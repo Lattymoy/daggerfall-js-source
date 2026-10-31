@@ -52,7 +52,7 @@
   {
     "name": "SCALE4f-house-never",
     "file": "server-account/src/realm.js",
-    "old": "    house: houseOn(row.record, row.person),   // no line, no record: none (houseOn's own null)",
+    "old": "    house: houseOn(row.record, row.person), // no line, no record: none (houseOn's own null)",
     "new": "    house: null,",
     "tests": [
       "test/server/scale4f.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "SCALE4f-stmt-wait-uncounted",
     "file": "server-account/src/metrics.js",
-    "old": "} finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
-    "new": "} finally { tripDone(tally, 0); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
+    "new": "          } finally {\n            tripDone(tally, 0);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip",
     "tests": [
       "test/server/scale4f.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4f-batch-wait-uncounted",
     "file": "server-account/src/metrics.js",
-    "old": "} finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
-    "new": "} finally { tripDone(tally, 0); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "old": "          } finally {\n            tripDone(tally, Date.now() - started);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
+    "new": "          } finally {\n            tripDone(tally, 0);\n          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries",
     "tests": [
       "test/server/scale4f.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "SCALE4f-batch-given-timed",
     "file": "server-account/src/metrics.js",
-    "old": "            const rs = await batch.call(target, Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list, ...rest);",
+    "old": "            const rs = await batch.call(\n              target,\n              Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list,\n              ...rest,\n            );",
     "new": "            const rs = await batch.call(target, list, ...rest);",
     "tests": [
       "test/server/scale4f.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "SCALE4f-point-as-before",
     "file": "server-account/src/metrics.js",
-    "old": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica,   // SCALE4f",
-    "new": "      doubles: [Date.now() - started, res.status, tally.n,   // SCALE4f",
+    "old": "        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements",
+    "new": "        tally.n, // SCALE4f: rows written, D1's wait, rows read, a replica's statements",
     "tests": [
       "test/server/scale4f.test.js"
     ],

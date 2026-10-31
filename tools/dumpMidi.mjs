@@ -47,7 +47,10 @@ if (!archive.load(new Uint8Array(readFileSync(join(arena2, 'MIDI.BSA'))))) {
 const vlq = (n) => {
   const out = [n & 0x7f];
   let v = n >>> 7;
-  while (v > 0) { out.unshift((v & 0x7f) | 0x80); v >>>= 7; }
+  while (v > 0) {
+    out.unshift((v & 0x7f) | 0x80);
+    v >>>= 7;
+  }
   return out;
 };
 
@@ -60,32 +63,46 @@ const chunk = (tag, body) => {
 /** One decoded HMI event to its MIDI wire bytes, or null to skip it. */
 function eventBytes(e) {
   switch (e.type) {
-    case 'noteOff':        return [0x80 | e.channel, e.note & 0x7f, e.velocity & 0x7f];
-    case 'noteOn':         return [0x90 | e.channel, e.note & 0x7f, e.velocity & 0x7f];
-    case 'polyPressure':   return [0xa0 | e.channel, e.note & 0x7f, e.pressure & 0x7f];
-    case 'controller':     return [0xb0 | e.channel, e.controller & 0x7f, e.value & 0x7f];
-    case 'programChange':  return [0xc0 | e.channel, e.program & 0x7f];
-    case 'channelPressure':return [0xd0 | e.channel, e.pressure & 0x7f];
-    case 'pitchBend':      return [0xe0 | e.channel, e.value & 0x7f, (e.value >> 7) & 0x7f];
-    case 'sysEx':          return [e.status, ...vlq(e.data.length), ...e.data];
+    case 'noteOff':
+      return [0x80 | e.channel, e.note & 0x7f, e.velocity & 0x7f];
+    case 'noteOn':
+      return [0x90 | e.channel, e.note & 0x7f, e.velocity & 0x7f];
+    case 'polyPressure':
+      return [0xa0 | e.channel, e.note & 0x7f, e.pressure & 0x7f];
+    case 'controller':
+      return [0xb0 | e.channel, e.controller & 0x7f, e.value & 0x7f];
+    case 'programChange':
+      return [0xc0 | e.channel, e.program & 0x7f];
+    case 'channelPressure':
+      return [0xd0 | e.channel, e.pressure & 0x7f];
+    case 'pitchBend':
+      return [0xe0 | e.channel, e.value & 0x7f, (e.value >> 7) & 0x7f];
+    case 'sysEx':
+      return [e.status, ...vlq(e.data.length), ...e.data];
     case 'meta':
       // End-of-track is written by us, once, at the real end - a song's
       // own 0x2F mid-stream would truncate everything after it.
       if (e.metaType === 0x2f) return null;
       return [0xff, e.metaType & 0xff, ...vlq(e.data.length), ...e.data];
-    default:               return null;
+    default:
+      return null;
   }
 }
 
 function toSmf(hmi) {
-  const division = hmi.ticksPerQuarterNote;   // the HMI clock (60), never the header's 480
+  const division = hmi.ticksPerQuarterNote; // the HMI clock (60), never the header's 480
   const bpm = hmi.beatsPerMinute || 120;
   const usPerQuarter = Math.round(60000000 / bpm);
 
   const track = [
     // tempo, at tick 0, before anything else
-    0x00, 0xff, 0x51, 0x03,
-    (usPerQuarter >> 16) & 0xff, (usPerQuarter >> 8) & 0xff, usPerQuarter & 0xff,
+    0x00,
+    0xff,
+    0x51,
+    0x03,
+    (usPerQuarter >> 16) & 0xff,
+    (usPerQuarter >> 8) & 0xff,
+    usPerQuarter & 0xff,
   ];
 
   let last = 0;
@@ -95,7 +112,7 @@ function toSmf(hmi) {
     track.push(...vlq(Math.max(0, e.tick - last)), ...bytes);
     last = e.tick;
   }
-  track.push(0x00, 0xff, 0x2f, 0x00);   // end of track
+  track.push(0x00, 0xff, 0x2f, 0x00); // end of track
 
   const header = [0x00, 0x00, 0x00, 0x01, (division >> 8) & 0xff, division & 0xff];
   return Uint8Array.from([...chunk('MThd', header), ...chunk('MTrk', track)]);
@@ -115,7 +132,10 @@ for (let i = 0; i < archive.count; i++) {
     skipped.push(`${name}: ${err.message}`);
     continue;
   }
-  if (!ok) { skipped.push(`${name}: not an HMI song`); continue; }
+  if (!ok) {
+    skipped.push(`${name}: not an HMI song`);
+    continue;
+  }
 
   const out = join(outDir, `${name.replace(/\.HMI$/i, '')}.mid`);
   writeFileSync(out, toSmf(hmi));

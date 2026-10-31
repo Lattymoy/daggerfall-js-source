@@ -2,8 +2,8 @@
   {
     "name": "IT1-1-homes-read-homes",
     "file": "src/systems/immersiveTravel.js",
-    "old": "if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons) return true;",
-    "new": "if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.homes) return true;",
+    "old": "  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons)",
+    "new": "  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.homes)",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "IT1-2-31-not-skipped",
     "file": "src/systems/immersiveTravel.js",
-    "old": "    if (r === 31) continue;\n",
-    "new": "",
+    "old": "    if (r === 31) continue;\n    if (r > 0) return r;",
+    "new": "    if (r > 0) return r;",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "IT1-4-y-plus-one-once",
     "file": "src/systems/immersiveTravel.js",
-    "old": "[[x, y + 1], [x, y + 1], [x + 1, y]",
-    "new": "[[x, y + 1], [x + 1, y]",
+    "old": "    [x, y + 1],\n    [x + 1, y],",
+    "new": "    [x + 1, y],",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "IT1-5-capital-unmasked",
     "file": "src/systems/immersiveTravel.js",
-    "old": "CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === pixelIdOf(mapId))",
-    "new": "CAPITAL_MAP_IDS.some((c) => c === (mapId | 0))",
+    "old": "export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === pixelIdOf(mapId));",
+    "new": "export const isCapital = (mapId) => CAPITAL_MAP_IDS.some((c) => c === (mapId | 0));",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "IT1-6-no-capital-to-capital",
     "file": "src/systems/immersiveTravel.js",
-    "old": "  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
+    "new": "  if (false) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/travel/it1_heldmap.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "IT1-7-capital-words-swapped",
     "file": "src/systems/immersiveTravel.js",
-    "old": "return fromCapital ? 'capitalOnly' : 'regionLocked';",
-    "new": "return fromCapital ? 'regionLocked' : 'capitalOnly';",
+    "old": "  return fromCapital ? 'capitalOnly' : 'regionLocked'; // IL_097e-09a3",
+    "new": "  return fromCapital ? 'regionLocked' : 'capitalOnly'; // IL_097e-09a3",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/travel/it1_heldmap.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "IT1-8-fee-no-plus-one",
     "file": "src/systems/immersiveTravel.js",
-    "old": "let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24) + fee;",
-    "new": "let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24);",
+    "old": "  let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24) + fee;",
+    "new": "  let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24);",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "IT1-11-no-north-neighbour",
     "file": "src/systems/immersiveTravel.js",
-    "old": "hasDock(id) || hasDock(id - 1000) ||",
-    "new": "hasDock(id) ||",
+    "old": "  return hasDock(id) || hasDock(id - 1000) || hasDock(id + 1) || hasDock(id + 1000) || hasDock(id - 1);",
+    "new": "  return hasDock(id) || hasDock(id + 1) || hasDock(id + 1000) || hasDock(id - 1);",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "IT1-13-no-region-sails-nowhere",
     "file": "src/systems/immersiveTravel.js",
-    "old": "if (border === dest.regionIndex || border === -1) return null;",
-    "new": "if (border === dest.regionIndex) return null;",
+    "old": "  if (border === dest.regionIndex || border === -1) return null;",
+    "new": "  if (border === dest.regionIndex) return null;",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "IT1-17-sea-inns",
     "file": "src/systems/immersiveTravel.js",
-    "old": "if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: false };",
-    "new": "if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: true };",
+    "old": "  if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: false };",
+    "new": "  if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: true };",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/travel/it1_heldmap.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "IT1-18-camp-out-keeps-ship",
     "file": "src/systems/immersiveTravel.js",
-    "old": "    st.travelShip = false;   // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone\n",
-    "new": "",
+    "old": "    st.travelShip = false; // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -186,8 +186,8 @@
   {
     "name": "IT1-19-captain-lets-you-walk",
     "file": "src/systems/immersiveTravel.js",
-    "old": "    if (transport && st.travelShip) { st.travelShip = true; return 'cannotDisableShip'; }   // IL_1f33-1f41, IL_1f4c-1f5a\n",
-    "new": "",
+    "old": "    if (transport && st.travelShip) {\n      st.travelShip = true;\n      return 'cannotDisableShip';\n    } // IL_1f33-1f41, IL_1f4c-1f5a\n    if (sleep && !st.sleepModeInn) {",
+    "new": "    if (sleep && !st.sleepModeInn) {",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/travel/it1_heldmap.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "IT1-21-drivers-not-merchants",
     "file": "src/systems/immersiveTravel.js",
-    "old": "type: 15, name: 'Carriage Drivers', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 1,",
-    "new": "type: 15, name: 'Carriage Drivers', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 0,",
+    "old": "    power: 100,\n    face: -1,\n    race: -1,\n    sgroup: 1,\n    ggroup: 16,\n  }),\n  Object.freeze({",
+    "new": "    power: 100,\n    face: -1,\n    race: -1,\n    sgroup: 0,\n    ggroup: 16,\n  }),\n  Object.freeze({",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -218,8 +218,8 @@
   {
     "name": "IT1-22-dock-table-drift",
     "file": "src/systems/immersiveTravelTables.js",
-    "old": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5222,",
-    "new": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5223,",
+    "old": "  5222, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
+    "new": "  5223, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],
@@ -228,8 +228,8 @@
   {
     "name": "IT1-23-online-mod-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'immersive-travel': Object.freeze({\n    Enabled: true,\n",
-    "new": "  'immersive-travel': Object.freeze({\n",
+    "old": "    Enabled: true,\n    'General.DisableNormalTravel': false,",
+    "new": "    'General.DisableNormalTravel': false,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/modsonline.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "IT1-25-online-fares-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'immersive-travel': Object.freeze(['General.ClearerMapDots',",
-    "new": "  'immersive-travel-x': Object.freeze(['General.ClearerMapDots',",
+    "old": "  'immersive-travel': Object.freeze([",
+    "new": "  'immersive-travel-x': Object.freeze([",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/realm0.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "IT1-27-shipped-default-on",
     "file": "src/systems/modSettings.js",
-    "old": "      'General.DisableNormalTravel': Object.freeze({ default: false,",
-    "new": "      'General.DisableNormalTravel': Object.freeze({ default: true,",
+    "old": "      'General.DisableNormalTravel': Object.freeze({\n        default: false,",
+    "new": "      'General.DisableNormalTravel': Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],

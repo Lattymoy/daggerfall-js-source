@@ -6,12 +6,12 @@
 // Enter) says goodbye.
 
 import { drawText, measureText } from './text.js';
-import { graphemesOf } from '../systems/graphemes.js';   // L10N2: where a Chinese or Japanese line may break
+import { graphemesOf } from '../systems/graphemes.js'; // L10N2: where a Chinese or Japanese line may break
 import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';
 import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js';
-import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1
-import { drawEnhancedChoice, closeEnhancedChoice } from './enhanced/enhancedDialog.js';   // DLG2: a keyed menu as the enhanced dialog   // ENH-NOTICE1: the no-options box on the enhanced skin
+import { isEnhancedPlus } from '../systems/uiSkin.js'; // PLUS1
+import { drawEnhancedChoice, closeEnhancedChoice } from './enhanced/enhancedDialog.js'; // DLG2: a keyed menu as the enhanced dialog   // ENH-NOTICE1: the no-options box on the enhanced skin
 
 const PANEL = [0.05, 0.05, 0.09, 0.92];
 /** UXB1-M: a clickable row's band starts this far (native px) above its glyphs' top - half the 12 px line's lead
@@ -26,8 +26,11 @@ const DIM = [0.55, 0.52, 0.45, 1];
 // one (kinsoku). DFU's TextLabel does the crude half of it, cutting a spaceless row at the glyph that overflows
 // (CreateNewLabelLayoutWrapped, TextLabel.cs:612-651). Korean spaces its words and breaks at the spaces; a text with
 // no CJK in it breaks exactly where it always did.
-const CJK = /[\u2E80-\u2FDF\u3000-\u303F\u3040-\u30FF\u3100-\u312F\u3190-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]|[\u{20000}-\u{3134F}]/u;
-const NO_LINE_START = new Set([...'、。，．・：；？！ー」』）］｝〕〉》】〙〗〟’”ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ々〻゠–〜～!),.:;?]}']);
+const CJK =
+  /[\u2E80-\u2FDF\u3000-\u303F\u3040-\u30FF\u3100-\u312F\u3190-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]|[\u{20000}-\u{3134F}]/u;
+const NO_LINE_START = new Set([
+  ...'、。，．・：；？！ー」』）］｝〕〉》】〙〗〟’”ぁぃぅぇぉっゃゅょゎゕゖァィゥェォッャュョヮヵヶ々〻゠–〜～!),.:;?]}',
+]);
 const NO_LINE_END = new Set([...'「『（［｛〔〈《【〘〖〝‘“([{']);
 
 /** A space-free run as the pieces a line may break between: itself when it holds no Chinese or Japanese. */
@@ -38,7 +41,10 @@ export function breakPieces(run) {
   let prev = null;
   for (const g of graphemesOf(run)) {
     const breaks = prev !== null && (CJK.test(g) || CJK.test(prev)) && !NO_LINE_START.has(g) && !NO_LINE_END.has(prev);
-    if (breaks) { out.push(cur); cur = g; } else cur += g;
+    if (breaks) {
+      out.push(cur);
+      cur = g;
+    } else cur += g;
     prev = g;
   }
   out.push(cur);
@@ -53,8 +59,10 @@ export function wrapText(fnt, text, maxWidth, measure = measureText) {
   for (const word of text.split(' ')) {
     breakPieces(word).forEach((piece, i) => {
       const probe = line.length ? `${line}${i === 0 ? ' ' : ''}${piece}` : piece;
-      if (line.length && measure(fnt, probe) > maxWidth) { lines.push(line); line = piece; }
-      else line = probe;
+      if (line.length && measure(fnt, probe) > maxWidth) {
+        lines.push(line);
+        line = piece;
+      } else line = probe;
     });
   }
   if (line.length) lines.push(line);
@@ -78,9 +86,9 @@ export class ChoiceWindow {
     this.options = options;
     this.done = false;
     this.isChoiceWindow = true;
-    this._hitRows = null;   // set by draw(): this session's option rows, in real pixel space
+    this._hitRows = null; // set by draw(): this session's option rows, in real pixel space
     this._hitBox = null;
-    this._m = null;         // this session's nativeMetrics, so click() can undo pointToNative
+    this._m = null; // this session's nativeMetrics, so click() can undo pointToNative
   }
 
   input(code) {
@@ -88,13 +96,20 @@ export class ChoiceWindow {
     // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD (bible/Home.md). The court's plea, answered under the tutorial
     // page and left painted in the stack, pleaded again on every press: each plea halved the term and took the fine.
     if (this.done) return;
-    if (!this.options.length && (code === 'back' || code === 'confirm' || code === 'Escape' || code === 'Enter' || code === 'KeyE')) {
+    if (
+      !this.options.length &&
+      (code === 'back' || code === 'confirm' || code === 'Escape' || code === 'Enter' || code === 'KeyE')
+    ) {
       this.done = true;
-      noticeRelease(this);   // ENH-NOTICE1: the panel leaves with the box
+      noticeRelease(this); // ENH-NOTICE1: the panel leaves with the box
       return;
     }
     const opt = this.options.find((o) => o.code === code);
-    if (opt) { this.done = true; closeEnhancedChoice(this); opt.action?.(); }
+    if (opt) {
+      this.done = true;
+      closeEnhancedChoice(this);
+      opt.action?.();
+    }
   }
 
   /** AUDIT (mouse): the box was keyboard-only - a mouse-driven player
@@ -112,16 +127,22 @@ export class ChoiceWindow {
    *  parchment (below), whose rows the hit map above never sees. The
    *  keyed menus keep the row hit. */
   click(vx, vy) {
-    if (!this.options.length) { this.input('confirm'); return true; }
+    if (!this.options.length) {
+      this.input('confirm');
+      return true;
+    }
     if (this._m && this._hitBox) {
       const px = vx * this._m.s + this._m.ox;
       const py = vy * this._m.s + this._m.oy;
       if (px >= this._hitBox.x && px < this._hitBox.x + this._hitBox.w) {
         const row = this._hitRows.find((r) => py >= r.y0 && py < r.y1);
-        if (row) { this.input(row.code ?? 'confirm'); return true; }
+        if (row) {
+          this.input(row.code ?? 'confirm');
+          return true;
+        }
       }
     }
-    return true;   // a click that missed every row is swallowed, not answered
+    return true; // a click that missed every row is swallowed, not answered
   }
 
   draw(renderer, canvas, font, s) {
@@ -141,20 +162,29 @@ export class ChoiceWindow {
     if (this.options.length && isEnhancedPlus() && drawEnhancedChoice(this, this.lines, this.options)) return;
     const wrapped = this.lines.flatMap((l) => (l === '' ? [''] : wrapText(font.fnt, l, 280)));
     const optLines = this.options.filter((o) => o.label);
-    const bodyCount = wrapped.length + 1;   // +1 for the blank spacer row below the text
+    const bodyCount = wrapped.length + 1; // +1 for the blank spacer row below the text
     const lines = [...wrapped, '', ...optLines.map((o) => o.label)];
     if (!this.options.length) lines.push('(continue)');
     const w = Math.max(...lines.map((l) => measureText(font.fnt, l))) * s + 24 * s;
     const lineH = 12 * s;
     const h = lines.length * lineH + 20 * s;
-    const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
+    const x = (canvas.width - w) / 2,
+      y = (canvas.height - h) / 2;
     renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
     this._m = nativeMetrics(canvas);
     this._hitBox = { x, y, w, h };
     this._hitRows = [];
     let ty = y + 12 * s;
     lines.forEach((l, i) => {
-      drawText(renderer, font, l, x + 12 * s, ty, s, this.options.some((o) => o.label === l) || l === '(continue)' ? DIM : TEXT);
+      drawText(
+        renderer,
+        font,
+        l,
+        x + 12 * s,
+        ty,
+        s,
+        this.options.some((o) => o.label === l) || l === '(continue)' ? DIM : TEXT,
+      );
       // Every row from bodyCount on is a clickable one: a real option
       // (its own code) or, when there are none at all, the single
       // '(continue)' row (null - click() reads that as 'confirm').
@@ -165,7 +195,12 @@ export class ChoiceWindow {
       // click on "N - no" answered nothing. The band now starts a
       // ROW_LEAD above the glyphs and is one lineH tall, so the bands
       // tile the rows they name.
-      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });
+      if (i >= bodyCount)
+        this._hitRows.push({
+          code: optLines[i - bodyCount]?.code ?? null,
+          y0: ty - ROW_LEAD * s,
+          y1: ty - ROW_LEAD * s + lineH,
+        });
       ty += lineH;
     });
   }
@@ -187,7 +222,10 @@ export class TalkWindow {
   /** Same fault as ChoiceWindow's, simpler fix: one message, no
    *  branching, so any click just says goodbye - "click anywhere to
    *  close", ActionTextBox's own rule. */
-  click() { this.input('confirm'); return true; }
+  click() {
+    this.input('confirm');
+    return true;
+  }
 
   draw(renderer, canvas, font, s) {
     const wrapped = wrapText(font.fnt, this.text, 280);
@@ -195,7 +233,8 @@ export class TalkWindow {
     const w = Math.max(...lines.map((l) => measureText(font.fnt, l))) * s + 24 * s;
     const lineH = 12 * s;
     const h = lines.length * lineH + 20 * s;
-    const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
+    const x = (canvas.width - w) / 2,
+      y = (canvas.height - h) / 2;
     renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
     let ty = y + 12 * s;
     for (const l of lines) {

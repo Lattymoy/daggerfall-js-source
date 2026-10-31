@@ -169,8 +169,8 @@
   {
     "name": "AUDIT1003b-S4-LOCK-IGNORED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "    if (S.locked) return { no: 'locked' };",
-    "new": "",
+    "old": "    if (S.locked) return { no: 'locked' }; // AUDIT PRE-MERGE 1003b S4: locked to newcomers - a member coming back is let in",
+    "new": "    // AUDIT PRE-MERGE 1003b S4: locked to newcomers - a member coming back is let in",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js",
       "test/systems/arena/audit1003b_client.test.js"
@@ -179,8 +179,8 @@
   {
     "name": "AUDIT1003b-S9-BOTH-GONE-FORFEIT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
-    "new": "  if (false && boutLive(b) && st.kind === 'pvp' && st.f.length === 2 && st.f.every(",
+    "old": "    boutLive(b) &&",
+    "new": "    false &&\n    boutLive(b) &&",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "AUDIT1003b-C1-STRANDED",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (over) { if (bout.priv) letGoPriv(true); else endBout(); }",
-    "new": "if (over) endBout();",
+    "old": "      if (over) {\n        if (bout.priv) letGoPriv(true);\n        else endBout();\n      }",
+    "new": "      if (over) endBout();",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "AUDIT1003b-C2-NO-HEAL",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    deps.heal?.();\n    if (stay)",
-    "new": "    if (stay)",
+    "old": "    deps.heal?.();\n    if (stay) {",
+    "new": "    if (stay) {",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "AUDIT1003b-C2-SUPERSEDED-NO-HEAL",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (bout?.priv) letGoPriv(false); else endBout();   // AUDIT PRE-MERGE 1003b C2",
-    "new": "    endBout();   // AUDIT PRE-MERGE 1003b C2",
+    "old": "    if (bout?.priv) letGoPriv(false);\n    else endBout(); // AUDIT PRE-MERGE 1003b C2: a session's fighter healed as it goes",
+    "new": "    endBout(); // AUDIT PRE-MERGE 1003b C2: a session's fighter healed as it goes",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT1003b-C3-LEFT-ROOM-ADOPTED",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (leave && sess) sessLeftRoom = sess.room;\n",
-    "new": "",
+    "old": "    if (leave && sess) sessLeftRoom = sess.room;\n    sess = null;",
+    "new": "    sess = null;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -233,8 +233,8 @@
   {
     "name": "AUDIT1003b-C4-REALM-OVER-SIDE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (C.you && !C.relay.fixed && (R?.banner",
-    "new": "if (C.you && (R?.banner",
+    "old": "    if (C.you && !C.relay.fixed && (R?.banner === 'red' || R?.banner === 'blue')) out[C.you] = R.banner;",
+    "new": "    if (C.you && (R?.banner === 'red' || R?.banner === 'blue')) out[C.you] = R.banner;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT1003b-C5-WINDOW-LEFT-OPEN",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (side >= 0) { deps.closeWindow?.(); deps.standOnMark",
-    "new": "if (side >= 0) { deps.standOnMark",
+    "old": "      deps.closeWindow?.();\n      deps.standOnMark?.(side === 1 ? 'rival' : 'ladder');",
+    "new": "      deps.standOnMark?.(side === 1 ? 'rival' : 'ladder');",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT1003b-C6-FULL-ONLY-SAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "'host guest', 'session full', 'locked']);",
-    "new": "'host guest']);",
+    "old": "  const SESSION_ENDS = new Set([\n    'closed',\n    'ended',\n    'removed',\n    'no session',\n    'taken',\n    'host guest',\n    'session full',\n    'locked',\n  ]);",
+    "new": "  const SESSION_ENDS = new Set(['closed', 'ended', 'removed', 'no session', 'taken', 'host guest']);",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "AUDIT1003b-C8-NO-REJOIN",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (sess) sessLast = { text, code: sess.code, back: !leave };",
-    "new": "if (sess) sessLast = { text, code: sess.code, back: false };",
+    "old": "    if (sess) sessLast = { text, code: sess.code, back: !leave }; // AUDIT PRE-MERGE 1003b C8: a session stepped out of may be rejoined",
+    "new": "    if (sess) sessLast = { text, code: sess.code, back: false }; // AUDIT PRE-MERGE 1003b C8: a session stepped out of may be rejoined",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "AUDIT1003b-U3-WORD-DROPPED",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ say(text); sess.word = text; return true; }",
-    "new": "{ say(text); return true; }",
+    "old": "      sess.word = text;\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT1003b-U3-NO-BOUT-UNSAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (SESSION_SAYS.has(w.m) || (w.m === 'no bout' && !bout))",
-    "new": "if (SESSION_SAYS.has(w.m))",
+    "old": "    if (SESSION_SAYS.has(w.m) || (w.m === 'no bout' && !bout)) {",
+    "new": "    if (SESSION_SAYS.has(w.m)) {",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "AUDIT1003b-U3-CARD-NO-WORD",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (v.word) lines.push(v.word);   // AUDIT PRE-MERGE 1003b U3",
-    "new": "  // gone",
+    "old": "  if (v.word) lines.push(v.word); // AUDIT PRE-MERGE 1003b U3: the relay's answer to the last press, in the window",
+    "new": "  // gone: the relay's answer to the last press, in the window",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT1003b-U4-NO-KEY",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "data: { r: id }, key: `aw-priv-${id}-r` }",
-    "new": "data: { r: id } }",
+    "old": "        key: `aw-priv-${id}-r`,\n      });",
+    "new": "      });",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js",
       "test/ui/enhanced/audit1003b_ui.test.js"
@@ -316,8 +316,8 @@
   {
     "name": "AUDIT1003b-U4-HARD-DISABLED",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "'', x.name, { soft: true, quiet: true }));",
-    "new": "'', x.name, { quiet: true }));",
+    "old": "            acts.append(\n              press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { soft: true, quiet: true }),\n            ); // AUDIT PRE-MERGE 1003b U4",
+    "new": "            acts.append(press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { quiet: true })); // AUDIT PRE-MERGE 1003b U4",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "AUDIT1003b-U4-PICKED-DROPPED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "why: no ?? (id === w.r ? T.privIsRed : null), data: { r: id }",
-    "new": "why: no, data: { r: id }",
+    "old": "      acts.push({\n        act: 'privPick',\n        label: T.privMakeRed,\n        why: no ?? (id === w.r ? T.privIsRed : null),\n        data: { r: id },\n        key: `aw-priv-${id}-r`,\n      });",
+    "new": "      acts.push({ act: 'privPick', label: T.privMakeRed, why: no, data: { r: id }, key: `aw-priv-${id}-r` });",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js",
       "test/ui/enhanced/audit1003b_ui.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT1003b-U6-CARD-LAST",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "if (c.code) cards.unshift(c); else cards.push(c);",
-    "new": "cards.push(c);",
+    "old": "  if (c.code) cards.unshift(c);\n  else cards.push(c);",
+    "new": "  cards.push(c);",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDIT1003b-U7-SESSION-AS-BOUT",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const busyWhy = inSession ? O().privIn : O().whyBusy;",
-    "new": "const busyWhy = O().whyBusy;",
+    "old": "  const busyWhy = inSession ? O().privIn : O().whyBusy; // AUDIT PRE-MERGE 1003b U7: in a session, said as one",
+    "new": "  const busyWhy = O().whyBusy; // AUDIT PRE-MERGE 1003b U7: in a session, said as one",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT1003b-U7-QUEUE-UNSAID",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const wait = busy ? T.whyBusy : queued ? T.privQueued : null;",
-    "new": "const wait = busy ? T.whyBusy : null;",
+    "old": "    const wait = busy ? T.whyBusy : queued ? T.privQueued : null;",
+    "new": "    const wait = busy ? T.whyBusy : null;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT1003b-U7-FIGHTER-IN-STANDS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  if (on && w.f.includes(w.me)) head.state = T.privState.fighter;",
-    "new": "  // gone",
+    "old": "  if (on && w.f.includes(w.me)) head.state = T.privState.fighter; // AUDIT PRE-MERGE 1003b U7",
+    "new": "  // gone   // AUDIT PRE-MERGE 1003b U7",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT1003b-U9-DRAW-NO-RESULT",
     "file": "src/systems/arena/arenaText.js",
-    "old": ": `${red} (Red) and ${blue} (Blue) drew`;",
-    "new": ": `${red} (Red) and ${blue} (Blue) - no result`;",
+    "old": "          : `${red} (Red) and ${blue} (Blue) drew`;",
+    "new": "          : `${red} (Red) and ${blue} (Blue) - no result`;",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT1003b-U10-NO-YOU",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "    if (id === w.me) roles.push(T.privRole.you);",
-    "new": "",
+    "old": "    if (id === w.me) roles.push(T.privRole.you); // AUDIT PRE-MERGE 1003b U10: your own row, in words",
+    "new": "    // AUDIT PRE-MERGE 1003b U10: your own row, in words",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT1003b-U10-CODE-TWICE",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "        shown.setAttribute('aria-hidden', 'true');\n",
-    "new": "",
+    "old": "        shown.setAttribute('aria-hidden', 'true');\n        code.append(shown, el('span', 'aw-sr', `${ARENA_TEXT.online.privCodeLabel}: ${c.code.split('').join(' ')}`));",
+    "new": "        code.append(shown, el('span', 'aw-sr', `${ARENA_TEXT.online.privCodeLabel}: ${c.code.split('').join(' ')}`));",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT1003b-U11-ENTER-MID-COMPOSITION",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "if (e.key === 'Enter' && !e.isComposing && !c.join.why)",
-    "new": "if (e.key === 'Enter' && !c.join.why)",
+    "old": "        if (e.key === 'Enter' && !e.isComposing && !c.join.why) {",
+    "new": "        if (e.key === 'Enter' && !c.join.why) {",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT1003b-U11-NO-CAPITALS",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "      input.setAttribute('autocapitalize', 'characters');\n",
-    "new": "",
+    "old": "      input.setAttribute('autocapitalize', 'characters');\n      input.setAttribute('autocorrect', 'off');",
+    "new": "      input.setAttribute('autocorrect', 'off');",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT1003b-S4-NO-LOCK-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "      { act: 'privLock', label: w.lo ? T.privUnlock : T.privLock, why: null, data: { l: w.lo ? 0 : 1 }, key: 'aw-priv-lock' },\n",
-    "new": "",
+    "old": "        {\n          act: 'privLock',\n          label: w.lo ? T.privUnlock : T.privLock,\n          why: null,\n          data: { l: w.lo ? 0 : 1 },\n          key: 'aw-priv-lock',\n        },\n        { act: 'privClose', label: T.privClose, why: null, key: 'aw-priv-close' },",
+    "new": "        { act: 'privClose', label: T.privClose, why: null, key: 'aw-priv-close' },",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT1003b-S4-LOCK-OFF-WIRE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null;   // AUDIT PRE-MERGE 1003b S4\n",
-    "new": "",
+    "old": "      if (m.a === 'lock') return m.l === 0 || m.l === 1 ? { k: 'ps', a: 'lock', l: m.l } : null; // AUDIT PRE-MERGE 1003b S4\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/net/arena/audit1003b_relay.test.js",
       "test/systems/arena/arena6_private.test.js"
@@ -444,8 +444,8 @@
   {
     "name": "AUDIT1003b-S6-RATED-CALL",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "say(C.relay.casual ? ARENA_TEXT.call.casual : ARENA_TEXT.call.players)",
-    "new": "say(ARENA_TEXT.call.players)",
+    "old": "          say(C.relay.casual ? ARENA_TEXT.call.casual : ARENA_TEXT.call.players);",
+    "new": "          say(ARENA_TEXT.call.players);",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "AUDIT1003b-S6-SESSION-NOT-CASUAL",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "        casual: true,   // AUDIT PRE-MERGE 1003b S6: called as the casual bout it is\n",
-    "new": "",
+    "old": "        casual: true, // AUDIT PRE-MERGE 1003b S6: called as the casual bout it is\n        banners: { p0: 'red', p1: 'blue' }, // the session's Red and Blue, under their colours on the sand",
+    "new": "        banners: { p0: 'red', p1: 'blue' }, // the session's Red and Blue, under their colours on the sand",
     "tests": [
       "test/systems/arena/audit1003b_client.test.js"
     ]

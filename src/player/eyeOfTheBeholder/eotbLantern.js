@@ -43,10 +43,15 @@
 // option bags, so the per-frame paths build nothing.
 
 import { RECORD_OFFSETS, ORIENTATIONS } from './eotbBillboard.js';
-import { createLanternSwing, stepLanternSwing, lanternSwingDown, HIP_LANTERN_HEIGHT } from '../../systems/lanternSwing.js';
+import {
+  createLanternSwing,
+  stepLanternSwing,
+  lanternSwingDown,
+  HIP_LANTERN_HEIGHT,
+} from '../../systems/lanternSwing.js';
 import { LANTERN_TEMPLATE } from '../../systems/playerTorch.js';
 import { templateByIndex } from '../../systems/item/itemTemplates.js';
-import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the one angle wrap
+import { wrapAngle } from '../../world/mat4.js'; // ONCRASH1: the one angle wrap
 
 /** The record of EOTB's wheel that shows the sprite's back, straight on (+4; +3 is the back three-quarter). */
 export const BACK_RECORD = 4;
@@ -60,7 +65,13 @@ export function isRearView(orientation) {
 /** The hook, off the sprite: a fraction of the quad's height above its base, the hip's side out along the
  *  facing's right (scaled with the sprite), and a nudge toward the eye so it never shares the body's depth; the
  *  picture's height the one both bodies hang (HT-WAIST-SIZE - systems/lanternSwing.js HIP_LANTERN_HEIGHT). */
-export const HIP_LANTERN_SPRITE = Object.freeze({ heightFraction: 0.5, side: 0.2, towardEye: 0.06, height: HIP_LANTERN_HEIGHT, minLength: 0.6 });
+export const HIP_LANTERN_SPRITE = Object.freeze({
+  heightFraction: 0.5,
+  side: 0.2,
+  towardEye: 0.06,
+  height: HIP_LANTERN_HEIGHT,
+  minLength: 0.6,
+});
 /** The renderer's key for the picture: its own, so no world flat of the same record is ever replaced by it. */
 export const LANTERN_ART_KEY = 'htwaist-lantern';
 
@@ -69,11 +80,15 @@ export const LANTERN_ART_KEY = 'htwaist-lantern';
  *  `renderer.uploadTexture` takes. Null when the data is not there; never throws. */
 export async function loadLanternArt() {
   const t = templateByIndex(LANTERN_TEMPLATE);
-  const archive = t?.worldTextureArchive, record = t?.worldTextureRecord;
+  const archive = t?.worldTextureArchive,
+    record = t?.worldTextureRecord;
   if (!Number.isInteger(archive) || !Number.isInteger(record)) return null;
   try {
     const [{ TextureFile, texName }, { DFPalette }, { changeMask }, { getBytes }] = await Promise.all([
-      import('../../formats/textureFile.js'), import('../../formats/dfPalette.js'), import('../../formats/baseImageFile.js'), import('../../scenes/dataSource.js'),
+      import('../../formats/textureFile.js'),
+      import('../../formats/dfPalette.js'),
+      import('../../formats/baseImageFile.js'),
+      import('../../scenes/dataSource.js'),
     ]);
     const pal = new DFPalette();
     pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
@@ -95,16 +110,26 @@ export async function loadLanternArt() {
  * @param {() => Promise<{width: number, height: number, colors: any}|null>} [load]
  */
 export function createLanternArt(getRenderer, load = loadLanternArt) {
-  let art;   // undefined: not asked; a Promise in flight; { w, h } uploaded; null: none
+  let art; // undefined: not asked; a Promise in flight; { w, h } uploaded; null: none
   return {
     ensure() {
       if (art !== undefined || !getRenderer()) return art && !(art instanceof Promise) ? art : null;
-      const p = Promise.resolve().then(() => load()).then((img) => {
-        const renderer = getRenderer();
-        if (!img || !renderer) { art = null; return; }
-        renderer.uploadTexture(LANTERN_ART_KEY, 0, { width: img.width, height: img.height, colors: img.colors });
-        art = { w: img.width, h: img.height };
-      }, () => { art = null; });
+      const p = Promise.resolve()
+        .then(() => load())
+        .then(
+          (img) => {
+            const renderer = getRenderer();
+            if (!img || !renderer) {
+              art = null;
+              return;
+            }
+            renderer.uploadTexture(LANTERN_ART_KEY, 0, { width: img.width, height: img.height, colors: img.colors });
+            art = { w: img.width, h: img.height };
+          },
+          () => {
+            art = null;
+          },
+        );
       art = p;
       return null;
     },
@@ -117,12 +142,20 @@ const REST = Object.freeze(createLanternSwing());
 export function createSpriteLantern() {
   return {
     swing: createLanternSwing(),
-    yaw: null,                        // last frame's facing, for the turn's pull
-    motion: { forward: 0, side: 0, yawRate: 0, stride: null },   // what stepLanternSwing is handed
-    batch: null, batchH: 0,           // the billboard, and the full height it was minted at
-    list: [],                         // [batch]: the one-element list drawBillboards takes, kept rather than built
-    d: [0, 0, -1], hook: [0, 0, 0], right: [0, 0, 0], up: [0, 0, 0], origin: [0, 0, 0], mid: [0, 0, 0],
-    w: 0, h: 0, fullH: 0,             // the quad as drawn this frame, and at full length
+    yaw: null, // last frame's facing, for the turn's pull
+    motion: { forward: 0, side: 0, yawRate: 0, stride: null }, // what stepLanternSwing is handed
+    batch: null,
+    batchH: 0, // the billboard, and the full height it was minted at
+    list: [], // [batch]: the one-element list drawBillboards takes, kept rather than built
+    d: [0, 0, -1],
+    hook: [0, 0, 0],
+    right: [0, 0, 0],
+    up: [0, 0, 0],
+    origin: [0, 0, 0],
+    mid: [0, 0, 0],
+    w: 0,
+    h: 0,
+    fullH: 0, // the quad as drawn this frame, and at full length
   };
 }
 
@@ -149,7 +182,9 @@ export function stepSpriteLantern(l, dt, fx, fz, speed, stride) {
   const m = l.motion;
   m.yawRate = l.yaw != null && dt > 0 ? wrapAngle(yaw - l.yaw) / dt : 0;
   l.yaw = yaw;
-  m.forward = speed || 0; m.side = 0; m.stride = stride;
+  m.forward = speed || 0;
+  m.side = 0;
+  m.stride = stride;
   stepLanternSwing(l.swing, dt, m);
   return l;
 }
@@ -163,29 +198,47 @@ export function stepSpriteLantern(l, dt, fx, fz, speed, stride) {
  */
 export function hangSpriteLantern(l, base, spriteH, fx, fz, eye, feet, camYaw, scale, art) {
   const L = HIP_LANTERN_SPRITE;
-  const h = L.height * scale, w = h * art.w / art.h;
-  const rx = fz, rz = -fx;   // right = [cos y, 0, -sin y] for forward [sin y, 0, cos y]
-  const ex = eye[0] - feet[0], ez = eye[2] - feet[2];
+  const h = L.height * scale,
+    w = (h * art.w) / art.h;
+  const rx = fz,
+    rz = -fx; // right = [cos y, 0, -sin y] for forward [sin y, 0, cos y]
+  const ex = eye[0] - feet[0],
+    ez = eye[2] - feet[2];
   const el = Math.hypot(ex, ez) || 1;
   const side = L.side * scale;
   const hook = l.hook;
-  hook[0] = base[0] + rx * side + ex / el * L.towardEye;
+  hook[0] = base[0] + rx * side + (ex / el) * L.towardEye;
   hook[1] = base[1] + spriteH * L.heightFraction;
-  hook[2] = base[2] + rz * side + ez / el * L.towardEye;
+  hook[2] = base[2] + rz * side + (ez / el) * L.towardEye;
   // the swing, from the facing frame into the view plane: the tilt, and the shortening toward or away
   const d = lanternSwingDown(l.swing, l.d);
-  const wx = rx * d[0] + fx * d[1], wy = d[2], wz = rz * d[0] + fz * d[1];
-  const crx = Math.cos(camYaw), crz = -Math.sin(camYaw);
+  const wx = rx * d[0] + fx * d[1],
+    wy = d[2],
+    wz = rz * d[0] + fz * d[1];
+  const crx = Math.cos(camYaw),
+    crz = -Math.sin(camYaw);
   const dx = wx * crx + wz * crz;
   const len = Math.hypot(dx, wy);
-  const sin = len > 1e-6 ? dx / len : 0, cos = len > 1e-6 ? -wy / len : 1;
-  const right = l.right, up = l.up;
-  right[0] = crx * cos; right[1] = sin; right[2] = crz * cos;
-  up[0] = -crx * sin; up[1] = cos; up[2] = -crz * sin;
+  const sin = len > 1e-6 ? dx / len : 0,
+    cos = len > 1e-6 ? -wy / len : 1;
+  const right = l.right,
+    up = l.up;
+  right[0] = crx * cos;
+  right[1] = sin;
+  right[2] = crz * cos;
+  up[0] = -crx * sin;
+  up[1] = cos;
+  up[2] = -crz * sin;
   const drawnH = h * Math.max(L.minLength, Math.min(1, len));
-  l.w = w; l.h = drawnH; l.fullH = h;
-  l.origin[0] = hook[0] - up[0] * drawnH; l.origin[1] = hook[1] - up[1] * drawnH; l.origin[2] = hook[2] - up[2] * drawnH;
-  l.mid[0] = hook[0] - up[0] * drawnH * 0.5; l.mid[1] = hook[1] - up[1] * drawnH * 0.5; l.mid[2] = hook[2] - up[2] * drawnH * 0.5;
+  l.w = w;
+  l.h = drawnH;
+  l.fullH = h;
+  l.origin[0] = hook[0] - up[0] * drawnH;
+  l.origin[1] = hook[1] - up[1] * drawnH;
+  l.origin[2] = hook[2] - up[2] * drawnH;
+  l.mid[0] = hook[0] - up[0] * drawnH * 0.5;
+  l.mid[1] = hook[1] - up[1] * drawnH * 0.5;
+  l.mid[2] = hook[2] - up[2] * drawnH * 0.5;
   return l;
 }
 
@@ -200,8 +253,11 @@ export function mintSpriteLantern(l, renderer) {
     l.list[0] = l.batch;
   }
   const b = l.batch;
-  b.size.w = l.w; b.size.h = l.h;
-  b.origin[0] = l.origin[0]; b.origin[1] = l.origin[1]; b.origin[2] = l.origin[2];
+  b.size.w = l.w;
+  b.size.h = l.h;
+  b.origin[0] = l.origin[0];
+  b.origin[1] = l.origin[1];
+  b.origin[2] = l.origin[2];
   return b;
 }
 

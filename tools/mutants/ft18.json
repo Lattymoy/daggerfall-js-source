@@ -2,8 +2,8 @@
   {
     "name": "FPSCAP-no-floor",
     "file": "src/systems/frameCap.js",
-    "old": "n >= FRAME_CAP_FLOOR ?",
-    "new": "n > 0 ?",
+    "old": "  return Number.isFinite(n) && n >= FRAME_CAP_FLOOR ? Math.min(FRAME_CAP_MAX, Math.floor(n)) : 0;",
+    "new": "  return Number.isFinite(n) && n > 0 ? Math.min(FRAME_CAP_MAX, Math.floor(n)) : 0;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FPSCAP-no-clamp",
     "file": "src/systems/frameCap.js",
-    "old": "getInt('Video', 'TargetFrameRate', 0, 300)",
-    "new": "getInt('Video', 'TargetFrameRate')",
+    "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
+    "new": "  return frameCapRate(getInt('Video', 'TargetFrameRate')) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FPSCAP-no-slack",
     "file": "src/systems/frameCap.js",
-    "old": "now < state.due - FRAME_CAP_SLACK_MS",
-    "new": "now < state.due",
+    "old": "  if (state.due && now < state.due - FRAME_CAP_SLACK_MS) return (state.held = true);",
+    "new": "  if (state.due && now < state.due) return (state.held = true);",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FPSCAP-slot-booked-from-the-stamp",
     "file": "src/systems/frameCap.js",
-    "old": "state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
-    "new": "state.due = now + interval;",
+    "old": "  state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
+    "new": "  state.due = now + interval;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FPSCAP-a-gap-is-a-burst",
     "file": "src/systems/frameCap.js",
-    "old": "state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
-    "new": "state.due = state.due ? state.due + interval : now + interval;",
+    "old": "  state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;",
+    "new": "  state.due = state.due ? state.due + interval : now + interval;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FPSCAP-the-stamp-not-remembered",
     "file": "src/systems/frameCap.js",
-    "old": "  if (state.at === now) return state.held;   // one decision per stamp: the host and the counter agree\n",
-    "new": "",
+    "old": "  if (state.at === now) return state.held; // one decision per stamp: the host and the counter agree\n  state.at = now;",
+    "new": "  state.at = now;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FPSCAP-the-counter-counts-the-screen",
     "file": "src/ui/fpsCounter.js",
-    "old": "    if (frameCapSkip(now)) { if (live && raf) handle = raf(tick); return; }\n",
-    "new": "",
+    "old": "    if (frameCapSkip(now)) {\n      if (live && raf) handle = raf(tick);\n      return;\n    }\n    const prev = stamps.length ? stamps[stamps.length - 1] : null;",
+    "new": "    const prev = stamps.length ? stamps[stamps.length - 1] : null;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "FPSCAP-vsync-left-stored",
     "file": "src/systems/settings/settings.js",
-    "old": "  'Video/VSync': 'the browser always waits for the screen refresh',\n",
-    "new": "",
+    "old": "  'Video/VSync': 'the browser always waits for the screen refresh',\n});",
+    "new": "});",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "FPSCAP-the-row-walks-the-range",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "    if (law.stops) return stepStops(law, raw, dir, coarse);   // FPS-CAP1\n",
-    "new": "",
+    "old": "    if (law.stops) return stepStops(law, raw, dir, coarse); // FPS-CAP1\n    const stepBy = coarse ? law.coarse : law.step;",
+    "new": "    const stepBy = coarse ? law.coarse : law.step;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "FPSCAP-zero-reads-as-a-number",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "  if (law.offBelow !== undefined && n < law.offBelow) return 'Off';   // FPS-CAP1\n",
-    "new": "",
+    "old": "  if (law.offBelow !== undefined && n < law.offBelow) return 'Off'; // FPS-CAP1\n  if (law.format === 'raw') return String(+n.toFixed(4)); // AUDIT 28 W11: a thousandths ratio (0.005) must not round to \"0.01\"",
+    "new": "  if (law.format === 'raw') return String(+n.toFixed(4)); // AUDIT 28 W11: a thousandths ratio (0.005) must not round to \"0.01\"",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "FT18-the-wind-writes-the-sway",
     "file": "src/systems/featureLanes.js",
-    "old": "for (const k of WIND_PARTS) setPref(k, v === true || v === 'true');",
-    "new": "setPref('floraSway', v === true || v === 'true');",
+    "old": "  for (const k of WIND_PARTS) setPref(k, v === true || v === 'true');",
+    "new": "  setPref('floraSway', v === true || v === 'true');",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "FT18-the-diamond-beats-the-hotbar",
     "file": "src/systems/featureLanes.js",
-    "old": "  const style = getPref(QUICKBAR_STYLE_PREF);\n  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
-    "new": "  const style = getPref(QUICKBAR_STYLE_PREF);\n  if (getPref(QUICKSLOTS_PREF) === false) return 'off';\n  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
+    "old": "  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
+    "new": "  if (getPref(QUICKSLOTS_PREF) === false) return 'off';\n  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "FT18-an-amount-leaves-the-parts-off",
     "file": "src/systems/featureLanes.js",
-    "old": "  if (!BLOOD_PARTS.some(on)) for (const k of BLOOD_PARTS) setPref(k, true);\n",
-    "new": "",
+    "old": "  if (!BLOOD_PARTS.some(on)) for (const k of BLOOD_PARTS) setPref(k, true);\n  setPref(BLOOD_GORE_PREF, v);",
+    "new": "  setPref(BLOOD_GORE_PREF, v);",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "FT18-blood-off-forgets-nothing",
     "file": "src/systems/featureLanes.js",
-    "old": "  if (v === 'off') { for (const k of BLOOD_PARTS) setPref(k, false); return; }",
-    "new": "  if (v === 'off') { setPref(BLOOD_PREF, false); return; }",
+    "old": "    for (const k of BLOOD_PARTS) setPref(k, false);",
+    "new": "    setPref(BLOOD_PREF, false);",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]

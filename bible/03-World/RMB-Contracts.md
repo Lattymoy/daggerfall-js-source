@@ -247,8 +247,9 @@ entry. The worker's graph is still `world/` and `formats/` alone, 86 modules (`t
 
 The ground moved, so the frame's law did too: `GROUND_FRAME_LAW` 6 and `PADS_FRAME_LAW` 6 (`terrainSampler.js`). A record
 written before stands where the carve put the ground: `landforms.js` `settlementMovedField` and `groundFrameHost.js`
-`padsMovedAt`, none on a pixel a location holds. Six pins of the old law moved with it. The wire's `GROUND_LAW` and the
-relay's version move at the merge of main, so their numbers are current (THE FOUR HOSTS below).
+`padsMovedAt`, none on a pixel a location holds. Six pins of the old law moved with it. The wire's `GROUND_LAW` is 6 and
+the relay `world303`, so a ground room refuses the old ground. The ground's print reads Sahr Waters' pixel
+(`tools/groundPrint.mjs`): a lost carve moves it 2.6 m and fails `fb1017f_groundgate.test.js`.
 
 ## RMBC4 - the buildings stood (BUILT, 2026-10-31)
 
@@ -264,7 +265,9 @@ settlement, past the Imperial City's.
 each built pixel's layout, asks the pipeline for the meshes, draws them at the pixel's translation, files the ground and
 the buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with
 its record (`settlement`) and its rooms (a `dfBlock` of its own, never a BLOCKS.BSA record). `world.js` wires it in
-twelve logical lines; `buildingDataForDoor` answers a door with no location pixel by the record it carries.
+fifteen logical lines, each a getter on the host's own state, and bootWorld's ceiling rose by those 15
+(`hostceiling.test.js`). The host's `frame` warns its own throw, so the world calls it bare. `buildingDataForDoor`
+answers a door with no location pixel by a copy of the record it carries.
 
 ## RMBC5 - the sites (BUILT, 2026-10-31)
 
@@ -290,8 +293,7 @@ past its footprint: the outline now keeps the farther of two near points, and a 
 `scenes/world.js` WIRED: the host built, framed, drawn and dropped, its doors in `doorTargets`, its records answered by
 `buildingDataForDoor`. `scenes/worldModes.js` WIRED through those two seams, with no line of its own: a settlement's
 door opens its rooms as a block's door does. `scenes/exterior.js` FLAGGED: the fixed-city bench streams no pixel, so it
-stands no settlement. `scenes/dungeonContext.js` FLAGGED: a dungeon stands no street. The wire's `GROUND_LAW` is FLAGGED
-until the merge of main moves it with the relay's version.
+stands no settlement. `scenes/dungeonContext.js` FLAGGED: a dungeon stands no street.
 
 ## The whole of Tamriel
 
@@ -310,7 +312,7 @@ edge across a notch, and the geometry pin was added for both. `tools/mutants/rmb
 first run left the deck's floor alive (no pin pulled a deck toward its ground), and a town whose gate stands on the low
 side now does; the split's run left the dressing's seed alive, and a pin now dresses one layout with two seeds.
 `rmbc3_exact.test.js` (4), `rmbc3_ground.test.js` (6) and `rmbc4_stand.test.js` (7) pin RMBC3 to RMBC5;
-`tools/mutants/rmbc3.json` and `rmbc4.json` hold their mutants.
+`tools/mutants/rmbc3.json` and `rmbc4.json` hold their mutants; `RMBC3-print-blind` is killed by the ground gate.
 
 ## Port-Ledger
 

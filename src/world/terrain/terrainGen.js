@@ -23,8 +23,8 @@
 
 import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
-import { reliefFlat, capitalReliefGround } from './capitalRelief.js';
-import { standSettlementGround } from '../settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's pads carved in   // SOLITUDE-RELIEF: a capital on a relief of its own
+import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
+import { standSettlementGround } from '../settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's pads carved in
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { townGroundMaskBefore } from './townBlendBefore.js';   // FB1028 YARDS Y2: the yards' ground as #1184 drew it

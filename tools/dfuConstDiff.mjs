@@ -9,7 +9,13 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const dfu = process.argv[2] ?? '/tmp/dfu/Assets/Scripts';
-const walk = (d, out = []) => { for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? walk(p, out) : out.push(p); } return out; };
+const walk = (d, out = []) => {
+  for (const n of readdirSync(d)) {
+    const p = join(d, n);
+    statSync(p).isDirectory() ? walk(p, out) : out.push(p);
+  }
+  return out;
+};
 const snake = (n) => n.replace(/(?<!^)(?=[A-Z])/g, '_').toUpperCase();
 const consts = new Map();
 for (const f of walk(dfu).filter((p) => p.endsWith('.cs'))) {
@@ -27,13 +33,17 @@ for (const f of walk('src').filter((p) => p.endsWith('.js'))) {
     port.get(m[1]).push([Number(m[2]), f]);
   }
 }
-let shared = 0, mismatches = 0;
+let shared = 0,
+  mismatches = 0;
 for (const [name, vals] of consts) {
   const sn = snake(name);
   if (!port.has(sn)) continue;
   shared++;
   for (const [pv, pf] of port.get(sn)) {
-    if (!vals.some(([v]) => Math.abs(v - pv) < 1e-9)) { mismatches++; console.log(`MISMATCH ${name}: DFU ${JSON.stringify(vals)} vs port ${sn}=${pv} (${pf})`); }
+    if (!vals.some(([v]) => Math.abs(v - pv) < 1e-9)) {
+      mismatches++;
+      console.log(`MISMATCH ${name}: DFU ${JSON.stringify(vals)} vs port ${sn}=${pv} (${pf})`);
+    }
   }
 }
 console.log(`compared ${shared} shared names; ${mismatches} mismatches`);

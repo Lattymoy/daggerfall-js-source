@@ -274,8 +274,8 @@
   {
     "name": "D2-the-drawn-ground-stood-on",
     "file": "src/player/parkour.js",
-    "old": "      if (h.key == null && collider.restFloor) { const rf = collider.restFloor(px, pz); if (Number.isFinite(rf)) top = Math.max(top, rf); }\n",
-    "new": "",
+    "old": "      if (h.key == null && collider.restFloor) {\n        const rf = collider.restFloor(px, pz);\n        if (Number.isFinite(rf)) top = Math.max(top, rf);\n      }\n      return { y: top, key: h.key ?? null };",
+    "new": "      return { y: top, key: h.key ?? null };",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "D4-the-over-hang-hangs-crouched",
     "file": "src/player/parkour.js",
-    "old": "    stand: true,   // AUDIT CLIMB-ARC D4",
-    "new": "    stand: false,   // AUDIT CLIMB-ARC D4",
+    "old": "    stand: true, // AUDIT CLIMB-ARC D4: a crouched Jump over the parapet hangs standing (the lower's own law), never crouched",
+    "new": "    stand: false, // AUDIT CLIMB-ARC D4: a crouched Jump over the parapet hangs standing (the lower's own law), never crouched",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "L9-a-candidate-on-the-followed-lip-taken",
     "file": "src/player/parkour.js",
-    "old": " && !onRun(g)) return g;",
-    "new": ") return g;",
+    "old": "      if (g && !(Math.abs(g.lipY - held.lipY) < PARKOUR_LIP_FOLLOW && s <= runs + PARKOUR_HAND_SPAN) && !onRun(g))\n        return g;",
+    "new": "      if (g && !(Math.abs(g.lipY - held.lipY) < PARKOUR_LIP_FOLLOW && s <= runs + PARKOUR_HAND_SPAN)) return g;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "L9-the-lip-run-along-the-held-face's-line",
     "file": "src/player/parkour.js",
-    "old": "    const g = senseGrip(collider, [at.face[0] + tt[0] * PARKOUR_HAND_SPAN, at.lipY, at.face[2] + tt[2] * PARKOUR_HAND_SPAN], at.normal, at.lipY, opts, false);",
-    "new": "    const g = senseGrip(collider, [held.face[0] + t[0] * (runs + PARKOUR_HAND_SPAN), held.lipY, held.face[2] + t[2] * (runs + PARKOUR_HAND_SPAN)], n, held.lipY, opts, false);",
+    "old": "      [at.face[0] + tt[0] * PARKOUR_HAND_SPAN, at.lipY, at.face[2] + tt[2] * PARKOUR_HAND_SPAN],\n      at.normal,\n      at.lipY,",
+    "new": "      [held.face[0] + t[0] * (runs + PARKOUR_HAND_SPAN), held.lipY, held.face[2] + t[2] * (runs + PARKOUR_HAND_SPAN)],\n      n,\n      held.lipY,",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "L11-the-face's-key-dropped",
     "file": "src/player/parkour.js",
-    "old": "{ up, to, grip, normal: n, key: hit.key ?? null } : null;",
-    "new": "{ up, to, grip, normal: n } : null;",
+    "old": "  return pathClear(collider, path(feet, up, to, 0.25, 0), stand)\n    ? { up, to, grip, normal: n, key: hit.key ?? null }\n    : null; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
+    "new": "  return pathClear(collider, path(feet, up, to, 0.25, 0), stand) ? { up, to, grip, normal: n } : null; // AUDIT CLIMB-ARC L11: the face's own key - a run with no lip rides its hull too",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -337,7 +337,7 @@
   {
     "name": "F5-the-semi-implicit-spring",
     "file": "src/player/climb/climbFeel.js",
-    "old": "  const w = Math.sqrt(k), y = x - target, e = Math.exp(-w * dt), c = v + w * y;\n  return [target + (y + c * dt) * e, (v - w * c * dt) * e];",
+    "old": "  const w = Math.sqrt(k),\n    y = x - target,\n    e = Math.exp(-w * dt),\n    c = v + w * y;\n  return [target + (y + c * dt) * e, (v - w * c * dt) * e];",
     "new": "  const c = 2 * Math.sqrt(k);\n  v += (-k * (x - target) - c * v) * dt;\n  x += v * dt;\n  return [x, v];",
     "tests": [
       "test/systems/auditclimbarc.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "F5-a-long-frame-cut-to-1/20",
     "file": "src/player/climb/climbFeel.js",
-    "old": "dt = Math.min(Math.max(dt, 0), 0.25);",
-    "new": "dt = Math.min(Math.max(dt, 0), 1 / 20);",
+    "old": "    dt = Math.min(Math.max(dt, 0), 0.25); // AUDIT CLIMB-ARC nit: the exact springs are stable at any step - only a stall is cut",
+    "new": "    dt = Math.min(Math.max(dt, 0), 1 / 20); // AUDIT CLIMB-ARC nit: the exact springs are stable at any step - only a stall is cut",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "F9-no-dip-at-the-leap's-hold",
     "file": "src/player/climb/climbFeel.js",
-    "old": "        if (this.move?.kind === 'leap') this._dip(this.move.speed ?? 0);   // AUDIT CLIMB-ARC F9: the leap lands on its hold\n",
-    "new": "",
+    "old": "        if (this.move?.kind === 'leap') this._dip(this.move.speed ?? 0); // AUDIT CLIMB-ARC F9: the leap lands on its hold\n        break;",
+    "new": "        break;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "F3-the-feel-reads-the-physics-feet",
     "file": "src/player/climb/climbFeel.js",
-    "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
-    "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
+    "old": "    const p = m.climbTrackPos?.() ?? m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
+    "new": "    const p = m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "F3/F8-the-sounds-read-the-physics-feet",
     "file": "src/player/climb/climbSounds.js",
-    "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
-    "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
+    "old": "    const p = m.climbTrackPos?.() ?? m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
+    "new": "    const p = m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "F13-the-turn-owed-as-look",
     "file": "src/player/lookFilter.js",
-    "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;",
-    "new": "    this.residualYaw += dyaw;\n    this.residualPitch += dpitch;",
+    "old": "    this.turnYaw += dyaw;",
+    "new": "    this.residualYaw += dyaw;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "N1-the-body's-yaw-to-the-sprite-lane",
     "file": "src/player/mwView.js",
-    "old": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
-    "new": "drawEotbBody(canvas, { proj, view, eye, feet, yaw, face });",
+    "old": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
+    "new": "    const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw, face });",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "N6-no-rhythm-floor",
     "file": "src/net/peer/peerClimb.js",
-    "old": "const rhythmOk = () => { if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false; s.rhythmAt = t; return true; };",
-    "new": "const rhythmOk = () => true;",
+    "old": "    const rhythmOk = () => {\n      if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false;\n      s.rhythmAt = t;\n      return true;\n    };",
+    "new": "    const rhythmOk = () => true;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]

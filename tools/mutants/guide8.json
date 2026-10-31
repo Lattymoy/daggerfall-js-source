@@ -56,7 +56,7 @@
   {
     "name": "GUIDE8-a-person-named-as-an-item",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    const name = res.isPerson === true ? (res.displayName || 'Someone') : (itemName(s, res) || 'Quest item');",
+    "old": "    const name = res.isPerson === true ? res.displayName || 'Someone' : itemName(s, res) || 'Quest item';",
     "new": "    const name = itemName(s, res) || 'Quest item';",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "GUIDE8-the-foes-unmarked",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    out.push({ at: [feet[0], feet[1], feet[2]], name: b.targetResource?.displayName || foeName(f) || 'Quest foe', followed: followed(b.questUID) });\n",
-    "new": "",
+    "old": "    out.push({\n      at: [feet[0], feet[1], feet[2]],\n      name: b.targetResource?.displayName || foeName(f) || 'Quest foe',\n      followed: followed(b.questUID),\n    });\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "GUIDE8-the-strip-unmarked",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      quest: !!opts.quest?.has?.(f.index),   // GUIDE8: a quest mark stands on this floor",
+    "old": "      quest: !!opts.quest?.has?.(f.index), // GUIDE8: a quest mark stands on this floor",
     "new": "      quest: false,",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "GUIDE8-an-echo-unpainted",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note);   // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)\n",
-    "new": "",
+    "old": "      paintMarkName(ctx, m.name, x, y + MARK_R * 2 + 2, PLAN_PEN.note); // AUDIT DELVE D7: the names' pen (the beacon's was 3:1)\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-any-town",
     "file": "src/systems/quest/questGuidance.js",
-    "old": " || (Number(b.mapId) >>> 0) !== here) continue;",
-    "new": ") continue;",
+    "old": "    if (!b || !(b.buildingKey > 0) || Number(b.mapId) >>> 0 !== here) continue;",
+    "new": "    if (!b || !(b.buildingKey > 0)) continue;",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-the-follow-lost",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "followed: followed || !!had?.followed",
-    "new": "followed",
+    "old": "    out.set(b.buildingKey, { buildingKey: b.buildingKey, followed: followed || !!had?.followed });",
+    "new": "    out.set(b.buildingKey, { buildingKey: b.buildingKey, followed });",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-DELVE-TOWN-the-unnamed-building",
     "file": "src/ui/quest/questLens.js",
-    "old": "    building: said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building",
-    "new": "    building: site.siteType === SITE_TYPES.Building",
+    "old": "      said.has(MACRO_TYPES.NameMacro1) && site.siteType === SITE_TYPES.Building && site.buildingKey > 0",
+    "new": "      site.siteType === SITE_TYPES.Building && site.buildingKey > 0",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-DELVE-E6-the-people-unmarked",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    out.push({ at: [p.x, p.y, p.z], name: res.displayName || 'Someone', followed: followed(b.questUID) });\n",
-    "new": "",
+    "old": "    out.push({ at: [p.x, p.y, p.z], name: res.displayName || 'Someone', followed: followed(b.questUID) });\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-DELVE-E7-exact-unfed",
     "file": "src/ui/quest/questTracker.js",
-    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
-    "new": "export const followOn = () => trackerOn() || marksOn();",
+    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal'; // ...and the Town tier's compass",
+    "new": "export const followOn = () => trackerOn() || marksOn(); // ...and the Town tier's compass",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-DELVE-C6-the-nearest-over-the-followed",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "    if (best) break;",
-    "new": "",
+    "old": "    if (best) break;\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-DELVE-D7-the-faint-pen",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note);",
-    "new": "      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.mark);",
+    "old": "      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.note); // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)",
+    "new": "      paintMarkName(ctx, m.name, x, y + MARK_R + 2, PLAN_PEN.mark); // AUDIT DELVE D7: the name is what the tier is for - the names' pen (10.5:1), not the marks' (2.3:1)",
     "tests": [
       "test/ui/automap/guide8_questguidance.test.js"
     ]

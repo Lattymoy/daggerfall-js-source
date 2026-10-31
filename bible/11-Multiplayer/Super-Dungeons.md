@@ -1477,7 +1477,7 @@ origin - `arenaOf`).
   exports `spendBlow` and `spendPurse` now, and the Remnant keeps no blow rate or bucket of its own: one hand and one purse
   for every body in the fight. A pose in the arena, a melee blow within reach of the body it meets; asleep, outside time or
   past the Hour, nothing lands; a blow that reaches the purse SEES its striker (RPT1026-FIGHTS RETIRED-BLOW: a share the
-  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` - and the relay drops a
+  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted"` - and the relay drops a
   blow from a pose older than `SD_POSE_FRESH_MS`, the census's own age); a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
   fells it - where it stands, the fight's best three and every fighter's part (the gate's `topDealers`, `damageChart`;
   `earned` reads it as the gate's does).
@@ -3649,7 +3649,7 @@ concealed body is drawn by nobody (INVIS-NET), so the forty could not tell which
   learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
   the realm's own judge the Concord came in no slot of 24 against a single griefer, where the old law's came in all 24.
   Now a hand told to wait while every hand it waits behind is held too is marked
-  (`sdBrain.js:"export function orreryWaited("`), and the snap begins its count again (`orreryRightsSnapped`); a hand
+  (`sdBrain.js:"export function orreryWaited"`), and the snap begins its count again (`orreryRightsSnapped`); a hand
   held out by a free hand's turns -
   a solver's, a learner's inside its six - keeps its count, so the contest above stands. The learned team reaches the
   Concord in every slot against one, two, four or eight griefer accounts. Pinned by
@@ -3742,8 +3742,8 @@ the relay's `_message` one existing line.
 The hub's answer to a realm (`sdAcctInternal`) read the Bay's lane alone: the record under SD_KEY and the Bay's death and
 receipt keys. Since WW5 a province's Hollow is kept under its lane's keys, so a slot past the Bay never matched: the hub
 answered ok and kept nothing. A player who died in one party's copy of a province's Hour came into another's, and a
-winner came into a second. The hub now reads the slot's own lane (`server/src/sdCopy.js:"const lane = sdLaneOf(c.s);"`):
+winner came into a second. The hub now reads the slot's own lane (`server/src/sdCopy.js:"const lane = sdLaneOf"`):
 its record, its receipt, and a death kept as `sdac:<account>.<lane>`
-(`server/src/sdCopy.js:"export const sdAcctKey = (sub, lane = 0) =>"`). The Bay's key is `sdac:<account>`, as it was.
+(`server/src/sdCopy.js:"export const sdAcctKey"`). The Bay's key is `sdac:<account>`, as it was.
 Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B1 (the Bay's Hollow beside Skyrim's). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (5, dead); `sdparty.json` SD-BACK-the-last-copy-kept
 re-aimed by content. Relay world284.

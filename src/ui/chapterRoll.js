@@ -8,10 +8,10 @@
 // Not a DFU member: Daggerfall's books are files; this one is written from the service's sheet. Ledger A row.
 
 import { RSC, TOKEN_TEXT } from '../formats/textRsc.js';
-import { createBookReaderWindow } from './bookDoor.js';   // the reader's one door - it picks the skin's face
+import { createBookReaderWindow } from './bookDoor.js'; // the reader's one door - it picks the skin's face
 
 /** Who the book says wrote it. */
-export const CHAPTER_ROLL_AUTHOR = 'the chapter\'s clerk';
+export const CHAPTER_ROLL_AUTHOR = "the chapter's clerk";
 /** The title face's font (ui/enhanced/enhancedBook.js: 5 is the title cut) - the Hall of Records' own. */
 const TITLE_FONT = 5;
 const text = (/** @type {string} */ t) => ({ formatting: TOKEN_TEXT, text: t });
@@ -21,7 +21,14 @@ const nl = () => ({ formatting: RSC.NewLine });
  *  @param {{ title: string, lines: string[] }} roll */
 export function chapterRollTokens(roll) {
   /** @type {any[]} */
-  const out = [{ formatting: RSC.JustifyCenter }, { formatting: RSC.FontPrefix, x: TITLE_FONT }, text(roll.title), nl(), nl(), { formatting: RSC.JustifyLeft }];
+  const out = [
+    { formatting: RSC.JustifyCenter },
+    { formatting: RSC.FontPrefix, x: TITLE_FONT },
+    text(roll.title),
+    nl(),
+    nl(),
+    { formatting: RSC.JustifyLeft },
+  ];
   for (const line of roll.lines) out.push(text(line), nl(), nl());
   return out;
 }
@@ -33,4 +40,5 @@ export function chapterRollBook(roll) {
 }
 
 /** The book's window, through the reader's one door - what the hall's shelf opens for its roll. */
-export const chapterRollWindow = (/** @type {{ title: string, lines: string[] }} */ roll) => createBookReaderWindow(chapterRollBook(roll));
+export const chapterRollWindow = (/** @type {{ title: string, lines: string[] }} */ roll) =>
+  createBookReaderWindow(chapterRollBook(roll));

@@ -16,8 +16,10 @@ import { NAVAL_CLASSIC } from '../naval/navalSounds.js';
 
 /** The mobiles whose voices it borrows (enemyBasics.js rows - the Dreugh, the Lamia). */
 export const SERPENT_VOICE_ROWS = Object.freeze({ dreugh: 41, lamia: 42 });
-const DREUGH = ENEMY_BASICS[SERPENT_VOICE_ROWS.dreugh], LAMIA = ENEMY_BASICS[SERPENT_VOICE_ROWS.lamia];
-const cue = (clip, pitch, volume, refDistance, maxDistance) => Object.freeze({ clip, pitch, volume, refDistance, maxDistance });
+const DREUGH = ENEMY_BASICS[SERPENT_VOICE_ROWS.dreugh],
+  LAMIA = ENEMY_BASICS[SERPENT_VOICE_ROWS.lamia];
+const cue = (clip, pitch, volume, refDistance, maxDistance) =>
+  Object.freeze({ clip, pitch, volume, refDistance, maxDistance });
 
 /** The serpent host's sound keys (scenes/serpentHost.js deps.sound) and what each plays. */
 export const SERPENT_SOUNDS = Object.freeze({
@@ -34,6 +36,14 @@ export const SERPENT_SOUNDS = Object.freeze({
 export function playSerpentSound(audio, key, pos, vol = 1) {
   const c = SERPENT_SOUNDS[/** @type {keyof typeof SERPENT_SOUNDS} */ (key)];
   if (!c || !audio?.play3d || !pos) return false;
-  try { audio.play3d(c.clip, pos, c.volume * vol, { refDistance: c.refDistance, maxDistance: c.maxDistance, pitch: c.pitch }); } catch { return false; }
+  try {
+    audio.play3d(c.clip, pos, c.volume * vol, {
+      refDistance: c.refDistance,
+      maxDistance: c.maxDistance,
+      pitch: c.pitch,
+    });
+  } catch {
+    return false;
+  }
   return true;
 }

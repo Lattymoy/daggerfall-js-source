@@ -26,7 +26,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { membersAt, NATIVE_PER_M } from '../systems/livingWorld/trips.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
-import { killed } from './hideouts.js';   // AUDIT LW-III: a body gone from the pool is a death only where it was killed
+import { killed } from './hideouts.js'; // AUDIT LW-III: a body gone from the pool is a death only where it was killed
 
 /** A hostile draws on the player this near (m) - a face known across a field. */
 export const DRAW_M = 45;
@@ -64,11 +64,17 @@ export function createRoadStands(deps) {
   const stands = new Map();
   const dayOf = (t) => Math.floor((t - 240) / 1440);
 
-  const takeOut = (rec) => { try { if (rec && deps.inPool(rec)) deps.remove(rec); } catch (e) { console.warn('[road stands] a body would not leave', e?.message ?? e); } };
+  const takeOut = (rec) => {
+    try {
+      if (rec && deps.inPool(rec)) deps.remove(rec);
+    } catch (e) {
+      console.warn('[road stands] a body would not leave', e?.message ?? e);
+    }
+  };
   function letGo(id) {
     const s = stands.get(id);
     if (!s) return;
-    if (!s.rec?.dead) takeOut(s.rec);   // the dead are the pool's own
+    if (!s.rec?.dead) takeOut(s.rec); // the dead are the pool's own
     stands.delete(id);
   }
 
@@ -78,22 +84,42 @@ export function createRoadStands(deps) {
     const s = { res: c.res, trip: c.trip, kind, at: { x: c.x, z: c.z }, rec: null, calm: 0, failed: false };
     stands.set(c.res.id, s);
     // a body the pool would not stand is FAILED: kept (no second try while it stands) and drawn by the roads again
-    const fail = () => { s.failed = true; };
-    Promise.resolve(deps.spawn(c.res.cls, deps.sceneOf(c.x, c.z), { yaw: c.yaw ?? 0, level: c.res.level ?? 1, allied: kind === 'friend', gender: c.res.sex ?? 'male' }))
+    const fail = () => {
+      s.failed = true;
+    };
+    Promise.resolve(
+      deps.spawn(c.res.cls, deps.sceneOf(c.x, c.z), {
+        yaw: c.yaw ?? 0,
+        level: c.res.level ?? 1,
+        allied: kind === 'friend',
+        gender: c.res.sex ?? 'male',
+      }),
+    )
       .then((rec) => {
-        if (!rec) { fail(); return; }
-        if (stands.get(c.res.id) !== s) { takeOut(rec); return; }
+        if (!rec) {
+          fail();
+          return;
+        }
+        if (stands.get(c.res.id) !== s) {
+          takeOut(rec);
+          return;
+        }
         rec.living = { id: c.res.id, res: c.res, town: deps.door ?? null };
         if (rec.entity) rec.entity.name = c.res.name;
         if (kind === 'friend') {
           rec.shipmate = true;
-          if (rec.entity) { rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }
+          if (rec.entity) {
+            rec.entity.team = 'PlayerAlly';
+            rec.entity.mobileTeam = 'PlayerAlly';
+          }
         }
         s.rec = rec;
       })
       .catch(fail);
     const first = firstNameOf(c.res.name);
-    deps.say?.(halt ? `${first}: "${halt}"` : kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);
+    deps.say?.(
+      halt ? `${first}: "${halt}"` : kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`,
+    );
   }
 
   return {
@@ -113,10 +139,10 @@ export function createRoadStands(deps) {
         const fight = deps.fighting();
         for (const c of cands) {
           if (c.res?.cls == null || stands.has(c.res.id)) continue;
-          if (deps.deadAt?.(c.res, t)) continue;   // AUDIT-B4: one a hand took - the roads' parties, read once a second, still walked them
+          if (deps.deadAt?.(c.res, t)) continue; // AUDIT-B4: one a hand took - the roads' parties, read once a second, still walked them
           const distM = Math.hypot(c.x - here.x, c.z - here.z) / NATIVE_PER_M;
           const standing = rel.standing(c.res.id, day);
-          const halt = distM <= DRAW_M ? deps.wanted?.(c.res, c.trip) ?? null : null;   // LW9: the law beyond the walls
+          const halt = distM <= DRAW_M ? (deps.wanted?.(c.res, c.trip) ?? null) : null; // LW9: the law beyond the walls
           if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);
           else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');
         }
@@ -124,15 +150,18 @@ export function createRoadStands(deps) {
       for (const [id, s] of [...stands]) {
         // AUDIT LW-III: KILLED, NOT GONE - a body the pool let go without a blow (its sweeps, a mode's change) is let go
         // here too, never a slaying (a crime the caravan reports) nor a death at the player's side
-        if (s.rec?.dead && !killed(s.rec)) { stands.delete(id); continue; }
+        if (s.rec?.dead && !killed(s.rec)) {
+          stands.delete(id);
+          continue;
+        }
         if (s.rec?.dead) {
           // AUDIT FB1025i D2: SLAIN BY THE PLAYER'S OWN HAND ALONE - the pool's death door names whose (`killedBy`); a foe
           // a beast, a peer or an ally cut down is KILLED (`killed` - dead for good, no report, nobody's regard moved)
           if (s.kind === 'foe' && s.rec.killedBy === 'player') {
-            deps.slay(s.res, t, true);   // struck down before their party
+            deps.slay(s.res, t, true); // struck down before their party
             for (const m of membersAt(s.trip, t)) if (m.id !== s.res.id) rel?.note(m.id, 'slain', day);
           } else if (s.kind === 'foe') deps.killed(s.res, t);
-          else deps.died(s.res, t);   // fallen at the player's side
+          else deps.died(s.res, t); // fallen at the player's side
           stands.delete(id);
           continue;
         }
@@ -142,11 +171,18 @@ export function createRoadStands(deps) {
       }
     },
     /** Whether a member is stood here - a body of the pool now (or on its way), not the roads' to draw. @param {string} id */
-    stood: (id) => { const s = stands.get(id); return !!s && !s.failed; },
+    stood: (id) => {
+      const s = stands.get(id);
+      return !!s && !s.failed;
+    },
     /** The stands (the probes; the pins). */
     stands: () => [...stands.values()],
     /** Every standing body taken out and every stand forgotten (the roads' own clear). */
-    clear() { for (const id of [...stands.keys()]) letGo(id); },
-    get size() { return stands.size; },
+    clear() {
+      for (const id of [...stands.keys()]) letGo(id);
+    },
+    get size() {
+      return stands.size;
+    },
   };
 }

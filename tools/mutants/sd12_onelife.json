@@ -38,8 +38,8 @@
   {
     "name": "SD12-ONELIFE-the-fallen-let-through",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "  if (fallen) return SD_NO_FALLEN;\n",
-    "new": "",
+    "old": "  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);",
+    "new": "  const ph = sdPhase(rec, now);",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]

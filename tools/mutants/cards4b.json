@@ -2,8 +2,8 @@
   {
     "name": "C4b-race-ignored",
     "file": "src/world/card/cardRegulars.js",
-    "old": "const race = (bank === BANK_TYPES.Imperial ? (native === undefined ? nativeHere() : native) : null) ?? RACE_OF_BANK[bank] ?? 'Breton';",
-    "new": "const race = 'Breton';",
+    "old": "  const race =\n    (bank === BANK_TYPES.Imperial ? (native === undefined ? nativeHere() : native) : null) ??\n    RACE_OF_BANK[bank] ??\n    'Breton'; // PROVINCE-FOLK: Cyrodiil's Imperials and Black Marsh's Argonians, both named from that bank",
+    "new": "  const race = 'Breton'; // PROVINCE-FOLK: Cyrodiil's Imperials and Black Marsh's Argonians, both named from that bank",
     "tests": [
       "test/net/cards4b_regulars.test.js",
       "test/systems/auditcards2_host.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "C4b-gown-with-skirt",
     "file": "src/world/card/cardRegulars.js",
-    "old": "  else { put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes); put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes); }",
-    "new": "  put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes); put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes);",
+    "old": "  else {\n    put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes);\n    put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes);\n  }",
+    "new": "  put(pick(r, kit.chest), EQUIP_SLOTS.ChestClothes);\n  put(pick(r, kit.legs), EQUIP_SLOTS.LegsClothes);",
     "tests": [
       "test/net/cards4b_regulars.test.js",
       "test/systems/auditcards2_host.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "C4b-barefoot",
     "file": "src/world/card/cardRegulars.js",
-    "old": "  put(pick(r, kit.feet), EQUIP_SLOTS.Feet);\n",
-    "new": "\n",
+    "old": "  put(pick(r, kit.feet), EQUIP_SLOTS.Feet);",
+    "new": "",
     "tests": [
       "test/net/cards4b_regulars.test.js",
       "test/systems/auditcards2_host.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "C4b-standing",
     "file": "src/world/card/cardRegulars.js",
-    "old": "feet: chair.feet, yaw: chair.yaw, st: seatTopByte(chair.top) });",
-    "new": "feet: chair.feet, yaw: chair.yaw, st: 0 });",
+    "old": "      st: seatTopByte(chair.top),",
+    "new": "      st: 0,",
     "tests": [
       "test/net/cards4b_regulars.test.js",
       "test/systems/auditcards2_host.test.js"

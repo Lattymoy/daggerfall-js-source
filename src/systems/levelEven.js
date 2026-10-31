@@ -33,7 +33,8 @@ export const averageLevelHp = (h, endurance) => (Math.trunc(h / 2) + h) / 2 + hi
 /** The floor: the maximum health of `entity`'s class at its level, every level rolled at the average with `endurance`.
  *  0 for an entity with no career or level. Whole. */
 export function evenHpFloor(entity, endurance) {
-  const h = entity?.career?.hitPointsPerLevel, level = entity?.level;
+  const h = entity?.career?.hitPointsPerLevel,
+    level = entity?.level;
   if (!(h > 0) || !(level >= 1) || !Number.isFinite(endurance)) return 0;
   return Math.floor(25 + h + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));
 }

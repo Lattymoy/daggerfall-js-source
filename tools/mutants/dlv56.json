@@ -2,8 +2,8 @@
   {
     "name": "DLV56-H1-whole-spliced",
     "file": "src/world/smallerDungeons.js",
-    "old": "return deps.whole ? built : curatedLocation(built);",
-    "new": "return curatedLocation(built);",
+    "old": "  return deps.whole ? built : curatedLocation(built);",
+    "new": "  return curatedLocation(built);",
     "tests": [
       "test/world/dlv56_audit.test.js",
       "test/world/dlv5_curated.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "DLV56-H2-fires-default-empty",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {",
-    "new": "anchors = [] } = {}) {",
+    "old": "  anchors = curatedAnchors(blocks, curatedRecordsLive()),",
+    "new": "  anchors = [],",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "DLV56-H2-sites-default-empty",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {",
-    "new": "anchors = [] } = {}) {",
+    "old": "    anchors = curatedAnchors(blocks, curatedRecordsLive()),",
+    "new": "    anchors = [],",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "DLV56-M3-size-word-blind",
     "file": "src/world/smallerDungeons.js",
-    "old": "return Number.isInteger(n) && n > 0 ? `${s}+${n}` : s;",
-    "new": "return s;",
+    "old": "  return Number.isInteger(n) && n > 0 ? `${s}+${n}` : s;",
+    "new": "  return s;",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "DLV56-M3-relaid-blind",
     "file": "src/world/smallerDungeons.js",
-    "old": " || curatedSlot(dfLocation, CURATED_RECORDS) != null;",
-    "new": ";",
+    "old": "export const relaidOnline = (dfLocation) =>\n  builtSizeFor(dfLocation, { online: true }) !== 'full' || curatedSlot(dfLocation, CURATED_RECORDS) != null;",
+    "new": "export const relaidOnline = (dfLocation) => builtSizeFor(dfLocation, { online: true }) !== 'full';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "DLV56-M3-staff-whole",
     "file": "src/net/staffTeleport.js",
-    "old": "whole: !!word || (!m[2] && !m[3]), pos: null",
-    "new": "whole: !!word || !m[2], pos: null",
+    "old": "    return {\n      kind: 'dungeon',\n      ...at,\n      mapId: +m[1],\n      ...(word ? { ins: word } : {}),\n      whole: !!word || (!m[2] && !m[3]),\n      pos: null,\n    };",
+    "new": "    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word || !m[2], pos: null };",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "DLV56-M7-hollow-takes",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId",
-    "new": "gameMade(loc) && !isHallMapId",
+    "old": "export const curatedTakes = (loc) =>\n  gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId(loc?.mapTableData?.mapId);",
+    "new": "export const curatedTakes = (loc) => gameMade(loc) && !isHallMapId(loc?.mapTableData?.mapId);",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "DLV56-M7-hall-takes",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "&& !isHallMapId(loc?.mapTableData?.mapId);",
-    "new": ";",
+    "old": "export const curatedTakes = (loc) =>\n  gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId(loc?.mapTableData?.mapId);",
+    "new": "export const curatedTakes = (loc) => gameMade(loc) && dungeonTier(loc) !== 'super';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "DLV56-M9-large-law-always",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "const lawOf = (a) => (a.r === DSITE.r ? DSITE : DSITE_SMALL);",
-    "new": "const lawOf = () => DSITE;",
+    "old": "  const lawOf = (a) => (a.r === DSITE.r ? DSITE : DSITE_SMALL);",
+    "new": "  const lawOf = () => DSITE;",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "DLV56-M9-start-unread",
     "file": "src/world/dungeon/delveSites.js",
-    "old": " && (!start || d2(start, a.at) >= SQ(lawOf(a).startM))",
-    "new": "",
+    "old": "    : anchors.filter(\n        (a) =>\n          kinds.includes(a.kind) &&\n          fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM)) &&\n          (!start || d2(start, a.at) >= SQ(lawOf(a).startM)),\n      );",
+    "new": "    : anchors.filter((a) => kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM)));",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "DLV56-M9-fire-flat",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM))",
-    "new": "anchors.every((a) => (a.at[0] - c.pos[0]) ** 2 + (a.at[2] - c.pos[2]) ** 2 >= SQ(DFIRE.anchorM))",
+    "old": "          anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)),",
+    "new": "          anchors.every((a) => (a.at[0] - c.pos[0]) ** 2 + (a.at[2] - c.pos[2]) ** 2 >= SQ(DFIRE.anchorM)),",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "DLV56-ANCHOR-vault-heart",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "vault: a.vault.map(cm) })),",
-    "new": "vault: a.at.map(cm) })),",
+    "old": "      vault: a.vault.map(cm),",
+    "new": "      vault: a.at.map(cm),",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "DLV56-ANCHOR-ward-large",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "r: a.r, tier, vault: a.vault",
-    "new": "r: DSITE.r, tier, vault: a.vault",
+    "old": "      r: a.r,",
+    "new": "      r: DSITE.r,",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "DLV56-ANCHOR-count-early",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "if (count <= 0 && !fixed.length) return",
-    "new": "if (count <= 0) return",
+    "old": "  if (count <= 0 && !fixed.length) return { sites: [], candidates: cands.length, valid: 0, small: 0, anchored: 0 };",
+    "new": "  if (count <= 0) return { sites: [], candidates: cands.length, valid: 0, small: 0, anchored: 0 };",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "DLV56-DROP-previous-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "      if (a.previousObjectOffset > 0) linked.add(a.previousObjectOffset);\n",
-    "new": "",
+    "old": "        if (a.previousObjectOffset > 0) linked.add(a.previousObjectOffset);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "DLV56-DROP-flat-next-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "      if (f.nextObjectOffset > 0) linked.add(f.nextObjectOffset);\n",
-    "new": "",
+    "old": "        if (f.nextObjectOffset > 0) linked.add(f.nextObjectOffset);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "DLV56-DROP-flat-acting",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "(f.action > 0 || f.nextObjectOffset > 0)",
-    "new": "(f.nextObjectOffset > 0)",
+    "old": "      if (o.type === RDB_RESOURCE_TYPES.Flat && f && (f.action > 0 || f.nextObjectOffset > 0)) {",
+    "new": "      if (o.type === RDB_RESOURCE_TYPES.Flat && f && f.nextObjectOffset > 0) {",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "DLV56-DROP-head-dropped",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "      if (a.flags || a.nextObjectOffset > 0 || a.previousObjectOffset > 0) linked.add(o.position);\n",
-    "new": "",
+    "old": "        if (a.flags || a.nextObjectOffset > 0 || a.previousObjectOffset > 0) linked.add(o.position);\n        if (a.nextObjectOffset > 0) linked.add(a.nextObjectOffset);",
+    "new": "        if (a.nextObjectOffset > 0) linked.add(a.nextObjectOffset);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "DLV56-DROP-any-record",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "(record === -1 || f.textureRecord === record)",
-    "new": "true",
+    "old": "  return f?.textureArchive === archive && (record === -1 || f.textureRecord === record);",
+    "new": "  return f?.textureArchive === archive && true;",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "DLV56-DROP-editor-flat",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (d.flat?.[0] === EDITOR_ARCHIVE) return",
-    "new": "if (false) return",
+    "old": "    if (d.flat?.[0] === EDITOR_ARCHIVE) return 'drop: an editor marker by its name (`marker`), never by its flat';",
+    "new": "    if (false) return 'drop: an editor marker by its name (`marker`), never by its flat';",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "DLV56-DROP-way-in",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (CURATED_KEPT_MARKERS.includes(d.marker)) return",
-    "new": "if (false) return",
+    "old": "    if (CURATED_KEPT_MARKERS.includes(d.marker)) return 'drop: never the way in (a start or an enter marker)';",
+    "new": "    if (false) return 'drop: never the way in (a start or an enter marker)';",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "DLV56-BLOCK-closed-edge",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "p[0] < RDB_SIDE && p[2] >= 0 && p[2] < RDB_SIDE",
-    "new": "p[0] <= RDB_SIDE && p[2] >= 0 && p[2] <= RDB_SIDE",
+    "old": "  p[0] < RDB_SIDE &&\n  p[2] >= 0 &&\n  p[2] < RDB_SIDE &&",
+    "new": "  p[0] <= RDB_SIDE &&\n  p[2] >= 0 &&\n  p[2] <= RDB_SIDE &&",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "DLV56-BLOCK-described-ref",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "m.modelIdNum === id && !m.description);",
-    "new": "m.modelIdNum === id);",
+    "old": "    let k = refs.findIndex((m) => m.modelIdNum === id && !m.description); // a described reference means more (`DOR`: an action door)",
+    "new": "    let k = refs.findIndex((m) => m.modelIdNum === id); // a described reference means more (`DOR`: an action door)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "DLV56-BLOCK-modded-base",
     "file": "src/world/dungeon/curatedInstall.js",
-    "old": "blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null",
-    "new": "blocksFile?.getBlockByName?.(rec.base)",
+    "old": "      (blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec),",
+    "new": "      (blocksFile) => curatedBlockOf(blocksFile?.getBlockByName?.(rec.base), rec),",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "DLV56-LAW-vault-anywhere",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (!inBlock(a.at) || !inBlock(a.vault)) return",
-    "new": "if (!inBlock(a.at)) return",
+    "old": "    if (!inBlock(a.at) || !inBlock(a.vault)) return 'anchors: a heart and a vault in the block';",
+    "new": "    if (!inBlock(a.at)) return 'anchors: a heart and a vault in the block';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "DLV56-LAW-rot-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (a.rot !== undefined && !(Array.isArray(a.rot) && a.rot.length === 3 && a.rot.every(Number.isFinite))) return",
-    "new": "if (false) return",
+    "old": "    if (a.rot !== undefined && !(Array.isArray(a.rot) && a.rot.length === 3 && a.rot.every(Number.isFinite)))\n      return 'add: rot in degrees [x, y, z]';",
+    "new": "    if (false) return 'add: rot in degrees [x, y, z]';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "DLV56-LAW-model-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "a.model > 0 && a.model < 1e6",
-    "new": "a.model > 0",
+    "old": "    if (a.model !== undefined && !(Number.isInteger(a.model) && a.model > 0 && a.model < 1e6)) return 'add: a model id';",
+    "new": "    if (a.model !== undefined && !(Number.isInteger(a.model) && a.model > 0)) return 'add: a model id';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "DLV56-LAW-drop-reach-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "d.r > 0 && d.r <= RDB_SIDE",
-    "new": "d.r > 0",
+    "old": "    if (!inBlock(d?.at) || !(d.r > 0 && d.r <= RDB_SIDE)) return 'drop: a point in the block and a radius';",
+    "new": "    if (!inBlock(d?.at) || !(d.r > 0)) return 'drop: a point in the block and a radius';",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "DLV56-SLOT-start-by-index",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "!blocks[j].isStartingBlock",
-    "new": "j !== 0",
+    "old": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);",
+    "new": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && j !== 0);",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "DLV56-LAB-draft-by-id-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "drafts[params.get('draft') ?? current ?? '']",
-    "new": "drafts[current ?? '']",
+    "old": "  return drafts[params.get('draft') ?? current ?? ''] ?? null;",
+    "new": "  return drafts[current ?? ''] ?? null;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "DLV56-LAB-from-lost",
     "file": "src/world/dungeon/curatedLab.js",
-    "old": "n: 0, from: rec.n, base",
-    "new": "n: 0, base",
+    "old": "  from: rec.n,\n  base: rec.base,",
+    "new": "  base: rec.base,",
     "tests": [
       "test/world/dlv56_audit.test.js",
       "test/world/dlv5_curated.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "DLV56-LAB-export-zero",
     "file": "src/world/dungeon/curatedLab.js",
-    "old": "?? (n === 0 ? 'n: 0 is the lab\\'s own draft - a shipped record is 1 or more' : null)",
-    "new": "",
+    "old": "  const why =\n    curatedRecordError(rec) ?? (n === 0 ? \"n: 0 is the lab's own draft - a shipped record is 1 or more\" : null); // AUDIT DLV5-6: a 0 shipped stops every load",
+    "new": "  const why = curatedRecordError(rec); // AUDIT DLV5-6: a 0 shipped stops every load",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "DLV56-LAB-types-first",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "const t = labTypes(types.value);",
-    "new": "const t = labTypes(types.value)?.slice(0, 1) ?? null;",
+    "old": "    const t = labTypes(types.value);",
+    "new": "    const t = labTypes(types.value)?.slice(0, 1) ?? null;",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "DLV56-LAB-export-n-default",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "const exportN = num(d.from ?? Math.max(",
-    "new": "const exportN = num(Math.max(",
+    "old": "  const exportN = num(d.from ?? Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1))); // AUDIT DLV5-6 M5: a shipped block ships as its own number",
+    "new": "  const exportN = num(Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1))); // AUDIT DLV5-6 M5: a shipped block ships as its own number",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -384,8 +384,8 @@
   {
     "name": "DLV56-LAB-start",
     "file": "src/world/dungeon/curatedLab.js",
-    "old": "blockName: curatedBlockName(0), isStartingBlock: false }",
-    "new": "blockName: curatedBlockName(0), isStartingBlock: true }",
+    "old": "        { x: 0, z: 0, blockName: curatedBlockName(0), isStartingBlock: false },",
+    "new": "        { x: 0, z: 0, blockName: curatedBlockName(0), isStartingBlock: true },",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "DLV56-LAB-base-unchecked",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "(blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null)",
-    "new": "null",
+    "old": "    const why =\n      setCuratedDraft(draft) ??\n      (blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null);",
+    "new": "    const why = setCuratedDraft(draft) ?? null;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "DLV56-BENCH-spawn-unbuilt",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "return { location: dungeonLocationFor(clone, { online: params.has('online') }) };",
-    "new": "return { location: clone };",
+    "old": "    return { location: dungeonLocationFor(clone, { online: params.has('online') }) }; // AUDIT DLV5-6: built as the world builds it",
+    "new": "    return { location: clone }; // AUDIT DLV5-6: built as the world builds it",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "DLV56-BENCH-elite-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "elite: params.has('elite') });",
-    "new": "elite: false });",
+    "old": "    const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: params.has('elite') });",
+    "new": "    const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: false });",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -424,8 +424,8 @@
   {
     "name": "DLV56-HOST-first-floor",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "floors.push([c.pos[0], f.y + 0.05, c.pos[2]]);",
-    "new": "floors.push([c.pos[0], c.pos[1], c.pos[2]]);",
+    "old": "        if (f && Number.isFinite(f.y)) floors.push([c.pos[0], f.y + 0.05, c.pos[2]]);",
+    "new": "        if (f && Number.isFinite(f.y)) floors.push([c.pos[0], c.pos[1], c.pos[2]]);",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -434,8 +434,8 @@
   {
     "name": "DLV56-HOST-floor-ward-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1)",
-    "new": "floors.filter((p) => Math.abs(p[1] - s0.y) < 1)",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "DLV56-HOST-floor-step-lost",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "!inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2])",
-    "new": "!inWard(s, p[0], p[1], p[2])",
+    "old": "        past = (p) => plan.sites.every((s) => !inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2]));",
+    "new": "        past = (p) => plan.sites.every((s) => !inWard(s, p[0], p[1], p[2]));",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "DLV56-HOST-floor-unsorted",
     "file": "src/scenes/delve/delveHost.js",
-    "old": ".sort((a, b) => off(a) - off(b))",
-    "new": "",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "DLV56-HOST-floor-storey-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "past(p) && Math.abs(p[1] - s0.y) < 1)",
-    "new": "past(p))",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => past(p)).sort((a, b) => off(a) - off(b)) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],

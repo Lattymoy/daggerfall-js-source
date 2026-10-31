@@ -2,8 +2,8 @@
   {
     "name": "INN-WATER-no-water-row",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
-    "new": "",
+    "old": "  rows.push({\n    text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`,\n    kind: 'water',\n    name: TAVERN_MENU_TEXT.water,\n    price: cost(water),\n  }); // ESSENTIALS-HALF: the water too\n  const holiday = Number.isFinite(minutes) && FREE_DRINK_HOLIDAYS.includes(getHolidayId(minutes, regionIndex)); // AUDIT C&C I8: the player's region, as the mod asks",
+    "new": "  const holiday = Number.isFinite(minutes) && FREE_DRINK_HOLIDAYS.includes(getHolidayId(minutes, regionIndex)); // AUDIT C&C I8: the player's region, as the mod asks",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "INN-WATER-the-shut-kitchen-hides-the-water",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
-    "new": "  if (!closed) rows.push({ text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`, kind: 'water', name: TAVERN_MENU_TEXT.water, price: cost(water) });   // ESSENTIALS-HALF: the water too\n",
+    "old": "  rows.push({\n    text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`,\n    kind: 'water',\n    name: TAVERN_MENU_TEXT.water,\n    price: cost(water),\n  }); // ESSENTIALS-HALF: the water too",
+    "new": "  if (!closed)\n    rows.push({\n      text: `${String(cost(water)).padStart(2)} gold   ${TAVERN_MENU_TEXT.water}`,\n      kind: 'water',\n      name: TAVERN_MENU_TEXT.water,\n      price: cost(water),\n    }); // ESSENTIALS-HALF: the water too",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "INN-WATER-sold-without-a-skin",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (!skins.length) return { ok: false, text: TAVERN_MENU_TEXT.noSkin };\n",
-    "new": "",
+    "old": "  if (!skins.length) return { ok: false, text: TAVERN_MENU_TEXT.noSkin };\n  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0))",
+    "new": "  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0))",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "INN-WATER-sold-to-full-skins",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0)) return { ok: false, text: TAVERN_MENU_TEXT.skinsFull };\n",
-    "new": "",
+    "old": "  if (skins.every((i) => WATERSKIN_CAPACITY_KG - waterIn(i) <= 0))\n    return { ok: false, text: TAVERN_MENU_TEXT.skinsFull };\n  return { ok: true };",
+    "new": "  return { ok: true };",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "INN-WATER-the-classic-window-pours-a-drink-for-the-water",
     "file": "src/ui/tavernWindow.js",
-    "old": "tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });\n        h.advanceMinutes",
-    "new": "tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });\n        h.advanceMinutes",
+    "old": "          row.kind === 'food'\n            ? tavernEat(s, now, row.worth)\n            : row.kind === 'water'\n              ? tavernWater(h.entity, now)\n              : tavernDrink(s, row.strength, { endurance, rules });",
+    "new": "          row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "INN-WATER-the-enhanced-window-pours-a-drink-for-the-water",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });\n  h.advanceMinutes",
-    "new": "tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });\n  h.advanceMinutes",
+    "old": "  const r =\n    row.kind === 'food'\n      ? tavernEat(s, now, row.worth)\n      : row.kind === 'water'\n        ? tavernWater(h.entity, now)\n        : tavernDrink(s, row.strength, { endurance, rules });",
+    "new": "  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "INN-WATER-the-classic-window-never-names-the-skins",
     "file": "src/ui/tavernWindow.js",
-    "old": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });",
-    "new": "        const order = tavernOrder(s, now, row, { endurance, rules });",
+    "old": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after",
+    "new": "        const order = tavernOrder(s, now, row, { endurance, rules }); // INN-WATER: the pack, for the skins the water asks after",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "INN-WATER-the-enhanced-window-never-names-the-skins",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });",
-    "new": "  const order = tavernOrder(s, now, row, { endurance, rules });",
+    "old": "  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after",
+    "new": "  const order = tavernOrder(s, now, row, { endurance, rules }); // INN-WATER: the pack, for the skins the water asks after",
     "tests": [
       "test/systems/survival/fb0930_cc_innwater.test.js"
     ]

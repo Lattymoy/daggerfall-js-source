@@ -11,12 +11,22 @@ import { padFamily } from './padGlyphs.js';
 import { TECHNIQUE_ACTION } from '../combat/technique/techniqueRoster.js';
 
 const _words = new Map();
-let _store = null, _rev = -1, _pad = null;
+let _store = null,
+  _rev = -1,
+  _pad = null;
 
 /** The word for `action`'s key, kept until the bindings or the pad in hand change. @param {string} [action] */
 export function techniqueKeyWord(action = TECHNIQUE_ACTION) {
-  const b = bindings(), rev = b?.rev ?? 0, pad = controllerLook() ? (padFamily() ?? 'xbox') : null;
-  if (_store !== b || _rev !== rev || _pad !== pad) { _store = b; _rev = rev; _pad = pad; _words.clear(); }
-  if (!_words.has(action)) _words.set(action, actionKeyWord(action, { bindings: b, controller: pad !== null, family: pad ?? 'xbox' }));
+  const b = bindings(),
+    rev = b?.rev ?? 0,
+    pad = controllerLook() ? (padFamily() ?? 'xbox') : null;
+  if (_store !== b || _rev !== rev || _pad !== pad) {
+    _store = b;
+    _rev = rev;
+    _pad = pad;
+    _words.clear();
+  }
+  if (!_words.has(action))
+    _words.set(action, actionKeyWord(action, { bindings: b, controller: pad !== null, family: pad ?? 'xbox' }));
   return _words.get(action);
 }

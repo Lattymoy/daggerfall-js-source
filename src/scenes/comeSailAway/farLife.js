@@ -46,7 +46,13 @@ export const farLife = (n) => ({ lifeN: n % FAR_LIFE_EVERY, lifeDt: 0, shape: -1
  */
 export function farLifeStep(life, dt, pos, eye) {
   life.lifeDt += dt;
-  if (eye && pos && Math.hypot(pos[0] - eye[0], pos[2] - eye[2]) > NEAR_LIFE_M && (life.lifeN = (life.lifeN + 1) % FAR_LIFE_EVERY) !== 0) return null;
+  if (
+    eye &&
+    pos &&
+    Math.hypot(pos[0] - eye[0], pos[2] - eye[2]) > NEAR_LIFE_M &&
+    (life.lifeN = (life.lifeN + 1) % FAR_LIFE_EVERY) !== 0
+  )
+    return null;
   const lived = life.lifeDt;
   life.lifeDt = 0;
   return lived;
@@ -67,9 +73,11 @@ export function farLifeStep(life, dt, pos, eye) {
  * @returns {number | null} farLifeStep's
  */
 export function farTreeStep(life, dt, root, pos, eye) {
-  const shape = prefabShapeStamp(root), on = prefabSwitchStamp(root);
+  const shape = prefabShapeStamp(root),
+    on = prefabSwitchStamp(root);
   const lived = farLifeStep(life, dt, life.shape === shape && life.on === on ? pos : null, eye);
-  life.shape = shape; life.on = on;   // held, she stood at both already: only a ship whose stamps read as kept is judged by range
+  life.shape = shape;
+  life.on = on; // held, she stood at both already: only a ship whose stamps read as kept is judged by range
   return lived;
 }
 
@@ -93,8 +101,11 @@ export function createBoatLives({ eye = () => null } = {}) {
       const at = eye();
       for (const boat of boats) {
         let life = lives.get(boat);
-        if (!life) { life = { ...farLife(seq++), lived: null }; lives.set(boat, life); }
-        const root = boat.GameObject;   // SpawnBoat's 'Boat', hung under nothing: her local place is where she stands
+        if (!life) {
+          life = { ...farLife(seq++), lived: null };
+          lives.set(boat, life);
+        }
+        const root = boat.GameObject; // SpawnBoat's 'Boat', hung under nothing: her local place is where she stands
         life.lived = farTreeStep(life, dt, root, root.localPosition, at);
         if (life.lived !== null) for (const a of boatAnimators(boat)) a.update(life.lived);
       }
@@ -104,7 +115,8 @@ export function createBoatLives({ eye = () => null } = {}) {
     particles(boats) {
       for (const boat of boats) {
         const lived = lives.get(boat)?.lived ?? null;
-        if (lived !== null) for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(lived);
+        if (lived !== null)
+          for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(lived);
       }
     },
   };

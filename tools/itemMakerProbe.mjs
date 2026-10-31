@@ -11,10 +11,15 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5215, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 await page.goto('http://localhost:5215/play/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
@@ -22,10 +27,13 @@ const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const win = async () => JSON.parse(await page.evaluate(() => window.__itemMakerOverlay()) ?? 'null');
-const gold = () => page.evaluate(() => (window.__playerEntity.items ?? [])
-  .find((i) => i.group === 'Currency')?.stackCount ?? 0);
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const win = async () => JSON.parse((await page.evaluate(() => window.__itemMakerOverlay())) ?? 'null');
+const gold = () =>
+  page.evaluate(() => (window.__playerEntity.items ?? []).find((i) => i.group === 'Currency')?.stackCount ?? 0);
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 const ENTERABLE = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13, 15]);
 const doors = JSON.parse(await page.evaluate(() => JSON.stringify(window.__doors())));
@@ -34,11 +42,13 @@ for (let i = 0; i < doors.length && !inside; i++) {
   const b = JSON.parse(await page.evaluate((j) => window.__buildingAt(j), i));
   if (!b || !ENTERABLE.has(b.buildingType)) continue;
   const { pos, normal } = doors[i];
-  await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
-    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])]);
-  if (!await page.evaluate(() => window.__enter())) continue;
+  await page.evaluate(
+    ([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
+    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])],
+  );
+  if (!(await page.evaluate(() => window.__enter()))) continue;
   await waitFrames(10);
-  if (JSON.parse(await page.evaluate(() => window.__building()) ?? 'null')) inside = true;
+  if (JSON.parse((await page.evaluate(() => window.__building())) ?? 'null')) inside = true;
 }
 if (!inside) fail('could not get inside any building');
 console.log('inside:', await page.evaluate(() => window.__building()));
@@ -50,7 +60,7 @@ await page.evaluate(() => {
   const g = e.items.find((i) => i.group === 'Currency');
   if (g) g.stackCount = 200000;
   else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: 200000 });
-  e.items.push({ group: 'Weapons', templateIndex: 117, material: 0, name: 'Wakizashi', stackCount: 1 });   // material 0 is IRON
+  e.items.push({ group: 'Weapons', templateIndex: 117, material: 0, name: 'Wakizashi', stackCount: 1 }); // material 0 is IRON
   e.items.push({ group: 'MensClothing', templateIndex: 19, name: 'Robe', stackCount: 1 });
   e.items.push({ group: 'Gems', templateIndex: 0, name: 'Ruby', stackCount: 1 });
 });
@@ -83,7 +93,7 @@ console.log('\n== REFUSALS BEFORE AN ITEM IS PICKED ==');
 await page.evaluate(() => window.__itemMakerClick('powersButton'));
 s = await win();
 if (!/must be selected/i.test(s.box?.[0] ?? '')) fail(`expected the no-item refusal, got ${JSON.stringify(s.box)}`);
-await page.evaluate(() => window.__itemMakerClick('powersButton'));   // dismiss
+await page.evaluate(() => window.__itemMakerClick('powersButton')); // dismiss
 
 console.log('\n== SELECT + THE PICKERS ==');
 // slot 0 of the item scroller, at that slot's own cell
@@ -126,7 +136,7 @@ if (s.labels.enchantmentCost !== '-400/337') {
 if (s.labels.goldCost !== '8000') fail('and the drawback must cost NO gold');
 
 console.log('\n== A BOUND SOUL DRAGS ITS CHILDREN IN ==');
-s = JSON.parse(await page.evaluate(() => window.__itemMakerPick('Soul Bound')) ?? 'null');
+s = JSON.parse((await page.evaluate(() => window.__itemMakerPick('Soul Bound'))) ?? 'null');
 if (!s) {
   await page.evaluate(() => window.__itemMakerClick('sideEffectsButton'));
   s = JSON.parse(await page.evaluate(() => window.__itemMakerPick('Soul Bound')));
@@ -141,7 +151,7 @@ const after = s.powers.length + s.sideEffects.length;
 if (after !== before + 4) fail(`the Daedra Lord brings three children plus itself: ${before} -> ${after}`);
 const forced = [...s.powers, ...s.sideEffects].filter((e) => e.parent && e.parent !== 0);
 if (forced.length !== 3) fail(`three rows must be marked FORCED, got ${forced.length}`);
-if (!forced.every((e) => e.parent === 'SoulBound:31')) fail('every child must carry the soul\'s key');
+if (!forced.every((e) => e.parent === 'SoulBound:31')) fail("every child must carry the soul's key");
 if (!s.powers.some((e) => e.type === 'PotentVs' && e.param === 1)) fail('the Daedra Lord forces Potent vs Daedra');
 if (!s.sideEffects.some((e) => e.type === 'ExtraWeight')) fail('...and Extra Weight');
 
@@ -149,7 +159,7 @@ console.log('\n== REMOVING THE PARENT TAKES THE CHILDREN ==');
 // through the window's own hit test, at the rect rowLayout puts the
 // Soul Bound row at - not by reaching into the array
 const withSoul = after;
-s = JSON.parse(await page.evaluate(() => window.__itemMakerRemoveRow('sideEffects', 'SoulBound:31')) ?? 'null');
+s = JSON.parse((await page.evaluate(() => window.__itemMakerRemoveRow('sideEffects', 'SoulBound:31'))) ?? 'null');
 if (!s) fail('the Soul Bound row was not where rowLayout says it is');
 const left = s.powers.length + s.sideEffects.length;
 console.log(`rows: ${withSoul} -> ${left}`);
@@ -170,8 +180,11 @@ console.log('gold:', gold0, '->', gold1);
 const spent = gold0 - gold1;
 if (!/has been enchanted/i.test(s.box?.[0] ?? '')) fail(`expected the enchant line, got ${JSON.stringify(s.box)}`);
 if (spent <= 0) fail('enchanting must actually spend gold off the entity');
-const item = JSON.parse(await page.evaluate(() => JSON.stringify(
-  (window.__playerEntity.items ?? []).find((i) => i.name === 'Wakizashi') ?? null)));
+const item = JSON.parse(
+  await page.evaluate(() =>
+    JSON.stringify((window.__playerEntity.items ?? []).find((i) => i.name === 'Wakizashi') ?? null),
+  ),
+);
 console.log('enchanted item:', JSON.stringify(item?.enchantments?.map((e) => `${e.type}:${e.param}`)));
 if (!item?.enchantments?.length) fail('the enchantments did not land on the item');
 if (s.selected !== null) fail('the item must be released after enchanting');

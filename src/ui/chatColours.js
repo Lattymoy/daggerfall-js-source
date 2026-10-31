@@ -19,14 +19,14 @@ export const CHAT_GROUNDS = Object.freeze({ light: '#343638', dark: '#c9a864' })
 
 /** A channel's words: the tab a line was said on (net/chat.js CHAT_TABS ids). */
 export const CHANNEL_COLOURS = Object.freeze({
-  world: Object.freeze({ light: '#f6f2ea', dark: '#24160a' }),    // white - and on the page, the ink itself
-  region: Object.freeze({ light: '#8fe28f', dark: '#194815' }),   // green
-  lang: Object.freeze({ light: '#ffaad4', dark: '#76134e' }),     // rose
-  party: Object.freeze({ light: '#6fe6d4', dark: '#0a4641' }),    // teal
-  guild: Object.freeze({ light: '#d2b6ff', dark: '#4e1f8f' }),    // purple
-  local: Object.freeze({ light: '#c4beb2', dark: '#443e39' }),    // grey
-  trade: Object.freeze({ light: '#f0dc5a', dark: '#3f3300' }),    // CHAT-TRADE: gold - the coin's
-  lfg: Object.freeze({ light: '#98c4ff', dark: '#173478' }),      // CHAT-TRADE: blue
+  world: Object.freeze({ light: '#f6f2ea', dark: '#24160a' }), // white - and on the page, the ink itself
+  region: Object.freeze({ light: '#8fe28f', dark: '#194815' }), // green
+  lang: Object.freeze({ light: '#ffaad4', dark: '#76134e' }), // rose
+  party: Object.freeze({ light: '#6fe6d4', dark: '#0a4641' }), // teal
+  guild: Object.freeze({ light: '#d2b6ff', dark: '#4e1f8f' }), // purple
+  local: Object.freeze({ light: '#c4beb2', dark: '#443e39' }), // grey
+  trade: Object.freeze({ light: '#f0dc5a', dark: '#3f3300' }), // CHAT-TRADE: gold - the coin's
+  lfg: Object.freeze({ light: '#98c4ff', dark: '#173478' }), // CHAT-TRADE: blue
 });
 
 /** CHAT-RP (2026-10-14, Mac: "/rp Italicizes and makes text color green. For roleplay purposes"): a line of roleplay's
@@ -60,14 +60,21 @@ export const COLOURED_LINE = ':not(.system):not(.red):not(.dm):not(.ooc):not(.me
  *  'dark', `imp` whether the rules must say !important (Grimoire's ink pass re-says the chat's own colours). */
 export function channelRules(scope, tone, imp = false) {
   const bang = imp ? ' !important' : '';
-  return Object.entries(CHANNEL_COLOURS).map(([ch, c]) =>
-    `${scope} .dfchat-line[data-ch="${ch}"]${COLOURED_LINE} .dfchat-text { color: ${c[tone]}${bang}; }`).join('\n');
+  return Object.entries(CHANNEL_COLOURS)
+    .map(
+      ([ch, c]) => `${scope} .dfchat-line[data-ch="${ch}"]${COLOURED_LINE} .dfchat-text { color: ${c[tone]}${bang}; }`,
+    )
+    .join('\n');
 }
 /** The tabs' and the channel marks' pip: a square of the channel's colour before each label. */
 export function pipRules(scope, tone, imp = false) {
   const bang = imp ? ' !important' : '';
-  return Object.entries(CHANNEL_COLOURS).map(([ch, c]) =>
-    `${scope} :is(.dfchat-tab, .dfchat-chan)[data-tab="${ch}"]::before { background: ${c[tone]}${bang}; }`).join('\n');
+  return Object.entries(CHANNEL_COLOURS)
+    .map(
+      ([ch, c]) =>
+        `${scope} :is(.dfchat-tab, .dfchat-chan)[data-tab="${ch}"]::before { background: ${c[tone]}${bang}; }`,
+    )
+    .join('\n');
 }
 
 /** PING1: the grounds under the mention's wash - CHAT_GROUNDS with PING_COLOURS.wash laid on each: a pinging line's
@@ -76,7 +83,13 @@ export const PING_GROUNDS = Object.freeze({ light: '#544d3a', dark: '#cca452' })
 /** WCAG's relative luminance of a #rrggbb colour, and the contrast of two - what the test measures with. */
 export function luminance(hex) {
   const n = parseInt(String(hex).replace('#', ''), 16);
-  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; });
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
   return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
 }
-export const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+export const contrast = (a, b) => {
+  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};

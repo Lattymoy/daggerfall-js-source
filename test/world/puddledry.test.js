@@ -97,7 +97,7 @@ test('PUDDLE-DRY once a ground, and never from nothing: a second call dries noth
 test('PUDDLE-DRY one door: getBlock serves BLOCKS.BSA\'s block and a world-data mod\'s dried, readClassicBlock keeps the bytes (mutants: either arm undried)', () => {
   const src = read('src/formats/blocksFile.js');
   assert.match(src, /^import \{ dryPuddles \} from '\.\.\/world\/puddleDry\.js';/m);
-  assert.match(src, /const dryBlock = \(dfBlock\) => \{ dryPuddles\(dfBlock\?\.rmbBlock\?\.fldHeader\?\.groundData\?\.groundTiles\); return dfBlock; \};/);
+  assert.match(src, /const dryBlock = \(dfBlock\) => \{\n\s*dryPuddles\(dfBlock\?\.rmbBlock\?\.fldHeader\?\.groundData\?\.groundTiles\);\n\s*return dfBlock;\n\s*\};/);
   assert.match(src, /return dryBlock\(replacement\);/, 'a mod\'s block');
   assert.match(src, /return dryBlock\(this\._blocks\[block\]\.dfBlock\);/, 'BLOCKS.BSA\'s');
   const classic = src.slice(src.indexOf('  readClassicBlock(block) {'), src.indexOf('  /** Discard a block from memory. */'));

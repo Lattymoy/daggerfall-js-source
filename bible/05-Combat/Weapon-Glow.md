@@ -60,7 +60,7 @@ reference's enchantment glow as not ported.
    then the piece, then the arcane look. Both hands wear it when dual wielding. The classic hand draws it as an
    outline on the plain sheet, as an element is drawn, so an enchanted weapon's own sheet gives way to it.
 8. **A Gilded weapon wears the rung's crimson** (GILDED-GLOW, 2026-10-29; `06-Systems/Gilded.md` section 11): the look
-   `gilded` (`systems/weaponGlow.js:"export const GILDED_LEVEL = 2;"`, its one strength - the wire's `gilded2`), in
+   `gilded` (`systems/weaponGlow.js:"export const GILDED_LEVEL"`, its one strength - the wire's `gilded2`), in
    every hand of its owner. It is the piece itself, as its card's colour is, so it shows first: over its element (the
    Hourlock's +10 shock), the armory's piece and the arcane look of rows the item maker laid. With the ladder switched
    off the card shows no rung, so the hand shows none. The classic hand draws it on the plain sheet; a Gilded gun keeps

@@ -2,8 +2,8 @@
   {
     "name": "SC-law-second-on-field",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "if (parted ? !isColour(r.field2) || r.field2 === r.field : r.field2 != null) return null;",
-    "new": "if (parted ? !isColour(r.field2) : r.field2 != null) return null;",
+    "old": "  if (parted ? !isColour(r.field2) || r.field2 === r.field : r.field2 != null) return null;",
+    "new": "  if (parted ? !isColour(r.field2) : r.field2 != null) return null;",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SC-law-border-on-field",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "if (border != null && (!isColour(border) || border === r.field)) return null;",
-    "new": "if (border != null && !isColour(border)) return null;",
+    "old": "  if (border != null && (!isColour(border) || border === r.field)) return null;",
+    "new": "  if (border != null && !isColour(border)) return null;",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SC-law-device-unknown",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "if (device != null && !HERALDRY_DEVICES.includes(device)) return null;",
+    "old": "  if (device != null && !HERALDRY_DEVICES.includes(device)) return null;",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "SC-law-charge-on-field",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "if (charge != null && (!isColour(charge) || charge === r.field || (parted && charge === r.field2))) return null;",
-    "new": "if (charge != null && !isColour(charge)) return null;",
+    "old": "  if (charge != null && (!isColour(charge) || charge === r.field || (parted && charge === r.field2))) return null;",
+    "new": "  if (charge != null && !isColour(charge)) return null;",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SC-law-charge-gift",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "charge = [border, 'argent', 'sable', 'gold'].find((c) => c && c !== r.field && c !== r.field2) ?? null;",
-    "new": "charge = border ?? 'argent';",
+    "old": "  if (device && charge == null)\n    charge = [border, 'argent', 'sable', 'gold'].find((c) => c && c !== r.field && c !== r.field2) ?? null;",
+    "new": "  if (device && charge == null) charge = border ?? 'argent';",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "SC-law-guild-any",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "if (r.guild != null && typeof r.guild !== 'boolean') return null;",
+    "old": "  if (r.guild != null && typeof r.guild !== 'boolean') return null;",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "SC-fit-second-kept",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "  const field2 = division === 'plain' ? null : isColour(d.field2) && d.field2 !== field ? d.field2 : ['argent', 'sable', 'gold', 'azure'].find((c) => c !== field);",
+    "old": "  const field2 =\n    division === 'plain'\n      ? null\n      : isColour(d.field2) && d.field2 !== field\n        ? d.field2\n        : ['argent', 'sable', 'gold', 'azure'].find((c) => c !== field);",
     "new": "  const field2 = division === 'plain' ? null : isColour(d.field2) ? d.field2 : 'argent';",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "SC-flown-shape-arms",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "  return Object.freeze({ shape: f.shape, field: h.field,",
-    "new": "  return Object.freeze({ shape: 'flag', field: h.field,",
+    "old": "    shape: f.shape,",
+    "new": "    shape: 'flag',",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "SC-code-door-open",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "  if (!Array.isArray(code) || code.length !== 7 || !code.every((n) => Number.isInteger(n) && n >= -1 && n < 64)) return null;",
+    "old": "  if (!Array.isArray(code) || code.length !== 7 || !code.every((n) => Number.isInteger(n) && n >= -1 && n < 64))\n    return null;",
     "new": "  if (!Array.isArray(code)) return null;",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "SC-code-silent-charge",
     "file": "src/systems/naval/shipFlag.js",
-    "old": "  if (device != null && charge == null) return null;   // a coded device always says its colour",
+    "old": "  if (device != null && charge == null) return null; // a coded device always says its colour",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "SC-art-no-division",
     "file": "src/ui/flagArt.js",
-    "old": "    + (divD ? `<path d=\"${divD}\" fill=\"${hexOf(f.field2)}\" clip-path=\"url(#${clip})\"/>` : '')",
-    "new": "",
+    "old": "    (divD ? `<path d=\"${divD}\" fill=\"${hexOf(f.field2)}\" clip-path=\"url(#${clip})\"/>` : '') +\n    (f.border",
+    "new": "    (f.border",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SC-art-no-border",
     "file": "src/ui/flagArt.js",
-    "old": "    + (f.border ? `<path d=\"${cloth}\" fill=\"none\" stroke=\"${hexOf(f.border)}\" stroke-width=\"${FLAG_BORDER_W * 2}\" clip-path=\"url(#${clip})\"/>` : '')",
-    "new": "",
+    "old": "    (f.border\n      ? `<path d=\"${cloth}\" fill=\"none\" stroke=\"${hexOf(f.border)}\" stroke-width=\"${FLAG_BORDER_W * 2}\" clip-path=\"url(#${clip})\"/>`\n      : '') +\n    (f.device",
+    "new": "    (f.device",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SC-host-arms-unread",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "flownFlag(deps.coloursOf(boat.uid), deps.guildArms?.() ?? null)",
-    "new": "flownFlag(deps.coloursOf(boat.uid), null)",
+    "old": "  const mineOf = (boat) => (boat?.uid ? flownFlag(deps.coloursOf(boat.uid), deps.guildArms?.() ?? null) : null);",
+    "new": "  const mineOf = (boat) => (boat?.uid ? flownFlag(deps.coloursOf(boat.uid), null) : null);",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SC-host-masthead",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "list.push({ key: flagKey(flag), flag, top, fly:",
-    "new": "list.push({ key: flagKey(flag), flag, top: boat.GameObject.position, fly:",
+    "old": "        top,",
+    "new": "        top: boat.GameObject.position,",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "SC-host-pennant-kept",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "      flown.set(boat, flag);   // flown where it is drawn - her pennant's cubes left out for it",
+    "old": "      flown.set(boat, flag); // flown where it is drawn - her pennant's cubes left out for it",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "SC-ledger-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.colours ? { colours: { ...r.colours } } : {}), ...(r.livery",
-    "new": ", ...(r.livery",
+    "old": "      ...(r.colours ? { colours: { ...r.colours } } : {}),\n      ...(r.livery ? { livery: { ...r.livery } } : {}),",
+    "new": "      ...(r.livery ? { livery: { ...r.livery } } : {}),",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "SC-ledger-unread",
     "file": "src/systems/fleet.js",
-    "old": "    r.colours = shipFlagOf(s.colours);   // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)",
+    "old": "    r.colours = shipFlagOf(s.colours); // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "SC-page-hoist-unwired",
     "file": "src/ui/fleetPage.js",
-    "old": "() => { _open = null; _flag = null; act('colours', d); }, 'act primary'));",
-    "new": "() => { _open = null; _flag = null; }, 'act primary'));",
+    "old": "        act('colours', d);\n      },",
+    "new": "      },",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SC-page-guild-ungated",
     "file": "src/ui/fleetPage.js",
-    "old": "    armed ? null : t('naval.flag.noArms', 'Your guild has no arms, or you\\'re not in a guild.'), () => { if (armed) set('guild', !d.guild); }",
-    "new": "    null, () => { set('guild', !d.guild); }",
+    "old": "      armed ? null : t('naval.flag.noArms', \"Your guild has no arms, or you're not in a guild.\"),\n      () => {\n        if (armed) set('guild', !d.guild);",
+    "new": "      null,\n      () => {\n        set('guild', !d.guild);",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SC-wire-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(flagged ? { f } : {}), ...(painted",
-    "new": "...{ f }, ...(painted",
+    "old": "    ...(flagged ? { f } : {}),",
+    "new": "    ...{ f },",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SC-wire-door",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null;",
-    "new": "    const flag = Array.isArray(raw.f) ? raw.f[boats.length] : null;",
+    "old": "    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null; // SHIP-COLOURS: hers, where she flies one",
+    "new": "    const flag = Array.isArray(raw.f) ? raw.f[boats.length] : null; // SHIP-COLOURS: hers, where she flies one",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SC-wire-key-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
-    "new": "rec.n ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "old": "              rec.f ?? null,\n              rec.l ?? null,",
+    "new": "              rec.l ?? null,",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SC-peers-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        for (let i = 0; i < list.length; i++) if (list[i]?.boat && words[i]?.flag) out.push({ boat: list[i].boat, flag: words[i].flag });",
-    "new": "",
+    "old": "        for (let i = 0; i < list.length; i++)\n          if (list[i]?.boat && words[i]?.flag) out.push({ boat: list[i].boat, flag: words[i].flag });\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "GATECROWD-stray-kept",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "(GATE_CROWD_TIERS.includes(v) ? v : GATE_CROWD_DEFAULT)",
-    "new": "(v ?? GATE_CROWD_DEFAULT)",
+    "old": "export const gateCrowdMax = (v) => (GATE_CROWD_TIERS.includes(v) ? v : GATE_CROWD_DEFAULT);",
+    "new": "export const gateCrowdMax = (v) => v ?? GATE_CROWD_DEFAULT;",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GATECROWD-one-over",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "for (let i = 0; i < rest.length && out.size < max; i++)",
-    "new": "for (let i = 0; i < rest.length && out.size <= max; i++)",
+    "old": "  for (let i = 0; i < rest.length && out.size < max; i++) out.add(rest[i].id);",
+    "new": "  for (let i = 0; i < rest.length && out.size <= max; i++) out.add(rest[i].id);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GATECROWD-farthest-drawn",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "rest.sort((a, b) => a.d - b.d ||",
-    "new": "rest.sort((a, b) => b.d - a.d ||",
+    "old": "  rest.sort((a, b) => a.d - b.d || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0));",
+    "new": "  rest.sort((a, b) => b.d - a.d || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0));",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GATECROWD-height-counted",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
-    "new": "Math.hypot(f[0] - me[0], f[1] - me[1], f[2] - me[2])",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[1] - me[1], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GATECROWD-mate-dropped",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "if (mate(p.id)) { out.add(p.id); continue; }",
-    "new": "if (mate(p.id)) { continue; }",
+    "old": "      out.add(p.id);\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GATECROWD-mates-uncounted",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "i < rest.length && out.size < max",
-    "new": "i < rest.length && i < max",
+    "old": "  for (let i = 0; i < rest.length && out.size < max; i++) out.add(rest[i].id);",
+    "new": "  for (let i = 0; i < rest.length && i < max; i++) out.add(rest[i].id);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GATECROWD-ties-unordered",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "a.d - b.d || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0)",
-    "new": "a.d - b.d",
+    "old": "  rest.sort((a, b) => a.d - b.d || (String(a.id) < String(b.id) ? -1 : String(a.id) > String(b.id) ? 1 : 0));",
+    "new": "  rest.sort((a, b) => a.d - b.d);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GATECROWD-no-count-cuts",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "if (!(max > 0) || peers.length <= max) {",
-    "new": "if (peers.length <= max) {",
+    "old": "  if (!(max > 0) || peers.length <= max) {",
+    "new": "  if (peers.length <= max) {",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GATECROWD-no-hold",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "- (was?.has(p.id) ? hold : 0)",
-    "new": "- 0",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - 0 });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GATECROWD-hold-to-newcomer",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "(was?.has(p.id) ? hold : 0)",
-    "new": "(was?.has(p.id) ? 0 : hold)",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? 0 : hold) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "GATECROWD-hold-sign",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "- (was?.has(p.id) ? hold : 0)",
-    "new": "+ (was?.has(p.id) ? hold : 0)",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) + (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GATECROWD-cut-everywhere",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "if (!on) { held.clear(); return peers; }",
-    "new": "if (on === null) { held.clear(); return peers; }",
+    "old": "      if (!on) {",
+    "new": "      if (on === null) {",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GATECROWD-places-never-forgotten",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "if (!on) { held.clear(); return peers; }",
-    "new": "if (!on) { return peers; }",
+    "old": "        held.clear();\n        return peers;",
+    "new": "        return peers;",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "GATECROWD-held-refilled-under-itself",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "spare = held; held = now;",
-    "new": "held = now;",
+    "old": "      spare = held;\n      held = now;",
+    "new": "      held = now;",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "GATECROWD-new-list-every-frame",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "      drawn.length = 0;\n      for (const p of peers) { if (held.has(p.id)) drawn.push(p); else gone.add(p.id); }\n      return drawn;",
+    "old": "      drawn.length = 0;\n      for (const p of peers) {\n        if (held.has(p.id)) drawn.push(p);\n        else gone.add(p.id);\n      }\n      return drawn;",
     "new": "      for (const p of peers) if (!held.has(p.id)) gone.add(p.id);\n      return peers.filter((p) => held.has(p.id));",
     "tests": [
       "test/systems/gatecrowd.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "GATECROWD-order-lost",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "{ if (held.has(p.id)) drawn.push(p); else gone.add(p.id); }",
-    "new": "{ if (held.has(p.id)) drawn.unshift(p); else gone.add(p.id); }",
+    "old": "        if (held.has(p.id)) drawn.push(p);",
+    "new": "        if (held.has(p.id)) drawn.unshift(p);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GATECROWD-pref-default-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  gateCrowd: 0,\n",
-    "new": "  gateCrowd: 12,\n",
+    "old": "  gateCrowd: 0,",
+    "new": "  gateCrowd: 12,",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "GATECROWD-everyone-shown",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "shows: (id) => !gone.has(id),",
-    "new": "shows: () => true,",
+    "old": "    shows: (id) => !gone.has(id),",
+    "new": "    shows: () => true,",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "GATECROWD-nobody-shown-outside",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "shows: (id) => !gone.has(id),",
-    "new": "shows: (id) => held.has(id),",
+    "old": "    shows: (id) => !gone.has(id),",
+    "new": "    shows: (id) => held.has(id),",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "GATECROWD-cut-never-forgotten",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "      gone.clear();\n      if (!on) { held.clear(); return peers; }",
-    "new": "      if (!on) { held.clear(); return peers; }",
+    "old": "      gone.clear();\n      if (!on) {",
+    "new": "      if (!on) {",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUDITCW-C1-my-x-summed",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
-    "new": "Math.hypot(f[0] + me[0], f[2] - me[2])",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] + me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "AUDITCW-C1-my-z-read-as-x",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
-    "new": "Math.hypot(f[0] - me[0], f[2] - me[0])",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[0]) - (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDITCW-C1-my-x-unread",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
-    "new": "Math.hypot(f[0], f[2] - me[2])",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDITCW-C1-z-ignored",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "Math.hypot(f[0] - me[0], f[2] - me[2])",
-    "new": "Math.hypot(f[0] - me[0], 0)",
+    "old": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], f[2] - me[2]) - (was?.has(p.id) ? hold : 0) });",
+    "new": "    rest.push({ id: p.id, d: Math.hypot(f[0] - me[0], 0) - (was?.has(p.id) ? hold : 0) });",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "AUDITCW-A2-kept-party-dropped",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "const kept = new Set(party ?? []);",
-    "new": "const kept = new Set();",
+    "old": "  const kept = new Set(party ?? []);",
+    "new": "  const kept = new Set();",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "AUDITCW-A2-kept-null-id",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "for (const id of ones) if (id != null) kept.add(id);",
-    "new": "for (const id of ones) kept.add(id);",
+    "old": "  for (const id of ones) if (id != null) kept.add(id);",
+    "new": "  for (const id of ones) kept.add(id);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "AUDITCW-A2-kept-lists-dropped",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "  for (const list of lists) if (list) for (const id of list) kept.add(id);\n",
-    "new": "",
+    "old": "  for (const list of lists) if (list) for (const id of list) kept.add(id);\n  return (id) => kept.has(id);",
+    "new": "  return (id) => kept.has(id);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "AUDITCW-A2-kept-first-list-only",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "for (const list of lists) if (list)",
-    "new": "for (const list of lists.slice(0, 1)) if (list)",
+    "old": "  for (const list of lists) if (list) for (const id of list) kept.add(id);",
+    "new": "  for (const list of lists.slice(0, 1)) if (list) for (const id of list) kept.add(id);",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "AUDITCW-B4-cut-shown",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "{ if (held.has(p.id)) drawn.push(p); else gone.add(p.id); }",
-    "new": "{ if (held.has(p.id)) drawn.push(p); }",
+    "old": "        else gone.add(p.id);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "AUDITCW-A2-riders-passengers-dropped",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "const out = book.passengers().map((e) => e[0]);",
-    "new": "const out = [];",
+    "old": "      const out = book.passengers().map((e) => e[0]);",
+    "new": "      const out = [];",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "AUDITCW-A2-riders-owner-dropped",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "if (ride?.seat != null) { out.push(ride.owner); for",
-    "new": "if (ride?.seat != null) { for",
+    "old": "        out.push(ride.owner);\n        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
+    "new": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "AUDITCW-A2-riders-others-unread",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer); }",
-    "new": "}",
+    "old": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "AUDITCW-A2-riders-third-wagon",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer); }",
-    "new": "for (const [peer] of seatWords) out.push(peer); }",
+    "old": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
+    "new": "        for (const [peer] of seatWords) out.push(peer);",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "AUDITCW-A2-ship-mine-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "if (on != null && r.owner === on) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id, r] of riders) if (on != null && r.owner === on) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "AUDITCW-A2-ship-owner-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "const out = on != null ? [on] : [];",
-    "new": "const out = [];",
+    "old": "      const out = on != null ? [on] : [];",
+    "new": "      const out = [];",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "AUDITCW-A2-ship-riders-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "if (r.owner === me) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id, r] of riders) if (r.owner === me) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "AUDITCW-A2-ship-third-boat",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
-    "new": "for (const [id] of riders) out.push(id);",
+    "old": "      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);",
+    "new": "      for (const [id] of riders) out.push(id);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]

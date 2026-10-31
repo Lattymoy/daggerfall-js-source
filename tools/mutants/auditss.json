@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-SS-a-buildings-record-carries-a-bound-piece",
     "file": "src/world/interior/interiorShared.js",
-    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
-    "new": "r: t.items.map((it) => clearStolen({ ...it })),",
+    "old": "      r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
+    "new": "      r: t.items.map((it) => clearStolen({ ...it })),",
     "note": "STOLEN-GOODS AUDIT S3 (re-aimed by content): the outgoing copy strips the theft's mark too - the mutant still drops peerHanded alone",
     "tests": [
       "test/systems/item/ss1_stones.test.js"

@@ -46,7 +46,8 @@ export function buildHudTip(doc, tip) {
 
 /** Where a card of `size` goes for an anchor's `rect` on a `view` - above it, centred, else below it; kept 8px inside. */
 export function hudTipPlace(rect, size, view) {
-  const pad = 8, gap = 8;
+  const pad = 8,
+    gap = 8;
   let left = rect.left + rect.width / 2 - size.width / 2;
   left = Math.max(pad, Math.min(left, view.width - size.width - pad));
   let top = rect.top - size.height - gap;
@@ -70,7 +71,10 @@ export function showHudTip(anchor, tip, key = null, doc = globalThis.document) {
   const r = anchor.getBoundingClientRect?.();
   const s = tipEl.getBoundingClientRect?.();
   if (r && s) {
-    const at = hudTipPlace(r, s, { width: globalThis.innerWidth || s.width, height: globalThis.innerHeight || s.height });
+    const at = hudTipPlace(r, s, {
+      width: globalThis.innerWidth || s.width,
+      height: globalThis.innerHeight || s.height,
+    });
     tipEl.style.left = `${at.left}px`;
     tipEl.style.top = `${at.top}px`;
   }
@@ -85,7 +89,7 @@ export function hideHudTip() {
 }
 
 /** Whether a card is up, and for what. */
-export const hudTipShowing = () => (tipEl ? tipFor ?? true : null);
+export const hudTipShowing = () => (tipEl ? (tipFor ?? true) : null);
 
 /**
  * Give `host` hover cards: a pointer over one of its children that `pick(node)` answers for (its node and its tip, or
@@ -96,11 +100,20 @@ export const hudTipShowing = () => (tipEl ? tipFor ?? true : null);
 export function bindHudTips(host, pick) {
   const over = (e) => {
     const hit = pick(e.target);
-    if (!hit) { hideHudTip(); return; }
+    if (!hit) {
+      hideHudTip();
+      return;
+    }
     showHudTip(hit.node, hit.tip, hit.key ?? hit.node);
   };
-  const out = (e) => { if (!host.contains(e.relatedTarget)) hideHudTip(); };
+  const out = (e) => {
+    if (!host.contains(e.relatedTarget)) hideHudTip();
+  };
   host.addEventListener?.('mouseover', over);
   host.addEventListener?.('mouseout', out);
-  return () => { host.removeEventListener?.('mouseover', over); host.removeEventListener?.('mouseout', out); hideHudTip(); };
+  return () => {
+    host.removeEventListener?.('mouseover', over);
+    host.removeEventListener?.('mouseout', out);
+    hideHudTip();
+  };
 }

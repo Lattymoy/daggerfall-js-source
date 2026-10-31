@@ -31,6 +31,7 @@ import { createGatherHost } from '../../src/scenes/gatherHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { dice, bus, sfxOf, tick, PX, rig, arrive, strikeOut, lands } from '../gatherRig.mjs';   // GATHER-FEEL II: the rig, shared
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -97,7 +98,7 @@ test('GATHER-FEEL G2: the fall is the felled tree\'s - its first crack at the cl
   const peak = Math.max(...x.map(Math.abs));
   assert.ok(x.slice(0, Math.round(11025 * 0.02)).some((v) => Math.abs(v) > 0.1 * peak), 'the first crack at once');
   assert.match(src('tools/gatherSfx.mjs'), /import \{ FALL_S \} from '\.\.\/src\/scenes\/treeHost\.js';/);
-  assert.match(src('tools/gatherSfx.mjs'), /const LEN = 2\.75, HIT = FALL_S;/);
+  assert.match(src('tools/gatherSfx.mjs'), /const LEN = 2\.75,\n\s*HIT = FALL_S;/);
 });
 
 test('GATHER-FEEL G3: the clips register on the bus once - under their keys, a clip that will not load is silence and the rest still take, and a bus with no door loads nothing', async () => {
@@ -413,7 +414,7 @@ test('GATHER-FEEL G13: the classic skin - the switch off, each beat says the DFU
   assert.deepEqual(cues, ['strike', 'clean'], 'the clean finish DFU\'s lock click; the port\'s own beats nothing');
   assert.deepEqual(audio.shots, [], 'never a clip of ours');
   // the switch: the port's own sounds', and the clips' load
-  assert.match(src('src/systems/gatherSounds.js'), /export function createGatherEar\(\{ audio = null, on = enhancedSoundsOn, rand = Math\.random, cue = profCue, install = true \} = \{\}\) \{/);
+  assert.match(src('src/systems/gatherSounds.js'), /export function createGatherEar\(\{\n\s*audio = null,\n\s*on = enhancedSoundsOn,\n\s*rand = Math\.random,\n\s*cue = profCue,\n\s*install = true,\n\s*\} = \{\}\) \{/);
   assert.equal(typeof enhancedSoundsOn, 'function');
   const realFetch = globalThis.fetch;
   const urls = [];
@@ -613,7 +614,7 @@ test('GATHER-FEEL G17: a tree falls heard - its creak at half its chops, the fal
 });
 
 test('GATHER-FEEL G18: the hosts - the world hands the gathering host its bus (the street, a dungeon and a building are the one host\'s); the host feeds the ear the act every frame and the idle frame too; the Enhanced sounds row says the gathering (mutants: the bus unhanded, the idle frame unfed)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /\n\s+audio,   \/\/ GATHER-FEEL: the bus the gathering's ear says the acts on/);
   const g = src('src/scenes/gatherHost.js');
   assert.match(g, /const ear = deps\.ear \?\? createGatherEar\(\{ audio: deps\.audio \?\? null \}\);/);

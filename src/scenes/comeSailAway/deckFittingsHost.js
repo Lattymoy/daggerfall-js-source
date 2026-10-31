@@ -38,10 +38,16 @@ export function standFittings(boat, list, { ctx, deck }) {
   let all = true;
   for (const f of list) {
     const b = ctx.modelBounds?.(f.m);
-    if (!b) { all = false; continue; }
+    if (!b) {
+      all = false;
+      continue;
+    }
     const y = deck?.heightAt?.(f.x, f.z);
     if (!Number.isFinite(y)) continue;
-    const node = new PrefabNode(`Fitting-${f.m}`, { position: [f.x, y, f.z], rotation: quatAngleAxis(yawDegrees(f.yaw), UP) }).setParent(root);
+    const node = new PrefabNode(`Fitting-${f.m}`, {
+      position: [f.x, y, f.z],
+      rotation: quatAngleAxis(yawDegrees(f.yaw), UP),
+    }).setParent(root);
     const mesh = createDaggerfallMeshGameObject(ctx, f.m, node);
     mesh.localPosition = [-(b.min[0] + b.max[0]) / 2, -b.min[1], -(b.min[2] + b.max[2]) / 2];
     mesh.localRotation = [0, 0, 0, 1];
@@ -65,20 +71,27 @@ export function fitBoats(boats, fittingsOf, { ctx, deckOf, load }) {
   for (const boat of boats) {
     const list = fittingsOf(boat) ?? NO_FITTINGS;
     if (!list.length) {
-      if (boat._fitted == null || boat._fitted === '') { boat._fitted = ''; continue; }   // none to fit, none stood
-    } else if (list === boat._fitList && boat._fitted === boat._fitKey) continue;   // the same list, stood
+      if (boat._fitted == null || boat._fitted === '') {
+        boat._fitted = '';
+        continue;
+      } // none to fit, none stood
+    } else if (list === boat._fitList && boat._fitted === boat._fitKey) continue; // the same list, stood
     const key = list === boat._fitList ? boat._fitKey : fittingsKey(list);
-    boat._fitList = list; boat._fitKey = key;
+    boat._fitList = list;
+    boat._fitKey = key;
     if (boat._fitted === key) continue;
     let loaded = 0;
     // AUDIT 2: asked for EVERY fitting, loaded or not - the ask is what pins its model (dataPipeline.js pinnedGpuMesh; `load`
     // asks once a model); a crate a house had loaded under its own hold was freed by the place cache four rooms on, and
     // her fitting went from the deck and its collider with it
-    for (const f of list) { load(f.m); if (ctx.modelBounds?.(f.m)) loaded++; }
+    for (const f of list) {
+      load(f.m);
+      if (ctx.modelBounds?.(f.m)) loaded++;
+    }
     const stage = `${key}#${loaded}`;
-    if (boat._fitStage === stage) continue;   // nothing more loaded since she was last stood
+    if (boat._fitStage === stage) continue; // nothing more loaded since she was last stood
     const deck = list.length ? deckOf(boat.hull) : null;
-    if (list.length && !deck) continue;   // her deck not baked yet: the next frame
+    if (list.length && !deck) continue; // her deck not baked yet: the next frame
     boat._fitStage = stage;
     if (standFittings(boat, list, { ctx, deck })) boat._fitted = key;
   }

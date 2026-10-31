@@ -17,11 +17,17 @@
 //     where it stands beside the town's pixel, and flagged `sea` in the claim. One tick vouches one dealing.
 // Online only: the world host builds none offline.
 // ═══════════════════════════════════════════════════════════════════
-import { regionClockOk } from './regionClockLaw.js';   // FOUNDATION F2: a region's number
+import { regionClockOk } from './regionClockLaw.js'; // FOUNDATION F2: a region's number
 import { readWatchReceipt } from './watchReceipt.js';
-import { jittered } from './backoff.js';   // a failed claim's wait, jittered as every book's is
-import { TOWN_WATCH_CLAIM_MAX, TOWN_ECON_KEPT_S, TOWN_SEA_REACH_PX, TOWN_SEA_TICK_S, townReportOf } from './townEconLaw.js';
-import { turnedDayOf } from './dayTurn.js';   // DAY-TURN
+import { jittered } from './backoff.js'; // a failed claim's wait, jittered as every book's is
+import {
+  TOWN_WATCH_CLAIM_MAX,
+  TOWN_ECON_KEPT_S,
+  TOWN_SEA_REACH_PX,
+  TOWN_SEA_TICK_S,
+  townReportOf,
+} from './townEconLaw.js';
+import { turnedDayOf } from './dayTurn.js'; // DAY-TURN
 
 /** Where the device keeps the ticks it holds: [{ r, s, i, e, sea? }] (`sea` a tick that vouches a dealing). */
 export const TOWN_ECON_WATCH_KEY = 'townecon.watch';
@@ -53,30 +59,61 @@ const WATCH_SETTLED = Object.freeze(['bad-watch', 'towns-need-account']);
  *   `me` the signed-in account, `isTownPixel` whether a town with an economy stands at a map pixel, `relayNowS` the
  *   relay's clock (a tick's life is the relay's), `turnMs` this page's moment past midnight (DAY-TURN, net/dayTurn.js)
  */
-export function createTownEconBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, isTownPixel = () => false, relayNowS = () => null, rand = Math.random, turnMs = 0 }) {
+export function createTownEconBook({
+  door,
+  storage = null,
+  nowMs = () => Date.now(),
+  me = () => null,
+  isTownPixel = () => false,
+  relayNowS = () => null,
+  rand = Math.random,
+  turnMs = 0,
+}) {
   // ── the shares ──
   /** @type {Map<number, number>} */
   let shares = new Map();
   /** FOUNDATION F2: each region's prosperity as last read (net/regionClockLaw.js). @type {Map<number, number>} */
   let regions = new Map();
-  let readAt = -Infinity, busy = false, stopped = false, heard = false;
+  let readAt = -Infinity,
+    busy = false,
+    stopped = false,
+    heard = false;
   const refresh = () => {
     if (stopped || busy || nowMs() - readAt < TOWN_ECON_KEPT_S * 1000) return false;
     busy = true;
     readAt = nowMs();
-    Promise.resolve().then(() => door.econ()).then((r) => {
-      if (r?.ok && Array.isArray(r.data?.towns)) {
-        /** @type {Map<number, number>} */
-        const next = new Map();
-        for (const t of r.data.towns) if (Array.isArray(t) && Number.isSafeInteger(t[0]) && Number.isFinite(t[1]) && t[1] > 0) next.set(t[0] >>> 0, t[1]);
-        shares = next;
-        /** @type {Map<number, number>} */
-        const byRegion = new Map();
-        for (const g of Array.isArray(r.data.regions) ? r.data.regions : []) if (Array.isArray(g) && regionClockOk(g[0]) && Number.isSafeInteger(g[1]) && g[1] > 0) byRegion.set(g[0], g[1]);
-        regions = byRegion;
-        heard = true;
-      } else if (TOWN_ECON_STOPS.includes(r?.error)) { stopped = true; heard = true; shares = new Map(); regions = new Map(); }
-    }, () => { /* a read that failed is asked again at the next keeping */ }).finally(() => { busy = false; });
+    Promise.resolve()
+      .then(() => door.econ())
+      .then(
+        (r) => {
+          if (r?.ok && Array.isArray(r.data?.towns)) {
+            /** @type {Map<number, number>} */
+            const next = new Map();
+            for (const t of r.data.towns)
+              if (Array.isArray(t) && Number.isSafeInteger(t[0]) && Number.isFinite(t[1]) && t[1] > 0)
+                next.set(t[0] >>> 0, t[1]);
+            shares = next;
+            /** @type {Map<number, number>} */
+            const byRegion = new Map();
+            for (const g of Array.isArray(r.data.regions) ? r.data.regions : [])
+              if (Array.isArray(g) && regionClockOk(g[0]) && Number.isSafeInteger(g[1]) && g[1] > 0)
+                byRegion.set(g[0], g[1]);
+            regions = byRegion;
+            heard = true;
+          } else if (TOWN_ECON_STOPS.includes(r?.error)) {
+            stopped = true;
+            heard = true;
+            shares = new Map();
+            regions = new Map();
+          }
+        },
+        () => {
+          /* a read that failed is asked again at the next keeping */
+        },
+      )
+      .finally(() => {
+        busy = false;
+      });
     return true;
   };
 
@@ -84,25 +121,53 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
   /** @typedef {{ r: string, s: string, i: number, e: number, sea?: true }} HeldTick */
   /** @type {HeldTick[] | null} */
   let watchList = null;
-  let watchBusy = false, watchFails = 0, watchRetryAt = -Infinity, watchStopped = false;
+  let watchBusy = false,
+    watchFails = 0,
+    watchRetryAt = -Infinity,
+    watchStopped = false;
   const watchHeld = () => {
     if (watchList) return watchList;
     watchList = [];
     try {
       const v = JSON.parse(storage?.getItem?.(TOWN_ECON_WATCH_KEY) ?? 'null');
       if (Array.isArray(v)) {
-        watchList = v.filter((w) => w && typeof w.r === 'string' && typeof w.s === 'string' && Number.isSafeInteger(w.i) && Number.isSafeInteger(w.e)).slice(-TOWN_ECON_WATCH_HELD_MAX)
-          .map((w) => ({ r: w.r, s: w.s, i: w.i, e: w.e, ...(w.sea === true ? { sea: /** @type {true} */ (true) } : {}) }));
+        watchList = v
+          .filter(
+            (w) =>
+              w &&
+              typeof w.r === 'string' &&
+              typeof w.s === 'string' &&
+              Number.isSafeInteger(w.i) &&
+              Number.isSafeInteger(w.e),
+          )
+          .slice(-TOWN_ECON_WATCH_HELD_MAX)
+          .map((w) => ({
+            r: w.r,
+            s: w.s,
+            i: w.i,
+            e: w.e,
+            ...(w.sea === true ? { sea: /** @type {true} */ (true) } : {}),
+          }));
       }
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return watchList;
   };
   const writeWatch = (/** @type {HeldTick[]} */ list) => {
     watchList = list.slice(-TOWN_ECON_WATCH_HELD_MAX);
-    try { storage?.setItem?.(TOWN_ECON_WATCH_KEY, JSON.stringify(watchList)); } catch { /* this page keeps them */ }
+    try {
+      storage?.setItem?.(TOWN_ECON_WATCH_KEY, JSON.stringify(watchList));
+    } catch {
+      /* this page keeps them */
+    }
   };
   const alive = (/** @type {{ e: number }} */ w, /** @type {number|null} */ t) => t == null || w.e > t;
-  const mine = () => { const who = me(), t = relayNowS(); return watchHeld().filter((w) => w.s === who && alive(w, t)); };
+  const mine = () => {
+    const who = me(),
+      t = relayNowS();
+    return watchHeld().filter((w) => w.s === who && alive(w, t));
+  };
   const due = () => {
     if (watchBusy || watchStopped || nowMs() < watchRetryAt) return false;
     const held = mine();
@@ -132,24 +197,38 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
     try {
       const v = JSON.parse(storage?.getItem?.(TOWN_ECON_REPORTED_KEY) ?? 'null');
       if (v && typeof v === 'object' && !Array.isArray(v)) reported = v;
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return /** @type {Record<string, number>} */ (reported);
   };
   // AUDIT TOWN-ECON 2 CLI-3: the newest kept by its day - a town done (TOWN_ECON_DONE past its day) outranked today's
   // row by its raw number, and past TOWN_ECON_REPORTED_MAX done towns today's was cut as it was written
   const writeTable = (/** @type {Record<string, number>} */ t) => {
-    reported = Object.fromEntries(Object.entries(t).sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE)).slice(0, TOWN_ECON_REPORTED_MAX));
-    try { storage?.setItem?.(TOWN_ECON_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
+    reported = Object.fromEntries(
+      Object.entries(t)
+        .sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))
+        .slice(0, TOWN_ECON_REPORTED_MAX),
+    );
+    try {
+      storage?.setItem?.(TOWN_ECON_REPORTED_KEY, JSON.stringify(reported));
+    } catch {
+      /* this page keeps it */
+    }
   };
-  const dayNow = () => turnedDayOf(nowMs(), turnMs);   // DAY-TURN: once a day, the day turned at this page's moment
+  const dayNow = () => turnedDayOf(nowMs(), turnMs); // DAY-TURN: once a day, the day turned at this page's moment
   /** AUDIT TOWN-ECON 2 SVC-1: the towns walked into and waiting for a tick at their pixel, by map id. */
   /** @type {Map<number, any>} */
   const waiting = new Map();
   /** The newest tick this page has of the signed-in account's at a pixel, alive, or null. @param {number} x @param {number} y */
   const tickAt = (x, y) => {
-    const who = me(), t = relayNowS();
+    const who = me(),
+      t = relayNowS();
     const all = [...watchHeld(), ...seen].filter((w) => w.s === who && alive(w, t));
-    const at = all.filter((w) => { const c = readWatchReceipt(w.r); return !!c && c.x === x && c.y === y; });
+    const at = all.filter((w) => {
+      const c = readWatchReceipt(w.r);
+      return !!c && c.x === x && c.y === y;
+    });
     return at.sort((a, b) => b.i - a.i)[0]?.r ?? null;
   };
   /** A town's report sent with its tick, once a UTC day: the day marked before it is asked. */
@@ -158,11 +237,24 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
     tab[String(t.map)] = dayNow();
     writeTable(tab);
     let r = null;
-    try { r = await door.witness(t, receipt); } catch { /* the next day asks again */ }
+    try {
+      r = await door.witness(t, receipt);
+    } catch {
+      /* the next day asks again */
+    }
     if (TOWN_ECON_STOPS.includes(r?.error) || (r?.ok && r.data?.why === 'young')) witnessStopped = true;
     // AUDIT TOWN-ECON 2 CLI-3: the table as it stands now - a report sent while this one waited marked its own town there
-    const done = r?.ok && (r.data?.confirmed === true || r.data?.why === 'known' || r.data?.why === 'struck' || (r.data?.counted === true && r.data?.why !== 'taken'));
-    if (done) { const now = table(); now[String(t.map)] = TOWN_ECON_DONE + dayNow(); writeTable(now); }
+    const done =
+      r?.ok &&
+      (r.data?.confirmed === true ||
+        r.data?.why === 'known' ||
+        r.data?.why === 'struck' ||
+        (r.data?.counted === true && r.data?.why !== 'taken'));
+    if (done) {
+      const now = table();
+      now[String(t.map)] = TOWN_ECON_DONE + dayNow();
+      writeTable(now);
+    }
     return true;
   };
 
@@ -173,27 +265,42 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
     shareOf(mapId) {
       refresh();
       // AUDIT TOWN-ECON 2 CLI-4: a claim waits on no tick - the oldest's time looked at by every reader, now and then
-      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) { dueLookAt = nowMs(); if (due()) book.claim(); }
-      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : shares.get(Number(mapId) >>> 0) ?? 0;
+      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) {
+        dueLookAt = nowMs();
+        if (due()) book.claim();
+      }
+      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);
     },
     /** FOUNDATION F2: A REGION'S PROSPERITY as last read (0 for none) - read with the shares. @param {unknown} region */
-    regionalOf(region) { refresh(); return regionClockOk(region) ? regions.get(/** @type {number} */ (region)) ?? 0 : 0; },
-    get stopped() { return stopped; },
+    regionalOf(region) {
+      refresh();
+      return regionClockOk(region) ? (regions.get(/** @type {number} */ (region)) ?? 0) : 0;
+    },
+    get stopped() {
+      return stopped;
+    },
     /** AUDIT TOWN-ECON 2 CLI-1: whether the shares have been answered (read, or refused for good) - a band before it is
      *  the TE1 terms' alone. */
-    get heard() { return heard; },
+    get heard() {
+      return heard;
+    },
     /** THE WATCH'S TICK KEPT (net/online.js onWatch): a signed receipt for the signed-in account, in a town's pixel,
      *  still alive by the relay's clock - and a claim's worth claimed. Answers whether it was kept. @param {unknown} r */
     keepWatch(r) {
       const c = readWatchReceipt(r);
       const t = relayNowS();
       if (watchStopped || !c || !c.signed || c.s !== me() || (t != null && c.e <= t)) return false;
-      if (!seen.some((w) => w.r === r)) seen.push({ r: /** @type {string} */ (r), s: c.s, x: c.x, y: c.y, i: c.i, e: c.e });
+      if (!seen.some((w) => w.r === r))
+        seen.push({ r: /** @type {string} */ (r), s: c.s, x: c.x, y: c.y, i: c.i, e: c.e });
       if (seen.length > TOWN_SEA_SEEN_MAX) seen.splice(0, seen.length - TOWN_SEA_SEEN_MAX);
       // AUDIT TOWN-ECON 2 SVC-1: a town walked into before its first tick there is reported with this one
-      for (const [map, t] of waiting) if (t.px === c.x && t.py === c.y) { waiting.delete(map); if (!witnessStopped) sendWitness(t, /** @type {string} */ (r)); }
+      for (const [map, t] of waiting)
+        if (t.px === c.x && t.py === c.y) {
+          waiting.delete(map);
+          if (!witnessStopped) sendWitness(t, /** @type {string} */ (r));
+        }
       if (!isTownPixel(c.x, c.y)) return false;
-      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false;   // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today
+      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false; // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today
       const list = watchHeld().filter((w) => alive(w, t));
       if (list.some((w) => w.r === r)) return false;
       list.push({ r: /** @type {string} */ (r), s: c.s, i: c.i, e: c.e });
@@ -209,10 +316,18 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
      *  Answers whether a tick vouched it. @param {number} px @param {number} py */
     seaDeal(px, py) {
       if (watchStopped || !Number.isSafeInteger(px) || !Number.isSafeInteger(py)) return false;
-      const who = me(), t = relayNowS() ?? Math.floor(nowMs() / 1000);
+      const who = me(),
+        t = relayNowS() ?? Math.floor(nowMs() / 1000);
       const list = watchHeld().filter((w) => alive(w, t));
       const near = (/** @type {{ r: string, s: string, i: number, e: number }} */ w) => {
-        if (w.s !== who || !alive(w, t) || t - w.i > TOWN_SEA_TICK_S || seaSpent.has(w.r) || list.some((h) => h.r === w.r && h.sea)) return false;
+        if (
+          w.s !== who ||
+          !alive(w, t) ||
+          t - w.i > TOWN_SEA_TICK_S ||
+          seaSpent.has(w.r) ||
+          list.some((h) => h.r === w.r && h.sea)
+        )
+          return false;
         const c = readWatchReceipt(w.r);
         return !!c && Math.abs(c.x - px) <= TOWN_SEA_REACH_PX && Math.abs(c.y - py) <= TOWN_SEA_REACH_PX;
       };
@@ -235,20 +350,33 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
       if (!batch.length) return null;
       watchBusy = true;
       let r;
-      const sea = batch.flatMap((w, k) => (w.sea ? [k] : []));   // SEA-TRADE: the ticks that vouch a dealing
-      try { r = await door.watch(batch.map((w) => w.r), sea); } catch { r = { ok: false, error: 'offline' }; } finally { watchBusy = false; }
+      const sea = batch.flatMap((w, k) => (w.sea ? [k] : [])); // SEA-TRADE: the ticks that vouch a dealing
+      try {
+        r = await door.watch(
+          batch.map((w) => w.r),
+          sea,
+        );
+      } catch {
+        r = { ok: false, error: 'offline' };
+      } finally {
+        watchBusy = false;
+      }
       if (r?.ok || WATCH_SETTLED.includes(r?.error)) {
         const gone = new Set(batch.map((w) => w.r));
         writeWatch(watchHeld().filter((w) => !gone.has(w.r)));
-        watchFails = 0; watchRetryAt = -Infinity;
+        watchFails = 0;
+        watchRetryAt = -Infinity;
         // a young account's ticks count nothing yet, and a guest's never: asked no more this page
         if ((r?.ok && r.data?.why?.young) || r?.error === 'towns-need-account') watchStopped = true;
         // AUDIT TOWN-ECON 2 SVC-5: the pixels whose footsteps are full today, kept off until the day turns
-        if (r?.ok && Array.isArray(r.data?.full)) for (const k of r.data.full) if (typeof k === 'string' && /^-?\d{1,4},-?\d{1,4}$/.test(k)) fullAt.set(k, dayNow());   // WW7-5: a pixel past the Bay too
+        if (r?.ok && Array.isArray(r.data?.full))
+          for (const k of r.data.full)
+            if (typeof k === 'string' && /^-?\d{1,4},-?\d{1,4}$/.test(k)) fullAt.set(k, dayNow()); // WW7-5: a pixel past the Bay too
       } else if (TOWN_ECON_STOPS.includes(r?.error)) watchStopped = true;
       else {
         watchFails += 1;
-        watchRetryAt = nowMs() + jittered(Math.min(TOWN_ECON_CLAIM_EVERY_MS, TOWN_ECON_RETRY_MS * 2 ** (watchFails - 1)), rand);
+        watchRetryAt =
+          nowMs() + jittered(Math.min(TOWN_ECON_CLAIM_EVERY_MS, TOWN_ECON_RETRY_MS * 2 ** (watchFails - 1)), rand);
       }
       return r?.ok ? r.data : null;
     },
@@ -263,7 +391,11 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
       const at = table()[String(t.map)];
       if (at === dayNow() || at >= TOWN_ECON_DONE) return false;
       const receipt = tickAt(t.px, t.py);
-      if (!receipt) { waiting.set(t.map, t); if (waiting.size > 8) waiting.delete(waiting.keys().next().value); return false; }
+      if (!receipt) {
+        waiting.set(t.map, t);
+        if (waiting.size > 8) waiting.delete(waiting.keys().next().value);
+        return false;
+      }
       waiting.delete(t.map);
       return sendWitness(t, receipt);
     },
@@ -275,7 +407,8 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
  *  (the confirmed towns of the region the player stands in) or `/town strike <map id>` - `{ op, key? }`, `{ error }` in
  *  words, or null when the line is not /town. NEVER GUARDED HERE (RED1's law): the service asks whether this player may.
  *  BAY-LEFT-SEA (the audit's E4): `/town audit <n>` its n-th page (townEconLaw.js TOWN_AUDIT_PAGE a page) - `page` n - 1. */
-export const TOWN_USAGE = 'Usage: /town audit [page] - the confirmed towns of this region, 400 a page; /town strike <map id> - a false town struck from the registry.';
+export const TOWN_USAGE =
+  'Usage: /town audit [page] - the confirmed towns of this region, 400 a page; /town strike <map id> - a false town struck from the registry.';
 export function parseTownCommand(/** @type {unknown} */ text) {
   const m = /^\/town(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
@@ -283,22 +416,31 @@ export function parseTownCommand(/** @type {unknown} */ text) {
   const o = String(op ?? '').toLowerCase();
   if (o === 'audit' && key == null) return { op: 'audit' };
   const k = Number(key);
-  if (o === 'audit' && /^\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 };   // BAY-LEFT-SEA: a page past the first
-  if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k < 1 || k > 0xffffffff || more.length) return { error: TOWN_USAGE };
+  if (o === 'audit' && /^\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first
+  if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k < 1 || k > 0xffffffff || more.length)
+    return { error: TOWN_USAGE };
   return { op: 'strike', key: k };
 }
 /** The registry's audit as chat lines: a confirmed town a line - its map id, pixel, place, the accounts that confirmed
  *  it, and FALSE where the town this client's own map holds at that pixel is another (`mapAt(px, py)`, its map id) -
  *  or a line that none is confirmed. BAY-LEFT-SEA: and, where the service says a page follows (`more`), the word for it. */
-export function townAuditLines(/** @type {any} */ data, /** @type {(x: number, y: number) => (number|null|undefined)} */ mapAt) {
+export function townAuditLines(
+  /** @type {any} */ data,
+  /** @type {(x: number, y: number) => (number|null|undefined)} */ mapAt,
+) {
   const towns = data?.towns ?? [];
   if (!towns.length) return ['No town of this region is confirmed in the registry.'];
   const lines = towns.map((/** @type {any} */ t) => {
     const here = mapAt(t.px, t.py);
-    const own = here == null ? 'no town here at that pixel' : (here >>> 0) === t.map ? 'the town here' : `FALSE - the town here is ${here >>> 0}`;
+    const own =
+      here == null
+        ? 'no town here at that pixel'
+        : here >>> 0 === t.map
+          ? 'the town here'
+          : `FALSE - the town here is ${here >>> 0}`;
     return `Town ${t.map} at ${t.px},${t.py} (location ${t.location}): ${own}; confirmed by ${(t.by ?? []).join(', ') || 'nobody kept'}`;
   });
-  if (data?.more === true) lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);
+  if (data?.more === true)
+    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);
   return lines;
 }
-

@@ -11,8 +11,8 @@
   {
     "name": "CHAP7A-OK-INT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isSafeInteger(marks) &&",
-    "new": "export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isFinite(marks) &&",
+    "old": "  Number.isSafeInteger(marks) &&",
+    "new": "  Number.isFinite(marks) &&",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP7A-OK-MIN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(marks) >= CHAPTER_PATRON_MIN\n",
-    "new": "(marks) > CHAPTER_PATRON_MIN\n",
+    "old": "  /** @type {number} */ (marks) >= CHAPTER_PATRON_MIN &&",
+    "new": "  /** @type {number} */ (marks) > CHAPTER_PATRON_MIN &&",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP7A-OK-MORE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;",
-    "new": "(marks) >= prev && /** @type {number} */ (marks) <= MARKS_MAX;",
+    "old": "  /** @type {number} */ (marks) > prev &&",
+    "new": "  /** @type {number} */ (marks) >= prev &&",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP7A-OK-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;",
-    "new": "(marks) > prev;",
+    "old": "  /** @type {number} */ (marks) > prev &&\n  /** @type {number} */ (marks) <= MARKS_MAX;",
+    "new": "  /** @type {number} */ (marks) > prev;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP7A-ESCROW-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;",
-    "new": "=> `patron:${chapterTitleKey(f, region)}:${guild}`;",
+    "old": ") => `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;",
+    "new": ") => `patron:${chapterTitleKey(f, region)}:${guild}`;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP7A-WIN-HIGH",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!best || b.amount > best.amount ||",
-    "new": "if (!best || b.amount < best.amount ||",
+    "old": "      b.amount > best.amount ||",
+    "new": "      b.amount < best.amount ||",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP7A-WIN-AT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(b.amount === best.amount && (b.at < best.at ||",
-    "new": "(b.amount === best.amount && (b.at > best.at ||",
+    "old": "      (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild < best.guild)))",
+    "new": "      (b.amount === best.amount && (b.at > best.at || (b.at === best.at && b.guild < best.guild)))",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP7A-WIN-GUILD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(b.at === best.at && b.guild < best.guild))))",
-    "new": "(b.at === best.at && b.guild > best.guild))))",
+    "old": "      (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild < best.guild)))",
+    "new": "      (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild > best.guild)))",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP7A-WIN-SHAPE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;",
-    "new": "if (!b) continue;",
+    "old": "    if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;",
+    "new": "    if (!b) continue;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP7A-OF-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) ||",
-    "new": "if (!p || typeof p.id !== 'string' ||",
+    "old": "  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string' || !p.name.trim())\n    return null;",
+    "new": "  if (!p || typeof p.id !== 'string' || typeof p.name !== 'string' || !p.name.trim()) return null;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP7A-OF-NAME",
     "file": "src/net/npcChapterLaw.js",
-    "old": "|| typeof p.name !== 'string' || !p.name.trim()) return null;\n  return { id: p.id,",
-    "new": "|| typeof p.name !== 'string') return null;\n  return { id: p.id,",
+    "old": "  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string' || !p.name.trim())\n    return null;",
+    "new": "  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string') return null;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP7A-OF-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "name: p.name.trim().slice(0, GUILD_NAME_MAX), tag:",
-    "new": "name: p.name.trim(), tag:",
+    "old": "  return {\n    id: p.id,\n    name: p.name.trim().slice(0, GUILD_NAME_MAX),\n    tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '',\n  };",
+    "new": "  return { id: p.id, name: p.name.trim(), tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '' };",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP7A-OF-TAG",
     "file": "src/net/npcChapterLaw.js",
-    "old": "tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '' };",
-    "new": "tag: typeof p.tag === 'string' ? p.tag : '' };",
+    "old": "  return {\n    id: p.id,\n    name: p.name.trim().slice(0, GUILD_NAME_MAX),\n    tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '',\n  };",
+    "new": "  return { id: p.id, name: p.name.trim().slice(0, GUILD_NAME_MAX), tag: typeof p.tag === 'string' ? p.tag : '' };",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP7A-LINE-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (row?.kind !== 'patron' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
-    "new": "if (row?.kind !== 'patron' || !isRollFaction(row?.faction)) return null;",
+    "old": "  if (row?.kind !== 'patron' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "  if (row?.kind !== 'patron' || !isRollFaction(row?.faction)) return null;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP7A-LINE-GUARD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!season || !name) return null;\n  return `For",
-    "new": "  if (!season) return null;\n  return `For",
+    "old": "  if (!season || !name) return null;",
+    "new": "  if (!season) return null;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP7A-LINE-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "took the patronage of the ${hallPosterName(row.faction)}.`;",
-    "new": "became the patron of the ${hallPosterName(row.faction)}.`;",
+    "old": "  return `For ${season}, ${name} took the patronage of the ${hallPosterName(row.faction)}.`;",
+    "new": "  return `For ${season}, ${name} became the patron of the ${hallPosterName(row.faction)}.`;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CHAP7A-LINE-ROUTE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (row?.kind === 'patron') return chapterPatronLine(row);   // CHAP7a: a Season's patron\n",
-    "new": "",
+    "old": "  if (row?.kind === 'patron') return chapterPatronLine(row); // CHAP7a: a Season's patron\n  if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "  if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]

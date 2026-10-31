@@ -15,7 +15,8 @@ export function setStandingOwed(/** @type {unknown} */ map) {
   /** @type {Record<number, number>} */
   const out = {};
   if (map && typeof map === 'object') {
-    for (const [k, v] of Object.entries(map)) if (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0) out[Number(k)] = /** @type {number} */ (v);
+    for (const [k, v] of Object.entries(map))
+      if (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0) out[Number(k)] = /** @type {number} */ (v);
   }
   owed = out;
 }

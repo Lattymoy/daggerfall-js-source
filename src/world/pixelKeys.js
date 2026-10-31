@@ -18,7 +18,8 @@ const _kept = new Map();
  * @returns {string}
  */
 export function pixelKeyText(px, py) {
-  if (!(Number.isInteger(px) && Number.isInteger(py) && Math.abs(px) < PIXEL_KEY_SPAN && Math.abs(py) < PIXEL_KEY_SPAN)) return `${px},${py}`;
+  if (!(Number.isInteger(px) && Number.isInteger(py) && Math.abs(px) < PIXEL_KEY_SPAN && Math.abs(py) < PIXEL_KEY_SPAN))
+    return `${px},${py}`;
   const n = (px + PIXEL_KEY_SPAN) * (2 * PIXEL_KEY_SPAN) + (py + PIXEL_KEY_SPAN);
   let k = _kept.get(n);
   if (k === undefined) {

@@ -41,7 +41,8 @@ export const WORLD_PIXEL_SPAN = 8192;
 const SIDE = 2 * WORLD_PIXEL_SPAN;
 
 /** Is (px, py) a whole pixel of the world's grid? */
-export const inWorldGrid = (px, py) => Number.isInteger(px) && Number.isInteger(py) && Math.abs(px) < WORLD_PIXEL_SPAN && Math.abs(py) < WORLD_PIXEL_SPAN;
+export const inWorldGrid = (px, py) =>
+  Number.isInteger(px) && Number.isInteger(py) && Math.abs(px) < WORLD_PIXEL_SPAN && Math.abs(py) < WORLD_PIXEL_SPAN;
 
 /** A pixel's one key over the whole world - a whole number in [0, 2^28), distinct for every pixel of the grid. The
  *  Bay's `y * 1000 + x` is not it (that is MapsFile's pixel id, a MapId's low 20 bits, and stays theirs).
@@ -62,12 +63,15 @@ export const BAY_THEATRE = 0;
  *  (world/tamriel/tamrielLand.js: 1..8 the races, 9 the Imperial Province). */
 export const THEATRE_COUNT = 10;
 /** Each theatre's key: the Bay's, then the provinces' (world/tamriel/tamrielLand.js PROVINCE_OF_ID). */
-export const THEATRE_KEYS = Object.freeze(['IliacBay', ...Array.from({ length: THEATRE_COUNT - 1 }, (_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)])]);
+export const THEATRE_KEYS = Object.freeze([
+  'IliacBay',
+  ...Array.from({ length: THEATRE_COUNT - 1 }, (_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)]),
+]);
 const THEATRE_OF_PROVINCE = new Map(THEATRE_KEYS.map((k, t) => [k, t]));
 
 /** A theatre past the Bay's name, as a player reads it: its province's ("Skyrim"); the Bay's own names are its regions'
  *  (none here). @param {number} t */
-export const theatreName = (t) => (t === BAY_THEATRE ? '' : provinceByKey(THEATRE_KEYS[t])?.name ?? '');
+export const theatreName = (t) => (t === BAY_THEATRE ? '' : (provinceByKey(THEATRE_KEYS[t])?.name ?? ''));
 
 /** The theatre a pixel stands in: the Bay's on the Bay's own map, else the province the picture (or the authored
  *  shape, untraced) puts the pixel's centre in; -1 at sea past the Bay and off the continent.
@@ -76,13 +80,13 @@ export function theatreAt(px, py) {
   if (inBay(px, py)) return BAY_THEATRE;
   const [x, y] = bayToPicture(px + 0.5, py + 0.5);
   const key = provinceKeyAt(x, y);
-  return key == null ? -1 : THEATRE_OF_PROVINCE.get(key) ?? -1;
+  return key == null ? -1 : (THEATRE_OF_PROVINCE.get(key) ?? -1);
 }
 
 // ═══ THE AREAS ═══════════════════════════════════════════════════════
 
 /** The Bay's areas are its regions, 0..61 (MapsFile's REGION_NAMES). */
-export const BAY_AREA_COUNT = BAY_REGION_COUNT;   // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area
+export const BAY_AREA_COUNT = BAY_REGION_COUNT; // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area
 /** Past the Bay a province is cut into DISTRICTS on a square of this many pixels (in the Bay's own coordinates, so a
  *  district never moves with the picture's fit) - about a Bay region's size: the Bay's 62 regions share its 500,000
  *  pixels, some 8,000 each, and a district is 9,216. A province the size of Skyrim is then a few dozen areas, as the
@@ -97,17 +101,33 @@ const THEATRE_SLOTS = 16;
 export const AREA_COUNT = BAY_AREA_COUNT + THEATRE_SLOTS * DISTRICTS_ACROSS * DISTRICTS_ACROSS;
 
 /** The district a pixel stands in, [cx, cy] on the districts' grid. @param {number} px @param {number} py */
-export const districtOf = (px, py) => [Math.floor((px + WORLD_PIXEL_SPAN) / DISTRICT_PX), Math.floor((py + WORLD_PIXEL_SPAN) / DISTRICT_PX)];
+export const districtOf = (px, py) => [
+  Math.floor((px + WORLD_PIXEL_SPAN) / DISTRICT_PX),
+  Math.floor((py + WORLD_PIXEL_SPAN) / DISTRICT_PX),
+];
 
 /** The area of a province's part of a district (theatre 1..9, a district's [cx, cy]); -1 for the Bay's theatre and none.
  *  @param {number} t @param {number} cx @param {number} cy */
 export function areaOfDistrict(t, cx, cy) {
   if (!Number.isInteger(t) || t <= BAY_THEATRE || t >= THEATRE_COUNT) return -1;
-  if (!Number.isInteger(cx) || !Number.isInteger(cy) || cx < 0 || cy < 0 || cx >= DISTRICTS_ACROSS || cy >= DISTRICTS_ACROSS) return -1;
+  if (
+    !Number.isInteger(cx) ||
+    !Number.isInteger(cy) ||
+    cx < 0 ||
+    cy < 0 ||
+    cx >= DISTRICTS_ACROSS ||
+    cy >= DISTRICTS_ACROSS
+  )
+    return -1;
   return BAY_AREA_COUNT + (t - 1) + THEATRE_SLOTS * (cy * DISTRICTS_ACROSS + cx);
 }
 /** The theatre an area stands in, or -1. @param {number} a */
-export const theatreOfArea = (a) => (!Number.isInteger(a) || a < 0 || a >= AREA_COUNT ? -1 : a < BAY_AREA_COUNT ? BAY_THEATRE : ((a - BAY_AREA_COUNT) % THEATRE_SLOTS) + 1);
+export const theatreOfArea = (a) =>
+  !Number.isInteger(a) || a < 0 || a >= AREA_COUNT
+    ? -1
+    : a < BAY_AREA_COUNT
+      ? BAY_THEATRE
+      : ((a - BAY_AREA_COUNT) % THEATRE_SLOTS) + 1;
 /** A district area's district, [cx, cy]; null for a Bay area and none. @param {number} a */
 export const districtOfArea = (a) => {
   if (theatreOfArea(a) <= BAY_THEATRE) return null;

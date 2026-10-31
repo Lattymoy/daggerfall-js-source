@@ -13,22 +13,29 @@
 // people (the scene passes the tables); the guard crime RESPONSE
 // pends the crime system (they spawn and walk now).
 
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, MobilePerson, spriteRaceOf } from '../../characters/mobile/mobilePerson.js';
+import {
+  PERSON_TEXTURES,
+  PERSON_FACE_RECORDS,
+  NUM_PERSON_FACE_VARIANTS,
+  GUARD_TEXTURE,
+  MobilePerson,
+  spriteRaceOf,
+} from '../../characters/mobile/mobilePerson.js';
 import { NAV_CELL } from '../../world/city/cityNavigation.js';
 import { getNameBank, GENDERS } from '../../characters/nameHelper.js';
-import { personName } from '../../characters/personNames.js';   // REGION-NAMES: a walker named by their people's customs and their region's
-import { folkRace, folkNameBank } from '../../characters/provinceFolk.js';   // PROVINCE-FOLK: past the Bay, each walker one of the province's people
+import { personName } from '../../characters/personNames.js'; // REGION-NAMES: a walker named by their people's customs and their region's
+import { folkRace, folkNameBank } from '../../characters/provinceFolk.js'; // PROVINCE-FOLK: past the Bay, each walker one of the province's people
 
 export const POP_TICKS_PER_SECOND = 10;
-export const POP_PER_16_BLOCKS = 24;           // populationIndexPer16Blocks
-export const POP_SPAWN_RADIUS = 96;            // navGridSpawnRadius (cells)
-export const POP_RECYCLE_DISTANCE = 150;       // recycleDistance
-export const POP_VISIBLE_RANGE = 120;          // allowVisiblePopRange
+export const POP_PER_16_BLOCKS = 24; // populationIndexPer16Blocks
+export const POP_SPAWN_RADIUS = 96; // navGridSpawnRadius (cells)
+export const POP_RECYCLE_DISTANCE = 150; // recycleDistance
+export const POP_VISIBLE_RANGE = 120; // allowVisiblePopRange
 export const POP_MAX_SEEKS = 4;
 // maxPlayerDistanceOutsideRect: 2500 classic units past the location
 // rect - beyond it no spawns happen at all (audit 2026-08-17).
-export const POP_SPAWN_RANGE_OUTSIDE_RECT = 2500 * 0.025;   // 62.5
-export const GUARD_CHANCE_DENOM = 32;          // Random.Range(0,32) == 0 -> a guard
+export const POP_SPAWN_RANGE_OUTSIDE_RECT = 2500 * 0.025; // 62.5
+export const GUARD_CHANCE_DENOM = 32; // Random.Range(0,32) == 0 -> a guard
 
 export function maxPopulationFor(totalBlocks) {
   return Math.max(1, Math.min(4, Math.floor(totalBlocks / 16))) * POP_PER_16_BLOCKS;
@@ -48,7 +55,20 @@ export class TownPopulation {
    * @param opts { totalBlocks, race, makePerson(archive, guard) ->
    *   MobilePerson (the scene owns textures/collider/ground), rand }
    */
-  constructor(nav, { totalBlocks, race = 'Breton', nameBank = null, folk = null, region = -1, home = null, makePerson, rand = Math.random, suppressSpawns = () => false } = {}) {
+  constructor(
+    nav,
+    {
+      totalBlocks,
+      race = 'Breton',
+      nameBank = null,
+      folk = null,
+      region = -1,
+      home = null,
+      makePerson,
+      rand = Math.random,
+      suppressSpawns = () => false,
+    } = {},
+  ) {
     // V4: PopulationManager.cs:174-176 - a racial override can
     // suppress population (the transformed lycanthrope); the gate
     // holds the PROMOTE arm (:186-191), so pending walkers wait and
@@ -61,12 +81,12 @@ export class TownPopulation {
     // billboard race (the climate's, or REGIONAL-FOLK's Redguard region's -
     // characters/mobile/mobilePerson.js walkerRace); null falls back to the race bank.
     this.nameBank = nameBank;
-    this.folk = folk;   // PROVINCE-FOLK: the province's people past the Bay (characters/provinceFolk.js), null on the Bay
-    this.where = { region, home };   // REGION-NAMES: the town's region and whose people, for its walkers' names
+    this.folk = folk; // PROVINCE-FOLK: the province's people past the Bay (characters/provinceFolk.js), null on the Bay
+    this.where = { region, home }; // REGION-NAMES: the town's region and whose people, for its walkers' names
     this.makePerson = makePerson;
     this.rand = rand;
     this.maxPopulation = maxPopulationFor(totalBlocks);
-    this.pool = [];   // { person, active, scheduleEnable, scheduleRecycle, visible }
+    this.pool = []; // { person, active, scheduleEnable, scheduleRecycle, visible }
     this._timer = 0;
   }
 
@@ -76,7 +96,13 @@ export class TownPopulation {
     // Pool items are IDENTITY-LESS shells; RandomiseNPC rolls at every
     // spawn (audit 2026-08-17 - recycled walkers come back as someone
     // else, and 1/32 of them as guards).
-    const item = { person: this.makePerson(GUARD_TEXTURE, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false };
+    const item = {
+      person: this.makePerson(GUARD_TEXTURE, false),
+      active: false,
+      scheduleEnable: false,
+      scheduleRecycle: false,
+      visible: false,
+    };
     this.pool.push(item);
     return item;
   }
@@ -103,13 +129,13 @@ export class TownPopulation {
       person.setIdentity(GUARD_TEXTURE, true);
       person.gender = GENDERS.Male;
       person.nameNPC = personName(bank, GENDERS.Male, { race: own ?? this.race, ...this.where });
-      this._setFaceRecord(person, GENDERS.Male, 0, sprite);   // the guard arm is personOutfitVariant 0 (:147-149)
+      this._setFaceRecord(person, GENDERS.Male, 0, sprite); // the guard arm is personOutfitVariant 0 (:147-149)
       return;
     }
     const tables = PERSON_TEXTURES[sprite] ?? PERSON_TEXTURES.Breton;
     const female = Math.floor(this.rand() * 2) === 1;
     const genderTable = female ? tables.female : tables.male;
-    const variant = Math.floor(this.rand() * genderTable.length);   // personOutfitVariant
+    const variant = Math.floor(this.rand() * genderTable.length); // personOutfitVariant
     person.setIdentity(genderTable[variant], false);
     person.gender = female ? GENDERS.Female : GENDERS.Male;
     person.nameNPC = personName(bank, person.gender, { race: own ?? this.race, ...this.where });
@@ -140,15 +166,17 @@ export class TownPopulation {
     // navgrid extent in the pool's frame.
     const m = POP_SPAWN_RANGE_OUTSIDE_RECT;
     const inRange =
-      playerPos[0] >= -m && playerPos[0] <= this.nav.width * NAV_CELL + m &&
-      playerPos[2] >= -m && playerPos[2] <= this.nav.height * NAV_CELL + m;
+      playerPos[0] >= -m &&
+      playerPos[0] <= this.nav.width * NAV_CELL + m &&
+      playerPos[2] >= -m &&
+      playerPos[2] <= this.nav.height * NAV_CELL + m;
     if (inRange) {
       const [pgx, pgy] = this.nav.worldToNav(playerPos[0], playerPos[2]);
       const item = this._freeItem();
       if (item) {
         const spawn = this.nav.getRandomSpawnPosition(pgx, pgy, POP_SPAWN_RADIUS, 10, this.rand);
         if (spawn) {
-          this._randomiseNPC(item.person);   // identity re-rolls EVERY spawn
+          this._randomiseNPC(item.person); // identity re-rolls EVERY spawn
           item.person.place(spawn[0], spawn[1]);
           item.active = true;
           item.scheduleEnable = true;
@@ -159,14 +187,21 @@ export class TownPopulation {
     // Promote/recycle
     for (const it of this.pool) {
       if (!it.active) continue;
-      const dx = it.person.pos[0] - playerPos[0], dz = it.person.pos[2] - playerPos[2];
+      const dx = it.person.pos[0] - playerPos[0],
+        dz = it.person.pos[2] - playerPos[2];
       const dist = Math.hypot(dx, it.person.pos[1] - playerPos[1], dz);
       const allowChange = popAllowChange(dx, dz, viewYaw, dist);
-      if (it.scheduleEnable && allowChange && isDay && !this.suppressSpawns()) { it.scheduleEnable = false; it.visible = true; }   // V4: SuppressPopulationSpawns holds the promote
+      if (it.scheduleEnable && allowChange && isDay && !this.suppressSpawns()) {
+        it.scheduleEnable = false;
+        it.visible = true;
+      } // V4: SuppressPopulationSpawns holds the promote
       if (it.person.seekCount > POP_MAX_SEEKS || dist > POP_RECYCLE_DISTANCE || !isDay) it.scheduleRecycle = true;
       if (it.scheduleRecycle && allowChange) {
         it.person.release();
-        it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;
+        it.active = false;
+        it.scheduleEnable = false;
+        it.scheduleRecycle = false;
+        it.visible = false;
       }
     }
   }
@@ -180,7 +215,10 @@ export class TownPopulation {
     for (const it of this.pool) {
       if (it.person !== person) continue;
       if (it.active) it.person.release();
-      it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;
+      it.active = false;
+      it.scheduleEnable = false;
+      it.scheduleRecycle = false;
+      it.visible = false;
       return true;
     }
     return false;
@@ -203,15 +241,16 @@ export class TownPopulation {
     // rather than rebuilt. The caller walks it within the frame and
     // keeps nothing, so a new array and a new row per visible person
     // per frame bought nothing.
-    const out = this._live ??= [];
+    const out = (this._live ??= []);
     out.length = 0;
-    const seats = this._rows ??= [];
+    const seats = (this._rows ??= []);
     for (const it of this.pool) {
       if (!it.active || !it.visible) continue;
       const frameOut = it.person.update(dt, cameraPos, wantsToStopFn(it.person));
       if (it.person.moveCount > 0) {
-        const seat = seats[out.length] ??= { person: null, out: null };
-        seat.person = it.person; seat.out = frameOut;
+        const seat = (seats[out.length] ??= { person: null, out: null });
+        seat.person = it.person;
+        seat.out = frameOut;
         out.push(seat);
       }
     }

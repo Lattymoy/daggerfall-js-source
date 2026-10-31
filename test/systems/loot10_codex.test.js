@@ -82,8 +82,8 @@ test('LOOT10: how a find is seen - at the take, at the round\'s sweep (the pack 
   equipItem(e, worn);   // worn, and on the table alone - the sweep reads what it wears too
   const s = heard(() => assert.equal(CX.sweepCodex(e), 2));
   assert.equal(s.lines.length, 2, 'each said');
-  assert.match(read('src/systems/loot/lootCodex.js'), /registerMagicRoundHook\(CODEX, \(entity\) => \{ if \(entity\?\.isPlayer\) sweepCodex\(entity\); \}\);/, 'the round sweeps the player\'s own');
-  assert.match(read('src/systems/loot/lootCodex.js'), /registerTakeListener\(CODEX, \(item\) => \{ noteFind\(item\); \}\);/);
+  assert.match(read('src/systems/loot/lootCodex.js'), /registerMagicRoundHook\(CODEX, \(entity\) => \{\n\s*if \(entity\?\.isPlayer\) sweepCodex\(entity\);\n\s*\}\);/, 'the round sweeps the player\'s own');
+  assert.match(read('src/systems/loot/lootCodex.js'), /registerTakeListener\(CODEX, \(item\) => \{\n\s*noteFind\(item\);\n\s*\}\);/);
   // a save from before the codex: what was carried is the codex's, and nothing is announced
   restoreModSaveRecords({});
   const q = heard(() => assert.equal(CX.sweepCodex({ isPlayer: true, items: [legend('worms-tooth')] }), 1));

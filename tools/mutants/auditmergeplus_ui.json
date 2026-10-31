@@ -101,8 +101,8 @@
   {
     "name": "MERGE-PLUS-D4-the-blood-edge-before-the-stone",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }\n${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }\n",
-    "new": "${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }\n${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }\n",
+    "old": "${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }\n${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }",
+    "new": "${list(r.warn, ':active:not(:disabled)')} { border-color: ${BLOOD_SUNK}; }\n${list(pressable, ':active:not(:disabled)')} {\n  border-color: ${SUNK}; translate: 1px 1px;\n  box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }",
     "tests": [
       "test/ui/enhanced/auditmergeplus_ui.test.js"
     ]

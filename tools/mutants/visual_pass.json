@@ -38,8 +38,8 @@
   {
     "name": "VISUAL-PASS-the-toes-sheen-on-nothing",
     "file": "src/systems/horse/horseCoats.js",
-    "old": " else if (hsv(src[o], src[o + 1], src[o + 2])[1] < POINT_SAT) sheen[i] = 2;",
-    "new": "",
+    "old": "    else if (hsv(src[o], src[o + 1], src[o + 2])[1] < POINT_SAT) sheen[i] = 2;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "VISUAL-PASS-the-sheen-narrowed",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "return H[0] >= 290 && H[0] < 345 && H[1] >= 0.2; };",
-    "new": "return H[0] >= 330 && H[0] < 345 && H[1] >= 0.2; };",
+    "old": "  return H[0] >= 290 && H[0] < 345 && H[1] >= 0.2;",
+    "new": "  return H[0] >= 330 && H[0] < 345 && H[1] >= 0.2;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]

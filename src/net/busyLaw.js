@@ -33,25 +33,25 @@
 
 /** The reads that stand back while the service is overloaded - route -> its method. */
 export const BUSY_READS = new Map([
-  ['/v1/homes/town', 'POST'],       // a town's homes - the busiest route of the 2026-10-13 hour (88,079 asks)
+  ['/v1/homes/town', 'POST'], // a town's homes - the busiest route of the 2026-10-13 hour (88,079 asks)
   ['/v1/homes/yards/cells', 'POST'], // a town's yard cells
-  ['/v1/homes/layouts', 'POST'],    // every town's kept layout
-  ['/v1/homes/mine', 'POST'],       // the caller's own homes
-  ['/v1/homes/rooms', 'POST'],      // a home's rooms
-  ['/v1/homes/decor', 'POST'],      // a home's pieces
-  ['/v1/prof/pixels', 'POST'],      // a pixel's nodes - the hour's third busiest (29,249 asks)
-  ['/v1/seats/list', 'POST'],       // the seats, from the isolate's kept rows
-  ['/v1/market/vendors', 'POST'],   // a region's traders - VENDOR-BOARD: its kept board written once a version, a write a shed read only defers (market.js vendorBoard)
-  ['/v1/marks/balance', 'POST'],    // the Marks held
-  ['/v1/guilds/invites', 'POST'],   // the invitations waiting
-  ['/v1/realm/lineages', 'POST'],   // the account's lineages
-  ['/v1/realm/unions', 'POST'],     // the account's unions
-  ['/v1/saves', 'GET'],             // the cloud saves' list
-  ['/v1/heartbeat', 'POST'],        // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest
+  ['/v1/homes/layouts', 'POST'], // every town's kept layout
+  ['/v1/homes/mine', 'POST'], // the caller's own homes
+  ['/v1/homes/rooms', 'POST'], // a home's rooms
+  ['/v1/homes/decor', 'POST'], // a home's pieces
+  ['/v1/prof/pixels', 'POST'], // a pixel's nodes - the hour's third busiest (29,249 asks)
+  ['/v1/seats/list', 'POST'], // the seats, from the isolate's kept rows
+  ['/v1/market/vendors', 'POST'], // a region's traders - VENDOR-BOARD: its kept board written once a version, a write a shed read only defers (market.js vendorBoard)
+  ['/v1/marks/balance', 'POST'], // the Marks held
+  ['/v1/guilds/invites', 'POST'], // the invitations waiting
+  ['/v1/realm/lineages', 'POST'], // the account's lineages
+  ['/v1/realm/unions', 'POST'], // the account's unions
+  ['/v1/saves', 'GET'], // the cloud saves' list
+  ['/v1/heartbeat', 'POST'], // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest
   ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART: the day's three, and its pick
-  ['/v1/towns/econ', 'POST'],       // AUDIT TOWN-ECON 2 CLI-8: the towns' shares - a display read every page asks each keeping
-  ['/v1/festival/town', 'POST'],    // WITCH1: a town's Hearth Offerings, asked a minute while the festival is live (scenes/witchesHost.js)
-  ['/v1/hunt/state', 'POST'],       // HUNT-LEAN: a character's hunt, asked on the hunt book's clock (net/huntBook.js)
+  ['/v1/towns/econ', 'POST'], // AUDIT TOWN-ECON 2 CLI-8: the towns' shares - a display read every page asks each keeping
+  ['/v1/festival/town', 'POST'], // WITCH1: a town's Hearth Offerings, asked a minute while the festival is live (scenes/witchesHost.js)
+  ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt, asked on the hunt book's clock (net/huntBook.js)
 ]);
 
 /** Whether a call is one of the reads that stand back. */
@@ -80,7 +80,8 @@ export function busyWaitMs(/** @type {number} */ n, /** @type {number} */ r) {
 
 /** Whether an answer is the service saying it is overloaded: a 503 that says `server` (an overloaded database - SCALE4f -
  *  or its shed) or `queue` (the sign-in line, ADMIT-LINE). A 500 is a fault, not a load, and holds nothing back. */
-export const busyAnswer = (/** @type {number} */ status, /** @type {unknown} */ error) => status === 503 && (error === 'server' || error === 'queue');
+export const busyAnswer = (/** @type {number} */ status, /** @type {unknown} */ error) =>
+  status === 503 && (error === 'server' || error === 'queue');
 
 /** A Retry-After's seconds as a wait (ms) - a whole number of seconds, else none - never past BUSY_MAX_MS. */
 export function retryAfterMs(/** @type {unknown} */ header) {

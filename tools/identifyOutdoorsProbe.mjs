@@ -23,26 +23,38 @@ const server = await createServer({
   server: { port: PORT, strictPort: true, hmr: false, watch: null },
 });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') pageErrors.push(m.text());
+});
 
 const out = { failures: [] };
 const check = (name, ok, detail) => {
   if (!ok) out.failures.push(name);
   console.log(`${ok ? 'ok  ' : 'FAIL'}  ${name}${detail !== undefined ? `  ${JSON.stringify(detail)}` : ''}`);
 };
-const frames = (n = 2) => page.evaluate((k) => new Promise((r) => {
-  let i = 0;
-  const step = () => (++i >= k ? r() : requestAnimationFrame(step));
-  requestAnimationFrame(step);
-}), n);
+const frames = (n = 2) =>
+  page.evaluate(
+    (k) =>
+      new Promise((r) => {
+        let i = 0;
+        const step = () => (++i >= k ? r() : requestAnimationFrame(step));
+        requestAnimationFrame(step);
+      }),
+    n,
+  );
 const shot = async (name) => {
   if (!process.env.SHOTS) return;
-  try { await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, timeout: 120000 }); }
-  catch (e) { console.log(`  [note] screenshot ${name} timed out (${e.name})`); }
+  try {
+    await page.screenshot({ path: `${process.env.SHOTS}/${name}.png`, timeout: 120000 });
+  } catch (e) {
+    console.log(`  [note] screenshot ${name} timed out (${e.name})`);
+  }
 };
 
 // `class=16` skips the chargen wizard. Without it the route boots into
@@ -54,20 +66,27 @@ await page.goto(`http://localhost:${PORT}/play/?shot&play&exterior&time=12:00&cl
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 const kind = () => page.evaluate(() => window.__overlayKind());
-const trade = async () => JSON.parse(await page.evaluate(() => window.__tradeOverlay()) ?? 'null');
+const trade = async () => JSON.parse((await page.evaluate(() => window.__tradeOverlay())) ?? 'null');
 
 // The player is OUTDOORS, which is the whole point.
-check('the probe stands in the street with no window up',
+check(
+  'the probe stands in the street with no window up',
   (await page.evaluate(() => window.__mode?.() ?? 'exterior')) !== 'interior' && (await kind()) === null,
-  { overlay: await kind() });
+  { overlay: await kind() },
+);
 
 // An unidentified magic item to work on, minted through the real
 // enchanted-item shape the trade window's Identify mode filters for.
 const staged = await page.evaluate(async () => {
   const e = window.__playerEntity;
   const item = {
-    group: 'Weapons', templateIndex: 120, name: 'Longsword', material: 1,
-    maxCondition: 1200, currentCondition: 1200, value: 90,
+    group: 'Weapons',
+    templateIndex: 120,
+    name: 'Longsword',
+    material: 1,
+    maxCondition: 1200,
+    currentCondition: 1200,
+    value: 90,
     enchantments: [{ type: 0, param: 1 }],
   };
   (e.items ??= []).push(item);
@@ -87,15 +106,22 @@ const cast = await page.evaluate(async () => {
   });
   const mp = window.__playerEntity.magicka;
   const r = window.__combat.applySpellToPlayer(spell, 5);
-  return { mpBefore: mp, mpAfter: window.__playerEntity.magicka,
-    identify: r?.identify ?? null, skipped: r?.skipped ?? null };
+  return {
+    mpBefore: mp,
+    mpAfter: window.__playerEntity.magicka,
+    identify: r?.identify ?? null,
+    skipped: r?.skipped ?? null,
+  };
 });
 await frames(4);
 const k = await kind();
 check('casting Identify OUTDOORS opens a window', k === 'NativeTradeWindow', { overlay: k, ...cast });
 const t = await trade();
-check('and it is the Identify window, on the spell path (not the paid service)',
-  !!t && t.mode === 'Identify' && t.usingIdentifySpell === true, t);
+check(
+  'and it is the Identify window, on the spell path (not the paid service)',
+  !!t && t.mode === 'Identify' && t.usingIdentifySpell === true,
+  t,
+);
 await shot('01-identify-outdoors');
 
 // ...and it WORKS. Stage the item and take the deal, through the
@@ -108,13 +134,22 @@ const done = await page.evaluate(() => {
   // by definition. Find the magic one.
   const listed = JSON.parse(window.__tradeOverlay() ?? 'null')?.localNames ?? [];
   const slot = listed.indexOf('Longsword');
-  window.__tradeSlot('local', slot);       // stage the magic item
+  window.__tradeSlot('local', slot); // stage the magic item
   const staged2 = JSON.parse(window.__tradeOverlay() ?? 'null');
-  return { before, slot, listed, stagedRemote: staged2?.remote?.length ?? 0,
-    stagedName: staged2?.remote?.[0]?.name ?? null, enabled: staged2?.cost?.modeActionEnabled ?? null };
+  return {
+    before,
+    slot,
+    listed,
+    stagedRemote: staged2?.remote?.length ?? 0,
+    stagedName: staged2?.remote?.[0]?.name ?? null,
+    enabled: staged2?.cost?.modeActionEnabled ?? null,
+  };
 });
-check('the item stages into the Identify list, and the action lights up',
-  done.stagedRemote === 1 && done.enabled === true, done);
+check(
+  'the item stages into the Identify list, and the action lights up',
+  done.stagedRemote === 1 && done.enabled === true,
+  done,
+);
 const finished = await page.evaluate(() => {
   // Enter raises the confirmation box, Y takes the deal - the window's
   // own keyboard path, through the town host's key seam.
@@ -130,8 +165,10 @@ check('and taking it identifies the item', finished.identified === true && finis
 // The effect REFUNDS its own cost before opening the window, and the
 // window charges it back on the Identify click - so the comparison is
 // against the post-refund reading, not the pre-cast one.
-check('the spell spent its magicka once, on the deal',
-  finished.magicka < done.before, { ...finished, postRefund: done.before });
+check('the spell spent its magicka once, on the deal', finished.magicka < done.before, {
+  ...finished,
+  postRefund: done.before,
+});
 
 // The window closes into the slot it came from, leaving nothing behind.
 await page.evaluate(() => window.__tradeClick('exit'));
@@ -144,7 +181,8 @@ await shot('02-identify-closed');
 // TRAPS". An environment fact, named rather than silently filtered.
 const BENIGN = /\/arena2\/CURSOR\.IMG|Failed to load resource/;
 const realErrors = pageErrors.filter((e) => !BENIGN.test(e));
-if (realErrors.length !== pageErrors.length) console.log('  [note] CURSOR.IMG is absent from this ARENA2 set; the OS cursor stands in (handled)');
+if (realErrors.length !== pageErrors.length)
+  console.log('  [note] CURSOR.IMG is absent from this ARENA2 set; the OS cursor stands in (handled)');
 check('zero page errors', realErrors.length === 0, { errors: realErrors.slice(0, 4) });
 
 console.log('\n=================================================');

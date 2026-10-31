@@ -32,8 +32,8 @@
   {
     "name": "STE-NOTES-4-condition-not-first",
     "file": "scripts/steNotes.mjs",
-    "old": "COMMANDS.has(steWords(s.replace(CONDITION_RE, ''))[0] ?? '')",
-    "new": "COMMANDS.has(steWords(s)[0] ?? '')",
+    "old": "        const command = COMMANDS.has(steWords(s.replace(CONDITION_RE, ''))[0] ?? '');",
+    "new": "        const command = COMMANDS.has(steWords(s)[0] ?? '');",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "STE-NOTES-5-unit-a-word",
     "file": "scripts/steNotes.mjs",
-    "old": "if (UNITS.has(bare) && words.length && ",
-    "new": "if (false && UNITS.has(bare) && words.length && ",
+    "old": "    if (UNITS.has(bare) && words.length && /^[±~≈]?\\d[\\d.,]*$/.test(words[words.length - 1])) continue;",
+    "new": "    if (false && UNITS.has(bare) && words.length && /^[±~≈]?\\d[\\d.,]*$/.test(words[words.length - 1])) continue;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "STE-NOTES-6-bold-read",
     "file": "scripts/steNotes.mjs",
-    "old": "    .replace(BOLD_RE, stand)\n",
-    "new": "    .replace(BOLD_RE, (b) => b.replaceAll('*', ''))\n",
+    "old": "    .replace(BOLD_RE, stand)",
+    "new": "    .replace(BOLD_RE, (b) => b.replaceAll('*', ''))",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "STE-NOTES-7-quotes-read",
     "file": "scripts/steNotes.mjs",
-    "old": "    .replace(QUOTED_RE, stand)\n",
-    "new": "",
+    "old": "    .replace(QUOTED_RE, stand)\n    .replace(ENTITY_RE, ' ')",
+    "new": "    .replace(ENTITY_RE, ' ')",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "STE-NOTES-8-code-read",
     "file": "scripts/steNotes.mjs",
-    "old": "    .replace(CODE_RE, stand)\n",
-    "new": "",
+    "old": "    .replace(CODE_RE, stand)\n    .replace(LINK_RE, (m, text) => text ?? '')",
+    "new": "    .replace(LINK_RE, (m, text) => text ?? '')",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "STE-NOTES-9-eg-ends",
     "file": "scripts/steNotes.mjs",
-    "old": "if (sentences.length && NOT_AN_END_RE.test(sentences[sentences.length - 1]))",
-    "new": "if (false)",
+    "old": "    if (sentences.length && NOT_AN_END_RE.test(sentences[sentences.length - 1]))\n      sentences[sentences.length - 1] += ` ${p}`;",
+    "new": "    if (false) sentences[sentences.length - 1] += ` ${p}`;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "STE-NOTES-10-semicolon-blind",
     "file": "scripts/steNotes.mjs",
-    "old": "if (s.includes(';'))",
-    "new": "if (s.includes(';;'))",
+    "old": "      if (s.includes(';')) find('semicolon', `a semicolon - STE uses none, write two sentences: ${q(s)}`);",
+    "new": "      if (s.includes(';;')) find('semicolon', `a semicolon - STE uses none, write two sentences: ${q(s)}`);",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "STE-NOTES-11-head-capital-a-name",
     "file": "scripts/steNotes.mjs",
-    "old": "(heading || i > 0)",
-    "new": "(heading || i >= 0)",
+    "old": "      if (/^\\p{Lu}/u.test(part) && (heading || i > 0)) continue;",
+    "new": "      if (/^\\p{Lu}/u.test(part) && (heading || i >= 0)) continue;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "STE-NOTES-12-heading-capitals-read",
     "file": "scripts/steNotes.mjs",
-    "old": "(heading || i > 0)",
-    "new": "(i > 0)",
+    "old": "      if (/^\\p{Lu}/u.test(part) && (heading || i > 0)) continue;",
+    "new": "      if (/^\\p{Lu}/u.test(part) && i > 0) continue;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "STE-NOTES-13-hyphen-whole",
     "file": "scripts/steNotes.mjs",
-    "old": "word.split('-')",
-    "new": "[word]",
+    "old": "    for (const part of word.split('-')) {",
+    "new": "    for (const part of [word]) {",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "STE-NOTES-14-nouns-read",
     "file": "scripts/steNotes.mjs",
-    "old": "!NOT_A_VERB.has(lower)",
-    "new": "true",
+    "old": "      if (/^[a-z]{2,}ing$/.test(lower) && !NOT_A_VERB.has(lower)) found.push(part);",
+    "new": "      if (/^[a-z]{2,}ing$/.test(lower) && true) found.push(part);",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "STE-NOTES-15-curly-apostrophe",
     "file": "scripts/steNotes.mjs",
-    "old": "n['’]t\\b",
-    "new": "n[']t\\b",
+    "old": "  /\\b[a-z]+n['’]t\\b|\\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’](?:s|re|ll|ve|d|m)\\b/gi;",
+    "new": "  /\\b[a-z]+n[']t\\b|\\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’](?:s|re|ll|ve|d|m)\\b/gi;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "STE-NOTES-16-possessive-a-contraction",
     "file": "scripts/steNotes.mjs",
-    "old": "\\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’]",
-    "new": "\\b[a-z]+['’]",
+    "old": "const CONTRACTION_RE =\n  /\\b[a-z]+n['’]t\\b|\\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’](?:s|re|ll|ve|d|m)\\b/gi;",
+    "new": "const CONTRACTION_RE = /\\b[a-z]+n['’]t\\b|\\b[a-z]+['’](?:s|re|ll|ve|d|m)\\b/gi;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "STE-NOTES-17-regular-unread",
     "file": "scripts/steNotes.mjs",
-    "old": "(?![-\\\\w])|${REGULAR})",
-    "new": "(?![-\\\\w]))",
+    "old": "  `\\\\b(?:has|have|had)\\\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\\\s+)*(?:(?:${IRREGULAR})(?![-\\\\w])|${REGULAR})`,",
+    "new": "  `\\\\b(?:has|have|had)\\\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\\\s+)*(?:(?:${IRREGULAR})(?![-\\\\w]))`,",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "STE-NOTES-18-adjective-a-verb",
     "file": "scripts/steNotes.mjs",
-    "old": "[a-z]{2,}ed(?=\\\\s*$|",
-    "new": "[a-z]{2,}ed(?=|",
+    "old": "  '(?!(?:speed|need|seed|feed|steed|deed|creed|greed|weed|bed|red|shed|sled|hundred|sacred|kindred|naked|wicked|rugged|ragged|jagged|crooked|beloved)\\\\b)[a-z]{2,}ed(?=\\\\s*$|\\\\s*[.,;:!?)]|\\\\s+(?:the|a|an|your|my|our|their|its|his|her|to|in|on|at|with|for|from|by|it|them|him|us|you|this|that|these|those|some|all|every|each|more|up|out|back|away|down|over|off|into|onto)\\\\b)';",
+    "new": "  '(?!(?:speed|need|seed|feed|steed|deed|creed|greed|weed|bed|red|shed|sled|hundred|sacred|kindred|naked|wicked|rugged|ragged|jagged|crooked|beloved)\\\\b)[a-z]{2,}ed(?=|\\\\s*[.,;:!?)]|\\\\s+(?:the|a|an|your|my|our|their|its|his|her|to|in|on|at|with|for|from|by|it|them|him|us|you|this|that|these|those|some|all|every|each|more|up|out|back|away|down|over|off|into|onto)\\\\b)';",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "STE-NOTES-19-hit-points",
     "file": "scripts/steNotes.mjs",
-    "old": "const IRREGULAR = 'been|",
-    "new": "const IRREGULAR = 'hit|been|",
+    "old": "  'been|gone|done|made|taken|given|seen|come|become|got|gotten|found|left|kept|lost|won|held|brought|built|bought|sold|fought|caught|taught|thought|told|said|paid|put|shot|struck|known|shown|grown|thrown|drawn|chosen|spoken|stolen|written|ridden|risen|fallen|forgotten|beaten|eaten|begun|sunk|flown|meant|sent|spent|felt|dealt|swept|read|led|fled|met|slid|stuck|spun|hung|dug|swung';",
+    "new": "  'hit|been|gone|done|made|taken|given|seen|come|become|got|gotten|found|left|kept|lost|won|held|brought|built|bought|sold|fought|caught|taught|thought|told|said|paid|put|shot|struck|known|shown|grown|thrown|drawn|chosen|spoken|stolen|written|ridden|risen|fallen|forgotten|beaten|eaten|begun|sunk|flown|meant|sent|spent|felt|dealt|swept|read|led|fled|met|slid|stuck|spun|hung|dug|swung';",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "STE-NOTES-20-built-in",
     "file": "scripts/steNotes.mjs",
-    "old": "(?![-\\\\w])",
-    "new": "(?!\\\\w)",
+    "old": "  `\\\\b(?:has|have|had)\\\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\\\s+)*(?:(?:${IRREGULAR})(?![-\\\\w])|${REGULAR})`,",
+    "new": "  `\\\\b(?:has|have|had)\\\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\\\s+)*(?:(?:${IRREGULAR})(?!\\\\w)|${REGULAR})`,",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "STE-NOTES-21-whole-description",
     "file": "scripts/steNotes.mjs",
-    "old": "const notes = patchNotesOf(description);",
-    "new": "const notes = String(description ?? '');",
+    "old": "  const notes = patchNotesOf(description);",
+    "new": "  const notes = String(description ?? '');",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "STE-NOTES-22-items-run-on",
     "file": "scripts/steNotes.mjs",
-    "old": "    if (item) {\n",
-    "new": "    if (item && !open) {\n",
+    "old": "    if (item) {",
+    "new": "    if (item && !open) {",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -222,7 +222,7 @@
   {
     "name": "STE-NOTES-23-blank-joins",
     "file": "scripts/steNotes.mjs",
-    "old": "    if (!line.trim()) { close(); continue; }",
+    "old": "    if (!line.trim()) {\n      close();\n      continue;\n    }",
     "new": "    if (!line.trim()) continue;",
     "tests": [
       "test/tooling/ste_notes.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "STE-NOTES-25-fence-read",
     "file": "scripts/steNotes.mjs",
-    "old": "    if (fence) { if (fence.test(line)) fence = null; continue; }",
-    "new": "    if (fence) { if (fence.test(line)) fence = null; }",
+    "old": "      if (fence.test(line)) fence = null;\n      continue;\n    }",
+    "new": "      if (fence.test(line)) fence = null;\n    }",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "STE-NOTES-26-quote-unnamed",
     "file": "scripts/steNotes.mjs",
-    "old": "names[Number(i)]",
-    "new": "'…'",
+    "old": "  const t = s.replace(NAME_RE, (m, i) => names[Number(i)]);",
+    "new": "  const t = s.replace(NAME_RE, (m, i) => '…');",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "STE-NOTES-27-exit-0",
     "file": "scripts/steNotes.mjs",
-    "old": "  for (const f of findings) console.log(`- ${f.message}`);\n  return 1;",
-    "new": "  for (const f of findings) console.log(`- ${f.message}`);\n  return 0;",
+    "old": "  return 1;",
+    "new": "  return 0;",
     "tests": [
       "test/tooling/ste_notes.test.js"
     ],

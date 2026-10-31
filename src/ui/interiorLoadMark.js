@@ -36,7 +36,11 @@ function dock() {
 
 function paint() {
   if (typeof document === 'undefined') return;
-  if (!on) { node?.remove(); node = null; return; }
+  if (!on) {
+    node?.remove();
+    node = null;
+    return;
+  }
   styleOnce();
   if (!node) {
     node = document.createElement('div');
@@ -72,10 +76,19 @@ function asideTo(next) {
  *  hides it at once and leaves the full screen aside until the frame ends that hold. */
 export function markInteriorLoad(next) {
   on = !!next;
-  if (arm) { clearTimeout(arm); arm = null; }
-  if (!on) { paint(); return on; }
+  if (arm) {
+    clearTimeout(arm);
+    arm = null;
+  }
+  if (!on) {
+    paint();
+    return on;
+  }
   asideTo(true);
-  arm = setTimeout(() => { arm = null; if (on) paint(); }, APPEAR_MS);
+  arm = setTimeout(() => {
+    arm = null;
+    if (on) paint();
+  }, APPEAR_MS);
   return on;
 }
 
@@ -88,7 +101,10 @@ export function markInteriorLoad(next) {
 export function syncInteriorLoad(transitioning) {
   if (!transitioning && on) {
     on = false;
-    if (arm) { clearTimeout(arm); arm = null; }
+    if (arm) {
+      clearTimeout(arm);
+      arm = null;
+    }
     paint();
   }
   asideTo(transitioning && on);

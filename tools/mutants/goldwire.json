@@ -12,8 +12,8 @@
   {
     "name": "GOLD-WIRE-mark-interior-off",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "    markRoomCarried(t.items);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in\n",
-    "new": "",
+    "old": "    markRoomCarried(t.items); // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in\n    t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g); // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)",
+    "new": "    t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g); // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)",
     "tests": [
       "test/systems/loot/goldwire.test.js"
     ],

@@ -73,7 +73,10 @@ export const syntheticTimeIncrease = () => _synthetic;
  * @returns {boolean} whether this window is synthetic
  */
 export function claimSyntheticTimeIncrease() {
-  if (_claimed) { _synthetic = false; _claimed = false; }
+  if (_claimed) {
+    _synthetic = false;
+    _claimed = false;
+  }
   if (_synthetic) _claimed = true;
   return _synthetic;
 }

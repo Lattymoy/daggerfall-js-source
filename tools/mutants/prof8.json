@@ -97,8 +97,8 @@
   {
     "name": "PROF8-wait-no-hours",
     "file": "src/net/professionLaw.js",
-    "old": "(hour === 7 || hour === 17 ? 0.5 : 1)",
-    "new": "1",
+    "old": "export const waitMult = (hour, storm = false) => (hour === 7 || hour === 17 ? 0.5 : 1) * (storm ? 2 : 1);",
+    "new": "export const waitMult = (hour, storm = false) => 1 * (storm ? 2 : 1);",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -107,8 +107,8 @@
   {
     "name": "PROF8-angler-plain",
     "file": "src/net/professionLaw.js",
-    "old": "FISH_ACT.tugS * (angler ? FISH_ACT.angler : 1)",
-    "new": "FISH_ACT.tugS",
+    "old": "export const tugWindow = (angler = false) => FISH_ACT.tugS * (angler ? FISH_ACT.angler : 1);",
+    "new": "export const tugWindow = (angler = false) => FISH_ACT.tugS;",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "PROF8-act-held-is-a-press",
     "file": "src/systems/fishAct.js",
-    "old": "  const pressed = attack || (held && !st.wasHeld);",
-    "new": "  const pressed = attack || held;",
+    "old": "      const pressed = attack || (held && !st.wasHeld); // an edge of E, or of attack",
+    "new": "      const pressed = attack || held; // an edge of E, or of attack",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "PROF8-act-never-slips",
     "file": "src/systems/fishAct.js",
-    "old": "      else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);\n",
-    "new": "",
+    "old": "      else st.slip = Math.min(1, st.slip + step / FISH_ACT.slipS);\n      if (st.fill >= 1) land(true);",
+    "new": "      if (st.fill >= 1) land(true);",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "PROF8-act-gentle-tugs",
     "file": "src/systems/fishAct.js",
-    "old": "          if (gentle) { land(false); return st; }   // no moment: the net comes in plain\n",
-    "new": "",
+    "old": "          if (gentle) {\n            land(false);\n            return st;\n          } // no moment: the net comes in plain\n          st.phase = 'tug';",
+    "new": "          st.phase = 'tug';",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "PROF8-kind-one-key",
     "file": "src/scenes/fishHost.js",
-    "old": "cast.day !== day || book.taken(cast.key, 'fish') || book.counting(cast.key, 'fish')) {",
-    "new": "cast.day !== day) {",
+    "old": "    if (\n      !cast ||\n      cast.x !== px.x ||\n      cast.y !== px.y ||\n      cast.day !== day ||\n      book.taken(cast.key, 'fish') ||\n      book.counting(cast.key, 'fish')\n    ) {",
+    "new": "    if (!cast || cast.x !== px.x || cast.y !== px.y || cast.day !== day) {",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "PROF8-kind-school-anywhere",
     "file": "src/scenes/fishHost.js",
-    "old": "if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return",
-    "new": "if (Math.hypot(s.x - at[0], s.z - at[1]) >= 0) return",
+    "old": "    for (const s of schoolPlaces())\n      if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return /** @type {0|1} */ (s.k);",
+    "new": "    for (const s of schoolPlaces()) if (Math.hypot(s.x - at[0], s.z - at[1]) >= 0) return /** @type {0|1} */ (s.k);",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "PROF8-schools-on-land",
     "file": "src/scenes/fishHost.js",
-    "old": "      if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;\n",
-    "new": "",
+    "old": "      if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;\n      const x = (tx + 0.5) * scale,",
+    "new": "      const x = (tx + 0.5) * scale,",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "PROF8-kind-foraging-unasked",
     "file": "src/scenes/fishHost.js",
-    "old": "      const refusal = foragingActRefusal(FT.FishingNet);\n      if (refusal) return { refused: refusal };\n",
-    "new": "",
+    "old": "      const refusal = foragingActRefusal(FT.FishingNet);\n      if (refusal) return { refused: refusal };\n      const g = host.ground();",
+    "new": "      const g = host.ground();",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "PROF8-act-tug-unfelt",
     "file": "src/systems/fishAct.js",
-    "old": "          try { onTug?.(); } catch { /* the host's own */ }\n",
-    "new": "",
+    "old": "          try {\n            onTug?.();\n          } catch {\n            /* the host's own */\n          }\n        }",
+    "new": "        }",
     "tests": [
       "test/world/terrain/prof8_client.test.js"
     ]

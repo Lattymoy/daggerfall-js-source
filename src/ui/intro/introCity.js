@@ -11,17 +11,46 @@
 // (imperialTree). Pure: built in the intro's worker (introBuildWorker.js), or here on a page without one.
 // The merge of main into TESA (2026-10-27): the city the film was shot on, kept as shot (./set/ - the game's grew to
 // IC-GRAND's twenty-five pixels and retired the Colosseum)
-import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';
 import {
-  buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne,
-  buildTalosStatue, buildNineDivines, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge,
+  IMPERIAL,
+  IMPERIAL_CELLS,
+  IMPERIAL_CITY_PLAN,
+  imperialDistrictAt,
+  imperialTile,
+  imperialTree,
+} from './set/imperialCity.js';
+import {
+  buildImperialTower,
+  buildPalaceWall,
+  buildEmperorsTombs,
+  buildCityWall,
+  buildDistrictWalls,
+  buildColosseum,
+  buildTempleOfTheOne,
+  buildTalosStatue,
+  buildNineDivines,
+  buildImperialPrison,
+  buildArcaneUniversity,
+  buildWaterfront,
+  buildTalosBridge,
 } from './set/capitalImperial.js';
 import { BLOCK_M, hash32 } from '../../world/spawnedDungeons.js';
 
 /** The landmarks, in the order the film's mesh carries them. */
 export const INTRO_LANDMARKS = Object.freeze([
-  buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne,
-  buildTalosStatue, buildNineDivines, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge,
+  buildImperialTower,
+  buildPalaceWall,
+  buildEmperorsTombs,
+  buildCityWall,
+  buildDistrictWalls,
+  buildColosseum,
+  buildTempleOfTheOne,
+  buildTalosStatue,
+  buildNineDivines,
+  buildImperialPrison,
+  buildArcaneUniversity,
+  buildWaterfront,
+  buildTalosBridge,
 ]);
 
 /** The film's salt for its own picks (houses, the woods past the lake). */
@@ -33,12 +62,23 @@ const rand = (a, b, c) => hash32(SALT, a | 0, b | 0, c | 0) / 4294967296;
  *  CAPITAL_ART), which the film's shader paints as that material. */
 export function buildIntroLandmarks(builders = INTRO_LANDMARKS) {
   const meshes = builders.map((b) => b());
-  let nv = 0, ni = 0;
-  for (const m of meshes) { nv += m.positions.length / 3; ni += m.indices.length; }
-  const positions = new Float32Array(nv * 3), normals = new Float32Array(nv * 3), uvs = new Float32Array(nv * 2), material = new Uint8Array(nv), indices = new Uint32Array(ni);
-  let v = 0, i = 0;
+  let nv = 0,
+    ni = 0;
   for (const m of meshes) {
-    positions.set(m.positions, v * 3); normals.set(m.normals, v * 3); uvs.set(m.uvs, v * 2);
+    nv += m.positions.length / 3;
+    ni += m.indices.length;
+  }
+  const positions = new Float32Array(nv * 3),
+    normals = new Float32Array(nv * 3),
+    uvs = new Float32Array(nv * 2),
+    material = new Uint8Array(nv),
+    indices = new Uint32Array(ni);
+  let v = 0,
+    i = 0;
+  for (const m of meshes) {
+    positions.set(m.positions, v * 3);
+    normals.set(m.normals, v * 3);
+    uvs.set(m.uvs, v * 2);
     for (const s of m.subMeshes) {
       for (let k = 0; k < s.primitiveCount * 3; k++) {
         const vi = m.indices[s.startIndex + k];
@@ -46,7 +86,8 @@ export function buildIntroLandmarks(builders = INTRO_LANDMARKS) {
         material[v + vi] = s.textureRecord;
       }
     }
-    v += m.positions.length / 3; i += m.indices.length;
+    v += m.positions.length / 3;
+    i += m.indices.length;
   }
   return { positions, normals, uvs, material, indices };
 }
@@ -65,14 +106,26 @@ export const DISTRICT_LOOK = Object.freeze({
 /** A cell no district names (the isle outside the walls). */
 const ISLE_LOOK = Object.freeze([[172, 162, 142], 4]);
 /** The roofs: terracotta, blue slate, dark slate, verdigris, weathered shingle, the University's slate. */
-export const ROOFS = Object.freeze([[150, 74, 50], [72, 88, 108], [62, 68, 80], [86, 128, 110], [96, 82, 68], [60, 74, 116]]);
+export const ROOFS = Object.freeze([
+  [150, 74, 50],
+  [72, 88, 108],
+  [62, 68, 80],
+  [86, 128, 110],
+  [96, 82, 68],
+  [60, 74, 116],
+]);
 /** A building's shape. */
-export const ROOF_GABLE = 0, ROOF_PYRAMID = 1, ROOF_FLAT = 2;
+export const ROOF_GABLE = 0,
+  ROOF_PYRAMID = 1,
+  ROOF_FLAT = 2;
 
 /** Floats a building carries: (x, z, w, d), (h, roof h, turned, seed), (wall r, g, b, roof index, roof kind, kind). */
 export const BUILDING_FLOATS = 14;
 /** The kinds of house the film stands: a house, a shop or tavern, a hall (a temple, a guild, a bank), a tower. */
-export const HOUSE = 0, SHOP = 1, HALL = 2, TOWER = 3;
+export const HOUSE = 0,
+  SHOP = 1,
+  HALL = 2,
+  TOWER = 3;
 /** Each of Daggerfall's block kinds as the houses the film stands for it - its great building (none for a street of
  *  houses) and how tall its houses run. */
 const TRADE = Object.freeze({
@@ -102,41 +155,100 @@ const cellCorner = (r, c) => [(c - IMPERIAL_CELLS / 2) * BLOCK_M, (r - IMPERIAL_
  * gardens: [x, z][] } - deterministic in the plan.
  */
 export function buildIntroDistricts(plan = IMPERIAL_CITY_PLAN) {
-  const out = [], gardens = [];
+  const out = [],
+    gardens = [];
   const push = (x, z, w, d, h, roofH, turned, seed, look, roofKind, kind) => {
     // a roof in four of the district's own, the rest weathered shingle or slate
     const roof = seed < 0.18 ? 4 : seed > 0.9 ? 2 : look[1];
-    out.push(x, z, w, d, h, roofH, turned, seed, look[0][0] / 255, look[0][1] / 255, look[0][2] / 255, roof, roofKind, kind);
+    out.push(
+      x,
+      z,
+      w,
+      d,
+      h,
+      roofH,
+      turned,
+      seed,
+      look[0][0] / 255,
+      look[0][1] / 255,
+      look[0][2] / 255,
+      roof,
+      roofKind,
+      kind,
+    );
   };
-  for (let r = 0; r < plan.length; r++) for (let c = 0; c < plan[r].length; c++) {
-    const cell = plan[r][c];
-    if (cell === 'L' || cell === 'O' || /^I/.test(cell)) continue;
-    const [x0, z0] = cellCorner(r, c);
-    if (cell === 'G') { gardens.push([x0, z0]); continue; }
-    const trade = TRADE[cell] ?? TRADE.RESI;
-    const look = DISTRICT_LOOK[imperialDistrictAt(x0 + BLOCK_M / 2, z0 + BLOCK_M / 2) ?? ''] ?? ISLE_LOOK;
-    const street = 6, inner = BLOCK_M - street * 2, n = 3, lot = inner / n;
-    for (let ly = 0; ly < n; ly++) for (let lx = 0; lx < n; lx++) {
-      const k = ly * n + lx, seed = rand(r * 64 + c, k, 1);
-      const cx = x0 + street + (lx + 0.5) * lot, cz = z0 + street + (ly + 0.5) * lot;
-      if (k === 0 && trade.great) {
-        const [kind, gw, gd, gh] = trade.great;
-        // the great building stands across its corner of the cell, turned to its longer street
-        const gx = x0 + street + Math.min(gw, inner) / 2 + 2, gz = z0 + street + Math.min(gd, inner) / 2 + 2;
-        const roofKind = kind === TOWER ? ROOF_PYRAMID : kind === HALL && cell === 'BANK' ? ROOF_FLAT : ROOF_GABLE;
-        push(gx, gz, gw, gd, gh, kind === TOWER ? gw * 1.1 : Math.min(gw, gd) * 0.42, 0, seed, look, roofKind, kind);
-        if (cell === 'TEMP') push(gx + gw / 2 + 5, gz - gd / 2 + 6, 9, 9, 34, 11, 0, rand(r, c, 7), look, ROOF_PYRAMID, TOWER);   // its bell tower
+  for (let r = 0; r < plan.length; r++)
+    for (let c = 0; c < plan[r].length; c++) {
+      const cell = plan[r][c];
+      if (cell === 'L' || cell === 'O' || /^I/.test(cell)) continue;
+      const [x0, z0] = cellCorner(r, c);
+      if (cell === 'G') {
+        gardens.push([x0, z0]);
         continue;
       }
-      if (trade.great && trade.great[1] > lot && ((lx <= 1 && ly <= 1) || (trade.great[2] > lot * 1.6 && lx <= 1 && ly <= 2))) continue;   // under the great one
-      if (seed < 0.1) continue;   // a yard
-      const w = lot * (0.55 + rand(r, c, k * 3) * 0.32), d = lot * (0.55 + rand(r, c, k * 3 + 1) * 0.32);
-      const h = trade.tall[0] + rand(r, c, k * 5) * (trade.tall[1] - trade.tall[0]);
-      const jx = (rand(r, c, k * 7) - 0.5) * (lot - w) * 0.8, jz = (rand(r, c, k * 7 + 1) - 0.5) * (lot - d) * 0.8;
-      const turned = rand(r, c, k * 11) < 0.5 ? 0 : 1;
-      push(cx + jx, cz + jz, w, d, h, Math.min(w, d) * (0.32 + rand(r, c, k * 13) * 0.14), turned, seed, look, ROOF_GABLE, seed < 0.35 ? SHOP : HOUSE);
+      const trade = TRADE[cell] ?? TRADE.RESI;
+      const look = DISTRICT_LOOK[imperialDistrictAt(x0 + BLOCK_M / 2, z0 + BLOCK_M / 2) ?? ''] ?? ISLE_LOOK;
+      const street = 6,
+        inner = BLOCK_M - street * 2,
+        n = 3,
+        lot = inner / n;
+      for (let ly = 0; ly < n; ly++)
+        for (let lx = 0; lx < n; lx++) {
+          const k = ly * n + lx,
+            seed = rand(r * 64 + c, k, 1);
+          const cx = x0 + street + (lx + 0.5) * lot,
+            cz = z0 + street + (ly + 0.5) * lot;
+          if (k === 0 && trade.great) {
+            const [kind, gw, gd, gh] = trade.great;
+            // the great building stands across its corner of the cell, turned to its longer street
+            const gx = x0 + street + Math.min(gw, inner) / 2 + 2,
+              gz = z0 + street + Math.min(gd, inner) / 2 + 2;
+            const roofKind = kind === TOWER ? ROOF_PYRAMID : kind === HALL && cell === 'BANK' ? ROOF_FLAT : ROOF_GABLE;
+            push(
+              gx,
+              gz,
+              gw,
+              gd,
+              gh,
+              kind === TOWER ? gw * 1.1 : Math.min(gw, gd) * 0.42,
+              0,
+              seed,
+              look,
+              roofKind,
+              kind,
+            );
+            if (cell === 'TEMP')
+              push(gx + gw / 2 + 5, gz - gd / 2 + 6, 9, 9, 34, 11, 0, rand(r, c, 7), look, ROOF_PYRAMID, TOWER); // its bell tower
+            continue;
+          }
+          if (
+            trade.great &&
+            trade.great[1] > lot &&
+            ((lx <= 1 && ly <= 1) || (trade.great[2] > lot * 1.6 && lx <= 1 && ly <= 2))
+          )
+            continue; // under the great one
+          if (seed < 0.1) continue; // a yard
+          const w = lot * (0.55 + rand(r, c, k * 3) * 0.32),
+            d = lot * (0.55 + rand(r, c, k * 3 + 1) * 0.32);
+          const h = trade.tall[0] + rand(r, c, k * 5) * (trade.tall[1] - trade.tall[0]);
+          const jx = (rand(r, c, k * 7) - 0.5) * (lot - w) * 0.8,
+            jz = (rand(r, c, k * 7 + 1) - 0.5) * (lot - d) * 0.8;
+          const turned = rand(r, c, k * 11) < 0.5 ? 0 : 1;
+          push(
+            cx + jx,
+            cz + jz,
+            w,
+            d,
+            h,
+            Math.min(w, d) * (0.32 + rand(r, c, k * 13) * 0.14),
+            turned,
+            seed,
+            look,
+            ROOF_GABLE,
+            seed < 0.35 ? SHOP : HOUSE,
+          );
+        }
     }
-  }
   return { buildings: new Float32Array(out), count: out.length / BUILDING_FLOATS, gardens };
 }
 
@@ -151,30 +263,40 @@ export const WOODS_REACH = 4600;
  * TREE_FLOATS each.
  */
 export function buildIntroTrees(gardens = buildIntroDistricts().gardens, I = IMPERIAL) {
-  const out = [], TILE = 6.4;
+  const out = [],
+    TILE = 6.4;
   const R = I.isle + 20;
-  for (let z = -R; z < R; z += TILE) for (let x = -R; x < R; x += TILE) {
-    if (x * x + z * z > R * R) continue;
-    const cx = x + TILE / 2, cz = z + TILE / 2;
-    if (imperialTree(cx, cz, I) < 0) continue;
-    const s = rand(cx * 10, cz * 10, 3);
-    out.push(cx + (s - 0.5) * 3, cz + (rand(cx, cz, 4) - 0.5) * 3, 9 + s * 9, s);
-  }
-  for (const [x0, z0] of gardens) for (let k = 0; k < 9; k++) {
-    const s = rand(x0, z0, k);
-    out.push(x0 + 10 + rand(x0, z0, k + 20) * (BLOCK_M - 20), z0 + 10 + rand(x0, z0, k + 40) * (BLOCK_M - 20), 10 + s * 8, s);
-  }
+  for (let z = -R; z < R; z += TILE)
+    for (let x = -R; x < R; x += TILE) {
+      if (x * x + z * z > R * R) continue;
+      const cx = x + TILE / 2,
+        cz = z + TILE / 2;
+      if (imperialTree(cx, cz, I) < 0) continue;
+      const s = rand(cx * 10, cz * 10, 3);
+      out.push(cx + (s - 0.5) * 3, cz + (rand(cx, cz, 4) - 0.5) * 3, 9 + s * 9, s);
+    }
+  for (const [x0, z0] of gardens)
+    for (let k = 0; k < 9; k++) {
+      const s = rand(x0, z0, k);
+      out.push(
+        x0 + 10 + rand(x0, z0, k + 20) * (BLOCK_M - 20),
+        z0 + 10 + rand(x0, z0, k + 40) * (BLOCK_M - 20),
+        10 + s * 8,
+        s,
+      );
+    }
   // the woods: groves on the land past the lake, thinning with distance
   const step = 34;
-  for (let z = -WOODS_REACH; z < WOODS_REACH; z += step) for (let x = -WOODS_REACH; x < WOODS_REACH; x += step) {
-    const rr = Math.hypot(x, z);
-    if (rr < I.lake + 40 || rr > WOODS_REACH) continue;
-    const grove = Math.sin(x * 0.0021 + 1.3) * Math.sin(z * 0.0017 - 0.4) + Math.sin((x + z) * 0.0009) * 0.6;
-    const keep = grove > 0.15 ? 0.85 : 0.08;
-    const s = rand(x, z, 9);
-    if (s > keep * (1 - (rr - I.lake) / (WOODS_REACH - I.lake) * 0.5)) continue;
-    out.push(x + (rand(x, z, 10) - 0.5) * step, z + (rand(x, z, 11) - 0.5) * step, 12 + s * 14, s);
-  }
+  for (let z = -WOODS_REACH; z < WOODS_REACH; z += step)
+    for (let x = -WOODS_REACH; x < WOODS_REACH; x += step) {
+      const rr = Math.hypot(x, z);
+      if (rr < I.lake + 40 || rr > WOODS_REACH) continue;
+      const grove = Math.sin(x * 0.0021 + 1.3) * Math.sin(z * 0.0017 - 0.4) + Math.sin((x + z) * 0.0009) * 0.6;
+      const keep = grove > 0.15 ? 0.85 : 0.08;
+      const s = rand(x, z, 9);
+      if (s > keep * (1 - ((rr - I.lake) / (WOODS_REACH - I.lake)) * 0.5)) continue;
+      out.push(x + (rand(x, z, 10) - 0.5) * step, z + (rand(x, z, 11) - 0.5) * step, 12 + s * 14, s);
+    }
   return new Float32Array(out);
 }
 
@@ -183,12 +305,15 @@ export function buildIntroTrees(gardens = buildIntroDistricts().gardens, I = IMP
 export const GROUND_SPAN = 6000;
 export const GROUND_TEXELS = 750;
 export function buildIntroGround(I = IMPERIAL) {
-  const out = new Uint8Array(GROUND_TEXELS * GROUND_TEXELS), m = GROUND_SPAN / GROUND_TEXELS;
-  for (let y = 0; y < GROUND_TEXELS; y++) for (let x = 0; x < GROUND_TEXELS; x++) {
-    const wx = (x + 0.5) * m - GROUND_SPAN / 2, wz = (y + 0.5) * m - GROUND_SPAN / 2;
-    const t = imperialTile(wx, wz, I);
-    out[y * GROUND_TEXELS + x] = t > 3 ? 4 : t;
-  }
+  const out = new Uint8Array(GROUND_TEXELS * GROUND_TEXELS),
+    m = GROUND_SPAN / GROUND_TEXELS;
+  for (let y = 0; y < GROUND_TEXELS; y++)
+    for (let x = 0; x < GROUND_TEXELS; x++) {
+      const wx = (x + 0.5) * m - GROUND_SPAN / 2,
+        wz = (y + 0.5) * m - GROUND_SPAN / 2;
+      const t = imperialTile(wx, wz, I);
+      out[y * GROUND_TEXELS + x] = t > 3 ? 4 : t;
+    }
   return out;
 }
 
@@ -196,10 +321,11 @@ export function buildIntroGround(I = IMPERIAL) {
  *  Daggerfall's blocks (the film's houses), 4 a garden. */
 export function buildIntroPlan(plan = IMPERIAL_CITY_PLAN) {
   const out = new Uint8Array(IMPERIAL_CELLS * IMPERIAL_CELLS);
-  for (let r = 0; r < IMPERIAL_CELLS; r++) for (let c = 0; c < IMPERIAL_CELLS; c++) {
-    const cell = plan[r][c];
-    out[r * IMPERIAL_CELLS + c] = cell === 'L' ? 0 : cell === 'O' ? 1 : /^I/.test(cell) ? 2 : cell === 'G' ? 4 : 3;
-  }
+  for (let r = 0; r < IMPERIAL_CELLS; r++)
+    for (let c = 0; c < IMPERIAL_CELLS; c++) {
+      const cell = plan[r][c];
+      out[r * IMPERIAL_CELLS + c] = cell === 'L' ? 0 : cell === 'O' ? 1 : /^I/.test(cell) ? 2 : cell === 'G' ? 4 : 3;
+    }
   return out;
 }
 
@@ -209,16 +335,34 @@ export function buildIntroCity() {
   const districts = buildIntroDistricts();
   return {
     landmarks: buildIntroLandmarks(),
-    buildings: districts.buildings, buildingCount: districts.count,
+    buildings: districts.buildings,
+    buildingCount: districts.count,
     trees: buildIntroTrees(districts.gardens),
     ground: buildIntroGround(),
     plan: buildIntroPlan(),
-    layout: { buildingFloats: BUILDING_FLOATS, treeFloats: TREE_FLOATS, groundSpan: GROUND_SPAN, cells: IMPERIAL_CELLS, cellM: BLOCK_M, roofs: ROOFS.map((c) => [...c]) },
+    layout: {
+      buildingFloats: BUILDING_FLOATS,
+      treeFloats: TREE_FLOATS,
+      groundSpan: GROUND_SPAN,
+      cells: IMPERIAL_CELLS,
+      cellM: BLOCK_M,
+      roofs: ROOFS.map((c) => [...c]),
+    },
   };
 }
 
 /** Every buffer of a built city - what the worker transfers instead of copying. */
 export function introCityTransfers(city) {
   const L = city.landmarks;
-  return [L.positions.buffer, L.normals.buffer, L.uvs.buffer, L.material.buffer, L.indices.buffer, city.buildings.buffer, city.trees.buffer, city.ground.buffer, city.plan.buffer];
+  return [
+    L.positions.buffer,
+    L.normals.buffer,
+    L.uvs.buffer,
+    L.material.buffer,
+    L.indices.buffer,
+    city.buildings.buffer,
+    city.trees.buffer,
+    city.ground.buffer,
+    city.plan.buffer,
+  ];
 }

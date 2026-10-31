@@ -16,10 +16,25 @@ import { lwSeed, textSeed } from './seed.js';
 export const KEEPSAKE_TEMPLATE = 1800;
 export const KEEPSAKE_GROUP = 'UselessItems2';
 export const KEEPSAKE_ROW = Object.freeze({
-  index: KEEPSAKE_TEMPLATE, name: 'Keepsake', baseWeight: 0.1, hitPoints: 100, capacityOrTarget: 0, basePrice: 1,
-  enchantmentPoints: 0, rarity: 0, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 254, worldTextureRecord: 56, playerTextureArchive: 0,
-  playerTextureRecord: 0, stackable: false,
+  index: KEEPSAKE_TEMPLATE,
+  name: 'Keepsake',
+  baseWeight: 0.1,
+  hitPoints: 100,
+  capacityOrTarget: 0,
+  basePrice: 1,
+  enchantmentPoints: 0,
+  rarity: 0,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 254,
+  worldTextureRecord: 56,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
 });
 registerCustomTemplates([KEEPSAKE_ROW]);
 
@@ -34,9 +49,23 @@ const placeIdOf = (id) => String(id ?? '').split('~')[0];
  * @param {{ id: string, name: string, town: number, home?: number|null }} res
  */
 export function mintKeepsake(res) {
-  const kind = KEEPSAKE_KINDS[lwSeed(textSeed(res.id), 0x6b656570) % KEEPSAKE_KINDS.length];   // 'keep'
-  const item = mintCondition(setItemFields({ group: KEEPSAKE_GROUP, templateIndex: KEEPSAKE_TEMPLATE, material: 0, flags: 0, variant: 0, message: 0, stackCount: 1 }));
-  return { ...item, name: `${res.name}'s ${kind}`, livingKeepsake: { id: res.id, name: res.name, town: res.town >>> 0, home: res.home ?? null } };
+  const kind = KEEPSAKE_KINDS[lwSeed(textSeed(res.id), 0x6b656570) % KEEPSAKE_KINDS.length]; // 'keep'
+  const item = mintCondition(
+    setItemFields({
+      group: KEEPSAKE_GROUP,
+      templateIndex: KEEPSAKE_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+    }),
+  );
+  return {
+    ...item,
+    name: `${res.name}'s ${kind}`,
+    livingKeepsake: { id: res.id, name: res.name, town: res.town >>> 0, home: res.home ?? null },
+  };
 }
 
 /** Whether an item is a keepsake. @param {any} it */
@@ -52,7 +81,13 @@ export const isKeepsake = (it) => it?.templateIndex === KEEPSAKE_TEMPLATE && !!i
  */
 export function keepsakeFor(items, town, home, holder, homeOf = null) {
   if (home == null) return null;
-  return (items ?? []).find((it) => isKeepsake(it) && it.livingKeepsake.town === (town >>> 0)
-    && (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home
-    && placeIdOf(it.livingKeepsake.id) !== placeIdOf(holder)) ?? null;
+  return (
+    (items ?? []).find(
+      (it) =>
+        isKeepsake(it) &&
+        it.livingKeepsake.town === town >>> 0 &&
+        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&
+        placeIdOf(it.livingKeepsake.id) !== placeIdOf(holder),
+    ) ?? null
+  );
 }

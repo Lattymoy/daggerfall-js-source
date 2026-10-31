@@ -19,21 +19,52 @@ export function createMountFx({ door = playerDoor } = {}) {
     /** One horse this frame: `look` its mount look (or none: nothing, its clock let go), `feet` its hooves' ground (the
      *  scene's), `yaw` its facing (forward is [sin, cos]), `pace` 0 standing, 1 walking, 2 running, `mane` whether its
      *  head is seen (never from its own saddle in first person). Answers whether a beat was thrown. */
-    step(/** @type {string} */ id, /** @type {string|null} */ look, /** @type {number[]|null} */ feet, /** @type {number} */ yaw, /** @type {number} */ pace, /** @type {number} */ dt, { mane = true } = {}) {
-      if (!look || !feet || !feet.every?.(Number.isFinite)) { clocks.delete(id); return false; }
+    step(
+      /** @type {string} */ id,
+      /** @type {string|null} */ look,
+      /** @type {number[]|null} */ feet,
+      /** @type {number} */ yaw,
+      /** @type {number} */ pace,
+      /** @type {number} */ dt,
+      { mane = true } = {},
+    ) {
+      if (!look || !feet || !feet.every?.(Number.isFinite)) {
+        clocks.delete(id);
+        return false;
+      }
       let c = clocks.get(id);
-      if (!c) { c = { t: 0, seen: true }; clocks.set(id, c); }
+      if (!c) {
+        c = { t: 0, seen: true };
+        clocks.set(id, c);
+      }
       c.seen = true;
       c.t += Math.max(0, Number.isFinite(dt) ? dt : 0);
-      const p = pace === 2 ? 2 : pace ? 1 : 0, beat = MOUNT_FX_BEAT_S[p];
+      const p = pace === 2 ? 2 : pace ? 1 : 0,
+        beat = MOUNT_FX_BEAT_S[p];
       if (c.t + 1e-9 < beat) return false;
-      c.t = Math.min(c.t - beat, beat);   // the remainder carried, so the beat keeps its time - never a burst of them after a long frame
+      c.t = Math.min(c.t - beat, beat); // the remainder carried, so the beat keeps its time - never a burst of them after a long frame
       const y = Number.isFinite(yaw) ? yaw : 0;
-      try { return !!door()?.burst?.(`mount-${look}`, feet, { ...MOUNT_FX_SIZE, dir: [Math.sin(y), Math.cos(y)], pace: p, mane }); } catch { return false; }
+      try {
+        return !!door()?.burst?.(`mount-${look}`, feet, {
+          ...MOUNT_FX_SIZE,
+          dir: [Math.sin(y), Math.cos(y)],
+          pace: p,
+          mane,
+        });
+      } catch {
+        return false;
+      }
     },
     /** The riders not stepped since the last sweep let go - once a frame, after every horse. */
-    sweep() { for (const [id, c] of clocks) { if (!c.seen) clocks.delete(id); else c.seen = false; } },
+    sweep() {
+      for (const [id, c] of clocks) {
+        if (!c.seen) clocks.delete(id);
+        else c.seen = false;
+      }
+    },
     /** How many horses it keeps a beat for (tests). */
-    get size() { return clocks.size; },
+    get size() {
+      return clocks.size;
+    },
   };
 }

@@ -20,8 +20,8 @@
   {
     "name": "CUSTOMS-ELSEWHERE-another-character-read",
     "file": "server-account/src/realm.js",
-    "old": "'SELECT spent FROM realm_census WHERE char_id = ? LIMIT 1').bind(originId)",
-    "new": "'SELECT spent FROM realm_census WHERE char_id <> ? LIMIT 1').bind(originId)",
+    "old": "      const other = await db.prepare('SELECT spent FROM realm_census WHERE char_id = ? LIMIT 1').bind(originId).first();",
+    "new": "      const other = await db\n        .prepare('SELECT spent FROM realm_census WHERE char_id <> ? LIMIT 1')\n        .bind(originId)\n        .first();",
     "tests": [
       "test/net/fb0930_customselsewhere.test.js"
     ]

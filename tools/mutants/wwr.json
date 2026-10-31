@@ -2,8 +2,8 @@
   {
     "name": "WWR-a-provinces-number",
     "file": "src/formats/mapsTables.js",
-    "old": "BAY_REGION_COUNT - 1 + t : -1);",
-    "new": "BAY_REGION_COUNT + t : -1);",
+    "old": "  Number.isInteger(t) && t >= 1 && t <= PROVINCE_REGION_NAMES.length ? BAY_REGION_COUNT - 1 + t : -1;",
+    "new": "  Number.isInteger(t) && t >= 1 && t <= PROVINCE_REGION_NAMES.length ? BAY_REGION_COUNT + t : -1;",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WWR-the-theatres-inverse",
     "file": "src/formats/mapsTables.js",
-    "old": "r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length ? r - BAY_REGION_COUNT + 1 : -1);",
-    "new": "r < BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length ? r - BAY_REGION_COUNT : -1);",
+    "old": "        ? r - BAY_REGION_COUNT + 1",
+    "new": "        ? r - BAY_REGION_COUNT",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WWR-cyrodiils-bank",
     "file": "src/formats/mapsTables.js",
-    "old": "REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 7]);",
-    "new": "REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 0]);",
+    "old": "export const REGION_NAME_BANKS = Object.freeze([...REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 7]);",
+    "new": "export const REGION_NAME_BANKS = Object.freeze([...REGION_RACES.slice(0, BAY_REGION_COUNT), 0, 1, 2, 3, 4, 5, 6, 7, 0]);",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WWR-cyrodiils-body",
     "file": "src/formats/mapsTables.js",
-    "old": "  0, 1, 2, 3, 4, 5, 6, 7, 0,\n]);",
-    "new": "  0, 1, 2, 3, 4, 5, 6, 7, 7,\n]);",
+    "old": "  0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 0,",
+    "new": "  0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, 7,",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WWR-the-shards-the-bays",
     "file": "src/net/hubShards.js",
-    "old": "export const REGION_CHANNELS = 71;",
-    "new": "export const REGION_CHANNELS = 62;",
+    "old": "export const REGION_CHANNELS = 71; // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)",
+    "new": "export const REGION_CHANNELS = 62; // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "WWR-a-province-on-the-naval-wire",
     "file": "src/systems/naval/navalWire.js",
-    "old": "sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);",
-    "new": "sh.region >= 0 && sh.region < 71 ? sh.region : -1]);",
+    "old": "      Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1,",
+    "new": "      Number.isInteger(sh.region) && sh.region >= 0 && sh.region < 71 ? sh.region : -1,",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "WWR-a-place-the-providers-region",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
-    "new": "  const region = bayRegion;",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre); // WW-R: past the Bay its province's region",
+    "new": "  const region = bayRegion; // WW-R: past the Bay its province's region",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "WWR-an-area-a-provinces-region",
     "file": "src/world/worldWide/worldGrid.js",
-    "old": "export const BAY_AREA_COUNT = BAY_REGION_COUNT;",
-    "new": "export const BAY_AREA_COUNT = REGION_NAMES.length;",
+    "old": "export const BAY_AREA_COUNT = BAY_REGION_COUNT; // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area",
+    "new": "export const BAY_AREA_COUNT = REGION_NAMES.length; // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "WWR-the-gate-scan-a-provinces-politic",
     "file": "src/systems/gate/gateSite.js",
-    "old": "(pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;",
-    "new": "(pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105;",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
+    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

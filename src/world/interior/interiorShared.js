@@ -48,11 +48,11 @@
 // owner's chest, and then been published back as the room's), and a
 // refused act's records name none. The bag's `home` says so.
 import { sharedRecord, validActionRecord } from '../actionSystem.js';
-import { validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT } from '../../systems/loot/loot.js';   // LOOT_NEWER_TEXT: AUDIT SETS M2 - a shelf the room has spoken about in words this build cannot read
-import { peerHanded } from '../../systems/peerWord.js';   // SS3: a bound piece in a room's container never lands; HACKED-GOLD: nor a letter of credit (systems/peerWord.js)
-import { clearStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S3: a shelf's or a cupboard's piece is its owner's, never stolen
-import { mintSharedStamp } from '../../net/wire.js';   // AUDIT WORLD6a B7: one stamp mint at the wire, twelve digits always
-import { createInteriorRoomLoot } from './interiorRoomLoot.js';   // OUTDOOR-LOOT: the cupboards' room law
+import { validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT } from '../../systems/loot/loot.js'; // LOOT_NEWER_TEXT: AUDIT SETS M2 - a shelf the room has spoken about in words this build cannot read
+import { peerHanded } from '../../systems/peerWord.js'; // SS3: a bound piece in a room's container never lands; HACKED-GOLD: nor a letter of credit (systems/peerWord.js)
+import { clearStolen } from '../../systems/stolenGoods.js'; // STOLEN-GOODS AUDIT S3: a shelf's or a cupboard's piece is its owner's, never stolen
+import { mintSharedStamp } from '../../net/wire.js'; // AUDIT WORLD6a B7: one stamp mint at the wire, twelve digits always
+import { createInteriorRoomLoot } from './interiorRoomLoot.js'; // OUTDOOR-LOOT: the cupboards' room law
 
 /** The room's own key for a building - the SAME spelling roomKeyFor mints for the relay room (the map id unsigned,
  *  AUDIT WORLD34 A2), so the memory's `locationKey` and the room agree by construction. */
@@ -71,7 +71,10 @@ export function interiorLocationKey(mapId, buildingKey, layout = null) {
 export const LAYOUT_ROOM_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
 export function layoutRoomKey(buildingKey, layout = null) {
   let tag = 0;
-  if (typeof layout === 'string') LAYOUT_ROOM_MODS.forEach((m, i) => { if (layout.split('+').some((p) => p.split('@')[0] === m)) tag |= 1 << i; });
+  if (typeof layout === 'string')
+    LAYOUT_ROOM_MODS.forEach((m, i) => {
+      if (layout.split('+').some((p) => p.split('@')[0] === m)) tag |= 1 << i;
+    });
   return buildingKey + tag * 0x1000000;
 }
 
@@ -84,8 +87,21 @@ export function layoutRoomKey(buildingKey, layout = null) {
  *  owning one owns them all, and two players in one hull would disagree about whether the room exists) keeps NO
  *  room at all: no key, no memory, no presence room either (the host reports a 0 building key). */
 export function mintInteriorShared(locationKey, { owned = false, home = false, net = null } = {}) {
-  const bag = { locationKey: owned ? null : (locationKey ?? null), owned: !!owned, home: !!home, stamp: mintSharedStamp(), seen: new Set(), tooBig: new Set(), unreadable: new Set(), applied: false, openKey: null, openWin: null, net, room: null };   // AUDIT SETS M2: `unreadable` the containers whose room word this build cannot read; OUTDOOR-LOOT: `net` the host's wiring (the act path, the clocks, the seat, the player's hands) and `room` the cupboards' room law
-  if (net && !bag.owned && !bag.home && bag.locationKey) bag.room = createInteriorRoomLoot(net, bag);   // HOME1: a home's cupboards are its owner's; an owned house or ship keeps no room - the module is inert there, as the bag is
+  const bag = {
+    locationKey: owned ? null : (locationKey ?? null),
+    owned: !!owned,
+    home: !!home,
+    stamp: mintSharedStamp(),
+    seen: new Set(),
+    tooBig: new Set(),
+    unreadable: new Set(),
+    applied: false,
+    openKey: null,
+    openWin: null,
+    net,
+    room: null,
+  }; // AUDIT SETS M2: `unreadable` the containers whose room word this build cannot read; OUTDOOR-LOOT: `net` the host's wiring (the act path, the clocks, the seat, the player's hands) and `room` the cupboards' room law
+  if (net && !bag.owned && !bag.home && bag.locationKey) bag.room = createInteriorRoomLoot(net, bag); // HOME1: a home's cupboards are its owner's; an owned house or ship keeps no room - the module is inert there, as the bag is
   return bag;
 }
 
@@ -116,18 +132,27 @@ export function interiorLootRecords(ctx, keys, tooBig = new Set(), bag = null) {
   const out = [];
   for (const key of keys ?? []) {
     const canon = interiorLootKeyOf(key);
-    if (canon && canon.startsWith('container:') && bag?.room?.live()) { out.push(...bag.room.records(ctx, canon)); continue; }
+    if (canon && canon.startsWith('container:') && bag?.room?.live()) {
+      out.push(...bag.room.records(ctx, canon));
+      continue;
+    }
     const t = canon && interiorLootTarget(ctx, canon);
     if (!t || !Array.isArray(t.items)) continue;
     if (t.items.length > LOOT_LIST_MAX) {
       if (!tooBig.has(canon)) {
         tooBig.add(canon);
-        console.warn(`[loot] ${canon} holds ${t.items.length} items, more than the room can carry (${LOOT_LIST_MAX}); it stays yours alone`);
+        console.warn(
+          `[loot] ${canon} holds ${t.items.length} items, more than the room can carry (${LOOT_LIST_MAX}); it stays yours alone`,
+        );
       }
       continue;
     }
     tooBig.delete(canon);
-    out.push({ k: canon, r: peerHanded(t.items).map((it) => clearStolen({ ...it })), d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0 });   // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit; STOLEN-GOODS AUDIT S3: nor a theft's mark (a stash left on a shut shelf is no peer's theft, and an older build would land it)
+    out.push({
+      k: canon,
+      r: peerHanded(t.items).map((it) => clearStolen({ ...it })),
+      d: Number.isFinite(t.stockedDate) ? t.stockedDate : 0,
+    }); // AUDIT SS: never a bound piece on the wire - a stone left in one before SS3 stays off the room (an older build connected beside this one would land it); HACKED-GOLD: nor a letter of credit; STOLEN-GOODS AUDIT S3: nor a theft's mark (a stash left on a shut shelf is no peer's theft, and an older build would land it)
   }
   return out;
 }
@@ -141,7 +166,7 @@ export function interiorLootRecords(ctx, keys, tooBig = new Set(), bag = null) {
  *  `carried`: as it came. */
 export function withoutCarried(items, carried = null, { stowed = false } = {}) {
   if (typeof carried?.keyOf !== 'function') return items;
-  const keys = new Set([...(carried.keys ?? []), ...(stowed ? carried.stowed ?? [] : [])]);
+  const keys = new Set([...(carried.keys ?? []), ...(stowed ? (carried.stowed ?? []) : [])]);
   return items.filter((it) => {
     const k = carried.keyOf(it);
     if (!k) return true;
@@ -160,14 +185,21 @@ export function withoutCarried(items, carried = null, { stowed = false } = {}) {
  *  room's memory of an earlier visit - put the piece back: the reader took it again and held one piece twice, a copy
  *  the ledger found at the next checkpoint (a piece sold to a shop and stolen back met it most). A piece the word names
  *  twice lands once. */
-export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null, today = null, unreadable = null, carried = null, room = null, from = null } = {}) {
+export function applyInteriorLoot(
+  ctx,
+  list,
+  { seen = new Set(), openKey = null, today = null, unreadable = null, carried = null, room = null, from = null } = {},
+) {
   let n = 0;
   for (const rec of Array.isArray(list) ? list : []) {
     const canon = interiorLootKeyOf(rec?.k);
     if (!canon) continue;
     // OUTDOOR-LOOT: a cupboard's word is the room's TAKES, merged - never a list landed over a list (interiorRoomLoot.js). `from`: the
     // sender (null: the room's memory), whose word it is the state, a claim or a birth - and the seat's verdicts leave in this very call.
-    if (room?.live() && canon.startsWith('container:')) { n += room.land(ctx, { ...rec, k: canon }, { from, today }) ? 1 : 0; continue; }
+    if (room?.live() && canon.startsWith('container:')) {
+      n += room.land(ctx, { ...rec, k: canon }, { from, today }) ? 1 : 0;
+      continue;
+    }
     // AUDIT WORLD6a A2/B2: THE DAY IS PROJECTED LIKE THE LIST. `d` is the one field the interior's record carries
     // that the dungeon's never did, and it landed unread: needsRestock is `stockedDate < today`, so a `d` of 1e15
     // froze a shelf's restock for ever, a `d` of 0 rerolled it on every browse, and either rode the scene cache
@@ -177,10 +209,16 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
     // then restock and republish over the room (A2's secondary). And the day only ever moves FORWARD (A3): a stale
     // close from a window opened yesterday must not un-restock a shelf the new day already rolled.
     if (!Number.isFinite(rec.d) || rec.d < 0 || (today != null && rec.d > today + 1)) continue;
-    const items = peerHanded(validLootList(rec.r));   // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold
+    const items = peerHanded(validLootList(rec.r)); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold
     // AUDIT SETS M2: a list this build cannot read (a newer game's item) - the room HAS spoken: seen, and never claimed
     // or closed over here (publishWhole below, and the cupboards' room law, read `unreadable`)
-    if (!items) { if (unreadable && interiorLootTarget(ctx, canon)) { seen.add(canon); unreadable.add(canon); } continue; }
+    if (!items) {
+      if (unreadable && interiorLootTarget(ctx, canon)) {
+        seen.add(canon);
+        unreadable.add(canon);
+      }
+      continue;
+    }
     const t = interiorLootTarget(ctx, canon);
     if (!t) continue;
     // STOLEN-GOODS AUDIT (2026-10-16, S3): A SHELF'S OR A CUPBOARD'S PIECE IS ITS OWNER'S. No client of this build puts a
@@ -191,9 +229,15 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
     for (const it of items) clearStolen(it);
     seen.add(canon);
     unreadable?.delete(canon);
-    if (canon === openKey) { n++; continue; }
+    if (canon === openKey) {
+      n++;
+      continue;
+    }
     const lands = withoutCarried(items, carried, { stowed: canon.startsWith('shelf:') });
-    if (Array.isArray(t.items)) { t.items.length = 0; for (const it of lands) t.items.push(it); } else t.items = lands;
+    if (Array.isArray(t.items)) {
+      t.items.length = 0;
+      for (const it of lands) t.items.push(it);
+    } else t.items = lands;
     t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, Math.floor(rec.d));
     n++;
   }
@@ -203,12 +247,16 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
 /** The building's SHARED world for the room's memory: the opened containers the room knows of (`seen`) and every
  *  action record's shared half; keyed by the building and stamped by the mode's context, so another building's
  *  memory - or this one's own, back from a reconnect's welcome (AUDIT WORLD B1) - is refused. */
-export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(), tooBig = new Set(), home = false, room = null } = {}) {
+export function composeInteriorShared(
+  ctx,
+  { locationKey, stamp, seen = new Set(), tooBig = new Set(), home = false, room = null } = {},
+) {
   if (!ctx || !locationKey) return null;
   return {
-    locationKey, stamp,
+    locationKey,
+    stamp,
     world: {
-      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),   // HOME1: a home's cupboards are its owner's alone
+      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone
       actions: (ctx.actions?.collectSaveData?.() ?? []).map(sharedRecord),
     },
   };
@@ -217,12 +265,33 @@ export function composeInteriorShared(ctx, { locationKey, stamp, seen = new Set(
 /** The room's memory applied, once per context, never its own: the action records projected and RESTORED (the
  *  memory is where the doors stand as this player walks in - a restore, like the cache's, not a swing heard), the
  *  opened containers through applyInteriorLoot. Answers true when it landed. */
-export function applyInteriorShared(ctx, shared, { locationKey, stamp, seen = new Set(), openKey = null, today = null, home = false, carried = null, room = null } = {}) {
-  if (!ctx || !shared || !locationKey || shared.locationKey !== locationKey || !shared.world || typeof shared.world !== 'object') return false;
+export function applyInteriorShared(
+  ctx,
+  shared,
+  {
+    locationKey,
+    stamp,
+    seen = new Set(),
+    openKey = null,
+    today = null,
+    home = false,
+    carried = null,
+    room = null,
+  } = {},
+) {
+  if (
+    !ctx ||
+    !shared ||
+    !locationKey ||
+    shared.locationKey !== locationKey ||
+    !shared.world ||
+    typeof shared.world !== 'object'
+  )
+    return false;
   if (shared.stamp === stamp) return false;
   const acts = Array.isArray(shared.world.actions) ? shared.world.actions.map(validActionRecord).filter(Boolean) : [];
-  if (acts.length) ctx.actions?.restoreSaveData?.(acts, { remote: true });   // SPELL-LOCK: a peer's word - no Lock spell's lock lands
-  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });   // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list
+  if (acts.length) ctx.actions?.restoreSaveData?.(acts, { remote: true }); // SPELL-LOCK: a peer's word - no Lock spell's lock lands
+  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list
   return true;
 }
 
@@ -232,7 +301,7 @@ export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set
   if (!ctx || !locationKey || !Array.isArray(keys) || !keys.length) return null;
   const want = new Set(keys);
   const a = (ctx.actions?.collectSaveData?.() ?? []).filter((r) => want.has(r.key)).map(sharedRecord);
-  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });   // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it
+  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it
   return a.length || l.length ? { k: locationKey, ...(a.length ? { a } : {}), ...(l.length ? { l } : {}) } : null;
 }
 
@@ -245,14 +314,14 @@ export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set
  *  claim speaks only for a container the room has not spoken about, AUDIT WORLD4 C2/D5), on a RESTOCK (the new day's stock is
  *  the room's, whoever browsed first), and on the CLOSE (what is left). */
 function publishWhole(ctx, canon, bag, { claim = false } = {}) {
-  if (!bag?.locationKey || !canon || !ctx || bag.home) return false;   // HOME1: a home's cupboards are never the room's
-  if (bag.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read
+  if (!bag?.locationKey || !canon || !ctx || bag.home) return false; // HOME1: a home's cupboards are never the room's
+  if (bag.unreadable?.has(canon)) return false; // AUDIT SETS M2: never over a word this build cannot read
   if (claim && bag.seen.has(canon)) return false;
   const l = interiorLootRecords(ctx, [canon], bag.tooBig);
-  if (!l.length) return false;   // never opened, or too large to say - it stays this player's own
+  if (!l.length) return false; // never opened, or too large to say - it stays this player's own
   const first = !bag.seen.has(canon);
   bag.seen.add(canon);
-  if (first) bag.net?.claimed?.();   // AUDIT WORLD4 D5: the memory goes out now, not up to fifteen seconds from now
+  if (first) bag.net?.claimed?.(); // AUDIT WORLD4 D5: the memory goes out now, not up to fifteen seconds from now
   return !!bag.net?.send?.({ k: bag.locationKey, l });
 }
 
@@ -267,9 +336,13 @@ function publishWhole(ctx, canon, bag, { claim = false } = {}) {
 export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = null } = {}) {
   const canon = interiorLootKeyOf(key);
   if (!bag?.locationKey || !canon || !win) return;
-  if (canon.startsWith('container:') && bag.room?.live()) { bag.room.open(canon, win, keeping); return; }
-  if (bag.unreadable?.has(canon)) bag.net?.say?.(LOOT_NEWER_TEXT);   // AUDIT SETS M2: what is shown is this build's own roll, and it is never said to the room
-  bag.openKey = canon; bag.openWin = win;
+  if (canon.startsWith('container:') && bag.room?.live()) {
+    bag.room.open(canon, win, keeping);
+    return;
+  }
+  if (bag.unreadable?.has(canon)) bag.net?.say?.(LOOT_NEWER_TEXT); // AUDIT SETS M2: what is shown is this build's own roll, and it is never said to the room
+  bag.openKey = canon;
+  bag.openWin = win;
   publishWhole(ctx, canon, bag, { claim: !fresh });
 }
 
@@ -286,7 +359,8 @@ export function interiorLootFrame(ctx, bag, { now = 0, open = () => true } = {})
   const win = bag.openWin;
   if (win && !(String(bag.openKey).startsWith('container:') && bag.room?.live()) && !(open(win) && !win.done)) {
     const k = bag.openKey;
-    bag.openKey = null; bag.openWin = null;
+    bag.openKey = null;
+    bag.openWin = null;
     publishWhole(ctx, k, bag);
   }
   bag.room?.frame(ctx, now, open);
@@ -319,8 +393,12 @@ export function interiorLootBirth(ctx, key, bag) {
 
 /** The building's mount: whatever list a stranger's cupboard holds that no word of the room made - the scene cache's - is set
  *  aside (called at the mint and again after the cache has laid its lists); one the room has spoken for is composed back over it. */
-export function interiorLootAside(ctx, bag) { bag?.room?.aside(ctx); }
+export function interiorLootAside(ctx, bag) {
+  bag?.room?.aside(ctx);
+}
 
 /** D-1/D-1a: the claimer's own teardown (exitInteriorNow, forceExitToExterior - a teleport's and a load's) - ahead of the bag's
  *  drop: a claim in flight and not lapsed goes with its claimer. */
-export function interiorLootLeave(ctx, bag) { bag?.room?.leave(ctx); }
+export function interiorLootLeave(ctx, bag) {
+  bag?.room?.leave(ctx);
+}

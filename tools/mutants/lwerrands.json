@@ -11,8 +11,8 @@
   {
     "name": "LW-ERRANDS-halls-unread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (t === BUILDING_TYPES.GuildHall) { const f = places.factions?.get(key) ?? 0;",
-    "new": "if (t === BUILDING_TYPES.GuildHall) { const f = 0;",
+    "old": "        const f = places.factions?.get(key) ?? 0;",
+    "new": "        const f = 0;",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "LW-ERRANDS-members-hall",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (res.job === 'guildsman') return res.work != null ? places.doors.get(res.work) ?? null : null;\n  const { halls, orders } = doorKinds(places);",
+    "old": "  if (res.job === 'guildsman') return res.work != null ? (places.doors.get(res.work) ?? null) : null;\n  const { halls, orders } = doorKinds(places);",
     "new": "  const { halls, orders } = doorKinds(places);",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "LW-ERRANDS-order",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (res.job === 'courtier') return order;\n",
-    "new": "",
+    "old": "  if (res.job === 'courtier') return order;\n  if (res.cls === MOBILE_TYPES.Knight && order) return order;",
+    "new": "  if (res.cls === MOBILE_TYPES.Knight && order) return order;",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-ERRANDS-knight",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (res.cls === MOBILE_TYPES.Knight && order) return order;\n",
-    "new": "",
+    "old": "  if (res.cls === MOBILE_TYPES.Knight && order) return order;\n  const guild =",
+    "new": "  const guild =",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW-ERRANDS-trades",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const guild = (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work) ?? -1) : undefined)",
-    "new": "  const guild = (undefined)",
+    "old": "  const guild =\n    (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work) ?? -1) : undefined) ??\n    (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
+    "new": "  const guild = undefined ?? (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-ERRANDS-mage",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "?? (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
-    "new": "?? (isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
+    "old": "    (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
+    "new": "    (isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW-ERRANDS-warrior",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "?? (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
-    "new": "?? (isMageClass(res.cls) ? MAGES_GUILD : null);",
+    "old": "    (isMageClass(res.cls) ? MAGES_GUILD : isWarriorClass(res.cls) ? FIGHTERS_GUILD : null);",
+    "new": "    (isMageClass(res.cls) ? MAGES_GUILD : null);",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "LW-ERRANDS-nearest",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const nearest = (/** @type {readonly Spot[]|undefined} */ list) => (list?.length ? nearestOf(places, list, home)[0] : null);",
+    "old": "  const nearest = (/** @type {readonly Spot[]|undefined} */ list) =>\n    list?.length ? nearestOf(places, list, home)[0] : null;",
     "new": "  const nearest = (/** @type {readonly Spot[]|undefined} */ list) => (list?.length ? list[0] : null);",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "LW-ERRANDS-evening-unkept",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(18), rollInt(rng, 60, 120));   // CHAP5b: its chapter's days\n",
-    "new": "",
+    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))\n        I('guild', fav.guild, h(18), rollInt(rng, 60, 120)); // CHAP5b: its chapter's days\n      evening();",
+    "new": "      evening();",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW-ERRANDS-courtier-unkept",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120));   // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days\n",
-    "new": "",
+    "old": "      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))\n        I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120)); // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days\n      break;",
+    "new": "      break;",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "LW-ERRANDS-guild-anyhall",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    guild: guildHallOf(res, places, home),   // LW-ERRANDS: their own guild's hall",
+    "old": "    guild: guildHallOf(res, places, home), // LW-ERRANDS: their own guild's hall",
     "new": "    guild: nearestOf(places, [...kinds.halls.values()].flat(), home)[0] ?? null,",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "LW-ERRANDS-need-always",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (!needs.length || rng() >= ERRAND_NEED_SHARE) return",
-    "new": "  if (!needs.length) return",
+    "old": "  if (!needs.length || rng() >= ERRAND_NEED_SHARE)\n    return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;",
+    "new": "  if (!needs.length) return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW-ERRANDS-browse",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;",
-    "new": "return shops.length ? shops[0] : null;",
+    "old": "  if (!needs.length || rng() >= ERRAND_NEED_SHARE)\n    return shops.length ? shops[Math.floor(rng() * Math.min(4, shops.length))] : null;",
+    "new": "  if (!needs.length || rng() >= ERRAND_NEED_SHARE) return shops.length ? shops[0] : null;",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LW-ERRANDS-needs-unread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "I('shop', errandShop(job, places, fav.shops, rng), from, rollInt(rng, 15, 35));",
-    "new": "I('shop', fav.shops[Math.floor(rng() * Math.min(4, fav.shops.length))], from, rollInt(rng, 15, 35));",
+    "old": "      I('shop', errandShop(job, places, fav.shops, rng), from, rollInt(rng, 15, 35)); // LW-ERRANDS: into a shop, of their need",
+    "new": "      I('shop', fav.shops[Math.floor(rng() * Math.min(4, fav.shops.length))], from, rollInt(rng, 15, 35)); // LW-ERRANDS: into a shop, of their need",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW-ERRANDS-merchant-shops",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "I('shop', errandShop(job, places, fav.shops, rng), h(14.5 + i), rollInt(rng, 30, 50));",
-    "new": "I('shop', fav.shops[Math.floor(rng() * fav.shops.length)], h(14.5 + i), rollInt(rng, 30, 50));",
+    "old": "        I('shop', errandShop(job, places, fav.shops, rng), h(14.5 + i), rollInt(rng, 30, 50)); // LW-ERRANDS: the bank, the trade",
+    "new": "        I('shop', fav.shops[Math.floor(rng() * fav.shops.length)], h(14.5 + i), rollInt(rng, 30, 50)); // LW-ERRANDS: the bank, the trade",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW-ERRANDS-visitor-shops",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "I('shop', errandShop(job, places, fav.shops, rng), h(10.5), rollInt(rng, 30, 60));",
-    "new": "I('shop', fav.shops[Math.floor(rng() * fav.shops.length)], h(10.5), rollInt(rng, 30, 60));",
+    "old": "      if (fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), h(10.5), rollInt(rng, 30, 60)); // LW-ERRANDS: a visitor's wares",
+    "new": "      if (fav.shops.length) I('shop', fav.shops[Math.floor(rng() * fav.shops.length)], h(10.5), rollInt(rng, 30, 60)); // LW-ERRANDS: a visitor's wares",
     "tests": [
       "test/systems/livingWorld/lwerrands_town.test.js"
     ]

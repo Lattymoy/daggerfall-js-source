@@ -1,38 +1,122 @@
 [
-  { "name": "WIND-FIRST-door-after-boats", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    ResetTimeScale(false);\n    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateBoatVisibility();\n", "new": "    ResetTimeScale(false);\n    UpdateBoatVisibility();\n    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "the C#'s order: a boat the visibility cannot read strands the indoors' none on the sea" },
-  { "name": "WIND-FIRST-load-after-boats", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateBoatVisibility();\n    UpdateWaveMesh();   // `if (waveObject != null)` - Start built it\n", "new": "    UpdateBoatVisibility();\n    UpdateWaveMesh();   // `if (waveObject != null)` - Start built it\n    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "SAIL-WIND's check after the boats: a load whose boats throw keeps the indoors' none" },
-  { "name": "NO-PIXEL-visibility-throws", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      if (allBoat2.inside || pixelsApart(deps.currentMapPixel(), pixelOf(allBoat2)) > 1) {", "new": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "the door's sight passes a boat with no pixel - shown two pixels off (it threw here before the node read took pixelOf, AUDIT FB1029d A3)" },
-  { "name": "NO-PIXEL-one-boat-throws", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (boat.inside || pixelsApart(deps.currentMapPixel(), pixelOf(boat)) > 1) {   // NO-PIXEL", "new": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1)) {",
-    "tests": ["test/systems/comeSailAway/csa_placing.test.js"], "why": "the one-boat visibility (a recentre's, a reposition's) throws at a boat with no pixel" },
-  { "name": "NO-PIXEL-restore-throws", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // NO-PIXEL: a record saved with none stands at the pixel she stands on", "new": "    UpdateBoatNodesAtMapPixel(boat, mapPixel);",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a record saved with no pixel throws in its restore" },
-  { "name": "NO-PIXEL-the-player's-pixel", "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  return (boat.MapPixel = pixelUnderOn(t0, boat.GameObject.position, edge));", "new": "  return (boat.MapPixel = deps.currentMapPixel());",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "she takes the player's pixel, not the one she stands on (AUDIT FB1029d C2: the PR's own pins kill it - each lost boat stands two pixels off)" },
-  { "name": "CARGO-ASHORE-wagon-always", "file": "src/scenes/world.js",
-    "old": "      wagonWeight: () => (!hccOn() || hccRuntime?.wagonWithPlayer?.() ? totalWeight(playerEntity.wagonItems ?? []) : 0),", "new": "      wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a wagon ashore weighs on every hull again" },
-  { "name": "CARGO-ASHORE-mod-off-ashore", "file": "src/scenes/world.js",
-    "old": "(!hccOn() || hccRuntime?.wagonWithPlayer?.() ?", "new": "(hccRuntime?.wagonWithPlayer?.() ?",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "with Horse Cart and Cargo off the cart no longer goes where its owner goes - DFU's law dropped" },
-  { "name": "CARGO-ASHORE-stabled-aboard", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !parkDue(cartParks);",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a stabled wagon weighs on the ship" },
-  { "name": "CARGO-ASHORE-parked-aboard", "file": "src/systems/horse/horseCart.js",
-    "old": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);", "new": "  const wagonWithPlayer = () => wagonState.Mode !== WAGON_MODE.None && !wagonState.WagonStabled && !parkDue(cartParks);",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a wagon parked at a door weighs on the ship" },
-  { "name": "HEAVY-HINT-unsaid", "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.heavy) return helmHeavyText();", "new": "",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "the load that holds her is said once, three seconds, as the helm is taken" },
-  { "name": "HEAVY-HINT-threshold", "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,", "new": "        heavy: state.boatCargoMod < 0 && state.cargoThreshold > 0,",
-    "tests": ["test/systems/comeSailAway/fb1029d_sailing.test.js"], "why": "a ship dead in the water is never called heavy" }
+  {
+    "name": "WIND-FIRST-door-after-boats",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    ResetTimeScale(false);\n    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateBoatVisibility();\n",
+    "new": "    ResetTimeScale(false);\n    UpdateBoatVisibility();\n    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "the C#'s order: a boat the visibility cannot read strands the indoors' none on the sea"
+  },
+  {
+    "name": "WIND-FIRST-load-after-boats",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateBoatVisibility();\n    UpdateWaveMesh();   // `if (waveObject != null)` - Start built it\n",
+    "new": "    UpdateBoatVisibility();\n    UpdateWaveMesh();   // `if (waveObject != null)` - Start built it\n    if (windStaleOutdoors(deps.isPlayerInside(), state.windVectorCurrent)) UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "SAIL-WIND's check after the boats: a load whose boats throw keeps the indoors' none"
+  },
+  {
+    "name": "NO-PIXEL-visibility-throws",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (allBoat2.inside || pixelsApart(deps.currentMapPixel(), pixelOf(allBoat2)) > 1) {",
+    "new": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "the door's sight passes a boat with no pixel - shown two pixels off (it threw here before the node read took pixelOf, AUDIT FB1029d A3)"
+  },
+  {
+    "name": "NO-PIXEL-one-boat-throws",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (boat.inside || pixelsApart(deps.currentMapPixel(), pixelOf(boat)) > 1) {   // NO-PIXEL",
+    "new": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1)) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_placing.test.js"
+    ],
+    "why": "the one-boat visibility (a recentre's, a reposition's) throws at a boat with no pixel"
+  },
+  {
+    "name": "NO-PIXEL-restore-throws",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    UpdateBoatNodesAtMapPixel(boat, pixelOf(boat));   // NO-PIXEL: a record saved with none stands at the pixel she stands on",
+    "new": "    UpdateBoatNodesAtMapPixel(boat, mapPixel);",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "a record saved with no pixel throws in its restore"
+  },
+  {
+    "name": "NO-PIXEL-the-player's-pixel",
+    "file": "src/systems/comeSailAway/csaPixel.js",
+    "old": "  return (boat.MapPixel = pixelUnderOn(t0, boat.GameObject.position, edge));",
+    "new": "  return (boat.MapPixel = deps.currentMapPixel());",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "she takes the player's pixel, not the one she stands on (AUDIT FB1029d C2: the PR's own pins kill it - each lost boat stands two pixels off)"
+  },
+  {
+    "name": "CARGO-ASHORE-wagon-always",
+    "file": "src/scenes/world.js",
+    "old": "      wagonWeight: () => (!hccOn() || hccRuntime?.wagonWithPlayer?.() ? totalWeight(playerEntity.wagonItems ?? []) : 0),",
+    "new": "      wagonWeight: () => totalWeight(playerEntity.wagonItems ?? []),",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "a wagon ashore weighs on every hull again"
+  },
+  {
+    "name": "CARGO-ASHORE-mod-off-ashore",
+    "file": "src/scenes/world.js",
+    "old": "(!hccOn() || hccRuntime?.wagonWithPlayer?.() ?",
+    "new": "(hccRuntime?.wagonWithPlayer?.() ?",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "with Horse Cart and Cargo off the cart no longer goes where its owner goes - DFU's law dropped"
+  },
+  {
+    "name": "CARGO-ASHORE-stabled-aboard",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "  const wagonWithPlayer = () =>\n    wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);",
+    "new": "  const wagonWithPlayer = () => wagonState.Mode === WAGON_MODE.WithPlayer && !parkDue(cartParks);",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "a stabled wagon weighs on the ship"
+  },
+  {
+    "name": "CARGO-ASHORE-parked-aboard",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "  const wagonWithPlayer = () =>\n    wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled && !parkDue(cartParks);",
+    "new": "  const wagonWithPlayer = () => wagonState.Mode !== WAGON_MODE.None && !wagonState.WagonStabled && !parkDue(cartParks);",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "a wagon parked at a door weighs on the ship"
+  },
+  {
+    "name": "HEAVY-HINT-unsaid",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  if (h.heavy) return helmHeavyText(); // HEAVY-HINT: said while it holds her, not once as the helm is taken",
+    "new": "  // HEAVY-HINT: said while it holds her, not once as the helm is taken",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "the load that holds her is said once, three seconds, as the helm is taken"
+  },
+  {
+    "name": "HEAVY-HINT-threshold",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        heavy: state.boatCargoMod < 0.5 && state.cargoThreshold > 0,",
+    "new": "        heavy: state.boatCargoMod < 0 && state.cargoThreshold > 0,",
+    "tests": [
+      "test/systems/comeSailAway/fb1029d_sailing.test.js"
+    ],
+    "why": "a ship dead in the water is never called heavy"
+  }
 ]

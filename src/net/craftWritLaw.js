@@ -49,7 +49,7 @@
 import { POTIONS, potionById, brewFirstPays, ingredientKeys } from './alchemyLaw.js';
 import { DISHES, recipeById, RECIPES } from './recipeLaw.js';
 import { material } from './nodeLaw.js';
-import { TIER_RANKS, topTierOf, professionName, COUNTER_ONLY, EMBER_MADE } from './professionLaw.js';   // DAEDRIC-SMELT: the ember's metal
+import { TIER_RANKS, topTierOf, professionName, COUNTER_ONLY, EMBER_MADE } from './professionLaw.js'; // DAEDRIC-SMELT: the ember's metal
 import { renownRate } from './renown.js';
 import { gateHash } from './gate/gateLaw.js';
 import { GUILD_FACTION_IDS, DIVINES } from '../systems/guild/guildFactions.js';
@@ -84,10 +84,20 @@ export const CRAFT_KINDS = Object.freeze({ potion: 'provisioning', dish: 'provis
  *  and the Repair Kits; the Temple of Mara the tart and the feast, a table's. */
 export const CRAFT_GUILDS = Object.freeze({
   potion: Object.freeze({
-    healing: DIVINES.Stendarr, healTrue: DIVINES.Stendarr, cureDisease: DIVINES.Stendarr, curePoison: DIVINES.Stendarr, purification: DIVINES.Stendarr,
-    orcStrength: GUILD_FACTION_IDS.FightersGuild, stamina: GUILD_FACTION_IDS.FightersGuild,
+    healing: DIVINES.Stendarr,
+    healTrue: DIVINES.Stendarr,
+    cureDisease: DIVINES.Stendarr,
+    curePoison: DIVINES.Stendarr,
+    purification: DIVINES.Stendarr,
+    orcStrength: GUILD_FACTION_IDS.FightersGuild,
+    stamina: GUILD_FACTION_IDS.FightersGuild,
   }),
-  dish: Object.freeze({ stew: GUILD_FACTION_IDS.FightersGuild, supper: GUILD_FACTION_IDS.FightersGuild, tart: DIVINES.Mara, feast: DIVINES.Mara }),
+  dish: Object.freeze({
+    stew: GUILD_FACTION_IDS.FightersGuild,
+    supper: GUILD_FACTION_IDS.FightersGuild,
+    tart: DIVINES.Mara,
+    feast: DIVINES.Mara,
+  }),
   kit: GUILD_FACTION_IDS.FightersGuild,
   potionDefault: GUILD_FACTION_IDS.MagesGuild,
 });
@@ -99,7 +109,11 @@ export const WRIT_POTIONS = Object.freeze(POTIONS.filter((p) => brewFirstPays(p)
  *  section 53): nor one of a metal only the ember makes (professionLaw EMBER_MADE, the Daedric ingot - smelted now, where
  *  E4 found it unmade): a writ pays its inputs' worth (costOf), and the ember spent is the account's purse, no Stores good
  *  it could price - so the Fighters Guild asks the Daedric kit of no one, as before. */
-export const WRIT_KITS = Object.freeze(RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key))));
+export const WRIT_KITS = Object.freeze(
+  RECIPES.filter(
+    (r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key)),
+  ),
+);
 
 /**
  * A writ's product, by its key: `potion:<id>` (alchemyLaw POTIONS), `dish:<id>` (recipeLaw DISHES - either herb's
@@ -114,30 +128,71 @@ export function craftProductOf(key) {
     const p = WRIT_POTIONS.find((x) => x.id === id);
     if (!p) return null;
     const cost = p.ingredients.reduce((s, t) => s + (cheapestValueOf(t) ?? Infinity), 0);
-    const bought = p.ingredients.filter((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k))).reduce((s, t) => s + (cheapestValueOf(t) ?? 0), 0);
-    return Number.isFinite(cost) ? Object.freeze({ kind, key, id, name: p.name, tier: p.tier, rank: p.rank, cost, bought, faction: CRAFT_GUILDS.potion[/** @type {keyof typeof CRAFT_GUILDS.potion} */ (id)] ?? CRAFT_GUILDS.potionDefault }) : null;
+    const bought = p.ingredients
+      .filter((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)))
+      .reduce((s, t) => s + (cheapestValueOf(t) ?? 0), 0);
+    return Number.isFinite(cost)
+      ? Object.freeze({
+          kind,
+          key,
+          id,
+          name: p.name,
+          tier: p.tier,
+          rank: p.rank,
+          cost,
+          bought,
+          faction:
+            CRAFT_GUILDS.potion[/** @type {keyof typeof CRAFT_GUILDS.potion} */ (id)] ?? CRAFT_GUILDS.potionDefault,
+        })
+      : null;
   }
   if (kind === 'dish') {
     const d = DISHES.find((x) => x.id === id);
     if (!d) return null;
-    const goods = [...d.inputs.map(([k, n]) => ({ key: String(k), n: Number(n) })), ...(d.herb != null ? [{ key: `p1:${d.herb}`, n: 1 }] : [])];
-    return Object.freeze({ kind, key, id, name: d.name, tier: d.tier, rank: TIER_RANKS[d.tier - 1], ...costOf(goods), faction: CRAFT_GUILDS.dish[/** @type {keyof typeof CRAFT_GUILDS.dish} */ (id)] });
+    const goods = [
+      ...d.inputs.map(([k, n]) => ({ key: String(k), n: Number(n) })),
+      ...(d.herb != null ? [{ key: `p1:${d.herb}`, n: 1 }] : []),
+    ];
+    return Object.freeze({
+      kind,
+      key,
+      id,
+      name: d.name,
+      tier: d.tier,
+      rank: TIER_RANKS[d.tier - 1],
+      ...costOf(goods),
+      faction: CRAFT_GUILDS.dish[/** @type {keyof typeof CRAFT_GUILDS.dish} */ (id)],
+    });
   }
   if (kind === 'kit') {
     const r = WRIT_KITS.find((x) => x.id === key);
     if (!r) return null;
-    return Object.freeze({ kind, key, id, name: r.name, tier: r.tier, rank: r.rank, ...costOf(r.inputs), faction: CRAFT_GUILDS.kit });
+    return Object.freeze({
+      kind,
+      key,
+      id,
+      name: r.name,
+      tier: r.tier,
+      rank: r.rank,
+      ...costOf(r.inputs),
+      faction: CRAFT_GUILDS.kit,
+    });
   }
   return null;
 }
 /** A make's `{ cost, bought }` of its inputs (`{ key, n }`): every one at its Marks value, and the counter's own apart. */
 function costOf(/** @type {ReadonlyArray<{ key: string, n: number }>} */ inputs) {
   const at = (/** @type {{ key: string, n: number }} */ i) => (material(i.key)?.value ?? 0) * i.n;
-  return { cost: inputs.reduce((s, i) => s + at(i), 0), bought: inputs.filter((i) => COUNTER_ONLY.includes(i.key)).reduce((s, i) => s + at(i), 0) };
+  return {
+    cost: inputs.reduce((s, i) => s + at(i), 0),
+    bought: inputs.filter((i) => COUNTER_ONLY.includes(i.key)).reduce((s, i) => s + at(i), 0),
+  };
 }
 /** A DFU ingredient template's Marks value - its cheapest Stores key's (an herb is held under either plant group). */
 function cheapestValueOf(/** @type {number} */ templateIndex) {
-  const vals = ingredientKeys(templateIndex).map((k) => material(k)?.value).filter((v) => Number.isFinite(v));
+  const vals = ingredientKeys(templateIndex)
+    .map((k) => material(k)?.value)
+    .filter((v) => Number.isFinite(v));
   return vals.length ? Math.min(.../** @type {number[]} */ (vals)) : null;
 }
 
@@ -151,8 +206,16 @@ export function craftWritBaseQty(/** @type {{ kind: string, tier: number }} */ p
 /** What `qty` of a product is worth: its unit cost (one make's, over a Novice's yield) - the gathered part times
  *  CRAFT_PAY_PCT, the counter's at cost (E2) - rounded up, never under the tier's floor. Uncapped: craftWritOf fits the
  *  count first. */
-export const craftWorth = (/** @type {{ kind: 'potion'|'dish'|'kit', tier: number, cost: number, bought?: number }} */ p, /** @type {number} */ qty) =>
-  Math.max(CRAFT_PAY_FLOOR * p.tier, Math.ceil((qty * ((p.cost - (p.bought ?? 0)) * CRAFT_PAY_PCT + (p.bought ?? 0) * 100)) / (100 * NOVICE_YIELD[p.kind])));
+export const craftWorth = (
+  /** @type {{ kind: 'potion'|'dish'|'kit', tier: number, cost: number, bought?: number }} */ p,
+  /** @type {number} */ qty,
+) =>
+  Math.max(
+    CRAFT_PAY_FLOOR * p.tier,
+    Math.ceil(
+      (qty * ((p.cost - (p.bought ?? 0)) * CRAFT_PAY_PCT + (p.bought ?? 0) * 100)) / (100 * NOVICE_YIELD[p.kind]),
+    ),
+  );
 /** The most a writ asks of one product - the table's own CHECK (migration 0145, `qty` 1 to 20). */
 export const CRAFT_WRIT_QTY_MAX = 20;
 /** A crafting writ's XP: twice its pay, to the craft's track (the Court writ's law, professionLaw writXp). */
@@ -169,22 +232,41 @@ export const craftWritRenown = (/** @type {number} */ pay) => renownRate(2 * pay
 export function craftWritOf(key, qty) {
   const p = craftProductOf(key);
   if (!p) return null;
-  let n = Number.isSafeInteger(qty) && /** @type {number} */ (qty) >= 1 ? Math.min(CRAFT_WRIT_QTY_MAX, /** @type {number} */ (qty)) : craftWritBaseQty(p);
+  let n =
+    Number.isSafeInteger(qty) && /** @type {number} */ (qty) >= 1
+      ? Math.min(CRAFT_WRIT_QTY_MAX, /** @type {number} */ (qty))
+      : craftWritBaseQty(p);
   while (n > 1 && craftWorth(/** @type {any} */ (p), n) > CRAFT_WRIT_PAY_MAX) n--;
   const pay = Math.min(CRAFT_WRIT_PAY_MAX, craftWorth(/** @type {any} */ (p), n));
-  return Object.freeze({ product: p.key, kind: p.kind, tier: p.tier, faction: p.faction, qty: n, pay, xp: craftWritXp(pay), renown: craftWritRenown(pay), track: CRAFT_KINDS[/** @type {keyof typeof CRAFT_KINDS} */ (p.kind)] });
+  return Object.freeze({
+    product: p.key,
+    kind: p.kind,
+    tier: p.tier,
+    faction: p.faction,
+    qty: n,
+    pay,
+    xp: craftWritXp(pay),
+    renown: craftWritRenown(pay),
+    track: CRAFT_KINDS[/** @type {keyof typeof CRAFT_KINDS} */ (p.kind)],
+  });
 }
 
 /** A crafting writ's id: `k:<day>:<realm id>:<slot>` - three an account a day, under the realm id of its character that
  *  read a board first that day (E1: the id's stem, never whose the writ is - it is the account's). */
-export const craftWritId = (/** @type {number} */ day, /** @type {string} */ character, /** @type {number} */ slot) => `k:${day}:${character}:${slot}`;
+export const craftWritId = (/** @type {number} */ day, /** @type {string} */ character, /** @type {number} */ slot) =>
+  `k:${day}:${character}:${slot}`;
 export const CRAFT_WRIT_ID_RE = /^k:\d{1,7}:r[0-9a-f]{20}:[0-2]$/;
 
 /** The products of a kind within reach of `rank`, nearest its top: every one at a tier its rank opens, no more than two
  *  tiers below the highest it opens (a Master is asked a Master's work, as XP quarters below that). */
 export function craftWritChoices(/** @type {'potion'|'dish'|'kit'} */ kind, /** @type {number} */ rank) {
   const top = topTierOf(Math.max(0, Math.trunc(Number(rank) || 0)));
-  const all = kind === 'potion' ? WRIT_POTIONS.map((p) => `potion:${p.id}`) : kind === 'dish' ? DISHES.map((d) => `dish:${d.id}`) : WRIT_KITS.map((r) => r.id);
+  const all =
+    kind === 'potion'
+      ? WRIT_POTIONS.map((p) => `potion:${p.id}`)
+      : kind === 'dish'
+        ? DISHES.map((d) => `dish:${d.id}`)
+        : WRIT_KITS.map((r) => r.id);
   const open = all.map(craftProductOf).filter((p) => !!p && p.tier <= top);
   const best = Math.max(0, ...open.map((p) => /** @type {any} */ (p).tier));
   return open.filter((p) => /** @type {any} */ (p).tier >= best - 2).map((p) => /** @type {any} */ (p).key);
@@ -203,13 +285,16 @@ export const CRAFT_WRIT_SEED_RE = /^[A-Za-z0-9_-]{16,64}$/;
  */
 export function craftWritsFor(day, account, ranks = {}) {
   if (!Number.isSafeInteger(day) || typeof account !== 'string' || !CRAFT_WRIT_SEED_RE.test(account)) return [];
-  const { provisioning = 0, smithing = 0, smithed = false } = ranks ?? {};   // E6: a null read as none
+  const { provisioning = 0, smithing = 0, smithed = false } = ranks ?? {}; // E6: a null read as none
   const id = [...account].map((ch) => ch.charCodeAt(0));
   const roll = (/** @type {number} */ slot) => gateHash(CRAFT_WRIT_SALT, day, ...id, slot) / 4294967296;
-  const pick = (/** @type {string[]} */ from, /** @type {number} */ slot) => from[Math.min(from.length - 1, Math.floor(roll(slot) * from.length))];
+  const pick = (/** @type {string[]} */ from, /** @type {number} */ slot) =>
+    from[Math.min(from.length - 1, Math.floor(roll(slot) * from.length))];
   const potions = craftWritChoices('potion', provisioning);
   const first = pick(potions, 0);
-  const third = smithed ? pick(craftWritChoices('kit', smithing), 2) : pick(potions.length > 1 ? potions.filter((k) => k !== first) : potions, 2);
+  const third = smithed
+    ? pick(craftWritChoices('kit', smithing), 2)
+    : pick(potions.length > 1 ? potions.filter((k) => k !== first) : potions, 2);
   return [first, pick(craftWritChoices('dish', provisioning), 1), third]
     .map((key, slot) => ({ slot, w: craftWritOf(key) }))
     .filter((x) => !!x.w)
@@ -226,7 +311,7 @@ export function pieceAnswers(/** @type {string} */ product, /** @type {unknown} 
 /** A potion writ's DFU recipe key (the bottles' `potionRecipeKey`), or null. */
 export const writPotionKey = (/** @type {string} */ product) => {
   const p = craftProductOf(product);
-  return p?.kind === 'potion' ? potionById(p.id)?.key ?? null : null;
+  return p?.kind === 'potion' ? (potionById(p.id)?.key ?? null) : null;
 };
 
 // ─── THE GOODS (a save's pack, the service's record and the client's alike) ───
@@ -239,10 +324,15 @@ const POTION_BOTTLE = GROUP_TEMPLATE_INDICES.UselessItems1[1];
 const mayGo = (/** @type {any} */ rec) => tradeableRecord(rec) && !isLocked(rec);
 /** A potion record of `key` that may leave: a BOTTLE of its recipe (AUDIT CRAFT-WRITS E3: a recipe sheet names the potion's
  *  key too - never the potion itself) that may go. */
-const bottleOf = (/** @type {any} */ rec, /** @type {number} */ key) => rec?.group === 'UselessItems1' && rec.templateIndex === POTION_BOTTLE
-  && Number.isSafeInteger(rec.potionRecipeKey) && rec.potionRecipeKey === key && mayGo(rec);
+const bottleOf = (/** @type {any} */ rec, /** @type {number} */ key) =>
+  rec?.group === 'UselessItems1' &&
+  rec.templateIndex === POTION_BOTTLE &&
+  Number.isSafeInteger(rec.potionRecipeKey) &&
+  rec.potionRecipeKey === key &&
+  mayGo(rec);
 /** A crafted piece's record answering a dish or kit writ, that may go. */
-export const pieceOf = (/** @type {any} */ rec, /** @type {string} */ product) => typeof rec?.provenance === 'string' && mayGo(rec) && pieceAnswers(product, rec?.recipe);
+export const pieceOf = (/** @type {any} */ rec, /** @type {string} */ product) =>
+  typeof rec?.provenance === 'string' && mayGo(rec) && pieceAnswers(product, rec?.recipe);
 /**
  * THE PACK'S OWN GOODS FOR A WRIT, the records a delivery takes: for a potion writ `qty` bottles of its recipe, the plain
  * ones before the Potent (a stack gives part of itself); for a dish or kit writ the records of `pieces` (provenance ids,
@@ -253,7 +343,9 @@ export function craftGoodsPick(items, w, pieces = null) {
   const list = Array.isArray(items) ? items : [];
   const key = writPotionKey(w.product);
   if (key != null) {
-    const order = list.map((rec, at) => ({ rec, at })).filter((x) => bottleOf(x.rec, key))
+    const order = list
+      .map((rec, at) => ({ rec, at }))
+      .filter((x) => bottleOf(x.rec, key))
       .sort((a, b) => (a.rec.potent ? 1 : 0) - (b.rec.potent ? 1 : 0) || a.at - b.at);
     const out = [];
     let left = w.qty;
@@ -265,7 +357,13 @@ export function craftGoodsPick(items, w, pieces = null) {
     }
     return left > 0 ? null : out;
   }
-  if (!Array.isArray(pieces) || pieces.length !== w.qty || new Set(pieces).size !== pieces.length || !pieces.every((p) => typeof p === 'string' && PROVENANCE_RE.test(p))) return null;
+  if (
+    !Array.isArray(pieces) ||
+    pieces.length !== w.qty ||
+    new Set(pieces).size !== pieces.length ||
+    !pieces.every((p) => typeof p === 'string' && PROVENANCE_RE.test(p))
+  )
+    return null;
   const out = [];
   for (const pv of pieces) {
     const at = list.findIndex((rec) => rec?.provenance === pv && pieceOf(rec, w.product));
@@ -298,7 +396,11 @@ export function takeCraftGoods(save, w, pieces = null) {
     if (items[at].stackCount !== undefined || n > 1) rec.stackCount = n;
     return rec;
   });
-  return takeTradeGoods(save, { items: offered, gold: 0 }, pick.map((x) => x.at));
+  return takeTradeGoods(
+    save,
+    { items: offered, gold: 0 },
+    pick.map((x) => x.at),
+  );
 }
 
 // ─── THE WORDS (the Work tab's card, the service's answers) ──────────
@@ -310,46 +412,87 @@ export function takeCraftGoods(save, w, pieces = null) {
 export function craftCountText(/** @type {string} */ product, /** @type {number} */ qty) {
   const p = craftProductOf(product);
   if (!p) return String(qty);
-  if (p.kind === 'potion') return t('prof.craftWrit.countPotion', '{n, plural, one {a Potion of {name}} other {# Potions of {name}}}', { n: qty, name: p.name });
-  if (p.kind === 'dish') return t('prof.craftWrit.countDish', '{n, plural, one {a {name}} other {# servings of {name}}}', { n: qty, name: p.name });
-  return t('prof.craftWrit.countKit', '{n, plural, one {one {name}} other {# {name}s}}', { n: qty, name: p.name });   // AUDIT CRAFT-WRITS C5: never "a Adamantium Repair Kit"
+  if (p.kind === 'potion')
+    return t('prof.craftWrit.countPotion', '{n, plural, one {a Potion of {name}} other {# Potions of {name}}}', {
+      n: qty,
+      name: p.name,
+    });
+  if (p.kind === 'dish')
+    return t('prof.craftWrit.countDish', '{n, plural, one {a {name}} other {# servings of {name}}}', {
+      n: qty,
+      name: p.name,
+    });
+  return t('prof.craftWrit.countKit', '{n, plural, one {one {name}} other {# {name}s}}', { n: qty, name: p.name }); // AUDIT CRAFT-WRITS C5: never "a Adamantium Repair Kit"
 }
 /** The guild's name, as a hall writ names it. */
 export const craftGuildName = (/** @type {number} */ faction) => hallPosterName(faction) ?? 'guild';
 /** The card's ask: "The Mages Guild asks you for 4 Potions of Restore Power". */
 export const craftNeedText = (/** @type {{ product: string, qty: number, faction: number }} */ w) =>
-  t('prof.craftWrit.need', 'The {guild} asks you for {count}', { guild: craftGuildName(w.faction), count: craftCountText(w.product, w.qty) });
+  t('prof.craftWrit.need', 'The {guild} asks you for {count}', {
+    guild: craftGuildName(w.faction),
+    count: craftCountText(w.product, w.qty),
+  });
 /** What fills it, said on the card. */
 export function craftMadeText(/** @type {string} */ product) {
   const p = craftProductOf(product);
   if (p?.kind === 'potion') return t('prof.craftWrit.madePotion', 'Of your own brewing - the bottles leave your pack.');
-  if (p?.kind === 'dish') return t('prof.craftWrit.madeDish', 'Of your own cooking, never sold - the servings leave your pack.');
+  if (p?.kind === 'dish')
+    return t('prof.craftWrit.madeDish', 'Of your own cooking, never sold - the servings leave your pack.');
   return t('prof.craftWrit.madeKit', 'Of your own make, never sold - the kits leave your pack.');
 }
 /** The card's pay: "Pays 156 silver, 312 Provisioning experience, 234 Renown and standing with the Mages Guild". */
-export const craftPayText = (/** @type {{ pay: number, xp: number, renown: number, faction: number, track: string }} */ w) =>
-  t('prof.craftWrit.pay', 'Pays {pay, number} silver, {xp, number} {track} experience, {renown, number} Renown and standing with the {guild}',
-    { pay: w.pay, xp: w.xp, track: professionName(w.track), renown: w.renown, guild: craftGuildName(w.faction) });
+export const craftPayText = (
+  /** @type {{ pay: number, xp: number, renown: number, faction: number, track: string }} */ w,
+) =>
+  t(
+    'prof.craftWrit.pay',
+    'Pays {pay, number} silver, {xp, number} {track} experience, {renown, number} Renown and standing with the {guild}',
+    { pay: w.pay, xp: w.xp, track: professionName(w.track), renown: w.renown, guild: craftGuildName(w.faction) },
+  );
 /** What a card says the character holds toward a writ (craftWritHost.js held): "3 brewed by you, 5 in your pack" for a
  *  potion writ, "2 of your own in your pack" for a dish or kit writ. */
 export function craftHeldText(/** @type {{ kind: string }} */ w, /** @type {{ pack: number, made: number }} */ h) {
   return w.kind === 'potion'
-    ? t('prof.craftWrit.heldPotion', '{made, number} brewed by you, {pack, number} in your pack', { made: h.made, pack: h.pack })
+    ? t('prof.craftWrit.heldPotion', '{made, number} brewed by you, {pack, number} in your pack', {
+        made: h.made,
+        pack: h.pack,
+      })
     : t('prof.craftWrit.heldPiece', '{made, number} of your own in your pack', { made: h.made });
 }
 /** Why Deliver waits, said on its title: what is short. A potion is brewed at an alchemy station (FIELD BUGS 2026-10-26):
  *  a potion maker anywhere else is the client's mix (POTION-DOOR), which the service never sees. */
-export function craftShortText(/** @type {{ kind: string, qty: number }} */ w, /** @type {{ pack: number, made: number }} */ h) {
+export function craftShortText(
+  /** @type {{ kind: string, qty: number }} */ w,
+  /** @type {{ pack: number, made: number }} */ h,
+) {
   if (w.kind === 'potion') {
-    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count', { n: w.qty - h.made });
-    return t('prof.craftWrit.shortCarry', 'Carry {n, number} more of these bottles in your pack', { n: w.qty - h.pack });
+    if (h.made < w.qty)
+      return t(
+        'prof.craftWrit.shortBrew',
+        'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count',
+        { n: w.qty - h.made },
+      );
+    return t('prof.craftWrit.shortCarry', 'Carry {n, number} more of these bottles in your pack', {
+      n: w.qty - h.pack,
+    });
   }
-  return t('prof.craftWrit.shortMake', 'Make {n, number} more yourself - pieces you bought or sold do not count', { n: w.qty - h.made });
+  return t('prof.craftWrit.shortMake', 'Make {n, number} more yourself - pieces you bought or sold do not count', {
+    n: w.qty - h.made,
+  });
 }
 /** A writ filled, said: "The Mages Guild thanks you: 156 silver, 312 Provisioning experience and 234 Renown." */
 export function craftFilledText(/** @type {{ faction: number, track: string }} */ w, /** @type {any} */ d) {
   const guild = craftGuildName(w.faction);
-  if (!d || !Number.isSafeInteger(d.pay)) return t('prof.craftWrit.delivered', 'Delivered to the {guild}.', { guild });   // a realm act that landed, its answer lost
-  return t('prof.craftWrit.filled', 'The {guild} thanks you: {pay, number} silver, {xp, number} {track} experience and {renown, number} Renown.',
-    { guild, pay: d.pay, xp: Number(d.xp ?? 0), track: professionName(w.track), renown: Number(d.renown?.credited ?? 0) });
+  if (!d || !Number.isSafeInteger(d.pay)) return t('prof.craftWrit.delivered', 'Delivered to the {guild}.', { guild }); // a realm act that landed, its answer lost
+  return t(
+    'prof.craftWrit.filled',
+    'The {guild} thanks you: {pay, number} silver, {xp, number} {track} experience and {renown, number} Renown.',
+    {
+      guild,
+      pay: d.pay,
+      xp: Number(d.xp ?? 0),
+      track: professionName(w.track),
+      renown: Number(d.renown?.credited ?? 0),
+    },
+  );
 }

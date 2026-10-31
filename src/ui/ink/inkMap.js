@@ -36,27 +36,31 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, LOCATION_TYPES } from '../../formats/mapsFile.js';
-import { CLASSIC_ARGB, argbChannels } from '../town/townQuarters.js';   // VENDOR-HOUSES: classic's shop blue, the trader's house's fill
+import { CLASSIC_ARGB, argbChannels } from '../town/townQuarters.js'; // VENDOR-HOUSES: classic's shop blue, the trader's house's fill
 import {
-  isWaterPixel, buildMarkerModel, traceChains, simplifyChain,
-  TREELINE_BYTE, SNOWLINE_BYTE,
+  isWaterPixel,
+  buildMarkerModel,
+  traceChains,
+  simplifyChain,
+  TREELINE_BYTE,
+  SNOWLINE_BYTE,
 } from '../overworldModel.js';
-import { getPixelColorIndex, FILTER_SRC } from '../travel/travelMapWindow.js';   // MAP-KEY: the classic's filter law and its four buttons, asked of - never copied
-import { GATE_RING_CSS, GATE_FILL_CSS } from '../gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, in the omen's own colours
-import { SERPENT_MAP_INK } from '../serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
-import { SD_MAP_INK } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's ring, in its omen's brass
-import { EG_ARCH_MAP_INK } from '../eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
-import { KT_MAP_INK } from '../ketch/ketchMapMark.js';   // KETCH: the Sky-Ketch over Daggerfall, in the aether's blue
-import { LODE_RING_CSS, LODE_FILL_CSS } from '../lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's Motherlodes, in the compass's aqua
-import { POI_RING_CSS, POI_FILL_CSS } from '../poi/poiMapMark.js';   // POI-2: the approved POIs, in their violet
-import { BOUNTY_RING_CSS, BOUNTY_FILL_CSS, REVENANT_RING_CSS, REVENANT_FILL_CSS } from '../bounty/bountyMapMark.js';   // BOUNTY1: a held bounty's black circle; RVN7c: a revenant's lair in blood red
-import { RAID_MARK_CSS } from '../eventMapMarks.js';   // EVENT-TIP: a town under attack
-import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from '../quest/questMarks.js';   // GUIDE5: where a quest points
-import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel beside its mark
-import { paintVendorMark } from '../vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint's coin
-import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js';   // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
-import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's violet
-import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../fissureMapMark.js';   // STOREFRONT: a Brass Fissure's brass and its crack's blue
+import { getPixelColorIndex, FILTER_SRC } from '../travel/travelMapWindow.js'; // MAP-KEY: the classic's filter law and its four buttons, asked of - never copied
+import { GATE_RING_CSS, GATE_FILL_CSS } from '../gate/gateMapMark.js'; // WB1: the Oblivion Gate's ring, in the omen's own colours
+import { SERPENT_MAP_INK } from '../serpentMapMark.js'; // SERPENT1: the sea serpent's ring, in the sea's colours
+import { SD_MAP_INK } from '../superDungeon/sdMapMark.js'; // SD2c: the Super dungeon's ring, in its omen's brass
+import { EG_ARCH_MAP_INK } from '../eliteGates/egArchMapMark.js'; // EG-F: my company's Elite arch, in its gold
+import { KT_MAP_INK } from '../ketch/ketchMapMark.js'; // KETCH: the Sky-Ketch over Daggerfall, in the aether's blue
+import { LODE_RING_CSS, LODE_FILL_CSS } from '../lodeMapMark.js'; // MINE-PERKS: a Motherlode Sense's Motherlodes, in the compass's aqua
+import { POI_RING_CSS, POI_FILL_CSS } from '../poi/poiMapMark.js'; // POI-2: the approved POIs, in their violet
+import { BOUNTY_RING_CSS, BOUNTY_FILL_CSS, REVENANT_RING_CSS, REVENANT_FILL_CSS } from '../bounty/bountyMapMark.js'; // BOUNTY1: a held bounty's black circle; RVN7c: a revenant's lair in blood red
+import { RAID_MARK_CSS } from '../eventMapMarks.js'; // EVENT-TIP: a town under attack
+import { QUEST_MARK_CSS, QUEST_MARK_LIFT } from '../quest/questMarks.js'; // GUIDE5: where a quest points
+import { wheelPath } from '../carriageWheel.js'; // OW-HUBS: a carriage town's wheel beside its mark
+import { paintVendorMark } from '../vendor/vendorMapMark.js'; // HOME-VENDOR: the trader's waypoint's coin
+import { seatMapMark, SEAT_RING_SIEGE } from '../../net/townSeatLaw.js'; // SEAT1a: how a seat is marked - its ring, a crown, a second ring; SEAT1c: held, Contested, a siege week
+import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js'; // STAR6: a fallen star's violet
+import { FISSURE_BRASS_CSS, FISSURE_AETHER_CSS } from '../fissureMapMark.js'; // STOREFRONT: a Brass Fissure's brass and its crack's blue
 
 // ── THE INK (skin): the pen and its washes ───────────────────────────────────────────────
 /** THE TWO GROUNDS EVERY COLOUR ON THIS SHEET IS MIXED FROM. The pen
@@ -78,17 +82,17 @@ export const mixRgb = (from, to, t) => [0, 1, 2].map((i) => from[i] + (to[i] - f
 
 const SHOP_BLUE = argbChannels(CLASSIC_ARGB.shop);
 export const PEN = Object.freeze({
-  line: rgba(INK_RGB, 0.92),         // the pen
-  soft: rgba(INK_RGB, 0.42),         // borders, tracks, minor marks
-  relief: rgba(INK_RGB, 0.26),       // MAP-FIELD6: the high ground's carets
-  wash: rgba(INK_RGB, 0.10),         // the shore's shade
-  name: 'rgba(46, 32, 18, 0.95)',    // a place's name
-  region: rgba(INK_RGB, 0.55),       // a province's name
+  line: rgba(INK_RGB, 0.92), // the pen
+  soft: rgba(INK_RGB, 0.42), // borders, tracks, minor marks
+  relief: rgba(INK_RGB, 0.26), // MAP-FIELD6: the high ground's carets
+  wash: rgba(INK_RGB, 0.1), // the shore's shade
+  name: 'rgba(46, 32, 18, 0.95)', // a place's name
+  region: rgba(INK_RGB, 0.55), // a province's name
   select: 'rgba(168, 112, 24, 0.95)', // the chosen mark's ring
-  player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
-  coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
-  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name
-  vendor: rgba([SHOP_BLUE.r, SHOP_BLUE.g, SHOP_BLUE.b], 0.95),   // VENDOR-HOUSES: a player's trader's house, in classic's shop blue
+  player: 'rgba(120, 28, 20, 0.95)', // the player's own mark
+  coords: 'rgba(120, 28, 20, 0.75)', // MAP2: a bare-pixel destination's cross
+  halo: rgba(PARCHMENT_RGB, 0.8), // MAP-FIELD6: the parchment, quieted under a glyph or a name
+  vendor: rgba([SHOP_BLUE.r, SHOP_BLUE.g, SHOP_BLUE.b], 0.95), // VENDOR-HOUSES: a player's trader's house, in classic's shop blue
 });
 
 /**
@@ -234,9 +238,17 @@ export const HALO_PEN = 1.6;
  *  therefore LOAD-BEARING rather than a courtesy margin - it is what
  *  covers the pen. Widen the pen much further and these need redoing. */
 export const GLYPH_R = Object.freeze({
-  city: 6.5, hamlet: 3.5, village: 2.8, temple: 5, cult: 4.5,
-  dungeon: 5, graveyard: 3.8, coven: 5, tavern: 3.2, home: 3.2,
-  hall: 5,   // PVPDUNGEONS: a zone hall's arched door, the dungeon's own room
+  city: 6.5,
+  hamlet: 3.5,
+  village: 2.8,
+  temple: 5,
+  cult: 4.5,
+  dungeon: 5,
+  graveyard: 3.8,
+  coven: 5,
+  tavern: 3.2,
+  home: 3.2,
+  hall: 5, // PVPDUNGEONS: a zone hall's arched door, the dungeon's own room
 });
 /** PVPDUNGEONS: a zone hall's ink - an elite hall's deep oxblood, apart from every classic dot's hue. */
 export const HALL_INK = '#7a1f14';
@@ -279,13 +291,24 @@ export function markKind(colorIndex) {
 export function markInks(colors) {
   if (!colors) return null;
   const out = {};
-  colors.forEach((c, i) => { const k = markKind(i); if (c && !(k in out)) out[k] = markInk(c); });
+  colors.forEach((c, i) => {
+    const k = markKind(i);
+    if (c && !(k in out)) out[k] = markInk(c);
+  });
   return Object.freeze(out);
 }
 /** MAP-KEY: what the key calls each glyph. Skin - DFU prints no key; its dots' colours were learnt. */
 export const KIND_WORD = Object.freeze({
-  dungeon: 'Dungeon', graveyard: 'Graveyard', coven: 'Coven', home: 'Home', temple: 'Temple',
-  cult: 'Cult', tavern: 'Tavern', city: 'City', hamlet: 'Hamlet', village: 'Village',
+  dungeon: 'Dungeon',
+  graveyard: 'Graveyard',
+  coven: 'Coven',
+  home: 'Home',
+  temple: 'Temple',
+  cult: 'Cult',
+  tavern: 'Tavern',
+  city: 'City',
+  hamlet: 'Hamlet',
+  village: 'Village',
 });
 let _keyGroups = null;
 /**
@@ -298,14 +321,20 @@ let _keyGroups = null;
 export function mapKeyGroups() {
   if (_keyGroups) return _keyGroups;
   const types = Object.values(LOCATION_TYPES).filter((t) => getPixelColorIndex(t, {}) >= 0);
-  _keyGroups = Object.freeze(Object.keys(FILTER_SRC).map((filter) => {
-    const buckets = types.filter((t) => getPixelColorIndex(t, { [filter]: true }) < 0)
-      .map((t) => getPixelColorIndex(t, {})).sort((a, b) => a - b);
-    return Object.freeze({
-      filter, label: filter[0].toUpperCase() + filter.slice(1),
-      buckets: Object.freeze(buckets), kinds: Object.freeze([...new Set(buckets.map(markKind))]),
-    });
-  }));
+  _keyGroups = Object.freeze(
+    Object.keys(FILTER_SRC).map((filter) => {
+      const buckets = types
+        .filter((t) => getPixelColorIndex(t, { [filter]: true }) < 0)
+        .map((t) => getPixelColorIndex(t, {}))
+        .sort((a, b) => a - b);
+      return Object.freeze({
+        filter,
+        label: filter[0].toUpperCase() + filter.slice(1),
+        buckets: Object.freeze(buckets),
+        kinds: Object.freeze([...new Set(buckets.map(markKind))]),
+      });
+    }),
+  );
   return _keyGroups;
 }
 /** Which buckets each band inks. Far: the cities alone. Mid: towns,
@@ -370,12 +399,16 @@ export function boundarySegments(inside, width, height) {
  */
 export function linkSegments(segs) {
   const key = (x, y) => `${x},${y}`;
-  const at = new Map();   // endpoint -> [segment index...]
+  const at = new Map(); // endpoint -> [segment index...]
   segs.forEach((s, i) => {
-    for (const [x, y] of [[s[0], s[1]], [s[2], s[3]]]) {
+    for (const [x, y] of [
+      [s[0], s[1]],
+      [s[2], s[3]],
+    ]) {
       const k = key(x, y);
       const l = at.get(k);
-      if (l) l.push(i); else at.set(k, [i]);
+      if (l) l.push(i);
+      else at.set(k, [i]);
     }
   });
   const used = new Uint8Array(segs.length);
@@ -405,14 +438,16 @@ export function linkSegments(segs) {
       const nx = s[0] === x && s[1] === y ? s[2] : s[0];
       const ny = s[0] === x && s[1] === y ? s[3] : s[1];
       out.push({ x: nx, y: ny });
-      x = nx; y = ny;
+      x = nx;
+      y = ny;
     }
     return out;
   };
   const from = (i) => {
     used[i] = 1;
     const s = segs[i];
-    const a = { x: s[0], y: s[1] }, b = { x: s[2], y: s[3] };
+    const a = { x: s[0], y: s[1] },
+      b = { x: s[2], y: s[3] };
     // THIS segment first, then on from both its ends - so an open chain
     // comes back whole, and a chain starting at a junction starts THERE
     const forward = walk(b.x, b.y);
@@ -447,15 +482,22 @@ export function roundCorners(line, maxCut = 1.5) {
   const pts = closed ? line.slice(0, -1) : line;
   const n = pts.length;
   const cut = (a, b) => {
-    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+    const dx = b.x - a.x,
+      dy = b.y - a.y,
+      len = Math.hypot(dx, dy);
     const t = len === 0 ? 0 : Math.min(0.25, maxCut / len);
-    return [{ x: a.x + dx * t, y: a.y + dy * t }, { x: b.x - dx * t, y: b.y - dy * t }];
+    return [
+      { x: a.x + dx * t, y: a.y + dy * t },
+      { x: b.x - dx * t, y: b.y - dy * t },
+    ];
   };
   const out = [];
   if (!closed) out.push(pts[0]);
-  const first = closed ? 0 : 0, last = closed ? n : n - 1;
+  const first = closed ? 0 : 0,
+    last = closed ? n : n - 1;
   for (let i = first; i < last; i++) {
-    const a = pts[i], b = pts[(i + 1) % n];
+    const a = pts[i],
+      b = pts[(i + 1) % n];
     const [p, q] = cut(a, b);
     if (closed || i > 0) out.push(p);
     if (closed || i < n - 2) out.push(q);
@@ -555,7 +597,9 @@ export const PATH_KINDS = Object.freeze(/** @type {const} */ (['roads', 'tracks'
  *  @param {'roads' | 'tracks'} kind @param {string} band @returns {{ width: number, style: string, dash: ?number[] }} */
 export function pathPen(kind, band) {
   if (kind === 'roads') return { width: band === 'far' ? 1 : 1.5, style: PEN.line, dash: null };
-  return band === 'far' ? { width: FAR_TRACK_PEN, style: PEN.soft, dash: null } : { width: 1, style: PEN.soft, dash: [2, 3] };
+  return band === 'far'
+    ? { width: FAR_TRACK_PEN, style: PEN.soft, dash: null }
+    : { width: 1, style: PEN.soft, dash: [2, 3] };
 }
 /** AUDIT TESA II M10: an `rgba(...)` pen as its solid colour and its alpha - a translucent pass laid solid on a scratch
  *  canvas a step at a time, then down whole at the alpha, reads as one stroke (the overlaps of one fill or stroke are
@@ -567,17 +611,22 @@ export function penSolid(style) {
 
 /** Where each province's name sits: the mean of its land pixels. */
 export function regionCentroids({ width, height, regionAt, isLand, regionCount }) {
-  const sx = new Float64Array(regionCount), sy = new Float64Array(regionCount), n = new Uint32Array(regionCount);
+  const sx = new Float64Array(regionCount),
+    sy = new Float64Array(regionCount),
+    n = new Uint32Array(regionCount);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (!isLand(x, y)) continue;
       const r = regionAt(x, y);
       if (r < 0 || r >= regionCount) continue;
-      sx[r] += x + 0.5; sy[r] += y + 0.5; n[r]++;
+      sx[r] += x + 0.5;
+      sy[r] += y + 0.5;
+      n[r]++;
     }
   }
   const out = [];
-  for (let r = 0; r < regionCount; r++) if (n[r] > 0) out.push({ region: r, x: sx[r] / n[r], y: sy[r] / n[r], n: n[r] });
+  for (let r = 0; r < regionCount; r++)
+    if (n[r] > 0) out.push({ region: r, x: sx[r] / n[r], y: sy[r] / n[r], n: n[r] });
   return out;
 }
 
@@ -614,7 +663,8 @@ export function buildInkModel(deps) {
   const regionCount = deps.regionCount ?? 0;
   const high = highGround({ heightBytes, width, height, isLand });
   return {
-    width, height,
+    width,
+    height,
     coast: coastChains({ heightBytes, width, height, climateAt: deps.climateAt }),
     borders: borderChains({ width, height, regionAt, isLand }),
     ...roadChains(deps.roads, width, height),
@@ -624,7 +674,7 @@ export function buildInkModel(deps) {
     // paint - the far band iterated a hundred thousand pixels a frame to
     // draw three thousand carets
     highBands: {
-      continent: high.filter((h) => h.x % CARET_STEP.continent === 0 && h.y % CARET_STEP.continent === 0),   // TAMRIEL1
+      continent: high.filter((h) => h.x % CARET_STEP.continent === 0 && h.y % CARET_STEP.continent === 0), // TAMRIEL1
       far: high.filter((h) => h.x % CARET_STEP.far === 0 && h.y % CARET_STEP.far === 0),
       mid: high.filter((h) => h.x % CARET_STEP.mid === 0 && h.y % CARET_STEP.mid === 0),
       near: high.filter((h) => h.x % CARET_STEP.near === 0 && h.y % CARET_STEP.near === 0),
@@ -651,17 +701,27 @@ export function buildInkModel(deps) {
  *   isPort?: (summary: any) => boolean, hubAt?: (summary: any) => any, seatAt?: (summary: any) => any,
  *   carriageAt?: (summary: any) => boolean }} deps   OW-HUBS: `carriageAt` - a carriage stands at the town's gate
  */
-export function buildInkMarks({ summaries = [], filters = {}, isDiscovered = undefined, nameOf = () => '', isPort = () => false, hubAt = () => null, seatAt = () => null, carriageAt = () => false }) {
+export function buildInkMarks({
+  summaries = [],
+  filters = {},
+  isDiscovered = undefined,
+  nameOf = () => '',
+  isPort = () => false,
+  hubAt = () => null,
+  seatAt = () => null,
+  carriageAt = () => false,
+}) {
   const opts = isDiscovered ? { isDiscovered } : {};
   return buildMarkerModel(summaries, filters, opts).map((m) => ({
-    x: m.x, y: -m.z,             // the pixel's centre, in map pixels (y down)
+    x: m.x,
+    y: -m.z, // the pixel's centre, in map pixels (y down)
     colorIndex: m.colorIndex,
     kind: markKind(m.colorIndex),
     name: nameOf(m.summary),
     summary: m.summary,
     mapId: m.summary?.mapID ?? m.summary?.mapId ?? null,
     port: !!isPort(m.summary),
-    carriage: !!carriageAt(m.summary),   // OW-HUBS
+    carriage: !!carriageAt(m.summary), // OW-HUBS
     hub: hubAt(m.summary) ?? null,
     ...seatMarkOf(seatAt(m.summary)),
   }));
@@ -688,7 +748,7 @@ export const PAN_SLACK = 0.5;
  *  top-left in its coordinates. Absent they are 0 and nothing moves. */
 export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev = null, mapX0 = 0, mapY0 = 0 }) {
   const scaleMin = Math.min(paperW / mapW, paperH / mapH);
-  if (!Number.isFinite(view.scale)) view = { ox: mapX0, oy: mapY0, scale: scaleMin };   // a total function: a NaN view rests
+  if (!Number.isFinite(view.scale)) view = { ox: mapX0, oy: mapY0, scale: scaleMin }; // a total function: a NaN view rests
   // contain wins over the ceiling: a bay smaller than the sheet (a
   // probe's synthetic one) is never let shrink off it
   const scale = Math.max(scaleMin, Math.min(SCALE_MAX, view.scale));
@@ -708,10 +768,17 @@ export function clampView(view, { mapW, mapH, paperW, paperH, pan = null, prev =
     // offset by design, and must not be read as a drag outward.
     const inBox = (o, lo, hi, vis, me, wasMid) => {
       const k = vis * PAN_SLACK;
-      let a = lo - k + vis / 2, b = hi + k - vis / 2;   // where the middle may be
+      let a = lo - k + vis / 2,
+        b = hi + k - vis / 2; // where the middle may be
       if (a > b) a = b = (lo + hi) / 2;
-      if (Number.isFinite(me)) { a = Math.min(a, me); b = Math.max(b, me); }
-      if (Number.isFinite(wasMid)) { a = Math.min(a, wasMid); b = Math.max(b, wasMid); }
+      if (Number.isFinite(me)) {
+        a = Math.min(a, me);
+        b = Math.max(b, me);
+      }
+      if (Number.isFinite(wasMid)) {
+        a = Math.min(a, wasMid);
+        b = Math.max(b, wasMid);
+      }
       return Math.min(b, Math.max(a, o + vis / 2)) - vis / 2;
     };
     const pw = prev && Number.isFinite(prev.scale) && prev.scale > 0;
@@ -733,7 +800,8 @@ export function viewCentredOn(x, y, scale, { paperW, paperH }) {
 /** Zoom by `factor` keeping the map point under paper point (px, py) still. */
 export function zoomAt(view, factor, px, py) {
   const scale = view.scale * factor;
-  const mx = view.ox + px / view.scale, my = view.oy + py / view.scale;
+  const mx = view.ox + px / view.scale,
+    my = view.oy + py / view.scale;
   return { ox: mx - px / scale, oy: my - py / scale, scale };
 }
 export const toPaper = (view, x, y) => [(x - view.ox) * view.scale, (y - view.oy) * view.scale];
@@ -767,18 +835,20 @@ export const FIT_MARGIN = 0.92;
  */
 export function paintCaret(ctx, x, y, yaw = 0, pen = {}) {
   if (!ctx?.beginPath) return;
-  const hx = Math.sin(yaw), hy = -Math.cos(yaw);
-  const px = -hy, py = hx;
+  const hx = Math.sin(yaw),
+    hy = -Math.cos(yaw);
+  const px = -hy,
+    py = hx;
   ctx.fillStyle = pen.fill ?? PEN.player;
   ctx.strokeStyle = pen.halo ?? PEN.halo;
-  ctx.lineWidth = pen.haloPen ?? (2 * HALO_PEN);
+  ctx.lineWidth = pen.haloPen ?? 2 * HALO_PEN;
   ctx.beginPath();
   ctx.moveTo(x + hx * CARET_R, y + hy * CARET_R);
   ctx.lineTo(x + px * CARET_R * 0.55 - hx * CARET_R * 0.6, y + py * CARET_R * 0.55 - hy * CARET_R * 0.6);
   ctx.lineTo(x - hx * CARET_R * 0.25, y - hy * CARET_R * 0.25);
   ctx.lineTo(x - px * CARET_R * 0.55 - hx * CARET_R * 0.6, y - py * CARET_R * 0.55 - hy * CARET_R * 0.6);
   ctx.closePath();
-  ctx.stroke();   // the halo first
+  ctx.stroke(); // the halo first
   ctx.fill();
 }
 
@@ -805,7 +875,9 @@ export function paintPartyCarets(ctx, marks, pen) {
   for (const m of marks) {
     paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });
     // the i-th member standing where another already is drops a line, so two names never print over each other
-    const stack = placed.filter((q) => Math.abs(q.x - m.x) < PARTY_CARET_STACK_PX && Math.abs(q.y - m.y) < PARTY_CARET_STACK_PX).length;
+    const stack = placed.filter(
+      (q) => Math.abs(q.x - m.x) < PARTY_CARET_STACK_PX && Math.abs(q.y - m.y) < PARTY_CARET_STACK_PX,
+    ).length;
     placed.push(m);
     if (!m.name) continue;
     const ly = m.y + CARET_R + PARTY_CARET_LABEL_GAP + stack * PARTY_LABEL_STACK;
@@ -858,7 +930,7 @@ export function nameFont(mark, size) {
 export const NAME_ASC = 0.78;
 export const NAME_DESC = 0.28;
 export function nameBox(x, baseline, w, size) {
-  return { x, y: baseline - (size * NAME_ASC), w, h: size * (NAME_ASC + NAME_DESC) };
+  return { x, y: baseline - size * NAME_ASC, w, h: size * (NAME_ASC + NAME_DESC) };
 }
 
 /**
@@ -888,27 +960,34 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
   // AUDIT-MAP2: culled to the sheet BEFORE the sort - at the near band
   // every named mark in the bay qualified, and the whole set was sorted
   // per pan frame to place the dozen on the paper
-  const onSheet = (m) => { const [px, py] = toPaper(view, m.x, m.y); return !(px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20); };
-  const sorted = marks.filter((m) => m.name && named.has(m.colorIndex) && onSheet(m))
+  const onSheet = (m) => {
+    const [px, py] = toPaper(view, m.x, m.y);
+    return !(px < -40 || py < -20 || px > paperW + 40 || py > paperH + 20);
+  };
+  const sorted = marks
+    .filter((m) => m.name && named.has(m.colorIndex) && onSheet(m))
     .sort((a, b) => (rank.get(a.colorIndex) ?? 99) - (rank.get(b.colorIndex) ?? 99));
   // the ground the glyphs already hold - seeded BEFORE any name is
   // placed, so the first name is as bound by them as the last
   for (const m of marks) {
     if (!shown.has(m.colorIndex) || !onSheet(m)) continue;
     const [px, py] = toPaper(view, m.x, m.y);
-    const r = markReach(m) + 1;   // HUB1: a hub's circle is ground its glyph holds
+    const r = markReach(m) + 1; // HUB1: a hub's circle is ground its glyph holds
     boxes.push({ x: px - r, y: py - r, w: r * 2, h: r * 2 });
-    if (m.carriage) {   // OW-HUBS: and a carriage town's wheel beside it
-      const [wx, wy] = carriageWheelAt(m, px, py), wr = CARRIAGE_WHEEL_R + 1;
+    if (m.carriage) {
+      // OW-HUBS: and a carriage town's wheel beside it
+      const [wx, wy] = carriageWheelAt(m, px, py),
+        wr = CARRIAGE_WHEEL_R + 1;
       boxes.push({ x: wx - wr, y: wy - wr, w: wr * 2, h: wr * 2 });
     }
   }
-  const hits = (box) => boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);
+  const hits = (box) =>
+    boxes.some((b) => b.x < box.x + box.w && b.x + b.w > box.x && b.y < box.y + box.h && b.y + b.h > box.y);
   for (const m of sorted) {
     const [px, py] = toPaper(view, m.x, m.y);
     const measured = measure(m.name, size, nameFont(m, size));
-    const w = Number.isFinite(measured) ? measured : 0;   // a stub's NaN would let every name overlap
-    const glyph = markReach(m) + 1;   // HUB1: set clear of a hub's circle, not only its glyph
+    const w = Number.isFinite(measured) ? measured : 0; // a stub's NaN would let every name overlap
+    const glyph = markReach(m) + 1; // HUB1: set clear of a hub's circle, not only its glyph
     // MAP-FIELD6: FOUR PLACES TO TRY, not one. Seeding the glyphs into
     // the test (above) is what stops a label landing on a mark, but with
     // a single candidate it also silenced the two names that most needed
@@ -927,7 +1006,7 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
     // that matched none of them. The box is RETURNED now.
     const cands = [
       { x: px + glyph + 3, base: py + size * 0.35 },
-      { x: px - (m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph) - 3 - w, base: py + size * 0.35 },   // OW-HUBS: past a carriage town's wheel
+      { x: px - (m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph) - 3 - w, base: py + size * 0.35 }, // OW-HUBS: past a carriage town's wheel
       { x: px - w * 0.5, base: py - glyph - 5 },
       { x: px - w * 0.5, base: py + glyph + 2 + size * 0.85 },
     ];
@@ -938,9 +1017,16 @@ export function placeNames(marks, view, band, { paperW, paperH, measure }) {
     // have been drawn. That is strictly worse than the drop the design
     // intends, and it was a fault this commit introduced: the single
     // candidate it replaced always sat at the mark's own height.
-    const fit = cands.map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))
-      .find((c) => c.box.x >= 2 && c.box.x + c.box.w <= paperW - 2
-        && c.box.y >= 2 && c.box.y + c.box.h <= paperH - 2 && !hits(c.box));
+    const fit = cands
+      .map((c) => ({ ...c, box: nameBox(c.x, c.base, w, size) }))
+      .find(
+        (c) =>
+          c.box.x >= 2 &&
+          c.box.x + c.box.w <= paperW - 2 &&
+          c.box.y >= 2 &&
+          c.box.y + c.box.h <= paperH - 2 &&
+          !hits(c.box),
+      );
     if (!fit) continue;
     boxes.push(fit.box);
     out.push({ mark: m, x: fit.x, y: fit.base, size, w, box: fit.box });
@@ -976,8 +1062,8 @@ export function paintInk(ctx, model, view, opts) {
  *  (ui/tamrielInk.js), which is why it is exported: one pen, one cull. */
 export function penOf(ctx, view, paperW, paperH) {
   const s = view.scale;
-  const visible = (x, y, pad = 2) => x >= view.ox - pad && y >= view.oy - pad
-    && x <= view.ox + paperW / s + pad && y <= view.oy + paperH / s + pad;
+  const visible = (x, y, pad = 2) =>
+    x >= view.ox - pad && y >= view.oy - pad && x <= view.ox + paperW / s + pad && y <= view.oy + paperH / s + pad;
   const stroke = (chains, width, style, dash = null) => {
     ctx.lineWidth = width;
     ctx.strokeStyle = style;
@@ -992,12 +1078,19 @@ export function penOf(ctx, view, paperW, paperH) {
       let on = false;
       for (let i = 0; i < c.length; i++) {
         const p = c[i];
-        const draw = visible(p.x, p.y, 8)
-          || (i > 0 && meets(view, paperW, paperH, c[i - 1], p))
-          || (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));
-        if (!draw) { on = false; continue; }
+        const draw =
+          visible(p.x, p.y, 8) ||
+          (i > 0 && meets(view, paperW, paperH, c[i - 1], p)) ||
+          (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));
+        if (!draw) {
+          on = false;
+          continue;
+        }
         const [x, y] = toPaper(view, p.x, p.y);
-        if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
+        if (!on) {
+          ctx.moveTo(x, y);
+          on = true;
+        } else ctx.lineTo(x, y);
       }
     }
     ctx.stroke();
@@ -1008,7 +1101,10 @@ export function penOf(ctx, view, paperW, paperH) {
 /** Whether the segment a-b might cross the sheet: its bounding box meets
  *  the padded view (the canvas clips the rest). */
 function meets(view, paperW, paperH, a, b) {
-  const x0 = view.ox - 8, y0 = view.oy - 8, x1 = view.ox + paperW / view.scale + 8, y1 = view.oy + paperH / view.scale + 8;
+  const x0 = view.ox - 8,
+    y0 = view.oy - 8,
+    x1 = view.ox + paperW / view.scale + 8,
+    y1 = view.oy + paperH / view.scale + 8;
   return Math.max(a.x, b.x) >= x0 && Math.min(a.x, b.x) <= x1 && Math.max(a.y, b.y) >= y0 && Math.min(a.y, b.y) <= y1;
 }
 
@@ -1038,14 +1134,16 @@ export function paintInkStatic(ctx, model, view, opts) {
   ctx.lineWidth = 1;
   ctx.beginPath();
   const caret = Math.max(2.5, Math.min(7, s * 0.9));
-  const caretBand = opts.continent ? CONTINENT_BAND : band;   // TAMRIEL1: on the continent the carets thin further
+  const caretBand = opts.continent ? CONTINENT_BAND : band; // TAMRIEL1: on the continent the carets thin further
   const step = CARET_STEP[caretBand] ?? 3;
   const carets = model.highBands?.[caretBand] ?? model.high.filter((h) => h.x % step === 0 && h.y % step === 0);
   for (const h of carets) {
     if (!visible(h.x, h.y)) continue;
     const [x, y] = toPaper(view, h.x + 0.5, h.y + 0.5);
     const k = h.peak ? caret * 1.3 : caret;
-    ctx.moveTo(x - k, y + k * 0.6); ctx.lineTo(x, y - k * 0.6); ctx.lineTo(x + k, y + k * 0.6);
+    ctx.moveTo(x - k, y + k * 0.6);
+    ctx.lineTo(x, y - k * 0.6);
+    ctx.lineTo(x + k, y + k * 0.6);
   }
   ctx.stroke();
   // the provinces - REGION-LINES: not out on the continent, where the Bay is one province's share of the sheet and its
@@ -1055,7 +1153,11 @@ export function paintInkStatic(ctx, model, view, opts) {
   strokePaths(stroke, model, band, opts.filters ?? {});
   // WILD1 (ui/wild/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
-  if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }
+  if (typeof opts.underMarks === 'function') {
+    ctx.save();
+    opts.underMarks(ctx);
+    ctx.restore();
+  }
 
   // MAP-PAN: the world sheet hands a marks layer and this is one blit. A caller
   // with none still inks the marks here, which is what the pins drive.
@@ -1069,7 +1171,7 @@ export function paintInkStatic(ctx, model, view, opts) {
     ctx.textAlign = 'left';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = PEN.halo;
-    ctx.lineWidth = 2 * HALO_PEN;   // strokeText is centred on the glyph too
+    ctx.lineWidth = 2 * HALO_PEN; // strokeText is centred on the glyph too
     for (const n of opts.names) {
       ctx.font = nameFont(n.mark, n.size);
       ctx.strokeText(n.mark.name, n.x, n.y);
@@ -1157,8 +1259,8 @@ export function paintInkMarks(ctx, model, view, opts) {
   // a crowded coast would come out with bites taken out of it - which
   // is worse than the tangle the halo is here to fix.
   const inked = [];
-  const harbours = [];   // PORT-MAP: [beside, x, y] - a port's anchor, at every band
-  const wheels = [];   // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
+  const harbours = []; // PORT-MAP: [beside, x, y] - a port's anchor, at every band
+  const wheels = []; // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
   for (const m of model.marks) {
     if (continent || !visible(m.x, m.y, reach)) continue;
     const ink = shown.has(m.colorIndex);
@@ -1167,18 +1269,19 @@ export function paintInkMarks(ctx, model, view, opts) {
     if (m.carriage) wheels.push([ink, ...toPaper(view, m.x, m.y), m]);
   }
   // HUB1: a hub's circle goes down FIRST - its glyph's halo and ink then sit on it, so the town reads on the colour
-  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);
+  for (const [m, x, y] of inked)
+    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);
   // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle
   for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);
   for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);
   for (const [m, x, y] of inked) {
-    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined));   // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
+    paintGlyph(ctx, m.kind, x, y, false, opts.inks?.[m.kind] ?? (m.kind === 'hall' ? HALL_INK : undefined)); // MAP-KEY: in its classic dot's hue, where there is a palette (PVPDUNGEONS: a hall its own)
   }
   // PORT-MAP (2026-10-04, Mac: "Also ports don't show on my map"): a port's anchor at EVERY band - beside its mark where
   // the band inks the place, ON the place where it does not (far inks the cities alone, and the map opens far) - so the
   // ports the quays stand at read from the first look. MAP2 drew them at mid and near only.
   for (const [beside, x, y] of harbours) paintHarbour(ctx, x, y, beside);
-  for (const [beside, x, y, m] of wheels) paintCarriageWheel(ctx, x, y, beside, m);   // OW-HUBS
+  for (const [beside, x, y, m] of wheels) paintCarriageWheel(ctx, x, y, beside, m); // OW-HUBS
   // MAP2: the mod's MARK (TravelOptionsMapWindow.cs:532-550, drawn in
   // MarkLocationColor) - a ring on the marked place at EVERY band, whether
   // or not the band inks the place itself: the mark is the thing the
@@ -1187,8 +1290,11 @@ export function paintInkMarks(ctx, model, view, opts) {
     for (const m of model.marks) {
       if (m.mapId !== opts.markedMapId || !visible(m.x, m.y, reach)) continue;
       const [x, y] = toPaper(view, m.x, m.y);
-      ctx.strokeStyle = opts.markColor; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = opts.markColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 9, 0, Math.PI * 2);
+      ctx.stroke();
     }
   }
 }
@@ -1245,7 +1351,10 @@ export function syncMarksLayer(prev, spec) {
   const dw = Math.max(1, Math.ceil(bw * dpr));
   const dh = Math.max(1, Math.ceil(bh * dpr));
   // AUDIT-MAP2: assigning a canvas's width resets its bitmap even to the same value
-  if (canvas.width !== dw || canvas.height !== dh) { canvas.width = dw; canvas.height = dh; }
+  if (canvas.width !== dw || canvas.height !== dh) {
+    canvas.width = dw;
+    canvas.height = dh;
+  }
   const scale = view.scale;
   const bakeView = { ox: view.ox - padX / scale, oy: view.oy - padY / scale, scale };
   lctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1254,7 +1363,11 @@ export function syncMarksLayer(prev, spec) {
   lctx.lineCap = 'round';
   lctx.lineJoin = 'round';
   paintInkMarks(lctx, model, bakeView, {
-    ...markOpts, paperW: bw, paperH: bh, dpr, cullPad: 2 + 16 / scale,
+    ...markOpts,
+    paperW: bw,
+    paperH: bh,
+    dpr,
+    cullPad: 2 + 16 / scale,
   });
   return {
     baked: true,
@@ -1281,18 +1394,23 @@ export function paintInkOverlay(ctx, view, opts) {
   // WW2: and the gates past the Bay, in the gate's own colours
   for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
-  if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
+  if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2))
+    paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
   // SD2c: the Super dungeon's ring once it is found, in its omen's brass - WW5: every theatre's (`sds`; `sd` the one ring a
   // caller from before WW5 hands)
-  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : [])) if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);
+  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))
+    if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);
   // EG-F: my company's Elite arch while it stands, in its gold
-  if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2)) paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);
+  if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2))
+    paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);
   // KETCH: the Sky-Ketch while she is in Daggerfall's sky, in the aether's blue
-  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : [])) if (k && visible(k.cx, k.cy, k.r + 2)) paintGateRing(ctx, view, k, pulse, KT_MAP_INK);   // KETCH-EVERYWHERE: every station's ring
+  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))
+    if (k && visible(k.cx, k.cy, k.r + 2)) paintGateRing(ctx, view, k, pulse, KT_MAP_INK); // KETCH-EVERYWHERE: every station's ring
   // BOUNTY1: each held bounty's black circle, under the party too
   for (const b of opts.bounties ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);
   // RVN7c: each revenant lair the player has heard of - the same circle in blood red, under the party too
-  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);
+  for (const b of opts.revenants ?? [])
+    if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);
   // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle in the compass's aqua, its ore and its hour over it
   for (const b of opts.lodes ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, LODE_INK);
   // POI-2: the approved POIs - the same circle in their violet, each its label
@@ -1307,28 +1425,39 @@ export function paintInkOverlay(ctx, view, opts) {
   // quest's filled
   for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);
   // HOME-VENDOR: the trader's waypoint - its coin over the quests' diamonds, its town ringed in gold, under the party
-  if (opts.vendor && visible(opts.vendor.x, opts.vendor.y)) paintVendorMark(ctx, view, opts.vendor, toPaper, { halo: PEN.halo, name: PEN.name });
+  if (opts.vendor && visible(opts.vendor.x, opts.vendor.y))
+    paintVendorMark(ctx, view, opts.vendor, toPaper, { halo: PEN.halo, name: PEN.name });
   // TV3: the region's travellers, under the party - a smaller ring and a smaller name, a stranger's; OWS1: one at sea
   // inked as a ship
   for (const t of opts.travellers ?? []) {
     if (!visible(t.x, t.y)) continue;
     const [x, y] = toPaper(view, t.x, t.y);
-    ctx.strokeStyle = t.color; ctx.lineWidth = 1.8;
+    ctx.strokeStyle = t.color;
+    ctx.lineWidth = 1.8;
     if (t.ship) inkShip(ctx, x, y);
-    else { ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.stroke(); }
+    else {
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.fillStyle = t.color;
     ctx.font = `600 11px ${NAME_FACE}`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
     ctx.fillText(t.journey ? `${t.name} \u2192` : t.name, x, y + 7);
   }
   for (const m of opts.party ?? []) {
     if (!visible(m.x, m.y)) continue;
     const [x, y] = toPaper(view, m.x, m.y);
-    ctx.strokeStyle = m.color; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.arc(x, y, 7 + pulse * 1.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = m.color;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(x, y, 7 + pulse * 1.5, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.fillStyle = m.color;
     ctx.font = `600 12px ${NAME_FACE}`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
     // AUDIT SOC D2: the i-th member on a shared pixel drops i labels down
     ctx.fillText(m.name, x, y + 9 + (m.stack ?? 0) * PARTY_LABEL_STACK);
   }
@@ -1337,21 +1466,34 @@ export function paintInkOverlay(ctx, view, opts) {
     if (opts.selected.coords) {
       // MAP2: a bare pixel chosen as a destination - a cross where no
       // mark is, since there is no place to ring
-      ctx.strokeStyle = PEN.coords; ctx.lineWidth = 1.6;
+      ctx.strokeStyle = PEN.coords;
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.moveTo(x - 6, y - 6); ctx.lineTo(x + 6, y + 6); ctx.moveTo(x + 6, y - 6); ctx.lineTo(x - 6, y + 6);
+      ctx.moveTo(x - 6, y - 6);
+      ctx.lineTo(x + 6, y + 6);
+      ctx.moveTo(x + 6, y - 6);
+      ctx.lineTo(x - 6, y + 6);
       ctx.stroke();
     }
-    ctx.strokeStyle = PEN.select; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = PEN.select;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2);
+    ctx.stroke();
   }
   if (opts.player) {
     const [x, y] = toPaper(view, opts.player.x + 0.5, opts.player.y + 0.5);
-    ctx.strokeStyle = PEN.player; ctx.lineWidth = 1.6;
+    ctx.strokeStyle = PEN.player;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y); ctx.moveTo(x, y - 6); ctx.lineTo(x, y + 6);
+    ctx.moveTo(x - 6, y);
+    ctx.lineTo(x + 6, y);
+    ctx.moveTo(x, y - 6);
+    ctx.lineTo(x, y + 6);
     ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y, 3.2, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+    ctx.stroke();
   }
 }
 /**
@@ -1361,11 +1503,18 @@ export function paintInkOverlay(ctx, view, opts) {
  * @param {CanvasRenderingContext2D} ctx
  */
 export function inkShip(ctx, x, y) {
-  ctx.beginPath();   // the hull
-  ctx.moveTo(x - 6, y); ctx.lineTo(x + 6, y); ctx.lineTo(x + 3.5, y + 4); ctx.lineTo(x - 3.5, y + 4); ctx.closePath();
+  ctx.beginPath(); // the hull
+  ctx.moveTo(x - 6, y);
+  ctx.lineTo(x + 6, y);
+  ctx.lineTo(x + 3.5, y + 4);
+  ctx.lineTo(x - 3.5, y + 4);
+  ctx.closePath();
   ctx.stroke();
-  ctx.beginPath();   // the mast and its sail
-  ctx.moveTo(x - 1, y); ctx.lineTo(x - 1, y - 8); ctx.lineTo(x + 5, y - 1.5); ctx.lineTo(x - 1, y - 1.5);
+  ctx.beginPath(); // the mast and its sail
+  ctx.moveTo(x - 1, y);
+  ctx.lineTo(x - 1, y - 8);
+  ctx.lineTo(x + 5, y - 1.5);
+  ctx.lineTo(x - 1, y - 1.5);
   ctx.stroke();
 }
 
@@ -1380,23 +1529,37 @@ export function inkShip(ctx, x, y) {
 /** AUDIT SD III (T7): the least a ring is drawn on the paper, in pixels - and so the least it answers a pointer in. */
 export const GATE_RING_MIN_PX = 10;
 
-export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {   // SERPENT1: `ink` {ring, fill} - the sea serpent's ring in its own colours
+export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {
+  // SERPENT1: `ink` {ring, fill} - the sea serpent's ring in its own colours
   const [x, y] = toPaper(view, g.cx, g.cy);
   const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);
   ctx.save();
   ctx.setLineDash([]);
   ctx.fillStyle = ink?.fill ?? GATE_FILL_CSS;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = ink?.ring ?? GATE_RING_CSS; ctx.lineWidth = 2.4;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink?.ring ?? GATE_RING_CSS;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
   // the inner ring breathes, broken like a fire's edge
-  ctx.globalAlpha = 0.45 + 0.45 * pulse; ctx.lineWidth = 1.3; ctx.setLineDash([4, 5]);
-  ctx.beginPath(); ctx.arc(x, y, r * 0.8 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
-  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.45 + 0.45 * pulse;
+  ctx.lineWidth = 1.3;
+  ctx.setLineDash([4, 5]);
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.8 + pulse * 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
   if (g.label) {
     ctx.font = `600 12px ${NAME_FACE}`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineJoin = 'round';
-    ctx.strokeStyle = PEN.halo; ctx.lineWidth = 2 * HALO_PEN;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = PEN.halo;
+    ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeText(g.label, x, y - r - 3);
     ctx.fillStyle = ink?.ring ?? GATE_RING_CSS;
     ctx.fillText(g.label, x, y - r - 3);
@@ -1409,7 +1572,7 @@ export function paintGateRing(ctx, view, g, pulse = 0, ink = null) {   // SERPEN
 const BOUNTY_INK = Object.freeze({ ring: BOUNTY_RING_CSS, fill: BOUNTY_FILL_CSS });
 const REVENANT_INK = Object.freeze({ ring: REVENANT_RING_CSS, fill: REVENANT_FILL_CSS });
 const LODE_INK = Object.freeze({ ring: LODE_RING_CSS, fill: LODE_FILL_CSS });
-const POI_INK = Object.freeze({ ring: POI_RING_CSS, fill: POI_FILL_CSS });   // POI-2
+const POI_INK = Object.freeze({ ring: POI_RING_CSS, fill: POI_FILL_CSS }); // POI-2
 /**
  * BOUNTY1 (Mac: "board quests can be a green circle", then black - green is the party's): a held bounty's pixel - a dark wash inside a black ring, the
  * beasts' name over its top. The radius is in MAP pixels with a floor of eight paper pixels, as the gate's ring is.
@@ -1423,13 +1586,21 @@ export function paintBountyRing(ctx, view, b, pulse = 0, ink = BOUNTY_INK) {
   ctx.save();
   ctx.setLineDash([]);
   ctx.fillStyle = ink.fill;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = ink.ring; ctx.lineWidth = 2.2 + pulse * 0.6;
-  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink.ring;
+  ctx.lineWidth = 2.2 + pulse * 0.6;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
   if (b.label) {
     ctx.font = `600 12px ${NAME_FACE}`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineJoin = 'round';
-    ctx.strokeStyle = PEN.halo; ctx.lineWidth = 2 * HALO_PEN;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = PEN.halo;
+    ctx.lineWidth = 2 * HALO_PEN;
     ctx.strokeText(b.label, x, y - r - 3);
     ctx.fillStyle = ink.ring;
     ctx.fillText(b.label, x, y - r - 3);
@@ -1445,14 +1616,23 @@ export function paintRaidMark(ctx, view, m, pulse = 0) {
   ctx.setLineDash([]);
   ctx.strokeStyle = RAID_MARK_CSS;
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(x, y, 9 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
-  const cy = y - 18, s = 5, g = 2, h = s * 0.55;
+  ctx.beginPath();
+  ctx.arc(x, y, 9 + pulse * 2, 0, Math.PI * 2);
+  ctx.stroke();
+  const cy = y - 18,
+    s = 5,
+    g = 2,
+    h = s * 0.55;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.moveTo(x - s, cy - s); ctx.lineTo(x + s, cy + s);   // a blade, its hilt at the lower right
-  ctx.moveTo(x + s, cy - s); ctx.lineTo(x - s, cy + s);   // the other, its hilt at the lower left
-  ctx.moveTo(x + h - g, cy + h + g); ctx.lineTo(x + h + g, cy + h - g);   // each guard square across its blade
-  ctx.moveTo(x - h - g, cy + h - g); ctx.lineTo(x - h + g, cy + h + g);
+  ctx.moveTo(x - s, cy - s);
+  ctx.lineTo(x + s, cy + s); // a blade, its hilt at the lower right
+  ctx.moveTo(x + s, cy - s);
+  ctx.lineTo(x - s, cy + s); // the other, its hilt at the lower left
+  ctx.moveTo(x + h - g, cy + h + g);
+  ctx.lineTo(x + h + g, cy + h - g); // each guard square across its blade
+  ctx.moveTo(x - h - g, cy + h - g);
+  ctx.lineTo(x - h + g, cy + h + g);
   ctx.stroke();
   ctx.restore();
 }
@@ -1461,15 +1641,25 @@ export function paintRaidMark(ctx, view, m, pulse = 0) {
  *  outlined in the pen's ink so it reads on any parchment. Skin. */
 export function paintStarMark(ctx, view, m, pulse = 0) {
   const [x, y] = toPaper(view, m.x, m.y);
-  const r = 7, w = 2.2;
+  const r = 7,
+    w = 2.2;
   ctx.save();
   ctx.setLineDash([]);
   ctx.strokeStyle = STAR_VIOLET_CSS;
   ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x, y - r); ctx.lineTo(x + w, y - w); ctx.lineTo(x + r, y); ctx.lineTo(x + w, y + w);
-  ctx.lineTo(x, y + r); ctx.lineTo(x - w, y + w); ctx.lineTo(x - r, y); ctx.lineTo(x - w, y - w); ctx.closePath();
+  ctx.arc(x, y, 10 + pulse * 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + w, y - w);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x + w, y + w);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - w, y + w);
+  ctx.lineTo(x - r, y);
+  ctx.lineTo(x - w, y - w);
+  ctx.closePath();
   ctx.fillStyle = STAR_VIOLET_CSS;
   ctx.fill();
   ctx.strokeStyle = PEN.line;
@@ -1482,14 +1672,24 @@ export function paintStarMark(ctx, view, m, pulse = 0) {
  *  the pen's ink; a Heart Fissure's cog larger, a ring breathing about it as the gate's does. Skin. */
 export function paintFissureMark(ctx, view, m, pulse = 0) {
   const [x, y] = toPaper(view, m.x, m.y);
-  const r = m.heart ? 7 : 5, teeth = 8;
+  const r = m.heart ? 7 : 5,
+    teeth = 8;
   ctx.save();
   ctx.setLineDash([]);
-  if (m.heart) { ctx.strokeStyle = FISSURE_BRASS_CSS; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 11 + pulse * 2, 0, Math.PI * 2); ctx.stroke(); }
+  if (m.heart) {
+    ctx.strokeStyle = FISSURE_BRASS_CSS;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, 11 + pulse * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   ctx.beginPath();
   for (let i = 0; i < teeth * 2; i++) {
-    const a0 = (i / (teeth * 2)) * Math.PI * 2, a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2, rr = i % 2 ? r : r * 1.3;
-    if (i === 0) ctx.moveTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr); else ctx.lineTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
+    const a0 = (i / (teeth * 2)) * Math.PI * 2,
+      a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2,
+      rr = i % 2 ? r : r * 1.3;
+    if (i === 0) ctx.moveTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
+    else ctx.lineTo(x + Math.cos(a0) * rr, y + Math.sin(a0) * rr);
     ctx.lineTo(x + Math.cos(a1) * rr, y + Math.sin(a1) * rr);
   }
   ctx.closePath();
@@ -1498,10 +1698,13 @@ export function paintFissureMark(ctx, view, m, pulse = 0) {
   ctx.strokeStyle = PEN.line;
   ctx.lineWidth = 1;
   ctx.stroke();
-  ctx.strokeStyle = FISSURE_AETHER_CSS;   // the crack across it
+  ctx.strokeStyle = FISSURE_AETHER_CSS; // the crack across it
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(x - r * 1.2, y - r * 0.5); ctx.lineTo(x - r * 0.3, y + r * 0.1); ctx.lineTo(x + r * 0.2, y - r * 0.3); ctx.lineTo(x + r * 1.2, y + r * 0.5);
+  ctx.moveTo(x - r * 1.2, y - r * 0.5);
+  ctx.lineTo(x - r * 0.3, y + r * 0.1);
+  ctx.lineTo(x + r * 0.2, y - r * 0.3);
+  ctx.lineTo(x + r * 1.2, y + r * 0.5);
   ctx.stroke();
   ctx.restore();
 }
@@ -1512,12 +1715,16 @@ export function paintFissureMark(ctx, view, m, pulse = 0) {
  *  fill say it, not the colour alone. A thin stroke joins it to the place it names. */
 export function paintQuestMark(ctx, view, m) {
   const [x, y] = toPaper(view, m.x, m.y);
-  const cy = y - (m.lift ?? QUEST_MARK_LIFT), r = 6;   // AUDIT GUIDE K7: a raided town's quest stands over the blades
+  const cy = y - (m.lift ?? QUEST_MARK_LIFT),
+    r = 6; // AUDIT GUIDE K7: a raided town's quest stands over the blades
   ctx.save();
   ctx.setLineDash([]);
   ctx.strokeStyle = PEN.soft;
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x, cy + r); ctx.stroke();   // the tie to the place
+  ctx.beginPath();
+  ctx.moveTo(x, y - 5);
+  ctx.lineTo(x, cy + r);
+  ctx.stroke(); // the tie to the place
   // AUDIT GUIDE U16: the followed quest's diamond filled with the pen's INK - gold on the paper is 2:1, the ink 8:1
   // AUDIT DELVE A4: the diamond's two strokes have one home (paintQuestDiamond, below)
   paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);
@@ -1530,8 +1737,15 @@ export function paintQuestMark(ctx, view, m) {
  *  fills it first (the followed quest's ink). */
 export function paintQuestDiamond(ctx, x, y, k, s = 1, fill = null) {
   ctx.beginPath();
-  ctx.moveTo(x, y - k); ctx.lineTo(x + k, y); ctx.lineTo(x, y + k); ctx.lineTo(x - k, y); ctx.closePath();
-  if (fill) { ctx.fillStyle = fill; ctx.fill(); }   // the followed quest's (paintQuestMark)
+  ctx.moveTo(x, y - k);
+  ctx.lineTo(x + k, y);
+  ctx.lineTo(x, y + k);
+  ctx.lineTo(x - k, y);
+  ctx.closePath();
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  } // the followed quest's (paintQuestMark)
   ctx.lineWidth = 2.4 * s;
   ctx.strokeStyle = PEN.line;
   ctx.stroke();
@@ -1550,11 +1764,14 @@ export const HARBOUR_HALO = 3.4;
 /** MAP2: the harbour glyph - a small anchor beside a port's mark (`beside`), or on the port's own place where the band
  *  inks no mark there (PORT-MAP). Skin. */
 export function paintHarbour(ctx, x, y, beside = true) {
-  const ax = beside ? x + 8 : x, ay = beside ? y - 1 : y;
-  ctx.strokeStyle = PEN.halo; ctx.lineWidth = HARBOUR_HALO;
+  const ax = beside ? x + 8 : x,
+    ay = beside ? y - 1 : y;
+  ctx.strokeStyle = PEN.halo;
+  ctx.lineWidth = HARBOUR_HALO;
   anchorPath(ctx, ax, ay);
   ctx.stroke();
-  ctx.strokeStyle = PEN.line; ctx.lineWidth = HARBOUR_PEN;
+  ctx.strokeStyle = PEN.line;
+  ctx.lineWidth = HARBOUR_PEN;
   anchorPath(ctx, ax, ay);
   ctx.stroke();
 }
@@ -1563,21 +1780,26 @@ export function paintHarbour(ctx, x, y, beside = true) {
  *  the place where the band inks no mark there; the anchor's halo and pen. Skin. */
 export const CARRIAGE_WHEEL_R = 3.6;
 /** Where mark `m`'s wheel stands, its mark at paper (x, y). */
-export const carriageWheelAt = (m, x, y, beside = true) => (beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y]);
+export const carriageWheelAt = (m, x, y, beside = true) =>
+  beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y];
 export function paintCarriageWheel(ctx, x, y, beside = true, m = {}) {
   const [wx, wy] = carriageWheelAt(m ?? {}, x, y, beside);
-  ctx.strokeStyle = PEN.halo; ctx.lineWidth = HARBOUR_HALO;
+  ctx.strokeStyle = PEN.halo;
+  ctx.lineWidth = HARBOUR_HALO;
   wheelPath(ctx, wx, wy, CARRIAGE_WHEEL_R);
   ctx.stroke();
-  ctx.lineWidth = HARBOUR_PEN; ctx.strokeStyle = PEN.line;
+  ctx.lineWidth = HARBOUR_PEN;
+  ctx.strokeStyle = PEN.line;
   wheelPath(ctx, wx, wy, CARRIAGE_WHEEL_R);
   ctx.stroke();
 }
 /** The anchor's one path: its shank, its stock and its flukes. */
 function anchorPath(ctx, ax, ay) {
   ctx.beginPath();
-  ctx.moveTo(ax, ay - 4); ctx.lineTo(ax, ay + 3);        // the shank
-  ctx.moveTo(ax - 2.5, ay - 2); ctx.lineTo(ax + 2.5, ay - 2);   // the stock
+  ctx.moveTo(ax, ay - 4);
+  ctx.lineTo(ax, ay + 3); // the shank
+  ctx.moveTo(ax - 2.5, ay - 2);
+  ctx.lineTo(ax + 2.5, ay - 2); // the stock
   // the flukes: a fresh subpath, or the canvas joins the stock's end to
   // the arc's start with a stray diagonal (AUDIT-MAP A6)
   ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));
@@ -1645,8 +1867,14 @@ export function paintSeatRing(ctx, x, y, r, mark) {
   if (mark.crown) {
     const cy = y - r - (mark.second?.length ? SEAT_SECOND_PAD : 0) - 2.5;
     ctx.beginPath();
-    ctx.moveTo(x - 3, cy); ctx.lineTo(x - 3, cy - 3); ctx.lineTo(x - 1.5, cy - 1.5); ctx.lineTo(x, cy - 3.5);
-    ctx.lineTo(x + 1.5, cy - 1.5); ctx.lineTo(x + 3, cy - 3); ctx.lineTo(x + 3, cy); ctx.closePath();
+    ctx.moveTo(x - 3, cy);
+    ctx.lineTo(x - 3, cy - 3);
+    ctx.lineTo(x - 1.5, cy - 1.5);
+    ctx.lineTo(x, cy - 3.5);
+    ctx.lineTo(x + 1.5, cy - 1.5);
+    ctx.lineTo(x + 3, cy - 3);
+    ctx.lineTo(x + 3, cy);
+    ctx.closePath();
     ctx.fillStyle = mark.crown;
     ctx.fill();
   }
@@ -1678,50 +1906,118 @@ export function paintHubCircle(ctx, x, y, r, capital = false) {
 export function paintGlyph(ctx, kind, x, y, halo = false, ink = PEN.line) {
   ctx.strokeStyle = halo ? PEN.halo : ink;
   ctx.fillStyle = halo ? PEN.halo : ink;
-  ctx.lineWidth = halo ? GLYPH_PEN + (2 * HALO_PEN) : GLYPH_PEN;
-  const solid = () => { ctx.fill(); if (halo) ctx.stroke(); };
+  ctx.lineWidth = halo ? GLYPH_PEN + 2 * HALO_PEN : GLYPH_PEN;
+  const solid = () => {
+    ctx.fill();
+    if (halo) ctx.stroke();
+  };
   ctx.beginPath();
   switch (kind) {
     case 'city':
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2); solid();
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+      solid();
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.stroke();
       return;
-    case 'hamlet': ctx.arc(x, y, 3, 0, Math.PI * 2); solid(); return;
-    case 'village': ctx.arc(x, y, 2.2, 0, Math.PI * 2); solid(); return;
+    case 'hamlet':
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      solid();
+      return;
+    case 'village':
+      ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+      solid();
+      return;
     case 'temple':
-      ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 4); ctx.moveTo(x - 3, y - 2); ctx.lineTo(x + 3, y - 2); ctx.stroke(); return;
+      ctx.moveTo(x, y - 5);
+      ctx.lineTo(x, y + 4);
+      ctx.moveTo(x - 3, y - 2);
+      ctx.lineTo(x + 3, y - 2);
+      ctx.stroke();
+      return;
     case 'cult':
-      ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 4); ctx.lineTo(x - 4, y); ctx.closePath(); ctx.stroke(); return;
+      ctx.moveTo(x, y - 4);
+      ctx.lineTo(x + 4, y);
+      ctx.lineTo(x, y + 4);
+      ctx.lineTo(x - 4, y);
+      ctx.closePath();
+      ctx.stroke();
+      return;
     case 'dungeon':
-      ctx.moveTo(x, y - 4.5); ctx.lineTo(x + 4, y + 3); ctx.lineTo(x - 4, y + 3); ctx.closePath(); ctx.stroke(); return;
+      ctx.moveTo(x, y - 4.5);
+      ctx.lineTo(x + 4, y + 3);
+      ctx.lineTo(x - 4, y + 3);
+      ctx.closePath();
+      ctx.stroke();
+      return;
     case 'hall': {
       // PVPDUNGEONS: an arched door in its frame - the dungeon's own footprint (GLYPH_R 5), stroked in the sheet's pen, its
       // leaf filled light so it reads as a door and not a hole, two planks and a ring
-      const w = 3.4, top = y - 1.2, base = y + 4.2;
-      const arch = () => { ctx.beginPath(); ctx.moveTo(x - w, base); ctx.lineTo(x - w, top); ctx.arc(x, top, w, Math.PI, 0); ctx.lineTo(x + w, base); ctx.closePath(); };
+      const w = 3.4,
+        top = y - 1.2,
+        base = y + 4.2;
+      const arch = () => {
+        ctx.beginPath();
+        ctx.moveTo(x - w, base);
+        ctx.lineTo(x - w, top);
+        ctx.arc(x, top, w, Math.PI, 0);
+        ctx.lineTo(x + w, base);
+        ctx.closePath();
+      };
       arch();
-      if (halo) { ctx.fill(); ctx.stroke(); return; }
-      ctx.save(); ctx.globalAlpha = 0.28; ctx.fill(); ctx.restore();
+      if (halo) {
+        ctx.fill();
+        ctx.stroke();
+        return;
+      }
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      ctx.fill();
+      ctx.restore();
       ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x - w * 0.36, top - w * 0.55); ctx.lineTo(x - w * 0.36, base); ctx.moveTo(x + w * 0.36, top - w * 0.55); ctx.lineTo(x + w * 0.36, base);
-      ctx.save(); ctx.lineWidth = Math.max(0.8, GLYPH_PEN * 0.6); ctx.stroke(); ctx.restore();
-      ctx.beginPath(); ctx.arc(x + w * 0.62, y + 1.6, 0.75, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(x - w - 1.1, base + 0.2); ctx.lineTo(x + w + 1.1, base + 0.2); ctx.stroke();   // the sill
+      ctx.beginPath();
+      ctx.moveTo(x - w * 0.36, top - w * 0.55);
+      ctx.lineTo(x - w * 0.36, base);
+      ctx.moveTo(x + w * 0.36, top - w * 0.55);
+      ctx.lineTo(x + w * 0.36, base);
+      ctx.save();
+      ctx.lineWidth = Math.max(0.8, GLYPH_PEN * 0.6);
+      ctx.stroke();
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(x + w * 0.62, y + 1.6, 0.75, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x - w - 1.1, base + 0.2);
+      ctx.lineTo(x + w + 1.1, base + 0.2);
+      ctx.stroke(); // the sill
       return;
     }
     case 'graveyard':
-      ctx.moveTo(x - 3, y - 3); ctx.lineTo(x + 3, y + 3); ctx.moveTo(x + 3, y - 3); ctx.lineTo(x - 3, y + 3); ctx.stroke(); return;
+      ctx.moveTo(x - 3, y - 3);
+      ctx.lineTo(x + 3, y + 3);
+      ctx.moveTo(x + 3, y - 3);
+      ctx.lineTo(x - 3, y + 3);
+      ctx.stroke();
+      return;
     case 'coven':
       for (let i = 0; i < 5; i++) {
-        const a = -Math.PI / 2 + i * 4 * Math.PI / 5;
-        const px = x + Math.cos(a) * 4.5, py = y + Math.sin(a) * 4.5;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        const a = -Math.PI / 2 + (i * 4 * Math.PI) / 5;
+        const px = x + Math.cos(a) * 4.5,
+          py = y + Math.sin(a) * 4.5;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
       }
-      ctx.closePath(); ctx.stroke(); return;
+      ctx.closePath();
+      ctx.stroke();
+      return;
     case 'tavern':
-      ctx.rect(x - 2.5, y - 2.5, 5, 5); solid(); return;
-    default:   // home
-      ctx.rect(x - 2.5, y - 2.5, 5, 5); ctx.stroke();
+      ctx.rect(x - 2.5, y - 2.5, 5, 5);
+      solid();
+      return;
+    default: // home
+      ctx.rect(x - 2.5, y - 2.5, 5, 5);
+      ctx.stroke();
   }
 }
 

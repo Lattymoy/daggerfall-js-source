@@ -354,7 +354,7 @@ test('RELIEF-PEAKS the records\' wiring (by source): the host hands its frame th
   const host = read('src/scenes/groundFrameHost.js'), w = read('src/scenes/world.js'), lf = read('src/world/landforms.js');
   assert.match(host, /movedAt: groundMovedAt, townMovedAt, meetMovedAt, padsMovedAt \}\);/);   // PIN MOVED (RMB-CONTRACTS RMBC3): and a settlement's carve   // PIN MOVED (FB1028 TOWN-GROUND): the town's blend's move handed beside it; PIN MOVED (FB1029 ACROSS-EDGE): and the meets'
   assert.match(host, /moved = groundMovedField\(woods, px, py, rect\);/);
-  assert.match(host, /const t = host\.state\.pixelTranslation\(px, py\), rect = liftRectAt\(px, py\);\n\s+const key = `\$\{px\},\$\{py\},\$\{rect \?/);
+  assert.match(host, /const t = host\.state\.pixelTranslation\(px, py\), rect = liftRectAt\(px, py\);\n\s*const key = `\$\{px\},\$\{py\},\$\{rect \?/);
   assert.match(w, /climates: _landformClimates, ranges: !before \}\) : null\);/);
   assert.match(lf, /const ranges = tl && ground\.hills && ground\.ranges !== false \? rangeShaper\(sx, sy\) : null;/);
   assert.match(lf, /const land = macro \+ lift \* fade, r = ranges \? ranges\(ox \+ x, oy \+ y, land\) : 0, c = r \+ tamrielLandformAt\(tl, ox \+ x, oy \+ y, land \+ r\);/);

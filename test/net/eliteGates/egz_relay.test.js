@@ -221,7 +221,7 @@ test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s
   CL.fl |= EG_FL.mirror;
   assert.equal(egLordsShare(C, 'acct-0', 40, true), false, 'a mirror is sized by nobody');
   const src = readFileSync(new URL('../../../src/net/eliteGates/egLords.js', import.meta.url), 'utf8');
-  assert.match(src, /import \{ dpsRef, retireShare, restoreShare \} from '\.\.\/gate\/gateBrain\.js';/);
+  assert.match(src, /import \{ retireShare, restoreShare \} from '\.\.\/gate\/gateBrain\.js';/);   // PIN MOVED (EG-MIGHT): a share counted at the might's root - net/eliteGates/egMight.js egHealthRef, over the gate's dpsRef
   assert.doesNotMatch(src, /function (retireShare|restoreShare|shareOut|standsAt)\b/);
 });
 

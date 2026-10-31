@@ -102,7 +102,7 @@ test('a worn cloak: its slot and dye read from the equip table and from a peer, 
   slots[EQUIP_SLOTS.Cloak2] = { templateIndex: 5, dye: 4 };                           // not a cloak
   assert.equal(cloakOfSlots(slots), null);
   assert.equal(outfitOfItems([{ equipSlot: EQUIP_SLOTS.Cloak1, templateIndex: 155, dye: 2, group: 'MensClothing' }]), 'lll~2');
-  assert.deepEqual(outfitPieces('p6cl~9'), { head: 'p6', top: 'c', legs: 'l', cloak: 9, weapon: null, offhand: null, spell: null });   // PIN MOVED (LAYERED-DUAL): a pair's second
+  assert.deepEqual(outfitPieces('p6cl~9'), { head: 'p6', top: 'c', legs: 'l', cloak: 9, shield: null, weapon: null, offhand: null, spell: null, stage: null });   // PIN MOVED (LAYERED-DUAL): a pair's second
   assert.equal(outfitPieces('lll').cloak, null);
   assert.equal(outfitPieces('lll~10'), null);
   // every on-foot frame carries it, both bodies: walk / attack / hurt / idle and the bow / cast

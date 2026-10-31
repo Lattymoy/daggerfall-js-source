@@ -2,8 +2,8 @@
   {
     "name": "TV4-a-cloud-that-does-not-fall-stands-a-veil",
     "file": "src/render/rainCurtains.js",
-    "old": "    if (!c || !(c.fall > 0) || !Number.isFinite(c.x)",
-    "new": "    if (!c || !Number.isFinite(c.x)",
+    "old": "    if (!c || !(c.fall > 0) || !Number.isFinite(c.x) || !Number.isFinite(c.z) || !(c.r > 0)) continue;",
+    "new": "    if (!c || !Number.isFinite(c.x) || !Number.isFinite(c.z) || !(c.r > 0)) continue;",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TV4-foot-floats",
     "file": "src/render/rainCurtains.js",
-    "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
-    "new": "const foot = Number.isFinite(lo) ? lo : g;",
+    "old": "    const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
+    "new": "    const foot = Number.isFinite(lo) ? lo : g;",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TV4-no-cap",
     "file": "src/render/rainCurtains.js",
-    "old": "    if (kept.length >= CURTAINS_MAX) break;\n",
-    "new": "",
+    "old": "    if (kept.length >= CURTAINS_MAX) break;\n    // PERF-TV: `memo` (a Map the host empties when its ground changes) keeps a veil's lowest land while it drifts",
+    "new": "    // PERF-TV: `memo` (a Map the host empties when its ground changes) keeps a veil's lowest land while it drifts",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TV4-furthest-first",
     "file": "src/render/rainCurtains.js",
-    "old": "  out.sort((a, b) => a.d - b.d);\n",
-    "new": "",
+    "old": "  out.sort((a, b) => a.d - b.d);\n  const kept = [];",
+    "new": "  const kept = [];",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TV4-clip-ignored",
     "file": "src/render/rainCurtains.js",
-    "old": "    if (clip && Math.hypot(c.x - clip.x, c.z - clip.z) - reachOut > clip.r * shapeBound(c.clip[3])) continue;   // wholly outside its front: nothing falls\n",
-    "new": "",
+    "old": "    if (clip && Math.hypot(c.x - clip.x, c.z - clip.z) - reachOut > clip.r * shapeBound(c.clip[3])) continue; // wholly outside its front: nothing falls\n    const d = Math.hypot(c.x - focus[0], c.z - focus[2]);",
+    "new": "    const d = Math.hypot(c.x - focus[0], c.z - focus[2]);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TV4-fog-from-the-camera",
     "file": "src/render/rainCurtains.js",
-    "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // TV1's focus: the fog is the traveller's\n",
-    "new": "",
+    "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS); // TV1's focus: the fog is the traveller's\n    if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);",
+    "new": "    if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-TV-D1-fade-ignored",
     "file": "src/render/rainCurtains.js",
-    "old": "gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);",
-    "new": "gl.uniform1f(U.uAlpha, Math.min(1, c.alpha));",
+    "old": "      gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);",
+    "new": "      gl.uniform1f(U.uAlpha, Math.min(1, c.alpha));",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-TV-D3-foot-traveller-only",
     "file": "src/render/rainCurtains.js",
-    "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
-    "new": "const foot = g - CURTAIN_BELOW_M;",
+    "old": "    const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
+    "new": "    const foot = g - CURTAIN_BELOW_M;",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-TV-D3-rim-unasked",
     "file": "src/render/rainCurtains.js",
-    "old": "    at(x + ca * radius, z + sa * radius);\n",
-    "new": "",
+    "old": "    at(x + ca * radius, z + sa * radius);\n    at(x + ca * radius * 0.5, z + sa * radius * 0.5);",
+    "new": "    at(x + ca * radius * 0.5, z + sa * radius * 0.5);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-DEEP-R1-gate-fogs-from-the-eye",
     "file": "src/render/gate/gatePass.js",
-    "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)\n",
-    "new": "",
+    "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS); // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)\n    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off",
+    "new": "    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-DEEP-R4-veil-through-the-sea",
     "file": "src/render/rainCurtains.js",
-    "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
-    "new": "const foot = Math.min(g - CURTAIN_BELOW_M, lo - CURTAIN_FOOT_MARGIN_M);",
+    "old": "    const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
+    "new": "    const foot = Math.min(g - CURTAIN_BELOW_M, lo - CURTAIN_FOOT_MARGIN_M);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-DEEP-R4-no-half-ring",
     "file": "src/render/rainCurtains.js",
-    "old": "    at(x + ca * radius * 0.5, z + sa * radius * 0.5);\n",
-    "new": "",
+    "old": "    at(x + ca * radius * 0.5, z + sa * radius * 0.5);\n  }",
+    "new": "  }",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-DEEP-R5-own-storm-gone",
     "file": "src/render/rainCurtains.js",
-    "old": "* Math.max(CURTAIN_OWN_ALPHA, ramp(d));",
-    "new": "* ramp(d);",
+    "old": "    const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));",
+    "new": "    const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * ramp(d);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-DEEP2-D1-shape-dropped",
     "file": "src/render/rainCurtains.js",
-    "old": "const shape = packShape(c.shape);",
-    "new": "const shape = packShape(null);",
+    "old": "    const shape = packShape(c.shape);",
+    "new": "    const shape = packShape(null);",
     "tests": [
       "test/render/tv4_weather_above.test.js"
     ],

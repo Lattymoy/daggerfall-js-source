@@ -80,6 +80,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Feature | Its folders under `src/` |
 |---|---|
 | Abyss Dungeon (super dungeons) | `systems/superDungeon/`, `net/superDungeon/`, `world/superDungeon/`, `render/superDungeon/`, `scenes/superDungeon/`, `ui/superDungeon/` |
+| Ambient life (birds, bats, small animals) | `systems/ambientLife/` - and loose: `render/ambientLifePass.js`, `scenes/ambientLifeHost.js` |
 | Arena | `systems/arena/`, `net/arena/`, `world/arena/`, `scenes/arena/`, `ui/arena/` |
 | Automap | `systems/automap/`, `ui/automap/` |
 | Blood | `combat/blood/` |
@@ -105,7 +106,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | First-person weapon | `combat/weapon/` |
 | Foraging | `systems/foraging/` |
 | Grammar (translations) | `systems/grammar/` |
-| Guilds | `systems/guild/`, `net/guild/` |
+| Guilds | `systems/guild/`, `net/guild/`, `ui/guild/` |
 | Guns | `combat/gun/` |
 | Herald (the world events on Discord) | `net/herald/` - and each event's own: `net/gate/gateHerald.js`, `net/serpent/serpentHerald.js`, `net/superDungeon/sdHerald.js`, `net/eliteGates/egHerald.js` |
 | Home decorating | `systems/decor/`, `scenes/decor/` |
@@ -147,7 +148,6 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Regions | `systems/region/` |
 | Resting | `systems/rest/` |
 | Revenant | `systems/revenant/`, `ui/revenant/` |
-| Rewrite Engine rig | `characters/rewrite/` |
 | Roads | `world/road/` |
 | Roleplay Realism | `systems/roleplayRealism/` |
 | Roleplay Realism: Items | `systems/roleplayRealismItems/` |
@@ -201,7 +201,6 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/characters/ownModels/` | The port's own 3D models: heads, armour, clothing, weapons. |
 | `src/characters/paperdoll/` | The paperdoll. |
 | `src/characters/pieces/` | The voxel pieces a character is built from (heads, bodies, armour, weapons). |
-| `src/characters/rewrite/` | project-final's Rewrite Engine rig, vendored byte for byte (`test/characters/rig.test.js`). |
 
 #### `src/combat/`
 
@@ -299,6 +298,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 
 | Folder | What lives there |
 |---|---|
+| `src/systems/ambientLife/` | The creatures outdoors (`07-Rendering/Ambient-Life.md`): who stands by climate, hour and weather, the birds, the runners and the insects, and the instances the pass draws. |
 | `src/systems/arena/` | The Arena's law (`11-Multiplayer/Arena.md`): the bout, its fighters and moves, the ladder and the league, the board and score, the herald, the crowd and the replay. |
 | `src/systems/automap/` | The automap's law: the model, its floors, and what a click picks. |
 | `src/systems/bounty/` | The bounty board's law: the board, the journal and the reward. |
@@ -492,6 +492,11 @@ mutation tables - walks `test/` recursively, so a new folder needs nothing regis
 5. **A new record** - an audit, a field-bugs pass, a hand-off - goes in its kind's folder under `01-Overview/`
    (`audits/Audit-X.md`, `bugs/Field-Bugs-<date>.md`, `handoffs/`), and the index names it by that path.
    `test/bible/audit18_bible_docs.test.js` finds a record by its name in any of them, so a name is one page.
+6. **Something reaches it** (UNREACHED, 2026-10-30). A module under `src/` that no page, relay, worker, app, script or
+   tool imports runs only in its own tests. `node tools/unreached.mjs` lists them, and `test/tooling/unreached.test.js`
+   fails on one unless `tools/unreachedBaseline.json` stages it with its why. The first sweep deleted what nothing shipped: the
+   vendored Rewrite rig (`characters/rewrite/`, C4a, 1,460 lines), `pieceFromSprite.js` (C6b) and DUEL-BAR's seam.
+   Six staged modules stand in the baseline.
 
 ## How a file moves
 

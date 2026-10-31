@@ -47,8 +47,8 @@ import { isEnchanted, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js'
 import { isIngredientTemplate } from './native/nativeInventory.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../systems/spell/spellMaker.js';
 import { POTION_TEMPLATE_INDEX } from '../systems/loot/loot.js';
-import { isCardBinder, isIliacCard } from '../systems/iliac/iliacItems.js';   // CARDS8: the binder and its cards
-import { isWalletItem } from '../systems/walletItem.js';   // WALLET1: the wallet is a valuable
+import { isCardBinder, isIliacCard } from '../systems/iliac/iliacItems.js'; // CARDS8: the binder and its cards
+import { isWalletItem } from '../systems/walletItem.js'; // WALLET1: the wallet is a valuable
 
 /** The pages, in the order the spine shows them: [id, label]. */
 export const PACK_PAGES = Object.freeze([
@@ -80,9 +80,10 @@ export function pageOf(it) {
   if (g === 'UselessItems1' && it.templateIndex === POTION_TEMPLATE_INDEX) return 'potions';
   // WALLET1: the wallet and the letter of credit, though both are DFU's miscellany (UselessItems2; MiscItems 275) - the
   // letter's group alone filed it under misc while this page's own words promised it here
-  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables';   // before the ingredient test: a gem is both, and a player looks here
+  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE))
+    return 'valuables'; // before the ingredient test: a gem is both, and a player looks here
   if (isIngredientTemplate(it.templateIndex)) return 'ingredients';
-  if (g === 'Books' || g === 'Maps' || isCardBinder(it) || isIliacCard(it)) return 'books';   // CARDS8: the binder and its cards with the books
+  if (g === 'Books' || g === 'Maps' || isCardBinder(it) || isIliacCard(it)) return 'books'; // CARDS8: the binder and its cards with the books
   return 'misc';
 }
 

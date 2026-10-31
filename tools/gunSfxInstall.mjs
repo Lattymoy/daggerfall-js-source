@@ -42,23 +42,95 @@ const OUT = 'public/sfx';
  *  normalises to, set per clip so the three slots sit together. */
 export const PICKS = {
   fire: [
-    { id: 473846, as: 'fire-shotgun', max: 0.95, peak: 0.92, why: 'a 6ms transient - the cleanest crack in the set, and the reason it is the default' },
-    { id: 427595, as: 'fire-20gauge', max: 1.10, peak: 0.92, why: 'a real 20-gauge, and the most trusted file on the site (4.7 from 116 ratings, 12k downloads)' },
-    { id: 244345, as: 'fire-musket', max: 1.30, peak: 0.90, why: 'black powder - the most Elder Scrolls thing here; slow, huge, and it wants the big room' },
-    { id: 773873, as: 'fire-blast', max: 0.90, peak: 0.92, why: 'short tail and a 25dB crest: the one to use if the trigger is held' },
-    { id: 564480, as: 'fire-dry', max: 0.80, peak: 0.90, why: 'drier and closer - no room on it at all, for when the lab\’s own room does the work' },
+    {
+      id: 473846,
+      as: 'fire-shotgun',
+      max: 0.95,
+      peak: 0.92,
+      why: 'a 6ms transient - the cleanest crack in the set, and the reason it is the default',
+    },
+    {
+      id: 427595,
+      as: 'fire-20gauge',
+      max: 1.1,
+      peak: 0.92,
+      why: 'a real 20-gauge, and the most trusted file on the site (4.7 from 116 ratings, 12k downloads)',
+    },
+    {
+      id: 244345,
+      as: 'fire-musket',
+      max: 1.3,
+      peak: 0.9,
+      why: 'black powder - the most Elder Scrolls thing here; slow, huge, and it wants the big room',
+    },
+    {
+      id: 773873,
+      as: 'fire-blast',
+      max: 0.9,
+      peak: 0.92,
+      why: 'short tail and a 25dB crest: the one to use if the trigger is held',
+    },
+    {
+      id: 564480,
+      as: 'fire-dry',
+      max: 0.8,
+      peak: 0.9,
+      why: 'drier and closer - no room on it at all, for when the lab\’s own room does the work',
+    },
   ],
   'reload-open': [
-    { id: 153560, as: 'open-winchester', max: 0.70, peak: 0.86, why: 'a lever cocking: two events, hard and wooden, and it ends' },
-    { id: 449614, as: 'open-rack', max: 0.55, peak: 0.86, why: 'a clean shotgun rack, dark enough to survive the bake whole' },
-    { id: 679878, as: 'open-gunrack', max: 0.65, peak: 0.86, why: 'the darkest of the racks (914Hz) - the most Daggerfall-sounding of them' },
-    { id: 108793, as: 'open-shell', max: 0.40, peak: 0.86, why: 'the shell itself going in, if the break should be quieter than the lock-up' },
+    {
+      id: 153560,
+      as: 'open-winchester',
+      max: 0.7,
+      peak: 0.86,
+      why: 'a lever cocking: two events, hard and wooden, and it ends',
+    },
+    {
+      id: 449614,
+      as: 'open-rack',
+      max: 0.55,
+      peak: 0.86,
+      why: 'a clean shotgun rack, dark enough to survive the bake whole',
+    },
+    {
+      id: 679878,
+      as: 'open-gunrack',
+      max: 0.65,
+      peak: 0.86,
+      why: 'the darkest of the racks (914Hz) - the most Daggerfall-sounding of them',
+    },
+    {
+      id: 108793,
+      as: 'open-shell',
+      max: 0.4,
+      peak: 0.86,
+      why: 'the shell itself going in, if the break should be quieter than the lock-up',
+    },
   ],
   'reload-close': [
-    { id: 383933, as: 'close-ready', max: 0.45, peak: 0.88, why: '30ms of tail and a 26dB crest: it stops dead, which is what "ready" sounds like' },
-    { id: 449613, as: 'close-rack2', max: 0.55, peak: 0.88, why: 'the rack\’s second half, for a pair that matches its opening' },
+    {
+      id: 383933,
+      as: 'close-ready',
+      max: 0.45,
+      peak: 0.88,
+      why: '30ms of tail and a 26dB crest: it stops dead, which is what "ready" sounds like',
+    },
+    {
+      id: 449613,
+      as: 'close-rack2',
+      max: 0.55,
+      peak: 0.88,
+      why: 'the rack\’s second half, for a pair that matches its opening',
+    },
     { id: 449612, as: 'close-rack3', max: 0.55, peak: 0.88, why: 'the same, a shade brighter' },
-    { id: 108793, as: 'close-shell', max: 0.40, peak: 0.88, why: 'the shell home, for a break-action that closes softly' },
+    {
+      id: 108793,
+      as: 'close-shell',
+      max: 0.4,
+      peak: 0.88,
+      why: 'the shell home, for a break-action that closes softly',
+    },
   ],
 };
 
@@ -86,12 +158,22 @@ const metaFor = (id) => {
 
 mkdirSync(OUT, { recursive: true });
 const installed = [];
-console.log('clip'.padEnd(52), 'secs'.padStart(6), 'attack'.padStart(8), 'crest'.padStart(7), 'tail'.padStart(7), 'bright'.padStart(8));
+console.log(
+  'clip'.padEnd(52),
+  'secs'.padStart(6),
+  'attack'.padStart(8),
+  'crest'.padStart(7),
+  'tail'.padStart(7),
+  'bright'.padStart(8),
+);
 await withDecoder(async (page) => {
   for (const [slot, picks] of Object.entries(PICKS)) {
     for (const p of picks) {
       const src = sourceFor(slot, p.id);
-      if (!src) { console.error(`  ! no download for ${p.id} - run tools/freesoundPick.mjs first`); continue; }
+      if (!src) {
+        console.error(`  ! no download for ${p.id} - run tools/freesoundPick.mjs first`);
+        continue;
+      }
       const { rate, mono } = await decodeAudio(page, src);
       const pcm = bake(mono, rate, { peak: p.peak, maxSeconds: p.max });
       const name = `${p.as}.wav`;
@@ -124,7 +206,9 @@ const lines = [
 ];
 for (const i of installed) {
   const m = i.meta;
-  lines.push(`| \`${i.name}\` | ${i.slot} | [${m?.name ?? i.id}](${m?.url ?? `https://freesound.org/s/${i.id}/`}) | ${m?.username ?? '?'} | CC0 | ${i.why} |`);
+  lines.push(
+    `| \`${i.name}\` | ${i.slot} | [${m?.name ?? i.id}](${m?.url ?? `https://freesound.org/s/${i.id}/`}) | ${m?.username ?? '?'} | CC0 | ${i.why} |`,
+  );
 }
 // OURS, in the same table - the lab offers them in the same dropdowns,
 // so a reader asking "where did this file come from" must find every
@@ -134,7 +218,9 @@ for (const [name, slot] of [
   ['gun-reload-open-synth.wav', 'reload-open'],
   ['gun-reload-close-synth.wav', 'reload-close'],
 ]) {
-  lines.push(`| \`${name}\` | ${slot} | \`tools/gunSfx.mjs\` | ours | n/a | synthesised from noise and sine, deterministically - nothing recorded, nothing to attribute |`);
+  lines.push(
+    `| \`${name}\` | ${slot} | \`tools/gunSfx.mjs\` | ours | n/a | synthesised from noise and sine, deterministically - nothing recorded, nothing to attribute |`,
+  );
 }
 writeFileSync(join(OUT, 'SOURCES.md'), `${lines.join('\n')}\n`);
 console.log(`\n${installed.length} clips -> ${OUT}/ (+ SOURCES.md)`);

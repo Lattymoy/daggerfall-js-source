@@ -147,7 +147,9 @@ test('AUDIT ETHER-OW C2-3: "Your Ship" is boarded from the Bay alone - past the 
       shipMemory: (m) => m, player: { pos: [0, 0, 0] }, groundFrameHeight: () => 0, state: { compensation: [0, 0, 0] }, cam: { yaw: 0 }, STREAMING_TERRAIN_SCALE: 1,
       RECORD_GROUND_STAMP: { terrainScale: 1, groundFrame: 2 },   // PIN MOVED (BAY-LEFT-GROUND, D5): the deck stamps its frame's law beside its scale
     };
+    // PIN MOVED (HOST-SPLIT, scenes/shipBoardHost.js): the board reads the Veil through its host
     return run(env, `${lift('  const veilRefused = (to = null) => {', '\n  };\n')}
+      const host = { veilRefused };
       ${W.slice(at, end)}    return t;\n  }\n  return boardOrDisembark;`);
   };
   // from past the Veil: refused, said

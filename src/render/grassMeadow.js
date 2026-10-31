@@ -125,7 +125,10 @@ export function meadowSpriteMean(sprite) {
     for (const ch of row) {
       if (ch === '.') continue;
       const c = rgb[MEADOW_ALPHABET.indexOf(ch)];
-      sum[0] += c[0]; sum[1] += c[1]; sum[2] += c[2]; n++;
+      sum[0] += c[0];
+      sum[1] += c[1];
+      sum[2] += c[2];
+      n++;
     }
   }
   return sum.map((v) => v / n / 255);
@@ -139,7 +142,7 @@ export function meadowSpriteMean(sprite) {
 export const MEADOW_GREEN = Object.freeze(meadowSpriteMean(MEADOW_SPRITES[0]));
 /** the ground the art is drawn FOR, given the tone (render/labGrass.js GRASS_TONES[1], or the classic lane's) its
  *  green should stand at over that ground */
-export const meadowArtGround = (tone, green = MEADOW_GREEN) => green.map((v, i) => v / tone[i]);   // BANTHA2: a set's own anchor (the jungle floor's is this tuft's too)
+export const meadowArtGround = (tone, green = MEADOW_GREEN) => green.map((v, i) => v / tone[i]); // BANTHA2: a set's own anchor (the jungle floor's is this tuft's too)
 /** and the ratio is held to this span, so a tile far off grass's mean (a shore, a mod's odd record) tints the art
  *  and never repaints it */
 export const MEADOW_SHIFT = Object.freeze([0.5, 1.6]);
@@ -172,8 +175,10 @@ export const meadowGrass = (style) => style !== 'smooth' && style !== 'pixel';
  */
 export function meadowPick(r, tint) {
   const lush = smoothstep(MEADOW_LUSH[0], MEADOW_LUSH[1], tint);
-  const at = (pair) => pair[0] * (1 - lush) + pair[1] * lush;   // GLSL's own mix, term for term, so the two agree at every byte
-  const b = at(MEADOW_SHARES.bush), f = at(MEADOW_SHARES.flowers), d = at(MEADOW_SHARES.dry);
+  const at = (pair) => pair[0] * (1 - lush) + pair[1] * lush; // GLSL's own mix, term for term, so the two agree at every byte
+  const b = at(MEADOW_SHARES.bush),
+    f = at(MEADOW_SHARES.flowers),
+    d = at(MEADOW_SHARES.dry);
   let variant;
   if (r < b) variant = MEADOW_BUSH;
   else if (r < b + f) variant = MEADOW_FLOWERS;
@@ -192,16 +197,33 @@ export function meadowPick(r, tint) {
  *   a picture's - fitSprite) its RGBA, top row first, alpha 0 or 255
  */
 export function meadowSpriteBox(sprite) {
-  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-  const rows = sprite.rows ?? Array.from({ length: sprite.height }, (_, y) => Array.from({ length: sprite.width }, (__, x) => (sprite.rgba[(y * sprite.width + x) * 4 + 3] ? '#' : '.')).join(''));
+  let x0 = Infinity,
+    x1 = -Infinity,
+    y0 = Infinity,
+    y1 = -Infinity;
+  const rows =
+    sprite.rows ??
+    Array.from({ length: sprite.height }, (_, y) =>
+      Array.from({ length: sprite.width }, (__, x) => (sprite.rgba[(y * sprite.width + x) * 4 + 3] ? '#' : '.')).join(
+        '',
+      ),
+    );
   rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       if (row[x] === '.') continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
   });
-  if (x1 < x0) return { u0: 0.5, u1: 0.5, v0: 0, v1: 0 };   // a sprite of air: a card of no area, which draws nothing
-  return { u0: x0 / sprite.width, u1: (x1 + 1) / sprite.width, v0: (sprite.height - 1 - y1) / sprite.height, v1: (sprite.height - y0) / sprite.height };
+  if (x1 < x0) return { u0: 0.5, u1: 0.5, v0: 0, v1: 0 }; // a sprite of air: a card of no area, which draws nothing
+  return {
+    u0: x0 / sprite.width,
+    u1: (x1 + 1) / sprite.width,
+    v0: (sprite.height - 1 - y1) / sprite.height,
+    v1: (sprite.height - y0) / sprite.height,
+  };
 }
 /** the five's boxes, in atlas order */
 export const MEADOW_BOXES = Object.freeze(MEADOW_SPRITES.map((s) => Object.freeze(meadowSpriteBox(s))));
@@ -236,11 +258,17 @@ const LEAN_MAX = Math.hypot(0.25, 0.25);
  */
 export function cardMeasures(variants, boxes) {
   const top = Math.max(...variants.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * boxes[i].v1));
-  const reach = Math.max(...variants.map((v, i) => {
-    const b = boxes[i];
-    return v.scale * MEADOW_PATCH_SCALE[1] * (Math.max(0.5 - b.u0, b.u1 - 0.5) + LEAN_MAX * v.stiff * b.v1 * b.v1);
-  }));
-  const windReach = Math.max(...variants.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * LAB_LEAN_PER_PUSH * LAB_GUST_MAX * v.sway * boxes[i].v1 ** 2));
+  const reach = Math.max(
+    ...variants.map((v, i) => {
+      const b = boxes[i];
+      return v.scale * MEADOW_PATCH_SCALE[1] * (Math.max(0.5 - b.u0, b.u1 - 0.5) + LEAN_MAX * v.stiff * b.v1 * b.v1);
+    }),
+  );
+  const windReach = Math.max(
+    ...variants.map(
+      (v, i) => v.scale * MEADOW_PATCH_SCALE[1] * LAB_LEAN_PER_PUSH * LAB_GUST_MAX * v.sway * boxes[i].v1 ** 2,
+    ),
+  );
   return { top, reach, windReach };
 }
 const _meadowMeasures = cardMeasures(MEADOW_VARIANTS, MEADOW_BOXES);
@@ -264,15 +292,26 @@ export const MEADOW_CARD_SLOTS = 6;
 export function meadowCardCorners(cards = MEADOW_CARDS, of = cards) {
   const out = new Float32Array(cards * MEADOW_CARD_SLOTS * 3);
   for (let k = 0; k < cards; k++) {
-    const t = k / of + (k % 2);   // AUDIT MEADOW1: `of` the set it is the first `cards` of - the far set is the near's first two
-    [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0], [0, 0]].forEach(([x, y], s) => out.set([x, y, t], (k * MEADOW_CARD_SLOTS + s) * 3));
+    const t = k / of + (k % 2); // AUDIT MEADOW1: `of` the set it is the first `cards` of - the far set is the near's first two
+    [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [0, 0],
+      [0, 0],
+    ].forEach(([x, y], s) => out.set([x, y, t], (k * MEADOW_CARD_SLOTS + s) * 3));
   }
   return out;
 }
 /** ...and their triangles, labBladeCorners' winding: (0, 1, 2) and (3, 0, 2), both ending on the shared corner */
 export function meadowCardIndices(cards = MEADOW_CARDS) {
   const out = new Uint16Array(cards * 6);
-  for (let k = 0; k < cards; k++) out.set([0, 1, 2, 3, 0, 2].map((s) => k * MEADOW_CARD_SLOTS + s), k * 6);
+  for (let k = 0; k < cards; k++)
+    out.set(
+      [0, 1, 2, 3, 0, 2].map((s) => k * MEADOW_CARD_SLOTS + s),
+      k * 6,
+    );
   return out;
 }
 
@@ -285,31 +324,40 @@ export function meadowCardIndices(cards = MEADOW_CARDS) {
  */
 export function buildMeadowAtlas({ sprites = MEADOW_SPRITES, cell = MEADOW_CELL, slots = MEADOW_SLOTS } = {}) {
   if (sprites.length > slots) throw new Error(`${sprites.length} sprites in an atlas of ${slots}`);
-  const width = slots * cell, height = cell;
+  const width = slots * cell,
+    height = cell;
   const data = new Uint8Array(width * height * 4);
   sprites.forEach((s, v) => {
-    if (s.width !== s.height || cell % s.width) throw new Error(`${s.name}: a ${s.width}x${s.height} sprite does not tile a ${cell} cell`);
+    if (s.width !== s.height || cell % s.width)
+      throw new Error(`${s.name}: a ${s.width}x${s.height} sprite does not tile a ${cell} cell`);
     const k = cell / s.width;
-    if (s.rgba) {   // BANTHA2: a picture's (fitSprite), top row first - laid as the rows are
+    if (s.rgba) {
+      // BANTHA2: a picture's (fitSprite), top row first - laid as the rows are
       for (let y = 0; y < cell; y++) {
         for (let x = 0; x < cell; x++) {
           const i = ((s.height - 1 - Math.floor(y / k)) * s.width + Math.floor(x / k)) * 4;
           if (!s.rgba[i + 3]) continue;
           const o = (y * width + v * cell + x) * 4;
-          data[o] = s.rgba[i]; data[o + 1] = s.rgba[i + 1]; data[o + 2] = s.rgba[i + 2]; data[o + 3] = 255;
+          data[o] = s.rgba[i];
+          data[o + 1] = s.rgba[i + 1];
+          data[o + 2] = s.rgba[i + 2];
+          data[o + 3] = 255;
         }
       }
       return;
     }
     const rgb = s.palette.map((hex) => [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)));
     for (let y = 0; y < cell; y++) {
-      const row = s.rows[s.height - 1 - Math.floor(y / k)];   // row 0 of the cell is the sprite's bottom row
+      const row = s.rows[s.height - 1 - Math.floor(y / k)]; // row 0 of the cell is the sprite's bottom row
       for (let x = 0; x < cell; x++) {
         const ch = row[Math.floor(x / k)];
         if (ch === '.') continue;
         const c = rgb[MEADOW_ALPHABET.indexOf(ch)];
         const o = (y * width + v * cell + x) * 4;
-        data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+        data[o] = c[0];
+        data[o + 1] = c[1];
+        data[o + 2] = c[2];
+        data[o + 3] = 255;
       }
     }
   });
@@ -325,16 +373,24 @@ export function buildMeadowAtlas({ sprites = MEADOW_SPRITES, cell = MEADOW_CELL,
  */
 export function fitSprite(picture, name, cell = MEADOW_CELL) {
   const { width: w, height: h, data } = picture;
-  const fit = Math.min(cell / w, cell / h), k = fit >= 1 ? Math.floor(fit) : fit;   // whole texels a pixel, or shrunk to fit
-  const fw = Math.max(1, Math.round(w * k)), fh = Math.max(1, Math.round(h * k)), x0 = Math.floor((cell - fw) / 2), y0 = cell - fh;
+  const fit = Math.min(cell / w, cell / h),
+    k = fit >= 1 ? Math.floor(fit) : fit; // whole texels a pixel, or shrunk to fit
+  const fw = Math.max(1, Math.round(w * k)),
+    fh = Math.max(1, Math.round(h * k)),
+    x0 = Math.floor((cell - fw) / 2),
+    y0 = cell - fh;
   const rgba = new Uint8Array(cell * cell * 4);
   for (let y = 0; y < fh; y++) {
-    const sy = Math.min(h - 1, Math.floor((y + 0.5) / k));   // nearest, at the texel's centre - a shrunk picture keeps its last row
+    const sy = Math.min(h - 1, Math.floor((y + 0.5) / k)); // nearest, at the texel's centre - a shrunk picture keeps its last row
     for (let x = 0; x < fw; x++) {
-      const sx = Math.min(w - 1, Math.floor((x + 0.5) / k)), i = (sy * w + sx) * 4;
-      if (data[i + 3] < 128) continue;   // a pack's soft edge cut at a half, as the meadow's alpha test is
+      const sx = Math.min(w - 1, Math.floor((x + 0.5) / k)),
+        i = (sy * w + sx) * 4;
+      if (data[i + 3] < 128) continue; // a pack's soft edge cut at a half, as the meadow's alpha test is
       const o = ((y0 + y) * cell + x0 + x) * 4;
-      rgba[o] = data[i]; rgba[o + 1] = data[i + 1]; rgba[o + 2] = data[i + 2]; rgba[o + 3] = 255;
+      rgba[o] = data[i];
+      rgba[o + 1] = data[i + 1];
+      rgba[o + 2] = data[i + 2];
+      rgba[o + 3] = 255;
     }
   }
   return { name, width: cell, height: cell, rgba };
@@ -365,26 +421,38 @@ export function slotCoverage(level, slots = MEADOW_SLOTS) {
  */
 export function downsampleMeadow(level, { targets, slots = MEADOW_SLOTS }) {
   const { width, height, data } = level;
-  const w2 = Math.max(1, width >> 1), h2 = Math.max(1, height >> 1);
+  const w2 = Math.max(1, width >> 1),
+    h2 = Math.max(1, height >> 1);
   const out = new Uint8Array(w2 * h2 * 4);
   const blocks = [];
   for (let y = 0; y < h2; y++) {
     for (let x = 0; x < w2; x++) {
-      let n = 0, r = 0, g = 0, b = 0;
+      let n = 0,
+        r = 0,
+        g = 0,
+        b = 0;
       for (let dy = 0; dy < 2; dy++) {
         for (let dx = 0; dx < 2; dx++) {
-          const sx = Math.min(width - 1, x * 2 + dx), sy = Math.min(height - 1, y * 2 + dy);
+          const sx = Math.min(width - 1, x * 2 + dx),
+            sy = Math.min(height - 1, y * 2 + dy);
           const i = (sy * width + sx) * 4;
           if (!data[i + 3]) continue;
-          n++; r += data[i]; g += data[i + 1]; b += data[i + 2];
+          n++;
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
         }
       }
       const o = (y * w2 + x) * 4;
-      if (n) { out[o] = Math.round(r / n); out[o + 1] = Math.round(g / n); out[o + 2] = Math.round(b / n); }
+      if (n) {
+        out[o] = Math.round(r / n);
+        out[o + 1] = Math.round(g / n);
+        out[o + 2] = Math.round(b / n);
+      }
       blocks.push({ x, y, n, o });
     }
   }
-  const cw = w2 / slots;   // this level's texels a cell, across
+  const cw = w2 / slots; // this level's texels a cell, across
   if (cw < 1) {
     for (const bl of blocks) if (bl.n) out[bl.o + 3] = 255;
     return { width: w2, height: h2, data: out };

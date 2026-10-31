@@ -204,8 +204,8 @@
   {
     "name": "LEANW-window-halved",
     "file": "server-account/src/leanWitness.js",
-    "old": "nowS - 2 * SEAT_WITNESS_IGNORED_S);",
-    "new": "nowS - SEAT_WITNESS_IGNORED_S);",
+    "old": "  db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`).bind(kind, account, nowS - 2 * SEAT_WITNESS_IGNORED_S);",
+    "new": "  db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`).bind(kind, account, nowS - SEAT_WITNESS_IGNORED_S);",
     "tests": [
       "test/server/lean_witness.test.js"
     ],
@@ -264,8 +264,8 @@
   {
     "name": "LEANW-clock-every-row",
     "file": "server-account/src/townSeats.js",
-    "old": "  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS);   // LEAN-WITNESS",
-    "new": "  const facts = seatFacts(await allSeatRows(db), nowS);   // LEAN-WITNESS",
+    "old": "  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS); // LEAN-WITNESS",
+    "new": "  const facts = seatFacts(await allSeatRows(db), nowS); // LEAN-WITNESS",
     "tests": [
       "test/server/lean_witness.test.js"
     ],
@@ -274,8 +274,8 @@
   {
     "name": "LEANW-dev-list-judged",
     "file": "server-account/src/townSeats.js",
-    "old": "  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS);",
-    "new": "  const { seats, ignored } = dev ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS);",
+    "old": "  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "new": "  const { seats, ignored } = dev ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
     "tests": [
       "test/server/lean_witness.test.js"
     ],
@@ -465,8 +465,8 @@
   {
     "name": "LEANW2-seats-judged-unnamed",
     "file": "server-account/src/townSeats.js",
-    "old": "FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = 'seat' AND ${LEAN_ROWS}",
-    "new": "FROM world_witness WHERE kind = 'seat' AND ${LEAN_ROWS}",
+    "old": "export const SEAT_JUDGED_SQL = `SELECT key, account, report, at FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = 'seat' AND ${LEAN_ROWS}`;",
+    "new": "export const SEAT_JUDGED_SQL = `SELECT key, account, report, at FROM world_witness WHERE kind = 'seat' AND ${LEAN_ROWS}`;",
     "tests": [
       "test/server/lean_witness.test.js"
     ],

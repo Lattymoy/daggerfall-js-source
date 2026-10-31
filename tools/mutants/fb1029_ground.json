@@ -25,8 +25,8 @@
   {
     "name": "ROAD-DRY-rotation-read",
     "file": "src/world/road/roadDry.js",
-    "old": "!PAVING.has(tilemap[i] & 0x3f)",
-    "new": "!PAVING.has(tilemap[i])",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!paths[i] || !PAVING.has(tilemap[i])) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/systems/travel/rpt1026_world_causeway.test.js"
@@ -36,8 +36,8 @@
   {
     "name": "ROAD-DRY-paths-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "if (!paths[i] || !PAVING",
-    "new": "if (!PAVING",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!PAVING.has(tilemap[i] & 0x3f)) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -46,8 +46,8 @@
   {
     "name": "ROAD-DRY-rect-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n",
-    "new": "",
+    "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n      if (rect?.ring?.[i]) continue;",
+    "new": "      if (rect?.ring?.[i]) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -56,8 +56,8 @@
   {
     "name": "ROAD-DRY-ring-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "      if (rect?.ring?.[i]) continue;\n",
-    "new": "",
+    "old": "      if (rect?.ring?.[i]) continue;\n      for (const [cx, cy] of [",
+    "new": "      for (const [cx, cy] of [",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "ROAD-DRY-lowers",
     "file": "src/world/road/roadDry.js",
-    "old": "if (samples[k] < CAPITAL_LAND) { samples[k] = CAPITAL_LAND; n++; }",
-    "new": "{ samples[k] = CAPITAL_LAND; n++; }",
+    "old": "    if (samples[k] < CAPITAL_LAND) {",
+    "new": "    {",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "ROAD-DRY-edge-corners",
     "file": "src/world/road/roadDry.js",
-    "old": " if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);",
-    "new": " lift(cx * hDim + cy);",
+    "old": "        if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);",
+    "new": "        lift(cx * hDim + cy);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -97,8 +97,8 @@
   {
     "name": "ROAD-DRY-one-sided",
     "file": "src/world/road/roadDry.js",
-    "old": " && !!(byteAt(px + dx, py + dy) & back)",
-    "new": "",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -107,8 +107,8 @@
   {
     "name": "ROAD-DRY-bay-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "onBay(px + dx, py + dy) && ",
-    "new": "",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -191,8 +191,8 @@
   {
     "name": "MEET-cone-steep",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;",
-    "new": "const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;",
+    "old": "        const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
+    "new": "        const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "MEET-cone-lowers",
     "file": "src/world/terrain/townMeet.js",
-    "old": "for (let i = 0; any && i < up.length; i++) if (up[i] > S[i]) {",
-    "new": "for (let i = 0; any && i < up.length; i++) if (up[i] > 0) {",
+    "old": "    if (up[i] > S[i]) {",
+    "new": "    if (up[i] > 0) {",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "MEET-beyond-moved",
     "file": "src/world/terrain/townMeet.js",
-    "old": "edges[side] = moved && !beyond ? { R, E } : null;",
-    "new": "edges[side] = moved ? { R, E } : null;",
+    "old": "    edges[side] = moved && !beyond ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
+    "new": "    edges[side] = moved ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "MEET-least-unread",
     "file": "src/world/terrain/townMeet.js",
-    "old": "R[k] = want - e > least ? Math.fround(want) : e;",
-    "new": "R[k] = want > e ? Math.fround(want) : e;",
+    "old": "      R[k] = want - e > least ? Math.fround(want) : e;",
+    "new": "      R[k] = want > e ? Math.fround(want) : e;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "MEET-point-law-parted",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2); if (c > up) up = c;",
-    "new": "const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky)); if (c > up) up = c;",
+    "old": "    const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2);",
+    "new": "    const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky));",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "MEET-reach-3x3",
     "file": "src/world/terrain/townMeet.js",
-    "old": "if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;",
-    "new": "if (!meet) continue;",
+    "old": "    if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;",
+    "new": "    if (!meet) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "MEET-cache-world",
     "file": "src/world/terrain/townMeet.js",
-    "old": "const sameGround = (had, woods, lf) => had.woods === woods &&",
-    "new": "const sameGround = (had, woods, lf) => true &&",
+    "old": "  had.woods === woods &&",
+    "new": "  true &&",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -366,8 +366,8 @@
   {
     "name": "MEET-bake-unmet",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    if (meets) applyTownMeets(S, mapPixelX, mapPixelY, meets);\n",
-    "new": "",
+    "old": "    if (meets) applyTownMeets(S, mapPixelX, mapPixelY, meets);\n    const [avg] = calcAvgMaxHeight(unmet ?? S);",
+    "new": "    const [avg] = calcAvgMaxHeight(unmet ?? S);",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -387,8 +387,8 @@
   {
     "name": "MEET-bake-any-shape",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "r?.meets && r.shape ? generateSamples(woods, x, y) : null",
-    "new": "r?.shape ? generateSamples(woods, x, y) : null",
+    "old": "        S = r?.meets && r.shape ? generateSamples(woods, x, y) : null;",
+    "new": "        S = r?.shape ? generateSamples(woods, x, y) : null;",
     "tests": [
       "test/world/fb1029_ground_real.test.js"
     ],
@@ -397,8 +397,8 @@
   {
     "name": "MEET-bake-rows-unflagged",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])",
-    "new": "...(r.shape ? [r.shape] : [])",
+    "old": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])]);",
+    "new": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape] : [])]);",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/fb1029_ground_real.test.js"
@@ -408,8 +408,8 @@
   {
     "name": "MEET-bake-key",
     "file": "src/world/deepWater/deepWatersBakeCache.js",
-    "old": "    if (r[6]) { h ^= 0x6d; h = Math.imul(h, 0x01000193); }   // ACROSS-EDGE: a town the meets read\n",
-    "new": "",
+    "old": "    if (r[6]) {\n      h ^= 0x6d;\n      h = Math.imul(h, 0x01000193);\n    } // ACROSS-EDGE: a town the meets read\n  }",
+    "new": "  }",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -418,8 +418,8 @@
   {
     "name": "MEET-bake-lookup",
     "file": "src/world/deepWater/deepWatersBakeCache.js",
-    "old": ", ...(r[6] ? { meets: true } : {})",
-    "new": "",
+    "old": "    m.set(r[0], {\n      xMin: r[1],\n      xMax: r[2],\n      yMin: r[3],\n      yMax: r[4],\n      ...(r[5] ? { shape: r[5] } : {}),\n      ...(r[6] ? { meets: true } : {}),\n    });",
+    "new": "    m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}) });",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -428,8 +428,8 @@
   {
     "name": "MEET-worker-twice",
     "file": "src/world/deepWater/deepWatersWorker.js",
-    "old": "buildGlobal(woods, { locationRectAt, meetsAt })",
-    "new": "buildGlobal(woods, { locationRectAt })",
+    "old": "    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt, meetsAt }) });",
+    "new": "    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt }) });",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -438,8 +438,8 @@
   {
     "name": "MEET-types-unread",
     "file": "src/scenes/townMeetsHost.js",
-    "old": "MEET_TYPES.has(loc.mapTableData?.locationType)",
-    "new": "true",
+    "old": "export const meetsTown = (loc) =>\n  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "export const meetsTown = (loc) => !!loc?.exterior?.exteriorData && true && !loc.spawned && !loc.capital;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -448,8 +448,8 @@
   {
     "name": "MEET-spawn-met",
     "file": "src/scenes/townMeetsHost.js",
-    "old": " && !loc.spawned",
-    "new": "",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.capital;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -458,8 +458,8 @@
   {
     "name": "MEET-capital-met",
     "file": "src/scenes/townMeetsHost.js",
-    "old": " && !loc.capital",
-    "new": "",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -468,8 +468,8 @@
   {
     "name": "MEET-bay-unread",
     "file": "src/scenes/townMeetsHost.js",
-    "old": "      if (!inBay(x, y)) continue;\n",
-    "new": "",
+    "old": "        if (!inBay(x, y)) continue;\n        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
+    "new": "        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],

@@ -18,7 +18,16 @@
 // Same inversion as DFU's four (TRUE means HIDDEN), so the default of
 // false is "always on" and a pre-ROADS-12 save, which has no such keys,
 // restores to shown.
-const DEFAULT_FILTERS = Object.freeze({ dungeons: false, temples: false, homes: false, towns: false, roads: false, tracks: false, rivers: false, streams: false });   // ROADS 24: water too
+const DEFAULT_FILTERS = Object.freeze({
+  dungeons: false,
+  temples: false,
+  homes: false,
+  towns: false,
+  roads: false,
+  tracks: false,
+  rivers: false,
+  streams: false,
+}); // ROADS 24: water too
 const DEFAULT_POPUP = Object.freeze({ speedCautious: true, sleepModeInn: true, travelShip: true });
 
 let _filters = { ...DEFAULT_FILTERS };
@@ -33,17 +42,27 @@ let _markedMapId = -1;
 
 /** The live filter set - the window edits this object in place, the
  *  way DFU's window edits its own four fields. */
-export function travelMapFilters() { return _filters; }
+export function travelMapFilters() {
+  return _filters;
+}
 
 /** AUDIT-TO1 G4: the middle-click mark, -1 for none. */
-export function travelMapMarkedMapId() { return _markedMapId; }
-export function setTravelMapMarkedMapId(id) { _markedMapId = Number.isFinite(id) ? id : -1; }
+export function travelMapMarkedMapId() {
+  return _markedMapId;
+}
+export function setTravelMapMarkedMapId(id) {
+  _markedMapId = Number.isFinite(id) ? id : -1;
+}
 
 /** The three popup choices the next popup opens with. */
-export function travelMapPopUpState() { return { ..._popUp }; }
+export function travelMapPopUpState() {
+  return { ..._popUp };
+}
 export function setTravelMapPopUpState({ speedCautious, sleepModeInn, travelShip }) {
   _popUp = {
-    speedCautious: !!speedCautious, sleepModeInn: !!sleepModeInn, travelShip: !!travelShip,
+    speedCautious: !!speedCautious,
+    sleepModeInn: !!sleepModeInn,
+    travelShip: !!travelShip,
   };
 }
 
@@ -58,9 +77,10 @@ export function travelMapSaveData(live = null) {
     filterTemples: _filters.temples,
     filterHomes: _filters.homes,
     filterTowns: _filters.towns,
-    filterRoads: _filters.roads,     // ROADS 12: the port's own two
+    filterRoads: _filters.roads, // ROADS 12: the port's own two
     filterTracks: _filters.tracks,
-    filterRivers: _filters.rivers, filterStreams: _filters.streams,   // ROADS 24
+    filterRivers: _filters.rivers,
+    filterStreams: _filters.streams, // ROADS 24
     sleepInn: p.sleepModeInn,
     speedCautious: p.speedCautious,
     travelShip: p.travelShip,
@@ -72,10 +92,14 @@ export function travelMapSaveData(live = null) {
 export function restoreTravelMapSaveData(data) {
   const d = data ?? {};
   _filters = {
-    dungeons: !!d.filterDungeons, temples: !!d.filterTemples,
-    homes: !!d.filterHomes, towns: !!d.filterTowns,
-    roads: !!d.filterRoads, tracks: !!d.filterTracks,   // ROADS 12: absent in an older save -> shown
-    rivers: !!d.filterRivers, streams: !!d.filterStreams,   // ROADS 24
+    dungeons: !!d.filterDungeons,
+    temples: !!d.filterTemples,
+    homes: !!d.filterHomes,
+    towns: !!d.filterTowns,
+    roads: !!d.filterRoads,
+    tracks: !!d.filterTracks, // ROADS 12: absent in an older save -> shown
+    rivers: !!d.filterRivers,
+    streams: !!d.filterStreams, // ROADS 24
   };
   _popUp = {
     speedCautious: d.speedCautious ?? true,
@@ -89,12 +113,16 @@ export function restoreTravelMapSaveData(data) {
 /** AUDIT IT1 C1: a NEW window's four filters and the rest - the struct's own defaults, every place shown. The mod's
  *  CarriageMap and SeafarersMap are each a new DaggerfallTravelMapWindow (`newobj`), never DaggerfallUI's persistent
  *  one the store stands for. */
-export function freshTravelMapFilters() { return { ...DEFAULT_FILTERS }; }
+export function freshTravelMapFilters() {
+  return { ...DEFAULT_FILTERS };
+}
 /** AUDIT IT1 C2: a NEW DaggerfallTravelPopUp's three (:85-87) - Cautious, By ship, At inns. */
-export function freshTravelMapPopUpState() { return { ...DEFAULT_POPUP }; }
+export function freshTravelMapPopUpState() {
+  return { ...DEFAULT_POPUP };
+}
 
 export function resetTravelMapState() {
   _filters = { ...DEFAULT_FILTERS };
   _popUp = { ...DEFAULT_POPUP };
-  _markedMapId = -1;   // AUDIT-TO1 G4
+  _markedMapId = -1; // AUDIT-TO1 G4
 }

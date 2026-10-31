@@ -2,8 +2,8 @@
   {
     "name": "TV8-spot-lost",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  const w = { x: dest.pixel.x, y: dest.pixel.y, at: Math.round(at), go: Math.round(at), h: null };\n  if (dest.point) { w.sx = Math.round(dest.point.x); w.sz = Math.round(dest.point.z); }\n",
-    "new": "  const w = { x: dest.pixel.x, y: dest.pixel.y, at: Math.round(at), go: Math.round(at), h: null };\n",
+    "old": "  if (dest.point) {\n    w.sx = Math.round(dest.point.x);\n    w.sz = Math.round(dest.point.z);\n  }\n  return w;",
+    "new": "  return w;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TV8-asked-forever",
     "file": "src/systems/party/partyWalk.js",
-    "old": "    if (now - tw.at > PARTY_WALK_ASK_MS) return null;   // too old to be asked about: left behind\n",
-    "new": "",
+    "old": "    if (now - tw.at > PARTY_WALK_ASK_MS) return null; // too old to be asked about: left behind\n    return gathered && !journeying && free ? 'ask' : null;",
+    "new": "    return gathered && !journeying && free ? 'ask' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TV8-no-means-yes",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (!mine.yes) return null;\n",
-    "new": "",
+    "old": "  if (!mine.yes) return null;\n  if (journeying && !onWalk) return 'leave';",
+    "new": "  if (journeying && !onWalk) return 'leave';",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TV8-never-halts",
     "file": "src/systems/party/partyWalk.js",
-    "old": "return !journeying ? null : was ? 'halt' : 'leave';",
-    "new": "return null;",
+    "old": "  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return !journeying ? null : was ? 'halt' : 'leave';",
+    "new": "  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TV8-never-again",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (tw.h == null && tw.go !== mine.go) return",
-    "new": "  if (tw.h == null && mine.go == null) return",
+    "old": "  if (tw.h == null && tw.go !== mine.go) return free && (journeying || !mine.balk) ? 'start' : null;",
+    "new": "  if (tw.h == null && mine.go == null) return free && (journeying || !mine.balk) ? 'start' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TV8-own-journey-stopped",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (!tw) return null;\n  if (mine.at !== tw.at) {",
-    "new": "  if (!tw) return journeying ? 'halt' : null;\n  if (mine.at !== tw.at) {",
+    "old": "  if (!tw) return null;",
+    "new": "  if (!tw) return journeying ? 'halt' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TV8-old-stop-halts",
     "file": "src/systems/party/partyWalk.js",
-    "old": "if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;",
-    "new": "if (Number.isFinite(s) && /** @type {number} */ (s) <= latest) return true;",
+    "old": "  for (const s of stops ?? [])\n    if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;",
+    "new": "  for (const s of stops ?? []) if (Number.isFinite(s) && /** @type {number} */ (s) <= latest) return true;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TV8-member-stop-ignored",
     "file": "src/systems/party/partyWalk.js",
-    "old": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };\n",
-    "new": "",
+    "old": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };\n    return { tw, halt: false };",
+    "new": "    return { tw, halt: false };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TV8-arrival-halts",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (ended) return 'done';\n",
-    "new": "",
+    "old": "  if (ended) return 'done';\n  const stop = was && following && !journeying; // released in the same breath (the walk gone, a new round): my stop is mine",
+    "new": "  const stop = was && following && !journeying; // released in the same breath (the walk gone, a new round): my stop is mine",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],

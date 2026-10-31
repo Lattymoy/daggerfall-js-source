@@ -20,8 +20,8 @@
   {
     "name": "GUIDE4-ending-keeps-the-pin",
     "file": "src/ui/quest/questTracker.js",
-    "old": "        if (this.pinned === e.id) this.pinned = null;   // a finished quest is tracked no more\n",
-    "new": "",
+    "old": "        if (this.pinned === e.id) this.pinned = null; // a finished quest is tracked no more\n      }",
+    "new": "      }",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUIDE4-ending-keeps-the-follow",
     "file": "src/ui/quest/questTracker.js",
-    "old": "        if (this.follow === e.id) this.follow = null;\n",
-    "new": "",
+    "old": "        if (this.follow === e.id) this.follow = null;\n        if (this.pinned === e.id) this.pinned = null; // a finished quest is tracked no more",
+    "new": "        if (this.pinned === e.id) this.pinned = null; // a finished quest is tracked no more",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GUIDE4-forget-drops-the-choice",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  forget() { this.views = []; this.follow = null; }",
-    "new": "  forget() { this.views = []; this.follow = null; this.pinned = null; }",
+    "old": "    this.follow = null;\n  }",
+    "new": "    this.follow = null;\n    this.pinned = null;\n  }",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GUIDE4-the-heralds-cap",
     "file": "src/ui/quest/questTracker.js",
-    "old": "entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
-    "new": "entryOpening(v.latest?.lines),",
+    "old": "      opening: v.objective\n        ? entryOpening([v.objective], TRACKER_OPENING_MAX)\n        : entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
+    "new": "      opening: v.objective ? entryOpening([v.objective], TRACKER_OPENING_MAX) : entryOpening(v.latest?.lines),",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GUIDE4-load-keeps-the-follow",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  restoreSaveData: (r) => { questTracker.pinned = validPin(r); questTracker.forget(); },",
-    "new": "  restoreSaveData: (r) => { questTracker.pinned = validPin(r); },",
+    "old": "    questTracker.forget();\n  },",
+    "new": "  },",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "GUIDE4-rebuilt-every-frame",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  if (!card || card.doc !== doc) { dropCard(); card = build(doc); }",
-    "new": "  dropCard(); card = build(doc);",
+    "old": "  if (!card || card.doc !== doc) {\n    dropCard();\n    card = build(doc);\n  }",
+    "new": "  dropCard();\n  card = build(doc);",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "GUIDE4-a-still-frame-writes",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  if (c.last[key] === text) return false;\n",
-    "new": "",
+    "old": "  if (c.last[key] === text) return false;\n  c.last[key] = text;",
+    "new": "  c.last[key] = text;",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "GUIDE4-height-kept-while-hidden",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  card.node.style.display = 'none';\n  publishHeight(card.doc, 0);\n",
-    "new": "  card.node.style.display = 'none';\n",
+    "old": "  publishHeight(card.doc, 0);\n}",
+    "new": "}",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "GUIDE4-height-without-the-gap",
     "file": "src/ui/quest/questTracker.js",
-    "old": "px = h ? h + TRACKER_GAP : 0; }",
-    "new": "px = h; }",
+    "old": "    px = h ? h + TRACKER_GAP : 0;",
+    "new": "    px = h;",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "GUIDE4-hide-door-skipped",
     "file": "src/ui/quest/questTracker.js",
-    "old": "    dropCard();   // GUIDE5: what the model followed is the bridge's to forget - the marks may still be following it\n    return null;",
+    "old": "    dropCard(); // GUIDE5: what the model followed is the bridge's to forget - the marks may still be following it\n    return null;",
     "new": "    return null;",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "GUIDE4-shown-under-a-window",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  if (!f || hidden || !doc) { hideCard(); return null; }",
-    "new": "  if (!f || !doc) { hideCard(); return null; }",
+    "old": "  if (!f || hidden || !doc) {",
+    "new": "  if (!f || !doc) {",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "GUIDE4-marks-swapped",
     "file": "src/ui/quest/questTracker.js",
-    "old": "f.pinned ? '\\u25c6' : '\\u25c7'",
-    "new": "f.pinned ? '\\u25c7' : '\\u25c6'",
+    "old": "  moved = setText(c, 'mark', c.rows.mark, f.pinned ? '\\u25c6' : '\\u25c7') || moved; // tracked: the filled diamond; followed: the hollow",
+    "new": "  moved = setText(c, 'mark', c.rows.mark, f.pinned ? '\\u25c7' : '\\u25c6') || moved; // tracked: the filled diamond; followed: the hollow",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "GUIDE4-spoken-by-the-card",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  node.setAttribute('aria-hidden', 'true');",
-    "new": "  node.setAttribute('aria-live', 'polite');",
+    "old": "  node.setAttribute('aria-hidden', 'true'); // the HUD's own text is; the herald is what speaks (the stack's aria-live)",
+    "new": "  node.setAttribute('aria-live', 'polite'); // the HUD's own text is; the herald is what speaks (the stack's aria-live)",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -273,7 +273,7 @@
   {
     "name": "GUIDE4-pressed-always",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  if (b && b.getAttribute?.('aria-pressed') !== (on ? 'true' : 'false')) b.setAttribute('aria-pressed', on ? 'true' : 'false');",
+    "old": "  if (b && b.getAttribute?.('aria-pressed') !== (on ? 'true' : 'false'))\n    b.setAttribute('aria-pressed', on ? 'true' : 'false');",
     "new": "  if (b) b.setAttribute('aria-pressed', 'true');",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
@@ -318,8 +318,8 @@
   {
     "name": "GUIDE4-chronicle-only-where-a-place",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  const track = followOn() && e.uid != null;",
-    "new": "  const track = followOn() && e.uid != null && !!e.where;",
+    "old": "  const track = followOn() && e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
+    "new": "  const track = followOn() && e.uid != null && !!e.where; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "GUIDE4-chronicle-without-the-switch",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  const track = followOn() && e.uid != null;",
-    "new": "  const track = e.uid != null;",
+    "old": "  const track = followOn() && e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
+    "new": "  const track = e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "GUIDE4-words-not-on-the-view",
     "file": "src/ui/quest/questLens.js",
-    "old": "        words: targetWords(latest.target),\n",
-    "new": "",
+    "old": "        words: targetWords(latest.target),\n        // QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objective now - the first still to do -",
+    "new": "        // QL2 (bible/06-Systems/Questlines-Arc.md section 6): a stamped quest's objective now - the first still to do -",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "GUIDE4-party-list-over-the-card",
     "file": "src/ui/partyPanel.js",
-    "old": "top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
-    "new": "top: calc(92px + env(safe-area-inset-top, 0px));",
+    "old": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "new": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + env(safe-area-inset-top, 0px));",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js",
       "test/net/soc4_partyhud.test.js"

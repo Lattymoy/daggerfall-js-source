@@ -142,5 +142,25 @@
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
+  },
+  {
+    "name": "RMBC3-print-blind",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
+    "new": "const settlement = null;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the ground print reads a settlement pixel: a lost carve moves the ground under GROUND_LAW 6"
+  },
+  {
+    "name": "RMBC3-ground-law-unmoved",
+    "file": "src/net/wire.js",
+    "old": "export const GROUND_LAW = 6;",
+    "new": "export const GROUND_LAW = 5;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the settlements carved the ground and the law stayed at FB1029's"
   }
 ]

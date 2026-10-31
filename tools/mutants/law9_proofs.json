@@ -38,8 +38,8 @@
   {
     "name": "PROOFS-shallow-ledges-rest",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "const rests = fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] :",
-    "new": "const rests = false ? [] :",
+    "old": "  const rests =\n    fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] : (c.ledges ?? []).filter((y) => fin(y) && y > c.y0 && y < c.y1);",
+    "new": "  const rests = false ? [] : (c.ledges ?? []).filter((y) => fin(y) && y > c.y0 && y < c.y1);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PROOFS-the-ledges-out-of-order",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "const ys = [c.y0, ...[...new Set(rests)].sort((a, b) => a - b), c.y1], out = [];",
-    "new": "const ys = [c.y0, ...[...new Set(rests)], c.y1], out = [];",
+    "old": "  const ys = [c.y0, ...[...new Set(rests)].sort((a, b) => a - b), c.y1],",
+    "new": "  const ys = [c.y0, ...[...new Set(rests)], c.y1],",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PROOFS-the-ledges-outside-the-climb-kept",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": ".filter((y) => fin(y) && y > c.y0 && y < c.y1);",
-    "new": ".filter((y) => fin(y));",
+    "old": "  const rests =\n    fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] : (c.ledges ?? []).filter((y) => fin(y) && y > c.y0 && y < c.y1);",
+    "new": "  const rests = fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] : (c.ledges ?? []).filter((y) => fin(y));",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PROOFS-a-pitch-s-margin-ignored",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if (wall > EG_GRIP_S - EG_GRIP_SLACK_S) return",
-    "new": "if (wall > EG_GRIP_S) return",
+    "old": "    if (wall > EG_GRIP_S - EG_GRIP_SLACK_S)",
+    "new": "    if (wall > EG_GRIP_S)",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PROOFS-the-named-climb-unread",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "  if (Number.isInteger(link?.climb) && all[link.climb]) return all[link.climb];\n",
-    "new": "",
+    "old": "  if (Number.isInteger(link?.climb) && all[link.climb]) return all[link.climb];\n  let best = null,",
+    "new": "  let best = null,",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PROOFS-a-climb-at-another-height-taken",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "    if (Math.abs(c.y0 - lo[1]) > EG_ROUTE_CLIMB_Y_M || Math.abs(c.y1 - hi[1]) > EG_ROUTE_CLIMB_Y_M) continue;\n",
-    "new": "",
+    "old": "    if (Math.abs(c.y0 - lo[1]) > EG_ROUTE_CLIMB_Y_M || Math.abs(c.y1 - hi[1]) > EG_ROUTE_CLIMB_Y_M) continue;\n    const d = segD2(lo[0], lo[2], c.x0, c.z0, c.x1, c.z1);",
+    "new": "    const d = segD2(lo[0], lo[2], c.x0, c.z0, c.x1, c.z1);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PROOFS-another-road-s-pieces-taken",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0",
-    "new": "if (s.hd % 2 === 1 || s.z < z0",
+    "old": "    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
+    "new": "    if (s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PROOFS-pieces-at-another-height-taken",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": " || s.y < y0 || s.y > y1) return false;",
-    "new": ") return false;",
+    "old": "    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
+    "new": "    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PROOFS-road-1-always-proven",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": ".some((g) => g.road === 1) ? [0, 1] : [0];",
-    "new": ".some((g) => g.road === 1) ? [0, 1] : [0, 1];",
+    "old": "  return egRouteLegs(spec, 1).some((g) => g.road === 1) ? [0, 1] : [0];",
+    "new": "  return egRouteLegs(spec, 1).some((g) => g.road === 1) ? [0, 1] : [0, 1];",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PROOFS-a-stair-past-45-asked",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "return h > EG_ROUTE_STAIR_MAX * plan + 1e-9 ?",
-    "new": "return h > 10 * plan + 1e-9 ?",
+    "old": "    return h > EG_ROUTE_STAIR_MAX * plan + 1e-9",
+    "new": "    return h > 10 * plan + 1e-9",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PROOFS-a-Drop-upward-asked",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "return g.rise > 1e-9 ? 'a Drop taken upward' :",
-    "new": "return false ? 'a Drop taken upward' :",
+    "old": "    return g.rise > 1e-9",
+    "new": "    return false",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PROOFS-a-billed-fall-asked",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "h > EG_ROUTE_FALL_MAX_M ?",
-    "new": "h > 50 ?",
+    "old": "      : h > EG_ROUTE_FALL_MAX_M",
+    "new": "      : h > 50",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PROOFS-a-climb-downward-asked",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "return g.rise < -1e-9 ? 'a climb taken downward' :",
-    "new": "return false ? 'a climb taken downward' :",
+    "old": "  if (g.kind === 'climb') return g.rise < -1e-9 ? 'a climb taken downward' : egClimbGrip(g.climb);",
+    "new": "  if (g.kind === 'climb') return false ? 'a climb taken downward' : egClimbGrip(g.climb);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PROOFS-the-grip-unproven",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": ": egClimbGrip(g.climb);",
-    "new": ": '';",
+    "old": "  if (g.kind === 'climb') return g.rise < -1e-9 ? 'a climb taken downward' : egClimbGrip(g.climb);",
+    "new": "  if (g.kind === 'climb') return g.rise < -1e-9 ? 'a climb taken downward' : '';",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PROOFS-the-ledge-s-rest-uncounted",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if (k > 0 && B.rest) s +=",
-    "new": "if (false) s +=",
+    "old": "    if (k > 0 && B.rest) s += (egPitchWallS(P[k - 1]) / EG_GRIP_S) * EG_GRIP_REGEN_S;",
+    "new": "    if (false) s += (egPitchWallS(P[k - 1]) / EG_GRIP_S) * EG_GRIP_REGEN_S;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PROOFS-the-climb-s-start-uncounted",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "s += B.start + max0(H - EG_CLIMB_HANG_M) / B.climb + B.mantle(H);",
-    "new": "s += max0(H - EG_CLIMB_HANG_M) / B.climb + B.mantle(H);",
+    "old": "    s += B.start + max0(H - EG_CLIMB_HANG_M) / B.climb + B.mantle(H);",
+    "new": "    s += max0(H - EG_CLIMB_HANG_M) / B.climb + B.mantle(H);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PROOFS-the-grip-owed-by-the-last-pitch-s-first",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "return (egPitchWallS(P[P.length - 1]) / EG_GRIP_S) * EG_GRIP_REGEN_S;",
-    "new": "return 0;",
+    "old": "  return (egPitchWallS(P[P.length - 1]) / EG_GRIP_S) * EG_GRIP_REGEN_S;",
+    "new": "  return 0;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PROOFS-the-stair-at-the-flat-run",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if (g.rise >= 0) return plan > 0 ? (plan * plan + h * h) / (plan * B.run) : Infinity;",
-    "new": "if (g.rise >= 0) return plan > 0 ? plan / B.run : Infinity;",
+    "old": "    if (g.rise >= 0) return plan > 0 ? (plan * plan + h * h) / (plan * B.run) : Infinity;",
+    "new": "    if (g.rise >= 0) return plan > 0 ? plan / B.run : Infinity;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PROOFS-a-stair-s-fall-unheeded",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "return Math.max(plan / (B.run * B.down), fall);",
-    "new": "return plan / (B.run * B.down);",
+    "old": "    return Math.max(plan / (B.run * B.down), fall);",
+    "new": "    return plan / (B.run * B.down);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PROOFS-a-Drop-s-fall-unheeded",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "if (g.kind === 'drop') return Math.max(g.plan / B.run, fall);",
-    "new": "if (g.kind === 'drop') return g.plan / B.run;",
+    "old": "  if (g.kind === 'drop') return Math.max(g.plan / B.run, fall);",
+    "new": "  if (g.kind === 'drop') return g.plan / B.run;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PROOFS-the-law-gate-open-to-every-law",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "lawOf(spec) >= EG_ROUTE_PROOF_LAW && egRouteOf(spec).line === 0",
-    "new": "egRouteOf(spec).line === 0",
+    "old": "export const egRouted = (/** @type {any} */ spec) => lawOf(spec) >= EG_ROUTE_PROOF_LAW && egRouteOf(spec).line === 0;",
+    "new": "export const egRouted = (/** @type {any} */ spec) => egRouteOf(spec).line === 0;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PROOFS-a-far-piece-met-under-law-9",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": " && (!one || Math.abs(a.x - b.x) <= EG_ROUTE_COURSE_SIDE_M);",
-    "new": ";",
+    "old": "    Math.abs(a.z + a.d / 2 - (b.z - b.d / 2 - (b.gap ?? 0))) < 1e-6 &&\n    (!one || Math.abs(a.x - b.x) <= EG_ROUTE_COURSE_SIDE_M);",
+    "new": "    Math.abs(a.z + a.d / 2 - (b.z - b.d / 2 - (b.gap ?? 0))) < 1e-6;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "PROOFS-the-meeting-gate-open-to-every-law",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const one = (spec.law ?? spec.v ?? 0) >= EG_ROUTE_PROOF_LAW;",
-    "new": "const one = true;",
+    "old": "  const one = (spec.law ?? spec.v ?? 0) >= EG_ROUTE_PROOF_LAW;",
+    "new": "  const one = true;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "PROOFS-the-median-by-z",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const c = routed ? egRouteCross(spec, road) : egRoadCross(spec, road);",
-    "new": "const c = egRoadCross(spec, road);",
+    "old": "      const c = routed ? egRouteCross(spec, road) : egRoadCross(spec, road);",
+    "new": "      const c = egRoadCross(spec, road);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "PROOFS-the-route-s-links-unasked",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const w = egLegRefusal(g); if (w) why.push(",
-    "new": "const w = egLegRefusal(g); if (false) why.push(",
+    "old": "        if (w) why.push(`road ${road}, link ${g.i}: ${w}`);",
+    "new": "        if (false) why.push(`road ${road}, link ${g.i}: ${w}`);",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "PROOFS-a-leg-waits-from-nought",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const at = t + (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
-    "new": "const at = (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
+    "old": "    const at = t + (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
+    "new": "    const at = (launchZ(p) - L.z0) / EG_SPAN_RUN_MPS + waited;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "PROOFS-the-grip-owed-unwaited",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    if (L.g.kind === 'climb' && owed - (t - since) > 0) t += owed - (t - since);\n",
-    "new": "",
+    "old": "    if (L.g.kind === 'climb' && owed - (t - since) > 0) t += owed - (t - since);\n    t += L.pairs.length ? spanLegAt(L, t, B) : L.span;",
+    "new": "    t += L.pairs.length ? spanLegAt(L, t, B) : L.span;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "PROOFS-the-route-unread-at-the-fast-build",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  if (egRouted(spec)) {\n    // THE ASCENT (LAW 9, section 6): the road's legs at THE FAST BUILD",
-    "new": "  if (false) {\n    // THE ASCENT (LAW 9, section 6): the road's legs at THE FAST BUILD",
+    "old": "  if (egRouted(spec)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "PROOFS-the-fast-chain-s-rest-unrun",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.z0)) / run;",
-    "new": "return E === Infinity ? Infinity : E - t;",
+    "old": "  return E === Infinity ? Infinity : E - t + Math.max(0, L.g.len - (L.zn[m] - L.z0)) / run;",
+    "new": "  return E === Infinity ? Infinity : E - t;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "PROOFS-the-fast-climb-the-span-build-s",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "climb: EG_FAST_RUN_MPS * EG_FAST_CLIMB_X,",
-    "new": "climb: EG_CLIMB_MPS,",
+    "old": "  climb: EG_FAST_RUN_MPS * EG_FAST_CLIMB_X,",
+    "new": "  climb: EG_CLIMB_MPS,",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "PROOFS-the-fast-mantle-Climbing-0-s",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "mantle: () => egMantleS(0, 100) });",
-    "new": "mantle: () => egMantleS(0, 0) });",
+    "old": "  mantle: () => egMantleS(0, 100),",
+    "new": "  mantle: () => egMantleS(0, 0),",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "PROOFS-the-fast-crossing-at-a-phase-by-z",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (egRouted(spec)) return routeFastAt(solvedLegs(spec, road), t0,",
-    "new": "if (false) return routeFastAt(solvedLegs(spec, road), t0,",
+    "old": "  if (egRouted(spec)) return routeFastAt(solvedLegs(spec, road), t0, buildsOf(spec.v ?? spec.law)[1]); // THE ASCENT: along THE ROUTE's legs",
+    "new": "  if (false) return routeFastAt(solvedLegs(spec, road), t0, buildsOf(spec.v ?? spec.law)[1]); // THE ASCENT: along THE ROUTE's legs",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "PROOFS-the-end-by-z",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const end = egRouted(spec) ? (spec.end ?",
-    "new": "const end = false ? (spec.end ?",
+    "old": "  const end = egRouted(spec)",
+    "new": "  const end = false",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "PROOFS-the-route-s-gate-lost-in-the-crossing",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  if (!egRouted(spec)) return egRoadCross(spec, road);\n",
-    "new": "",
+    "old": "  if (!egRouted(spec)) return egRoadCross(spec, road);\n  const legs = solvedLegs(spec, road),",
+    "new": "  const legs = solvedLegs(spec, road),",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "PROOFS-a-shaft-crossed-on-another-line",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": " && s.z > f.z0 && s.z < f.z1 && (!routed || Math.abs(s.x - f.x) <= EG_ROUTE_COURSE_SIDE_M)) }",
-    "new": " && s.z > f.z0 && s.z < f.z1) }",
+    "old": "          steps: (spec.steps ?? []).filter(\n            (s) =>\n              (s.road ?? 0) === (f.road ?? 0) &&\n              s.z > f.z0 &&\n              s.z < f.z1 &&\n              (!routed || Math.abs(s.x - f.x) <= EG_ROUTE_COURSE_SIDE_M),\n          ),",
+    "new": "          steps: (spec.steps ?? []).filter((s) => (s.road ?? 0) === (f.road ?? 0) && s.z > f.z0 && s.z < f.z1),",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "PROOFS-the-span-build-s-climb-unrested",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "start: EG_CLIMB_START_S, rest: true,",
-    "new": "start: EG_CLIMB_START_S, rest: false,",
+    "old": "  rest: true,",
+    "new": "  rest: false,",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "PILOT-the-ledge-unrested",
     "file": "tools/egSpanSolve.mjs",
-    "old": "const rest = m.grounded && m.grip < 1 && me().y > foot + 0.3;",
-    "new": "const rest = false;",
+    "old": "      const rest = m.grounded && m.grip < 1 && me().y > foot + 0.3;",
+    "new": "      const rest = false;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "PILOT-the-climb-at-a-rested-grip",
     "file": "tools/egSpanSolve.mjs",
-    "old": "    skills = CLIMB0;\n    const foot",
-    "new": "    skills = SKILL0;\n    const foot",
+    "old": "    skills = CLIMB0;",
+    "new": "    skills = SKILL0;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "PILOT-a-routed-road-unswept",
     "file": "tools/egSpanSolve.mjs",
-    "old": "if (egRouted(spec)) { if (!egRouteRoads(spec).includes(road)) continue; } else {",
-    "new": "if (egRouted(spec)) { continue; } else {",
+    "old": "        if (!egRouteRoads(spec).includes(road)) continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "PILOT-the-faces-unstood",
     "file": "tools/egSpanSolve.mjs",
-    "old": "      if (col.raycastHit(P((ax + bx) / 2 + nx, (y0 + y1) / 2, (az + bz) / 2 + nz), [-nx, 0, -nz], 1.5).dist < 1.5) continue;",
-    "new": "      continue;",
+    "old": "        if (col.raycastHit(P((ax + bx) / 2 + nx, (y0 + y1) / 2, (az + bz) / 2 + nz), [-nx, 0, -nz], 1.5).dist < 1.5)\n          continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "PILOT-routed-halls-crossed-by-z",
     "file": "tools/egSpanSolve.mjs",
-    "old": "  if (egRouted(spec)) return sweepRoute(S, spec, road, t0, trace);\n",
-    "new": "",
+    "old": "  if (egRouted(spec)) return sweepRoute(S, spec, road, t0, trace);\n  const P = pilotOf(S, spec, road, t0, trace),",
+    "new": "  const P = pilotOf(S, spec, road, t0, trace),",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]

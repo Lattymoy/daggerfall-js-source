@@ -47,8 +47,8 @@
   {
     "name": "WAGON-FILTER-materials-read-as-a-page",
     "file": "src/ui/storeFilter.js",
-    "old": "cat === 'materials' ? isMaterialItem(it) : pageOf(it) === cat",
-    "new": "pageOf(it) === cat",
+    "old": "export const storeFilterAccepts = (it, cat) =>\n  !IDS.has(cat) || cat === 'all' ? true : cat === 'materials' ? isMaterialItem(it) : pageOf(it) === cat;",
+    "new": "export const storeFilterAccepts = (it, cat) => (!IDS.has(cat) || cat === 'all' ? true : pageOf(it) === cat);",
     "tests": [
       "test/systems/shiftstow.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WAGON-FILTER-query-unlowered",
     "file": "src/ui/storeFilter.js",
-    "old": "String(nameOf(it) ?? '').toLowerCase().includes(q)",
-    "new": "String(nameOf(it) ?? '').includes(q)",
+    "old": "      (!q ||\n        String(nameOf(it) ?? '')\n          .toLowerCase()\n          .includes(q)),",
+    "new": "      (!q || String(nameOf(it) ?? '').includes(q)),",
     "tests": [
       "test/systems/shiftstow.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-WAGON-FILTER-the-cap-lifted",
     "file": "src/ui/storeFilter.js",
-    "old": "export const storeQuery = (q) => String(q ?? '').trim().toLowerCase().slice(0, 40);",
-    "new": "export const storeQuery = (q) => String(q ?? '').trim().toLowerCase();",
+    "old": "    .toLowerCase()\n    .slice(0, 40);",
+    "new": "    .toLowerCase();",
     "tests": [
       "test/systems/shiftstow.test.js"
     ]

@@ -18,7 +18,7 @@ allows. What failed was what the change kept, what it cost to say no, and what i
 
 **Its memory (C1, L2, H3).** A graph of node and chain objects, two typed arrays a chain: the network has a junction
 every 4.2 pixels, so headers were most of it - 20 MB after one trip, 179 MB after the network was walked, 368 MB with
-the slot before it. Nothing owned it. **Fixed**: flat typed arrays (`travelRoute.js:"function roadGraphFor("`), 15 MB
+the slot before it. Nothing owned it. **Fixed**: flat typed arrays (`travelRoute.js:"function roadGraphFor"`), 15 MB
 of arrays after the 992 trips; kept on the ground the host owns (`routeGround`'s `roadKeep`), one graph at a time, dropped whole
 past ROAD_GRAPH_MAX_PIXELS. A caller with no keep keeps nothing.
 

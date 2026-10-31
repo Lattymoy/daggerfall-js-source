@@ -910,7 +910,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | Clamp selection to the visible range | `ListBox`, precedent `listPicker.js:"let _smallFont ="` |
 | Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:"export const clampScrollPixels"` |
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
-| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:"export const DEFAULT_TEXT_COLOR"`; precedent `guildServiceWindow.js:"drawText(renderer, font, label,"` |
+| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:"export const DEFAULT_TEXT_COLOR"`; precedent `guildServiceWindow.js:"const lw = measureText".."renderer,"` |
 | `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:"AUDIT 24 ui: there"` |
 | The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:"gates again below".."await ensureData();"` |
 

@@ -173,8 +173,8 @@
   {
     "name": "WW5-SD-the-province-unnamed",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "return lane > 0 ? PROVINCE_REGION_NAMES[lane - 1] ?? '' : '';",
-    "new": "return '';",
+    "old": "  return lane > 0 ? (PROVINCE_REGION_NAMES[lane - 1] ?? '') : '';",
+    "new": "  return '';",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WW5-SD-the-bays-rise-text-moved",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and",
-    "new": "somewhere in ${SD_BAY_NAME}, and",
+    "old": "    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`, // WW5: a province's in its province",
+    "new": "    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`, // WW5: a province's in its province",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "WW5-SD-the-claims-order",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));\n",
-    "new": "",
+    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));\n  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.p);",
+    "new": "  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.p);",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "WW5-SD-the-claims-tie",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;",
-    "new": "return claim ? [...claim.slice(0, 4)] : null;",
+    "old": "  return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;",
+    "new": "  return claim ? [...claim.slice(0, 4)] : null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "WW5-SD-the-great-cities-any-town",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;\n",
-    "new": "",
+    "old": "    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;\n    rows.push({ p, claim });",
+    "new": "    rows.push({ p, claim });",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "WW5-SD-the-dry-ground",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "      if (!ground(px, py)) continue;\n      return { s: rec.s, px, py, city,",
-    "new": "      return { s: rec.s, px, py, city,",
+    "old": "      if (!ground(px, py)) continue;\n      return {",
+    "new": "      return {",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WW5-SD-the-map-ids-lane",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": " | ((sdLaneOf(s) & 0xf) << 15)",
-    "new": "",
+    "old": "export const sdWorldMapId = (s) =>\n  ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf(s) & 0xf) << 15) | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;",
+    "new": "export const sdWorldMapId = (s) => ((SD_WORLD_LANE << 20) | 0x80000 | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WW5-SD-the-bays-id-moved",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
-    "new": "mapId: sdWorldMapId(rec.s)",
+    "old": "    mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s),",
+    "new": "    mapId: sdWorldMapId(rec.s),",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WW5-SD-a-provinces-id-a-bay-pixels",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
-    "new": "mapId: null",
+    "old": "    mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s),",
+    "new": "    mapId: null,",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WW5-SD-the-lane-routing",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "      if (lane === 0) bay.heard(w);\n      else if (SD_LANES.includes(lane)) laneHost(lane).heard(w);\n",
-    "new": "      bay.heard(w);\n",
+    "old": "      if (lane === 0) bay.heard(w);\n      else if (SD_LANES.includes(lane)) laneHost(lane).heard(w);",
+    "new": "      bay.heard(w);",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "WW5-SD-the-ground-asked-far-away",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "    return ph === 'found' || ph === 'fell';\n",
-    "new": "    return true;\n",
+    "old": "    return ph === 'found' || ph === 'fell';",
+    "new": "    return true;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "WW5-SD-the-ground-unasked-where-i-stand",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "    if (p && theatreAt(p.x, p.y) === lane) return true;\n",
-    "new": "",
+    "old": "    if (p && theatreAt(p.x, p.y) === lane) return true;\n    const ph = h?.phase?.();",
+    "new": "    const ph = h?.phase?.();",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "WW5-SD-a-townless-scan-read-as-ground",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "return sc && sc.towns.length ? sc : null; },",
-    "new": "return sc; },",
+    "old": "          return sc && sc.towns.length ? sc : null;",
+    "new": "          return sc;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "WW5-SD-the-focus-not-the-nearest",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "      const d = p ? Math.hypot(site.px - p.x, site.py - p.y) : h === bay ? 0 : Infinity;\n",
-    "new": "      const d = h === bay ? 0 : 1;\n",
+    "old": "      const d = p ? Math.hypot(site.px - p.x, site.py - p.y) : h === bay ? 0 : Infinity;",
+    "new": "      const d = h === bay ? 0 : 1;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "WW5-SD-the-focus-not-where-i-stand",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "    if (s != null) return hostOf(s) ?? bay;\n",
-    "new": "",
+    "old": "    if (s != null) return hostOf(s) ?? bay;\n    const p = o.here?.() ?? null;",
+    "new": "    const p = o.here?.() ?? null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -416,7 +416,7 @@
   {
     "name": "WW5-SD-the-bays-host-judging-a-provinces-slot",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "  const bay = createSdHost({ ...o, standing: () => { const s = standing(); return s != null && sdLaneOf(s) === 0 ? s : null; } });",
+    "old": "  const bay = createSdHost({\n    ...o,\n    standing: () => {\n      const s = standing();\n      return s != null && sdLaneOf(s) === 0 ? s : null;\n    },\n  });",
     "new": "  const bay = createSdHost(o);",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
@@ -425,8 +425,8 @@
   {
     "name": "WW5-SD-a-provinces-host-judging-the-bays-slot",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "        standing: () => { const s = standing(); return s != null && sdLaneOf(s) === lane ? s : null; },\n",
-    "new": "",
+    "old": "        standing: () => {\n          const s = standing();\n          return s != null && sdLaneOf(s) === lane ? s : null;\n        },\n      });",
+    "new": "      });",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "WW5-SD-a-lanes-timers-lost",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "lanes: [...lanes.entries()].map(",
-    "new": "lanes: [].map(",
+    "old": "        lanes: [...lanes.entries()].map(([lane, h]) => ({",
+    "new": "        lanes: [].map(([lane, h]) => ({",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "WW5-SD-mine-every-lane",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "mine: lane === at",
-    "new": "mine: false",
+    "old": "          mine: lane === at,",
+    "new": "          mine: false,",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "WW5-SD-the-map-the-bays-ring",
     "file": "src/scenes/superDungeon/sdLanes.js",
-    "old": "    mapMarks: () => all().map((h) => h.mapMark()).filter(Boolean),",
+    "old": "    mapMarks: () =>\n      all()\n        .map((h) => h.mapMark())\n        .filter(Boolean),",
     "new": "    mapMarks: () => [bay.mapMark()].filter(Boolean),",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
@@ -470,8 +470,8 @@
   {
     "name": "WW5-SD-the-hollow-down-while-its-ground-is-made",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (!sc) { if (rescan && memo && memo.s === r.s && !memo.none) return memo; warmScan(); return null; }",
-    "new": "    if (!sc) { warmScan(); return null; }",
+    "old": "      if (rescan && memo && memo.s === r.s && !memo.none) return memo;\n      warmScan();",
+    "new": "      warmScan();",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "WW5-SD-the-region-for-a-province",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
-    "new": "const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';",
+    "old": "        region = province ? '' : regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
+    "new": "        region = regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "WW5-SD-the-found-line-no-province",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province }));",
-    "new": "say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region }));",
+    "old": "        say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province }));",
+    "new": "        say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region }));",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "WW5-SD-every-lanes-coming-row",
     "file": "src/systems/eventTimers.js",
-    "old": "lp === 'gone' && L.mine && Number.isFinite(lr.next)",
-    "new": "lp === 'gone' && Number.isFinite(lr.next)",
+    "old": "    } else if (lp === 'gone' && L.mine && Number.isFinite(lr.next)) {",
+    "new": "    } else if (lp === 'gone' && Number.isFinite(lr.next)) {",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "WW5-SD-the-boards-site-the-bays",
     "file": "src/systems/eventBoard.js",
-    "old": "sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;",
-    "new": "sd = src?.sd;",
+    "old": "      sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;",
+    "new": "      sd = src?.sd;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "WW5-SD-the-inks-one-ring",
     "file": "src/ui/ink/inkMap.js",
-    "old": "for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))",
-    "new": "for (const m of (opts.sd ? [opts.sd] : []))",
+    "old": "  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))",
+    "new": "  for (const m of opts.sd ? [opts.sd] : [])",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]

@@ -10,13 +10,13 @@
 import { HEALTH_SHARE_WHOLE, PVP_RESTORATION_MAX } from './refereeHealthShare.js';
 import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShieldShare } from '../../combat/pvpGuard.js';
-import { pvpDodging, pvpGearEvade } from '../../combat/pvpEvade.js';   // PVP-EVADE
-import { pvpGuardWithGear } from '../../combat/pvpGearPowers.js';   // PVP-GEAR: the guard powers' share
+import { pvpDodging, pvpGearEvade } from '../../combat/pvpEvade.js'; // PVP-EVADE
+import { pvpGuardWithGear } from '../../combat/pvpGearPowers.js'; // PVP-GEAR: the guard powers' share
 import { capPvpBuffs } from '../../combat/pvpBuffs.js';
 import { setPvpFight } from '../../combat/pvpPotions.js';
-import { pendingDeclares, declaresSent } from '../../combat/pvpDeclare.js';   // PVP-VITALS: what I drank and cast on myself
+import { pendingDeclares, declaresSent } from '../../combat/pvpDeclare.js'; // PVP-VITALS: what I drank and cast on myself
 import { maxFatigue } from '../../systems/statMods.js';
-import '../../combat/pvpArmourCasting.js';   // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set
+import '../../combat/pvpArmourCasting.js'; // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set
 
 /** The fewest milliseconds between two reports: four a second, well under the relay's gate for this frame. */
 export const HEALTH_REPORT_MS = 250;
@@ -35,11 +35,28 @@ const VITALS_STEP = 100;
  *  and resistances' shares (combat/pvpGuard.js); `shield` (PVP-SHIELD) a Shield on me - PVP-KIT: its share, per cent, or true for the strongest;
  *  `evasion` (PVP-EVADE) my live Dodging and a gear power's evade; `spends` (PVP-VITALS) my magicka's and fatigue's shares, in HEALTH_SHARE_WHOLE parts. */
 /** @param {MirrorOptions} o */
-export function createRefereeHealthMirror({ read, write, send, now = () => Date.now(), restoration = () => 0, guard = () => null, ward = () => null, shield = () => false, evasion = () => null, spends = () => null }) {
+export function createRefereeHealthMirror({
+  read,
+  write,
+  send,
+  now = () => Date.now(),
+  restoration = () => 0,
+  guard = () => null,
+  ward = () => null,
+  shield = () => false,
+  evasion = () => null,
+  spends = () => null,
+}) {
   /** PVP-KIT: the report's `sh` - 0 none, 1 the strongest (a plain true), else the share (net/wire.js VIT_SHIELD_MIN..MAX). */
-  const shieldWord = () => { const v = shield(); return v === true ? 1 : Math.max(0, Math.round(Number(v) || 0)); };
+  const shieldWord = () => {
+    const v = shield();
+    return v === true ? 1 : Math.max(0, Math.round(Number(v) || 0));
+  };
   /** PVP-EVADE: the report's `dg` and `pe`, or nothing. */
-  const evasionWord = () => { const e = evasion(); return e ? { dg: e.dg, pe: e.pe } : {}; };
+  const evasionWord = () => {
+    const e = evasion();
+    return e ? { dg: e.dg, pe: e.pe } : {};
+  };
   /** My share after the last word, exact, and my health right after that word wrote it. Null before any word. */
   let base = /** @type {{ share: number, health: number } | null} */ (null);
   /** The last word applied from each pool: epoch to word number. */
@@ -62,7 +79,12 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
   const spendsMoved = () => {
     if (pendingDeclares().length > 0) return true;
     const v = spends();
-    return !!v && (!lastSentSpends || Math.abs(v.m - lastSentSpends.m) >= VITALS_STEP || Math.abs(v.f - lastSentSpends.f) >= VITALS_STEP);
+    return (
+      !!v &&
+      (!lastSentSpends ||
+        Math.abs(v.m - lastSentSpends.m) >= VITALS_STEP ||
+        Math.abs(v.f - lastSentSpends.f) >= VITALS_STEP)
+    );
   };
 
   /** Counts what my health did since the mirror last looked: a foe's blow, a potion - never the mirror's own write. */
@@ -86,10 +108,33 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
     // PVP-HEALTH: my real maximum and Restoration ride every report - the referee's pool is that whole
     const x = Math.max(1, Math.round(read().maxHealth || 1));
     const r = Math.max(0, Math.min(PVP_RESTORATION_MAX, Math.round(Number(restoration()) || 0)));
-    const g = guard(), w = ward(), sh = shieldWord(), ev = evasionWord();
-    const v = spends(), u = pendingDeclares();   // PVP-VITALS
-    const vit = { ...(v ? { m: clamp(Math.round(v.m), 0, HEALTH_SHARE_WHOLE), f: clamp(Math.round(v.f), 0, HEALTH_SHARE_WHOLE) } : {}), ...(u.length ? { u } : {}) };
-    if (!send({ n: number, s: rounded, seen: [...seen.entries()], x, r, ...(Array.isArray(g) ? { g } : {}), ...(Array.isArray(w) ? { w } : {}), sh, ...ev, ...vit })) return;
+    const g = guard(),
+      w = ward(),
+      sh = shieldWord(),
+      ev = evasionWord();
+    const v = spends(),
+      u = pendingDeclares(); // PVP-VITALS
+    const vit = {
+      ...(v
+        ? { m: clamp(Math.round(v.m), 0, HEALTH_SHARE_WHOLE), f: clamp(Math.round(v.f), 0, HEALTH_SHARE_WHOLE) }
+        : {}),
+      ...(u.length ? { u } : {}),
+    };
+    if (
+      !send({
+        n: number,
+        s: rounded,
+        seen: [...seen.entries()],
+        x,
+        r,
+        ...(Array.isArray(g) ? { g } : {}),
+        ...(Array.isArray(w) ? { w } : {}),
+        sh,
+        ...ev,
+        ...vit,
+      })
+    )
+      return;
     if (u.length) declaresSent(u.length);
     lastSentSpends = v;
     lastSentMax = x;
@@ -107,21 +152,27 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
     /** The host's frame: a report when one is owed. `active` - a refereed fight may hold me now. */
     frame(active) {
       const { maxHealth } = read();
-      if (maxHealth !== lastMax) { base = null; lastMax = maxHealth; }   // a new maximum (a level-up, a spell) makes the old share baseline wrong
+      if (maxHealth !== lastMax) {
+        base = null;
+        lastMax = maxHealth;
+      } // a new maximum (a level-up, a spell) makes the old share baseline wrong
       if (!active && !asked) return;
       if (now() - lastSentAt < HEALTH_REPORT_MS) return;
       observe();
       const share = clamp(localShare(), 0, HEALTH_SHARE_WHOLE);
-      const moved = lastSentShare === null || Math.abs(share - lastSentShare) >= 1 || Math.round(maxHealth || 1) !== lastSentMax
-        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard   // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off
-        || JSON.stringify(evasionWord()) !== lastSentEvasion   // PVP-EVADE: my Dodging or a gear power's evade
-        || spendsMoved();   // PVP-VITALS
+      const moved =
+        lastSentShare === null ||
+        Math.abs(share - lastSentShare) >= 1 ||
+        Math.round(maxHealth || 1) !== lastSentMax ||
+        `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off
+        JSON.stringify(evasionWord()) !== lastSentEvasion || // PVP-EVADE: my Dodging or a gear power's evade
+        spendsMoved(); // PVP-VITALS
       if (asked || moved) report(share);
     },
     /** The relay's ask: a pool of mine was made or reset and waits for my share. */
     ask() {
       asked = true;
-      base = null;   // a pool made or started again: my share is my own health again, not the last pool's word
+      base = null; // a pool made or started again: my share is my own health again, not the last pool's word
     },
     /**
      * The referee's word on my pool (net/wire.js validVitOut `k: 'h'`).
@@ -187,17 +238,22 @@ export function createPlayerHealthMirror(player, onlineOf) {
     restoration: () => skillValue(player, SKILLS.Restoration),
     guard: () => pvpGuardWithGear(pvpArmorKept(player), player),
     ward: () => pvpWardKept(player),
-    shield: () => pvpShieldShare(player),   // PVP-KIT: the Shield's share
-    evasion: () => ({ dg: pvpDodging(player), pe: pvpGearEvade(player) }),   // PVP-EVADE
-    spends: () => {   // PVP-VITALS: magicka and fatigue, as shares
-      const mm = Number(player.maxMagicka) || 0, mf = maxFatigue(player) || 0;
-      return { m: mm > 0 ? ((Number(player.magicka) || 0) / mm) * HEALTH_SHARE_WHOLE : 0, f: mf > 0 ? ((Number(player.fatigue) || 0) / mf) * HEALTH_SHARE_WHOLE : 0 };
+    shield: () => pvpShieldShare(player), // PVP-KIT: the Shield's share
+    evasion: () => ({ dg: pvpDodging(player), pe: pvpGearEvade(player) }), // PVP-EVADE
+    spends: () => {
+      // PVP-VITALS: magicka and fatigue, as shares
+      const mm = Number(player.maxMagicka) || 0,
+        mf = maxFatigue(player) || 0;
+      return {
+        m: mm > 0 ? ((Number(player.magicka) || 0) / mm) * HEALTH_SHARE_WHOLE : 0,
+        f: mf > 0 ? ((Number(player.fatigue) || 0) / mf) * HEALTH_SHARE_WHOLE : 0,
+      };
     },
   });
   const frame = mirror.frame;
   mirror.frame = (active) => {
     if (active) capPvpBuffs(player);
-    setPvpFight(active);   // PVP-POTIONS: the potion clocks run only in a fight
+    setPvpFight(active); // PVP-POTIONS: the potion clocks run only in a fight
     frame(active);
   };
   return mirror;

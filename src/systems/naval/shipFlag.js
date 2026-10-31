@@ -21,7 +21,13 @@
 // hers with her. A ship with no flag set flies the mod's pennant, as she always did. The flag FLOWN rides the room's word
 // beside her boat (systems/comeSailAway/comeSailAwayWire.js `f`, `flagCode`), so every player sees the colours she flies.
 
-import { HERALDRY_COLOURS, HERALDRY_DEVICES, HERALDRY_DIVISIONS, heraldryOf, heraldryInk } from '../../net/heraldryLaw.js';
+import {
+  HERALDRY_COLOURS,
+  HERALDRY_DEVICES,
+  HERALDRY_DIVISIONS,
+  heraldryOf,
+  heraldryInk,
+} from '../../net/heraldryLaw.js';
 
 /** The flag's shapes, in their wire order. */
 export const FLAG_SHAPES = Object.freeze(['flag', 'swallowtail', 'pennant', 'burgee']);
@@ -29,7 +35,16 @@ const COLOURS = /** @type {string[]} */ (HERALDRY_COLOURS.map((c) => c.key));
 const isColour = (k) => typeof k === 'string' && COLOURS.includes(k);
 
 /** A flag a new design starts from: Azure bordered Gold, a Gold anchor. */
-export const FLAG_DEFAULT = Object.freeze({ shape: 'flag', field: 'azure', division: 'plain', field2: null, border: 'gold', device: 'anchor', charge: 'gold', guild: false });
+export const FLAG_DEFAULT = Object.freeze({
+  shape: 'flag',
+  field: 'azure',
+  division: 'plain',
+  field2: null,
+  border: 'gold',
+  device: 'anchor',
+  charge: 'gold',
+  guild: false,
+});
 
 /**
  * A FLAG, through its door: `{ shape, field, division, field2, border, device, charge, guild }` - or null for anything
@@ -50,12 +65,22 @@ export function shipFlagOf(raw) {
   if (border != null && (!isColour(border) || border === r.field)) return null;
   const device = r.device ?? null;
   if (device != null && !HERALDRY_DEVICES.includes(device)) return null;
-  let charge = device ? r.charge ?? null : null;
+  let charge = device ? (r.charge ?? null) : null;
   if (!device && r.charge != null) return null;
-  if (device && charge == null) charge = [border, 'argent', 'sable', 'gold'].find((c) => c && c !== r.field && c !== r.field2) ?? null;
+  if (device && charge == null)
+    charge = [border, 'argent', 'sable', 'gold'].find((c) => c && c !== r.field && c !== r.field2) ?? null;
   if (charge != null && (!isColour(charge) || charge === r.field || (parted && charge === r.field2))) return null;
   if (r.guild != null && typeof r.guild !== 'boolean') return null;
-  return Object.freeze({ shape, field: r.field, division, field2: parted ? r.field2 : null, border, device, charge, guild: !!r.guild });
+  return Object.freeze({
+    shape,
+    field: r.field,
+    division,
+    field2: parted ? r.field2 : null,
+    border,
+    device,
+    charge,
+    guild: !!r.guild,
+  });
 }
 
 /**
@@ -70,12 +95,19 @@ export function fitFlag(raw) {
   const shape = FLAG_SHAPES.includes(d.shape) ? d.shape : 'flag';
   const field = isColour(d.field) ? d.field : FLAG_DEFAULT.field;
   const division = HERALDRY_DIVISIONS.includes(d.division) ? d.division : 'plain';
-  const field2 = division === 'plain' ? null : isColour(d.field2) && d.field2 !== field ? d.field2 : ['argent', 'sable', 'gold', 'azure'].find((c) => c !== field);
+  const field2 =
+    division === 'plain'
+      ? null
+      : isColour(d.field2) && d.field2 !== field
+        ? d.field2
+        : ['argent', 'sable', 'gold', 'azure'].find((c) => c !== field);
   const border = isColour(d.border) && d.border !== field ? d.border : null;
   const device = HERALDRY_DEVICES.includes(d.device) ? d.device : null;
   const ok = (c) => isColour(c) && c !== field && c !== field2;
   const charge = device ? (ok(d.charge) ? d.charge : [border, 'argent', 'sable', 'gold'].find(ok)) : null;
-  return /** @type {any} */ (shipFlagOf({ shape, field, division, field2, border, device, charge, guild: d.guild === true }));
+  return /** @type {any} */ (
+    shipFlagOf({ shape, field, division, field2, border, device, charge, guild: d.guild === true })
+  );
 }
 
 /**
@@ -87,13 +119,24 @@ export function flownFlag(flag, arms = null) {
   if (!f) return null;
   const h = f.guild ? heraldryOf(arms) : null;
   if (!h) return f;
-  return Object.freeze({ shape: f.shape, field: h.field, division: h.division ?? 'plain', field2: h.field2 ?? null, border: h.border, device: h.device, charge: heraldryInk(h), guild: true });
+  return Object.freeze({
+    shape: f.shape,
+    field: h.field,
+    division: h.division ?? 'plain',
+    field2: h.field2 ?? null,
+    border: h.border,
+    device: h.device,
+    charge: heraldryInk(h),
+    guild: true,
+  });
 }
 
 /** A flag's one spelling - its texture's key. '' for none. */
 export function flagKey(flag) {
   const f = shipFlagOf(flag);
-  return f ? [f.shape, f.field, f.division, f.field2 ?? '', f.border ?? '', f.device ?? '', f.charge ?? ''].join('|') : '';
+  return f
+    ? [f.shape, f.field, f.division, f.field2 ?? '', f.border ?? '', f.device ?? '', f.charge ?? ''].join('|')
+    : '';
 }
 
 /** THE WIRE: a flag as seven whole numbers - its shape, field, division, second colour, border, device and charge by
@@ -102,18 +145,39 @@ export function flagCode(flag) {
   const f = shipFlagOf(flag);
   if (!f) return 0;
   const at = (list, v) => (v == null ? -1 : list.indexOf(v));
-  return [FLAG_SHAPES.indexOf(f.shape), COLOURS.indexOf(f.field), HERALDRY_DIVISIONS.indexOf(f.division), at(COLOURS, f.field2),
-    at(COLOURS, f.border), at(HERALDRY_DEVICES, f.device), at(COLOURS, f.charge)];
+  return [
+    FLAG_SHAPES.indexOf(f.shape),
+    COLOURS.indexOf(f.field),
+    HERALDRY_DIVISIONS.indexOf(f.division),
+    at(COLOURS, f.field2),
+    at(COLOURS, f.border),
+    at(HERALDRY_DEVICES, f.device),
+    at(COLOURS, f.charge),
+  ];
 }
 /** A flag read back from its code - through the door - or null (0, or anything that is no flag's code). */
 export function flagOfCode(code) {
-  if (!Array.isArray(code) || code.length !== 7 || !code.every((n) => Number.isInteger(n) && n >= -1 && n < 64)) return null;
-  const pick = (list, i) => (i === -1 ? null : list[i] ?? undefined);
-  const [shape, field, division, field2, border, device, charge] = [pick(FLAG_SHAPES, code[0]), pick(COLOURS, code[1]), pick(HERALDRY_DIVISIONS, code[2]),
-    pick(COLOURS, code[3]), pick(COLOURS, code[4]), pick(HERALDRY_DEVICES, code[5]), pick(COLOURS, code[6])];
-  if ([shape, field, division, field2, border, device, charge].includes(undefined) || shape == null || field == null || division == null) return null;
+  if (!Array.isArray(code) || code.length !== 7 || !code.every((n) => Number.isInteger(n) && n >= -1 && n < 64))
+    return null;
+  const pick = (list, i) => (i === -1 ? null : (list[i] ?? undefined));
+  const [shape, field, division, field2, border, device, charge] = [
+    pick(FLAG_SHAPES, code[0]),
+    pick(COLOURS, code[1]),
+    pick(HERALDRY_DIVISIONS, code[2]),
+    pick(COLOURS, code[3]),
+    pick(COLOURS, code[4]),
+    pick(HERALDRY_DEVICES, code[5]),
+    pick(COLOURS, code[6]),
+  ];
+  if (
+    [shape, field, division, field2, border, device, charge].includes(undefined) ||
+    shape == null ||
+    field == null ||
+    division == null
+  )
+    return null;
   if (device == null && charge != null) return null;
-  if (device != null && charge == null) return null;   // a coded device always says its colour
+  if (device != null && charge == null) return null; // a coded device always says its colour
   return shipFlagOf({ shape, field, division, field2, border, device, charge });
 }
 
@@ -121,6 +185,12 @@ export function flagOfCode(code) {
  * Her flag's cloth by hull (systems/comeSailAway/comeSailAwayBoat.js HULL_NAMES' order): `[fly, hoist]`, metres - a Large
  * Boat's a man's arm, a Carrack's a sail of its own. The Rowboat flies none (her prefab has no FlagObject).
  */
-export const FLAG_SIZES = Object.freeze([null, Object.freeze([1.2, 0.8]), Object.freeze([2.4, 1.6]), Object.freeze([2.7, 1.8]), Object.freeze([3, 2])]);
+export const FLAG_SIZES = Object.freeze([
+  null,
+  Object.freeze([1.2, 0.8]),
+  Object.freeze([2.4, 1.6]),
+  Object.freeze([2.7, 1.8]),
+  Object.freeze([3, 2]),
+]);
 /** A hull's flag cloth `[fly, hoist]`, or null where she flies none. */
 export const flagSizeOf = (hull) => FLAG_SIZES[hull] ?? null;

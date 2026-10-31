@@ -25,7 +25,7 @@
 // joins later hears a waypoint when its author shares it again (the menu's "Share again").
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
-import { worldPixelOk } from '../../net/wire.js';   // BAY-LEFT-MAPS: a waypoint's pixel is the world's (TV-BEYOND's bound), the Bay's and past it
+import { worldPixelOk } from '../../net/wire.js'; // BAY-LEFT-MAPS: a waypoint's pixel is the world's (TV-BEYOND's bound), the Bay's and past it
 
 export const WAYPOINT_KINDS = Object.freeze(['personal', 'party', 'guild']);
 export const WAYPOINT_STORE_KEY = 'dfjs.waypoints';
@@ -64,11 +64,16 @@ export const WP_WIRE_PREFIX = '[WP1]';
 /** The colour's CSS by id (an unknown id: the first). */
 export const waypointCss = (id) => (WAYPOINT_COLORS.find((c) => c.id === id) ?? WAYPOINT_COLORS[0]).css;
 /** A colour id, checked. */
-const colorId = (id, kind = 'personal') => (WAYPOINT_COLORS.some((c) => c.id === id) ? id : WAYPOINT_KIND_COLOR[kind] ?? 'red');
+const colorId = (id, kind = 'personal') =>
+  WAYPOINT_COLORS.some((c) => c.id === id) ? id : (WAYPOINT_KIND_COLOR[kind] ?? 'red');
 
 /** A name, cleaned: one line, no control characters, bounded. */
 export function cleanWaypointName(name, fallback = 'Waypoint') {
-  const s = String(name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, WAYPOINT_NAME_MAX);
+  const s = String(name ?? '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, WAYPOINT_NAME_MAX);
   return s || fallback;
 }
 
@@ -78,7 +83,8 @@ export function cleanWaypointName(name, fallback = 'Waypoint') {
  *  zone, which is Cyrodiil's since WW-C2 - could stand past the Bay. A client from before reads a party's or a guild's
  *  line naming a point past the Bay as no waypoint (decodeWaypointLine's null), takes it off the chat all the same
  *  (isWaypointLine) and shows nothing: harmless. */
-const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));
+const onMap = (mx, my) =>
+  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));
 
 /** Native world units (DFU's, the streaming world's `worldCoords`) to map pixels, as floats. */
 export const nativeToMapPoint = (x, z) => ({ mx: x / 32768, my: 500 - z / 32768 });
@@ -95,8 +101,8 @@ const newId = () => {
  *   mine: boolean, by: string, src: string|null, at: number, grp?: string|null }} Waypoint
  */
 
-let state = null;   // { list: Waypoint[], follow: string[] }
-let show = null;    // { personal, party, guild }
+let state = null; // { list: Waypoint[], follow: string[] }
+let show = null; // { personal, party, guild }
 const listeners = new Set();
 /** The host's sender: (ch: 'party'|'guild', text: string) => boolean. */
 let sender = null;
@@ -106,19 +112,35 @@ let groups = { party: undefined, guild: undefined };
 function readState() {
   const st = { list: [], follow: [] };
   let raw = null;
-  try { raw = appStorage()?.getItem(WAYPOINT_STORE_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(WAYPOINT_STORE_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (!raw) return st;
   try {
     const v = JSON.parse(raw);
     for (const w of Array.isArray(v?.list) ? v.list : []) {
       const kind = WAYPOINT_KINDS.includes(w?.kind) ? w.kind : null;
       if (!kind || typeof w.id !== 'string' || !onMap(w.mx, w.my)) continue;
-      st.list.push({ id: w.id.slice(0, 24), kind, name: cleanWaypointName(w.name), color: colorId(w.color, kind), mx: w.mx, my: w.my,
-        mine: w.mine !== false, by: String(w.by ?? '').slice(0, 40), src: typeof w.src === 'string' ? w.src.slice(0, 64) : null, at: Number(w.at) || 0,
-        grp: typeof w.grp === 'string' ? w.grp.slice(0, 64) : null });
+      st.list.push({
+        id: w.id.slice(0, 24),
+        kind,
+        name: cleanWaypointName(w.name),
+        color: colorId(w.color, kind),
+        mx: w.mx,
+        my: w.my,
+        mine: w.mine !== false,
+        by: String(w.by ?? '').slice(0, 40),
+        src: typeof w.src === 'string' ? w.src.slice(0, 64) : null,
+        at: Number(w.at) || 0,
+        grp: typeof w.grp === 'string' ? w.grp.slice(0, 64) : null,
+      });
     }
     for (const id of Array.isArray(v?.follow) ? v.follow : []) if (st.list.some((w) => w.id === id)) st.follow.push(id);
-  } catch { /* a bad word: none */ }
+  } catch {
+    /* a bad word: none */
+  }
   return st;
 }
 function store() {
@@ -126,16 +148,30 @@ function store() {
   return state;
 }
 function save(why = 'change') {
-  try { appStorage()?.setItem(WAYPOINT_STORE_KEY, JSON.stringify(state)); } catch { /* held for the session */ }
-  for (const fn of [...listeners]) { try { fn(why); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(WAYPOINT_STORE_KEY, JSON.stringify(state));
+  } catch {
+    /* held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn(why);
+    } catch {
+      /* a listener's own fault */
+    }
+  }
 }
 
 /** Every waypoint, newest last. */
-export function listWaypoints() { return store().list; }
+export function listWaypoints() {
+  return store().list;
+}
 /** One waypoint by id, or null. */
 export const waypointById = (id) => store().list.find((w) => w.id === id) ?? null;
 /** The ids the player follows, in the order they were followed. */
-export function followedWaypointIds() { return store().follow; }
+export function followedWaypointIds() {
+  return store().follow;
+}
 export const isWaypointFollowed = (id) => store().follow.includes(id);
 
 /** Hear any change (a waypoint added, moved, a switch, a follow); returns the way to stop. */
@@ -148,9 +184,18 @@ export function onWaypoints(fn) {
 function readShow() {
   const s = { personal: true, party: true, guild: true };
   let raw = null;
-  try { raw = appStorage()?.getItem(WAYPOINT_SHOW_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(WAYPOINT_SHOW_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw) {
-    try { const v = JSON.parse(raw); for (const k of WAYPOINT_KINDS) if (typeof v?.[k] === 'boolean') s[k] = v[k]; } catch { /* the defaults */ }
+    try {
+      const v = JSON.parse(raw);
+      for (const k of WAYPOINT_KINDS) if (typeof v?.[k] === 'boolean') s[k] = v[k];
+    } catch {
+      /* the defaults */
+    }
   }
   return s;
 }
@@ -164,13 +209,24 @@ export function toggleWaypointKind(kind) {
   if (!WAYPOINT_KINDS.includes(kind)) return false;
   const cur = waypointKindsShown();
   show = { ...cur, [kind]: !cur[kind] };
-  try { appStorage()?.setItem(WAYPOINT_SHOW_KEY, JSON.stringify(show)); } catch { /* held for the session */ }
-  for (const fn of [...listeners]) { try { fn('show'); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(WAYPOINT_SHOW_KEY, JSON.stringify(show));
+  } catch {
+    /* held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn('show');
+    } catch {
+      /* a listener's own fault */
+    }
+  }
   return show[kind];
 }
 /** The waypoints the switches let the maps draw (a followed one always - the player asked for it). */
 export function shownWaypoints() {
-  const s = waypointKindsShown(), st = store();
+  const s = waypointKindsShown(),
+    st = store();
   return st.list.filter((w) => s[w.kind] !== false || st.follow.includes(w.id));
 }
 
@@ -178,7 +234,10 @@ export function shownWaypoints() {
 /** The next default name ("Waypoint 3"). */
 export function nextWaypointName() {
   const used = new Set(store().list.map((w) => w.name));
-  for (let n = 1; n < 1000; n++) { const s = WAYPOINT_TEXT.defaultName(n); if (!used.has(s)) return s; }
+  for (let n = 1; n < 1000; n++) {
+    const s = WAYPOINT_TEXT.defaultName(n);
+    if (!used.has(s)) return s;
+  }
   return 'Waypoint';
 }
 
@@ -195,7 +254,19 @@ export function addWaypoint({ kind = 'personal', mx, my, name, color, by = '' })
   const own = st.list.filter((w) => w.kind === k && w.mine);
   if (own.length >= WAYPOINT_MAX_PER_KIND) removeWaypoint(own[0].id, { quiet: true });
   /** @type {Waypoint} */
-  const wp = { id: newId(), kind: k, name: cleanWaypointName(name, nextWaypointName()), color: colorId(color, k), mx, my, mine: true, by: String(by).slice(0, 40), src: null, at: Date.now(), grp: groupOf(k) };
+  const wp = {
+    id: newId(),
+    kind: k,
+    name: cleanWaypointName(name, nextWaypointName()),
+    color: colorId(color, k),
+    mx,
+    my,
+    mine: true,
+    by: String(by).slice(0, 40),
+    src: null,
+    at: Date.now(),
+    grp: groupOf(k),
+  };
   st.list.push(wp);
   save('add');
   const shared = k === 'personal' ? null : shareWaypoint(wp.id);
@@ -252,16 +323,24 @@ export function setWaypointFollowed(id, on) {
 
 // ── THE WIRE ────────────────────────────────────────────────────────
 /** The host's sender, or null (offline, the chat gone). `(ch, text) => boolean`. */
-export function setWaypointSender(fn) { sender = typeof fn === 'function' ? fn : null; }
+export function setWaypointSender(fn) {
+  sender = typeof fn === 'function' ? fn : null;
+}
 /** Whether a shared waypoint can be said now. */
 export const waypointSharingLive = () => !!sender;
 
 const num = (v) => (Math.round(v * 1000) / 1000).toString();
 /** A wire line's words, joined; the name last (it may hold spaces). */
-export function encodeWaypointLine(words) { return `${WP_WIRE_PREFIX} ${words.join(' ')}`; }
+export function encodeWaypointLine(words) {
+  return `${WP_WIRE_PREFIX} ${words.join(' ')}`;
+}
 function say(kind, words) {
   if (!sender || (kind !== 'party' && kind !== 'guild')) return false;
-  try { return !!sender(kind, encodeWaypointLine(words)); } catch { return false; }
+  try {
+    return !!sender(kind, encodeWaypointLine(words));
+  } catch {
+    return false;
+  }
 }
 
 /** Say one of mine on its channel again (a member who joined since hears it). */
@@ -281,10 +360,12 @@ export function decodeWaypointLine(text) {
   const s = String(text ?? '');
   if (!s.startsWith(`${WP_WIRE_PREFIX} `)) return null;
   const w = s.slice(WP_WIRE_PREFIX.length + 1).split(' ');
-  const op = w[0], id = w[1];
+  const op = w[0],
+    id = w[1];
   if (!id || !/^[a-z0-9]{1,24}$/.test(id)) return null;
   if (op === 'add') {
-    const mx = Number(w[2]), my = Number(w[3]);
+    const mx = Number(w[2]),
+      my = Number(w[3]);
     if (!onMap(mx, my)) return null;
     return { op, id, mx, my, color: colorId(w[4]), name: cleanWaypointName(w.slice(5).join(' ')) };
   }
@@ -314,20 +395,39 @@ export function receiveWaypointLine(line) {
   const have = st.list.find(key);
   if (d.op === 'add') {
     if (have) {
-      if (have.src && src && have.src !== src) return true;   // another's word on a waypoint they did not make
-      have.mx = d.mx; have.my = d.my; have.color = d.color; have.name = d.name; have.by = String(line.name ?? have.by).slice(0, 40);
+      if (have.src && src && have.src !== src) return true; // another's word on a waypoint they did not make
+      have.mx = d.mx;
+      have.my = d.my;
+      have.color = d.color;
+      have.name = d.name;
+      have.by = String(line.name ?? have.by).slice(0, 40);
     } else {
       const theirs = st.list.filter((w) => w.kind === kind && !w.mine);
       if (theirs.length >= WAYPOINT_MAX_PER_KIND * 2) st.list.splice(st.list.indexOf(theirs[0]), 1);
-      st.list.push({ id: d.id, kind, name: d.name, color: d.color, mx: d.mx, my: d.my, mine: false, by: String(line.name ?? '').slice(0, 40), src, at: Date.now(), grp: groupOf(kind) });
+      st.list.push({
+        id: d.id,
+        kind,
+        name: d.name,
+        color: d.color,
+        mx: d.mx,
+        my: d.my,
+        mine: false,
+        by: String(line.name ?? '').slice(0, 40),
+        src,
+        at: Date.now(),
+        grp: groupOf(kind),
+      });
     }
     save('wire');
     return true;
   }
-  if (!have || (have.src && src && have.src !== src)) return true;   // only its author moves a shared waypoint
+  if (!have || (have.src && src && have.src !== src)) return true; // only its author moves a shared waypoint
   if (d.op === 'ren') have.name = d.name;
   else if (d.op === 'col') have.color = d.color;
-  else if (d.op === 'del') { st.list.splice(st.list.indexOf(have), 1); st.follow = st.follow.filter((f) => f !== have.id); }
+  else if (d.op === 'del') {
+    st.list.splice(st.list.indexOf(have), 1);
+    st.follow = st.follow.filter((f) => f !== have.id);
+  }
   save('wire');
   return true;
 }
@@ -345,7 +445,8 @@ const groupOf = (kind) => (kind === 'party' || kind === 'guild' ? (groups[kind] 
  */
 export function syncWaypointGroups(now) {
   const st = store();
-  let gone = 0, moved = false;
+  let gone = 0,
+    moved = false;
   for (const kind of /** @type {const} */ (['party', 'guild'])) {
     if (!(kind in now)) continue;
     const g = now[kind] == null ? null : String(now[kind]).slice(0, 64);
@@ -354,8 +455,16 @@ export function syncWaypointGroups(now) {
     for (let i = st.list.length - 1; i >= 0; i--) {
       const w = st.list[i];
       if (w.kind !== kind) continue;
-      if (w.grp == null && g != null) { w.grp = g; moved = true; continue; }   // kept from before: adopted
-      if (w.grp !== g) { st.list.splice(i, 1); st.follow = st.follow.filter((f) => f !== w.id); gone++; }
+      if (w.grp == null && g != null) {
+        w.grp = g;
+        moved = true;
+        continue;
+      } // kept from before: adopted
+      if (w.grp !== g) {
+        st.list.splice(i, 1);
+        st.follow = st.follow.filter((f) => f !== w.id);
+        gone++;
+      }
     }
   }
   if (gone || moved) save('groups');
@@ -363,4 +472,10 @@ export function syncWaypointGroups(now) {
 }
 
 /** Pins: back to the device's word. */
-export function _resetWaypoints() { state = null; show = null; sender = null; groups = { party: undefined, guild: undefined }; listeners.clear(); }
+export function _resetWaypoints() {
+  state = null;
+  show = null;
+  sender = null;
+  groups = { party: undefined, guild: undefined };
+  listeners.clear();
+}

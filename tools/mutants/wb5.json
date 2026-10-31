@@ -2,8 +2,8 @@
   {
     "name": "WB5-all-at-once",
     "file": "src/world/gate/gateSpew.js",
-    "old": "    out.push({ at: i * SPEW_GAP_MS,",
-    "new": "    out.push({ at: 0,",
+    "old": "    out.push({ at: i * SPEW_GAP_MS, dir: [Math.sin(a) / l, rise / l, Math.cos(a) / l], speed });",
+    "new": "    out.push({ at: 0, dir: [Math.sin(a) / l, rise / l, Math.cos(a) / l], speed });",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB5-rest-never-reached",
     "file": "src/world/gate/gateSpew.js",
-    "old": "    if (p.speedCurrent < p.speedStart * PROJECTILE.restFraction) { p.pos = point; p.rest = true; return 'rest'; }",
-    "new": "    if (false) { p.pos = point; p.rest = true; return 'rest'; }",
+    "old": "    if (p.speedCurrent < p.speedStart * PROJECTILE.restFraction) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB5-gravity-without-the-drag",
     "file": "src/world/gate/gateSpew.js",
-    "old": "PROJECTILE.gravityAccel * SPEW_GRAVITY_DRAG * PROJECTILE_FIXED_DT",
-    "new": "PROJECTILE.gravityAccel * PROJECTILE_FIXED_DT",
+    "old": "  p.gravity = [\n    p.gravity[0],\n    p.gravity[1] + PROJECTILE.gravityAccel * SPEW_GRAVITY_DRAG * PROJECTILE_FIXED_DT,\n    p.gravity[2],\n  ];",
+    "new": "  p.gravity = [p.gravity[0], p.gravity[1] + PROJECTILE.gravityAccel * PROJECTILE_FIXED_DT, p.gravity[2]];",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "WB5-the-pulse-on-every-tier",
     "file": "src/render/spoilsGlow.js",
-    "old": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);",
+    "old": "      gl.uniform1f(\n        U.uPulse,\n        g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0,\n      );",
     "new": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : 1);",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"

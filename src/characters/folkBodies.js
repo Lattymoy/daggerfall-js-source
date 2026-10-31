@@ -14,24 +14,24 @@ import { GENDERS } from './nameHelper.js';
 import { PERSON_TEXTURES, GUARD_TEXTURE } from './mobile/mobilePerson.js';
 import { EQUIP_SLOTS } from '../systems/equip.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';   // MWNPC12: steel is ARMOR_MATERIAL.Steel - a look's armour is resolved by it (mwItemMap.js mwArmorRecords)
-import { dressPerson, npcHint, WARDROBE_BEAST_RACES } from './wardrobe.js';   // MWNPC17
-import { townsfolkOutfitOf } from './ownModels/ownClothingModels.js';   // MW-FOLK1: the outfits the walkers' pictures wear, made for the body
+import { ARMOR_MATERIAL } from '../systems/armorMaterials.js'; // MWNPC12: steel is ARMOR_MATERIAL.Steel - a look's armour is resolved by it (mwItemMap.js mwArmorRecords)
+import { dressPerson, npcHint, WARDROBE_BEAST_RACES } from './wardrobe.js'; // MWNPC17
+import { townsfolkOutfitOf } from './ownModels/ownClothingModels.js'; // MW-FOLK1: the outfits the walkers' pictures wear, made for the body
 
 /** MWNPC17: what each outfit variant is, by gender, in PERSON_TEXTURES' variant order - the wardrobe's role and the cut
  *  their sprite shows (characters/wardrobe.js WARDROBE_ROLES, SILHOUETTES). */
 export const FOLK_DRESS = Object.freeze({
   male: Object.freeze([
-    Object.freeze({ role: 'commoner', cut: 'pants' }),    // a short shirt and casual pants - the commoner
-    Object.freeze({ role: 'tradesman', cut: 'pants' }),   // a tunic and breeches - the tradesman
-    Object.freeze({ role: 'traveller', cut: 'pants' }),   // a long shirt and tall boots - the traveller
-    Object.freeze({ role: 'scholar', cut: 'robe' }),      // plain robes - the scholar
+    Object.freeze({ role: 'commoner', cut: 'pants' }), // a short shirt and casual pants - the commoner
+    Object.freeze({ role: 'tradesman', cut: 'pants' }), // a tunic and breeches - the tradesman
+    Object.freeze({ role: 'traveller', cut: 'pants' }), // a long shirt and tall boots - the traveller
+    Object.freeze({ role: 'scholar', cut: 'robe' }), // plain robes - the scholar
   ]),
   female: Object.freeze([
-    Object.freeze({ role: 'commoner', cut: 'skirt' }),    // a peasant blouse and a long skirt
-    Object.freeze({ role: 'tradesman', cut: 'pants' }),   // a long shirt and casual pants
-    Object.freeze({ role: 'scholar', cut: 'robe' }),      // plain robes
-    Object.freeze({ role: 'commoner', cut: 'skirt' }),    // a short shirt and a long skirt
+    Object.freeze({ role: 'commoner', cut: 'skirt' }), // a peasant blouse and a long skirt
+    Object.freeze({ role: 'tradesman', cut: 'pants' }), // a long shirt and casual pants
+    Object.freeze({ role: 'scholar', cut: 'robe' }), // plain robes
+    Object.freeze({ role: 'commoner', cut: 'skirt' }), // a short shirt and a long skirt
   ]),
 });
 
@@ -40,7 +40,11 @@ function mix(h) {
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return (h ^ (h >>> 16)) >>> 0;
 }
-const strHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193); return h >>> 0; };
+const strHash = (s) => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return h >>> 0;
+};
 
 /** The outfit variant a walker's sprite archive is (PERSON_TEXTURES' index), or 0. PROVINCE-FOLK: whichever race's
  *  picture it is - past the Bay a Dark Elf walks in a Breton's or a Nord's (mobilePerson.js spriteRaceOf). */
@@ -61,11 +65,12 @@ let _shells = 0;
  * @param {any} person @param {string} race
  */
 function spawnOf(person, race) {
-  const roll = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}`, key = `${roll}|${race}`;
+  const roll = `${person.archive}|${person.personFaceRecordId ?? 0}|${person.nameNPC ?? ''}|${person.gender ?? 0}`,
+    key = `${roll}|${race}`;
   if (person._mwFolk && person._mwFolk.key === key) return person._mwFolk;
-  const shell = person._mwShell ??= ++_shells;
+  const shell = (person._mwShell ??= ++_shells);
   const n = (person._mwFolk?.n ?? 0) + 1;
-  const seed = mix(strHash(roll) ^ mix(shell));   // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key
+  const seed = mix(strHash(roll) ^ mix(shell)); // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key
   return (person._mwFolk = { key, n, id: `${shell}.${n}`, seed, look: folkLookOf(person, race, seed) });
 }
 
@@ -78,9 +83,21 @@ export function folkLookOf(person, race, seed) {
   const items = [];
   if (person.guard || person.archive === GUARD_TEXTURE) {
     // the street's guard: the watch's iron and steel, his longsword drawn at need - and none of it rolled
-    for (const [slot, piece] of [['ChestArmor', ARMOR_ENUM.Cuirass], ['LegsArmor', ARMOR_ENUM.Greaves], ['Head', ARMOR_ENUM.Helm], ['Feet', ARMOR_ENUM.Boots],
-      ['LeftArm', ARMOR_ENUM.Left_Pauldron], ['RightArm', ARMOR_ENUM.Right_Pauldron], ['Gloves', ARMOR_ENUM.Gauntlets]]) {
-      items.push({ templateIndex: piece, group: 'Armor', equipSlot: EQUIP_SLOTS[slot], material: ARMOR_MATERIAL.Steel });   // steel - MWNPC12: 1 named no material, so none of it was ever worn
+    for (const [slot, piece] of [
+      ['ChestArmor', ARMOR_ENUM.Cuirass],
+      ['LegsArmor', ARMOR_ENUM.Greaves],
+      ['Head', ARMOR_ENUM.Helm],
+      ['Feet', ARMOR_ENUM.Boots],
+      ['LeftArm', ARMOR_ENUM.Left_Pauldron],
+      ['RightArm', ARMOR_ENUM.Right_Pauldron],
+      ['Gloves', ARMOR_ENUM.Gauntlets],
+    ]) {
+      items.push({
+        templateIndex: piece,
+        group: 'Armor',
+        equipSlot: EQUIP_SLOTS[slot],
+        material: ARMOR_MATERIAL.Steel,
+      }); // steel - MWNPC12: 1 named no material, so none of it was ever worn
     }
     items.push({ templateIndex: 165, group: 'MensClothing', equipSlot: EQUIP_SLOTS.ChestClothes, dye: 1 });
     items.push({ templateIndex: 151, group: 'MensClothing', equipSlot: EQUIP_SLOTS.LegsClothes, dye: 1 });
@@ -94,9 +111,10 @@ export function folkLookOf(person, race, seed) {
   // theirs to wear, nor is one a beast race stands in (a resident's) - its boots on no Khajiit's or Argonian's feet,
   // as Morrowind dresses none: the wardrobe dresses them, and the figure draws what a beast wears of it (BEAST-BOOTS).
   const own = townsfolkOutfitOf(person.archive);
-  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };
+  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))
+    return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };
   const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];
-  const d = dressPerson({ role, gender, seed, cut });   // MWNPC17: the role and cut their sprite shows, the rest their own
+  const d = dressPerson({ role, gender, seed, cut }); // MWNPC17: the role and cut their sprite shows, the rest their own
   return { race, gender, faceIndex, items: d.items, npc: d.npc };
 }
 
@@ -120,9 +138,25 @@ export const folkLook = (person, race) => spawnOf(person, person.folk ?? race).l
  * @param {any} person @param {number[]} feet @param {string} race
  */
 export function folkActor(person, feet, race) {
-  const s = spawnOf(person, person.folk ?? race);   // PROVINCE-FOLK: the walker's own people, past the Bay the province's
-  const a = person._mwActor ??= { id: '', look: null, feet: null, yaw: 0, moving: false, running: false, drawn: false, swings: 0, strike: 0, casts: 0, castRange: 0, hits: 0, dead: 0 };
-  a.id = s.id; a.look = s.look; a.feet = feet;
+  const s = spawnOf(person, person.folk ?? race); // PROVINCE-FOLK: the walker's own people, past the Bay the province's
+  const a = (person._mwActor ??= {
+    id: '',
+    look: null,
+    feet: null,
+    yaw: 0,
+    moving: false,
+    running: false,
+    drawn: false,
+    swings: 0,
+    strike: 0,
+    casts: 0,
+    castRange: 0,
+    hits: 0,
+    dead: 0,
+  });
+  a.id = s.id;
+  a.look = s.look;
+  a.feet = feet;
   a.yaw = Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0);
   a.moving = person.state === 'move';
   return a;

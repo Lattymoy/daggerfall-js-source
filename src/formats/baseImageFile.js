@@ -36,8 +36,9 @@ export const COMPRESSION_FORMATS = Object.freeze({
 export function unityColor32(c) {
   const ch = (v) => {
     const x = Math.fround(Math.fround(Math.min(1, Math.max(0, Math.fround(v)))) * Math.fround(255));
-    const f = Math.floor(x), d = x - f;
-    return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff;   // half to even
+    const f = Math.floor(x),
+      d = x - f;
+    return (d > 0.5 || (d === 0.5 && f % 2 === 1) ? f + 1 : f) & 0xff; // half to even
   };
   return [ch(c[0]), ch(c[1]), ch(c[2]), ch(c.length > 3 ? c[3] : 1)];
 }
@@ -192,10 +193,18 @@ export class BaseImageFile {
    * reindex to the grey gradient (96 - index) so bones read brighter
    * than shroud. 180 = the spectral transparency (~70% visible).
    */
-  static get SPECTRAL_EYES_RESERVED() { return 14; }
-  static get SPECTRAL_EYES_PATCHED() { return 247; }
-  static get SPECTRAL_GRAY_START() { return 96; }
-  static get SPECTRAL_ALPHA() { return 180; }
+  static get SPECTRAL_EYES_RESERVED() {
+    return 14;
+  }
+  static get SPECTRAL_EYES_PATCHED() {
+    return 247;
+  }
+  static get SPECTRAL_GRAY_START() {
+    return 96;
+  }
+  static get SPECTRAL_ALPHA() {
+    return 180;
+  }
 
   setSpectral(srcBitmap) {
     const d = srcBitmap.data;
@@ -213,8 +222,10 @@ export class BaseImageFile {
    * lighter features pop. Same flip/border walk as getColor32.
    */
   getSpectralEmissionColors32(srcBitmap, albedo, border, eyesEmissionIndex, eyeEmission, otherEmission) {
-    const srcWidth = srcBitmap.width, srcHeight = srcBitmap.height;
-    const dstWidth = srcWidth + border * 2, dstHeight = srcHeight + border * 2;
+    const srcWidth = srcBitmap.width,
+      srcHeight = srcBitmap.height;
+    const dstWidth = srcWidth + border * 2,
+      dstHeight = srcHeight + border * 2;
     const out = new Uint8ClampedArray(dstWidth * dstHeight * 4);
     const A = albedo.colors;
     // Color.Lerp interpolates ALPHA with the other three channels; otherEmission
@@ -228,11 +239,16 @@ export class BaseImageFile {
         const index = srcBitmap.data[srcRow + x];
         const dst = (dstRow + border + x) * 4;
         if (index === eyesEmissionIndex) {
-          out[dst] = eyeEmission[0]; out[dst + 1] = eyeEmission[1]; out[dst + 2] = eyeEmission[2]; out[dst + 3] = 255;
+          out[dst] = eyeEmission[0];
+          out[dst + 1] = eyeEmission[1];
+          out[dst + 2] = eyeEmission[2];
+          out[dst + 3] = 255;
         } else {
-          const r = A[dst], g = A[dst + 1], b = A[dst + 2];
-          const V = Math.max(r, g, b) / 255;                       // Color.RGBToHSV's V
-          const t = Math.min(1, Math.max(0, Math.pow(V, 1.9)));    // Mathf.Pow + Clamp01
+          const r = A[dst],
+            g = A[dst + 1],
+            b = A[dst + 2];
+          const V = Math.max(r, g, b) / 255; // Color.RGBToHSV's V
+          const t = Math.min(1, Math.max(0, Math.pow(V, 1.9))); // Mathf.Pow + Clamp01
           out[dst] = Math.round(otherEmission[0] + (r - otherEmission[0]) * t);
           out[dst + 1] = Math.round(otherEmission[1] + (g - otherEmission[1]) * t);
           out[dst + 2] = Math.round(otherEmission[2] + (b - otherEmission[2]) * t);

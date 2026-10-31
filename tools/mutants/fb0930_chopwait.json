@@ -11,8 +11,8 @@
   {
     "name": "CHOP-WAIT-the-release-never-marked",
     "file": "src/scenes/foragingWait.js",
-    "old": "    _releasing = true;\n",
-    "new": "",
+    "old": "    _releasing = true;\n    try {",
+    "new": "    try {",
     "tests": [
       "test/systems/quest/fb0930_chopwait.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHOP-WAIT-nothing-held-after-the-first-release",
     "file": "src/scenes/foragingWait.js",
-    "old": "    } finally { _releasing = false; }",
-    "new": "    } finally { /* never reset */ }",
+    "old": "      _releasing = false;",
+    "new": "      /* never reset */",
     "tests": [
       "test/systems/quest/fb0930_chopwait.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHOP-WAIT-a-release-without-end",
     "file": "src/scenes/foragingWait.js",
-    "old": "      for (let n = _held.length; n > 0 && _held.length && ",
-    "new": "      for (let n = _held.length; _held.length && ",
+    "old": "      for (let n = _held.length; n > 0 && _held.length && !pending() && !_win && !overlayActive(); n--) {",
+    "new": "      for (let n = _held.length; _held.length && !pending() && !_win && !overlayActive(); n--) {",
     "tests": [
       "test/systems/quest/fb0930_chopwait.test.js"
     ]

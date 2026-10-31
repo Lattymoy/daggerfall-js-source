@@ -21,7 +21,7 @@ import { CARD_W } from './cardMotion.js';
 /** MEASURE (CARDS3b): where the hand is held in the view (metres along the view's X, up, forward - forward is its -Z;
  *  the world is drawn through a mirror, so the view's +X shows on the screen's LEFT), the
  *  fan between the cards (degrees), the lean back while held and when peeked, the spread when peeked. */
-export const HELD_AT = Object.freeze([-0.03, -0.115, -0.27]);   // a little right of the middle, on the screen
+export const HELD_AT = Object.freeze([-0.03, -0.115, -0.27]); // a little right of the middle, on the screen
 export const HELD_FAN_DEG = 9;
 export const HELD_LEAN_DEG = 58;
 export const PEEK_LEAN_DEG = 14;
@@ -80,10 +80,19 @@ export const HELD_EASE_S = 0.25;
 function quatOf(m) {
   const tr = m[0] + m[5] + m[10];
   let q;
-  if (tr > 0) { const k = Math.sqrt(tr + 1) * 2; q = [(m[6] - m[9]) / k, (m[8] - m[2]) / k, (m[1] - m[4]) / k, k / 4]; }
-  else if (m[0] > m[5] && m[0] > m[10]) { const k = Math.sqrt(1 + m[0] - m[5] - m[10]) * 2; q = [k / 4, (m[4] + m[1]) / k, (m[8] + m[2]) / k, (m[6] - m[9]) / k]; }
-  else if (m[5] > m[10]) { const k = Math.sqrt(1 + m[5] - m[0] - m[10]) * 2; q = [(m[4] + m[1]) / k, k / 4, (m[9] + m[6]) / k, (m[8] - m[2]) / k]; }
-  else { const k = Math.sqrt(1 + m[10] - m[0] - m[5]) * 2; q = [(m[8] + m[2]) / k, (m[9] + m[6]) / k, k / 4, (m[1] - m[4]) / k]; }
+  if (tr > 0) {
+    const k = Math.sqrt(tr + 1) * 2;
+    q = [(m[6] - m[9]) / k, (m[8] - m[2]) / k, (m[1] - m[4]) / k, k / 4];
+  } else if (m[0] > m[5] && m[0] > m[10]) {
+    const k = Math.sqrt(1 + m[0] - m[5] - m[10]) * 2;
+    q = [k / 4, (m[4] + m[1]) / k, (m[8] + m[2]) / k, (m[6] - m[9]) / k];
+  } else if (m[5] > m[10]) {
+    const k = Math.sqrt(1 + m[5] - m[0] - m[10]) * 2;
+    q = [(m[4] + m[1]) / k, k / 4, (m[9] + m[6]) / k, (m[8] - m[2]) / k];
+  } else {
+    const k = Math.sqrt(1 + m[10] - m[0] - m[5]) * 2;
+    q = [(m[8] + m[2]) / k, (m[9] + m[6]) / k, k / 4, (m[1] - m[4]) / k];
+  }
   return q;
 }
 
@@ -95,7 +104,8 @@ function quatOf(m) {
  */
 export function blendMatrix(a, b, u) {
   const k = Math.max(0, Math.min(1, u));
-  const qa = quatOf(a), qb = quatOf(b);
+  const qa = quatOf(a),
+    qb = quatOf(b);
   const sign = qa[0] * qb[0] + qa[1] * qb[1] + qa[2] * qb[2] + qa[3] * qb[3] < 0 ? -1 : 1;
   const q = qa.map((v, i) => v + (qb[i] * sign - v) * k);
   const n = Math.hypot(...q) || 1;
@@ -141,9 +151,13 @@ export const onStack = (p, place) => !!p && Math.hypot(p[0] - place.stack[0], p[
  */
 export function onTable(p, frame, inset = 0) {
   if (!p || !frame) return false;
-  const dx = p[0] - frame.centre[0], dz = p[2] - frame.centre[2];
+  const dx = p[0] - frame.centre[0],
+    dz = p[2] - frame.centre[2];
   const a = [Math.sin(frame.axisYaw), Math.cos(frame.axisYaw)];
-  return Math.abs(dx * a[0] + dz * a[1]) <= frame.halfLong - inset && Math.abs(dx * a[1] - dz * a[0]) <= frame.halfShort - inset;
+  return (
+    Math.abs(dx * a[0] + dz * a[1]) <= frame.halfLong - inset &&
+    Math.abs(dx * a[1] - dz * a[0]) <= frame.halfShort - inset
+  );
 }
 
 /**
@@ -202,7 +216,8 @@ export const SQUEEZE_TURN_DEG = 12;
  */
 export function handGesture(from, to, ms, h) {
   if (!from || !to || !(h > 0)) return null;
-  const dx = (to[0] - from[0]) / h, dy = (to[1] - from[1]) / h;
+  const dx = (to[0] - from[0]) / h,
+    dy = (to[1] - from[1]) / h;
   if (Math.hypot(dx, dy) <= CLICK_SLOP && ms <= CLICK_MS) return 'click';
   if (-dy >= PUSH_FOLD && -dy > Math.abs(dx)) return 'push';
   return null;

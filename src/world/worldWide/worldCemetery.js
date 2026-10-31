@@ -38,13 +38,17 @@ export function cemeteryPastBay(places, px, py, roll = Math.random) {
   const [cx, cy] = districtOf(px, py);
   const own = cemeteriesOf(places, areaOfDistrict(t, cx, cy));
   if (own.length) return siteOf(own[Math.min(own.length - 1, Math.floor(roll() * own.length))]);
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       if (!dx && !dy) continue;
       for (const p of cemeteriesOf(places, areaOfDistrict(t, cx + dx, cy + dy))) {
         const d = Math.hypot(p.px - px, p.py - py);
-        if (d < bestD || (d === bestD && p.mapId < best.mapId)) { best = p; bestD = d; }
+        if (d < bestD || (d === bestD && p.mapId < best.mapId)) {
+          best = p;
+          bestD = d;
+        }
       }
     }
   }
@@ -64,7 +68,8 @@ function cemeteriesOf(places, area) {
  * @returns {{ px: number, py: number, mapId: number, name: string }|null}
  */
 export function nearestBayCemetery(maps, px, py) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (let r = 0; r < (maps?.regionCount ?? 0); r++) {
     const region = maps.getRegion(r);
     const table = region?.mapTable ?? [];
@@ -73,7 +78,10 @@ export function nearestBayCemetery(maps, px, py) {
       if (row?.dungeonType !== DUNGEON_TYPES.Cemetery) continue;
       const p = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
       const d = Math.hypot(p.x - px, p.y - py);
-      if (d < bestD) { bestD = d; best = { px: p.x, py: p.y, mapId: row.mapId, name: region.mapNames?.[i] ?? '' }; }
+      if (d < bestD) {
+        bestD = d;
+        best = { px: p.x, py: p.y, mapId: row.mapId, name: region.mapNames?.[i] ?? '' };
+      }
     }
   }
   return best;

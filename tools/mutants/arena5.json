@@ -2,8 +2,8 @@
   {
     "name": "ARENA5-UNDERCROFT-SHRINKS",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (isArenaUndercroft(dfLocation)) return 'full';\n",
-    "new": "",
+    "old": "  if (isArenaUndercroft(dfLocation)) return 'full';\n  // WW7-4 (World-Wide.md WW7-4): A CAPITAL'S CASTLE NEVER SHRINKS. Its halls are a Bay palace's (world/capitalCastles.js), and",
+    "new": "  // WW7-4 (World-Wide.md WW7-4): A CAPITAL'S CASTLE NEVER SHRINKS. Its halls are a Bay palace's (world/capitalCastles.js), and",
     "tests": [
       "test/world/arena5_audit.test.js"
     ]

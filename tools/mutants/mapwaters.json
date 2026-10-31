@@ -2,8 +2,8 @@
   {
     "name": "MAP-WATERS-version-still",
     "file": "src/world/tamriel/watersInk.js",
-    "old": "export function setWatersInk(ink) { _ink = ink; _version++; }",
-    "new": "export function setWatersInk(ink) { _ink = ink; }",
+    "old": "  _version++;\n}",
+    "new": "}",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MAP-WATERS-pack-widths-as-points",
     "file": "src/world/tamriel/watersInk.js",
-    "old": "pts: Float32Array.from(r.pts)",
-    "new": "pts: Float32Array.from(r.width)",
+    "old": "    pts: Float32Array.from(r.pts),",
+    "new": "    pts: Float32Array.from(r.width),",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MAP-WATERS-lakes-copied",
     "file": "src/world/tamriel/watersInk.js",
-    "old": "transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer]), ...lakes.map((l) => l.buffer)]",
-    "new": "transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer])]",
+    "old": "  return {\n    ink: { rivers, lakes },\n    transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer]), ...lakes.map((l) => l.buffer)],\n  };",
+    "new": "  return { ink: { rivers, lakes }, transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer])] };",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]
@@ -116,10 +116,6 @@
       "test/ui/mapwaters.test.js"
     ]
   },
-  
-  
-  
-  
   {
     "name": "MAP-WATERS-client-wet-offset",
     "file": "src/world/terrain/terrainGenClient.js",
@@ -132,8 +128,8 @@
   {
     "name": "MAP-WATERS-ring-wet-ignored",
     "file": "src/render/midRing.js",
-    "old": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;",
-    "new": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS) sea[v] = 255;",
+    "old": "      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v]))",
+    "new": "      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS)",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]

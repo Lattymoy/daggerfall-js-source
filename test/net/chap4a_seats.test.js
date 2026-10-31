@@ -261,6 +261,6 @@ test('CHAP4a a deleted character\'s seats go with it; the Chronicle keeps their 
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM realm_characters WHERE id = ?').get(a.id).n, 0, 'deleted');
   assert.deepEqual(s.seats(), []);
   assert.equal(s.history().length, 1);
-  assert.match(src('server-account/src/realm.js'), /DELETE FROM npc_chapter_seats WHERE account = \? AND char_id = \?'\)\.bind\(playerId, id\),   \/\/ CHAP4a: and its seats \(the Chronicle keeps their story\)/);
-  assert.match(src('server-account/src/realm.js'), /DELETE FROM npc_chapter_seats WHERE account = \? AND char_id = \?'\)\.bind\(playerId, id\),   \/\/ CHAP4a: and its seats\n/);
+  assert.match(src('server-account/src/realm.js'), /DELETE FROM npc_chapter_seats WHERE account = \? AND char_id = \?'\)\.bind\(playerId, id\), \/\/ CHAP4a: and its seats \(the Chronicle keeps their story\)/);
+  assert.match(src('server-account/src/realm.js'), /DELETE FROM npc_chapter_seats WHERE account = \? AND char_id = \?'\)\.bind\(playerId, id\), \/\/ CHAP4a: and its seats/);
 });

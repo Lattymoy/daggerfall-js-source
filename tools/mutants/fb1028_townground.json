@@ -133,8 +133,8 @@
   {
     "name": "FB1028-CROP-the-half-range-unread",
     "file": "src/world/townShape.js",
-    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-    "new": "        const hx = f.noise * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS,",
+    "new": "        const hx = f.noise * UNITS,",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "FB1028-CROP-the-rows-unflipped",
     "file": "src/world/townShape.js",
-    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-    "new": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = -r.zPos;",
+    "old": "          z = r.zPos + 4096;",
+    "new": "          z = -r.zPos;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -161,8 +161,8 @@
   {
     "name": "FB1028-the-isles-fields-packed-none",
     "file": "src/world/etherWatersBake.js",
-    "old": "fields = b.fields ? pack(b.fields) : null;",
-    "new": "fields = null;",
+    "old": "      fields = b.fields ? pack(b.fields) : null; // FB1028: and its crops' tiles",
+    "new": "      fields = null; // FB1028: and its crops' tiles",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "FB1028-the-isles-fields-unpacked-none",
     "file": "src/world/etherWatersBake.js",
-    "old": "fields: basis.fields ? unpack(basis.fields) : null,",
-    "new": "fields: null,",
+    "old": "    fields: basis.fields ? unpack(basis.fields) : null,",
+    "new": "    fields: null,",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -179,8 +179,8 @@
   {
     "name": "FB1028-the-isles-key-blind-to-fields",
     "file": "src/world/etherWatersBake.js",
-    "old": ":${fields?.join(',') ?? ''}`;",
-    "new": "`;",
+    "old": "    const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}:${fields?.join(',') ?? ''}`;",
+    "new": "    const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}`;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -188,8 +188,8 @@
   {
     "name": "FB1028-the-kept-id-packed-none",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-    "new": "r[i * 3 + 2] = -1;",
+    "old": "    r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "    r[i * 3 + 2] = -1;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "FB1028-the-kept-id-unpacked-none",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });",
-    "new": "records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
+    "old": "  for (let i = 0; i < k.r.length; i += 3)\n    records.push(\n      k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] },\n    );",
+    "new": "  for (let i = 0; i < k.r.length; i += 3) records.push({ xPos: k.r[i], zPos: k.r[i + 1] });",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "FB1028-the-kept-flat-an-id",
     "file": "src/world/terrain/groundTilesKept.js",
-    "old": "r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
-    "new": "r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
+    "old": "    r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;",
+    "new": "    r[i * 3 + 2] = Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : 0;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js",
       "test/world/terrain/fv_groundtiles.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "FB1028-the-ground-law-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const GROUND_LAW = 5;",
+    "old": "export const GROUND_LAW = 6;",
     "new": "export const GROUND_LAW = 2;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
@@ -298,7 +298,7 @@
   {
     "name": "AUDIT-FB1028-A2A3-the-ground-law-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const GROUND_LAW = 5;",
+    "old": "export const GROUND_LAW = 6;",
     "new": "export const GROUND_LAW = 3;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
@@ -375,8 +375,8 @@
   {
     "name": "FB1028-frame-before-reach-not-12",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "const BLEND_TILES = 12, EDGE_TILES = 4;",
-    "new": "const BLEND_TILES = 17, EDGE_TILES = 4;",
+    "old": "const BLEND_TILES = 12,",
+    "new": "const BLEND_TILES = 17,",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "FB1028-frame-before-fields-kept",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "outlineOfBasis({ ...shape.basis, fields: null }, seed)",
-    "new": "outlineOfBasis(shape.basis, seed)",
+    "old": "  return shape?.basis?.fields ? outlineOfBasis({ ...shape.basis, fields: null }, seed) : shape;",
+    "new": "  return shape?.basis?.fields ? outlineOfBasis(shape.basis, seed) : shape;",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "FB1028-frame-before-sea-lifted",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n",
-    "new": "",
+    "old": "      if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;\n      s *= edge * edge * (3 - 2 * edge);",
+    "new": "      s *= edge * edge * (3 - 2 * edge);",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -402,7 +402,7 @@
   {
     "name": "FB1028-frame-before-edge-unfaded",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "    s *= edge * edge * (3 - 2 * edge);",
+    "old": "      s *= edge * edge * (3 - 2 * edge);",
     "new": "",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"

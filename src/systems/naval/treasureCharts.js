@@ -20,10 +20,25 @@ export const CHART_TEMPLATE = 1342;
 export const CHART_GROUP = 'UselessItems2';
 /** The chart's template row (not bound: a chart changes hands). */
 export const CHART_ROW = Object.freeze({
-  index: CHART_TEMPLATE, name: 'Treasure Chart', baseWeight: 0.25, hitPoints: 1, capacityOrTarget: 0, basePrice: 150,
-  enchantmentPoints: 0, rarity: 9, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 209, worldTextureRecord: 8, playerTextureArchive: 0,
-  playerTextureRecord: 0, stackable: false,
+  index: CHART_TEMPLATE,
+  name: 'Treasure Chart',
+  baseWeight: 0.25,
+  hitPoints: 1,
+  capacityOrTarget: 0,
+  basePrice: 150,
+  enchantmentPoints: 0,
+  rarity: 9,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 209,
+  worldTextureRecord: 8,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
 });
 registerCustomTemplates([CHART_ROW]);
 /** A chart's own stream's salt; the share of pirates that carry one - the coast's, the deep's, a flagship's. */
@@ -40,7 +55,18 @@ export const CHART_SITE = 'chart:';
 export const CHART_PORT_TRIES = 32;
 
 /** A chart of `seed` (its `message`). */
-export const mintChart = (seed) => mintCondition(setItemFields({ group: CHART_GROUP, templateIndex: CHART_TEMPLATE, material: 0, flags: 0, variant: 0, message: seed >>> 0, stackCount: 1 }));
+export const mintChart = (seed) =>
+  mintCondition(
+    setItemFields({
+      group: CHART_GROUP,
+      templateIndex: CHART_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: seed >>> 0,
+      stackCount: 1,
+    }),
+  );
 export const isChart = (it) => it?.templateIndex === CHART_TEMPLATE;
 
 /**

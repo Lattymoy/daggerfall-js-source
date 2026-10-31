@@ -119,7 +119,7 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
 test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and asks the host; a settlement door\'s record answers the door; the pixel carries its layout (mutants: each seam)', () => {
   const world = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(world, /settlements = createSettlementHost\(\{/);
-  assert.match(world, /try \{ settlements\?\.frame\(\); \}/);
+  assert.match(world, /\n {4}settlements\?\.frame\(\);/);
   assert.match(world, /settlements\?\.draw\(renderer\);/);
   assert.equal(world.match(/settlements\?\.destroyAll\(\);/g)?.length, 2, 'at a re-anchor and a load');
   assert.match(world, /\.\.\.\(settlements\?\.doorTargets\(\) \?\? \[\]\)\]/);

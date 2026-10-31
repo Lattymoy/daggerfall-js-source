@@ -366,7 +366,7 @@ test('DEX5-12 ONLINE UNDERGROUND: the record says a body gone (`bg`, roomRecord)
   assert.match(dc, /else setFoeDead\(f, false\);\n\s*\}\n\s*if \(r\.d === 1 && r\.bg\) corpsePrefabs\.told\(f, r\.bg\);/);
   assert.match(dc, /if \(f\._ownFrom != null \|\| \(f\.dead && !f\.corpse && !f\.corpseDestroyed\)\) continue;/);
   assert.match(dc, /if \(\(f\.dead && !f\.corpse && !f\.corpseDestroyed\) \|\| !foes\.includes\(f\)\) _sharedById\.delete\(id\);/);
-  assert.match(rd('src/scenes/corpsePrefabHost.js'), /f\._ownFrom != null \? \{ own: 1, to: f\._ownFrom, k: h\.locationKey\(\), i: f\._ownI, \.\.\.hit \} : \{ \.\.\.\(f\._encId != null \? \{ i: f\._encId, xs: 1 \} : \{ i: f\._surI \?\? h\.foes\.indexOf\(f\) \}\), \.\.\.hit \}/);
+  assert.match(rd('src/scenes/corpsePrefabHost.js'), /f\._ownFrom != null\n\s*\? \{ own: 1, to: f\._ownFrom, k: h\.locationKey\(\), i: f\._ownI, \.\.\.hit \}\n\s*: \{ \.\.\.\(f\._encId != null \? \{ i: f\._encId, xs: 1 \} : \{ i: f\._surI \?\? h\.foes\.indexOf\(f\) \}\), \.\.\.hit \}/);
   assert.match(dc, /if \(f\?\.dead && data\.cs === 1 && \(xs \|\| i < _layoutFoes\)\) \{ const s = hitSpellOf\(data\); return !!s && !!f\.corpsePrefab\?\.struck\(s\.spell, s\.level, null\); \}/);
   assert.match(dc, /if \(f\?\.dead && data\.cs === 1\) \{ if \(f\.entity\?\.team === 'PlayerAlly' \|\| !\(ownLoose\(f\) \|\| \(!!ownQuestTag\(f\) && ownPeerMayHit\(id, f\)\)\)\) return false; const s = hitSpellOf\(data\); return !!s && !!f\.corpsePrefab\?\.struck\(s\.spell, s\.level, null\); \}/, 'AUDIT DEX D7: through the gate a living blow passes');
   assert.match(dc, /if \(!foes\.includes\(f\) \|\| f\.corpseDestroyed\) return;/, 'a body told gone while its art warmed never lands');

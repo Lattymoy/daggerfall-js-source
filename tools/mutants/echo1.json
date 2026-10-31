@@ -2,8 +2,8 @@
   {
     "name": "ECHO1-the-ways-turned",
     "file": "src/systems/compassWords.js",
-    "old": "export const sceneCompassWord = (dx, dz) => COMPASS_WORDS[((Math.round(Math.atan2(dx, dz)",
-    "new": "export const sceneCompassWord = (dx, dz) => COMPASS_WORDS[((Math.round(Math.atan2(dz, dx)",
+    "old": "  COMPASS_WORDS[((Math.round((Math.atan2(dx, dz) * 180) / Math.PI / 45) % 8) + 8) % 8];",
+    "new": "  COMPASS_WORDS[((Math.round((Math.atan2(dz, dx) * 180) / Math.PI / 45) % 8) + 8) % 8];",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ECHO1-the-vertical-loose",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "  const up = dy > ECHO_VERT_M ?",
-    "new": "  const up = dy >= ECHO_VERT_M ?",
+    "old": "  const up = dy > ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';",
+    "new": "  const up = dy >= ECHO_VERT_M ? `above ${who}` : dy < -ECHO_VERT_M ? `below ${who}` : '';",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ECHO1-every-mover-grinds",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "  if (isActionDoorObject(o)) return 'A door swings';\n",
-    "new": "",
+    "old": "  if (isActionDoorObject(o)) return 'A door swings';\n  if (o?.kind === 'moveFlat') return 'Something shifts';",
+    "new": "  if (o?.kind === 'moveFlat') return 'Something shifts';",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ECHO1-close-is-a-way",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "    return d <= ECHO_NEAR_M ? 'Works something close by' :",
-    "new": "    return false ? 'Works something close by' :",
+    "old": "    return d <= ECHO_NEAR_M",
+    "new": "    return false",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ECHO1-the-examine-turned-round",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "    const a = boxMiddle(from), b = boxMiddle(box);",
-    "new": "    const a = boxMiddle(box), b = boxMiddle(from);",
+    "old": "    const a = boxMiddle(from),\n      b = boxMiddle(box);",
+    "new": "    const a = boxMiddle(box),\n      b = boxMiddle(from);",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ECHO1-heard-again-kept-where-it-was",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "      list = list.filter((e) => e.key !== key);\n",
-    "new": "",
+    "old": "      list = list.filter((e) => e.key !== key);\n      list.push({ key, at: [at[0], at[1], at[2]] });",
+    "new": "      list.push({ key, at: [at[0], at[1], at[2]] });",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ECHO1-the-book-unbounded",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "      if (list.length > max) list = list.slice(list.length - max);\n",
-    "new": "",
+    "old": "      if (list.length > max) list = list.slice(list.length - max);\n      return list.length;",
+    "new": "      return list.length;",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ECHO1-found-kept",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "      list = keep;\n",
-    "new": "",
+    "old": "      list = keep;\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "ECHO1-the-map-left-blank",
     "file": "src/ui/automap/automapDoor.js",
-    "old": "        echoes: deps.echoes ?? null,",
-    "new": "        echoes: null,",
+    "old": "        echoes: deps.echoes ?? null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
+    "new": "        echoes: null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-DELVE-D10-said-of-you",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')",
-    "new": "wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2])",
+    "old": "      : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')}`; // D10: from the lever",
+    "new": "      : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2])}`; // D10: from the lever",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-DELVE-C6-a-boxless-mover-ends-it",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "    const box = boxOf(m);\n    if (!box) continue;",
-    "new": "    const box = boxOf(m);\n    if (!box) return null;",
+    "old": "    if (!box) continue;",
+    "new": "    if (!box) return null;",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-DELVE-C6-near-is-strict",
     "file": "src/systems/dungeon/dungeonEcho.js",
-    "old": "    return d <= ECHO_NEAR_M ? 'Works something close by'",
-    "new": "    return d < ECHO_NEAR_M ? 'Works something close by'",
+    "old": "    return d <= ECHO_NEAR_M",
+    "new": "    return d < ECHO_NEAR_M",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]

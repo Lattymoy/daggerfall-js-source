@@ -11,8 +11,14 @@ let _bound = false;
 
 export const WALK_MODE_ACTION = 'WalkMode';
 export const walkModeOn = () => _on;
-export function setWalkMode(v) { _on = !!v; return _on; }
-export function toggleWalkMode() { _on = !_on; return _on; }
+export function setWalkMode(v) {
+  _on = !!v;
+  return _on;
+}
+export function toggleWalkMode() {
+  _on = !_on;
+  return _on;
+}
 
 /** One listener for the page (idempotent): `actionsOf(e)` answers a key event's actions (ui/input.js actionsOf);
  *  `isWindowUp()` gates it off while a window is up, as the cursor toggle is. */
@@ -27,5 +33,8 @@ export function bindWalkMode(actionsOf, isWindowUp = () => false) {
     else if (acts.includes('Run') && _on) _on = false;
   };
   addEventListener('keydown', onKey, true);
-  return () => { removeEventListener('keydown', onKey, true); _bound = false; };
+  return () => {
+    removeEventListener('keydown', onKey, true);
+    _bound = false;
+  };
 }

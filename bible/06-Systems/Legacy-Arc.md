@@ -198,7 +198,7 @@ at its own pace, roughly a dozen deaths a generation. AGELESS-CURSE (2026-10-09,
 and werewolves of this please?"): a member with the curse in the blood at the death - a vampire, a werewolf or a
 wereboar, the curse taken (`liveVampirism`, `liveLycanthropy`), not one still incubating - pays no toll and always
 rises, their span spent or not, and the rise says so ("The curse in Ysolde's blood keeps Arkay at bay. No years are
-taken." - `payToll`'s `ageless`, `age.js:"if (ageless) return { final: false"`; asked at the door,
+taken." - `payToll`'s `ageless`, `age.js:"if (ageless) return {"`; asked at the door,
 `legacyHost.js:"const cursed = !!(deps.entity"`). Their own clock still ages them. Cured, the toll is theirs again
 from the next death - a spent member cured dies of their years at it. The sheet's "your next death is your last"
 (section 11) is still said to a spent member while the curse holds. And at any time an Elder may PASS THE MANTLE from the family
@@ -945,7 +945,7 @@ AUDIT (2026-10-16, the slice's own audit - `01-Overview/bugs/Field-Bugs-2026-10-
   to take back.
 - R2 - below ten frames a second the open zone's death screen counted the frames' clamped time while the hold ran on the
   wall clock: the window closed (a Resurrect refused "fallen for good") with the screen still saying "RISING IN 15".
-  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);"`),
+  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online)"`),
   never behind the frames' own count.
 - R3 - this section said "relay world208": the relay that carries `fg` is world212 (world208, world209 and world210
   went to other branches) - corrected above.
@@ -976,21 +976,21 @@ town hundreds of pixels away.
 WHAT IT IS NOW:
 
 - **The start's lookup left bootWorld** (HOST-SPLIT, verbatim - by hand, as `tools/hostMove.mjs` refuses a group whose
-  `let` the statements after it write): `scenes/bootStartHost.js:"export function createBootStart(host) {"`. The classic
+  `let` the statements after it write): `scenes/bootStartHost.js:"export function createBootStart"`. The classic
   cell, EE13's random spawn and the named start stand as they did.
-- **A start past the Bay** (`bootStartHost.js:"export function farStartOf(params, regionName, locationName) {"`): a name
+- **A start past the Bay** (`bootStartHost.js:"export function farStartOf"`): a name
   MAPS.BSA does not hold, with the address's kept map id (`seat`) or a province's region (62..70). It is booted the way a
   save made in a town past the Bay loads (TESA2): the world stands first at the Bay's town nearest the place where its
   pixel is known before the trace (else the boot's own default, Daggerfall); once the boot's world stands
   (`playerSpawned`, `_bootLoaded`, no load) and the land has its trace (`arenaTraced`, ARENA_LOAD_WAIT_MS at most - the
   load's own wait), the player is moved there (`_teleportToPixel`, on a start marker, as `__tesaJump` lands). The place's
-  pixel (`bootStartHost.js:"export function farPixelOf(far, worldPlaces) {"`): by its map id - the registry's place (a
+  pixel (`bootStartHost.js:"export function farPixelOf"`): by its map id - the registry's place (a
   capital's slice, an Arena place), a country place's id read back to its pixel where the countryside stands it there
   (`world/tamrielCountry.js:"export function countryPixelOfId(id) {"`), an isle's to its centre
-  (`world/etherPlaces.js:"export function etherPlacePixelOfId(id) {"`) - else by name, the registry's first listed place
+  (`world/etherPlaces.js:"export function etherPlacePixelOfId"`) - else by name, the registry's first listed place
   of that name and region past the Bay. Any `?region=&loc=` boot reaches it, a dev boot's as a birth's; a load's place
   stays the save's; a Bay name MAPS.BSA lacks still throws, as it always did.
-- **The birth waits on the move** (`world.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so
+- **The birth waits on the move** (`testPresetHost.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so
   the heir is made, and first saved (offline `onBorn`, online the realm's checkpoint, legacyRealmBirth), at the seat; a
   reload loads that save. No way to it (the trace never landed, the place gone): said (`start.noSite`, START2's own
   words) and born where the world stood.

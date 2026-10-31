@@ -2,8 +2,8 @@
   {
     "name": "AUDITLWII2-C4-transport",
     "file": "src/scenes/hideouts.js",
-    "old": "!!it && it.group !== 'Transportation' && !isBagItem(it)",
-    "new": "!!it && !isBagItem(it)",
+    "old": "export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isBagItem(it) && !isSurvivalItem(it);",
+    "new": "export const chestPiece = (it) => !!it && !isBagItem(it) && !isSurvivalItem(it);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDITLWII2-C4-bag",
     "file": "src/scenes/hideouts.js",
-    "old": "it.group !== 'Transportation' && !isBagItem(it) && !isSurvivalItem(it)",
-    "new": "it.group !== 'Transportation' && !isSurvivalItem(it)",
+    "old": "export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isBagItem(it) && !isSurvivalItem(it);",
+    "new": "export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isSurvivalItem(it);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDITLWII2-C4-provisions",
     "file": "src/scenes/hideouts.js",
-    "old": "!isBagItem(it) && !isSurvivalItem(it);",
-    "new": "!isBagItem(it);",
+    "old": "export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isBagItem(it) && !isSurvivalItem(it);",
+    "new": "export const chestPiece = (it) => !!it && it.group !== 'Transportation' && !isBagItem(it);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDITLWII2-C4-filter",
     "file": "src/scenes/hideouts.js",
-    "old": "shelfIndex: 1 }).filter(chestPiece) : [];",
-    "new": "shelfIndex: 1 }) : [];",
+    "old": "  const pool = take.goods\n    ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }).filter(chestPiece)\n    : []; // 'chst'",
+    "new": "  const pool = take.goods ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }) : []; // 'chst'",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDITLWII2-C4-shelf",
     "file": "src/scenes/hideouts.js",
-    "old": "0x63687374), shelfIndex: 1 })",
-    "new": "0x63687374), shelfIndex: 0 })",
+    "old": "    ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }).filter(chestPiece)",
+    "new": "    ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 0 }).filter(chestPiece)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AUDITLWII2-C4-draw",
     "file": "src/scenes/hideouts.js",
-    "old": "items.push(pool.splice(Math.floor(draw() * pool.length), 1)[0]);",
-    "new": "items.push(pool.splice(0, 1)[0]);",
+    "old": "  while (items.length < take.goods && pool.length) items.push(pool.splice(Math.floor(draw() * pool.length), 1)[0]);",
+    "new": "  while (items.length < take.goods && pool.length) items.push(pool.splice(0, 1)[0]);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDITLWII2-C4-seed",
     "file": "src/scenes/hideouts.js",
-    "old": "deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374)",
-    "new": "deps.shelf({ rolls: lwRng(textSeed('chest'), 0x63687374)",
+    "old": "    ? deps.shelf({ rolls: lwRng(textSeed(band.key), 0x63687374), shelfIndex: 1 }).filter(chestPiece)",
+    "new": "    ? deps.shelf({ rolls: lwRng(textSeed('chest'), 0x63687374), shelfIndex: 1 }).filter(chestPiece)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDITLWII2-P5-LW12P-wire-chest-gold",
     "file": "src/scenes/hideouts.js",
-    "old": "  if (take.gold > 0) items.push(deps.gold(take.gold));\n",
-    "new": "",
+    "old": "  if (take.gold > 0) items.push(deps.gold(take.gold));\n  return { items, robbed: take.robbed };",
+    "new": "  return { items, robbed: take.robbed };",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDITLWII2-P5-LW12P-wire-chest-days",
     "file": "src/scenes/hideouts.js",
-    "old": "for (let d = 0; d <= TAKE_DAYS; d++) for (const town of towns)",
-    "new": "for (let d = 0; d <= 0; d++) for (const town of towns)",
+    "old": "  for (let d = 0; d <= TAKE_DAYS; d++)",
+    "new": "  for (let d = 0; d <= 0; d++)",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AUDITLWII2-P5-LW12P-wire-chest-towns",
     "file": "src/scenes/hideouts.js",
-    "old": "const towns = [band.hideout.a, band.hideout.b].map((id) => deps.townOf(id)).filter(Boolean);",
-    "new": "const towns = [band.hideout.a].map((id) => deps.townOf(id)).filter(Boolean);",
+    "old": "  const towns = [band.hideout.a, band.hideout.b].map((id) => deps.townOf(id)).filter(Boolean);",
+    "new": "  const towns = [band.hideout.a].map((id) => deps.townOf(id)).filter(Boolean);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDITLWII2-C5-stand-frame",
     "file": "src/scenes/hideouts.js",
-    "old": "      stood.chest = deps.chest(band, t);\n",
-    "new": "      stood.chest = deps.chest(band, t);\n      workChest(stood, Infinity);\n",
+    "old": "      stood.chest = deps.chest(band, t);\n    }",
+    "new": "      stood.chest = deps.chest(band, t);\n      workChest(stood, Infinity);\n    }",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDITLWII2-C5-slice",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (now() - t0 >= budgetMs) return;\n",
-    "new": "",
+    "old": "      if (now() - t0 >= budgetMs) return;\n      let r;",
+    "new": "      let r;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDITLWII2-C5-work",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (stood?.chest) workChest(stood, CHEST_SLICE_MS);",
-    "new": "",
+    "old": "      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
+    "new": "      // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDITLWII2-C5-rout",
     "file": "src/scenes/hideouts.js",
-    "old": "    if (s.chest) workChest(s, Infinity);",
-    "new": "",
+    "old": "    if (s.chest) workChest(s, Infinity); // AUDIT LW-II-2 C5: a rout before its chest was worked - its robbed known now",
+    "new": "    // AUDIT LW-II-2 C5: a rout before its chest was worked - its robbed known now",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDITLWII2-C5-minted",
     "file": "src/scenes/hideouts.js",
-    "old": "      s.minted = c.items.map((it) => [it, it?.stackCount]);",
-    "new": "      s.minted = [];",
+    "old": "      s.minted = c.items.map((it) => [it, it?.stackCount]); // AUDIT LW-II C2: the take's minting, the latch's measure",
+    "new": "      s.minted = []; // AUDIT LW-II C2: the take's minting, the latch's measure",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDITLWII2-C13-giveup",
     "file": "src/scenes/hideouts.js",
-    "old": "          else if (!mine && stood.owned) dropPeople(stood);\n",
-    "new": "",
+    "old": "          else if (!mine && stood.owned) dropPeople(stood);\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "AUDITLWII2-C13-coming",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood !== s || s.wave !== wave) { takeOut(rec); return; }",
-    "new": "if (stood !== s) { takeOut(rec); return; }",
+    "old": "          if (stood !== s || s.wave !== wave) {",
+    "new": "          if (stood !== s) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "AUDITLWII2-C13-wave",
     "file": "src/scenes/hideouts.js",
-    "old": "s.allDown = false; s.wave++;",
-    "new": "s.allDown = false;",
+    "old": "    s.wave++;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDITLWII2-C14-hold",
     "file": "src/scenes/hideouts.js",
-    "old": " && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) { letGo(); return; }",
-    "new": ") { letGo(); return; }",
+    "old": "        if (d > BAND_KEEP_M && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {",
+    "new": "        if (d > BAND_KEEP_M) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "AUDITLWII2-C14-kept-filter",
     "file": "src/scenes/hideouts.js",
-    "old": ".filter((p) => !down?.has(p.id))",
-    "new": "",
+    "old": "    const people = standingAt(s.band, t).filter((p) => !down?.has(p.id)),",
+    "new": "    const people = standingAt(s.band, t),",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDITLWII2-C14-kept-letgo",
     "file": "src/scenes/hideouts.js",
-    "old": "    for (const rec of s.foes) if (s.killed.has(rec) || killed(rec)) strike(s, rec);\n",
-    "new": "",
+    "old": "    for (const rec of s.foes) if (s.killed.has(rec) || killed(rec)) strike(s, rec);\n    for (const rec of s.foes) if (!rec.dead) takeOut(rec);",
+    "new": "    for (const rec of s.foes) if (!rec.dead) takeOut(rec);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "AUDITLWII2-C14-kept-latched",
     "file": "src/scenes/hideouts.js",
-    "old": "if (s.killed.has(rec) || killed(rec)) strike(s, rec);",
-    "new": "if (killed(rec)) strike(s, rec);",
+    "old": "    for (const rec of s.foes) if (s.killed.has(rec) || killed(rec)) strike(s, rec);",
+    "new": "    for (const rec of s.foes) if (killed(rec)) strike(s, rec);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDITLWII2-C14-last-blow",
     "file": "src/scenes/hideouts.js",
-    "old": "(stood.foes.length || stood.allDown)",
-    "new": "stood.foes.length",
+    "old": "        if (stood.band && stood.owned && !stood.routed && !stood.spawning && (stood.foes.length || stood.allDown)) {",
+    "new": "        if (stood.band && stood.owned && !stood.routed && !stood.spawning && stood.foes.length) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "AUDITLWII2-C14-character",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (rel() !== downsRel) { downs.clear(); downsRel = rel(); }",
-    "new": "",
+    "old": "      if (rel() !== downsRel) {\n        downs.clear();\n        downsRel = rel();\n      } // AUDIT LW-II-2 C14: the struck-down the character's",
+    "new": "      // AUDIT LW-II-2 C14: the struck-down the character's",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AUDITLWII2-H2-tents",
     "file": "src/scenes/hideouts.js",
-    "old": "      for (const tt of s.tents) move(tt.feet);\n",
-    "new": "",
+    "old": "      for (const tt of s.tents) move(tt.feet);\n      move(s.centre);",
+    "new": "      move(s.centre);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDITLWII2-H2-centre",
     "file": "src/scenes/hideouts.js",
-    "old": "      move(s.centre);\n",
-    "new": "",
+    "old": "      move(s.centre);\n      if (s.batch) {",
+    "new": "      if (s.batch) {",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "AUDITLWII2-H2-free",
     "file": "src/scenes/hideouts.js",
-    "old": "        deps.renderer?.destroyBillboardBatch?.(s.batch);\n",
-    "new": "",
+    "old": "        deps.renderer?.destroyBillboardBatch?.(s.batch);\n        s.batch =",
+    "new": "        s.batch =",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "AUDITLWII2-H2-frame",
     "file": "src/scenes/hideouts.js",
-    "old": "        s.batch = deps.renderer?.createBillboardBatch?.(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]) ?? null;\n        if (s.batch) s.batch.frame = frame;\n",
-    "new": "        s.batch = null;\n",
+    "old": "        s.batch =\n          deps.renderer?.createBillboardBatch?.(FIRE_FLAT.archive, FIRE_FLAT.record, fire.size, [s.centre]) ?? null;\n        if (s.batch) s.batch.frame = frame;",
+    "new": "        s.batch = null;",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "AUDITLWII2-P11-LW12P-take-counter-kinds",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "(tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar' ?",
-    "new": "(tr.kind === 'merchant' ?",
+    "old": "    (a, tr) =>\n      a +\n      (tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar'\n        ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE)\n        : ROB_GOLD),",
+    "new": "    (a, tr) => a + (tr.kind === 'merchant' ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE) : ROB_GOLD),",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -442,7 +442,7 @@
   {
     "name": "AUDITLWII2-P11-LW12P-trouble-nearest",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "    .sort((a, b) => Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) || (a.key < b.key ? -1 : 1));",
+    "old": "    .sort(\n      (a, b) =>\n        Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) ||\n        (a.key < b.key ? -1 : 1),\n    );",
     "new": "    .sort((a, b) => (a.key < b.key ? -1 : 1));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
@@ -452,8 +452,8 @@
   {
     "name": "AUDITLWII2-P11-LW12P-rout-thanks-all",
     "file": "src/scenes/hideouts.js",
-    "old": "    for (const tr of s.robbed) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
-    "new": "    for (const tr of s.robbed.slice(0, 1)) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
+    "old": "    for (const tr of s.robbed)",
+    "new": "    for (const tr of s.robbed.slice(0, 1))",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -462,7 +462,7 @@
   {
     "name": "AUDITLWII2-P11-LW12P-leader-classes",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "    const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);",
+    "old": "    const cls =\n      i === 0\n        ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue])\n        : pickOf(rng, OUTLAW_CLASSES);",
     "new": "    const cls = pickOf(rng, OUTLAW_CLASSES);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"

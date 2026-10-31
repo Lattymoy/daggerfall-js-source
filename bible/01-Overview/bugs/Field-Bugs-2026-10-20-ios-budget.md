@@ -30,7 +30,7 @@ VE4) spent it inside half a minute.
 
 **The fix.** `bundleBudgetGb` answers the browser's report when there is one. When there is none it asks the device:
 a finger-pointed page (`isTouchDevice`) is read as `IOS_TAB_GB`, 2 - the ceiling iOS gives a tab - and the same
-192 MB a GB makes 384 MB (systems/textureReplacement.js:"export const IOS_TAB_GB = 2;"). A mouse-pointed page with no
+192 MB a GB makes 384 MB (systems/textureReplacement.js:"export const IOS_TAB_GB"). A mouse-pointed page with no
 report keeps the 8 GB reading and its 1536 MB. Android Chrome reports `deviceMemory`, so a phone that says 4 is scaled
 as before, 768 MB, and the report wins over the device reading either way. `bundleBudgetBytes` keeps its callers:
 both take the navigator and the window as arguments so the law is pinned without a window stub, and the call sites

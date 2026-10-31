@@ -29,8 +29,8 @@
   {
     "name": "TESA3-the-coin-turned",
     "file": "src/characters/nameHelper.js",
-    "old": "export function getRandomFullNameOfBank(bank) {\n  const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;",
-    "new": "export function getRandomFullNameOfBank(bank) {\n  const gender = randomRangeInclusive(0, 1) === 0 ? GENDERS.Female : GENDERS.Male;",
+    "old": "  const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;",
+    "new": "  const gender = randomRangeInclusive(0, 1) === 0 ? GENDERS.Female : GENDERS.Male;",
     "tests": [
       "test/tesa3_provinces.test.js",
       "test/systems/audit58_magic.test.js"

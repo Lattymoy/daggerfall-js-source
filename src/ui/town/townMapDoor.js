@@ -30,11 +30,15 @@
 // a dynamic import would make the slot briefly empty.
 // ═══════════════════════════════════════════════════════════════════
 
-import { heldMapWorn } from '../map/mapSkin.js';   // MAP-TOGGLE: the skin AND the player's switch
-import { ExteriorAutomapWindow, preloadExteriorAutomapArt, exteriorAutomapArtLoaded } from '../exteriorAutomapWindow.js';
+import { heldMapWorn } from '../map/mapSkin.js'; // MAP-TOGGLE: the skin AND the player's switch
+import {
+  ExteriorAutomapWindow,
+  preloadExteriorAutomapArt,
+  exteriorAutomapArtLoaded,
+} from '../exteriorAutomapWindow.js';
 import { HeldMapWindow } from '../heldMap.js';
-import { yardTownBlocks } from '../../world/merchantYards/merchantYardMap.js';   // YARDS-FOUND: the town's yards on either map
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { yardTownBlocks } from '../../world/merchantYards/merchantYardMap.js'; // YARDS-FOUND: the town's yards on either map
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export { preloadExteriorAutomapArt };
 
@@ -69,14 +73,14 @@ export function townMapDoorReady() {
  * same way, the lighthouse in a house's byte.
  */
 export function createTownMapWindow(deps = {}) {
-  noteFirstUse('automap');   // TUT1: the town's map is the same page
+  noteFirstUse('automap'); // TUT1: the town's map is the same page
   if (heldMapWorn()) {
     return new HeldMapWindow({
       ...(deps.travel ?? {}),
       where: deps.where ?? (() => ({ inLocation: true })),
       openOnSheet: deps.openOnSheet ?? null,
-      holder: deps.holder ?? null,   // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weapon/weaponRig.js sheetHolderOf)
-      town: townSheetBag(deps),   // FB1020c STREETS-TAB: the streets' bag has one home - the travel key's window takes the same
+      holder: deps.holder ?? null, // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weapon/weaponRig.js sheetHolderOf)
+      town: townSheetBag(deps), // FB1020c STREETS-TAB: the streets' bag has one home - the travel key's window takes the same
     });
   }
   return exteriorAutomapArtLoaded() ? new ExteriorAutomapWindow(laidOn(deps)) : null;
@@ -85,7 +89,7 @@ export function createTownMapWindow(deps = {}) {
 /** YARDS-FOUND / SHIPYARDS-FOUND: the town's sites laid on its block rows, once, for whichever map is built - the
  *  classic window's rows and the held sheet's alike. */
 function laidOn(deps) {
-  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) };   // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way
+  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) }; // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way
   if (deps.yards?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.yards) };
   return deps;
 }
@@ -111,11 +115,11 @@ export function townSheetBag(deps = {}) {
     discovered: deps.discovered,
     revealAll: deps.revealAll ?? null,
     player: deps.townPlayer ?? null,
-    party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)
-    homes: deps.townHomes ?? null,   // TOWN-MARKS: the player housing, by building key
+    party: deps.townParty ?? null, // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)
+    homes: deps.townHomes ?? null, // TOWN-MARKS: the player housing, by building key
     homesVersion: deps.townHomesVersion ?? null,
-    questBuildings: deps.townQuestBuildings ?? null,   // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names here
+    questBuildings: deps.townQuestBuildings ?? null, // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names here
     title: deps.locationName ?? '',
-    imperial: deps.imperialSlice ?? null,   // IC-TOWNMAP: the Imperial City's slice the player stands in - the sheet draws the city (ui/town/imperialSheet.js)
+    imperial: deps.imperialSlice ?? null, // IC-TOWNMAP: the Imperial City's slice the player stands in - the sheet draws the city (ui/town/imperialSheet.js)
   };
 }

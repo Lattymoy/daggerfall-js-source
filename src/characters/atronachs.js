@@ -108,11 +108,7 @@ export const ATRONACH_DESIGNS = [
     // what every enemy did before the ghost and is still the right
     // answer for a thing made of metal.
     build: { torso: 1.34, shoulder: 1.42, arm: 1.3, hand: 1.36, neck: 1.24, skull: 1.02, jaw: 1.16, leg: 1.28 },
-    zones: [
-      torso('iron', 1.06, 1.6, 0.034),
-      arms('iron', 1.02, 1.48, 0.03),
-      legs('iron', 0.3, 0.96, 0.03),
-    ],
+    zones: [torso('iron', 1.06, 1.6, 0.034), arms('iron', 1.02, 1.48, 0.03), legs('iron', 0.3, 0.96, 0.03)],
     mats: { iron: ATRONACH_RAMPS.iron },
     hideRamp: 'iron',
     bootRamp: 'iron',

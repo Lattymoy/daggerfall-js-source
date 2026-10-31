@@ -474,7 +474,7 @@ test('SD11d THE CHART IN BRASS (L6 F11): the Remnant\'s damage chart heads its c
   assert.equal(damageChartModel(fell, { ...when, theme: 'brass" onclick' }).theme, null);
   assert.match(DAMAGE_CHART_CSS, /\.wb-dmg-chart\.wb-dmg-brass \{/);
   assert.match(read('src/ui/gate/gateDamageChart.js'), /\$\{model\.theme \? ` wb-dmg-\$\{model\.theme\}` : ''\}/);
-  assert.match(read('src/scenes/superDungeon/sdRemnantBlows.js'), /damageChartModel\(chartFell, \{ boss: SD_BLOWS_TEXT\.boss, me: me\(\), since: chartAt, now: t, crystals: SD_BLOWS_TEXT\.hearts, theme: 'brass' \}\)/);
+  assert.match(read('src/scenes/superDungeon/sdRemnantBlows.js'), /damageChartModel\(chartFell, \{\n\s*boss: SD_BLOWS_TEXT\.boss,\n\s*me: me\(\),\n\s*since: chartAt,\n\s*now: t,\n\s*crystals: SD_BLOWS_TEXT\.hearts,\n\s*theme: 'brass',\n\s*\}\)/);
 });
 
 // ── the words (L6 F20, F21) ────────────────────────────────────────────

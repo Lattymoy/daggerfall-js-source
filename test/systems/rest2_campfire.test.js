@@ -141,6 +141,6 @@ test('REST2 by source: the hosts hand the plaque\'s lit row to the camps and spe
   assert.match(rd('src/scenes/shared.js'), /out\.onNightSlept\?\.\(\);/);
   assert.match(rd('src/ui/restWindow.js'), /if \(this\.mode !== 'loiter' && \(this\.session\?\.totalHours \?\? 0\) >= 6\) this\.deps\.onNightSlept\?\.\(\);/, 'AUDIT REST F5: a loiter is no night');
   assert.match(rd('src/ui/enhanced/enhancedRest.js'), /if \(overlay\.mode !== 'loiter' && \(overlay\.session\?\.totalHours \?\? 0\) >= 6\) deps\.onNightSlept\?\.\(\);/);
-  assert.match(rd('src/systems/startingGear.js'), /else if \(sharedClockOn\(\)\) \{ const it = startingCampfire\(\);/);
+  assert.match(rd('src/systems/startingGear.js'), /else if \(sharedClockOn\(\)\) \{\n\s*const it = startingCampfire\(\);/);
   assert.match(rd('src/systems/shopStock.js'), /else if \(sharedClockOn\(\) && shelfIndex === 0\) for \(const it of campfireStock\(rolls\)\) items\.push\(it\);/);   // AUDIT REST II H8 (PIN MOVED): the counter's shelf alone
 });

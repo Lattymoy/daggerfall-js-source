@@ -34,7 +34,7 @@
 import { NAV_CELL, HALF_CELL } from '../../world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { hasShopJob } from './census.js';
-import { stepsDone } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
+import { stepsDone } from '../../world/puddleMask.js'; // IC-STUTTER: OW-HITCH's runner, the one export
 
 /** How far out along a door's normal its cell is looked for (m), and the ring searched about it after (cells). */
 export const DOOR_REACH_M = [0.9, 1.6, 2.4, 3.2, 4.0];
@@ -71,7 +71,12 @@ export const PLACES_ROWS_A_STEP = 64;
 export const PLACES_CELLS_A_STEP = 16384;
 
 /** The buildings before which a town gathers to talk. @type {Set<number>} */
-const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall, BUILDING_TYPES.Palace]);
+const SOCIAL_TYPES = new Set([
+  BUILDING_TYPES.Tavern,
+  BUILDING_TYPES.Temple,
+  BUILDING_TYPES.GuildHall,
+  BUILDING_TYPES.Palace,
+]);
 
 /**
  * @typedef {{ key: string, kind: 'door'|'social'|'square'|'corner'|'market'|'dock'|'exit', cell: number[], x: number, z: number,
@@ -93,32 +98,55 @@ export const streetNet = (nav) => stepsDone(streetNetSteps(nav));
 /** IC-STUTTER: streetNet a band of rows at a time. @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
  *  @returns {Generator<void, { label: Int32Array, id: number, size: number }, void>} */
 export function* streetNetSteps(nav) {
-  const W = nav.width, H = nav.height;
+  const W = nav.width,
+    H = nav.height;
   const label = new Int32Array(W * H);
   const stack = new Int32Array(W * H);
   // LW-PERF: the walkable cells read once (the grid's own bytes where it has them: the weight in the high nibble)
   const grid = /** @type {any} */ (nav).grid;
   const walk = new Uint8Array(W * H);
-  if (grid instanceof Uint8Array && grid.length === W * H) for (let i = 0; i < W * H; i++) walk[i] = grid[i] >> 4 > 0 ? 1 : 0;
+  if (grid instanceof Uint8Array && grid.length === W * H)
+    for (let i = 0; i < W * H; i++) walk[i] = grid[i] >> 4 > 0 ? 1 : 0;
   else for (let i = 0; i < W * H; i++) walk[i] = nav.weightAt(i % W, (i / W) | 0) > 0 ? 1 : 0;
-  let next = 0, best = 0, bestSize = 0, flooded = 0;
+  let next = 0,
+    best = 0,
+    bestSize = 0,
+    flooded = 0;
   for (let i = 0; i < W * H; i++) {
     if (i && i % (W * PLACES_ROWS_A_STEP) === 0) yield;
     if (label[i] || !walk[i]) continue;
     const id = ++next;
-    let sp = 0, size = 0;
-    stack[sp++] = i; label[i] = id;
+    let sp = 0,
+      size = 0;
+    stack[sp++] = i;
+    label[i] = id;
     while (sp > 0) {
       if (++flooded % PLACES_CELLS_A_STEP === 0) yield;
       const c = stack[--sp];
       size++;
-      const x = c % W, y = (c / W) | 0;
-      if (x > 0 && !label[c - 1] && walk[c - 1]) { label[c - 1] = id; stack[sp++] = c - 1; }
-      if (x < W - 1 && !label[c + 1] && walk[c + 1]) { label[c + 1] = id; stack[sp++] = c + 1; }
-      if (y > 0 && !label[c - W] && walk[c - W]) { label[c - W] = id; stack[sp++] = c - W; }
-      if (y < H - 1 && !label[c + W] && walk[c + W]) { label[c + W] = id; stack[sp++] = c + W; }
+      const x = c % W,
+        y = (c / W) | 0;
+      if (x > 0 && !label[c - 1] && walk[c - 1]) {
+        label[c - 1] = id;
+        stack[sp++] = c - 1;
+      }
+      if (x < W - 1 && !label[c + 1] && walk[c + 1]) {
+        label[c + 1] = id;
+        stack[sp++] = c + 1;
+      }
+      if (y > 0 && !label[c - W] && walk[c - W]) {
+        label[c - W] = id;
+        stack[sp++] = c - W;
+      }
+      if (y < H - 1 && !label[c + W] && walk[c + W]) {
+        label[c + W] = id;
+        stack[sp++] = c + W;
+      }
     }
-    if (size > bestSize) { bestSize = size; best = id; }
+    if (size > bestSize) {
+      bestSize = size;
+      best = id;
+    }
   }
   return { label, id: best, size: bestSize };
 }
@@ -130,17 +158,24 @@ export function* streetNetSteps(nav) {
  * @param {number} x @param {number} z @param {number} ring
  */
 function nearestCell(nav, ok, x, z, ring) {
-  const W = nav.width, H = nav.height;
-  const gx = Math.floor(x / NAV_CELL), gy = Math.floor(z / NAV_CELL);
+  const W = nav.width,
+    H = nav.height;
+  const gx = Math.floor(x / NAV_CELL),
+    gy = Math.floor(z / NAV_CELL);
   for (let r = 0; r <= ring; r++) {
-    let best = null, bestD = Infinity;
+    let best = null,
+      bestD = Infinity;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        const cx = gx + dx, cy = gy + dy;
+        const cx = gx + dx,
+          cy = gy + dy;
         if (cx < 0 || cy < 0 || cx >= W || cy >= H || !ok(cy * W + cx)) continue;
         const d = Math.hypot(cx * NAV_CELL + HALF_CELL - x, cy * NAV_CELL + HALF_CELL - z);
-        if (d < bestD) { bestD = d; best = [cx, cy]; }
+        if (d < bestD) {
+          bestD = d;
+          best = [cx, cy];
+        }
       }
     }
     if (best) return best;
@@ -166,13 +201,17 @@ export function nearestNetCell(nav, net, netId, x, z, ring) {
  * @returns {{ cell: number[], nx: number, nz: number } | null}
  */
 function doorCell(nav, d, ok) {
-  const W = nav.width, H = nav.height;
+  const W = nav.width,
+    H = nav.height;
   const nl = Math.hypot(d.nx, d.nz) || 1;
-  const nx = d.nx / nl, nz = d.nz / nl;
+  const nx = d.nx / nl,
+    nz = d.nz / nl;
   for (const sign of [1, -1]) {
     for (const m of DOOR_REACH_M) {
-      const cx = Math.floor((d.x + sign * nx * m) / NAV_CELL), cy = Math.floor((d.z + sign * nz * m) / NAV_CELL);
-      if (cx >= 0 && cy >= 0 && cx < W && cy < H && ok(cy * W + cx)) return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };
+      const cx = Math.floor((d.x + sign * nx * m) / NAV_CELL),
+        cy = Math.floor((d.z + sign * nz * m) / NAV_CELL);
+      if (cx >= 0 && cy >= 0 && cx < W && cy < H && ok(cy * W + cx))
+        return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };
     }
   }
   const cell = nearestCell(nav, ok, d.x + nx * 1.6, d.z + nz * 1.6, DOOR_RING);
@@ -195,7 +234,8 @@ function doorCell(nav, d, ok) {
  * @returns {number} the component's label
  */
 export function doorsNet(nav, doors, streets) {
-  const { label } = streets, opens = doorsByNet(nav, doors, streets);
+  const { label } = streets,
+    opens = doorsByNet(nav, doors, streets);
   if (!opens.size) return streets.id;
   // IC-STUTTER: each component's cells counted in a typed array (a map's read and write a cell was 10-40 ms of one task
   // over a slice of the Imperial City's 262,144)
@@ -204,10 +244,16 @@ export function doorsNet(nav, doors, streets) {
   const cells = new Int32Array(top + 1);
   for (let i = 0; i < label.length; i++) cells[label[i]]++;
   const size = new Map([...opens.keys()].map((id) => [id, cells[id] ?? 0]));
-  let best = 0, bestKeys = -1, bestSize = -1;
+  let best = 0,
+    bestKeys = -1,
+    bestSize = -1;
   for (const [id, keys] of [...opens].sort((a, b) => a[0] - b[0])) {
     const n = /** @type {number} */ (size.get(id));
-    if (keys.size > bestKeys || (keys.size === bestKeys && n > bestSize)) { best = id; bestKeys = keys.size; bestSize = n; }
+    if (keys.size > bestKeys || (keys.size === bestKeys && n > bestSize)) {
+      best = id;
+      bestKeys = keys.size;
+      bestSize = n;
+    }
   }
   return best;
 }
@@ -247,28 +293,52 @@ const STREET_SLACK = 1e-6;
  * @returns {Street}
  */
 export function streetGeometry(nav, places, reach = STAND_REACH_M) {
-  const W = nav.width, H = nav.height, C = NAV_CELL, net = places.net, id = places.netId;
+  const W = nav.width,
+    H = nav.height,
+    C = NAV_CELL,
+    net = places.net,
+    id = places.netId;
   const r = reach - STREET_SLACK;
   /** the way from (ax, az) to (bx, bz) as a share of its length: the first share at which a body walking it would
    *  overlap a cell off the net - Infinity for none */
-  const enter = (/** @type {number} */ ax, /** @type {number} */ az, /** @type {number} */ bx, /** @type {number} */ bz) => {
-    const dx = bx - ax, dz = bz - az;
-    const x0 = Math.floor((Math.min(ax, bx) - reach) / C), x1 = Math.floor((Math.max(ax, bx) + reach) / C);
-    const y0 = Math.floor((Math.min(az, bz) - reach) / C), y1 = Math.floor((Math.max(az, bz) + reach) / C);
+  const enter = (
+    /** @type {number} */ ax,
+    /** @type {number} */ az,
+    /** @type {number} */ bx,
+    /** @type {number} */ bz,
+  ) => {
+    const dx = bx - ax,
+      dz = bz - az;
+    const x0 = Math.floor((Math.min(ax, bx) - reach) / C),
+      x1 = Math.floor((Math.max(ax, bx) + reach) / C);
+    const y0 = Math.floor((Math.min(az, bz) - reach) / C),
+      y1 = Math.floor((Math.max(az, bz) + reach) / C);
     let first = Infinity;
     for (let cy = y0; cy <= y1; cy++) {
       for (let cx = x0; cx <= x1; cx++) {
         if (cx >= 0 && cy >= 0 && cx < W && cy < H && net[cy * W + cx] === id) continue;
         // the cell grown by the reach, open: the shares of the way strictly inside it
-        let lo = 0, hi = 1;
-        const lx = cx * C - r, hx = (cx + 1) * C + r, lz = cy * C - r, hz = (cy + 1) * C + r;
-        if (dx === 0) { if (!(ax > lx && ax < hx)) continue; } else {
-          const ta = (lx - ax) / dx, tb = (hx - ax) / dx;
-          lo = Math.max(lo, Math.min(ta, tb)); hi = Math.min(hi, Math.max(ta, tb));
+        let lo = 0,
+          hi = 1;
+        const lx = cx * C - r,
+          hx = (cx + 1) * C + r,
+          lz = cy * C - r,
+          hz = (cy + 1) * C + r;
+        if (dx === 0) {
+          if (!(ax > lx && ax < hx)) continue;
+        } else {
+          const ta = (lx - ax) / dx,
+            tb = (hx - ax) / dx;
+          lo = Math.max(lo, Math.min(ta, tb));
+          hi = Math.min(hi, Math.max(ta, tb));
         }
-        if (dz === 0) { if (!(az > lz && az < hz)) continue; } else {
-          const ta = (lz - az) / dz, tb = (hz - az) / dz;
-          lo = Math.max(lo, Math.min(ta, tb)); hi = Math.min(hi, Math.max(ta, tb));
+        if (dz === 0) {
+          if (!(az > lz && az < hz)) continue;
+        } else {
+          const ta = (lz - az) / dz,
+            tb = (hz - az) / dz;
+          lo = Math.max(lo, Math.min(ta, tb));
+          hi = Math.min(hi, Math.max(ta, tb));
         }
         if (lo < hi && lo < first) first = lo;
       }
@@ -318,7 +388,10 @@ export function doorsByNet(nav, doors, streets) {
  *  @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors @param {{ label: Int32Array }} streets
  *  @param {number} main @returns {number[]|null} */
 export function quartersOf(nav, doors, streets, main) {
-  const ids = [...doorsByNet(nav, doors, streets)].filter(([id, keys]) => id !== main && keys.size >= QUARTER_MIN).map(([id]) => id).sort((a, b) => a - b);
+  const ids = [...doorsByNet(nav, doors, streets)]
+    .filter(([id, keys]) => id !== main && keys.size >= QUARTER_MIN)
+    .map(([id]) => id)
+    .sort((a, b) => a - b);
   return ids.length ? [main, ...ids] : null;
 }
 
@@ -341,24 +414,37 @@ export const townPlaces = (nav, doors, buildings, o = {}) => stepsDone(townPlace
  * @param {{ quarters?: boolean, streets?: { label: Int32Array, id: number } | null, netId?: number | null, tag?: string }} [o] - `tag` a later quarter's, before its spot keys (AUDIT LW-ANTICS A5)
  * @returns {Generator<void, Places, void>}
  */
-export function* townPlacesSteps(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null, tag = '' } = {}) {
-  const W = nav.width, H = nav.height;
+export function* townPlacesSteps(
+  nav,
+  doors,
+  buildings,
+  { quarters = false, streets: given = null, netId: forced = null, tag = '' } = {},
+) {
+  const W = nav.width,
+    H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
   const factions = new Map((buildings ?? []).map((b) => [b.key, b.factionId ?? 0]));
-  const ordered = [...(doors ?? [])].filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z)).sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
+  const ordered = [...(doors ?? [])]
+    .filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z))
+    .sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
   const streets = given ?? (yield* streetNetSteps(nav));
   let net = streets.label;
   yield;
-  const netId = forced ?? doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
+  const netId = forced ?? doorsNet(nav, ordered, streets); // FIELD 2026-10-06: the street its doors open onto
   yield;
   // IC-GRAND: a town of quarters walks every net QUARTER_MIN of its buildings open onto - the union its net
   const quarterIds = quarters && forced == null ? quartersOf(nav, ordered, streets, netId) : null;
   yield;
   // IC-STUTTER: a loop, never Int32Array.from's mapped read - 0.1-0.5 s over a slice's 262,144 cells, one task
   if (quarterIds) {
-    const top = Math.max(...quarterIds), one = new Uint8Array(top + 1), joined = new Int32Array(net.length);
+    const top = Math.max(...quarterIds),
+      one = new Uint8Array(top + 1),
+      joined = new Int32Array(net.length);
     for (const id of quarterIds) one[id] = 1;
-    for (let i = 0; i < net.length; i++) { const l = net[i]; joined[i] = l <= top && one[l] ? netId : l; }
+    for (let i = 0; i < net.length; i++) {
+      const l = net[i];
+      joined[i] = l <= top && one[l] ? netId : l;
+    }
     net = joined;
   }
   yield;
@@ -371,36 +457,72 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
     const at = doorCell(nav, d, (i) => net[i] === netId);
     if (!at) continue;
     const [x, z] = centre(at.cell);
-    doorSpots.set(d.key, { key: `d${d.key}`, kind: 'door', cell: at.cell, x, z, yaw: yawTo(x, z, d.x, d.z), building: d.key });
+    doorSpots.set(d.key, {
+      key: `d${d.key}`,
+      kind: 'door',
+      cell: at.cell,
+      x,
+      z,
+      yaw: yawTo(x, z, d.x, d.z),
+      building: d.key,
+    });
     doorOf.set(d.key, { x: d.x, z: d.z, nx: at.nx, nz: at.nz });
   }
   /** A spot `out` cells before a building's door, on the net (else the door's own cell). */
   const before = (key, out, kind) => {
-    const door = doorSpots.get(key), d = doorOf.get(key);
+    const door = doorSpots.get(key),
+      d = doorOf.get(key);
     if (!door || !d) return null;
-    const c = nearestNetCell(nav, net, netId, door.x + d.nx * out * NAV_CELL, door.z + d.nz * out * NAV_CELL, 2) ?? door.cell;
+    const c =
+      nearestNetCell(nav, net, netId, door.x + d.nx * out * NAV_CELL, door.z + d.nz * out * NAV_CELL, 2) ?? door.cell;
     const [x, z] = centre(c);
-    return /** @type {Spot} */ ({ key: `${kind[0]}${key}`, kind, cell: c, x, z, yaw: yawTo(x, z, door.x, door.z), building: key });
+    return /** @type {Spot} */ ({
+      key: `${kind[0]}${key}`,
+      kind,
+      cell: c,
+      x,
+      z,
+      yaw: yawTo(x, z, door.x, door.z),
+      building: key,
+    });
   };
-  const social = [], market = [], dock = [];
+  const social = [],
+    market = [],
+    dock = [];
   for (const key of [...doorSpots.keys()].sort((a, b) => a - b)) {
     const t = types.get(key);
-    if (SOCIAL_TYPES.has(t)) { const s = before(key, SOCIAL_OUT, 'social'); if (s) social.push(s); }
-    else if (hasShopJob(t)) { const s = before(key, MARKET_OUT, 'market'); if (s) market.push(s); }
-    else if (t === BUILDING_TYPES.Ship) { const s = before(key, MARKET_OUT, 'dock'); if (s) dock.push(s); }
+    if (SOCIAL_TYPES.has(t)) {
+      const s = before(key, SOCIAL_OUT, 'social');
+      if (s) social.push(s);
+    } else if (hasShopJob(t)) {
+      const s = before(key, MARKET_OUT, 'market');
+      if (s) market.push(s);
+    } else if (t === BUILDING_TYPES.Ship) {
+      const s = before(key, MARKET_OUT, 'dock');
+      if (s) dock.push(s);
+    }
   }
   // the square: the most open net cell near the middle (the walkable cells in its window), sampled on a stride.
   // LW-PERF: each window's count off the net's running sums (one pass), not counted cell by cell
   yield;
-  const W1 = W + 1, sums = new Int32Array(W1 * (H + 1));
+  const W1 = W + 1,
+    sums = new Int32Array(W1 * (H + 1));
   for (let y = 0; y < H; y++) {
     if (y && y % PLACES_ROWS_A_STEP === 0) yield;
     let row = 0;
-    for (let x = 0; x < W; x++) { row += net[y * W + x] === netId ? 1 : 0; sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row; }
+    for (let x = 0; x < W; x++) {
+      row += net[y * W + x] === netId ? 1 : 0;
+      sums[(y + 1) * W1 + x + 1] = sums[y * W1 + x + 1] + row;
+    }
   }
-  const openIn = (x0, y0, x1, y1) => sums[(y1 + 1) * W1 + x1 + 1] - sums[y0 * W1 + x1 + 1] - sums[(y1 + 1) * W1 + x0] + sums[y0 * W1 + x0];
-  let square = null, bestOpen = -1, bestD = Infinity;
-  const mx = W / 2, my = H / 2, reach = Math.max(W, H) * 0.35;
+  const openIn = (x0, y0, x1, y1) =>
+    sums[(y1 + 1) * W1 + x1 + 1] - sums[y0 * W1 + x1 + 1] - sums[(y1 + 1) * W1 + x0] + sums[y0 * W1 + x0];
+  let square = null,
+    bestOpen = -1,
+    bestD = Infinity;
+  const mx = W / 2,
+    my = H / 2,
+    reach = Math.max(W, H) * 0.35;
   yield;
   for (let y = SQUARE_WINDOW; y < H - SQUARE_WINDOW; y += SQUARE_STRIDE) {
     for (let x = SQUARE_WINDOW; x < W - SQUARE_WINDOW; x += SQUARE_STRIDE) {
@@ -408,7 +530,11 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
       const d = Math.hypot(x - mx, y - my);
       if (d > reach) continue;
       const open = openIn(x - SQUARE_WINDOW, y - SQUARE_WINDOW, x + SQUARE_WINDOW, y + SQUARE_WINDOW);
-      if (open > bestOpen || (open === bestOpen && d < bestD)) { bestOpen = open; bestD = d; square = [x, y]; }
+      if (open > bestOpen || (open === bestOpen && d < bestD)) {
+        bestOpen = open;
+        bestD = d;
+        square = [x, y];
+      }
     }
   }
   /** @type {Spot|null} */
@@ -426,8 +552,16 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
     const [sx, sy] = square;
     /** @type {{ x: number, y: number, open: number, d: number }[]} */
     const near = [];
-    for (let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH); y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH); y++) {
-      for (let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH); cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH); cx++) {
+    for (
+      let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH);
+      y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH);
+      y++
+    ) {
+      for (
+        let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH);
+        cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH);
+        cx++
+      ) {
         const d = Math.hypot(cx - sx, y - sy);
         if (d > SQUARE_REACH || net[y * W + cx] !== netId) continue;
         const open = openIn(cx - SQUARE_WINDOW, y - SQUARE_WINDOW, cx + SQUARE_WINDOW, y + SQUARE_WINDOW);
@@ -455,8 +589,16 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
       yield;
       for (let bx = 0; bx * BLOCK_CELLS < W; bx++) {
         let top = null;
-        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {
-          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {
+        for (
+          let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN);
+          y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN);
+          y++
+        ) {
+          for (
+            let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN);
+            x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN);
+            x++
+          ) {
             if (net[y * W + x] !== netId) continue;
             const open = openIn(x - SQUARE_WINDOW, y - SQUARE_WINDOW, x + SQUARE_WINDOW, y + SQUARE_WINDOW);
             if (!top || open > top.open) top = { x, y, open, bx, by };
@@ -484,7 +626,9 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
   for (let k = 0; k < 4; k++) {
     yield;
     const side = SIDES[k];
-    const lines = k < 2 ? H : W, along = k < 2 ? W : H, half = k < 2 ? W / 2 : H / 2;
+    const lines = k < 2 ? H : W,
+      along = k < 2 ? W : H,
+      half = k < 2 ? W / 2 : H / 2;
     let best = null;
     for (let n = 0; n < lines && !best; n++) {
       if (n && n % PLACES_ROWS_A_STEP === 0) yield;
@@ -494,7 +638,10 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
         const [x, y] = cellOf(k, i, j);
         if (net[y * W + x] !== netId) continue;
         const mid = Math.abs(j - half);
-        if (mid < bestMid) { bestMid = mid; best = [x, y]; }
+        if (mid < bestMid) {
+          bestMid = mid;
+          best = [x, y];
+        }
       }
     }
     if (!best) continue;
@@ -502,16 +649,36 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
     const yaw = side === 'n' ? 0 : side === 's' ? Math.PI : side === 'e' ? Math.PI / 2 : -Math.PI / 2;
     exits.push(/** @type {Spot} */ ({ key: `${tag}x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
   }
-  const town = { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, factions, net, netId };
+  const town = {
+    doors: doorSpots,
+    square: squareSpot,
+    squares,
+    corners,
+    social,
+    market,
+    dock,
+    exits,
+    types,
+    factions,
+    net,
+    netId,
+  };
   if (!quarterIds) return town;
   // IC-GRAND: each quarter the town's places over its own street alone, its doors the ones that open onto it
-  const label = streets.label, of = new Map(quarterIds.map((id, q) => [id, q]));
+  const label = streets.label,
+    of = new Map(quarterIds.map((id, q) => [id, q]));
   const quarterAt = (/** @type {number[]} */ cell) => of.get(label[cell[1] * W + cell[0]]) ?? 0;
   /** @type {Array<typeof ordered>} */
   const byQ = quarterIds.map(() => []);
-  for (const d of ordered) { const s = doorSpots.get(d.key); if (s && s.cell) byQ[quarterAt(s.cell)].push(d); }
+  for (const d of ordered) {
+    const s = doorSpots.get(d.key);
+    if (s && s.cell) byQ[quarterAt(s.cell)].push(d);
+  }
   const each = [];
-  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));
+  for (let q = 0; q < quarterIds.length; q++)
+    each.push(
+      yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }),
+    );
   return { ...town, quarters: each, quarterAt };
 }
 
@@ -521,7 +688,8 @@ export function* townPlacesSteps(nav, doors, buildings, { quarters = false, stre
 function netLine(net, netId, W, a, b) {
   const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 4));
   for (let i = 0; i <= n; i++) {
-    const x = Math.floor(a[0] + 0.5 + ((b[0] - a[0]) * i) / n), y = Math.floor(a[1] + 0.5 + ((b[1] - a[1]) * i) / n);
+    const x = Math.floor(a[0] + 0.5 + ((b[0] - a[0]) * i) / n),
+      y = Math.floor(a[1] + 0.5 + ((b[1] - a[1]) * i) / n);
     if (net[y * W + x] !== netId) return false;
   }
   return true;
@@ -529,20 +697,28 @@ function netLine(net, netId, W, a, b) {
 
 /** The exit facing a direction (a world yaw out of town: 0 north, +PI/2 east). @param {Places} places @param {number} yaw */
 export function exitToward(places, yaw) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const e of places.exits) {
     const d = Math.abs(Math.atan2(Math.sin(e.yaw - yaw), Math.cos(e.yaw - yaw)));
-    if (d < bestD) { bestD = d; best = e; }
+    if (d < bestD) {
+      bestD = d;
+      best = e;
+    }
   }
   return best;
 }
 
 /** The exit nearest a cell. @param {Places} places @param {number[]} cell */
 export function exitNearest(places, cell) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const e of places.exits) {
     const d = Math.abs(e.cell[0] - cell[0]) + Math.abs(e.cell[1] - cell[1]);
-    if (d < bestD) { bestD = d; best = e; }
+    if (d < bestD) {
+      bestD = d;
+      best = e;
+    }
   }
   return best;
 }

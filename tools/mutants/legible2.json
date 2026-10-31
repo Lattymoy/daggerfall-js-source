@@ -11,7 +11,7 @@
   {
     "name": "LEGIBLE2-a-rename-not-asked-for-passes",
     "file": "tools/sameProgram.mjs",
-    "old": "      if (renames[a.name] !== b.name) differ(`\\`${a.name}\\` was renamed to \\`${b.name}\\`, and that rename was not asked for`, a, b);",
+    "old": "      if (renames[a.name] !== b.name)\n        differ(`\\`${a.name}\\` was renamed to \\`${b.name}\\`, and that rename was not asked for`, a, b);",
     "new": "      void 0;",
     "tests": [
       "test/tooling/legible2_sameprogram.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "LEGIBLE2-an-imports-outer-name-free",
     "file": "tools/sameProgram.mjs",
-    "old": "      if (outerName(a) !== outerName(b)) differ(`the ${outer} name \\`${outerName(a)}\\` became \\`${outerName(b)}\\``, a, b);",
+    "old": "      if (outerName(a) !== outerName(b))\n        differ(`the ${outer} name \\`${outerName(a)}\\` became \\`${outerName(b)}\\``, a, b);",
     "new": "      void 0;",
     "tests": [
       "test/tooling/legible2_sameprogram.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "LEGIBLE2-a-templates-text-uncompared",
     "file": "tools/sameProgram.mjs",
-    "old": "      if (a.value.raw !== b.value.raw || a.value.cooked !== b.value.cooked || a.tail !== b.tail) differ('a template literal\\'s text differs', a, b);",
+    "old": "      if (a.value.raw !== b.value.raw || a.value.cooked !== b.value.cooked || a.tail !== b.tail)\n        differ(\"a template literal's text differs\", a, b);",
     "new": "      void 0;",
     "tests": [
       "test/tooling/legible2_sameprogram.test.js"
@@ -74,7 +74,7 @@
   {
     "name": "LEGIBLE2-a-regex-flag-uncompared",
     "file": "tools/sameProgram.mjs",
-    "old": "        if (a.regex?.pattern !== b.regex?.pattern || a.regex?.flags !== b.regex?.flags) differ('a regular expression differs', a, b);",
+    "old": "        if (a.regex?.pattern !== b.regex?.pattern || a.regex?.flags !== b.regex?.flags)\n          differ('a regular expression differs', a, b);",
     "new": "        if (a.regex?.pattern !== b.regex?.pattern) differ('a regular expression differs', a, b);",
     "tests": [
       "test/tooling/legible2_sameprogram.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LEGIBLE2-a-comments-inner-lines-lost",
     "file": "tools/carryPins.mjs",
-    "old": "        if (a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
-    "new": "        if (false && a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {",
+    "old": "          a[k].line < line &&",
+    "new": "          false &&\n          a[k].line < line &&",
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LEGIBLE2-an-anchor-in-code-written",
     "file": "tools/carryPins.mjs",
-    "old": "        if (!forbid) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
-    "new": "        if (false) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }",
+    "old": "        if (!forbid) {",
+    "new": "        if (false) {",
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
     ]
@@ -123,6 +123,24 @@
     "new": "        for (const candidate of newLines.slice(0, 1)) {",
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-the-chain-uncompared",
+    "file": "tools/sameProgram.mjs",
+    "old": "    if (a.type === 'LogicalExpression' && b.type === 'LogicalExpression' && a.operator === b.operator) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-the-chain-length-unread",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (ca.length !== cb.length) differ(`a chain of \\`${a.operator}\\` has a different number of parts`, a, b);",
+    "new": "      if (false) differ(`a chain of \\`${a.operator}\\` has a different number of parts`, a, b);",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
     ]
   }
 ]

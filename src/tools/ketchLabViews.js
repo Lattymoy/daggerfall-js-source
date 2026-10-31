@@ -39,7 +39,22 @@ export const KT_LAB_VIEWS = Object.freeze({
  *  part pays for it here in the open. */
 export const KT_LAB_BILL = Object.freeze({ waist: 74, gallery: 92, hold: 92, bridge: 136, cabin: 136 });
 
-export const KT_LAB_DECK_VIEWS = Object.freeze(['arrive', 'waist', 'gallery', 'landing', 'hold', 'engine', 'lift', 'top', 'top-out', 'sailwalk', 'bridge', 'helm', 'cabin', 'city']);
+export const KT_LAB_DECK_VIEWS = Object.freeze([
+  'arrive',
+  'waist',
+  'gallery',
+  'landing',
+  'hold',
+  'engine',
+  'lift',
+  'top',
+  'top-out',
+  'sailwalk',
+  'bridge',
+  'helm',
+  'cabin',
+  'city',
+]);
 
 /**
  * THE LAB'S KNOBS read off a query string: `grey` the frame in grey (the look's grayscale check - every meaning carried by
@@ -55,7 +70,8 @@ export const KT_LAB_DECK_VIEWS = Object.freeze(['arrive', 'waist', 'gallery', 'l
  */
 export function ketchLabKnobs(search) {
   const p = new URLSearchParams(search);
-  const hour = Number(p.get('hour') ?? 13), eye = Number(p.get('eye') ?? 1);
+  const hour = Number(p.get('hour') ?? 13),
+    eye = Number(p.get('eye') ?? 1);
   return Object.freeze({
     grey: p.has('grey'),
     lite: p.has('lite') || p.get('touch') === 'on',

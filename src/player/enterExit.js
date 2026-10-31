@@ -14,7 +14,7 @@
 // gate only without re-scaling).
 
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
-import { t } from '../systems/textManager.js';   // VOID-DUNGEON: the failsafe's line underground, in the player's language
+import { t } from '../systems/textManager.js'; // VOID-DUNGEON: the failsafe's line underground, in the player's language
 
 export const ENTER_DOOR_OFFSET = CAPSULE_RADIUS + 0.4; // 0.75
 export const EXIT_DOOR_OFFSET = CAPSULE_RADIUS * 3; // 1.05
@@ -50,11 +50,7 @@ export function doorWorldNormal(door) {
 /** World AABB of a static door trigger volume (for activation picking). */
 export function doorWorldAabb(door) {
   const c = doorWorldPosition(door);
-  const h = [
-    door.size.x / 2 + 0.25,
-    door.size.y / 2 + 0.25,
-    door.size.z / 2 + 0.25,
-  ];
+  const h = [door.size.x / 2 + 0.25, door.size.y / 2 + 0.25, door.size.z / 2 + 0.25];
   // The size triple is axis-agnostic (thickness-major); padding an
   // axis-aligned box around the centre covers any door orientation.
   const e = Math.max(h[0], h[2]);
@@ -72,7 +68,10 @@ function closest(points, p) {
     const dy = point.pos[1] - p[1];
     const dz = point.pos[2] - p[2];
     const d = dx * dx + dy * dy + dz * dz;
-    if (d < bestD) { bestD = d; best = point; }
+    if (d < bestD) {
+      bestD = d;
+      best = point;
+    }
   }
   return best;
 }
@@ -80,12 +79,15 @@ function closest(points, p) {
 /** FIELD BUGS 2026-10-04d VOID-ENTRY: `points` nearest `p` first, in `closest`'s own measure - so the first is its pick
  *  (the sort is stable, and a tie keeps the array's order as its strict `<` does). */
 function byDistance(points, p) {
-  return points.map((point) => {
-    const dx = point.pos[0] - p[0];
-    const dy = point.pos[1] - p[1];
-    const dz = point.pos[2] - p[2];
-    return { point, d: dx * dx + dy * dy + dz * dz };
-  }).sort((a, b) => a.d - b.d).map((e) => e.point);
+  return points
+    .map((point) => {
+      const dx = point.pos[0] - p[0];
+      const dy = point.pos[1] - p[1];
+      const dz = point.pos[2] - p[2];
+      return { point, d: dx * dx + dy * dy + dz * dz };
+    })
+    .sort((a, b) => a.d - b.d)
+    .map((e) => e.point);
 }
 
 /** FIELD BUGS 2026-10-04d VOID-ENTRY: what DaggerfallUI.AddHUDText says when TransitionInterior cannot lay a building
@@ -143,7 +145,11 @@ export function interiorLanding(exteriorDoorPos, enterMarkers, interiorDoors, st
   }));
   if (standsAt) {
     for (const d of byDistance(doors, check)) {
-      const at = [d.pos[0] + d.normal[0] * ENTER_DOOR_OFFSET, d.pos[1] + d.normal[1] * ENTER_DOOR_OFFSET, d.pos[2] + d.normal[2] * ENTER_DOOR_OFFSET];
+      const at = [
+        d.pos[0] + d.normal[0] * ENTER_DOOR_OFFSET,
+        d.pos[1] + d.normal[1] * ENTER_DOOR_OFFSET,
+        d.pos[2] + d.normal[2] * ENTER_DOOR_OFFSET,
+      ];
       if (standsAt(at)) return at;
     }
     for (const m of byDistance(markers, exteriorDoorPos)) {
@@ -184,7 +190,10 @@ export function closestDoorTo(pos, doors) {
   (doors ?? []).forEach((door, i) => {
     const c = doorWorldPosition(door);
     const d = Math.hypot(c[0] - pos[0], c[1] - pos[1], c[2] - pos[2]);
-    if (d < minDistance) { minDistance = d; best = { pos: c, normal: doorWorldNormal(door), index: i }; }
+    if (d < minDistance) {
+      minDistance = d;
+      best = { pos: c, normal: doorWorldNormal(door), index: i };
+    }
   });
   return best;
 }
@@ -285,7 +294,7 @@ export function dungeonEntranceLanding(entranceDoors) {
  * Mac, 2026-08-27: "spawns in the air and drops".
  */
 export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
-  const minFeet = (Number.isFinite(terrainY) ? terrainY : -Infinity) + 0.15;   // terrain + height/2 + 0.15, as feet
+  const minFeet = (Number.isFinite(terrainY) ? terrainY : -Infinity) + 0.15; // terrain + height/2 + 0.15, as feet
   return Math.max(minFeet, centreY - height / 2);
 }
 
@@ -295,7 +304,8 @@ export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
  *  capitals' castle doors, 4.5 to 19.2 m) metres in the air; on the Bay a crypt's 3.2 m door dropped it 0.7 m. A departure from
  *  StreamingWorld.PositionPlayerToDungeonExit, Port-Ledger A. @param {any} collider @param {{ pos: number[] }} landing */
 export function dungeonExitFeet(collider, landing) {
-  const [x, y, z] = landing.pos, terrain = collider.heightAt?.(x, z);
+  const [x, y, z] = landing.pos,
+    terrain = collider.heightAt?.(x, z);
   const floor = floorLanding(collider, landing.pos)[1];
   return Math.min(repositionFeetY(terrain, y), Math.max(floor, Number.isFinite(terrain) ? terrain + 0.15 : -Infinity));
 }
@@ -330,7 +340,10 @@ export function climbLadder(playerPos, markers, markerTypes, ladder = null) {
       const dy = m.y - to[1];
       const dz = m.z - to[2];
       const d = dx * dx + dy * dy + dz * dz;
-      if (d < bestD) { bestD = d; best = m; }
+      if (d < bestD) {
+        bestD = d;
+        best = m;
+      }
     }
     return best;
   };
@@ -404,7 +417,7 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
     // stubs) keeps the arm exactly as it was.
     const ground = collider.heightAt?.(pos[0], pos[2]);
     if (Number.isFinite(ground)) return [pos[0], ground, pos[2]];
-    return pos;                                    // truly nothing below: leave to gravity
+    return pos; // truly nothing below: leave to gravity
   }
   return [pos[0], bestFloorY, pos[2]];
 }
@@ -423,15 +436,21 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
 export const OPEN_GROUND_RINGS = Object.freeze([0, 4, 8, 16, 32, 64, 128, 256]);
 /** UNSTUCK-OUT: the spacing of the spots on a ring (metres along it), and the body's points asked of the solids. */
 export const OPEN_GROUND_STEP = 8;
-export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null, level = false } = {}) {
+export function openGroundNear(
+  collider,
+  x,
+  z,
+  { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null, level = false } = {},
+) {
   for (const r of rings) {
     const n = r === 0 ? 1 : Math.max(8, Math.round((2 * Math.PI * r) / step));
     for (let i = 0; i < n; i++) {
       const a = (i / n) * 2 * Math.PI;
-      const px = x + r * Math.cos(a), pz = z + r * Math.sin(a);
+      const px = x + r * Math.cos(a),
+        pz = z + r * Math.sin(a);
       const h = collider.heightAt?.(px, pz);
       if (!Number.isFinite(h) || (dry && !dry(h))) continue;
-      if (level && !levelGroundAt(collider, px, pz, h)) continue;   // PORTAL-ANYWHERE: and, where asked, no cliff
+      if (level && !levelGroundAt(collider, px, pz, h)) continue; // PORTAL-ANYWHERE: and, where asked, no cliff
       if (heldInSolid(collider, [px, h, pz])) continue;
       if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;
       return [px, h, pz];
@@ -445,7 +464,12 @@ export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step
 export const LANDING_LEVEL_REACH = 2;
 export const LANDING_STEEP = 1.5;
 export function levelGroundAt(collider, x, z, floor) {
-  for (const [dx, dz] of [[LANDING_LEVEL_REACH, 0], [-LANDING_LEVEL_REACH, 0], [0, LANDING_LEVEL_REACH], [0, -LANDING_LEVEL_REACH]]) {
+  for (const [dx, dz] of [
+    [LANDING_LEVEL_REACH, 0],
+    [-LANDING_LEVEL_REACH, 0],
+    [0, LANDING_LEVEL_REACH],
+    [0, -LANDING_LEVEL_REACH],
+  ]) {
     const h = collider.heightAt?.(x + dx, z + dz);
     if (!Number.isFinite(h) || Math.abs(h - floor) > LANDING_STEEP) return false;
   }
@@ -469,7 +493,10 @@ export function safeGroundNear(collider, x, z, seaY) {
 /** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head).
  *  DECOR-CLEAR (player/lateSolid.js): `height`, the body's own - a crouched one's head is lower. */
 export function heldInSolid(collider, feet, height = CAPSULE_HEIGHT) {
-  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);
+  return (
+    collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) ||
+    collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]])
+  );
 }
 
 /** PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): whether a raid's or a staff event's
@@ -486,8 +513,14 @@ export function raidSpotOpen(collider, spot) {
 /** floorLanding's footprint sweep: the highest floor its five rays (the centre and a ring at ~half the capsule's
  *  radius, each from 0.2 above `pos`) meet within `maxDist`, or -Infinity. */
 function footprintFloorY(collider, pos, maxDist) {
-  const R = 0.18;                                  // ~half capsule radius
-  const offs = [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]];
+  const R = 0.18; // ~half capsule radius
+  const offs = [
+    [0, 0],
+    [R, 0],
+    [-R, 0],
+    [0, R],
+    [0, -R],
+  ];
   let bestFloorY = -Infinity;
   for (const [ox, oz] of offs) {
     const origin = [pos[0] + ox, pos[1] + 0.2, pos[2] + oz];
@@ -524,7 +557,10 @@ export function interiorVoidRescue(collider, at) {
 export function dungeonVoidRescue(collider, at, ownsVoid = false) {
   let rescue;
   return () => {
-    if (rescue === undefined) { const spot = ownsVoid ? null : at(); rescue = spot ? interiorVoidRescue(collider, spot) : null; }
+    if (rescue === undefined) {
+      const spot = ownsVoid ? null : at();
+      rescue = spot ? interiorVoidRescue(collider, spot) : null;
+    }
     return rescue;
   };
 }

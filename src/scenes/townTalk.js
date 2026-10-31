@@ -1001,12 +1001,15 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
         thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
         workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
-        askWork: () => (_toneHeard(), eng.pipeline.getAnswerText(workListItem(), {
-          npcSeed,
-          // TalkManager.WorkAvailable - the town's npcsWithWork pool
-          // (TK-iv owns it); no work in town = record 8078 verbatim
-          workAvailable: eng.session?.workAvailable ?? false,
-        })),
+        askWork: () => {
+          _toneHeard();
+          return eng.pipeline.getAnswerText(workListItem(), {
+            npcSeed,
+            // TalkManager.WorkAvailable - the town's npcsWithWork pool
+            // (TK-iv owns it); no work in town = record 8078 verbatim
+            workAvailable: eng.session?.workAvailable ?? false,
+          });
+        },
         answer: (row) => {
           // COURT-DEEDS (AUDIT FB1026d B3): a row that hears the tone itself is handed it, to read the regard either side
           if (row.legacy?.hearsTone) return row.legacy.answer(tone, _toneTaste(), _toneHeard);

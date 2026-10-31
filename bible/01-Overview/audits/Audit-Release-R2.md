@@ -55,7 +55,7 @@ anything is staked ("There is no room for it here."), and a headstone past the B
 
 ### R2-1 - staff /tp past the Bay (FIXED)
 
-`src/net/staffTeleport.js:"const pixel = (v) => v && worldPixelOk(v.x) && worldPixelOk(v.y);"`. STAFF-TP's destination law
+`src/net/staffTeleport.js:"const pixel = (v)"`. STAFF-TP's destination law
 held a pixel to 0..999 x 0..499. Past the Bay the target's game built its destination and threw it away
 (`scenes/world.js` staffDestination's `validStaffDestination`, then `{ error: 'unavailable' }`), the hub's where note there
 was "a pixel off the map" (`notePlace`), and the relay's projection of an answer (`wire.js parseClient` ->
@@ -134,7 +134,7 @@ cold on the freeware where the cells made whole took 83 s (Quest-Arc QUEST-FABRI
 ### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
 `src/scenes/vampireCrypt.js:"export function vampireCryptPixel(at, regionIndex, maps, places, roll = Math.random) {"`,
-`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay(places, px, py, roll = Math.random) {"`. The
+`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay"`. The
 transfer (`scenes/world.js` transferToCemeteryArm - VampirismInfection's GetRandomCemetery, then the respawn into its
 dungeon) read the current region's MAPS.BSA rows for a cemetery; past the Bay a province's region holds none, so it was
 skipped with its warning and the vampire woke where they turned. The owner, of the gaps the first pass left: *"Take care
@@ -150,8 +150,8 @@ shorter (the host asks one positional call).
 
 ### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's by WW6)
 
-`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND = 8192;"`,
-`src/net/staffPlaces.js:"function provincePlaces(maps, region, places) {"`. The event's place was a Bay pixel by its law
+`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND"`,
+`src/net/staffPlaces.js:"function provincePlaces"`. The event's place was a Bay pixel by its law
 (the account service that signs it, the relay that keeps its book and its place's cell, and the game read one copy), the
 picker listed a region's MAPS.BSA places (none for 62..70), and an event runs as a town's raid runs (RAID2/RAID3). Now:
 an event's pixel and its place's word are the world's (the law's bound held equal to the wire's WORLD_PIXEL_BOUND - the
@@ -174,7 +174,7 @@ by name (`town`, the panel's `event-bad-town`), and the picker offers a province
 
 ### R2-8 - a POI past the Bay (FIXED, the second pass)
 
-`src/poi/poiLaw.js:"export const poiPixelKey = (px, py) => (px >= 0 && py >= 0 && px < POI_MAP.w && py < POI_MAP.h"`. A
+`src/poi/poiLaw.js:"export const poiPixelKey"`. A
 builder's POI was held to MAPS.BSA's 1000 x 500 by its law (the editor, the account service and the game read one law),
 the editor clamped a place to the Bay's map, and the feed filed the standing set by `py * 1000 + px` - as did the world
 host's riding frames - which past the Bay gives two pixels one id. Now the place is any pixel of the world's grid (the

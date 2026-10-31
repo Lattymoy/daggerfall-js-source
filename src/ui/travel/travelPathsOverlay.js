@@ -25,8 +25,8 @@
 // world - which is what lets the pins draw a junction and read the
 // texels back.
 
-import { LOCATION_TYPES } from '../../formats/mapsFile.js';   // a leaf of its own: the enum alone
-import { inWorldGrid } from '../../world/worldWide/worldGrid.js';   // BAY-LEFT-MAPS: the junction map's pixels are the world's
+import { LOCATION_TYPES } from '../../formats/mapsFile.js'; // a leaf of its own: the enum alone
+import { inWorldGrid } from '../../world/worldWide/worldGrid.js'; // BAY-LEFT-MAPS: the junction map's pixels are the world's
 
 /** :38-39 and :57-58 - the four path colours, the mod's own. Roads are
  *  near-black, tracks a dirt brown, rivers and streams two blues. The
@@ -64,15 +64,39 @@ export function drawPath(buf, offset, width, pathDataPt, color) {
   const data = pathDataPt & 0xff;
   if (data === 0) return;
   const px = typeof color === 'number' ? color : packColor(color);
-  buf[offset + (width * 2) + 2] = px;                                  // the pixel itself
-  if ((data & 8) !== 0) { buf[offset + 2] = px; buf[offset + width + 2] = px; }                       // S
-  if ((data & 16) !== 0) { buf[offset + 4] = px; buf[offset + width + 3] = px; }                      // SE
-  if ((data & 32) !== 0) { buf[offset + (width * 2) + 3] = px; buf[offset + (width * 2) + 4] = px; }  // E
-  if ((data & 64) !== 0) { buf[offset + (width * 3) + 3] = px; buf[offset + (width * 4) + 4] = px; }  // NE
-  if ((data & 128) !== 0) { buf[offset + (width * 3) + 2] = px; buf[offset + (width * 4) + 2] = px; } // N
-  if ((data & 1) !== 0) { buf[offset + (width * 3) + 1] = px; buf[offset + (width * 4)] = px; }       // NW
-  if ((data & 2) !== 0) { buf[offset + (width * 2)] = px; buf[offset + (width * 2) + 1] = px; }       // W
-  if ((data & 4) !== 0) { buf[offset] = px; buf[offset + width + 1] = px; }                           // SW
+  buf[offset + width * 2 + 2] = px; // the pixel itself
+  if ((data & 8) !== 0) {
+    buf[offset + 2] = px;
+    buf[offset + width + 2] = px;
+  } // S
+  if ((data & 16) !== 0) {
+    buf[offset + 4] = px;
+    buf[offset + width + 3] = px;
+  } // SE
+  if ((data & 32) !== 0) {
+    buf[offset + width * 2 + 3] = px;
+    buf[offset + width * 2 + 4] = px;
+  } // E
+  if ((data & 64) !== 0) {
+    buf[offset + width * 3 + 3] = px;
+    buf[offset + width * 4 + 4] = px;
+  } // NE
+  if ((data & 128) !== 0) {
+    buf[offset + width * 3 + 2] = px;
+    buf[offset + width * 4 + 2] = px;
+  } // N
+  if ((data & 1) !== 0) {
+    buf[offset + width * 3 + 1] = px;
+    buf[offset + width * 4] = px;
+  } // NW
+  if ((data & 2) !== 0) {
+    buf[offset + width * 2] = px;
+    buf[offset + width * 2 + 1] = px;
+  } // W
+  if ((data & 4) !== 0) {
+    buf[offset] = px;
+    buf[offset + width + 1] = px;
+  } // SW
 }
 
 /** TravelOptionsMapWindow.cs:664-691, DrawLocation.
@@ -96,16 +120,22 @@ export function drawLocation(buf, offset, width, color, large, { highlight = fal
   const st = large ? 0 : 1;
   const en = large ? 5 : 4;
   for (let y = st; y < en; y++) {
-    for (let x = st; x < en; x++) buf[offset + (y * width) + x] = px;
+    for (let x = st; x < en; x++) buf[offset + y * width + x] = px;
   }
   if (!highlight) return;
-  const mark = markColor == null ? px : (typeof markColor === 'number' ? markColor : packColor(markColor));
+  const mark = markColor == null ? px : typeof markColor === 'number' ? markColor : packColor(markColor);
   const inside = (i) => i >= 0 && i < buf.length;
   for (let y = -2; y < 8; y += 8) {
-    for (let x = -2; x < 7; x++) { const i = offset + (y * width) + x; if (inside(i)) buf[i] = mark; }
+    for (let x = -2; x < 7; x++) {
+      const i = offset + y * width + x;
+      if (inside(i)) buf[i] = mark;
+    }
   }
   for (let x = -2; x < 8; x += 8) {
-    for (let y = -2; y < 7; y++) { const i = offset + (y * width) + x; if (inside(i)) buf[i] = mark; }
+    for (let y = -2; y < 7; y++) {
+      const i = offset + y * width + x;
+      if (inside(i)) buf[i] = mark;
+    }
   }
 }
 
@@ -128,24 +158,35 @@ export const JUNCTION_MAP_W5 = JUNCTION_MAP_WIDTH * DOT_SCALE;
  *  map pixels back down, half the columns across, plus two - which is
  *  the centre texel of the cell one map pixel BELOW the middle, because
  *  the buffer's rows run bottom-up. */
-export const JUNCTION_HERE_PT = (JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25) - (3 * JUNCTION_MAP_WIDTH * 5) + (JUNCTION_MAP_W2 * 5) + 2;
+export const JUNCTION_HERE_PT =
+  JUNCTION_MAP_H2 * JUNCTION_MAP_WIDTH * 25 - 3 * JUNCTION_MAP_WIDTH * 5 + JUNCTION_MAP_W2 * 5 + 2;
 
 /** TravelOptionsMod.cs:930-952, GetDirectionIndex - the texel that
  *  carries the player's facing pip, one step from `herePt` in the
  *  facing's own direction. North is a row of map pixels UP the buffer
  *  (+ width5), east one texel right. */
 export function junctionDirectionIndex(direction) {
-  const here = JUNCTION_HERE_PT, w5 = JUNCTION_MAP_W5;
+  const here = JUNCTION_HERE_PT,
+    w5 = JUNCTION_MAP_W5;
   switch (direction) {
-    case 128: return here + w5;         // N
-    case 64: return here + w5 + 1;      // NE
-    case 32: return here + 1;           // E
-    case 16: return here - w5 + 1;      // SE
-    case 8: return here - w5;           // S
-    case 4: return here - w5 - 1;       // SW
-    case 2: return here - 1;            // W
-    case 1: return here + w5 - 1;       // NW
-    default: return 0;
+    case 128:
+      return here + w5; // N
+    case 64:
+      return here + w5 + 1; // NE
+    case 32:
+      return here + 1; // E
+    case 16:
+      return here - w5 + 1; // SE
+    case 8:
+      return here - w5; // S
+    case 4:
+      return here - w5 - 1; // SW
+    case 2:
+      return here - 1; // W
+    case 1:
+      return here + w5 - 1; // NW
+    default:
+      return 0;
   }
 }
 
@@ -176,30 +217,43 @@ export function junctionDirectionIndex(direction) {
  *  colour or null, onlyLargeDots, markedMapId, markColor, showPaths }. */
 export function drawMapSection(buf, { originX, originY, width, height, circular = false }, deps) {
   const {
-    pathsAt, locationAt, colorOf, onlyLargeDots = false, markedMapId = -1, markColor = null,
+    pathsAt,
+    locationAt,
+    colorOf,
+    onlyLargeDots = false,
+    markedMapId = -1,
+    markColor = null,
     showPaths = [true, true, false, false],
   } = deps;
   buf.fill(0);
   const width5 = width * DOT_SCALE;
-  const trackPx = packColor(TRACK_COLOR), roadPx = packColor(ROAD_COLOR);
+  const trackPx = packColor(TRACK_COLOR),
+    roadPx = packColor(ROAD_COLOR);
   for (let y = 0; y < height; y++) {
     const mpY = originY + y;
     for (let x = 0; x < width; x++) {
       const mpX = originX + x;
       if (!inWorldGrid(mpX, mpY)) continue;
-      if (circular && height === width
-        && Math.sqrt(Math.abs(x - Math.trunc(width / 2) + 0.5) ** 2 + Math.abs(y - Math.trunc(height / 2) + 0.5) ** 2) >= (height + 1.5) / 2) continue;
-      const offset = ((height - y - 1) * width) + x;
+      if (
+        circular &&
+        height === width &&
+        Math.sqrt(Math.abs(x - Math.trunc(width / 2) + 0.5) ** 2 + Math.abs(y - Math.trunc(height / 2) + 0.5) ** 2) >=
+          (height + 1.5) / 2
+      )
+        continue;
+      const offset = (height - y - 1) * width + x;
       if (offset >= width * height) continue;
-      const offset5 = ((height - y - 1) * DOT_SCALE * width5) + (x * DOT_SCALE);
+      const offset5 = (height - y - 1) * DOT_SCALE * width5 + x * DOT_SCALE;
       if (showPaths[1]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 1), trackPx);
       if (showPaths[0]) drawPath(buf, offset5, width5, pathsAt(mpX, mpY, 0), roadPx);
       const loc = locationAt?.(mpX, mpY);
       if (loc && loc.discovered) {
         const color = colorOf(loc.locationType);
         if (color != null) {
-          drawLocation(buf, offset5, width5, color, isLocationLarge(loc.locationType, onlyLargeDots),
-            { highlight: loc.mapId === markedMapId, markColor });
+          drawLocation(buf, offset5, width5, color, isLocationLarge(loc.locationType, onlyLargeDots), {
+            highlight: loc.mapId === markedMapId,
+            markColor,
+          });
         }
       }
     }

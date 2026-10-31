@@ -55,10 +55,15 @@ export class GfxFile {
             if (probe < 0) {
               probe = -probe;
               const pixel = bytes[p++];
-              for (let i = 0; i < probe; i++) { data[dst++] = pixel; rowPos++; }
+              for (let i = 0; i < probe; i++) {
+                data[dst++] = pixel;
+                rowPos++;
+              }
             } else if (probe > 0) {
               data.set(bytes.subarray(p, p + probe), dst);
-              dst += probe; p += probe; rowPos += probe;
+              dst += probe;
+              p += probe;
+              rowPos += probe;
             }
           } while (rowPos < rowWidth);
         } else {
@@ -71,6 +76,10 @@ export class GfxFile {
     return true;
   }
 
-  getFrameCount() { return this.frameCount; }
-  getDFBitmap(record = 0, frame = 0) { return record === 0 ? this.frames[frame] : null; }
+  getFrameCount() {
+    return this.frameCount;
+  }
+  getDFBitmap(record = 0, frame = 0) {
+    return record === 0 ? this.frames[frame] : null;
+  }
 }

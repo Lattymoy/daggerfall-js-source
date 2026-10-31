@@ -20,8 +20,8 @@
   {
     "name": "SD27-S1-the-sky-blind-to-the-empty-fight",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out;",
-    "new": "if (!s || s.fell || !(t >= s.op)) return out;",
+    "old": "  if (!s || !(s.fi > 0) || s.fell || !(t >= s.op)) return out; // AUDIT SD V (S1): no fight heard is no End - the sky red over every fresh Hour",
+    "new": "  if (!s || s.fell || !(t >= s.op)) return out; // AUDIT SD V (S1): no fight heard is no End - the sky red over every fresh Hour",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD27-S1-the-floor-blind-to-the-empty-fight",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (!s || !(s.fi > 0) || s.fell) return memo;",
-    "new": "if (!s || s.fell) return memo;",
+    "old": "  if (!s || !(s.fi > 0) || s.fell) return memo; // AUDIT SD V (S1): no fight heard (SD_FIGHT_EMPTY's ends 0) is no End",
+    "new": "  if (!s || s.fell) return memo; // AUDIT SD V (S1): no fight heard (SD_FIGHT_EMPTY's ends 0) is no End",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD27-S2-the-way-back-revealed",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "if (!rift.hollow && !rift.revealed && eye &&",
-    "new": "if (!rift.revealed && eye &&",
+    "old": "    if (!rift.hollow && !rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {",
+    "new": "    if (!rift.revealed && eye && t >= rift.revealAskAt && L.state === 'open') {",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD27-L2-the-bridge-walkable-before-drawn",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "get bridgeLaid() { return ok && laid; },",
-    "new": "get bridgeLaid() { return ok; },",
+    "old": "      return ok && laid;",
+    "new": "      return ok;",
     "tests": [
       "test/world/superDungeon/sd25_orrery.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD27-L3-the-rods-over-the-deck",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "foot: 2.15, head: 2.15, eye: 1.3,",
-    "new": "foot: 1.2, head: 0.5, eye: 1.2,",
+    "old": "  foot: 2.15,\n  head: 2.15,\n  eye: 1.3,",
+    "new": "  foot: 1.2,\n  head: 0.5,\n  eye: 1.2,",
     "tests": [
       "test/world/superDungeon/sd25_steps.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD27-P1-the-open-look-made-a-call",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))];",
-    "new": "if (ph === 'found') return { ...SD_RIFT_OPEN_LOOK, studs: Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000))) };",
+    "old": "  if (ph === 'found') return FOUND_LOOKS[Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000)))]; // AUDIT SD V (P1): one record an hour, made once",
+    "new": "  if (ph === 'found')\n    return { ...SD_RIFT_OPEN_LOOK, studs: Math.max(1, Math.min(24, Math.ceil((rec.until - now) / 3600000))) }; // AUDIT SD V (P1): one record an hour, made once",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD27-P1-the-look-made-a-frame",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      const out = _look;\n",
-    "new": "      const out = { window: null, floor: null, bay: null };\n",
+    "old": "      const out = _look;",
+    "new": "      const out = { window: null, floor: null, bay: null };",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SD27-P1-the-halos-let-go",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      let n = 0;   // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one\n",
-    "new": "      let n = 0; _halos.length = 0;\n",
+    "old": "      let n = 0; // AUDIT SD V (P1): filled in place - a list's length set to nought lets its store go, and the next push makes one",
+    "new": "      let n = 0;\n      _halos.length = 0;",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SD27-P4-the-skys-key-a-string",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "    this._all = all;\n",
-    "new": "    this._all = all; this._key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;\n",
+    "old": "    this._all = all;\n    gl.disable(gl.BLEND);",
+    "new": "    this._all = all;\n    this._key = `${steps}|${idx}|${light?.join(',') ?? ''}|${haze?.join?.(',') ?? ''}`;\n    gl.disable(gl.BLEND);",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD27-P6-the-halos-corners-made",
     "file": "src/render/superDungeon/sdHalo.js",
-    "old": "for (let c = 0; c < 12; c += 2) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = CORNERS[c]; d[o++] = CORNERS[c + 1];",
-    "new": "for (const C of [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]]) { d[o++] = h.at[0]; d[o++] = h.at[1]; d[o++] = h.at[2]; d[o++] = C[0]; d[o++] = C[1];",
+    "old": "      for (let c = 0; c < 12; c += 2) {\n        d[o++] = h.at[0];\n        d[o++] = h.at[1];\n        d[o++] = h.at[2];\n        d[o++] = CORNERS[c];\n        d[o++] = CORNERS[c + 1];",
+    "new": "      for (const C of [\n        [-1, -1],\n        [1, -1],\n        [1, 1],\n        [-1, -1],\n        [1, 1],\n        [-1, 1],\n      ]) {\n        d[o++] = h.at[0];\n        d[o++] = h.at[1];\n        d[o++] = h.at[2];\n        d[o++] = C[0];\n        d[o++] = C[1];",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "SD27-P2-the-hands-made",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "  const F = STONE_FRAMES[i], n = F.n, R = F.R, o = HAND_AT[i];\n",
-    "new": "  out = new Float32Array(16); const F = STONE_FRAMES[i], n = F.n, R = F.R, o = HAND_AT[i];\n",
+    "old": "  // frame while the hands turn\n  const F = STONE_FRAMES[i],",
+    "new": "  // frame while the hands turn\n  out = new Float32Array(16);\n  const F = STONE_FRAMES[i],",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SD27-P3-the-air-asked-a-frame",
     "file": "src/scenes/superDungeon/sdAir.js",
-    "old": "const E = periodEvents(), P = SD_SKY_PERIOD,",
-    "new": "const E = sdAirEvents(0, SD_SKY_PERIOD), P = SD_SKY_PERIOD,",
+    "old": "          const E = periodEvents(),",
+    "new": "          const E = sdAirEvents(0, SD_SKY_PERIOD),",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]

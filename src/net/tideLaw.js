@@ -32,10 +32,20 @@ const TIDE_BY_ID = new Map(TIDES.map((t) => [t.id, t]));
 /** The lands a Tide rolls for, in the roll's order: the three kingdoms, the Marches, the Free Lands. */
 export const TIDE_LANDS = Object.freeze(['daggerfall', 'wayrest', 'sentinel', 'marches', 'free']);
 /** A land's words: "the Kingdom of Wayrest", "the Marches", "the Free Lands". */
-export const tideLandName = (land) => (KINGDOMS[land] ? `the Kingdom of ${KINGDOMS[land].name}` : land === 'marches' ? 'the Marches' : land === 'free' ? 'the Free Lands' : null);
+export const tideLandName = (land) =>
+  KINGDOMS[land]
+    ? `the Kingdom of ${KINGDOMS[land].name}`
+    : land === 'marches'
+      ? 'the Marches'
+      : land === 'free'
+        ? 'the Free Lands'
+        : null;
 /** The land a region's Tide is: its crown's kingdom, the Marches, the Free Lands - or null (the sea, a region no crown
  *  holds), which is always Calm. */
-export const tideLandOf = (region) => { const k = kingdomOf(region); return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null; };   // WW7-3: a province's crown is no Tide's land - the Tides are the Bay's
+export const tideLandOf = (region) => {
+  const k = kingdomOf(region);
+  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;
+}; // WW7-3: a province's crown is no Tide's land - the Tides are the Bay's
 /** THE TIDE of `land` in seat week `week` (9.3) - a Tide's id; Calm for no land. Only the roll: a caller asks whether a
  *  Season is counted (tideAt). */
 export function tideOf(week, land) {
@@ -57,21 +67,28 @@ export const tideName = (id) => TIDE_BY_ID.get(id)?.name ?? null;
 /** THE TIDES' NUMBERS (9.3). */
 export const TIDE_EFFECTS = Object.freeze({
   /** Harvest: gathering yields a quarter more; Blight: herbs and wood a quarter less. */
-  harvestYield: 1.25, blightYield: 0.75,
+  harvestYield: 1.25,
+  blightYield: 0.75,
   /** Plague: the Watch counts half; Festivals cost double. */
-  plagueWatch: 0.5, plagueFestival: 2,
+  plagueWatch: 0.5,
+  plagueFestival: 2,
   /** Orc Raids: each WoD camp cleared gives its clearer's guild influence at its pledged seat in the region, bounded. */
-  orcsCampInfluence: 50, orcsCampsDay: 5, orcsInfluenceWeek: 250,
+  orcsCampInfluence: 50,
+  orcsCampsDay: 5,
+  orcsInfluenceWeek: 250,
   /** Daedric Incursion: gate kills in the land give double influence. */
   daedraGates: 2,
   /** Royal Wedding: Festivals cost half; Standing +3 at every held seat. */
-  weddingFestival: 0.5, weddingStanding: 3,
+  weddingFestival: 0.5,
+  weddingStanding: 3,
   /** Bandit Summer: a courier into the land takes twice as long. */
   banditsCourier: 2,
   /** Storm Season: fishing yields half again; sea travel slowed. */
-  stormsFish: 1.5, stormsSea: 1.5,
+  stormsFish: 1.5,
+  stormsSea: 1.5,
   /** Tax Revolt: a Tithe above 5% costs Standing -3 more. */
-  revoltTithe: 5, revoltStanding: -3,
+  revoltTithe: 5,
+  revoltStanding: -3,
 });
 /** What a Tide does, in the Seat tab's words. */
 export const TIDE_WORDS = Object.freeze({
@@ -80,7 +97,7 @@ export const TIDE_WORDS = Object.freeze({
   blight: 'Herbs and wood yield a quarter less.',
   plague: 'The Watch counts half, and Festivals cost double.',
   orcs: 'Each World of Daggerfall camp cleared gives your guild 50 influence at its seat in the region (up to 5 camps a day, 250 influence a week).',
-  daedra: 'Gate kills give double influence and double silver.',   // AUDIT SEATS-2 L7: 9.3's Marks, paid since AUDIT-SEATS (seatIncursion.js)
+  daedra: 'Gate kills give double influence and double silver.', // AUDIT SEATS-2 L7: 9.3's Marks, paid since AUDIT-SEATS (seatIncursion.js)
   wedding: 'Festivals cost half, and every held seat gains 3 Standing.',
   bandits: 'Couriers into the land take twice as long.',
   storms: 'Fishing yields half again, and the sea is slow.',

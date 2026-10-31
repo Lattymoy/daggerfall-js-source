@@ -23,8 +23,8 @@
 // what it holds would go with it, out of reach.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf, decorIsDoorKey } from '../../net/decorLaw.js';   // DOOR-KEPT: a door's name is the doors' list's
-import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece put back round the body is withheld until it is clear
+import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf, decorIsDoorKey } from '../../net/decorLaw.js'; // DOOR-KEPT: a door's name is the doors' list's
+import { lateSolidsOf } from '../../player/lateSolid.js'; // DECOR-CLEAR: a piece put back round the body is withheld until it is clear
 import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../player/activate.js';
 
 /** A built-in model's collider bucket - its own, so a piece taken out is nothing to walk into. */
@@ -56,14 +56,20 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
   /** names the room was told to keep out that it does not have (a layout its data set lays otherwise): kept, unread */
   /** @type {Set<string>} */
   const stray = new Set();
-  const drop = (list, x) => { const i = list.indexOf(x); if (i >= 0) list.splice(i, 1); };
+  const drop = (list, x) => {
+    const i = list.indexOf(x);
+    if (i >= 0) list.splice(i, 1);
+  };
   const holds = (p) => !!(p?.furniture && Array.isArray(p.furniture.items) && p.furniture.items.length);
 
   function hide(key) {
     const p = pieces.get(key);
     if (!p || p.hidden || holds(p)) return false;
     p.hidden = true;
-    if (p.draw) { drop(drawList, p.draw); lateSolidsOf(collider)?.remove(baseBucketOf(key)); }   // DECOR-CLEAR: or its triangles withheld
+    if (p.draw) {
+      drop(drawList, p.draw);
+      lateSolidsOf(collider)?.remove(baseBucketOf(key));
+    } // DECOR-CLEAR: or its triangles withheld
     if (p.furniture) p.furniture.hidden = true;
     if (p.batch) drop(batches(), p.batch);
     if (p.light) drop(lights(), p.light);
@@ -76,7 +82,8 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
     if (p.draw) {
       drawList.push(p.draw);
       // DECOR-CLEAR: through the collider's gate - put back round the body it guards, solid once the body is clear of it
-      if (p.cpu?.positions && p.cpu?.indices) lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);
+      if (p.cpu?.positions && p.cpu?.indices)
+        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);
     }
     if (p.furniture) p.furniture.hidden = false;
     if (p.batch) batches().push(p.batch);
@@ -88,16 +95,53 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
     /** A prop model as the build stood it: its draw entry (never the merge), its geometry, where it stands. */
     addModel(key, { model, draw, cpu, matrix, at, aabb = null }) {
       const bounds = aabb?.min && aabb?.max ? { min: aabb.min.slice(), max: aabb.max.slice() } : null;
-      pieces.set(key, { key, model, flat: null, at, bounds, hidden: false, draw, cpu, matrix, furniture: null, batch: null, light: null });
+      pieces.set(key, {
+        key,
+        model,
+        flat: null,
+        at,
+        bounds,
+        hidden: false,
+        draw,
+        cpu,
+        matrix,
+        furniture: null,
+        batch: null,
+        light: null,
+      });
     },
     /** A flat as the build stood it: its own batch, and the light it gives (null: none). */
     addFlat(key, { flat, batch, light = null, at }) {
-      pieces.set(key, { key, model: null, flat, at, hidden: false, draw: null, cpu: null, matrix: null, furniture: null, batch, light });
+      pieces.set(key, {
+        key,
+        model: null,
+        flat,
+        at,
+        hidden: false,
+        draw: null,
+        cpu: null,
+        matrix: null,
+        furniture: null,
+        batch,
+        light,
+      });
     },
     /** AUDIT FB1029e H2: a piece the room keeps - never offered, so never taken out (its draw and its bucket stand). */
-    keep(key) { const p = pieces.get(key); if (p && !p.hidden) { if (p.furniture) delete p.furniture.baseKey; pieces.delete(key); } },
+    keep(key) {
+      const p = pieces.get(key);
+      if (p && !p.hidden) {
+        if (p.furniture) delete p.furniture.baseKey;
+        pieces.delete(key);
+      }
+    },
     /** The cupboard, the shelf or the bed a model is - the entry in the host's index-keyed list. */
-    furnish(key, entry) { const p = pieces.get(key); if (p && entry) { p.furniture = entry; entry.baseKey = key; } },
+    furnish(key, entry) {
+      const p = pieces.get(key);
+      if (p && entry) {
+        p.furniture = entry;
+        entry.baseKey = key;
+      }
+    },
     /** One piece the crosshair can name, or null once it is out of the room. */
     row(key) {
       const p = pieces.get(key);
@@ -109,15 +153,33 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
       const out = [];
       for (const p of pieces.values()) {
         if (p.hidden) continue;
-        const aabb = p.bounds ?? (p.at ? { min: [p.at[0] - 0.4, p.at[1] - 0.4, p.at[2] - 0.4], max: [p.at[0] + 0.4, p.at[1] + 0.4, p.at[2] + 0.4] } : null);
+        const aabb =
+          p.bounds ??
+          (p.at
+            ? { min: [p.at[0] - 0.4, p.at[1] - 0.4, p.at[2] - 0.4], max: [p.at[0] + 0.4, p.at[1] + 0.4, p.at[2] + 0.4] }
+            : null);
         if (!aabb) continue;
-        out.push({ key: baseBucketOf(p.key), aabb, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, meshCollider: p.model != null, noSurface: p.model == null });
+        out.push({
+          key: baseBucketOf(p.key),
+          aabb,
+          distance: RAY_DISTANCE,
+          reach: DEFAULT_ACTIVATION_DISTANCE,
+          meshCollider: p.model != null,
+          noSurface: p.model == null,
+        });
       }
       return out;
     },
     /** Every piece, in the layout's order: its name, what it is, where it stands, whether it is out, whether it holds. */
     list() {
-      return [...pieces.values()].map((p) => ({ key: p.key, model: p.model, flat: p.flat, at: p.at, hidden: p.hidden, holds: holds(p) }));
+      return [...pieces.values()].map((p) => ({
+        key: p.key,
+        model: p.model,
+        flat: p.flat,
+        at: p.at,
+        hidden: p.hidden,
+        holds: holds(p),
+      }));
     },
     hide,
     show,
@@ -131,15 +193,22 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
      *  does not take is no name, and no more than the cap is kept. Anything but a list changes nothing. */
     setHidden(keys) {
       if (!Array.isArray(keys)) return false;
-      const named = [...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k)))].slice(0, DECOR_HIDDEN_CAP);
+      const named = [
+        ...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k))),
+      ].slice(0, DECOR_HIDDEN_CAP);
       const want = decorHiddenOf(named) ?? [];
       const set = new Set(want);
       stray.clear();
       for (const k of set) if (!pieces.has(k)) stray.add(k);
-      for (const p of pieces.values()) { if (set.has(p.key)) hide(p.key); else show(p.key); }
+      for (const p of pieces.values()) {
+        if (set.has(p.key)) hide(p.key);
+        else show(p.key);
+      }
       return true;
     },
     /** The batches of the flats taken out - out of the room's list, so its teardown does not see them. */
-    outBatches() { return [...pieces.values()].filter((p) => p.hidden && p.batch).map((p) => p.batch); },
+    outBatches() {
+      return [...pieces.values()].filter((p) => p.hidden && p.batch).map((p) => p.batch);
+    },
   };
 }

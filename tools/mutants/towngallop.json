@@ -2,8 +2,8 @@
   {
     "name": "TOWNGALLOP-town-walks-as-shipped",
     "file": "src/systems/modSettings.js",
-    "old": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true,",
-    "new": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false,",
+    "old": "      'EnhancedRiding.GallopingInTowns': Object.freeze({\n        default: true,",
+    "new": "      'EnhancedRiding.GallopingInTowns': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/horsewalk.test.js",
       "test/systems/rr1_realism.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TOWNGALLOP-room-walks-in-town",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'RefinedTraining.intensiveTraining': false,",
-    "new": "'RefinedTraining.intensiveTraining': false, 'EnhancedRiding.GallopingInTowns': false,",
+    "old": "    'RefinedTraining.intensiveTraining': false,\n  }),",
+    "new": "    'RefinedTraining.intensiveTraining': false,\n    'EnhancedRiding.GallopingInTowns': false,\n  }),",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "TOWNGALLOP-room-leaves-it-to-the-player",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
-    "new": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents', 'EnhancedRiding.GallopingInTowns']),",
+    "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']), // who stands behind a counter and in a house: looks",
+    "new": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents', 'EnhancedRiding.GallopingInTowns']), // who stands behind a counter and in a house: looks",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "TOWNGALLOP-trample-ships-off",
     "file": "src/systems/modSettings.js",
-    "old": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true,",
-    "new": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: false,",
+    "old": "      'EnhancedRiding.TrampleCivilians': Object.freeze({\n        default: true,",
+    "new": "      'EnhancedRiding.TrampleCivilians': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

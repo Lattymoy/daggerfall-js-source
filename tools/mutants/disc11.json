@@ -29,8 +29,8 @@
   {
     "name": "DISC11-carried-loop-stacks",
     "file": "src/systems/ambientEffects.js",
-    "old": "(deps.underground && deps.indoorRainSource ? 0 : 1)",
-    "new": "1",
+    "old": "    const rainGain =\n      this.rainGain *\n      (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : deps.underground && deps.indoorRainSource ? 0 : 1);",
+    "new": "    const rainGain = this.rainGain * (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : 1);",
     "tests": [
       "test/systems/disc11.test.js"
     ]

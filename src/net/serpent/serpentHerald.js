@@ -25,9 +25,19 @@
 //   colour, the moment's title and its facts as fields.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (SERPENT2).
-import { serpentDayAt, isSerpentDay, serpentAt, serpentTimes, serpentBossOf, sameSerpentSite, SERPENT_EVERY_DAYS, SERPENT_DIVE_MS, SERPENT_SITE_LAW } from './serpentLaw.js';
+import {
+  serpentDayAt,
+  isSerpentDay,
+  serpentAt,
+  serpentTimes,
+  serpentBossOf,
+  sameSerpentSite,
+  SERPENT_EVERY_DAYS,
+  SERPENT_DIVE_MS,
+  SERPENT_SITE_LAW,
+} from './serpentLaw.js';
 import { agreedGateSite, HERALD_FELL_KEEP_MS, GATE_SITE_SKEW_MS } from '../gate/gateHerald.js';
-import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho, heraldRole } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
+import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho, heraldRole } from '../herald/heraldCard.js'; // HERALD-CARDS: the one card
 import { SERPENT_TOP_MAX } from '../wire.js';
 
 /** The role the serpent's bells ping: its own, when the operator names one, else the gate's - or null, none pinged. */
@@ -40,14 +50,21 @@ export const serpentHeraldRole = (own, gate) => heraldRole(own) ?? heraldRole(ga
  * @param {{day: number, place?: string|null, role?: string|null}} o
  */
 export function serpentOmenPost({ day, place = null, role = null }) {
-  const t = serpentTimes(day), boss = serpentBossOf(day);
+  const t = serpentTimes(day),
+    boss = serpentBossOf(day);
   const off = place ? heraldName(place) : '';
   return heraldCard({
-    family: 'serpent', moment: 'Bells', role,
+    family: 'serpent',
+    moment: 'Bells',
+    role,
     title: `A great serpent is sighted ${off ? `off ${off}` : 'on the packet lanes'}`,
     ping: `${boss.name} rises ${heraldStamp(t.riseAt, 'R')}.`,
     text: `Bells ring in the harbors. ${boss.name}, ${boss.nick}, hunts until it dives, and every ship may join until then. One ship alone cannot bring it down: sail out together.`,
-    fields: [['Rises', heraldWhen(t.riseAt)], ['Dives', heraldStamp(t.soundAt, 't')], ['Where', off ? `Off ${off}` : 'Ringed on your map']],
+    fields: [
+      ['Rises', heraldWhen(t.riseAt)],
+      ['Dives', heraldStamp(t.soundAt, 't')],
+      ['Where', off ? `Off ${off}` : 'Ringed on your map'],
+    ],
   });
 }
 
@@ -61,10 +78,14 @@ export function serpentFellPost({ day, place = null, top = [], n = 0 }) {
   const boss = serpentBossOf(day);
   const off = place ? heraldName(place) : '';
   return heraldCard({
-    family: 'serpent', moment: 'Slain',
+    family: 'serpent',
+    moment: 'Slain',
     title: `${boss.name} is slain`,
     text: 'Its hoard goes to the ships that fought it.',
-    fields: [['Where', off ? `Off ${off}` : null], ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)]],
+    fields: [
+      ['Where', off ? `Off ${off}` : null],
+      ['Slain by', heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)],
+    ],
   });
 }
 
@@ -76,7 +97,7 @@ export function serpentFellPost({ day, place = null, top = [], n = 0 }) {
  */
 export function serpentHeraldOmenDue(nowMs, postedDay = -1) {
   const today = serpentDayAt(nowMs);
-  const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1;   // a day not yet come is no post made
+  const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1; // a day not yet come is no post made
   for (let d = Math.max(0, today); d <= today + SERPENT_EVERY_DAYS; d++) {
     if (!isSerpentDay(d) || d <= posted) continue;
     const t = serpentTimes(d);
@@ -87,11 +108,13 @@ export function serpentHeraldOmenDue(nowMs, postedDay = -1) {
 }
 
 /** Is a serpent day's kill still news at `nowMs` - a serpent day, and its waters not long gone quiet? */
-export const serpentHeraldFellLive = (day, nowMs) => isSerpentDay(day) && nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS;
+export const serpentHeraldFellLive = (day, nowMs) =>
+  isSerpentDay(day) && nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS;
 
 /** Does the hub take a word of day `day`'s site at `nowMs` - the serpent the clock is about, or the next one a moment
  *  before the turn? */
-export const serpentSiteDayOk = (day, nowMs) => Number.isSafeInteger(day) && (day === serpentAt(nowMs).day || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day);
+export const serpentSiteDayOk = (day, nowMs) =>
+  Number.isSafeInteger(day) && (day === serpentAt(nowMs).day || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day);
 
 /** AUDIT TAMRIEL-WIDE E3: does the hub fold a `site` word - its own site law's (serpentLaw.js SERPENT_SITE_LAW), of the
  *  day the clock is about? A build on another law rolls another site, and its word would split the vote. */
@@ -129,7 +152,8 @@ export function serpentAtWord(rec, nowMs) {
  * @param {{d: number, list: any[]}|null} fells @param {any} rec @param {number} postedDay @param {number} nowMs
  */
 export function serpentHeraldKill(fells, rec, postedDay, nowMs) {
-  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs)) return null;
+  if (!fells || !Number.isSafeInteger(fells.d) || fells.d <= postedDay || !serpentHeraldFellLive(fells.d, nowMs))
+    return null;
   const site = agreedSerpentSite(rec, fells.d);
   const f = site ? (Array.isArray(fells.list) ? fells.list : []).find((g) => sameSerpentSite(g, site)) : null;
   return f ? { day: fells.d, place: site.place, top: f.top, n: f.n } : { wait: true };

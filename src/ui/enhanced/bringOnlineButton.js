@@ -15,6 +15,7 @@ import { t } from '../../systems/textManager.js';
  */
 export function bringOnlineButton(save, { realmCopy }) {
   if (save.testRoom) return { label: t('menu.online.testRoomOffline', 'Test Room: offline only'), offlineOnly: true };
-  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };
+  if (realmCopy)
+    return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };
   return { label: t('menu.online.bring', 'Bring online'), offlineOnly: false };
 }

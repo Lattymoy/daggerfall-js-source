@@ -2,8 +2,8 @@
   {
     "name": "TV2-bisection-backwards",
     "file": "src/player/travelPick.js",
-    "old": "for (let i = 0; i < refine; i++) { const m = (lo + hi) / 2; if (under(m)) hi = m; else lo = m; }",
-    "new": "for (let i = 0; i < refine; i++) { const m = (lo + hi) / 2; if (under(m)) lo = m; else hi = m; }",
+    "old": "        if (under(m)) hi = m;\n        else lo = m;",
+    "new": "        if (under(m)) lo = m;\n        else hi = m;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TV2-stride-steps-over-a-ridge",
     "file": "src/player/travelPick.js",
-    "old": "export function groundHit(eye, dir, heightAt, { maxDist = TV_PICK_MAX, stepMin = TV_PICK_STEP_MIN,",
-    "new": "export function groundHit(eye, dir, heightAt, { maxDist = TV_PICK_MAX, stepMin = 40,",
+    "old": "  { maxDist = TV_PICK_MAX, stepMin = TV_PICK_STEP_MIN, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
+    "new": "  { maxDist = TV_PICK_MAX, stepMin = 40, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TV2-unbuilt-not-said",
     "file": "src/player/travelPick.js",
-    "old": "    if (!Number.isFinite(h)) unbuilt = true;\n",
-    "new": "    if (!Number.isFinite(h)) { /* skipped */ }\n",
+    "old": "    if (!Number.isFinite(h)) unbuilt = true;\n    else if (p[1] <= h) {",
+    "new": "    if (!Number.isFinite(h)) {\n      /* skipped */\n    } else if (p[1] <= h) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TV2-half-an-edge-is-a-road",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (roads && (roads[a] & bit) && (roads[b] & back)) return 0;",
-    "new": "  if (roads && (roads[a] & bit)) return 0;",
+    "old": "  if (roads && roads[a] & bit && roads[b] & back) return 0;",
+    "new": "  if (roads && roads[a] & bit) return 0;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TV2-route-swims",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n",
-    "new": "",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own",
+    "new": "  // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TV2-legs-ignore-the-ground",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "&& next.x - pixels[i].x === dx && next.y - pixels[i].y === dy && (kinds[i] ?? 'open') === kind;",
-    "new": "&& next.x - pixels[i].x === dx && next.y - pixels[i].y === dy;",
+    "old": "      next.y - pixels[i].y === dy &&\n      (kinds[i] ?? 'open') === kind;",
+    "new": "      next.y - pixels[i].y === dy;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TV2-governor-no-hold",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) { if (want > TV_GOV_FLOOR)",
-    "new": "        { if (want > TV_GOV_FLOOR)",
+    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) {",
+    "new": "        {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TV2-governor-hole-keeps-the-clean-clock",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "      if (unbuilt > 0) {\n        clear = 0;",
-    "new": "      if (unbuilt > 0) {",
+    "old": "        clear = 0;\n        dirty += dt;",
+    "new": "        dirty += dt;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TV2-plate-while-rising",
     "file": "src/scenes/travelView.js",
-    "old": "p.button === 0 && state === 'up' && e.type",
-    "new": "p.button === 0 && e.type",
+    "old": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
+    "new": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && e.type !== 'pointercancel') {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-DEEP-T2-2-walking-teaches-x1",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "if (want > TV_GOV_FLOOR) { ceiling = stepDown",
-    "new": "{ ceiling = stepDown",
+    "old": "          if (want > TV_GOV_FLOOR) {",
+    "new": "          {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AUDIT-DEEP-T2-8-climb-by-odd-steps",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "Math.floor(ceiling / TV_GOV_STEP) * TV_GOV_STEP + TV_GOV_STEP",
-    "new": "ceiling + TV_GOV_STEP",
+    "old": "            ceiling = Math.min(max, Math.floor(ceiling / TV_GOV_STEP) * TV_GOV_STEP + TV_GOV_STEP);",
+    "new": "            ceiling = Math.min(max, ceiling + TV_GOV_STEP);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-DEEP-T2-5-swim-the-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n",
-    "new": "",
+    "old": "  if (\n    ax !== bx &&\n    ay !== by &&\n    isWater(bx, ay) &&\n    isWater(ax, by) &&\n    !pavedStep(ax, ay, bx, by, bit, width, height, roads)\n  )\n    return -1;\n  const kind = pathKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond);",
+    "new": "  const kind = pathKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-DEEP-X6-the-reason-unshown",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "parts.accel.title = why;",
-    "new": "parts.accel.title = '';",
+    "old": "    parts.accel.title = why;",
+    "new": "    parts.accel.title = '';",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-DEEP2-B6-always-the-widest",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;",
-    "new": "",
+    "old": "    if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-DEEP2-B2-no-settle",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S))",
-    "new": "        if (dirty >= TV_GOV_HOLD_S)",
+    "old": "        if (dirty >= (settling ? TV_GOV_SETTLE_S : TV_GOV_HOLD_S)) {",
+    "new": "        if (dirty >= TV_GOV_HOLD_S) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "AUDIT-DEEP2-B2-settle-forever",
     "file": "src/systems/travel/travelGovernor.js",
-    "old": "TV_GOV_STEP + TV_GOV_STEP); clear = 0; settling = false; }",
-    "new": "TV_GOV_STEP + TV_GOV_STEP); clear = 0; }",
+    "old": "            settling = false;\n          }",
+    "new": "          }",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

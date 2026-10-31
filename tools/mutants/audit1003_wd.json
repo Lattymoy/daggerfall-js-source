@@ -102,8 +102,8 @@
   {
     "name": "AUDIT1003-WD1-the-book-drops-it",
     "file": "src/net/guild/guildBook.js",
-    "old": "region, price, layout })));",
-    "new": "region, price })));",
+    "old": "      await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price, layout })),",
+    "new": "      await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price })),",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js",
       "test/net/guild1d_client.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT1003-WD1-classic-sent-as-a-stamp",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  return stamp && stamp !== CLASSIC_LAYOUT ? stamp : null;\n",
-    "new": "  return stamp || null;\n",
+    "old": "  return stamp && stamp !== CLASSIC_LAYOUT ? stamp : null;",
+    "new": "  return stamp || null;",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT1003-WD1-the-claim-says-another",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const layout = homeClaimLayout(mapId);\n",
-    "new": "    const layout = null;\n",
+    "old": "    const layout = homeClaimLayout(mapId);",
+    "new": "    const layout = null;",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js",
       "test/systems/wd3_layoutPins.test.js"

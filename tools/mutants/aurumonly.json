@@ -2,85 +2,109 @@
   {
     "name": "AURUM-ONLY-an-item-sold-for-money",
     "file": "src/net/shopLaw.js",
-    "old": "gives: Object.freeze([...gives]), alone, cash: kind === 'aurum', aurum,",
-    "new": "gives: Object.freeze([...gives]), alone, cash: true, aurum,",
-    "tests": ["test/server/aurumonly.test.js"]
+    "old": "    cash: kind === 'aurum',",
+    "new": "    cash: true,",
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-a-ware-over-the-cap",
     "file": "src/net/shopLaw.js",
-    "old": "ware('mount', 'warhorse', 2500, { tier: 'exclusive' }),",
-    "new": "ware('mount', 'warhorse', 3500, { tier: 'exclusive' }),",
-    "tests": ["test/server/aurumonly.test.js"]
+    "old": "  ware('mount', 'warhorse', 2500, { tier: 'exclusive' }),",
+    "new": "  ware('mount', 'warhorse', 3500, { tier: 'exclusive' }),",
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-the-deal-off-its-share",
     "file": "src/net/aurumLaw.js",
     "old": "export const AURUM_DEAL = 0.75;",
     "new": "export const AURUM_DEAL = 0.8;",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-the-deal-charged-in-full",
     "file": "server-account/src/aurum.js",
     "old": "return { price: deal ? aurumDealOf(list) : list, deal };",
     "new": "return { price: list, deal };",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-the-shown-price-not-read",
     "file": "server-account/src/aurum.js",
     "old": "if (!paid && Number.isSafeInteger(body?.price) && body.price !== at.price) return { error: 'aurum-price', price: at.price };",
     "new": "if (!paid && Number.isSafeInteger(body?.price) && body.price !== at.price && !body) return { error: 'aurum-price', price: at.price };",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-a-pack-sold-for-Aurum",
     "file": "server-account/src/aurum.js",
     "old": "if (!w || !w.alone || shopRepeatable(w)) return { error: 'aurum-ware' };",
     "new": "if (!w || !w.alone) return { error: 'aurum-ware' };",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-an-item-given-a-money-link",
     "file": "server-account/src/shop.js",
-    "old": "    if (!w.cash) {   // AURUM-ONLY: no link",
-    "new": "    if (w.kind === 'never') {   // AURUM-ONLY: no link",
-    "tests": ["test/server/aurumonly.test.js"]
+    "old": "    if (!w.cash) {",
+    "new": "    if (w.kind === 'never') {",
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-the-deal-unmarked",
     "file": "server-account/src/shop.js",
-    "old": "price: at?.price ?? w.price, ...(at?.deal ? { deal: true } : {}),",
-    "new": "price: at?.price ?? w.price,",
-    "tests": ["test/server/aurumonly.test.js"]
+    "old": "      wares.push({\n        id: w.id,\n        sale: onSale,\n        held: isHeld,\n        price: at?.price ?? w.price,\n        ...(at?.deal ? { deal: true } : {}),\n        ...win,\n      });",
+    "new": "      wares.push({ id: w.id, sale: onSale, held: isHeld, price: at?.price ?? w.price, ...win });",
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-an-item-page-priced-in-money",
     "file": "server-account/src/shop.js",
-    "old": "    if (!shopRepeatable(ware)) return shopHtml(SHOP_PAGES.aurum, 410);   // AURUM-ONLY",
+    "old": "    if (!shopRepeatable(ware)) return shopHtml(SHOP_PAGES.aurum, 410); // AURUM-ONLY",
     "new": "    // the item's page as any",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-its-press-asking-Stripe",
     "file": "server-account/src/shop.js",
-    "old": "  if (!shopRepeatable(ware)) return { page: 'aurum' };   // AURUM-ONLY: a ticket for an item, sealed before the switch",
+    "old": "  if (!shopRepeatable(ware)) return { page: 'aurum' }; // AURUM-ONLY: a ticket for an item, sealed before the switch",
     "new": "  // an item's press as any",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "AURUM-ONLY-the-client-follows-an-item-link",
     "file": "src/net/shopLaw.js",
-    "old": "    const buy = w.cash && typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
+    "old": "    const buy =\n      w.cash && typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
     "new": "    const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
-    "tests": ["test/server/aurumonly.test.js"]
+    "tests": [
+      "test/server/aurumonly.test.js"
+    ]
   },
   {
     "name": "CACHES-ONCE-BALANCE-the-Aurum-left-at-twenty-five",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_AURUM = 10;",
-    "new": "export const AURUM_CACHE_AURUM = 25;",
-    "tests": ["test/net/aurum_cache_law.test.js"]
+    "old": "export const AURUM_CACHE_AURUM_MAX = 10;",
+    "new": "export const AURUM_CACHE_AURUM_MAX = 25;",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
   }
 ]

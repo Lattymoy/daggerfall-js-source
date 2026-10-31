@@ -33,16 +33,21 @@ import { MAX_FRAME_BYTES } from '../net/wire.js';
 import { activeWagonItem, wagonKindOf, isWagonItem } from './wagon/wagonKinds.js';
 
 /** The wire's code for an entry (`we`): its place in HOME_ENTRIES - 0 (said by no field) for the owner alone. */
-export const caravanEntryCode = (entry) => Math.max(0, HOME_ENTRIES.indexOf(homeEntryOk(entry) ? entry : HOME_ENTRY_DEFAULT));
+export const caravanEntryCode = (entry) =>
+  Math.max(0, HOME_ENTRIES.indexOf(homeEntryOk(entry) ? entry : HOME_ENTRY_DEFAULT));
 /** The entry a wire code names - the owner alone for anything the law does not know. */
-export const caravanEntryOfCode = (code) => (Number.isInteger(code) && code > 0 && code < HOME_ENTRIES.length ? HOME_ENTRIES[code] : HOME_ENTRY_DEFAULT);
+export const caravanEntryOfCode = (code) =>
+  Number.isInteger(code) && code > 0 && code < HOME_ENTRIES.length ? HOME_ENTRIES[code] : HOME_ENTRY_DEFAULT;
 /** The guild's code - the one that carries the owner's guild tag (`wg`). */
 export const CARAVAN_GUILD_CODE = HOME_ENTRIES.indexOf('guild');
 /** A guild tag as the word may carry it, or null. */
 export const caravanGuildTag = (tag) => (typeof tag === 'string' && GUILD_TAG_RE.test(tag) ? tag : null);
 
 /** Who may enter a caravan item: its `wagonEntry`, the owner alone for anything else (and for every wagon not a caravan). */
-export const caravanEntryOf = (item) => (isWagonItem(item) && wagonKindOf(item) === 'caravan' && homeEntryOk(item.wagonEntry) ? item.wagonEntry : HOME_ENTRY_DEFAULT);
+export const caravanEntryOf = (item) =>
+  isWagonItem(item) && wagonKindOf(item) === 'caravan' && homeEntryOk(item.wagonEntry)
+    ? item.wagonEntry
+    : HOME_ENTRY_DEFAULT;
 
 /**
  * THE DRIVEN CARAVAN'S DOOR SET: in the pack `items` (the host's own list - the caravan's place in it taken by its new
@@ -67,7 +72,10 @@ export function setDrivenCaravanEntry(items, entry) {
 export function caravanMayEnter(t, { partyNames = [], guild = null } = {}) {
   if (!t || typeof t.owner !== 'string' || !t.owner) return false;
   const tag = caravanGuildTag(guild);
-  return homeMayEnter({ owner: t.owner, entry: t.entry, guildmate: !!tag && caravanGuildTag(t.guild) === tag }, { partyNames });
+  return homeMayEnter(
+    { owner: t.owner, entry: t.entry, guildmate: !!tag && caravanGuildTag(t.guild) === tag },
+    { partyNames },
+  );
 }
 
 /** The words: the owner's row and its line (the entry's own words are a home's - systems/online/onlineHomes.js
@@ -77,7 +85,7 @@ export const CARAVAN_VISIT_TEXT = Object.freeze({
   entryLine: (words) => `Who may enter your caravan: ${words}.`,
   shut: (owner) => `This is ${owner}'s caravan. Its door is shut.`,
   gone: 'The caravan has moved on. You step outside.',
-  closed: (owner) => `${owner} has shut the caravan's door. You step outside.`,   // WAGONS2-VISIT (AUDIT): the door set against me while I stood in it
+  closed: (owner) => `${owner} has shut the caravan's door. You step outside.`, // WAGONS2-VISIT (AUDIT): the door set against me while I stood in it
 });
 
 /** The document's shape version, and its byte bound - the small frame's cap less room for the frame around it. */
@@ -86,7 +94,11 @@ export const CARAVAN_DECOR_BYTES = MAX_FRAME_BYTES - 512;
 
 /** The room's own pieces taken out, as a document carries them: each a base key the decor law takes (DECOR_BASE_KEY_RE),
  *  once, at most DECOR_HIDDEN_CAP - anything else is none. */
-const caravanHiddenOf = (raw) => [...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(0, DECOR_HIDDEN_CAP);
+const caravanHiddenOf = (raw) =>
+  [...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(
+    0,
+    DECOR_HIDDEN_CAP,
+  );
 
 /** THE ROOM'S DOCUMENT: `pieces` (as the save keeps them - unturned) through the decor law, in their order, as many as
  *  fit CARAVAN_DECOR_BYTES (and DECOR_CAP); a piece the law refuses is left out. `hidden` (WAGONS2-BASE), the room's own
@@ -109,7 +121,8 @@ export function caravanDecorDoc(pieces, hidden = []) {
 }
 /** A document as a visitor reads it: its pieces through the decor law (unturned), or null - no document. */
 export function readCaravanDecor(doc) {
-  if (!doc || typeof doc !== 'object' || Array.isArray(doc) || doc.v !== CARAVAN_DECOR_V || !Array.isArray(doc.p)) return null;
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc) || doc.v !== CARAVAN_DECOR_V || !Array.isArray(doc.p))
+    return null;
   return doc.p.slice(0, DECOR_CAP).map(decorPieceOf).filter(Boolean);
 }
 /** WAGONS2-BASE: the room's own pieces a document says its owner took out - none for no document, or an older one. */

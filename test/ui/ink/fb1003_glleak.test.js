@@ -127,6 +127,6 @@ test('GL-LEAK AS THE PAGE GOES: every seated context let go once, an unseated on
   assert.doesNotMatch(rd('src/render/glRelease.js'), /^\s*import\s/m, 'a leaf: the entry\'s static reach unchanged (BOOT1)');
   assert.match(rd('src/ui/ink/inkDungeonGL.js'), /if \(ink\) _shared = \{ doc, ink, unseat: onPageGone\(disposeDungeonInk\) \};/);
   assert.match(rd('src/ui/gate/gateVeil.js'), /unseat = onPageGone\(\(\) => loseGlContext\(gl\)\);/);
-  assert.match(rd('src/ui/gate/gateVeil.js'), /loseGlContext\(veilGl\); unseat\?\.\(\);/, 'and its destroy lets it go');
+  assert.match(rd('src/ui/gate/gateVeil.js'), /loseGlContext\(veilGl\);\n\s*unseat\?\.\(\);/, 'and its destroy lets it go');
   assert.match(rd('src/ui/intro/introLandscape.js'), /unseat\(\);\n\s*loseGlContext\(gl\);/);
 });

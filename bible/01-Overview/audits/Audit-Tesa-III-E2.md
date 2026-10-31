@@ -123,7 +123,7 @@ and `out` over made-up halls - 1,000 writes of the record, 500 halls in each of 
   (`ok`, epoch 0) and nothing is kept - so a churn of made-up halls cannot push a real hall's epoch out (one another has
   stood in is held, and does not count). The zone stands some 840 halls a day and a hall takes minutes: 64 new halls is
   more than one player's day.
-- **Every map to its count** (`src/net/wild/wildLaw.js:"export function wdunBound(st) {"`), the least recently touched
+- **Every map to its count** (`src/net/wild/wildLaw.js:"export function wdunBound"`), the least recently touched
   or soonest-ending let go first: the halls (WDUN_HALLS_MAX, 2,048, each of `inside`, `empty`, `eps`, `crows`), the
   accounts standing in halls (WDUN_INSIDE_MAX, 4,096), an account's locks (WDUN_ACCT_LOCKS_MAX, 32), all locks
   (WDUN_LOCKS_MAX, 8,192), the accounts with locks (WDUN_ACCTS_MAX, as before) and the remains (WDUN_PILES_MAX, 4,096).

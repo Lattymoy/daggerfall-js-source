@@ -68,7 +68,7 @@ test('BS1: the interior shelf click routes - bookshelf in the three types, loot 
   assert.match(wm, /if \(isBookshelfBuilding\(b\.buildingType\)\) openBookshelf\(shelf, b\);/,
     'the click ASKS for the answer rather than keeping a second copy of it');
   assert.match(code('systems/bookshelf.js'),
-    /export const isBookshelfBuilding = \(buildingType\) => buildingType === BUILDING_TYPES\.Library\n\s+\|\| buildingType === BUILDING_TYPES\.GuildHall \|\| buildingType === BUILDING_TYPES\.Temple;/,
+    /export const isBookshelfBuilding = \(buildingType\) =>\n\s*buildingType === BUILDING_TYPES\.Library \|\|\n\s*buildingType === BUILDING_TYPES\.GuildHall \|\|\n\s*buildingType === BUILDING_TYPES\.Temple;/,
     'the DaggerfallInterior.cs:808-814 building-type gate');
   assert.equal(isBookshelfBuilding(BUILDING_TYPES.Library), true);
   assert.equal(isBookshelfBuilding(BUILDING_TYPES.GuildHall), true);

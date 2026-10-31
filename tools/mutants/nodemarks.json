@@ -2,8 +2,8 @@
   {
     "name": "NODE-MARKS-the-herbs-never-marked",
     "file": "src/scenes/herbHost.js",
-    "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK),",
-    "new": "    mark: () => null,",
+    "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK), // NODE-MARKS: on the compass and lit while either harvest stands",
+    "new": "    mark: () => null, // NODE-MARKS: on the compass and lit while either harvest stands",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "NODE-MARKS-a-half-taken-patch-dropped",
     "file": "src/scenes/herbHost.js",
-    "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food');",
-    "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food');",
+    "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
+    "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "NODE-MARKS-the-order-kept",
     "file": "src/ui/nodeMarks.js",
-    "old": "  if (marks) for (let i = marks.length - 1; i >= 0; i--) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
-    "new": "  if (marks) for (let i = 0; i < marks.length; i++) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
+    "old": "    for (let i = marks.length - 1; i >= 0; i--) {",
+    "new": "    for (let i = 0; i < marks.length; i++) {",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -161,8 +161,8 @@
   {
     "name": "NODE-MARKS-the-opacity-flat",
     "file": "src/ui/nodeMarks.js",
-    "old": "put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
-    "new": "put(m.at[0], m.at[2], m.profession, 1);",
+    "old": "      put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
+    "new": "      put(m.at[0], m.at[2], m.profession, 1);",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "NODE-MARKS-glow-no-kindling",
     "file": "src/render/nodeGlow.js",
-    "old": "if (!n) { n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); } else n.kindle = m.quiet === true ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S) : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S);",
-    "new": "if (!n) { n = { kindle: 1, seen: frame, seed: nodeGlowSeed(m.key) }; state.nodes.set(m.key, n); }",
+    "old": "        n = { kindle: 0, seen: frame, seed: nodeGlowSeed(m.key) };\n        state.nodes.set(m.key, n);\n      } else\n        n.kindle =\n          m.quiet === true\n            ? Math.max(0, n.kindle - dt / NODE_GLOW_KINDLE_S)\n            : Math.min(1, n.kindle + dt / NODE_GLOW_KINDLE_S); // AUDIT NODE-GLINT: a quiet mark dims as it kindled",
+    "new": "        n = { kindle: 1, seen: frame, seed: nodeGlowSeed(m.key) };\n        state.nodes.set(m.key, n);\n      } // AUDIT NODE-GLINT: a quiet mark dims as it kindled",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -233,7 +233,7 @@
   {
     "name": "NODE-MARKS-glow-no-fade",
     "file": "src/render/nodeGlow.js",
-    "old": "      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
+    "old": "      const alpha =\n        n.kindle *\n        (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) *\n        (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
     "new": "      const alpha = n.kindle * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
     "tests": [
       "test/scenes/nodemarks.test.js"
@@ -251,8 +251,8 @@
   {
     "name": "NODE-MARKS-glow-the-cap-ignored",
     "file": "src/render/nodeGlow.js",
-    "old": "      if (out.length >= NODE_GLOW_MAX) break;",
-    "new": "",
+    "old": "      if (out.length >= NODE_GLOW_MAX) break;\n      if (!m || !isVec3(m.at) || !(m.w > 0) || !(m.h > 0)) continue;",
+    "new": "      if (!m || !isVec3(m.at) || !(m.w > 0) || !(m.h > 0)) continue;",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "NODE-MARKS-glow-not-pulled-toward-the-eye",
     "file": "src/render/nodeGlow.js",
-    "old": "  vec3 base = uAt + vec3(dir.x, 0.0, dir.y) * min(uPull, fl * 0.5);",
-    "new": "  vec3 base = uAt;",
+    "old": "  vec3 base = uAt + vec3(dir.x, 0.0, dir.y) * min(uPull, fl * 0.5);   // stood toward it, never past half its way",
+    "new": "  vec3 base = uAt;   // stood toward it, never past half its way",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "NODE-MARKS-glow-depth-written",
     "file": "src/render/nodeGlow.js",
-    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
-    "new": "    gl.disable(gl.CULL_FACE);\n    for (const g of list) {",
+    "old": "    gl.depthMask(false);\n    gl.disable(gl.CULL_FACE);",
+    "new": "    gl.disable(gl.CULL_FACE);",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-NODE-MARKS-built-on-the-frame",
     "file": "src/render/nodeGlow.js",
-    "old": "      if (!asked && marks?.length) { asked = true; idle(make); }",
-    "new": "      if (!asked && marks?.length) { asked = true; make(); }",
+    "old": "        idle(make);",
+    "new": "        make();",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-NODE-MARKS-built-every-frame",
     "file": "src/render/nodeGlow.js",
-    "old": "      if (!asked && marks?.length) { asked = true; idle(make); }",
-    "new": "      if (marks?.length) { asked = true; idle(make); }",
+    "old": "      if (!asked && marks?.length) {",
+    "new": "      if (marks?.length) {",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-NODE-MARKS-a-build-failure-costs-the-game",
     "file": "src/render/nodeGlow.js",
-    "old": "  const make = () => { if (dead) return; try { pass = build(renderer.gl); } catch (e) { console.warn('[prof] the nodes\\' glow would not build', e?.message ?? e); pass = null; } };   // SENSE1: an idle build after the end builds nothing",
-    "new": "  const make = () => { if (dead) return; pass = build(renderer.gl); };",
+    "old": "    try {\n      pass = build(renderer.gl);\n    } catch (e) {\n      console.warn(\"[prof] the nodes' glow would not build\", e?.message ?? e);\n      pass = null;\n    }\n  }; // SENSE1: an idle build after the end builds nothing",
+    "new": "    pass = build(renderer.gl);\n  };",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-foreign-pass-only-for-a-draw",
     "file": "src/render/nodeGlow.js",
-    "old": "      renderer.markForeignPass();\n      return pass.drawn;",
-    "new": "      if (pass.drawn) renderer.markForeignPass();\n      return pass.drawn;",
+    "old": "      renderer.markForeignPass();",
+    "new": "      if (pass.drawn) renderer.markForeignPass();",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-fog-not-handed",
     "file": "src/render/nodeGlow.js",
-    "old": "{ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze }, reduced(t));",
-    "new": "null, reduced(t));",
+    "old": "      pass.draw(\n        list,\n        proj,\n        view,\n        eye,\n        t,\n        {\n          mode: renderer._fogMode,\n          density: renderer._fogDensity,\n          range: renderer._fogRange,\n          camPos: renderer._camPos,\n          focus: renderer._focus,\n          haze: renderer._haze,\n        },\n        reduced(t),\n      );",
+    "new": "      pass.draw(list, proj, view, eye, t, null, reduced(t));",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-still-form-never-asked",
     "file": "src/render/nodeGlow.js",
-    "old": "focus: renderer._focus, haze: renderer._haze }, reduced(t));",
-    "new": "focus: renderer._focus, haze: renderer._haze }, false);",
+    "old": "        reduced(t),",
+    "new": "        false,",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-still-clock-not-held",
     "file": "src/render/nodeGlow.js",
-    "old": "  float tm = uTime * (1.0 - uStill);",
-    "new": "  float tm = uTime;",
+    "old": "  float tm = uTime * (1.0 - uStill);   // still: every moving part held at its seed's own place",
+    "new": "  float tm = uTime;   // still: every moving part held at its seed's own place",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-still-shimmer-kept",
     "file": "src/render/nodeGlow.js",
-    "old": " * across * up * (1.0 - uStill);",
-    "new": " * across * up;",
+    "old": "  float band = exp(-bq * bq) * across * up * (1.0 - uStill);",
+    "new": "  float band = exp(-bq * bq) * across * up;",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-NODE-MARKS-the-still-flag-never-uploaded",
     "file": "src/render/nodeGlow.js",
-    "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);\n",
-    "new": "",
+    "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);\n    gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);",
+    "new": "    gl.uniform3f(U.uEye, eye[0], eye[1], eye[2]);",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-NODE-MARKS-a-record-made-a-frame",
     "file": "src/render/nodeGlow.js",
-    "old": "      const g = state.pool[out.length] ??= {",
-    "new": "      const g = {",
+    "old": "      const g = (state.pool[out.length] ??= {\n        at: m.at,\n        w: 0,\n        h: 0,\n        rgb,\n        alpha: 0,\n        seed: 0,\n        form: NODE_GLOW_FORM,\n        pull: NODE_GLOW_PULL,\n        mark: m,\n      });",
+    "new": "      const g = { at: m.at, w: 0, h: 0, rgb, alpha: 0, seed: 0, form: NODE_GLOW_FORM, pull: NODE_GLOW_PULL, mark: m };",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]

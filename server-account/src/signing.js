@@ -42,7 +42,9 @@ export async function signingKey(env, subtle) {
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     _key = await subtle.importKey('pkcs8', bytes, { name: 'Ed25519' }, false, ['sign']);
     return _key;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** WB5b: THE RELAY'S PUBLIC HALF - `GATE_PUBLIC_KEY`, base64url raw,
@@ -63,4 +65,7 @@ export async function gatePublicKey(env, subtle) {
 
 /** Drops the per-isolate cache. A test that changes the key in `env`
  *  would otherwise get the one the previous test imported. */
-export function _resetKeyForTests() { _key = null; _gateKey = undefined; }
+export function _resetKeyForTests() {
+  _key = null;
+  _gateKey = undefined;
+}

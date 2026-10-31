@@ -2,7 +2,7 @@
 // SPIRE ON THIS SCREEN (scenes/eliteGates/egClient.js, ui/eliteGates/egHud.js, systems/eliteGates/spireKit.js) - folded from the director's own words
 // (net/eliteGates/egBrain.js egStateOf and friends, held to the wire's projection): THE WITNESS (the death save, no blow reaching it,
 // the eye behind a living companion, Q and E, the body put away, the recall's word standing me back), THE PANEL (a
-// Vestige's cards and the company's word by key and by `/breach`), THE POTION LAW, the push, the cage and the ring, the
+// Vestige's cards and the company's word by key and by `/breach`), the push, the cage and the ring, the
 // room's heals, THE RECAP.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,13 +11,8 @@ import { egBreachNew, egEnter, egStateOf } from '../../../src/net/eliteGates/egB
 import { egHallOf, EG_SEALED_MS } from '../../../src/net/eliteGates/egLaw.js';
 import { validEgOut } from '../../../src/net/wire.js';
 import { realmToDungeon, dungeonToRealm } from '../../../src/net/superDungeon/sdBrain.js';
-import { egPanelModel, egRecapModel, EG_POTIONS_PER_HALL } from '../../../src/ui/eliteGates/egHud.js';
+import { egPanelModel, egRecapModel } from '../../../src/ui/eliteGates/egHud.js';
 import { EG_VESTIGES, EG_V_BY_KEY } from '../../../src/net/eliteGates/egVestige.js';
-import { isRestoringPotion, registerSpirePotionLaw, spirePotionRefusal, SPIRE_POTION_TEXT } from '../../../src/systems/eliteGates/spireKit.js';
-import { POTION_RECIPES, potionRecipeKey } from '../../../src/systems/potionRecipes.js';
-import { useItem } from '../../../src/systems/useItem.js';
-import { registerMadeLevelHere } from '../../../src/systems/madeLevel.js';   // EG-H2: THE POTION LAW is the made level's rule
-import { TEMPLATES } from '../../../src/systems/item/itemKinds.js';
 import { createEgLink } from '../../../src/net/eliteGates/egLink.js';
 import { EG_FALL_MS } from '../../../src/ui/eliteGates/egSpireHud.js';   // EG-ZD: THE FALL's length, before the witness's eye
 
@@ -107,34 +102,7 @@ test('EG-FULL THE PANEL (sections 16.2 and 21): a Vestige offer drawn as its car
   assert.deepEqual(sent.at(-1), { k: 'vote', q: 'dec:legion', y: 1 });
 });
 
-test('EG-FULL THE POTION LAW (section 17.4): the restoring potions are the recipes that heal health (Healing, Heal True, Purification) and no other; in the breach two a hall - the third refused with the bottle kept, the count filled again at the wake and the rest; outside it, never (mutants: a Stamina potion counted; the bottle drunk on a refusal; the count never refilled)', () => {
-  const key = (name) => potionRecipeKey(POTION_RECIPES.find((r) => r.name === name).ingredients);
-  for (const n of ['healing', 'healTrue', 'purification']) assert.equal(isRestoringPotion({ potionRecipeKey: key(n) }), true, n);
-  for (const n of ['stamina', 'restorePower', 'levitation', 'resistFire']) assert.equal(isRestoringPotion({ potionRecipeKey: key(n) }), false, n);
-  const P = inBreach();
-  const { client } = P;
-  registerSpirePotionLaw({ allowed: () => client.potionAllowed(), used: () => client.potionUsed() });
-  registerMadeLevelHere(() => 'spire');   // PIN MOVED (EG-H2): the potion door asks the made level's law where the player stands - the world host's word, here the Spire's
-  try {
-    client.frame();   // the trial's wake fills the count
-    const bottle = () => ({ group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle, potionRecipeKey: key('healing'), name: 'Healing' });
-    const pack = [];
-    const drink = () => { const it = bottle(); pack.push(it); return useItem(it, pack, { drinkPotion: () => 'Healing' }); };
-    assert.equal(drink().kind, 'potion');
-    assert.equal(drink().kind, 'potion');
-    const third = drink();
-    assert.equal(third.kind, 'refused');
-    assert.equal(third.text, SPIRE_POTION_TEXT);
-    assert.equal(pack.length, 1, 'the refused bottle kept');
-    assert.equal(spirePotionRefusal({ potionRecipeKey: key('stamina') }), null, 'a Stamina potion never counted');
-    // the rest fills it again
-    P.B.sg = 'rest'; P.tell(egStateOf(P.B, P.now()));
-    client.frame();
-    assert.equal(spirePotionRefusal({ potionRecipeKey: key('healing') }), null);
-    assert.equal(EG_POTIONS_PER_HALL, 2);
-  } finally { registerSpirePotionLaw(null); registerMadeLevelHere(null); }
-  assert.equal(spirePotionRefusal({ potionRecipeKey: key('healing') }), null, 'outside the breach, never');
-});
+// EG-FULL THE POTION LAW: PIN MOVED to test/systems/eliteGates/potionclock.test.js (POTION-CLOCK, 2026-10-31 - every potion, each kind 15 s)
 
 test('EG-FULL THE PUSH, THE CAGE AND THE RING (section 9.3): a push carried by the collider\'s own move at the breath\'s pace (no edge stops it), Iron Footing taking its share off; a cage holds the motor; a challenge\'s ring keeps the challenged inside its rim and everyone else out (mutants: a push teleporting; Iron Footing ignored; the ring keeping nobody)', async () => {
   const P = inBreach();

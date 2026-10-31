@@ -2,8 +2,8 @@
   {
     "name": "CLIMB4-catch-dip-ignores-speed",
     "file": "src/player/climb/climbFeel.js",
-    "old": "const v = Math.min(FEEL.DIP_MAX, FEEL.DIP_BASE + FEEL.DIP_PER_SPEED * speed);",
-    "new": "const v = Math.min(FEEL.DIP_MAX, FEEL.DIP_BASE);",
+    "old": "    const v = Math.min(FEEL.DIP_MAX, FEEL.DIP_BASE + FEEL.DIP_PER_SPEED * speed);",
+    "new": "    const v = Math.min(FEEL.DIP_MAX, FEEL.DIP_BASE);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CLIMB4-catch-pitches-up",
     "file": "src/player/climb/climbFeel.js",
-    "old": "this.pitchV -= FEEL.CATCH_PITCH_DEG * DEG * 8 * (v / FEEL.DIP_MAX);",
-    "new": "this.pitchV += FEEL.CATCH_PITCH_DEG * DEG * 8 * (v / FEEL.DIP_MAX);",
+    "old": "    this.pitchV -= FEEL.CATCH_PITCH_DEG * DEG * 8 * (v / FEEL.DIP_MAX);",
+    "new": "    this.pitchV += FEEL.CATCH_PITCH_DEG * DEG * 8 * (v / FEEL.DIP_MAX);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CLIMB4-hang-no-sway",
     "file": "src/player/climb/climbFeel.js",
-    "old": "rollT = FEEL.SWAY_ROLL_DEG * DEG * Math.sin(2 * Math.PI * FEEL.SWAY_HZ * this.t);",
-    "new": "rollT = 0;",
+    "old": "          rollT = FEEL.SWAY_ROLL_DEG * DEG * Math.sin(2 * Math.PI * FEEL.SWAY_HZ * this.t);",
+    "new": "          rollT = 0;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CLIMB4-shimmy-rolls-against-its-way",
     "file": "src/player/climb/climbFeel.js",
-    "old": "rollT = FEEL.SHIMMY_ROLL_DEG * DEG * this.shimmySide * s;",
-    "new": "rollT = -FEEL.SHIMMY_ROLL_DEG * DEG * this.shimmySide * s;",
+    "old": "          rollT = FEEL.SHIMMY_ROLL_DEG * DEG * this.shimmySide * s;",
+    "new": "          rollT = -FEEL.SHIMMY_ROLL_DEG * DEG * this.shimmySide * s;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CLIMB4-climb-roll-one-hand",
     "file": "src/player/climb/climbFeel.js",
-    "old": "rollT = FEEL.CLIMB_ROLL_DEG * DEG * Math.sin(Math.PI * ph);",
-    "new": "rollT = FEEL.CLIMB_ROLL_DEG * DEG * Math.abs(Math.sin(Math.PI * ph));",
+    "old": "        rollT = FEEL.CLIMB_ROLL_DEG * DEG * Math.sin(Math.PI * ph); // one hand (+), then the other (-)",
+    "new": "        rollT = FEEL.CLIMB_ROLL_DEG * DEG * Math.abs(Math.sin(Math.PI * ph)); // one hand (+), then the other (-)",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CLIMB4-tremble-on-a-fresh-grip",
     "file": "src/player/climb/climbFeel.js",
-    "old": "const k = clamp01((PARKOUR_GRIP_LOW - m.grip) / PARKOUR_GRIP_LOW);",
-    "new": "const k = clamp01((m.grip - PARKOUR_GRIP_LOW) / PARKOUR_GRIP_LOW);",
+    "old": "      const k = clamp01((PARKOUR_GRIP_LOW - m.grip) / PARKOUR_GRIP_LOW);",
+    "new": "      const k = clamp01((m.grip - PARKOUR_GRIP_LOW) / PARKOUR_GRIP_LOW);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CLIMB4-mantle-crest-looks-up",
     "file": "src/player/climb/climbFeel.js",
-    "old": "case 'mantle': pitchT = FEEL.MANTLE_LOOK_UP_DEG * DEG * bump(t, 0, 0.5) - FEEL.MANTLE_CREST_DEG * DEG * bump(t, 0.35, 1); break;",
-    "new": "case 'mantle': pitchT = FEEL.MANTLE_LOOK_UP_DEG * DEG * bump(t, 0, 0.5) + FEEL.MANTLE_CREST_DEG * DEG * bump(t, 0.35, 1); break;",
+    "old": "          pitchT = FEEL.MANTLE_LOOK_UP_DEG * DEG * bump(t, 0, 0.5) - FEEL.MANTLE_CREST_DEG * DEG * bump(t, 0.35, 1);",
+    "new": "          pitchT = FEEL.MANTLE_LOOK_UP_DEG * DEG * bump(t, 0, 0.5) + FEEL.MANTLE_CREST_DEG * DEG * bump(t, 0.35, 1);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CLIMB4-vault-pitches-up",
     "file": "src/player/climb/climbFeel.js",
-    "old": "case 'vault': pitchT = -FEEL.VAULT_DIP_DEG * DEG * bump(t, 0.15, 0.95);",
-    "new": "case 'vault': pitchT = FEEL.VAULT_DIP_DEG * DEG * bump(t, 0.15, 0.95);",
+    "old": "          pitchT = -FEEL.VAULT_DIP_DEG * DEG * bump(t, 0.15, 0.95);",
+    "new": "          pitchT = FEEL.VAULT_DIP_DEG * DEG * bump(t, 0.15, 0.95);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CLIMB4-lower-looks-up",
     "file": "src/player/climb/climbFeel.js",
-    "old": "case 'lower': pitchT = -FEEL.LOWER_LOOK_DOWN_DEG * DEG * bump(t, 0, 0.75); break;",
-    "new": "case 'lower': pitchT = FEEL.LOWER_LOOK_DOWN_DEG * DEG * bump(t, 0, 0.75); break;",
+    "old": "          pitchT = -FEEL.LOWER_LOOK_DOWN_DEG * DEG * bump(t, 0, 0.75);",
+    "new": "          pitchT = FEEL.LOWER_LOOK_DOWN_DEG * DEG * bump(t, 0, 0.75);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CLIMB4-lower-turns-away-from-the-wall",
     "file": "src/player/climb/climbFeel.js",
-    "old": "if (e.kind === 'lower' && n) this._turnTo(Math.atan2(-n[0], -n[2]), yaw, Math.max(0.05, e.dur / 5));",
-    "new": "if (e.kind === 'lower' && n) this._turnTo(Math.atan2(n[0], n[2]), yaw, Math.max(0.05, e.dur / 5));",
+    "old": "        if (e.kind === 'lower' && n) this._turnTo(Math.atan2(-n[0], -n[2]), yaw, Math.max(0.05, e.dur / 5));",
+    "new": "        if (e.kind === 'lower' && n) this._turnTo(Math.atan2(n[0], n[2]), yaw, Math.max(0.05, e.dur / 5));",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CLIMB4-corner-turns-against-the-wall",
     "file": "src/player/climb/climbFeel.js",
-    "old": "if (e.kind === 'corner' && e.turn) { this.turnLeft += e.turn;",
-    "new": "if (e.kind === 'corner' && e.turn) { this.turnLeft -= e.turn;",
+    "old": "          this.turnLeft += e.turn;",
+    "new": "          this.turnLeft -= e.turn;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CLIMB4-leap-rolls-against-its-side",
     "file": "src/player/climb/climbFeel.js",
-    "old": "rollT = FEEL.LEAP_ROLL_DEG * DEG * right * bump(t, 0, 1);",
-    "new": "rollT = -FEEL.LEAP_ROLL_DEG * DEG * right * bump(t, 0, 1);",
+    "old": "          rollT = FEEL.LEAP_ROLL_DEG * DEG * right * bump(t, 0, 1);",
+    "new": "          rollT = -FEEL.LEAP_ROLL_DEG * DEG * right * bump(t, 0, 1);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CLIMB4-launch-no-fov-kick",
     "file": "src/player/climb/climbFeel.js",
-    "old": "this.fovV += FEEL.LAUNCH_FOV * 8;",
-    "new": "",
+    "old": "        this.fovV += FEEL.LAUNCH_FOV * 8;\n        const d = e.dir;",
+    "new": "        const d = e.dir;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "CLIMB4-eject-no-turn",
     "file": "src/player/climb/climbFeel.js",
-    "old": "if (d) this._turnTo(Math.atan2(d[0], d[2]), yaw, FEEL.EJECT_TURN_S / 3);",
+    "old": "        if (d) this._turnTo(Math.atan2(d[0], d[2]), yaw, FEEL.EJECT_TURN_S / 3);",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "CLIMB4-view-roll-sign",
     "file": "src/player/climb/climbFeel.js",
-    "old": "cr = Math.cos(fx.roll), sr = Math.sin(fx.roll);",
-    "new": "cr = Math.cos(fx.roll), sr = -Math.sin(fx.roll);",
+    "old": "    sr = Math.sin(fx.roll);",
+    "new": "    sr = -Math.sin(fx.roll);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CLIMB4-turn-latched-as-mouse-look",
     "file": "src/player/lookFilter.js",
-    "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;\n  }",
-    "new": "    this.add(dyaw, dpitch);\n  }",
+    "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;",
+    "new": "    this.add(dyaw, dpitch);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CLIMB4-handle-no-sounds",
     "file": "src/player/climb/climbFeel.js",
-    "old": "sounds?.update(dt, m);",
-    "new": "",
+    "old": "      sounds?.update(dt, m);\n    },",
+    "new": "    },",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CLIMB4-sounds-ignore-the-switch",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!m || !this.on()) { this.cues = null; this.prev = null; return; }",
-    "new": "if (!m) { this.cues = null; this.prev = null; return; }",
+    "old": "    if (!m || !this.on()) {",
+    "new": "    if (!m) {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CLIMB4-install-every-call",
     "file": "src/player/climb/climbSounds.js",
-    "old": "return (_install ??= (async () => {",
-    "new": "return (_install = (async () => {",
+    "old": "  return (_install ??= (async () => {",
+    "new": "  return (_install = (async () => {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CLIMB4-sounds-load-while-off",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!m || !this.on()) { this.cues = null; this.prev = null; return; }\n    if (this.install && this.audio) installClimbSounds(this.audio);",
-    "new": "if (this.install && this.audio) installClimbSounds(this.audio);\n    if (!m || !this.on()) { this.cues = null; this.prev = null; return; }",
+    "old": "    if (!m || !this.on()) {\n      this.cues = null;\n      this.prev = null;\n      return;\n    }\n    if (this.install && this.audio) installClimbSounds(this.audio);",
+    "new": "    if (this.install && this.audio) installClimbSounds(this.audio);\n    if (!m || !this.on()) {\n      this.cues = null;\n      this.prev = null;\n      return;\n    }",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CLIMB4-catch-volume-ignores-speed",
     "file": "src/player/climb/climbSounds.js",
-    "old": "Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed)",
-    "new": "Math.min(C.CATCH_MAX, C.CATCH_BASE)",
+    "old": "      cues.push([\n        0,\n        'catch',\n        Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed),\n        1,\n        speed > C.HARD_CATCH_SPEED ? 0.5 : 0,\n      ]);",
+    "new": "      cues.push([0, 'catch', Math.min(C.CATCH_MAX, C.CATCH_BASE), 1, speed > C.HARD_CATCH_SPEED ? 0.5 : 0]);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CLIMB4-soft-catch-strains",
     "file": "src/player/climb/climbSounds.js",
-    "old": "speed > C.HARD_CATCH_SPEED ? 0.5 : 0",
-    "new": "0.5",
+    "old": "      cues.push([\n        0,\n        'catch',\n        Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed),\n        1,\n        speed > C.HARD_CATCH_SPEED ? 0.5 : 0,\n      ]);",
+    "new": "      cues.push([0, 'catch', Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed), 1, 0.5]);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CLIMB4-hang-pullup-grabs-again",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!from) cues.push([0, 'grab', C.GRAB * 0.9, 1, 0]);",
-    "new": "cues.push([0, 'grab', C.GRAB * 0.9, 1, 0]);",
+    "old": "        if (!from) cues.push([0, 'grab', C.GRAB * 0.9, 1, 0]);",
+    "new": "        cues.push([0, 'grab', C.GRAB * 0.9, 1, 0]);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CLIMB4-step-up-hauls",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (rise < C.STEP_UP_RISE) {",
-    "new": "if (rise < 0) {",
+    "old": "      if (rise < C.STEP_UP_RISE) {",
+    "new": "      if (rise < 0) {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CLIMB4-sill-ignores-split",
     "file": "src/player/climb/climbSounds.js",
-    "old": "const split = Number.isFinite(e.split) ? Math.min(1, Math.max(0, e.split)) : 0.5;",
-    "new": "const split = 0.5;",
+    "old": "  const split = Number.isFinite(e.split) ? Math.min(1, Math.max(0, e.split)) : 0.5;",
+    "new": "  const split = 0.5;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "CLIMB4-vault-no-rush",
     "file": "src/player/climb/climbSounds.js",
-    "old": "cues.push([split, 'whoosh', C.WHOOSH * 0.6, 1.1, 0]);",
+    "old": "      cues.push([split, 'whoosh', C.WHOOSH * 0.6, 1.1, 0]);",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -272,7 +272,7 @@
   {
     "name": "CLIMB4-lower-no-boots",
     "file": "src/player/climb/climbSounds.js",
-    "old": "cues.push([0.92, 'step', C.FOOT, C.FOOT_PITCH, 0]);",
+    "old": "      cues.push([0.92, 'step', C.FOOT, C.FOOT_PITCH, 0]);",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -281,7 +281,7 @@
   {
     "name": "CLIMB4-corner-one-hand",
     "file": "src/player/climb/climbSounds.js",
-    "old": "cues.push([0.7, 'step', C.SHIMMY * 1.15, C.SHIMMY_PITCH, 0]);",
+    "old": "      cues.push([0.7, 'step', C.SHIMMY * 1.15, C.SHIMMY_PITCH, 0]);",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "CLIMB4-leap-grabs-in-the-air",
     "file": "src/player/climb/climbSounds.js",
-    "old": "cues.push([1, 'grab', C.GRAB * 1.2, 1, 0]);",
-    "new": "cues.push([0.9, 'grab', C.GRAB * 1.2, 1, 0]);",
+    "old": "      cues.push([1, 'grab', C.GRAB * 1.2, 1, 0]); // the hands taking the far hold",
+    "new": "      cues.push([0.9, 'grab', C.GRAB * 1.2, 1, 0]); // the hands taking the far hold",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -299,7 +299,7 @@
   {
     "name": "CLIMB4-wallrun-no-hands-at-the-top",
     "file": "src/player/climb/climbSounds.js",
-    "old": "cues.push([1, 'grab', C.GRAB * 1.1, 1, 0]);",
+    "old": "      cues.push([1, 'grab', C.GRAB * 1.1, 1, 0]);",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -308,8 +308,8 @@
   {
     "name": "CLIMB4-arrival-double-grab",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (this.cues && !live) {\n            this._flush(1, m);   // the move's arrival: its last cues are its own sound of the hold\n          } else {\n            this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75));   // the hands onto the wall\n          }",
-    "new": "this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75));   // the hands onto the wall",
+    "old": "          if (this.cues && !live) {\n            this._flush(1, m); // the move's arrival: its last cues are its own sound of the hold\n          } else {\n            this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75)); // the hands onto the wall\n          }",
+    "new": "          this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75)); // the hands onto the wall",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CLIMB4-chained-move-owes-nothing",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this._flush(1);   // a move chained on",
-    "new": "// a move chained on",
+    "old": "          this._flush(1); // a move chained on: the last one ended - what it still owed is due",
+    "new": "          // a move chained on: the last one ended - what it still owed is due",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "CLIMB4-release-into-move-lets-go",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!moving) {",
-    "new": "if (true) {",
+    "old": "          if (!moving) {",
+    "new": "          if (true) {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "CLIMB4-climb-reach-off-the-camera",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this.climbPhase += travel / FEEL.REACH;",
-    "new": "this.climbPhase += travel / FEEL.SHIMMY_SPAN;",
+    "old": "          this.climbPhase += travel / FEEL.REACH;",
+    "new": "          this.climbPhase += travel / FEEL.SHIMMY_SPAN;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CLIMB4-climb-no-boots",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (Math.floor(this.climbPhase - 0.5) > Math.floor(was - 0.5)) this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH);",
-    "new": "",
+    "old": "          if (Math.floor(this.climbPhase - 0.5) > Math.floor(was - 0.5))\n            this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH);\n        }",
+    "new": "        }",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -353,7 +353,7 @@
   {
     "name": "CLIMB4-clip-repeats",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (keys.length > 1 && key === prev) key = keys[(keys.indexOf(key) + 1) % keys.length];",
+    "old": "  if (keys.length > 1 && key === prev) key = keys[(keys.indexOf(key) + 1) % keys.length];",
     "new": "",
     "tests": [
       "test/player/climb4.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "CLIMB4-trickle-every-frame",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this._play('crumble', CLIMB_SOUND.TRICKLE);\n        this.trickleAt = this.t + this._between(CLIMB_SOUND.TRICKLE_MIN_S, CLIMB_SOUND.TRICKLE_MAX_S);",
-    "new": "this._play('crumble', CLIMB_SOUND.TRICKLE);",
+    "old": "        this.trickleAt = this.t + this._between(CLIMB_SOUND.TRICKLE_MIN_S, CLIMB_SOUND.TRICKLE_MAX_S);\n      }",
+    "new": "      }",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "CLIMB4-slip-on-a-let-go",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!(m.grip > 0)) {",
-    "new": "if (m.grip > 0) {",
+    "old": "            if (!(m.grip > 0)) {",
+    "new": "            if (m.grip > 0) {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "CLIMB4-slip-no-cry",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this._strain(0.7, m);",
-    "new": "",
+    "old": "              this._strain(0.7, m);\n            } else {",
+    "new": "            } else {",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "CLIMB4-let-go-silent",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this._play('step', CLIMB_SOUND.LET_GO, 1.15);",
-    "new": "",
+    "old": "              this._play('step', CLIMB_SOUND.LET_GO, 1.15); // the hands leaving the stone",
+    "new": "              // the hands leaving the stone",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "CLIMB4-strain-chance-inverted",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (this.rand() >= Math.min(0.9, chance * (1 + (1 - grip)))) return;",
-    "new": "if (this.rand() < Math.min(0.9, chance * (1 + (1 - grip)))) return;",
+    "old": "    if (this.rand() >= Math.min(0.9, chance * (1 + (1 - grip)))) return;",
+    "new": "    if (this.rand() < Math.min(0.9, chance * (1 + (1 - grip)))) return;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "CLIMB4-strain-gap-dropped",
     "file": "src/player/climb/climbSounds.js",
-    "old": "if (!this.strain || this.t - this.lastStrain < CLIMB_SOUND.STRAIN_GAP_S) return;",
-    "new": "if (!this.strain) return;",
+    "old": "    if (!this.strain || this.t - this.lastStrain < CLIMB_SOUND.STRAIN_GAP_S) return;",
+    "new": "    if (!this.strain) return;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "CLIMB4-strain-lift-unspent",
     "file": "src/player/climb/climbSounds.js",
-    "old": "this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1 + (voice.pitchLift ?? 0));",
-    "new": "this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1);",
+    "old": "    this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1 + (voice.pitchLift ?? 0)); // AUDIT 58: the lift spent, as every voice site spends it",
+    "new": "    this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1); // AUDIT 58: the lift spent, as every voice site spends it",
     "tests": [
       "test/player/climb4.test.js",
       "test/scenes/audit58_saveaudio.test.js"
@@ -444,8 +444,8 @@
   {
     "name": "CLIMB4-sfx-whoosh-unseeded",
     "file": "tools/climbSfx.mjs",
-    "old": "const rand = rng(0x700511);",
-    "new": "const rand = Math.random;",
+    "old": "  const rand = rng(0x700511);",
+    "new": "  const rand = Math.random;",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "CLIMB4-wallrun-looks-down",
     "file": "src/player/climb/climbFeel.js",
-    "old": "        case 'wallrun': pitchT = FEEL.WALLRUN_UP_DEG * DEG * bump(t, 0, 1.2);",
-    "new": "        case 'wallrun': pitchT = -FEEL.WALLRUN_UP_DEG * DEG * bump(t, 0, 1.2);",
+    "old": "          pitchT = FEEL.WALLRUN_UP_DEG * DEG * bump(t, 0, 1.2);",
+    "new": "          pitchT = -FEEL.WALLRUN_UP_DEG * DEG * bump(t, 0, 1.2);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "CLIMB4-view-order-swapped",
     "file": "src/player/climb/climbFeel.js",
-    "old": "  const e00 = cr, e01 = -sr * cp, e02 = -sr * sp;\n  const e10 = sr, e11 = cr * cp, e12 = cr * sp;\n  const e20 = 0, e21 = -sp, e22 = cp;",
-    "new": "  const e00 = cr, e01 = -sr, e02 = 0;\n  const e10 = cp * sr, e11 = cp * cr, e12 = sp;\n  const e20 = -sp * sr, e21 = -sp * cr, e22 = cp;",
+    "old": "    e01 = -sr * cp,\n    e02 = -sr * sp;\n  const e10 = sr,\n    e11 = cr * cp,\n    e12 = cr * sp;\n  const e20 = 0,\n    e21 = -sp,",
+    "new": "    e01 = -sr,\n    e02 = 0;\n  const e10 = cp * sr,\n    e11 = cp * cr,\n    e12 = sp;\n  const e20 = -sp * sr,\n    e21 = -sp * cr,",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "CLIMB4-handle-turn-never-paid",
     "file": "src/player/climb/climbFeel.js",
-    "old": "      if (this.fx.yaw) lookFilter?.turn?.(this.fx.yaw);\n",
-    "new": "",
+    "old": "      if (this.fx.yaw) lookFilter?.turn?.(this.fx.yaw);\n      sounds?.update(dt, m);",
+    "new": "      sounds?.update(dt, m);",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -663,8 +663,8 @@
   {
     "name": "CLIMB4-sounds-never-load",
     "file": "src/player/climb/climbSounds.js",
-    "old": "    if (this.install && this.audio) installClimbSounds(this.audio);\n",
-    "new": "",
+    "old": "    if (this.install && this.audio) installClimbSounds(this.audio);\n    const events = m.climbEvents ?? [];",
+    "new": "    const events = m.climbEvents ?? [];",
     "tests": [
       "test/player/climb4.test.js"
     ]
@@ -672,8 +672,8 @@
   {
     "name": "CLIMB4-strain-chance-ignored",
     "file": "src/player/climb/climbSounds.js",
-    "old": "    if (this.rand() >= Math.min(0.9, chance * (1 + (1 - grip)))) return;\n",
-    "new": "",
+    "old": "    if (this.rand() >= Math.min(0.9, chance * (1 + (1 - grip)))) return;\n    const voice = this.strain(this.rand);",
+    "new": "    const voice = this.strain(this.rand);",
     "tests": [
       "test/player/climb4.test.js"
     ]

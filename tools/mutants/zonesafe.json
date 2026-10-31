@@ -192,8 +192,8 @@
   {
     "name": "ZONESAFE-the-tip-line-unsaid",
     "file": "src/ui/hud/statusTips.js",
-    "old": "    lines.push(zoneSafe() ? ZONE_SAFE_TEXT.enter : ZONE_SAFE_TEXT.rule);",
-    "new": "    void 0;",
+    "old": "    lines.push(zoneSafe() ? ZONE_SAFE_TEXT.enter : ZONE_SAFE_TEXT.rule); // ZONE-SAFE: in a settlement's streets, their peace; elsewhere, where it is",
+    "new": "    void 0; // ZONE-SAFE: in a settlement's streets, their peace; elsewhere, where it is",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "ZONESAFE-the-row-unread",
     "file": "src/ui/hud/hudActiveSpells.js",
-    "old": "displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip,",
-    "new": "displayName: WILD_TEXT.chip,",
+    "old": "      displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip,",
+    "new": "      displayName: WILD_TEXT.chip,",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "ZONESAFE-the-legend-law-unread",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
-    "new": "return laws ? [ZONE_RULES[0], ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
+    "old": "    ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]",
+    "new": "    ? [ZONE_RULES[0], ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]",
     "tests": [
       "test/systems/wild/zonesafe.test.js"
     ],

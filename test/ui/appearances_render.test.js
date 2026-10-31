@@ -80,12 +80,12 @@ test('APPEARANCES THE BODY: the Morrowind body\'s worn armour and a shield in th
   const chest = armour(102, ARMOR_MATERIAL.Iron, 2), legs = armour(104, ARMOR_MATERIAL.Chain), helm = armour(107, ARMOR_MATERIAL.Leather, 1), shield = armour(112, ARMOR_MATERIAL.Ebony);
   for (const it of [chest, legs, helm, shield]) { me.items.push(it); equipItem(me, it); }
   const before = outfitPieces(outfitOfSlots(equipTableOf(me)));
-  assert.deepEqual(before, { head: 'l', top: 'p0', legs: 'c', cloak: null, weapon: null, offhand: null, spell: null });   // PIN MOVED (LAYERED-DUAL): a pair's second
+  assert.deepEqual(before, { head: 'l', top: 'p0', legs: 'c', cloak: null, shield: 't7', weapon: null, offhand: null, spell: null, stage: null });   // PIN MOVED (LAYERED-DUAL): a pair's second; (LAYERED-SHIELD) the Ebony Tower Shield
   chest.appearance = { t: 102, m: ARMOR_MATERIAL.Leather, v: 0 };
   legs.appearance = { t: 104, m: ARMOR_MATERIAL.Daedric, v: 5 };
   helm.appearance = { t: 107, m: ARMOR_MATERIAL.Ebony, v: 3 };
   shield.appearance = { t: 109, m: ARMOR_MATERIAL.Silver, v: 0 };
-  assert.deepEqual(outfitPieces(outfitOfSlots(equipTableOf(me))), { head: 'p4', top: 'l', legs: 'p6', cloak: null, weapon: null, offhand: null, spell: null }, 'an Ebony helm (the strips\' fifth metal), a leather top, Daedric legs');
+  assert.deepEqual(outfitPieces(outfitOfSlots(equipTableOf(me))), { head: 'p4', top: 'l', legs: 'p6', cloak: null, shield: 'b2', weapon: null, offhand: null, spell: null, stage: null }, 'an Ebony helm (the strips\' fifth metal), a leather top, Daedric legs, a Silver Buckler');
   const worn = dfWornArmor(equipTableOf(me), EQUIP_SLOTS, ARMOR_ENUM);
   assert.deepEqual(worn.map((p) => [p.templateIndex, p.material]).sort((a, b) => a[0] - b[0]), [[102, ARMOR_MATERIAL.Leather], [104, ARMOR_MATERIAL.Daedric], [107, ARMOR_MATERIAL.Ebony], [109, ARMOR_MATERIAL.Silver]]);
 });
@@ -116,7 +116,7 @@ test('APPEARANCES THE SHEET, THE CLONE AND THE HELM: the classic first-person sh
   assert.match(rig, /function artFor\(held\) \{\s*const plain = !!glowOf\(held\);\s*const type = heldType\(held\);\s*if \(type === WEAPON_TYPES\.None\) return null;\s*const item = drawnPiece\(held\);/);
   // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
   assert.match(rig, /art: c \? artFor\(item\) : null, weapon: drawnPiece\(item\),\s*weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/);
-  assert.match(strip(read('src/characters/headPortraits.js')), /const helm = drawnPiece\(entity\?\.equip \? equipTableOf\(entity\)\?\.\[EQUIP_SLOTS\.Head\] \?\? null : null\);/);
+  assert.match(strip(read('src/characters/headPortraits.js')), /const helm = drawnPiece\(entity\?\.equip \? \(equipTableOf\(entity\)\?\.\[EQUIP_SLOTS\.Head\] \?\? null\) : null\);/);
   const sword = createWeapon(WEAPONS.Longsword, 1);
   sword.appearance = { t: WEAPONS.Katana, m: 7, v: 0 };
   assert.equal(drawnPiece(sword), drawnPiece(sword), 'one copy, so the clone sees one weapon');

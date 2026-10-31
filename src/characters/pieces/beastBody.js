@@ -121,18 +121,7 @@ export function buildBeastBody(ramp = PELT_RAMP, s = {}) {
     const x = side * girth * 0.66;
     box(quad, x - legs, 0.02 * HSCALE, z - legs, x + legs, belly + 0.02, z + legs, 0.7, 0.6, 0.35);
     // A paw, wider than the leg, or the animal stands on pins.
-    box(
-      quad,
-      x - legs * 1.5,
-      0,
-      z - legs * 1.4,
-      x + legs * 1.5,
-      0.03 * HSCALE,
-      z + legs * 1.8,
-      0.4,
-      0.34,
-      0.24,
-    );
+    box(quad, x - legs * 1.5, 0, z - legs * 1.4, x + legs * 1.5, 0.03 * HSCALE, z + legs * 1.8, 0.4, 0.34, 0.24);
   }
 
   // ── THE TAIL ────────────────────────────────────────────────────

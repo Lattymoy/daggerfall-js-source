@@ -2,8 +2,8 @@
   {
     "name": "SD15-the-disc-unread",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "  if (A === SD_BLOWS.stomp) { const dx = x - atk.x, dz = z - atk.z; return dx * dx + dz * dz <= S.r * S.r; }\n",
-    "new": "",
+    "old": "  if (A === SD_BLOWS.stomp) {\n    const dx = x - atk.x,\n      dz = z - atk.z;\n    return dx * dx + dz * dz <= S.r * S.r;\n  }\n  if (A === SD_BLOWS.hand) return handSweepHas(handSweepOf(atk, S, t, over), x, z);",
+    "new": "  if (A === SD_BLOWS.hand) return handSweepHas(handSweepOf(atk, S, t, over), x, z);",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD15-no-way-out",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "way = Number.isFinite(yaw) ? wayOutOf(bestA, bestAtk, S, t, over, fx, fz) : null;",
-    "new": "way = null;",
+    "old": "      way = Number.isFinite(yaw) ? wayOutOf(bestA, bestAtk, S, t, over, fx, fz) : null;",
+    "new": "      way = null;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD15-the-ring-never-called",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;\n",
-    "new": "",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD15-the-ring-called-after-it-passed",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M",
-    "new": "      if (Math.abs(d - front) <= SD_JUMP_CALL_M",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;",
+    "new": "      if (Math.abs(d - front) <= SD_JUMP_CALL_M && (!jumpAtk || atk.at < jumpAtk.at)) jumpAtk = atk;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD15-the-shade-ignored",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "    if (t0 < 1) return false;\n  }\n  return true;\n}",
-    "new": "    if (t0 < 1) void 0;\n  }\n  return true;\n}",
+    "old": "    if (t0 < 1) return false;",
+    "new": "    if (t0 < 1) void 0;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD15-the-beams-past-read",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "  const t0 = Math.max(t, atk.at), t1 = atk.at + S.active;",
-    "new": "  const t0 = atk.at, t1 = atk.at + S.active;",
+    "old": "  const t0 = Math.max(t, atk.at),",
+    "new": "  const t0 = atk.at,",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD15-the-echoes-unread",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "const atk = i < 0 ? s.rem?.atk : ec[i].h > 0 ? ec[i].atk : null;",
-    "new": "const atk = i < 0 ? s.rem?.atk : null;",
+    "old": "    const atk = i < 0 ? s.rem?.atk : ec[i].h > 0 ? ec[i].atk : null;",
+    "new": "    const atk = i < 0 ? s.rem?.atk : null;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD15-the-latest-of-two",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "(bestAtk && bestAtk.at <= atk.at)",
-    "new": "(bestAtk && bestAtk.at >= atk.at)",
+    "old": "      (bestAtk && bestAtk.at <= atk.at) ||",
+    "new": "      (bestAtk && bestAtk.at >= atk.at) ||",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD15-the-pulse-in-it",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "|| !isPlace(A) || !insideAt(A, atk, S, t, over, fx, fz)) continue;",
-    "new": "|| (isPlace(A) && !insideAt(A, atk, S, t, over, fx, fz))) continue;",
+    "old": "      !isPlace(A) ||\n      !insideAt(A, atk, S, t, over, fx, fz)",
+    "new": "      (isPlace(A) && !insideAt(A, atk, S, t, over, fx, fz))",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD15-a-way-out-past-the-rim",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "      if (Math.hypot(x, z) > R) break;\n",
-    "new": "",
+    "old": "      if (Math.hypot(x, z) > R) break;\n      if (!inside(x, z)) {",
+    "new": "      if (!inside(x, z)) {",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD15-the-brass-unfelt",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "  const m = groundViewModel({ inside: !!burning,",
-    "new": "  const m = groundViewModel({ inside: false,",
+    "old": "    inside: !!burning,",
+    "new": "    inside: false,",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "SD15-a-late-joins-beats",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "        k = { fi: s.fi, awake: t >= s.op, ph: s.ph, last: Number.isFinite(s.ends) && s.ends - t <= SD_BEAT_LAST_MS, fell: !!s.fell };",
+    "old": "        k = {\n          fi: s.fi,\n          awake: t >= s.op,\n          ph: s.ph,\n          last: Number.isFinite(s.ends) && s.ends - t <= SD_BEAT_LAST_MS,\n          fell: !!s.fell,\n        };",
     "new": "        k = { fi: s.fi, awake: false, ph: 1, last: false, fell: false };",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "SD15-the-wake-late",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show(",
-    "new": "if (awake && !k.awake) show(",
+    "old": "      if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, sdWakeText(s.mk));",
+    "new": "      if (awake && !k.awake) show('wake', s.op, sdWakeText(s.mk));",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD15-no-last-minute",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "      if (last && !k.last) show('last', t, SD_BEAT_TEXT.last, '#ff6a5a');\n",
-    "new": "",
+    "old": "      if (last && !k.last) show('last', t, SD_BEAT_TEXT.last, '#ff6a5a');\n      k.last = k.last || last;",
+    "new": "      k.last = k.last || last;",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD15-the-fall-late",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "if (s.fell && !k.fell) { k.fell = true; if (t - s.fell.at < SD_BEAT_LATE_MS) show(",
-    "new": "if (s.fell && !k.fell) { k.fell = true; if (true) show(",
+    "old": "        if (t - s.fell.at < SD_BEAT_LATE_MS) show('fell', s.fell.at, SD_BEAT_TEXT.fell);",
+    "new": "        if (true) show('fell', s.fell.at, SD_BEAT_TEXT.fell);",
     "tests": [
       "test/net/superDungeon/sd15_read.test.js"
     ]

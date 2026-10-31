@@ -19,8 +19,15 @@
 // window yet (Ledger C), so the flow mounts this from the start
 // menu's Load arm instead - see scenes/menu.js.
 
-import { nativeMetrics, drawImg, drawRect, shadowText, pointToNative, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
-import { audio } from '../systems/audio.js';   // AUDIT 64 F44: the three sounded click handlers
+import {
+  nativeMetrics,
+  drawImg,
+  drawRect,
+  shadowText,
+  pointToNative,
+  DEFAULT_TEXT_COLOR,
+} from './native/nativePanel.js';
+import { audio } from '../systems/audio.js'; // AUDIT 64 F44: the three sounded click handlers
 import { SOUND } from '../systems/soundClips.js';
 
 export const LOAD_CLASSIC_IMG = 'LOAD00I0.IMG';
@@ -87,7 +94,7 @@ export class LoadClassicWindow {
     if (!pt) return null;
     const [vx, vy] = pt;
     for (let i = 0; i < this.slots.length; i++) {
-      if (!this.slots[i]) continue;   // an unmounted slot has no buttons
+      if (!this.slots[i]) continue; // an unmounted slot has no buttons
       if (inRect(SAVE_IMAGE_RECTS[i], vx, vy) || inRect(SAVE_TEXT_RECTS[i], vx, vy)) {
         // AUDIT 64 F44: SaveGame_OnMouseClick (:219-223) and
         // SaveGame_OnMouseDoubleClick (:225-230) both HEAD with
@@ -98,17 +105,17 @@ export class LoadClassicWindow {
         // doubleClickDelay) MouseDoubleClick(...)` at :691-692. Both
         // handlers are on the same slot button (:132-133, :139-140), so
         // the second press of a double click sounds TWICE.
-        audio.playOneShot(SOUND.ButtonClick, 1);   // MouseClick -> :221
+        audio.playOneShot(SOUND.ButtonClick, 1); // MouseClick -> :221
         this.selectedSaveGame = i;
         if (!isDouble) return { action: 'select', index: i };
         // :228 re-runs SelectSaveGame on the same index (idempotent),
         // then :229 opens it.
-        audio.playOneShot(SOUND.ButtonClick, 1);   // MouseDoubleClick -> :227
+        audio.playOneShot(SOUND.ButtonClick, 1); // MouseDoubleClick -> :227
         return { action: 'load', index: i };
       }
     }
     if (this.selectedSaveGame >= 0 && inRect(LOAD_BUTTON_RECT, vx, vy)) {
-      audio.playOneShot(SOUND.ButtonClick, 1);   // LoadGameButton_OnMouseClick (:213-217)
+      audio.playOneShot(SOUND.ButtonClick, 1); // LoadGameButton_OnMouseClick (:213-217)
       return { action: 'load', index: this.selectedSaveGame };
     }
     // The exit button is DaggerfallUI.AddButton(..., wmCloseWindow, ...)

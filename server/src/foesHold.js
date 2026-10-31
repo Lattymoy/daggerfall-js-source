@@ -89,7 +89,11 @@ export function served(hold, e) {
   const turn = (hold.turn?.ws === e.ws ? hold.turn.bytes : 0) + e.length;
   unhold(hold, e);
   const mine = heldOf(hold, e.ws);
-  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) { mine[0].seq = e.seq; hold.turn = { ws: e.ws, bytes: turn }; return; }
+  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) {
+    mine[0].seq = e.seq;
+    hold.turn = { ws: e.ws, bytes: turn };
+    return;
+  }
   for (const next of mine) next.seq = hold.seq++;
 }
 
@@ -108,8 +112,13 @@ function roomFor(hold, mine, over) {
   for (const e of hold.entries) bytes.set(e.ws, (bytes.get(e.ws) ?? 0) + e.length);
   const taken = [];
   while (over > 0) {
-    let top = null, most = mine;
-    for (const [s, b] of bytes) if (b > most) { top = s; most = b; }
+    let top = null,
+      most = mine;
+    for (const [s, b] of bytes)
+      if (b > most) {
+        top = s;
+        most = b;
+      }
     if (top === null) return null;
     const theirs = hold.entries.filter((e) => e.ws === top && !taken.includes(e));
     const e = theirs.findLast((x) => !x.hands) ?? /** @type {any} */ (theirs.at(-1));

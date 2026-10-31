@@ -33,16 +33,22 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
-import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
-import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
-import { t } from '../textManager.js';   // QUEST-ELSEWHERE: its line in the player's language
+import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js'; // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { isOnlinePage } from '../online/onlineLane.js'; // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { isShelved } from './quest.js'; // QUEST-SHELF's audit: the repair mends no quest set aside
+import { t } from '../textManager.js'; // QUEST-ELSEWHERE: its line in the player's language
 
-const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol', CreateNpc: 'npcSymbol' });
+const PLACEMENTS = Object.freeze({
+  PlaceNpc: 'npcSymbol',
+  PlaceItem: 'itemSymbol',
+  PlaceFoe: 'foeSymbol',
+  CreateNpc: 'npcSymbol',
+});
 
 /** CREATE-HOME: the Place a completed `create npc` put its person at - their generated home (Person.PlaceAtHome), never
  *  a questor's or an individual's, whom PlaceAtHome refuses. */
-const homeOf = (person) => (person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? person.getHomePlace?.() ?? null : null);
+const homeOf = (person) =>
+  person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? (person.getHomePlace?.() ?? null) : null;
 
 /** A quest still running: neither complete nor tombstoned. */
 export const questRunning = (quest) => !!quest && !quest.questComplete && !quest.questTombstoned;
@@ -72,10 +78,10 @@ export function placeHoldsTargets(place) {
 export function goneOnPurpose(res, quest, { carriesQuestItem = null } = {}) {
   if (res.isPerson) return !!res.isDestroyed || !!(res.isIndividualNPC && res.isIndividualAtHome);
   if (res.isItem) {
-    if (res.isHidden || res.madePermanent || res.playerDropped) return true;   // picked up / the player's own / dropped
+    if (res.isHidden || res.madePermanent || res.playerDropped) return true; // picked up / the player's own / dropped
     if (carriesQuestItem?.(res)) return true;
     const df = res.daggerfallUnityItem ?? null;
-    if (df) for (const r of quest.resources?.values?.() ?? []) if (r?.isFoe && r.itemQueue?.includes?.(df)) return true;   // given to a foe
+    if (df) for (const r of quest.resources?.values?.() ?? []) if (r?.isFoe && r.itemQueue?.includes?.(df)) return true; // given to a foe
     return false;
   }
   if (res.isFoe) return !!res.isHidden || !((res.killCount ?? 0) < (res.spawnCount ?? 0));
@@ -91,11 +97,17 @@ export function placementIntents(quest) {
       const field = PLACEMENTS[a?.typeName];
       if (!field || !a.isComplete) continue;
       const res = quest.getResource?.(a[field]);
-      const place = a.typeName === 'CreateNpc' ? homeOf(res) : quest.getPlace?.(a.placeSymbol);   // CREATE-HOME: `create npc` names no Place - its person's home is where it put them
+      const place = a.typeName === 'CreateNpc' ? homeOf(res) : quest.getPlace?.(a.placeSymbol); // CREATE-HOME: `create npc` names no Place - its person's home is where it put them
       if (!res || !place) continue;
       const name = res.symbol?.name;
       const prev = out.get(name);
-      const intent = { res, place, marker: Number.isInteger(a.marker) ? a.marker : -1, pref: a.markerPreference ?? MARKER_PREFERENCE.Default, ambiguous: false };
+      const intent = {
+        res,
+        place,
+        marker: Number.isInteger(a.marker) ? a.marker : -1,
+        pref: a.markerPreference ?? MARKER_PREFERENCE.Default,
+        ambiguous: false,
+      };
       if (!prev) out.set(name, intent);
       else if (prev.place !== place) prev.ambiguous = true;
     }
@@ -104,7 +116,8 @@ export function placementIntents(quest) {
     if (!it.res.isPerson || !it.res.assignedPlaceSymbol) continue;
     const last = quest.getPlace?.(it.res.assignedPlaceSymbol);
     if (!last) continue;
-    if (last !== it.place) out.set(name, { ...it, place: last, marker: -1, pref: MARKER_PREFERENCE.Default, ambiguous: false });
+    if (last !== it.place)
+      out.set(name, { ...it, place: last, marker: -1, pref: MARKER_PREFERENCE.Default, ambiguous: false });
     else it.ambiguous = false;
   }
   return out;
@@ -116,8 +129,13 @@ export function putBackPlacements(quest, env = {}, report = { people: 0, items: 
   const held = targetedNames(quest);
   for (const [name, it] of placementIntents(quest)) {
     if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;
-    try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }   // a Place with no markers throws: that one is not repairable here
-    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol);   // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)
+    try {
+      it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false);
+    } catch {
+      report.failed++;
+      continue;
+    } // a Place with no markers throws: that one is not repairable here
+    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol); // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)
     held.add(name);
     if (it.res.isPerson) report.people++;
     else if (it.res.isItem) report.items++;
@@ -169,7 +187,7 @@ export function relayOnlineDungeons(machine, env = {}) {
  *  and its copy pointed into blocks this page's world-sized build has not; the load's pass alone re-laid it, the next
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
-  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;   // INSTANCES: the whole dungeon's, as its markers know it
+  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false; // INSTANCES: the whole dungeon's, as its markers know it
   const { moved, unread } = relayDungeonPlaces(quest);
   if (!unread) quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
   if (!moved) return false;
@@ -183,19 +201,36 @@ export function relayQuestOnline(quest, env = {}) {
  *  one body (relayQuestOnline, relayMovedLayouts). */
 function relayDungeonPlaces(quest, { only = null } = {}) {
   const world = quest.hooks?.world ?? null;
-  let moved = false, unread = false;
+  let moved = false,
+    unread = false;
   for (const r of quest.resources?.values?.() ?? []) {
     const sd = r?.isPlace ? r.siteDetails : null;
     if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
     const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
-    if (!location?.dungeon?.blocks) { unread = true; continue; }
+    if (!location?.dungeon?.blocks) {
+      unread = true;
+      continue;
+    }
     if (only && !only(sd, location)) continue;
     let markers;
-    try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
-    if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
-      && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;
-    r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
+    try {
+      markers = r._enumerateDungeonQuestMarkers(world, location);
+    } catch {
+      unread = true;
+      continue;
+    }
+    if (
+      markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers) &&
+      markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)
+    )
+      continue;
+    r.siteDetails = {
+      ...sd,
+      questSpawnMarkers: markers.questSpawnMarkers,
+      questItemMarkers: markers.questItemMarkers,
+      selectedMarker: { targetResources: null },
+    };
     moved = true;
   }
   return { moved, unread };
@@ -214,7 +249,8 @@ function relayDungeonPlaces(quest, { only = null } = {}) {
  * moves. `mapId` the mount's key for the dungeon (its site links'). Answers the count of Places re-laid. Run before the dungeon's scene mount (scenes/worldModes.js
  * mountQuestResources). Not a DFU member (DFU's layout is the one size).
  */
-export function relayBuiltDungeon(machine, location, env = {}, mapId = location?.mapTableData?.mapId ?? 0) {   // `mapId` the mount's own key (the dungeon adapter's currentMapId)
+export function relayBuiltDungeon(machine, location, env = {}, mapId = location?.mapTableData?.mapId ?? 0) {
+  // `mapId` the mount's own key (the dungeon adapter's currentMapId)
   if (!machine?.getSiteLinks || !location?.dungeon?.blocks?.length) return 0;
   let relaid = 0;
   const seen = new Set();
@@ -228,13 +264,25 @@ export function relayBuiltDungeon(machine, location, env = {}, mapId = location?
     const world = quest.hooks?.world ?? null;
     if (!world?.getBlock) continue;
     let markers;
-    try { markers = place._enumerateDungeonQuestMarkers(world, location); } catch { continue; }
-    const here = new Set(`${markerAddresses(markers.questSpawnMarkers)};${markerAddresses(markers.questItemMarkers)}`.split(';'));
-    const held = [sd.selectedMarker, ...(sd.questSpawnMarkers ?? []), ...(sd.questItemMarkers ?? [])]
-      .filter((m) => (m?.targetResources?.length ?? 0) > 0 && Number.isInteger(m.dungeonX));   // a marker with no block address is not one to judge
+    try {
+      markers = place._enumerateDungeonQuestMarkers(world, location);
+    } catch {
+      continue;
+    }
+    const here = new Set(
+      `${markerAddresses(markers.questSpawnMarkers)};${markerAddresses(markers.questItemMarkers)}`.split(';'),
+    );
+    const held = [sd.selectedMarker, ...(sd.questSpawnMarkers ?? []), ...(sd.questItemMarkers ?? [])].filter(
+      (m) => (m?.targetResources?.length ?? 0) > 0 && Number.isInteger(m.dungeonX),
+    ); // a marker with no block address is not one to judge
     if (!held.length || held.every((m) => here.has(markerAddresses([m])))) continue;
-    if (!markers.questSpawnMarkers && !markers.questItemMarkers) continue;   // a build with no markers at all: nowhere to stand them
-    place.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
+    if (!markers.questSpawnMarkers && !markers.questItemMarkers) continue; // a build with no markers at all: nowhere to stand them
+    place.siteDetails = {
+      ...sd,
+      questSpawnMarkers: markers.questSpawnMarkers,
+      questItemMarkers: markers.questItemMarkers,
+      selectedMarker: { targetResources: null },
+    };
     putBackPlacements(quest, env);
     relaid++;
   }
@@ -254,7 +302,8 @@ export function relayBuiltDungeon(machine, location, env = {}, mapId = location?
  */
 export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
   let relaid = 0;
-  for (const quest of machine?.quests?.values?.() ?? []) if (relayQuestMovedLayout(quest, machine, env, online)) relaid++;
+  for (const quest of machine?.quests?.values?.() ?? [])
+    if (relayQuestMovedLayout(quest, machine, env, online)) relaid++;
   return relaid;
 }
 /**
@@ -267,8 +316,9 @@ export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
  */
 export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlinePage()) {
   if (!questRunning(quest) || !portSize(quest.smallerDungeonsState)) return false;
-  const only = (sd, location) => location.dungeon?.distinct === true
-    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);
+  const only = (sd, location) =>
+    location.dungeon?.distinct === true &&
+    (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);
   if (!relayDungeonPlaces(quest, { only }).moved) return false;
   putBackPlacements(quest, env);
   return true;
@@ -281,13 +331,23 @@ export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlin
  * Answers the counts and the line the player reads.
  */
 export function repairActiveQuests(machine, env = {}) {
-  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0, elsewhere: false };
+  const report = {
+    quests: 0,
+    people: 0,
+    items: 0,
+    foes: 0,
+    relinked: 0,
+    revealed: 0,
+    topics: 0,
+    failed: 0,
+    elsewhere: false,
+  };
   // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
   // still follow a moved layout (the relays above), so a reclaim finds them true.
   const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
   report.quests = quests.length;
   const was = !!machine?.mountByName;
-  if (machine) machine.mountByName = true;   // every mount the pass runs matches by name (sceneMount.js)
+  if (machine) machine.mountByName = true; // every mount the pass runs matches by name (sceneMount.js)
   try {
     for (const quest of quests) {
       try {
@@ -296,7 +356,9 @@ export function repairActiveQuests(machine, env = {}) {
         // 2. one link per (quest, Place) that holds targets
         for (const r of quest.resources?.values?.() ?? []) {
           if (!r?.isPlace || !placeHoldsTargets(r)) continue;
-          const linked = (machine.siteLinks ?? []).some((l) => l.questUID === quest.uid && l.placeSymbol?.name === r.symbol?.name);
+          const linked = (machine.siteLinks ?? []).some(
+            (l) => l.questUID === quest.uid && l.placeSymbol?.name === r.symbol?.name,
+          );
           if (linked) continue;
           machine.createSiteLink(quest, r.symbol);
           report.relinked++;
@@ -307,15 +369,29 @@ export function repairActiveQuests(machine, env = {}) {
             if (a?.typeName !== 'RevealLocation' || !a.isComplete) continue;
             const place = quest.getPlace?.(a.placeSymbol);
             if (!place?.siteDetails) continue;
-            try { if (env.discoverLocation?.(place.siteDetails.regionName, place.siteDetails.locationName) === true) report.revealed++; } catch { report.failed++; }
+            try {
+              if (env.discoverLocation?.(place.siteDetails.regionName, place.siteDetails.locationName) === true)
+                report.revealed++;
+            } catch {
+              report.failed++;
+            }
           }
         }
-        if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) { env.addQuestTopics(quest); report.topics++; }
-      } catch { report.failed++; }
+        if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) {
+          env.addQuestTopics(quest);
+          report.topics++;
+        }
+      } catch {
+        report.failed++;
+      }
     }
     // 4. where the player stands, now - QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a re-laid public room mounts none of a
     // quest's things (worldModes.js mountQuestResources answers 'elsewhere'), and the repair says where they are
-    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }
+    try {
+      if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true;
+    } catch {
+      report.failed++;
+    }
   } finally {
     if (machine) machine.mountByName = was;
   }
@@ -330,20 +406,31 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
  *  Repair'"): online, a dungeon's public room is laid smaller for most dungeons, and a quest's things stand in the dungeon
  *  laid whole - the player's instance (systems/instancePlaces.js questMountsHere). The repair found nothing missing, and
  *  said only that. */
-export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's targets in this dungeon are only in your own instance. Leave and enter again, choosing Your instance.");
+export const questElsewhereLine = () =>
+  t(
+    'quest.repair.elsewhere',
+    "Your quest's targets in this dungeon are only in your own instance. Leave and enter again, choosing Your instance.",
+  );
 
 /** The line the player reads after a repair - QUEST-ELSEWHERE: where its things are, never "nothing was missing", when
  *  the room the player stands in holds none of them. */
 export function questRepairText(r) {
   if (!r || !r.quests) return 'You have no active quests to repair.';
-  const put = [r.people ? plural(r.people, 'person', 'people') : null, r.items ? plural(r.items, 'item', 'items') : null, r.foes ? plural(r.foes, 'foe', 'foes') : null].filter(Boolean);
+  const put = [
+    r.people ? plural(r.people, 'person', 'people') : null,
+    r.items ? plural(r.items, 'item', 'items') : null,
+    r.foes ? plural(r.foes, 'foe', 'foes') : null,
+  ].filter(Boolean);
   const parts = [];
   if (put.length) parts.push(`put back ${put.join(', ')}`);
   if (r.relinked) parts.push(`reconnected ${plural(r.relinked, 'place', 'places')}`);
   if (r.revealed) parts.push(`marked ${plural(r.revealed, 'location', 'locations')} on your map`);
   if (r.topics) parts.push(`restored what people know about ${plural(r.topics, 'quest', 'quests')}`);
-  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.`
-    : r.elsewhere ? questElsewhereLine() : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
+  const head = parts.length
+    ? `Quests repaired: ${parts.join('; ')}.`
+    : r.elsewhere
+      ? questElsewhereLine()
+      : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
   const said = parts.length && r.elsewhere ? `${head} ${questElsewhereLine()}` : head;
   return r.failed ? `${said} ${plural(r.failed, 'part', 'parts')} could not be checked.` : said;
 }

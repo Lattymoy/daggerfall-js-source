@@ -11,8 +11,8 @@
   {
     "name": "WALLET-WEIGHT-every-holding-weighing-all-of-them",
     "file": "src/systems/walletItem.js",
-    "old": "w + (it.templateIndex === t ? itemWeight(it) : 0), 0);",
-    "new": "w + itemWeight(it), 0);",
+    "old": "  const kg = (t) => held.reduce((w, it) => w + (it.templateIndex === t ? itemWeight(it) : 0), 0);",
+    "new": "  const kg = (t) => held.reduce((w, it) => w + itemWeight(it), 0);",
     "tests": [
       "test/systems/wallet_weight.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WALLET-WEIGHT-no-row-weight",
     "file": "src/systems/walletItem.js",
-    "old": "weight: n ? walletKg(kg) : null });",
-    "new": "weight: null });",
+    "old": "  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });",
+    "new": "  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: null });",
     "tests": [
       "test/systems/wallet_weight.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WALLET-WEIGHT-an-empty-holding-weighed",
     "file": "src/systems/walletItem.js",
-    "old": "weight: n ? walletKg(kg) : null });",
-    "new": "weight: walletKg(kg) });",
+    "old": "  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });",
+    "new": "  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: walletKg(kg) });",
     "tests": [
       "test/systems/wallet_weight.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WALLET-WEIGHT-the-figure-places",
     "file": "src/systems/walletItem.js",
-    "old": "`${(Number(kg) || 0).toFixed(2)} kg`",
-    "new": "`${(Number(kg) || 0).toFixed(1)} kg`",
+    "old": "export const walletKg = (/** @type {number} */ kg) => `${(Number(kg) || 0).toFixed(2)} kg`;",
+    "new": "export const walletKg = (/** @type {number} */ kg) => `${(Number(kg) || 0).toFixed(1)} kg`;",
     "tests": [
       "test/systems/wallet_weight.test.js"
     ]

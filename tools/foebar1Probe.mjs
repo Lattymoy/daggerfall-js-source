@@ -18,7 +18,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 
 const ROOT = normalize(join(dirname(fileURLToPath(import.meta.url)), '..'));
-const PAGE_NAME = 'foebar1-probe.tmp.html';   // written into play/ - the game's own directory (U60: no probe drives the root as the game)
+const PAGE_NAME = 'foebar1-probe.tmp.html'; // written into play/ - the game's own directory (U60: no probe drives the root as the game)
 const OUT = process.env.FOEBAR1_OUT ?? join(ROOT, 'tools');
 
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOEBAR1 probe</title>
@@ -52,10 +52,15 @@ document.title = 'ready';
 <\/script></body></html>`;
 
 const fails = [];
-const check = (name, ok, detail = '') => { if (!ok) fails.push(`${name}${detail ? ` - ${detail}` : ''}`); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  if (!ok) fails.push(`${name}${detail ? ` - ${detail}` : ''}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 
 await mkdir(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
@@ -66,12 +71,19 @@ try {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (er) => errors.push(er.message));
-  await page.goto(`http://127.0.0.1:${port}/play/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(`http://127.0.0.1:${port}/play/${PAGE_NAME}?nofonts`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
   await page.waitForFunction(() => !!globalThis.__probe, null, { timeout: 30000 });
   const P = (fn, ...a) => page.evaluate(fn, ...a);
   const sleep = (ms) => page.waitForTimeout(ms);
   const loaded = await P(() => globalThis.__probe.loaded());
-  check('both pictures are served as PNG from the module\'s own URL, from the game\'s directory', Object.keys(loaded).length === 2 && Object.values(loaded).every((v) => typeof v === 'number' && v > 1000), JSON.stringify(loaded));
+  check(
+    "both pictures are served as PNG from the module's own URL, from the game's directory",
+    Object.keys(loaded).length === 2 && Object.values(loaded).every((v) => typeof v === 'number' && v > 1000),
+    JSON.stringify(loaded),
+  );
   for (const style of ['bar', 'blade']) {
     check(`the pref takes '${style}'`, (await P((s) => globalThis.__probe.style(s), style)) === style);
     for (const pct of [100, 50, 10]) {
@@ -80,20 +92,49 @@ try {
       const r = await P(() => globalThis.__probe.read());
       check(`${style} @${pct}: the target block is on`, r.on === true, JSON.stringify(r));
       if (style === 'blade') {
-        check(`blade @${pct}: the blade shows and the track hides`, r.blade && r.bladeDisplay === 'block' && r.trackDisplay === 'none', `${r.bladeDisplay}/${r.trackDisplay}`);
+        check(
+          `blade @${pct}: the blade shows and the track hides`,
+          r.blade && r.bladeDisplay === 'block' && r.trackDisplay === 'none',
+          `${r.bladeDisplay}/${r.trackDisplay}`,
+        );
         const x = ((100 - pct) / 2).toFixed(2);
         // the browser normalises the four-value inset to its short form (`inset(0px 25%)`)
         const insets = (r.clip.match(/[\d.]+%/g) ?? []).map(parseFloat);
-        check(`blade @${pct}: the fill is clipped in ${x}% from each tip`, insets.length >= 1 && insets.every((v) => Math.abs(v - Number(x)) < 0.01) && /^inset\(0(?:px)? /.test(r.clip), r.clip);
-        check(`blade @${pct}: both pictures are the crop`, /foe-blade-empty\.png/.test(r.emptyImg) && /foe-blade-full\.png/.test(r.fullImg), `${r.emptyImg} | ${r.fullImg}`);
-        check(`blade @${pct}: the shape keeps the crop's aspect`, Math.abs(r.w / r.h - 981 / 130) < 0.05, `${r.w}x${r.h}`);
-        check(`blade @${pct}: the drained bar lets the world through and the fill does not`, Math.abs(parseFloat(r.emptyOpacity) - 0.72) < 0.001 && parseFloat(r.fullOpacity) === 1, `${r.emptyOpacity}/${r.fullOpacity}`);
+        check(
+          `blade @${pct}: the fill is clipped in ${x}% from each tip`,
+          insets.length >= 1 && insets.every((v) => Math.abs(v - Number(x)) < 0.01) && /^inset\(0(?:px)? /.test(r.clip),
+          r.clip,
+        );
+        check(
+          `blade @${pct}: both pictures are the crop`,
+          /foe-blade-empty\.png/.test(r.emptyImg) && /foe-blade-full\.png/.test(r.fullImg),
+          `${r.emptyImg} | ${r.fullImg}`,
+        );
+        check(
+          `blade @${pct}: the shape keeps the crop's aspect`,
+          Math.abs(r.w / r.h - 981 / 130) < 0.05,
+          `${r.w}x${r.h}`,
+        );
+        check(
+          `blade @${pct}: the drained bar lets the world through and the fill does not`,
+          Math.abs(parseFloat(r.emptyOpacity) - 0.72) < 0.001 && parseFloat(r.fullOpacity) === 1,
+          `${r.emptyOpacity}/${r.fullOpacity}`,
+        );
       } else {
-        check(`bar @${pct}: the plain track shows and the blade hides`, !r.blade && r.trackDisplay !== 'none' && r.bladeDisplay === 'none', `${r.trackDisplay}/${r.bladeDisplay}`);
+        check(
+          `bar @${pct}: the plain track shows and the blade hides`,
+          !r.blade && r.trackDisplay !== 'none' && r.bladeDisplay === 'none',
+          `${r.trackDisplay}/${r.bladeDisplay}`,
+        );
         check(`bar @${pct}: the fill is ${pct}%`, Math.abs(parseFloat(r.fill) - pct) < 0.01, r.fill);
       }
       const rect = await P(() => globalThis.__probe.rect());
-      const clip = { x: Math.max(0, rect.x - 24), y: Math.max(0, rect.y - 12), width: Math.min(900, rect.width + 48), height: rect.height + 24 };
+      const clip = {
+        x: Math.max(0, rect.x - 24),
+        y: Math.max(0, rect.y - 12),
+        width: Math.min(900, rect.width + 48),
+        height: rect.height + 24,
+      };
       await page.screenshot({ path: join(OUT, `foebar1-${style}-${pct}.png`), clip });
     }
   }

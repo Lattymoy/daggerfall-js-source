@@ -47,8 +47,8 @@
   {
     "name": "SEAT-WORDS-the-given-house-unread",
     "file": "src/systems/knightlyGifts.js",
-    "old": "((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()",
-    "new": "false ? alreadyGivenHouseText()",
+    "old": "      line:\n        ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0\n          ? alreadyGivenHouseText()\n          : t(\n              'knight.seatHouse',\n              \"Online, ranks {officer} and {master} are the order's chapter chairs, held by winning Merit. A chair brings no house.\",\n              { officer: SEAT_RANK.officer, master: SEAT_RANK.master },\n            ),",
+    "new": "      line: false\n        ? alreadyGivenHouseText()\n        : t(\n            'knight.seatHouse',\n            \"Online, ranks {officer} and {master} are the order's chapter chairs, held by winning Merit. A chair brings no house.\",\n            { officer: SEAT_RANK.officer, master: SEAT_RANK.master },\n          ),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEAT-WORDS-the-house-ranks-not-the-laws",
     "file": "src/systems/knightlyGifts.js",
-    "old": "{ officer: SEAT_RANK.officer, master: SEAT_RANK.master }) };",
-    "new": "{ officer: 7, master: SEAT_RANK.master }) };",
+    "old": "              { officer: SEAT_RANK.officer, master: SEAT_RANK.master },",
+    "new": "              { officer: 7, master: SEAT_RANK.master },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEAT-WORDS-the-page-not-asked-at-the-hold",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      if (line) say(line);\n      noteFirstUse('chapters');\n",
-    "new": "      if (line) say(line);\n",
+    "old": "      noteFirstUse('chapters');\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEAT-WORDS-the-page-not-asked-at-the-first-word",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');\n",
-    "new": "",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');\n      const line = standingLine(entityOf(), changes);",
+    "new": "      const line = standingLine(entityOf(), changes);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEAT-WORDS-the-page-for-a-stranger",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf()))",
-    "new": "if (first)",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (first) noteFirstUse('chapters');",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEAT-WORDS-the-first-word-gate",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf()))",
-    "new": "if (holdsRollMembership(entityOf()))",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (holdsRollMembership(entityOf())) noteFirstUse('chapters');",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEAT-WORDS-the-raw-book",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "Object.values(activeMemberships(entity) ?? {})",
-    "new": "Object.values(entity?.guildMemberships ?? {})",
+    "old": "    Object.values(activeMemberships(entity) ?? {})",
+    "new": "    Object.values(entity?.guildMemberships ?? {})",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STANDING-WORDS-the-moves-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);\n",
-    "new": "      const line = standingLine(entityOf(), changes);\n",
+    "old": "      if (line) say(line);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STANDING-WORDS-the-say-unguarded",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);\n",
-    "new": "      const line = standingLine(entityOf(), changes);\n      say(line);\n",
+    "old": "      const line = standingLine(entityOf(), changes);\n      if (line) say(line);",
+    "new": "      const line = standingLine(entityOf(), changes);\n      say(line);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "STANDING-WORDS-the-entity-unread",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "standingLine(entityOf(), changes)",
-    "new": "standingLine(null, changes)",
+    "old": "      const line = standingLine(entityOf(), changes);",
+    "new": "      const line = standingLine(null, changes);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "STANDING-WORDS-the-owed-uncounted",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    const together = (now + owed) - (was + owedWas);",
+    "old": "    const together = now + owed - (was + owedWas);",
     "new": "    const together = now - was;",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "STANDING-WORDS-the-paid-unsaid",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    else if (now !== was) out.push(",
-    "new": "    else if (false) out.push(",
+    "old": "      else if (now !== was) out.push({ f, paid: now - was, now, owed });",
+    "new": "      else if (false) out.push({ f, paid: now - was, now, owed });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "STANDING-WORDS-the-item-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "    return c.owed > 0 ? t('chapters.standing.itemOwed'",
-    "new": "    return false ? t('chapters.standing.itemOwed'",
+    "old": "  if (c.delta) {\n    return c.owed > 0",
+    "new": "  if (c.delta) {\n    return false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "STANDING-WORDS-the-paid-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  return c.owed > 0 ? t('chapters.standing.paidOwed'",
-    "new": "  return false ? t('chapters.standing.paidOwed'",
+    "old": "  }\n  return c.owed > 0",
+    "new": "  }\n  return false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "STANDING-WORDS-the-sign",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0) }",
-    "new": "delta: String(c.delta ?? 0) }",
+    "old": "  const args = {\n    name: standingName(c.f),\n    now: c.now,\n    owed: c.owed,\n    paid: c.paid ?? 0,\n    delta: Number(c.delta) > 0 ? `+${c.delta}` : String(c.delta ?? 0),\n  };",
+    "new": "  const args = { name: standingName(c.f), now: c.now, owed: c.owed, paid: c.paid ?? 0, delta: String(c.delta ?? 0) };",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "STANDING-WORDS-the-fold-gone",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  const named = moved.filter((c) => mine.has(c.f)).map(",
-    "new": "  const named = moved.map(",
+    "old": "  const named = moved.filter((c) => mine.has(c.f)).map((c) => standingItem(entity, c));",
+    "new": "  const named = moved.map((c) => standingItem(entity, c));",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "STANDING-WORDS-the-others-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  const list = others ? [...named, t(",
-    "new": "  const list = false ? [...named, t(",
+    "old": "  const list = others",
+    "new": "  const list = false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "STANDING-WORDS-the-empty-line",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  if (!moved.length) return null;\n",
-    "new": "",
+    "old": "  if (!moved.length) return null;\n  const mine = rollMembershipsOf(entity);",
+    "new": "  const mine = rollMembershipsOf(entity);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "STANDING-WORDS-the-last-word-unread",
     "file": "src/net/npcRollTracker.js",
-    "old": "    const changes = rollMovesOf(base, lastOwed,",
-    "new": "    const changes = rollMovesOf(null, lastOwed,",
+    "old": "    const changes = rollMovesOf(base, lastOwed, a.base, owed, paid && typeof paid === 'object' ? paid : null);",
+    "new": "    const changes = rollMovesOf(null, lastOwed, a.base, owed, paid && typeof paid === 'object' ? paid : null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "STANDING-WORDS-the-first-owed",
     "file": "src/net/npcRollTracker.js",
-    "old": "    setStandingOwed(owed);\n    base = a.base;",
-    "new": "    setStandingOwed(last ? owed : null);\n    base = a.base;",
+    "old": "    setStandingOwed(owed);",
+    "new": "    setStandingOwed(last ? owed : null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "STANDING-WORDS-the-stops-clear",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (error !== 'lease') setStandingOwed(null); onStop(error);",
-    "new": "onStop(error);",
+    "old": "      if (error !== 'lease') setStandingOwed(null);\n      onStop(error);",
+    "new": "      onStop(error);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "STANDING-WORDS-the-first-said-twice",
     "file": "src/net/npcRollTracker.js",
-    "old": "    onStanding(changes, !firstSaid);",
-    "new": "    onStanding(changes, !last);",
+    "old": "    onStanding(changes, !firstSaid); // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word",
+    "new": "    onStanding(changes, !last); // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "STANDING-WORDS-the-owed-row",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "const reputationLine = (n, owed) => (owed > 0\n",
-    "new": "const reputationLine = (n, owed) => (false\n",
+    "old": "  owed > 0",
+    "new": "  false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SEAT-WORDS-the-seat-warnings",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "      ...warnings,\n      next,\n",
-    "new": "      next,\n",
+    "old": "      ...warnings,\n      next,",
+    "new": "      next,",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "STANDING-WORDS-the-books-owed",
     "file": "src/systems/affiliations.js",
-    "old": "      owed: standingOwedOf(guild.factionId),   // STANDING-WORDS\n",
-    "new": "      owed: 0,\n",
+    "old": "      owed: standingOwedOf(guild.factionId), // STANDING-WORDS",
+    "new": "      owed: 0,",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "STANDING-WORDS-the-books-warnings",
     "file": "src/systems/affiliations.js",
-    "old": "      warnings: entity?.factionRep ? reviewWarnings(",
-    "new": "      warnings: false ? reviewWarnings(",
+    "old": "      warnings: entity?.factionRep",
+    "new": "      warnings: false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "REVIEW-WARNINGS-the-fall-reason",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(false",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      false",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "REVIEW-WARNINGS-never-expels-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "guild.neverExpels && !underworldRuleOf(guild) ? 'ends'",
-    "new": "false ? 'ends'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = false ? 'ends' : skillsShort ? 'skills' : 'expel';",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "REVIEW-WARNINGS-the-skills-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "skillsShort ? 'skills'",
-    "new": "false ? 'skills'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : false ? 'skills' : 'expel';",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "REVIEW-WARNINGS-the-seated-book",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "reviewWarnings(entity, guild, ctx?.book ?? memberships, store,",
-    "new": "reviewWarnings(entity, guild, memberships, store,",
+    "old": "  const warnings = reviewWarnings(\n    entity,\n    guild,\n    ctx?.book ?? memberships,\n    store,\n    ctx && { ...ctx, online: !!ctx.pace },\n  );",
+    "new": "  const warnings = reviewWarnings(entity, guild, memberships, store, ctx && { ...ctx, online: !!ctx.pace });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "REVIEW-WARNINGS-the-renewal-not-the-laws",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES })",
-    "new": "{ days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: 30 })",
+    "old": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
+    "new": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: 30 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SEAT-WORDS-the-guides-writ-not-the-laws",
     "file": "src/ui/noticeWindow.js",
-    "old": "{ max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP }",
-    "new": "{ max: ROLL_GAIN_DAY_MAX, writ: 3, receipt: RECEIPT_REP }",
+    "old": "        { max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP },",
+    "new": "        { max: ROLL_GAIN_DAY_MAX, writ: 3, receipt: RECEIPT_REP },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "LANE-E-GSF-seat-loop-short",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "rank <= SEAT_RANK.master; rank++",
-    "new": "rank < SEAT_RANK.master; rank++",
+    "old": "    for (let rank = ceiling + 1; rank <= SEAT_RANK.master; rank++) {",
+    "new": "    for (let rank = ceiling + 1; rank < SEAT_RANK.master; rank++) {",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -640,8 +640,8 @@
   {
     "name": "LANE-E-GSF-kind-rr-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "guild.neverExpels && !underworldRuleOf(guild) ? 'ends'",
-    "new": "guild.neverExpels ? 'ends'",
+    "old": "    const kind = guild.neverExpels && !underworldRuleOf(guild) ? 'ends' : skillsShort ? 'skills' : 'expel';",
+    "new": "    const kind = guild.neverExpels ? 'ends' : skillsShort ? 'skills' : 'expel';",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -676,8 +676,8 @@
   {
     "name": "LANE-E-GSF-fall-reason-always-rep",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(true",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      true",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -688,8 +688,8 @@
   {
     "name": "LANE-E-GSF-fall-reason-boundary",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "    out.push(getReputation(store, guild.factionId) < need",
-    "new": "    out.push(getReputation(store, guild.factionId) <= need",
+    "old": "      getReputation(store, guild.factionId) < need",
+    "new": "      getReputation(store, guild.factionId) <= need",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -724,8 +724,8 @@
   {
     "name": "LANE-E-GSF-owed-row-boundary",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "const reputationLine = (n, owed) => (owed > 0",
-    "new": "const reputationLine = (n, owed) => (owed >= 0",
+    "old": "  owed > 0",
+    "new": "  owed >= 0",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -747,8 +747,8 @@
   {
     "name": "LANE-E-KG-flag-bit",
     "file": "src/systems/knightlyGifts.js",
-    "old": "line: ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()",
-    "new": "line: ((membership?.flags ?? 0) & 1) > 0 ? alreadyGivenHouseText()",
+    "old": "        ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0",
+    "new": "        ((membership?.flags ?? 0) & 1) > 0",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -756,8 +756,8 @@
   {
     "name": "LANE-E-AF-raw-book",
     "file": "src/systems/affiliations.js",
-    "old": "reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep",
-    "new": "reviewWarnings(entity, guild, entity.guildMemberships, entity.factionRep",
+    "old": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online })",
+    "new": "        ? reviewWarnings(entity, guild, entity.guildMemberships, entity.factionRep, { now, online })",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js",
       "test/systems/guild/guildrep.test.js"
@@ -766,8 +766,8 @@
   {
     "name": "LANE-E-TR-owed-zero-kept",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (Number.isSafeInteger(v) && v > 0) owed[Number(k)] = v;",
-    "new": "if (Number.isSafeInteger(v) && v >= 0) owed[Number(k)] = v;",
+    "old": "    for (const [k, v] of Object.entries(roll.owed ?? {})) if (Number.isSafeInteger(v) && v > 0) owed[Number(k)] = v;",
+    "new": "    for (const [k, v] of Object.entries(roll.owed ?? {})) if (Number.isSafeInteger(v) && v >= 0) owed[Number(k)] = v;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -778,8 +778,8 @@
   {
     "name": "LANE-E-TR-lastOwed-unkept",
     "file": "src/net/npcRollTracker.js",
-    "old": "    lastOwed = owed;\n",
-    "new": "",
+    "old": "    lastOwed = owed;\n    keep({ seq: roll.seq, factions: a.base });",
+    "new": "    keep({ seq: roll.seq, factions: a.base });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -788,8 +788,8 @@
   {
     "name": "LANE-E-TR-firstSaid-unset",
     "file": "src/net/npcRollTracker.js",
-    "old": "    firstSaid = true;\n",
-    "new": "",
+    "old": "    firstSaid = true;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -798,8 +798,8 @@
   {
     "name": "LANE-E-LAW-moves-paid-sign",
     "file": "src/net/npcChapterLaw.js",
-    "old": "paid: now - was, now, owed",
-    "new": "paid: was - now, now, owed",
+    "old": "      else if (now !== was) out.push({ f, paid: now - was, now, owed });",
+    "new": "      else if (now !== was) out.push({ f, paid: was - now, now, owed });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -808,8 +808,8 @@
   {
     "name": "LANE-E-RN-fold-mortal-book",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "Object.values(activeMemberships(entity) ?? {})",
-    "new": "Object.values(entity?.guildMemberships?.mortal ?? {})",
+    "old": "    Object.values(activeMemberships(entity) ?? {})",
+    "new": "    Object.values(entity?.guildMemberships?.mortal ?? {})",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -818,8 +818,8 @@
   {
     "name": "LANE-E-RN-twenty-two-unfiltered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": ".map((m) => rollFactionOfGuild(m?.guild)).filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)));",
-    "new": ".map((m) => rollFactionOfGuild(m?.guild)));",
+    "old": "  new Set(\n    Object.values(activeMemberships(entity) ?? {})\n      .map((m) => rollFactionOfGuild(m?.guild))\n      .filter((f) => /** @type {readonly unknown[]} */ (ROLL_FACTIONS).includes(f)),\n  );",
+    "new": "  new Set(Object.values(activeMemberships(entity) ?? {}).map((m) => rollFactionOfGuild(m?.guild)));",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -830,8 +830,8 @@
   {
     "name": "LANE-E-RN-paid-filtered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": " || (Number.isSafeInteger(c?.paid) && c.paid !== 0));",
-    "new": ");",
+    "old": "  const moved = (changes ?? []).filter(\n    (c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),\n  );",
+    "new": "  const moved = (changes ?? []).filter((c) => Number.isSafeInteger(c?.delta) && c.delta !== 0);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -840,8 +840,8 @@
   {
     "name": "LANE-E-RN-loss-filtered",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "(Number.isSafeInteger(c?.delta) && c.delta !== 0)",
-    "new": "(Number.isSafeInteger(c?.delta) && c.delta > 0)",
+    "old": "    (c) => (Number.isSafeInteger(c?.delta) && c.delta !== 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),",
+    "new": "    (c) => (Number.isSafeInteger(c?.delta) && c.delta > 0) || (Number.isSafeInteger(c?.paid) && c.paid !== 0),",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -850,8 +850,8 @@
   {
     "name": "LANE-E-RN-first-needs-a-move",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
-    "new": "if (first && changes.length && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "old": "      if (first && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
+    "new": "      if (first && changes.length && holdsRollMembership(entityOf())) noteFirstUse('chapters');",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -860,8 +860,8 @@
   {
     "name": "LANE-E-RN-item-loss-as-paid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  if (c.delta) {\n",
-    "new": "  if (c.delta > 0) {\n",
+    "old": "  if (c.delta) {",
+    "new": "  if (c.delta > 0) {",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -870,8 +870,8 @@
   {
     "name": "LANE-E-SO-merge-not-replace",
     "file": "src/systems/standingOwed.js",
-    "old": "  owed = out;\n",
-    "new": "  Object.assign(owed, out);\n",
+    "old": "  owed = out;",
+    "new": "  Object.assign(owed, out);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -892,8 +892,8 @@
   {
     "name": "LANE-E-SV-before-owed-dropped",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(Math.max(row.rep, line.rep + line.owed), f)",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep, line.rep + line.owed), f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -901,8 +901,8 @@
   {
     "name": "LANE-E-SV-min",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(Math.min(row.rep + row.owed, line.rep + line.owed), f)",
+    "old": "        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "        ranks.has(f) && (row.member || joinRecordable(Math.min(row.rep + row.owed, line.rep + line.owed), f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -910,8 +910,8 @@
   {
     "name": "LANE-E-SV-before-alone",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(row.rep + row.owed, f)",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && (row.member || joinRecordable(row.rep + row.owed, f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -948,8 +948,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-start-reason",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "out.push(getReputation(store, guild.factionId) < 0\n      ? t('guild.probation.comingRep'",
-    "new": "out.push(true\n      ? t('guild.probation.comingRep'",
+    "old": "      getReputation(store, guild.factionId) < 0",
+    "new": "      true",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-start-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "puts you on probation: your standing is below 0.', { days: daysOf(days) })",
-    "new": "puts you on probation: your standing is below 0.', { days: 0 })",
+    "old": "            \"Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your standing is below 0.\",\n            { days: daysOf(days) },",
+    "new": "            \"Your review {days, plural, =0 {at your next visit to the guild's hall} one {at the guild's hall in # day or later} other {at the guild's hall in # days or later}} puts you on probation: your standing is below 0.\",\n            { days: 0 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-falls-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "lowers you to {title}.', { days: daysOf(days), title })",
-    "new": "lowers you to {title}.', { days: 0, title })",
+    "old": "            { days: daysOf(days), title },",
+    "new": "            { days: 0, title },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -975,8 +975,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-fallsRep-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days: daysOf(days), title, current:",
-    "new": "{ days: 0, title, current:",
+    "old": "            { days: daysOf(days), title, current: getTitle({ rank: m.rank }, entity, guild), need },",
+    "new": "            { days: 0, title, current: getTitle({ rank: m.rank }, entity, guild), need },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -984,8 +984,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-skills-days",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "{ days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0]",
-    "new": "{ days: 0, high: RANK_REQ_SKILL_HIGH[0]",
+    "old": "      { days: daysOf(days), high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW },",
+    "new": "      { days: 0, high: RANK_REQ_SKILL_HIGH[0], low: RANK_REQ_SKILL_LOW[0], expel: GUILD_EXPEL_BELOW },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -993,8 +993,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-hall-offline",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "ctx && { ...ctx, online: !!ctx.pace })",
-    "new": "ctx && { ...ctx, online: false })",
+    "old": "  const warnings = reviewWarnings(\n    entity,\n    guild,\n    ctx?.book ?? memberships,\n    store,\n    ctx && { ...ctx, online: !!ctx.pace },\n  );",
+    "new": "  const warnings = reviewWarnings(entity, guild, ctx?.book ?? memberships, store, ctx && { ...ctx, online: false });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1002,8 +1002,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-online-word",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "online: online ? 'yes' : 'no'",
-    "new": "online: 'no'",
+    "old": "        { days, online: online ? 'yes' : 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
+    "new": "        { days, online: 'no', expel: GUILD_EXPEL_BELOW, renew: DAYS_BETWEEN_RANK_CHANGES },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-online-unread",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "out.push(probationWords(days, kind, !!ctx?.online));",
-    "new": "out.push(probationWords(days, kind));",
+    "old": "    out.push(probationWords(days, kind, !!ctx?.online));",
+    "new": "    out.push(probationWords(days, kind));",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1020,8 +1020,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-page-offline",
     "file": "src/systems/affiliations.js",
-    "old": "entity.factionRep, { now, online }) : [],",
-    "new": "entity.factionRep, { now }) : [],",
+    "old": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now, online })",
+    "new": "        ? reviewWarnings(entity, guild, activeMemberships(entity), entity.factionRep, { now })",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1047,8 +1047,8 @@
   {
     "name": "REVIEW-WARNINGS-II-the-rank-bars",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "  const { high, low } = numHighLowSkills(entity, guild, 0);\n  const skillsShort = high < 1 || high + low < 2;",
-    "new": "  const { high, low } = numHighLowSkills(entity, guild, m.rank);\n  const skillsShort = high < 1 || high + low < 2;",
+    "old": "  const days = ctx?.now ? reviewDaysLeft(m, ctx.now) : 0;\n  const { high, low } = numHighLowSkills(entity, guild, 0);",
+    "new": "  const days = ctx?.now ? reviewDaysLeft(m, ctx.now) : 0;\n  const { high, low } = numHighLowSkills(entity, guild, m.rank);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1065,8 +1065,8 @@
   {
     "name": "PAID-II-the-first-reads-unpaid",
     "file": "src/net/npcRollTracker.js",
-    "old": "    adopt(from, {}, roll, r.data.paid ?? null);",
-    "new": "    adopt(from, {}, roll, null);",
+    "old": "    adopt(from, {}, roll, r.data.paid ?? null); // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word",
+    "new": "    adopt(from, {}, roll, null); // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1083,8 +1083,8 @@
   {
     "name": "PAID-II-the-first-words-payment",
     "file": "src/net/npcChapterLaw.js",
-    "old": "      if (p > 0) out.push({ f, paid: p, now, owed });\n",
-    "new": "\n",
+    "old": "      if (p > 0) out.push({ f, paid: p, now, owed });\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1092,8 +1092,8 @@
   {
     "name": "PAID-II-the-both-arm",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...(p > 0 ? { paid: p } : {}), now, owed });",
-    "new": "now, owed });",
+    "old": "    if (delta !== 0 || p > 0)\n      out.push({ f, ...(delta !== 0 ? { delta } : {}), ...(p > 0 ? { paid: p } : {}), now, owed });",
+    "new": "    if (delta !== 0 || p > 0) out.push({ f, ...(delta !== 0 ? { delta } : {}), now, owed });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1128,8 +1128,8 @@
   {
     "name": "PAID-II-the-reads-payment",
     "file": "server-account/src/npcRoll.js",
-    "old": "      if (d.credited > 0) drained[f] = d.credited;\n    }\n    if (!paid.length)",
-    "new": "    }\n    if (!paid.length)",
+    "old": "        paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);\n      if (d.credited > 0) drained[f] = d.credited;\n    }",
+    "new": "        paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);\n    }",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -1137,8 +1137,8 @@
   {
     "name": "PAID-II-the-claims-payment",
     "file": "server-account/src/npcRoll.js",
-    "old": "      if (d.credited > 0) drained[f] = d.credited;\n    }\n    const asked",
-    "new": "    }\n    const asked",
+    "old": "      line = { ...line, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed };\n      if (d.credited > 0) drained[f] = d.credited;\n    }",
+    "new": "      line = { ...line, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed };\n    }",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -1155,8 +1155,8 @@
   {
     "name": "PACE-II-the-lost-unsaid",
     "file": "src/net/npcRollTracker.js",
-    "old": "    if (lost.length) onFull(lost);",
-    "new": "",
+    "old": "    if (lost.length) onFull(lost);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1164,8 +1164,8 @@
   {
     "name": "PACE-II-the-payment-unread",
     "file": "src/net/npcRollTracker.js",
-    "old": "- (paid ? Math.max(0, paid[f] ?? 0) : 0));",
-    "new": "- 0);",
+    "old": "    const grew = (/** @type {number} */ f) =>\n      (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - (paid ? Math.max(0, paid[f] ?? 0) : 0));",
+    "new": "    const grew = (/** @type {number} */ f) => (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - 0);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1173,8 +1173,8 @@
   {
     "name": "PACE-II-the-lease-clears",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (error !== 'lease') setStandingOwed(null);",
-    "new": "setStandingOwed(null);",
+    "old": "      if (error !== 'lease') setStandingOwed(null);",
+    "new": "      setStandingOwed(null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1182,8 +1182,8 @@
   {
     "name": "PACE-II-the-owed-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "{ name: standingName(f), owed: standingOwedOf(f) }",
-    "new": "{ name: standingName(f), owed: 0 }",
+    "old": "            { name: standingName(f), owed: standingOwedOf(f) },",
+    "new": "            { name: standingName(f), owed: 0 },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1191,8 +1191,8 @@
   {
     "name": "PACE-II-the-full-unsaid",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "        say(t('chapters.standing.full',",
-    "new": "        void (t('chapters.standing.full',",
+    "old": "        say(\n          t(\n            'chapters.standing.full',\n            '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',\n            { name: standingName(f), max: MAX_REPUTATION },\n          ),",
+    "new": "        void t(\n          'chapters.standing.full',\n          '{name}: your standing and what is owed already reach {max}, so the rest of that reward is lost.',\n          { name: standingName(f), max: MAX_REPUTATION },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1200,8 +1200,8 @@
   {
     "name": "NAMES-II-the-list-bare",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "{ list: listOf(list) }",
-    "new": "{ list: list.join(', ') }",
+    "old": "  return t('chapters.standing.line', 'Standing: {list}', { list: listOf(list) });",
+    "new": "  return t('chapters.standing.line', 'Standing: {list}', { list: list.join(', ') });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1209,8 +1209,8 @@
   {
     "name": "NAMES-II-zen",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "  [D.Zenithar]: () => t('chapters.guild.zenithar', 'Temple of Zenithar'),\n",
-    "new": "",
+    "old": "  [D.Zenithar]: () => t('chapters.guild.zenithar', 'Temple of Zenithar'),\n  [O.Horn]: () => t('chapters.guild.horn', 'Host of the Horn'),",
+    "new": "  [O.Horn]: () => t('chapters.guild.horn', 'Host of the Horn'),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1227,8 +1227,8 @@
   {
     "name": "UI-II-F2-the-box-unfitted",
     "file": "src/ui/guildServiceWindow.js",
-    "old": "layoutMessageBox(font, fitBoxRows(font, latchBoxRows(top, this.hooks.rows)), buttons);",
-    "new": "layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);",
+    "old": "      this._box = layoutMessageBox(font, fitBoxRows(font, latchBoxRows(top, this.hooks.rows)), buttons);",
+    "new": "      this._box = layoutMessageBox(font, latchBoxRows(top, this.hooks.rows), buttons);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1273,8 +1273,8 @@
   {
     "name": "WORDS-II-C2-the-seat-word",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "are chapter chairs won by Merit, and a chair\\'s services",
-    "new": "are chapter seats won by Merit, and a seat\\'s services",
+    "old": "            \"Rank {rank} offers this. Online, ranks {officer} and {master} are chapter chairs won by Merit, and a chair's services are at its own chapter's halls, for a member at rank {cap}. A notice board explains chapters.\",",
+    "new": "            \"Rank {rank} offers this. Online, ranks {officer} and {master} are chapter seats won by Merit, and a seat's services are at its own chapter's halls, for a member at rank {cap}. A notice board explains chapters.\",",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1282,8 +1282,8 @@
   {
     "name": "WORDS-II-C5-the-hall-writ",
     "file": "src/ui/noticeWindow.js",
-    "old": "a chapter writ (yours or the chapter\\'s) adds {writ}",
-    "new": "a hall writ adds {writ}",
+    "old": "        \"Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a chapter writ (yours or the chapter's) adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).\",",
+    "new": "        'Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a hall writ adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).',",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

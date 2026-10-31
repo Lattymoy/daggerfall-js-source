@@ -17,6 +17,12 @@ export const WEIR_KEY_TEMPLATE = 575;
 export const WEIR_KEY_LAW_ROW = Object.freeze({
   // KEY-WEIGHT (2026-10-31, Mac: "Remove weight from weir keys"): a key leaves the pack only to the Spire's own stake, so it
   // weighs nothing, as CAKE-WEIGHT made the Soul Cake. A face carries no `weightInKg` of its own (weirKey.js weirKeys).
-  index: WEIR_KEY_TEMPLATE, baseWeight: 0, hitPoints: 1000, basePrice: 500, rarity: 20, bound: true, stackable: true,
-  packOnly: true,   // KEY-FACE: the face never leaves the pack
+  index: WEIR_KEY_TEMPLATE,
+  baseWeight: 0,
+  hitPoints: 1000,
+  basePrice: 500,
+  rarity: 20,
+  bound: true,
+  stackable: true,
+  packOnly: true, // KEY-FACE: the face never leaves the pack
 });

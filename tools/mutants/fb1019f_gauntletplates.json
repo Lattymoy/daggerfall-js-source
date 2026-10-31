@@ -2,8 +2,8 @@
   {
     "name": "GAUNTLET-PLATES-never-drawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      gauntletPlates(F, t);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and the Gauntlet's, each caster's\n",
-    "new": "",
+    "old": "      gauntletPlates(F, t); // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and the Gauntlet's, each caster's\n      for (const [i, d] of drawn)",
+    "new": "      for (const [i, d] of drawn)",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "GAUNTLET-PLATES-short-reach",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.origin[1] = q.plate[1]; sh.r = EG_TOUCH_M;",
-    "new": "sh.origin[1] = q.plate[1]; sh.r = 1.5;",
+    "old": "      sh.origin[1] = q.plate[1];\n      sh.r = EG_TOUCH_M;",
+    "new": "      sh.origin[1] = q.plate[1];\n      sh.r = 1.5;",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "GAUNTLET-PLATES-held-still-bright",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.alpha = said?.[j] ? 0.35 : 0.85;",
-    "new": "sh.alpha = 0.85;",
+    "old": "      sh.alpha = said?.[j] ? 0.35 : 0.85;",
+    "new": "      sh.alpha = 0.85;",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "GAUNTLET-PLATES-every-laid-pillar",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "j < (said ? Math.min(said.length, pillars.length) : pillars.length)",
-    "new": "j < pillars.length",
+    "old": "    for (let j = 0; j < (said ? Math.min(said.length, pillars.length) : pillars.length); j++) {",
+    "new": "    for (let j = 0; j < pillars.length; j++) {",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "GAUNTLET-PLATES-plateY-top-never-found",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.hypot(x - d.x, z - d.z) <= d.r);",
-    "new": "Math.hypot(x - d.x, z - d.z) < 0);",
+    "old": "  const top = (spec.discs ?? []).find((d) => d.role === 'pillar' && Math.hypot(x - d.x, z - d.z) <= d.r);",
+    "new": "  const top = (spec.discs ?? []).find((d) => d.role === 'pillar' && Math.hypot(x - d.x, z - d.z) < 0);",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GAUNTLET-PLATES-plateY-stair-foot",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return r.y0 + (r.y1 - r.y0) * u;",
-    "new": "return r.y0;",
+    "old": "    if (u >= 0 && u <= 1 && Math.hypot(x - r.ax - u * dx, z - r.az - u * dz) <= r.hw) return r.y0 + (r.y1 - r.y0) * u; // along its run, within its width",
+    "new": "    if (u >= 0 && u <= 1 && Math.hypot(x - r.ax - u * dx, z - r.az - u * dz) <= r.hw) return r.y0; // along its run, within its width",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "GAUNTLET-PLATES-plateY-stair-head",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return r.y0 + (r.y1 - r.y0) * u;",
-    "new": "return r.y1;",
+    "old": "    if (u >= 0 && u <= 1 && Math.hypot(x - r.ax - u * dx, z - r.az - u * dz) <= r.hw) return r.y0 + (r.y1 - r.y0) * u; // along its run, within its width",
+    "new": "    if (u >= 0 && u <= 1 && Math.hypot(x - r.ax - u * dx, z - r.az - u * dz) <= r.hw) return r.y1; // along its run, within its width",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "GAUNTLET-PLATES-old-line",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', { n: pg.left ?? 0, s: EG_SILENCE_MS / 1000 })",
-    "new": "`Casters left: ${pg.left ?? 0}`",
+    "old": "  if (pg.obj === 'gauntlet')\n    return t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', {\n      n: pg.left ?? 0,\n      s: EG_SILENCE_MS / 1000,\n    }); // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the two ways a Caster is silenced named - its plate held, or its death (GAUNTLET-SLAIN)",
+    "new": "  if (pg.obj === 'gauntlet') return `Casters left: ${pg.left ?? 0}`; // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the two ways a Caster is silenced named - its plate held, or its death (GAUNTLET-SLAIN)",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "GAUNTLET-PLATES-line-seconds",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "s: EG_SILENCE_MS / 1000 }",
-    "new": "s: EG_SILENCE_MS / 100 }",
+    "old": "      s: EG_SILENCE_MS / 1000,",
+    "new": "      s: EG_SILENCE_MS / 100,",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -172,7 +172,7 @@
   {
     "name": "GAUNTLET-PLATES-objective-unrouted",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "export const egObjectiveText = (spec) => (spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\") : egObjectiveOf(spec));",
+    "old": "export const egObjectiveText = (spec) =>\n  spec?.variant === 'gauntlet'\n    ? t('eg.objective.gauntlet', 'Silence each caster: stand on its plate, or slay it.')\n    : egObjectiveOf(spec);",
     "new": "export const egObjectiveText = (spec) => egObjectiveOf(spec);",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "GAUNTLET-PLATES-tracker-law-english",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "      const obj = egObjectiveText(spec), prog",
-    "new": "      const obj = egObjectiveOf(spec), prog",
+    "old": "      const obj = egObjectiveText(spec),",
+    "new": "      const obj = egObjectiveOf(spec),",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "GAUNTLET-PLATES-spire-chip-law-english",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : ''",
-    "new": "objective: E.sg === 'trial' && !watching ? spec.objective : ''",
+    "old": "    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '',",
+    "new": "    objective: E.sg === 'trial' && !watching ? spec.objective : '',",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "GAUNTLET-PLATES-screen-old-words",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\")",
-    "new": "t('eg.objective.gauntlet', 'Silence the casters.')",
+    "old": "  spec?.variant === 'gauntlet'\n    ? t('eg.objective.gauntlet', 'Silence each caster: stand on its plate, or slay it.')\n    : egObjectiveOf(spec);",
+    "new": "  spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', 'Silence the casters.') : egObjectiveOf(spec);",
     "tests": [
       "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
     ],

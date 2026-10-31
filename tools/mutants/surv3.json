@@ -11,8 +11,8 @@
   {
     "name": "REST2-a-campfire-with-no-fuel-relights",
     "file": "src/systems/survival/camp.js",
-    "old": "  if ((camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither\n",
-    "new": "",
+    "old": "  if ((camp.wear | 0) <= 0) return false; // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither\n  camp.litUntil = Math.max(camp.litUntil ?? 0, from) + FIRE_MINUTES;",
+    "new": "  camp.litUntil = Math.max(camp.litUntil ?? 0, from) + FIRE_MINUTES;",
     "tests": [
       "test/systems/rest2_campfire.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "REST2-a-burnt-down-campfire-is-swept-away",
     "file": "src/systems/survival/camp.js",
-    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
-    "new": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now);",
+    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
+    "new": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
     "tests": [
       "test/systems/rest2_campfire.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "SURV3-a-skillet-is-no-faster",
     "file": "src/systems/survival/camp.js",
-    "old": "minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES,",
-    "new": "minutes: COOK_MINUTES,",
+    "old": "  return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };",
+    "new": "  return { item: cooked, minutes: COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };",
     "tests": [
       "test/systems/survival/surv3_camps.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "SURV3-a-cold-fire-warms",
     "file": "src/systems/survival/camp.js",
-    "old": "    if (!fireLit(c, now)) continue;\n    const d = Math.hypot(",
-    "new": "    const d = Math.hypot(",
+    "old": "    if (!fireLit(c, now)) continue;\n    const d = Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]);",
+    "new": "    const d = Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]);",
     "tests": [
       "test/systems/survival/surv3_camps.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "SURV3-anyone-may-pack-your-camp",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
-    "new": "  if (!camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack',",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "new": "  if (!camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
     "tests": [
       "test/systems/survival/surv3_camps.test.js"
     ],

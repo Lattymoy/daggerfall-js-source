@@ -69,8 +69,13 @@ export function mapPixelDistance(a, b) {
  *  of `indices`, so every filter the caller already ran still holds. */
 export function nearbyIndices(regionData, indices, origin, reach, minChoices = QUEST_REACH_MIN_CHOICES) {
   const within = indicesWithin(regionData, indices, origin, reach);
-  if (within === null) return indices;   // an unmeasured site: DFU's own pool
+  if (within === null) return indices; // an unmeasured site: DFU's own pool
   if (within.length >= minChoices || within.length === indices.length) return within;
-  const dist = (i) => mapPixelDistance(/** @type {{x:number,y:number}} */ (mapTablePixel(regionData.mapTable[i])), origin);
-  return indices.map((i) => [i, dist(i)]).sort((p, q) => p[1] - q[1] || p[0] - q[0]).slice(0, minChoices).map((p) => p[0]);
+  const dist = (i) =>
+    mapPixelDistance(/** @type {{x:number,y:number}} */ (mapTablePixel(regionData.mapTable[i])), origin);
+  return indices
+    .map((i) => [i, dist(i)])
+    .sort((p, q) => p[1] - q[1] || p[0] - q[0])
+    .slice(0, minChoices)
+    .map((p) => p[0]);
 }

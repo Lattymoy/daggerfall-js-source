@@ -65,7 +65,7 @@
   {
     "name": "BOARD-site-neighbours",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  const open = (x, y) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!seaAt(x + dx, y + dy)) return false; return true; };",
+    "old": "  const open = (x, y) => {\n    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (!seaAt(x + dx, y + dy)) return false;\n    return true;\n  };",
     "new": "  const open = (x, y) => seaAt(x, y);",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "BOARD-site-one-way",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  for (let k = 0; k < 8; k++) {\n    const a = ((first + k) % 8) * (Math.PI / 4);",
-    "new": "  for (let k = 0; k < 1; k++) {\n    const a = ((first + k) % 8) * (Math.PI / 4);",
+    "old": "  for (let k = 0; k < 8; k++) {",
+    "new": "  for (let k = 0; k < 1; k++) {",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BOARD-site-round-ring",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "    const c = Math.cos(a), sn = Math.sin(a), m = Math.max(Math.abs(c), Math.abs(sn));",
-    "new": "    const c = Math.cos(a), sn = Math.sin(a), m = 1;",
+    "old": "      m = Math.max(Math.abs(c), Math.abs(sn)); // on the square ring: `d` pixels off, Chebyshev",
+    "new": "      m = 1; // on the square ring: `d` pixels off, Chebyshev",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BOARD-quarry-reach",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12));",
-    "new": "c.minLevel <= Math.max(1, level | 0) && (!c.flagship || level >= 12));",
+    "old": "    (c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12),",
+    "new": "    (c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0) && (!c.flagship || level >= 12),",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BOARD-quarry-flagship",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12));",
-    "new": "c.minLevel <= Math.max(1, level | 0) + 2);",
+    "old": "  const pool = SHIP_CLASSES.filter(\n    (c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12),\n  );",
+    "new": "  const pool = SHIP_CLASSES.filter((c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0) + 2);",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BOARD-offers-day",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  const r = mulberry32(((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
-    "new": "  const r = mulberry32(((hashKey(port.key) ^ BOARD_SALT) >>> 0));",
+    "old": "  const r = mulberry32((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0);",
+    "new": "  const r = mulberry32((hashKey(port.key) ^ BOARD_SALT) >>> 0);",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BOARD-offers-port",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  const r = mulberry32(((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
-    "new": "  const r = mulberry32(((Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0));",
+    "old": "  const r = mulberry32((hashKey(port.key) ^ Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0);",
+    "new": "  const r = mulberry32((Math.imul((day | 0) + 1, 0x9e3779b1) ^ BOARD_SALT) >>> 0);",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BOARD-taken-refilled",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "    if (!o) continue;\n    posted++;",
-    "new": "    if (!o || gone.has(id)) continue;\n    posted++;",
+    "old": "    if (!o) continue;",
+    "new": "    if (!o || gone.has(id)) continue;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BOARD-delivery-near",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "cheb(p, port) >= DELIVERY_PX_MIN && deliveryPort(p, seaAt))",
-    "new": "cheb(p, port) >= 1 && deliveryPort(p, seaAt))",
+    "old": "      .filter((p) => p && p.key !== port.key && cheb(p, port) >= DELIVERY_PX_MIN && deliveryPort(p, seaAt))",
+    "new": "      .filter((p) => p && p.key !== port.key && cheb(p, port) >= 1 && deliveryPort(p, seaAt))",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BOARD-hunt-regard",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt * need,",
-    "new": "pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt,",
+    "old": "      standing: STANDING_DONE.hunt * need,",
+    "new": "      standing: STANDING_DONE.hunt,",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "BOARD-bounty-regard",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "standing: STANDING_DONE.bounty * Math.max(1, cls.cargo), days: TERM_DAYS.bounty,",
-    "new": "standing: STANDING_DONE.bounty, days: TERM_DAYS.bounty,",
+    "old": "      standing: STANDING_DONE.bounty * Math.max(1, cls.cargo),",
+    "new": "      standing: STANDING_DONE.bounty,",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "BOARD-take-term",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "until: Math.floor(now) + offer.days * MINUTES_PER_DAY,",
-    "new": "until: Math.floor(now) + MINUTES_PER_DAY,",
+    "old": "    until: Math.floor(now) + offer.days * MINUTES_PER_DAY,",
+    "new": "    until: Math.floor(now) + MINUTES_PER_DAY,",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "BOARD-take-boat-any",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "boat: offer.kind === 'delivery' ? boat ?? null : null };",
-    "new": "boat: boat ?? null };",
+    "old": "    boat: offer.kind === 'delivery' ? (boat ?? null) : null,",
+    "new": "    boat: boat ?? null,",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "BOARD-advance-bounty-any",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (c.kind === 'bounty') return ev.bounty !== c.id ? null : ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
+    "old": "  if (c.kind === 'bounty')\n    return ev.bounty !== c.id ? null : ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
     "new": "  if (c.kind === 'bounty') return ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "BOARD-advance-hunt-crown",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
-    "new": "ev.faction === 'pirate' && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
+    "old": "    return ev.type === 'end' &&\n      ev.faction === 'pirate' &&\n      ev.crown === c.crown &&\n      (ev.act === 'sink' || ev.act === 'board')\n      ? count()\n      : null;",
+    "new": "    return ev.type === 'end' && ev.faction === 'pirate' && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "BOARD-advance-hunt-trade",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
-    "new": "ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
+    "old": "    return ev.type === 'end' &&\n      ev.faction === 'pirate' &&\n      ev.crown === c.crown &&\n      (ev.act === 'sink' || ev.act === 'board')\n      ? count()\n      : null;",
+    "new": "    return ev.type === 'end' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BOARD-advance-hunt-repel",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "ev.faction === 'pirate' && ev.crown === c.crown && (ev.act === 'sink' || ev.act === 'board') ? count() : null;",
-    "new": "ev.faction === 'pirate' && ev.crown === c.crown ? count() : null;",
+    "old": "  if (c.kind === 'hunt')\n    return ev.type === 'end' &&\n      ev.faction === 'pirate' &&\n      ev.crown === c.crown &&\n      (ev.act === 'sink' || ev.act === 'board')\n      ? count()\n      : null;",
+    "new": "  if (c.kind === 'hunt') return ev.type === 'end' && ev.faction === 'pirate' && ev.crown === c.crown ? count() : null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "BOARD-advance-delivery-lost",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "    if (ev.type === 'wrecked') return 'failed';\n",
-    "new": "",
+    "old": "    if (ev.type === 'wrecked') return 'failed';\n    return ev.type === 'berth' && ev.port === c.to?.key ? 'done' : null;",
+    "new": "    return ev.type === 'berth' && ev.port === c.to?.key ? 'done' : null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "BOARD-line-hours",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "hours = Math.floor((left % MINUTES_PER_DAY) / 60);",
-    "new": "hours = 0;",
+    "old": "    hours = Math.floor((left % MINUTES_PER_DAY) / 60);",
+    "new": "    hours = 0;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "BOARD-sites-salvage-left",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "n: Math.max(0, (c.need | 0) - (c.done | 0)) });",
-    "new": "n: c.need | 0 });",
+    "old": "      out.push({\n        id: c.id,\n        kind: 'salvage',\n        px: c.target.px,\n        py: c.target.py,\n        seed: c.target.seed,\n        n: Math.max(0, (c.need | 0) - (c.done | 0)),\n      });",
+    "new": "      out.push({ id: c.id, kind: 'salvage', px: c.target.px, py: c.target.py, seed: c.target.seed, n: c.need | 0 });",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "BOARD-restore-kind",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (!c || typeof c !== 'object' || !HARBOUR_CONTRACT_KINDS.includes(c.kind) || typeof c.id !== 'string' || typeof c.crown !== 'string') return null;",
+    "old": "  if (\n    !c ||\n    typeof c !== 'object' ||\n    !HARBOUR_CONTRACT_KINDS.includes(c.kind) ||\n    typeof c.id !== 'string' ||\n    typeof c.crown !== 'string'\n  )\n    return null;",
     "new": "  if (!c || typeof c !== 'object' || typeof c.id !== 'string' || typeof c.crown !== 'string') return null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "BOARD-marque-rank",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (!perks?.marque) return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };\n",
-    "new": "",
+    "old": "  if (!perks?.marque)\n    return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };\n  if ((Number(purse) || 0) < price)",
+    "new": "  if ((Number(purse) || 0) < price)",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "BOARD-marque-purse",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if ((Number(purse) || 0) < price) return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };\n",
-    "new": "",
+    "old": "  if ((Number(purse) || 0) < price)\n    return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };\n  return { can: true, price, days: MARQUE_DAYS, why: '' };",
+    "new": "  return { can: true, price, days: MARQUE_DAYS, why: '' };",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "BOARD-marque-held",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (held) return { can: false, price, days: MARQUE_DAYS,",
-    "new": "  if (false) return { can: false, price, days: MARQUE_DAYS,",
+    "old": "  if (held)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "BOARD-admiralty-rank",
     "file": "src/systems/naval/harbourBoard.js",
-    "old": "  if (!perks?.admiralty) return { can: false, price, why: `${crown}'s Admiralty sells its carrack to its Commodores.` };\n",
-    "new": "",
+    "old": "  if (!perks?.admiralty) return { can: false, price, why: `${crown}'s Admiralty sells its carrack to its Commodores.` };\n  if ((Number(purse) || 0) < price) return { can: false, price, why: `The Admiralty asks ${gold(price)}.` };",
+    "new": "  if ((Number(purse) || 0) < price) return { can: false, price, why: `The Admiralty asks ${gold(price)}.` };",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LEDGER-done-unpaid-log",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    ledger.note('earned', c.pay);\n",
-    "new": "",
+    "old": "    ledger.note('earned', c.pay);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -407,7 +407,7 @@
   {
     "name": "LEDGER-failed-free",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    if (!ok) { regard(c.crown, STANDING_FAILED); return; }",
+    "old": "    if (!ok) {\n      regard(c.crown, STANDING_FAILED);\n      return;\n    }",
     "new": "    if (!ok) return;",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -425,8 +425,8 @@
   {
     "name": "LEDGER-moved-unsaid",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "} else if ((c.done | 0) !== was) moved.push(c);",
-    "new": "}",
+    "old": "        } else if ((c.done | 0) !== was) moved.push(c);",
+    "new": "        }",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "LEDGER-contracts-unsaved",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "contracts: JSON.parse(JSON.stringify(contracts)), taken: taken.slice(), dealt:",
-    "new": "contracts: [], taken: taken.slice(), dealt:",
+    "old": "      contracts: JSON.parse(JSON.stringify(contracts)),",
+    "new": "      contracts: [],",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "OFFICE-done-unpaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of r.done) { deps.credit?.(c.pay);",
-    "new": "    for (const c of r.done) {",
+    "old": "      deps.credit?.(c.pay);\n      deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5);",
+    "new": "      deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5);",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "OFFICE-cargo-no-boat",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (o.kind === 'delivery' && boat?.uid == null) return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };\n",
-    "new": "",
+    "old": "    if (o.kind === 'delivery' && boat?.uid == null)\n      return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };\n    const c = takeContract(o, { now: now(), boat: o.kind === 'delivery' ? boat.uid : null });",
+    "new": "    const c = takeContract(o, { now: now(), boat: o.kind === 'delivery' ? boat.uid : null });",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -470,7 +470,7 @@
   {
     "name": "OFFICE-carrack-untitled",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (!deps.carrack?.(o.price, port)) return { ok: false, text: 'The Admiralty\\'s yard has no carrack to give today.' };",
+    "old": "    if (!deps.carrack?.(o.price, port))\n      return { ok: false, text: \"The Admiralty's yard has no carrack to give today.\" };",
     "new": "    if (false) return { ok: false, text: '' };",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "OFFICE-tick-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of failed) deps.mid?.(`Contract failed - ${c.title}. Its term ran out.`, 5);\n",
-    "new": "",
+    "old": "    for (const c of failed) deps.mid?.(`Contract failed - ${c.title}. Its term ran out.`, 5);\n    const ports = deps.ports?.() ?? [];",
+    "new": "    const ports = deps.ports?.() ?? [];",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "DIRECTOR-relief-sure-unread",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null;",
-    "new": "    if (!(roll < RELIEF_CHANCE)) return null;",
+    "old": "    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null; // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)",
+    "new": "    if (!(roll < RELIEF_CHANCE)) return null; // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "TAB-take-unpressed",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "b.press, b.can, () => { const r = o.take(b.id);",
-    "new": "b.press, b.can, () => { const r = null;",
+    "old": "            const r = o.take(b.id);",
+    "new": "            const r = null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]

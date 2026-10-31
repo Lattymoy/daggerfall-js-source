@@ -26,7 +26,25 @@ export const standFlatId = (place, x, z) => `flat:${place}:${Math.round(x * 100)
  */
 export function standFlatRecord(sf, batch, id) {
   if (isStandingHorseFlat(sf.archive, sf.record)) {
-    return { kind: 'horse', x: sf.x, y: sf.y, z: sf.z, batch, yaw: standingHorseYaw(id), seed: standingHorseSeed(id), look: strangerHorseLook(id), feet: [sf.x, sf.y, sf.z] };
+    return {
+      kind: 'horse',
+      x: sf.x,
+      y: sf.y,
+      z: sf.z,
+      batch,
+      yaw: standingHorseYaw(id),
+      seed: standingHorseSeed(id),
+      look: strangerHorseLook(id),
+      feet: [sf.x, sf.y, sf.z],
+    };
   }
-  return { kind: 'person', x: sf.x, y: sf.y, z: sf.z, batch, piece: { id, flat: [sf.archive, sf.record] }, _mwFeet: null };
+  return {
+    kind: 'person',
+    x: sf.x,
+    y: sf.y,
+    z: sf.z,
+    batch,
+    piece: { id, flat: [sf.archive, sf.record] },
+    _mwFeet: null,
+  };
 }

@@ -2,8 +2,8 @@
   {
     "name": "CULLSIZE-the-born-radius-only",
     "file": "src/render/bounds.js",
-    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;",
-    "new": "  out[3] = s[3] + (b.size?.h ?? 0) * _flatLean;",
+    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
+    "new": "  out[3] = s[3] + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CULLSIZE-no-hair",
     "file": "src/render/bounds.js",
-    "old": "q > r * r * (1 + 1e-6) ?",
-    "new": "q > r * r ?",
+    "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
+    "new": "  return q > r * r ? Math.sqrt(q) : r;",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CULLSIZE-always-the-drawn-size",
     "file": "src/render/bounds.js",
-    "old": "? Math.sqrt(q) : r;",
-    "new": "? Math.sqrt(q) : Math.sqrt(q);",
+    "old": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;",
+    "new": "  return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : Math.sqrt(q);",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CULLSIZE-half-diagonal-doubled",
     "file": "src/render/bounds.js",
-    "old": "z.h * z.h) * 0.25;",
-    "new": "z.h * z.h) * 0.5;",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = (z.w * z.w + z.h * z.h) * 0.5; // the half-diagonal, squared - a root only when it is the answer",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CULLSIZE-half-diagonal-short",
     "file": "src/render/bounds.js",
-    "old": "z.h * z.h) * 0.25;",
-    "new": "z.h * z.h) * 0.2;",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = (z.w * z.w + z.h * z.h) * 0.2; // the half-diagonal, squared - a root only when it is the answer",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CULLSIZE-width-forgotten",
     "file": "src/render/bounds.js",
-    "old": "const q = (z.w * z.w + z.h * z.h)",
-    "new": "const q = (z.h * z.h)",
+    "old": "  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer",
+    "new": "  const q = z.h * z.h * 0.25; // the half-diagonal, squared - a root only when it is the answer",
     "tests": [
       "test/scenes/fb1004d_cullsize.test.js"
     ],

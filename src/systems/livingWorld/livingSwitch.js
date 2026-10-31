@@ -10,4 +10,5 @@ export const LIVING_WORLD_KEY = 'livingWorld';
 
 /** Whether the streets are the living world's (an override for a pin). */
 export const LIVING_WORLD_TUNING = { override: /** @type {boolean|null} */ (null) };
-export const livingWorldOn = () => LIVING_WORLD_TUNING.override ?? (isEnhanced() && getPref(LIVING_WORLD_KEY) !== false);
+export const livingWorldOn = () =>
+  LIVING_WORLD_TUNING.override ?? (isEnhanced() && getPref(LIVING_WORLD_KEY) !== false);

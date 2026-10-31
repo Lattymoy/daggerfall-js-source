@@ -35,17 +35,18 @@
 // `hooks.label` and runs the service from its own `onService`.
 
 import { loadImg, drawImg, nativeMetrics, drawRect, shadowText, DEFAULT_TEXT_COLOR } from '../native/nativePanel.js';
-import { REFORGE_ROW_BG } from '../guildServiceWindow.js';   // PORTAL1: the port-drawn rows' one parchment dark
+import { REFORGE_ROW_BG } from '../guildServiceWindow.js'; // PORTAL1: the port-drawn rows' one parchment dark
 import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { drawText, measureText } from '../text.js';
-import { audio } from '../../systems/audio.js';   // F141: the ButtonClick roster
+import { audio } from '../../systems/audio.js'; // F141: the ButtonClick roster
 import { SOUND } from '../../systems/soundClips.js';
-import { localizedTable } from '../../systems/textManager.js';   // L10N3d: the service label
+import { localizedTable } from '../../systems/textManager.js'; // L10N3d: the service label
 
 /** mainPanel.Size (:66) and the centring both alignments force. */
-export const MERCHANT_PANEL_W = 130, MERCHANT_PANEL_H = 42;
-export const MERCHANT_PANEL_X = Math.round((320 - MERCHANT_PANEL_W) / 2);   // 95
-export const MERCHANT_PANEL_Y = Math.round((200 - MERCHANT_PANEL_H) / 2);   // 79
+export const MERCHANT_PANEL_W = 130,
+  MERCHANT_PANEL_H = 42;
+export const MERCHANT_PANEL_X = Math.round((320 - MERCHANT_PANEL_W) / 2); // 95
+export const MERCHANT_PANEL_Y = Math.round((200 - MERCHANT_PANEL_H) / 2); // 79
 
 /** Panel-child rects, verbatim (:22-24). */
 export const MERCHANT_RECTS = Object.freeze({
@@ -77,24 +78,34 @@ export function drawShopRow(renderer, m, font, px, py, ph, label, i) {
   shadowText(renderer, font, label, m, px + rx, py + ry + 2, { align: 'center', w: rw });
 }
 /** The Portal Stone's row, drawn under a panel at (px, py) of height ph. */
-export const drawPortalRow = (renderer, m, font, px, py, ph, label) => drawShopRow(renderer, m, font, px, py, ph, label, 0);
+export const drawPortalRow = (renderer, m, font, px, py, ph, label) =>
+  drawShopRow(renderer, m, font, px, py, ph, label, 0);
 
 /** GetServiceLabelText's switch (:78-88), with the `default:` folded
  *  into Sell exactly as the C# folds it - keyed by the service, each
  *  label read through its DFU key when drawn (L10N3d). */
-export const MERCHANT_SERVICE_LABEL = localizedTable({ Sell: ['serviceSell', 'Sell'], Banking: ['serviceBanking', 'Banking'] });
+export const MERCHANT_SERVICE_LABEL = localizedTable({
+  Sell: ['serviceSell', 'Sell'],
+  Banking: ['serviceBanking', 'Banking'],
+});
 export const merchantServiceLabel = (service) => MERCHANT_SERVICE_LABEL[service] ?? MERCHANT_SERVICE_LABEL.Sell;
 
 let _art = null;
 export async function preloadMerchantServiceArt(deps) {
   if (_art) return;
-  try { _art = await loadImg(deps, 'GNRC01I0.IMG'); }
-  catch { console.warn('[merchant] GNRC01I0 unavailable; the merchant popup stays text'); }
+  try {
+    _art = await loadImg(deps, 'GNRC01I0.IMG');
+  } catch {
+    console.warn('[merchant] GNRC01I0 unavailable; the merchant popup stays text');
+  }
 }
 export const merchantServiceArtLoaded = () => !!_art;
 
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + MERCHANT_PANEL_X && y >= ry + MERCHANT_PANEL_Y
-  && x < rx + MERCHANT_PANEL_X + rw && y < ry + MERCHANT_PANEL_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + MERCHANT_PANEL_X &&
+  y >= ry + MERCHANT_PANEL_Y &&
+  x < rx + MERCHANT_PANEL_X + rw &&
+  y < ry + MERCHANT_PANEL_Y + rh;
 
 export class MerchantServiceWindow {
   /**
@@ -105,20 +116,44 @@ export class MerchantServiceWindow {
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
+    this.isChoiceWindow = true; // raw codes through the overlay seam
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    this.hooks.onClose?.();
+  }
 
   /** Every handler heads with PlayOneShot(SoundClips.ButtonClick)
    *  (:86, :93, :113) and CLOSES BEFORE it acts (:87, :94, :114) - the
    *  trade or bank window DFU pushes is pushed over a closed popup. */
-  _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
-  _talk() { this._click(); this._close(); this.hooks.onTalk?.(); }
-  _service() { this._click(); this._close(); this.hooks.onService?.(); }
-  _exit() { this._click(); this._close(); }
-  _portal() { this._click(); this._close(); this.hooks.portal?.onBuy?.(); }   // PORTAL1: closes first, as the three do
-  _wardrobe() { this._click(); this._close(); this.hooks.wardrobe?.onOpen?.(); }   // APPEARANCES: the same
+  _click() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+  }
+  _talk() {
+    this._click();
+    this._close();
+    this.hooks.onTalk?.();
+  }
+  _service() {
+    this._click();
+    this._close();
+    this.hooks.onService?.();
+  }
+  _exit() {
+    this._click();
+    this._close();
+  }
+  _portal() {
+    this._click();
+    this._close();
+    this.hooks.portal?.onBuy?.();
+  } // PORTAL1: closes first, as the three do
+  _wardrobe() {
+    this._click();
+    this._close();
+    this.hooks.wardrobe?.onOpen?.();
+  } // APPEARANCES: the same
 
   input(code, e = null) {
     // AUDIT HORIZONTAL E7 (bible/04-Characters/Wardrobe.md section 4): a key's repeat is no press here - W, S and E move
@@ -135,20 +170,44 @@ export class MerchantServiceWindow {
     // wrong against: keyboard access here is an ADDITION, recorded at
     // Ledger A, THE MERCHANT SERVICE POPUP'S ACCELERATORS ARE THE
     // PORT'S OWN, cited by name.
-    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { this._exit(); return; }
-    if (code === 'KeyT') { this._talk(); return; }
-    if (code === 'KeyS') { this._service(); return; }
-    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal();   // PORTAL1
-    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe();   // APPEARANCES
+    if (code === 'Escape' || code === 'Enter' || code === 'KeyE') {
+      this._exit();
+      return;
+    }
+    if (code === 'KeyT') {
+      this._talk();
+      return;
+    }
+    if (code === 'KeyS') {
+      this._service();
+      return;
+    }
+    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal(); // PORTAL1
+    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe(); // APPEARANCES
   }
 
   click(vx, vy) {
-    if (inRect(MERCHANT_RECTS.talk, vx, vy)) { this._talk(); return true; }
-    if (inRect(MERCHANT_RECTS.service, vx, vy)) { this._service(); return true; }
-    if (inRect(MERCHANT_RECTS.exit, vx, vy)) { this._exit(); return true; }
-    if (this.hooks.portal && inRect(portalRowRect(MERCHANT_PANEL_H), vx, vy)) { this._portal(); return true; }   // PORTAL1
-    if (this.hooks.wardrobe && inRect(shopRowRect(MERCHANT_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._wardrobe(); return true; }   // APPEARANCES
-    return true;   // the panel eats its own clicks
+    if (inRect(MERCHANT_RECTS.talk, vx, vy)) {
+      this._talk();
+      return true;
+    }
+    if (inRect(MERCHANT_RECTS.service, vx, vy)) {
+      this._service();
+      return true;
+    }
+    if (inRect(MERCHANT_RECTS.exit, vx, vy)) {
+      this._exit();
+      return true;
+    }
+    if (this.hooks.portal && inRect(portalRowRect(MERCHANT_PANEL_H), vx, vy)) {
+      this._portal();
+      return true;
+    } // PORTAL1
+    if (this.hooks.wardrobe && inRect(shopRowRect(MERCHANT_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) {
+      this._wardrobe();
+      return true;
+    } // APPEARANCES
+    return true; // the panel eats its own clicks
   }
 
   draw(renderer, canvas, font) {
@@ -156,12 +215,29 @@ export class MerchantServiceWindow {
     drawScreenDimBackdrop(renderer, canvas);
     if (_art) drawImg(renderer, _art, m, MERCHANT_PANEL_X, MERCHANT_PANEL_Y);
     const [sx, sy, sw] = MERCHANT_RECTS.service;
-    const label = this.hooks.label ?? merchantServiceLabel(this.hooks.service);   // RR3: GetServiceLabelText's custom arm (:114-115) - the registered service's own name
+    const label = this.hooks.label ?? merchantServiceLabel(this.hooks.service); // RR3: GetServiceLabelText's custom arm (:114-115) - the registered service's own name
     const lw = measureText(font.fnt, label);
-    drawText(renderer, font, label,
+    drawText(
+      renderer,
+      font,
+      label,
       m.ox + (MERCHANT_PANEL_X + sx + Math.round((sw - lw) / 2)) * m.s,
-      m.oy + (MERCHANT_PANEL_Y + sy + SERVICE_LABEL_OFFSET_Y) * m.s, m.s, DEFAULT_TEXT_COLOR);
-    if (this.hooks.portal) drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label);   // PORTAL1
-    if (this.hooks.wardrobe) drawShopRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.wardrobe.label, wardrobeRowIndex(this.hooks));   // APPEARANCES
+      m.oy + (MERCHANT_PANEL_Y + sy + SERVICE_LABEL_OFFSET_Y) * m.s,
+      m.s,
+      DEFAULT_TEXT_COLOR,
+    );
+    if (this.hooks.portal)
+      drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label); // PORTAL1
+    if (this.hooks.wardrobe)
+      drawShopRow(
+        renderer,
+        m,
+        font,
+        MERCHANT_PANEL_X,
+        MERCHANT_PANEL_Y,
+        MERCHANT_PANEL_H,
+        this.hooks.wardrobe.label,
+        wardrobeRowIndex(this.hooks),
+      ); // APPEARANCES
   }
 }

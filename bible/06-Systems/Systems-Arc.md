@@ -8388,7 +8388,7 @@ The owner: "Reduce the density of spawning dungeons by 25%." The band is unchang
 A second roll keeps three quarters of the pixels that band already chose
 (`world/spawnedDungeons.js:"export const SPAWN_KEEP = 0.75;"`), on its own hash lane, so a dungeon that remains is the
 same kind on the same pixel and one the keep drops is absent. The salt is not changed: changing it would move every
-dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP = 0.75;"`).
+dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP"`).
 A character standing in a dropped dungeon does not find it on the next load. Authored dungeons are not this roll.
 
 ### GROUND-AGREE - A SPAWN'S GROUND IS THE ROLL'S, ALIVE OR DEAD (2026-10-24)
@@ -8417,7 +8417,7 @@ party walk's far spawn (`tvLocationAt`, through `spawnAt`) threw the same way, w
 What stood then: `spawnAt` answered none past the Bay (its first gate `inBay`), so the clone was never asked there; the
 Bay to the byte. It was the first commit of the fix, a guard SPAWN-WORLD (below) replaced with the spawn's own law past the
 Bay - the spawner's id in the world's spawn lane, and past the Bay a place first
-(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py)) return null;"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
+(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py))"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
 producer, and with ARENA2 the audit's own box: 0 threw, the Bay's 14 spawns as they stood). Mutants:
 `tools/mutants/spawnhole.json`. PIN MOVED: `test/scenes/fb1024_groundagree.test.js` (the Eltheric box with no Eltheric
 Ocean is past the Bay).

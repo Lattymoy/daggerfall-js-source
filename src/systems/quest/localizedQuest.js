@@ -11,7 +11,15 @@
 // current locale's Internal_Quests, as DFU's into its selected one. English has no -LOC file, so nothing here ever
 // speaks for it: its quests read their own source, byte for byte.
 
-import { localeDocument, localeTable, tryGetLocalizedText, runtimeCollectionName, currentLocale, textRevision, TextCollections } from '../textManager.js';
+import {
+  localeDocument,
+  localeTable,
+  tryGetLocalizedText,
+  runtimeCollectionName,
+  currentLocale,
+  textRevision,
+  TextCollections,
+} from '../textManager.js';
 import { staticMessagesTable } from './tables.js';
 import { splitField, getFieldStringValue } from './parseUtils.js';
 
@@ -38,13 +46,17 @@ export function parseLocalizedQuest(lines) {
   if (!lines?.length) return null;
   let displayName = '';
   const messages = new Map();
-  let inQRC = false, inQBN = false;
+  let inQRC = false,
+    inQBN = false;
   const table = staticMessagesTable();
   for (let i = 0; i < lines.length; i++) {
     const text = lines[i].trim();
     if (!text || text.startsWith('-')) continue;
     if (startsWithCI(text, 'quest:')) continue;
-    if (startsWithCI(text, 'displayname:')) { displayName = getFieldStringValue(text); continue; }
+    if (startsWithCI(text, 'displayname:')) {
+      displayName = getFieldStringValue(text);
+      continue;
+    }
     if (startsWithCI(text, 'qrc:')) inQRC = true;
     else if (startsWithCI(text, 'qbn:')) inQBN = true;
     if (!inQRC || inQBN) continue;
@@ -53,9 +65,13 @@ export function parseLocalizedQuest(lines) {
     let id;
     if (parts[1].startsWith('[') && parts[1].endsWith(']')) {
       id = table.getInt('id', parts[0]);
-      if (id === -1) throw new Error(`Could not parse localized quest message ID '${id}' to an int. Expected message ID value.`);
+      if (id === -1)
+        throw new Error(`Could not parse localized quest message ID '${id}' to an int. Expected message ID value.`);
     } else {
-      if (!/^\s*[+-]?\d+\s*$/.test(parts[1])) throw new Error(`Could not parse localized quest message ID '${parts[1]}' to an int. Expected message ID value.`);
+      if (!/^\s*[+-]?\d+\s*$/.test(parts[1]))
+        throw new Error(
+          `Could not parse localized quest message ID '${parts[1]}' to an int. Expected message ID value.`,
+        );
       id = Number.parseInt(parts[1], 10);
     }
     let messageLines = '';
@@ -63,7 +79,10 @@ export function parseLocalizedQuest(lines) {
       if (i + 1 >= lines.length) break;
       const textLine = lines[++i].replace(/\r+$/, '');
       if (!textLine) {
-        if (!peekMessageEnd(lines, i)) { messageLines += ' \n'; continue; }
+        if (!peekMessageEnd(lines, i)) {
+          messageLines += ' \n';
+          continue;
+        }
         break;
       }
       messageLines += textLine + '\n';
@@ -74,9 +93,12 @@ export function parseLocalizedQuest(lines) {
   return { displayName, messages };
 }
 
-const _parsed = new Map();   // `${locale}|${QUEST}` -> { displayName } | null
+const _parsed = new Map(); // `${locale}|${QUEST}` -> { displayName } | null
 let _revision = -1;
-const questKey = (questName) => String(questName ?? '').replace(/\.txt$/i, '').toUpperCase();
+const questKey = (questName) =>
+  String(questName ?? '')
+    .replace(/\.txt$/i, '')
+    .toUpperCase();
 
 /**
  * ParseLocalizedQuestText (QuestMachine.cs:1648-1730): the current language's -LOC file for `questName`, parsed once and
@@ -85,7 +107,10 @@ const questKey = (questName) => String(questName ?? '').replace(/\.txt$/i, '').t
  * or null.
  */
 export function parseLocalizedQuestText(questName) {
-  if (_revision !== textRevision()) { _parsed.clear(); _revision = textRevision(); }
+  if (_revision !== textRevision()) {
+    _parsed.clear();
+    _revision = textRevision();
+  }
   const name = questKey(questName);
   const key = `${currentLocale()}|${name}`;
   if (_parsed.has(key)) return _parsed.get(key);
@@ -93,14 +118,20 @@ export function parseLocalizedQuestText(questName) {
   const doc = localeDocument(QUEST_DOCUMENT, name);
   if (doc) {
     let parsed = null;
-    try { parsed = parseLocalizedQuest(doc.split('\n')); } catch (err) { console.error(`Parsing localized quest \`${name}-LOC.txt\` FAILED!\r\n${err?.message ?? err}`); }
-    if (parsed && !parsed.displayName) console.error(`Localized quest '${name}-LOC.txt' has a null or empty DisplayName: value.`);
-    else if (parsed && !parsed.messages.size) console.error(`Localized quest '${name}-LOC.txt' parsed no valid messages. Check source file is a valid format.`);
+    try {
+      parsed = parseLocalizedQuest(doc.split('\n'));
+    } catch (err) {
+      console.error(`Parsing localized quest \`${name}-LOC.txt\` FAILED!\r\n${err?.message ?? err}`);
+    }
+    if (parsed && !parsed.displayName)
+      console.error(`Localized quest '${name}-LOC.txt' has a null or empty DisplayName: value.`);
+    else if (parsed && !parsed.messages.size)
+      console.error(`Localized quest '${name}-LOC.txt' parsed no valid messages. Check source file is a valid format.`);
     else if (parsed) {
       const table = localeTable(currentLocale(), runtimeCollectionName(TextCollections.TextQuests), { create: true });
       for (const [id, text] of parsed.messages) {
         const k = `${name}.${id}`;
-        if (!table.has(k)) table.set(k, text);   // AddEntry only where GetEntry found none
+        if (!table.has(k)) table.set(k, text); // AddEntry only where GetEntry found none
       }
       entry = { displayName: parsed.displayName };
     }

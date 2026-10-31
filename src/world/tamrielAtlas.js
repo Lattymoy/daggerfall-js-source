@@ -41,7 +41,8 @@ export function createTamrielAtlas(placeAt, stamp = atlasStamp) {
   let kept = null;
   function rollTile(tx, ty) {
     const out = [];
-    const x0 = tx * ATLAS_TILE, y0 = ty * ATLAS_TILE;
+    const x0 = tx * ATLAS_TILE,
+      y0 = ty * ATLAS_TILE;
     for (let y = y0; y < y0 + ATLAS_TILE; y++) {
       for (let x = x0; x < x0 + ATLAS_TILE; x++) {
         if (inBay(x, y)) continue;
@@ -56,7 +57,10 @@ export function createTamrielAtlas(placeAt, stamp = atlasStamp) {
      *  rolled. */
     placesIn(x0, y0, x1, y1) {
       const s = stamp();
-      if (!sameStamp(kept, s)) { tiles.clear(); kept = s; }
+      if (!sameStamp(kept, s)) {
+        tiles.clear();
+        kept = s;
+      }
       const out = [];
       if (x1 <= x0 || y1 <= y0) return out;
       const had = [];
@@ -69,7 +73,7 @@ export function createTamrielAtlas(placeAt, stamp = atlasStamp) {
       for (const [tx, ty] of had) {
         const key = `${tx},${ty}`;
         const tile = /** @type {Array<{ x: number, y: number, type: number, name: string }>} */ (tiles.get(key));
-        tiles.delete(key);   // read again: to the back of the line
+        tiles.delete(key); // read again: to the back of the line
         tiles.set(key, tile);
         for (const p of tile) if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);
       }

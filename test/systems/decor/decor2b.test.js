@@ -419,8 +419,8 @@ test('DECOR2b the host (worldModes.js) by source: the tool reads the deliveries;
   // PIN MOVED (AUDIT FB1025i E1): the owner's own things' doors are systems/decor/decorPack.js's, the host wires them
   const pk = src('src/systems/decor/decorPack.js');
   assert.match(m, /const \{ decorHome, decorPackTake, decorPackGive \} = createDecorPack\(\(\) => playerEntity\);/);
-  assert.match(pk, /function decorPackTake\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) \{[^\n]*\n\s*const list = decorHome\(item\);\n\s*const i = list\.indexOf\(item\);\n\s*if \(i < 0\) return null;\n\s*list\.splice\(i, 1\);\n\s*return item;\n\s*\}/, 'whole, out of the deliveries');
-  assert.match(pk, /function decorPackGive\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) \{ decorHome\(item\)\.push\(item\); return item; \}/, 'given back to the deliveries');
+  assert.match(pk, /function decorPackTake\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) \{\n\s*\/\/ DECOR2b: a delivered piece leaves the deliveries whole\n\s*const list = decorHome\(item\);\n\s*const i = list\.indexOf\(item\);\n\s*if \(i < 0\) return null;\n\s*list\.splice\(i, 1\);\n\s*return item;\n\s*\}/, 'whole, out of the deliveries');
+  assert.match(pk, /function decorPackGive\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) \{\n\s*decorHome\(item\)\.push\(item\);\n\s*return item;\n\s*\}/, 'given back to the deliveries');
   assert.match(pk, /function decorHome\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) return \(entity\(\)\.furnishings \?\?= \[\]\);\n\s*return \(entity\(\)\.items \?\?= \[\]\);/);
   assert.match(m, /function decorDeliver\(items\) \{\n\s*if \(!items\.length\) return;\n\s*for \(const it of items\) decorHome\(it\)\.push\(it\);\n\s*say\(furnishingDeliveredLine\(items\.map\(\(it\) => itemLongName\(it\)\)\)\);/, 'said once for the lot');
   assert.match(m, /if \(i >= 0\) shelf\.items\.splice\(i, 1\);\n\s*if \(!isFurnishing\(it\)\) addItem\(playerEntity\.items, it\);\n\s*\}\n\s*decorDeliver\(staged\.filter\(isFurnishing\)\);/, 'the counter');

@@ -46,14 +46,14 @@ import { ListPickerWindow } from './listPicker.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { isPotion } from '../systems/useItem.js';
 import { isEnchanted as defaultIsEnchanted } from '../systems/inventory.js';
-import { itemLongName } from '../systems/item/itemInfo.js';   // UMI-NAMES: Refresh's LongName (:50-57); L10N3e: its names in the player's language
-import { audio } from '../systems/audio.js';   // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
+import { itemLongName } from '../systems/item/itemInfo.js'; // UMI-NAMES: Refresh's LongName (:50-57); L10N3e: its names in the player's language
+import { audio } from '../systems/audio.js'; // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
 import { SOUND } from '../systems/soundClips.js';
-import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 import { bindings } from './input.js';
-import { codeMeans } from '../systems/inputActions.js';   // UXB1-S: its own key, shared or not
+import { codeMeans } from '../systems/inputActions.js'; // UXB1-S: its own key, shared or not
 import { normalizeCode } from '../systems/dialogShortcuts.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /**
  * UpdateUsableMagicItems (:58-81), verbatim: walk the pack in order;
@@ -69,7 +69,10 @@ export function usableMagicItems(items = [], { isEnchanted = defaultIsEnchanted 
     if (!item) continue;
     if (isEnchanted(item) && item.enchantments != null) {
       for (const e of item.enchantments) {
-        if (e?.type === ENCHANTMENT_TYPES.CastWhenUsed) { out.push(item); break; }
+        if (e?.type === ENCHANTMENT_TYPES.CastWhenUsed) {
+          out.push(item);
+          break;
+        }
       }
     } else if (isPotion(item)) {
       out.push(item);
@@ -92,14 +95,19 @@ export const noItemToActivateText = () => localizedText('noItemToActivate', NO_I
  * player's language).
  * @returns {ListPickerWindow|null} the window, or null when nothing is
  */
-export function createUseMagicItemWindow({ items = [], onUse = null, onClose = null,
-  isEnchanted = defaultIsEnchanted, nameOf = (it) => itemLongName(it) } = {}) {
+export function createUseMagicItemWindow({
+  items = [],
+  onUse = null,
+  onClose = null,
+  isEnchanted = defaultIsEnchanted,
+  nameOf = (it) => itemLongName(it),
+} = {}) {
   const usable = usableMagicItems(items, { isEnchanted });
   if (usable.length === 0) return null;
-  noteFirstUse('magic-items');   // TUT1
+  noteFirstUse('magic-items'); // TUT1
   const win = new ListPickerWindow({
     items: usable.map(nameOf),
-    backdrop: 'none',   // :33 ParentPanel.BackgroundColor = Color.clear
+    backdrop: 'none', // :33 ParentPanel.BackgroundColor = Color.clear
     // AllowCancel = false (:34-35): the base class's Escape is off
     // because Update below closes the window itself.
     allowCancel: false,
@@ -125,19 +133,19 @@ export function createUseMagicItemWindow({ items = [], onUse = null, onClose = n
   // release closes. The release of the press that OPENED the window
   // finds nothing armed, so it cannot close what it opened.
   const closesIt = (code, e) => {
-    const c = normalizeCode(code, e);   // 'back' is Escape, 'char:u' is KeyU
+    const c = normalizeCode(code, e); // 'back' is Escape, 'char:u' is KeyU
     return c === 'Escape' || codeMeans(bindings(), c, 'UseMagicItem');
   };
   let isCloseWindowDeferred = false;
   const pick = win.input.bind(win);
   win.input = (code, e = null) => {
     if (closesIt(code, e)) isCloseWindowDeferred = true;
-    pick(code, e);   // base.Update runs first in DFU: the list still sees the press
+    pick(code, e); // base.Update runs first in DFU: the list still sees the press
   };
   win.keyup = (code, e = null) => {
     if (!isCloseWindowDeferred || !closesIt(code, e)) return;
     isCloseWindowDeferred = false;
-    win.done = true;   // CloseWindow
+    win.done = true; // CloseWindow
     onClose?.();
   };
   return win;

@@ -23,14 +23,20 @@ export const RANDOM_TREASURE_ARCHIVE = 216;
 /** The other five drop archives (:21-25) - "Other texture archives for
  *  dropped loot icons". */
 export const DROP_ICON_ARCHIVES = Object.freeze({
-  clothing: 204, boxesNbottles: 205, combat: 207, academic: 209, misc: 211,
+  clothing: 204,
+  boxesNbottles: 205,
+  combat: 207,
+  academic: 209,
+  misc: 211,
   randomTreasure: RANDOM_TREASURE_ARCHIVE,
 });
 
 /** randomTreasureIconIndices (:30-33) - the icon a pile rolls when
  *  nobody picked one. DFU's own note: "Only a subset of loot icons
  *  from TEXTURE.216 are used & These are matched to classic". */
-export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47]);
+export const RANDOM_TREASURE_ICONS = Object.freeze([
+  0, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 43, 44, 45, 46, 47,
+]);
 
 /** dropIconIdxs (:37-45) - "Dropped items icon lists for player
  *  selection in inventory window", verbatim and IN THE DICTIONARY'S
@@ -41,9 +47,18 @@ export const RANDOM_TREASURE_ICONS = Object.freeze([0, 20, 22, 23, 24, 25, 26, 2
  *  Map guarantees it. */
 export const DROP_ICON_IDXS = new Map([
   [DROP_ICON_ARCHIVES.clothing, Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])],
-  [DROP_ICON_ARCHIVES.boxesNbottles, Object.freeze([1, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 31, 32, 33, 34, 35, 36, 42, 43, 44])],
+  [
+    DROP_ICON_ARCHIVES.boxesNbottles,
+    Object.freeze([1, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 31, 32, 33, 34, 35, 36, 42, 43, 44]),
+  ],
   [DROP_ICON_ARCHIVES.combat, Object.freeze([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16])],
   [DROP_ICON_ARCHIVES.academic, Object.freeze([0, 1, 2, 3, 5, 6, 7, 8, 10])],
   [DROP_ICON_ARCHIVES.misc, Object.freeze([2, 49, 51, 57])],
-  [DROP_ICON_ARCHIVES.randomTreasure, Object.freeze([0, 1, 3, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 43, 44, 45, 46, 47])],
+  [
+    DROP_ICON_ARCHIVES.randomTreasure,
+    Object.freeze([
+      0, 1, 3, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 43, 44, 45, 46,
+      47,
+    ]),
+  ],
 ]);

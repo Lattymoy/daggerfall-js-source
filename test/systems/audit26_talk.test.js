@@ -211,6 +211,6 @@ test('F097: the questor gender is read only on a Work question', () => {
   // this pin held, which no producer mints.
   assert.ok(tm.includes('const female = () => ctx.questorGender?.() === GENDERS.Female;'),
     'the questor-gender read is one helper');
-  assert.ok(tm.includes("pronoun() { return text(female() ? 'pronounShe' : 'pronounHe'); }"),
+  assert.ok(tm.includes("pronoun() {\n      return text(female() ? 'pronounShe' : 'pronounHe');\n    }"),
     'anything but female is the male pronoun');
 });

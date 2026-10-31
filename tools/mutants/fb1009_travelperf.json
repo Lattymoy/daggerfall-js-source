@@ -38,8 +38,8 @@
   {
     "name": "TVB-law-farthest-first",
     "file": "src/systems/travel/travelDungeonModels.js",
-    "old": "  for (const g of list ?? []) {\n    if (n >= max) break;",
-    "new": "  for (const g of [...(list ?? [])].reverse()) {\n    if (n >= max) break;",
+    "old": "  for (const g of list ?? []) {",
+    "new": "  for (const g of [...(list ?? [])].reverse()) {",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "TVS-the-player-handed",
     "file": "src/scenes/snowfallHost.js",
-    "old": "player: enabled && !overworld ? f.player ?? null : null",
-    "new": "player: enabled ? f.player ?? null : null",
+    "old": "      player: enabled && !overworld ? (f.player ?? null) : null, // the switch off: the surfaces hidden, the snowpack still kept",
+    "new": "      player: enabled ? (f.player ?? null) : null, // the switch off: the surfaces hidden, the snowpack still kept",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "TVS-the-frame-not-run",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    runtime.frame(frame);\n    flushPromotions(f.now);",
-    "new": "    if (!overworld) runtime.frame(frame);\n    flushPromotions(f.now);",
+    "old": "    runtime.frame(frame);",
+    "new": "    if (!overworld) runtime.frame(frame);",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "TVSV-a-refill-unmarked",
     "file": "src/systems/snowfall.js",
-    "old": "    this.revision++;   // TV-SAVE: every cell rises or goes\n",
-    "new": "",
+    "old": "    this.revision++; // TV-SAVE: every cell rises or goes\n    const C = this.cells,",
+    "new": "    const C = this.cells,",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "TVSV-a-deepening-unmarked",
     "file": "src/systems/snowfall.js",
-    "old": "        this.revision++;   // TV-SAVE: deepened\n",
-    "new": "",
+    "old": "        this.revision++; // TV-SAVE: deepened\n        cell.sequence = ++this.nextSequence;",
+    "new": "        cell.sequence = ++this.nextSequence;",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "TVSV-a-new-cell-unmarked",
     "file": "src/systems/snowfall.js",
-    "old": "    this.revision++;   // TV-SAVE: made\n",
-    "new": "",
+    "old": "    this.revision++; // TV-SAVE: made\n    this.order.push({ key, sequence: fresh.sequence });",
+    "new": "    this.order.push({ key, sequence: fresh.sequence });",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "TVSV-the-text-kept-past-a-clear",
     "file": "src/systems/snowfall.js",
-    "old": "    this._packed = null;   // TV-SAVE: the last record's text goes with the field (an empty field packs none)\n",
-    "new": "",
+    "old": "    this._packed = null; // TV-SAVE: the last record's text goes with the field (an empty field packs none)\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "TVR-the-clean-window-swept",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      if (L.hasDeformation) {\n        let any = false;",
-    "new": "      if (true) {\n        let any = false;",
+    "old": "      if (L.hasDeformation) {",
+    "new": "      if (true) {",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "TVR-the-far-flag-unread",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (!F.ready || step <= 0 || !F.deformed) return;",
-    "new": "    if (!F.ready || step <= 0) return;",
+    "old": "    if (!F.ready || step <= 0 || !F.deformed) return; // TV-REFILL: a clean mask has nothing to fill",
+    "new": "    if (!F.ready || step <= 0) return; // TV-REFILL: a clean mask has nothing to fill",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "TVR-a-far-stamp-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (n > 0) { F.lastChanged = n; F.deformed = true; }",
-    "new": "    if (n > 0) { F.lastChanged = n; }",
+    "old": "      F.deformed = true;\n    } // TV-REFILL",
+    "new": "    } // TV-REFILL",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "TVR-a-scroll-forgets",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;",
-    "new": "      F.deformed = F.lastChanged > 0;",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
+    "new": "      F.deformed = F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "TVR-a-recentres-restore-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0;",
-    "new": "      F.deformed = !!out && F.deformed;",
+    "old": "      F.deformed = (!!out && F.deformed) || F.lastChanged > 0; // TV-REFILL: what the scroll kept, and what the field laid",
+    "new": "      F.deformed = !!out && F.deformed; // TV-REFILL: what the scroll kept, and what the field laid",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "TVR-a-stand-unflagged",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "      F.deformed = F.lastChanged > 0;   // TV-REFILL",
-    "new": "      F.deformed = false;   // TV-REFILL",
+    "old": "      F.deformed = F.lastChanged > 0; // TV-REFILL",
+    "new": "      F.deformed = false; // TV-REFILL",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "TVR-the-flag-left-up",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "    F.deformed = any;   // TV-REFILL: none found, none left",
-    "new": "    F.deformed = true;   // TV-REFILL: none found, none left",
+    "old": "    F.deformed = any; // TV-REFILL: none found, none left",
+    "new": "    F.deformed = true; // TV-REFILL: none found, none left",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "TVR-a-clear-leaves-it-up",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "this.far.lastChanged = 0; this.far.deformed = false; this.rects.far.all();",
-    "new": "this.far.lastChanged = 0; this.rects.far.all();",
+    "old": "    this.far.deformed = false;\n    this.rects.far.all();",
+    "new": "    this.rects.far.all();",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]

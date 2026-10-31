@@ -27,6 +27,7 @@ import { setPref, getPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { SYSTEM_PANES } from '../../src/ui/enhanced/enhancedMenu.js';
 import { holdFrame, claimFrame } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');   // the pins are the LF the suite runs on; this checkout writes CRLF
 const enc = async () => ({ blob: new Blob(['full']), thumb: new Blob(['thumb']), w: 1920, h: 1080 });
@@ -189,9 +190,9 @@ test('LOAD1 the key: the PNG goes to the gallery AND the download, the download 
     setShotEncoder(null);
   }
   const src = read('src/ui/screenshot.js');
-  assert.match(src, /const place = placeNow\(\);[^\n]*\n\s*_shoot\(_canvas, \{ keep: \(blob\) => keepInGallery\(blob, place\), download: getPref\(SHOT_DOWNLOAD_PREF\) !== false, said: sayOnHud \}\);/,
+  assert.match(src, /const place = placeNow\(\); \/\/ where the key was pressed, not where the gallery's answer finds the player\n\s*_shoot\(_canvas, \{\n\s*keep: \(blob\) => keepInGallery\(blob, place\),\n\s*download: getPref\(SHOT_DOWNLOAD_PREF\) !== false,\n\s*said: sayOnHud,\n\s*\}\);/,
     'the place is read at the press, the keep goes to the gallery and the download asks the switch');
-  assert.doesNotMatch(src, /^import[^\n]*shotGallery/m, 'the gallery is a door, never a static import - this file is on the entry\'s graph (BOOT2)');
+  assert.doesNotMatch(src, /import \{\n\s*listShots,\n\s*deleteShot,\n\s*setShotLoading,\n\s*keepShot,\n\s*onGalleryChange,\n\s*shotCaption,\n\s*GALLERY_MAX,\n\s*\} from '\.\.\/systems\/shotGallery/m, 'the gallery is a door, never a static import - this file is on the entry\'s graph (BOOT2)');
 });
 
 test('LOAD1 the screen: a hold shorter than its delay shows nothing; a shown screen stands MIN_SHOWN_MS and fades; nested holds keep it up; the place and the step paint (mutants: no delay; no stand; the first end takes it down)', () => {
@@ -363,7 +364,7 @@ test('LOAD1 the screen stands on a shot from the turn, with its caption; with no
 });
 
 test('LOAD1 the hosts: the boot raises the screen at once and its title steps are its line, ended at status(null); the world frame asks AUDIT 68 S22\'s one question and a door\'s build; a claimed loop lets go; a film takes the screen aside (mutants: the frame sync gone; the boot hold never ended; the claimed loop keeps the screen)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const boot = w.slice(w.indexOf('export async function bootWorld('));
   const head = boot.slice(0, boot.indexOf('const realmNew = '));
   assert.match(head, /const bootLoading = beginLoading\(\{ delay: 0, [^}]*why: 'the boot' \}\);/, 'before the realm\'s join - the first await');

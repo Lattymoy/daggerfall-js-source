@@ -30,14 +30,20 @@ export const TV_LAIR_READS = 4;
  *   site, that lair laid out unstood, the politic map's region, the stamp of what stands the places
  */
 export function createTravelLairs({ lairAt, cloneAt, regionAt, version, reads = TV_LAIR_READS }) {
-  let ver = null, gen = 0;
+  let ver = null,
+    gen = 0;
   /** @type {Map<number, any>} cell -> its lair's row, or null */
   const cells = new Map();
   /** @type {Map<string, any>} "x,y" -> the lair laid out there, or null */
   const laid = new Map();
   const fresh = () => {
     const v = version();
-    if (v !== ver) { ver = v; cells.clear(); laid.clear(); gen++; }
+    if (v !== ver) {
+      ver = v;
+      cells.clear();
+      laid.clear();
+      gen++;
+    }
   };
   /**
    * THE LAIRS within `range` (a circle, map pixels) of `at` whose cell's site lies past the Bay, nearest first - TV6's
@@ -47,36 +53,49 @@ export function createTravelLairs({ lairAt, cloneAt, regionAt, version, reads = 
    */
   function rowsNear(at, range, budget = reads) {
     fresh();
-    const r = Math.ceil(range), seen = new Set(), near = [];
+    const r = Math.ceil(range),
+      seen = new Set(),
+      near = [];
     for (let y = at.y - r; y <= at.y + r; y++) {
       for (let x = at.x - r; x <= at.x + r; x++) {
         const c = lairCellOf(x, y);
         if (c < 0 || seen.has(c)) continue;
         seen.add(c);
-        const s = lairSite(c), d = Math.hypot(s.px - at.x, s.py - at.y);
+        const s = lairSite(c),
+          d = Math.hypot(s.px - at.x, s.py - at.y);
         if (d <= range && !inBay(s.px, s.py)) near.push({ c, s, d });
       }
     }
     near.sort((a, b) => a.d - b.d || a.c - b.c);
-    let read = 0, owed = false;
+    let read = 0,
+      owed = false;
     const out = [];
     for (const { c, s } of near) {
       if (!cells.has(c)) {
-        if (read >= budget) { owed = true; continue; }
+        if (read >= budget) {
+          owed = true;
+          continue;
+        }
         read++;
         cells.set(c, lairAt(s.px, s.py) ?? null);
       }
       const row = cells.get(c);
-      if (row) out.push({ x: row.px, y: row.py, row: { mapID: row.mapId, regionIndex: regionAt(row.px, row.py), locationType: row.type }, lair: row });
+      if (row)
+        out.push({
+          x: row.px,
+          y: row.py,
+          row: { mapID: row.mapId, regionIndex: regionAt(row.px, row.py), locationType: row.type },
+          lair: row,
+        });
     }
-    if (owed) gen++;   // cells in reach still unread: what was built on this answer is built again
+    if (owed) gen++; // cells in reach still unread: what was built on this answer is built again
     return out;
   }
   /** The lair a pixel past the Bay holds, laid out as it would stand and never stood - or null. @param {number} x @param {number} y */
   function lairPlaceAt(x, y) {
     fresh();
     const key = `${x},${y}`;
-    if (!laid.has(key)) laid.set(key, lairAt(x, y) ? cloneAt(x, y) ?? null : null);
+    if (!laid.has(key)) laid.set(key, lairAt(x, y) ? (cloneAt(x, y) ?? null) : null);
     return laid.get(key);
   }
   return { rowsNear, lairPlaceAt, gen: () => gen };

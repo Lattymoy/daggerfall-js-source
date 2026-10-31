@@ -387,7 +387,7 @@ test('SET5 the surfaces\' wiring: the pack\'s card and the Info box append the s
   assert.match(inv, /export function markItemFrame\(node, item\) \{[\s\S]*?markSetFrame\(node, item\);[\s\S]*?return node;\s*\}/, 'every frame the pack marks');
   const hb = strip(read('src/ui/enhanced/enhancedHotbar.js'));
   assert.match(hb, /\$\{validSigil\(v\.item\.sigil\) \? '\*' : ''\}\$\{setIdOf\(v\.item\) \?\? ''\}/, 'the hotbar\'s repaint key reads the set');
-  assert.match(hb, /if \(it && validSigil\(it\.sigil\)\) n\.dataset\.sigil = ''; else delete n\.dataset\.sigil;\s*markSetFrame\(n, it\);/);
+  assert.match(hb, /if \(it && validSigil\(it\.sigil\)\) n\.dataset\.sigil = '';\n\s*else delete n\.dataset\.sigil;\n\s*markSetFrame\(n, it\);/);
   const hud = strip(read('src/ui/enhanced/enhancedHud.js'));
   assert.match(hud, /const frameKey = worn \? `\$\{rarityAttr\(worn\) \?\? ''\}\|\$\{validSigil\(worn\.sigil\) \? 1 : 0\}\|\$\{setIdOf\(worn\) \?\? ''\}` : '';/, 'the diamond\'s key');
   assert.match(hud, /markSetFrame\(part\.cell, worn\);/);

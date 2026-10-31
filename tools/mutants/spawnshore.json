@@ -33,8 +33,8 @@
   {
     "name": "SHORE-overworld-ungated",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (!plateauDry(px, py)) return null;\n",
-    "new": "",
+    "old": "    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;",
+    "new": "    if (clocks && spawnGone(px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js",
       "test/world/terrain/spawnshore.test.js"

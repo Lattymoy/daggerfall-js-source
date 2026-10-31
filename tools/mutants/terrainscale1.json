@@ -11,8 +11,8 @@
   {
     "name": "TS1-placed-on-the-prefab",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
-    "new": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "old": "  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "TS1-overworld-on-the-prefab",
     "file": "src/ui/overworldModel.js",
-    "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;",
-    "new": "const TRUE_VERTICAL = 1.5;",
+    "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE; // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)",
+    "new": "const TRUE_VERTICAL = 1.5; // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "TS1-wod-sites-on-the-prefab",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)",
-    "new": "Math.fround(MAX_TERRAIN_HEIGHT * 1.5)",
+    "old": "export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
+    "new": "export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * 1.5);",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -264,7 +264,7 @@
     "name": "TS1-cache-save-drops-torches",
     "file": "src/systems/sceneCache.js",
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
-    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), droppedTorches: undefined })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({\n      sceneName,\n      ...copySceneEntry(d),\n      droppedTorches: undefined,\n    })),",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -273,7 +273,7 @@
     "name": "TS1-cache-save-drops-camps",
     "file": "src/systems/sceneCache.js",
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
-    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), camps: undefined })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({\n      sceneName,\n      ...copySceneEntry(d),\n      camps: undefined,\n    })),",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -282,7 +282,7 @@
     "name": "TS1-cache-save-drops-frame",
     "file": "src/systems/sceneCache.js",
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
-    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), frame: undefined, terrainScale: undefined })),",
+    "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({\n      sceneName,\n      ...copySceneEntry(d),\n      frame: undefined,\n      terrainScale: undefined,\n    })),",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "TS1-cache-load-drops-frame",
     "file": "src/systems/sceneCache.js",
-    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
-    "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), frame: undefined, terrainScale: undefined }]));",
+    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)])); // `?? []` inside keeps a pre-ID1 save loadable",
+    "new": "  cache.scenes = new Map(\n    (snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), frame: undefined, terrainScale: undefined }]),\n  ); // `?? []` inside keeps a pre-ID1 save loadable",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "TS1-cache-load-drops-torches",
     "file": "src/systems/sceneCache.js",
-    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
-    "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), droppedTorches: undefined }]));",
+    "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)])); // `?? []` inside keeps a pre-ID1 save loadable",
+    "new": "  cache.scenes = new Map(\n    (snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), droppedTorches: undefined }]),\n  ); // `?? []` inside keeps a pre-ID1 save loadable",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]
@@ -523,7 +523,7 @@
   },
   {
     "name": "TS1-ship-unstamped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP },",
     "new": "yaw: cam.yaw },",
     "tests": [
@@ -533,7 +533,7 @@
   },
   {
     "name": "TS1-ship-deck-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "      if (walkMode) player.spawn(localPos[0], y, localPos[2]);",
     "new": "      if (walkMode) player.spawn(localPos[0], localPos[1], localPos[2]);",
     "tests": [

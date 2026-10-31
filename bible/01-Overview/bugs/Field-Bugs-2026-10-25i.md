@@ -66,7 +66,7 @@ a face the watch knows and its stop's 600 gold, pinned as intended.
 
 FIXED. The road's strike is its own module (out of `bootWorld`, 9 logical lines), and asks the street's law: a
 traveller it spares stops the swing - nothing killed, nothing reported, no door behind them bashed (AUDIT 29g)
-(`roadStrike.js:"if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;"`). No fight, or the
+(`roadStrike.js:"if (cityGuards.playerSparesPerson(near.entry.person))"`). No fight, or the
 protection off, and a blow at a traveller is DFU's one-hit civilian. AUDIT FB1025i D2: a stood traveller (LW7b) another
 hand cut down - a beast, a peer, an ally - is KILLED, never the player's slain (no report): the pool's death door names
 whose hand (`exteriorFoes.js` `killedBy`, the watch pool's own word) and `roadStands.js` slays on the player's kill
@@ -133,7 +133,7 @@ a plain heart on the same body about half the time (201 of 400 bodies through sp
 struck and one "Daedra's Heart" row ("3.00 kg", if read right, is three hearts, and a quest's item never stacks).
 
 FIXED. HEART-KEPT (B1, a return to DFU's law): a foe's clone says it is one (`questClone`, declared in `itemFields.js`,
-`foe.js:"return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));"`), and the read of
+`foe.js:"return this.itemQueue.map"`), and the read of
 a quest's own record in the pack is one law beside keepsQuestItem
 (`itemTransfer.js:"export function heldQuestRecordIndex(items, dfItem, { clones = false } = {}) {"`) - the record, or a
 restored copy that is no clone; playerHasItem never takes a clone for it
@@ -150,7 +150,7 @@ showing them), S0000503's hoard by its `_item_` alone (B3: `_S.30_` asks on DFU'
 so a look and a walk out reached `_S.28_`, `take _item_ from pc`, and `_S.29_`; a party copy has the latch by the merge,
 `qlState.js` mergeSharedState). A SAVE FROM BEFORE (B4): each rebound objective names its mend (`"reread":"fb1025i"`), and
 a state that has not taken it forgets that objective's latch once at its first read
-(`qlLaw.js:"const unmended = (st, o) => !!o?.reread && !(st?.reread ?? []).includes(o.reread);"`); a fresh state takes it
+(`qlLaw.js:"const unmended ="`); a fresh state takes it
 at once, and a latch this build wrote stands through a load (`06-Systems/Questlines-Arc.md` 2.2). QUEST-MARK: a quest's
 item says "quest item" on its row and names its quest on its card in the Enhanced pack and a body's list
 (`enhancedInventory.js:"quest: item?.questItem ? (deps.getQuest?.(item.questUID)?.displayName ?? '') : null,"`) - "Quest
@@ -189,7 +189,7 @@ glints were a herb's - six at most at a herb's reach: the light of their cores a
 near herb's at 30 m, 53 times at 12 m (the audit lane's probe, the real door's tree with the player's atlases).
 
 FIXED. The crown is as tall as the tree its run draws (`h = t.run.size[1] * row[4]`). A 3D crown's glints grow with its
-size on screen (`nodeGlint.js:"export const glintCrownGrowth = (rows, crownPx) =>"`): its side against the side a herb's
+size on screen (`nodeGlint.js:"export const glintCrownGrowth"`): its side against the side a herb's
 glint stops growing at, to the two thirds (their light, count times reach squared, as its area), up to twice as many
 reaching twice as far - twelve at 28 px at 1080 rows, the room round it its own. After: 1.4 and 7 times sparser than the
 herb at 30 and 12 m, the tree's hearts a frame 2.8 to 6.1 and 2.4 to 4.7. A herb, a vein, a boulder, a school and a far
@@ -223,7 +223,7 @@ ordered journal, undone last first (`decorTool.js:"for (const [i, m] of [...d.mo
 thing set down and taken down in one draft stays in the pack (the pack's door refuses a record it holds, and the take
 that followed lost the only copy; a ruby given again joined its stack, four of three), a thing taken down joins the
 stack it landed on and Discard takes one off that stack, and one gone from the pack since (stored, sold, dropped, or
-worn - `decorPack.js:"if (!pack.includes(item) || item?.equipSlot != null) return null;"`) stays down for Confirm,
+worn - `decorPack.js:"if (!pack.includes(item) || item?.equipSlot != null)"`) stays down for Confirm,
 said. The doors are the host's own, out of it (`systems/decor/decorPack.js`), so the pins stand on them. A staged
 chest's Access set before Confirm goes through the record's act (`decorTool.js:"const act = kind === 'storage' ? deps.realm?.() : null;"`):
 the service moves what the chest holds now, and the save's list empties only on its word - it had been cleared on an
@@ -234,11 +234,11 @@ saved room never stands; the next visit gives them back to the pack, said
 (`worldModes.js:"if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);"`).
 COPY-LIFT: a record's own `twice` copy is lifted only by staff's purge with `keep: true`, and (AUDIT FB1025i lane F)
 only where the act itself leaves the record one: the keep finds every copy the save holds wherever it lies - a
-deserter's take, the ground, a shop's shelf (`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as
+deserter's take, the ground, a shop's shelf (`staffRealm.js:"export function copiesOfKeys"`, said as
 `hidden`) - keeps the ledger's own piece (the first of its row's print) and destroys the rest, and lifts where its batch
 destroyed a copy or staff's Remove keeps one; its row the record's own, held and unclaimed and of the piece kept, no
 other record's copy, no trail check or one found innocent - never `unclear`
-(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`). The finding and the answer say what the
+(`ledger.js:"export async function ownCopiesLiftable"`). The finding and the answer say what the
 batch lifted; a checkpoint landing between the act's read and its seizure refuses it `seq`; a keep empties the
 account's chests only of what it lifts. No revenant takes a realm-locked piece (`revenant.js:"&& !isRealmLocked(item)"`).
 No checkpoint lifts a copy: a slice that did was found launderable before it merged - a copy moved where the record
@@ -280,7 +280,7 @@ and the Shipyard. Separately, PH1's one-way floor set a body on a split-rail fen
 side: a walker from behind ON the lower rail's back edge (0.39 m, wedged under the upper rail - 130 of 130 stations), a
 runner from the street on its under slope in a 0.28 m band a panel.
 
-FIXED. A sign's triangle whose every corner stands `signSolid.js:"export const SIGN_HANG_M = 1;"` over the sign's foot
+FIXED. A sign's triangle whose every corner stands `signSolid.js:"export const SIGN_HANG_M"` over the sign's foot
 hangs: it stays in the collider as a ray's (addMesh's `sight`), met by every ray and sweep - an arrow, a spell, a foe's
 look, the camera, a click, a walker's eye - and by no body (the resolve, the overlap, the contact, the parity and a
 body's own rays, `BODY_RAY`, pass it). The posts stand. The range is HOUSE-SIGN's one export (`houseSigns.js`

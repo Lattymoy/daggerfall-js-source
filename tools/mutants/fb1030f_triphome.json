@@ -1,17 +1,138 @@
 [
-  {"name": "TRIP-FROM-START-the-start-unmeasured", "file": "src/systems/quest/clock.js", "old": "travel > this.startingTimeInSeconds", "new": "travel < 0", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-the-shorter-taken", "file": "src/systems/quest/clock.js", "old": "travel > this.startingTimeInSeconds", "new": "travel > 0", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-a-run-clock-measured-again", "file": "src/systems/quest/clock.js", "old": " && this.remainingTimeInSeconds === this.startingTimeInSeconds) {", "new": ") {", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-the-arm-unmarked", "file": "src/systems/quest/clock.js", "old": "      this.travelArm = true;\n", "new": "", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-the-mark-unsaved", "file": "src/systems/quest/clock.js", "old": "      travelArm: this.travelArm,", "new": "", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-an-old-save-unread", "file": "src/systems/quest/clock.js", "old": ": (this.flag & 16) === 16;", "new": ": false;", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-FROM-START-the-measure-unguarded", "file": "src/systems/quest/clock.js", "old": "      try { travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline }); }   // TRIP-HOME: a deadline's way back too\n      catch (ex) { console.warn(`[quest] clock ${this.symbol?.name}: its trip could not be measured as it started (${ex?.message ?? ex})`); }\n", "new": "      travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline });\n", "tests": ["test/systems/quest/fb1030f_triphome.test.js", "test/systems/quest/fb1013e_sharereveal.test.js"]},
-  {"name": "TRIP-PIXEL-the-rows-coords-past-the-Bay", "file": "src/systems/quest/clock.js", "old": "const endPos = sd.worldPixel ?? worldCoordToMapPixel(", "new": "const endPos = worldCoordToMapPixel(", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-PIXEL-a-site-past-the-Bay-unfound-counted-0", "file": "src/systems/quest/clock.js", "old": "if (!location && !sd?.worldPixel) {", "new": "if (!location) {", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-the-leg-uncounted", "file": "src/systems/quest/clock.js", "old": "total += tripSeconds(world, seat, false);   // TRIP-HOME", "new": "void seat;   // TRIP-HOME", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-every-clock", "file": "src/systems/quest/clock.js", "old": "travelSeconds?.({ home: this.isDeadline })", "new": "travelSeconds?.({ home: true })", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-counted-at-the-seat", "file": "src/systems/quest/clock.js", "old": "if (at.x !== here?.x || at.y !== here?.y) seats.set", "new": "seats.set", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-any-person", "file": "src/systems/quest/clock.js", "old": " || !person.isIndividualNPC || !person.isIndividualAtHome", "new": "", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-any-questor-line", "file": "src/systems/quest/clock.js", "old": "if (action?.typeName !== 'AddAsQuestor') continue;", "new": "", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]},
-  {"name": "TRIP-HOME-a-seat-twice", "file": "src/systems/quest/clock.js", "old": "seats.set(`${at.x},${at.y}`, at)", "new": "seats.set(seats.size, at)", "tests": ["test/systems/quest/fb1030f_triphome.test.js"]}
+  {
+    "name": "TRIP-FROM-START-the-start-unmeasured",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (Number.isFinite(travel) && travel > this.startingTimeInSeconds) {",
+    "new": "      if (Number.isFinite(travel) && travel < 0) {",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-the-shorter-taken",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (Number.isFinite(travel) && travel > this.startingTimeInSeconds) {",
+    "new": "      if (Number.isFinite(travel) && travel > 0) {",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-a-run-clock-measured-again",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (this.travelArm && !this.clockFinished && this.remainingTimeInSeconds === this.startingTimeInSeconds) {",
+    "new": "    if (this.travelArm && !this.clockFinished) {",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-the-arm-unmarked",
+    "file": "src/systems/quest/clock.js",
+    "old": "      this.travelArm = true;\n      const travel = this.parentQuest?.travelSeconds?.();",
+    "new": "      const travel = this.parentQuest?.travelSeconds?.();",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-the-mark-unsaved",
+    "file": "src/systems/quest/clock.js",
+    "old": "      travelArm: this.travelArm, // TRIP-FROM-START (the port's, for the same reason)",
+    "new": "      // TRIP-FROM-START (the port's, for the same reason)",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-an-old-save-unread",
+    "file": "src/systems/quest/clock.js",
+    "old": "    this.travelArm = typeof dataIn.travelArm === 'boolean' ? dataIn.travelArm : (this.flag & 16) === 16;",
+    "new": "    this.travelArm = typeof dataIn.travelArm === 'boolean' ? dataIn.travelArm : false;",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-FROM-START-the-measure-unguarded",
+    "file": "src/systems/quest/clock.js",
+    "old": "      try {\n        travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline });\n      } catch (ex) {\n        // TRIP-HOME: a deadline's way back too\n        console.warn(\n          `[quest] clock ${this.symbol?.name}: its trip could not be measured as it started (${ex?.message ?? ex})`,\n        );\n      }",
+    "new": "      travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline });",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js",
+      "test/systems/quest/fb1013e_sharereveal.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-PIXEL-the-rows-coords-past-the-Bay",
+    "file": "src/systems/quest/clock.js",
+    "old": "  const endPos =\n    sd.worldPixel ??\n    worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);",
+    "new": "  const endPos = worldCoordToMapPixel(\n    location.exterior.recordElement.header.x,\n    location.exterior.recordElement.header.y,\n  );",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-PIXEL-a-site-past-the-Bay-unfound-counted-0",
+    "file": "src/systems/quest/clock.js",
+    "old": "  if (!location && !sd?.worldPixel) {",
+    "new": "  if (!location) {",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-the-leg-uncounted",
+    "file": "src/systems/quest/clock.js",
+    "old": "    if (home) for (const seat of questorSeats(quest, world)) total += tripSeconds(world, seat, false); // TRIP-HOME",
+    "new": "    if (home) for (const seat of questorSeats(quest, world)) void seat; // TRIP-HOME",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-every-clock",
+    "file": "src/systems/quest/clock.js",
+    "old": "        travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline });",
+    "new": "        travel = this.parentQuest.travelSeconds?.({ home: true });",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-counted-at-the-seat",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (at.x !== here?.x || at.y !== here?.y) seats.set(`${at.x},${at.y}`, at);",
+    "new": "      seats.set(`${at.x},${at.y}`, at);",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-any-person",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (!person?.isPerson || !person.isIndividualNPC || !person.isIndividualAtHome) continue;",
+    "new": "      if (!person?.isPerson) continue;",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-any-questor-line",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (action?.typeName !== 'AddAsQuestor') continue;\n      const person = quest.resources.get(action.target?.name);",
+    "new": "      const person = quest.resources.get(action.target?.name);",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  },
+  {
+    "name": "TRIP-HOME-a-seat-twice",
+    "file": "src/systems/quest/clock.js",
+    "old": "      if (at.x !== here?.x || at.y !== here?.y) seats.set(`${at.x},${at.y}`, at);",
+    "new": "      if (at.x !== here?.x || at.y !== here?.y) seats.set(seats.size, at);",
+    "tests": [
+      "test/systems/quest/fb1030f_triphome.test.js"
+    ]
+  }
 ]

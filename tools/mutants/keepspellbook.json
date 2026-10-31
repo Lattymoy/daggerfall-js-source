@@ -29,8 +29,8 @@
   {
     "name": "KEEP-SPELLBOOK-the-shift-drop-unguarded",
     "file": "src/systems/physicalItems.js",
-    "old": "  : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null);",
-    "new": "  : null);",
+    "old": "export const shiftDropRefusal = (item) =>\n  item?.group === 'Transportation'\n    ? { text: CANNOT_REMOVE_ITEM_TEXT }\n    : isKeptSpellbook(item)\n      ? { text: SPELLBOOK_KEPT_TEXT }\n      : null;",
+    "new": "export const shiftDropRefusal = (item) => (item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT } : null);",
     "tests": [
       "test/systems/pvpdungeons_game.test.js"
     ]

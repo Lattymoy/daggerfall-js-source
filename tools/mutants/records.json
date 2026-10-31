@@ -1,354 +1,354 @@
 [
- {
-  "name": "RECORDS-ordinal",
-  "file": "src/net/townSeatLaw.js",
-  "old": "const WEEK_ORDINALS = Object.freeze(['first', 'second', 'third',",
-  "new": "const WEEK_ORDINALS = Object.freeze(['second', 'first', 'third',",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-ordinal-index",
-  "file": "src/net/townSeatLaw.js",
-  "old": "const nth = s ? WEEK_ORDINALS[week - s.start] : null;",
-  "new": "const nth = s ? WEEK_ORDINALS[week - s.start + 1] : null;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-season-name",
-  "file": "src/net/townSeatLaw.js",
-  "old": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
-  "new": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n + 1)}` : `In ${seatWeekName(week)}`;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-fallback",
-  "file": "src/net/townSeatLaw.js",
-  "old": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
-  "new": "return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In the first week of ${seatSeasonName(0)}`;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-line-zero",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  const when = chronicleWhen(row?.week ?? 0, zero);",
-  "new": "  const when = chronicleWhen(row?.week ?? 0, null);",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-rows",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const HALL_OF_RECORDS_ROWS = 400;",
-  "new": "export const HALL_OF_RECORDS_ROWS = 399;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-title",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const hallOfRecordsTitle = (seat) => `The Hall of Records of ${seat?.name ?? 'the seat'}`;",
-  "new": "export const hallOfRecordsTitle = (seat) => `Hall of Records of ${seat?.name ?? 'the seat'}`;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-drop",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const line = chronicleLine(r, seat, zero);\n    if (!line) continue;",
-  "new": "    const line = chronicleLine(r, seat, zero) ?? '';",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-heading",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    const heading = s ? seatSeasonName(s.n) : null;",
-  "new": "    const heading = s ? seatSeasonName(s.n) : '';",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-break",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (last && last.heading === heading) last.lines.push(line);",
-  "new": "    if (last) last.lines.push(line);",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-title-face",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "const TITLE_FONT = 5;",
-  "new": "const TITLE_FONT = 4;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-title-centre",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "  const out = [{ formatting: RSC.JustifyCenter }, { formatting: RSC.FontPrefix, x: TITLE_FONT },",
-  "new": "  const out = [{ formatting: RSC.FontPrefix, x: TITLE_FONT },",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-heading-centre",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
-  "new": "if (c.heading) out.push(text(upper(c.heading)), nl(), nl());",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-capital",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "text(upper(c.heading))",
-  "new": "text(c.heading)",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-blank",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "    for (const line of c.lines) out.push(text(line), nl(), nl());",
-  "new": "    for (const line of c.lines) out.push(text(line), nl());",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-empty",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
-  "new": "if (!chapters.length && !said.length) return out;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-author",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "export const HALL_OF_RECORDS_AUTHOR = 'the Chronicle of the Seats';",
-  "new": "export const HALL_OF_RECORDS_AUTHOR = '';",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-pages",
-  "file": "src/ui/hallOfRecords.js",
-  "old": "pageCount: 1, getPageTokens: () => tokens };",
-  "new": "pageCount: 0, getPageTokens: () => tokens };",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-order",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
-  "new": "  const rows = await chronicleOf(db, key, HALL_OF_RECORDS_ROWS);",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-bound",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
-  "new": "  const rows = (await chronicleOf(db, key, 10_000)).reverse();",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-zero",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  return { ok: true, key, rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };",
-  "new": "  return { ok: true, key, rows, zero: null };",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-shut",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "export async function readRecords({ db }, player, env, { key } = {}) {\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n",
-  "new": "export async function readRecords({ db }, player, env, { key } = {}) {\n",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-key",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };\n  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
-  "new": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-si-few",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "async function chronicleOf(db, key, max = SEAT_CHRONICLE_SHOWN) {",
-  "new": "async function chronicleOf(db, key, max = HALL_OF_RECORDS_ROWS) {",
-  "tests": [
-   "test/ui/season1_records.test.js",
-   "test/net/seat1c_service.test.js"
-  ]
- },
- {
-  "name": "RECORDS-ix-route",
-  "file": "server-account/src/index.js",
-  "old": "          '/v1/seats/records': () => readRecords(ctx, who.player, env, body),   // SEASON1 part three (9.2): the Hall of Records\n",
-  "new": "",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-bk-open",
-  "file": "src/net/townSeatBook.js",
-  "old": "      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;\n      try { r = await door.records(key); }",
-  "new": "      let r;\n      try { r = await door.records(key); }",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-bk-cache",
-  "file": "src/net/townSeatBook.js",
-  "old": "if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };",
-  "new": "if (kept && nowMs() - kept.at < 0) return { data: kept.data, error: null };",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-bk-rows",
-  "file": "src/net/townSeatBook.js",
-  "old": "const data = { rows: Array.isArray(r.data?.rows) ? r.data.rows : [],",
-  "new": "const data = { rows: r.data?.rows ?? [],",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-bk-zero",
-  "file": "src/net/townSeatBook.js",
-  "old": "zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null };",
-  "new": "zero: r.data?.zero ?? null };",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-bk-shut",
-  "file": "src/net/townSeatBook.js",
-  "old": "        recordsAt.set(key, { at: nowMs(), data });\n        return { data, error: null };\n      }\n      if (SHUT.includes(r?.error)) open = false;",
-  "new": "        recordsAt.set(key, { at: nowMs(), data });\n        return { data, error: null };\n      }",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-ac-path",
-  "file": "src/net/accountClient.js",
-  "old": "    records: (key) => post('/v1/seats/records', { key }),",
-  "new": "    records: (key) => post('/v1/seats/standings', { key }),",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wm-palace",
-  "file": "src/scenes/worldModes.js",
-  "old": "const hallOfRecordsHere = (b) => b?.buildingType === BUILDING_TYPES.Palace && !!host.hallOfRecords?.here?.(homeTownOf(b));",
-  "new": "const hallOfRecordsHere = (b) => !!host.hallOfRecords?.here?.(homeTownOf(b));",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wm-hover",
-  "file": "src/scenes/worldModes.js",
-  "old": "        if (hallOfRecordsHere(b)) return decorTool.flying() && !decorTool.ghost() ? decorBuiltInPlaque(HALL_OF_RECORDS_TEXT, interiorCtx.shelves?.[Number(key.split(':')[1])], true) : { title: HALL_OF_RECORDS_TEXT };   // SEASON1 part three: a seat's palace shelves are its Hall of Records; decorating takes the shelf out\n",
-  "new": "",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wm-press",
-  "file": "src/scenes/worldModes.js",
-  "old": "    if (hallOfRecordsHere(b)) { openHallOfRecords(b); return; }   // SEASON1 part three: a seat's palace shelves (DFU leaves them geometry)\n",
-  "new": "",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wm-left",
-  "file": "src/scenes/worldModes.js",
-  "old": "      if (interiorBuilding !== b || interiorOverlay) { dropRecords(w); return; }\n      if (w) interiorOverlay = w;",
-  "new": "      if (w) interiorOverlay = w;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wd-here",
-  "file": "src/scenes/world.js",
-  "old": "      here: (mapId) => !!seatHere(mapId),",
-  "new": "      here: (mapId) => mapId != null,",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-wd-read",
-  "file": "src/scenes/world.js",
-  "old": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;",
-  "new": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, null, seatArmsOf, ch?.ok ? ch.data : null) : null;",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-tab-zero",
-  "file": "src/ui/seatTab.js",
-  "old": "chronicleLine(r, seat, book.zero ?? null)",
-  "new": "chronicleLine(r, seat)",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- },
- {
-  "name": "RECORDS-oh-text",
-  "file": "src/systems/online/onlineHomes.js",
-  "old": "export const HALL_OF_RECORDS_TEXT = 'Hall of Records';",
-  "new": "export const HALL_OF_RECORDS_TEXT = 'Bookshelf';",
-  "tests": [
-   "test/ui/season1_records.test.js"
-  ]
- }
+  {
+    "name": "RECORDS-ordinal",
+    "file": "src/net/townSeatLaw.js",
+    "old": "const WEEK_ORDINALS = Object.freeze(['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth']);",
+    "new": "const WEEK_ORDINALS = Object.freeze(['second', 'first', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth']);",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-ordinal-index",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const nth = s ? WEEK_ORDINALS[week - s.start] : null;",
+    "new": "  const nth = s ? WEEK_ORDINALS[week - s.start + 1] : null;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-season-name",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
+    "new": "  return nth ? `In the ${nth} week of ${seatSeasonName(s.n + 1)}` : `In ${seatWeekName(week)}`;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-fallback",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In ${seatWeekName(week)}`;",
+    "new": "  return nth ? `In the ${nth} week of ${seatSeasonName(s.n)}` : `In the first week of ${seatSeasonName(0)}`;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-line-zero",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const when = chronicleWhen(row?.week ?? 0, zero); // SEASON1 part three: the Season's own words, where one is counted",
+    "new": "  const when = chronicleWhen(row?.week ?? 0, null); // SEASON1 part three: the Season's own words, where one is counted",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-rows",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const HALL_OF_RECORDS_ROWS = 400;",
+    "new": "export const HALL_OF_RECORDS_ROWS = 399;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-title",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const hallOfRecordsTitle = (seat) => `The Hall of Records of ${seat?.name ?? 'the seat'}`;",
+    "new": "export const hallOfRecordsTitle = (seat) => `Hall of Records of ${seat?.name ?? 'the seat'}`;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-drop",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const line = chronicleLine(r, seat, zero);\n    if (!line) continue;",
+    "new": "    const line = chronicleLine(r, seat, zero) ?? '';",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-heading",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    const heading = s ? seatSeasonName(s.n) : null;",
+    "new": "    const heading = s ? seatSeasonName(s.n) : '';",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-break",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (last && last.heading === heading) last.lines.push(line);",
+    "new": "    if (last) last.lines.push(line);",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-title-face",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "const TITLE_FONT = 5;",
+    "new": "const TITLE_FONT = 4;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-title-centre",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "  const out = [\n    { formatting: RSC.JustifyCenter },\n    { formatting: RSC.FontPrefix, x: TITLE_FONT },\n    text(hallOfRecordsTitle(seat)),\n    nl(),\n    nl(),\n  ]; // the blank row puts the face and the centring back",
+    "new": "  const out = [{ formatting: RSC.FontPrefix, x: TITLE_FONT }, text(hallOfRecordsTitle(seat)), nl(), nl()]; // the blank row puts the face and the centring back",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-heading-centre",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
+    "new": "    if (c.heading) out.push(text(upper(c.heading)), nl(), nl());",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-capital",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(upper(c.heading)), nl(), nl());",
+    "new": "    if (c.heading) out.push({ formatting: RSC.JustifyCenter }, text(c.heading), nl(), nl());",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-blank",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "    for (const line of c.lines) out.push(text(line), nl(), nl());",
+    "new": "    for (const line of c.lines) out.push(text(line), nl());",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-empty",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "  if (!chapters.length && !said.length) return [...out, text(HALL_OF_RECORDS_EMPTY), nl()];",
+    "new": "  if (!chapters.length && !said.length) return out;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-author",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "export const HALL_OF_RECORDS_AUTHOR = 'the Chronicle of the Seats';",
+    "new": "export const HALL_OF_RECORDS_AUTHOR = '';",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-pages",
+    "file": "src/ui/hallOfRecords.js",
+    "old": "  return { title: hallOfRecordsTitle(seat), author: HALL_OF_RECORDS_AUTHOR, pageCount: 1, getPageTokens: () => tokens };",
+    "new": "  return { title: hallOfRecordsTitle(seat), author: HALL_OF_RECORDS_AUTHOR, pageCount: 0, getPageTokens: () => tokens };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-order",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
+    "new": "  const rows = await chronicleOf(db, key, HALL_OF_RECORDS_ROWS);",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-bound",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
+    "new": "  const rows = (await chronicleOf(db, key, 10_000)).reverse();",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-zero",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  return { ok: true, key, rows, zero: seasonZeroOf(env?.SEASON_ZERO_WEEK) };",
+    "new": "  return { ok: true, key, rows, zero: null };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-shut",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "export async function readRecords({ db }, player, env, { key } = {}) {\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n",
+    "new": "export async function readRecords({ db }, player, env, { key } = {}) {\n",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-key",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };\n  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
+    "new": "  const rows = (await chronicleOf(db, key, HALL_OF_RECORDS_ROWS)).reverse();",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-si-few",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "async function chronicleOf(db, key, max = SEAT_CHRONICLE_SHOWN) {",
+    "new": "async function chronicleOf(db, key, max = HALL_OF_RECORDS_ROWS) {",
+    "tests": [
+      "test/ui/season1_records.test.js",
+      "test/net/seat1c_service.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-ix-route",
+    "file": "server-account/src/index.js",
+    "old": "          '/v1/seats/records': () => readRecords(ctx, who.player, env, body),   // SEASON1 part three (9.2): the Hall of Records\n",
+    "new": "",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-bk-open",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };\n      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;",
+    "new": "      if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };\n      let r;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-bk-cache",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };",
+    "new": "      if (kept && nowMs() - kept.at < 0) return { data: kept.data, error: null };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-bk-rows",
+    "file": "src/net/townSeatBook.js",
+    "old": "        const data = {\n          rows: Array.isArray(r.data?.rows) ? r.data.rows : [],\n          zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null,\n        };",
+    "new": "        const data = { rows: r.data?.rows ?? [], zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-bk-zero",
+    "file": "src/net/townSeatBook.js",
+    "old": "        const data = {\n          rows: Array.isArray(r.data?.rows) ? r.data.rows : [],\n          zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null,\n        };",
+    "new": "        const data = { rows: Array.isArray(r.data?.rows) ? r.data.rows : [], zero: r.data?.zero ?? null };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-bk-shut",
+    "file": "src/net/townSeatBook.js",
+    "old": "      }\n      if (SHUT.includes(r?.error)) open = false;\n      return { data: null, error: r?.error ?? 'server' };",
+    "new": "      }\n      return { data: null, error: r?.error ?? 'server' };",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-ac-path",
+    "file": "src/net/accountClient.js",
+    "old": "    records: (key) => post('/v1/seats/records', { key }),",
+    "new": "    records: (key) => post('/v1/seats/standings', { key }),",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wm-palace",
+    "file": "src/scenes/worldModes.js",
+    "old": "const hallOfRecordsHere = (b) => b?.buildingType === BUILDING_TYPES.Palace && !!host.hallOfRecords?.here?.(homeTownOf(b));",
+    "new": "const hallOfRecordsHere = (b) => !!host.hallOfRecords?.here?.(homeTownOf(b));",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wm-hover",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (hallOfRecordsHere(b)) return decorTool.flying() && !decorTool.ghost() ? decorBuiltInPlaque(HALL_OF_RECORDS_TEXT, interiorCtx.shelves?.[Number(key.split(':')[1])], true) : { title: HALL_OF_RECORDS_TEXT };   // SEASON1 part three: a seat's palace shelves are its Hall of Records; decorating takes the shelf out\n",
+    "new": "",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wm-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (hallOfRecordsHere(b)) { openHallOfRecords(b); return; }   // SEASON1 part three: a seat's palace shelves (DFU leaves them geometry)\n",
+    "new": "",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wm-left",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorBuilding !== b || interiorOverlay) { dropRecords(w); return; }\n      if (w) interiorOverlay = w;",
+    "new": "      if (w) interiorOverlay = w;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wd-here",
+    "file": "src/scenes/world.js",
+    "old": "      here: (mapId) => !!seatHere(mapId),",
+    "new": "      here: (mapId) => mapId != null,",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-wd-read",
+    "file": "src/scenes/world.js",
+    "old": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, r.data.zero, seatArmsOf, ch?.ok ? ch.data : null) : null;",
+    "new": "return r?.data ? hallOfRecordsWindow(seat, r.data.rows, null, seatArmsOf, ch?.ok ? ch.data : null) : null;",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-tab-zero",
+    "file": "src/ui/seatTab.js",
+    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "new": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  },
+  {
+    "name": "RECORDS-oh-text",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const HALL_OF_RECORDS_TEXT = 'Hall of Records';",
+    "new": "export const HALL_OF_RECORDS_TEXT = 'Bookshelf';",
+    "tests": [
+      "test/ui/season1_records.test.js"
+    ]
+  }
 ]

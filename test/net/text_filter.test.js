@@ -163,7 +163,7 @@ test('TEXT-F1 the seams: every surface reads the one reader - the chat\'s and th
   assert.match(wire, /&& !textCaught\(look\.class\) \? look\.class\.trim\(\) : null;/);
   assert.match(src('server-account/src/board.js'), /subject: maskText\(n\.subject\), body: maskText\(n\.body\),/);
   assert.match(src('server-account/src/board.js'), /subject: maskText\(x\.subject\), body: maskText\(x\.body\),/, 'the server\'s notices too');
-  assert.match(src('server-account/src/guildBoard.js'), /subject: maskText\(n\.subject\), body: maskText\(n\.body\),/);
+  assert.match(src('server-account/src/guildBoard.js'), /subject: maskText\(n\.subject\),\n\s*body: maskText\(n\.body\),/);
   assert.match(src('server-account/src/index.js'), /\(r\.error === 'guild-name-word' \|\| r\.error === 'guild-rank-word'\) && typeof r\.word === 'string'/);
   assert.equal((src('src/net/nameFilter.js').match(/^import /gm) ?? []).length, 0, 'the filter imports nothing - the relay\'s and the Worker\'s graphs stay flat');
 });

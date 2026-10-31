@@ -15,7 +15,17 @@ export function signatureSpell(id) {
   const p = PATH_BY_ID[id];
   if (!p) return null;
   const s = p.spell;
-  return { ...buildCustomSpell({ slots: s.slots.map((x) => ({ ...x, settings: { ...x.settings } })), rangeType: s.rangeType, element: s.element, name: s.nameEn, icon: s.icon, index: s.index }), path: p.id };   // AUDIT SCHOOLS L4 4: its canonical English name - shown in the player's language (loot.js shownSpellName)
+  return {
+    ...buildCustomSpell({
+      slots: s.slots.map((x) => ({ ...x, settings: { ...x.settings } })),
+      rangeType: s.rangeType,
+      element: s.element,
+      name: s.nameEn,
+      icon: s.icon,
+      index: s.index,
+    }),
+    path: p.id,
+  }; // AUDIT SCHOOLS L4 4: its canonical English name - shown in the player's language (loot.js shownSpellName)
 }
 
 /** The Buy Spells shelf's offer to this entity: its own path's signature spell, or nothing - a path HELD (mentoring

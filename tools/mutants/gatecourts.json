@@ -302,8 +302,8 @@
   {
     "name": "GC-link-the-go-unkept",
     "file": "src/net/gate/gateLink.js",
-    "old": "      if (g.k === 'go') { courts.set(g.d, g.c); state = GATE_STATE_EMPTY; watching = false; return; }",
-    "new": "      if (g.k === 'go') { state = GATE_STATE_EMPTY; watching = false; return; }",
+    "old": "        courts.set(g.d, g.c);\n        state = GATE_STATE_EMPTY;",
+    "new": "        state = GATE_STATE_EMPTY;",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "GC-link-said-twice",
     "file": "src/net/gate/gateLink.js",
-    "old": "if (!courtFalls.has(k)) {",
-    "new": "if (true) {",
+    "old": "        if (!courtFalls.has(k)) {",
+    "new": "        if (true) {",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "GC-link-the-night-over-its-courts",
     "file": "src/net/gate/gateLink.js",
-    "old": "if (![...courtFalls].some((k) => k.startsWith(`${day}.`))) onFell(day, f);",
-    "new": "onFell(day, f);",
+    "old": "          if (![...courtFalls].some((k) => k.startsWith(`${day}.`))) onFell(day, f);",
+    "new": "          onFell(day, f);",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "GC-the-court-s-number",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "court: c + 1,",
-    "new": "court: c,",
+    "old": "  const args = { boss, court: c + 1, near: near ?? '', by: (top ?? []).join(', '), struck: top?.length ? 'yes' : 'no' };",
+    "new": "  const args = { boss, court: c, near: near ?? '', by: (top ?? []).join(', '), struck: top?.length ? 'yes' : 'no' };",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "GC-the-collapse-for-a-court",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "in the wilds{struck, select, yes {, struck down by {by}} other {}}.\", args)",
-    "new": "in the wilds{struck, select, yes {, struck down by {by}} other {}}. The breach collapses.\", args)",
+    "old": "        \"{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}.\",",
+    "new": "        \"{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}. The breach collapses.\",",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "GC-the-herald-title",
     "file": "src/net/gate/gateHerald.js",
-    "old": "    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`,",
-    "new": "    title: `${boss.name} has fallen`,",
+    "old": "    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
+    "new": "    title: `${boss.name} has fallen`, // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -782,8 +782,8 @@
   {
     "name": "GCA-the-night-folded",
     "file": "src/net/gate/gateLink.js",
-    "old": "onFell(day, f); }\n        return;\n",
-    "new": "onFell(day, f); }\n",
+    "old": "        }\n        return;\n      }\n      state = foldGate(state, g, now(), place);",
+    "new": "        }\n      }\n      state = foldGate(state, g, now(), place);",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -792,8 +792,8 @@
   {
     "name": "GCA-the-court-kept",
     "file": "src/net/gate/gateLink.js",
-    "old": "leave() { state = GATE_STATE_EMPTY; watching = false; courts.clear(); },",
-    "new": "leave() { state = GATE_STATE_EMPTY; watching = false; },",
+    "old": "      courts.clear();\n    },",
+    "new": "    },",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -802,8 +802,8 @@
   {
     "name": "GCA-a-court-carried",
     "file": "src/net/gate/gateLink.js",
-    "old": "courts.set(g.d, g.c); state = GATE_STATE_EMPTY; watching = false; return; }",
-    "new": "courts.set(g.d, g.c); return; }",
+    "old": "        state = GATE_STATE_EMPTY;\n        watching = false;\n        return;",
+    "new": "        return;",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -812,8 +812,8 @@
   {
     "name": "GCA-the-seal-said-at-once",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (line === 'seal' && now() - t.sealAt < SEAL_SAY_HOLD_MS) return current;\n",
-    "new": "",
+    "old": "      if (line === 'seal' && now() - t.sealAt < SEAL_SAY_HOLD_MS) return current;\n      // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall",
+    "new": "      // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -852,8 +852,8 @@
   {
     "name": "GCA-the-court-dropped-from-the-landing",
     "file": "src/net/staffTeleport.js",
-    "old": ", ...(g.c ? { c: g.c } : {}) } };",
-    "new": " } };",
+    "old": "    return {\n      ...out,\n      gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '', ...(g.c ? { c: g.c } : {}) },\n    };",
+    "new": "    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '' } };",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -862,8 +862,8 @@
   {
     "name": "GCA-a-court-past-the-last-landed",
     "file": "src/net/staffTeleport.js",
-    "old": "    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null;",
-    "new": "",
+    "old": "    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null; // AUDIT GATE-COURTS C6: the court the player stands in",
+    "new": "    // AUDIT GATE-COURTS C6: the court the player stands in",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -872,8 +872,8 @@
   {
     "name": "GCA-one-key-for-every-court",
     "file": "src/net/staffTeleport.js",
-    "old": "`gate:${d.gate.day}.${d.gate.c ?? 0}`",
-    "new": "`gate:${d.gate.day}`",
+    "old": "  if (d.kind === 'gate') return `gate:${d.gate.day}.${d.gate.c ?? 0}`;",
+    "new": "  if (d.kind === 'gate') return `gate:${d.gate.day}`;",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -882,8 +882,8 @@
   {
     "name": "GCA-the-court-unnamed",
     "file": "src/net/gate/gateLink.js",
-    "old": "withCourt: (gate) => ({ ...gate, c: courts.get(gate.day) ?? 0 }),",
-    "new": "withCourt: (gate) => ({ ...gate }),",
+    "old": "    withCourt: (gate) => ({ ...gate, c: courts.get(gate.day) ?? 0 }),",
+    "new": "    withCourt: (gate) => ({ ...gate }),",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -892,8 +892,8 @@
   {
     "name": "GCA-the-court-not-kept-landing",
     "file": "src/net/gate/gateLink.js",
-    "old": "seatFor: (gate) => { if (Number.isSafeInteger(gate?.c) && gate.c > 0) courts.set(gate.day, gate.c); return gate; },",
-    "new": "seatFor: (gate) => gate,",
+    "old": "    seatFor: (gate) => {\n      if (Number.isSafeInteger(gate?.c) && gate.c > 0) courts.set(gate.day, gate.c);\n      return gate;\n    },",
+    "new": "    seatFor: (gate) => gate,",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "SEASONAUDIT-every-member-walked",
     "file": "src/world/gate/gateClearance.js",
-    "old": "if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin);",
-    "new": "if (Array.isArray(clear.list)) return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));",
+    "old": "  if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin); // EG-F: a set - any of its clearings",
+    "new": "  if (Array.isArray(clear.list)) return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin)); // EG-F: a set - any of its clearings",
     "tests": [
       "test/world/gate/seasonclear.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEASONAUDIT-the-members-reach-one-short",
     "file": "src/world/gate/gateClearance.js",
-    "old": "      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);",
-    "new": "      const c0 = c.px + Math.floor((x - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + CELL_PAD) / PIXEL_M);",
+    "old": "      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M),\n        c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);",
+    "new": "      const c0 = c.px + Math.floor((x - CELL_PAD) / PIXEL_M),\n        c1 = c.px + Math.floor((x + CELL_PAD) / PIXEL_M);",
     "tests": [
       "test/world/gate/seasonclear.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "SEASONAUDIT-a-member-past-the-span-lost",
     "file": "src/world/gate/gateClearance.js",
-    "old": "    if (keys.has(NaN)) { idx.wide.push(c); continue; }",
+    "old": "    if (keys.has(NaN)) {\n      idx.wide.push(c);\n      continue;\n    }",
     "new": "    if (keys.has(NaN)) continue;",
     "tests": [
       "test/world/gate/seasonclear.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SEASONAUDIT-the-come-walked-whole",
     "file": "src/world/gate/gateClearance.js",
-    "old": "|| reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
-    "new": "|| comeOf.get(was).list.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
+    "old": "        if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
+    "new": "        if ((gone && p.gateRefused) || comeOf.get(was).list.some((c) => reachNearGate(p.wodReach, c, p.px, p.py)))\n          again.push(p);",
     "tests": [
       "test/world/gate/seasonclear.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEASONAUDIT-a-leader-s-two-for-the-colossus",
     "file": "src/systems/bossTraits.js",
-    "old": "colossus ? BOSS_TRAITS_MOST.colossus : BOSS_TRAITS_MOST.leader);",
-    "new": "colossus ? BOSS_TRAITS_MOST.leader : BOSS_TRAITS_MOST.leader);",
+    "old": "  !leader ? BOSS_TRAITS_MOST.elite : colossus ? BOSS_TRAITS_MOST.colossus : BOSS_TRAITS_MOST.leader;",
+    "new": "  !leader ? BOSS_TRAITS_MOST.elite : colossus ? BOSS_TRAITS_MOST.leader : BOSS_TRAITS_MOST.leader;",
     "tests": [
       "test/scenes/seasonaudit_world.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-mauls-day-no-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/season/maul': Object.freeze(['pass', false]),\n",
-    "new": "",
+    "old": "  '/v1/season/maul': Object.freeze(['pass', false]),\n  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "new": "  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
     "tests": [
       "test/server/seasonmaul_service.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "AC4-A3-delete-with-stake-held",
     "file": "server-account/src/realm.js",
-    "old": "  if (await db.prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`).bind(playerId, id).first()) return { error: 'cards-held' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`)\n      .bind(playerId, id)\n      .first()\n  )\n    return { error: 'cards-held' };\n  // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home",
+    "new": "  // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -380,8 +380,8 @@
   {
     "name": "AC4-T-topup-in-hand",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand && t.handSeats.includes(chair)) return 'in hand';\n",
-    "new": "",
+    "old": "  if (t.hand && t.handSeats.includes(chair)) return 'in hand';\n  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -398,8 +398,8 @@
   {
     "name": "AC4-T-topup-past-most",
     "file": "src/net/holdemTable.js",
-    "old": "seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb",
-    "new": "true",
+    "old": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))\n    return 'bad stake';",
+    "new": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && true)) return 'bad stake';",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -416,8 +416,8 @@
   {
     "name": "AC4-T-joined-carries-gold",
     "file": "src/net/card/cardReceipt.js",
-    "old": "(c.w === 'broke' || c.w === 'joined') && c.r !== 0",
-    "new": "c.w === 'broke' && c.r !== 0",
+    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
+    "new": "  if (c.w === 'broke' && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -434,8 +434,8 @@
   {
     "name": "AC4-C1-asked-again-unpaid",
     "file": "src/net/card/cardStakes.js",
-    "old": "{ apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); } }",
-    "new": "{}",
+    "old": "      ...(first\n        ? { reserve: () => wallet(x.reg).pay(x.amount) }\n        : {\n            apply: (/** @type {any} */ a) => {\n              if (!a?.data?.repeat) wallet(x.reg).pay(x.amount);\n            },\n          }),",
+    "new": "      ...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : {}),",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -452,8 +452,8 @@
   {
     "name": "AC4-C1-repeat-paid-twice",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (!a?.data?.repeat) wallet(x.reg).pay(x.amount);",
-    "new": "wallet(x.reg).pay(x.amount);",
+    "old": "              if (!a?.data?.repeat) wallet(x.reg).pay(x.amount);",
+    "new": "              wallet(x.reg).pay(x.amount);",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -470,8 +470,8 @@
   {
     "name": "AC4-C2-recover-drops-on-session-word",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (r && !r.ok && cardStakeRefused(r.error))",
-    "new": "if (r && !r.ok && !r.unknown)",
+    "old": "        if (r && !r.ok && cardStakeRefused(r.error))",
+    "new": "        if (r && !r.ok && !r.unknown)",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -488,8 +488,8 @@
   {
     "name": "AC4-C3-acked-unkept",
     "file": "src/net/card/cardStakes.js",
-    "old": "      if (!read(CARD_RECEIPTS_KEY).some((x) => x.j === c.j)) return null;\n",
-    "new": "",
+    "old": "      if (!read(CARD_RECEIPTS_KEY).some((x) => x.j === c.j)) return null;\n      if (stake)",
+    "new": "      if (stake)",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -506,8 +506,8 @@
   {
     "name": "AC4-C4-receipt-to-whoever-plays",
     "file": "src/net/card/cardStakes.js",
-    "old": "c: stake?.c ?? null",
-    "new": "c: character()",
+    "old": "        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: stake?.reg ?? region() }]);",
+    "new": "        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: character(), reg: stake?.reg ?? region() }]);",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -524,8 +524,8 @@
   {
     "name": "AC4-C4-sat-forgotten",
     "file": "src/net/card/cardStakes.js",
-    "old": "seated(id) { write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).map((x) => (x.id === id ? { ...x, sat: true } : x))); }",
-    "new": "seated(id) { write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).filter((x) => x.id !== id)); }",
+    "old": "        read(CARD_STAKES_KEY).map((x) => (x.id === id ? { ...x, sat: true } : x)),",
+    "new": "        read(CARD_STAKES_KEY).filter((x) => x.id !== id),",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -542,8 +542,8 @@
   {
     "name": "AC4-C4-sat-voided",
     "file": "src/net/card/cardStakes.js",
-    "old": "x.order && !x.sat &&",
-    "new": "x.order &&",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -560,8 +560,8 @@
   {
     "name": "AC4-C6-receipt-evicted",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (k === CARD_RECEIPTS_KEY) return v.slice(0, CARD_KEPT_MAX);",
-    "new": "if (k === CARD_RECEIPTS_KEY) return v.slice(-CARD_KEPT_MAX);",
+    "old": "    if (k === CARD_RECEIPTS_KEY) return v.slice(0, CARD_KEPT_MAX);",
+    "new": "    if (k === CARD_RECEIPTS_KEY) return v.slice(-CARD_KEPT_MAX);",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -578,8 +578,8 @@
   {
     "name": "AC4-C6-unsat-evicted-first",
     "file": "src/net/card/cardStakes.js",
-    "old": "const i = out.findIndex((x) => x.sat);",
-    "new": "const i = -1;",
+    "old": "      const i = out.findIndex((x) => x.sat);",
+    "new": "      const i = -1;",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -596,8 +596,8 @@
   {
     "name": "AC4-C6-never-pruned",
     "file": "src/net/card/cardStakes.js",
-    "old": "const t = now(), kept = read(CARD_STAKES_KEY), left = kept.filter((x) => !(t - x.at > CARD_STAKE_KEEP_MS));",
-    "new": "const t = now(), kept = read(CARD_STAKES_KEY), left = kept;",
+    "old": "        left = kept.filter((x) => !(t - x.at > CARD_STAKE_KEEP_MS));",
+    "new": "        left = kept;",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -614,8 +614,8 @@
   {
     "name": "AC4-C8-one-round",
     "file": "src/net/card/cardStakes.js",
-    "old": "(x.c == null || x.c === character()) && !tried.has(x.j))",
-    "new": "(x.c == null || x.c === character()) && !tried.size)",
+    "old": "            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;",
+    "new": "            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.size)).length;",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -632,8 +632,8 @@
   {
     "name": "AC4-C5-stake-spent-pending",
     "file": "src/systems/card/cardRemoteTable.js",
-    "old": "'stake spent', ",
-    "new": "",
+    "old": "  'stake spent',\n  'stake refused',",
+    "new": "  'stake refused',",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -670,8 +670,8 @@
   {
     "name": "AC4-T-elsewhere-own-room",
     "file": "src/net/card/cardStakes.js",
-    "old": "x.room !== room && x.c === character()",
-    "new": "x.c === character()",
+    "old": "        .filter((x) => x.room !== room && x.c === character() && (x.sat || x.order))",
+    "new": "        .filter((x) => x.c === character() && (x.sat || x.order))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -706,8 +706,8 @@
   {
     "name": "AC4-T-hud-no-topup",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "if (phase === 'playing' && topUp > 0)",
-    "new": "if (false)",
+    "old": "  if (phase === 'playing' && topUp > 0) actions.push({ id: 'topup', label: `Top up ${topUp}`, enabled: !staking }); // CARDS6 follow-up: between hands, a gold seat",
+    "new": "  if (false) actions.push({ id: 'topup', label: `Top up ${topUp}`, enabled: !staking }); // CARDS6 follow-up: between hands, a gold seat",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -742,8 +742,8 @@
   {
     "name": "AC4-E2-latch-set-after-finally",
     "file": "src/net/card/cardStakes.js",
-    "old": "      claiming ??= (async () => {\n        {\n          const tried = new Set();\n          // AUDIT CARDS-4 C8: round again for a receipt heard while the last round ran\n          for (let next; realm && wallet && (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j))).length;) {\n            for (const k of next) {\n              tried.add(k.j);\n              const who = k.c ?? character();\n              const r = await realm.act({\n                needsAnswer: true,\n                apply: (/** @type {any} */ a) => { const g = a?.data?.gold; if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g); say?.(cardBankedText(g)); } },\n                call: (/** @type {any} */ at) => door.cashout({ character: who, realm: at, receipt: k.receipt }),\n              });\n              if (r?.ok || CARD_CLAIM_DONE.includes(r?.error) || (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))) write(CARD_RECEIPTS_KEY, read(CARD_RECEIPTS_KEY).filter((x) => x.j !== k.j));\n            }\n          }\n        }\n      })().finally(() => { claiming = null; });\n",
-    "new": "      claiming ??= (async () => {\n        try {\n          const tried = new Set();\n          // AUDIT CARDS-4 C8: round again for a receipt heard while the last round ran\n          for (let next; realm && wallet && (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j))).length;) {\n            for (const k of next) {\n              tried.add(k.j);\n              const who = k.c ?? character();\n              const r = await realm.act({\n                needsAnswer: true,\n                apply: (/** @type {any} */ a) => { const g = a?.data?.gold; if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g); say?.(cardBankedText(g)); } },\n                call: (/** @type {any} */ at) => door.cashout({ character: who, realm: at, receipt: k.receipt }),\n              });\n              if (r?.ok || CARD_CLAIM_DONE.includes(r?.error) || (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))) write(CARD_RECEIPTS_KEY, read(CARD_RECEIPTS_KEY).filter((x) => x.j !== k.j));\n            }\n          }\n        } finally { claiming = null; }\n      })();\n",
+    "old": "        {\n          const tried = new Set();\n          // AUDIT CARDS-4 C8: round again for a receipt heard while the last round ran\n          for (\n            let next;\n            realm &&\n            wallet &&\n            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;\n          ) {\n            for (const k of next) {\n              tried.add(k.j);\n              const who = k.c ?? character();\n              const r = await realm.act({\n                needsAnswer: true,\n                apply: (/** @type {any} */ a) => {\n                  const g = a?.data?.gold;\n                  if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) {\n                    wallet(k.reg).bank(g);\n                    say?.(cardBankedText(g));\n                  }\n                },\n                call: (/** @type {any} */ at) => door.cashout({ character: who, realm: at, receipt: k.receipt }),\n              });\n              if (\n                r?.ok ||\n                CARD_CLAIM_DONE.includes(r?.error) ||\n                (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))\n              )\n                write(\n                  CARD_RECEIPTS_KEY,\n                  read(CARD_RECEIPTS_KEY).filter((x) => x.j !== k.j),\n                );\n            }\n          }\n        }\n      })().finally(() => {\n        claiming = null;\n      });",
+    "new": "        try {\n          const tried = new Set();\n          // AUDIT CARDS-4 C8: round again for a receipt heard while the last round ran\n          for (\n            let next;\n            realm &&\n            wallet &&\n            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;\n          ) {\n            for (const k of next) {\n              tried.add(k.j);\n              const who = k.c ?? character();\n              const r = await realm.act({\n                needsAnswer: true,\n                apply: (/** @type {any} */ a) => {\n                  const g = a?.data?.gold;\n                  if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) {\n                    wallet(k.reg).bank(g);\n                    say?.(cardBankedText(g));\n                  }\n                },\n                call: (/** @type {any} */ at) => door.cashout({ character: who, realm: at, receipt: k.receipt }),\n              });\n              if (\n                r?.ok ||\n                CARD_CLAIM_DONE.includes(r?.error) ||\n                (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))\n              )\n                write(\n                  CARD_RECEIPTS_KEY,\n                  read(CARD_RECEIPTS_KEY).filter((x) => x.j !== k.j),\n                );\n            }\n          }\n        } finally {\n          claiming = null;\n        }\n      })();",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1012,8 +1012,8 @@
   {
     "name": "AC4-B-buy-in-low-edge",
     "file": "src/net/holdemTable.js",
-    "old": "stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb &&",
-    "new": "stake && !(stake.amount > HOLDEM_STAKE_MIN_BB * t.bb &&",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (stake && !(stake.amount > HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1030,8 +1030,8 @@
   {
     "name": "AC4-B-buy-in-high-edge",
     "file": "src/net/holdemTable.js",
-    "old": "&& stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
-    "new": "&& stake.amount < HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount < HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1066,8 +1066,8 @@
   {
     "name": "AC4-B-never-broke",
     "file": "src/net/holdemTable.js",
-    "old": "r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
-    "new": "r: seat.stack, w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: 'stood' });",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1084,8 +1084,8 @@
   {
     "name": "AC4-B-folded-never-broke",
     "file": "src/net/holdemTable.js",
-    "old": "w: t.hand.seats[k].stack > 0 ? 'stood' : 'broke' });",
-    "new": "w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: t.hand.seats[k].stack,\n    w: t.hand.seats[k].stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: t.hand.seats[k].stack, w: 'stood' });",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1102,8 +1102,8 @@
   {
     "name": "AC4-B-folded-stand-later",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }",
-    "new": "  if (t.hand.seats[k].folded) { return [room(t, [])]; }",
+    "old": "    cashOutFolded(t, chair, k);\n    return [room(t, [])];",
+    "new": "    return [room(t, [])];",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1228,8 +1228,8 @@
   {
     "name": "AC4-C-void-said-once",
     "file": "src/net/card/cardStakes.js",
-    "old": "!(x.voided > t - 60_000)",
-    "new": "!x.voided",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !x.voided)",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1246,8 +1246,8 @@
   {
     "name": "AC4-C-void-timer-from-request",
     "file": "src/net/card/cardStakes.js",
-    "old": "got = { order: r.data.stake, id: r.data.id, at: now() }",
-    "new": "got = { order: r.data.stake, id: r.data.id }",
+    "old": "        got = { order: r.data.stake, id: r.data.id, at: now() };",
+    "new": "        got = { order: r.data.stake, id: r.data.id };",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1282,8 +1282,8 @@
   {
     "name": "AC4-C-bank-where-playing",
     "file": "src/net/card/cardStakes.js",
-    "old": "wallet(k.reg).bank(g)",
-    "new": "wallet(region()).bank(g)",
+    "old": "                    wallet(k.reg).bank(g);",
+    "new": "                    wallet(region()).bank(g);",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1300,8 +1300,8 @@
   {
     "name": "AC4-C-claims-at-once",
     "file": "src/net/card/cardStakes.js",
-    "old": "claiming ??= (async () => {",
-    "new": "claiming = (async () => {",
+    "old": "      claiming ??= (async () => {",
+    "new": "      claiming = (async () => {",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1318,8 +1318,8 @@
   {
     "name": "AC4-C-receipt-dropped-any-why",
     "file": "src/net/card/cardStakes.js",
-    "old": "CARD_RECEIPT_DEAD.includes(r?.why)",
-    "new": "true",
+    "old": "              if (\n                r?.ok ||\n                CARD_CLAIM_DONE.includes(r?.error) ||\n                (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))\n              )",
+    "new": "              if (r?.ok || CARD_CLAIM_DONE.includes(r?.error) || (r?.error === 'cards-receipt' && true))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1410,8 +1410,8 @@
   {
     "name": "AC4-D4-gather-no-lift",
     "file": "src/world/card/cardMotion.js",
-    "old": "lerp(from.pos[1], to[1], u) + GATHER_LIFT * 4 * u * (1 - u)",
-    "new": "lerp(from.pos[1], to[1], u)",
+    "old": "        pos: [\n          lerp(from.pos[0], to[0], u),\n          lerp(from.pos[1], to[1], u) + GATHER_LIFT * 4 * u * (1 - u),\n          lerp(from.pos[2], to[2], u),\n        ],",
+    "new": "        pos: [lerp(from.pos[0], to[0], u), lerp(from.pos[1], to[1], u), lerp(from.pos[2], to[2], u)],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1445,8 +1445,8 @@
   {
     "name": "AC4-D4-gather-stays-face",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: lerp(from.roll, Math.PI, u), moving: t < t1",
-    "new": "roll: from.roll, moving: t < t1",
+    "old": "        roll: lerp(from.roll, Math.PI, u),",
+    "new": "        roll: from.roll,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1480,8 +1480,8 @@
   {
     "name": "AC4-D4-gather-keeps-yaw",
     "file": "src/world/card/cardMotion.js",
-    "old": "yaw: lerp(from.yaw, yaw, u), roll: lerp(from.roll, Math.PI, u)",
-    "new": "yaw: from.yaw, roll: lerp(from.roll, Math.PI, u)",
+    "old": "        yaw: lerp(from.yaw, yaw, u),",
+    "new": "        yaw: from.yaw,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1515,8 +1515,8 @@
   {
     "name": "AC4-D4-gather-instant",
     "file": "src/world/card/cardMotion.js",
-    "old": "  const t1 = t0 + GATHER_S;\n  return {\n    t0, t1, rest: to.slice(),",
-    "new": "  const t1 = t0;\n  return {\n    t0, t1, rest: to.slice(),",
+    "old": "  const t1 = t0 + GATHER_S;",
+    "new": "  const t1 = t0;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1585,8 +1585,8 @@
   {
     "name": "AC4-D4-gather-always-moving",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: lerp(from.roll, Math.PI, u), moving: t < t1 };",
-    "new": "roll: lerp(from.roll, Math.PI, u), moving: true };",
+    "old": "        moving: t < t1,",
+    "new": "        moving: true,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1727,8 +1727,8 @@
   {
     "name": "AC4-D4-gathered-into-deck",
     "file": "src/world/card/cardScene.js",
-    "old": "to: this._rest(deckAt, DECK_PLATES + i * 0.1)",
-    "new": "to: this._rest(deckAt, 0)",
+    "old": "            gatherMotion({\n              from: this._poseOf(c, t),\n              to: this._rest(deckAt, DECK_PLATES + i * 0.1),\n              yaw: deckYaw,\n              t0: t,\n            }),",
+    "new": "            gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, 0), yaw: deckYaw, t0: t }),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1797,8 +1797,8 @@
   {
     "name": "AC4-D4-old-dealer-deck",
     "file": "src/world/card/cardScene.js",
-    "old": "      const deckAt = this.places.seats[e.button].deck, deckYaw",
-    "new": "      const deckAt = this.places.seats[this.dealer].deck, deckYaw",
+    "old": "      const deckAt = this.places.seats[e.button].deck,",
+    "new": "      const deckAt = this.places.seats[this.dealer].deck,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1832,8 +1832,8 @@
   {
     "name": "AC4-D4-deck-hidden-gathering",
     "file": "src/world/card/cardScene.js",
-    "old": "!(t >= this.riffle?.t0 && t < this.deck.upTo)",
-    "new": "!(t < this.deck.upTo)",
+    "old": "    return !!this.deck && t >= this.deck.from && !(t >= this.riffle?.t0 && t < this.deck.upTo);",
+    "new": "    return !!this.deck && t >= this.deck.from && !(t < this.deck.upTo);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1869,8 +1869,8 @@
   {
     "name": "AC4-D4-pile-thins-on-settle",
     "file": "src/world/card/cardScene.js",
-    "old": "c.seat !== -4 && t > c.motions[0].t0).length;",
-    "new": "c.seat !== -4 && t > c.motions[c.motions.length - 1].t1).length;",
+    "old": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
+    "new": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[c.motions.length - 1].t1).length;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1904,8 +1904,8 @@
   {
     "name": "AC4-D4-pile-counts-gathered",
     "file": "src/world/card/cardScene.js",
-    "old": "const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
-    "new": "const thrown = this.cards.filter((c) => t > c.motions[0].t0).length;",
+    "old": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
+    "new": "    const thrown = this.cards.filter((c) => t > c.motions[0].t0).length;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1939,8 +1939,8 @@
   {
     "name": "AC4-D4-pile-flat",
     "file": "src/world/card/cardScene.js",
-    "old": "pos: this._rest(this.deck.at, k), yaw: this.deck.yaw",
-    "new": "pos: this._rest(this.deck.at, 0), yaw: this.deck.yaw",
+    "old": "      pos: this._rest(this.deck.at, k),",
+    "new": "      pos: this._rest(this.deck.at, 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1974,8 +1974,8 @@
   {
     "name": "AC4-D4-pile-face-up",
     "file": "src/world/card/cardScene.js",
-    "old": "yaw: this.deck.yaw, roll: Math.PI, id:",
-    "new": "yaw: this.deck.yaw, roll: 0, id:",
+    "old": "      yaw: this.deck.yaw,\n      roll: Math.PI,",
+    "new": "      yaw: this.deck.yaw,\n      roll: 0,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2009,8 +2009,8 @@
   {
     "name": "AC4-D4-pile-unsettled",
     "file": "src/world/card/cardScene.js",
-    "old": "seat: -5, settled: true",
-    "new": "seat: -5, settled: false",
+    "old": "      settled: true,",
+    "new": "      settled: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2044,8 +2044,8 @@
   {
     "name": "AC4-D4-gathered-keep-seat",
     "file": "src/world/card/cardScene.js",
-    "old": "id: `g${e.hand}:${i}`, seat: -4, motions:",
-    "new": "id: `g${e.hand}:${i}`, seat: c.seat, motions:",
+    "old": "          id: `g${e.hand}:${i}`,\n          seat: -4,",
+    "new": "          id: `g${e.hand}:${i}`,\n          seat: c.seat,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2079,8 +2079,8 @@
   {
     "name": "AC4-D4-gathered-keep-id",
     "file": "src/world/card/cardScene.js",
-    "old": "id: `g${e.hand}:${i}`, seat: -4,",
-    "new": "id: c.id, seat: -4,",
+    "old": "          id: `g${e.hand}:${i}`,",
+    "new": "          id: c.id,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2114,8 +2114,8 @@
   {
     "name": "AC4-D4-pile-at-old-place",
     "file": "src/world/card/cardScene.js",
-    "old": "this.deck = { at: deckAt, yaw: deckYaw,",
-    "new": "this.deck = { at: this.deck?.at ?? deckAt, yaw: deckYaw,",
+    "old": "      this.deck = { at: deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt }; // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered",
+    "new": "      this.deck = { at: this.deck?.at ?? deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt }; // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2149,8 +2149,8 @@
   {
     "name": "AC4-D4-think-no-gather",
     "file": "src/systems/card/cardTableSession.js",
-    "old": "Math.round((GATHER_S + RIFFLE_S) * 1000)",
-    "new": "Math.round(RIFFLE_S * 1000)",
+    "old": "    this._think(now, settleMs(live.length * 2) + Math.round((GATHER_S + RIFFLE_S) * 1000)); // the first to act waits for the last hand's gathering, the riffle and the deal to land (CARDS-TIDY)",
+    "new": "    this._think(now, settleMs(live.length * 2) + Math.round(RIFFLE_S * 1000)); // the first to act waits for the last hand's gathering, the riffle and the deal to land (CARDS-TIDY)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2184,8 +2184,8 @@
   {
     "name": "AC4-D4-delta-by-reference",
     "file": "src/net/holdemTable.js",
-    "old": "if (JSON.stringify(prev[k]) !== JSON.stringify(state[k])) d[k] = state[k];",
-    "new": "if (prev[k] !== state[k]) d[k] = state[k];",
+    "old": "  for (const k of STATE_KEYS) if (JSON.stringify(prev[k]) !== JSON.stringify(state[k])) d[k] = state[k];",
+    "new": "  for (const k of STATE_KEYS) if (prev[k] !== state[k]) d[k] = state[k];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2219,8 +2219,8 @@
   {
     "name": "AC4-D4-keys-no-last",
     "file": "src/net/holdemTable.js",
-    "old": "'hand', 'clockAt', 'last']);",
-    "new": "'hand', 'clockAt']);",
+    "old": "  'last',\n]);",
+    "new": "]);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2254,8 +2254,8 @@
   {
     "name": "AC4-D4-keys-no-seed",
     "file": "src/net/holdemTable.js",
-    "old": "'handNo', 'button', 'seed', 'seats',",
-    "new": "'handNo', 'button', 'seats',",
+    "old": "  'seed',\n  'seats',",
+    "new": "  'seats',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2289,8 +2289,8 @@
   {
     "name": "AC4-D4-keys-no-button",
     "file": "src/net/holdemTable.js",
-    "old": "'handNo', 'button', 'seed', 'seats',",
-    "new": "'handNo', 'seed', 'seats',",
+    "old": "  'button',\n  'seed',",
+    "new": "  'seed',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2324,8 +2324,8 @@
   {
     "name": "AC4-D4-delta-chairs-unchecked",
     "file": "src/net/holdemTable.js",
-    "old": "    if (d.chairs !== undefined && !(Number.isInteger(d.chairs) && d.chairs >= HOLDEM_SEATS_MIN && d.chairs <= HOLDEM_SEATS_MAX)) return false;\n",
-    "new": "",
+    "old": "    if (\n      d.chairs !== undefined &&\n      !(Number.isInteger(d.chairs) && d.chairs >= HOLDEM_SEATS_MIN && d.chairs <= HOLDEM_SEATS_MAX)\n    )\n      return false;\n    if (d.bb !== undefined && !HOLDEM_BBS.includes(d.bb)) return false;",
+    "new": "    if (d.bb !== undefined && !HOLDEM_BBS.includes(d.bb)) return false;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2359,8 +2359,8 @@
   {
     "name": "AC4-D4-delta-seats-any-length",
     "file": "src/net/holdemTable.js",
-    "old": "d.seats.length <= HOLDEM_SEATS_MAX && d.seats.every(seatOk)",
-    "new": "d.seats.every(seatOk)",
+    "old": "    return (\n      d.seats === undefined || (Array.isArray(d.seats) && d.seats.length <= HOLDEM_SEATS_MAX && d.seats.every(seatOk))\n    );",
+    "new": "    return d.seats === undefined || (Array.isArray(d.seats) && d.seats.every(seatOk));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2394,8 +2394,8 @@
   {
     "name": "AC4-D4-delta-array-ok",
     "file": "src/net/holdemTable.js",
-    "old": "|| !d || typeof d !== 'object' || Array.isArray(d) ||",
-    "new": "|| !d || typeof d !== 'object' ||",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )",
+    "new": "    if (m.state !== undefined || !d || typeof d !== 'object' || Object.keys(d).some((k) => !STATE_KEYS.includes(k)))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2429,8 +2429,8 @@
   {
     "name": "AC4-D4-delta-and-state",
     "file": "src/net/holdemTable.js",
-    "old": "    if (m.state !== undefined || !d ||",
-    "new": "    if (!d ||",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )",
+    "new": "    if (!d || typeof d !== 'object' || Array.isArray(d) || Object.keys(d).some((k) => !STATE_KEYS.includes(k)))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2744,8 +2744,8 @@
   {
     "name": "AC4-D4-c6-queue-unbounded",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.cashouts.length > HOLDEM_CASHOUTS_MAX) t.cashouts.splice(0, t.cashouts.length - HOLDEM_CASHOUTS_MAX);\n",
-    "new": "",
+    "old": "  if (t.cashouts.length > HOLDEM_CASHOUTS_MAX) t.cashouts.splice(0, t.cashouts.length - HOLDEM_CASHOUTS_MAX);\n}",
+    "new": "}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2779,8 +2779,8 @@
   {
     "name": "AC4-D4-c6-folded-not-marked",
     "file": "src/net/holdemTable.js",
-    "old": "  seat.cashed = true;\n",
-    "new": "",
+    "old": "  seat.cashed = true;\n}",
+    "new": "}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2814,8 +2814,8 @@
   {
     "name": "AC4-D4-c6-folded-any-chair",
     "file": "src/net/holdemTable.js",
-    "old": " || !t.hand || t.handSeats[k] !== chair) return;",
-    "new": " || !t.hand) return;",
+    "old": "  if (!seat?.stake || seat.cashed || !t.hand || t.handSeats[k] !== chair) return;",
+    "new": "  if (!seat?.stake || seat.cashed || !t.hand) return;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2851,8 +2851,8 @@
   {
     "name": "AC4-D4-c6-always-stood",
     "file": "src/net/holdemTable.js",
-    "old": "r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
-    "new": "r: seat.stack, w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: 'stood' });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2886,8 +2886,8 @@
   {
     "name": "AC4-D4-c6-view-not-gold",
     "file": "src/net/holdemTable.js",
-    "old": "sb: t.sb, gold: !!t.gold, handNo",
-    "new": "sb: t.sb, gold: false, handNo",
+    "old": "    gold: !!t.gold,",
+    "new": "    gold: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2921,8 +2921,8 @@
   {
     "name": "AC4-D4-c6-sit-stake-unchecked",
     "file": "src/net/holdemTable.js",
-    "old": "    if (m.stake !== undefined && !stakeWordOk(m.stake)) return null;\n",
-    "new": "",
+    "old": "    if (m.stake !== undefined && !stakeWordOk(m.stake)) return null;\n    return {",
+    "new": "    return {",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2956,8 +2956,8 @@
   {
     "name": "AC4-D4-c6-ack-any-id",
     "file": "src/net/holdemTable.js",
-    "old": "typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ?",
-    "new": "typeof m.j === 'string' ?",
+    "old": "  if (m.op === 'ack')\n    return typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null; // CARDS6",
+    "new": "  if (m.op === 'ack') return typeof m.j === 'string' ? { op: 'ack', table: m.table, j: m.j } : null; // CARDS6",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2991,8 +2991,8 @@
   {
     "name": "AC4-D4-c6-cashout-any-length",
     "file": "src/net/holdemTable.js",
-    "old": "typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX;",
-    "new": "typeof m.cashout === 'string';",
+    "old": "  if (m.cashout !== undefined) return typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX; // CARDS6: a staked seat's receipt (net/card/cardReceipt.js reads it)",
+    "new": "  if (m.cashout !== undefined) return typeof m.cashout === 'string'; // CARDS6: a staked seat's receipt (net/card/cardReceipt.js reads it)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3166,8 +3166,8 @@
   {
     "name": "AC4-D4-c6-book-recover-other-char",
     "file": "src/net/card/cardStakes.js",
-    "old": "filter((y) => !y.order && y.c === character())",
-    "new": "filter((y) => !y.order)",
+    "old": "      for (const x of read(CARD_STAKES_KEY).filter((y) => !y.order && y.c === character())) {",
+    "new": "      for (const x of read(CARD_STAKES_KEY).filter((y) => !y.order)) {",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3201,8 +3201,8 @@
   {
     "name": "AC4-D4-c6-book-void-room-any",
     "file": "src/net/card/cardStakes.js",
-    "old": "filter((x) => x.room === room && x.order &&",
-    "new": "filter((x) => x.order &&",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3236,8 +3236,8 @@
   {
     "name": "AC4-D4-c6-book-void-spam",
     "file": "src/net/card/cardStakes.js",
-    "old": " && !(x.voided > t - 60_000)).map(",
-    "new": ").map(",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3271,8 +3271,8 @@
   {
     "name": "AC4-D4-c6-book-receipt-dup",
     "file": "src/net/card/cardStakes.js",
-    "old": "      if (!kept.some((x) => x.j === c.j)) write(CARD_RECEIPTS_KEY,",
-    "new": "      write(CARD_RECEIPTS_KEY,",
+    "old": "      if (!kept.some((x) => x.j === c.j))\n        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: stake?.reg ?? region() }]);",
+    "new": "      write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: stake?.reg ?? region() }]);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3306,8 +3306,8 @@
   {
     "name": "AC4-D4-c6-book-stake-kept-after-receipt",
     "file": "src/net/card/cardStakes.js",
-    "old": "      if (stake) write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).filter((x) => x.id !== c.j));\n",
-    "new": "",
+    "old": "      if (stake)\n        write(\n          CARD_STAKES_KEY,\n          read(CARD_STAKES_KEY).filter((x) => x.id !== c.j),\n        );\n      return c.j;",
+    "new": "      return c.j;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -3341,8 +3341,8 @@
   {
     "name": "AC4-D4-c6-book-order-at-kept",
     "file": "src/net/card/cardStakes.js",
-    "old": "order: r.data.stake, id: r.data.id, at: now() }",
-    "new": "order: r.data.stake, id: r.data.id }",
+    "old": "        got = { order: r.data.stake, id: r.data.id, at: now() };",
+    "new": "        got = { order: r.data.stake, id: r.data.id };",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

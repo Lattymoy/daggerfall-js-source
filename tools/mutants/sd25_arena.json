@@ -2,8 +2,8 @@
   {
     "name": "SD25-S7-a-band-past-the-square",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "band: Object.freeze({ h: 0.2, w: 0.73 })",
-    "new": "band: Object.freeze({ h: 0.2, w: 0.83 })",
+    "old": "  band: Object.freeze({ h: 0.2, w: 0.73 }),",
+    "new": "  band: Object.freeze({ h: 0.2, w: 0.83 }),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD25-S7-the-cap-over-the-laws-top",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "cap: Object.freeze({ y1: SD_PILLAR_H, w: SD_PILLAR_W / 2 }),",
-    "new": "cap: Object.freeze({ y1: SD_PILLAR_H + 0.2, w: SD_PILLAR_W / 2 }),",
+    "old": "  cap: Object.freeze({ y1: SD_PILLAR_H, w: SD_PILLAR_W / 2 }),",
+    "new": "  cap: Object.freeze({ y1: SD_PILLAR_H + 0.2, w: SD_PILLAR_W / 2 }),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD25-S7-the-plinth-in-from-the-square",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "plinth: Object.freeze({ y1: 0.45, w: SD_PILLAR_W / 2 }),",
-    "new": "plinth: Object.freeze({ y1: 0.45, w: 0.7 }),",
+    "old": "  plinth: Object.freeze({ y1: 0.45, w: SD_PILLAR_W / 2 }),",
+    "new": "  plinth: Object.freeze({ y1: 0.45, w: 0.7 }),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD25-S7-a-prism-wound-in",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "    f.quad(rec, C(a, y0), C(a, y1), C(b, y1), C(b, y0), [u / tile, -y0 / tile], [u / tile, -y1 / tile], [(u + len) / tile, -y1 / tile], [(u + len) / tile, -y0 / tile]);",
-    "new": "    f.quad(rec, C(b, y0), C(b, y1), C(a, y1), C(a, y0), [u / tile, -y0 / tile], [u / tile, -y1 / tile], [(u + len) / tile, -y1 / tile], [(u + len) / tile, -y0 / tile]);",
+    "old": "      C(a, y0),\n      C(a, y1),\n      C(b, y1),\n      C(b, y0),",
+    "new": "      C(b, y0),\n      C(b, y1),\n      C(a, y1),\n      C(a, y0),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD25-S7-the-stone-alight",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "  for (let row = 0; row < S / H; row++) for (let c = 0; c < 3; c++) bevel(albedo,",
-    "new": "  for (let i = 0; i < emission.colors.length; i += 4) emission.colors[i] = 9;\n  for (let row = 0; row < S / H; row++) for (let c = 0; c < 3; c++) bevel(albedo,",
+    "old": "  for (let row = 0; row < S / H; row++)",
+    "new": "  for (let i = 0; i < emission.colors.length; i += 4) emission.colors[i] = 9;\n  for (let row = 0; row < S / H; row++)",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD25-S7-a-courses-joint-gone",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "    if (bx < J || by < J) { putTexel(albedo, x, y, step(B, 0)); continue; }",
-    "new": "    if (bx < J) { putTexel(albedo, x, y, step(B, 0)); continue; }",
+    "old": "      if (bx < J || by < J) {",
+    "new": "      if (bx < J) {",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD25-S7-a-dial-facing-in",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "n: Object.freeze([nx, 0, nz])",
-    "new": "n: Object.freeze([-nx, 0, -nz])",
+    "old": "            n: Object.freeze([nx, 0, nz]),",
+    "new": "            n: Object.freeze([-nx, 0, -nz]),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD25-S7-the-cages-bars-on-the-diagonals",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "for (const [sx, sz] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) prism(f, rec, px, pz, square(N.bar)",
-    "new": "for (const [sx, sz] of [[1, 1], [-1, 1], [-1, -1], [1, -1]]) prism(f, rec, px, pz, square(N.bar)",
+    "old": "    [1, 0],\n    [0, 1],\n    [-1, 0],\n    [0, -1],",
+    "new": "    [1, 1],\n    [-1, 1],\n    [-1, -1],\n    [1, -1],",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD25-S7-a-flame-out-of-its-cage",
     "file": "src/world/superDungeon/sdPillarModel.js",
-    "old": "bar: 0.025, plate: 0.08, flameY: 12.86 });",
-    "new": "bar: 0.025, plate: 0.08, flameY: 13.6 });",
+    "old": "export const SD_LANTERN = Object.freeze({ w: 0.3, y0: 12.43, y1: 13.3, bar: 0.025, plate: 0.08, flameY: 12.86 });",
+    "new": "export const SD_LANTERN = Object.freeze({ w: 0.3, y0: 12.43, y1: 13.3, bar: 0.025, plate: 0.08, flameY: 13.6 });",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD25-S7-the-hand-the-wrong-way-round",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "vec2 dir = vec2(sin(a), cos(a)), side = vec2(cos(a), -sin(a));",
-    "new": "vec2 dir = vec2(cos(a), sin(a)), side = vec2(sin(a), -cos(a));",
+    "old": "  vec2 dir = vec2(sin(a), cos(a)), side = vec2(cos(a), -sin(a));",
+    "new": "  vec2 dir = vec2(cos(a), sin(a)), side = vec2(sin(a), -cos(a));",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD25-S7-no-spade",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "if (spade >= 0.0 && spade <= 1.0 && off <= ",
-    "new": "if (spade >= 9.0 && spade <= 1.0 && off <= ",
+    "old": "  if (spade >= 0.0 && spade <= 1.0 && off <= ${SD_DIAL_HAND.spadeW.toFixed(2)} * (1.0 - abs(spade * 2.0 - 1.0)) + 0.5) return 3.0;",
+    "new": "  if (spade >= 9.0 && spade <= 1.0 && off <= ${SD_DIAL_HAND.spadeW.toFixed(2)} * (1.0 - abs(spade * 2.0 - 1.0)) + 0.5) return 3.0;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD25-S7-the-quarters-thin",
     "file": "src/render/superDungeon/sdPillarPass.js",
-    "old": "float w = mod(h, 3.0) < 0.5 ?",
-    "new": "float w = mod(h, 3.0) < -0.5 ?",
+    "old": "    float w = mod(h, 3.0) < 0.5 ? ${SD_DIAL_RINGS.quarterW.toFixed(2)} : ${SD_DIAL_RINGS.tickW.toFixed(2)};",
+    "new": "    float w = mod(h, 3.0) < -0.5 ? ${SD_DIAL_RINGS.quarterW.toFixed(2)} : ${SD_DIAL_RINGS.tickW.toFixed(2)};",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD25-S7-the-right-turned-over",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "Math.atan2((at[0] - d.at[0]) * d.right[0] + (at[2] - d.at[2]) * d.right[2], at[1] - d.at[1])",
-    "new": "Math.atan2(-((at[0] - d.at[0]) * d.right[0] + (at[2] - d.at[2]) * d.right[2]), at[1] - d.at[1])",
+    "old": "  Math.atan2((at[0] - d.at[0]) * d.right[0] + (at[2] - d.at[2]) * d.right[2], at[1] - d.at[1]);",
+    "new": "  Math.atan2(-((at[0] - d.at[0]) * d.right[0] + (at[2] - d.at[2]) * d.right[2]), at[1] - d.at[1]);",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD25-S7-the-first-echo-never-the-nearest",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "    if (d < best) { best = d; e0 = e; }",
-    "new": "    if (e0 < 0) { best = d; e0 = e; }",
+    "old": "    if (d < best) {",
+    "new": "    if (e0 < 0) {",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD25-S7-its-heart-at-the-floor",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "W.one[1] = AY + SD_REMNANT_BODY.heartY - p.sink;",
-    "new": "W.one[1] = AY - p.sink;",
+    "old": "    W.one[1] = AY + SD_REMNANT_BODY.heartY - p.sink;",
+    "new": "    W.one[1] = AY - p.sink;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD25-S7-the-way-home-at-the-fall-unmoved",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "const [x, z] = clearOfPillars(s.rem.x, s.rem.z);",
-    "new": "const [x, z] = [s.rem.x, s.rem.z];",
+    "old": "      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);",
+    "new": "      const [x, z] = [s.rem.x, s.rem.z];",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD25-S7-no-ease-in",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "if (t - called < DIM_IN) { u = (t - called) / DIM_IN; by = DIM_TO - 1; }",
-    "new": "if (t - called < 0) { u = (t - called) / DIM_IN; by = DIM_TO - 1; }",
+    "old": "      if (t - called < DIM_IN) {",
+    "new": "      if (t - called < 0) {",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD25-S7-the-landing-not-bringing-them-back",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "    else if (t - at < DIM_OUT) { u = (t - at) / DIM_OUT; from = DIM_TO; by = 1 - DIM_TO; }",
-    "new": "    else { out[0] = DIM_TO; return out; }",
+    "old": "    } else if (t - at < DIM_OUT) {\n      u = (t - at) / DIM_OUT;\n      from = DIM_TO;\n      by = 1 - DIM_TO;",
+    "new": "    } else {\n      out[0] = DIM_TO;\n      return out;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD25-S7-the-stun-not-bringing-them-back",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "  if (s.su > t && s.stunAt > 0) { if (t - s.stunAt < DIM_OUT) { u = (t - s.stunAt) / DIM_OUT; from = DIM_TO; by = 1 - DIM_TO; } }",
-    "new": "  if (s.su > t && s.stunAt > 0) { out[0] = DIM_TO; return out; }",
+    "old": "    if (t - s.stunAt < DIM_OUT) {\n      u = (t - s.stunAt) / DIM_OUT;\n      from = DIM_TO;\n      by = 1 - DIM_TO;\n    }",
+    "new": "    out[0] = DIM_TO;\n    return out;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD25-S7-the-echoes-metals-swapped",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "markShape([0, 0], 0, SD_MARK_COLOR.echoes[0], SD_ECHO.r), markShape([0, 0], 0, SD_MARK_COLOR.echoes[1], SD_ECHO.r)",
-    "new": "markShape([0, 0], 0, SD_MARK_COLOR.echoes[1], SD_ECHO.r), markShape([0, 0], 0, SD_MARK_COLOR.echoes[0], SD_ECHO.r)",
+    "old": "  markShape([0, 0], 0, SD_MARK_COLOR.echoes[0], SD_ECHO.r),\n  markShape([0, 0], 0, SD_MARK_COLOR.echoes[1], SD_ECHO.r),",
+    "new": "  markShape([0, 0], 0, SD_MARK_COLOR.echoes[1], SD_ECHO.r),\n  markShape([0, 0], 0, SD_MARK_COLOR.echoes[0], SD_ECHO.r),",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD25-S7-the-remnant-marked-outside-time",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "    if (onFloor(p)) { const m = _marks[0];",
-    "new": "    if (onFloor(p) || s.ph === 2) { const m = _marks[0];",
+    "old": "    if (onFloor(p)) {",
+    "new": "    if (onFloor(p) || s.ph === 2) {",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD25-S7-its-facing-unset",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; m.yaw = p.yw; _picked[n++] = m; }",
-    "new": "    if (onFloor(p)) { const m = _marks[0]; m.origin[0] = p.x; m.origin[1] = p.z; _picked[n++] = m; }",
+    "old": "      m.yaw = p.yw;\n      _picked[n++] = m;",
+    "new": "      _picked[n++] = m;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD25-S7-the-marks-under-nothing",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      for (let i = 0; i < under.length; i++) { pass.draw(under[i],",
-    "new": "      for (let i = 0; i < 0; i++) { pass.draw(under[i],",
+    "old": "      for (let i = 0; i < under.length; i++) {",
+    "new": "      for (let i = 0; i < 0; i++) {",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD25-S7-the-looks-dimming-made-a-frame",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "  sdLampDimInto(s, t, look.k);\n",
-    "new": "  look.k = Float64Array.of(sdLampDimAt(s, t), 0);\n",
+    "old": "  sdLampDimInto(s, t, look.k);",
+    "new": "  look.k = Float64Array.of(sdLampDimAt(s, t), 0);",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD25-S7-the-marks-list-made-a-frame",
     "file": "src/scenes/superDungeon/sdArenaWatch.js",
-    "old": "  return list;\n}",
-    "new": "  return list.slice(0, n);\n}",
+    "old": "  return list;",
+    "new": "  return list.slice(0, n);",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]

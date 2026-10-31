@@ -2,8 +2,8 @@
   {
     "name": "ROAD-SPARE-unasked",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
-    "new": "",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ROAD-SPARE-spared-as-nobody",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "return ROAD_SPARED;   // ROAD-SPARE",
-    "new": "return false;   // ROAD-SPARE",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    if (cityGuards.playerSparesPerson(near.entry.person)) return false; // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ROAD-SPARE-every-blow-spared",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
-    "new": "    if (near) return ROAD_SPARED;",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    if (near) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-FB1025i-D2-any-death-slain",
     "file": "src/scenes/roadStands.js",
-    "old": "if (s.kind === 'foe' && s.rec.killedBy === 'player') {",
-    "new": "if (s.kind === 'foe') {",
+    "old": "          if (s.kind === 'foe' && s.rec.killedBy === 'player') {",
+    "new": "          if (s.kind === 'foe') {",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-FB1025i-D2-other-unsaid",
     "file": "src/scenes/roadStands.js",
-    "old": "} else if (s.kind === 'foe') deps.killed(s.res, t);",
-    "new": "} else if (s.kind === 'foe') void 0;",
+    "old": "          } else if (s.kind === 'foe') deps.killed(s.res, t);",
+    "new": "          } else if (s.kind === 'foe') void 0;",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],

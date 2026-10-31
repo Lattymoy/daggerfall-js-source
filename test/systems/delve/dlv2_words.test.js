@@ -1,12 +1,12 @@
-// DLV2 (bible/03-World/Delve-II.md law 9 and section 6): EVERY WORD AN ENCOUNTER SAYS, AND ITS VAULT'S ROLL. Each line
+// DLV2 (bible/03-World/Delve-II.md law 9 and section 6): EVERY WORD AN ENCOUNTER SAYS. Each line
 // through the text core under its own key, short (PLAIN-TEXT: 40 words a string, 25 a sentence), the event then what
-// to do; the vault never empty. Pins held to fail under the mutations in tools/mutants/dlv2.json.
+// to do. The vault's roll is test/systems/delve/delvevault.test.js (DELVE-VAULT). Pins held to fail under the mutations in
+// tools/mutants/dlv2.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as WORDS from '../../../src/systems/delve/delveWords.js';
 import { DELVE_NEAR_TEXT, DELVE_HOLD_TEXT, DELVE_SAY_S, DELVE_SAY_LONG_S } from '../../../src/systems/delve/delveWords.js';
-import { rollVault } from '../../../src/systems/delve/delveVault.js';
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 /** Every line of every table (DLV4: the new kinds' too), each source look's near line, at the arguments they take. */
@@ -32,19 +32,3 @@ test('DLV2 THE WORDS: each its own key in the text core, said short - no line pa
   assert.deepEqual([DELVE_SAY_S, DELVE_SAY_LONG_S], [3, 5]);
 });
 
-test('DLV2 THE VAULT\'S ROLL: the pile\'s own roll; empty, rolled again once; empty twice, the level\'s gold - never an empty vault (mutants: no second roll; the gold\'s floor)', () => {
-  let n = 0;
-  assert.deepEqual(rollVault(() => { n++; return [{ name: 'Dagger' }]; }, 5), [{ name: 'Dagger' }]);
-  assert.equal(n, 1, 'a roll with items, once');
-  n = 0;
-  assert.deepEqual(rollVault(() => (++n === 1 ? [] : [{ name: 'Ruby' }]), 5), [{ name: 'Ruby' }]);
-  assert.equal(n, 2, 'empty, rolled again');
-  n = 0;
-  const gold = rollVault(() => { n++; return []; }, 7);
-  assert.equal(n, 2, 'twice and no more');
-  assert.equal(gold.length, 1);
-  assert.equal(gold[0].group, 'Currency');
-  assert.equal(gold[0].stackCount, 7, 'the level\'s gold');
-  assert.equal(rollVault(() => null, 0)[0].stackCount, 1, 'at least 1');
-  assert.equal(rollVault(() => [], 3.7)[0].stackCount, 3);
-});

@@ -16,8 +16,17 @@
 // seats' book (net/townSeatBook.js dressed: its holder, its Standing, the
 // Edict that rules) - nothing here reads the service itself.
 // ═════════════════════════════════════════════════════════════════════
-import { seatShopFactor, seatArrivalNews, bailiwickOf, bountySitePixel, bountyClaimPixel, bountyDenId, CURFEW, FESTIVE } from '../net/townSeatLaw.js';
-import { t } from './textManager.js';   // BAY-LEFT-SEA: a den's pay, in the player's language
+import {
+  seatShopFactor,
+  seatArrivalNews,
+  bailiwickOf,
+  bountySitePixel,
+  bountyClaimPixel,
+  bountyDenId,
+  CURFEW,
+  FESTIVE,
+} from '../net/townSeatLaw.js';
+import { t } from './textManager.js'; // BAY-LEFT-SEA: a den's pay, in the player's language
 import { isNight } from '../world/worldClock.js';
 
 /** The entity fold's name the Festive buff rides (systems/entityMods.js registerEntityFold). */
@@ -55,7 +64,10 @@ export function createSeatEdicts(host) {
   let festiveUntil = -Infinity;
   /** DOMAIN3: the Charter a town's shops, watch and news answer to - a holding's its region's (net/townSeatBook.js dressed
    *  `charterSeat`), every other seat its own. */
-  const charterAt = (mapId) => { const s = host.seatAt(mapId); return s?.charterSeat ?? s ?? null; };
+  const charterAt = (mapId) => {
+    const s = host.seatAt(mapId);
+    return s?.charterSeat ?? s ?? null;
+  };
   const edictAt = (mapId) => charterAt(mapId)?.holder?.edict ?? null;
   const curfew = () => edictAt(host.here()) === 'curfew';
   /** The seat whose bailiwick a map pixel in `region` lies in, dressed - null where the region holds none. */
@@ -67,13 +79,20 @@ export function createSeatEdicts(host) {
   async function campCleared(site) {
     const pixel = typeof site === 'string' ? bountyClaimPixel(site) : null;
     if (!pixel || !host.claim) return 0;
-    const region = host.regionAt(pixel[0], pixel[1]), camp = !!bountySitePixel(site);
+    const region = host.regionAt(pixel[0], pixel[1]),
+      camp = !!bountySitePixel(site);
     if (camp && (host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {
-      host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});
+      host
+        .orcCamp(site, region)
+        .then((r) => {
+          if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4);
+        })
+        .catch(() => {});
     }
     if (!bountyAt(region, pixel)) return 0;
     if (!camp) {
-      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);
+      const now = host.nowMs?.() ?? Date.now(),
+        was = denAsked.get(site);
       if (was != null && now - was < BOUNTY_DEN_ASK_GAP_MS) return 0;
       denAsked.set(site, now);
     }
@@ -89,7 +108,7 @@ export function createSeatEdicts(host) {
     shopFactor: (b) => seatShopFactor(charterAt(b?.townMapId), host.guildId()),
     /** THE ARRIVAL (7.3, 7.6): the town's news said after its line, and a Festival's buff taken for a game day. */
     arrived(town) {
-      const seat = town?.charterSeat ?? town;   // DOMAIN3: a holding's news is its Charter's
+      const seat = town?.charterSeat ?? town; // DOMAIN3: a holding's news is its Charter's
       const news = seatArrivalNews(seat);
       if (news) host.say?.(news, 5);
       if (seat?.holder?.edict === 'festival') {
@@ -101,7 +120,8 @@ export function createSeatEdicts(host) {
     /** Whether the Festive buff holds now. */
     festive: () => host.minutes() < festiveUntil,
     /** CURFEW (7.6): the levels a town watchman stands stronger, at night in a Curfew town. */
-    guardLevelBonus: (minuteOfDay) => (curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0),
+    guardLevelBonus: (minuteOfDay) =>
+      curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0,
     /** CURFEW: what a crime in this town costs, as a multiple of its legal reputation. */
     crimeFactor: () => (curfew() ? CURFEW.crimeFactor : 1),
     /** THE BOUNTY (7.6): whether a World of Daggerfall camp at map pixel (`px`, `py`) lies in a Bounty seat's
@@ -119,6 +139,8 @@ export function createSeatEdicts(host) {
     denCleared,
     /** BAY-LEFT-SEA: an outlaws' hideout routed (scenes/hideouts.js `routed`, its hideout `h` - its map pixel) - its den
      *  claimed, quietly. */
-    hideoutRouted: (h) => { denCleared('hideout', h?.px, h?.py).catch(() => {}); },
+    hideoutRouted: (h) => {
+      denCleared('hideout', h?.px, h?.py).catch(() => {});
+    },
   };
 }

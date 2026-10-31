@@ -22,8 +22,8 @@
   {
     "name": "EGA3P-completes-undrawn",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "      if (c.completes) b.append(",
-    "new": "      if (false) b.append(",
+    "old": "      if (c.completes) b.append(egEl(doc, 'span', 'eg-k-tline eg-cap', c.completes)); // AUDIT EG III: the capstone it completes",
+    "new": "      if (false) b.append(egEl(doc, 'span', 'eg-k-tline eg-cap', c.completes)); // AUDIT EG III: the capstone it completes",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "EGA3P-completes-words",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "completes: (fam, cap, line) => `Completes ${fam}: ${cap}. ${line}`,",
-    "new": "completes: (fam, cap, line) => `Completes ${fam}: ${cap}.`,",
+    "old": "  completes: (fam, cap, line) => `Completes ${fam}: ${cap}. ${line}`,",
+    "new": "  completes: (fam, cap, line) => `Completes ${fam}: ${cap}.`,",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "EGA3P-resonance-unsaid",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "  if (me) for (const f of egResonance(egRunOfMember(E, me).vs)) if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
+    "old": "  if (me)\n    for (const f of egResonance(egRunOfMember(E, me).vs))\n      if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
     "new": "",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js",
@@ -53,8 +53,8 @@
   {
     "name": "EGA3P-resonance-every-look",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
-    "new": "{ fresh(keyOf('res', E.b, f)); if (memo.primed) beats.push({ k: 'resonance', t: f }); }",
+    "old": "    for (const f of egResonance(egRunOfMember(E, me).vs))\n      if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
+    "new": "    for (const f of egResonance(egRunOfMember(E, me).vs)) {\n      fresh(keyOf('res', E.b, f));\n      if (memo.primed) beats.push({ k: 'resonance', t: f });\n    }",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js",
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
@@ -64,8 +64,8 @@
   {
     "name": "EGA3P-recap-capstones-blind",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "capstones: egResonance(run?.vs ?? []).map((f) => EG_CAPSTONES[f].name),",
-    "new": "capstones: [],",
+    "old": "    capstones: egResonance(run?.vs ?? []).map((f) => EG_CAPSTONES[f].name), // AUDIT EG III (section 27.6): the capstones held",
+    "new": "    capstones: [], // AUDIT EG III (section 27.6): the capstones held",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -74,8 +74,8 @@
   {
     "name": "EGA3P-recap-capstones-undrawn",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "recap.capstones?.length ? `${words.recapCapstones}",
-    "new": "false ? `${words.recapCapstones}",
+    "old": "      recap.capstones?.length ? `${words.recapCapstones}: ${recap.capstones.join(', ')}` : '', // AUDIT EG III: the capstones",
+    "new": "      false ? `${words.recapCapstones}: ${recap.capstones.join(', ')}` : '', // AUDIT EG III: the capstones",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -84,7 +84,7 @@
   {
     "name": "EGA3P-accord-does-unsaid",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "export const egAccordDoes = (key) => { const A = EG_ACCORDS.find((x) => x.key === key); return A ? EG_PRES_TEXT.accordDoes(A.name, A.line) : ''; };",
+    "old": "export const egAccordDoes = (key) => {\n  const A = EG_ACCORDS.find((x) => x.key === key);\n  return A ? EG_PRES_TEXT.accordDoes(A.name, A.line) : '';\n};",
     "new": "export const egAccordDoes = () => '';",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "EGA3P-accord-does-every-companion",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "const first = !told.has(a.key);",
-    "new": "const first = true;",
+    "old": "        const first = !told.has(a.key);",
+    "new": "        const first = true;",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "EGA3P-board-no-enhanced-id",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "  root.id = EG_BOARD_PANEL_ID;   // AUDIT EG III: an enhanced door, for the pad\n",
-    "new": "",
+    "old": "  root.id = EG_BOARD_PANEL_ID; // AUDIT EG III: an enhanced door, for the pad\n  root.setAttribute('tabindex', '-1');",
+    "new": "  root.setAttribute('tabindex', '-1');",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "EGA3P-board-left-on-the-stack",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "alive = false; unregister(); win.removeEventListener",
-    "new": "alive = false; win.removeEventListener",
+    "old": "      unregister();\n      win.removeEventListener?.('keydown', onBack, { capture: true });",
+    "new": "      win.removeEventListener?.('keydown', onBack, { capture: true });",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "EGA3P-board-back-unheard",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "overlayAction(e) !== 'back') return;",
-    "new": "overlayAction(e) !== 'confirm') return;",
+    "old": "    if (typeof e?.key !== 'string' || e.metaKey || e.ctrlKey || e.altKey || overlayAction(e) !== 'back') return;",
+    "new": "    if (typeof e?.key !== 'string' || e.metaKey || e.ctrlKey || e.altKey || overlayAction(e) !== 'confirm') return;",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -154,8 +154,8 @@
   {
     "name": "EGA3P-board-back-shared",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": " e.preventDefault?.(); e.stopPropagation?.(); onClose(); };",
-    "new": " e.preventDefault?.(); onClose(); };",
+    "old": "    e.stopPropagation?.();\n    onClose();",
+    "new": "    onClose();",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "EGA3P-board-listener-left",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": " win.removeEventListener?.('keydown', onBack, { capture: true });",
-    "new": "",
+    "old": "      win.removeEventListener?.('keydown', onBack, { capture: true });\n      root.remove?.();",
+    "new": "      root.remove?.();",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "EGA3P-shaft-still-whole",
     "file": "src/player/mwView.js",
-    "old": "  if (still) return 0;\n",
-    "new": "  if (still) return want;\n",
+    "old": "  if (still) return 0;",
+    "new": "  if (still) return want;",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js",
       "test/net/eliteGates/egz_camera_shaft.test.js"
@@ -255,8 +255,8 @@
   {
     "name": "EGA3P-season-line",
     "file": "src/systems/eventTimers.js",
-    "old": "top ten hold the title Spire Champion through the next season');",
-    "new": "top ten hold Spire Champion through the next');",
+    "old": "      \"Each Descent bracket's top ten hold the title Spire Champion through the next season\",",
+    "new": "      \"Each Descent bracket's top ten hold Spire Champion through the next\",",
     "tests": [
       "test/net/eliteGates/egaudit3_pres.test.js"
     ],
@@ -275,8 +275,8 @@
   {
     "name": "EGA3P-wind-silent",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "secondWind: Object.freeze({ sight: \"the health bar's rise\", sound: 'chime',",
-    "new": "secondWind: Object.freeze({ sight: \"the health bar's rise\", sound: null,",
+    "old": "    sight: \"the health bar's rise\",\n    sound: 'chime',\n    words: (n, t) => EG_PRES_TEXT.secondWind(t),",
+    "new": "    sight: \"the health bar's rise\",\n    sound: null,\n    words: (n, t) => EG_PRES_TEXT.secondWind(t),",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -285,8 +285,8 @@
   {
     "name": "EGA3P-wind-to-chat",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "words: (n, t) => EG_PRES_TEXT.secondWind(t), by: null, chat: false }),",
-    "new": "words: (n, t) => EG_PRES_TEXT.secondWind(t), by: null, chat: true }),",
+    "old": "    by: null,\n    chat: false,\n  }), // `t` the points healed",
+    "new": "    by: null,\n    chat: true,\n  }), // `t` the points healed",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -305,8 +305,8 @@
   {
     "name": "EGA3P-news-wind-unsaid",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 });",
-    "new": "",
+    "old": "  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 }); // AUDIT EG III: said as Shed Skin says its heal",
+    "new": "  // AUDIT EG III: said as Shed Skin says its heal",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "EGA3P-news-weave-early",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' });",
-    "new": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 2) _news.push({ k: 'spellweave' });",
+    "old": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' }); // AUDIT EG III: the free one left the hands",
+    "new": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 2) _news.push({ k: 'spellweave' }); // AUDIT EG III: the free one left the hands",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "EGA3P-news-cry-unspent",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' });",
-    "new": "    _news.push({ k: 'rallyingCry' });",
+    "old": "    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' }); // AUDIT EG III: a wind spent in this hall given back, said",
+    "new": "    _news.push({ k: 'rallyingCry' }); // AUDIT EG III: a wind spent in this hall given back, said",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "EGA3P-news-kept",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "  if (!_held) _news.length = 0;   // AUDIT EG III: nothing held, nothing to say\n",
-    "new": "",
+    "old": "  if (!_held) _news.length = 0; // AUDIT EG III: nothing held, nothing to say\n  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "  if (_held && holder?.cry === true && holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "EGA3P-chip-closed-shown",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": ".filter((w) => w[0] <= now && now < w[1]).at(-1);",
-    "new": ".filter((w) => w[0] <= now && now <= w[1]).at(-1);",
+    "old": "  const ll = (H.ll ?? []).filter((w) => w[0] <= now && now < w[1]).at(-1);",
+    "new": "  const ll = (H.ll ?? []).filter((w) => w[0] <= now && now <= w[1]).at(-1);",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -385,8 +385,8 @@
   {
     "name": "EGA3P-hymn-my-own",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "hymn: hy && hy[2].some((s) => s !== me) ? hy : null,",
-    "new": "hymn: hy,",
+    "old": "  return {\n    ll: fight.shield?.().ll ?? [],\n    hymn: hy && hy[2].some((s) => s !== me) ? hy : null,\n    accords,\n    weave: !!weave,\n  };",
+    "new": "  return { ll: fight.shield?.().ll ?? [], hymn: hy, accords, weave: !!weave };",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -395,8 +395,8 @@
   {
     "name": "EGA3P-lifeline-twice",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": " beats.push({ k: 'lifeline', t: newest[2] }); memo.llU = newest[1]; }",
-    "new": " beats.push({ k: 'lifeline', t: newest[2] }); }",
+    "old": "    memo.llU = newest[1];\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -405,8 +405,8 @@
   {
     "name": "EGA3P-hymn-unsaid",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "if (memo.primed && H.hymn[1] > now) beats.push({ k: 'shieldHymn' });",
-    "new": "",
+    "old": "    if (memo.primed && H.hymn[1] > now) beats.push({ k: 'shieldHymn' });\n    memo.hyF = H.hymn[0];",
+    "new": "    memo.hyF = H.hymn[0];",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -415,8 +415,8 @@
   {
     "name": "EGA3P-accord-every-reform",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "if (!memo.up.has(A.key) && memo.primed && !memo.said.has(`${A.key}+`))",
-    "new": "if (!memo.up.has(A.key) && memo.primed)",
+    "old": "    if (!memo.up.has(A.key) && memo.primed && !memo.said.has(`${A.key}+`)) {",
+    "new": "    if (!memo.up.has(A.key) && memo.primed) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -425,8 +425,8 @@
   {
     "name": "EGA3P-accord-first-look",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "if (!memo.up.has(A.key) && memo.primed && !memo.said",
-    "new": "if (!memo.up.has(A.key) && !memo.said",
+    "old": "    if (!memo.up.has(A.key) && memo.primed && !memo.said.has(`${A.key}+`)) {",
+    "new": "    if (!memo.up.has(A.key) && !memo.said.has(`${A.key}+`)) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -435,8 +435,8 @@
   {
     "name": "EGA3P-accord-lapse-unsaid",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "for (const key of memo.up) if (!up.has(key) && memo.primed && !memo.said.has(`${key}-`))",
-    "new": "for (const key of []) if (true)",
+    "old": "  for (const key of memo.up)\n    if (!up.has(key) && memo.primed && !memo.said.has(`${key}-`)) {",
+    "new": "  for (const key of [])\n    if (true) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -445,7 +445,7 @@
   {
     "name": "EGA3P-held-witness",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    held: watching ? [] : held,   // AUDIT EG III: the holder's chips",
+    "old": "    held: watching ? [] : held, // AUDIT EG III: the holder's chips",
     "new": "    held,",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
@@ -455,8 +455,8 @@
   {
     "name": "EGA3P-held-undrawn",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    for (const c of model.held ?? []) { const n = doc.createElement('div');",
-    "new": "    for (const c of []) { const n = doc.createElement('div');",
+    "old": "    for (const c of model.held ?? []) {",
+    "new": "    for (const c of []) {",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],
@@ -515,8 +515,8 @@
   {
     "name": "EGA3P-watch-blind",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "    if (SAY_MINE.has(s.w) && !(me && s.s?.includes(me))) continue;",
-    "new": "",
+    "old": "    if (SAY_MINE.has(s.w) && !(me && s.s?.includes(me))) continue; // AUDIT EG III: a host hit is its striker's to hear",
+    "new": "    // AUDIT EG III: a host hit is its striker's to hear",
     "tests": [
       "test/net/eliteGates/egaudit3_pres_beats.test.js"
     ],

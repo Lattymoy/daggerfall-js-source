@@ -8,13 +8,17 @@ import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 import { TEMPLATE } from './food.js';
 import { createSurvivalItem, spoilFood } from './items.js';
-import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 export const SURVIVAL_LOOT_HANDLER = 'survival';
 /** [min, max] raw meat by mobile type; the max grows by the luck mod. */
 export const MEAT_BY_TYPE = Object.freeze({
-  [MOBILE_TYPES.Rat]: [1, 1], [MOBILE_TYPES.GiantBat]: [1, 1], [MOBILE_TYPES.GrizzlyBear]: [6, 10],
-  [MOBILE_TYPES.SabertoothTiger]: [4, 8], [MOBILE_TYPES.Spider]: [2, 2], [MOBILE_TYPES.GiantScorpion]: [2, 3],
+  [MOBILE_TYPES.Rat]: [1, 1],
+  [MOBILE_TYPES.GiantBat]: [1, 1],
+  [MOBILE_TYPES.GrizzlyBear]: [6, 10],
+  [MOBILE_TYPES.SabertoothTiger]: [4, 8],
+  [MOBILE_TYPES.Spider]: [2, 2],
+  [MOBILE_TYPES.GiantScorpion]: [2, 3],
 });
 export const FISH_BY_TYPE = Object.freeze({ [MOBILE_TYPES.Slaughterfish]: [2, 3] });
 export const DEFAULT_ANIMAL_MEAT = Object.freeze([1, 2]);
@@ -55,13 +59,18 @@ function scaledCount(n, scale, rolls) {
   return frac > 0 && rolls() < frac ? whole + 1 : whole;
 }
 
-export const isAnimal = (entity) => entity?.basics?.affinity === 'Animal' || entity?.mobileType === MOBILE_TYPES.Slaughterfish;
+export const isAnimal = (entity) =>
+  entity?.basics?.affinity === 'Animal' || entity?.mobileType === MOBILE_TYPES.Slaughterfish;
 // MOD (player report): a Centaur is half human and carries a
 // person's loot/kit, not an animal's - drops the same way the other
 // humanoids do (75% item/gear cut in hostCombat.js, 50% food cut
 // below), even though its own affinity/team row (Daylight/Centaurs)
 // doesn't say "Human" or "Orcs".
-export const isHumanoid = (entity) => isClassEnemyId(entity?.mobileType ?? 0) || entity?.basics?.team === 'Orcs' || entity?.basics?.affinity === 'Human' || entity?.mobileType === MOBILE_TYPES.Centaur;
+export const isHumanoid = (entity) =>
+  isClassEnemyId(entity?.mobileType ?? 0) ||
+  entity?.basics?.team === 'Orcs' ||
+  entity?.basics?.affinity === 'Human' ||
+  entity?.mobileType === MOBILE_TYPES.Centaur;
 
 /** What one corpse carries: raw meat or fish for an animal, sometimes a
  *  meal for a humanoid. Pure: returns the items. */
@@ -76,7 +85,7 @@ export function corpseFood(entity, { luck = 50, rolls = Math.random } = {}) {
     const n = scaledCount(range(min, max + Math.max(0, lm - 5), rolls), ANIMAL_LOOT_SCALE, rolls);
     for (let i = 0; i < n; i++) {
       const item = createSurvivalItem(fish ? TEMPLATE.RawFish : TEMPLATE.RawMeat);
-      if (item && rolls() < 0.5) spoilFood(item);   // half of it is already turning
+      if (item && rolls() < 0.5) spoilFood(item); // half of it is already turning
       if (item) out.push(item);
     }
     return out;
@@ -85,7 +94,7 @@ export function corpseFood(entity, { luck = 50, rolls = Math.random } = {}) {
     const roll = range(1, 20, rolls) + lm - 5;
     if (roll > HUMANOID_FOOD_ABOVE) out.push(humanoidFood(rolls));
     if (roll > HUMANOID_SECOND_ABOVE) out.push(humanoidFood(rolls));
-    out.length = scaledCount(out.length, HUMANOID_FOOD_SCALE, rolls);   // MOD: -50%
+    out.length = scaledCount(out.length, HUMANOID_FOOD_SCALE, rolls); // MOD: -50%
   }
   return out.filter(Boolean);
 }
@@ -107,7 +116,7 @@ let _enabled = () => false;
  *  dungeon joiner's: dungeonContext.js). Answers how many items it added. */
 export function addCorpseFood(entity, opts = {}) {
   if (!_enabled() || !entity || !Array.isArray(entity.items)) return 0;
-  const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor
+  const luck = opts.luck ?? 50; // AUDIT VC6: the raiser's own player, or the floor
   const before = entity.items.length;
   for (const item of corpseFood(entity, { luck, rolls: opts.rolls ?? Math.random })) entity.items.push(item);
   return entity.items.length - before;
@@ -117,7 +126,13 @@ export function installSurvivalLoot({ enabled = () => true } = {}) {
   if (_installed) return false;
   _installed = true;
   _enabled = enabled;
-  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => { addCorpseFood(entity, opts); });
+  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {
+    addCorpseFood(entity, opts);
+  });
   return true;
 }
-export function uninstallSurvivalLoot() { registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, null); _installed = false; _enabled = () => false; }
+export function uninstallSurvivalLoot() {
+  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, null);
+  _installed = false;
+  _enabled = () => false;
+}

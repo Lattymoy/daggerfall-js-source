@@ -345,7 +345,7 @@ test('AUDIT WORLD-EVENTS L3-14: whether a town is held as its receipt comes - th
   assert.equal(raidHeldFor(`3:8:${DAY}`), false);
   assert.equal(raidHeldFor('9:9:9'), true, 'a cleanse held');
   assert.match(rd('src/systems/raidingParties.js'), /host\(\)\.onRaidReceipt\?\.\(f\.r, c, raidHeldFor\(c\.w\)\);/);
-  assert.match(rd('src/net/raid/raidClaims.js'), /keep\(\[\.\.\.list, \{ r, ch: character, nm: typeof name === 'string' \? name : null, lv, cid: cid\(\), hd: held === true \}\]/);
+  assert.match(rd('src/net/raid/raidClaims.js'), /keep\(\n\s*\[\n\s*\.\.\.list,\n\s*\{ r, ch: character, nm: typeof name === 'string' \? name : null, lv, cid: cid\(\), hd: held === true \},\n\s*\]/);
 });
 
 test('AUDIT WORLD-EVENTS L6-5: a raid\'s goal is its raiders\' quarry first whatever infighting reads - the bearer over the player beside him, infighting off - until a blow turns the raider (mutants: the goal through the infighting chain; no priority)', () => {

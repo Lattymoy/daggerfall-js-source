@@ -2,8 +2,8 @@
   {
     "name": "AQA3-STORY-aftermath-is-story",
     "file": "src/systems/quest/machine.js",
-    "old": "!/^S0000[15]\\d\\d$/i.test(name) && !questNameIn",
-    "new": "!/^S00005\\d\\d$/i.test(name) && !questNameIn",
+    "old": "  /^S\\d{7}$/i.test(name ?? '') && !/^S0000[15]\\d\\d$/i.test(name) && !questNameIn(PROTECTED_QUESTS, name);",
+    "new": "  /^S\\d{7}$/i.test(name ?? '') && !/^S00005\\d\\d$/i.test(name) && !questNameIn(PROTECTED_QUESTS, name);",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AQA3-STORY-guild-series-is-story",
     "file": "src/systems/quest/machine.js",
-    "old": "!/^S0000[15]\\d\\d$/i.test(name) && !questNameIn",
-    "new": "!/^S00001\\d\\d$/i.test(name) && !questNameIn",
+    "old": "  /^S\\d{7}$/i.test(name ?? '') && !/^S0000[15]\\d\\d$/i.test(name) && !questNameIn(PROTECTED_QUESTS, name);",
+    "new": "  /^S\\d{7}$/i.test(name ?? '') && !/^S00001\\d\\d$/i.test(name) && !questNameIn(PROTECTED_QUESTS, name);",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AQA3-STORY-a-trigger-sets-nothing",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (body.length && LINK_TRIGGER.test(body[0])) sets.add(id);\n",
-    "new": "",
+    "old": "    if (body.length && LINK_TRIGGER.test(body[0])) sets.add(id);\n    if (body.some((l) => LINK_WORK.test(l))) replays.add(id);",
+    "new": "    if (body.some((l) => LINK_WORK.test(l))) replays.add(id);",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AQA3-STORY-a-start-task-sets-nothing",
     "file": "src/systems/quest/machine.js",
-    "old": "  for (const { id, symbol } of links) if (started.has(symbol)) sets.add(id);\n",
-    "new": "",
+    "old": "  for (const { id, symbol } of links) if (started.has(symbol)) sets.add(id);\n  return { next: storySuccessors(qbn).filter(isMainStoryQuest), sets: [...sets], replays: [...replays] };",
+    "new": "  return { next: storySuccessors(qbn).filter(isMainStoryQuest), sets: [...sets], replays: [...replays] };",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "AQA3-STORY-no-replays-read",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (body.some((l) => LINK_WORK.test(l))) replays.add(id);\n",
-    "new": "",
+    "old": "    if (body.some((l) => LINK_WORK.test(l))) replays.add(id);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "AQA3-STORY-the-replay-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (own.replays.some((id) => this.globalVars.get(id))) return 'carried';\n",
-    "new": "",
+    "old": "    if (own.replays.some((id) => this.globalVars.get(id))) return 'carried';\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "AQA3-STORY-the-seed-reads-success",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned)) this.storyEnded.add(n);",
-    "new": "      if (!e.success && ![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned)) this.storyEnded.add(n);",
+    "old": "      if (![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned))",
+    "new": "      if (!e.success && ![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned))",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js",
       "test/systems/quest/questaudit3.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AQA3-STORY-the-legacy-tombstone-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (q.questTombstoned) this.storyEnded.add(n);\n",
-    "new": "",
+    "old": "      if (q.questTombstoned) this.storyEnded.add(n);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/questaudit3.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AQA3-STORY-the-chronicle-unarmed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (bountyArmed !== `st:${s.questName}`) { bountyArmed = `st:${s.questName}`; render(); return; }\n",
-    "new": "",
+    "old": "        if (bountyArmed !== `st:${s.questName}`) {\n          bountyArmed = `st:${s.questName}`;\n          render();\n          return;\n        }\n        bountyArmed = null;",
+    "new": "        bountyArmed = null;",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AQA3-STORY-the-scheduled-arm",
     "file": "src/systems/quest/machine.js",
-    "old": "    const live = (n) => [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n)\n      || this.questsToInvoke.some((q) => q.questName?.toUpperCase() === n);\n    if (live(name)) return 'running';",
-    "new": "    const live = (n) => [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n);\n    if (live(name)) return 'running';",
+    "old": "    const live = (n) =>\n      [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n) ||\n      this.questsToInvoke.some((q) => q.questName?.toUpperCase() === n);",
+    "new": "    const live = (n) => [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n);",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js"
     ]

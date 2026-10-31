@@ -2,8 +2,8 @@
   {
     "name": "SENSE1-past-the-reach",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "    if (!(d <= reach)) continue;\n    const title = nameOf(t.key);",
-    "new": "    if (!(d <= reach + 1)) continue;\n    const title = nameOf(t.key);",
+    "old": "    if (!(d <= reach)) continue;",
+    "new": "    if (!(d <= reach + 1)) continue;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SENSE1-the-unnamed-lit",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "    if (!title) continue;\n",
-    "new": "",
+    "old": "    if (!title) continue;\n    if (!sees(t)) continue;",
+    "new": "    if (!sees(t)) continue;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SENSE1-the-unseen-lit",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "    if (!sees(t)) continue;\n",
-    "new": "",
+    "old": "    if (!sees(t)) continue;\n    seen.add(t.key);",
+    "new": "    seen.add(t.key);",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SENSE1-twice-lit",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "typeof t.key !== 'string' || seen.has(t.key) ||",
-    "new": "typeof t.key !== 'string' ||",
+    "old": "    if (!box || typeof t.key !== 'string' || seen.has(t.key) || !isVec3(box.min) || !isVec3(box.max)) continue;",
+    "new": "    if (!box || typeof t.key !== 'string' || !isVec3(box.min) || !isVec3(box.max)) continue;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SENSE1-not-nearest-first",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "(senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);",
-    "new": "(senseKind(t.key, title)), d, ...senseCard(box) });\n  }",
+    "old": "    out.push({ key: t.key, kind: /** @type {SenseFind['kind']} */ (senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  if (out.length > max) out.length = max;\n  return out;",
+    "new": "    out.push({ key: t.key, kind: /** @type {SenseFind['kind']} */ (senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  if (out.length > max) out.length = max;\n  return out;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SENSE1-no-budget",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "(senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  if (out.length > max) out.length = max;",
-    "new": "(senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);",
+    "old": "    out.push({ key: t.key, kind: /** @type {SenseFind['kind']} */ (senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  if (out.length > max) out.length = max;\n  return out;\n}\n",
+    "new": "    out.push({ key: t.key, kind: /** @type {SenseFind['kind']} */ (senseKind(t.key, title)), d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  return out;\n}\n",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SENSE1-a-flat-pardoned",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "    if (noSurface) continue;\n",
-    "new": "",
+    "old": "    if (noSurface) continue;\n    const at = [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist];",
+    "new": "    const at = [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist];",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SENSE1-own-bucket-blocks",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "skip ? { skip: [skip] } : null",
-    "new": "null",
+    "old": "    const hit = collider.raycastHit(eye, dir, len, skip ? { skip: [skip] } : null);",
+    "new": "    const hit = collider.raycastHit(eye, dir, len, null);",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SENSE1-an-action-door-is-a-secret",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "(o.kind === 'door' && o.special === true)",
-    "new": "o.kind === 'door'",
+    "old": "  const mover = o.kind === 'action' || o.kind === 'moveFlat' || (o.kind === 'door' && o.special === true);",
+    "new": "  const mover = o.kind === 'action' || o.kind === 'moveFlat' || o.kind === 'door';",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SENSE1-held-forever",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "      if (!(age >= 0 && age < hold)) { finds = []; return out; }",
-    "new": "      if (!(age >= 0)) { finds = []; return out; }",
+    "old": "      if (!(age >= 0 && age < hold)) {",
+    "new": "      if (!(age >= 0)) {",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SENSE1-nothing-found-lit",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "return age >= 0 && age < hold && finds.length > 0; },",
-    "new": "return age >= 0 && age < hold; },",
+    "old": "      return age >= 0 && age < hold && finds.length > 0;",
+    "new": "      return age >= 0 && age < hold;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SENSE1-a-door-is-worked",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "  if ((key.startsWith('act:') || key.startsWith('door:')) && title === 'Door') return 'door';\n",
-    "new": "",
+    "old": "  if ((key.startsWith('act:') || key.startsWith('door:')) && title === 'Door') return 'door';\n  return 'use';",
+    "new": "  return 'use';",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SENSE1-a-shelf-is-no-find",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']",
-    "new": "['loot:', 'corpse:', 'droppedLoot:', 'srch:', 'delve:']",
+    "old": "const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']); // DELVE II: an encounter's vault",
+    "new": "const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'srch:', 'delve:']); // DELVE II: an encounter's vault",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SENSE1-the-gain-ignored",
     "file": "src/render/nodeGlow.js",
-    "old": " * (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
-    "new": ";",
+    "old": "      const alpha =\n        n.kindle *\n        (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d)) *\n        (Number.isFinite(m.gain) ? Math.min(1, Math.max(0, m.gain)) : 1);",
+    "new": "      const alpha = n.kindle * (1 - smooth(NODE_GLOW_FADE_M, NODE_GLOW_M, d));",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SENSE1-built-after-the-end",
     "file": "src/render/nodeGlow.js",
-    "old": "  const make = () => { if (dead) return; try {",
-    "new": "  const make = () => { try {",
+    "old": "    if (dead) return;\n    try {",
+    "new": "    try {",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SENSE1-the-end-frees-nothing",
     "file": "src/render/nodeGlow.js",
-    "old": "    dispose() { dead = true; asked = true; pass?.dispose?.(); pass = null; },",
-    "new": "    dispose() { dead = true; asked = true; },",
+    "old": "      pass?.dispose?.();\n      pass = null;\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SENSE1-a-special-door-is-a-door",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (isActionDoorObject(o)) return actionDoorName(",
-    "new": "  if (o.kind === 'door') return actionDoorName(",
+    "old": "  if (isActionDoorObject(o)) return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);",
+    "new": "  if (o.kind === 'door') return actionDoorName((o.currentLockValue ?? 0) > 0, o.currentLockValue ?? 0);",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SENSE1-the-door-band-first",
     "file": "src/systems/worldTooltips.js",
-    "old": "  if (t) return { title: t };\n  if (isActionDoorObject(o))",
-    "new": "  if (t && !isActionDoorObject(o)) return { title: t };\n  if (isActionDoorObject(o))",
+    "old": "  if (t) return { title: t };",
+    "new": "  if (t && !isActionDoorObject(o)) return { title: t };",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SENSE1-an-ask-uncounted",
     "file": "src/player/interactionMode.js",
-    "old": "  _asks[m]++;\n",
-    "new": "",
+    "old": "  _asks[m]++;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-DELVE-C5-the-pardon-wide",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "v >= box.min[i] - PICK_PARDON_M && v <= box.max[i] + PICK_PARDON_M",
-    "new": "v >= box.min[i] - 1.5 && v <= box.max[i] + 1.5",
+    "old": "    if (at.every((v, i) => v >= box.min[i] - PICK_PARDON_M && v <= box.max[i] + PICK_PARDON_M)) return true;",
+    "new": "    if (at.every((v, i) => v >= box.min[i] - 1.5 && v <= box.max[i] + 1.5)) return true;",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-DELVE-C5-the-secrets-uncapped",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "  if (out.length > max) out.length = max;\n  return out;\n}\n\n/**\n * AUDIT DELVE C5/B9/D5",
-    "new": "  return out;\n}\n\n/**\n * AUDIT DELVE C5/B9/D5",
+    "old": "    out.push({ key: o.key, kind: 'secret', d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  if (out.length > max) out.length = max;\n  return out;\n}\n",
+    "new": "    out.push({ key: o.key, kind: 'secret', d, ...senseCard(box) });\n  }\n  out.sort((a, b) => a.d - b.d);\n  return out;\n}\n",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-DELVE-D6-one-form",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use;",
-    "new": "        m.form = SENSE_FORM.use;",
+    "old": "        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use; // AUDIT DELVE D6",
+    "new": "        m.form = SENSE_FORM.use; // AUDIT DELVE D6",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-DELVE-D6-the-glow-drops-the-form",
     "file": "src/render/nodeGlow.js",
-    "old": "      g.form = m.form ?? NODE_GLOW_FORM;",
-    "new": "      g.form = NODE_GLOW_FORM;",
+    "old": "      g.form = m.form ?? NODE_GLOW_FORM; // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole",
+    "new": "      g.form = NODE_GLOW_FORM; // AUDIT DELVE D6: a sense mark's own form (systems/dungeon/dungeonSense.js SENSE_FORM); a node's is whole",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]

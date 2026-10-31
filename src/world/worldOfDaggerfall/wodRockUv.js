@@ -44,7 +44,9 @@ export const WOD_ROCK_STRETCH_MIN = 4;
  *  threshold (60610 at 3.01 beside 60610 at 4.69 in WOD_BanditCamp_04 and WOD_Nature_01; WOD_Rocks_Cave_00's 60718 at
  *  3.5 beside 60714 at 1.9), and touching pieces wore two to three and a half times each other's texel density - so a
  *  pebble is unfolded from any real stretch (WOD_ROCK_PEBBLE_MIN), and every rock face of an outcrop agrees. */
-export const WOD_ROCK_MODELS = new Set([60610, 60711, 60712, 60713, 60714, 60715, 60716, 60717, 60718, 60719, 60720, 41719]);
+export const WOD_ROCK_MODELS = new Set([
+  60610, 60711, 60712, 60713, 60714, 60715, 60716, 60717, 60718, 60719, 60720, 41719,
+]);
 export const WOD_ROCK_PEBBLE_MIN = 1.05;
 /** ROCK-CAP (AUDIT part five; Mac: "Cap at ~8 m a repeat"): a rock pebble's face tiles no finer than one repeat per 8 m
  *  in any direction (8 texels a metre for the 64x64 rock). At the pebble's own density (12 to 150 texels a metre) model
@@ -74,13 +76,22 @@ const scaled = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
  * @param {number} [minStretch]
  * @returns {M}
  */
-export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_MODELS.has(modelId) ? WOD_ROCK_PEBBLE_MIN : WOD_ROCK_STRETCH_MIN) {
-  if (!cpu?.uvs || !cpu.indices?.length || !(pieceStretch(matrix) + 1e-4 >= minStretch)) return cpu;   // a float32 matrix holds a scale of 4 as 3.9999998
-  const P = cpu.positions, UV = cpu.uvs, I = cpu.indices;
-  const nV = P.length / 3, nT = I.length / 3;
+export function wodRockUvs(
+  cpu,
+  matrix,
+  modelId = null,
+  minStretch = WOD_ROCK_MODELS.has(modelId) ? WOD_ROCK_PEBBLE_MIN : WOD_ROCK_STRETCH_MIN,
+) {
+  if (!cpu?.uvs || !cpu.indices?.length || !(pieceStretch(matrix) + 1e-4 >= minStretch)) return cpu; // a float32 matrix holds a scale of 4 as 3.9999998
+  const P = cpu.positions,
+    UV = cpu.uvs,
+    I = cpu.indices;
+  const nV = P.length / 3,
+    nT = I.length / 3;
   const cap = WOD_ROCK_MODELS.has(modelId) ? WOD_ROCK_MAX_REPEATS_PER_M : Infinity;
   const pos = (v) => [P[v * 3], P[v * 3 + 1], P[v * 3 + 2]];
-  const lin = (d) => [   // the matrix's linear part on a direction
+  const lin = (d) => [
+    // the matrix's linear part on a direction
     matrix[0] * d[0] + matrix[4] * d[1] + matrix[8] * d[2],
     matrix[1] * d[0] + matrix[5] * d[1] + matrix[9] * d[2],
     matrix[2] * d[0] + matrix[6] * d[1] + matrix[10] * d[2],
@@ -88,10 +99,19 @@ export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_MO
 
   // the patches: triangles joined through a shared vertex
   const parent = new Int32Array(nV).map((_, i) => i);
-  const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  const find = (x) => {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  };
   for (let t = 0; t < nT; t++) {
-    const a = find(I[t * 3]), b = find(I[t * 3 + 1]), c = find(I[t * 3 + 2]);
-    parent[b] = a; parent[find(c)] = a;
+    const a = find(I[t * 3]),
+      b = find(I[t * 3 + 1]),
+      c = find(I[t * 3 + 2]);
+    parent[b] = a;
+    parent[find(c)] = a;
   }
   // the model's size, for the plane test's tolerance
   let ext = 0;
@@ -103,65 +123,118 @@ export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_MO
   const planes = [];
   const byRoot = new Map();
   for (let t = 0; t < nT; t++) {
-    const pa = pos(I[t * 3]), n0 = cross(sub(pos(I[t * 3 + 1]), pa), sub(pos(I[t * 3 + 2]), pa)), l = len(n0);
+    const pa = pos(I[t * 3]),
+      n0 = cross(sub(pos(I[t * 3 + 1]), pa), sub(pos(I[t * 3 + 2]), pa)),
+      l = len(n0);
     const root = find(I[t * 3]);
     let list = byRoot.get(root);
-    if (!list) byRoot.set(root, list = []);
+    if (!list) byRoot.set(root, (list = []));
     let g = -1;
     if (l > 0) {
-      const n = scaled(n0, 1 / l), d = dot(n, pa);
+      const n = scaled(n0, 1 / l),
+        d = dot(n, pa);
       g = list.find((k) => dot(planes[k].n, n) > 1 - 1e-4 && Math.abs(dot(planes[k].n, pa) - planes[k].d) <= tol) ?? -1;
-      if (g < 0) { g = planes.length; planes.push({ n, d, tris: [] }); list.push(g); }
-    } else if (list.length) g = list[0];   // a sliver draws nothing: it rides its patch's first plane
-    else { g = planes.length; planes.push({ n: [0, 0, 0], d: 0, tris: [] }); list.push(g); }
+      if (g < 0) {
+        g = planes.length;
+        planes.push({ n, d, tris: [] });
+        list.push(g);
+      }
+    } else if (list.length)
+      g = list[0]; // a sliver draws nothing: it rides its patch's first plane
+    else {
+      g = planes.length;
+      planes.push({ n: [0, 0, 0], d: 0, tris: [] });
+      list.push(g);
+    }
     planes[g].tris.push(t);
   }
 
   // each plane's unfolding
-  const out = { positions: [], normals: [], uvs: [] };   // vertices a second plane copies, appended
+  const out = { positions: [], normals: [], uvs: [] }; // vertices a second plane copies, appended
   const uvs = new Float32Array(UV);
   let indices = I;
   const owner = new Int32Array(nV).fill(-1);
-  const copyOf = new Map();   // `${plane}:${vertex}` -> its copy's index
+  const copyOf = new Map(); // `${plane}:${vertex}` -> its copy's index
   let next = nV;
   for (let g = 0; g < planes.length; g++) {
     const { tris } = planes[g];
     // the reference triangle: the largest one whose UVs span the plane
-    let ref = -1, best = 0;
+    let ref = -1,
+      best = 0;
     for (const t of tris) {
-      const a = I[t * 3], b = I[t * 3 + 1], c = I[t * 3 + 2];
+      const a = I[t * 3],
+        b = I[t * 3 + 1],
+        c = I[t * 3 + 2];
       const area = len(cross(sub(pos(b), pos(a)), sub(pos(c), pos(a))));
-      const det = (UV[b * 2] - UV[a * 2]) * (UV[c * 2 + 1] - UV[a * 2 + 1]) - (UV[c * 2] - UV[a * 2]) * (UV[b * 2 + 1] - UV[a * 2 + 1]);
-      if (area > best && Math.abs(det) > 1e-12) { best = area; ref = t; }
+      const det =
+        (UV[b * 2] - UV[a * 2]) * (UV[c * 2 + 1] - UV[a * 2 + 1]) -
+        (UV[c * 2] - UV[a * 2]) * (UV[b * 2 + 1] - UV[a * 2 + 1]);
+      if (area > best && Math.abs(det) > 1e-12) {
+        best = area;
+        ref = t;
+      }
     }
-    let map = null;   // vertex -> [u, v], or null: the plane keeps its own UVs
+    let map = null; // vertex -> [u, v], or null: the plane keeps its own UVs
     if (ref >= 0) {
-      const a = I[ref * 3], b = I[ref * 3 + 1], c = I[ref * 3 + 2];
-      const pa = pos(a), e1 = sub(pos(b), pa), e2 = sub(pos(c), pa);
+      const a = I[ref * 3],
+        b = I[ref * 3 + 1],
+        c = I[ref * 3 + 2];
+      const pa = pos(a),
+        e1 = sub(pos(b), pa),
+        e2 = sub(pos(c), pa);
       // the frame along the texture's own rows (dP/du), not along e1: an in-plane stretch turns every direction but
       // the frame's against the face, and a quad's e1 may be its diagonal - a plank's rows ran along its edge
-      const dt = (UV[b * 2] - UV[a * 2]) * (UV[c * 2 + 1] - UV[a * 2 + 1]) - (UV[c * 2] - UV[a * 2]) * (UV[b * 2 + 1] - UV[a * 2 + 1]);
-      const rows = sub(scaled(e1, (UV[c * 2 + 1] - UV[a * 2 + 1]) / dt), scaled(e2, (UV[b * 2 + 1] - UV[a * 2 + 1]) / dt));
-      const n0 = cross(e1, e2), t0 = scaled(rows, 1 / len(rows)), b0 = cross(scaled(n0, 1 / len(n0)), t0);
+      const dt =
+        (UV[b * 2] - UV[a * 2]) * (UV[c * 2 + 1] - UV[a * 2 + 1]) -
+        (UV[c * 2] - UV[a * 2]) * (UV[b * 2 + 1] - UV[a * 2 + 1]);
+      const rows = sub(
+        scaled(e1, (UV[c * 2 + 1] - UV[a * 2 + 1]) / dt),
+        scaled(e2, (UV[b * 2 + 1] - UV[a * 2 + 1]) / dt),
+      );
+      const n0 = cross(e1, e2),
+        t0 = scaled(rows, 1 / len(rows)),
+        b0 = cross(scaled(n0, 1 / len(n0)), t0);
       // the unscaled plane's UV map: (x, y) in (t0, b0) metres -> (u, v), from the reference triangle
-      const x1 = dot(e1, t0), y1 = dot(e1, b0), x2 = dot(e2, t0), y2 = dot(e2, b0);
-      const du1 = UV[b * 2] - UV[a * 2], dv1 = UV[b * 2 + 1] - UV[a * 2 + 1];
-      const du2 = UV[c * 2] - UV[a * 2], dv2 = UV[c * 2 + 1] - UV[a * 2 + 1];
+      const x1 = dot(e1, t0),
+        y1 = dot(e1, b0),
+        x2 = dot(e2, t0),
+        y2 = dot(e2, b0);
+      const du1 = UV[b * 2] - UV[a * 2],
+        dv1 = UV[b * 2 + 1] - UV[a * 2 + 1];
+      const du2 = UV[c * 2] - UV[a * 2],
+        dv2 = UV[c * 2 + 1] - UV[a * 2 + 1];
       const k = x1 * y2 - x2 * y1;
       // the same frame on the scaled plane, along the image of the same rows
-      const f1 = lin(rows), m1 = cross(lin(e1), lin(e2)), lf = len(f1), lm = len(m1);
+      const f1 = lin(rows),
+        m1 = cross(lin(e1), lin(e2)),
+        lf = len(f1),
+        lm = len(m1);
       if (k !== 0 && lf > 0 && lm > 0 && Number.isFinite(lf * lm)) {
-        let ux = (du1 * y2 - du2 * y1) / k, uy = (du2 * x1 - du1 * x2) / k;
-        let vx = (dv1 * y2 - dv2 * y1) / k, vy = (dv2 * x1 - dv1 * x2) / k;
-        if (cap < Infinity) {   // ROCK-CAP: the map's finest direction (its larger singular value) held to the cap
-          const s1 = ux * ux + uy * uy + vx * vx + vy * vy, s2 = Math.sqrt((ux * ux + uy * uy - vx * vx - vy * vy) ** 2 + 4 * (ux * vx + uy * vy) ** 2);
+        let ux = (du1 * y2 - du2 * y1) / k,
+          uy = (du2 * x1 - du1 * x2) / k;
+        let vx = (dv1 * y2 - dv2 * y1) / k,
+          vy = (dv2 * x1 - dv1 * x2) / k;
+        if (cap < Infinity) {
+          // ROCK-CAP: the map's finest direction (its larger singular value) held to the cap
+          const s1 = ux * ux + uy * uy + vx * vx + vy * vy,
+            s2 = Math.sqrt((ux * ux + uy * uy - vx * vx - vy * vy) ** 2 + 4 * (ux * vx + uy * vy) ** 2);
           const fine = Math.sqrt((s1 + s2) / 2);
-          if (fine > cap) { const q = cap / fine; ux *= q; uy *= q; vx *= q; vy *= q; }
+          if (fine > cap) {
+            const q = cap / fine;
+            ux *= q;
+            uy *= q;
+            vx *= q;
+            vy *= q;
+          }
         }
-        const t1 = scaled(f1, 1 / lf), b1 = cross(scaled(m1, 1 / lm), t1);
-        const u0 = UV[a * 2], v0 = UV[a * 2 + 1];
+        const t1 = scaled(f1, 1 / lf),
+          b1 = cross(scaled(m1, 1 / lm), t1);
+        const u0 = UV[a * 2],
+          v0 = UV[a * 2 + 1];
         map = (v) => {
-          const d = lin(sub(pos(v), pa)), x = dot(d, t1), y = dot(d, b1);
+          const d = lin(sub(pos(v), pa)),
+            x = dot(d, t1),
+            y = dot(d, b1);
           return [u0 + ux * x + uy * y, v0 + vx * x + vy * y];
         };
       }
@@ -171,14 +244,24 @@ export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_MO
     for (const t of tris) {
       for (let j = 0; j < 3; j++) {
         const v = I[t * 3 + j];
-        if (owner[v] < 0 || owner[v] === g) { if (owner[v] < 0) { owner[v] = g; verts.push([v, v]); } continue; }
+        if (owner[v] < 0 || owner[v] === g) {
+          if (owner[v] < 0) {
+            owner[v] = g;
+            verts.push([v, v]);
+          }
+          continue;
+        }
         const key = `${g}:${v}`;
         let w = copyOf.get(key);
         if (w === undefined) {
           w = next++;
           copyOf.set(key, w);
           out.positions.push(P[v * 3], P[v * 3 + 1], P[v * 3 + 2]);
-          out.normals.push(cpu.normals ? cpu.normals[v * 3] : 0, cpu.normals ? cpu.normals[v * 3 + 1] : 0, cpu.normals ? cpu.normals[v * 3 + 2] : 0);
+          out.normals.push(
+            cpu.normals ? cpu.normals[v * 3] : 0,
+            cpu.normals ? cpu.normals[v * 3 + 1] : 0,
+            cpu.normals ? cpu.normals[v * 3 + 2] : 0,
+          );
           out.uvs.push(UV[v * 2], UV[v * 2 + 1]);
           verts.push([v, w]);
         }
@@ -189,17 +272,34 @@ export function wodRockUvs(cpu, matrix, modelId = null, minStretch = WOD_ROCK_MO
     if (!map) continue;
     // the new UVs, shifted by whole repeats to start near zero
     const got = verts.map(([v]) => map(v));
-    let minU = Infinity, minV = Infinity;
-    for (const [u, v] of got) { if (u < minU) minU = u; if (v < minV) minV = v; }
-    const su = Math.floor(minU), sv = Math.floor(minV);
+    let minU = Infinity,
+      minV = Infinity;
+    for (const [u, v] of got) {
+      if (u < minU) minU = u;
+      if (v < minV) minV = v;
+    }
+    const su = Math.floor(minU),
+      sv = Math.floor(minV);
     verts.forEach(([, w], i) => {
-      const u = got[i][0] - su, v = got[i][1] - sv;
-      if (w < nV) { uvs[w * 2] = u; uvs[w * 2 + 1] = v; } else { out.uvs[(w - nV) * 2] = u; out.uvs[(w - nV) * 2 + 1] = v; }
+      const u = got[i][0] - su,
+        v = got[i][1] - sv;
+      if (w < nV) {
+        uvs[w * 2] = u;
+        uvs[w * 2 + 1] = v;
+      } else {
+        out.uvs[(w - nV) * 2] = u;
+        out.uvs[(w - nV) * 2 + 1] = v;
+      }
     });
   }
 
   if (next === nV) return { ...cpu, uvs };
-  const grow = (base, extra) => { const a = new Float32Array(base.length + extra.length); a.set(base); a.set(extra, base.length); return a; };
+  const grow = (base, extra) => {
+    const a = new Float32Array(base.length + extra.length);
+    a.set(base);
+    a.set(extra, base.length);
+    return a;
+  };
   return {
     ...cpu,
     positions: grow(P, out.positions),

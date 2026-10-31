@@ -383,14 +383,14 @@ test('COATS3D by source: the view keeps the saddle and lifts RIDE-POV astride; t
   const v = rd('src/player/mwView.js');
   assert.match(v, /saddled = !!state\.riding && stepOwnHorse\(state\.horse, feet, yaw, state\.dt \?\? 0\);\n[^\n]*\n\s*mounted = !!state\.riding && !saddled && !onDragon;/, 'RIDE-POV holds the head only off a 3D horse (PIN MOVED, DRAGON-POV: and off a dragon)');
   assert.match(v, /horseRig\?\.tick\(\);\n\s*if \(!state\.riding\) dropOwnHorse\(\);\n\s*\/\/ EOTB4: the other lane/, 'AUDIT A2/A11: the dye every frame, on foot as mounted, before either lane; my horse let go off its back');
-  assert.match(v, /dropOwnHorse\(\); saddled = false;   \/\/ the sprite lane's rider is its own picture/, 'and on the sprite lane');
+  assert.match(v, /dropOwnHorse\(\);\n\s*saddled = false; \/\/ the sprite lane's rider is its own picture/, 'and on the sprite lane');
   assert.match(v, /ownSink = fpEye && feet \? Math\.max\(0, RIDE_EYE_HEIGHT - \(fpEye\[1\] - feet\[1\]\) - SINK_SLACK\) : 0;/, 'AUDIT A8: the horse under the eye - sunk with a swimming rider, rising under a mount');
   assert.match(v, /feet\[1\] - ownSink \* grow,/);
-  assert.match(v, /if \(!horse \|\| !horseRig\?\.ready\(\) \|\| !feet \|\| !fpArm\.canThirdPerson\(\)\) \{ dropOwnHorse\(\); return false; \}/, 'no horse, no rig or no Morrowind body: RIDE-POV as it stood');
+  assert.match(v, /if \(!horse \|\| !horseRig\?\.ready\(\) \|\| !feet \|\| !fpArm\.canThirdPerson\(\)\) \{\n\s*dropOwnHorse\(\);\n\s*return false;\n\s*\}/, 'no horse, no rig or no Morrowind body: RIDE-POV as it stood');
   assert.match(v, /export const mwViewSaddle = \(\) => \(saddled \? ownSaddle : null\);/);
   assert.match(v, /export function mwViewHorseRig\(\) \{\n\s*return horseRig\?\.ready\(\) && !eotbLane\(\) && fpArm\.canThirdPerson\(\) \? horseRig : null;/, 'the world\'s horses 3D on the Morrowind lane alone');
-  assert.match(v, /return fpArm\.drawThird\(canvas, \{ [^\n]*, horse \}\);/);
-  assert.match(v, /if \(saddled && ownSaddle\) feet = \[feet\[0\], feet\[1\] \+ Math\.max\(0, ownSaddle\.seat\[1\] - feet\[1\] - SEAT_PELVIS_HEIGHT \* heightScale\), feet\[2\]\];\n\s*const eye = mwCamera\.eye\(\{ fpEye, feet,/, 'the third-person camera about the rider\'s head');
+  assert.match(v, /return fpArm\.drawThird\(canvas, \{\n\s*proj,\n\s*view,\n\s*eye,\n\s*feet,\n\s*yaw,\n\s*grow: face\?\.grow > 1 \? face\.grow : 1,\n\s*up: face\?\.up \?\? null,\n\s*horse,\n\s*\}\);/);
+  assert.match(v, /if \(saddled && ownSaddle\)\n\s*feet = \[feet\[0\], feet\[1\] \+ Math\.max\(0, ownSaddle\.seat\[1\] - feet\[1\] - SEAT_PELVIS_HEIGHT \* heightScale\), feet\[2\]\];\n\s*const eye = mwCamera\.eye\(\{ fpEye, feet,/, 'the third-person camera about the rider\'s head');
   for (const h of ['world', 'exterior']) {
     const s = rd(`src/scenes/${h}.js`);
     assert.match(s, /horse: player\.transportMode === TRANSPORT_MODES\.Horse \? \{ look: ownMountLook\(riddenHorseLook\(playerEntity\.items \?\? \[\]\)\), slow: player\.slowRide \} : null,/, `${h}: the horse, never the cart, in its look (PIN MOVED, HORSE-WALK: and the motor's slow ride, which holds it under the gallop; STOREFRONT: my mount look over it)`);
@@ -409,9 +409,9 @@ test('COATS3D by source: the view keeps the saddle and lifts RIDE-POV astride; t
   assert.match(rd('src/render/characterSprite.js'), /queueCharacterSprite\(\{ mesh, model: rigMat, also,/);
   const pb = rd('src/net/peer/peerBodies.js');
   assert.match(pb, /b\.cam\.saddle = this\._saddle\(b, peer\.shown, f, dt\);/);
-  assert.match(pb, /if \(!rig\?\.ready\(\) \|\| shown\.rd !== POSE_RIDE\.Horse \|\| peerIsWolf\(shown\) \|\| shown\.wb\) \{ this\._unhorse\(b\); return null; \}/);
+  assert.match(pb, /if \(!rig\?\.ready\(\) \|\| shown\.rd !== POSE_RIDE\.Horse \|\| peerIsWolf\(shown\) \|\| shown\.wb\) \{\n\s*this\._unhorse\(b\);\n\s*return null;\n\s*\}/);
   assert.match(pb, /look: peerMountLook\(b\.id, shown\.rc \| 0, f\)/, 'in the look the pose names (PIN MOVED, STOREFRONT: its rider\'s mount look over it; PIN MOVED, the wire audit: where it stands, for the Others\' effects choice)');
-  assert.match(pb, /this\._unhorse\(b\);   \/\/ COATS3D: the horse is the peer's, never the spare body's/);
+  assert.match(pb, /this\._unhorse\(b\); \/\/ COATS3D: the horse is the peer's, never the spare body's/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /yields: peerRidesIn3d, conceal: veilOf/);
   assert.match(w, /const peerRidesIn3d = \(d\) => !!peerBodies\?\.enabled\(\) && horseRigFor\(renderer\)\.ready\(\) && d\.shown\?\.rd === POSE_RIDE\.Horse && !d\.shown\?\.wb && !peerBodies\.failureOf\(d\.look, d\.shown, d\.glyphs\);/);

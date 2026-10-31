@@ -65,7 +65,8 @@ export const CELL_LEVEL_MAX = 4;
 export const nodeSize = (level) => WORLD_CELL * 2 ** level;
 const NODE_RE = /^cell:([1-4]):(-?\d{1,3}),(-?\d{1,3})$/;
 /** The level-`level` node (`nx`, `ny`)'s key - an L0 node is the fine cell's own `world:` key. */
-export const cellNodeKey = (/** @type {number} */ level, /** @type {number} */ nx, /** @type {number} */ ny) => (level === 0 ? `world:${nx},${ny}` : `cell:${level}:${nx},${ny}`);
+export const cellNodeKey = (/** @type {number} */ level, /** @type {number} */ nx, /** @type {number} */ ny) =>
+  level === 0 ? `world:${nx},${ny}` : `cell:${level}:${nx},${ny}`;
 /** A node key read back, or null for a key that is no node. @param {unknown} key @returns {ParsedNode | null} */
 export function parseNode(key) {
   const cell = cellOfRoom(key);
@@ -91,7 +92,15 @@ export function nodeBounds(key) {
 /** Does node `key` hold map pixel (`px`, `py`)? @param {unknown} key @param {number} px @param {number} py */
 export const nodeHolds = (key, px, py) => {
   const bounds = nodeBounds(key);
-  return !!bounds && Number.isFinite(px) && Number.isFinite(py) && px >= bounds.x0 && px < bounds.x1 && py >= bounds.y0 && py < bounds.y1;
+  return (
+    !!bounds &&
+    Number.isFinite(px) &&
+    Number.isFinite(py) &&
+    px >= bounds.x0 &&
+    px < bounds.x1 &&
+    py >= bounds.y0 &&
+    py < bounds.y1
+  );
 };
 /** Does node `node` hold fine cell `cellKey`? An L0 node holds its own cell alone. @param {unknown} node @param {unknown} cellKey */
 export function nodeHoldsCell(node, cellKey) {
@@ -106,7 +115,8 @@ export function nodeHoldsCell(node, cellKey) {
  * is a fine cell, which covers itself alone - so nothing changes until the tree is coarse.
  * @param {unknown} cover @param {unknown} key
  */
-export const coversCell = (cover, key) => typeof key === 'string' && (key === cover || (isCoarseNode(cover) && nodeHoldsCell(cover, key)));
+export const coversCell = (cover, key) =>
+  typeof key === 'string' && (key === cover || (isCoarseNode(cover) && nodeHoldsCell(cover, key)));
 /** A node's square in FINE CELLS, `[x0, y0, x1, y1]` half-open - what a welcome tells a page its socket covers. @param {unknown} key */
 export function cellsOfNode(key) {
   const parsed = parseNode(key);
@@ -120,20 +130,35 @@ export function nodeOfCells(cells) {
   const [x0, y0, x1, y1] = /** @type {number[]} */ (cells);
   const size = x1 - x0,
     level = Math.log2(size);
-  if (y1 - y0 !== size || !Number.isInteger(level) || level < 0 || level > CELL_LEVEL_MAX || x0 % size !== 0 || y0 % size !== 0) return null;
+  if (
+    y1 - y0 !== size ||
+    !Number.isInteger(level) ||
+    level < 0 ||
+    level > CELL_LEVEL_MAX ||
+    x0 % size !== 0 ||
+    y0 % size !== 0
+  )
+    return null;
   const key = cellNodeKey(level, x0 / size, y0 / size);
   return parseNode(key) ? key : null;
 }
 /** A node's parent (null at the top). @param {unknown} key */
 export function parentNode(key) {
   const parsed = parseNode(key);
-  return parsed && parsed.L < CELL_LEVEL_MAX ? cellNodeKey(parsed.L + 1, Math.floor(parsed.nx / 2), Math.floor(parsed.ny / 2)) : null;
+  return parsed && parsed.L < CELL_LEVEL_MAX
+    ? cellNodeKey(parsed.L + 1, Math.floor(parsed.nx / 2), Math.floor(parsed.ny / 2))
+    : null;
 }
 /** A node's four children, row by row (none at L0). @param {unknown} key @returns {string[]} */
 export function childNodes(key) {
   const parsed = parseNode(key);
   if (!parsed || parsed.L === 0) return [];
-  return [[0, 0], [1, 0], [0, 1], [1, 1]].map(([dx, dy]) => cellNodeKey(parsed.L - 1, parsed.nx * 2 + dx, parsed.ny * 2 + dy));
+  return [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
+  ].map(([dx, dy]) => cellNodeKey(parsed.L - 1, parsed.nx * 2 + dx, parsed.ny * 2 + dy));
 }
 
 /** Every node split down to L0, so a fine key is its own node. */
@@ -161,7 +186,13 @@ const setsOf = (tree) => {
 export function readTree(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const candidate = /** @type {{v?: unknown, base?: unknown, split?: unknown, joined?: unknown}} */ (raw);
-  if (candidate.v !== 1 || !Number.isInteger(candidate.base) || /** @type {number} */ (candidate.base) < 0 || /** @type {number} */ (candidate.base) > CELL_LEVEL_MAX) return null;
+  if (
+    candidate.v !== 1 ||
+    !Number.isInteger(candidate.base) ||
+    /** @type {number} */ (candidate.base) < 0 ||
+    /** @type {number} */ (candidate.base) > CELL_LEVEL_MAX
+  )
+    return null;
   const base = /** @type {number} */ (candidate.base);
   const list = (/** @type {unknown} */ listed, /** @type {(level: number) => boolean} */ side) => {
     if (!Array.isArray(listed) || listed.length > TREE_NODES_MAX) return null;
@@ -227,8 +258,11 @@ export function partitionRows(rows, pixelOf, targets) {
 /** The tree seeded at level `level` (0 to CELL_LEVEL_MAX): every node above it split, every node at it whole, nothing
  *  listed. L0 is L0_TREE. Null for any other `level`. @param {unknown} level @returns {CellTree | null} */
 export function seedTree(level) {
-  if (!Number.isInteger(level) || /** @type {number} */ (level) < 0 || /** @type {number} */ (level) > CELL_LEVEL_MAX) return null;
-  return level === 0 ? L0_TREE : Object.freeze({ v: 1, base: /** @type {number} */ (level), split: Object.freeze([]), joined: Object.freeze([]) });
+  if (!Number.isInteger(level) || /** @type {number} */ (level) < 0 || /** @type {number} */ (level) > CELL_LEVEL_MAX)
+    return null;
+  return level === 0
+    ? L0_TREE
+    : Object.freeze({ v: 1, base: /** @type {number} */ (level), split: Object.freeze([]), joined: Object.freeze([]) });
 }
 /** Is `tree` every node split down to L0? A base-0 tree can list no split node, so its joined list is all it merged.
  *  @param {{base: number, joined: readonly string[]}} tree */
@@ -236,7 +270,8 @@ export const isL0Tree = (tree) => tree.base === 0 && tree.joined.length === 0;
 /** Does the walk reach node `key` in `tree` - is every node above it split? @param {any} tree @param {string} key */
 export function isReached(tree, key) {
   if (!isNodeRoom(key)) return false;
-  for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor)) if (!isSplit(tree, ancestor)) return false;
+  for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor))
+    if (!isSplit(tree, ancestor)) return false;
   return true;
 }
 /** Is node `key` a LEAF of `tree` - the object its fine cells' sockets share: reached, and not split itself? @param {any} tree @param {string} key */
@@ -261,7 +296,12 @@ function changed(tree, { whole = [], cut = [], drop = [] }) {
     else split.add(key);
   }
   if (split.size > TREE_NODES_MAX || joined.size > TREE_NODES_MAX) return null;
-  return Object.freeze({ v: 1, base: tree.base, split: Object.freeze([...split].sort()), joined: Object.freeze([...joined].sort()) });
+  return Object.freeze({
+    v: 1,
+    base: tree.base,
+    split: Object.freeze([...split].sort()),
+    joined: Object.freeze([...joined].sort()),
+  });
 }
 /** THE SPLIT: `tree` with leaf `key` (above L0) split into its four children, each a leaf - or null when `key` is no
  *  such leaf. @param {any} tree @param {string} key */
@@ -273,12 +313,19 @@ export function splitTree(tree, key) {
  *  no longer listed - or null when it is no such node. @param {any} tree @param {string} parent */
 export function mergeTree(tree, parent) {
   const children = childNodes(parent);
-  if (!children.length || !isReached(tree, parent) || !isSplit(tree, parent) || !children.every((key) => isLeaf(tree, key))) return null;
+  if (
+    !children.length ||
+    !isReached(tree, parent) ||
+    !isSplit(tree, parent) ||
+    !children.every((key) => isLeaf(tree, key))
+  )
+    return null;
   return changed(tree, { drop: children, whole: [parent] });
 }
 /** The tree a move leaves: a split's of its one departing node, a merge's of its one receiving node.
  *  @param {any} tree @param {{kind: string, from: string[], to: string[]}} move */
-export const treeAfter = (tree, move) => (move.kind === 'split' ? splitTree(tree, move.from[0]) : move.kind === 'merge' ? mergeTree(tree, move.to[0]) : null);
+export const treeAfter = (tree, move) =>
+  move.kind === 'split' ? splitTree(tree, move.from[0]) : move.kind === 'merge' ? mergeTree(tree, move.to[0]) : null;
 
 /**
  * THE TREE'S HYSTERESIS (pure): the move due at `now`, or null, and the dwell to carry to the next ask.
@@ -306,18 +353,32 @@ export function cellMoveDue(tree, counts, dwell, cool, now, law) {
   const parents = new Set([...counts.keys()].map(parentNode).filter((parent) => parent != null));
   for (const parent of /** @type {Set<string>} */ (parents)) {
     const children = childNodes(parent);
-    if (!isReached(tree, parent) || !isSplit(tree, parent) || !children.every((key) => isLeaf(tree, key) && movable(key)) || !movable(parent)) continue;
+    if (
+      !isReached(tree, parent) ||
+      !isSplit(tree, parent) ||
+      !children.every((key) => isLeaf(tree, key) && movable(key)) ||
+      !movable(parent)
+    )
+      continue;
     if (!(children.reduce((sum, key) => sum + playersIn(key), 0) < law.mergeAt)) continue;
     under[parent] = dwell.under[parent] ?? now;
     if (now - under[parent] >= law.mergeDwellMs) merges.push(parent);
   }
-  const first = (/** @type {string[]} */ candidates, /** @type {Record<string, number>} */ since) => candidates.sort((left, right) => since[left] - since[right] || (left < right ? -1 : 1))[0];
+  const first = (/** @type {string[]} */ candidates, /** @type {Record<string, number>} */ since) =>
+    candidates.sort((left, right) => since[left] - since[right] || (left < right ? -1 : 1))[0];
   const splitting = first(splits, over),
     merging = splitting ? null : first(merges, under);
-  const move = /** @type {TreeMove | null} */ (splitting ? { kind: 'split', from: [splitting], to: childNodes(splitting) } : merging ? { kind: 'merge', from: childNodes(merging), to: [merging] } : null);
+  const move = /** @type {TreeMove | null} */ (
+    splitting
+      ? { kind: 'split', from: [splitting], to: childNodes(splitting) }
+      : merging
+        ? { kind: 'merge', from: childNodes(merging), to: [merging] }
+        : null
+  );
   return { move, dwell: { over, under } };
 }
 
 /** The `cellSeed` relay setting (net/relayCfg.js) read: the level 1 to CELL_LEVEL_MAX the directory seeds its tree at,
  *  0 for off or unset (the tree fixed at L0), and undefined for a value it is not. @param {unknown} value */
-export const cellSeedOf = (value) => (value == null || value === '' || value === 'off' ? 0 : /^[1-4]$/.test(String(value)) ? Number(value) : undefined);
+export const cellSeedOf = (value) =>
+  value == null || value === '' || value === 'off' ? 0 : /^[1-4]$/.test(String(value)) ? Number(value) : undefined;

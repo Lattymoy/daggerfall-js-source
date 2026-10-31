@@ -1,365 +1,365 @@
 [
- {
-  "name": "ASL-L1-first",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
-  "new": "Number(since) <= season.start;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L1-any",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
-  "new": "Number(since) <= season.start + 1;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L1-use",
-  "file": "src/net/townSeatLaw.js",
-  "old": "    if (keptWholeSeason(season, h.since)) out.push(",
-  "new": "    if (Number(h.since) <= season.start) out.push(",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L1-turning",
-  "file": "server-account/src/seatTurning.js",
-  "old": "kept: keptWholeSeason(ending, h.since) }));",
-  "new": "kept: h.since <= ending.start }));",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L2-risen",
-  "file": "src/net/townSeatLaw.js",
-  "old": "candidates.push({ ...risen, key: s.key, total, defence });",
-  "new": "candidates.push({ ...g, key: s.key, total, defence });",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L4-law",
-  "file": "src/net/marketLaw.js",
-  "old": "export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) => saleTithe(before + total, pct) - saleTithe(before, pct);",
-  "new": "export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) => saleTithe(total, pct);",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L4-market",
-  "file": "server-account/src/market.js",
-  "old": "tithe = tt ? saleTitheOn(before, total, tt.pct) : 0;",
-  "new": "tithe = tt ? saleTithe(total, tt.pct) : 0;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L5-first",
-  "file": "src/net/townSeatLaw.js",
-  "old": "sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)",
-  "new": "sort((x, y) => x.key - y.key)",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L5-slot",
-  "file": "src/net/townSeatLaw.js",
-  "old": "const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 0 : 1);",
-  "new": "const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 1 : 0);",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L6-next",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "return season || nextCounted ? {",
-  "new": "return season ? {",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L6-now",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "{ now: tideAt(week, seat.region, !!season), next:",
-  "new": "{ now: tideAt(week, seat.region, true), next:",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-bout",
-  "file": "src/net/townSeatLaw.js",
-  "old": "with ${plural(Number(d.wins ?? 0), 'bout')} -",
-  "new": "with ${Number(d.wins ?? 0)} bouts -",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-drakes",
-  "file": "src/net/townSeatLaw.js",
-  "old": "paid ${marksText(Number(d.marks ?? 0))} in fealty",
-  "new": "paid ${Number(d.marks ?? 0)} Marks in fealty",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-cons",
-  "file": "src/net/townSeatLaw.js",
-  "old": "brought ${guildWords(d.guild)} ${marksText(Number(d.marks ?? 0))} of",
-  "new": "brought ${guildWords(d.guild)} ${Number(d.marks ?? 0)} Marks of",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-article",
-  "file": "src/net/townSeatLaw.js",
-  "old": "(e === 'market-day' || e === 'open-gates' ? EDICTS[e].name : `a ${EDICTS[e].name}`)",
-  "new": "(e === 'market-day' ? EDICTS[e].name : `a ${EDICTS[e].name}`)",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-chron",
-  "file": "src/net/townSeatLaw.js",
-  "old": "proclaimed ${edictWords(d.edict) ?? 'an Edict'} at",
-  "new": "proclaimed ${EDICTS[d.edict]?.name ?? 'an Edict'} at",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-rule",
-  "file": "src/net/townSeatLaw.js",
-  "old": "? `${edictWordsCap(holder.edict)} is proclaimed.`",
-  "new": "? `${EDICTS[holder.edict].name} is proclaimed.`",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L7-tail",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Number.isSafeInteger(n) && n >= 1 ? `, Season ${n}` : ''",
-  "new": "Number.isSafeInteger(n) ? `, Season ${n}` : ''",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L8-from-third",
-  "file": "src/net/townSeatLaw.js",
-  "old": "&& nowS < ts[i] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
-  "new": "&& nowS < ts[i - n + 1] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L8-window",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S &&",
-  "new": "if (",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L8-future",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (c == null || r.report === c || r.at > nowS) continue;",
-  "new": "if (c == null || r.report === c) continue;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L10-amount",
-  "file": "src/net/townSeatLaw.js",
-  "old": "return Number.isFinite(n) && n > 0 ? n : 0; };",
-  "new": "return n > 0 ? n : 0; };",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L10-tithe-neg",
-  "file": "src/net/marketLaw.js",
-  "old": "Math.floor((Math.max(0, total) * Math.max(0, pct)) / 100);",
-  "new": "Math.floor((total * pct) / 100);",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-L10-march",
-  "file": "src/net/kingdomLaw.js",
-  "old": "export const isMarch = (region) => Number.isInteger(region) && ",
-  "new": "export const isMarch = (region) => ",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G2-clause",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  return ` A siege is called for ${battleWhenText(battle.startsAt * 1000)}.`;",
-  "new": "  return '';",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G2-end",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';",
-  "new": "if (Number.isFinite(battle.endsAt) && nowMs > battle.endsAt * 1000) return '';",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G2-kind",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
-  "new": "if (!battle || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G2-svc",
-  "file": "server-account/src/seatInfluence.js",
-  "old": "startsAt: r.starts_at == null ? null : Number(r.starts_at), endsAt:",
-  "new": "startsAt: null, endsAt:",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-tide",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "if (tideAt(week, region, counted) !== 'daedra') continue;",
-  "new": "if (tideAt(week, region, true) !== 'daedra') continue;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-region",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "      WHERE k.day = ?1 AND k.region = ?2\n",
-  "new": "      WHERE k.day = ?1\n",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-struck",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "JOIN marks_ledger l ON l.actor = k.account AND l.rid = ?6 AND l.kind = 'gate'",
-  "new": "JOIN marks_ledger l ON l.actor = k.account AND l.kind = 'gate'",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-room",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "COALESCE((SELECT balance FROM marks WHERE account = k.account), 0) + l.amount <= ?7`)",
-  "new": "1`)",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-once",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "        AND NOT EXISTS (SELECT 1 FROM marks_ledger x WHERE x.actor = k.account AND x.rid = ?5)\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ],
-  "equivalent": true,
-  "why": "an incursion:<day> line is written only by the settle of the week holding that gate day, and town_seat_weeks' key lets that settle run once (a racing second rolls back whole); gate_kills' key (day, account) gives each account one row a day, so the statement never meets its own line - the guard keeps a future retry from failing the Turning on UNIQUE (actor, rid), it changes no answer today"
- },
- {
-  "name": "ASL-INC-call",
-  "file": "server-account/src/seatTurning.js",
-  "old": "  stmts.push(...incursionStatements(db, { week, agreed, counted, nowS }));\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-INC-amount",
-  "file": "server-account/src/seatIncursion.js",
-  "old": "'gate-incursion', l.amount, ?3,",
-  "new": "'gate-incursion', 1, ?3,",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-KIND-drop",
-  "file": "src/net/marksLaw.js",
-  "old": "  'fealty-tribute': 'move',   // CROWN2: a vassal's 5% of its Tithe to its liege\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-KIND-mint",
-  "file": "src/net/marksLaw.js",
-  "old": "  'siege-honours': 'mint',",
-  "new": "  'siege-honours': 'move',",
-  "tests": [
-   "test/net/audit_seats_law.test.js",
-   "test/net/marks1.test.js"
-  ]
- },
- {
-  "name": "ASL-G21-castle",
-  "file": "src/systems/siegeField.js",
-  "old": "const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
-  "new": "const face = palace;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G21-tier",
-  "file": "src/systems/siegeField.js",
-  "old": "const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
-  "new": "const face = doorFace(castle) ?? palace;",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- },
- {
-  "name": "ASL-G21-fallback",
-  "file": "src/systems/siegeField.js",
-  "old": "const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
-  "new": "const face = (tier === 'crown' ? doorFace(castle) : null);",
-  "tests": [
-   "test/net/audit_seats_law.test.js"
-  ]
- }
+  {
+    "name": "ASL-L1-first",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
+    "new": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L1-any",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
+    "new": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + 1;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L1-use",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (keptWholeSeason(season, h.since)) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
+    "new": "    if (Number(h.since) <= season.start) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L1-turning",
+    "file": "server-account/src/seatTurning.js",
+    "old": "kept: keptWholeSeason(ending, h.since) }));",
+    "new": "kept: h.since <= ending.start }));",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L2-risen",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence)\n        candidates.push({ ...risen, key: s.key, total, defence });",
+    "new": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence) candidates.push({ ...g, key: s.key, total, defence });",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L4-law",
+    "file": "src/net/marketLaw.js",
+    "old": "export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) =>\n  saleTithe(before + total, pct) - saleTithe(before, pct);",
+    "new": "export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) => saleTithe(total, pct);",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L4-market",
+    "file": "server-account/src/market.js",
+    "old": "tithe = tt ? saleTitheOn(before, total, tt.pct) : 0;",
+    "new": "tithe = tt ? saleTithe(total, tt.pct) : 0;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L5-first",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  for (const b of [...battles].sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)) {",
+    "new": "  for (const b of [...battles].sort((x, y) => x.key - y.key)) {",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L5-slot",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 0 : 1); // SEAT2b part two (c): a crown's revolt at its slot too",
+    "new": "  const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 1 : 0); // SEAT2b part two (c): a crown's revolt at its slot too",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L6-next",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "return season || nextCounted ? {",
+    "new": "return season ? {",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L6-now",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "{ now: tideAt(week, seat.region, !!season), next:",
+    "new": "{ now: tideAt(week, seat.region, true), next:",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-bout",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      return `${when}, ${d.name || 'a contender'} won the Royal Tourney at ${seat.name} with ${plural(Number(d.wins ?? 0), 'bout')} - Champion of ${kingdomName(d.kingdom) ?? seat.name}.`; // AUDIT-SEATS L7: \"1 bout\"",
+    "new": "      return `${when}, ${d.name || 'a contender'} won the Royal Tourney at ${seat.name} with ${Number(d.wins ?? 0)} bouts - Champion of ${kingdomName(d.kingdom) ?? seat.name}.`; // AUDIT-SEATS L7: \"1 bout\"",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-drakes",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      return `${when}, ${guildWords(d.vassal)} paid ${marksText(Number(d.marks ?? 0))} in fealty to ${guildWords(d.liege)}.`; // AUDIT GUILD3 W5: \"Tribute\" is the seat's",
+    "new": "      return `${when}, ${guildWords(d.vassal)} paid ${Number(d.marks ?? 0)} Marks in fealty to ${guildWords(d.liege)}.`; // AUDIT GUILD3 W5: \"Tribute\" is the seat's",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-cons",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      return `${when}, the crown's Conscription brought ${guildWords(d.guild)} ${marksText(Number(d.marks ?? 0))} of its kingdom's Tithe.`;",
+    "new": "      return `${when}, the crown's Conscription brought ${guildWords(d.guild)} ${Number(d.marks ?? 0)} Marks of its kingdom's Tithe.`;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-article",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const edictWords = (e) =>\n  edictOk(e) ? (e === 'market-day' || e === 'open-gates' ? EDICTS[e].name : `a ${EDICTS[e].name}`) : null;",
+    "new": "export const edictWords = (e) => (edictOk(e) ? (e === 'market-day' ? EDICTS[e].name : `a ${EDICTS[e].name}`) : null);",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-chron",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      return `${when}, ${guildWords(d.guild)} proclaimed ${edictWords(d.edict) ?? 'an Edict'} at ${seat.name}.`; // AUDIT-SEATS L7: its article",
+    "new": "      return `${when}, ${guildWords(d.guild)} proclaimed ${EDICTS[d.edict]?.name ?? 'an Edict'} at ${seat.name}.`; // AUDIT-SEATS L7: its article",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-rule",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    holder.edict && EDICTS[holder.edict]\n      ? `${edictWordsCap(holder.edict)} is proclaimed.`\n      : 'No Edict rules this week.';",
+    "new": "    holder.edict && EDICTS[holder.edict] ? `${EDICTS[holder.edict].name} is proclaimed.` : 'No Edict rules this week.';",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L7-tail",
+    "file": "src/net/townSeatLaw.js",
+    "old": "const seasonTail = (n) => (Number.isSafeInteger(n) && n >= 1 ? `, Season ${n}` : '');",
+    "new": "const seasonTail = (n) => (Number.isSafeInteger(n) ? `, Season ${n}` : '');",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L8-from-third",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i - n + 1] + SEAT_WITNESS_IGNORED_S) {",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L8-window",
+    "file": "src/net/townSeatLaw.js",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L8-future",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    if (c == null || r.report === c || r.at > nowS) continue;",
+    "new": "    if (c == null || r.report === c) continue;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L10-amount",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return Number.isFinite(n) && n > 0 ? n : 0;",
+    "new": "  return n > 0 ? n : 0;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L10-tithe-neg",
+    "file": "src/net/marketLaw.js",
+    "old": "export const saleTithe = (total, pct = MARKET_TITHE_PCT) => Math.floor((Math.max(0, total) * Math.max(0, pct)) / 100); // AUDIT-SEATS L10: townSeatLaw.js titheOf's rule, a negative none",
+    "new": "export const saleTithe = (total, pct = MARKET_TITHE_PCT) => Math.floor((total * pct) / 100); // AUDIT-SEATS L10: townSeatLaw.js titheOf's rule, a negative none",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-L10-march",
+    "file": "src/net/kingdomLaw.js",
+    "old": "export const isMarch = (region) => Number.isInteger(region) && Object.prototype.hasOwnProperty.call(MARCHES, region); // AUDIT-SEATS L10: a number, as kingdomOf and isFreeLand read one ('21' is no region)",
+    "new": "export const isMarch = (region) => Object.prototype.hasOwnProperty.call(MARCHES, region); // AUDIT-SEATS L10: a number, as kingdomOf and isFreeLand read one ('21' is no region)",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G2-clause",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  return ` A siege is called for ${battleWhenText(battle.startsAt * 1000)}.`;",
+    "new": "  return '';",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G2-end",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';",
+    "new": "  if (Number.isFinite(battle.endsAt) && nowMs > battle.endsAt * 1000) return '';",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G2-kind",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
+    "new": "  if (!battle || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G2-svc",
+    "file": "server-account/src/seatInfluence.js",
+    "old": "startsAt: r.starts_at == null ? null : Number(r.starts_at), endsAt:",
+    "new": "startsAt: null, endsAt:",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-tide",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "    if (tideAt(week, region, counted) !== 'daedra') continue;",
+    "new": "    if (tideAt(week, region, true) !== 'daedra') continue;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-region",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "      WHERE k.day = ?1 AND k.region = ?2",
+    "new": "      WHERE k.day = ?1",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-struck",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "      FROM gate_kills k JOIN marks_ledger l ON l.actor = k.account AND l.rid = ?6 AND l.kind = 'gate'",
+    "new": "      FROM gate_kills k JOIN marks_ledger l ON l.actor = k.account AND l.kind = 'gate'",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-room",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "        AND COALESCE((SELECT balance FROM marks WHERE account = k.account), 0) + l.amount <= ?7`,",
+    "new": "        AND 1`,",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-once",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM marks_ledger x WHERE x.actor = k.account AND x.rid = ?5)\n        AND COALESCE((SELECT balance FROM marks WHERE account = k.account), 0) + l.amount <= ?7`,",
+    "new": "        AND COALESCE((SELECT balance FROM marks WHERE account = k.account), 0) + l.amount <= ?7`,",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ],
+    "equivalent": true,
+    "why": "an incursion:<day> line is written only by the settle of the week holding that gate day, and town_seat_weeks' key lets that settle run once (a racing second rolls back whole); gate_kills' key (day, account) gives each account one row a day, so the statement never meets its own line - the guard keeps a future retry from failing the Turning on UNIQUE (actor, rid), it changes no answer today"
+  },
+  {
+    "name": "ASL-INC-call",
+    "file": "server-account/src/seatTurning.js",
+    "old": "  stmts.push(...incursionStatements(db, { week, agreed, counted, nowS }));\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-INC-amount",
+    "file": "server-account/src/seatIncursion.js",
+    "old": "      SELECT 'mint', NULL, 'account', k.account, 'gate-incursion', l.amount, ?3, ?4, k.account, 'Daedric Incursion', ?5",
+    "new": "      SELECT 'mint', NULL, 'account', k.account, 'gate-incursion', 1, ?3, ?4, k.account, 'Daedric Incursion', ?5",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-KIND-drop",
+    "file": "src/net/marksLaw.js",
+    "old": "  'fealty-tribute': 'move',   // CROWN2: a vassal's 5% of its Tithe to its liege\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-KIND-mint",
+    "file": "src/net/marksLaw.js",
+    "old": "  'siege-honours': 'mint',",
+    "new": "  'siege-honours': 'move',",
+    "tests": [
+      "test/net/audit_seats_law.test.js",
+      "test/net/marks1.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G21-castle",
+    "file": "src/systems/siegeField.js",
+    "old": "  const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
+    "new": "  const face = palace;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G21-tier",
+    "file": "src/systems/siegeField.js",
+    "old": "  const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
+    "new": "  const face = doorFace(castle) ?? palace;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  },
+  {
+    "name": "ASL-G21-fallback",
+    "file": "src/systems/siegeField.js",
+    "old": "  const face = (tier === 'crown' ? doorFace(castle) : null) ?? palace;",
+    "new": "  const face = tier === 'crown' ? doorFace(castle) : null;",
+    "tests": [
+      "test/net/audit_seats_law.test.js"
+    ]
+  }
 ]

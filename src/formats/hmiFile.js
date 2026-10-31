@@ -206,7 +206,7 @@ export class HmiFile {
   constructor() {
     this.name = '';
     this.signature = '';
-    this.headerResolution = 0;   // the 0x0D2 field, 480 in every retail song; not the time base
+    this.headerResolution = 0; // the 0x0D2 field, 480 in every retail song; not the time base
     this.beatsPerMinute = 0;
     this.trackCount = 0;
     this.tracks = [];
@@ -350,11 +350,15 @@ export class HmiFile {
       return ev;
     };
 
-    let lastTick = 0;   // the shunt's landing: the latest tick any event took
+    let lastTick = 0; // the shunt's landing: the latest tick any event took
     for (;;) {
       const delta = vlq();
-      if (delta > HMI_MAX_DELTA) tick = lastTick;   // THE SHUNT (foo_midi): an authoring artifact, not time
-      else { tick += delta; if (tick > lastTick) lastTick = tick; }
+      if (delta > HMI_MAX_DELTA)
+        tick = lastTick; // THE SHUNT (foo_midi): an authoring artifact, not time
+      else {
+        tick += delta;
+        if (tick > lastTick) lastTick = tick;
+      }
       if (p >= limit) this._fail(`track ${index} ended without end-of-track`, p);
       let st = bytes[p];
       if (st & 0x80) p++;
@@ -380,10 +384,7 @@ export class HmiFile {
         if (subtype === HMI_CHANNEL_SETUP) size = 1 + 2 + 1 + bytes[p + 3] + 4;
         if (!size) this._fail(`track ${index} unknown HMI event 0xFE 0x${subtype.toString(16)}`, p);
         if (p + size > limit) this._fail(`track ${index} HMI event runs past its data`, p);
-        push(
-          { tick, type: 'hmi', channel: null, subtype, data: bytes.slice(p + 1, p + size) },
-          RANK_EVENT,
-        );
+        push({ tick, type: 'hmi', channel: null, subtype, data: bytes.slice(p + 1, p + size) }, RANK_EVENT);
         p += size;
         continue;
       }

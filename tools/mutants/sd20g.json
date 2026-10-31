@@ -93,8 +93,8 @@
   {
     "name": "SD20G-D3-the-stand-of-an-ended-quest",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "res.isHidden === true || questEnded(s.behaviour)) continue;",
-    "new": "res.isHidden === true) continue;",
+    "old": "    if (!res || !s.active || s.dead || res.isHidden === true || questEnded(s.behaviour)) continue;",
+    "new": "    if (!res || !s.active || s.dead || res.isHidden === true) continue;",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "SD20G-D3-the-foe-of-an-ended-quest",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "b.targetResource?.isHidden === true || questEnded(b)) continue;",
-    "new": "b.targetResource?.isHidden === true) continue;",
+    "old": "    if (!b || f.dead || !feet || b.targetResource?.isHidden === true || questEnded(b)) continue;",
+    "new": "    if (!b || f.dead || !feet || b.targetResource?.isHidden === true) continue;",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "SD20G-D3-the-person-of-an-ended-quest",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "res.isDestroyed === true || questEnded(b)) continue;",
-    "new": "res.isDestroyed === true) continue;",
+    "old": "    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true || questEnded(b)) continue;",
+    "new": "    if (!res || p.active === false || res.isHidden === true || res.isDestroyed === true) continue;",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "SD20G-D3-complete-unread",
     "file": "src/systems/quest/questGuidance.js",
-    "old": "return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null);",
-    "new": "return !!q && (q.questTombstoned === true || q.shelvedAt != null);",
+    "old": "  return !!q && (q.questComplete === true || q.questTombstoned === true || q.shelvedAt != null); // QUEST-SHELF: and one set aside marks nothing while away",
+    "new": "  return !!q && (q.questTombstoned === true || q.shelvedAt != null); // QUEST-SHELF: and one set aside marks nothing while away",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SD20G-D4-no-back-off",
     "file": "src/systems/wayOut.js",
-    "old": "offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2);",
-    "new": "offWait = fieldEvery;",
+    "old": "        offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2); // still off: not again so soon",
+    "new": "        offWait = fieldEvery; // still off: not again so soon",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SD20G-D4-new-cells-unattached",
     "file": "src/systems/wayOut.js",
-    "old": "      else if (covered < c.pts.length) { attachCells(c, field, covered, clear); covered = c.pts.length; }\n",
-    "new": "",
+    "old": "      else if (covered < c.pts.length) {\n        attachCells(c, field, covered, clear);\n        covered = c.pts.length;\n      }\n      let from = nearestCell(c, feet);",
+    "new": "      let from = nearestCell(c, feet);",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SD20G-D4-asks-unpaced",
     "file": "src/systems/wayOut.js",
-    "old": "const spend = () => left-- > 0 && clock() < until;",
-    "new": "const spend = () => left-- > 0;",
+    "old": "      const spend = () => left-- > 0 && clock() < until;",
+    "new": "      const spend = () => left-- > 0;",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD20G-D4-a-walled-step-left-walked",
     "file": "src/systems/wayOut.js",
-    "old": "          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;\n",
-    "new": "",
+    "old": "          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SD20G-D5-the-share-unlaid",
     "file": "src/systems/quest/questShare.js",
-    "old": "  relay(quest);\n  machine.noteShareHolder?.(questName, ctx.from);",
-    "new": "  machine.noteShareHolder?.(questName, ctx.from);",
+    "old": "  relay(quest);\n  machine.noteShareHolder?.(questName, ctx.from); // QUEST-AUDIT III GOLD-HOLDERS: the sharer holds it",
+    "new": "  machine.noteShareHolder?.(questName, ctx.from); // QUEST-AUDIT III GOLD-HOLDERS: the sharer holds it",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD20G-D5-the-resync-unlaid",
     "file": "src/systems/quest/questShare.js",
-    "old": "if (quest) { relay(quest); machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }",
-    "new": "if (quest) { machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }",
+    "old": "      relay(quest);\n      machine.noteShareHolder?.(questName, ctx.from);",
+    "new": "      machine.noteShareHolder?.(questName, ctx.from);",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "SD20G-D6-a-links-stamp-online",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return null;\n",
-    "new": "",
+    "old": "  if (online) return null;\n  const known = [",
+    "new": "  const known = [",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

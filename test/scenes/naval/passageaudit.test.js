@@ -34,6 +34,6 @@ test('AUDIT PASSAGE (lane D) by source: my own gangway is the first press at a q
   assert.match(read('src/scenes/naval/navalHost.js'), /const p = e \|\| boatTrigger \|\| gangwayInReach\(\) \? null : passageShip\(\);[^\n]*\n {4}if \(p\) \{ deps\.passage\(/);
   const host = read('src/scenes/naval/passageHost.js');
   assert.match(host, /const gold = \(\) => Math\.max\(0, Math\.floor\(Number\(deps\.gold \? deps\.gold\(\) : totalGoldAmount\(playerEntity\)\) \|\| 0\)\);/);
-  assert.match(host, /const pay = \(n\) => \{ if \(deps\.pay\) deps\.pay\(n\); else \{ deductGold\(playerEntity, n\); surfacePlayer\(\); \} \};/);
+  assert.match(host, /const pay = \(n\) => \{\n\s*if \(deps\.pay\) deps\.pay\(n\);\n\s*else \{\n\s*deductGold\(playerEntity, n\);\n\s*surfacePlayer\(\);\n\s*\}\n\s*\};/);
   assert.doesNotMatch(read('src/scenes/world.js'), /const passage = createPassageHost\(\{[^\n]*\n[^\n]*\n[^\n]*\b(gold|pay|pack):/, 'the world hands no purse - the player entity\'s own is read');
 });

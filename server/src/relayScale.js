@@ -5,7 +5,15 @@
 // the room's counts written to Analytics Engine. Its constants and its one helper live here, not in index.js: a module
 // Worker reads every named export of its entrypoint as an entrypoint (the account service's probe found a Worker that
 // would not boot over four exported constants - Testing.md, `npm run account`).
-import { LAYERS_MAX, LAYER_HEADER, LAYER_FULL_HEADER, LAYER_ASK_HEADER, LAYER_EMPTY_HEADER, LAYER_LAST_HEADER, layerName } from './relay.js';
+import {
+  LAYERS_MAX,
+  LAYER_HEADER,
+  LAYER_FULL_HEADER,
+  LAYER_ASK_HEADER,
+  LAYER_EMPTY_HEADER,
+  LAYER_LAST_HEADER,
+  layerName,
+} from './relay.js';
 
 /** SCALE2b: how long the socket index is trusted before one walk against the runtime's list (`_all`). */
 export const IDX_TRUST_MS = 1000;
@@ -28,7 +36,10 @@ export const ROOM_CALL_MS = 5000;
  *  moves it to the back), never the whole map. `_recs` and `_cool` cleared themselves whole when full, so one key
  *  past the bound forgot every warm record at once (a read storm) and every repeat-act cooldown (a spam window). */
 export class Bounded extends Map {
-  constructor(max) { super(); this.max = max; }
+  constructor(max) {
+    super();
+    this.max = max;
+  }
   set(k, v) {
     if (this.has(k)) this.delete(k);
     else while (this.size >= this.max) this.delete(this.keys().next().value);
@@ -87,23 +98,77 @@ export class Bounded extends Map {
  *  2026-10-21; RELAY-LOAD met a 422 for less.) */
 export const METRICS_WINDOW_MS = 5 * 60 * 1000;
 /** SCALE2b: a room key's kind for a metric - its prefix, at most 16 characters (never an id or a place's name). */
-export const roomKindOf = (key) => { const k = String(key ?? ''); const i = k.indexOf(':'); return ((i > 0 ? k.slice(0, i) : k).replace(/[^a-z0-9_-]/gi, '').slice(0, 16)) || 'none'; };
+export const roomKindOf = (key) => {
+  const k = String(key ?? '');
+  const i = k.indexOf(':');
+  return (i > 0 ? k.slice(0, i) : k).replace(/[^a-z0-9_-]/gi, '').slice(0, 16) || 'none';
+};
 export class RoomMetrics {
-  constructor(now = Date.now()) { this.reset(now); }
+  constructor(now = Date.now()) {
+    this.reset(now);
+  }
   reset(now) {
     this.since = now;
-    this.c = { hellos: 0, busy: 0, frames: 0, bytesIn: 0, poses: 0, sends: 0, bytesOut: 0, reads: 0, writes: 0, refusals: 0, full: 0, drops: 0, peak: 0, foes: 0, hits: 0, chats: 0, owed: 0, batches: 0, hitDrops: 0, fullDrops: 0, fulls: 0, held: 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0, cellMoves: 0, cellBlocked: 0 };   // SCALE5b: from `full` on; FOES-FIRST: from `hitDrops` on, the blobs; FOES-HOLD: from `held` on; COST-2 part two: the directory's moves
+    this.c = {
+      hellos: 0,
+      busy: 0,
+      frames: 0,
+      bytesIn: 0,
+      poses: 0,
+      sends: 0,
+      bytesOut: 0,
+      reads: 0,
+      writes: 0,
+      refusals: 0,
+      full: 0,
+      drops: 0,
+      peak: 0,
+      foes: 0,
+      hits: 0,
+      chats: 0,
+      owed: 0,
+      batches: 0,
+      hitDrops: 0,
+      fullDrops: 0,
+      fulls: 0,
+      held: 0,
+      heldSent: 0,
+      heldGone: 0,
+      heldMs: 0,
+      beats: 0,
+      cellMoves: 0,
+      cellBlocked: 0,
+    }; // SCALE5b: from `full` on; FOES-FIRST: from `hitDrops` on, the blobs; FOES-HOLD: from `held` on; COST-2 part two: the directory's moves
   }
   /** Anything to say? */
-  get busy() { const c = this.c; return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals + c.full > 0; }   // SCALE5b: a room that only refused a socket for being full has that to say
+  get busy() {
+    const c = this.c;
+    return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals + c.full > 0;
+  } // SCALE5b: a room that only refused a socket for being full has that to say
   /** The window's point to `sink` (env.METRICS) when it is over (or `force`d), and a new window. True when written. */
   flush(sink, kind, sockets, version, now = Date.now(), force = false, level = '') {
     if (!force && now - this.since < METRICS_WINDOW_MS) return false;
-    const c = this.c, wrote = this.busy && !!sink && typeof sink.writeDataPoint === 'function';
+    const c = this.c,
+      wrote = this.busy && !!sink && typeof sink.writeDataPoint === 'function';
     if (wrote) {
       try {
         sink.writeDataPoint({
-          indexes: [kind], blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)],   // FOES-FIRST: blob3 to 5, counts - the doubles are all spoken for; FOES-HOLD: blob6 to 10; COST-2: blob11 the node's level; COST-2 part two: blob12 and 13 the directory's moves
+          indexes: [kind],
+          blobs: [
+            kind,
+            String(version),
+            String(c.hitDrops),
+            String(c.fullDrops),
+            String(c.fulls),
+            String(c.held),
+            String(c.heldSent),
+            String(c.heldGone),
+            String(Math.round(c.heldMs)),
+            String(c.beats),
+            String(level),
+            String(c.cellMoves),
+            String(c.cellBlocked),
+          ], // FOES-FIRST: blob3 to 5, counts - the doubles are all spoken for; FOES-HOLD: blob6 to 10; COST-2: blob11 the node's level; COST-2 part two: blob12 and 13 the directory's moves
           // SCALE5b (2026-10-10; bible/11-Multiplayer/Scale-Arc.md SCALE5b): WHAT SAYS A ROOM'S LIMIT IS NEAR, from double13 -
           // the sockets refused 'room full' (the Worker's door, which counted nothing - AUDIT SCALE II R1-5: a refusal the
           // walk could not get past, its last try's or a room's that does not layer, never a full layer it walked on from),
@@ -111,10 +176,32 @@ export class RoomMetrics {
           // R1-6: and the `own` frames - _foesFan counts both, a foes frame's method), blows and lines it took, and the second wire's work:
           // the items it carried in batches and the batch frames that carried them (items over batches: the sends saved).
           // Analytics Engine takes twenty doubles; these are the last eight.
-          doubles: [now - this.since, sockets, c.hellos, c.busy, c.frames, c.bytesIn, c.poses, c.sends, c.bytesOut, c.reads, c.writes, c.refusals,
-            c.full, c.drops, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],
+          doubles: [
+            now - this.since,
+            sockets,
+            c.hellos,
+            c.busy,
+            c.frames,
+            c.bytesIn,
+            c.poses,
+            c.sends,
+            c.bytesOut,
+            c.reads,
+            c.writes,
+            c.refusals,
+            c.full,
+            c.drops,
+            Math.max(c.peak, sockets),
+            c.foes,
+            c.hits,
+            c.chats,
+            c.owed,
+            c.batches,
+          ],
         });
-      } catch { /* a metric never costs a frame */ }
+      } catch {
+        /* a metric never costs a frame */
+      }
     }
     this.reset(now);
     return wrote;
@@ -139,7 +226,11 @@ export function countedState(state, metrics) {
     get(t, k) {
       const v = Reflect.get(t, k);
       if (typeof v !== 'function') return v;
-      if (k === 'get' || k === 'list') return (...args) => { metrics.c.reads++; return v.apply(t, args); };
+      if (k === 'get' || k === 'list')
+        return (...args) => {
+          metrics.c.reads++;
+          return v.apply(t, args);
+        };
       if (k === 'put' || k === 'delete' || k === 'deleteAll' || k === 'setAlarm' || k === 'deleteAlarm')
         return (...args) => {
           metrics.c.writes += rowsWritten(k, args);
@@ -147,7 +238,9 @@ export function countedState(state, metrics) {
         };
       return v.bind(t);
     },
-    set(t, k, v) { return Reflect.set(t, k, v); },
+    set(t, k, v) {
+      return Reflect.set(t, k, v);
+    },
   });
   return new Proxy(state, {
     get(t, k) {
@@ -166,11 +259,16 @@ export function countedState(state, metrics) {
  *  answers (online.js BACKOFF_MIN_MS..BACKOFF_MAX_MS) - never an exception thrown out of the Worker. */
 export async function askRoom(rooms, name, request) {
   for (let i = 0; ; i++) {
-    try { return await rooms.get(rooms.idFromName(name)).fetch(request); } catch (e) {
+    try {
+      return await rooms.get(rooms.idFromName(name)).fetch(request);
+    } catch (e) {
       const err = /** @type {{ retryable?: boolean, overloaded?: boolean, message?: string }} */ (e ?? {});
       if (i === 0 && err.retryable && !err.overloaded) continue;
       console.warn('[worker] a room did not answer', name, err.message ?? e);
-      return new Response(JSON.stringify({ error: err.overloaded ? 'busy' : 'unavailable' }), { status: 503, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'retry-after': '2' } });
+      return new Response(JSON.stringify({ error: err.overloaded ? 'busy' : 'unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'retry-after': '2' },
+      });
     }
   }
 }
@@ -186,21 +284,30 @@ export async function layerWalk(rooms, key, request, start) {
   // the page's own word of the walk's headers is never passed on: its layer is overwritten below, its ask and its last
   // dropped (a Headers lower-cases its names, as these are)
   const page = Object.fromEntries(request.headers);
-  delete page[LAYER_ASK_HEADER]; delete page[LAYER_LAST_HEADER];
+  delete page[LAYER_ASK_HEADER];
+  delete page[LAYER_LAST_HEADER];
   // AUDIT SCALE II R3-3: AN ASKED LAYER IS THE PAGE'S ONLY WHILE SOMEONE STANDS IN IT. Every `?ly=` was honoured, so any
   // page had a private empty copy of any place on demand (in the Wild zone, a hiding place from its fights). The ask
   // rides the first try alone; an asked layer that holds no socket answers LAYER_EMPTY_HEADER, and the walk starts again
   // at the place, as a page that asked nothing is walked - the empty layer is admitted only when the walk reaches it in
   // turn. A party's layer holds the party; a reconnect's own holds the socket it replaces while the runtime lists it -
   // one that stood there alone, its socket gone, is walked from the place like any page.
-  let ask = start > 0, res = null;
+  let ask = start > 0,
+    res = null;
   for (let i = 0; i < LAYERS_MAX; i++) {
     const ly = (start + i) % LAYERS_MAX;
     const headers = { ...page, [LAYER_HEADER]: String(ly) };
     if (ask) headers[LAYER_ASK_HEADER] = '1';
-    else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1';   // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)
-    res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));   // DO-ASK: a layer that did not answer is asked once more, or its 503
-    if (ask) { ask = false; if (res.status === 503 && res.headers.get(LAYER_EMPTY_HEADER) === '1') { start = 0; i = -1; continue; } }
+    else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1'; // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)
+    res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers })); // DO-ASK: a layer that did not answer is asked once more, or its 503
+    if (ask) {
+      ask = false;
+      if (res.status === 503 && res.headers.get(LAYER_EMPTY_HEADER) === '1') {
+        start = 0;
+        i = -1;
+        continue;
+      }
+    }
     if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;
   }
   return res;

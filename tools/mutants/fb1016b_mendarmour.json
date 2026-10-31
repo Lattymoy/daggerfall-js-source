@@ -2,8 +2,8 @@
   {
     "name": "MEND-ARMOUR-armour-keeps-the-point",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : (it.group === 'Weapons' ? Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)) : CONDITION_AMOUNT));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic || it.artifact\n    ? CONDITION_AMOUNT\n    : it.group === 'Weapons'\n      ? Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF))\n      : CONDITION_AMOUNT;",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MEND-ARMOUR-the-pool-for-every-piece",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(1600 / MEND_SHARE_OF)));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(1600 / MEND_SHARE_OF));",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MEND-ARMOUR-the-template-not-the-piece",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round((templateByIndex(it.templateIndex)?.hitPoints ?? it.maxCondition) / MEND_SHARE_OF)));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic || it.artifact\n    ? CONDITION_AMOUNT\n    : Math.max(\n        CONDITION_AMOUNT,\n        Math.round((templateByIndex(it.templateIndex)?.hitPoints ?? it.maxCondition) / MEND_SHARE_OF),\n      );",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "MEND-ARMOUR-no-floor",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.round(it.maxCondition / MEND_SHARE_OF);",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "MEND-ARMOUR-rounded-down",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.floor(it.maxCondition / MEND_SHARE_OF)));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.floor(it.maxCondition / MEND_SHARE_OF));",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"
     ]
@@ -59,7 +59,7 @@
   {
     "name": "MEND-ARMOUR-AUDIT-uses-on-the-share",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "old": "export const repairsObjectsMend = (it) =>\n  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
     "new": "export const repairsObjectsMend = (it) => Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
     "tests": [
       "test/systems/fb1016b_mendarmour.test.js"

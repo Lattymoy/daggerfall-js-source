@@ -80,13 +80,21 @@ export function careerAbsorbs(career, { day = false, inside = true } = {}) {
  *  DFU's own two gates (a Destruction effect, and room in the target's magicka for what it drinks). A source answers 0
  *  for any target it is not about. */
 const _absorbChances = new Map();
-export function registerAbsorptionChance(name, fn) { if (typeof fn === 'function') _absorbChances.set(name, fn); else _absorbChances.delete(name); }
+export function registerAbsorptionChance(name, fn) {
+  if (typeof fn === 'function') _absorbChances.set(name, fn);
+  else _absorbChances.delete(name);
+}
 
 /** TryAbsorption (:1160-1200). Returns the spell points absorbed, or 0
  *  when the effect passes through. `absorbing` is DFU's persistent
  *  IsAbsorbingSpells state (:1196) - the port has no such effect yet,
  *  so it is an injectable the caller may leave false. */
-export function tryAbsorption(effect, targetType, target, { day = false, inside = true, absorbing = false, rolls = Math.random, paid = 0 } = {}) {
+export function tryAbsorption(
+  effect,
+  targetType,
+  target,
+  { day = false, inside = true, absorbing = false, rolls = Math.random, paid = 0 } = {},
+) {
   if (!effect) return 0;
   if (!isDestructionEffect(effect)) return 0;
   const cost = effectCastingCost(effect, targetType, target);
@@ -106,9 +114,14 @@ export function tryAbsorption(effect, targetType, target, { day = false, inside 
   // persistent flag - DFU's own order, not classic's override.
   const chance = spellAbsorptionChance(target);
   if (chance > 0 && Math.floor(rolls() * 100) < chance) return drink;
-  for (const fn of _absorbChances.values()) {   // SET2: the port's own, each its own roll - none is rolled that answers 0
+  for (const fn of _absorbChances.values()) {
+    // SET2: the port's own, each its own roll - none is rolled that answers 0
     let c = 0;
-    try { c = Number(fn(target)) || 0; } catch { c = 0; }
+    try {
+      c = Number(fn(target)) || 0;
+    } catch {
+      c = 0;
+    }
     if (c > 0 && Math.floor(rolls() * 100) < c) return drink;
   }
   if (careerAbsorbs(target?.career, { day, inside })) return drink;
@@ -134,7 +147,10 @@ export function spellAbsorptionChance(target) {
   for (const a of target?.activeEffects ?? []) {
     if (a.kind !== 'spellAbsorption' || a.ended) continue;
     const per = Math.max(1, a.chancePerLevel ?? 1);
-    const chance = a.chanceBase == null ? (a.chance ?? 0) : (a.chanceBase ?? 0) + (a.chanceMod ?? 0) * Math.floor((target?.level ?? 1) / per);
+    const chance =
+      a.chanceBase == null
+        ? (a.chance ?? 0)
+        : (a.chanceBase ?? 0) + (a.chanceMod ?? 0) * Math.floor((target?.level ?? 1) / per);
     if (chance > best) best = chance;
   }
   // ABSORB-NERF (2026-09-30, Discord: "Nerf spell absorption, it breaks the game"): the effect's chance caps at 50%

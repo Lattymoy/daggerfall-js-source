@@ -21,10 +21,17 @@ export function standInKey(fileName) {
 
 let _store = null;
 /** Test seam: the store the ships' pictures are kept in (node has no IndexedDB); null for the player's. */
-export function _setStandInStoreForTests(store) { _store = store ?? null; }
+export function _setStandInStoreForTests(store) {
+  _store = store ?? null;
+}
 
 /** A picture as dfLook answers one: top-down RGBA of its size. */
-const isPicture = (v) => !!v && Number.isInteger(v.width) && Number.isInteger(v.height) && v.data instanceof Uint8Array && v.data.length === v.width * v.height * 4;
+const isPicture = (v) =>
+  !!v &&
+  Number.isInteger(v.width) &&
+  Number.isInteger(v.height) &&
+  v.data instanceof Uint8Array &&
+  v.data.length === v.width * v.height * 4;
 
 /**
  * One painted picture: the kept one, or `paint()`'s, kept. With no store, `paint()`'s.
@@ -33,6 +40,12 @@ const isPicture = (v) => !!v && Number.isInteger(v.width) && Number.isInteger(v.
  */
 export async function keptStandIn(fileName, paint, store = _store ?? derivedValueStore()) {
   if (!store) return paint();
-  const { value } = await keptAnswer({ key: standInKey(fileName), scope: standInScope(fileName), build: paint, accept: isPicture, store });
+  const { value } = await keptAnswer({
+    key: standInKey(fileName),
+    scope: standInScope(fileName),
+    build: paint,
+    accept: isPicture,
+    store,
+  });
   return value;
 }

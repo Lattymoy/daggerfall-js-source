@@ -78,8 +78,8 @@
   {
     "name": "SPELL-GIFT-stranger-receiver-keeps-the-party-list",
     "file": "src/systems/allyCast.js",
-    "old": "  const effects = d.effects.filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
-    "new": "  const effects = d.effects.filter(companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
+    "old": "  const effects = d.effects\n    .filter(stranger ? strangerEffect : companion ? companionEffect : allyEffect)\n    .slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
+    "new": "  const effects = d.effects.filter(companion ? companionEffect : allyEffect).slice(0, MAX_EFFECTS_PER_SPELL); // SPELL-GIFT: a stranger's cast keeps the stranger's list alone; AUDIT WK-M4: my companion's gift, what he can use",
     "tests": [
       "test/systems/spellgift.test.js"
     ]

@@ -29,7 +29,9 @@ export function boardTally(blocks) {
   for (const b of blocks ?? []) {
     for (const m of b?.layout?.models ?? []) {
       if (!isBulletinBoard(m.modelIdNum)) continue;
-      const x = (b.originX ?? 0) + (m.matrix?.[12] ?? 0), y = m.matrix?.[13] ?? 0, z = (b.originZ ?? 0) + (m.matrix?.[14] ?? 0);
+      const x = (b.originX ?? 0) + (m.matrix?.[12] ?? 0),
+        y = m.matrix?.[13] ?? 0,
+        z = (b.originZ ?? 0) + (m.matrix?.[14] ?? 0);
       boxes.push({ box: [x, y, z, x, y, z] });
     }
   }
@@ -54,8 +56,12 @@ export function hubBoards(maps, blocks) {
   const out = [];
   for (const hub of hubs.byRegion.values()) {
     const loc = byKey.get(`${hub.regionIndex}:${hub.locationIndex}`);
-    let tally = { boards: -1, bounty: 0, rumour: 0 };   // -1: the layout failed - read it as "not measured", never as none
-    try { if (loc) tally = boardTally(layoutLocation(loc, maps, blocks, { enhanced: false, windmills: false }).blocks); } catch { /* not measured */ }
+    let tally = { boards: -1, bounty: 0, rumour: 0 }; // -1: the layout failed - read it as "not measured", never as none
+    try {
+      if (loc) tally = boardTally(layoutLocation(loc, maps, blocks, { enhanced: false, windmills: false }).blocks);
+    } catch {
+      /* not measured */
+    }
     out.push({ region: hub.regionName, name: hub.name, capital: hub.capital, ...tally });
   }
   return out;
@@ -63,16 +69,28 @@ export function hubBoards(maps, blocks) {
 
 if (isMain(import.meta.url)) {
   const A2 = process.env.ARENA2_PATH;
-  if (!A2) { console.error('ARENA2_PATH is not set - point it at your own arena2 folder.'); process.exit(2); }
+  if (!A2) {
+    console.error('ARENA2_PATH is not set - point it at your own arena2 folder.');
+    process.exit(2);
+  }
   const bytes = (n) => new Uint8Array(readFileSync(`${A2}/${n}`));
-  const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
-  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  const blocks = new BlocksFile();
+  blocks.load(bytes('BLOCKS.BSA'));
+  const maps = new MapsFile();
+  maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
   const hubs = hubBoards(maps, blocks);
-  if (process.argv.includes('--json')) { console.log(JSON.stringify(hubs, null, 2)); process.exit(0); }
+  if (process.argv.includes('--json')) {
+    console.log(JSON.stringify(hubs, null, 2));
+    process.exit(0);
+  }
   for (const h of hubs) {
-    console.log(`${h.region.padEnd(20)} ${h.name.padEnd(24)} ${h.capital ? 'capital' : '       '}  boards ${String(h.boards).padStart(2)}  bounty ${h.bounty}  rumour ${h.rumour}${h.boards < 0 ? '   (layout failed - not measured)' : h.rumour ? '' : '   <- NO NOTICE BOARD'}`);
+    console.log(
+      `${h.region.padEnd(20)} ${h.name.padEnd(24)} ${h.capital ? 'capital' : '       '}  boards ${String(h.boards).padStart(2)}  bounty ${h.bounty}  rumour ${h.rumour}${h.boards < 0 ? '   (layout failed - not measured)' : h.rumour ? '' : '   <- NO NOTICE BOARD'}`,
+    );
   }
   const none = hubs.filter((h) => h.boards === 0);
   const failed = hubs.filter((h) => h.boards < 0);
-  console.log(`\n${hubs.length} hubs; ${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`);
+  console.log(
+    `\n${hubs.length} hubs; ${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`,
+  );
 }

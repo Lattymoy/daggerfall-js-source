@@ -86,7 +86,9 @@ export class FlatsFile {
     return this.getFlatData(archive, record)?.faceIndex ?? -1;
   }
 
-  get count() { return this.flats.size; }
+  get count() {
+    return this.flats.size;
+  }
 }
 
 /** ParseFlatData, verbatim - including the six-line assumption and the

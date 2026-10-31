@@ -2,8 +2,8 @@
   {
     "name": "KEY-FACE-the-row-not-pack-only",
     "file": "src/systems/eliteGates/weirKeyRow.js",
-    "old": "  packOnly: true,   // KEY-FACE: the face never leaves the pack\n",
-    "new": "",
+    "old": "  packOnly: true, // KEY-FACE: the face never leaves the pack\n});",
+    "new": "});",
     "why": "the bug: a face goes to the wagon, the pack is given a new one, and the stowed ones carried back turn to rust",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "KEY-FACE-a-list-unfolded",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
-    "new": "if (isWeirKey(list[i])) folded.add(list[i]);",
+    "old": "    for (let i = list.length - 1; i >= 0; i--) if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "new": "    for (let i = list.length - 1; i >= 0; i--) if (isWeirKey(list[i])) folded.add(list[i]);",
     "why": "the lists counted and left as they were",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "KEY-FACE-the-fold-blind",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
-    "new": "if (!isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "old": "    for (let i = list.length - 1; i >= 0; i--) if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "new": "    for (let i = list.length - 1; i >= 0; i--) if (!isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
     "why": "everything but the faces folded",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "KEY-FACE-a-record-unfolded",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "{ folded.add(item); delete r[id]; }",
-    "new": "{ folded.add(item); }",
+    "old": "        delete r[id];\n      }",
+    "new": "      }",
     "why": "a room's own thing that is a face counted and kept",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "KEY-FACE-a-face-counted-twice",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "{ folded.add(item); delete r[id]; }",
-    "new": "{ folded.add({ ...item }); delete r[id]; }",
+    "old": "        folded.add(item);",
+    "new": "        folded.add({ ...item });",
     "why": "a room's own thing the load's walk also lists counted twice",
     "tests": [
       "test/net/eliteGates/fb1019f_keyface.test.js"

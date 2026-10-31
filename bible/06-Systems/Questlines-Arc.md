@@ -453,13 +453,13 @@ player's - the main quest's (`_BRISIEN`, StartGameBehaviour.cs:444-456), a crime
 StartRacialOverrideQuest - `systems/worldTick.js`) - and all other work is a questor's to offer and the player's to accept
 or refuse (DaggerfallQuestOfferWindow.cs, the guild popup's GetQuest at DaggerfallGuildServicePopupWindow.cs:546-667 -
 `systems/quest/offerFlow.js`). The runner follows DFU's rule now. A line whose gate holds is OFFERED and never begun by a
-look (`qlLineRunner.js:"        if (!rec) continue;"`); the player TAKES it (`qlLineRunner.js:"    takeLine(id, { quest = null } = {}) {"`),
+look (`qlLineRunner.js:"if (!rec) continue"`); the player TAKES it (`qlLineRunner.js:"takeLine(id, { quest = null } = {})"`),
 its first step's quest started then - the very quest an offer was read from where there was one, so the letter read is
 the letter taken - and its record the player's (`taken`). Every first step's letter is in hand from its start-up (`start
 task`, `get item`: the fourteen scripts lost their courier's clock and their courier's words, and the four journal
 entries that had a messenger hand it over say "I took a letter"); QLTF01's Wyrd Sister still hands hers as she is met. A
 first step that fails, or is lost without its end, puts its line back on offer - its record let go, never sent again
-(`qlLineRunner.js:"        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) { reoffer(l.id); continue; }"`);
+(`qlLineRunner.js:"if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest))"`);
 one the player set aside in the journal puts it on offer too, and the take takes that step back (machine.js
 reclaimQuest). A first step that will not parse where the player stands (a `local` place off a town, a place this region
 lacks) is no take at all: the line stays on offer and the take says why. The LATER steps of a line the player took start
@@ -468,10 +468,10 @@ quest's do; one that ends badly is offered again a day later (RETRY_GAP_S) - a f
 
 THE COURIERS' PACE (FB1020c LETTER-PACE, re-aimed). A later step sets out only when no letter of any begun line is still
 on its way and an hour after the last letter reached the player, the take's own among them
-(`qlLineRunner.js:"  const courierMay = (s) => Object.entries(lines).every(([id, r]) => {"`). A courier counts only once
+(`qlLineRunner.js:"const courierMay"`). A courier counts only once
 it is SENT - its clock running, or its task fired with GivePc holding the letter for a town by day
-(`qlLineRunner.js:"export function letterOnItsWay(quest) {"`, heard at GivePc's moment through
-`qlLayer.js:"if (resource?.itemName === 'letter') { runner.lettered(quest); return; }"`): QLBD03's courier sets out once
+(`qlLineRunner.js:"export function letterOnItsWay"`, heard at GivePc's moment through
+`qlLayer.js:"if (resource?.itemName === 'letter')"`): QLBD03's courier sets out once
 the rite is broken and QLIW02's once a revenant kneels, and read unsent they held every other line's next step for as
 long as the deed waited. A step set out in the same look, its start-up not yet run, holds the rest until the machine's next tick says
 whether its courier set out (two set out in one breath landed together at dawn). Pinned by
@@ -763,7 +763,7 @@ nothing paid - and on the client a line the service pays opens only for a regist
   SERVICE-2) - and in the line's order: newer than the receipt that witnessed an earlier step, older than one that
   witnessed a later, so one receipt witnesses one step (`seen_at`; AUDIT QUESTLINES SERVICE-5: one rite-breaking fight
   paid both of the Burning Doors' steps). THE WITNESS-ORDER RULE (AUDIT STARFALL B2): an end is not witnessed while an
-  earlier WITNESSED step of its line is not done (`server-account/src/questlines.js:"export function qlStepsBefore(lineId, step) {"`):
+  earlier WITNESSED step of its line is not done (`server-account/src/questlines.js:"export function qlStepsBefore"`):
   the earlier step's receipt is the window's floor only once it is laid, and a later step's end asked first read its
   window from the line's opening, so one receipt witnessed both (the Thirteenth of Frostfall's three stars took its
   first, the Weir Road's three Redoubts took its first). Answered `{ witnessed: false }`, and the runner asks again; the

@@ -2,8 +2,8 @@
   {
     "name": "ROSTER-STAFF-hub-unread",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": " ?? l?.hubOnline?.get?.(id) ?? l?.guildOnline",
-    "new": " ?? l?.guildOnline",
+    "old": "          l?.hubOnline?.get?.(id) ??\n          l?.guildOnline?.get?.(id) ??",
+    "new": "          l?.guildOnline?.get?.(id) ??",
     "why": "a player on another shard of the World list has no staff acts",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ROSTER-STAFF-search-unread",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": " ?? l?.hubFound?.l?.find?.((/** @type {any} */ q) => q?.id === id);",
-    "new": ";",
+    "old": "        const p =\n          l?.peers?.get?.(id) ??\n          l?.hubOnline?.get?.(id) ??\n          l?.guildOnline?.get?.(id) ??\n          l?.hubFound?.l?.find?.((/** @type {any} */ q) => q?.id === id);",
+    "new": "        const p = l?.peers?.get?.(id) ?? l?.hubOnline?.get?.(id) ?? l?.guildOnline?.get?.(id);",
     "why": "a player the Find a player box found on the hub has no staff acts",
     "tests": [
       "test/net/safety/safe_client.test.js"

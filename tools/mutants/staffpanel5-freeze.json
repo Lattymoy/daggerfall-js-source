@@ -262,8 +262,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-token-no-fz",
     "file": "server-account/src/index.js",
-    "old": "...(wa ? { wa } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
-    "new": "...(wa ? { wa } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
+    "old": "...(wa ? { wa } : {}), ...(mg != null ? { mg } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
+    "new": "...(wa ? { wa } : {}), ...(mg != null ? { mg } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
     "why": "a reload sheds the freeze",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-checkpoint-saves",
     "file": "server-account/src/realm.js",
-    "old": "if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen'",
-    "new": "if (false) return { error: 'frozen'",
+    "old": "  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS)",
+    "new": "  if (false)",
     "why": "a frozen checkpoint saves under an old pass",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-fall-names-frozen",
     "file": "server-account/src/wild.js",
-    "old": "if (fallen !== player.id && isFrozen(",
-    "new": "if (false && isFrozen(",
+    "old": "    fallen !== player.id &&",
+    "new": "    false &&",
     "why": "a frozen player robbed by a filed fall",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-two-reads",
     "file": "src/net/staffChat.js",
-    "old": "if (reading) { again = true; return reading; }",
-    "new": "if (false) { again = true; return reading; }",
+    "old": "    if (reading) {",
+    "new": "    if (false) {",
     "why": "two reads at once",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -594,8 +594,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-read-from-start",
     "file": "src/net/staffChat.js",
-    "old": "const r = await read(last);",
-    "new": "const r = await read(0);",
+    "old": "        const r = await read(last);",
+    "new": "        const r = await read(0);",
     "why": "the thread read from its start every time",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-nudge-on-refusal",
     "file": "src/net/staffChat.js",
-    "old": "if (!r?.ok) { system(accountRefusalText(r?.error ?? 'server')); return; }",
-    "new": "if (!r?.ok) { system(accountRefusalText(r?.error ?? 'server')); nudge(0); return; }",
+    "old": "          return;",
+    "new": "          nudge(0);\n          return;",
     "why": "a nudge for a line the service refused",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-poll-never",
     "file": "src/net/staffChat.js",
-    "old": "if ((frozen() || open) && at - readAt >= STAFF_POLL_MS) refresh();",
-    "new": "if (false) refresh();",
+    "old": "      if ((frozen() || open) && at - readAt >= STAFF_POLL_MS) refresh();",
+    "new": "      if (false) refresh();",
     "why": "a lost nudge never read",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -624,8 +624,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-tab-unshown",
     "file": "src/net/staffChat.js",
-    "old": "const shown = () => log.setShown(STAFF_TAB, frozen() || open || copied.has(log));",
-    "new": "const shown = () => log.setShown(STAFF_TAB, false);",
+    "old": "  const shown = () => log.setShown(STAFF_TAB, frozen() || open || copied.has(log));",
+    "new": "  const shown = () => log.setShown(STAFF_TAB, false);",
     "why": "the Staff tab never on the bar",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -634,8 +634,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-invite-twice",
     "file": "src/net/staffChat.js",
-    "old": "if (url && url !== invite) {",
-    "new": "if (url) {",
+    "old": "        if (url && url !== invite) {",
+    "new": "        if (url) {",
     "why": "the invite said at every read",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -644,8 +644,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-invite-any",
     "file": "src/net/staffChat.js",
-    "old": "/^https:\\/\\/[^\\s]+$/",
-    "new": "/^https?:\\/\\/[^\\s]+$/",
+    "old": "export const inviteOf = (v) => (typeof v === 'string' && v.length <= 200 && /^https:\\/\\/[^\\s]+$/.test(v) ? v : null);",
+    "new": "export const inviteOf = (v) => (typeof v === 'string' && v.length <= 200 && /^https?:\\/\\/[^\\s]+$/.test(v) ? v : null);",
     "why": "an http invite shown",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -654,8 +654,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-tab-open-frozen",
     "file": "src/scenes/staffFreezeHost.js",
-    "old": "claims: (tabId) => tabId === STAFF_TAB || chat.frozen(),",
-    "new": "claims: (tabId) => tabId === STAFF_TAB,",
+    "old": "    claims: (tabId) => tabId === STAFF_TAB || chat.frozen(),",
+    "new": "    claims: (tabId) => tabId === STAFF_TAB,",
     "why": "a frozen player talks on the World tab",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-screen-never-hidden",
     "file": "src/ui/freezeScreen.js",
-    "old": "root.hidden = !(u > 0);",
-    "new": "root.hidden = false;",
+    "old": "      root.hidden = !(u > 0);",
+    "new": "      root.hidden = false;",
     "why": "the screen stays after the lift",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -715,7 +715,7 @@
     "name": "STAFF-PANEL5-FREEZE-FIX-old-lease-rooms",
     "file": "src/net/roomLease.js",
     "old": "export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key);",
-    "new": "export const leaseRoom = (key) => typeof key === 'string' && !isSocialRoom(key) && /^(chat|world|dungeon|interior):/.test(key);",
+    "new": "export const leaseRoom = (key) =>\n  typeof key === 'string' && !isSocialRoom(key) && /^(chat|world|dungeon|interior):/.test(key);",
     "why": "finding 21: a home, a caravan, a siege, an arena, a gate, a breach and a Super dungeon realm out of the leases again - a freeze never reaches them",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -835,8 +835,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-read-raises-only",
     "file": "src/net/staffChat.js",
-    "old": "until = f ? f.until : 0;",
-    "new": "if (f && f.until > until) until = f.until;",
+    "old": "          until = f ? f.until : 0;",
+    "new": "          if (f && f.until > until) until = f.until;",
     "why": "finding 26: a read never lowers the freeze - a lift the relay never said holds the motor",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -845,8 +845,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-relay-word-overruled",
     "file": "src/net/staffChat.js",
-    "old": "if (word === heard) {",
-    "new": "if (true) {",
+    "old": "        if (word === heard) {",
+    "new": "        if (true) {",
     "why": "finding 26: a read begun before the relay's lift puts the freeze back",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -855,8 +855,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-hall-lease-untaken",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      for (const x of links()) link.leaseFrom?.(x);\n",
-    "new": "",
+    "old": "      for (const x of links()) link.leaseFrom?.(x);\n      extra.add(link);",
+    "new": "      extra.add(link);",
     "why": "round two, item 1: a new hall link holds no lease - with the door on, its queue word is heard in nothing",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -915,8 +915,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-read-unmarked",
     "file": "src/net/roomLease.js",
-    "old": "u: c.u, ...(c.p ? { p: 1 } : {}) };",
-    "new": "u: c.u };",
+    "old": "  return { s: c.s, mu: c.m, fz: c.f, at: c.a, u: c.u, ...(c.p ? { p: 1 } : {}) };",
+    "new": "  return { s: c.s, mu: c.m, fz: c.f, at: c.a, u: c.u };",
     "why": "round two, item 2: a pass read as any lease",
     "tests": [
       "test/net/lease1.test.js",
@@ -926,8 +926,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-mark-unchecked-read",
     "file": "src/net/roomLease.js",
-    "old": "|| (c.p !== undefined && c.p !== 1)) return null;",
-    "new": ") return null;",
+    "old": "    c.u !== c.a + LEASE_LIFE_S ||\n    (c.p !== undefined && c.p !== 1)",
+    "new": "    c.u !== c.a + LEASE_LIFE_S",
     "why": "round two, item 2: any `p` read",
     "tests": [
       "test/net/lease1.test.js"
@@ -936,8 +936,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-mark-unchecked-mint",
     "file": "src/net/roomLease.js",
-    "old": "|| (p !== 0 && p !== 1)) return null;",
-    "new": ") return null;",
+    "old": "  if (\n    typeof s !== 'string' ||\n    !ID_RE.test(s) ||\n    until(mu) == null ||\n    until(fz) == null ||\n    !(until(at) > 0) ||\n    (p !== 0 && p !== 1)\n  )",
+    "new": "  if (typeof s !== 'string' || !ID_RE.test(s) || until(mu) == null || until(fz) == null || !(until(at) > 0))",
     "why": "round two, item 2: any `p` minted",
     "tests": [
       "test/net/lease1.test.js"

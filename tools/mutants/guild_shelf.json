@@ -2,8 +2,8 @@
   {
     "name": "GUILD-SHELF-every-open-mints",
     "file": "src/systems/shopStock.js",
-    "old": "  if (shelfStands(kept, today)) return kept;\n  if (store) for",
-    "new": "  if (store) for",
+    "old": "  if (shelfStands(kept, today)) return kept;\n  if (store)",
+    "new": "  if (store)",
     "tests": [
       "test/systems/guildshelf.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD-SHELF-scene-cache-drops-it",
     "file": "src/systems/sceneCache.js",
-    "old": "    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),",
-    "new": "    .map(([service, s]) => [service, { day: s.day, items: [] }])),",
+    "old": "      .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }]),",
+    "new": "      .map(([service, s]) => [service, { day: s.day, items: [] }]),",
     "tests": [
       "test/systems/guildshelf.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUILD-SHELF-scene-cache-shares-the-live-array",
     "file": "src/systems/sceneCache.js",
-    "old": "    .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }])),",
-    "new": "    .map(([service, s]) => [service, { day: s.day, items: s.items }])),",
+    "old": "      .map(([service, s]) => [service, { day: s.day, items: s.items.map((it) => ({ ...it })) }]),",
+    "new": "      .map(([service, s]) => [service, { day: s.day, items: s.items }]),",
     "tests": [
       "test/systems/guildshelf.test.js"
     ]

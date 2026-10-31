@@ -16,7 +16,7 @@
 // registry's first listed place of that name past the Bay). `farStart` settles when the move is made (or none could
 // be): a birth waits on it before the heir is made (world.js's birth chain), so they are born, and first saved, there.
 // Where no way stands they are born where the world stood, and it is said.
-import { getInt } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys
+import { getInt } from '../systems/settings/settings.js'; // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys
 import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { BAY_THEATRE } from '../world/worldWide/worldGrid.js';
@@ -53,13 +53,15 @@ export function farStartOf(params, regionName, locationName) {
 export function farPixelOf(far, worldPlaces) {
   if (far.id != null) {
     const listed = worldPlaces?.byMapId?.(far.id) ?? null;
-    if (listed) return { x: listed.px, y: listed.py };   // a Bay place by its id too, where its names no longer answer
+    if (listed) return { x: listed.px, y: listed.py }; // a Bay place by its id too, where its names no longer answer
     const country = countryPixelOfId(far.id);
     if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;
     const isle = etherPlacePixelOfId(far.id);
     if (isle) return isle;
   }
-  const named = (worldPlaces?.all?.() ?? []).find((p) => !inBay(p.px, p.py) && p.name === far.loc && REGION_NAMES[p.region] === far.region);
+  const named = (worldPlaces?.all?.() ?? []).find(
+    (p) => !inBay(p.px, p.py) && p.name === far.loc && REGION_NAMES[p.region] === far.region,
+  );
   return named ? { x: named.px, y: named.py } : null;
 }
 
@@ -68,10 +70,16 @@ export function farPixelOf(far, worldPlaces) {
 function bayGuardOf(far, { worldPlaces, locationIndex, maps }) {
   const at = farPixelOf(far, worldPlaces);
   const hit = at ? nearestSafePlace([worldPlaces?.inTheatre?.(BAY_THEATRE) ?? []], at, (h) => h.kind === 'city') : null;
-  return (hit ? locationIndex.get(`${hit.mapPixel.x},${hit.mapPixel.y}`) : null) ?? maps.getLocationByName(BAY_DEFAULT_START.region, BAY_DEFAULT_START.loc);
+  return (
+    (hit ? locationIndex.get(`${hit.mapPixel.x},${hit.mapPixel.y}`) : null) ??
+    maps.getLocationByName(BAY_DEFAULT_START.region, BAY_DEFAULT_START.loc)
+  );
 }
 
-const wait = (/** @type {number} */ ms) => new Promise((r) => { setTimeout(r, ms); });
+const wait = (/** @type {number} */ ms) =>
+  new Promise((r) => {
+    setTimeout(r, ms);
+  });
 
 /** @param {any} host */
 export function createBootStart(host) {
@@ -89,7 +97,8 @@ export function createBootStart(host) {
   if (params.has('classic')) {
     const cell = `${getInt('Startup', 'StartCellX')},${getInt('Startup', 'StartCellY')}`;
     startLoc = locationIndex.get(cell) ?? null;
-    if (!startLoc) console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
+    if (!startLoc)
+      console.warn(`[world] start cell ${cell} holds no location; falling back to ${regionName}/${locationName}`);
   }
   // EE13 (Mac: a season test that spawns somewhere random, from the
   // menu): ?spawn=random picks any TOWN in the index - a place with
@@ -97,9 +106,14 @@ export function createBootStart(host) {
   // with. Seeded from the clock so two presses give two towns; the town
   // is logged so a good one can be found again by ?region=&loc=.
   if (!startLoc && params.get('spawn') === 'random') {
-    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType));   // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
+    const towns = [...locationIndex.values()].filter((l) => [0, 1, 2].includes(l.mapTableData?.locationType)); // TownCity, TownHamlet, TownVillage (MapsFile LocationTypes)
     const pick = towns.length ? towns[Math.floor((Date.now() / 7919) % towns.length)] : null;
-    if (pick) { startLoc = pick; console.info(`[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar’s season'})`); }
+    if (pick) {
+      startLoc = pick;
+      console.info(
+        `[world] random spawn: ${pick.regionName ?? pick.mapTableData?.regionName ?? '?'} / ${pick.name ?? '?'} (${params.get('season') ?? 'the calendar’s season'})`,
+      );
+    }
   }
   if (!startLoc) startLoc = maps.getLocationByName(regionName, locationName);
   // BAY-LEFT-B: a start past the Bay stands the world on the Bay first, and is reached once its land stands
@@ -111,10 +125,20 @@ export function createBootStart(host) {
    *  past the Bay loads (world.js: the load's wait on arenaTraced, then its teleport). Answers the pixel reached, or null. */
   async function reach(/** @type {{ id: ?number, region: string, loc: string }} */ to) {
     for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);
-    const landed = _worldReady() && await Promise.race([Promise.resolve(host.arenaTraced).then(() => true, () => true), wait(ARENA_LOAD_WAIT_MS).then(() => false)]);
+    const landed =
+      _worldReady() &&
+      (await Promise.race([
+        Promise.resolve(host.arenaTraced).then(
+          () => true,
+          () => true,
+        ),
+        wait(ARENA_LOAD_WAIT_MS).then(() => false),
+      ]));
     const at = landed ? farPixelOf(to, worldPlaces) : null;
     if (!at) {
-      console.warn(`[world] no way to ${to.region}/${to.loc} past the Bay (seat ${to.id ?? '-'}): the world stands at ${startLoc.name}`);
+      console.warn(
+        `[world] no way to ${to.region}/${to.loc} past the Bay (seat ${to.id ?? '-'}): the world stands at ${startLoc.name}`,
+      );
       host.townTalk?.say(STARTS_TEXT.noSite);
       return null;
     }

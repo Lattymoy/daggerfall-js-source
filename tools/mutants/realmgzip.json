@@ -92,8 +92,8 @@
   {
     "name": "REALM-GZIP-the-first-save-read-unopened",
     "file": "server-account/src/realm.js",
-    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
-    "new": "  const text = new TextDecoder().decode(body);\n",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);",
+    "new": "  const text = new TextDecoder().decode(body);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "REALM-GZIP-the-first-save-opened-unbounded",
     "file": "server-account/src/realm.js",
-    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);\n",
-    "new": "  const text = await saveTextOf(new Uint8Array(body), Infinity);\n",
+    "old": "  const text = await saveTextOf(new Uint8Array(body), REALM_TEXT_MAX_BYTES);",
+    "new": "  const text = await saveTextOf(new Uint8Array(body), Infinity);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "REALM-GZIP-a-gold-act-reads-unopened",
     "file": "server-account/src/realm.js",
-    "old": "  try { save = JSON.parse(await realmSaveTextOf(object)); } catch { save = null; }   // REALM-GZIP: packed or plain\n",
-    "new": "  try { save = JSON.parse(await object.text()); } catch { save = null; }   // REALM-GZIP: packed or plain\n",
+    "old": "    save = JSON.parse(await realmSaveTextOf(object));",
+    "new": "    save = JSON.parse(await object.text());",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "REALM-GZIP-a-gold-act-held-to-the-request",
     "file": "server-account/src/realm.js",
-    "old": "  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' };",
-    "new": "  if (bytes > REALM_MAX_BYTES) return { error: 'no-data' };",
+    "old": "  if (bytes > REALM_TEXT_MAX_BYTES) return { error: 'no-data' }; // REALM-GZIP: written plain, within the text's bound",
+    "new": "  if (bytes > REALM_MAX_BYTES) return { error: 'no-data' }; // REALM-GZIP: written plain, within the text's bound",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "REALM-GZIP-the-bound-never-kept",
     "file": "src/net/realm/realmSaveCodec.js",
-    "old": "      if (size > max) { reader.cancel().catch(() => {}); return null; }\n",
-    "new": "",
+    "old": "      if (size > max) {\n        reader.cancel().catch(() => {});\n        return null;\n      }\n      parts.push(value);",
+    "new": "      parts.push(value);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "REALM-GZIP-plain-text-past-its-bound",
     "file": "src/net/realm/realmSaveCodec.js",
-    "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);\n",
-    "new": "  return new TextDecoder().decode(bytes);\n",
+    "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);",
+    "new": "  return new TextDecoder().decode(bytes);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]

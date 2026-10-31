@@ -12,8 +12,8 @@
   {
     "name": "SD11c-L1F2-latched-on-the-refusal",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };",
-    "new": "const ask = (s, key) => { castOut(key); castOutS = s; castOutAt = t; };",
+    "old": "      if (castOut(key) !== false) {\n        castOutS = s;\n        castOutAt = t;\n      }",
+    "new": "      castOut(key);\n      castOutS = s;\n      castOutAt = t;",
     "tests": [
       "test/systems/sd11c_page.test.js",
       "test/systems/superDungeon/sd2d_castout.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SD11c-L1F2-asked-twice-a-frame",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "    if (!asked && at != null && rec && ",
-    "new": "    if (at != null && rec && ",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "SD11c-L1F3-judged-before-the-hub-spoke",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "at != null && rec && !(rec.s === at && sdStands(phase))",
-    "new": "at != null && !(rec && rec.s === at && sdStands(phase))",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && !(rec && rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -79,8 +79,8 @@
   {
     "name": "SD11c-L1F3-cast-out-of-a-standing-Hollow",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "!(rec.s === at && sdStands(phase))",
-    "new": "!(rec.s === at && false)",
+    "old": "    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && again(at)) ask(at, `slot:${at}`);",
+    "new": "    if (!asked && at != null && rec && !(rec.s === at && false) && again(at)) ask(at, `slot:${at}`);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -115,8 +115,8 @@
   {
     "name": "SD11c-L6F17-never-kept",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "try { storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
-    "new": "void 0;",
+    "old": "      try {\n        storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX)));\n      } catch {\n        /* this session's memory holds it */\n      }",
+    "new": "      void 0;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "SD11c-L6F17-never-read",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "try { raw = storage()?.getItem?.(k) ?? null; } catch { raw = null; }",
-    "new": "try { raw = null; } catch { raw = null; }",
+    "old": "      raw = storage()?.getItem?.(k) ?? null;",
+    "new": "      raw = null;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "SD11c-L6F17-unbounded",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "JSON.stringify([...now, s].slice(-SD_ENTERED_MAX))",
-    "new": "JSON.stringify([...now, s])",
+    "old": "        storage()?.setItem?.(k, JSON.stringify([...now, s].slice(-SD_ENTERED_MAX)));",
+    "new": "        storage()?.setItem?.(k, JSON.stringify([...now, s]));",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -152,8 +152,8 @@
   {
     "name": "SD11c-L6F18-toward-the-Rift",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe)",
-    "new": "besideOn(ret, [-dx / len, 0, -dz / len], SD_LANDING_PAST_M, probe)",
+    "old": "    const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe);",
+    "new": "    const at = besideOn(ret, [-dx / len, 0, -dz / len], SD_LANDING_PAST_M, probe);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "SD11c-L6F18-boxed-in-nowhere",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return [ret[0], ret[1], ret[2]];",
-    "new": "      if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) >= riftClear) return at;\n    }\n  }\n  return null;",
+    "old": "  return [ret[0], ret[1], ret[2]];",
+    "new": "  return null;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -199,8 +199,8 @@
   {
     "name": "SD11c-L1F5-save-said",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.',",
-    "new": "'an older Hour': 'Your game is older than this Hour - save, then reload (or update the app) to fight.',",
+    "old": "    'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.', // AUDIT SD II (L1 F5, L6 F12): it said \"save\" where the Hour refuses a save",
+    "new": "    'an older Hour': 'Your game is older than this Hour - save, then reload (or update the app) to fight.', // AUDIT SD II (L1 F5, L6 F12): it said \"save\" where the Hour refuses a save",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -208,8 +208,8 @@
   {
     "name": "SD11c-L5F1-the-towns-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),\n            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
+    "new": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "SD11c-L5F1-the-serpents-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),\n            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
+    "new": "            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -226,8 +226,8 @@
   {
     "name": "SD11c-L5F1-the-Hours-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),\n          };",
+    "new": "          };",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "SD11c-L5F1-a-malformed-count-kept",
     "file": "src/net/duel/duelRecord.js",
-    "old": "...(Number.isSafeInteger(d?.raids?.defended) ?",
-    "new": "...(d?.raids ?",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),",
+    "new": "            ...(d?.raids ? { raids: { defended: d.raids.defended } } : {}),",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -244,7 +244,7 @@
   {
     "name": "SD11c-L5F1-unlaid",
     "file": "src/ui/profileWindow.js",
-    "old": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), dragons: profileDragonLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });",
+    "old": "export const profileRecordLines = (record) => ({\n  gates: profileGateLine(record),\n  raids: profileRaidLine(record),\n  serpents: profileSerpentLine(record),\n  dragons: profileDragonLine(record),\n  hours: profileSdLine(record),\n  stars: profileStarLine(record),\n  voyages: profileKetchLine(record),\n});",
     "new": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record) });",
     "tests": [
       "test/systems/sd11c_page.test.js",
@@ -384,8 +384,8 @@
   {
     "name": "SD11c-L5F6-the-device-unbounded",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));",
-    "new": "keep([...list.filter((k) => k !== drop), r]);",
+    "old": "        keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));",
+    "new": "        keep([...list.filter((k) => k !== drop), r]);",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SD11c-L6F4-the-Hours-words-unwritten",
     "file": "src/systems/deathRespawn.js",
-    "old": "  hour: [SD_REALM_TEXT.died],\n",
-    "new": "",
+    "old": "  hour: [SD_REALM_TEXT.died],\n});",
+    "new": "});",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "SD11c-G2-the-stuns-moment-moved",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0,",
-    "new": "stunAt: w.su ? now : 0,",
+    "old": "      stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0,",
+    "new": "      stunAt: w.su ? now : 0,",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "SD11c-G10-the-law-leaves-the-Echoes",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "      for (const B of [f.rem, ...(f.ec ?? []).map((x) => x.body)]) { stepWalk(B, now); B.mv = null; B.atk = null; }",
-    "new": "      for (const B of [f.rem]) { stepWalk(B, now); B.mv = null; B.atk = null; }",
+    "old": "      for (const B of [f.rem, ...(f.ec ?? []).map((x) => x.body)]) {",
+    "new": "      for (const B of [f.rem]) {",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "SD11c-G10-the-page-leaves-the-Echoes",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "ec: s.ec ? s.ec.map((E) => ({ ...E, ...stopped(E, at) })) : null, cx: null, su: 0, heardAt: now };",
-    "new": "ec: s.ec, cx: null, su: 0, heardAt: now };",
+    "old": "        return {\n          ...s,\n          clk: atkOf(w),\n          ended: w.at,\n          rem: stopped(s.rem, at),\n          ec: s.ec ? s.ec.map((E) => ({ ...E, ...stopped(E, at) })) : null,\n          cx: null,\n          su: 0,\n          heardAt: now,\n        };",
+    "new": "        return { ...s, clk: atkOf(w), ended: w.at, rem: stopped(s.rem, at), ec: s.ec, cx: null, su: 0, heardAt: now };",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "SD11c-G13-a-fallen-Echo-strikes",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "if (E.h > 0 && E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
-    "new": "if (E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "old": "    if (E.h > 0 && E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
+    "new": "    if (E.atk) out.push({ b: SD_BODY.gold + k, atk: E.atk });",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "SD11c-G13-Silver-named-Gold",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,",
-    "new": "echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Gold'} Echo.`,",
+    "old": "  echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,",
+    "new": "  echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Gold'} Echo.`,",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "SD11c-G13-no-Hollow-the-line-waits",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
-    "new": "if (!h && t - o.at < SD_LINE_WAIT_MS) return;",
+    "old": "      if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;",
+    "new": "      if (!h && t - o.at < SD_LINE_WAIT_MS) return;",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -548,8 +548,8 @@
     "name": "SD11c-G13-no-Hollow-no-region",
     "file": "src/scenes/superDungeon/sdHost.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
-    "new": "const near = h?.site?.cityName || '', region = province ? '' : '';",
+    "old": "        region = province ? '' : regionName(o.rec.r) || ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
+    "new": "        region = province ? '' : ''; // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -602,7 +602,7 @@
   {
     "name": "SD11c-G5-the-Echoes-reach-unread",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK) return out;",
+    "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)\n    return out;",
     "new": "  void 0;",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
@@ -611,8 +611,8 @@
   {
     "name": "SD11c-G5-the-Echoes-pose-unread",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (!spendBlow(p, now, seq, `e${e}`)) return out;\n  if (!poseIn(pose)) return out;",
-    "new": "  if (!spendBlow(p, now, seq, `e${e}`)) return out;",
+    "old": "  if (!poseIn(pose)) return out;\n  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)",
+    "new": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK)",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "SD11c-G5-the-Hearts-pose-unread",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (!spendBlow(p, now, seq, `x${c}`)) return out;\n  if (!poseIn(pose)) return out;",
-    "new": "  if (!spendBlow(p, now, seq, `x${c}`)) return out;",
+    "old": "  if (!poseIn(pose)) return out;\n  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;",
+    "new": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "SD11c-G6-each-body-charged",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    p.bqWho.push(who);\n    return true;\n  }\n  p.rate = Math.min(GATE_HIT_HZ_MAX,",
-    "new": "    void who;\n  }\n  p.rate = Math.min(GATE_HIT_HZ_MAX,",
+    "old": "    p.bqWho.push(who);\n    return true;",
+    "new": "    void who;",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]
@@ -674,7 +674,7 @@
   {
     "name": "SD11c-G7-never-retired",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
+    "old": "  for (const p of Object.values(f.players))\n    if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
     "new": "  void 0;",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
@@ -683,8 +683,8 @@
   {
     "name": "SD11c-G7-never-restored",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
-    "new": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; }",
+    "old": "      restoreShare(f, p);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "SD11c-G7-the-Echoes-unrescaled",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "retireShare(f, p);\n  rescaleEchoes(f);\n",
-    "new": "retireShare(f, p);\n",
+    "old": "  rescaleEchoes(f);\n  // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost",
+    "new": "  // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost",
     "tests": [
       "test/net/superDungeon/sd11c_law.test.js"
     ]

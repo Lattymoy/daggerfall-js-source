@@ -52,8 +52,8 @@
   {
     "name": "SD-PARTY-kept-in-another-party",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": " && (kept.p ?? null) === party &&",
-    "new": " &&",
+    "old": "    (kept.p ?? null) === party &&\n    typeof kept.o === 'string' &&",
+    "new": "    typeof kept.o === 'string' &&",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SD-BACK-another-copy-admits",
     "file": "server/src/sdCopy.js",
-    "old": "...(mine && mine.o !== c.o ? { w: 'down' } : {})",
-    "new": "...({})",
+    "old": "  return Response.json({ ok: true, ...(mine && mine.o !== c.o ? { w: 'down' } : {}) });",
+    "new": "  return Response.json({ ok: true, ...{} });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "SD-BACK-its-own-copy-refuses",
     "file": "server/src/sdCopy.js",
-    "old": "...(mine && mine.o !== c.o ? { w: 'down' } : {})",
-    "new": "...(mine ? { w: 'down' } : {})",
+    "old": "  return Response.json({ ok: true, ...(mine && mine.o !== c.o ? { w: 'down' } : {}) });",
+    "new": "  return Response.json({ ok: true, ...(mine ? { w: 'down' } : {}) });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "SD-BACK-the-last-copy-kept",
     "file": "server/src/sdCopy.js",
-    "old": "if (!mine) await room.state.storage.put(sdAcctKey(c.a, lane)",
-    "new": "await room.state.storage.put(sdAcctKey(c.a, lane)",
+    "old": "    if (!mine) await room.state.storage.put(sdAcctKey(c.a, lane), { s: c.s, d: 1, o: c.o });",
+    "new": "    await room.state.storage.put(sdAcctKey(c.a, lane), { s: c.s, d: 1, o: c.o });",
     "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE B1): the death's key is its lane's. SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "SD-SOLO-the-shared-door-shut",
     "file": "server/src/sdCopy.js",
-    "old": "  if (isSdPubOwner(owner)) return null;",
-    "new": "",
+    "old": "  if (isSdPubOwner(owner)) return null; // SD-SOLO: a shared Hour's door is its seats'",
+    "new": "  // SD-SOLO: a shared Hour's door is its seats'",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "SD-SOLO-the-open-passed-over",
     "file": "server/src/sdCopy.js",
-    "old": "if (r.has || r.open) return",
-    "new": "if (r.has) return",
+    "old": "    if (r.has || r.open) return new Response(JSON.stringify({ n }), { headers: head });",
+    "new": "    if (r.has) return new Response(JSON.stringify({ n }), { headers: head });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "SD-SOLO-the-holder-passed-over",
     "file": "server/src/sdCopy.js",
-    "old": "if (r.has || r.open) return",
-    "new": "if (r.open) return",
+    "old": "    if (r.has || r.open) return new Response(JSON.stringify({ n }), { headers: head });",
+    "new": "    if (r.open) return new Response(JSON.stringify({ n }), { headers: head });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "SD-SOLO-alone-in-my-own",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "return sdPubOwner(n) ?? me;",
-    "new": "return me;",
+    "old": "        return sdPubOwner(n) ?? me; // SD-SOLO: the shared Hour, or alone my own",
+    "new": "        return me; // SD-SOLO: the shared Hour, or alone my own",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "SD-SOLO-the-count-unsaid",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "{ n: Math.max(1, Math.min(SD_PUB_SEATS, n | 0)), max: SD_PUB_SEATS }",
-    "new": "{ n: SD_PUB_SEATS, max: SD_PUB_SEATS }",
+    "old": "  return t('sd.copy.shared', '{n} of {max} players are in this shared Hour.', {\n    n: Math.max(1, Math.min(SD_PUB_SEATS, n | 0)),\n    max: SD_PUB_SEATS,\n  });",
+    "new": "  return t('sd.copy.shared', '{n} of {max} players are in this shared Hour.', { n: SD_PUB_SEATS, max: SD_PUB_SEATS });",
     "note": "SD-BACK / SD-SOLO / SD-WON (2026-10-28).",
     "tests": [
       "test/net/superDungeon/sdparty_relay.test.js"

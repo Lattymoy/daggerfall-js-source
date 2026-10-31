@@ -9,17 +9,29 @@
 /** How close and how soon the last step outside must be, and how long the walk stays said after it. */
 export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000, keepMs: 15_000 });
 
-let out = null, inside = false, walkedAt = -Infinity;
+let out = null,
+  inside = false,
+  walkedAt = -Infinity;
 
 /** Each frame: `here` whether I stand in the zone, `pos` my place (metres, [x, y, z]), `now` ms. Answers whether my latest
  *  step in was a walk over the edge, said for ZONE_EDGE.keepMs. */
 export function zoneEdgeSee(here, pos, now) {
-  const x = Number(pos?.[0]) || 0, z = Number(pos?.[2]) || 0;
-  if (!here) { out = { x, z, at: now }; inside = false; walkedAt = -Infinity; return false; }   // outside, the last walk is spent
+  const x = Number(pos?.[0]) || 0,
+    z = Number(pos?.[2]) || 0;
+  if (!here) {
+    out = { x, z, at: now };
+    inside = false;
+    walkedAt = -Infinity;
+    return false;
+  } // outside, the last walk is spent
   if (!inside && out && now - out.at <= ZONE_EDGE.ms && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;
   inside = true;
   return now - walkedAt <= ZONE_EDGE.keepMs;
 }
 
 /** Tests: forget. */
-export function resetZoneEdge() { out = null; inside = false; walkedAt = -Infinity; }
+export function resetZoneEdge() {
+  out = null;
+  inside = false;
+  walkedAt = -Infinity;
+}

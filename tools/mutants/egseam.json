@@ -11,8 +11,8 @@
   {
     "name": "EGSEAM-more-than-the-contract",
     "file": "src/net/bossSeam.js",
-    "old": "  return Object.freeze(out);\n}",
-    "new": "  return Object.freeze({ ...members, ...out });\n}",
+    "old": "  return Object.freeze(out);",
+    "new": "  return Object.freeze({ ...members, ...out });",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGSEAM-the-gate-admits-all",
     "file": "src/net/bossSeam.js",
-    "old": "joinFight(f, sub, name, lv, now, o.admits, present)",
-    "new": "joinFight(f, sub, name, lv, now, true, present)",
+    "old": "  join: (f, sub, name, lv, now, present = null, o = {}) => joinFight(f, sub, name, lv, now, o.admits, present),",
+    "new": "  join: (f, sub, name, lv, now, present = null, o = {}) => joinFight(f, sub, name, lv, now, true, present),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGSEAM-the-gate-unmarked",
     "file": "src/net/bossSeam.js",
-    "old": "newFight(day, now, wrathAt, boss, md, pt, ti)",
-    "new": "newFight(day, now, wrathAt, boss, null, pt, ti)",
+    "old": "  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) => newFight(day, now, wrathAt, boss, md, pt, ti), // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment",
+    "new": "  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) =>\n    newFight(day, now, wrathAt, boss, null, pt, ti), // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGSEAM-the-remnant-unmarked",
     "file": "src/net/bossSeam.js",
-    "old": "newRemnantFight(s, fi, now, mk)",
-    "new": "newRemnantFight(s, fi, now, null)",
+    "old": "  new: ({ s, fi, now, mk = null }) => newRemnantFight(s, fi, now, mk),",
+    "new": "  new: ({ s, fi, now, mk = null }) => newRemnantFight(s, fi, now, null),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGSEAM-the-serpent-turned",
     "file": "src/net/bossSeam.js",
-    "old": "yaw = 0 }) => newSerpentFight",
-    "new": "yaw = 0.4 }) => newSerpentFight",
+    "old": "  new: ({ day, now, soundAt, boss, sx, sz, yaw = 0 }) => newSerpentFight(day, now, soundAt, boss, sx, sz, yaw),",
+    "new": "  new: ({ day, now, soundAt, boss, sx, sz, yaw = 0.4 }) => newSerpentFight(day, now, soundAt, boss, sx, sz, yaw),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGSEAM-the-serpent-far",
     "file": "src/net/bossSeam.js",
-    "old": "o.near ?? true",
-    "new": "o.near ?? false",
+    "old": "    joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? true),",
+    "new": "    joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? false),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGSEAM-the-serpent-hull-lost",
     "file": "src/net/bossSeam.js",
-    "old": "o.hl, now, o.admits",
-    "new": "4, now, o.admits",
+    "old": "    joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? true),",
+    "new": "    joinSerpentFight(f, sub, name, lv, 4, now, o.admits, present, o.near ?? true),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGSEAM-a-hand-on-the-ship-purse",
     "file": "src/net/bossSeam.js",
-    "old": "pose, now, r === 1),",
-    "new": "pose, now, false),",
+    "old": "  hit: (f, sub, d, r, pose, now, _seq = null, o = {}) => applySerpentHit(f, sub, d, o.z, pose, now, r === 1),",
+    "new": "  hit: (f, sub, d, r, pose, now, _seq = null, o = {}) => applySerpentHit(f, sub, d, o.z, pose, now, false),",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGSEAM-the-checkpoint-low",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "checkpoints.push({ x: x0, y, z, r: spec.checkR });",
-    "new": "checkpoints.push({ x: x0, y: 0, z, r: spec.checkR });",
+    "old": "      checkpoints.push({ x: x0, y, z, r: spec.checkR });",
+    "new": "      checkpoints.push({ x: x0, y: 0, z, r: spec.checkR });",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGSEAM-the-line-lost",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  const x0 = spec.x ?? 0, spire = spec.road != null;",
-    "new": "  const x0 = 0, spire = spec.road != null;",
+    "old": "  const x0 = spec.x ?? 0,",
+    "new": "  const x0 = 0,",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGSEAM-the-start-flat",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "let edge = spec.start.z + spec.start.r, y = spec.start.y ?? 0;",
-    "new": "let edge = spec.start.z + spec.start.r, y = 0;",
+    "old": "    y = spec.start.y ?? 0;",
+    "new": "    y = 0;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGSEAM-the-ghosts-the-hours",
     "file": "src/render/superDungeon/sdStepsPass.js",
-    "old": "export const sdGhostStepsOf = (course) => course.steps.filter(",
-    "new": "export const sdGhostStepsOf = (course) => SD_COURSE.steps.filter(",
+    "old": "export const sdGhostStepsOf = (course) => course.steps.filter((s) => s.kind === 'beat' || s.kind === 'crumble');",
+    "new": "export const sdGhostStepsOf = (course) => SD_COURSE.steps.filter((s) => s.kind === 'beat' || s.kind === 'crumble');",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGSEAM-the-waystones-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "export const sdWaystonesOf = (course) => Object.freeze(course.checkpoints.map(",
-    "new": "export const sdWaystonesOf = (course) => Object.freeze(SD_COURSE.checkpoints.map(",
+    "old": "  Object.freeze(course.checkpoints.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));",
+    "new": "  Object.freeze(SD_COURSE.checkpoints.map((c) => Object.freeze([c.x - 1.9, c.y, c.z + 0.4])));",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGSEAM-the-vane-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "export const sdVaneAt = (course) => { const C = course.checkpoints[2];",
-    "new": "export const sdVaneAt = (course) => { const C = SD_COURSE.checkpoints[2];",
+    "old": "  const C = course.checkpoints[2];",
+    "new": "  const C = SD_COURSE.checkpoints[2];",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGSEAM-the-floors-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "of course.checkpoints.entries()) {\n",
-    "new": "of SD_COURSE.checkpoints.entries()) {\n",
+    "old": "  for (const [k, { x: cx, y, z: cz, r }] of course.checkpoints.entries()) {",
+    "new": "  for (const [k, { x: cx, y, z: cz, r }] of SD_COURSE.checkpoints.entries()) {",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGSEAM-the-islands-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "  for (const [k, c] of course.checkpoints.entries()) if (k > 0)",
-    "new": "  for (const [k, c] of SD_COURSE.checkpoints.entries()) if (k > 0)",
+    "old": "  for (const [k, c] of course.checkpoints.entries())",
+    "new": "  for (const [k, c] of SD_COURSE.checkpoints.entries())",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGSEAM-the-breath-the-hours",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "z0 = C.z + C.r, z1 = course.end;",
-    "new": "z0 = C.z + C.r, z1 = SD_COURSE.end;",
+    "old": "    z1 = course.end;",
+    "new": "    z1 = SD_COURSE.end;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGSEAM-the-hang-the-hours",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "  ...course.checkpoints.map((c, k) => ({ stage: 'steps',",
-    "new": "  ...SD_COURSE.checkpoints.map((c, k) => ({ stage: 'steps',",
+    "old": "      ...course.checkpoints.map((c, k) => ({",
+    "new": "      ...SD_COURSE.checkpoints.map((c, k) => ({",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGSEAM-the-hang-model-the-hours",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "  for (const isl of islands) if (isl.stage === stage)",
-    "new": "  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage)",
+    "old": "  for (const isl of islands) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));",
+    "new": "  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage) islandRoot(f, isl, hangPlan(isl, { lite }));",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGSEAM-the-span-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  const C = course.checkpoints;\n  for (let k = C.length - 1;",
-    "new": "  const C = SD_COURSE.checkpoints;\n  for (let k = C.length - 1;",
+    "old": "  const C = course.checkpoints;",
+    "new": "  const C = SD_COURSE.checkpoints;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGSEAM-the-breath-end-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "&& z < course.end;",
-    "new": "&& z < SD_COURSE.end;",
+    "old": "  z > course.checkpoints[2].z + course.checkpoints[2].r && z < course.end;",
+    "new": "  z > course.checkpoints[2].z + course.checkpoints[2].r && z < SD_COURSE.end;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGSEAM-the-cast-back-the-hours",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "const C = course.checkpoints, c = C[Math.max(",
-    "new": "const C = SD_COURSE.checkpoints, c = C[Math.max(",
+    "old": "  const C = course.checkpoints,",
+    "new": "  const C = SD_COURSE.checkpoints,",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGSEAM-the-road-after-unmoved",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
-    "new": "orreryTurned(R, who, id, road, orreryShortest(o, lock.st), now);",
+    "old": "  if (R) orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
+    "new": "  if (R) orreryTurned(R, who, id, road, orreryShortest(o, lock.st), now);",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGSWAP-the-key-groundless",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "`${seed >>> 0}:${c}:${geo || 0}`",
-    "new": "`${seed >>> 0}:${c}`",
+    "old": "export const egCircleKey = (seed, c, geo = 0) => `${seed >>> 0}:${c}:${geo || 0}`;",
+    "new": "export const egCircleKey = (seed, c, geo = 0) => `${seed >>> 0}:${c}`;",
     "tests": [
       "test/world/eliteGates/egswap_client.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGSWAP-the-gates-copied",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "  for (const g of parts?.gates ?? []) { model(g.model); take(g.tris); }\n",
-    "new": "",
+    "old": "  for (const g of parts?.gates ?? []) {\n    model(g.model);\n    take(g.tris);\n  }\n  for (const [, art] of parts?.art ?? []) {",
+    "new": "  for (const [, art] of parts?.art ?? []) {",
     "tests": [
       "test/world/eliteGates/egswap_client.test.js"
     ]

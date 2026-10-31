@@ -66,8 +66,8 @@
   {
     "name": "party-hud-five-face-dropped",
     "file": "src/ui/partyPanel.js",
-    "old": "export const PARTY_CSS = `\n${PIXELIFY_FIVE_FACE}",
-    "new": "export const PARTY_CSS = `",
+    "old": "${PIXELIFY_FIVE_FACE}\n/* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and",
+    "new": "/* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "party-name-back-to-14px",
     "file": "src/ui/partyPanel.js",
-    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px;",
-    "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px;",
+    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;",
+    "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px; line-height: 1.2;",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "peer-menu-five-face-dropped",
     "file": "src/ui/socialMenu.js",
-    "old": "export const SOCIAL_MENU_CSS = `\n${PIXELIFY_FIVE_FACE}\n",
-    "new": "export const SOCIAL_MENU_CSS = `\n",
+    "old": "${PIXELIFY_FIVE_FACE}\n.dfpeer { position: fixed; left: 50%; top: 52%; transform: translate(-50%, 0); z-index: 6; display: none;",
+    "new": ".dfpeer { position: fixed; left: 50%; top: 52%; transform: translate(-50%, 0); z-index: 6; display: none;",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "hudtext-enhanced-arm-dropped",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (false && typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "hudtext-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -171,7 +171,7 @@
   {
     "name": "hudtext-hide-door-a-no-op",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined')\n      drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "new": "    if (false) drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "ENH-NOTICE3-toasts-keyed-by-index-not-row",
     "file": "src/ui/hud/hudText.js",
-    "old": "      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
-    "new": "      ids: drawn.map((l, i) => i),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
+    "old": "      ids: drawn.map((l) => l.id), // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
+    "new": "      ids: drawn.map((l, i) => i), // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "midscreen-enhanced-arm-dropped",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
-    "new": "    if (false && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (false && typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "midscreen-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/midScreenText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      // AUDIT FONT F11",
-    "new": "    if (typeof document !== 'undefined') {\n      // AUDIT FONT F11",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "midscreen-label-never-blanks",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = shown ? '' : 'none'; }",
-    "new": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = ''; }",
+    "old": "    midHost.style.display = shown ? '' : 'none';",
+    "new": "    midHost.style.display = '';",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "midscreen-a-node-per-message",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (!midHost) {\n    injectEnhancedStyle(doc);",
-    "new": "  {\n    injectEnhancedStyle(doc);",
+    "old": "  if (!midHost) {",
+    "new": "  {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "status-strip-never-clears",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = shown ? '' : 'none'; }",
-    "new": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = ''; }",
+    "old": "    statusHost.style.display = shown ? '' : 'none';",
+    "new": "    statusHost.style.display = '';",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "status-strip-a-node-per-message",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (!statusHost) {\n    injectEnhancedStyle(doc);",
-    "new": "  {\n    injectEnhancedStyle(doc);",
+    "old": "  if (!statusHost) {",
+    "new": "  {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -716,7 +716,7 @@
     "name": "AUDIT-FONT-F11-the-native-scale-stops-being-floored",
     "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  const m = nativeMetrics(canvas);\n  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (m.oy + y * m.s) / dpr;",
-    "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y / 200) / dpr;",
+    "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y) / 200 / dpr;",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "AUDIT-FONT-F11-the-large-HUD-lift-never-reaches-the-label",
     "file": "src/ui/midScreenText.js",
-    "old": "top: midTextTopPx(canvas, this.y) });",
-    "new": "top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
+    "old": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, this.y) });",
+    "new": "      drawEnhancedMidText({ text: this.text, visible: true, top: midTextTopPx(canvas, MID_SCREEN_TEXT_DEFAULT_Y) });",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

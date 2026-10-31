@@ -24,13 +24,18 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const IN_SESSION = 'claude-in-session';
 const TABLE = 'Port_Strings';
 
-const catalogOf = (root) => new Map(parseStringTableCsv(readFileSync(join(root, 'locales/en', `${TABLE}.csv`), 'utf8')));
+const catalogOf = (root) =>
+  new Map(parseStringTableCsv(readFileSync(join(root, 'locales/en', `${TABLE}.csv`), 'utf8')));
 /** The languages with a Port_Strings table of their own (every folder but English's). */
-export const draftLanguages = (root = ROOT) => readdirSync(join(root, 'locales'), { withFileTypes: true })
-  .filter((d) => d.isDirectory() && d.name !== 'en' && existsSync(join(root, 'locales', d.name, `${TABLE}.csv`))).map((d) => d.name).sort();
+export const draftLanguages = (root = ROOT) =>
+  readdirSync(join(root, 'locales'), { withFileTypes: true })
+    .filter((d) => d.isDirectory() && d.name !== 'en' && existsSync(join(root, 'locales', d.name, `${TABLE}.csv`)))
+    .map((d) => d.name)
+    .sort();
 
 function readLanguage(root, code) {
-  const csv = join(root, 'locales', code, `${TABLE}.csv`), metaPath = join(root, 'locales', code, `${TABLE}.meta.json`);
+  const csv = join(root, 'locales', code, `${TABLE}.csv`),
+    metaPath = join(root, 'locales', code, `${TABLE}.meta.json`);
   const rows = new Map(existsSync(csv) ? parseStringTableCsv(readFileSync(csv, 'utf8')) : []);
   const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : {};
   return { csv, metaPath, rows, meta };
@@ -56,29 +61,50 @@ export function mergeDrafts(drafts, root = ROOT) {
   const en = catalogOf(root);
   const report = { written: {}, refused: [], kept: [], dropped: [], owed: {} };
   for (const [code, rowsIn] of Object.entries(drafts)) {
-    if (code === 'en' || !/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/.test(code)) { report.refused.push(`${code}: not a language folder`); continue; }
+    if (code === 'en' || !/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/.test(code)) {
+      report.refused.push(`${code}: not a language folder`);
+      continue;
+    }
     const { csv, metaPath, rows, meta } = readLanguage(root, code);
     const plan = planRun(en, rows, meta);
     const people = new Set(plan.human);
     const nextMeta = { ...plan.meta };
     let n = 0;
     for (const [key, text] of Object.entries(rowsIn ?? {})) {
-      if (!en.has(key)) { report.refused.push(`${code} ${key}: not in the English catalog`); continue; }
-      if (people.has(key)) { report.kept.push(`${code} ${key}`); continue; }
+      if (!en.has(key)) {
+        report.refused.push(`${code} ${key}: not in the English catalog`);
+        continue;
+      }
+      if (people.has(key)) {
+        report.kept.push(`${code} ${key}`);
+        continue;
+      }
       const problems = checkDraft(en.get(key), text, 'icu');
-      if (problems.length) { report.refused.push(`${code} ${key}: ${problems.join('; ')}`); continue; }
+      if (problems.length) {
+        report.refused.push(`${code} ${key}: ${problems.join('; ')}`);
+        continue;
+      }
       rows.set(key, text);
       nextMeta[key] = { en: hash(en.get(key)), tr: hash(text), by: IN_SESSION };
       n++;
     }
-    for (const key of [...rows.keys()]) if (!en.has(key)) { rows.delete(key); delete nextMeta[key]; report.dropped.push(`${code} ${key}`); }
+    for (const key of [...rows.keys()])
+      if (!en.has(key)) {
+        rows.delete(key);
+        delete nextMeta[key];
+        report.dropped.push(`${code} ${key}`);
+      }
     const ordered = [...en.keys()].filter((k) => rows.has(k)).map((k) => [k, rows.get(k)]);
     writeFileSync(csv, formatStringTableCsv(ordered));
     const metaOrdered = Object.fromEntries([...en.keys()].filter((k) => nextMeta[k]).map((k) => [k, nextMeta[k]]));
     writeFileSync(metaPath, `${JSON.stringify(metaOrdered, null, 1)}\n`);
     report.written[code] = n;
   }
-  report.owed = Object.fromEntries(Object.entries(owed(root)).map(([c, o]) => [c, Object.keys(o).length]).filter(([, k]) => k));
+  report.owed = Object.fromEntries(
+    Object.entries(owed(root))
+      .map(([c, o]) => [c, Object.keys(o).length])
+      .filter(([, k]) => k),
+  );
   return report;
 }
 

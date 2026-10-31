@@ -20,8 +20,8 @@
   {
     "name": "PE-lean-back-across-the-cut",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "  const b = Math.max(0, num / den);",
-    "new": "  const b = num / den;",
+    "old": "  const b = Math.max(0, num / den); // texels right per row down - never back across the cut",
+    "new": "  const b = num / den; // texels right per row down - never back across the cut",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PE-bleed-walks-the-wrong-way",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "const qx = Math.round(x - t * dx), qy = Math.round(y - t * dy);",
-    "new": "const qx = Math.round(x - t * dy), qy = Math.round(y - t * dx);",
+    "old": "      const qx = Math.round(x - t * dx),\n        qy = Math.round(y - t * dy);",
+    "new": "      const qx = Math.round(x - t * dy),\n        qy = Math.round(y - t * dx);",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PE-frame-shifted",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "out[y * W * 4 + i] = data[y * w * 4 + i];",
-    "new": "out[y * W * 4 + i + 4] = data[y * w * 4 + i];",
+    "old": "  for (let y = 0; y < h; y++) for (let i = 0; i < w * 4; i++) out[y * W * 4 + i] = data[y * w * 4 + i];",
+    "new": "  for (let y = 0; y < h; y++) for (let i = 0; i < w * 4; i++) out[y * W * 4 + i + 4] = data[y * w * 4 + i];",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PE-anchor-the-bled-box",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "  return { cells, boxes, anchor, lean, bled, union,",
-    "new": "  return { cells, boxes, anchor: contentBox(bled[0]), lean, bled, union,",
+    "old": "  return { cells, boxes, anchor, lean, bled, union, soft: cells.reduce((n, c) => n + c.soft, 0) };",
+    "new": "  return { cells, boxes, anchor: contentBox(bled[0]), lean, bled, union, soft: cells.reduce((n, c) => n + c.soft, 0) };",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PE-anchor-left-behind",
     "file": "src/combat/gun/pistolViewmodel.js",
-    "old": "  if (dx) { rect.x += dx; anchorRect.x += dx; }",
-    "new": "  if (dx) { rect.x += dx; }",
+    "old": "    anchorRect.x += dx;\n  }",
+    "new": "  }",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PE-mirror-held-on-the-right",
     "file": "src/combat/gun/pistolViewmodel.js",
-    "old": "  const dx = flip ? Math.min(0, -rect.x) :",
-    "new": "  const dx = flip ? Math.max(0, canvasW - (rect.x + rect.w)) :",
+    "old": "  const dx = flip ? Math.min(0, -rect.x) : Math.max(0, canvasW - (rect.x + rect.w));",
+    "new": "  const dx = flip ? Math.max(0, canvasW - (rect.x + rect.w)) : Math.max(0, canvasW - (rect.x + rect.w));",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PE-the-hand-unheld",
     "file": "src/combat/gun/pistolViewmodel.js",
-    "old": "  return holdToCorner(gunFrameRect({",
-    "new": "  return ((fr) => fr)(gunFrameRect({",
+    "old": "  return holdToCorner(",
+    "new": "  return ((fr) => fr)(",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PE-the-gold-unbled",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);",
-    "new": "gildFrame(own, pistoletGildKeep(own)) : shimmer(own), null);",
+    "old": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);",
+    "new": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), null);",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PE-every-gap-closed",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "if (i > 0 && j < len && j - i <= EDGE_GAP)",
-    "new": "if (i > 0 && j < len)",
+    "old": "    if (i > 0 && j < len && j - i <= EDGE_GAP)\n      for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];",
+    "new": "    if (i > 0 && j < len) for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PE-the-notch-the-far-sides",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];",
-    "new": "src[k] = k - (i - 1) <= j - k ? src[j] : src[i - 1];",
+    "old": "      for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];",
+    "new": "      for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[j] : src[i - 1];",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PE-the-wrong-edge",
     "file": "src/combat/gun/pistolStrip.js",
-    "old": "const o = tx >= ty ? right[qy] : bottom[qx];",
-    "new": "const o = tx > 0 ? right[qy] : bottom[qx];",
+    "old": "      const o = tx >= ty ? right[qy] : bottom[qx]; // the edge the walk back crossed last",
+    "new": "      const o = tx > 0 ? right[qy] : bottom[qx]; // the edge the walk back crossed last",
     "tests": [
       "test/combat/gun/pistoledge.test.js"
     ]

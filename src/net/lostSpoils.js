@@ -17,7 +17,8 @@ export const lostCall = (io, { day, pieces }) => call(io, '/v1/post/lost', { day
 
 /** What an answer means to the pool: 'ok', 'refused' (it will never be a yes - net/lostLaw.js LOST_FINAL) or 'later'.
  *  @returns {'ok'|'refused'|'later'} */
-export const lostAnswerOf = (/** @type {any} */ r) => (r?.ok ? 'ok' : LOST_FINAL.includes(r?.error) ? 'refused' : 'later');
+export const lostAnswerOf = (/** @type {any} */ r) =>
+  r?.ok ? 'ok' : LOST_FINAL.includes(r?.error) ? 'refused' : 'later';
 
 /**
  * THE POOLS' DOOR TO THE LOST AND FOUND (scenes/spoilsPool.js `mail`).
@@ -33,7 +34,11 @@ export function lostSpoilsMail({ box, say = () => {} }) {
       if (!io?.secret) return /** @type {'later'} */ ('later');
       return lostAnswerOf(await lostCall(io, o));
     },
-    sent: () => { box()?.refresh?.()?.catch?.(() => {}); },
+    sent: () => {
+      box()
+        ?.refresh?.()
+        ?.catch?.(() => {});
+    },
     say,
   };
 }

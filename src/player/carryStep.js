@@ -14,8 +14,9 @@ export const CARRY_LET_GO_MS = 1500;
  */
 export function carryStep(st, t, sendDrop) {
   if (!st.carrying) return { forced: false };
-  if (t - st.letGoAt < CARRY_LET_GO_MS) return { forced: st.forced };   // the hands given back while the room hears the piece let go
-  if (st.forced && st.sheathed === false) return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };
+  if (t - st.letGoAt < CARRY_LET_GO_MS) return { forced: st.forced }; // the hands given back while the room hears the piece let go
+  if (st.forced && st.sheathed === false)
+    return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };
   if (!st.sheathed) return { forced: true, sheathe: true, say: st.forced ? null : 'handsFull' };
   return { forced: true };
 }

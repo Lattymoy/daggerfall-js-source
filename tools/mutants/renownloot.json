@@ -135,8 +135,8 @@
   {
     "name": "RENOWN-LOOT-kit-ladder-whole",
     "file": "src/systems/foeLootCap.js",
-    "old": "weights: plainFoeRarityWeights(quarters) };   // RENOWN-LOOT",
-    "new": "weights: plainFoeRarityWeights(4) };   // RENOWN-LOOT",
+    "old": "    weights: plainFoeRarityWeights(quarters),",
+    "new": "    weights: plainFoeRarityWeights(4),",
     "why": "the kit's ladder never read at the Renown",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -145,8 +145,8 @@
   {
     "name": "RENOWN-LOOT-ladder-before",
     "file": "src/systems/foeLootCap.js",
-    "old": "  magic:     Object.freeze({ base: 40,  perTier: 4,    cap: 150 }),",
-    "new": "  magic:     Object.freeze({ base: 45,  perTier: 4,    cap: 150 }),",
+    "old": "  magic: Object.freeze({ base: 40, perTier: 4, cap: 150 }),",
+    "new": "  magic: Object.freeze({ base: 45, perTier: 4, cap: 150 }),",
     "why": "the ladder's step from the wrong before",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "RENOWN-LOOT-ladder-whole-shortcut",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;\n",
-    "new": "",
+    "old": "  if (quarters === 4) return PLAIN_FOE_RARITY_WEIGHTS;\n  let w = _ladders.get(quarters);",
+    "new": "  let w = _ladders.get(quarters);",
     "why": "a fresh ladder for LOOT-EASE's own (not the very table)",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -195,8 +195,8 @@
   {
     "name": "RENOWN-LOOT-magicka-from-some",
     "file": "src/systems/healingSupply.js",
-    "old": "magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters) }",
-    "new": "magicka: lootEased(MAGICKA_ENEMY_CHANCE, MAGICKA_ENEMY_CHANCE, quarters) }",
+    "old": "      magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters),",
+    "new": "      magicka: lootEased(MAGICKA_ENEMY_CHANCE, MAGICKA_ENEMY_CHANCE, quarters),",
     "why": "a foe's Restore Power flat",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "RENOWN-LOOT-foe-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { enemy } = healingSupplyChances(quarters); maybeAddHealingPotion",
-    "new": "{ const { enemy } = healingSupplyChances(4); maybeAddHealingPotion",
+    "old": "    const { enemy } = healingSupplyChances(quarters);",
+    "new": "    const { enemy } = healingSupplyChances(4);",
     "why": "the foe's hook at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -215,8 +215,8 @@
   {
     "name": "RENOWN-LOOT-pile-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion",
-    "new": "{ const { pile } = healingSupplyChances(4); maybeAddHealingPotion",
+    "old": "      const { pile } = healingSupplyChances(quarters);",
+    "new": "      const { pile } = healingSupplyChances(4);",
     "why": "the pile's hook at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -225,8 +225,8 @@
   {
     "name": "RENOWN-LOOT-rest-from-some",
     "file": "src/systems/rest/restItems.js",
-    "old": "chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
-    "new": "chances.map(([t, pct]) => [t, lootEased(pct, pct, quarters)]);",
+    "old": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
+    "new": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(pct, pct, quarters)]);",
     "why": "the supplies flat online",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -235,8 +235,8 @@
   {
     "name": "RENOWN-LOOT-rest-foe-hook-whole",
     "file": "src/systems/rest/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_FOE_CHANCES, quarters), rolls); });",
-    "new": "rollRestLoot(items, REST_FOE_CHANCES, rolls); });",
+    "old": "    rollRestLoot(items, restLootChances(REST_FOE_CHANCES, quarters), rolls);",
+    "new": "    rollRestLoot(items, REST_FOE_CHANCES, rolls);",
     "why": "the foe's supplies at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "RENOWN-LOOT-rest-pile-hook-whole",
     "file": "src/systems/rest/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_PILE_CHANCES, quarters), rolls); });",
-    "new": "rollRestLoot(items, REST_PILE_CHANCES, rolls); });",
+    "old": "    if (isDeepPileKey(key)) rollRestLoot(items, restLootChances(REST_PILE_CHANCES, quarters), rolls);",
+    "new": "    if (isDeepPileKey(key)) rollRestLoot(items, REST_PILE_CHANCES, rolls);",
     "why": "the pile's supplies at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -255,8 +255,8 @@
   {
     "name": "RENOWN-LOOT-rest-whole-shortcut",
     "file": "src/systems/rest/restItems.js",
-    "old": "  quarters === 4 ? chances : chances.map(",
-    "new": "  chances.map(",
+    "old": "  quarters === 4 ? chances : chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
+    "new": "  chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
     "why": "a fresh table for LOOT-EASE's own (not the very table)",
     "tests": [
       "test/systems/renownloot.test.js"

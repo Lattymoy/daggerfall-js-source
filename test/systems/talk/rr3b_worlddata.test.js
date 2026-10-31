@@ -267,7 +267,7 @@ test('RR3b the readers ask the door: MapsFile\'s three asks and BlocksFile\'s fo
   const bf = rd('src/formats/blocksFile.js');
   assert.match(bf, /return worldDataDoor\(\)\?\.getNewDFBlockName\(block\) \?\? \(block < this\.count \? this\._bsa\.getRecordName\(block\) : null\);/, 'GetBlockName (:214)');
   assert.match(bf, /const assigned = worldDataDoor\(\)\?\.getNewDFBlockIndex\(name\) \?\? -1;\s*if \(assigned !== -1\) return assigned;/, 'GetBlockIndex (:273)');
-  assert.match(bf, /const replacement = block >= 0 \? worldDataDoor\(\)\?\.getDFBlockReplacementData\(block, this\.getBlockName\(block\)\) : null;\s*if \(replacement\) \{\s*if \(this\._blocks && this\._blocks\.length > block\) this\._blocks\[block\] = \{ name: replacement\.name, bytes: null, view: null, dfBlock: replacement \};\s*return dryBlock\(replacement\);/, 'GetBlock (:385)');   // PIN MOVED (PUDDLE-DRY): the replacement served through the one door that dries a town's puddles
+  assert.match(bf, /const replacement = block >= 0 \? worldDataDoor\(\)\?\.getDFBlockReplacementData\(block, this\.getBlockName\(block\)\) : null;\n\s*if \(replacement\) \{\n\s*if \(this\._blocks && this\._blocks\.length > block\)\n\s*this\._blocks\[block\] = \{ name: replacement\.name, bytes: null, view: null, dfBlock: replacement \};\n\s*return dryBlock\(replacement\);/, 'GetBlock (:385)');   // PIN MOVED (PUDDLE-DRY): the replacement served through the one door that dries a town's puddles
   assert.match(bf, /const replacement = door\?\.getBuildingReplacementData\(rec\.name, rec\.dfBlock\.index, i\);\s*if \(replacement\) \{\s*subRecords\[i\] = \{ \.\.\.replacement\.rmbSubRecord \};/, 'ReadRmbBlockData (:850)');
   assert.match(bf, /if \(replacement\.nameSeed > 0\) h\.buildingDataList\[i\]\.nameSeed = replacement\.nameSeed;\s*door\.applyBuildingReplacementAutoMapData\(replacement, h\.autoMapData\);/);
   assert.match(bf, /position \+= h\.blockDataSizes\[i\];\s*r\.pos = position;/, 'the step by the header\'s sizes stands on both arms');
@@ -324,7 +324,7 @@ test('RR3b the hosts and the save: the four hosts bind the reader and await the 
   assert.equal((w.match(/locationIndex: (dfLoc|loc)\.locationIndex \?\? 0/g) ?? []).length, 5, 'world.js: the five merge sites');
   assert.equal((e.match(/locationIndex: dfLocation\.locationIndex \?\? 0/g) ?? []).length, 4, 'exterior.js: the four merge sites');
   assert.match(rd('src/systems/talk/talkTopics.js'), /export function mergeNamedBuildings\(exteriorBuildings, blocks, \{ locationIndex = 0 \} = \{\}\) \{/);
-  assert.match(rd('src/world/buildingSummaries.js'), /mergeNamedBuildings\(exteriorBuildings \?\? \[\], blocks \?\? \[\], \{ locationIndex: nameOpts\.locationIndex \?\? 0 \}\)/);
+  assert.match(rd('src/world/buildingSummaries.js'), /mergeNamedBuildings\(exteriorBuildings \?\? \[\], blocks \?\? \[\], \{\n\s*locationIndex: nameOpts\.locationIndex \?\? 0,\n\s*\}\)/);
   const sv = rd('src/systems/save/save.js');
   assert.match(sv, /snap\.worldVariation = getWorldVariationSaveData\(\);/, 'SaveLoadManager.cs:1125');
   assert.match(sv, /clearWorldDataVariants\(\);\s*restoreWorldVariationData\(snap\.worldVariation \?\? null\);/, 'SaveLoadManager.cs:1465-1466');

@@ -4,34 +4,44 @@
     "file": "src/scenes/world.js",
     "old": "      wildRemains.setRooms(online.heldRooms());\n      wildRemains.onWord(w, room);",
     "new": "      wildRemains.onWord(w, room);",
-    "tests": ["test/systems/map/waypoints.test.js"]
+    "tests": [
+      "test/systems/map/waypoints.test.js"
+    ]
   },
   {
     "name": "WILDWP-not-followed",
     "file": "src/systems/wild/wildRemainsWaypoint.js",
-    "old": "  setWaypointFollowed(got.waypoint.id, true);\n",
-    "new": "",
-    "tests": ["test/systems/map/waypoints.test.js"]
+    "old": "  setWaypointFollowed(got.waypoint.id, true);\n  writeMark({ id: got.waypoint.id, until, r });",
+    "new": "  writeMark({ id: got.waypoint.id, until, r });",
+    "tests": [
+      "test/systems/map/waypoints.test.js"
+    ]
   },
   {
     "name": "WILDWP-outlives-its-time",
     "file": "src/systems/wild/wildRemainsWaypoint.js",
-    "old": "  if (now >= m.until || !waypointById(m.id)) { clearRemainsMark(); return true; }",
-    "new": "  if (!waypointById(m.id)) { clearRemainsMark(); return true; }",
-    "tests": ["test/systems/map/waypoints.test.js"]
+    "old": "  if (now >= m.until || !waypointById(m.id)) {",
+    "new": "  if (!waypointById(m.id)) {",
+    "tests": [
+      "test/systems/map/waypoints.test.js"
+    ]
   },
   {
     "name": "WILDWP-gone-ignored",
     "file": "src/systems/wild/wildRemainsWaypoint.js",
     "old": "  return !!m && m.r != null && m.r === r ? clearRemainsMark() : false;",
     "new": "  return false;",
-    "tests": ["test/systems/map/waypoints.test.js"]
+    "tests": [
+      "test/systems/map/waypoints.test.js"
+    ]
   },
   {
     "name": "WILDWP-two-flags",
     "file": "src/systems/wild/wildRemainsWaypoint.js",
-    "old": "export function markRemains({ mx, my, until, r = null }) {\n  clearRemainsMark();",
-    "new": "export function markRemains({ mx, my, until, r = null }) {",
-    "tests": ["test/systems/map/waypoints.test.js"]
+    "old": "  clearRemainsMark();\n  if (!Number.isFinite(until)) return null;",
+    "new": "  if (!Number.isFinite(until)) return null;",
+    "tests": [
+      "test/systems/map/waypoints.test.js"
+    ]
   }
 ]

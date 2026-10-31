@@ -23,21 +23,27 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { cardById } from '../net/iliac/iliacCards.js';
-import { cardRules } from '../systems/iliac/iliacCardWords.js';   // KG-SET: a card's rules, in the player's language
+import { cardRules } from '../systems/iliac/iliacCardWords.js'; // KG-SET: a card's rules, in the player's language
 import { ILIAC_HAND_MAX, ILIAC_HOLDINGS, ILIAC_MAGICKA_MAX, ILIAC_ROOM, ILIAC_TURNS } from '../net/iliac/iliacHand.js';
 import { ILIAC_CARD_ASPECT } from '../render/iliacCardFaces.js';
-import { cardCanvasCopy } from './card/cardBinderPage.js';   // CARDS-PLUS: the binder's own painting of a face, at its CSS size
-import { cardPanelChromeCss, dressCardPanel, foldWords } from './card/cardPanelKit.js';   // CARDS-PLUS: the kit and the face, both panels' one home
-import { PIXELIFY_FIVE_FACE } from './pixelifyFive.js';   // FIX-D: the face's five, carried by every sheet that sets it
-import { t, localizedText } from '../systems/textManager.js';   // CARDS-PLUS (L10N4): the words this panel's look added, in the player's language
-import { playGambitWord } from './gambitTableWords.js';   // KG3: the third game's press, in the player's language
+import { cardCanvasCopy } from './card/cardBinderPage.js'; // CARDS-PLUS: the binder's own painting of a face, at its CSS size
+import { cardPanelChromeCss, dressCardPanel, foldWords } from './card/cardPanelKit.js'; // CARDS-PLUS: the kit and the face, both panels' one home
+import { PIXELIFY_FIVE_FACE } from './pixelifyFive.js'; // FIX-D: the face's five, carried by every sheet that sets it
+import { t, localizedText } from '../systems/textManager.js'; // CARDS-PLUS (L10N4): the words this panel's look added, in the player's language
+import { playGambitWord } from './gambitTableWords.js'; // KG3: the third game's press, in the player's language
 
 /** A temper as the panel names it. */
 export const TEMPER_WORDS = Object.freeze({ tight: 'careful', loose: 'reckless', bluffer: 'sly' });
 /** A deck's refusal (the binder page's words: ui/card/cardBinderPage.js DECK_REFUSAL_WORDS) as the setup's row says it. */
 export const ILIAC_REFUSAL_WORDS = Object.freeze({
-  over: 'The game is over.', committed: 'You have committed this turn.', shape: 'That is not a valid play.', hand: 'That card is not in your hand.',
-  holding: 'No such holding.', spell: 'Spells cannot be played there.', magicka: 'Not enough magicka.', room: 'No room on your side there.',
+  over: 'The game is over.',
+  committed: 'You have committed this turn.',
+  shape: 'That is not a valid play.',
+  hand: 'That card is not in your hand.',
+  holding: 'No such holding.',
+  spell: 'Spells cannot be played there.',
+  magicka: 'Not enough magicka.',
+  room: 'No room on your side there.',
 });
 
 /** A holding's ongoing rule of `verb` (its own card's text), or null. */
@@ -51,19 +57,23 @@ const holdingRule = (id, verb) => cardById(id)?.fx?.find((f) => f.on === 'ongoin
 export function viewCostOf(view, card, h) {
   const p = view.viewer;
   let off = 0;
-  for (const fx of cardById(view.holdings[h].id)?.fx ?? []) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
-  for (const hd of view.holdings) for (const c of hd.sides[p]) {
-    if (c.down) continue;
-    for (const fx of cardById(c.form ?? c.id)?.fx ?? []) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
-  }
+  for (const fx of cardById(view.holdings[h].id)?.fx ?? [])
+    if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
+  for (const hd of view.holdings)
+    for (const c of hd.sides[p]) {
+      if (c.down) continue;
+      for (const fx of cardById(c.form ?? c.id)?.fx ?? [])
+        if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
+    }
   return Math.max(0, card.cost - off);
 }
 /** The magicka a staged list spends. */
-export const stagedSpend = (/** @type {any} */ view, /** @type {{card: number, holding: number}[]} */ plays) => plays.reduce((s, x) => {
-  const id = view.players[view.viewer].hand?.[x.card]?.id;
-  const c = id ? cardById(id) : null;
-  return s + (c ? viewCostOf(view, c, x.holding) : 0);
-}, 0);
+export const stagedSpend = (/** @type {any} */ view, /** @type {{card: number, holding: number}[]} */ plays) =>
+  plays.reduce((s, x) => {
+    const id = view.players[view.viewer].hand?.[x.card]?.id;
+    const c = id ? cardById(id) : null;
+    return s + (c ? viewCostOf(view, c, x.holding) : 0);
+  }, 0);
 /**
  * Why the viewer may not commit `plays` (playsRefusal's words, over the view), or null.
  * @param {any} view @param {{card: number, holding: number}[]} plays
@@ -74,25 +84,37 @@ export function stagedRefusal(view, plays) {
   if (!me?.hand) return 'over';
   if (me.committed) return 'committed';
   if (!Array.isArray(plays) || plays.length > ILIAC_HAND_MAX) return 'shape';
-  const seen = new Set(), units = [0, 0, 0];
+  const seen = new Set(),
+    units = [0, 0, 0];
   for (const x of plays) {
     if (!Number.isInteger(x?.card) || !Number.isInteger(x?.holding)) return 'shape';
     if (x.card < 0 || x.card >= me.hand.length || seen.has(x.card)) return 'hand';
     if (x.holding < 0 || x.holding >= ILIAC_HOLDINGS) return 'holding';
     seen.add(x.card);
     const card = cardById(me.hand[x.card].id);
-    if (card.kind === 'spell') { if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell'; } else units[x.holding]++;
+    if (card.kind === 'spell') {
+      if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell';
+    } else units[x.holding]++;
   }
   if (stagedSpend(view, plays) > me.magicka) return 'magicka';
-  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';
+  for (let h = 0; h < ILIAC_HOLDINGS; h++)
+    if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';
   return null;
 }
 
 /** A card as the panel shows it: its id (painted), its name, what the hover says - or a face-down card. */
 export const iliacFace = (/** @type {any} */ c, extra = {}) => {
-  if (!c || c.down && !c.id) return { id: null, name: 'Face down', title: 'A card face down', ...extra };
+  if (!c || (c.down && !c.id)) return { id: null, name: 'Face down', title: 'A card face down', ...extra };
   const card = cardById(c.form ?? c.id);
-  return { id: card?.id ?? null, name: card?.name ?? '?', power: c.power ?? card?.power ?? 0, cost: card?.cost ?? 0, title: card ? `${card.name} - ${cardRules(card)}` : '?', ...(c.down ? { down: true } : {}), ...extra };
+  return {
+    id: card?.id ?? null,
+    name: card?.name ?? '?',
+    power: c.power ?? card?.power ?? 0,
+    cost: card?.cost ?? 0,
+    title: card ? `${card.name} - ${cardRules(card)}` : '?',
+    ...(c.down ? { down: true } : {}),
+    ...extra,
+  };
 };
 
 /** The result said. */
@@ -100,10 +122,11 @@ export function resultLine(view, end) {
   const r = view?.result;
   const me = view?.viewer ?? 0;
   if (end === 'left') return 'You concede the game.';
-  if (end === 'won-left') return 'Your opponent concedes. You win.';   // CARDS10: the relay's concession
-  if (end === 'void') return 'No contest. The game is called off.';   // AUDIT CARDS-6 C7/E13: nobody's
+  if (end === 'won-left') return 'Your opponent concedes. You win.'; // CARDS10: the relay's concession
+  if (end === 'void') return 'No contest. The game is called off.'; // AUDIT CARDS-6 C7/E13: nobody's
   if (!r) return '';
-  const held = r.held.filter((x) => x === me).length, theirs = r.held.filter((x) => x === 1 - me).length;
+  const held = r.held.filter((x) => x === me).length,
+    theirs = r.held.filter((x) => x === 1 - me).length;
   if (r.winner === null) return `A draw: ${held} holdings each, and ${r.total[me]} power to ${r.total[1 - me]}.`;
   const won = r.winner === me;
   return r.by === 'holdings'
@@ -118,7 +141,8 @@ export function resultLine(view, end) {
  * @param {any} view @param {number} h
  */
 export function holdingLead(view, h) {
-  const me = view?.viewer >= 0 ? view.viewer : 0, them = 1 - me;
+  const me = view?.viewer >= 0 ? view.viewer : 0,
+    them = 1 - me;
   const held = view?.result?.held?.[h];
   if (held === me) return 'mine';
   if (held === them) return 'theirs';
@@ -129,132 +153,274 @@ export function holdingLead(view, h) {
 /** CARDS-PLUS: a game's end as its player's - 'won', 'lost', 'drawn', or 'void' for no contest; null while it is played,
  *  and for a watcher (the end is the players', said in the line). `end` is the session's or the relay's word. */
 export function iliacOutcome(view, end) {
-  if (view && !(view.viewer >= 0)) return null;   // AUDIT CARDS-PLUS A6: a watcher's 'void' too - the end is the players'
+  if (view && !(view.viewer >= 0)) return null; // AUDIT CARDS-PLUS A6: a watcher's 'void' too - the end is the players'
   if (end === 'left') return 'lost';
   if (end === 'won-left') return 'won';
   if (end === 'void') return 'void';
   const r = view?.result;
-  if (!r) return null;   // a watcher is turned away above (A6); asked again here, it was a check no pin could fail
+  if (!r) return null; // a watcher is turned away above (A6); asked again here, it was a check no pin could fail
   return r.winner === null ? 'drawn' : r.winner === view.viewer ? 'won' : 'lost';
 }
 /** CARDS-PLUS: the end's banner word - read when it is shown (L10N4: a frozen table's words are getters, never read at
  *  module load, which comes before the boot chooses the language). */
 export const VERDICT_WORDS = Object.freeze({
-  get won() { return t('cards.iliac.verdict.won', 'Victory'); },
-  get lost() { return t('cards.iliac.verdict.lost', 'Defeat'); },
-  get drawn() { return t('cards.iliac.verdict.drawn', 'A draw'); },
-  get void() { return t('cards.iliac.verdict.void', 'No contest'); },
+  get won() {
+    return t('cards.iliac.verdict.won', 'Victory');
+  },
+  get lost() {
+    return t('cards.iliac.verdict.lost', 'Defeat');
+  },
+  get drawn() {
+    return t('cards.iliac.verdict.drawn', 'A draw');
+  },
+  get void() {
+    return t('cards.iliac.verdict.void', 'No contest');
+  },
 });
 
 /**
  * The panel's model.
  * @param {{phase: 'setup'|'playing'|'over', view?: any, staged?: {card: number, holding: number}[], pick?: number|null, setup?: any, end?: string|null, prize?: any, log?: string[], packPrice?: number|null, online?: any, friendly?: boolean, why?: string|null, gambit?: boolean}} p
  */
-export function iliacHudModel({ phase, view = null, staged = [], pick = null, setup = null, end = null, prize = null, log = [], packPrice = null, online = null, friendly = false, why = null, gambit = false }) {
+export function iliacHudModel({
+  phase,
+  view = null,
+  staged = [],
+  pick = null,
+  setup = null,
+  end = null,
+  prize = null,
+  log = [],
+  packPrice = null,
+  online = null,
+  friendly = false,
+  why = null,
+  gambit = false,
+}) {
   const title = 'Card table: Iliac Hand';
-  const note = online ? (online.ranked ? 'A ranked game against another player. The result counts on the season board.' : 'A game against another player in the room.')
-    : friendly ? 'A friendly game. Online, no cards change hands at a regulars\' table.' : null;
+  const note = online
+    ? online.ranked
+      ? 'A ranked game against another player. The result counts on the season board.'
+      : 'A game against another player in the room.'
+    : friendly
+      ? "A friendly game. Online, no cards change hands at a regulars' table."
+      : null;
   const pack = packPrice ? [{ id: 'pack', label: `Buy a card pack (${packPrice} gold)`, enabled: true }] : [];
   if (phase === 'setup') {
     const s = setup ?? { decks: [], foes: [] };
     const deckOk = s.deck != null && s.decks[s.deck] && !s.decks[s.deck].word;
     const foeOk = online ? true : s.foe != null && !!s.foes[s.foe];
     return {
-      phase, title, note,
+      phase,
+      title,
+      note,
       decks: s.decks.map((d, i) => ({ i, name: d.name, word: d.word ?? null, chosen: i === s.deck })),
-      foes: online ? [] : s.foes.map((f, i) => ({ i, name: f.name, temper: TEMPER_WORDS[f.temper] ?? f.temper, paid: !!f.paid, chosen: i === s.foe })),
+      foes: online
+        ? []
+        : s.foes.map((f, i) => ({
+            i,
+            name: f.name,
+            temper: TEMPER_WORDS[f.temper] ?? f.temper,
+            paid: !!f.paid,
+            chosen: i === s.foe,
+          })),
       keeps: online ? null : { on: !!s.forKeeps && !!s.keepsOk, enabled: !!s.keepsOk, why: s.keepsWhy ?? null },
       // CARDS10: online, the season's board - a deck the service vouches the realm character holds (the relay seats it ranked)
-      ranked: online ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null } : null,
+      ranked: online
+        ? { on: !!online.rankedOn && !!online.rankedOk, enabled: !!online.rankedOk, why: online.rankedWhy ?? null }
+        : null,
       board: online?.board ? boardLines(online.board) : null,
-      message: why ?? (!s.decks.length ? 'Your binder has no deck. Build one under Holdings, Collections.' : !deckOk ? 'Choose a valid deck from your binder.' : !foeOk ? 'Choose a regular to play.' : online?.busy ? 'Checking your deck with the realm...'
-        : online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ') : 'Ready to deal.'),   // AUDIT CARDS-6 E10: a watched game's end said as its chair frees
+      message:
+        why ??
+        (!s.decks.length
+          ? 'Your binder has no deck. Build one under Holdings, Collections.'
+          : !deckOk
+            ? 'Choose a valid deck from your binder.'
+            : !foeOk
+              ? 'Choose a regular to play.'
+              : online?.busy
+                ? 'Checking your deck with the realm...'
+                : online
+                  ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ')
+                  : 'Ready to deal.'), // AUDIT CARDS-6 E10: a watched game's end said as its chair frees
       // CARDS-PLUS: what the line is - a refusal, or no deck to play, a warning; the realm vouching a wait
       tone: why || !deckOk ? 'warn' : online?.busy ? 'wait' : null,
       actions: [
-        { id: 'deal', label: online ? 'Sit at the table' : 'Deal', enabled: !!(deckOk && foeOk) && !online?.busy, kind: 'primary' },
-        ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []),   // CARDS10: the tavern's own, while he holds no seat at the relay's (AUDIT CARDS-6 E20: not "alone in the room")
-        ...(online ? [{ id: 'board', label: online.board ? 'Hide the season board' : 'Season board', enabled: !online.boardBusy }] : []),   // CARDS10: the ladder
-        { id: 'holdem', label: 'Play Hold\'em instead', enabled: true },
-        ...(gambit ? [{ id: 'gambit', label: playGambitWord(), enabled: true }] : []),   // KG3: the third game, its Features switch on
+        {
+          id: 'deal',
+          label: online ? 'Sit at the table' : 'Deal',
+          enabled: !!(deckOk && foeOk) && !online?.busy,
+          kind: 'primary',
+        },
+        ...(online ? [{ id: 'regulars', label: 'Play a regular instead', enabled: !!online.regularsOk }] : []), // CARDS10: the tavern's own, while he holds no seat at the relay's (AUDIT CARDS-6 E20: not "alone in the room")
+        ...(online
+          ? [
+              {
+                id: 'board',
+                label: online.board ? 'Hide the season board' : 'Season board',
+                enabled: !online.boardBusy,
+              },
+            ]
+          : []), // CARDS10: the ladder
+        { id: 'holdem', label: "Play Hold'em instead", enabled: true },
+        ...(gambit ? [{ id: 'gambit', label: playGambitWord(), enabled: true }] : []), // KG3: the third game, its Features switch on
         ...pack,
         { id: 'stand', label: 'Stand up', enabled: true, kind: 'quiet' },
       ],
       log: log.slice(-6),
     };
   }
-  const me = view?.viewer >= 0 ? view.viewer : 0, them = 1 - me;   // a spectator's view (-1) reads seat 0 as the first side
+  const me = view?.viewer >= 0 ? view.viewer : 0,
+    them = 1 - me; // a spectator's view (-1) reads seat 0 as the first side
   const mine = view?.players?.[me] ?? null;
-  const stagedAt = (h) => staged.flatMap((x, k) => (x.holding === h ? [{ ...iliacFace(mine?.hand?.[x.card]), staged: k }] : []));
+  const stagedAt = (h) =>
+    staged.flatMap((x, k) => (x.holding === h ? [{ ...iliacFace(mine?.hand?.[x.card]), staged: k }] : []));
   const holdings = (view?.holdings ?? []).map((hd, h) => {
     const loc = cardById(hd.id);
     const st = stagedAt(h);
     return {
-      h, id: hd.id, name: loc?.name ?? '?', text: loc?.text ?? '', room: hd.room,
+      h,
+      id: hd.id,
+      name: loc?.name ?? '?',
+      text: loc?.text ?? '',
+      room: hd.room,
       power: [hd.power[me], hd.power[them]],
-      mine: hd.sides[me].map((c) => iliacFace(c)), theirs: hd.sides[them].map((c) => iliacFace(c)),
+      mine: hd.sides[me].map((c) => iliacFace(c)),
+      theirs: hd.sides[them].map((c) => iliacFace(c)),
       staged: st,
       // CARDS-PLUS: who holds it as the board stands, and the room left each side - a staged unit takes its place, a
       // staged spell none (stagedRefusal's own count)
       lead: holdingLead(view, h),
-      open: [Math.max(0, hd.room - hd.sides[me].length - st.filter((c) => c.id && cardById(c.id)?.kind !== 'spell').length), Math.max(0, hd.room - hd.sides[them].length)],
-      target: pick !== null && phase === 'playing' && stagedRefusal(view, [...staged, { card: pick, holding: h }]) === null,
+      open: [
+        Math.max(0, hd.room - hd.sides[me].length - st.filter((c) => c.id && cardById(c.id)?.kind !== 'spell').length),
+        Math.max(0, hd.room - hd.sides[them].length),
+      ],
+      target:
+        pick !== null && phase === 'playing' && stagedRefusal(view, [...staged, { card: pick, holding: h }]) === null,
     };
   });
   const used = new Set(staged.map((x) => x.card));
-  const hand = (mine?.hand ?? []).map((c, i) => ({ ...iliacFace(c), i, picked: i === pick, staged: used.has(i),
-    playable: phase === 'playing' && !used.has(i) && holdings.some((_, h) => stagedRefusal(view, [...staged, { card: i, holding: h }]) === null) }));
+  const hand = (mine?.hand ?? []).map((c, i) => ({
+    ...iliacFace(c),
+    i,
+    picked: i === pick,
+    staged: used.has(i),
+    playable:
+      phase === 'playing' &&
+      !used.has(i) &&
+      holdings.some((_, h) => stagedRefusal(view, [...staged, { card: i, holding: h }]) === null),
+  }));
   const spend = view ? stagedSpend(view, staged) : 0;
   const committed = !!mine?.committed;
   const actions = [];
   if (phase === 'playing') {
     // AUDIT CARDS-6 E3: a commit in flight is pressed once
-    actions.push({ id: 'commit', label: committed ? 'Committed' : online?.committing ? 'Committing...' : staged.length ? `Commit ${staged.length} ${staged.length === 1 ? 'play' : 'plays'}` : 'Pass this turn', enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null, kind: 'primary' });
+    actions.push({
+      id: 'commit',
+      label: committed
+        ? 'Committed'
+        : online?.committing
+          ? 'Committing...'
+          : staged.length
+            ? `Commit ${staged.length} ${staged.length === 1 ? 'play' : 'plays'}`
+            : 'Pass this turn',
+      enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null,
+      kind: 'primary',
+    });
     actions.push({ id: 'clear', label: 'Clear', enabled: !committed && staged.length > 0 });
     // CARDS-PLUS: a concession costs something - the card staked, the ranked game - and is edged in blood (the kit's warn)
     const concede = !!(view?.forKeeps || (online && view && !online.watching));
-    actions.push({ id: 'stand', label: concede ? 'Concede and stand' : 'Stand up', enabled: true, kind: concede ? 'warn' : 'quiet' });
+    actions.push({
+      id: 'stand',
+      label: concede ? 'Concede and stand' : 'Stand up',
+      enabled: true,
+      kind: concede ? 'warn' : 'quiet',
+    });
   } else if (online) {
-    actions.push(...pack);   // CARDS10: the relay deals the next game while both still sit
+    actions.push(...pack); // CARDS10: the relay deals the next game while both still sit
     actions.push({ id: 'stand', label: 'Leave the table', enabled: true, kind: 'quiet' });
   } else {
     actions.push({ id: 'again', label: 'Play again', enabled: true, kind: 'primary' });
-    actions.push({ id: 'holdem', label: 'Play Hold\'em', enabled: true });
-    if (gambit) actions.push({ id: 'gambit', label: playGambitWord(), enabled: true });   // KG3
+    actions.push({ id: 'holdem', label: "Play Hold'em", enabled: true });
+    if (gambit) actions.push({ id: 'gambit', label: playGambitWord(), enabled: true }); // KG3
     actions.push(...pack);
     actions.push({ id: 'stand', label: 'Leave the table', enabled: true, kind: 'quiet' });
   }
   const other = view?.names?.[them] ?? (online ? 'Your opponent' : 'The regular');
   // AUDIT CARDS-6 E10: the next game deals only while both chairs are filled - a winner left alone waits for a player
-  const next = !online ? '' : online.full ? 'The next game starts in a moment.' : 'Waiting for another player to sit down.';
-  const message = phase === 'over'
-    ? [online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end), prizeLine(prize, other), online?.rankedLine ?? '', next].filter(Boolean).join(' ')
-    // AUDIT CARDS-6 E19: no game on the cloth yet - the wait said, never "Turn 1 of 6 - your magicka 0 of 0"
-    : online?.seating ? 'Sitting down at the table...'
-      : online?.waiting ? 'Waiting for another player to sit down.'
-      : online && !view ? 'Both seats are taken. The game starts in a moment.'
-      : online?.watching ? `You watch ${view?.names?.[0] ?? 'a player'} and ${view?.names?.[1] ?? 'a player'} play.`
-      : view?.revealing ? 'The cards turn over...'
-      : committed ? (view?.players?.[them]?.committed ? 'Both players have committed. The cards turn over.' : `${other} is thinking...`)
-      : `Turn ${view?.turn ?? 1} of ${view?.turns ?? 6} - your magicka ${Math.max(0, (mine?.magicka ?? 0) - spend)} of ${mine?.magicka ?? 0}.${online?.clock ? ` ${online.clock} s.` : ''}`;
+  const next = !online
+    ? ''
+    : online.full
+      ? 'The next game starts in a moment.'
+      : 'Waiting for another player to sit down.';
+  const message =
+    phase === 'over'
+      ? [
+          online?.watching === false && online?.lastLine ? online.lastLine : resultLine(view, end),
+          prizeLine(prize, other),
+          online?.rankedLine ?? '',
+          next,
+        ]
+          .filter(Boolean)
+          .join(' ')
+      : // AUDIT CARDS-6 E19: no game on the cloth yet - the wait said, never "Turn 1 of 6 - your magicka 0 of 0"
+        online?.seating
+        ? 'Sitting down at the table...'
+        : online?.waiting
+          ? 'Waiting for another player to sit down.'
+          : online && !view
+            ? 'Both seats are taken. The game starts in a moment.'
+            : online?.watching
+              ? `You watch ${view?.names?.[0] ?? 'a player'} and ${view?.names?.[1] ?? 'a player'} play.`
+              : view?.revealing
+                ? 'The cards turn over...'
+                : committed
+                  ? view?.players?.[them]?.committed
+                    ? 'Both players have committed. The cards turn over.'
+                    : `${other} is thinking...`
+                  : `Turn ${view?.turn ?? 1} of ${view?.turns ?? 6} - your magicka ${Math.max(0, (mine?.magicka ?? 0) - spend)} of ${mine?.magicka ?? 0}.${online?.clock ? ` ${online.clock} s.` : ''}`;
   const outcome = phase === 'over' ? iliacOutcome(view, end) : null;
   // CARDS-PLUS: what the line is, as the Hold'em panel says it - a refusal a warning; the table's time (a sit on its way,
   // the other chair empty, a game watched, the cards turning, the other's thought) a wait; the turn yours; the end its own
-  const tone = online?.error || why ? 'warn'
-    : phase === 'over' ? (outcome === 'won' || outcome === 'lost' ? outcome : null)
-      : online?.seating || online?.waiting || (online && !view) || online?.watching || view?.revealing || committed ? 'wait' : 'turn';
+  const tone =
+    online?.error || why
+      ? 'warn'
+      : phase === 'over'
+        ? outcome === 'won' || outcome === 'lost'
+          ? outcome
+          : null
+        : online?.seating || online?.waiting || (online && !view) || online?.watching || view?.revealing || committed
+          ? 'wait'
+          : 'turn';
   return {
-    phase, title, note, holdings, hand, tone, outcome,
+    phase,
+    title,
+    note,
+    holdings,
+    hand,
+    tone,
+    outcome,
     // AUDIT CARDS-PLUS A3: a game on the cloth - online, the chairs fill and the relay deals before there is one, and the
     // panel draws no turn, no other player and no board until it does (AUDIT CARDS-6 E19: never "Turn 1 of 6")
     dealt: !!view,
-    spectator: !(view?.viewer >= 0),   // CARDS-PLUS: a watcher holds no hand and no magicka of their own
-    them: { name: other, hand: view?.players?.[them]?.handCount ?? 0, deck: view?.players?.[them]?.deckCount ?? 0, committed: !!view?.players?.[them]?.committed },
+    spectator: !(view?.viewer >= 0), // CARDS-PLUS: a watcher holds no hand and no magicka of their own
+    them: {
+      name: other,
+      hand: view?.players?.[them]?.handCount ?? 0,
+      deck: view?.players?.[them]?.deckCount ?? 0,
+      committed: !!view?.players?.[them]?.committed,
+    },
     me: { deck: mine?.deckCount ?? 0, magicka: mine?.magicka ?? 0, spend },
-    turn: view?.turn ?? 1, turns: view?.turns ?? 6,
-    sides: online && view?.viewer === -1 ? [view?.names?.[0] ?? 'seat one', view?.names?.[1] ?? 'seat two'] : ['you', 'them'],   // AUDIT CARDS-6 C9: a watched game's last board too
+    turn: view?.turn ?? 1,
+    turns: view?.turns ?? 6,
+    sides:
+      online && view?.viewer === -1
+        ? [view?.names?.[0] ?? 'seat one', view?.names?.[1] ?? 'seat two']
+        : ['you', 'them'], // AUDIT CARDS-6 C9: a watched game's last board too
     // AUDIT CARDS-6 E9: and why a press did nothing (a refusal, the relay not answering) - said only in the setup before
-    actions, message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' '), log: log.slice(-6),
+    actions,
+    message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' '),
+    log: log.slice(-6),
   };
 }
 /**
@@ -265,12 +431,17 @@ export function iliacHudModel({ phase, view = null, staged = [], pick = null, se
 export function boardLines(b) {
   if (!b) return [];
   if (b.error) return [b.error];
-  const row = (r) => `${r.rank}. ${r.name ?? '?'} - ${r.rating} (${r.wins}-${r.losses}-${r.draws})${r.you ? ' - you' : ''}`;
+  const row = (r) =>
+    `${r.rank}. ${r.name ?? '?'} - ${r.rating} (${r.wins}-${r.losses}-${r.draws})${r.you ? ' - you' : ''}`;
   const out = [`Season ${b.season?.n ?? '?'}, day ${b.season?.day ?? '?'}.`];
   if (!b.rows?.length) out.push('No ranked game has been played this season.');
   for (const r of b.rows ?? []) out.push(row(r));
   if (b.pinned) out.push('...', row(b.pinned));
-  out.push(b.champion ? `Iliac Champion: ${b.champion.name}.` : `No Iliac Champion yet. The top player needs ${b.titleNeeds?.games ?? 10} games against ${b.titleNeeds?.foes ?? 5} different players.`);
+  out.push(
+    b.champion
+      ? `Iliac Champion: ${b.champion.name}.`
+      : `No Iliac Champion yet. The top player needs ${b.titleNeeds?.games ?? 10} games against ${b.titleNeeds?.foes ?? 5} different players.`,
+  );
   if (b.me) out.push(`Your rating ${b.me.rating}, ${b.me.games} ${b.me.games === 1 ? 'game' : 'games'} this season.`);
   return out;
 }
@@ -279,7 +450,9 @@ export function boardLines(b) {
 export function prizeLine(prize, other = 'The regular') {
   if (!prize?.card) return '';
   const name = cardById(prize.card)?.name ?? 'a card';
-  return prize.from === 'patron' ? `${other} pays you a card: ${name}.` : `${other} takes a card from your deck: ${name}.`;
+  return prize.from === 'patron'
+    ? `${other} pays you a card: ${name}.`
+    : `${other} takes a card from your deck: ${name}.`;
 }
 
 const STYLE_ID = 'dfiliac-style';
@@ -299,7 +472,9 @@ const GEMS_MAX = ILIAC_MAGICKA_MAX;
  *  (a relay's garbled 2,000,000 grew them without end: 38 s to paint one board). */
 const TRACK_MAX = ILIAC_TURNS;
 const SLOTS_MAX = ILIAC_ROOM;
-const LANE_W = cardW(ILIAC_LANE_CARD_H), HAND_W = cardW(ILIAC_HAND_CARD_H), PLACE_W = cardW(ILIAC_PLACE_CARD_H);
+const LANE_W = cardW(ILIAC_LANE_CARD_H),
+  HAND_W = cardW(ILIAC_HAND_CARD_H),
+  PLACE_W = cardW(ILIAC_PLACE_CARD_H);
 /** CARDS-PLUS: the panel's own sheet - geometry and words. The chrome (the window's box, the header band and its fold,
  *  the note, the line, the presses, the log) is ui/card/cardPanelKit.js's; every surface's paint is the kit's by role
  *  (ui/enhanced/enhancedFrame.js FRAME_ROLES: the window, a holding a panel, the tray and the season's board wells, a choice a
@@ -404,7 +579,8 @@ body .dfiliac .pw.ahead{border-color:#f3cf86 #7a5424 #5c3f1a #c08a3e;color:#f3cf
 /** A press on the panel is the panel's - never a swing or a look (the Hold'em panel's own law). */
 const swallowPresses = (node) => {
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) node.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    node.addEventListener(t, swallow);
 };
 
 /**
@@ -416,22 +592,34 @@ const swallowPresses = (node) => {
 export function createIliacTableHud({ onPress, doc = document }) {
   if (doc?.getElementById && !doc.getElementById(STYLE_ID)) {
     const s = doc.createElement('style');
-    s.id = STYLE_ID; s.textContent = ILIAC_TABLE_CSS;
+    s.id = STYLE_ID;
+    s.textContent = ILIAC_TABLE_CSS;
     (doc.head ?? doc.body)?.append(s);
   }
-  dressCardPanel(doc);   // CARDS-PLUS: the kit on the classic skin, the face on every skin
+  dressCardPanel(doc); // CARDS-PLUS: the kit on the classic skin, the face on every skin
   const root = doc.createElement('div');
   root.className = 'dfiliac';
-  root.setAttribute('tabindex', '-1');   // AUDIT CARDS-6 B10: the keyboard's resting place when its control is gone
+  root.setAttribute('tabindex', '-1'); // AUDIT CARDS-6 B10: the keyboard's resting place when its control is gone
   swallowPresses(root);
   // AUDIT CARDS-6 B10: Tab in the panel walks its controls - the browser's walk, never the game's dial (QuickDial took
   // it, and nothing past the buttons was ever reached)
   // AUDIT CARDS-PLUS A4: and Space and Enter on the panel itself are the panel's - Space is the game's jump, and a jump
   // stands the player up and concedes (the root holds the keyboard when its control is gone)
-  root.addEventListener('keydown', (e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();
+  });
   doc.body?.append(root);
-  try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }   // AUDIT CARDS-6 B10: the keyboard starts in the panel
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  try {
+    root.focus?.({ preventScroll: true });
+  } catch {
+    /* a page that cannot focus */
+  } // AUDIT CARDS-6 B10: the keyboard starts in the panel
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   // AUDIT CARDS-6 B10: THE KEYBOARD PLAYS THE PANEL. A row the mouse presses - a deck, a regular, a box, a card of the
   // hand, a holding, a staged card - is in the Tab order and takes Enter or Space as its click; a button's own Enter
   // and Space are the panel's too (never the game's jump or step, which stand the player up). Every control carries a
@@ -445,22 +633,40 @@ export function createIliacTableHud({ onPress, doc = document }) {
     n.setAttribute('role', 'button');
     n.setAttribute('data-focus', key);
     n.addEventListener('click', fn);
-    n.addEventListener('keydown', (e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); fn(); });
+    n.addEventListener('keydown', (e) => {
+      if (!ACTIVATE.has(e.key)) return;
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      fn();
+    });
   };
   const focusedKey = () => {
     const a = doc.activeElement;
-    return a && a !== root && root.contains?.(a) ? a.getAttribute?.('data-focus') ?? null : null;
+    return a && a !== root && root.contains?.(a) ? (a.getAttribute?.('data-focus') ?? null) : null;
   };
   const refocus = (key) => {
     if (!key) return;
     const keyed = [];
-    const walk = (n) => { for (const c of n.children ?? []) { if (c.getAttribute?.('data-focus') && !c.disabled) keyed.push(c); walk(c); } };
+    const walk = (n) => {
+      for (const c of n.children ?? []) {
+        if (c.getAttribute?.('data-focus') && !c.disabled) keyed.push(c);
+        walk(c);
+      }
+    };
     walk(root);
     const at = (k) => keyed.find((n) => n.getAttribute('data-focus') === k) ?? null;
     // AUDIT CARDS-PLUS A4: the keyboard goes to a control that TOOK it - one inside the folded body is not drawn, and its
     // focus() left the keyboard on the page's body, where Space is the game's; so each is asked in turn, the panel last
-    const took = (n) => { try { n.focus({ preventScroll: true }); } catch { n.focus?.(); } return doc.activeElement === n; };
-    for (const n of [at(key), keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))]) if (n && took(n)) return;
+    const took = (n) => {
+      try {
+        n.focus({ preventScroll: true });
+      } catch {
+        n.focus?.();
+      }
+      return doc.activeElement === n;
+    };
+    for (const n of [at(key), keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))])
+      if (n && took(n)) return;
     took(root);
   };
   // CARDS-PLUS: a card's face is the binder's own painting (ui/card/cardBinderPage.js cardCanvas - at its CSS size and the
@@ -468,13 +674,14 @@ export function createIliacTableHud({ onPress, doc = document }) {
   // twice its size, past the tile's bound, and the hand wore the full face's rules box at 4px), a fresh copy for each
   // place it stands; a page with no canvas writes the card's name
   const canPaint = !!doc.createElement('canvas')?.getContext?.('2d');
-  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? cardById(id) ?? null : null, h) : null);
+  const face = (id, h) => (canPaint ? cardCanvasCopy(doc, id ? (cardById(id) ?? null) : null, h) : null);
   const card = (c, { h = ILIAC_LANE_CARD_H, cls = '', press = null, value = undefined, power = true } = {}) => {
     // AUDIT CARDS-PLUS (lane A): your own card played face down keeps its face for you under a veil - the other player
     // sees its back, and its text never runs (net/iliac/iliacHand.js: a face-down card is its power alone, unveiled at the end)
     const n = el('span', `ic${cls ? ` ${cls}` : ''}${c.down && c.id ? ' down' : ''}`);
     const cv = face(c.id, h);
-    if (cv) n.append(cv); else n.append(el('span', 'icname', c.name));
+    if (cv) n.append(cv);
+    else n.append(el('span', 'icname', c.name));
     // the power it stands at now, beside its printed one - raised green, lowered dark
     const k = power && c.id ? cardById(c.id) : null;
     if (k && k.kind !== 'spell' && k.kind !== 'location') {
@@ -482,7 +689,7 @@ export function createIliacTableHud({ onPress, doc = document }) {
       n.append(el('span', `p${p > k.power ? ' up' : p < k.power ? ' down' : ''}`, String(p)));
     }
     n.title = c.title ?? '';
-    if (press) pressable(n, `${press}-${value}`, () => onPress(press, value));   // AUDIT CARDS-6 B10
+    if (press) pressable(n, `${press}-${value}`, () => onPress(press, value)); // AUDIT CARDS-6 B10
     return n;
   };
   /** A holding's lane: its cards from the duel outward, then the places that side has left - a grid as wide as the plate
@@ -499,11 +706,19 @@ export function createIliacTableHud({ onPress, doc = document }) {
     const n = el('div', `opt${cls}${enabled ? '' : ' off'}`);
     n.append(...parts);
     n.setAttribute('aria-pressed', String(!!on));
-    if (enabled) pressable(n, key, fn); else n.setAttribute('aria-disabled', 'true');
+    if (enabled) pressable(n, key, fn);
+    else n.setAttribute('aria-disabled', 'true');
     return n;
   };
-  const section = (head, body) => { const s = el('div', 'ilsec'); s.append(el('div', 'ilsec-head', head), body); return s; };
-  let alive = true, shownKey = null, msgEl = null, collapsed = false;
+  const section = (head, body) => {
+    const s = el('div', 'ilsec');
+    s.append(el('div', 'ilsec-head', head), body);
+    return s;
+  };
+  let alive = true,
+    shownKey = null,
+    msgEl = null,
+    collapsed = false;
   /** The header's fold - the table's words put away so the cloth shows; the line and the presses stay. Kept across
    *  repaints, as the Hold'em panel's is. */
   const foldToggle = () => {
@@ -514,7 +729,11 @@ export function createIliacTableHud({ onPress, doc = document }) {
       fold.setAttribute('aria-expanded', String(!collapsed));
     };
     say();
-    pressable(fold, 'fold', () => { collapsed = !collapsed; root.className = `dfiliac${collapsed ? ' collapsed' : ''}`; say(); });
+    pressable(fold, 'fold', () => {
+      collapsed = !collapsed;
+      root.className = `dfiliac${collapsed ? ' collapsed' : ''}`;
+      say();
+    });
     return fold;
   };
   return {
@@ -522,9 +741,12 @@ export function createIliacTableHud({ onPress, doc = document }) {
     render(m) {
       if (!alive) return;
       const key = JSON.stringify({ ...m, message: null });
-      if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }
+      if (key === shownKey && msgEl) {
+        msgEl.textContent = m.message;
+        return;
+      }
       shownKey = key;
-      const kept = focusedKey();   // AUDIT CARDS-6 B10: the keyboard's control, found again below
+      const kept = focusedKey(); // AUDIT CARDS-6 B10: the keyboard's control, found again below
       root.replaceChildren();
       const head = el('h3', 'tablehead');
       head.append(el('span', 'tabletitle', m.title), foldToggle());
@@ -534,7 +756,12 @@ export function createIliacTableHud({ onPress, doc = document }) {
       if (m.phase === 'setup') {
         const decks = el('div', 'opts');
         for (const d of m.decks) {
-          decks.append(opt(`deck-${d.i}`, d.chosen, true, () => onPress('deck', d.i), [el('span', 'optname', d.name), ...(d.word ? [el('span', 'optword bad', d.word)] : [])]));
+          decks.append(
+            opt(`deck-${d.i}`, d.chosen, true, () => onPress('deck', d.i), [
+              el('span', 'optname', d.name),
+              ...(d.word ? [el('span', 'optword bad', d.word)] : []),
+            ]),
+          );
         }
         body.append(section(t('cards.iliac.setup.deck', 'Your deck'), decks));
         if (m.foes.length) {
@@ -542,7 +769,12 @@ export function createIliacTableHud({ onPress, doc = document }) {
           for (const f of m.foes) {
             const name = el('span', 'optname', f.name);
             name.append(el('span', 'opttemper', ` (${f.temper})`));
-            foes.append(opt(`foe-${f.i}`, f.chosen, true, () => onPress('foe', f.i), [name, ...(f.paid ? [el('span', 'optword paid', t('cards.iliac.setup.paid', 'has paid a card tonight'))] : [])]));
+            foes.append(
+              opt(`foe-${f.i}`, f.chosen, true, () => onPress('foe', f.i), [
+                name,
+                ...(f.paid ? [el('span', 'optword paid', t('cards.iliac.setup.paid', 'has paid a card tonight'))] : []),
+              ]),
+            );
           }
           body.append(section(t('cards.iliac.setup.against', 'Play against'), foes));
         }
@@ -553,8 +785,43 @@ export function createIliacTableHud({ onPress, doc = document }) {
         }
         const boxes = el('div', 'opts');
         // the boxes a game is dealt with - ticked brass (the kit's tile pressed); one that cannot be ticked says why
-        if (m.ranked) boxes.append(opt('ranked', m.ranked.on, m.ranked.enabled, () => onPress('ranked'), [el('span', 'optname', t('cards.iliac.setup.ranked', 'Ranked')), el('span', 'optword', m.ranked.why ?? t('cards.iliac.setup.rankedWhy', 'Counts on the season board. Uses your realm character\'s cards.'))], ' box'));
-        if (m.keeps) boxes.append(opt('keeps', m.keeps.on, m.keeps.enabled, () => onPress('keeps'), [el('span', 'optname', t('cards.iliac.setup.keeps', 'Play for a card')), el('span', 'optword', m.keeps.why ?? t('cards.iliac.setup.keepsWhy', 'The loser pays one from their deck'))], ' box'));
+        if (m.ranked)
+          boxes.append(
+            opt(
+              'ranked',
+              m.ranked.on,
+              m.ranked.enabled,
+              () => onPress('ranked'),
+              [
+                el('span', 'optname', t('cards.iliac.setup.ranked', 'Ranked')),
+                el(
+                  'span',
+                  'optword',
+                  m.ranked.why ??
+                    t('cards.iliac.setup.rankedWhy', "Counts on the season board. Uses your realm character's cards."),
+                ),
+              ],
+              ' box',
+            ),
+          );
+        if (m.keeps)
+          boxes.append(
+            opt(
+              'keeps',
+              m.keeps.on,
+              m.keeps.enabled,
+              () => onPress('keeps'),
+              [
+                el('span', 'optname', t('cards.iliac.setup.keeps', 'Play for a card')),
+                el(
+                  'span',
+                  'optword',
+                  m.keeps.why ?? t('cards.iliac.setup.keepsWhy', 'The loser pays one from their deck'),
+                ),
+              ],
+              ' box',
+            ),
+          );
         if (m.ranked || m.keeps) body.append(boxes);
       } else {
         if (m.outcome) body.append(el('div', `verdict ${m.outcome}`, VERDICT_WORDS[m.outcome]));
@@ -567,7 +834,12 @@ export function createIliacTableHud({ onPress, doc = document }) {
         // label says, never the whole track
         const reached = Math.min(m.turn, m.turns);
         for (let n = 1; n <= Math.min(m.turns, TRACK_MAX); n++) {
-          pips.append(el('i', `pip${m.phase === 'over' ? (n <= reached ? ' past' : '') : n < m.turn ? ' past' : n === m.turn ? ' now' : ''}`));
+          pips.append(
+            el(
+              'i',
+              `pip${m.phase === 'over' ? (n <= reached ? ' past' : '') : n < m.turn ? ' past' : n === m.turn ? ' now' : ''}`,
+            ),
+          );
         }
         turn.append(el('span', '', t('cards.iliac.track.turn', 'Turn')), pips, el('b', '', `${reached}/${m.turns}`));
         bar.append(turn);
@@ -575,26 +847,46 @@ export function createIliacTableHud({ onPress, doc = document }) {
           const mana = el('div', 'track');
           const gems = el('span', 'gems');
           const left = Math.max(0, m.me.magicka - m.me.spend);
-          for (let k = 0; k < Math.min(m.me.magicka, GEMS_MAX); k++) gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));
-          mana.append(el('span', '', localizedText('magicka', 'Magicka')), gems, el('b', '', `${left}/${m.me.magicka}`));
+          for (let k = 0; k < Math.min(m.me.magicka, GEMS_MAX); k++)
+            gems.append(el('i', `gem${k < left ? ' lit' : ' spent'}`));
+          mana.append(
+            el('span', '', localizedText('magicka', 'Magicka')),
+            gems,
+            el('b', '', `${left}/${m.me.magicka}`),
+          );
           bar.append(mana);
         }
         body.append(bar);
         const foe = el('div', 'foe');
         const backs = el('span', 'backs');
         for (let k = 0; k < Math.min(m.them.hand, BACKS_MAX); k++) backs.append(el('i', 'mb'));
-        foe.append(el('span', 'foename', m.them.name), backs, el('span', '', t('cards.iliac.foe.counts', '{hand} in hand · {deck} in deck', { hand: m.them.hand, deck: m.them.deck })));
+        foe.append(
+          el('span', 'foename', m.them.name),
+          backs,
+          el(
+            'span',
+            '',
+            t('cards.iliac.foe.counts', '{hand} in hand · {deck} in deck', { hand: m.them.hand, deck: m.them.deck }),
+          ),
+        );
         if (m.them.committed) foe.append(el('span', 'foestate', t('cards.iliac.foe.committed', 'Committed')));
         body.append(foe);
         const holds = el('div', 'holds');
         for (const hd of m.holdings) {
           // AUDIT CARDS-PLUS A7: the plate's edge says who holds it as yours or theirs - a watcher has neither (the duel's
           // lit number says which side leads)
-          const box = el('div', `hold${hd.target ? ' target' : ''}${hd.lead && !m.spectator ? ` lead-${hd.lead}` : ''}`);
+          const box = el(
+            'div',
+            `hold${hd.target ? ' target' : ''}${hd.lead && !m.spectator ? ` lead-${hd.lead}` : ''}`,
+          );
           box.title = `${hd.name} - ${hd.text}`;
           const top = el('div', 'holdhead');
           const art = face(hd.id, ILIAC_PLACE_CARD_H);
-          if (art) { const a = el('span', 'holdart'); a.append(art); top.append(a); }
+          if (art) {
+            const a = el('span', 'holdart');
+            a.append(art);
+            top.append(a);
+          }
           const words = el('div', 'holdwords');
           words.append(el('div', 'holdname', hd.name), el('div', 'holdrule', hd.text));
           top.append(words);
@@ -605,19 +897,44 @@ export function createIliacTableHud({ onPress, doc = document }) {
             const g = el('span', 'duelpart');
             const pw = el('b', `pw${hd.lead === (k ? 'theirs' : 'mine') ? ' ahead' : ''}`, String(hd.power[k]));
             const word = el('span', 'duelside', m.sides?.[k] ?? (k ? 'them' : 'you'));
-            if (k) g.append(word, pw); else g.append(pw, word);
+            if (k) g.append(word, pw);
+            else g.append(pw, word);
             return g;
           };
           duel.append(part(0), el('span', 'duelto', '-'), part(1));
-          box.append(top, lane('theirs', hd.theirs.map((c) => card(c)), hd.open?.[1] ?? 0), duel,
-            lane('mine', [...hd.mine.map((c) => card(c)), ...hd.staged.map((c) => card(c, { cls: 'staged', press: 'unstage', value: c.staged, power: false }))], hd.open?.[0] ?? 0));
+          box.append(
+            top,
+            lane(
+              'theirs',
+              hd.theirs.map((c) => card(c)),
+              hd.open?.[1] ?? 0,
+            ),
+            duel,
+            lane(
+              'mine',
+              [
+                ...hd.mine.map((c) => card(c)),
+                ...hd.staged.map((c) => card(c, { cls: 'staged', press: 'unstage', value: c.staged, power: false })),
+              ],
+              hd.open?.[0] ?? 0,
+            ),
+          );
           if (hd.target) pressable(box, `hold-${hd.h}`, () => onPress('hold', hd.h));
           holds.append(box);
         }
         body.append(holds);
         if (!m.spectator) {
           const tray = el('div', 'tray');
-          for (const c of m.hand) tray.append(card(c, { h: ILIAC_HAND_CARD_H, cls: c.picked ? 'picked' : c.staged ? 'used' : c.playable ? '' : 'off', press: c.playable || c.picked ? 'pick' : null, value: c.i, power: false }));
+          for (const c of m.hand)
+            tray.append(
+              card(c, {
+                h: ILIAC_HAND_CARD_H,
+                cls: c.picked ? 'picked' : c.staged ? 'used' : c.playable ? '' : 'off',
+                press: c.playable || c.picked ? 'pick' : null,
+                value: c.i,
+                power: false,
+              }),
+            );
           if (!m.hand.length) tray.append(el('span', 'trayempty', t('cards.iliac.hand.empty', 'No cards in hand.')));
           body.append(tray);
         }
@@ -629,10 +946,14 @@ export function createIliacTableHud({ onPress, doc = document }) {
       for (const a of m.actions) {
         const b = el('button', '', a.label);
         b.disabled = !a.enabled;
-        if (a.kind) b.dataset.kind = a.kind;   // CARDS-PLUS: the kit's primary, its blood-edged warn, a quiet press at the row's end
-        b.setAttribute('data-focus', `act-${a.id}`);   // AUDIT CARDS-6 B10: its key, and its Enter and Space its own
-        b.addEventListener('keydown', (e) => { if (ACTIVATE.has(e.key)) e.stopPropagation?.(); });
-        b.addEventListener('click', () => { if (a.enabled) onPress(a.id); });
+        if (a.kind) b.dataset.kind = a.kind; // CARDS-PLUS: the kit's primary, its blood-edged warn, a quiet press at the row's end
+        b.setAttribute('data-focus', `act-${a.id}`); // AUDIT CARDS-6 B10: its key, and its Enter and Space its own
+        b.addEventListener('keydown', (e) => {
+          if (ACTIVATE.has(e.key)) e.stopPropagation?.();
+        });
+        b.addEventListener('click', () => {
+          if (a.enabled) onPress(a.id);
+        });
         acts.append(b);
       }
       root.append(acts);
@@ -646,6 +967,10 @@ export function createIliacTableHud({ onPress, doc = document }) {
       }
       refocus(kept);
     },
-    destroy() { if (!alive) return; alive = false; root.remove?.(); },
+    destroy() {
+      if (!alive) return;
+      alive = false;
+      root.remove?.();
+    },
   };
 }

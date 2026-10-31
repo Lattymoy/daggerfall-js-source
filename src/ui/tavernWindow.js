@@ -60,26 +60,48 @@ import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { raceDisplayName, honorificOf } from '../systems/talk/talkSession.js';
-import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
+import { audio } from '../systems/audio.js'; // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
-import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
-import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, tavernRefresh, blackout, blackoutWaking, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh, the drink's fatigue and magicka; I4: blackoutWaking, the line under the sky
+import { firstHotkey } from '../systems/dialogShortcuts.js'; // A8: the DaggerfallShortcut table
+import { survivalOn, survivalRules } from '../systems/survival/switch.js'; // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
+import {
+  tavernMenu,
+  tavernEat,
+  tavernDrink,
+  tavernOrder,
+  tavernWater,
+  tavernRefresh,
+  blackout,
+  blackoutWaking,
+  TAVERN_MENU_TEXT,
+} from '../systems/survival/tavernMenu.js'; // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh, the drink's fatigue and magicka; I4: blackoutWaking, the line under the sky
 import { survivalOf } from '../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 import {
-  TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
-  HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
-  roomFreeForKnightText, roomFreeHeartsDayText, youAreNotHungryText,   // L10N3d: the lines in the player's language
-  tavernMenuLabels, removeExpiredRooms, findRentedRoom, roomRemainingHours,
-  rentalDecision, rentRoom, canEat, eatOrDrink,
+  TOO_MANY_DAYS_ID,
+  OFFER_PRICE_ID,
+  NOT_ENOUGH_GOLD_ID,
+  HOW_MANY_DAYS_ID,
+  HOW_MANY_ADDITIONAL_DAYS_ID,
+  roomFreeForKnightText,
+  roomFreeHeartsDayText,
+  youAreNotHungryText, // L10N3d: the lines in the player's language
+  tavernMenuLabels,
+  removeExpiredRooms,
+  findRentedRoom,
+  roomRemainingHours,
+  rentalDecision,
+  rentRoom,
+  canEat,
+  eatOrDrink,
 } from '../systems/tavern.js';
 
 /** mainPanel.Size (:100) - and the size TVRN00I0.IMG actually ships. */
-export const TAVERN_PANEL_W = 130, TAVERN_PANEL_H = 44;
+export const TAVERN_PANEL_W = 130,
+  TAVERN_PANEL_H = 44;
 /** Center/Middle on the 320x200 native panel (:96-97). */
-export const TAVERN_PANEL_X = Math.round((320 - TAVERN_PANEL_W) / 2);   // 95
-export const TAVERN_PANEL_Y = Math.round((200 - TAVERN_PANEL_H) / 2);   // 78
+export const TAVERN_PANEL_X = Math.round((320 - TAVERN_PANEL_W) / 2); // 95
+export const TAVERN_PANEL_Y = Math.round((200 - TAVERN_PANEL_H) / 2); // 78
 
 /** #region UI Rects (:23-26), panel-relative. */
 export const TAVERN_RECTS = Object.freeze({
@@ -92,9 +114,7 @@ export const TAVERN_RECTS = Object.freeze({
 /** D1: the window's DaggerfallShortcut.Buttons in ctor ADD order
  *  (:103-124) - the order Panel.ProcessHotkeySequences asks them in.
  *  DialogShortcuts.txt:175-179 binds R / T / F / G. */
-export const TAVERN_BUTTONS = Object.freeze([
-  'TavernRoom', 'TavernTalk', 'TavernFood', 'TavernExit',
-]);
+export const TAVERN_BUTTONS = Object.freeze(['TavernRoom', 'TavernTalk', 'TavernFood', 'TavernExit']);
 
 /** TextBox.Numeric, MaxCharacters 3, Text "1" (:166-168). Three
  *  characters is not an accident: the ceiling is 350 days, so the
@@ -106,12 +126,14 @@ export async function preloadTavernArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'TVRN00I0.IMG');
-  } catch { console.warn('[tavern] TVRN00I0 unavailable; the tavern popup stays text'); }
+  } catch {
+    console.warn('[tavern] TVRN00I0 unavailable; the tavern popup stays text');
+  }
 }
 export const tavernArtLoaded = () => !!_art;
 
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + TAVERN_PANEL_X && y >= ry + TAVERN_PANEL_Y
-  && x < rx + TAVERN_PANEL_X + rw && y < ry + TAVERN_PANEL_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + TAVERN_PANEL_X && y >= ry + TAVERN_PANEL_Y && x < rx + TAVERN_PANEL_X + rw && y < ry + TAVERN_PANEL_Y + rh;
 
 /** A plain string as one centred row - the chain's own idiom. */
 const line = (text) => [{ text, center: true }];
@@ -155,11 +177,14 @@ export class TavernWindow {
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
-    this.flow = null;             // the box chain, when one is up
+    this.isChoiceWindow = true; // raw codes through the overlay seam
+    this.flow = null; // the box chain, when one is up
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    this.hooks.onClose?.();
+  }
 
   /** TavernMacroDataSource (:369-386): Amount() is the trade price and
    *  RoomHoursLeft() is GetRemainingHours on THIS inn's room. Both go
@@ -188,9 +213,16 @@ export class TavernWindow {
    *  the four-button panel. The old header claimed both buttons
    *  close-before-chain, and every rental ending tore the tavern down. */
   _chain(boxes, { closesTavern = false } = {}) {
-    if (!boxes?.length) { this.flow = null; if (closesTavern) this._close(); return; }
+    if (!boxes?.length) {
+      this.flow = null;
+      if (closesTavern) this._close();
+      return;
+    }
     this.flow = new ServiceFlowWindow(boxes, {
-      onClose: () => { this.flow = null; if (closesTavern) this._close(); },
+      onClose: () => {
+        this.flow = null;
+        if (closesTavern) this._close();
+      },
     });
   }
 
@@ -203,12 +235,14 @@ export class TavernWindow {
     const now = h.now();
     h.entity.rentedRooms = removeExpiredRooms(h.entity.rentedRooms ?? [], now, h.sceneCache?.());
     const room = findRentedRoom(h.entity.rentedRooms, h.mapId(), h.buildingKey());
-    this._chain([{
-      // 5100 quotes the hours left (%dwr); 5102 has no room to quote.
-      rows: this._rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID, { room, now }),
-      field: DAYS_FIELD,
-      onInput: (text) => this._decide(text, room, now),
-    }]);
+    this._chain([
+      {
+        // 5100 quotes the hours left (%dwr); 5102 has no room to quote.
+        rows: this._rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID, { room, now }),
+        field: DAYS_FIELD,
+        onInput: (text) => this._decide(text, room, now),
+      },
+    ]);
   }
 
   /** InputMessageBox_OnGotUserInput (:173-208), through the law. */
@@ -220,10 +254,14 @@ export class TavernWindow {
     // the WORLD's (worldNow; now() offline), the room's own time the
     // character's.
     const d = rentalDecision(text, {
-      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },
-      quality: h.quality?.() ?? 0, free: !!h.freeRooms?.(), skills: h.skills?.(),
+      room,
+      nowMinutes: now,
+      date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },
+      quality: h.quality?.() ?? 0,
+      free: !!h.freeRooms?.(),
+      skills: h.skills?.(),
     });
-    if (d.kind === 'ignore') return null;          // int.TryParse: nothing at all
+    if (d.kind === 'ignore') return null; // int.TryParse: nothing at all
     if (d.kind === 'tooMany') return [{ rows: this._rows(TOO_MANY_DAYS_ID, { room, now }) }];
     if (d.kind === 'free') {
       this._rent(room, d.days);
@@ -236,7 +274,7 @@ export class TavernWindow {
       rows: [...this._rows(OFFER_PRICE_ID, { amount: d.price, room, now }), ...this._ownTimeRows(room, d.days, now)],
       buttons: 'YesNo',
       onYes: () => this._confirm(room, d),
-      onNo: () => null,      // the chain empties, which closes the tavern (:212)
+      onNo: () => null, // the chain empties, which closes the tavern (:212)
     };
     return d.heartsDay ? [{ rows: line(roomFreeHeartsDayText()) }, offer] : [offer];
   }
@@ -256,7 +294,10 @@ export class TavernWindow {
     if (!t) return [];
     const c = t.indexOf(' (');
     if (c < 0) return [{ text: `${OWN_TIME_ROOM} ${t}${OWN_TIME_ROOM_NOTE}`, center: true }];
-    return [{ text: `${OWN_TIME_ROOM} ${t.slice(0, c)}`, center: true }, { text: `${t.slice(c + 1)}${OWN_TIME_ROOM_NOTE}`, center: true }];
+    return [
+      { text: `${OWN_TIME_ROOM} ${t.slice(0, c)}`, center: true },
+      { text: `${t.slice(c + 1)}${OWN_TIME_ROOM_NOTE}`, center: true },
+    ];
   }
 
   /** ConfirmRenting_OnButtonClick's Yes arm (:213-223). */
@@ -275,11 +316,15 @@ export class TavernWindow {
     const h = this.hooks;
     h.entity.rentedRooms = h.entity.rentedRooms ?? [];
     rentRoom(h.entity.rentedRooms, {
-      room, days, nowMinutes: h.now(),
-      mapId: h.mapId(), buildingKey: h.buildingKey(),
-      name: h.buildingName?.() ?? '', bedCount: h.bedCount?.() ?? 1,
+      room,
+      days,
+      nowMinutes: h.now(),
+      mapId: h.mapId(),
+      buildingKey: h.buildingKey(),
+      name: h.buildingName?.() ?? '',
+      bedCount: h.bedCount?.() ?? 1,
       rolls: h.rolls ?? Math.random,
-      sceneCache: h.sceneCache?.() ?? null,   // P1: the room's interior is HELD while rented
+      sceneCache: h.sceneCache?.() ?? null, // P1: the room's interior is HELD while rented
     });
   }
 
@@ -292,7 +337,13 @@ export class TavernWindow {
     const h = this.hooks;
     const now = h.now();
     // AUDIT C&C I8: the region keys the menu first (regionMenuDay), and the world's calendar pours the holidays' drinks
-    const menu = tavernMenu({ climateIndex: h.climateIndex(), regionIndex: h.regionIndex?.() ?? -1, quality: h.quality?.() ?? 5, minutes: h.worldNow?.() ?? now, hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });   // LIVED1: the kitchen keeps the sky's hours
+    const menu = tavernMenu({
+      climateIndex: h.climateIndex(),
+      regionIndex: h.regionIndex?.() ?? -1,
+      quality: h.quality?.() ?? 5,
+      minutes: h.worldNow?.() ?? now,
+      hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),
+    }); // LIVED1: the kitchen keeps the sky's hours
     // AUDIT SURV C/D: before six the kitchen refuses in the mod's two words and the drinks still pour (the picker
     // follows the refusal); the Drinks divider is not a door out - a header pick keeps the picker up
     const box = {
@@ -306,25 +357,30 @@ export class TavernWindow {
         const rules = survivalRules();
         if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
         // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
-        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after
+        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after
         if (!order.ok) return [{ rows: line(order.text) }];
         deductGold(h.entity, row.price);
         // INN-WATER: the water row is the fountain's law (a skin filled at the bar), paid as every row is paid
-        const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });
+        const r =
+          row.kind === 'food'
+            ? tavernEat(s, now, row.worth)
+            : row.kind === 'water'
+              ? tavernWater(h.entity, now)
+              : tavernDrink(s, row.strength, { endurance, rules });
         h.advanceMinutes?.(r.minutes);
         h.entity.lastTimePlayerAteOrDrankAtTavern = now;
-        tavernRefresh(h.entity, r);   // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
+        tavernRefresh(h.entity, r); // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
         let b = null;
         if (r.blackout) {
           // AUDIT C&C I4: the night runs to the SKY's six from where it stands after the drink - offline the one clock,
           // online the world's, which the character's own minutes never move (LIVED1) - and the waking says dawn only
           // under a dawn sky
           b = blackout(s, h.worldNow?.() ?? now + r.minutes, { endurance });
-          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price
+          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules); // the night on the boards is a rough one (SURV4), at the tier's price
           h.advanceMinutes?.(b.minutes);
           b.text = blackoutWaking(h.worldNow?.() ?? now + r.minutes + b.minutes);
         }
-        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];   // AUDIT SURV-TIERS (the third pass): and the waking
+        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }]; // AUDIT SURV-TIERS (the third pass): and the waking
       },
       onCancel: () => null,
     };
@@ -333,32 +389,46 @@ export class TavernWindow {
 
   _food() {
     const h = this.hooks;
-    if (survivalOn() && typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5
+    if (survivalOn() && typeof h.climateIndex === 'function') {
+      this._survivalFood();
+      return;
+    } // SURV5
     const now = h.now();
     if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) {
-      this._chain([{ rows: line(youAreNotHungryText()) }], { closesTavern: true });   // F143: food closes (:286)
+      this._chain([{ rows: line(youAreNotHungryText()) }], { closesTavern: true }); // F143: food closes (:286)
       return;
     }
-    this._chain([{
-      picker: tavernMenuLabels(),   // ESSENTIALS-HALF: online, the row's gold is the half it costs; L10N3d: the language's lines
-      onPick: (i) => {
-        audio.playOneShot(SOUND.ButtonClick, 1);   // F145: FoodAndDrink_OnItemPicked (:307)
-        const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now });   // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar
-        if (r.kind === 'ignore') return null;
-        if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
-        if (r.spend) deductGold(h.entity, r.spend);
-        h.heal?.(r.heal);
-        h.entity.lastTimePlayerAteOrDrankAtTavern = now;
-        return null;             // DFU shows nothing at all on a meal
-      },
-      onCancel: () => null,
-    }], { closesTavern: true });   // F143: DoFoodAndDrink's CloseWindow-first (:286)
+    this._chain(
+      [
+        {
+          picker: tavernMenuLabels(), // ESSENTIALS-HALF: online, the row's gold is the half it costs; L10N3d: the language's lines
+          onPick: (i) => {
+            audio.playOneShot(SOUND.ButtonClick, 1); // F145: FoodAndDrink_OnItemPicked (:307)
+            const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar
+            if (r.kind === 'ignore') return null;
+            if (r.kind === 'poor') return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
+            if (r.spend) deductGold(h.entity, r.spend);
+            h.heal?.(r.heal);
+            h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+            return null; // DFU shows nothing at all on a meal
+          },
+          onCancel: () => null,
+        },
+      ],
+      { closesTavern: true },
+    ); // F143: DoFoodAndDrink's CloseWindow-first (:286)
   }
 
   input(code, e = null) {
-    if (this.flow) { this.flow.input(code, e); return; }
+    if (this.flow) {
+      this.flow.input(code, e);
+      return;
+    }
     // Escape/Enter are the port host's close keys, not DFU buttons.
-    if (code === 'Escape' || code === 'Enter') { this._close(); return; }
+    if (code === 'Escape' || code === 'Enter') {
+      this._close();
+      return;
+    }
     // D1: the four Hotkeys, from the table, in DFU's button ADD order.
     const hit = firstHotkey(TAVERN_BUTTONS, code, e);
     if (hit === null) return;
@@ -368,10 +438,18 @@ export class TavernWindow {
     // through the faked click (Button.cs:85-90), sound included.
     audio.playOneShot(SOUND.ButtonClick, 1);
     switch (hit) {
-      case 'TavernRoom': this._room(); return;
-      case 'TavernTalk': this.hooks.onTalk?.(); this._close(); return;
-      case 'TavernFood': this._food(); return;
-      default: this._close();   // TavernExit
+      case 'TavernRoom':
+        this._room();
+        return;
+      case 'TavernTalk':
+        this.hooks.onTalk?.();
+        this._close();
+        return;
+      case 'TavernFood':
+        this._food();
+        return;
+      default:
+        this._close(); // TavernExit
     }
   }
 
@@ -379,22 +457,45 @@ export class TavernWindow {
     if (this.flow) return this.flow.click(vx, vy);
     // F145: PlayOneShot(SoundClips.ButtonClick) heads all four handlers
     // (Exit :135, Room :155, Talk :264, Food :339).
-    if (inRect(TAVERN_RECTS.room, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._room(); return true; }
-    if (inRect(TAVERN_RECTS.talk, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this.hooks.onTalk?.(); this._close(); return true; }
-    if (inRect(TAVERN_RECTS.food, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._food(); return true; }
-    if (inRect(TAVERN_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
+    if (inRect(TAVERN_RECTS.room, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._room();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.talk, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this.hooks.onTalk?.();
+      this._close();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.food, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._food();
+      return true;
+    }
+    if (inRect(TAVERN_RECTS.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
     return false;
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     const m = nativeMetrics(canvas);
     // AUDIT 19 F2: DaggerfallBaseWindow's parentPanel is opaque BLACK.
     drawMenuBackdrop(renderer, canvas);
     // Both buttons close the tavern before their chain runs, so the
     // panel is NOT drawn under a live box - DFU's CloseWindow has
     // already taken it off the stack.
-    if (this.flow) { this.flow.draw(renderer, canvas, font); return; }
+    if (this.flow) {
+      this.flow.draw(renderer, canvas, font);
+      return;
+    }
     drawImg(renderer, _art, m, TAVERN_PANEL_X, TAVERN_PANEL_Y);
   }
 }

@@ -179,7 +179,7 @@ test('MW-SHOULDER THE WIRING: the feature row (off by default, Off / Right / Lef
   assert.equal(row.control.initial, 'off', 'off, as the reference ships it (settings.lua:44)');
   assert.equal(row.control.online, 'player');
   assert.deepEqual(row.control.tiers.map((t) => t[0]), ['off', 'right', 'left']);
-  assert.match(rd('src/ui/settings/settingsMap.js'), /sec\("camera", "Camera", \[\n\s*"feat:mw-shoulder-camera", "feat:mod-eye-of-the-beholder"\]\)/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /sec\('camera', 'Camera', \['feat:mw-shoulder-camera', 'feat:mod-eye-of-the-beholder'\]\)/);
   const view = rd('src/player/mwView.js');
   const set = view.indexOf("mwCamera.setShoulder(getPref('mwShoulderCam'));");
   const step = view.indexOf('mwCamera.stepShoulder(state.dt ?? 0, fpArm.shoulderStance());');

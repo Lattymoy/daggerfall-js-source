@@ -2,8 +2,8 @@
   {
     "name": "PLD-install-registers-nothing",
     "file": "src/systems/pistolet.js",
-    "old": "  return addVendorTextures(PISTOLET_ICON_FILES.map(",
-    "new": "  return 0 && addVendorTextures(PISTOLET_ICON_FILES.map(",
+    "old": "  return addVendorTextures(\n    PISTOLET_ICON_FILES.map(({ archive, record, frame, file, offset }) => ({\n      archive,\n      record,\n      frame,\n      fileName: file,\n      standIn: true,\n      offset,\n      load: () => load(file),\n    })),",
+    "new": "  return (\n    0 &&\n    addVendorTextures(\n      PISTOLET_ICON_FILES.map(({ archive, record, frame, file, offset }) => ({\n        archive,\n        record,\n        frame,\n        fileName: file,\n        standIn: true,\n        offset,\n        load: () => load(file),\n      })),\n    )",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PLD-install-not-a-stand-in",
     "file": "src/systems/pistolet.js",
-    "old": "fileName: file, standIn: true, offset, load",
-    "new": "fileName: file, standIn: false, offset, load",
+    "old": "      standIn: true,",
+    "new": "      standIn: false,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PLD-install-drops-the-offsets",
     "file": "src/systems/pistolet.js",
-    "old": "fileName: file, standIn: true, offset, load",
-    "new": "fileName: file, standIn: true, offset: null, load",
+    "old": "      offset,",
+    "new": "      offset: null,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PLD-gilded-right-doll-plain",
     "file": "src/systems/pistolet.js",
-    "old": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
-    "new": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
+    "old": "  if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
+    "new": "  if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLD-gilded-left-doll-file-right-offset",
     "file": "src/systems/pistolet.js",
-    "old": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-    "new": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "old": "    file: 'pistolet-paperdoll-left-gilded.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.left,",
+    "new": "    file: 'pistolet-paperdoll-left-gilded.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.right,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLD-left-doll-file-right-offset",
     "file": "src/systems/pistolet.js",
-    "old": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-    "new": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "old": "    file: 'pistolet-paperdoll-left.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.left,",
+    "new": "    file: 'pistolet-paperdoll-left.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.right,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PLD-condition-unclamped",
     "file": "src/systems/pistolet.js",
-    "old": "item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
-    "new": "item.currentCondition = condition;",
+    "old": "  if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
+    "new": "  if (condition != null) item.currentCondition = condition;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLD-not-dwarven",
     "file": "src/systems/pistolet.js",
-    "old": "export function createPistolet({ material = 4,",
-    "new": "export function createPistolet({ material = 3,",
+    "old": "export function createPistolet({ material = 4, condition = null } = {}) {",
+    "new": "export function createPistolet({ material = 3, condition = null } = {}) {",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "PLD-offset-right-6px",
     "file": "src/systems/pistolet.js",
-    "old": "right: Object.freeze({ x: 200 + 17, y: 8 + 89 })",
-    "new": "right: Object.freeze({ x: 200 + 17, y: 8 + 93 })",
+    "old": "  right: Object.freeze({ x: 200 + 17, y: 8 + 89 }),",
+    "new": "  right: Object.freeze({ x: 200 + 17, y: 8 + 93 }),",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "GF-two-draws",
     "file": "src/systems/thunderlock.js",
-    "old": "    rolls();\n    return [];",
-    "new": "    rolls(); rolls();\n    return [];",
+    "old": "    return [];",
+    "new": "    rolls();\n    return [];",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pelletsscarce.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "GF-half-weight-back",
     "file": "src/systems/thunderlock.js",
-    "old": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n",
-    "new": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
+    "old": "  mint: (rolls = Math.random) => {",
+    "new": "  weight: 0.5,\n  mint: (rolls = Math.random) => {",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "SE-era-for-any-template",
     "file": "src/systems/gilded.js",
-    "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
-    "new": "e.id === r?.id",
+    "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
+    "new": "  return GILDED_ERAS.find((e) => e.id === r?.id) ?? r;",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "OH-duel-melee-only",
     "file": "src/combat/duelCombat.js",
-    "old": "const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
-    "new": "const off = d.by === 'melee' && d.off === true;",
+    "old": "  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
+    "new": "  const off = d.by === 'melee' && d.off === true;",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "OH-lead-read-as-off",
     "file": "src/combat/playerWeapon.js",
-    "old": "item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
-    "new": "item === this.handItem(this.leadHand);",
+    "old": "    return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
+    "new": "    return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand);",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "PA-gilded-keep-of-the-rest-frame",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "gilded ? gildFrame(own, pistoletGildKeep(own))",
-    "new": "gilded ? gildFrame(own, pistoletGildKeep(cells[0]))",
+    "old": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);",
+    "new": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(cells[0])) : shimmer(own), lean);",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "PA-enchanted-is-plain",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
-    "new": "const type = WEAPON_TYPES.Pistolet;",
+    "old": "  const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
+    "new": "  const type = WEAPON_TYPES.Pistolet;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "PA-sleeve-gilded",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "((c === 'g' || c === '#' || c === '?') && !sleeve[i])",
-    "new": "(c === 'g' || c === '#' || c === '?')",
+    "old": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i])) ? 1 : 0;",
+    "new": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || c === 'g' || c === '#' || c === '?') ? 1 : 0;",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -269,8 +269,8 @@
   {
     "name": "PA-muzzle-off-the-wrong-frame",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "muzzle: flashPoint(cropImage(bled[1], union))",
-    "new": "muzzle: flashPoint(cropImage(bled[0], union)) ?? { x: 0.5, y: 0.5 }",
+    "old": "    muzzle: flashPoint(cropImage(bled[1], union)),",
+    "new": "    muzzle: flashPoint(cropImage(bled[0], union)) ?? { x: 0.5, y: 0.5 },",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "FM-flame-gilded",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "keep[i] = !flame[i] && (",
-    "new": "keep[i] = (",
+    "old": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i])) ? 1 : 0;",
+    "new": "    keep[i] = c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i]) ? 1 : 0;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "FM-glow-unbounded",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "(j) => data[j * 4] >= 245 && luma(j) >= 150",
-    "new": "(j) => luma(j) >= 150",
+    "old": "  return flood(w, h, data, seeds, mask, (j) => data[j * 4] >= 245 && luma(j) >= 150);",
+    "new": "  return flood(w, h, data, seeds, mask, (j) => luma(j) >= 150);",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "PAT-right-hand-unflipped-point",
     "file": "tools/pistoletArt.mjs",
-    "old": "point && (flip ? [level.width - point[0], point[1]] : point)",
-    "new": "point",
+    "old": "  return rotSprite(\n    flip ? flipAcross(level) : level,\n    turn,\n    point && (flip ? [level.width - point[0], point[1]] : point),\n  );",
+    "new": "  return rotSprite(flip ? flipAcross(level) : level, turn, point);",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -343,8 +343,8 @@
   {
     "name": "TL-light-side-ignored",
     "file": "src/systems/thunderlock.js",
-    "old": "const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
-    "new": "const side = 1;",
+    "old": "  const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
+    "new": "  const side = 1;",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/thunderlock.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "SR-pistolet-no-top",
     "file": "src/net/siege/siegeRef.js",
-    "old": " : w === SIEGE_PISTOLET.template ? SIEGE_PISTOLET.max",
-    "new": "",
+    "old": "  const top =\n    w === SIEGE_THUNDERLOCK.template\n      ? SIEGE_THUNDERLOCK.max\n      : w === SIEGE_PISTOLET.template\n        ? SIEGE_PISTOLET.max\n        : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];",
+    "new": "  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pvpref_law.test.js",
@@ -377,8 +377,8 @@
   {
     "name": "GV-preset-over-the-tuning",
     "file": "src/combat/gun/gunViewmodel.js",
-    "old": "{ ...widgetDefaults(), ...tuning }), { preset: false });",
-    "new": "{ ...widgetDefaults(), ...tuning }), { preset: true });",
+    "old": "  const t = readWidgetSettings(() => ({ ...widgetDefaults(), ...tuning }), { preset: false });",
+    "new": "  const t = readWidgetSettings(() => ({ ...widgetDefaults(), ...tuning }), { preset: true });",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "LL-pistol-unclaimed",
     "file": "src/systems/thunderlock.js",
-    "old": "templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
-    "new": "templates: [THUNDERLOCK_TEMPLATE],",
+    "old": "  templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
+    "new": "  templates: [THUNDERLOCK_TEMPLATE],",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]

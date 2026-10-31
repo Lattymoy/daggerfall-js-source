@@ -32,7 +32,8 @@ export function toggleLocked(/** @type {any} */ item) {
 export const LOCK_CLOSES = Object.freeze(['drop', 'sell', 'trade']);
 
 /** Whether a lock refuses `way` for this piece. */
-export const lockRefuses = (/** @type {any} */ item, /** @type {string} */ way) => isLocked(item) && LOCK_CLOSES.includes(way);
+export const lockRefuses = (/** @type {any} */ item, /** @type {string} */ way) =>
+  isLocked(item) && LOCK_CLOSES.includes(way);
 
 /** The refusal, in the windows' own voice. */
 export const lockedText = (/** @type {string} */ name) => `${name || 'That'} is locked. Unlock it first.`;

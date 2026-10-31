@@ -47,7 +47,11 @@ export const DRESS_GROUP_COUNT = 5;
 
 /** The slots clothing is worn in (paperdoll EquipSlots). */
 export const DRESS_SLOTS = Object.freeze([
-  EQUIP_SLOTS.Cloak1, EQUIP_SLOTS.Cloak2, EQUIP_SLOTS.ChestClothes, EQUIP_SLOTS.LegsClothes, EQUIP_SLOTS.Feet,
+  EQUIP_SLOTS.Cloak1,
+  EQUIP_SLOTS.Cloak2,
+  EQUIP_SLOTS.ChestClothes,
+  EQUIP_SLOTS.LegsClothes,
+  EQUIP_SLOTS.Feet,
 ]);
 
 export const DRESS_CLASS = Object.freeze({ Common: 'common', Fine: 'fine', Religious: 'religious' });
@@ -57,15 +61,31 @@ export const DRESS_CLASS = Object.freeze({ Common: 'common', Fine: 'fine', Relig
 const COMMON = [
   141, // Straps
   142, // Armbands
-  150, 189, // Sandals
-  151, 190, // Casual Pants
+  150,
+  189, // Sandals
+  151,
+  190, // Casual Pants
   152, // Breeches
-  154, 191, // Casual Cloak
-  162, 199, // Loincloth
-  163, 200, // Plain Robes
-  165, 166, 169, 170, 178, 202, 203, 206, 207, 214, // Short Shirt
-  174, 211, // Wrap
-  180, 216, // Vest
+  154,
+  191, // Casual Cloak
+  162,
+  199, // Loincloth
+  163,
+  200, // Plain Robes
+  165,
+  166,
+  169,
+  170,
+  178,
+  202,
+  203,
+  206,
+  207,
+  214, // Short Shirt
+  174,
+  211, // Wrap
+  180,
+  216, // Vest
   184, // Peasant Blouse
   197, // Casual Dress
   198, // Strapless Dress
@@ -73,7 +93,8 @@ const COMMON = [
 const FINE = [
   143, // Kimono
   144, // Fancy Armbands
-  155, 192, // Formal Cloak
+  155,
+  192, // Formal Cloak
   157, // Dwynnen Surcoat
   159, // Formal Tunic
   160, // Toga
@@ -83,7 +104,7 @@ const FINE = [
   195, // Evening Gown
   196, // Day Gown
 ];
-const RELIGIOUS = [164, 201];   // Priest Robes, Priestess Robes
+const RELIGIOUS = [164, 201]; // Priest Robes, Priestess Robes
 
 const CLASS_OF = new Map([
   ...COMMON.map((t) => [t, DRESS_CLASS.Common]),
@@ -137,7 +158,7 @@ export function dressStanding(entity) {
     for (let g = 0; g < DRESS_GROUP_COUNT; g++) groups[g] += fx.groups[g];
     temple += fx.temple;
   }
-  const gear = entity?._mods?.standing;   // LOOT14
+  const gear = entity?._mods?.standing; // LOOT14
   const capGear = (v) => Math.max(-GEAR_STANDING_CAP, Math.min(GEAR_STANDING_CAP, Number(v) || 0));
   return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };
 }

@@ -2,8 +2,8 @@
   {
     "name": "AUDITBLOOD3-the-ink-is-read-as-a-density-again-the-bug-this-audit-found",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
-    "new": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, ink));",
+    "old": "export const filmThickness = (alpha, ink) =>\n  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
+    "new": "export const filmThickness = (alpha, ink) => Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, ink));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDITBLOOD3-the-thickness-is-coverage-alone",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
-    "new": "  Math.max(0, Math.min(1, alpha));",
+    "old": "export const filmThickness = (alpha, ink) =>\n  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));",
+    "new": "export const filmThickness = (alpha, ink) => Math.max(0, Math.min(1, alpha));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITBLOOD3-the-sheet-stops-being-white-ink-so-the-lens-tints-green",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;",
-    "new": "          colors[o] = ink; colors[o + 1] = Math.round(255 * thick); colors[o + 2] = ink;",
+    "old": "          colors[o + 1] = ink;",
+    "new": "          colors[o + 1] = Math.round(255 * thick);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "AUDITBLOOD3-blood-absorbs-every-channel-alike-so-a-thinning-mark-never-shifts",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.5, 0.95, 0.95]);",
     "new": "export const BLOOD_ABSORB = Object.freeze([0.95, 0.95, 0.95]);",
     "tests": [
       "test/combat/blood1_decals.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "AUDITBLOOD3-blood-is-a-tinted-filter-rather-than-a-red-one",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
-    "new": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.80]);",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.5, 0.95, 0.95]);",
+    "new": "export const BLOOD_ABSORB = Object.freeze([0.5, 0.95, 0.8]);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "AUDITBLOOD3-the-film-is-too-faint-to-see",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);",
+    "old": "export const BLOOD_ABSORB = Object.freeze([0.5, 0.95, 0.95]);",
     "new": "export const BLOOD_ABSORB = Object.freeze([0.05, 0.09, 0.09]);",
     "tests": [
       "test/combat/blood1_decals.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "AUDITBLOOD3-the-sheen-ignores-the-marks-depth-so-a-dried-rim-shines",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x));   // smoothstep, the shader's own",
-    "new": "  return Math.max(0, Math.min(1, wet));   // smoothstep, the shader's own",
+    "old": "  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x)); // smoothstep, the shader's own",
+    "new": "  return Math.max(0, Math.min(1, wet)); // smoothstep, the shader's own",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDITBLOOD3-the-lanterns-glint-drops-its-Fresnel-and-is-plastic-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];",
-    "new": "      if (g > 0.0) glint += att * g * uPointColors[i];",
+    "old": "      if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe",
+    "new": "      if (g > 0.0) glint += att * g * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITBLOOD3-the-suns-glint-drops-its-Fresnel",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
-    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
+    "old": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * sunVis);",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDITBLOOD3-F10-the-shader-goes-back-to-claiming-a-rim-lip",
     "file": "src/render/enhancedLighting.js",
-    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE.",
-    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER.",
+    "old": "  // BLOOD3: AND THE MARK IS A HEIGHT FIELD, NOT A PLANE. A mark lit by",
+    "new": "  // BLOOD3: AND THE RIM HAS A SHOULDER. A mark lit by",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

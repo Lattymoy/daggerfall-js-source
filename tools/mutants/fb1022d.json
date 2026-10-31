@@ -40,8 +40,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-unread-read-as-none",
     "file": "src/scenes/lairHost.js",
-    "old": "      if (e == null) unread = true;\n",
-    "new": "",
+    "old": "      if (e == null) unread = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-enhanced-only-always",
     "file": "src/scenes/lairHost.js",
-    "old": "      if (m.enhancedOnly && !enhanced) continue;\n",
-    "new": "",
+    "old": "      if (m.enhancedOnly && !enhanced) continue;\n      const e = entranceOf(m.modelIdNum);",
+    "new": "      const e = entranceOf(m.modelIdNum);",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-ring-unfiltered",
     "file": "src/scenes/lairHost.js",
-    "old": ".filter((d) => enterable(d.px, d.py)).map(",
-    "new": ".map(",
+    "old": "        return (ring ??= bountyDungeons(x, y, dungeonAt)\n          .filter((d) => enterable(d.px, d.py))\n          .map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
+    "new": "        return (ring ??= bountyDungeons(x, y, dungeonAt).map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-region-dropped",
     "file": "src/scenes/lairHost.js",
-    "old": "region: regionAt(d.px, d.py)",
-    "new": "region: -1",
+    "old": "          .map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
+    "new": "          .map((d) => ({ ...d, region: -1 })));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-pixel-not-kept",
     "file": "src/scenes/lairHost.js",
-    "old": "    byPixel.set(key, v);\n",
-    "new": "",
+    "old": "    byPixel.set(key, v);\n    return v;",
+    "new": "    return v;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-model-not-kept",
     "file": "src/scenes/lairHost.js",
-    "old": "    byModel.set(id, v);\n",
-    "new": "",
+    "old": "    byModel.set(id, v);\n    return v;",
+    "new": "    return v;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-unread-judged-shut",
     "file": "src/scenes/lairHost.js",
-    "old": "entranceOf, en) !== false;",
-    "new": "entranceOf, en) === true;",
+    "old": "          blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) !==\n          false;",
+    "new": "          blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) ===\n          true;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-nearest-is-itself",
     "file": "src/scenes/lairHost.js",
-    "old": "if (d === 0 || d >= bestD",
-    "new": "if (d >= bestD",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
+    "new": "        if (d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-nearest-the-farthest",
     "file": "src/scenes/lairHost.js",
-    "old": "if (d === 0 || d >= bestD",
-    "new": "if (d === 0 || d <= bestD && bestD !== Infinity",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
+    "new": "        if (d === 0 || (d <= bestD && bestD !== Infinity) || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-kept-never-asked",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(kept && lairEnterable(kept, here) ? kept : null) ?? pickLair",
-    "new": "kept ?? pickLair",
+    "old": "  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
+    "new": "  return kept ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-host-word-ignored",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "here.enterable(lair.px, lair.py) !== false;",
-    "new": "true;",
+    "old": "export const lairEnterable = (lair, here) =>\n  typeof here?.enterable !== 'function' || here.enterable(lair.px, lair.py) !== false;",
+    "new": "export const lairEnterable = (lair, here) => typeof here?.enterable !== 'function' || true;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-ease-under-way",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = false ? glideToward",
+    "old": "    const position =\n      !jumped && ledWay > 0\n        ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay)\n        : easeToward(shown, target, dt, undefined, snap);",
+    "new": "    const position = false\n      ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay)\n      : easeToward(shown, target, dt, undefined, snap);",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-share-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "(CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d",
-    "new": "(CSA_PEER_CATCH_MPS + way) * d",
+    "old": "    off > 1e-9\n      ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off\n      : 0;",
+    "new": "    off > 1e-9 ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + way) * d) / off : 0;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "FB1022D-SEA-GLIDE-bound-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off",
-    "new": "(off * (1 - Math.exp(-CSA_PEER_CATCH * d))) / off",
+    "old": "  const take =\n    off > 1e-9\n      ? Math.min(off * (1 - Math.exp(-CSA_PEER_CATCH * d)), (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * way) * d) / off\n      : 0;",
+    "new": "  const take = off > 1e-9 ? (off * (1 - Math.exp(-CSA_PEER_CATCH * d))) / off : 0;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "FB1022D-PEER-ART-record-kept-in-look",
     "file": "src/net/peer/peerRiders.js",
-    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d$/, '')}`",
-    "new": "`${p[0]}:${p[1]}:${p[2]}:${p[3]}:${p[4].replace(/!\\d$/, '')}`",
+    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}`",
+    "new": "`${p[0]}:${p[1]}:${p[2]}:${p[3]}:${p[4].replace(/!\\d\\d?$/, '')}`",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "FB1022D-AUDIT-B5-skin-unkeyed",
     "file": "src/scenes/lairHost.js",
-    "old": "const key = `${en ? 1 : 0}:${px},${py}`;",
-    "new": "const key = `${px},${py}`;",
+    "old": "    const key = `${en ? 1 : 0}:${px},${py}`;",
+    "new": "    const key = `${px},${py}`;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "FB1022D-AUDIT-B5-name-uncut",
     "file": "src/scenes/lairHost.js",
-    "old": "name: String(name).slice(0, 80)",
-    "new": "name: String(name)",
+    "old": "        best = { px: x, py: y, name: String(name).slice(0, 80), region: regionAt(x, y) }; // revenantFeud.js sanitizeLair's shape",
+    "new": "        best = { px: x, py: y, name: String(name), region: regionAt(x, y) }; // revenantFeud.js sanitizeLair's shape",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "FB1022D-AUDIT-B6-ring-laid-at-once",
     "file": "src/scenes/lairHost.js",
-    "old": "    let ring = null;\n",
-    "new": "    let ring = bountyDungeons(x, y, dungeonAt).filter((d) => enterable(d.px, d.py)).map((d) => ({ ...d, region: regionAt(d.px, d.py) }));\n",
+    "old": "    let ring = null;",
+    "new": "    let ring = bountyDungeons(x, y, dungeonAt)\n      .filter((d) => enterable(d.px, d.py))\n      .map((d) => ({ ...d, region: regionAt(d.px, d.py) }));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "FB1022D-AUDIT-C1-snap-by-the-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const ledWay = Math.max(speed, s.ledWay ?? 0);",
-    "new": "const ledWay = speed;",
+    "old": "    const ledWay = Math.max(speed, s.ledWay ?? 0);",
+    "new": "    const ledWay = speed;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "FB1022D-AUDIT-C1-led-way-never-settles",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "ledWay: settled ? speed : ledWay }",
-    "new": "ledWay }",
+    "old": "    return { position, rotation, jumped, way, ledWay: settled ? speed : ledWay };",
+    "new": "    return { position, rotation, jumped, way, ledWay };",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js",
       "test/systems/csa_together.test.js"
@@ -397,8 +397,8 @@
   {
     "name": "FB1022D-AUDIT-C1-pairing-by-the-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "had[j].ledWay ?? 0), 0, 0]) ** 2) continue;",
-    "new": "0), 0, 0]) ** 2) continue;",
+    "old": "            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2",
+    "new": "            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), 0), 0, 0]) ** 2",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "FB1022D-AUDIT-C2-led-straight",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const led = v ? wayOver(v, turn, lead) : null;",
-    "new": "const led = v ? wayOver(v, 0, lead) : null;",
+    "old": "    const led = v ? wayOver(v, turn, lead) : null; // AUDIT FB1022d C2: along the turn's arc",
+    "new": "    const led = v ? wayOver(v, 0, lead) : null; // AUDIT FB1022d C2: along the turn's arc",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "FB1022D-AUDIT-C2-arc-turned-the-wrong-way",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "  const om = (turn * Math.PI) / 180;\n",
-    "new": "  const om = (-turn * Math.PI) / 180;\n",
+    "old": "  const om = (turn * Math.PI) / 180;",
+    "new": "  const om = (-turn * Math.PI) / 180;",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "FB1022D-AUDIT-C5-under-way-never-snaps",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = ledWay > 0 && shown ? glideToward",
+    "old": "      !jumped && ledWay > 0",
+    "new": "      ledWay > 0 && shown",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "FB1022D-AUDIT-C5-slow-boat-eased",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const position = !jumped && ledWay > 0 ? glideToward",
-    "new": "const position = !jumped && ledWay > 3 ? glideToward",
+    "old": "      !jumped && ledWay > 0",
+    "new": "      !jumped && ledWay > 3",
     "tests": [
       "test/scenes/fb1022d_seaglide.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "FB1022D-AUDIT-D4-cloak-plain-frames-released",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "(worn === lk.outfit || worn === plain)",
-    "new": "(worn === lk.outfit)",
+    "old": "[lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? '')))",
+    "new": "[lk.outfit].some((o) => worn === o || worn === slung(String(o ?? '')))",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]

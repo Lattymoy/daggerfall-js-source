@@ -38,8 +38,8 @@
   {
     "name": "CHAP3B-TARGET-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> STRENGTH_TARGET * Math.max(1, Math.ceil(",
-    "new": "=> STRENGTH_TARGET * Math.max(0, Math.ceil(",
+    "old": "  STRENGTH_TARGET * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "  STRENGTH_TARGET * Math.max(0, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP3B-TARGET-CEIL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> STRENGTH_TARGET * Math.max(1, Math.ceil(",
-    "new": "=> STRENGTH_TARGET * Math.max(1, Math.floor(",
+    "old": "  STRENGTH_TARGET * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "  STRENGTH_TARGET * Math.max(1, Math.floor(Math.max(0, Number(active) || 0) / 100));",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP3B-AFTER-IDLE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const moved = m <= 0 ? s - STRENGTH_IDLE",
-    "new": "const moved = m < 0 ? s - STRENGTH_IDLE",
+    "old": "    m <= 0",
+    "new": "    m < 0",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP3B-AFTER-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)))",
-    "new": "Math.min(STRENGTH_STEP_MAX, Math.round(m / Math.max(1, target)))",
+    "old": "  const step = Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)));",
+    "new": "  const step = Math.min(STRENGTH_STEP_MAX, Math.round(m / Math.max(1, target)));",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP3B-AFTER-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)))",
-    "new": "Math.floor(m / Math.max(1, target))",
+    "old": "  const step = Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)));",
+    "new": "  const step = Math.floor(m / Math.max(1, target));",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP3B-AFTER-TOP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
-    "new": "return Math.max(STRENGTH_MIN, moved);",
+    "old": "  return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
+    "new": "  return Math.max(STRENGTH_MIN, moved);",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP3B-AFTER-BOTTOM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
-    "new": "return Math.min(STRENGTH_MAX, moved);",
+    "old": "  return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));",
+    "new": "  return Math.min(STRENGTH_MAX, moved);",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP3B-AFTER-PREV",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;",
-    "new": "const s = Number.isFinite(prev) ? Math.round(prev) : 0;",
+    "old": "  const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;",
+    "new": "  const s = Number.isFinite(prev) ? Math.round(prev) : 0;",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP3B-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);",
-    "new": "STRENGTH_START + Math.round((Number(s) - STRENGTH_START) / 2);",
+    "old": "  STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);",
+    "new": "  STRENGTH_START + Math.round((Number(s) - STRENGTH_START) / 2);",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP3B-BAND-STEADY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "band: 'steady', name: 'Steady', from: 20,",
-    "new": "band: 'steady', name: 'Steady', from: 25,",
+    "old": "  Object.freeze({ band: 'steady', name: 'Steady', from: 20, price: 1, writs: 1, shelf: 0 }),",
+    "new": "  Object.freeze({ band: 'steady', name: 'Steady', from: 25, price: 1, writs: 1, shelf: 0 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP3B-BAND-THRIVING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "band: 'thriving', name: 'Thriving', from: 70,",
-    "new": "band: 'thriving', name: 'Thriving', from: 75,",
+    "old": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 75, price: 0.9, writs: 1.5, shelf: 4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP3B-BAND-ASCENDANT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "band: 'ascendant', name: 'Ascendant', from: 90,",
-    "new": "band: 'ascendant', name: 'Ascendant', from: 85,",
+    "old": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 85, price: 0.8, writs: 1.5, shelf: 4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP3B-BAND-PRICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 0, price: 1.25, writs: 0.5",
-    "new": "from: 0, price: 1.2, writs: 0.5",
+    "old": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -4 }),",
+    "new": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.2, writs: 0.5, shelf: -4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CHAP3B-BAND-THRIVING-PRICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 70, price: 0.9, writs: 1.5",
-    "new": "from: 70, price: 0.85, writs: 1.5",
+    "old": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.85, writs: 1.5, shelf: 4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CHAP3B-BAND-WRITS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 70, price: 0.9, writs: 1.5",
-    "new": "from: 70, price: 0.9, writs: 2",
+    "old": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 2, shelf: 4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CHAP3B-BAND-FAILWRITS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 0, price: 1.25, writs: 0.5",
-    "new": "from: 0, price: 1.25, writs: 1",
+    "old": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -4 }),",
+    "new": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 1, shelf: -4 }),",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CHAP3B-BAND-NUMBER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (typeof strength !== 'number' || !Number.isFinite(strength)) return CHAPTER_BANDS[1];",
-    "new": "if (!Number.isFinite(Number(strength))) return CHAPTER_BANDS[1];",
+    "old": "  if (typeof strength !== 'number' || !Number.isFinite(strength)) return CHAPTER_BANDS[1];",
+    "new": "  if (!Number.isFinite(Number(strength))) return CHAPTER_BANDS[1];",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CHAP3B-BAND-ORDER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "for (const b of CHAPTER_BANDS) if (strength >= b.from) at = b;",
-    "new": "for (const b of CHAPTER_BANDS) if (strength > b.from) at = b;",
+    "old": "  for (const b of CHAPTER_BANDS) if (strength >= b.from) at = b;",
+    "new": "  for (const b of CHAPTER_BANDS) if (strength > b.from) at = b;",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CHAP3B-WRITS-BAND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.round(hallWritCount(active) * chapterBandOf(strength).writs)",
-    "new": "Math.round(hallWritCount(active))",
+    "old": "  Math.max(1, Math.round(hallWritCount(active) * chapterBandOf(strength).writs));",
+    "new": "  Math.max(1, Math.round(hallWritCount(active)));",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CHAP3B-LINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})",
-    "new": "here is ${chapterBandOf(c?.strength).name}",
+    "old": "  return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;",
+    "new": "  return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name}`;",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "CHAP3B-BOARD-LINES",
     "file": "src/ui/noticeWindow.js",
-    "old": "    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`));   // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)\n",
-    "new": "",
+    "old": "    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)\n    const merit = (writs?.merit ?? []).find((m) => m.faction === c.faction);",
+    "new": "    const merit = (writs?.merit ?? []).find((m) => m.faction === c.faction);",
     "tests": [
       "test/net/chap3b_strength.test.js"
     ]

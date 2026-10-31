@@ -739,7 +739,7 @@ test('AUDIT UICALM-FIRM1 L5 M5 / L4 M1: the saddle panel When needed, on a page 
     toggleSaddlePanel();
     assert.equal(show({ saddle: SADDLE(), now: 9800 }), 'none', 'and its own key puts it away');
   } finally { hideEnhancedSaddle(); _resetPrefsForTests(); }
-  assert.match(read('src/ui/enhanced/enhancedSaddle.js'), /if \(last\.place === 0\) \{ if \(state\.touch\) placeTouch\(doc, parts, last\); else placeBar\(doc, parts, last\); \}/, 'a finger\'s block placed under the compass');   // PIN MOVED (THE MERGE of main into FIELD BUGS 2026-10-14: HUD-SADDLE's preview paints through the same code, so the placers take the nodes they place)
+  assert.match(read('src/ui/enhanced/enhancedSaddle.js'), /if \(last\.place === 0\) \{\n\s*if \(state\.touch\) placeTouch\(doc, parts, last\);\n\s*else placeBar\(doc, parts, last\);\n\s*\}/, 'a finger\'s block placed under the compass');   // PIN MOVED (THE MERGE of main into FIELD BUGS 2026-10-14: HUD-SADDLE's preview paints through the same code, so the placers take the nodes they place)
 });
 
 test('AUDIT UICALM-FIRM1 L5 M7 / L4 M3, N1: the calm HUD - the vitals rest after VITALS_REST_S full, and not a moment before; the player\'s Off, a lost point, a foe in the bar and the HUD arranged keep them up', async () => {

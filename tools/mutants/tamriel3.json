@@ -220,8 +220,8 @@
   {
     "name": "TAMRIEL3-a-bad-fit-is-taken",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "_fit = fit && Number.isFinite(fit.ox) && Number.isFinite(fit.oy) && fit.ppu > 0",
-    "new": "_fit = fit",
+    "old": "  _fit =\n    fit && Number.isFinite(fit.ox) && Number.isFinite(fit.oy) && fit.ppu > 0\n      ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu }\n      : { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };",
+    "new": "  _fit = fit\n    ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu }\n    : { ox: BAY_ORIGIN.x, oy: BAY_ORIGIN.y, ppu: PIXELS_PER_PICTURE_UNIT };",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "TAMRIEL3-picture-to-bay-forgets-the-fit",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];",
-    "new": "return [px * PIXELS_PER_PICTURE_UNIT - _fit.ox, py * PIXELS_PER_PICTURE_UNIT - _fit.oy];",
+    "old": "  return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];",
+    "new": "  return [px * PIXELS_PER_PICTURE_UNIT - _fit.ox, py * PIXELS_PER_PICTURE_UNIT - _fit.oy];",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "TAMRIEL3-bay-to-picture-forgets-the-origin",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return [(x + _fit.ox) / _fit.ppu, (y + _fit.oy) / _fit.ppu];",
-    "new": "return [(x + BAY_ORIGIN.x) / _fit.ppu, (y + BAY_ORIGIN.y) / _fit.ppu];",
+    "old": "  return [(x + _fit.ox) / _fit.ppu, (y + _fit.oy) / _fit.ppu];",
+    "new": "  return [(x + BAY_ORIGIN.x) / _fit.ppu, (y + BAY_ORIGIN.y) / _fit.ppu];",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -265,24 +265,22 @@
   {
     "name": "TAMRIEL3-the-raster-forgets-the-live-scale",
     "file": "src/world/tamriel/tamrielRaster.js",
-    "old": "const unit = tamrielFit().ppu / cell;   // cells a picture unit",
-    "new": "const unit = 18.75 / cell;   // cells a picture unit",
+    "old": "  const unit = tamrielFit().ppu / cell; // cells a picture unit",
+    "new": "  const unit = 18.75 / cell; // cells a picture unit",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
   },
-  
   {
     "name": "TAMRIEL3-the-southern-border-edge-is-dropped",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "    if (d !== c) { crossing(bottom, bx, by + 1, 1, 0, d, c); E.push(",
-    "new": "    if (false) { crossing(bottom, bx, by + 1, 1, 0, d, c); E.push(",
+    "old": "    if (d !== c) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/tamriel3.test.js",
       "test/world/smoothland.test.js"
     ]
   },
-  
   {
     "name": "TAMRIEL3-a-label-for-a-province-with-no-land",
     "file": "src/ui/tamrielInk.js",

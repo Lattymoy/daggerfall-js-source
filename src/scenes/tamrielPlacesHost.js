@@ -4,7 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId } from '../world/arenaLocations.js';
-import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryPixelOfId, countryLocationIndex } from '../world/tamrielCountry.js';
+import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryPixelOfId, countryLocationIndex, COUNTRY_SOURCE } from '../world/tamrielCountry.js';
 import { capitalOnPixel, capitalPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceOrdinal, capitalSpanPixels, capitalsVersion, imperialOutskirts, capitalCentrePixel, capitalSlicePort } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -21,8 +21,8 @@ import { rollSpec } from '../world/tamrielRoads.js';
 import { outlineTownLocation, townOutlineBlockJson } from '../world/townOutline.js';   // TOWN-SHAPES TS3: a town past the Bay laid as its own outline of blocks
 import { standTownWall, setTownWallPaths, townWallPathsReader } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline; ROAD-FOLLOW: its gates where its roads come in
 import { startLairSites } from '../systems/starts/startSite.js';
-import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';
-import { settlementPlaceRows, SETTLEMENTS_SOURCE } from '../world/settlement/settlementPlaces.js';   // RMB-CONTRACTS RMBC5: the settlements on the registry   // AUDIT TESA II P7: the places past the Bay on the world's registry
+import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   // AUDIT TESA II P7: the places past the Bay on the world's registry
+import { settlementPlaceRows, SETTLEMENTS_SOURCE } from '../world/settlement/settlementPlaces.js';   // RMB-CONTRACTS RMBC5: the settlements on the registry
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // WW7-7: a pixel the roads past the Bay rolled a place on is dry
 import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA II P2/P3: the nearest town of the world
 import { townClimateAt } from '../world/urban/townLook.js';   // URBANIZER U1: a town past the Bay in its province's own stone (the Imperial City aside)
@@ -273,7 +273,7 @@ export function createTamrielPlaces(host) {
   // and Arena's places as lists (a capital's pixel the capital's - the first list holds it), the countryside and the
   // lairs as pixel providers (the same rolls the build reads). Registered again when the land, Arena's standing or the
   // capitals' move; only where the land past the Bay stands (as every place past the Bay is).
-  const TESA_SOURCES = Object.freeze({ country: 'tesa-country', lairs: 'tesa-lairs' });   // TESA x AUDIT TESA II: the capitals and Arena's places the live list's (PAST_BAY_SOURCE, below)
+  const TESA_SOURCES = Object.freeze({ country: COUNTRY_SOURCE, lairs: 'tesa-lairs' });   // TESA x AUDIT TESA II: the capitals and Arena's places the live list's (PAST_BAY_SOURCE, below)
   const exteriorSize = (loc) => ({ w: loc?.exterior?.exteriorData?.width ?? 1, h: loc?.exterior?.exteriorData?.height ?? 1 });
   /** The countryside's place on a pixel past the Bay, as its location stands it. */
   function countryRow(px, py) {

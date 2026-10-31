@@ -2,8 +2,8 @@
   {
     "name": "GATE-FBX-the-ground-unread",
     "file": "tools/bakeGate.mjs",
-    "old": "(z - frame.ground) * frame.scale",
-    "new": "z * frame.scale",
+    "old": "  (z - frame.ground) * frame.scale,",
+    "new": "  z * frame.scale,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATE-FBX-the-mirror",
     "file": "tools/bakeGate.mjs",
-    "old": "(y - frame.y) * frame.scale]",
-    "new": "(frame.y - y) * frame.scale]",
+    "old": "  (y - frame.y) * frame.scale,",
+    "new": "  (frame.y - y) * frame.scale,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "GATE-FBX-the-winding-left",
     "file": "tools/bakeGate.mjs",
-    "old": "    polygons.push([...poly].reverse());   // the mirror: the port's winding",
+    "old": "    polygons.push([...poly].reverse()); // the mirror: the port's winding",
     "new": "    polygons.push([...poly]);",
     "tests": [
       "test/tooling/gatefbx.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "GATE-FBX-the-triangles-wound-as-drawn",
     "file": "tools/bakeGate.mjs",
-    "old": "triangles.push(poly[a], poly[c], poly[b2]);",
-    "new": "triangles.push(poly[a], poly[b2], poly[c]);",
+    "old": "      triangles.push(poly[a], poly[c], poly[b2]);",
+    "new": "      triangles.push(poly[a], poly[b2], poly[c]);",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GATE-FBX-the-unread-asked-their-sense",
     "file": "tools/shipBake.mjs",
-    "old": "    if (!read(name)) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (!read(name)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GATE-FBX-a-sole-wall-wound-inward",
     "file": "src/world/gate/gateModel.js",
-    "old": "        out.push({ k, piece, kind: 'wall', tri: [a, b, down(b)] }, { k, piece, kind: 'wall', tri: [a, down(b), down(a)] });",
-    "new": "        out.push({ k, piece, kind: 'wall', tri: [a, down(b), b] }, { k, piece, kind: 'wall', tri: [a, down(a), down(b)] });",
+    "old": "          { k, piece, kind: 'wall', tri: [a, b, down(b)] },\n          { k, piece, kind: 'wall', tri: [a, down(b), down(a)] },",
+    "new": "          { k, piece, kind: 'wall', tri: [a, down(b), b] },\n          { k, piece, kind: 'wall', tri: [a, down(a), down(b)] },",
     "tests": [
       "test/world/gate/wb2_gate.test.js",
       "test/tooling/gatefbx.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-GATE-FBX-P7-the-reach-read-off-z",
     "file": "src/world/gate/gateModel.js",
-    "old": "export const GATE_HALF_W = PART.positions.reduce((m, v, i) => (i % 3 === 0 ?",
-    "new": "export const GATE_HALF_W = PART.positions.reduce((m, v, i) => (i % 3 === 2 ?",
+    "old": "export const GATE_HALF_W = PART.positions.reduce((m, v, i) => (i % 3 === 0 ? Math.max(m, Math.abs(v)) : m), 0);",
+    "new": "export const GATE_HALF_W = PART.positions.reduce((m, v, i) => (i % 3 === 2 ? Math.max(m, Math.abs(v)) : m), 0);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-GATE-FBX-P8-the-spines-stone",
     "file": "src/world/gate/gateModel.js",
-    "old": "      f.as(GATE_PART.Spike);\n",
-    "new": "      f.as(GATE_PART.Stone);\n",
+    "old": "      f.as(GATE_PART.Spike);",
+    "new": "      f.as(GATE_PART.Stone);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -112,7 +112,7 @@
     "name": "AUDIT-GATE-FBX-G2-the-bands-least",
     "file": "src/world/gate/gateModel.js",
     "old": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = gateClearAt(P, at(k));",
-    "new": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = Math.min(gateClearAt(P, at(k - 1)), gateClearAt(P, at(k)), gateClearAt(P, at(k + 1)));",
+    "new": "  for (let k = 0; k < ARCH_PROFILE_N; k++)\n    out[k] = Math.min(gateClearAt(P, at(k - 1)), gateClearAt(P, at(k)), gateClearAt(P, at(k + 1)));",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-GATE-FBX-G2-the-fire-over-the-stone",
     "file": "src/world/gate/gateModel.js",
-    "old": "    if (over > 0) { out[k] = Math.max(0, out[k] - over); out[k + 1] = Math.max(0, out[k + 1] - over); }",
-    "new": "    if (false) {}",
+    "old": "    if (over > 0) {\n      out[k] = Math.max(0, out[k] - over);\n      out[k + 1] = Math.max(0, out[k + 1] - over);",
+    "new": "    if (false) {",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "GATE-FBX-the-arch-top-the-crown",
     "file": "src/world/gate/gateModel.js",
-    "old": "  let top = Infinity;\n  const T = part.triangles;\n  for (let t = 0; t < T.length; t += 3) {\n    const [a, b, c] = [at(T[t]), at(T[t + 1]), at(T[t + 2])];\n    // (0, 0) inside the triangle seen from above: the same side of all three edges\n    const side = (p, q) => (q[0] - p[0]) * (0 - p[2]) - (q[2] - p[2]) * (0 - p[0]);\n    const s1 = side(a, b), s2 = side(b, c), s3 = side(c, a);\n    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;\n    const y = (s2 * a[1] + s3 * b[1] + s1 * c[1]) / (s1 + s2 + s3);\n    if (y > 0.5 && y < top) top = y;",
-    "new": "  let top = -Infinity;\n  const T = part.triangles;\n  for (let t = 0; t < T.length; t += 3) {\n    const [a, b, c] = [at(T[t]), at(T[t + 1]), at(T[t + 2])];\n    // (0, 0) inside the triangle seen from above: the same side of all three edges\n    const side = (p, q) => (q[0] - p[0]) * (0 - p[2]) - (q[2] - p[2]) * (0 - p[0]);\n    const s1 = side(a, b), s2 = side(b, c), s3 = side(c, a);\n    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;\n    const y = (s2 * a[1] + s3 * b[1] + s1 * c[1]) / (s1 + s2 + s3);\n    if (y > 0.5 && y > top) top = y;",
+    "old": "  let top = Infinity;\n  const T = part.triangles;\n  for (let t = 0; t < T.length; t += 3) {\n    const [a, b, c] = [at(T[t]), at(T[t + 1]), at(T[t + 2])];\n    // (0, 0) inside the triangle seen from above: the same side of all three edges\n    const side = (p, q) => (q[0] - p[0]) * (0 - p[2]) - (q[2] - p[2]) * (0 - p[0]);\n    const s1 = side(a, b),\n      s2 = side(b, c),\n      s3 = side(c, a);\n    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;\n    const y = (s2 * a[1] + s3 * b[1] + s1 * c[1]) / (s1 + s2 + s3);\n    if (y > 0.5 && y < top) top = y;",
+    "new": "  let top = -Infinity;\n  const T = part.triangles;\n  for (let t = 0; t < T.length; t += 3) {\n    const [a, b, c] = [at(T[t]), at(T[t + 1]), at(T[t + 2])];\n    // (0, 0) inside the triangle seen from above: the same side of all three edges\n    const side = (p, q) => (q[0] - p[0]) * (0 - p[2]) - (q[2] - p[2]) * (0 - p[0]);\n    const s1 = side(a, b),\n      s2 = side(b, c),\n      s3 = side(c, a);\n    if (!((s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0))) continue;\n    const y = (s2 * a[1] + s3 * b[1] + s1 * c[1]) / (s1 + s2 + s3);\n    if (y > 0.5 && y > top) top = y;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-GATE-FBX-G8-no-stone-handed-on",
     "file": "src/world/gate/gateModel.js",
-    "old": "  if (!Number.isFinite(top)) throw new Error('the gate has no stone over its threshold - no opening to hang the fire in');\n",
-    "new": "",
+    "old": "  if (!Number.isFinite(top))\n    throw new Error('the gate has no stone over its threshold - no opening to hang the fire in');\n  return top;",
+    "new": "  return top;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-GATE-FBX-G1-the-rim-unbounded",
     "file": "src/world/gate/gateModel.js",
-    "old": "  if (!(Math.abs(c[0]) < GATE_OPEN_HALF_W + RIM_REACH_M)) return false;\n",
-    "new": "",
+    "old": "  if (!(Math.abs(c[0]) < GATE_OPEN_HALF_W + RIM_REACH_M)) return false;\n  if (n[0] * Math.sign(c[0]) < -0.5 && Math.abs(n[2]) < 0.5) return true;",
+    "new": "  if (n[0] * Math.sign(c[0]) < -0.5 && Math.abs(n[2]) < 0.5) return true;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDIT-GATE-FBX-G3-a-face-laid-by-its-quad",
     "file": "src/world/gate/gateModel.js",
-    "old": "    const n = norm(cross(sub(b, a), sub(c, a)));   // AUDIT GATE-FBX G3: the triangle's own",
-    "new": "    const q = PART.polygons[k].map(corner), n = kind === 'stone' ? norm(cross(sub(q[1], q[0]), sub(q[2], q[0]))) : norm(cross(sub(b, a), sub(c, a)));",
+    "old": "    const n = norm(cross(sub(b, a), sub(c, a))); // AUDIT GATE-FBX G3: the triangle's own",
+    "new": "    const q = PART.polygons[k].map(corner),\n      n = kind === 'stone' ? norm(cross(sub(q[1], q[0]), sub(q[2], q[0]))) : norm(cross(sub(b, a), sub(c, a)));",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "GATE-FBX-the-spine-burning-from-its-root",
     "file": "src/world/gate/gateArt.js",
-    "old": "    if (v >= SPINE_HEAT_FROM) {",
-    "new": "    if (v >= 0) {",
+    "old": "      if (v >= SPINE_HEAT_FROM) {",
+    "new": "      if (v >= 0) {",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-GATE-FBX-E1-a-spine-left-open",
     "file": "src/world/gate/gateModel.js",
-    "old": "    byPiece.get(pieceOf[polygons[0]]).push(...roots.flatMap((v) => corner(v)));\n",
-    "new": "",
+    "old": "    byPiece.get(pieceOf[polygons[0]]).push(...roots.flatMap((v) => corner(v)));\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AUDIT-GATE-FBX-E5-the-masks-foot-at-the-ground",
     "file": "src/render/gate/gatePass.js",
-    "old": "  if (vLocal.y < ${FIRE_FOOT_Y.toFixed(4)} ||",
-    "new": "  if (vLocal.y < ${ARCH_Y0.toFixed(4)} ||",
+    "old": "  if (vLocal.y < ${FIRE_FOOT_Y.toFixed(4)} || vLocal.y > ${ARCH_Y1.toFixed(4)}) discard;   // AUDIT GATE-FBX E5: down to the soles - the ground cuts it",
+    "new": "  if (vLocal.y < ${ARCH_Y0.toFixed(4)} || vLocal.y > ${ARCH_Y1.toFixed(4)}) discard;   // AUDIT GATE-FBX E5: down to the soles - the ground cuts it",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "AUDIT-GATE-FBX-E5-the-quads-foot-at-the-ground",
     "file": "src/render/gate/gatePass.js",
-    "old": "  const x0 = -MEMBRANE_HALF_W, x1 = MEMBRANE_HALF_W, y0 = FIRE_FOOT_Y, y1 = ARCH_Y1;",
-    "new": "  const x0 = -MEMBRANE_HALF_W, x1 = MEMBRANE_HALF_W, y0 = ARCH_Y0, y1 = ARCH_Y1;",
+    "old": "    y0 = FIRE_FOOT_Y,",
+    "new": "    y0 = ARCH_Y0,",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "GATE-FBX-the-way-in-a-beacon",
     "file": "src/render/gate/gatePass.js",
-    "old": "      if (g.fireOnly) continue;   // GATE-FBX: the court's way in - its fire alone\n",
-    "new": "",
+    "old": "      if (g.fireOnly) continue; // GATE-FBX: the court's way in - its fire alone\n      const v = gatePassValues(g); // EG-F: the beacon's colour, height, foot and light, per draw - the gate's own unless named",
+    "new": "      const v = gatePassValues(g); // EG-F: the beacon's colour, height, foot and light, per draw - the gate's own unless named",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]

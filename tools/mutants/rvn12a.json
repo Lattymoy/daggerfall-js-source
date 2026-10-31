@@ -2,8 +2,8 @@
   {
     "name": "RVN12a-moment-dropped",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "'stole', 'festered', 'felled_return', 'routed_return', 'deserted', 'betrayed', 'devoted_warn',\n]));",
-    "new": "'stole', 'festered', 'felled_return', 'routed_return', 'deserted', 'betrayed',\n]));",
+    "old": "    'devoted_warn',\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/systems/revenant/rvn12a_words.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN12a-unsayable-said",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "  const pool = voiceLines(personality, event).filter((l) => sayable(l, vars));",
-    "new": "  const pool = voiceLines(personality, event);",
+    "old": "  const pool = voiceLines(personality, event).filter((l) => sayable(l, vars)); // RVN12a: never a line it cannot fill",
+    "new": "  const pool = voiceLines(personality, event); // RVN12a: never a line it cannot fill",
     "tests": [
       "test/systems/revenant/rvn12a_words.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN12a-empty-word-sayable",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "every((m) => vars[m[1]] != null && vars[m[1]] !== '');",
-    "new": "every((m) => vars[m[1]] != null);",
+    "old": "const sayable = (s, vars) => [...s.matchAll(PLACEHOLDER)].every((m) => vars[m[1]] != null && vars[m[1]] !== '');",
+    "new": "const sayable = (s, vars) => [...s.matchAll(PLACEHOLDER)].every((m) => vars[m[1]] != null);",
     "tests": [
       "test/systems/revenant/rvn12a_words.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN12a-beast-lost",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "  betrayed: 'Turns on you {manner}!',\n",
-    "new": "",
+    "old": "  betrayed: 'Turns on you {manner}!',\n  devoted_warn: 'Snarls a warning {manner} - behind you!',",
+    "new": "  devoted_warn: 'Snarls a warning {manner} - behind you!',",
     "tests": [
       "test/systems/revenant/rvn12a_words.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN12a-habit-word",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "arrowWise: 'arrows',",
-    "new": "arrowWise: 'shafts',",
+    "old": "  arrowWise: 'arrows',",
+    "new": "  arrowWise: 'shafts',",
     "tests": [
       "test/systems/revenant/rvn12a_words.test.js"
     ]

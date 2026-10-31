@@ -28,8 +28,8 @@
 // started - on your own deck; a boat with no crew meets a party of the naval arc's own (REPEL_PARTY). Throw them off
 // and their ship, her boarders spent, lies struck alongside: board her in turn.
 
-import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap
-import { hullBuild, hullMid, flatHull, hullOverlap } from './navalShips.js';   // BOARD-MAGNET: a hull's own beam, width and middle (berthHull); the haul kept clear (drawHaul)
+import { wrapAngle } from '../../world/mat4.js'; // ONCRASH1: the port's one angle wrap
+import { hullBuild, hullMid, flatHull, hullOverlap } from './navalShips.js'; // BOARD-MAGNET: a hull's own beam, width and middle (berthHull); the haul kept clear (drawHaul)
 
 export const BOARD_RANGE = 32;
 export const GRAPPLE_S = 2.2;
@@ -55,14 +55,51 @@ export const REPEL_PARTY = Object.freeze({ min: 3, max: 6 });
 
 /** DFU's MobileTypes for the musters (the quest foe table's ids: vendor/dfu-quests/Tables/Quests-Foes.txt). */
 export const MOBILE = Object.freeze({
-  Spellsword: 129, BattleMage: 130, Healer: 132, Nightblade: 133, Bard: 134, Rogue: 136, Thief: 138, Assassin: 139,
-  Monk: 140, Archer: 141, Ranger: 142, Barbarian: 143, Warrior: 144, Knight: 145,
+  Spellsword: 129,
+  BattleMage: 130,
+  Healer: 132,
+  Nightblade: 133,
+  Bard: 134,
+  Rogue: 136,
+  Thief: 138,
+  Assassin: 139,
+  Monk: 140,
+  Archer: 141,
+  Ranger: 142,
+  Barbarian: 143,
+  Warrior: 144,
+  Knight: 145,
 });
 /** Who a ship sends to her rail, by faction - drawn in order, round and round - and who leads them. */
 export const MUSTERS = Object.freeze({
-  pirate: Object.freeze({ men: Object.freeze([MOBILE.Rogue, MOBILE.Barbarian, MOBILE.Thief, MOBILE.Rogue, MOBILE.Archer, MOBILE.Nightblade, MOBILE.Barbarian, MOBILE.Assassin]), captain: MOBILE.Spellsword }),
-  merchant: Object.freeze({ men: Object.freeze([MOBILE.Warrior, MOBILE.Archer, MOBILE.Monk, MOBILE.Warrior, MOBILE.Bard]), captain: MOBILE.Ranger }),
-  navy: Object.freeze({ men: Object.freeze([MOBILE.Knight, MOBILE.Warrior, MOBILE.Archer, MOBILE.Warrior, MOBILE.BattleMage, MOBILE.Knight]), captain: MOBILE.Knight }),
+  pirate: Object.freeze({
+    men: Object.freeze([
+      MOBILE.Rogue,
+      MOBILE.Barbarian,
+      MOBILE.Thief,
+      MOBILE.Rogue,
+      MOBILE.Archer,
+      MOBILE.Nightblade,
+      MOBILE.Barbarian,
+      MOBILE.Assassin,
+    ]),
+    captain: MOBILE.Spellsword,
+  }),
+  merchant: Object.freeze({
+    men: Object.freeze([MOBILE.Warrior, MOBILE.Archer, MOBILE.Monk, MOBILE.Warrior, MOBILE.Bard]),
+    captain: MOBILE.Ranger,
+  }),
+  navy: Object.freeze({
+    men: Object.freeze([
+      MOBILE.Knight,
+      MOBILE.Warrior,
+      MOBILE.Archer,
+      MOBILE.Warrior,
+      MOBILE.BattleMage,
+      MOBILE.Knight,
+    ]),
+    captain: MOBILE.Knight,
+  }),
 });
 /** The hands a crewed ship of the player's sends: Warm Ashes' `_ally_` (Foe _ally_ is Warrior). */
 export const HAND = MOBILE.Warrior;
@@ -161,18 +198,25 @@ export function berthHull(pos, yaw, hull) {
  * @returns {{ pos: number[], yaw: number, side: 1|-1, same: boolean }}
  */
 export function berthPose(anchor, ship, lie = null) {
-  const f = [Math.sin(anchor.yaw), 0, Math.cos(anchor.yaw)], r = [f[2], 0, -f[0]];
+  const f = [Math.sin(anchor.yaw), 0, Math.cos(anchor.yaw)],
+    r = [f[2], 0, -f[0]];
   const d = [ship.pos[0] - anchor.pos[0], 0, ship.pos[2] - anchor.pos[2]];
   const side = lie?.side ?? (d[0] * r[0] + d[2] * r[2] >= 0 ? 1 : -1);
   // her heading: the anchor's, or its reciprocal - whichever is nearer her own
   const same = lie?.same ?? Math.cos(ship.yaw - anchor.yaw) >= 0;
   const yaw = same ? anchor.yaw : anchor.yaw + Math.PI;
-  const off = side * Math.max(anchor.beam + ship.beam + BERTH_GAP, (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR);
+  const off =
+    side *
+    Math.max(
+      anchor.beam + ship.beam + BERTH_GAP,
+      (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR,
+    );
   const along = (anchor.midZ ?? 0) - (same ? 1 : -1) * (ship.midZ ?? 0);
   return {
     pos: [anchor.pos[0] + r[0] * off + f[0] * along, ship.pos[1], anchor.pos[2] + r[2] * off + f[2] * along],
     yaw: wrapAngle(yaw),
-    side, same,
+    side,
+    same,
   };
 }
 
@@ -194,18 +238,26 @@ export const haulBrake = (v, most = Infinity) => Math.min(most, Math.max(0, Numb
 export function drawHaul(at, to, t, dt, anchor, hull) {
   if (!(dt > 0)) return at;
   const left = Math.max(GRAPPLE_S - t, dt);
-  const f = [Math.sin(anchor.yaw), Math.cos(anchor.yaw)], r = [f[1], -f[0]];
-  const local = (p) => { const x = p[0] - anchor.pos[0], z = p[2] - anchor.pos[2]; return [x * r[0] + z * r[1], x * f[0] + z * f[1]]; };
-  const [a0, l0] = local(at.pos), [a1, l1] = local(to.pos);
+  const f = [Math.sin(anchor.yaw), Math.cos(anchor.yaw)],
+    r = [f[1], -f[0]];
+  const local = (p) => {
+    const x = p[0] - anchor.pos[0],
+      z = p[2] - anchor.pos[2];
+    return [x * r[0] + z * r[1], x * f[0] + z * f[1]];
+  };
+  const [a0, l0] = local(at.pos),
+    [a1, l1] = local(to.pos);
   let step = Math.min((Math.abs(a1 - a0) + Math.abs(l1 - l0)) / left, HAUL_SPEED) * dt;
   const da = clamp(a1 - a0, -step, step);
   step -= Math.abs(da);
-  const a = a0 + da, l = l0 + clamp(l1 - l0, -step, step);   // the lane first, then along it with the step it leaves
-  const dy = wrapAngle(to.yaw - at.yaw);   // the short way round, in one step whatever the input (ONCRASH1)
+  const a = a0 + da,
+    l = l0 + clamp(l1 - l0, -step, step); // the lane first, then along it with the step it leaves
+  const dy = wrapAngle(to.yaw - at.yaw); // the short way round, in one step whatever the input (ONCRASH1)
   const yaw = wrapAngle(at.yaw + Math.sign(dy) * Math.min(Math.abs(dy), (Math.abs(dy) * dt) / left, HAUL_TURN * dt));
   let pos = [anchor.pos[0] + r[0] * a + f[0] * l, at.pos[1], anchor.pos[2] + r[1] * a + f[1] * l];
   const grown = flatHull(anchor.pos, anchor.yaw, anchor.hull);
-  grown.hl += HULL_CLEAR; grown.hw += HULL_CLEAR;
+  grown.hl += HULL_CLEAR;
+  grown.hw += HULL_CLEAR;
   for (let i = 0; i < 4; i++) {
     const push = hullOverlap(flatHull(pos, yaw, hull), grown);
     if (!push) break;
@@ -214,7 +266,8 @@ export function drawHaul(at, to, t, dt, anchor, hull) {
   return { pos, yaw };
 }
 /** Whether a haul has laid her in her berth. */
-const lies = (at, to) => Math.hypot(at.pos[0] - to.pos[0], at.pos[2] - to.pos[2]) < 1e-3 && Math.abs(wrapAngle(at.yaw - to.yaw)) < 1e-4;
+const lies = (at, to) =>
+  Math.hypot(at.pos[0] - to.pos[0], at.pos[2] - to.pos[2]) < 1e-3 && Math.abs(wrapAngle(at.yaw - to.yaw)) < 1e-4;
 
 /**
  * Whether a boarding fight is won: the captain down and SURRENDER_SHARE of the muster down, or every man of it.
@@ -235,7 +288,21 @@ export function boardingWon({ captainDown, down, total }) {
  * `kind` - 'board' (the player boards her) or 'repel' (she boards the player); `hull` hers (the haul's own footprint).
  */
 export function createBoarding({ kind, shipId, from, to, hull = 0 }) {
-  const b = { kind, shipId, phase: 'grapple', t: 0, from, to, hull, at: { pos: [...from.pos], yaw: from.yaw }, arrived: false, quest: null, foes: [], hands: [], outcome: null };
+  const b = {
+    kind,
+    shipId,
+    phase: 'grapple',
+    t: 0,
+    from,
+    to,
+    hull,
+    at: { pos: [...from.pos], yaw: from.yaw },
+    arrived: false,
+    quest: null,
+    foes: [],
+    hands: [],
+    outcome: null,
+  };
   return Object.assign(b, {
     /** BOARD-MAGNET: a frame of the haul - her pose (`at`) drawn toward `to`, her berth as the hull she is hauled to,
      *  `anchor`, lies NOW (`drawHaul`); with no anchor (over her rail on foot) she lies where she is told; laid in the berth
@@ -243,18 +310,37 @@ export function createBoarding({ kind, shipId, from, to, hull = 0 }) {
     haul(to, anchor, dt) {
       b.to = to;
       const d = Math.max(0, dt);
-      b.at = !anchor || b.t + d >= HAUL_MAX_S ? { pos: [...to.pos], yaw: to.yaw } : drawHaul(b.at, to, b.t, d, anchor, b.hull);
+      b.at =
+        !anchor || b.t + d >= HAUL_MAX_S
+          ? { pos: [...to.pos], yaw: to.yaw }
+          : drawHaul(b.at, to, b.t, d, anchor, b.hull);
       b.arrived = lies(b.at, to);
       return b.at;
     },
     step(dt) {
       if (b.phase !== 'grapple') return null;
       b.t += Math.max(0, dt);
-      if ((b.t >= GRAPPLE_S - 1e-9 && b.arrived) || b.t >= HAUL_MAX_S) { b.phase = 'fight'; return 'fight'; }   // a clock summed frame by frame, a hair either side
+      if ((b.t >= GRAPPLE_S - 1e-9 && b.arrived) || b.t >= HAUL_MAX_S) {
+        b.phase = 'fight';
+        return 'fight';
+      } // a clock summed frame by frame, a hair either side
       return null;
     },
-    win() { if (b.phase === 'fight') { b.phase = 'prize'; b.outcome = 'won'; } },
-    abandon() { if (b.phase === 'fight' || b.phase === 'grapple') { b.phase = 'done'; b.outcome = 'abandoned'; } },
-    done() { b.phase = 'done'; b.outcome ??= 'done'; },
+    win() {
+      if (b.phase === 'fight') {
+        b.phase = 'prize';
+        b.outcome = 'won';
+      }
+    },
+    abandon() {
+      if (b.phase === 'fight' || b.phase === 'grapple') {
+        b.phase = 'done';
+        b.outcome = 'abandoned';
+      }
+    },
+    done() {
+      b.phase = 'done';
+      b.outcome ??= 'done';
+    },
   });
 }

@@ -78,8 +78,8 @@
   {
     "name": "AUDIT-STARTS-U5-here-by-the-map-alone",
     "file": "src/ui/quest/questLens.js",
-    "old": "const here = hereByName && (onMap !== false || !!site.worldPixel);",
-    "new": "const here = hereByName && onMap !== false;",
+    "old": "  const here = hereByName && (onMap !== false || !!site.worldPixel);",
+    "new": "  const here = hereByName && onMap !== false;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT-STARTS-U5-the-bay-note-past-it",
     "file": "src/ui/quest/questLens.js",
-    "old": "(target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap)",
-    "new": "WHERE_TEXT.offMap",
+    "old": "    note:\n      target.locationName && target.onMap === false && !target.here\n        ? target.pastBay\n          ? WHERE_TEXT.offMapPastBay\n          : WHERE_TEXT.offMap\n        : null,",
+    "new": "    note: target.locationName && target.onMap === false && !target.here ? WHERE_TEXT.offMap : null,",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-STARTS-U5-note-where-here",
     "file": "src/ui/quest/questLens.js",
-    "old": "target.onMap === false && !target.here ?",
-    "new": "target.onMap === false ?",
+    "old": "      target.locationName && target.onMap === false && !target.here",
+    "new": "      target.locationName && target.onMap === false",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDIT-STARTS-U3-a-press-answers-unseen",
     "file": "src/ui/startChoice.js",
-    "old": "    if (i === this._shown) return this.pickIndex(i);\n",
-    "new": "    return this.pickIndex(i);\n",
+    "old": "    if (i === this._shown) return this.pickIndex(i);",
+    "new": "    return this.pickIndex(i);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-STARTS-U3-classic-story-unmarked",
     "file": "src/ui/startChoice.js",
-    "old": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n    this._shown = this.cursor;\n",
-    "new": "    centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);\n",
+    "old": "    this._shown = this.cursor;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/starts/auditstarts.test.js",
       "test/systems/starts/start2_provinces.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "AUDIT-STARTS-U3-plus-story-unmarked",
     "file": "src/ui/startChoice.js",
-    "old": "this._faced = true; this._shown = this.cursor; return;",
-    "new": "this._faced = true; return;",
+    "old": "      this._shown = this.cursor;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-STARTS-P8-up-is-down",
     "file": "src/ui/startChoice.js",
-    "old": "const n = this.options.length, step = move === 'up' ? n - 1 : 1;",
-    "new": "const n = this.options.length, step = 1;",
+    "old": "      step = move === 'up' ? n - 1 : 1;",
+    "new": "      step = 1;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "AUDIT-STARTS-U3-plus-row-picks",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "    node.onclick = () => owner.pressIndex(i);",
-    "new": "    node.onclick = () => owner.pickIndex(i);",
+    "old": "    node.onclick = () => owner.pressIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
+    "new": "    node.onclick = () => owner.pickIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-STARTS-P3-plus-row-presses-the-cursor",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "    node.onclick = () => owner.pressIndex(i);",
-    "new": "    node.onclick = () => owner.pressIndex(owner.cursor);",
+    "old": "    node.onclick = () => owner.pressIndex(i); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
+    "new": "    node.onclick = () => owner.pressIndex(owner.cursor); // AUDIT STARTS U3: a tap selects, and answers once its story is up",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "AUDIT-STARTS-P3-plus-face-kept-for-a-new-page",
     "file": "src/ui/enhanced/enhancedStartChoice.js",
-    "old": "  if (face && face.owner !== owner) releaseStartChoiceFace(face.owner);\n",
-    "new": "",
+    "old": "  if (face && face.owner !== owner) releaseStartChoiceFace(face.owner);\n  if (!face) face = buildFace(doc, owner);",
+    "new": "  if (!face) face = buildFace(doc, owner);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-STARTS-W2-the-zone-offered-online",
     "file": "src/scenes/startsHost.js",
-    "old": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province && !zoneShut(start));",
-    "new": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province);",
+    "old": "  const open = (start) => start === BAY_START || (!!pastBay && !!start?.province && !zoneShut(start));",
+    "new": "  const open = (start) => start === BAY_START || (!!pastBay && !!start?.province);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-STARTS-W2-shut-without-why",
     "file": "src/scenes/startsHost.js",
-    "old": "const why = (start) => (zoneShut(start) ? STARTS_TEXT.openZone : null);",
-    "new": "const why = () => null;",
+    "old": "  const why = (start) => (zoneShut(start) ? STARTS_TEXT.openZone : null);",
+    "new": "  const why = () => null;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-STARTS-W3-any-quest",
     "file": "src/scenes/startsHost.js",
-    "old": " || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase())) continue;",
-    "new": ") continue;",
+    "old": "      if (!q || q.questComplete || q.questTombstoned || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase()))\n        continue;",
+    "new": "      if (!q || q.questComplete || q.questTombstoned) continue;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "AUDIT-STARTS-W5-never-healed",
     "file": "src/scenes/startsHost.js",
-    "old": "    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);\n",
-    "new": "",
+    "old": "    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-STARTS-W5-a-begun-story-healed",
     "file": "src/scenes/startsHost.js",
-    "old": "const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0",
-    "new": "const begun = !m || m.storyLegacy",
+    "old": "      (m.storyStarted?.size ?? 0) > 0 ||\n      [...(m.quests?.values?.() ?? [])].some(",
+    "new": "      [...(m.quests?.values?.() ?? [])].some(",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "AUDIT-STARTS-V2-an-ended-start-a-writ",
     "file": "src/scenes/startsHost.js",
-    "old": "if (!q || q.questComplete || q.questTombstoned || !carriesWrit(q.questName)) continue;",
-    "new": "if (!q || !carriesWrit(q.questName)) continue;",
+    "old": "      if (!q || q.questComplete || q.questTombstoned || !carriesWrit(q.questName)) continue;",
+    "new": "      if (!q || !carriesWrit(q.questName)) continue;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "AUDIT-STARTS-Q5-begun-over-a-load",
     "file": "src/scenes/startsHost.js",
-    "old": "      if (!live()) return;\n      const loc = landed",
-    "new": "      const loc = landed",
+    "old": "      if (!live()) return;\n      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
+    "new": "      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-STARTS-Q6-an-unlanded-trace-asked",
     "file": "src/scenes/startsHost.js",
-    "old": "const loc = landed ? quests()?.startSiteOfId?.(startSiteId(start)) ?? null : null;",
-    "new": "const loc = quests()?.startSiteOfId?.(startSiteId(start)) ?? null;",
+    "old": "      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
+    "new": "      const loc = quests()?.startSiteOfId?.(startSiteId(start)) ?? null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-STARTS-Q6-a-refused-start-left",
     "file": "src/scenes/startsHost.js",
-    "old": "        if (!running(moved ? start.quest : HAND_START_QUEST)) machine?.()?.startQuestByName?.(HAND_START_QUEST);\n",
-    "new": "",
+    "old": "        if (!running(moved ? start.quest : HAND_START_QUEST)) machine?.()?.startQuestByName?.(HAND_START_QUEST);\n        return;",
+    "new": "        return;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-STARTS-W6-the-door-at-the-pixel",
     "file": "src/scenes/startsHost.js",
-    "old": "await teleport(p.x, p.y, null, { reposition: REPOSITION.RandomStartMarker });",
-    "new": "await teleport(p.x, p.y);",
+    "old": "    await teleport(p.x, p.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "    await teleport(p.x, p.y);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-STARTS-W5-the-move-unlatched",
     "file": "src/scenes/startsHost.js",
-    "old": "await quests().respawnLatched(loc);",
-    "new": "await quests().respawnAtSite?.(loc);",
+    "old": "      await quests().respawnLatched(loc);",
+    "new": "      await quests().respawnAtSite?.(loc);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -340,7 +340,7 @@
   {
     "name": "AUDIT-STARTS-V3-the-bay-letter-a-writ",
     "file": "src/systems/starts/starts.js",
-    "old": "export const carriesWrit = (questName) => isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();",
+    "old": "export const carriesWrit = (questName) =>\n  isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();",
     "new": "export const carriesWrit = (questName) => isStartQuestName(questName);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
@@ -376,8 +376,8 @@
   {
     "name": "AUDIT-STARTS-W8-online-keeps-start",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'region', 'loc', 'seat', 'start']);",
-    "new": "'region', 'loc', 'seat']);",
+    "old": "  'start',\n]); // BAY-LEFT-B: a birth's seat by its map id   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house's birth, decided by the Online page   // REALM P1.3: the realm character's id, and a character born online",
+    "new": "]); // BAY-LEFT-B: a birth's seat by its map id   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house's birth, decided by the Online page   // REALM P1.3: the realm character's id, and a character born online",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-STARTS-P7-layer-skips-the-bay-alone",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "!isStartQuestName(quest?.questName)",
-    "new": "quest?.questName !== '_STARTIB'",
+    "old": "        !isStartQuestName(quest?.questName) &&",
+    "new": "        quest?.questName !== '_STARTIB' &&",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "AUDIT-STARTS-Q5-restores-uncounted",
     "file": "src/systems/quest/machine.js",
-    "old": "    this.restores = (this.restores ?? 0) + 1;",
-    "new": "",
+    "old": "    this.restores = (this.restores ?? 0) + 1; // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)",
+    "new": "    // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-STARTS-Q3-the-letter-at-sea",
     "file": "src/systems/quest/questPatches.js",
-    "old": "    { old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n', new: ' most appreciative.\\n', count: 1 },\n",
-    "new": "",
+    "old": "      old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n',\n      new: ' most appreciative.\\n',\n      count: 1,\n    },\n    {\n      old: \"     I heard about your accident at sea, and feared the\\n worst. Now that I've heard you're alive and well, I\\n would like the opportunity to meet with you and discuss\\n our beloved Emperor's mission in the Iliac Bay.\\n\",",
+    "new": "      old: \"     I heard about your accident at sea, and feared the\\n worst. Now that I've heard you're alive and well, I\\n would like the opportunity to meet with you and discuss\\n our beloved Emperor's mission in the Iliac Bay.\\n\",",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "AUDIT-STARTS-U8-the-crowns-writ-row",
     "file": "src/systems/naval/passage.js",
-    "old": "t('passage.rowWrit', '{port} - {wind}, by writ'",
-    "new": "t('passage.rowWrit', \"{port} - {wind}, the Crown's writ\"",
+    "old": "        ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })",
+    "new": "        ? t('passage.rowWrit', \"{port} - {wind}, the Crown's writ\", { port: d.port.name, wind: windText(d.bearing) })",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-STARTS-P5-lanes-through-a-corner",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sails = (ax, ay, bx, by) => isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));",
-    "new": "const sails = (ax, ay, bx, by) => isWater(bx, by);",
+    "old": "  const sails = (ax, ay, bx, by) =>\n    isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));",
+    "new": "  const sails = (ax, ay, bx, by) => isWater(bx, by);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "AUDIT-STARTS-V6-the-voyage-alone-sails-the-lanes",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
-    "new": "if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
+    "old": "  if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
+    "new": "  if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "AUDIT-STARTS-V5-no-wider-box",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
-    "new": "const sailed = (yield* planSeaLanesSteps(from, to, opts));",
+    "old": "    const sailed =\n      (yield* planSeaLanesSteps(from, to, opts)) ??\n      (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
+    "new": "    const sailed = yield* planSeaLanesSteps(from, to, opts);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "AUDIT-STARTS-V4-the-port-pixel-alone",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];",
-    "new": "const goals = [to];",
+    "old": "  const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];",
+    "new": "  const goals = [to];",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "AUDIT-STARTS-V4-the-end-unpadded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "endPad: VOYAGE_LANDFALL_PX * 2 });",
-    "new": "endPad: 0 });",
+    "old": "      endPad: VOYAGE_LANDFALL_PX * 2,",
+    "new": "      endPad: 0,",
     "equivalent": true,
     "why": "ROAD-BEYOND's reachOf grows the box by the rung's margin about every end past the table, and searchSteps clips the box to the two ends grown by that same margin, so a pad about an end past the table adds no cell the search may enter. Kept as the landfall's own word (GREEDY-BEYOND's mutants' sweep).",
     "tests": [

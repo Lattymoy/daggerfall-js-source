@@ -75,5 +75,5 @@ test('FB1020c CABIN-FOES the world\'s doors by source: the deck door is handed t
   assert.doesNotMatch(W, /sailing: \(\) => !!csaRuntime\?\.isSailing\(\), disembarking:/, 'the two helm seams folded into the runtime\'s own');
   assert.match(W, /if \(csaRuntime\.isSailing\(\) \|\| navalHostileNear\(\)\) \{ townTalk\.say\(csaRuntime\.isSailing\(\) \? CABIN_REFUSAL\.helm : CABIN_REFUSAL\.enemies\); return true; \}/);
   const adapter = readFileSync(new URL('../../../src/scenes/sailingCabin.js', import.meta.url), 'utf8');
-  assert.match(adapter, /aboard: deps\.aboard\(boat\), hostile: !!deps\.hostile\?\.\(\),/);
+  assert.match(adapter, /aboard: deps\.aboard\(boat\),\n\s*hostile: !!deps\.hostile\?\.\(\),/);
 });

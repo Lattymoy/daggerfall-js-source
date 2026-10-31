@@ -26,11 +26,17 @@ export const vanguardOut = (s) => !!s?.vg && s.vg[0] < 2;
 export function vanguardLine(w, boss) {
   if (!w) return null;
   switch (w.e) {
-    case VG_WORD.wave: return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;
-    case VG_WORD.clear: return VANGUARD_TEXT.clear();
-    case VG_WORD.lord: return VANGUARD_TEXT.lord();
-    case VG_WORD.broken: return VANGUARD_TEXT.broken();
-    case VG_WORD.patience: return VANGUARD_TEXT.patience(boss);
-    default: return null;
+    case VG_WORD.wave:
+      return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;
+    case VG_WORD.clear:
+      return VANGUARD_TEXT.clear();
+    case VG_WORD.lord:
+      return VANGUARD_TEXT.lord();
+    case VG_WORD.broken:
+      return VANGUARD_TEXT.broken();
+    case VG_WORD.patience:
+      return VANGUARD_TEXT.patience(boss);
+    default:
+      return null;
   }
 }

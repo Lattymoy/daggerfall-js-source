@@ -16,9 +16,11 @@ export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30, sayMs: 10_000
  *  a villain (systems/wild/villainLaw.js). */
 export function pvpFlagRefusal({ on, level = 1, fightAt = -Infinity, now = 0, red = false }) {
   if (on) return level >= PVP_FLAG.level ? null : t('pvp.flag.level', 'PvP opens at level {n}.', { n: PVP_FLAG.level });
-  if (red) return t('pvp.flag.villain', 'You are a villain. Your PvP flag stays on.');   // PVP-VILLAIN: always in aggro
+  if (red) return t('pvp.flag.villain', 'You are a villain. Your PvP flag stays on.'); // PVP-VILLAIN: always in aggro
   const left = PVP_FLAG.lockMs - (now - fightAt);
-  return left > 0 ? t('pvp.flag.locked', 'You are in combat. You can turn PvP off in {s} s.', { s: Math.ceil(left / 1000) }) : null;
+  return left > 0
+    ? t('pvp.flag.locked', 'You are in combat. You can turn PvP off in {s} s.', { s: Math.ceil(left / 1000) })
+    : null;
 }
 
 /** May the flag come down, by the relay's clock? Its last fight `fightAt`. */

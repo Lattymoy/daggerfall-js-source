@@ -2,8 +2,8 @@
   {
     "name": "NEED-TIER-no-foot",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null",
-    "new": "String(c.foot) : null",
+    "old": "      foot: c.foot != null ? String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null,",
+    "new": "      foot: c.foot != null ? String(c.foot) : null,",
     "why": "a need tile says no stage",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "NEED-TIER-off-by-one",
     "file": "src/systems/survival/status.js",
-    "old": "tier: ladder.indexOf(stage) + 1, of: ladder.length",
-    "new": "tier: ladder.indexOf(stage), of: ladder.length",
+    "old": "      tier: ladder.indexOf(stage) + 1,",
+    "new": "      tier: ladder.indexOf(stage),",
     "why": "Peckish 0/3",
     "tests": [
       "test/systems/survival/surv5_ui.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "NEED-TIER-one-temperature-ladder",
     "file": "src/systems/survival/status.js",
-    "old": "(key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key])",
-    "new": "(key === 'temp' ? Object.keys(HUD_NEED_WORDS.temp) : NEED_LADDERS[key])",
+    "old": "const needLadder = (key, stage) =>\n  key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key];",
+    "new": "const needLadder = (key, stage) => (key === 'temp' ? Object.keys(HUD_NEED_WORDS.temp) : NEED_LADDERS[key]);",
     "why": "Freezing 5/6 and not 2/3",
     "tests": [
       "test/systems/survival/surv5_ui.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "NEED-TIER-the-drunk-pair-turned",
     "file": "src/systems/survival/status.js",
-    "old": "tier: s.drunk > endurance - 10 ? 2 : 1, of: 2",
-    "new": "tier: s.drunk > endurance - 10 ? 1 : 2, of: 2",
+    "old": "          tier: s.drunk > endurance - 10 ? 2 : 1,",
+    "new": "          tier: s.drunk > endurance - 10 ? 1 : 2,",
     "why": "Very drunk 1/2",
     "tests": [
       "test/systems/survival/surv5_ui.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "NEED-TIER-a-stageless-need-footed",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null",
-    "new": "String(c.foot) : `${c.tier}/${c.of}`",
+    "old": "      foot: c.foot != null ? String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null,",
+    "new": "      foot: c.foot != null ? String(c.foot) : `${c.tier}/${c.of}`,",
     "why": "Stiff reads undefined/undefined",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"

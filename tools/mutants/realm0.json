@@ -2,8 +2,8 @@
   {
     "name": "REALM0-flags-kept-online",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  if (!params?.has?.('online')) return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
-    "new": "  return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
+    "old": "  if (!params?.has?.('online')) return [];",
+    "new": "  return [];",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM0-shot-not-refused",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
-    "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly',",
+    "old": "  'shot',\n  'fly',",
+    "new": "  'fly',",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REALM0-cosmetic-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
-    "new": "  'roleplay-realism': Object.freeze([]),",
+    "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']), // who stands behind a counter and in a house: looks",
+    "new": "  'roleplay-realism': Object.freeze([]), // who stands behind a counter and in a house: looks",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REALM0-leveling-choice-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'oblivion-remaster-leveling': Object.freeze(['Enabled']),",
-    "new": "  'oblivion-remaster-leveling': Object.freeze([]),",
+    "old": "  'oblivion-remaster-leveling': Object.freeze(['Enabled']), // which leveling a character uses stays its own; the dials are the room's",
+    "new": "  'oblivion-remaster-leveling': Object.freeze([]), // which leveling a character uses stays its own; the dials are the room's",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REALM0-sync-skips-whole",
     "file": "src/systems/online/onlineSync.js",
-    "old": "  for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {\n",
-    "new": "  for (const vendor of []) {\n",
+    "old": "  for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {",
+    "new": "  for (const vendor of []) {",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "REALM0-window-daggerfall-words",
     "file": "src/ui/bankWindow.js",
-    "old": "        if (d.empireRegion != null) this._lines(",
-    "new": "        if (false) this._lines(",
+    "old": "        if (d.empireRegion != null)",
+    "new": "        if (false)",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "REALM0-garnish-silent",
     "file": "src/ui/bankWindow.js",
-    "old": "    if (taken > 0) this._lines(empireGarnishLines(taken));\n",
-    "new": "",
+    "old": "    if (taken > 0) this._lines(empireGarnishLines(taken));\n    return result;",
+    "new": "    return result;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "REALM0-sale-uncapped",
     "file": "src/systems/shopStock.js",
-    "old": "    if (!online) return sale;\n",
-    "new": "    return sale;\n",
+    "old": "    if (!online) return sale;",
+    "new": "    return sale;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "REALM0-sale-cap-the-sale",
     "file": "src/systems/shopStock.js",
-    "old": "calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE",
-    "new": "calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE",
+    "old": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks",
+    "new": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "REALM0-pile-leveled",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (online) unlevelPileGold(items, level);   // REALM P0.4: every pile, whatever its key\n",
-    "new": "",
+    "old": "  if (online) unlevelPileGold(items, level); // REALM P0.4: every pile, whatever its key\n  // `int alphabetIndex = key - 64` on the FIRST character: 'A' is 1,",
+    "new": "  // `int alphabetIndex = key - 64` on the FIRST character: 'A' is 1,",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "REALM0-pile-no-floor",
     "file": "src/systems/loot/loot.js",
-    "old": "it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));",
-    "new": "it.stackCount = Math.trunc((it.stackCount ?? 0) / by);",
+    "old": "  for (const it of items)\n    if (it?.group === 'Currency') it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));",
+    "new": "  for (const it of items) if (it?.group === 'Currency') it.stackCount = Math.trunc((it.stackCount ?? 0) / by);",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "REALM0-pile-any-item",
     "file": "src/systems/loot/loot.js",
-    "old": "  for (const it of items) if (it?.group === 'Currency') it.stackCount",
-    "new": "  for (const it of items) if (it) it.stackCount",
+    "old": "  for (const it of items)\n    if (it?.group === 'Currency') it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));",
+    "new": "  for (const it of items) if (it) it.stackCount = Math.max(1, Math.trunc((it.stackCount ?? 0) / by));",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "REALM0-bound-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  bound: bool(),\n",
-    "new": "",
+    "old": "  bound: bool(),\n  // SS5: the Sigil Stones the Broker took for a ware (systems/sigil/sigilBroker.js brokerStock) - its dismantle's measure",
+    "new": "  // SS5: the Sigil Stones the Broker took for a ware (systems/sigil/sigilBroker.js brokerStock) - its dismantle's measure",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "REALM0-shares-unshared",
     "file": "src/systems/quest/machine.js",
-    "old": "(this.sharedQuestNames.has(quest?.questName) ? Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0))) : 1)",
-    "new": "Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0)))",
+    "old": "        this.sharedQuestNames.has(quest?.questName)\n          ? Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0)))\n          : 1,",
+    "new": "        Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0))),",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "REALM0-checkpoint-due-late",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "nowMs - lastMs >= ONLINE_CHECKPOINT_MS",
-    "new": "nowMs - lastMs > ONLINE_CHECKPOINT_MS",
+    "old": "  Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;",
+    "new": "  Number.isFinite(nowMs) && nowMs - lastMs > ONLINE_CHECKPOINT_MS;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "REALM0-take-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "      if (handle) checkpoint('trade');\n",
-    "new": "",
+    "old": "      if (handle) checkpoint('trade');\n      return handle;",
+    "new": "      return handle;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "REALM0-restore-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    restore(/** @type {any} */ handle) { pack.restore(handle); checkpoint('trade'); },",
-    "new": "    restore(/** @type {any} */ handle) { pack.restore(handle); },",
+    "old": "      pack.restore(handle);\n      checkpoint('trade');\n    },",
+    "new": "      pack.restore(handle);\n    },",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "REALM0-give-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); checkpoint('trade'); },",
-    "new": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); },",
+    "old": "      pack.give(received, gold);\n      checkpoint('trade');\n    },",
+    "new": "      pack.give(received, gold);\n    },",
     "tests": [
       "test/systems/realm0.test.js"
     ]

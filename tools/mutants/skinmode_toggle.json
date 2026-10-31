@@ -2,8 +2,8 @@
   {
     "name": "SKINMODE-toggle-gone",
     "file": "src/ui/skinCard.js",
-    "old": "    lookToggle(layeredOn);\n",
-    "new": "    void lookToggle;\n",
+    "old": "    lookToggle(layeredOn);",
+    "new": "    void lookToggle;",
     "tests": [
       "test/ui/skinmode_toggle.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SKINMODE-onfoot-in-layered",
     "file": "src/ui/skinCard.js",
-    "old": "    if (layeredOn) {\n      // LAYERED-GEAR: the body",
-    "new": "    if (false) {\n      // LAYERED-GEAR: the body",
+    "old": "    if (layeredOn) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/skinmode_toggle.test.js"
     ],
@@ -62,7 +62,7 @@
   {
     "name": "SKINMODE-body-grid-gone",
     "file": "src/ui/skinCard.js",
-    "old": "      root.append(grid(bodyWord, (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2), LAYERED, worn));",
+    "old": "      root.append(\n        grid(\n          bodyWord,\n          (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2),\n          LAYERED,\n          worn,\n        ),\n      );",
     "new": "      void grid;",
     "tests": [
       "test/ui/skinmode_toggle.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "LAYERED-ON-default-off",
     "file": "src/systems/modSettings.js",
-    "old": "'Graphics.LayeredGear': Object.freeze({ default: 3, min: 0, max: 3,",
-    "new": "'Graphics.LayeredGear': Object.freeze({ default: 0, min: 0, max: 3,",
+    "old": "      'Graphics.LayeredGear': Object.freeze({\n        default: 3,",
+    "new": "      'Graphics.LayeredGear': Object.freeze({\n        default: 0,",
     "tests": [
       "test/player/eyeOfTheBeholder/worn_armour.test.js",
       "test/ui/skinmode_toggle.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "LAYERED-ON-body-own-unread",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  : choice === LAYERED_OWN ? bodyOf(own) : null);",
-    "new": "  : null);",
+    "old": "export const layeredGenderOf = (choice, own = null) =>\n  choice === 1 ? 'female' : choice === 2 ? 'male' : choice === LAYERED_OWN ? bodyOf(own) : null;",
+    "new": "export const layeredGenderOf = (choice, own = null) => (choice === 1 ? 'female' : choice === 2 ? 'male' : null);",
     "tests": [
       "test/player/eyeOfTheBeholder/worn_armour.test.js"
     ],

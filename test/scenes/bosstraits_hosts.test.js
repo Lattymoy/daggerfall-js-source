@@ -90,7 +90,7 @@ test('BOSS-TRAITS WHO CARRIES THEM, by the hosts\' source: an elite of my own dr
   assert.match(d, /dealDamage: \(t, d\) => landOnBoss\(boss, bossStrikeAt\(boss\.entity, d, 'arrow', null, null, false, \(n\) => hurtPlayer\(n\)\), HIT_KINDS\.Shaft\)/);
   assert.match(d, /if \(fromPlayer && !peer\) damage = strikeTraits\(foe\.entity, damage, kind, weapon, element, _whole \|\| bypassShield, \(n\) => hurtPlayer\(n\), \(l\) => hudText\.add\(l\)\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-10 / L5-6 (scenes/foeTraitsHost.js)
   assert.match(d, /damage = bossTakeAt\(foe\.entity, damage, _whole \|\| bypassShield, bossClockS\(\), \(l\) => hudText\.add\(l\), [^\n]*\{ blow: fromPlayer \|\| striker != null \|\| kind !== 'melee', mine: fromPlayer \}\);/);   // PIN MOVED - AUDIT WORLD-EVENTS L2-5 / L2-10
-  assert.match(rd('src/scenes/gate/standInSpell.js'), /const dealt = counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted;/);
+  assert.match(rd('src/scenes/gate/standInSpell.js'), /const dealt =\n\s*counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted;/);
   // the spells hand their element to the sinks a resistance reads it at
   const fx = rd('src/systems/effects.js');
   assert.match(fx, /sinks\.hurt\(n, \{ element: spell\.element \?\? null \}\);/);

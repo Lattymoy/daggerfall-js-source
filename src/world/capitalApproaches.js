@@ -44,16 +44,21 @@ const FRAMES = Object.freeze({
  *  slice's where its plan has no gate there (Falinesti: no wall). @param {any} cap @param {{ w: number, h: number, mx: number, my: number }} D
  *  @param {string} side @returns {number} */
 export function capitalGateSlice(cap, D, side) {
-  const g = cap.gateAt?.[side], lat = FRAMES[side]?.lateral;
+  const g = cap.gateAt?.[side],
+    lat = FRAMES[side]?.lateral;
   if (!g || lat === undefined) return lat === 1 ? D.my : D.mx;
-  const n = lat === 1 ? D.h : D.w, s = Math.floor((g[lat] + cap.anchor[lat] * BLOCK_M) / (8 * BLOCK_M));
+  const n = lat === 1 ? D.h : D.w,
+    s = Math.floor((g[lat] + cap.anchor[lat] * BLOCK_M) / (8 * BLOCK_M));
   return Math.max(0, Math.min(n - 1, s));
 }
 
 /** WHERE THE ROAD ENDS: the middle of the gate slice's side - the arm's end, in the plan's metres. @param {any} cap
  *  @param {{ w: number, h: number, mx: number, my: number }} D @param {string} side @returns {[number, number]} */
 export function capitalArrival(cap, D, side) {
-  const F = FRAMES[side], s = capitalGateSlice(cap, D, side), e = F.edge(cap, D), mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;
+  const F = FRAMES[side],
+    s = capitalGateSlice(cap, D, side),
+    e = F.edge(cap, D),
+    mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;
   return F.lateral === 1 ? [e, mid] : [mid, e];
 }
 
@@ -68,12 +73,28 @@ export function capitalArrival(cap, D, side) {
 export function capitalApproaches(cap, D) {
   const out = [];
   for (const side of cap.gates ?? []) {
-    const g = cap.gateAt?.[side], F = FRAMES[side];
+    const g = cap.gateAt?.[side],
+      F = FRAMES[side];
     if (!g || !F) continue;
-    const e = F.edge(cap, D), [ua] = F.uv(...capitalArrival(cap, D, side), e), [ug0, vg] = F.uv(g[0], g[1], e), ug = Math.round(ug0 / T) * T, H = APPROACH_HALF;
-    if (Math.abs(ug - ua) < T) { out.push({ side, edge: e, rects: [[ua - H, 0, ua + H, vg]] }); continue; }
+    const e = F.edge(cap, D),
+      [ua] = F.uv(...capitalArrival(cap, D, side), e),
+      [ug0, vg] = F.uv(g[0], g[1], e),
+      ug = Math.round(ug0 / T) * T,
+      H = APPROACH_HALF;
+    if (Math.abs(ug - ua) < T) {
+      out.push({ side, edge: e, rects: [[ua - H, 0, ua + H, vg]] });
+      continue;
+    }
     const vs = vg - APPROACH_SKIRT;
-    out.push({ side, edge: e, rects: [[ua - H, 0, ua + H, vs + H], [Math.min(ua, ug) - H, vs - H, Math.max(ua, ug) + H, vs + H], [ug - H, vs - H, ug + H, vg]] });
+    out.push({
+      side,
+      edge: e,
+      rects: [
+        [ua - H, 0, ua + H, vs + H],
+        [Math.min(ua, ug) - H, vs - H, Math.max(ua, ug) + H, vs + H],
+        [ug - H, vs - H, ug + H, vg],
+      ],
+    });
   }
   return out;
 }
@@ -83,15 +104,18 @@ const _onWay = new WeakMap();
  *  span. @param {any} cap @param {{ w: number, h: number, mx: number, my: number }} D
  *  @returns {(x: number, z: number) => boolean} */
 export function onCapitalApproach(cap, D) {
-  if (cap.approach) return cap.approach;   // SOLITUDE-RELIEF: a capital whose road on to its gate is a line of its own (Solitude's Gate Road)
+  if (cap.approach) return cap.approach; // SOLITUDE-RELIEF: a capital whose road on to its gate is a line of its own (Solitude's Gate Road)
   let k = _onWay.get(cap);
   if (!k || k.D !== D) {
     const ways = capitalApproaches(cap, D);
-    const test = ways.length ? (x, z) => ways.some(({ side, edge, rects }) => {
-      const [u, v] = FRAMES[side].uv(x, z, edge);
-      return rects.some(([u0, v0, u1, v1]) => u > u0 && u < u1 && v > v0 && v < v1);
-    }) : () => false;
-    _onWay.set(cap, k = { D, test });
+    const test = ways.length
+      ? (x, z) =>
+          ways.some(({ side, edge, rects }) => {
+            const [u, v] = FRAMES[side].uv(x, z, edge);
+            return rects.some(([u0, v0, u1, v1]) => u > u0 && u < u1 && v > v0 && v < v1);
+          })
+      : () => false;
+    _onWay.set(cap, (k = { D, test }));
   }
   return k.test;
 }
@@ -99,12 +123,16 @@ export function onCapitalApproach(cap, D) {
 /** The plan's cells (`[r, c]`, its rows from the north) an approach crosses. @param {any} cap
  *  @param {{ w: number, h: number, mx: number, my: number }} D @returns {Array<[number, number]>} */
 export function capitalApproachCells(cap, D) {
-  const out = new Map(), on = onCapitalApproach(cap, D), [ax, ar] = cap.anchor;
-  if (cap.approach) {   // SOLITUDE-RELIEF: its own line - every tile of the plan asked
+  const out = new Map(),
+    on = onCapitalApproach(cap, D),
+    [ax, ar] = cap.anchor;
+  if (cap.approach) {
+    // SOLITUDE-RELIEF: its own line - every tile of the plan asked
     for (let x = -ax * BLOCK_M + T / 2; x < (8 * D.w - ax) * BLOCK_M; x += T) {
       for (let z = -ar * BLOCK_M + T / 2; z < (8 * D.h - ar) * BLOCK_M; z += T) {
         if (!on(x, z)) continue;
-        const r = Math.floor(z / BLOCK_M + ar), c = Math.floor(x / BLOCK_M + ax);
+        const r = Math.floor(z / BLOCK_M + ar),
+          c = Math.floor(x / BLOCK_M + ax);
         out.set(`${r},${c}`, [r, c]);
       }
     }
@@ -113,12 +141,21 @@ export function capitalApproachCells(cap, D) {
   for (const { side, edge, rects } of capitalApproaches(cap, D)) {
     for (const [u0, v0, u1, v1] of rects) {
       // the rectangle's corners back in the plan's metres, and every tile centre between them asked
-      const pts = [[u0, v0], [u1, v1]].map(([u, v]) => (side === 'N' ? [u, edge + v] : side === 'S' ? [u, edge - v] : side === 'W' ? [edge + v, u] : [edge - v, u]));
-      const x0 = Math.min(pts[0][0], pts[1][0]), x1 = Math.max(pts[0][0], pts[1][0]), z0 = Math.min(pts[0][1], pts[1][1]), z1 = Math.max(pts[0][1], pts[1][1]);
+      const pts = [
+        [u0, v0],
+        [u1, v1],
+      ].map(([u, v]) =>
+        side === 'N' ? [u, edge + v] : side === 'S' ? [u, edge - v] : side === 'W' ? [edge + v, u] : [edge - v, u],
+      );
+      const x0 = Math.min(pts[0][0], pts[1][0]),
+        x1 = Math.max(pts[0][0], pts[1][0]),
+        z0 = Math.min(pts[0][1], pts[1][1]),
+        z1 = Math.max(pts[0][1], pts[1][1]);
       for (let x = Math.floor(x0 / T) * T + T / 2; x < x1; x += T) {
         for (let z = Math.floor(z0 / T) * T + T / 2; z < z1; z += T) {
           if (!on(x, z)) continue;
-          const r = Math.floor(z / BLOCK_M + ar), c = Math.floor(x / BLOCK_M + ax);
+          const r = Math.floor(z / BLOCK_M + ar),
+            c = Math.floor(x / BLOCK_M + ax);
           out.set(`${r},${c}`, [r, c]);
         }
       }

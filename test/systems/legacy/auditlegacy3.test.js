@@ -20,7 +20,7 @@ import { renownHeldSql } from '../../../server-account/src/renownTracks.js';
 import { RENOWN_TRACKS_MAX } from '../../../src/net/renown.js';
 import { GUILD_FOUND_RENOWN, GUILD_RANK_MASTER } from '../../../src/net/guild/guildLaw.js';
 import {
-  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, TOKEN_VILLAINY_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
+  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, TOKEN_VILLAINY_MAX, TOKEN_MIGHT_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
   RENOWN_MAX, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX, TOKEN_ARMS_TOP_MAX,
 } from '../../../src/net/identityToken.js';
 import { HOUSE_NAME_MAX, HOUSE_GIVEN_MAX, HOUSE_GEN_MAX } from '../../../src/net/houseLaw.js';
@@ -189,7 +189,7 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   // PIN MOVED (STOREFRONT): the glyphs are signed as their mask (`gb`), and every claim, the effects kit and a house at
   // its bounds, with the villain meter, is 651 - the house said again. As words they are 1,078, which this bound refuses.
   const crowns = /^crown(SK|MW|SU|VW|EW|BM|CY)$/;
-  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1], vl: TOKEN_VILLAINY_MAX };   // PVP-VILLAIN-KEEP: and the villain meter at its top
+  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1], mg: TOKEN_MIGHT_MAX, vl: TOKEN_VILLAINY_MAX };   // PVP-VILLAIN-KEEP: and the villain meter at its top; EG-MIGHT (PIN MOVED): and the kit's might at its widest
   const asWords = Buffer.from(JSON.stringify({ ...every, ...house, ...arms })).toString('base64url').length;
   assert.ok(asWords > TOKEN_BODY_MAX, `every glyph's word and a house: past the hello (${asWords}) - the mask is what makes the room`);
   const bay = tokenBodyOf(await mintToken({ ...every, g: GLYPHS.filter((g) => !crowns.test(g)), ...house, ...arms }, kp.privateKey, { subtle, nowS })).length;
@@ -505,7 +505,7 @@ test('AUDIT LEGACY III O7: A TOMBSTONE IS NEVER DELETED - nor undone: it is the 
   // the record rewritten without the death: the person is still the played one's
   await A.write({ people: ysolde });
   assert.equal((await A.call('/v1/realm/create', { name: 'Ysolde Hlaalu', lineage: A.fam, person: 1 })).body.error, 'lineage-played');
-  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \};   \/\/ AUDIT LEGACY III O7/);
+  assert.match(rd('server-account/src/realm.js'), /if \(row\.dead_at != null\) return \{ error: 'dead' \}; \/\/ AUDIT LEGACY III O7/);
 });
 
 test('AUDIT LEGACY III O8/O9: AN ACCOUNT\'S UNIONS, THE LATEST WORD FIRST, READ BY ITS OWN INDEXES - listed newest-wed first, a union older than fifty others was never listed again and its end never reached the house; and every read scanned the whole table', async () => {

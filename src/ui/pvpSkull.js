@@ -6,10 +6,22 @@
 
 /** The drawing: O outline, E socket, L bone, S shade, H light. */
 export const SKULL_ROWS = Object.freeze([
-  '....OOOOOOOO....', '..OOLLLLLLLLOO..', '.OLHHLLLLLLLLSO.', 'OLHHLLLLLLLLLLSO',
-  'OLHLLLLLLLLLLLSO', 'OLLEEEELLEEEELSO', 'OLEEEEELLEEEEESO', 'OLEEEEELLEEEEESO',
-  'OLLEEELLLLEEELSO', 'OSLLLLLEELLLLLSO', '.OSLLLLEELLLLSO.', '..OSSLLLLLLSSO..',
-  '...OLLOLLOLLO...', '...OSSOSSOSSO...', '...OOOOOOOOOO...', '................',
+  '....OOOOOOOO....',
+  '..OOLLLLLLLLOO..',
+  '.OLHHLLLLLLLLSO.',
+  'OLHHLLLLLLLLLLSO',
+  'OLHLLLLLLLLLLLSO',
+  'OLLEEEELLEEEELSO',
+  'OLEEEEELLEEEEESO',
+  'OLEEEEELLEEEEESO',
+  'OLLEEELLLLEEELSO',
+  'OSLLLLLEELLLLLSO',
+  '.OSLLLLEELLLLSO.',
+  '..OSSLLLLLLSSO..',
+  '...OLLOLLOLLO...',
+  '...OSSOSSOSSO...',
+  '...OOOOOOOOOO...',
+  '................',
 ]);
 
 /** Each kind's bone, shade and light. */
@@ -28,11 +40,16 @@ export function skullSrc(kind) {
   if (cache.has(kind)) return cache.get(kind);
   const ink = { O: '#140f0b', E: '#140f0b', L: tint[0], S: tint[1], H: tint[2] };
   let rects = '';
-  SKULL_ROWS.forEach((row, y) => [...row].forEach((c, x) => { if (ink[c]) rects += `<rect x='${x}' y='${y}' width='1' height='1' fill='${ink[c]}'/>`; }));
+  SKULL_ROWS.forEach((row, y) =>
+    [...row].forEach((c, x) => {
+      if (ink[c]) rects += `<rect x='${x}' y='${y}' width='1' height='1' fill='${ink[c]}'/>`;
+    }),
+  );
   const src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'>${rects}</svg>`)}`;
   cache.set(kind, src);
   return src;
 }
 
 /** The soft glow gold and red wear (white none), as a CSS filter. */
-export const skullGlow = (kind) => (kind === 'gold' || kind === 'red' ? `drop-shadow(0 0 3px ${SKULL_TINTS[kind][0]})` : '');
+export const skullGlow = (kind) =>
+  kind === 'gold' || kind === 'red' ? `drop-shadow(0 0 3px ${SKULL_TINTS[kind][0]})` : '';

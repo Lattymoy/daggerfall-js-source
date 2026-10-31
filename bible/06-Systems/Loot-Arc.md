@@ -515,7 +515,7 @@ shows nothing). The arc landed - half the shaft, as shock, on the nearest other 
 pool's door, which runs no formula, so HN1's numbers (`10-UI/UI-Arc.md`) never heard it: no number, no word, while
 `again()`'s follow-up beside it raised its own since ROSE-SEEN. Every reach of a blow on another foe was the same
 omission - Earthshaker's quake, Dragonfire's burst - and Dragonfire's own second burn rose untagged. Each lands through
-one door now (`lootPowers.js:"function reachOn(door, f, n, word) {"`), its number risen and tagged with its power's name
+one door now (`lootPowers.js:"function reachOn"`), its number risen and tagged with its power's name
 (`showFollowUp`), before the foe takes it; enhanced only, as HN1 is. NOT the same omission, left: thorns, an affix line
 that answers a foe's blow where its attacker stands (as the sets' Spite of the Spurned does), not a reach of my blow at the
 reticle - a number of its own is the owner's call; and the arcane paths' arcs (`arcanePowers.js` - Rift Lance, the

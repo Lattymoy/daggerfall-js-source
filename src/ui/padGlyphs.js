@@ -45,7 +45,9 @@ export function padFamilyOf(id) {
 let _family = null;
 /** The live pad's family, or null when no pad is connected. */
 export const padFamily = () => _family;
-export function setPadFamily(f) { _family = f === 'ps' || f === 'xbox' ? f : null; }
+export function setPadFamily(f) {
+  _family = f === 'ps' || f === 'xbox' ? f : null;
+}
 
 // ── the bitmaps ──────────────────────────────────────────────────
 //
@@ -92,8 +94,10 @@ const TWO3 = ['oo.', '..o', '.o.', 'o..', 'ooo'];
 /** PAD1: the d-pad - a cross of '#', the pressed arm filled with the
  *  mark. One shape for both families, because a d-pad is a d-pad. */
 const dpad = (dir) => {
-  const u = dir === 'up' ? 'o' : '.', d = dir === 'down' ? 'o' : '.';
-  const l = dir === 'left' ? 'ooo' : '...', r = dir === 'right' ? 'ooo' : '...';
+  const u = dir === 'up' ? 'o' : '.',
+    d = dir === 'down' ? 'o' : '.';
+  const l = dir === 'left' ? 'ooo' : '...',
+    r = dir === 'right' ? 'ooo' : '...';
   return [
     '....###....',
     `....#${u}#....`,
@@ -199,7 +203,14 @@ export const PAD_GLYPHS = Object.freeze({
 /** PAD1: the axis keys a glyph exists for - the four d-pad directions
  *  and the two triggers' positive halves. Named once, so the tag law,
  *  the defaults and the pin all read the same six. */
-export const GLYPH_AXIS_KEYS = Object.freeze(['JoystickAxis7Button0', 'JoystickAxis7Button1', 'JoystickAxis6Button1', 'JoystickAxis6Button0', 'JoystickAxis9Button0', 'JoystickAxis10Button0']);
+export const GLYPH_AXIS_KEYS = Object.freeze([
+  'JoystickAxis7Button0',
+  'JoystickAxis7Button1',
+  'JoystickAxis6Button1',
+  'JoystickAxis6Button0',
+  'JoystickAxis9Button0',
+  'JoystickAxis10Button0',
+]);
 
 /** The button's bitmap, or null for anything that is not one of the
  *  ten - an axis key, a keyboard code, JoystickButton10 and up (Unity
@@ -233,7 +244,10 @@ export function glyphSvg(family, code, { size = 12, color = '#d8cfae', accent = 
     let x = 0;
     while (x < row.length) {
       const ch = row[x];
-      if (ch === '.') { x++; continue; }
+      if (ch === '.') {
+        x++;
+        continue;
+      }
       let run = 1;
       while (x + run < row.length && row[x + run] === ch) run++;
       rects += `<rect x="${x}" y="${y}" width="${run}" height="1" fill="${ch === 'o' ? ink : color}"/>`;
@@ -247,4 +261,6 @@ export function glyphSvg(family, code, { size = 12, color = '#d8cfae', accent = 
 }
 
 /** Test seam: forget the cached URLs. */
-export function _clearGlyphCache() { _svgs.clear(); }
+export function _clearGlyphCache() {
+  _svgs.clear();
+}

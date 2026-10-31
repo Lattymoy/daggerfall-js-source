@@ -52,7 +52,7 @@
   {
     "name": "BUILD-RETRY-stream-asks-at-once",
     "file": "src/world/streamingWorld.js",
-    "old": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });",
+    "old": "    this.failed.set(key, {\n      px,\n      py,\n      tries,\n      at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity,\n    });",
     "new": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now : Infinity });",
     "tests": [
       "test/scenes/ow_buildretry.test.js"
@@ -62,7 +62,7 @@
   {
     "name": "BUILD-RETRY-stream-unbounded",
     "file": "src/world/streamingWorld.js",
-    "old": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });",
+    "old": "    this.failed.set(key, {\n      px,\n      py,\n      tries,\n      at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity,\n    });",
     "new": "    this.failed.set(key, { px, py, tries, at: now + BUILD_RETRY_MS[0] });",
     "tests": [
       "test/scenes/ow_buildretry.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "BUILD-RETRY-stream-out-of-grid",
     "file": "src/world/streamingWorld.js",
-    "old": "      if (!this.inRange(f.px, f.py)) { this.failed.delete(key); continue; }",
-    "new": "      if (false) { this.failed.delete(key); continue; }",
+    "old": "      if (!this.inRange(f.px, f.py)) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/ow_buildretry.test.js"
     ],

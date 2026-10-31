@@ -11,8 +11,8 @@
   {
     "name": "COST1-var-loose",
     "file": "src/net/hubShards.js",
-    "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
-    "new": "canon(part, REGION_SPLIT))",
+    "old": "              .filter((part) => /^\\d{1,2}$/.test(part) && canon(part, REGION_SPLIT))",
+    "new": "              .filter((part) => canon(part, REGION_SPLIT))",
     "tests": [
       "test/net/cost1_regions.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COST1-all-short",
     "file": "src/net/hubShards.js",
-    "old": "Array.from({ length: REGION_SPLIT }, (_, region) => region)",
-    "new": "Array.from({ length: REGION_SPLIT - 1 }, (_, region) => region)",
+    "old": "        ? new Set(Array.from({ length: REGION_SPLIT }, (_, region) => region))",
+    "new": "        ? new Set(Array.from({ length: REGION_SPLIT - 1 }, (_, region) => region))",
     "tests": [
       "test/net/cost1_regions.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COST1-hub-touched",
     "file": "src/net/hubShards.js",
-    "old": "  if (bus === HUB_BUS) return hubOfSubject(sub);\n  // a region bus's key ends in its region's number (`chat:region.<r>`)\n  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded",
-    "new": "  if (bus === HUB_BUS) return sharded.size ? hubOfSubject(sub) : null;\n  // a region bus's key ends in its region's number (`chat:region.<r>`)\n  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded",
+    "old": "  if (bus === HUB_BUS) return hubOfSubject(sub);",
+    "new": "  if (bus === HUB_BUS) return sharded.size ? hubOfSubject(sub) : null;",
     "tests": [
       "test/net/cost1_regions.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "COST1-grant-left",
     "file": "server/src/drainWindows.js",
-    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
-    "new": "",
+    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n  const staffNet = room._staffNet;",
+    "new": "  const staffNet = room._staffNet;",
     "tests": [
       "test/server/cost1_drain.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "COST1-net-left",
     "file": "server/src/drainWindows.js",
-    "old": "if (staffNet && (staffNet.timer || staffNet.rows.size || staffNet.foes.size || staffNet.retry)) posts.push",
-    "new": "if (false) posts.push",
+    "old": "  if (staffNet && (staffNet.timer || staffNet.rows.size || staffNet.foes.size || staffNet.retry))\n    posts.push(staffNetFlush(room));",
+    "new": "  if (false) posts.push(staffNetFlush(room));",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "COST1-react-left",
     "file": "server/src/drainWindows.js",
-    "old": "if (staffReact && (staffReact.timer || staffReact.rows.length || staffReact.retry)) posts.push",
-    "new": "if (false) posts.push",
+    "old": "  if (staffReact && (staffReact.timer || staffReact.rows.length || staffReact.retry)) posts.push(staffReactFlush(room));",
+    "new": "  if (false) posts.push(staffReactFlush(room));",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "COST1-lines-left",
     "file": "server/src/drainWindows.js",
-    "old": "  if (room._feedQ?.lines.length) posts.push(room._feedFlush());\n",
-    "new": "",
+    "old": "  if (room._feedQ?.lines.length) posts.push(room._feedFlush());\n  if (!posts.length) return 0;",
+    "new": "  if (!posts.length) return 0;",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "COST1-retry-kept",
     "file": "server/src/drainWindows.js",
-    "old": "    staffFeedsStop(room);\n",
-    "new": "",
+    "old": "    staffFeedsStop(room);\n    if (room._grants?.timer) {",
+    "new": "    if (room._grants?.timer) {",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "COST1-alarm-uncounted",
     "file": "server/src/relayScale.js",
-    "old": " || k === 'setAlarm' || k === 'deleteAlarm')\n        return",
-    "new": ")\n        return",
+    "old": "      if (k === 'put' || k === 'delete' || k === 'deleteAll' || k === 'setAlarm' || k === 'deleteAlarm')",
+    "new": "      if (k === 'put' || k === 'delete' || k === 'deleteAll')",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "COST1-entries-one",
     "file": "server/src/relayScale.js",
-    "old": "? Object.keys(args[0]).length\n    : method === 'delete'",
-    "new": "? 1\n    : method === 'delete'",
+    "old": "    ? Object.keys(args[0]).length",
+    "new": "    ? 1",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "COST1-keys-one",
     "file": "server/src/relayScale.js",
-    "old": "Array.isArray(args[0])\n      ? args[0].length\n      : 1;",
-    "new": "Array.isArray(args[0])\n      ? 1\n      : 1;",
+    "old": "      ? args[0].length",
+    "new": "      ? 1",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "COST1-read-a-write",
     "file": "server/src/relayScale.js",
-    "old": "if (k === 'get' || k === 'list') return (...args) => { metrics.c.reads++;",
-    "new": "if (k === 'get' || k === 'list') return (...args) => { metrics.c.writes++;",
+    "old": "          metrics.c.reads++;",
+    "new": "          metrics.c.writes++;",
     "tests": [
       "test/server/cost1_drain.test.js"
     ]

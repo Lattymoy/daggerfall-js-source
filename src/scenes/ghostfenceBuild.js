@@ -3,11 +3,32 @@
 // build (scenes/pixelBuild.js) on the pixel's own ground - its pylons and Ghostgate in the pixel's batch, their orbs their
 // own light, and the pylons, the gate's towers and the curtain between the pylons solid through the world's one gate
 // (player/lateSolid.js) - no body passes the Ghostfence but by Ghostgate. Each foot and curtain point is noted for the glow.
-import { ghostfenceFrame, ghostfencePylonsIn, ghostfenceRunCuts, ghostfenceCurtainPoint, sampleToPixel, CURTAIN_STEPS, ghostfenceNear, ghostfenceBeside } from '../world/tamriel/ghostfence.js';
-import { redMountainLavaBed, redMountainLavaIn } from '../world/tamriel/redMountain.js';   // LAVA-CLEAR: nothing stood in the lava
+import {
+  ghostfenceFrame,
+  ghostfencePylonsIn,
+  ghostfenceRunCuts,
+  ghostfenceCurtainPoint,
+  sampleToPixel,
+  CURTAIN_STEPS,
+  ghostfenceNear,
+  ghostfenceBeside,
+} from '../world/tamriel/ghostfence.js';
+import { redMountainLavaBed, redMountainLavaIn } from '../world/tamriel/redMountain.js'; // LAVA-CLEAR: nothing stood in the lava
 import { landMeasures, LAND_PROP_FLOATS } from '../world/lands/landProps.js';
 import { LAND_KINDS } from '../world/lands/landPropMesh.js';
-import { pylonModel, pylonSolid, pylonFooting, ghostgateModel, ghostgateSolid, ghostfencePictures, GHOSTFENCE_ARCHIVE, GF_RECORD, PYLON, CURTAIN, GHOSTGATE } from '../world/tamriel/ghostfenceModel.js';
+import {
+  pylonModel,
+  pylonSolid,
+  pylonFooting,
+  ghostgateModel,
+  ghostgateSolid,
+  ghostfencePictures,
+  GHOSTFENCE_ARCHIVE,
+  GF_RECORD,
+  PYLON,
+  CURTAIN,
+  GHOSTGATE,
+} from '../world/tamriel/ghostfenceModel.js';
 import { surfaceHeightAt, lowestGroundUnder } from '../world/terrain/terrainSurface.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
@@ -25,17 +46,32 @@ const FOOTING_FROM = 0.5;
 /** The lowest and highest walk ground (`samples`, the pixel's) on the pixel-local segment (ax, az)-(bx, bz) - at its ends
  *  and every crossing of the ground's cells and their diagonals, where the triangles' plane turns: exact. */
 export function groundAlong(samples, ax, az, bx, bz) {
-  const cell = TERRAIN_SIZE / 128, dx = bx - ax, dz = bz - az, ts = [0, 1];
+  const cell = TERRAIN_SIZE / 128,
+    dx = bx - ax,
+    dz = bz - az,
+    ts = [0, 1];
   const cross = (a, d) => {
     if (Math.abs(d) < 1e-12) return;
-    const lo = Math.min(a, a + d), hi = Math.max(a, a + d);
-    for (let k = Math.ceil(lo / cell); k * cell <= hi; k++) { const t = (k * cell - a) / d; if (t > 0 && t < 1) ts.push(t); }
+    const lo = Math.min(a, a + d),
+      hi = Math.max(a, a + d);
+    for (let k = Math.ceil(lo / cell); k * cell <= hi; k++) {
+      const t = (k * cell - a) / d;
+      if (t > 0 && t < 1) ts.push(t);
+    }
   };
-  cross(ax, dx); cross(az, dz); cross(az - ax, dz - dx);
-  let lo = Infinity, hi = -Infinity;
+  cross(ax, dx);
+  cross(az, dz);
+  cross(az - ax, dz - dx);
+  let lo = Infinity,
+    hi = -Infinity;
   for (const t of ts) {
-    const y = surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, ax + dx * t)), Math.max(0, Math.min(TERRAIN_SIZE, az + dz * t)));
-    if (y < lo) lo = y; if (y > hi) hi = y;
+    const y = surfaceHeightAt(
+      samples,
+      Math.max(0, Math.min(TERRAIN_SIZE, ax + dx * t)),
+      Math.max(0, Math.min(TERRAIN_SIZE, az + dz * t)),
+    );
+    if (y < lo) lo = y;
+    if (y > hi) hi = y;
   }
   return [lo, hi];
 }
@@ -50,11 +86,14 @@ export const FENCE_CLEAR = GHOSTGATE.depth + 2;
  * and the fence's line - as `(x, z, reach) => true to drop it`, pixel-local metres; null where neither comes.
  */
 export function fireClearing(px, py) {
-  const lava = redMountainLavaIn(px, py), fence = ghostfenceBeside(px, py);
+  const lava = redMountainLavaIn(px, py),
+    fence = ghostfenceBeside(px, py);
   if (!lava && !fence) return null;
-  const ox = px * 128, oy = (BAY_H - py) * 128;
+  const ox = px * 128,
+    oy = (BAY_H - py) * 128;
   return (x, z, reach = 0) => {
-    const gx = ox + x / SAMPLE_M, gy = oy + z / SAMPLE_M;
+    const gx = ox + x / SAMPLE_M,
+      gy = oy + z / SAMPLE_M;
     return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));
   };
 }
@@ -87,7 +126,8 @@ export const footMatrix = (x, y, z, tx, tz) => new Float32Array([tx, 0, tz, 0, 0
 
 /** The pixel-local box a footprint of half-widths (along, across) covers about (x, z) turned to (tx, tz). */
 function footprint(x, z, tx, tz, along, across) {
-  const ex = Math.abs(tx) * along + Math.abs(tz) * across, ez = Math.abs(tz) * along + Math.abs(tx) * across;
+  const ex = Math.abs(tx) * along + Math.abs(tz) * across,
+    ez = Math.abs(tz) * along + Math.abs(tx) * across;
   return [x - ex, 0, z - ez, x + ex, 0, z + ez];
 }
 
@@ -100,55 +140,92 @@ function footprint(x, z, tx, tz, along, across) {
  *   late: { add: Function }, translation: any }} o
  */
 export function standGhostfence({ px, py, pkey, key, samples, renderer, addStatic, unionBox, late, translation }) {
-  const f = ghostfenceFrame(), here = f ? ghostfencePylonsIn(px, py) : [], runs = f?.runsBy.get(`${px},${py}`) ?? [];
+  const f = ghostfenceFrame(),
+    here = f ? ghostfencePylonsIn(px, py) : [],
+    runs = f?.runsBy.get(`${px},${py}`) ?? [];
   if (!f || (!here.length && !runs.length)) return 0;
   upload(renderer);
-  const ox = px * 128, oy = (BAY_H - py) * 128;
+  const ox = px * 128,
+    oy = (BAY_H - py) * 128;
   const local = (gx, gy) => [(gx - ox) * SAMPLE_M, (gy - oy) * SAMPLE_M];
-  const groundAt = (x, z) => surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, x)), Math.max(0, Math.min(TERRAIN_SIZE, z)));
-  const seats = [], points = [], heights = [];
+  const groundAt = (x, z) =>
+    surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, x)), Math.max(0, Math.min(TERRAIN_SIZE, z)));
+  const seats = [],
+    points = [],
+    heights = [];
   const stand = (cpu, solid, m) => {
     addStatic(cpu, m, true);
     unionBox(transformedAabb(localAabb(cpu.positions), m));
     late.add(key, solid.positions, solid.indices, m, { translation });
   };
   for (const i of here) {
-    const [x, z] = local(f.pts[2 * i], f.pts[2 * i + 1]), tx = f.tan[2 * i], tz = f.tan[2 * i + 1];
+    const [x, z] = local(f.pts[2 * i], f.pts[2 * i + 1]),
+      tx = f.tan[2 * i],
+      tz = f.tan[2 * i + 1];
     if (i === f.gate) {
       const y = lowestGroundUnder(samples, footprint(x, z, tx, tz, GHOSTGATE.half, GHOSTGATE.depth));
       seats.push(y);
       stand(ghostgateModel(), ghostgateSolid(), footMatrix(x, y, z, tx, tz));
       continue;
     }
-    const y = groundAt(x, z), low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));
+    const y = groundAt(x, z),
+      low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));
     seats.push(y);
     const m = footMatrix(x, y, z, tx, tz);
     stand(pylonModel(), pylonSolid(), m);
-    if (y - low > FOOTING_FROM) { const foot = pylonFooting(y - low); stand(foot.model, foot.solid, m); }
+    if (y - low > FOOTING_FROM) {
+      const foot = pylonFooting(y - low);
+      stand(foot.model, foot.solid, m);
+    }
   }
   for (const i of runs) {
     // the solid: this pixel's pieces of the run (by their middles), each from under its lowest ground to over its highest
-    const cuts = ghostfenceRunCuts(f, i), quads = [];
+    const cuts = ghostfenceRunCuts(f, i),
+      quads = [];
     for (let c = 0; c + 3 < cuts.length; c += 2) {
       const [mx, my] = sampleToPixel((cuts[c] + cuts[c + 2]) / 2, (cuts[c + 1] + cuts[c + 3]) / 2);
       if (mx !== px || my !== py) continue;
-      const [ax, az] = local(cuts[c], cuts[c + 1]), [bx, bz] = local(cuts[c + 2], cuts[c + 3]), [lo, hi] = groundAlong(samples, ax, az, bx, bz);
-      quads.push(ax, lo + CURTAIN.from, az, bx, lo + CURTAIN.from, bz, bx, hi + CURTAIN_SOLID_TOP, bz, ax, hi + CURTAIN_SOLID_TOP, az);
+      const [ax, az] = local(cuts[c], cuts[c + 1]),
+        [bx, bz] = local(cuts[c + 2], cuts[c + 3]),
+        [lo, hi] = groundAlong(samples, ax, az, bx, bz);
+      quads.push(
+        ax,
+        lo + CURTAIN.from,
+        az,
+        bx,
+        lo + CURTAIN.from,
+        bz,
+        bx,
+        hi + CURTAIN_SOLID_TOP,
+        bz,
+        ax,
+        hi + CURTAIN_SOLID_TOP,
+        az,
+      );
     }
     if (quads.length) {
-      const q = quads.length / 12, indices = new Uint32Array(q * 6);
+      const q = quads.length / 12,
+        indices = new Uint32Array(q * 6);
       for (let k = 0; k < q; k++) indices.set([4 * k, 4 * k + 1, 4 * k + 2, 4 * k, 4 * k + 2, 4 * k + 3], 6 * k);
       late.add(key, new Float32Array(quads), indices, IDENTITY, { translation });
     }
     // the glow's curtain points in this pixel, on its ground
     for (let k = 0; k <= CURTAIN_STEPS; k++) {
-      const [gx, gy] = ghostfenceCurtainPoint(f, i, k), [qx, qy] = sampleToPixel(gx, gy);
+      const [gx, gy] = ghostfenceCurtainPoint(f, i, k),
+        [qx, qy] = sampleToPixel(gx, gy);
       if (qx !== px || qy !== py) continue;
       const [x, z] = local(gx, gy);
-      points.push(i * (CURTAIN_STEPS + 1) + k); heights.push(groundAt(x, z));
+      points.push(i * (CURTAIN_STEPS + 1) + k);
+      heights.push(groundAt(x, z));
     }
   }
-  noteFenceFeet(pkey, { frame: f, idx: here.slice(), seats: Float32Array.from(seats), points, heights: Float32Array.from(heights) });
+  noteFenceFeet(pkey, {
+    frame: f,
+    idx: here.slice(),
+    seats: Float32Array.from(seats),
+    points,
+    heights: Float32Array.from(heights),
+  });
   return here.length;
 }
 

@@ -38,6 +38,7 @@ import {
 } from '../../src/render/nodeGlow.js';
 import { glslFunctions } from '../glsl.mjs';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -608,14 +609,15 @@ test('NODE-MARKS AUDIT the still form, the shader RUN: under reduced motion (`uS
 });
 
 test('NODE-MARKS the hosts by source: the street\'s compass and the dungeon\'s take the nodes - under the travel view too (AUDIT); the glow is drawn after each mode\'s opaque world through the veiled bodies\' hook, never under the travel view; none in a building or with the professions shut; every edit to the cited hosts line-neutral (one import line, one door folded beside the party\'s)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(!gatherHost \|\| profBook\?\.state\.open !== true \|\| !feet\) return null;\n\s*const m = _mode\(\);\n\s*return m === 'exterior' \|\| m === 'dungeon' \? gatherHost\.marks\(feet\) : null;/, 'AUDIT: the compass keeps the nodes under the travel view, as PROF2\'s Prospector\'s veins were kept');
   assert.match(w, /nodes: professionMarks\(\),/);
   // PIN MOVED (PROF2b): the far Motherlodes beside the near nodes, the glow still built right after
   assert.match(w, /const professionMarks = \(feet = enchantFeet\(\)\) => \{\n\s*const near = nodeMarksAt\(feet\), far = motherlodeMarks\(\);\n\s*return nodeCompassPoints\(far\.length \? \[\.\.\.far, \.\.\.\(near \?\? \[\]\)\] : near, trackerAnimals\(\)\);[^\n]*\n\s*\};\n\s*const nodeGlintPass = createNodeGlintPass\(renderer\);/);   // PIN MOVED (NODE-OUTLINE): the glow the outline's fallback, for a node with no picture; PIN MOVED (HOST-SPLIT): the outline builds that glow itself; PIN MOVED (NODE-GLINT): the glint's now
   assert.match(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\); nodeGlintPass\.draw\(travelView\?\.active \? null : nodeMarksAt\(enchantFeet\(\)\)\); partyPing\?\.draw\(renderer\); \};/, 'the glow alone none under the travel view');
   assert.match(w, /partyNear: \(\) => partyOnMaps\(\), professionMarks: \(feet\) => professionMarks\(feet\),/);
-  assert.match(w, /^import \{ mineKind \} from '\.\/mineHost\.js'; import \{ nodeCompassPoints \} from '\.\.\/ui\/nodeMarks\.js'; import \{ createNodeGlintPass \} from '\.\.\/render\/nodeGlint\.js';/m);   // PIN MOVED (NODE-OUTLINE); PIN MOVED (HOST-SPLIT): the outline builds the glow it falls back to; PIN MOVED (NODE-GLINT): the glint does now
+  assert.match(w, /^import \{ nodeCompassPoints \} from '\.\.\/ui\/nodeMarks\.js'; import \{ createNodeGlintPass \} from '\.\.\/render\/nodeGlint\.js';/m);   // PIN MOVED (NODE-OUTLINE); PIN MOVED (HOST-SPLIT)
+  assert.match(w, /^import \{ mineKind \} from '\.\/mineHost\.js';/m);   // PIN MOVED (HOST-SPLIT PROFESSIONS): the kinds are scenes/professionsHost.js's: the outline builds the glow it falls back to; PIN MOVED (NODE-GLINT): the glint does now
   assert.match(src('src/scenes/worldModes.js'), /party: \(\) => host\.partyNear\?\.\(\) \?\? \[\], nodeMarks: \(feet\) => host\.professionMarks\?\.\(feet\) \?\? null,/);
   assert.match(src('src/scenes/dungeonContext.js'), /party: partyCompassPoints\(\{ bodies: opts\.party \?\? null \}\), nodes: playerFeet \? withFireMarks\(opts\.nodeMarks\?\.\(playerFeet\) \?\? null, dungeonFires, playerFeet\) : null,/, 'REST3: the dungeon\'s campfires ride the same field');
   assert.match(src('src/ui/hud/hud.js'), /nodes: nodes \?\? null,/, 'handed to the enhanced skin');

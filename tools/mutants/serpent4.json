@@ -2,8 +2,8 @@
   {
     "name": "SERPENT4-admission-closed-at-the-storm",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };",
-    "new": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.sealAt; };",
+    "old": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt;",
+    "new": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.sealAt;",
     "tests": [
       "test/net/serpent/serpent4.test.js",
       "test/net/serpent/serpent1_law.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "SERPENT4-countdown-to-the-storm",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "if (phase === 'rising' || phase === 'hunt' || phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
-    "new": "if (phase === 'rising' || phase === 'hunt') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };\n  if (phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
+    "old": "  if (phase === 'rising' || phase === 'hunt' || phase === 'late')\n    return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
+    "new": "  if (phase === 'rising' || phase === 'hunt') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };\n  if (phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "SERPENT4-the-throw-unscaled",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const d = Math.hypot(dx, dz) || 1, v = A.shove * SERPENT_THROW_X;",
-    "new": "const d = Math.hypot(dx, dz) || 1, v = A.shove;",
+    "old": "    v = A.shove * SERPENT_THROW_X; // SERPENT4: half the throw",
+    "new": "    v = A.shove; // SERPENT4: half the throw",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "SERPENT4-the-whole-canvas",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "sail: shared(A.sail * SERPENT_CANVAS_X * whole.maxSail, k, carry, 'sail')",
-    "new": "sail: shared(A.sail * whole.maxSail, k, carry, 'sail')",
+    "old": "  sail: shared(A.sail * SERPENT_CANVAS_X * whole.maxSail, k, carry, 'sail'),",
+    "new": "  sail: shared(A.sail * whole.maxSail, k, carry, 'sail'),",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "SERPENT4-the-gale-off-her-helm",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
-    "new": "if (!b || b.boat !== boat || !nearMe()) return null;",
+    "old": "      if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
+    "new": "      if (!b || b.boat !== boat || !nearMe()) return null;",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SERPENT4-the-gale-everywhere",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
-    "new": "if (!b || b.boat !== boat || !b.atHelm) return null;",
+    "old": "      if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
+    "new": "      if (!b || b.boat !== boat || !b.atHelm) return null;",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SERPENT4-the-gale-line-every-ask",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!galeSaid) { galeSaid = true; deps.mid?.(GALE_LINE, 3); }",
-    "new": "deps.mid?.(GALE_LINE, 3);",
+    "old": "      if (!galeSaid) {\n        galeSaid = true;\n        deps.mid?.(GALE_LINE, 3);\n      }",
+    "new": "      deps.mid?.(GALE_LINE, 3);",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SERPENT4-the-marks-to-a-captain",
     "file": "src/scenes/serpentHost.js",
-    "old": "      if (!live || deps.boat?.()) return [];\n      return this.targets();",
-    "new": "      if (!live) return [];\n      return this.targets();",
+    "old": "      if (!live || deps.boat?.()) return [];",
+    "new": "      if (!live) return [];",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SERPENT4-the-hands-word-without-r",
     "file": "src/scenes/serpentHost.js",
-    "old": "z, ...(r ? { r } : {}) }, cell))",
-    "new": "z }, cell))",
+    "old": "      if (\n        d > 0 &&\n        !deps.online?.send?.({ k: 'hit', d: Math.min(5000, Math.round(d * 100) / 100), z, ...(r ? { r } : {}) }, cell)\n      )",
+    "new": "      if (d > 0 && !deps.online?.send?.({ k: 'hit', d: Math.min(5000, Math.round(d * 100) / 100), z }, cell))",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

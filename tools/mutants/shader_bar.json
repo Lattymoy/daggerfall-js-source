@@ -2,8 +2,8 @@
   {
     "name": "GB-taken-not-done",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (lost || p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)) done.add(k);",
-    "new": "if (lost || (p !== null && p !== undefined && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)) done.add(k);",
+    "old": "      if (lost || p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true))",
+    "new": "      if (lost || (p !== null && p !== undefined && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true))",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GB-queued-done",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "(p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)",
-    "new": "(p === null || gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)",
+    "old": "      if (lost || p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true))",
+    "new": "      if (lost || p === undefined || p === null || gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "GB-lost-pending",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (lost || p === undefined ||",
-    "new": "if (p === undefined ||",
+    "old": "      if (lost || p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true))\n        done.add(k);",
+    "new": "      if (p === undefined || (p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true)) done.add(k);",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "GB-no-hold",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "return settled && now - fullAt >= GFX_HOLD_MS ?",
-    "new": "return settled ?",
+    "old": "  return settled && now - fullAt >= GFX_HOLD_MS\n    ? { ...s, phase: 'ready', done, total, fullAt, since: now }\n    : { ...s, done, total, fullAt };",
+    "new": "  return settled ? { ...s, phase: 'ready', done, total, fullAt, since: now } : { ...s, done, total, fullAt };",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "GB-hold-kept",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (!full) return { ...s, done, total, fullAt: null };",
-    "new": "if (!full) return { ...s, done, total };",
+    "old": "  if (!full) return { ...s, done, total, fullAt: null };",
+    "new": "  if (!full) return { ...s, done, total };",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "GB-polls-on",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "timer = state.phase === 'gone' || state.phase === 'ready' ? null : win.setTimeout(tick, GFX_POLL_MS);",
-    "new": "timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);",
+    "old": "    timer = state.phase === 'gone' || state.phase === 'ready' ? null : win.setTimeout(tick, GFX_POLL_MS);",
+    "new": "    timer = state.phase === 'gone' ? null : win.setTimeout(tick, GFX_POLL_MS);",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "GB-bar-only-with-button",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (!ext && !fixShown) return",
-    "new": "if (!fixShown) return",
+    "old": "  if (!ext && !fixShown) return { root: null, bar: null, button: null, panel: () => null, tick() {}, unmount() {} };",
+    "new": "  if (!fixShown) return { root: null, bar: null, button: null, panel: () => null, tick() {}, unmount() {} };",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "FS-app-shows-button",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "if (shell || !nav) return false;",
-    "new": "if (!nav) return false;",
+    "old": "  if (shell || !nav) return false;",
+    "new": "  if (!nav) return false;",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "FS-keys-leak",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "    e.stopImmediatePropagation();\n",
-    "new": "",
+    "old": "    e.stopImmediatePropagation();\n    if (e.type === 'keydown' && e.key === 'Escape') {",
+    "new": "    if (e.type === 'keydown' && e.key === 'Escape') {",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "FS-listener-kept",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "for (const type of ['keydown', 'keyup']) win.removeEventListener?.(type, onKey, true);",
+    "old": "      for (const type of ['keydown', 'keyup']) win.removeEventListener?.(type, onKey, true);",
     "new": "",
     "tests": [
       "test/ui/gfxprepbar.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "GB-ready-before-mount-queued",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "  return settled && now - fullAt >= GFX_HOLD_MS ?",
-    "new": "  return now - fullAt >= GFX_HOLD_MS ?",
+    "old": "  return settled && now - fullAt >= GFX_HOLD_MS",
+    "new": "  return now - fullAt >= GFX_HOLD_MS",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "FS-linux-shown",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "  if (!/Windows|Macintosh|macOS/.test(platform)) return false;",
-    "new": "  void platform;",
+    "old": "  if (!/Windows|Macintosh|macOS/.test(platform)) return false; // the steps are Windows' and the Mac's alone, never a phone's",
+    "new": "  void platform; // the steps are Windows' and the Mac's alone, never a phone's",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "FS-brave-shown",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "/Google Chrome|Microsoft Edge/.test(String(b?.brand ?? ''))",
-    "new": "/Chromium|Google Chrome|Microsoft Edge/.test(String(b?.brand ?? ''))",
+    "old": "    return brands.some((b) => /Google Chrome|Microsoft Edge/.test(String(b?.brand ?? '')));",
+    "new": "    return brands.some((b) => /Chromium|Google Chrome|Microsoft Edge/.test(String(b?.brand ?? '')));",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "FS-menu-hears-panel-keys",
     "file": "src/ui/gfxPrepBar.js",
-    "old": "    e.stopImmediatePropagation();\n",
-    "new": "",
+    "old": "    e.stopImmediatePropagation();\n    if (e.type === 'keydown' && e.key === 'Escape') {",
+    "new": "    if (e.type === 'keydown' && e.key === 'Escape') {",
     "tests": [
       "test/ui/gfxprepbar.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "SM-settled-at-once",
     "file": "src/render/bootPrograms.js",
-    "old": "  settled = false;\n",
-    "new": "  settled = true;\n",
+    "old": "  settled = false;",
+    "new": "  settled = true;",
     "tests": [
       "test/render/shadermount.test.js"
     ],

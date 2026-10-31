@@ -46,7 +46,9 @@ export function addIntoQuestTables(rows = {}) {
     if (_tables[key]) applyExtraRows(_tables[key], lines);
   }
 }
-export function _resetExtraQuestRows() { for (const k of Object.keys(_extraRows)) _extraRows[k].length = 0; }
+export function _resetExtraQuestRows() {
+  for (const k of Object.keys(_extraRows)) _extraRows[k].length = 0;
+}
 
 /** Load from raw file text keyed by DFU table name. */
 export function loadQuestTables(sources) {
@@ -64,7 +66,7 @@ export function loadQuestTables(sources) {
   for (const [file, key] of Object.entries(map)) {
     if (sources[file] != null) {
       _tables[key] = new Table(sources[file]);
-      if (_extraRows[key]?.length) applyExtraRows(_tables[key], _extraRows[key]);   // RR3: the mod's rows ride the fresh table (DEX1: a keyed one where its key is new)
+      if (_extraRows[key]?.length) applyExtraRows(_tables[key], _extraRows[key]); // RR3: the mod's rows ride the fresh table (DEX1: a keyed one where its key is new)
     }
   }
 }

@@ -21,7 +21,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { accountRefusalText } from '../net/accountClient.js';
-import { hallEntryTurnable, hallSellable, hallOwnerLines, hallSaleLines, hallSoldLine, hallYourGuild } from '../systems/online/onlineHomes.js';
+import {
+  hallEntryTurnable,
+  hallSellable,
+  hallOwnerLines,
+  hallSaleLines,
+  hallSoldLine,
+  hallYourGuild,
+} from '../systems/online/onlineHomes.js';
 import { t } from '../systems/textManager.js';
 
 /**
@@ -33,25 +40,39 @@ import { t } from '../systems/textManager.js';
 export function createHallSaleDoor({ host, townTalk, homeOnward, turnHallEntry, homeIdOf, homeTownOf }) {
   /** THE HALL'S MENU at its door (Info): go in, who may enter, sell it - each as the service lets this character. */
   function openHallMenu(bd, home, hit, entries) {
-    townTalk?.showOverlay?.(new ChoiceWindow({
-      lines: hallOwnerLines(home),
-      options: [
-        { code: 'KeyG', label: t('home.hallMenu.goIn', 'G - go in'), action: homeOnward(hit, entries) },
-        ...(hallEntryTurnable(home) ? [{ code: 'KeyW', label: t('home.hallMenu.entry', 'W - who may enter'), action: () => turnHallEntry(bd, home) }] : []),
-        ...(hallSellable(home) ? [{ code: 'KeyS', label: t('home.hallMenu.sell', 'S - sell it'), action: () => openHallSale(bd, home) }] : []),
-        { code: 'Escape', label: 'Esc - close', action: () => {} },
-      ],
-    }));
+    townTalk?.showOverlay?.(
+      new ChoiceWindow({
+        lines: hallOwnerLines(home),
+        options: [
+          { code: 'KeyG', label: t('home.hallMenu.goIn', 'G - go in'), action: homeOnward(hit, entries) },
+          ...(hallEntryTurnable(home)
+            ? [
+                {
+                  code: 'KeyW',
+                  label: t('home.hallMenu.entry', 'W - who may enter'),
+                  action: () => turnHallEntry(bd, home),
+                },
+              ]
+            : []),
+          ...(hallSellable(home)
+            ? [{ code: 'KeyS', label: t('home.hallMenu.sell', 'S - sell it'), action: () => openHallSale(bd, home) }]
+            : []),
+          { code: 'Escape', label: 'Esc - close', action: () => {} },
+        ],
+      }),
+    );
   }
   /** Sell it back - asked first, at what the sale pays the treasury (the service's own sum, its pieces' half in words). */
   function openHallSale(bd, home) {
-    townTalk?.showOverlay?.(new ChoiceWindow({
-      lines: hallSaleLines(home),
-      options: [
-        { code: 'KeyY', label: 'Y - yes', action: () => sellHallAt(bd, home) },
-        { code: 'KeyN', label: 'N - no', action: () => {} },
-      ],
-    }));
+    townTalk?.showOverlay?.(
+      new ChoiceWindow({
+        lines: hallSaleLines(home),
+        options: [
+          { code: 'KeyY', label: 'Y - yes', action: () => sellHallAt(bd, home) },
+          { code: 'KeyN', label: 'N - no', action: () => {} },
+        ],
+      }),
+    );
   }
   /** The halls whose sale is out - one at a time a house (AUDIT GUILD1d A8's law for the buy); the first answer speaks. */
   const _hallSelling = new Set();
@@ -64,11 +85,14 @@ export function createHallSaleDoor({ host, townTalk, homeOnward, turnHallEntry, 
     const name = home?.hall?.name ?? hallYourGuild();
     Promise.resolve(host.guildHall?.sell?.({ mapId, buildingKey: bd.buildingKey }) ?? { ok: false, error: 'no-guild' })
       .then((r) => {
-        if (r?.ok || r?.error === 'guild-hall-moved' || r?.error === 'guild-hall-none') host.onlineHomes?.ensure?.(mapId, { force: true });   // sold - or not this guild's hall as the door had it: the door reads it again
+        if (r?.ok || r?.error === 'guild-hall-moved' || r?.error === 'guild-hall-none')
+          host.onlineHomes?.ensure?.(mapId, { force: true }); // sold - or not this guild's hall as the door had it: the door reads it again
         townTalk?.say?.(r?.ok ? hallSoldLine(name, r.data?.back) : accountRefusalText(r?.error ?? 'server'));
       })
       .catch((e) => console.error(e))
-      .finally(() => { _hallSelling.delete(id); });
+      .finally(() => {
+        _hallSelling.delete(id);
+      });
   }
   return { openHallMenu, openHallSale };
 }

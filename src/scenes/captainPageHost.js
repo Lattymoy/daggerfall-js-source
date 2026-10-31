@@ -14,7 +14,7 @@
 //     changed()           a sky accepted: every boat of mine read again on it, and the save told
 //   }
 import { perksOf, PERKS_REFUSED_AT, logLines } from '../systems/naval/captainLedger.js';
-import { createCaptainStarsOverlay } from '../ui/naval/navalPlunderDoor.js';   // CAPTAIN-TREE: the stars' window
+import { createCaptainStarsOverlay } from '../ui/naval/navalPlunderDoor.js'; // CAPTAIN-TREE: the stars' window
 
 /** @param {{ ledger: any, naval: () => any, office: () => any, minutes: () => number, show: (overlay: any) => void, changed: () => void }} deps */
 export function createCaptainPageHost(deps) {
@@ -22,10 +22,14 @@ export function createCaptainPageHost(deps) {
    *  its days, the contracts under way (CAPT-BOARD), the caches marked (CAPT-CHARTS), the log in words, and (CAPTAIN-TREE)
    *  her level and the stars set of her points. */
   function model() {
-    const L = deps.ledger, at = Math.floor(deps.minutes());   // the captain's own clock, the letter's
+    const L = deps.ledger,
+      at = Math.floor(deps.minutes()); // the captain's own clock, the letter's
     const mq = L.marque(at);
     return {
-      crowns: L.crowns().map((c) => { const n = deps.naval()?.notorietyOf?.(c.crown) ?? 0; return { ...c, notoriety: n, perks: perksOf(c.rank.rank, n) }; }),
+      crowns: L.crowns().map((c) => {
+        const n = deps.naval()?.notorietyOf?.(c.crown) ?? 0;
+        return { ...c, notoriety: n, perks: perksOf(c.rank.rank, n) };
+      }),
       refusedAt: PERKS_REFUSED_AT,
       marque: mq ? { crown: mq.crown, days: Math.max(1, Math.ceil((mq.until - at) / 1440)) } : null,
       contracts: deps.office().pageContracts(),

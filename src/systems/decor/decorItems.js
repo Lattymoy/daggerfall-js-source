@@ -33,21 +33,30 @@
 import { templateByIndex, inventoryItemImage } from '../item/itemTemplates.js';
 import { itemLongName } from '../item/itemInfo.js';
 import { getMagicItemTemplates, ITEM_GROUP_NAME_BY_CLASS } from '../loot/loot.js';
-import { getLocalizedMagicItemName } from '../textManager.js';   // L10N3e: an artifact's name, by its MAGIC.DEF index
+import { getLocalizedMagicItemName } from '../textManager.js'; // L10N3e: an artifact's name, by its MAGIC.DEF index
 import { TEMPLATES, isMap } from '../useItem.js';
 import { isSummoned } from '../inventory.js';
-import { isBagItem } from '../../net/bagLaw.js';   // AUDIT ONE-BAG 2: the Materials Bag stands as no piece
-import { isPackOnly } from '../item/itemBound.js';   // AUDIT 625 W1: nor a pack-only piece (the Wallet)
+import { isBagItem } from '../../net/bagLaw.js'; // AUDIT ONE-BAG 2: the Materials Bag stands as no piece
+import { isPackOnly } from '../item/itemBound.js'; // AUDIT 625 W1: nor a pack-only piece (the Wallet)
 import { decorFlatLight } from './decorCatalogue.js';
 import { itemDyeColor, itemDyeTarget } from '../item/itemDye.js';
-import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN, DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';
-import { PROVENANCE_RE, MASTERWORK, makerMark, markedName } from '../../net/recipeLaw.js';   // PROF4: a crafted piece's id and mark
-import { TROPHY_TEMPLATE } from '../../net/trophyLaw.js';   // HUNTERS-MARK: a mounted trophy
+import {
+  decorItemOf,
+  decorIsMount,
+  DECOR_ARCHIVE_MAX,
+  DECOR_RECORD_MAX,
+  DECOR_ARTIFACT_UNKNOWN,
+  DECOR_OWN_KEPT_BACK,
+} from '../../net/decorLaw.js';
+import { PROVENANCE_RE, MASTERWORK, makerMark, markedName } from '../../net/recipeLaw.js'; // PROF4: a crafted piece's id and mark
+import { TROPHY_TEMPLATE } from '../../net/trophyLaw.js'; // HUNTERS-MARK: a mounted trophy
 import { trophyItemName } from '../hunt/trophies.js';
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
-export const DECOR_OWN_NEVER_GROUPS = Object.freeze(new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']));
+export const DECOR_OWN_NEVER_GROUPS = Object.freeze(
+  new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),
+);
 // The items kept back by name - INT9: DECOR_OWN_KEPT_BACK's home is net/decorLaw.js (the account Worker reads it: a death in
 // the zone's drop keeps them too - systems/wild/wildDropLaw.js), re-exported here
 export { DECOR_OWN_KEPT_BACK };
@@ -58,7 +67,10 @@ export { DECOR_OWN_KEPT_BACK };
 export function decorItemFlat(item) {
   const t = templateByIndex(item?.templateIndex);
   if (!t) return null;
-  const own = Number.isSafeInteger(item.worldTextureArchive) && item.worldTextureArchive > 0 && Number.isSafeInteger(item.worldTextureRecord);
+  const own =
+    Number.isSafeInteger(item.worldTextureArchive) &&
+    item.worldTextureArchive > 0 &&
+    Number.isSafeInteger(item.worldTextureRecord);
   const archive = own ? item.worldTextureArchive : t.worldTextureArchive;
   const record = own ? item.worldTextureRecord : t.worldTextureRecord;
   if (!Number.isSafeInteger(archive) || archive <= 0 || archive > DECOR_ARCHIVE_MAX) return null;
@@ -73,18 +85,26 @@ export function decorDescriptorOf(item) {
   const g = ITEM_GROUP_NAME_BY_CLASS.indexOf(item.group);
   const bits = item.artifactIndexBitfield ?? 0;
   // AUDIT DYE-ICON 7: an artifact with no index recorded is one all the same - it hung as its base item, dyed
-  const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;
+  const a = item.artifact ? (bits & 1 ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;
   // HUNTERS-MARK: a trophy's beast rides its message too, so a visitor hangs and names the same beast
-  const p = (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) && Number.isSafeInteger(item.message) ? item.message : null;
+  const p =
+    (item.group === 'Paintings' || item.group === 'Books' || item.templateIndex === TROPHY_TEMPLATE) &&
+    Number.isSafeInteger(item.message)
+      ? item.message
+      : null;
   // PROF4 (bible/06-Systems/Professions-Arc.md 25): a crafted piece's provenance, and its mark where its name carries
   // one - online the service writes the mark from its own row, whatever this sends
   const pv = typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance) ? item.provenance : null;
-  const mk = pv && (item.marked === true || item.quality === MASTERWORK) ? makerMark(item.maker) : null;   // TEXT-F1: a mark the filter lets stand
+  const mk = pv && (item.marked === true || item.quality === MASTERWORK) ? makerMark(item.maker) : null; // TEXT-F1: a mark the filter lets stand
   return decorItemOf({
-    t: item.templateIndex, g: g >= 0 ? g : null,
+    t: item.templateIndex,
+    g: g >= 0 ? g : null,
     m: Number.isSafeInteger(item.material) && item.material > 0 ? item.material : null,
     v: Number.isSafeInteger(item.variant) && item.variant > 0 ? item.variant : null,
-    a, p, pv, mk,
+    a,
+    p,
+    pv,
+    mk,
   });
 }
 
@@ -102,7 +122,7 @@ export function decorStandOf(item) {
   // piece (systems/item/itemBound.js isPackOnly - the Wallet's row): set down, it leaves the pack (scenes/decor/decorTool.js
   // commitOwn), and a wallet out of the pack leaves what it holds back on the pack's pages
   if (isBagItem(item) || isPackOnly(item)) return null;
-  if (item.templateIndex === TROPHY_TEMPLATE) return null;   // HUNTERS-MARK: a trophy hangs (decorMountOf), never stands
+  if (item.templateIndex === TROPHY_TEMPLATE) return null; // HUNTERS-MARK: a trophy hangs (decorMountOf), never stands
   const flat = decorItemFlat(item);
   const descriptor = flat ? decorDescriptorOf(item) : null;
   if (!flat || !descriptor) return null;
@@ -132,7 +152,7 @@ export function decorMountOf(item, identity = undefined) {
 export function decorMountDye(d) {
   const own = decorItemOf(d);
   if (!own) return null;
-  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  const group = own.g != null ? (ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null) : null;
   return itemDyeColor({ templateIndex: own.t, group, material: own.m ?? 0, artifact: own.a != null });
 }
 
@@ -141,7 +161,7 @@ export function decorMountDye(d) {
 export function decorMountItem(d) {
   const own = decorItemOf(d);
   if (!own) return null;
-  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  const group = own.g != null ? (ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null) : null;
   return { group, templateIndex: own.t, material: own.m ?? 0, variant: own.v ?? 0, artifact: own.a != null };
 }
 
@@ -150,7 +170,7 @@ export function decorMountItem(d) {
 export function decorMountDyeTarget(d) {
   const own = decorItemOf(d);
   if (!own) return null;
-  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  const group = own.g != null ? (ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null) : null;
   return itemDyeTarget({ group, artifact: own.a != null });
 }
 
@@ -165,16 +185,23 @@ export function decorItemName(d) {
   if (own.a != null) {
     const artifacts = (getMagicItemTemplates() ?? []).filter((m) => m.type === 1 || m.type === 2);
     const m = artifacts[own.a];
-    if (m?.name) return getLocalizedMagicItemName(m.index, m.name);   // L10N3e: SetArtifact's shortName, in the player's language (DaggerfallUnityItem.cs:602)
+    if (m?.name) return getLocalizedMagicItemName(m.index, m.name); // L10N3e: SetArtifact's shortName, in the player's language (DaggerfallUnityItem.cs:602)
   }
   const t = templateByIndex(own.t);
   if (!t) return null;
-  if (own.t === TROPHY_TEMPLATE && own.p != null) return trophyItemName(own.p, own.v != null ? own.v - 1 : null);   // HUNTERS-MARK: its beast, and a mark's name
-  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;
+  if (own.t === TROPHY_TEMPLATE && own.p != null) return trophyItemName(own.p, own.v != null ? own.v - 1 : null); // HUNTERS-MARK: its beast, and a mark's name
+  const group = own.g != null ? (ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null) : null;
   // the list's own naming reads a book's title off its message (itemInfo.js resolveItemName)
-  const item = { templateIndex: own.t, group, material: own.m ?? 0, variant: own.v ?? 0, isIdentified: true, message: own.p ?? 0 };
+  const item = {
+    templateIndex: own.t,
+    group,
+    material: own.m ?? 0,
+    variant: own.v ?? 0,
+    isIdentified: true,
+    message: own.p ?? 0,
+  };
   const name = itemLongName(item) || t.name;
-  return own.mk ? markedName(own.mk, name) : name;   // PROF4: a crafted piece's maker's mark, as the service wrote it
+  return own.mk ? markedName(own.mk, name) : name; // PROF4: a crafted piece's maker's mark, as the service wrote it
 }
 
 /**
@@ -190,12 +217,23 @@ export function decorOwnEntry(item, index, identity = undefined) {
   if (!as) return null;
   const pic = inventoryItemImage(item, identity);
   return {
-    key: `own:${index}`, kind: 'own', own: item, name: itemLongName(item), model: null, flat: as.flat,
-    light: as.light, item: as.item, storage: false, count: item.stackCount ?? 1, mount: !!hangs,
+    key: `own:${index}`,
+    kind: 'own',
+    own: item,
+    name: itemLongName(item),
+    model: null,
+    flat: as.flat,
+    light: as.light,
+    item: as.item,
+    storage: false,
+    count: item.stackCount ?? 1,
+    mount: !!hangs,
     icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : { archive: as.flat[0], record: as.flat[1], dye: null },
   };
 }
 
 /** What a sale says of the owner's own things that stood in the room - back in the pack (Mac: "Back to pack"). */
-export const decorOwnBackLine = (n) => (n === 1 ? 'One of your things that stood in it came back to your pack.'
-  : `${n} of your things that stood in it came back to your pack.`);
+export const decorOwnBackLine = (n) =>
+  n === 1
+    ? 'One of your things that stood in it came back to your pack.'
+    : `${n} of your things that stood in it came back to your pack.`;

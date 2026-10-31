@@ -2,8 +2,8 @@
   {
     "name": "DOMAIN3-week-rule",
     "file": "src/net/domainLaw.js",
-    "old": "&& week >= domainsWeek;",
-    "new": "&& week > domainsWeek;",
+    "old": "  Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week >= domainsWeek;",
+    "new": "  Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week > domainsWeek;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DOMAIN3-report-region",
     "file": "src/net/domainLaw.js",
-    "old": "return seatRegionOk(region) && seatKeyOk(key) ? { region, key } : null;",
-    "new": "return seatKeyOk(key) ? { region, key } : null;",
+    "old": "  return seatRegionOk(region) && seatKeyOk(key) ? { region, key } : null;",
+    "new": "  return seatKeyOk(key) ? { region, key } : null;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DOMAIN3-canonical",
     "file": "src/net/domainLaw.js",
-    "old": "return domain && domainReportText(domain) === text ? { domain } : null;",
-    "new": "return domain ? { domain } : null;",
+    "old": "  return domain && domainReportText(domain) === text ? { domain } : null;",
+    "new": "  return domain ? { domain } : null;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN3-crown",
     "file": "src/net/domainLaw.js",
-    "old": "    if (Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) && s.tier !== 'crown') continue;\n",
-    "new": "",
+    "old": "    if (Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) && s.tier !== 'crown') continue;\n    out.set(region, s);",
+    "new": "    out.set(region, s);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DOMAIN3-marks-power",
     "file": "src/net/domainLaw.js",
-    "old": "k === s.key ? { ...s, domain: true } : { ...s, charter: k };",
-    "new": "k === s.key ? s : { ...s, charter: k };",
+    "old": "    return k == null ? s : k === s.key ? { ...s, domain: true } : { ...s, charter: k };",
+    "new": "    return k == null ? s : k === s.key ? s : { ...s, charter: k };",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DOMAIN3-power-crown-first",
     "file": "src/systems/town/townSeats.js",
-    "old": "  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';\n",
-    "new": "",
+    "old": "  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';\n  if (!ca !== !cb) return !!ca;",
+    "new": "  if (!ca !== !cb) return !!ca;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DOMAIN3-power-key-tie",
     "file": "src/systems/town/townSeats.js",
-    "old": "  return a.key < b.key;\n};",
-    "new": "  return a.key > b.key;\n};",
+    "old": "  return a.key < b.key;",
+    "new": "  return a.key > b.key;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DOMAIN3-witness-region-tie",
     "file": "server-account/src/domains.js",
-    "old": "if (!s || !d || d.region !== s.region) return 'bad-domain';",
-    "new": "if (!s || !d) return 'bad-domain';",
+    "old": "  if (!s || !d || d.region !== s.region) return 'bad-domain';",
+    "new": "  if (!s || !d) return 'bad-domain';",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DOMAIN3-witness-agreeing-written",
     "file": "server-account/src/domains.js",
-    "old": "if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
-    "new": "if (domainFacts(rows, ignored).get(d.region) === d.key) return 'agreed';",
+    "old": "  if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
+    "new": "  if (domainFacts(rows, ignored).get(d.region) === d.key) return 'agreed';",
     "tests": [
       "test/net/domain3_regions.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "DOMAIN3-facts-ignored",
     "file": "server-account/src/domains.js",
-    "old": "    if (ignored.has(r.account)) continue;\n",
-    "new": "",
+    "old": "    if (ignored.has(r.account)) continue;\n    const list = byRegion.get(r.key) ?? [];",
+    "new": "    const list = byRegion.get(r.key) ?? [];",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "DOMAIN3-facts-own-region",
     "file": "server-account/src/domains.js",
-    "old": "if (factConfirmed(f) && f.domain?.region === Number(k)) out.set",
-    "new": "if (factConfirmed(f)) out.set",
+    "old": "    if (factConfirmed(f) && f.domain?.region === Number(k)) out.set(Number(k), f.domain.key);",
+    "new": "    if (factConfirmed(f)) out.set(Number(k), f.domain.key);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "DOMAIN3-book-dress",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (c) out.charterSeat = c;\n",
-    "new": "",
+    "old": "      if (c) out.charterSeat = c;\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "DOMAIN3-book-witness-domain",
     "file": "src/net/townSeatBook.js",
-    "old": "door.witness(s, power == null ? undefined : { region: s.region, key: power })",
-    "new": "door.witness(s, undefined)",
+    "old": "        await door.witness(s, power == null ? undefined : { region: s.region, key: power });",
+    "new": "        await door.witness(s, undefined);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "DOMAIN3-name-region",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (seat?.domain && REGION_NAMES[seat.region]) return",
-    "new": "if (false && REGION_NAMES[seat.region]) return",
+    "old": "  if (seat?.domain && REGION_NAMES[seat.region])",
+    "new": "  if (false && REGION_NAMES[seat.region])",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "DOMAIN3-arrival-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (seat?.charterSeat) return holdingWords(seat);   // DOMAIN3: a holding says its region's Charter\n",
-    "new": "",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat); // DOMAIN3: a holding says its region's Charter\n  const siege = siegeCalledClause(seat?.battle, nowMs);",
+    "new": "  const siege = siegeCalledClause(seat?.battle, nowMs);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "DOMAIN3-box-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (seat?.charterSeat) return holdingWords(seat, true);",
-    "new": "  if (false) return holdingWords(seat, true);",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat, true); // DOMAIN3: a holding's box names its Charter and the Charter's holder",
+    "new": "  if (false) return holdingWords(seat, true); // DOMAIN3: a holding's box names its Charter and the Charter's holder",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "DOMAIN3-ring-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null;",
-    "new": "const h = seat.holder?.guild?.heraldry ?? null;",
+    "old": "  const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null; // DOMAIN3: a holding in its Charter's holder's colours",
+    "new": "  const h = seat.holder?.guild?.heraldry ?? null; // DOMAIN3: a holding in its Charter's holder's colours",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "DOMAIN3-bailiwick-client",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (s.region !== region || /** @type {any} */ (s).charter != null) continue;",
-    "new": "if (s.region !== region) continue;",
+    "old": "    if (s.region !== region || /** @type {any} */ (s).charter != null) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
+    "new": "    if (s.region !== region) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "DOMAIN3-news-charter",
     "file": "src/systems/seatEdicts.js",
-    "old": "      const seat = town?.charterSeat ?? town;",
-    "new": "      const seat = town;",
+    "old": "      const seat = town?.charterSeat ?? town; // DOMAIN3: a holding's news is its Charter's",
+    "new": "      const seat = town; // DOMAIN3: a holding's news is its Charter's",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "DOMAIN3-festival-stage",
     "file": "src/scenes/seatFestival.js",
-    "old": "festivalRules(town?.charterSeat ?? town)",
-    "new": "festivalRules(town)",
+    "old": "      r = mapId != null && festivalRules(town?.charterSeat ?? town);",
+    "new": "      r = mapId != null && festivalRules(town);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

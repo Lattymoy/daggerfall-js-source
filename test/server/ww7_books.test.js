@@ -74,7 +74,7 @@ test('WW7-5 a place past the Bay carries its location\'s index through the regis
   assert.equal(towns.get(row.mapId).location, capitalLocationIndex(1, 0));
   // PIN MOVED (TESA x AUDIT TESA II): the capitals and Arena's places the audit's live list (world/pastBayRows.js), the countryside the host's
   const rows = rd('src/world/pastBayRows.js');
-  for (const re of [/location: capitalLocationIndex\(k, capitalSliceOrdinal\(cap, s\)\),/, /port: !!p\.port, location: arenaLocationIndex\(p\) \}\);/]) assert.match(rows, re);
+  for (const re of [/location: capitalLocationIndex\(k, capitalSliceOrdinal\(cap, s\)\),/, /port: !!p\.port,\n\s*location: arenaLocationIndex\(p\),\n\s*\}\);/]) assert.match(rows, re);
   assert.match(rd('src/scenes/tamrielPlacesHost.js'), /location: countryLocationIndex\(countryOrdinal\(px, py\)\) \};/);
 });
 

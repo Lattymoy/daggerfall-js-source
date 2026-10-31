@@ -32,9 +32,19 @@
 //   ring's brass, the moment's title and its facts as fields.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (SD-HERALD).
-import { sdPhase, sdNameOf, sdWhere, sdFoundLine, sdFadeLine, SD_COLLAPSE_MS, SD_FADE_GRACE_MS, sdLaneOf, SD_BAY_NAME } from './sdLaw.js';
+import {
+  sdPhase,
+  sdNameOf,
+  sdWhere,
+  sdFoundLine,
+  sdFadeLine,
+  SD_COLLAPSE_MS,
+  SD_FADE_GRACE_MS,
+  sdLaneOf,
+  SD_BAY_NAME,
+} from './sdLaw.js';
 import { HERALD_FELL_KEEP_MS } from '../gate/gateHerald.js';
-import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
+import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho } from '../herald/heraldCard.js'; // HERALD-CARDS: the one card
 import { REGION_NAMES, BAY_REGION_COUNT, PROVINCE_REGION_NAMES } from '../../formats/mapsTables.js';
 
 /** @typedef {import('../wire.js').SdRecord} SdRecord */
@@ -49,7 +59,10 @@ export const sdRegionName = (r) => (Number.isSafeInteger(r) && r >= 0 && r < BAY
 /** WW5 (bible/03-World/World-Wide.md WW5): THE PROVINCE A SLOT'S HOLLOW STANDS IN - its lane's (net/superDungeon/sdLaw.js
  *  sdLaneOf: a province's lane is its theatre), named as the map names it (formats/mapsTables.js PROVINCE_REGION_NAMES);
  *  '' for the Bay's - whose posts say the Bay, as they always did. */
-export const sdProvinceName = (s) => { const lane = Number.isSafeInteger(s) ? sdLaneOf(s) : 0; return lane > 0 ? PROVINCE_REGION_NAMES[lane - 1] ?? '' : ''; };
+export const sdProvinceName = (s) => {
+  const lane = Number.isSafeInteger(s) ? sdLaneOf(s) : 0;
+  return lane > 0 ? (PROVINCE_REGION_NAMES[lane - 1] ?? '') : '';
+};
 
 /** A slot's name as the herald may say it: its name when that needs no city, else null. The city is every client's own
  *  (systems/superDungeon/sdSite.js), so a name with one is asked of sdNameOf with a mark no name holds, and the mark found in it. */
@@ -60,7 +73,10 @@ export function sdHeraldName(s) {
 
 /** HERALD-CARDS: where a Hollow stands, as a card's field says it ("In the Daggerfall region", "Near the Iliac Bay") - WW5:
  *  a province's in its province ("In Skyrim"). */
-const whereField = (rec) => { const w = sdWhere('', sdRegionName(rec.r), sdProvinceName(rec.s)); return w[0].toUpperCase() + w.slice(1); };
+const whereField = (rec) => {
+  const w = sdWhere('', sdRegionName(rec.r), sdProvinceName(rec.s));
+  return w[0].toUpperCase() + w.slice(1);
+};
 
 /**
  * THE RISE'S POST: an Abyss Dungeon stands somewhere, to be found - never where - and when it fades unfound. The role
@@ -69,10 +85,12 @@ const whereField = (rec) => { const w = sdWhere('', sdRegionName(rec.r), sdProvi
  */
 export function sdRisePost({ rec, role = null }) {
   return heraldCard({
-    family: 'abyss', moment: 'Risen', role,
+    family: 'abyss',
+    moment: 'Risen',
+    role,
     title: 'An Abyss Dungeon has risen',
     ping: `An Abyss Dungeon has risen. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
-    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`,   // WW5: a province's in its province
+    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`, // WW5: a province's in its province
     fields: [['Fades unfound', heraldWhen(rec.until)]],
   });
 }
@@ -86,10 +104,20 @@ export function sdRisePost({ rec, role = null }) {
 export function sdFoundPost({ rec, role = null }) {
   const name = sdHeraldName(rec.s);
   return heraldCard({
-    family: 'abyss', moment: 'Found', role,
-    title: sdFoundLine({ who: heraldName(rec.fb) || 'Someone', near: '', region: sdRegionName(rec.r), province: sdProvinceName(rec.s) }),   // WW5: a province's in its province
+    family: 'abyss',
+    moment: 'Found',
+    role,
+    title: sdFoundLine({
+      who: heraldName(rec.fb) || 'Someone',
+      near: '',
+      region: sdRegionName(rec.r),
+      province: sdProvinceName(rec.s),
+    }), // WW5: a province's in its province
     text: `${name ?? 'It'} is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades. Each fighter has one life.`,
-    fields: [['Dungeon', name], ['Fades', heraldWhen(rec.until)]],
+    fields: [
+      ['Dungeon', name],
+      ['Fades', heraldWhen(rec.until)],
+    ],
   });
 }
 
@@ -103,10 +131,15 @@ export function sdFoundPost({ rec, role = null }) {
 export function sdFellPost({ rec, next = rec.next }) {
   const name = sdHeraldName(rec.s);
   return heraldCard({
-    family: 'abyss', moment: 'Hour broken',
+    family: 'abyss',
+    moment: 'Hour broken',
     title: `${heraldWho([heraldName(rec.top) || 'Someone'], rec.n)} broke the Hour`,
     text: 'The Brass Remnant has fallen, and the Abyss Dungeon collapses.',
-    fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(next)]],
+    fields: [
+      ['Dungeon', name],
+      ['Where', whereField(rec)],
+      ['Next may rise', heraldWhen(next)],
+    ],
   });
 }
 
@@ -119,9 +152,13 @@ export function sdFellPost({ rec, next = rec.next }) {
 export function sdFadePost({ rec, next = rec.next }) {
   const name = sdHeraldName(rec.s);
   return heraldCard({
-    family: 'abyss', moment: 'Faded',
-    title: sdFadeLine({ name: name ?? 'an Abyss Dungeon' }).replace(/\.$/, ''),   // a title ends without its full stop
-    fields: [['Where', whereField(rec)], ['Next may rise', heraldWhen(next)]],
+    family: 'abyss',
+    moment: 'Faded',
+    title: sdFadeLine({ name: name ?? 'an Abyss Dungeon' }).replace(/\.$/, ''), // a title ends without its full stop
+    fields: [
+      ['Where', whereField(rec)],
+      ['Next may rise', heraldWhen(next)],
+    ],
   });
 }
 
@@ -145,7 +182,8 @@ export function sdHeraldPost(kind, rec, role = null, next = rec.next) {
 export function sdHeraldDue(rec, st, now) {
   const out = { rise: st.rise, found: st.found, end: st.end };
   if (!rec || !Number.isSafeInteger(rec.s) || rec.s < 1) return { kind: null, st: out };
-  const s = rec.s, phase = sdPhase(rec, now);
+  const s = rec.s,
+    phase = sdPhase(rec, now);
   if (s > out.rise) {
     if (phase === 'risen') return { kind: 'rise', st: out };
     out.rise = s;
@@ -160,7 +198,8 @@ export function sdHeraldDue(rec, st, now) {
       out.end = s;
     } else if (rec.ph === 'gone') {
       // the hub says the fade SD_FADE_GRACE_MS past `until` (net/superDungeon/sdLaw.js sdDue) - and only a found Hollow's is news
-      if (rec.foundAt != null && now < rec.until + SD_FADE_GRACE_MS + HERALD_FELL_KEEP_MS) return { kind: 'fade', st: out };
+      if (rec.foundAt != null && now < rec.until + SD_FADE_GRACE_MS + HERALD_FELL_KEEP_MS)
+        return { kind: 'fade', st: out };
       out.end = s;
     }
   }

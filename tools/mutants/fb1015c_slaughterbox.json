@@ -2,8 +2,8 @@
   {
     "name": "SLAUGHTER-BOX-the-swimmers-drawn",
     "file": "src/systems/searchables.js",
-    "old": "t >= 0 && !WATER_SPECIES.has(t)))];",
-    "new": "t >= 0))];",
+    "old": "  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0 && !WATER_SPECIES.has(t)))];",
+    "new": "  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0))];",
     "tests": [
       "test/systems/search1_searchables.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SLAUGHTER-BOX-a-species-out-of-the-set",
     "file": "src/characters/dungeonEnemies.js",
-    "old": "  MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,\n]);",
-    "new": "  MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,\n]);",
+    "old": "export const WATER_SPECIES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);",
+    "new": "export const WATER_SPECIES = new Set([MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);",
     "tests": [
       "test/systems/search1_searchables.test.js"
     ]

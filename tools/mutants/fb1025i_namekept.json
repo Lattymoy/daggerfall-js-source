@@ -112,8 +112,8 @@
   {
     "name": "NAME-KEPT-imbue-renames",
     "file": "src/systems/reforge.js",
-    "old": "    if (item.rarity === tier) item.name = linesName(item, tier, was);",
-    "new": "",
+    "old": "    if (item.rarity === tier) item.name = linesName(item, tier, was); // NAME-KEPT (AUDIT FB1025i A4): a name of its own stands - a questline's (`qlNamed`) - where applyRarity named it from its template",
+    "new": "    // NAME-KEPT (AUDIT FB1025i A4): a name of its own stands - a questline's (`qlNamed`) - where applyRarity named it from its template",
     "tests": [
       "test/systems/loot/fb1025i_namekept.test.js"
     ],

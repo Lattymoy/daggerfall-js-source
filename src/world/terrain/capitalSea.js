@@ -41,18 +41,20 @@ export const CAPITAL_SEA_FLAT = Object.freeze({ avg: CAPITAL_LAND, classic: CAPI
 /** Is a natural sample the sea's (the sampler's clamp, with the bake's own epsilon). */
 const SEA_LINE = f32(CAPITAL_SEA + f32(1e-5));
 
-const T = 128, H = HEIGHTMAP_DIMENSION;
+const T = 128,
+  H = HEIGHTMAP_DIMENSION;
 
 /** Does a stamped tile of the location's ground have water at the vertex (x, y)? @param {Uint8Array} tilemap */
 function stampedWaterAt(tilemap, x, y) {
   for (let dy = 0; dy < 2; dy++) {
     for (let dx = 0; dx < 2; dx++) {
-      const tx = x - 1 + dx, ty = y - 1 + dy;
+      const tx = x - 1 + dx,
+        ty = y - 1 + dy;
       if (tx < 0 || ty < 0 || tx >= T || ty >= T) continue;
       const t = tilemap[tx + ty * T];
-      if (t === 0) continue;   // unstamped: the squares' own, later
+      if (t === 0) continue; // unstamped: the squares' own, later
       // the vertex is the tile's corner (1 - dx, 1 - dy): bit 1 (0,0), 2 (1,0), 4 (0,1), 8 (1,1)
-      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << ((1 - dx) + 2 * (1 - dy)))) return true;
+      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << (1 - dx + 2 * (1 - dy)))) return true;
     }
   }
   return false;
@@ -75,16 +77,35 @@ export function capitalSeaGround(S, natural, tilemap, rect, px, py, seaEdges = n
   const city = rumareSlice(px, py);
   for (let x = 0; x < H; x++) {
     for (let y = 0; y < H; y++) {
-      const i = x * H + y, bx = px + x / (H - 1), by = py + 1 - y / (H - 1);
+      const i = x * H + y,
+        bx = px + x / (H - 1),
+        by = py + 1 - y / (H - 1);
       const inRect = x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;
       const border = x === 0 || y === 0 || x === H - 1 || y === H - 1;
-      const outer = (x === 0 && rect.xMin > 0) || (x === H - 1 && rect.xMax < T) || (y === 0 && rect.yMin > 0) || (y === H - 1 && rect.yMax < T);   // a side with a rim: the span's outer one
-      if (outer) { S[i] = natural[i]; continue; }   // the span's outer edge: the land's own, as the pixel past it stands
+      const outer =
+        (x === 0 && rect.xMin > 0) ||
+        (x === H - 1 && rect.xMax < T) ||
+        (y === 0 && rect.yMin > 0) ||
+        (y === H - 1 && rect.yMax < T); // a side with a rim: the span's outer one
+      if (outer) {
+        S[i] = natural[i];
+        continue;
+      } // the span's outer edge: the land's own, as the pixel past it stands
       const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);
       let sea;
-      if (city) sea = rumareSeaAt(bx, by) || (!border && stamped);   // the Imperial City: its plan's law, the seams the law's alone
-      else if (!inRect) sea = stamped || natural[i] <= SEA_LINE;   // the rim: the sea reaching in
-      else if (border && seaEdges && ((x === 0 && seaEdges.W) || (x === H - 1 && seaEdges.E) || (y === 0 && seaEdges.S) || (y === H - 1 && seaEdges.N))) sea = true;
+      if (city)
+        sea = rumareSeaAt(bx, by) || (!border && stamped); // the Imperial City: its plan's law, the seams the law's alone
+      else if (!inRect)
+        sea = stamped || natural[i] <= SEA_LINE; // the rim: the sea reaching in
+      else if (
+        border &&
+        seaEdges &&
+        ((x === 0 && seaEdges.W) ||
+          (x === H - 1 && seaEdges.E) ||
+          (y === 0 && seaEdges.S) ||
+          (y === H - 1 && seaEdges.N))
+      )
+        sea = true;
       else sea = stamped;
       if (sea) S[i] = CAPITAL_SEA;
       else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));

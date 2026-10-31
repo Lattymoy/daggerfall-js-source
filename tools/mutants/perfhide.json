@@ -11,8 +11,8 @@
   {
     "name": "PH-one-hide-either-tack",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "=> (tack ? 1 : 0) + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
-    "new": "=> 0 + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
+    "old": ") => (tack ? 1 : 0) + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
+    "new": ") => 0 + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PH-cells-any-stretch",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "s !== _cellAt[2] || stretch !== _cellAt[3]) {",
-    "new": "s !== _cellAt[2]) {",
+    "old": "  if (ix !== _cellAt[0] || iy !== _cellAt[1] || s !== _cellAt[2] || stretch !== _cellAt[3]) {",
+    "new": "  if (ix !== _cellAt[0] || iy !== _cellAt[1] || s !== _cellAt[2]) {",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PH-cells-any-seed",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "iy !== _cellAt[1] || s !== _cellAt[2] ||",
-    "new": "iy !== _cellAt[1] ||",
+    "old": "  if (ix !== _cellAt[0] || iy !== _cellAt[1] || s !== _cellAt[2] || stretch !== _cellAt[3]) {",
+    "new": "  if (ix !== _cellAt[0] || iy !== _cellAt[1] || stretch !== _cellAt[3]) {",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PH-cell-hash-wrong-salt",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "      _cells[j + 5] = hash3(cx, cy, s + 2);",
-    "new": "      _cells[j + 5] = hash3(cx, cy, s + 1);",
+    "old": "        _cells[j + 5] = hash3(cx, cy, s + 2);",
+    "new": "        _cells[j + 5] = hash3(cx, cy, s + 1);",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PH-rgb-sextant-swapped",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "if (k === 0) { r = c; g = x; b = 0; }",
-    "new": "if (k === 0) { r = x; g = c; b = 0; }",
+    "old": "    r = c;\n    g = x;",
+    "new": "    r = x;\n    g = c;",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PH-white-scratch-unwritten",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "    const tmp = _rgb;\n    rgbInto(tmp, 0,",
-    "new": "    const tmp = _rgb;\n    rgbInto([0, 0, 0], 0,",
+    "old": "    rgbInto(tmp, 0, hue, 0.04, clamp01(0.4 + 0.85 * Math.max(v, whiteFloor)));",
+    "new": "    rgbInto([0, 0, 0], 0, hue, 0.04, clamp01(0.4 + 0.85 * Math.max(v, whiteFloor)));",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]

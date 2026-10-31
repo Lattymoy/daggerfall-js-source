@@ -1153,9 +1153,9 @@ Both bows are one point higher at each end, in the tables those formulas read
 (`characters/weapons.js:"[[W.Short_Bow, W.Long_Bow], 5]"`, the Short Bow's max 17 and the Long Bow's 19;
 `combat/formulas.js`'s display table; Roleplay Realism's weaponBalance rows, so that module does not put
 the old span back). A bow takes the two-handed strength term even when BowLeftHandWithSwitching makes it
-a left-hand weapon (`combat/pcaao.js:"const bow = weapon.templateIndex === WEAPONS.Short_Bow || weapon.templateIndex === WEAPONS.Long_Bow;"`).
+a left-hand weapon (`combat/pcaao.js:"const bow = weapon.templateIndex"`).
 The stock core, used when the overhaul is off, still adds strength once to every weapon: that core has
-no two-handed term to match. A shaft flies at `systems/spellcast.js:"export const ARROW_FLIGHT_SPEED = MISSILE_SPEED * 1.35;"`
+no two-handed term to match. A shaft flies at `systems/spellcast.js:"export const ARROW_FLIGHT_SPEED"`
 (`combat/arrowFlight.js:"(m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
 A spell and a gun's orb stay on MISSILE_SPEED. The bow's draw, its 0.0625 s tick and GetBowCooldownTime
 are unchanged. Archery Mastery is unchanged: +1% of the blow per effective point past 100, and never
@@ -1170,7 +1170,7 @@ No PvP multiplier was added to meet it. The paperdoll viewer still flies a shaft
 
 The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `Math.max(1, 1.7 * (1 - 0.004 * (speed - 50)))` on effective Speed
-(`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds(speed) {"`), committed onto the machine's
+(`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds"`), committed onto the machine's
 `cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
@@ -1179,7 +1179,7 @@ ARCHERY-REF (2026-10-26, from the CI of the merged change): the referees kept DF
 player's blow in a siege, an arena bout, a duel and the open zone against its own copies of the weapon tables,
 pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
 Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
-(`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
+(`net/siege/siegeRef.js:"126: 18,"`,
 `net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
 (#1184, which carried it while main stood red). The flight pins
 measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
@@ -1191,8 +1191,8 @@ the two met with one set of values, and the relay's row is world270, past BOW-TO
 1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
 kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
 Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
-(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
-`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX"`). Both files are in the relay's bundle,
 so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
 on the merge, which drops every open socket once.
 

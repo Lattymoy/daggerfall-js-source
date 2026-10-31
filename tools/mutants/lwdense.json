@@ -12,7 +12,7 @@
   {
     "name": "LW-DENSE-floor",
     "file": "src/systems/livingWorld/census.js",
-    "old": "export const censusMaxOf = (town) => Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));",
+    "old": "export const censusMaxOf = (town) =>\n  Math.max(CENSUS_MAX, Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0)));",
     "new": "export const censusMaxOf = (town) => Math.min(CENSUS_CAP, CENSUS_PER_BLOCK * Math.max(1, town.blocks | 0));",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
@@ -72,8 +72,8 @@
   {
     "name": "LW-DENSE-crowd-homeless",
     "file": "src/systems/livingWorld/census.js",
-    "old": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
-    "new": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: null, work: null, faction: 0 });",
+    "old": "        keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
+    "new": "        keep.push({ job: commonJob(crng), home: null, work: null, faction: 0 });",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
       "test/systems/livingWorld/lw1_livingWorld.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "LW-DENSE-crowd-trade",
     "file": "src/systems/livingWorld/census.js",
-    "old": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
-    "new": "      for (let i = 0; i < n && keep.length < max; i++) keep.push({ job: 'merchant', home: h.key, work: null, faction: 0 });",
+    "old": "        keep.push({ job: commonJob(crng), home: h.key, work: null, faction: 0 });",
+    "new": "        keep.push({ job: 'merchant', home: h.key, work: null, faction: 0 });",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
       "test/systems/livingWorld/lw1_livingWorld.test.js"
@@ -172,7 +172,7 @@
   {
     "name": "LW-WIDE-unminted",
     "file": "src/systems/livingWorld/census.js",
-    "old": "    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++) out.push(mintResident(town, 't', slot++, job));",
+    "old": "    for (let i = 0; i < wide[/** @type {keyof ReturnType<typeof wideCounts>} */ (job)]; i++)\n      out.push(mintResident(town, 't', slot++, job));",
     "new": "    for (let i = 0; i < 0; i++) out.push(mintResident(town, 't', slot++, job));",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
@@ -192,7 +192,7 @@
   {
     "name": "LW-WIDE-mixed",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "  dealCompanies(advs.filter((r) => r.slot < from), got, false);",
+    "old": "  dealCompanies(\n    advs.filter((r) => r.slot < from),\n    got,\n    false,\n  );",
     "new": "  dealCompanies(advs, got, false);",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
@@ -203,7 +203,7 @@
   {
     "name": "LW-WIDE-divers-undealt",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "  dealCompanies(advs.filter((r) => r.slot >= from), got, true);",
+    "old": "  dealCompanies(\n    advs.filter((r) => r.slot >= from),\n    got,\n    true,\n  );",
     "new": "",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js",
@@ -251,8 +251,8 @@
   {
     "name": "LW-DENSE-nearest-by-list",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  byFrom.set(from, out);",
-    "new": "  byFrom.set(from, out); nearestKept.set(list, { get: () => out, set: () => {} });",
+    "old": "  byFrom.set(from, out);\n  return out;",
+    "new": "  byFrom.set(from, out);\n  nearestKept.set(list, { get: () => out, set: () => {} });\n  return out;",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "LW-DENSE-nearest-unfrozen",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  out = Object.freeze([...list].sort(",
-    "new": "  out = ([...list].sort(",
+    "old": "  out = Object.freeze(\n    [...list].sort(\n      (a, b) =>\n        Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy)) ||\n        (rank.get(a) ?? 0) - (rank.get(b) ?? 0),\n    ),",
+    "new": "  out = [...list].sort(\n    (a, b) =>\n      Math.abs(a.cell[0] - fx) + Math.abs(a.cell[1] - fy) - (Math.abs(b.cell[0] - fx) + Math.abs(b.cell[1] - fy)) ||\n      (rank.get(a) ?? 0) - (rank.get(b) ?? 0),",
     "tests": [
       "test/systems/livingWorld/lwdense_town.test.js"
     ]

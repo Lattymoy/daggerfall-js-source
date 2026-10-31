@@ -38,33 +38,50 @@ export const HOLD_MS = 160;
  *   events {type:'tap',x,y} | {type:'look',dx,dy} | {type:'swipe',dx,dy,held}
  */
 export function createGestureRecognizer({
-  tapPx = TAP_PX, tapMs = TAP_MS, holdMs = HOLD_MS,
+  tapPx = TAP_PX,
+  tapMs = TAP_MS,
+  holdMs = HOLD_MS,
   locked = () => false,
 } = {}) {
   let state = 'idle';
-  let ox = 0, oy = 0, ot = 0, lx = 0, ly = 0;
-  let travel = 0, bufDx = 0, bufDy = 0;
+  let ox = 0,
+    oy = 0,
+    ot = 0,
+    lx = 0,
+    ly = 0;
+  let travel = 0,
+    bufDx = 0,
+    bufDy = 0;
   return {
-    get state() { return state; },
+    get state() {
+      return state;
+    },
     begin(x, y, t) {
       state = 'pending';
-      ox = lx = x; oy = ly = y; ot = t;
-      travel = 0; bufDx = 0; bufDy = 0;
+      ox = lx = x;
+      oy = ly = y;
+      ot = t;
+      travel = 0;
+      bufDx = 0;
+      bufDy = 0;
       return [];
     },
     move(x, y, t) {
       if (state === 'idle') return [];
-      const dx = x - lx, dy = y - ly;
-      lx = x; ly = y;
+      const dx = x - lx,
+        dy = y - ly;
+      lx = x;
+      ly = y;
       travel += Math.hypot(dx, dy);
       if (state === 'look') return [{ type: 'look', dx, dy }];
       if (state === 'swipe') return [{ type: 'swipe', dx, dy, held: true }];
-      bufDx += dx; bufDy += dy;
+      bufDx += dx;
+      bufDy += dy;
       if (travel < tapPx) return [];
       // The finger has left the tap radius: this is a drag. Which one
       // is decided HERE, once, by what came before the move - the lock,
       // or a hold - never by how fast it is going.
-      if (locked() || (t - ot) >= holdMs) {
+      if (locked() || t - ot >= holdMs) {
         state = 'swipe';
         return [{ type: 'swipe', dx: bufDx, dy: bufDy, held: true }];
       }
@@ -75,8 +92,8 @@ export function createGestureRecognizer({
       const s = state;
       state = 'idle';
       if (s === 'pending') {
-        if (travel < tapPx && (t - ot) <= tapMs) return [{ type: 'tap', x: ox, y: oy }];
-        return [];   // a long press that never moved: nothing (yet)
+        if (travel < tapPx && t - ot <= tapMs) return [{ type: 'tap', x: ox, y: oy }];
+        return []; // a long press that never moved: nothing (yet)
       }
       if (s === 'swipe') return [{ type: 'swipe', dx: 0, dy: 0, held: false }];
       return [];

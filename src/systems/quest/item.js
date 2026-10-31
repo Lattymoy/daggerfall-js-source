@@ -29,14 +29,18 @@ import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { itemsTable } from './tables.js';
 import {
-  createRegularMagicItem, createArtifact, getMagicItemTemplates,
-  createPotion, createRandomPotion,   // AUDIT 63 F20: Item.cs:350's own two makers
-  ITEM_GROUP_NAME_BY_CLASS, BOOK_TEMPLATE,
+  createRegularMagicItem,
+  createArtifact,
+  getMagicItemTemplates,
+  createPotion,
+  createRandomPotion, // AUDIT 63 F20: Item.cs:350's own two makers
+  ITEM_GROUP_NAME_BY_CLASS,
+  BOOK_TEMPLATE,
 } from '../loot/loot.js';
 import { GROUP_TEMPLATE_INDICES, ITEM_TEMPLATES, mintCondition, rollPaintingMessage } from '../item/itemTemplates.js';
-import { createBook, createRandomBook } from '../books.js';   // A2: ItemBuilder.CreateBook / CreateRandomBook
+import { createBook, createRandomBook } from '../books.js'; // A2: ItemBuilder.CreateBook / CreateRandomBook
 import { goldStack, isGoldPieces } from '../inventory.js';
-import { itemLongName, shownItemName } from '../item/itemInfo.js';   // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
+import { itemLongName, shownItemName } from '../item/itemInfo.js'; // MAC-D: ResolveItemLongName, which Item.cs:304-307 is a call to; L10N3e: an artifact's shortName, as shown
 import { alterReward } from '../guild/guilds.js';
 import { CLOTHING_DYES } from '../../characters/dyes.js';
 
@@ -47,7 +51,7 @@ export function makeItemPermanent(dfItem) {
     dfItem.questUID = 0;
     dfItem.questSymbol = null;
     dfItem.questItem = false;
-    delete dfItem.questClone;   // HEART-KEPT: a plain item is no quest's clone either
+    delete dfItem.questClone; // HEART-KEPT: a plain item is no quest's clone either
   }
 }
 
@@ -86,7 +90,9 @@ export class Item extends QuestResource {
     if (line !== null) this.setResource(line);
   }
 
-  get isItem() { return true; }
+  get isItem() {
+    return true;
+  }
 
   /** ExpandMacro (Item.cs:236-260): _symbol_ and =symbol_ both
    *  answer the item's name - an artifact its SHORT name, gold its
@@ -112,7 +118,7 @@ export class Item extends QuestResource {
    *  the quest this resource belongs to rather than a machine lookup -
    *  a letter in a quest names its own quest's signoff. */
   expandMacro(macroType) {
-    if (macroType !== 1 && macroType !== 5) return false;   // NameMacro1/DetailsMacro
+    if (macroType !== 1 && macroType !== 5) return false; // NameMacro1/DetailsMacro
     const it = this.daggerfallUnityItem;
     if (!it) return false;
     // L10N3e: Item.cs:245's shortName, which SetArtifact minted in the
@@ -120,7 +126,7 @@ export class Item extends QuestResource {
     // keeps the canonical name (LegacyGetArtifactSubType reads it), so
     // it is looked up where it is shown, by its MAGIC.DEF template
     if (this.artifact) return it.shortName ?? shownItemName(it) ?? false;
-    if (isGoldPieces(it)) return String(it.stackCount ?? 0);   // AUDIT 68 S29-item-gold-test: Item.cs:236's IsOfTemplate, one spelling
+    if (isGoldPieces(it)) return String(it.stackCount ?? 0); // AUDIT 68 S29-item-gold-test: Item.cs:236's IsOfTemplate, one spelling
     const long = itemLongName(it, {
       differentiatePlantIngredients: false,
       getQuest: (uid) => (uid === this.parentQuest?.uid ? this.parentQuest : null),
@@ -159,7 +165,10 @@ export class Item extends QuestResource {
       // class/subclass mint at :370 and CreateGold at :430 link) - a
       // template-form item survives quest end and no sweep matches it.
       this.daggerfallUnityItem = this._templateItem(
-        ITEM_GROUP_NAME_BY_CLASS[this.itemClass], this.itemTemplate, this._rolls());
+        ITEM_GROUP_NAME_BY_CLASS[this.itemClass],
+        this.itemTemplate,
+        this._rolls(),
+      );
     } else if (this.itemName && !this.isGold) {
       this.daggerfallUnityItem = this._createItemByName(this.itemName, this.itemKey);
     } else if (this.isGold) {
@@ -189,7 +198,9 @@ export class Item extends QuestResource {
 
   // ---- the mint (Item.cs:325-470) ----
 
-  _rolls() { return this.parentQuest?.rolls ?? Math.random; }
+  _rolls() {
+    return this.parentQuest?.rolls ?? Math.random;
+  }
 
   _link(dfItem) {
     // LinkQuestItem (DaggerfallUnityItem.cs:1230-1236)
@@ -207,7 +218,8 @@ export class Item extends QuestResource {
    *  draft (Q2b-ii VERIFY). */
   _templateItem(groupName, templateIndex, rolls) {
     const item = mintCondition({
-      group: groupName, templateIndex,
+      group: groupName,
+      templateIndex,
       name: ITEM_TEMPLATES[templateIndex]?.name,
     });
     if (groupName === 'Paintings') item.message = rollPaintingMessage(rolls);
@@ -236,10 +248,13 @@ export class Item extends QuestResource {
       // MagicItems: CreateRegularMagicItem(subClass, level, gender, race)
       const templates = getMagicItemTemplates();
       if (templates) {
-        result = createRegularMagicItem(templates,
+        result = createRegularMagicItem(
+          templates,
           this.parentQuest?.hooks?.playerLevel?.() ?? 0,
           this.parentQuest?.hooks?.playerGender?.() ?? 'male',
-          rolls, itemSubClass);
+          rolls,
+          itemSubClass,
+        );
       } else {
         // No MAGIC.DEF registered (the headless corpus gate) - a loud
         // stand-in instead of a throw; hosts register the file.
@@ -250,11 +265,14 @@ export class Item extends QuestResource {
       // their MAGIC.DEF template via SetArtifact.
       const templates = getMagicItemTemplates();
       result = templates
-        ? createArtifact(templates, itemSubClass,
-          // D9: SetArtifact reads PlayerEntity.Gender for the texture
-          // archive (ItemHelper.cs:521) - the same hook the magic-item
-          // mint above already asks for.
-          { gender: this.parentQuest?.hooks?.playerGender?.() ?? 'male' })
+        ? createArtifact(
+            templates,
+            itemSubClass,
+            // D9: SetArtifact reads PlayerEntity.Gender for the texture
+            // archive (ItemHelper.cs:521) - the same hook the magic-item
+            // mint above already asks for.
+            { gender: this.parentQuest?.hooks?.playerGender?.() ?? 'male' },
+          )
         : { group: 'Artifacts', pendingMagicDef: true, artifactIndex: itemSubClass, name: this.itemName };
     } else if (itemClass === 7) {
       // Item.cs:343-345 verbatim: `(itemKey != -1) ?
@@ -264,9 +282,10 @@ export class Item extends QuestResource {
       // BOOK FILE's price. CreateBook answers null for an id no book
       // file backs; the port keeps the old template mint for that case
       // rather than handing the quest machine a null resource.
-      result = itemKey !== -1
-        ? (createBook(itemKey) ?? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }))
-        : createRandomBook(rolls);
+      result =
+        itemKey !== -1
+          ? (createBook(itemKey) ?? mintCondition({ group: 'Books', templateIndex: BOOK_TEMPLATE, message: itemKey }))
+          : createRandomBook(rolls);
     } else if (itemClass === 1 && itemSubClass === 1) {
       // Item.cs:347-351 verbatim: `(itemKey != -1) ?
       // ItemBuilder.CreatePotion(itemKey) : ItemBuilder.CreateRandomPotion()`.
@@ -316,9 +335,10 @@ export class Item extends QuestResource {
       }
       if (playerMod > 10) playerMod = 10;
       const regionPriceMod = Math.trunc((hooks?.regionPriceAdjustment?.() ?? 0) / 2);
-      const lo = 150 * playerMod, hi = 200 * playerMod + 1;
-      const draw = lo + Math.floor(rolls() * (hi - lo));   // Random.Range(lo, hi)
-      amount = Math.trunc(Math.trunc(draw * (regionPriceMod + 500) / 1000) * (factionMod + 50) / 100);
+      const lo = 150 * playerMod,
+        hi = 200 * playerMod + 1;
+      const draw = lo + Math.floor(rolls() * (hi - lo)); // Random.Range(lo, hi)
+      amount = Math.trunc((Math.trunc((draw * (regionPriceMod + 500)) / 1000) * (factionMod + 50)) / 100);
       // C# dispatches guild.AlterReward VIRTUALLY - a NonMemberGuild
       // carries the base identity whatever its group, so the group-
       // keyed port must gate on the flag (Q2b-ii VERIFY: an FG
@@ -342,7 +362,7 @@ export class Item extends QuestResource {
       playerDropped: this.playerDropped,
       madePermanent: this.madePermanent,
       item: this.daggerfallUnityItem ? structuredClone(this.daggerfallUnityItem) : null,
-      ...(this.goldPaid ? { goldPaid: true } : {}),   // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid
+      ...(this.goldPaid ? { goldPaid: true } : {}), // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid
     };
   }
 

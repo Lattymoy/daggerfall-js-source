@@ -2,8 +2,8 @@
   {
     "name": "DOMAIN1-the-ram-kit-to-a-stockpile",
     "file": "src/net/seatGiftLaw.js",
-    "old": "FORT_MATERIALS.includes(key) || (place === 'camp' && key === RAM_KIT_KEY)",
-    "new": "FORT_MATERIALS.includes(key) || key === RAM_KIT_KEY",
+    "old": "export const giftMaterialOk = (key, place) => FORT_MATERIALS.includes(key) || (place === 'camp' && key === RAM_KIT_KEY);",
+    "new": "export const giftMaterialOk = (key, place) => FORT_MATERIALS.includes(key) || key === RAM_KIT_KEY;",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DOMAIN1-the-bound-short",
     "file": "src/net/seatGiftLaw.js",
-    "old": "n >= 1 && n <= GIFT_UNITS_MAX",
-    "new": "n >= 1 && n < GIFT_UNITS_MAX",
+    "old": "export const giftUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= GIFT_UNITS_MAX;",
+    "new": "export const giftUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n < GIFT_UNITS_MAX;",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DOMAIN1-the-bag-not-summed",
     "file": "src/net/seatGiftLaw.js",
-    "old": "most: Math.min(GIFT_UNITS_MAX, s + b)",
-    "new": "most: Math.min(GIFT_UNITS_MAX, s)",
+    "old": "    if (s + b > 0) out.push({ key, stores: s, bag: b, most: Math.min(GIFT_UNITS_MAX, s + b) });",
+    "new": "    if (s + b > 0) out.push({ key, stores: s, bag: b, most: Math.min(GIFT_UNITS_MAX, s) });",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DOMAIN1-the-ram-kit-first",
     "file": "src/net/seatGiftLaw.js",
-    "old": "(place === 'camp' ? [...FORT_MATERIALS, RAM_KIT_KEY] : [...FORT_MATERIALS])",
-    "new": "(place === 'camp' ? [RAM_KIT_KEY, ...FORT_MATERIALS] : [...FORT_MATERIALS])",
+    "old": "export const giftMaterials = (place) => (place === 'camp' ? [...FORT_MATERIALS, RAM_KIT_KEY] : [...FORT_MATERIALS]);",
+    "new": "export const giftMaterials = (place) => (place === 'camp' ? [RAM_KIT_KEY, ...FORT_MATERIALS] : [...FORT_MATERIALS]);",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN1-the-hold-a-camp",
     "file": "server-account/src/seatGifts.js",
-    "old": "if (held) return { place: 'stockpile', key: Number(held.key) };",
-    "new": "if (held) return { place: 'camp', key: Number(held.key) };",
+    "old": "  if (held) return { place: 'stockpile', key: Number(held.key) };",
+    "new": "  if (held) return { place: 'camp', key: Number(held.key) };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DOMAIN1-last-weeks-pledge",
     "file": "server-account/src/seatGifts.js",
-    "old": "'SELECT key FROM town_seat_pledges WHERE week = ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1'",
-    "new": "'SELECT key FROM town_seat_pledges WHERE week <= ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1'",
+    "old": "    .prepare('SELECT key FROM town_seat_pledges WHERE week = ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1')",
+    "new": "    .prepare('SELECT key FROM town_seat_pledges WHERE week <= ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1')",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DOMAIN1-any-origin-spent",
     "file": "server-account/src/seatGifts.js",
-    "old": "AND ${spendableSql('?1', '?3', '?9')} >= ?10",
-    "new": "AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9), 0) >= ?10",
+    "old": "        AND ${spendableSql('?1', '?3', '?9')} >= ?10   -- GOLD-MARKET: never gold's units; BAG-CRAFT: never loose`,",
+    "new": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9), 0) >= ?10   -- GOLD-MARKET: never gold's units; BAG-CRAFT: never loose`,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DOMAIN1-own-first",
     "file": "server-account/src/seatGifts.js",
-    "old": "material = ?9 AND origin = 'bought'), 0)), ?11, ?12, ?13",
-    "new": "material = ?9 AND origin = 'own'), 0)), ?11, ?12, ?13",
+    "old": "        MAX(0, ?10 - COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9 AND origin = 'bought'), 0)), ?11, ?12, ?13",
+    "new": "        MAX(0, ?10 - COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9 AND origin = 'own'), 0)), ?11, ?12, ?13",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DOMAIN1-a-flat-influence",
     "file": "server-account/src/seatGifts.js",
-    "old": "value: material(key)?.value ?? 0, ref: `gift:${me}:${rid}` });",
-    "new": "value: 1, ref: `gift:${me}:${rid}` });",
+    "old": "      value: material(key)?.value ?? 0,",
+    "new": "      value: 1,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DOMAIN1-no-bought-row",
     "file": "server-account/src/seatGifts.js",
-    "old": "own, bought: units - own,",
-    "new": "own, bought: 0,",
+    "old": "      bought: units - own,",
+    "new": "      bought: 0,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DOMAIN1-the-camp-the-stockpile",
     "file": "server-account/src/seatGifts.js",
-    "old": "    camp === 1\n      ? db.prepare(`INSERT INTO town_seat_camps",
-    "new": "    camp === 0\n      ? db.prepare(`INSERT INTO town_seat_camps",
+    "old": "    camp === 1",
+    "new": "    camp === 0",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DOMAIN1-the-stores-switch",
     "file": "server-account/src/seatGifts.js",
-    "old": "  if (!profOpenFor(player, env)) return { error: 'prof-closed' };\n",
-    "new": "",
+    "old": "  if (!profOpenFor(player, env)) return { error: 'prof-closed' };\n  if (!charOk(character)) return { error: 'prof-character' };",
+    "new": "  if (!charOk(character)) return { error: 'prof-character' };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DOMAIN1-a-fresh-id-each-ask",
     "file": "src/net/townSeatBook.js",
-    "old": "if (giftAsk?.ask !== ask) giftAsk = { ask, rid: rid() };",
-    "new": "giftAsk = { ask, rid: rid() };",
+    "old": "      if (giftAsk?.ask !== ask) giftAsk = { ask, rid: rid() };",
+    "new": "      giftAsk = { ask, rid: rid() };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DOMAIN1-the-stores-untold",
     "file": "src/net/townSeatBook.js",
-    "old": "if (r.data?.store) stores?.(r.data.store);",
-    "new": "if (r.data?.store) stores?.(null);",
+    "old": "      if (r.data?.store) stores?.(r.data.store);",
+    "new": "      if (r.data?.store) stores?.(null);",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DOMAIN1-past-the-holding",
     "file": "src/ui/seatWorks.js",
-    "old": "return onGive(c.key, Math.min(c.most, Math.max(1, want)));",
-    "new": "return onGive(c.key, Math.max(1, want));",
+    "old": "      return onGive(c.key, Math.min(c.most, Math.max(1, want)));",
+    "new": "      return onGive(c.key, Math.max(1, want));",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DOMAIN1-the-bag-never-put-in",
     "file": "src/ui/seatTab.js",
-    "old": "            if (giving.bag(key) > 0) {",
-    "new": "            if (giving.bag(key) > 1e9) {",
+    "old": "              if (giving.bag(key) > 0) {",
+    "new": "              if (giving.bag(key) > 1e9) {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DOMAIN1-any-seat",
     "file": "src/ui/seatTab.js",
-    "old": "if (host.giving && gifts?.place && gifts.key === seat.key) {",
-    "new": "if (host.giving && gifts?.place) {",
+    "old": "      if (host.giving && gifts?.place && gifts.key === seat.key) {",
+    "new": "      if (host.giving && gifts?.place) {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "DOMAIN1-the-camp-unsaid",
     "file": "src/ui/seatWorks.js",
-    "old": "  if (gifts.place === 'camp') {\n    const held",
-    "new": "  if (gifts.place === 'stockpile') {\n    const held",
+    "old": "  if (gifts.place === 'camp') {",
+    "new": "  if (gifts.place === 'stockpile') {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]

@@ -113,17 +113,19 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     });
   }
   return {
-    /** Stand what the built pixels hold, take down what left. */
+    /** Stand what the built pixels hold, take down what left. A throw is warned here, so the world's frame calls it bare. */
     frame() {
-      const live = new Set();
-      for (const p of built()) {
-        if (!p?.settlement) continue;
-        const key = `${p.px},${p.py}`;
-        live.add(key);
-        if (!stood.has(key)) stand(p, key);
-      }
-      for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
-      for (const s of stood.values()) standCollider(s);
+      try {
+        const live = new Set();
+        for (const p of built()) {
+          if (!p?.settlement) continue;
+          const key = `${p.px},${p.py}`;
+          live.add(key);
+          if (!stood.has(key)) stand(p, key);
+        }
+        for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
+        for (const s of stood.values()) standCollider(s);
+      } catch (e) { console.warn('[settlements]', e?.message ?? e); }
     },
     draw(r = renderer) {
       if (!r?.drawMesh || !exterior()) return 0;

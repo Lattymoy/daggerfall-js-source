@@ -21,17 +21,28 @@
 // Built once a mask, on a canvas of its own (as the fog is); nothing is computed per frame but the plaques' places.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, wildOutline, ringOfCell, maskWorld, maskWorldBox,
+  WILD_RINGS,
+  WILD_NAME,
+  wildRingAt,
+  wildRingChains,
+  wildRingAnchors,
+  wildRingName,
+  wildRingBonus,
+  wildEdgeChains,
+  wildOutline,
+  ringOfCell,
+  maskWorld,
+  maskWorldBox,
 } from '../../systems/wild/wildZone.js';
-import { t } from '../../systems/textManager.js';   // AUDIT TESA II M5: the legend's new words, through the text core
-import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
+import { t } from '../../systems/textManager.js'; // AUDIT TESA II M5: the legend's new words, through the text core
+import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js'; // ZONE-SAFE: the settlements' peace, among the zone's laws
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
 /** Each ring's inks, the foothills first: its fill (RGB), the fill's alpha on the zone map, its line and its tag. */
 export const RING_INK = Object.freeze([
   // a graded ladder of old-map pigments - weathered gold, amber, rust, wine - kept soft so the paper reads through
-  Object.freeze({ fill: [190, 164, 96], alpha: 0.30, line: 'rgba(104,80,36,0.9)', tag: '#7a5c24' }),
+  Object.freeze({ fill: [190, 164, 96], alpha: 0.3, line: 'rgba(104,80,36,0.9)', tag: '#7a5c24' }),
   Object.freeze({ fill: [206, 134, 64], alpha: 0.32, line: 'rgba(122,64,28,0.92)', tag: '#8a4a1e' }),
   Object.freeze({ fill: [170, 74, 54], alpha: 0.36, line: 'rgba(98,34,26,0.95)', tag: '#7a2a1e' }),
   Object.freeze({ fill: [96, 30, 52], alpha: 0.46, line: 'rgba(48,12,26,0.98)', tag: '#4a1426' }),
@@ -61,8 +72,10 @@ export const inkRes = (mask, res = RING_RES) => ((mask?.cell ?? 1) > 1 ? Math.ma
 export function ringPixels(mask, res = inkRes(mask)) {
   if (!mask?.box) return null;
   const { x0, y0, x1, y1 } = mask.box;
-  const mw = x1 - x0 + 1, mh = y1 - y0 + 1;
-  const w = mw * res, h = mh * res;
+  const mw = x1 - x0 + 1,
+    mh = y1 - y0 + 1;
+  const w = mw * res,
+    h = mh * res;
   const data = new Uint8ClampedArray(w * h * 4);
   for (let my = 0; my < mh; my++) {
     for (let mx = 0; mx < mw; mx++) {
@@ -71,10 +84,13 @@ export function ringPixels(mask, res = inkRes(mask)) {
       const ink = RING_INK[ring - 1];
       for (let sy = 0; sy < res; sy++) {
         for (let sx = 0; sx < res; sx++) {
-          const px = mx * res + sx, py = my * res + sy;
+          const px = mx * res + sx,
+            py = my * res + sy;
           const g = grain(px, py) - 0.5;
           const o = (py * w + px) * 4;
-          data[o] = ink.fill[0] + g * 18; data[o + 1] = ink.fill[1] + g * 14; data[o + 2] = ink.fill[2] + g * 10;
+          data[o] = ink.fill[0] + g * 18;
+          data[o + 1] = ink.fill[1] + g * 14;
+          data[o + 2] = ink.fill[2] + g * 10;
           data[o + 3] = Math.round(255 * Math.max(0, Math.min(1, ink.alpha + g * 0.08)));
         }
       }
@@ -91,8 +107,12 @@ export function smoothChain(chain, n = 3) {
   for (let k = 0; k < n && pts.length > 2; k++) {
     const out = [];
     for (let i = 0; i < pts.length; i++) {
-      const a = pts[i], b = pts[(i + 1) % pts.length];
-      out.push({ x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 }, { x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 });
+      const a = pts[i],
+        b = pts[(i + 1) % pts.length];
+      out.push(
+        { x: a.x * 0.75 + b.x * 0.25, y: a.y * 0.75 + b.y * 0.25 },
+        { x: a.x * 0.25 + b.x * 0.75, y: a.y * 0.25 + b.y * 0.75 },
+      );
     }
     pts = out;
   }
@@ -111,7 +131,8 @@ export function smoothContour(chain, { step = 0.6, relax = 10, cuts = 1 } = {}) 
   if (pts.length < 4) return smoothChain(chain, 3);
   const dense = [];
   for (let i = 0; i < pts.length; i++) {
-    const a = pts[i], b = pts[(i + 1) % pts.length];
+    const a = pts[i],
+      b = pts[(i + 1) % pts.length];
     const n = Math.max(1, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / step));
     for (let k = 0; k < n; k++) dense.push({ x: a.x + ((b.x - a.x) * k) / n, y: a.y + ((b.y - a.y) * k) / n });
   }
@@ -122,12 +143,17 @@ export function smoothContour(chain, { step = 0.6, relax = 10, cuts = 1 } = {}) 
   const step2 = (k) => {
     const next = new Array(N);
     for (let i = 0; i < N; i++) {
-      const a = pts[(i + N - 1) % N], b = pts[i], c = pts[(i + 1) % N];
+      const a = pts[(i + N - 1) % N],
+        b = pts[i],
+        c = pts[(i + 1) % N];
       next[i] = { x: b.x + k * ((a.x + c.x) / 2 - b.x), y: b.y + k * ((a.y + c.y) / 2 - b.y) };
     }
     pts = next;
   };
-  for (let pass = 0; pass < relax * 3; pass++) { step2(0.6); step2(-0.63); }
+  for (let pass = 0; pass < relax * 3; pass++) {
+    step2(0.6);
+    step2(-0.63);
+  }
   const out = smoothChain([...pts, { ...pts[0] }], cuts);
   return out;
 }
@@ -136,7 +162,8 @@ export function smoothContour(chain, { step = 0.6, relax = 10, cuts = 1 } = {}) 
  *  wildInk, zoneMapInk): ZONE-LINE (Wild-Zone.md section 27) - a zone kept to the pixel (Cyrodiil's) is drawn on its own
  *  line, never smoothed off it (systems/wild/wildZone.js wildOutline: the province's outline, one line with the
  *  province's own on the held map); a zone of whole cells is its edge smoothed (SMOOTHZONE). */
-export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask) : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) })));
+export const zoneLine = (mask) =>
+  mask?.bits ? wildOutline(mask) : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) }));
 
 const _cache = new WeakMap();
 /** The rings as a canvas, each deeper ring's line, the zone's edge and the plaques' anchors - built once a mask. */
@@ -148,17 +175,24 @@ export function zoneMapInk(mask, doc = globalThis.document) {
   let canvas = null;
   if (px && doc?.createElement) {
     canvas = doc.createElement('canvas');
-    canvas.width = px.w; canvas.height = px.h;
+    canvas.width = px.w;
+    canvas.height = px.h;
     const c = canvas.getContext('2d');
     if (c && typeof ImageData === 'function') c.putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
   }
   const lines = {};
-  const step = 0.6 * (mask.cell ?? 1);   // WW-C2: the contour's step at the grid's own scale
+  const step = 0.6 * (mask.cell ?? 1); // WW-C2: the contour's step at the grid's own scale
   for (let r = 2; r <= WILD_RINGS; r++) lines[r] = wildRingChains(mask, r).map((c) => smoothContour(c, { step }));
   const box = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));
   const ink = {
-    canvas, x0: box.x0, y0: box.y0, w: box.x1 - box.x0 + 1, h: box.y1 - box.y0 + 1,
-    lines, edge: zoneLine(mask), anchors: wildRingAnchors(mask),   // ZONE-LINE: the red line's own
+    canvas,
+    x0: box.x0,
+    y0: box.y0,
+    w: box.x1 - box.x0 + 1,
+    h: box.y1 - box.y0 + 1,
+    lines,
+    edge: zoneLine(mask),
+    anchors: wildRingAnchors(mask), // ZONE-LINE: the red line's own
   };
   _cache.set(mask, ink);
   return ink;
@@ -169,7 +203,8 @@ function tracePath(ctx, view, chains) {
   for (const c of chains) {
     for (let i = 0; i < c.length; i++) {
       const [x, y] = paper(view, c[i].x, c[i].y);
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
     ctx.closePath();
   }
@@ -177,23 +212,48 @@ function tracePath(ctx, view, chains) {
 
 /** A tag or a plaque: a rounded box at paper (x, y), centred, with its lines. */
 function plaque(ctx, x, y, lines, { fill = 'rgba(244,234,210,0.94)', edge = '#5e0c08', pad = 6, gap = 2 } = {}) {
-  let w = 0, h = pad * 2 - gap;
-  for (const l of lines) { ctx.font = l.font; w = Math.max(w, ctx.measureText(l.text).width); h += l.size + gap; }
+  let w = 0,
+    h = pad * 2 - gap;
+  for (const l of lines) {
+    ctx.font = l.font;
+    w = Math.max(w, ctx.measureText(l.text).width);
+    h += l.size + gap;
+  }
   w += pad * 2;
-  const bx = Math.round(x - w / 2), by = Math.round(y - h / 2), r = 3;
+  const bx = Math.round(x - w / 2),
+    by = Math.round(y - h / 2),
+    r = 3;
   ctx.beginPath();
-  ctx.moveTo(bx + r, by); ctx.lineTo(bx + w - r, by); ctx.quadraticCurveTo(bx + w, by, bx + w, by + r);
-  ctx.lineTo(bx + w, by + h - r); ctx.quadraticCurveTo(bx + w, by + h, bx + w - r, by + h);
-  ctx.lineTo(bx + r, by + h); ctx.quadraticCurveTo(bx, by + h, bx, by + h - r);
-  ctx.lineTo(bx, by + r); ctx.quadraticCurveTo(bx, by, bx + r, by);
+  ctx.moveTo(bx + r, by);
+  ctx.lineTo(bx + w - r, by);
+  ctx.quadraticCurveTo(bx + w, by, bx + w, by + r);
+  ctx.lineTo(bx + w, by + h - r);
+  ctx.quadraticCurveTo(bx + w, by + h, bx + w - r, by + h);
+  ctx.lineTo(bx + r, by + h);
+  ctx.quadraticCurveTo(bx, by + h, bx, by + h - r);
+  ctx.lineTo(bx, by + r);
+  ctx.quadraticCurveTo(bx, by, bx + r, by);
   ctx.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 1;
-  ctx.fillStyle = fill; ctx.fill();
-  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.lineWidth = 1.5; ctx.strokeStyle = edge; ctx.stroke();
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetY = 1;
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = edge;
+  ctx.stroke();
   let ty = by + pad;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (const l of lines) { ctx.font = l.font; ctx.fillStyle = l.color; ctx.fillText(l.text, x, ty); ty += l.size + gap; }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (const l of lines) {
+    ctx.font = l.font;
+    ctx.fillStyle = l.color;
+    ctx.fillText(l.text, x, ty);
+    ty += l.size + gap;
+  }
   return { x: bx, y: by, w, h };
 }
 
@@ -206,11 +266,15 @@ export function paintWildRings(ctx, view, ink, { paperW, paperH, far = false }) 
   const [ax, ay] = paper(view, ink.x0, ink.y0);
   if (ax > paperW || ay > paperH || ax + ink.w * view.scale < 0 || ay + ink.h * view.scale < 0) return;
   ctx.save();
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
   for (let r = 2; r <= WILD_RINGS; r++) {
-    ctx.beginPath(); tracePath(ctx, view, ink.lines[r] ?? []);
+    ctx.beginPath();
+    tracePath(ctx, view, ink.lines[r] ?? []);
     ctx.setLineDash([Math.max(2, view.scale * 0.5), Math.max(2, view.scale * 0.45)]);
-    ctx.strokeStyle = RING_INK[r - 1].line; ctx.lineWidth = Math.max(0.8, Math.min(2, view.scale * 0.2)); ctx.stroke();
+    ctx.strokeStyle = RING_INK[r - 1].line;
+    ctx.lineWidth = Math.max(0.8, Math.min(2, view.scale * 0.2));
+    ctx.stroke();
   }
   ctx.setLineDash([]);
   // PVPDUNGEONS (the owner: "The 25%,50,75,100% marker shown on the world map when not clicking on the zone have to be
@@ -237,18 +301,34 @@ export function paintZoneMapStatic(ctx, view, ink, { paperW, paperH, places = []
     if (wash) {
       ctx.globalCompositeOperation = 'multiply';
       ctx.imageSmoothingEnabled = true;
-      try { ctx.imageSmoothingQuality = 'high'; } catch { /* an older canvas */ }
+      try {
+        ctx.imageSmoothingQuality = 'high';
+      } catch {
+        /* an older canvas */
+      }
       const [ax, ay] = paper(view, ink.x0 - wash.pad, ink.y0 - wash.pad);
-      ctx.drawImage(wash.canvas, ax, ay, (wash.canvas.width / wash.res) * view.scale, (wash.canvas.height / wash.res) * view.scale);
+      ctx.drawImage(
+        wash.canvas,
+        ax,
+        ay,
+        (wash.canvas.width / wash.res) * view.scale,
+        (wash.canvas.height / wash.res) * view.scale,
+      );
       ctx.globalCompositeOperation = 'source-over';
     }
     // the tiers' borders: a soft dark rule with a parchment hairline beside it - an engraver's line, never a marker's
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     for (let r = 2; r <= WILD_RINGS; r++) {
-      ctx.beginPath(); tracePath(ctx, view, ink.lines[r] ?? []);
-      ctx.strokeStyle = 'rgba(250,242,222,0.55)'; ctx.lineWidth = Math.max(1.6, Math.min(3, view.scale * 0.22)); ctx.stroke();
-      ctx.strokeStyle = RING_INK[r - 1].line; ctx.lineWidth = Math.max(0.8, Math.min(1.5, view.scale * 0.1));
-      ctx.setLineDash([Math.max(6, view.scale * 1.1), Math.max(3, view.scale * 0.45)]); ctx.stroke();
+      ctx.beginPath();
+      tracePath(ctx, view, ink.lines[r] ?? []);
+      ctx.strokeStyle = 'rgba(250,242,222,0.55)';
+      ctx.lineWidth = Math.max(1.6, Math.min(3, view.scale * 0.22));
+      ctx.stroke();
+      ctx.strokeStyle = RING_INK[r - 1].line;
+      ctx.lineWidth = Math.max(0.8, Math.min(1.5, view.scale * 0.1));
+      ctx.setLineDash([Math.max(6, view.scale * 1.1), Math.max(3, view.scale * 0.45)]);
+      ctx.stroke();
       ctx.setLineDash([]);
     }
     ctx.restore();
@@ -261,15 +341,21 @@ export function paintZoneMapStatic(ctx, view, ink, { paperW, paperH, places = []
   ctx.fillStyle = ZONE_WASH;
   ctx.fill('evenodd');
   // the zone's places, haloed, and never one over another
-  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
   // the plaques' room first (paintZoneMapPlaques stands them at the anchors), so no name runs under one
-  const taken = [];   // ZONEINK2: the rings' plaques are gone from the zone map (its legend names each ring)
+  const taken = []; // ZONEINK2: the rings' plaques are gone from the zone map (its legend names each ring)
   const townish = (k) => k === 'city' || k === 'village' || k === 'hamlet';
   // ZONEINK2 (the owner: "dont show all location names from the beginning when you zoom in"): the names come in with the
   // zoom - the cities at the zone's own fit, the towns from half again, every other place from twice it
   const shownAt = (k) => (k === 'city' ? 0 : townish(k) ? ZONE_NAMES_TOWNS : ZONE_NAMES_ALL);
   const vis = places.filter((p) => zoom >= shownAt(p.kind));
-  const big = vis.filter((p) => p.kind === 'city').concat(vis.filter((p) => p.kind !== 'city' && townish(p.kind)), vis.filter((p) => !townish(p.kind)));
+  const big = vis
+    .filter((p) => p.kind === 'city')
+    .concat(
+      vis.filter((p) => p.kind !== 'city' && townish(p.kind)),
+      vis.filter((p) => !townish(p.kind)),
+    );
   for (const p of big) {
     const [x, y] = paper(view, p.x, p.y);
     if (x < 0 || y < 0 || x > paperW || y > paperH || !p.name) continue;
@@ -277,10 +363,19 @@ export function paintZoneMapStatic(ctx, view, ink, { paperW, paperH, places = []
     ctx.font = `${p.kind === 'dungeon' ? 'italic ' : ''}600 ${size}px 'Cormorant', Georgia, serif`;
     const w = ctx.measureText(p.name).width;
     const box = { x: x + 7, y: y - size / 2, w, h: size };
-    if (taken.some((t) => box.x < t.x + t.w + 4 && t.x < box.x + box.w + 4 && box.y < t.y + t.h + 2 && t.y < box.y + box.h + 2)) continue;
+    if (
+      taken.some(
+        (t) => box.x < t.x + t.w + 4 && t.x < box.x + box.w + 4 && box.y < t.y + t.h + 2 && t.y < box.y + box.h + 2,
+      )
+    )
+      continue;
     taken.push(box);
-    ctx.lineJoin = 'round'; ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(244,234,210,0.88)'; ctx.strokeText(p.name, box.x, y);
-    ctx.fillStyle = p.kind === 'dungeon' ? '#4a1410' : '#2a1c12'; ctx.fillText(p.name, box.x, y);
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = 'rgba(244,234,210,0.88)';
+    ctx.strokeText(p.name, box.x, y);
+    ctx.fillStyle = p.kind === 'dungeon' ? '#4a1410' : '#2a1c12';
+    ctx.fillText(p.name, box.x, y);
   }
   ctx.restore();
 }
@@ -294,20 +389,55 @@ export function paintZoneMapPlaques(ctx, view, ink, { paperW, paperH, mine = 0 }
   // the plaques' room: the nearest two anchors apart on the paper - a small sheet (a phone's) names each ring on one line,
   // a smaller one in a tag, so no plaque stands over another
   let gap = Infinity;
-  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) gap = Math.min(gap, Math.abs(pts[i].p[1] - pts[j].p[1]) + Math.abs(pts[i].p[0] - pts[j].p[0]) * 0.25);
+  for (let i = 0; i < pts.length; i++)
+    for (let j = i + 1; j < pts.length; j++)
+      gap = Math.min(gap, Math.abs(pts[i].p[1] - pts[j].p[1]) + Math.abs(pts[i].p[0] - pts[j].p[0]) * 0.25);
   const size = gap >= 46 ? 'full' : gap >= 22 ? 'line' : 'tag';
-  for (const { a, p: [x, y] } of pts) {
+  for (const {
+    a,
+    p: [x, y],
+  } of pts) {
     if (x < -80 || y < -40 || x > paperW + 80 || y > paperH + 40) continue;
     const i = a.ring - 1;
     const edge = a.ring === mine ? '#c08a3e' : RING_INK[i].tag;
     if (size === 'full') {
-      plaque(ctx, x, y, [
-        { text: `${RING_NUMERALS[i]} · ${wildRingName(a.ring).toUpperCase()}`, font: "700 11px 'Cormorant', Georgia, serif", size: 11, color: '#2a1c12' },
-        { text: wildRingBonus(a.ring), font: "700 13px 'Cormorant', Georgia, serif", size: 13, color: RING_INK[i].tag },
-      ], { edge, pad: 6 });
+      plaque(
+        ctx,
+        x,
+        y,
+        [
+          {
+            text: `${RING_NUMERALS[i]} · ${wildRingName(a.ring).toUpperCase()}`,
+            font: "700 11px 'Cormorant', Georgia, serif",
+            size: 11,
+            color: '#2a1c12',
+          },
+          {
+            text: wildRingBonus(a.ring),
+            font: "700 13px 'Cormorant', Georgia, serif",
+            size: 13,
+            color: RING_INK[i].tag,
+          },
+        ],
+        { edge, pad: 6 },
+      );
     } else {
-      const text = size === 'line' ? `${RING_NUMERALS[i]} · ${wildRingBonus(a.ring)}` : wildRingBonus(a.ring).replace(' loot', '');
-      plaque(ctx, x, y, [{ text, font: `700 ${size === 'line' ? 11 : 10}px 'Cormorant', Georgia, serif`, size: size === 'line' ? 11 : 10, color: RING_INK[i].tag }], { edge, pad: size === 'line' ? 4 : 3, gap: 0 });
+      const text =
+        size === 'line' ? `${RING_NUMERALS[i]} · ${wildRingBonus(a.ring)}` : wildRingBonus(a.ring).replace(' loot', '');
+      plaque(
+        ctx,
+        x,
+        y,
+        [
+          {
+            text,
+            font: `700 ${size === 'line' ? 11 : 10}px 'Cormorant', Georgia, serif`,
+            size: size === 'line' ? 11 : 10,
+            color: RING_INK[i].tag,
+          },
+        ],
+        { edge, pad: size === 'line' ? 4 : 3, gap: 0 },
+      );
     }
   }
   ctx.restore();
@@ -345,37 +475,50 @@ export function tierWash(ink, doc = globalThis.document) {
   let res = 12;
   while (res > 3 && (ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res -= 1;
   // WW-C2: a province's zone (Cyrodiil's two thousand pixels across) held to the budget too - under a canvas pixel a map pixel
-  if ((ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res = Math.sqrt(WASH_PX_MAX / ((ink.w + pad * 2) * (ink.h + pad * 2)));
+  if ((ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX)
+    res = Math.sqrt(WASH_PX_MAX / ((ink.w + pad * 2) * (ink.h + pad * 2)));
   const canvas = doc.createElement('canvas');
-  canvas.width = Math.ceil((ink.w + pad * 2) * res); canvas.height = Math.ceil((ink.h + pad * 2) * res);
+  canvas.width = Math.ceil((ink.w + pad * 2) * res);
+  canvas.height = Math.ceil((ink.h + pad * 2) * res);
   const c = canvas.getContext('2d');
   if (!c) return null;
   const v = { ox: ink.x0 - pad, oy: ink.y0 - pad, scale: res };
   const ring = (r) => (r === 1 ? ink.edge : (ink.lines[r] ?? []));
   for (let r = 1; r <= WILD_RINGS; r++) {
     const t = TIER_WASH[r - 1];
-    c.beginPath(); tracePath(c, v, ring(r));
-    c.fillStyle = `rgb(${t.fill.join(',')})`; c.fill('evenodd');
+    c.beginPath();
+    tracePath(c, v, ring(r));
+    c.fillStyle = `rgb(${t.fill.join(',')})`;
+    c.fill('evenodd');
   }
   // the shade inside each tier's border: its own contour stroked through a wide blur, clipped to the tier, once
   for (let r = 1; r <= WILD_RINGS; r++) {
     const t = TIER_WASH[r - 1];
     c.save();
-    c.beginPath(); tracePath(c, v, ring(r)); c.clip('evenodd');
-    c.beginPath(); tracePath(c, v, ring(r));
-    c.shadowColor = `rgba(${t.shade.join(',')},0.9)`; c.shadowBlur = res * 1.6;
-    c.strokeStyle = `rgba(${t.shade.join(',')},0.55)`; c.lineWidth = res * 0.35;
-    c.lineJoin = 'round'; c.stroke();
+    c.beginPath();
+    tracePath(c, v, ring(r));
+    c.clip('evenodd');
+    c.beginPath();
+    tracePath(c, v, ring(r));
+    c.shadowColor = `rgba(${t.shade.join(',')},0.9)`;
+    c.shadowBlur = res * 1.6;
+    c.strokeStyle = `rgba(${t.shade.join(',')},0.55)`;
+    c.lineWidth = res * 0.35;
+    c.lineJoin = 'round';
+    c.stroke();
     c.restore();
   }
   // a fine paper tooth through the whole wash (a pigment pools in the grain), off the same stable hash as the fog's
-  const img = c.getImageData(0, 0, canvas.width, canvas.height), d = img.data;
+  const img = c.getImageData(0, 0, canvas.width, canvas.height),
+    d = img.data;
   for (let y = 0; y < canvas.height; y++) {
     for (let x = 0; x < canvas.width; x++) {
       const i = (y * canvas.width + x) * 4;
       if (d[i + 3] === 0) continue;
       const g = (grain(x >> 1, y >> 1) - 0.5) * 10;
-      d[i] = Math.max(0, Math.min(255, d[i] + g)); d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + g)); d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + g));
+      d[i] = Math.max(0, Math.min(255, d[i] + g));
+      d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + g));
+      d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + g));
     }
   }
   c.putImageData(img, 0, 0);
@@ -386,20 +529,29 @@ export function tierWash(ink, doc = globalThis.document) {
 /** The view that holds the whole zone on the paper, its box padded, centred in the room the legend leaves. */
 export function zoneMapView(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
-  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask)); // WW-C2: on the world
+  const bw = x1 - x0 + 1,
+    bh = y1 - y0 + 1,
+    pad = 3 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
   const scale = Math.min(room / (bw + pad * 2), paperH / (bh + pad * 2));
-  const cx = x0 + bw / 2, cy = y0 + bh / 2;
+  const cx = x0 + bw / 2,
+    cy = y0 + bh / 2;
   return { ox: cx - room / (2 * scale), oy: cy - paperH / (2 * scale), scale };
 }
 /** The zone map's limits for the window's clamp (ui/ink/inkMap.js clampView): its box with a band of the bay round it. */
 export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask)); // WW-C2: on the world
   const pad = 6 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
-  return { mapW: (x1 - x0 + 1 + pad * 2) * (paperW / room), mapH: y1 - y0 + 1 + pad * 2, paperW, paperH, pan: { x0: x0 - pad, y0: y0 - pad, x1: x1 + 1 + pad, y1: y1 + 1 + pad } };
+  return {
+    mapW: (x1 - x0 + 1 + pad * 2) * (paperW / room),
+    mapH: y1 - y0 + 1 + pad * 2,
+    paperW,
+    paperH,
+    pan: { x0: x0 - pad, y0: y0 - pad, x1: x1 + 1 + pad, y1: y1 + 1 + pad },
+  };
 }
 
 /** The zone's laws online, as the legend states them - AUDIT TESA II M5: its travel law is Cyrodiil's (zoneRules). The
@@ -410,23 +562,39 @@ export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  'If another player kills you, nothing drops. They may take one uninsured worn piece, or gold. Insured gear is kept, but never a villain\'s.',   // PVP-WORDS (PVP-REWARD): no bag drops; the killer's one roll
+  "If another player kills you, nothing drops. They may take one uninsured worn piece, or gold. Insured gear is kept, but never a villain's.", // PVP-WORDS (PVP-REWARD): no bag drops; the killer's one roll
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
 /** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says
  *  offline, where the zone is drawn (MAP-LINES ZONE-OFFLINE: its fog, red line, rings and fire) and none of its laws runs
  *  (scenes/world.js wildMapMask, wildHere and the halls are online's). Read when they are said, through the text core. */
 export const ZONE_MAP_TEXT = Object.freeze({
-  travel: () => t('wild.legend.travel', 'No fast travel and no carriage reaches {zone} or runs inside it: walk or ride, on the Overworld map.', { zone: WILD_NAME }),
-  offline: () => t('wild.legend.offline', 'You are offline, so no other player can reach you here. The zone\'s laws - stronger foes, more loot, what a player\'s kill takes - hold only online.'),
-  chipTipOffline: () => t('wild.map.chipTipOffline', '{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land\'s own.', { zone: WILD_NAME }),
+  travel: () =>
+    t(
+      'wild.legend.travel',
+      'No fast travel and no carriage reaches {zone} or runs inside it: walk or ride, on the Overworld map.',
+      { zone: WILD_NAME },
+    ),
+  offline: () =>
+    t(
+      'wild.legend.offline',
+      "You are offline, so no other player can reach you here. The zone's laws - stronger foes, more loot, what a player's kill takes - hold only online.",
+    ),
+  chipTipOffline: () =>
+    t(
+      'wild.map.chipTipOffline',
+      "{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land's own.",
+      { zone: WILD_NAME },
+    ),
   door: () => t('wild.map.door', 'Open the {zone} map, with its four rings and their loot', { zone: WILD_NAME }),
   doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map, with its four rings', { zone: WILD_NAME }),
 });
 /** AUDIT TESA II M5: the legend's laws - online the zone's, its travel law Cyrodiil's; offline (`laws` false) the one line
  *  that says they hold only online. */
 export function zoneRules(laws = true) {
-  return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];   // ZONE-SAFE: the settlements' peace beside the first law
+  return laws
+    ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]
+    : [ZONE_MAP_TEXT.offline()]; // ZONE-SAFE: the settlements' peace beside the first law
 }
 
 /**
@@ -435,8 +603,16 @@ export function zoneRules(laws = true) {
  * Back button's act. Pure DOM: the window mounts it and takes it away. AUDIT TESA II M5: `laws` false (offline) says the
  * rings without their loot and, for its laws, that they hold only online.
  */
-export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {}) {
-  const el = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+export function buildZoneLegend(
+  doc,
+  { ring = 0, laws = true, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {},
+) {
+  const el = (tag, cls, text) => {
+    const e = doc.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
   const root = el('div', 'hmwild');
   root.addEventListener?.('pointerdown', (e) => e.stopPropagation?.());
   root.addEventListener?.('wheel', (e) => e.stopPropagation?.());
@@ -444,7 +620,13 @@ export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, nam
   head.append(el('div', 'hmwild-kicker', 'Open PvP zone'), el('div', 'hmwild-title', WILD_NAME));
   root.append(head);
   // AUDIT TESA II M5: offline (`laws` false) no ring's loot holds - the rings are named, their bonus not said
-  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}${laws ? ` - ${wildRingBonus(ring)}` : ''}` : 'You stand outside the zone');
+  const where = el(
+    'div',
+    `hmwild-where${ring ? ' in' : ''}`,
+    ring
+      ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}${laws ? ` - ${wildRingBonus(ring)}` : ''}`
+      : 'You stand outside the zone',
+  );
   root.append(where);
   const list = el('ol', 'hmwild-rings');
   for (let r = 1; r <= WILD_RINGS; r++) {
@@ -457,7 +639,11 @@ export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, nam
     sw.style.borderColor = sw2.edge;
     const name = el('span', 'hmwild-rname');
     name.append(el('b', null, RING_NUMERALS[r - 1]), doc.createTextNode(` ${wildRingName(r)}`));
-    const depth = el('span', 'hmwild-depth', r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`);
+    const depth = el(
+      'span',
+      'hmwild-depth',
+      r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`,
+    );
     li.append(sw, name, el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : ''), depth);
     list.append(li);
   }
@@ -472,18 +658,21 @@ export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, nam
   // PVPJOURNEY: a press on the zone's ground gives the Begin journey button - at the top of the foot, always in view
   if (canBegin) {
     const go = el('button', 'act hmwild-back hmwild-go', 'Begin journey');
-    go.type = 'button'; go.tabIndex = -1;
+    go.type = 'button';
+    go.tabIndex = -1;
     go.onpointerdown = (e) => e.preventDefault?.();
     go.onclick = () => onBegin?.();
     foot.append(go);
   }
   const nm = el('button', 'act hmwild-back', names ? 'Hide place names' : 'Show place names');
-  nm.type = 'button'; nm.tabIndex = -1;
+  nm.type = 'button';
+  nm.tabIndex = -1;
   nm.onpointerdown = (e) => e.preventDefault?.();
   nm.onclick = () => onNames?.();
   foot.append(nm);
   const back = el('button', 'act hmwild-back', 'World map');
-  back.type = 'button'; back.tabIndex = -1;
+  back.type = 'button';
+  back.tabIndex = -1;
   back.onpointerdown = (e) => e.preventDefault?.();
   back.onclick = () => onBack?.();
   foot.append(back);

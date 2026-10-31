@@ -12,18 +12,41 @@ let _owned = null;
 let _held = null;
 
 /** The guild book's shop read, set once it is made. */
-export function setGuildStockReader(/** @type {(() => unknown) | null} */ fn) { _reader = typeof fn === 'function' ? fn : null; }
+export function setGuildStockReader(/** @type {(() => unknown) | null} */ fn) {
+  _reader = typeof fn === 'function' ? fn : null;
+}
 /** The shop as a read said it (its `wares`), or null for none - the reader in no guild. `none` (a read that found no
  *  guild) stands as a shop of nothing, so nothing asks again until the guild's tab reads it. */
 export function noteGuildShop(/** @type {any} */ shop, none = false) {
   const wares = Array.isArray(shop?.wares) ? shop.wares : none ? [] : null;
-  _owned = wares ? new Map(wares.filter((/** @type {any} */ w) => w.payer === 'guild').map((/** @type {any} */ w) => [String(w.key), Number(w.owned) || 0])) : null;
-  _held = wares ? new Set(wares.filter((/** @type {any} */ w) => w.payer === 'account' && w.held).map((/** @type {any} */ w) => String(w.key))) : null;
+  _owned = wares
+    ? new Map(
+        wares
+          .filter((/** @type {any} */ w) => w.payer === 'guild')
+          .map((/** @type {any} */ w) => [String(w.key), Number(w.owned) || 0]),
+      )
+    : null;
+  _held = wares
+    ? new Set(
+        wares
+          .filter((/** @type {any} */ w) => w.payer === 'account' && w.held)
+          .map((/** @type {any} */ w) => String(w.key)),
+      )
+    : null;
 }
-const ask = () => { try { _reader?.(); } catch { /* the next ask */ } };
+const ask = () => {
+  try {
+    _reader?.();
+  } catch {
+    /* the next ask */
+  }
+};
 /** How many of `ware` the guild owns - null while unread (and a read is asked). */
 export function guildStockOwned(/** @type {unknown} */ ware) {
-  if (!_owned) { ask(); return null; }
+  if (!_owned) {
+    ask();
+    return null;
+  }
   return _owned.get(String(ware)) ?? 0;
 }
 /** GUILD-SHOP: how many more of guild piece `e` may stand in a room of `pieces` - the guild's stock less what stands there
@@ -38,8 +61,15 @@ export function guildPieceLeft(/** @type {any} */ e, /** @type {any[] | null | u
 }
 /** Whether the account holds `ware` (one of the account's: the Guild Sailcloth) - null while unread (and a read is asked). */
 export function guildWareHeld(/** @type {unknown} */ ware) {
-  if (!_held) { ask(); return null; }
+  if (!_held) {
+    ask();
+    return null;
+  }
   return _held.has(String(ware));
 }
 /** For the tests: nothing read, no reader. */
-export function _resetGuildStock() { _reader = null; _owned = null; _held = null; }
+export function _resetGuildStock() {
+  _reader = null;
+  _owned = null;
+  _held = null;
+}

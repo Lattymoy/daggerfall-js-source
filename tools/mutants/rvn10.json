@@ -83,8 +83,8 @@
   {
     "name": "RVN10-judged-fight-kept",
     "file": "src/systems/harmMark.js",
-    "old": "  if (entity) _fights.delete(entity);   // RVN10: a judged foe's fight is over\n",
-    "new": "",
+    "old": "  if (entity) _fights.delete(entity); // RVN10: a judged foe's fight is over\n}",
+    "new": "}",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN10-end-keeps-low",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
-    "new": "export function endPlayerFights() { _fights = new WeakMap(); _harmAt = null; }",
+    "old": "  _lowAt = null;\n  _harmAt = null;",
+    "new": "  _harmAt = null;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN10-end-keeps-fights",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
-    "new": "export function endPlayerFights() { _lowAt = null; _harmAt = null; }",
+    "old": "  _fights = new WeakMap();\n  _lowAt = null;",
+    "new": "  _lowAt = null;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "RVN10-layer-unhanded",
     "file": "src/scenes/crewAshore.js",
-    "old": "deps.onKnocked?.(s.c, rec._knockedBy ?? null);",
-    "new": "deps.onKnocked?.(s.c, null);",
+    "old": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
+    "new": "        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "RVN10-page-name-dropped",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(d?.deed === 'felled' && typeof d.ally === 'string' && d.ally ? `felled ${d.ally}` : d?.deed === 'fled'",
-    "new": "(d?.deed === 'fled'",
+    "old": "  d?.deed === 'felled' && typeof d.ally === 'string' && d.ally\n    ? `felled ${d.ally}`\n    : d?.deed === 'fled' && d.unbroken === true\n      ? 'escaped unbroken'\n      : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
+    "new": "  d?.deed === 'fled' && d.unbroken === true ? 'escaped unbroken' : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

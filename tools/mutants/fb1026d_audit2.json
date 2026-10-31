@@ -2,8 +2,8 @@
   {
     "name": "HULL-PASS-II-owner-unread",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "    if (b === deck || (whose && whose(b) === whose(deck))) continue;",
-    "new": "    if (b === deck) continue;",
+    "old": "      if (b === deck || (whose && whose(b) === whose(deck))) continue;",
+    "new": "      if (b === deck) continue;",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HULL-PASS-II-pool-unread",
     "file": "src/scenes/comeSailAway/peerHulls.js",
-    "old": "const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null;",
-    "new": "const P = b && feet ? hullPlan(b, geometry) : null;",
+    "old": "    const P = b && feet && hulls.includes(b) ? hullPlan(b, geometry) : null;",
+    "new": "    const P = b && feet ? hullPlan(b, geometry) : null;",
     "tests": [
       "test/scenes/fb1001b_peerboats.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "MAIN-SPINE-II-curse-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),",
-    "new": "opened: saved?.opened === true || has(SPINE_OPENER),",
+    "old": "  return {\n    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),\n    ran: saved?.ran === true || has(SPINE),\n  };",
+    "new": "  return { opened: saved?.opened === true || has(SPINE_OPENER), ran: saved?.ran === true || has(SPINE) };",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "MAIN-SPINE-II-said-started",
     "file": "src/systems/quest/machine.js",
-    "old": "was owed - scheduled (try ${this.spineTries})",
-    "new": "was owed - started (try ${this.spineTries})",
+    "old": "      console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - scheduled (try ${this.spineTries})`);",
+    "new": "      console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - started (try ${this.spineTries})`);",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "COURT-DEEDS-II-badge-unconditional",
     "file": "src/systems/livingWorld/people.js",
-    "old": "with Project Legacy, so do the deeds Tell me about offers",
-    "new": "so do the deeds Tell me about offers",
+    "old": "      'Talking once a day, speaking in a tone they like and fighting at their side raise it; with Project Legacy, so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.', // TONE-TASTE; COURT-DEEDS (systems/legacy/courtDeeds.js): the deeds named, as offered (AUDIT FB1026d B4: never promised to the watch, a traveller or kin; II B4: nor without the house that offers them - legacyHost.js topicRows); FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)",
+    "new": "      'Talking once a day, speaking in a tone they like and fighting at their side raise it; so do the deeds Tell me about offers a townsperson you could court - a compliment, a gift, and a hug once you are friends - each once a day. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.', // TONE-TASTE; COURT-DEEDS (systems/legacy/courtDeeds.js): the deeds named, as offered (AUDIT FB1026d B4: never promised to the watch, a traveller or kin; II B4: nor without the house that offers them - legacyHost.js topicRows); FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)",
     "tests": [
       "test/systems/legacy/fb1026d_courtdeeds.test.js",
       "test/systems/legacy/plainui.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "LEVEL-45-II-cap-unsaid",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "label: t('levelup.progress.cap', 'Highest level reached'), cap: true };",
-    "new": "label: t('levelup.progress.cap', 'Highest level reached') };",
+    "old": "  if (atLevelCap(e))\n    return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached'), cap: true }; // AUDIT FB1026d II C3: `cap` - the bar says its label alone",
+    "new": "  if (atLevelCap(e)) return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached') }; // AUDIT FB1026d II C3: `cap` - the bar says its label alone",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "LEVEL-45-II-next-level-notes",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],",
-    "new": "    note: ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],",
+    "old": "    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE], // AUDIT FB1026d II C3: at the cap no skill counts toward a next level",
+    "new": "    note: ROLE_NOTE[roles.get(id) ?? ROLE_IDLE], // AUDIT FB1026d II C3: at the cap no skill counts toward a next level",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "JEWEL-KIN-II-old-law-asked",
     "file": "src/net/productRecord.js",
-    "old": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES",
-    "new": "asked >= MINT_V_LAST_PASS ? Math.min(asked, MINT_VERSION) : MINT_V_LINES",
+    "old": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN",
+    "new": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_LAST_PASS",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "WF-deepest-without-free",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "thin(ring_.filter((p) => p.bd === lv), poolMax, sift).some(isFree)",
-    "new": "thin(ring_.filter((p) => p.bd === lv), poolMax, sift).length",
+    "old": "        ).some(isFree)",
+    "new": "        ).length",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WF-band-unasked",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift).filter(isFree);",
-    "new": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift);",
+    "old": "      ).filter(isFree);",
+    "new": "      );",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WF-ring-for-the-two-pixel-band",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "pool = two.length >= want ? two : all();",
-    "new": "pool = all();",
+    "old": "      pool = two.length >= want ? two : all();",
+    "new": "      pool = all();",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "WF-band-for-the-ring",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "[2, all], [1, all]]",
-    "new": "[2, () => pool], [1, () => pool]]",
+    "old": "      [2, all],\n      [1, all],",
+    "new": "      [2, () => pool],\n      [1, () => pool],",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ],
@@ -44,8 +44,8 @@
   {
     "name": "WF-asked-again",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "return (p.free ??= !!free(x, y)); };",
-    "new": "return (p.free = !!free(x, y)); };",
+    "old": "    return (p.free ??= !!free(x, y));",
+    "new": "    return (p.free = !!free(x, y));",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ],
@@ -54,8 +54,8 @@
   {
     "name": "WF-asked-first",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "free: /** @type {boolean|undefined} */ (undefined) });",
-    "new": "free: !!free(x, y) });",
+    "old": "      if (ring) byRing[ring].push({ x, y, ring, bd: bd[i], free: /** @type {boolean|undefined} */ (undefined) });",
+    "new": "      if (ring) byRing[ring].push({ x, y, ring, bd: bd[i], free: !!free(x, y) });",
     "tests": [
       "test/systems/wild/wildfree.test.js"
     ]

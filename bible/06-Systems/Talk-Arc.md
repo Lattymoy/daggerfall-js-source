@@ -476,14 +476,14 @@ Work answer throws KeyNotFoundException out of GetQuestorGender
 can move the selection, and the topic stays dead in that town. The
 port's readers answered the empty string instead: "Go to a place called
  and talk to someone named ." Both mutators now end in
-`npcSession.js:"  _holdSelection() {"`, which takes the build's own rule,
+`npcSession.js:"_holdSelection() {"`, which takes the build's own rule,
 the last questor the pool holds. A selection still in the pool is left
 alone, and nothing is drawn. DFU's order is unchanged: the answer names
 the selection that stood before the ask, and the pick follows it.
 Pinned: `fb1020h_questor.test.js`.
 
 **QUESTOR-SHE** (FIELD BUGS 2026-10-20h). The four pronouns fork on
-`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`.
+`talkMacros.js:"const female = ()"`.
 It compared the string `'female'`, but the pool's NPCData carries the
 Genders enum staticNpcData mints, and the world host hands that on
 unchanged. So every woman with work was "him", while the pins handed
@@ -1732,7 +1732,7 @@ WHAT IT IS NOW:
   standing it (`scenes/tamrielPlacesHost.js` tableKeyAt): a stood location's own; an Arena place's, a country place's and
   a lair's template's (the clone keeps it - all 276 Arena places past the Bay on the freeware, stood, carry exactly it); a
   capital's slice its own once it stands (the province's warm stands them in idle time, R2-5d), none before.
-- **THE KEY IS THE LOCATION'S BUILDINGS' DIRECTORY** (`world/locationKey.js:"export function locationKeyOf(buildings) {"`).
+- **THE KEY IS THE LOCATION'S BUILDINGS' DIRECTORY** (`world/locationKey.js:"export function locationKeyOf"`).
   DFU reads MapTable.Key (CheckLocationKeyForRegionalBuilding, :1920-1990, `systems/answerPipeline.js`) and never writes
   it. Measured on the freeware's MAPS.BSA, all 15,251 rows (7,351 with a key) carry exactly the key their own building
   lists make: byte 0 a temple of each of the eight divines (the building's faction, or its temple order's - FACTION.TXT's

@@ -62,7 +62,15 @@ export function giveOffer() {
   // party's resync rebuilds every action, and the latched one was nobody's
   const s = lastPendingOfferSender;
   const held = (q) => [...(q?.tasks?.values?.() ?? [])].some((t) => t.actions?.includes(s));
-  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;
+  if (
+    s != null &&
+    (s.isComplete ||
+      s.parentQuest?.questComplete ||
+      s.parentQuest?.questTombstoned ||
+      s.parentQuest?.shelvedAt != null ||
+      (s.parentQuest?.tasks && !held(s.parentQuest)))
+  )
+    lastPendingOfferSender = null;
   if (lastPendingOfferSender != null) {
     lastPendingOfferSender.offerImmediatelyNow();
     lastPendingOfferSender = null;
@@ -73,4 +81,6 @@ export function giveOffer() {
 
 /** Probe/teardown seam: the latch itself. */
 export const pendingOfferSender = () => lastPendingOfferSender;
-export function clearPendingOffer() { lastPendingOfferSender = null; }
+export function clearPendingOffer() {
+  lastPendingOfferSender = null;
+}

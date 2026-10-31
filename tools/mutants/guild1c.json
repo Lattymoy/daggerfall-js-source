@@ -11,8 +11,8 @@
   {
     "name": "GUILD1c-tag-coerced",
     "file": "src/net/identityToken.js",
-    "old": "    && typeof c.gt === 'string' && GUILD_TAG_RE.test(c.gt)",
-    "new": "    && GUILD_TAG_RE.test(c.gt)",
+    "old": "    typeof c.gt === 'string' &&\n    GUILD_TAG_RE.test(c.gt) &&",
+    "new": "    GUILD_TAG_RE.test(c.gt) &&",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUILD1c-claims-unguarded",
     "file": "src/net/identityToken.js",
-    "old": "  if (!guildClaimsValid(c)) return false;   // GUILD1c\n",
-    "new": "",
+    "old": "  if (!guildClaimsValid(c)) return false; // GUILD1c\n  // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service",
+    "new": "  // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD1c-mute-carries-a-guild",
     "file": "src/net/identityToken.js",
-    "old": "c.lv !== undefined || !noGuild)) return false;\n  if (c.o === 'renown'",
-    "new": "c.lv !== undefined)) return false;\n  if (c.o === 'renown'",
+    "old": "  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined || !noGuild)) return false;",
+    "new": "  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined)) return false;",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD1c-guildout-with-a-tag",
     "file": "src/net/identityToken.js",
-    "old": "GUILD_ID_RE.test(c.gi) || c.gt !== undefined\n",
-    "new": "GUILD_ID_RE.test(c.gi)\n",
+    "old": "      c.gt !== undefined ||\n      (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) ||",
+    "new": "      (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) ||",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUILD1c-guild-order-partial",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined",
-    "new": "  if (c.o === 'guild' && (c.mu !== undefined",
+    "old": "  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;",
+    "new": "  if (c.o === 'guild' && (c.mu !== undefined || c.lv !== undefined)) return false;",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'guildout',\n  'siege',",
+    "new": "  'siege',",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "GUILD1c-every-look-hands-an-order",
     "file": "src/net/guild/guildBook.js",
-    "old": "if (key !== this._carried && typeof mine.data?.order === 'string')",
-    "new": "if (typeof mine.data?.order === 'string')",
+    "old": "    if (key !== this._carried && typeof mine.data?.order === 'string') {",
+    "new": "    if (typeof mine.data?.order === 'string') {",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "GUILD1c-the-acts-out-order-dropped",
     "file": "src/net/guild/guildBook.js",
-    "old": "      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });\n",
-    "new": "",
+    "old": "      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });\n      // AUDIT2 GUILD2 S2/S7: a refusal's own reason kept - the word the name filter caught (`why`), and when a refused act may",
+    "new": "      // AUDIT2 GUILD2 S2/S7: a refusal's own reason kept - the word the name filter caught (`why`), and when a refused act may",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "GUILD1c-the-unpaid-foundings-out-order-dropped",
     "file": "src/net/guild/guildBook.js",
-    "old": "        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder });",
-    "new": "",
+    "old": "        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder }); // GUILD1c: a room that heard the founding hears it gone",
+    "new": "        // GUILD1c: a room that heard the founding hears it gone",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "GUILD1c-g-taken-from-the-world",
     "file": "src/net/chatCommands.js",
-    "old": "names: Object.freeze(['guild', 'gu'])",
-    "new": "names: Object.freeze(['guild', 'g'])",
+    "old": "    names: Object.freeze(['guild', 'gu']),",
+    "new": "    names: Object.freeze(['guild', 'g']),",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "GUILD1c-another-guild-listed",
     "file": "src/net/roster.js",
-    "old": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);",
-    "new": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt) peers.set(id, p);",
+    "old": "  if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);",
+    "new": "  if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt) peers.set(id, p);",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -466,8 +466,8 @@
   {
     "name": "GUILD1c-a-row-without-its-tag",
     "file": "src/net/roster.js",
-    "old": "...readBadge(from), gt: readGuildTag(from) };",
-    "new": "...readBadge(from) };",
+    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
+    "new": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
     "tests": [
       "test/net/guild1c.test.js"
     ],
@@ -476,8 +476,8 @@
   {
     "name": "GUILD1c-my-own-row-untagged",
     "file": "src/net/roster.js",
-    "old": "glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
-    "new": "glyphs: hub?.glyphs ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
+    "old": "    title: hub?.title ?? null,\n    glyphs: hub?.glyphs ?? null,\n    gt: hub?.gt ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Guild',",
+    "new": "    title: hub?.title ?? null,\n    glyphs: hub?.glyphs ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Guild',",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "GUILD1c-the-tag-never-written",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.gtOf !== p.gt) { tag.gtOf = p.gt; setText(tag.guild, guildTagText(p.gt) ?? ''); }   // GUILD1c: \"<HND>\", or nothing\n",
-    "new": "",
+    "old": "        if (tag.gtOf !== p.gt) {\n          tag.gtOf = p.gt;\n          setText(tag.guild, guildTagText(p.gt) ?? '');\n        } // GUILD1c: \"<HND>\", or nothing\n        if (tag.houseOf !== p.house) {",
+    "new": "        if (tag.houseOf !== p.house) {",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "GUILD1c-the-card-without-its-tag",
     "file": "src/ui/profileWindow.js",
-    "old": "    guild: guildTagText(peer?.gt),",
-    "new": "    guild: null,",
+    "old": "    guild: guildTagText(peer?.gt), // GUILD1c: the tag the relay stamped off their signed token - \"<HND>\", or null",
+    "new": "    guild: null, // GUILD1c: the tag the relay stamped off their signed token - \"<HND>\", or null",
     "tests": [
       "test/net/guild1c.test.js"
     ]

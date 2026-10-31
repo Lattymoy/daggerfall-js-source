@@ -17,7 +17,7 @@
 // with the node that holds it, which is what makes it safe to hand
 // straight to a screen that rebuilds its DOM on every repaint.
 
-import { fitIcon, opaqueBounds, ICON_CAP } from './iconFit.js';   // UI1: the fit law, for fitCanvas below
+import { fitIcon, opaqueBounds, ICON_CAP } from './iconFit.js'; // UI1: the fit law, for fitCanvas below
 
 /**
  * @param {{width:number,height:number,data:Uint8Array}} bmp
@@ -39,7 +39,10 @@ export function bitmapCanvas(bmp, palette, { scale = 1 } = {}) {
   for (let i = 0; i < w * h; i++) {
     const idx = data[i];
     const o = i * 4;
-    if (idx === 0) { img.data[o + 3] = 0; continue; }   // the cutout
+    if (idx === 0) {
+      img.data[o + 3] = 0;
+      continue;
+    } // the cutout
     const [r, g, b] = palette(idx);
     img.data[o] = r;
     img.data[o + 1] = g;
@@ -59,7 +62,6 @@ export function bitmapCanvas(bmp, palette, { scale = 1 } = {}) {
   return out;
 }
 
-
 /**
  * SURV-ART: THE SAME THING FOR ART THAT NEVER HAD A PALETTE.
  *
@@ -76,7 +78,8 @@ export function bitmapCanvas(bmp, palette, { scale = 1 } = {}) {
  * @returns {HTMLCanvasElement|null}
  */
 export function color32Canvas(image, { scale = 1 } = {}) {
-  const w = image?.width | 0, h = image?.height | 0;
+  const w = image?.width | 0,
+    h = image?.height | 0;
   const src = image?.colors;
   if (!w || !h || !src || src.length < w * h * 4) return null;
   const c = document.createElement('canvas');
@@ -86,7 +89,8 @@ export function color32Canvas(image, { scale = 1 } = {}) {
   if (!ctx) return null;
   const img = ctx.createImageData(w, h);
   const row = w * 4;
-  for (let y = 0; y < h; y++) {       // row 0 of `colors` is the picture's bottom
+  for (let y = 0; y < h; y++) {
+    // row 0 of `colors` is the picture's bottom
     const from = (h - 1 - y) * row;
     for (let i = 0; i < row; i++) img.data[y * row + i] = src[from + i];
   }
@@ -102,7 +106,6 @@ export function color32Canvas(image, { scale = 1 } = {}) {
   octx.drawImage(c, 0, 0, out.width, out.height);
   return out;
 }
-
 
 // ── UI1: A PICTURE FITTED TO ITS SLOT (ui/iconFit.js's law, carried out) ──
 //
@@ -126,18 +129,22 @@ export const TRIM_ALPHA = 8;
  * @param {{ box: number, dpr?: number, cap?: number, trim?: boolean, snap?: boolean }} opts
  */
 export function fitCanvas(src, { box, dpr = 1, cap = ICON_CAP, trim = true, snap = true } = /** @type {any} */ ({})) {
-  const w = src?.width | 0, h = src?.height | 0;
+  const w = src?.width | 0,
+    h = src?.height | 0;
   const sctx = w && h ? src.getContext?.('2d') : null;
   if (!sctx) return null;
   const { data } = sctx.getImageData(0, 0, w, h);
   const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };
   const f = b ? fitIcon(b.w, b.h, { box, dpr, cap, snap }) : null;
   if (!b || !f) return null;
-  const bigW = b.w * f.prescale, bigH = b.h * f.prescale;
+  const bigW = b.w * f.prescale,
+    bigH = b.h * f.prescale;
   let cur = paintedCanvas(bigW, bigH, false, (c) => c.drawImage(src, b.x, b.y, b.w, b.h, 0, 0, bigW, bigH));
   if (cur && f.smooth) {
     while (cur && cur.width >= 2 * f.outW && cur.height >= 2 * f.outH) {
-      const from = cur, hw = Math.ceil(from.width / 2), hh = Math.ceil(from.height / 2);
+      const from = cur,
+        hw = Math.ceil(from.width / 2),
+        hh = Math.ceil(from.height / 2);
       cur = paintedCanvas(hw, hh, true, (c) => c.drawImage(from, 0, 0, hw, hh));
     }
     const from = cur;

@@ -1339,11 +1339,6 @@
   "tr": "4ed61bce4c42",
   "by": "claude-in-session"
  },
- "account.refusal.cacheCapped": {
-  "en": "9104ce44c542",
-  "tr": "03672693a5e8",
-  "by": "claude-in-session"
- },
  "account.refusal.cacheClosed": {
   "en": "e8e601ad45b4",
   "tr": "66fa83d59fe4",
@@ -12574,6 +12569,11 @@
   "tr": "1caf49b45f98",
   "by": "claude-in-session"
  },
+ "eg.potion.wait": {
+  "en": "3ee335241484",
+  "tr": "a983e1042483",
+  "by": "claude-in-session"
+ },
  "eg.progress.gauntlet": {
   "en": "83d2b8b37cf7",
   "tr": "20133c91d780",
@@ -14117,6 +14117,16 @@
  "features.wildernessCamps.title": {
   "en": "c86a78ce52db",
   "tr": "62b5e8890e3d",
+  "by": "claude-in-session"
+ },
+ "features.wildlife.note": {
+  "en": "31f535af642e",
+  "tr": "e7cc8c69b2c5",
+  "by": "claude-in-session"
+ },
+ "features.wildlife.title": {
+  "en": "f00edc13965e",
+  "tr": "05949d53f231",
   "by": "claude-in-session"
  },
  "features.wind.note": {
@@ -20624,9 +20634,9 @@
   "tr": "2e8f19200d32",
   "by": "claude-in-session"
  },
- "madeRules.potions": {
-  "en": "88310252fc38",
-  "tr": "8508cc67a40f",
+ "madeRules.potionClock": {
+  "en": "74ec7fa1a624",
+  "tr": "1c9eee20b12b",
   "by": "claude-in-session"
  },
  "madeRules.regen": {
@@ -42262,6 +42272,11 @@
  "shop.who.reading": {
   "en": "9964cedb67bf",
   "tr": "6c21c53065fd",
+  "by": "claude-in-session"
+ },
+ "shop.who.unread": {
+  "en": "dcec3bbdb56e",
+  "tr": "dfb4bff4d3f5",
   "by": "claude-in-session"
  },
  "shop.yourName": {

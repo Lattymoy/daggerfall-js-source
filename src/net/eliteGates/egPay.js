@@ -35,7 +35,8 @@ export const egValkRedoubt = (w) => Number.isSafeInteger(w) && w >= 5 && w % 5 =
 /** How many times Redoubt `w`'s spoils are rolled: twice at a Valkynaz's. Pure. */
 export const egSpoilsPasses = (w) => (egValkRedoubt(w) ? 2 : 1);
 /** The Panoply's odds at Redoubt `w`, 1 in this: 12 at Redoubt 1, 4 from Redoubt 16, 3 at a Valkynaz's. Pure. */
-export const egPanoplyIn = (w) => (egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2)));
+export const egPanoplyIn = (w) =>
+  egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2));
 /** The Legendary's share of the first piece: 20% at Redoubt 1, +3% a Redoubt, to 65% (Redoubt 16). Pure. */
 export const egLegendaryShare = (w) => Math.min(0.65, 0.2 + 0.03 * (Math.max(1, w | 0) - 1));
 
@@ -61,9 +62,20 @@ export const egPanoplyHit = (seed, w, pass) => egPanoplyDraw(seed, pass) * egPan
 
 /** The embers Redoubt `w` pays: 1 + floor(R/10) at a Valkynaz's, and 1 when it is the account's first of it this season.
  *  Pure. */
-export const egEmbersOf = (w, firstThisSeason) => (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + (firstThisSeason ? 1 : 0);
+export const egEmbersOf = (w, firstThisSeason) =>
+  (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + (firstThisSeason ? 1 : 0);
 
 /** THE BATTLEMAGE'S PANOPLY's nine pieces (section 19; systems/aetheric.js PANOPLY_SET_PIECES holds their records, in
  *  Sigil-Sets.md's SET_PLACES order): each record's id, `panoply-<key>` - the account service's sink sells by it. */
-export const EG_PANOPLY_KEYS = Object.freeze(['warhelm', 'right-pauldron', 'left-pauldron', 'cuirass', 'gauntlets', 'greaves', 'boots', 'shield', 'saber']);
+export const EG_PANOPLY_KEYS = Object.freeze([
+  'warhelm',
+  'right-pauldron',
+  'left-pauldron',
+  'cuirass',
+  'gauntlets',
+  'greaves',
+  'boots',
+  'shield',
+  'saber',
+]);
 export const EG_PANOPLY_IDS = Object.freeze(EG_PANOPLY_KEYS.map((k) => `panoply-${k}`));

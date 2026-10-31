@@ -21,14 +21,33 @@
 // online realm's (the decorations are the calendar's, world/witchesDecor.js).
 //
 // Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
-import { accountFestival, equipTitle, equipAura, equipIcon, adoptIdentity, storedSession, serviceBase, readAccount, accountRefusalText } from '../../net/accountClient.js';
+import {
+  accountFestival,
+  equipTitle,
+  equipAura,
+  equipIcon,
+  adoptIdentity,
+  storedSession,
+  serviceBase,
+  readAccount,
+  accountRefusalText,
+} from '../../net/accountClient.js';
 import { appStorage } from '../appStorage.js';
 import { registerPlayerKillListener } from '../playerKills.js';
 import { hearActs, ACT_KINDS, ACT_NOT_FOUND } from '../questlines/qlActs.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
-import { festivalOpen, isFindSource, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE, FIND_CAKES_PER_DAY } from '../../net/festivalLaw.js';
-import { utcDay } from '../../net/marksLaw.js';   // CAKE-CAP-SAID: the service's own day (server-account/src/festival.js)
+import {
+  festivalOpen,
+  isFindSource,
+  wareById,
+  accountWare,
+  bowlWare,
+  festivalWaresHeld,
+  SALE_RID_RE,
+  FIND_CAKES_PER_DAY,
+} from '../../net/festivalLaw.js';
+import { utcDay } from '../../net/marksLaw.js'; // CAKE-CAP-SAID: the service's own day (server-account/src/festival.js)
 import { createAskRest } from '../../net/askRest.js';
 import { restackSoulCakes, restackHearthOfferings, isHearthOffering } from './soulCake.js';
 import { foeFindSource } from './festivalFoes.js';
@@ -40,21 +59,50 @@ import { addItem } from '../inventory.js';
 /** The kill listener's and the act hearer's name. */
 export const FESTIVAL_FIND = 'festival-find';
 
-const NO_DOORS = Object.freeze({ online: () => false, entity: () => null, say: (/** @type {string} */ _l) => {}, selfId: () => null, saved: () => {}, room: () => null, nowMs: () => Date.now() });
+const NO_DOORS = Object.freeze({
+  online: () => false,
+  entity: () => null,
+  say: (/** @type {string} */ _l) => {},
+  selfId: () => null,
+  saved: () => {},
+  room: () => null,
+  nowMs: () => Date.now(),
+});
 /** @type {any} */
 let _doors = NO_DOORS;
 /** @type {any} */
 let _api = null;
 /** @typedef {{ cakes: number|null, bowls: number|null, wares: string[], given: number|null, taken: number|null, offerings: any[], open: boolean|null, today: number|null, todayDay: number|null, fullDay: number|null }} FestivalState */
 /** What no answer has said: nothing known - every count null (unknown, never a known nought), nothing held or standing. */
-const UNHEARD = Object.freeze({ cakes: null, bowls: null, wares: [], given: null, taken: null, offerings: [], open: null, today: null, todayDay: null, fullDay: null });
+const UNHEARD = Object.freeze({
+  cakes: null,
+  bowls: null,
+  wares: [],
+  given: null,
+  taken: null,
+  offerings: [],
+  open: null,
+  today: null,
+  todayDay: null,
+  fullDay: null,
+});
 /** The account's festival as the service last said it: its cakes and bowls, its wares, given and taken, its own offerings
  *  standing, and whether the festival is open for it - and the account it was said for (`_stateOf`): another signed in
  *  hears nothing of it (AUDIT WITCH1 G2). */
-let _state = /** @type {FestivalState} */ (UNHEARD), _stateOf = /** @type {string|null} */ (null);
+let _state = /** @type {FestivalState} */ (UNHEARD),
+  _stateOf = /** @type {string|null} */ (null);
 const _hear = new Set();
 let _version = 0;
-const changed = () => { _version++; for (const fn of _hear) { try { fn(); } catch { /* a listener's throw is not ours */ } } };
+const changed = () => {
+  _version++;
+  for (const fn of _hear) {
+    try {
+      fn();
+    } catch {
+      /* a listener's throw is not ours */
+    }
+  }
+};
 /** AUDIT PASS 2 (the festival's twin): the page's rest after the service said shut or refused a find - the Battle Pass's
  *  rule (net/askRest.js). A shut word ends with its rest and is read again, never kept for the page. */
 const _rest = createAskRest({ nowMs: () => _doors.nowMs(), account: () => festivalAccount() });
@@ -65,7 +113,13 @@ const _rest = createAskRest({ nowMs: () => _doors.nowMs(), account: () => festiv
  *  unbinds. Answers the door to the service (or null). */
 export function bindFestival(doors = null) {
   _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
-  _api = doors ? (doors.api ?? accountFestival({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
+  _api = doors
+    ? (doors.api ??
+      accountFestival({
+        fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i),
+        storage: appStorage(),
+      }))
+    : null;
   _rest.reset();
   if (doors) refreshFestival().catch(() => {});
   return _api;
@@ -73,7 +127,12 @@ export function bindFestival(doors = null) {
 /** The doors bound now (the host module and the window read them). */
 export const festivalDoors = () => _doors;
 /** A listener told whenever the account's festival changes; answers its unregistering. */
-export function hearFestival(/** @type {() => void} */ fn) { _hear.add(fn); return () => { _hear.delete(fn); }; }
+export function hearFestival(/** @type {() => void} */ fn) {
+  _hear.add(fn);
+  return () => {
+    _hear.delete(fn);
+  };
+}
 export const festivalVersion = () => _version;
 /** The account's festival as last heard. */
 export const festivalState = () => (_stateOf === festivalAccount() ? _state : UNHEARD);
@@ -95,13 +154,17 @@ export const festivalAccount = () => _api?.me?.() ?? storedSession(appStorage())
 /** Whether this page plays the festival now: bound, online, a registered account, inside its days, open for it. */
 export const festivalLive = () => festivalShut() == null;
 /** A refusal's line: the festival's own words, else the account service's (a session signed out, a ban, its fault). */
-const refusalText = (/** @type {unknown} */ code) => (isFestivalRefusal(code) || typeof code !== 'string' ? festivalRefusalText(code) : accountRefusalText(code));
+const refusalText = (/** @type {unknown} */ code) =>
+  isFestivalRefusal(code) || typeof code !== 'string' ? festivalRefusalText(code) : accountRefusalText(code);
 
 /** Lay an answer's counts on the state and the pack: `cakes` and `bowls` the account's, the pack's stacks their faces. */
 function learn(/** @type {any} */ d) {
   if (!d || typeof d !== 'object') return;
   const who = festivalAccount();
-  if (who !== _stateOf) { _state = UNHEARD; _stateOf = who; }
+  if (who !== _stateOf) {
+    _state = UNHEARD;
+    _stateOf = who;
+  }
   let moved = false;
   const items = _doors.entity()?.items;
   if (Number.isSafeInteger(d.cakes) && d.cakes >= 0) {
@@ -113,17 +176,36 @@ function learn(/** @type {any} */ d) {
   }
   if (Number.isSafeInteger(d.bowls) && d.bowls >= 0) {
     _state = { ..._state, bowls: d.bowls };
-    if (Array.isArray(items)) restackHearthOfferings(items, d.bowls);   // OVERLOAD-EASE: as the cakes
+    if (Array.isArray(items)) restackHearthOfferings(items, d.bowls); // OVERLOAD-EASE: as the cakes
     moved = true;
   }
-  if (Array.isArray(d.wares)) { _state = { ..._state, wares: festivalWaresHeld(d.wares.join(' ')) }; moved = true; }
-  for (const k of ['given', 'taken']) if (Number.isSafeInteger(d[k])) { _state = { ..._state, [k]: d[k] }; moved = true; }
-  if (Array.isArray(d.offerings)) { _state = { ..._state, offerings: d.offerings }; moved = true; }
-  if (typeof d.open === 'boolean') { _state = { ..._state, open: d.open }; moved = true; }
+  if (Array.isArray(d.wares)) {
+    _state = { ..._state, wares: festivalWaresHeld(d.wares.join(' ')) };
+    moved = true;
+  }
+  for (const k of ['given', 'taken'])
+    if (Number.isSafeInteger(d[k])) {
+      _state = { ..._state, [k]: d[k] };
+      moved = true;
+    }
+  if (Array.isArray(d.offerings)) {
+    _state = { ..._state, offerings: d.offerings };
+    moved = true;
+  }
+  if (typeof d.open === 'boolean') {
+    _state = { ..._state, open: d.open };
+    moved = true;
+  }
   // CAKE-CAP-SAID: the day's finds as the service counts them (`today`, the UTC day it was said in), and the day it said
   // they are all found (a find's `capped: true`, or the refusal once the day's asks are spent)
-  if (Number.isSafeInteger(d.today) && d.today >= 0) { _state = { ..._state, today: d.today, todayDay: findDay() }; moved = true; }
-  if (d.capped === true || d.error === 'capped') { _state = { ..._state, fullDay: findDay() }; moved = true; }
+  if (Number.isSafeInteger(d.today) && d.today >= 0) {
+    _state = { ..._state, today: d.today, todayDay: findDay() };
+    moved = true;
+  }
+  if (d.capped === true || d.error === 'capped') {
+    _state = { ..._state, fullDay: findDay() };
+    moved = true;
+  }
   if (moved) changed();
 }
 
@@ -135,9 +217,15 @@ const findDay = () => utcDay(festivalNowMs() / 1000);
  * most (FIND_CAKES_PER_DAY), whether the service has said they are all found, and when the next day opens.
  */
 export function festivalFindsToday() {
-  const s = festivalState(), day = findDay();
+  const s = festivalState(),
+    day = findDay();
   const found = s.today == null ? null : s.todayDay === day ? s.today : 0;
-  return { found, max: FIND_CAKES_PER_DAY, full: s.fullDay === day || (found ?? 0) >= FIND_CAKES_PER_DAY, resetMs: (day + 1) * 86_400_000 };
+  return {
+    found,
+    max: FIND_CAKES_PER_DAY,
+    full: s.fullDay === day || (found ?? 0) >= FIND_CAKES_PER_DAY,
+    resetMs: (day + 1) * 86_400_000,
+  };
 }
 /** The account and day the day's end was last said for: said once a day, an account. */
 let _fullSaid = /** @type {string|null} */ (null);
@@ -172,7 +260,8 @@ let _chain = Promise.resolve();
 /** @type {WeakSet<object>} */
 const _asked = new WeakSet();
 /** A kill that never pays (Renown's own rule, net/renownTracker.js neverPays): the city watch, and my own ally. */
-const neverPays = (/** @type {any} */ e) => e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';
+const neverPays = (/** @type {any} */ e) =>
+  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';
 /**
  * ASK FOR A FIND: `source` (festivalLaw FIND_SOURCES), queued behind the asks before it; the cakes it gives land in the
  * pack (the count's face). Answers a promise of the cakes found.
@@ -181,15 +270,21 @@ const neverPays = (/** @type {any} */ e) => e?.mobileType === KNIGHT_CITY_WATCH 
 export function askFind(source) {
   if (!isFindSource(source) || !festivalLive() || _rest.resting()) return Promise.resolve(0);
   const run = async () => {
-    if (_rest.resting()) return 0;   // a refusal ahead of it in the queue stood the page back
+    if (_rest.resting()) return 0; // a refusal ahead of it in the queue stood the page back
     // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer
     // and a write for nothing, every kill - and the player is told why (once a day)
-    if (festivalFindsToday().full) { sayDayFull(); return 0; }
-    if (_rest.due(festivalState().open) && !(await readFestival())) { _rest.unheard(); return 0; }   // a shut word read again
+    if (festivalFindsToday().full) {
+      sayDayFull();
+      return 0;
+    }
+    if (_rest.due(festivalState().open) && !(await readFestival())) {
+      _rest.unheard();
+      return 0;
+    } // a shut word read again
     if (festivalState().open === false) return 0;
     const r = await _api.find(source).catch(() => null);
     if (!r?.ok) _rest.refused(r?.error);
-    const d = r?.ok ? r.data : r;   // a refusal (`capped`) carries the count too
+    const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too
     const found = r?.ok && Number.isSafeInteger(d?.found) ? d.found : 0;
     learn(d);
     if (found > 0) _doors.say(cakesFoundText(found));
@@ -201,7 +296,9 @@ export function askFind(source) {
   return p;
 }
 /** A DFU quest of mine done (scenes/quest/questBridge.js onQuestEnded): a find, as the world's events give. */
-export function festivalQuestEnded(/** @type {any} */ q) { if (q?.questSuccess) askFind('world'); }
+export function festivalQuestEnded(/** @type {any} */ q) {
+  if (q?.questSuccess) askFind('world');
+}
 /** A bounty of mine paid (scenes/bountyHost.js): the same. */
 export const festivalBountyPaid = () => askFind('world');
 
@@ -222,7 +319,12 @@ let _actTurn = /** @type {Set<string>|null} */ (null);
 hearActs(FESTIVAL_FIND, (/** @type {string} */ kind) => {
   const g = ACT_KINDS[/** @type {keyof typeof ACT_KINDS} */ (kind)];
   if (!g || ACT_NOT_FOUND.includes(kind)) return;
-  if (!_actTurn) { _actTurn = new Set(); Promise.resolve().then(() => { _actTurn = null; }); }   // the turn over, the next deed its own
+  if (!_actTurn) {
+    _actTurn = new Set();
+    Promise.resolve().then(() => {
+      _actTurn = null;
+    });
+  } // the turn over, the next deed its own
   if (_actTurn.has(g)) return;
   _actTurn.add(g);
   askFind(g);
@@ -237,12 +339,22 @@ export const FESTIVAL_SAVE_VENDOR = 'WitchesFestival';
 /** The refusals that say a sale never happened (server-account/src/festival.js buyFestival) - the only answers that let a
  *  kept sale go. Every other (no answer, a session signed out, a ban, the service's fault) keeps it to ask again. */
 export const SALE_FINAL = Object.freeze(['ware', 'rid', 'owned', 'cakes', 'closed', 'rate']);
-const validPending = (/** @type {any} */ r) => (r && typeof r.rid === 'string' && SALE_RID_RE.test(r.rid) && wareById(r.ware) && typeof r.account === 'string' && r.account
-  ? { rid: r.rid, ware: r.ware, account: r.account } : null);
+const validPending = (/** @type {any} */ r) =>
+  r &&
+  typeof r.rid === 'string' &&
+  SALE_RID_RE.test(r.rid) &&
+  wareById(r.ware) &&
+  typeof r.account === 'string' &&
+  r.account
+    ? { rid: r.rid, ware: r.ware, account: r.account }
+    : null;
 registerModSaveData(FESTIVAL_SAVE_VENDOR, {
   newSaveData: () => ({ pending: null }),
   getSaveData: () => ({ pending: _pending ? { ..._pending } : null }),
-  restoreSaveData: (/** @type {any} */ r) => { _pending = validPending(r?.pending); _asking = null; },
+  restoreSaveData: (/** @type {any} */ r) => {
+    _pending = validPending(r?.pending);
+    _asking = null;
+  },
 });
 export const pendingSale = () => _pending;
 /** Twelve hex digits for a sale's id. */
@@ -256,14 +368,21 @@ export function saleRid(rand = Math.random) {
  *  it are bound, and it is never gold or another player's. */
 export function wareItem(/** @type {any} */ w) {
   if (!w || accountWare(w) || bowlWare(w)) return null;
-  if (w.kind === 'piece') { const it = wyrdPieceById(w.key); if (it) it.bound = true; return it; }
+  if (w.kind === 'piece') {
+    const it = wyrdPieceById(w.key);
+    if (it) it.bound = true;
+    return it;
+  }
   if (w.kind === 'card') return mintIliacCard(w.key);
   return null;
 }
 /** A sale answered: while it is still the one pending, its ware minted into the pack (once) and let go; the counts and the
  *  wares learned either way. */
 function landSale(/** @type {object} */ sale, /** @type {any} */ d) {
-  if (_pending !== sale) { learn(d); return wareById(d?.ware); }
+  if (_pending !== sale) {
+    learn(d);
+    return wareById(d?.ware);
+  }
   _pending = null;
   const w = wareById(d?.ware);
   const items = _doors.entity()?.items;
@@ -280,14 +399,19 @@ function askSale(/** @type {{ rid: string, ware: string, account: string }} */ s
     const r = await _api.buy(sale.ware, sale.rid).catch(() => null);
     if (r?.ok) landSale(sale, r.data);
     else if (r && SALE_FINAL.includes(r.error)) {
-      if (_pending === sale) { _pending = null; _doors.saved(); }
+      if (_pending === sale) {
+        _pending = null;
+        _doors.saved();
+      }
       learn(r);
     }
     return r;
   })();
   const asking = { sale, p };
   _asking = asking;
-  p.finally(() => { if (_asking === asking) _asking = null; }).catch(() => {});
+  p.finally(() => {
+    if (_asking === asking) _asking = null;
+  }).catch(() => {});
   return p;
 }
 /**
@@ -301,13 +425,16 @@ export async function buyWare(wareId) {
   const shut = festivalShut();
   if (shut) return { ok: false, text: festivalRefusalText(shut) };
   if (_pending) await resumeSale();
-  if (_pending) return { ok: false, text: festivalRefusalText('offline') };   // the sale before it is still unanswered
+  if (_pending) return { ok: false, text: festivalRefusalText('offline') }; // the sale before it is still unanswered
   const sale = { rid: saleRid(), ware: w.id, account: _api.me() ?? '' };
   _pending = sale;
   _doors.saved();
   const r = await askSale(sale);
   if (r?.ok) return { ok: true, text: '' };
-  return { ok: false, text: !r || !SALE_FINAL.includes(r.error) ? festivalRefusalText('offline') : refusalText(r.error) };   // kept: asked again by its id
+  return {
+    ok: false,
+    text: !r || !SALE_FINAL.includes(r.error) ? festivalRefusalText('offline') : refusalText(r.error),
+  }; // kept: asked again by its id
 }
 /** A pending sale asked again by its own id, under the account that made it: answered `repeat` (it landed), or as a sale
  *  now, or refused for good (let go). Another account signed in leaves it kept for its own. */
@@ -319,18 +446,36 @@ async function resumeSale() {
 // ═══ THE WARDROBE ════════════════════════════════════════════════════════════════════════════════════════════════════
 /** What the account holds and wears, as the service last said it (its wardrobe - server-account/src/titles.js
  *  wardrobeOf): the titles, auras and icons held, and the one of each worn. Null until read. */
-let _wardrobe = /** @type {{ title: string|null, aura: string|null, icon: string|null, titles: string[], auras: string[], icons: string[] } | null} */ (null);
+let _wardrobe =
+  /** @type {{ title: string|null, aura: string|null, icon: string|null, titles: string[], auras: string[], icons: string[] } | null} */ (
+    null
+  );
 export const festivalWardrobe = () => _wardrobe;
 const list = (/** @type {unknown} */ v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
 function adoptWardrobe(/** @type {any} */ w) {
   if (!w || typeof w !== 'object') return;
-  _wardrobe = { title: w.title ?? null, aura: w.aura ?? null, icon: w.icon ?? null, titles: list(w.titles), auras: list(w.auras), icons: list(w.icons) };
+  _wardrobe = {
+    title: w.title ?? null,
+    aura: w.aura ?? null,
+    icon: w.icon ?? null,
+    titles: list(w.titles),
+    auras: list(w.auras),
+    icons: list(w.icons),
+  };
   changed();
 }
 /** The account service's door as the stored session opens it, or null signed out. */
 function accountIo() {
-  const storage = appStorage(), s = storedSession(storage);
-  return s ? { fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), base: serviceBase(storage), secret: s.secret, storage } : null;
+  const storage = appStorage(),
+    s = storedSession(storage);
+  return s
+    ? {
+        fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i),
+        base: serviceBase(storage),
+        secret: s.secret,
+        storage,
+      }
+    : null;
 }
 /** Ask for the account's wardrobe (the window asks it as it opens). Answers whether it was heard. */
 export async function loadWardrobe() {
@@ -350,13 +495,32 @@ export async function wearAccount(kind, key, on = true) {
   const io = accountIo();
   if (!io) return { ok: false, text: festivalRefusalText('offline') };
   const want = on ? key : null;
-  const r = await (kind === 'title' ? equipTitle(io, want) : kind === 'aura' ? equipAura(io, want) : equipIcon(io, want)).catch(() => null);
-  if (!r?.ok) return { ok: false, text: r?.error === 'not-held' ? festivalRefusalText('held') : refusalText(r?.error ?? 'offline') };
+  const r = await (
+    kind === 'title' ? equipTitle(io, want) : kind === 'aura' ? equipAura(io, want) : equipIcon(io, want)
+  ).catch(() => null);
+  if (!r?.ok)
+    return {
+      ok: false,
+      text: r?.error === 'not-held' ? festivalRefusalText('held') : refusalText(r?.error ?? 'offline'),
+    };
   adoptWardrobe(r.data);
   const w = _wardrobe;
-  adoptIdentity(io.storage, { glyphs: r.data?.glyphs, glyphsOff: r.data?.glyphsOff, aura: w?.aura ?? null, icon: w?.icon ?? null, secret: io.secret });
+  adoptIdentity(io.storage, {
+    glyphs: r.data?.glyphs,
+    glyphsOff: r.data?.glyphsOff,
+    aura: w?.aura ?? null,
+    icon: w?.icon ?? null,
+    secret: io.secret,
+  });
   const room = _doors.room();
-  room?.adoptIdentity?.({ title: w?.title ?? null, ts: (w?.title ?? null) === (room.title ?? null) ? room.ts : null, glyphs: room.glyphs, level: room.lv, aura: w?.aura ?? null, icon: w?.icon ?? null });   // a seat title's claim kept while its title is
+  room?.adoptIdentity?.({
+    title: w?.title ?? null,
+    ts: (w?.title ?? null) === (room.title ?? null) ? room.ts : null,
+    glyphs: room.glyphs,
+    level: room.lv,
+    aura: w?.aura ?? null,
+    icon: w?.icon ?? null,
+  }); // a seat title's claim kept while its title is
   return { ok: true, text: '' };
 }
 /** WEAR a ware the account bought (festivalLaw FESTIVAL_WARES: a title, an aura, an icon). */
@@ -371,19 +535,21 @@ export async function wearWare(/** @type {string} */ wareId, on = true) {
  *  cakes, and the bowls: set out, one fewer in the pack; taken in, one more). A take-in goes on whatever the festival's
  *  state (a bowl's cakes are never lost to its end). Answers `{ ok, data, text, error? }`. */
 export async function offeringMove(/** @type {'set'|'fill'|'takeIn'|'take'} */ move, /** @type {any} */ at) {
-  if (!_api || !_doors.online()) return { ok: false, data: null, text: festivalRefusalText('offline'), error: 'offline' };
+  if (!_api || !_doors.online())
+    return { ok: false, data: null, text: festivalRefusalText('offline'), error: 'offline' };
   const shut = move === 'takeIn' ? null : festivalShut();
   if (shut) return { ok: false, data: null, text: festivalRefusalText(shut), error: shut };
   const items = _doors.entity()?.items;
-  if (move === 'set' && !(Array.isArray(items) && items.some(isHearthOffering))) return { ok: false, data: null, text: festivalRefusalText('item'), error: 'item' };
+  if (move === 'set' && !(Array.isArray(items) && items.some(isHearthOffering)))
+    return { ok: false, data: null, text: festivalRefusalText('item'), error: 'item' };
   const r = await _api[move](at).catch(() => null);
   if (!r?.ok) {
-    learn(r);   // a refusal's counts (`cakes`, `bowls`)
-    const code = move === 'take' && r?.error === 'none' ? 'gone' : r?.error ?? 'offline';   // a take's `none`: taken in since
+    learn(r); // a refusal's counts (`cakes`, `bowls`)
+    const code = move === 'take' && r?.error === 'none' ? 'gone' : (r?.error ?? 'offline'); // a take's `none`: taken in since
     return { ok: false, data: null, text: refusalText(code), error: code };
   }
   learn(r.data);
-  if (move !== 'take') refreshFestival().catch(() => {});   // the account's own offerings, as they stand now
+  if (move !== 'take') refreshFestival().catch(() => {}); // the account's own offerings, as they stand now
   _doors.saved();
   return { ok: true, data: r.data, text: '' };
 }
@@ -391,12 +557,22 @@ export async function offeringMove(/** @type {'set'|'fill'|'takeIn'|'take'} */ m
 export async function townOfferings(/** @type {number} */ mapId) {
   if (!_api || !_doors.online()) return null;
   const r = await _api.town(mapId).catch(() => null);
-  return r?.ok ? r.data : null;   // AUDIT PASS 2: its `open` is the town's view (its days too), never the switch's word
+  return r?.ok ? r.data : null; // AUDIT PASS 2: its `open` is the town's view (its days too), never the switch's word
 }
 
 /** Tests only. */
 export function _resetFestivalClientForTests() {
-  _doors = NO_DOORS; _api = null; _pending = null; _asking = null; _wardrobe = null; _chain = Promise.resolve(); _actTurn = null;
-  _state = UNHEARD; _stateOf = null; _fullSaid = null;
-  _hear.clear(); _version = 0; _rest.reset();
+  _doors = NO_DOORS;
+  _api = null;
+  _pending = null;
+  _asking = null;
+  _wardrobe = null;
+  _chain = Promise.resolve();
+  _actTurn = null;
+  _state = UNHEARD;
+  _stateOf = null;
+  _fullSaid = null;
+  _hear.clear();
+  _version = 0;
+  _rest.reset();
 }

@@ -132,8 +132,8 @@
 import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
 import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect, calcAvgMaxHeight } from './terrain/terrainTiles.js';
 import { townMeetsAbout, applyTownMeets, meetLiftAt } from './terrain/townMeet.js';   // ACROSS-EDGE: the ground meets a town across its pixel's edge
-import { blendShapedBefore } from './terrain/townBlendBefore.js';
-import { standSettlementGround } from './settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's carve, for a record's move   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
+import { blendShapedBefore } from './terrain/townBlendBefore.js';   // FB1028 TOWN-GROUND: TS2's blend before it, for a record's move alone
+import { standSettlementGround } from './settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's carve, for a record's move
 import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';

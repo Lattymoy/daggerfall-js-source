@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WB11-W1-a-host-stand-in-naming-nobody",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (i !== null) e.hostI = i;\n",
-    "new": "",
+    "old": "  if (i !== null) e.hostI = i;\n  return e;",
+    "new": "  return e;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WB11-W1-a-crystal-stand-in-naming-nobody",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (c !== null) e.crystalC = c;\n",
-    "new": "",
+    "old": "  if (c !== null) e.crystalC = c;\n  return e;",
+    "new": "  return e;",
     "tests": [
       "test/net/gate/audit_wb11.test.js",
       "test/net/gate/wb9c_gate_reckoning.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "AUDIT-WB11-W1-every-stand-in-to-him",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    if (target?.hostI != null) return spellOnHost(record, target.hostI);\n",
-    "new": "",
+    "old": "    if (target?.hostI != null) return spellOnHost(record, target.hostI);\n    if (target?.crystalC != null) return spellOnCrystal(record, target.crystalC);",
+    "new": "    if (target?.crystalC != null) return spellOnCrystal(record, target.crystalC);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-WB11-W3-a-token-a-body",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (seq != null && p.bq === seq &&",
-    "new": "  if (false && p.bq === seq &&",
+    "old": "    seq != null &&",
+    "new": "    false &&",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-WB11-W3-a-body-met-twice-rides",
     "file": "src/net/gate/gateBrain.js",
-    "old": " && !p.bqWho.includes(who)) {",
-    "new": " && true) {",
+    "old": "    !p.bqWho.includes(who)",
+    "new": "    true",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-WB11-W3-no-bound-on-the-bodies",
     "file": "src/net/gate/gateBrain.js",
-    "old": "p.bqWho.length < BLOW_BODIES_MAX",
-    "new": "p.bqWho.length < Infinity",
+    "old": "    p.bqWho.length < BLOW_BODIES_MAX &&",
+    "new": "    p.bqWho.length < Infinity &&",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-WB11-W3-a-late-frame-rides",
     "file": "src/net/gate/gateBrain.js",
-    "old": "now - (p.bqAt ?? -Infinity) <= BLOW_GROUP_MS",
-    "new": "now - (p.bqAt ?? -Infinity) <= Infinity",
+    "old": "    now - (p.bqAt ?? -Infinity) <= BLOW_GROUP_MS &&",
+    "new": "    now - (p.bqAt ?? -Infinity) <= Infinity &&",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "AUDIT-WB11-B1-the-sweep-unchecked",
     "file": "src/net/gate/gateBrain.js",
-    "old": "k < RIM_SWEEP; k++) take(at(",
-    "new": "k < RIM_SWEEP; k++) spots.push(at(",
+    "old": "    for (let k = 0; spots.length < n && k < RIM_SWEEP; k++) take(at(a0 + ((k + 0.5) / RIM_SWEEP - 0.5) * 2 * half));",
+    "new": "    for (let k = 0; spots.length < n && k < RIM_SWEEP; k++)\n      spots.push(at(a0 + ((k + 0.5) / RIM_SWEEP - 0.5) * 2 * half));",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "AUDIT-WB11-B1-the-clock-spent-on-a-closed-rim",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      if (n <= 0 || spots.length) { H.harryAt = now + HARRY_EVERY_MS;",
-    "new": "      if (true) { H.harryAt = now + HARRY_EVERY_MS;",
+    "old": "      // AUDIT WB11 B1: a rim with no clear spot holds the wave a beat (it asks again), never raises it beside them\n      if (n <= 0 || spots.length) {",
+    "new": "      // AUDIT WB11 B1: a rim with no clear spot holds the wave a beat (it asks again), never raises it beside them\n      if (true) {",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-WB11-B1-the-arc-alone",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (spots.length < n) sweep(about ?? 0, Math.PI);\n",
-    "new": "",
+    "old": "  if (spots.length < n) sweep(about ?? 0, Math.PI);\n  return spots;",
+    "new": "  return spots;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-WB11-B4-the-fallen-not-counted",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const fighters = bodies.filter((b) => f.players[b.sub]);\n  const n = bearerCountFor(fighters.length), C = hisCourt(f)",
-    "new": "const fighters = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  const n = bearerCountFor(fighters.length), C = hisCourt(f)",
+    "old": "  const fighters = bodies.filter((b) => f.players[b.sub]);",
+    "new": "  const fighters = bodies.filter((b) => !b.dead && f.players[b.sub]);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-WB11-B2-the-crumbling-before-his-word",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    out.push({ k: 'atk', ...atkFrame(f.atk) });\n    // WB11b: and his host",
-    "new": "    hostGone(f, now, out, HOST_GONE.crumbled);\n    out.push({ k: 'atk', ...atkFrame(f.atk) });\n    // WB11b: and his host",
+    "old": "    out.push({ k: 'atk', ...atkFrame(f.atk) });",
+    "new": "    hostGone(f, now, out, HOST_GONE.crumbled);\n    out.push({ k: 'atk', ...atkFrame(f.atk) });",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-WB11-B3-the-rising-says-every-health",
     "file": "src/net/gate/gateBrain.js",
-    "old": "H.hSent = [H.hSent, ...a.map(([i]) => `${i}:${Math.ceil(m)}`)].filter(Boolean).join(',');",
-    "new": "H.hSent = hostHealthKey(H);",
+    "old": "  H.hSent = [H.hSent, ...a.map(([i]) => `${i}:${Math.ceil(m)}`)].filter(Boolean).join(',');",
+    "new": "  H.hSent = hostHealthKey(H);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-WB11-C1-the-imp-on-idle-records",
     "file": "src/world/gate/gateBoss.js",
-    "old": "stateAnims(state, look?.mobile, !!ENEMY_BASICS[look?.mobile]?.hasIdle,",
-    "new": "stateAnims(state, look?.mobile, true,",
+    "old": "  const tab = (state) =>\n    stateAnims(state, look?.mobile, !!ENEMY_BASICS[look?.mobile]?.hasIdle, false, false, true, false, winged);",
+    "new": "  const tab = (state) => stateAnims(state, look?.mobile, true, false, false, true, false, winged);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "AUDIT-WB11-C7-the-seducer-at-a-walker-clock",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const flyer = winged || (look?.hover ?? 0) > 0;",
-    "new": "const flyer = (look?.hover ?? 0) > 0;",
+    "old": "  const flyer = winged || (look?.hover ?? 0) > 0;",
+    "new": "  const flyer = (look?.hover ?? 0) > 0;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-WB11-C5-the-old-wave-kept",
     "file": "src/net/gate/gateLink.js",
-    "old": "const ward = prev?.ward && ads.some((a) => a.k === 2 && prev.ward.is?.includes(a.i)) ? prev.ward : null;",
-    "new": "const ward = prev?.ward ?? null;",
+    "old": "  const ward = prev?.ward && ads.some((a) => a.k === 2 && prev.ward.is?.includes(a.i)) ? prev.ward : null;",
+    "new": "  const ward = prev?.ward ?? null;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-WB11-U1-the-long-tip",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "legion: 'Stop the Atronachs. Break the Ward-Bearers.',",
-    "new": "legion: 'Cut down the Imps off whoever stands far from him, stop each Atronach before it reaches him, and break his Ward-Bearers to break his ward.',",
+    "old": "  legion: 'Stop the Atronachs. Break the Ward-Bearers.', // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)",
+    "new": "  legion:\n    'Cut down the Imps off whoever stands far from him, stop each Atronach before it reaches him, and break his Ward-Bearers to break his ward.', // WB11a (AUDIT WB11 U1: as short as the others - 138 characters made the tallest card, off a landscape phone)",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "AUDIT-WB11-M1-the-line-on-imps",
     "file": "src/net/gate/gateMods.js",
-    "old": "text: 'His Imps, Atronachs and Ward-Bearers fight beside him'",
-    "new": "text: 'His imps, atronachs and ward-bearers fight beside him'",
+    "old": "    text: 'His Imps, Atronachs and Ward-Bearers fight beside him',",
+    "new": "    text: 'His imps, atronachs and ward-bearers fight beside him',",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "AUDIT-WB11-U2-the-novas-gold",
     "file": "src/world/gate/gateBoss.js",
-    "old": "?.nova ?? HOST_PULSE_FIRE;",
-    "new": "?.nova ?? ATTACK_COLORS.nova;",
+    "old": "export const hostPulseColor = (P) => ASPECT_COLORS[P?.aspect?.id]?.nova ?? HOST_PULSE_FIRE; // AUDIT WB11 U2: the Burning's Nova gold was the ward's own - the disc that hurts read as the tether beside it",
+    "new": "export const hostPulseColor = (P) => ASPECT_COLORS[P?.aspect?.id]?.nova ?? ATTACK_COLORS.nova; // AUDIT WB11 U2: the Burning's Nova gold was the ward's own - the disc that hurts read as the tether beside it",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "AUDIT-WB11-D2-no-cap-a-blow",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, left));",
-    "new": "const got = Math.max(0, Math.min(d, p.bucket, left));",
+    "old": "  const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, left));",
+    "new": "  const got = Math.max(0, Math.min(d, p.bucket, left));",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "AUDIT-WB11-D2-no-bucket",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, left));",
-    "new": "const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, left));",
+    "old": "  const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, p.bucket, left));",
+    "new": "  const got = Math.max(0, Math.min(d, HIT_CAP_X * ref, left));",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -386,8 +386,8 @@
   {
     "name": "AUDIT-WB11-D2-sappers-armed-in-a-turn",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (f.phase === 2 && f.court === 1 && !f.pending && !f.queue.length && now >= f.shieldUntil) {",
-    "new": "if (f.phase === 2 && f.court === 1) {",
+    "old": "  if (f.phase === 2 && f.court === 1 && !f.pending && !f.queue.length && now >= f.shieldUntil) {",
+    "new": "  if (f.phase === 2 && f.court === 1) {",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "AUDIT-WB11-D2-dice-rolled-in-every-fight",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!P.legion || f.fell || f.wrath) return;\n  const H = (f.lg ??= newHost());",
-    "new": "  rng(); rng();\n  if (!P.legion || f.fell || f.wrath) return;\n  const H = (f.lg ??= newHost());",
+    "old": "  if (!P.legion || f.fell || f.wrath) return;",
+    "new": "  rng();\n  rng();\n  if (!P.legion || f.fell || f.wrath) return;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-WB11-D7-harriers-uncapped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const n = Math.min(harrierCountFor(here.length), HARRIERS_MAX - H.ads.filter((a) => a.k === HOST.harrier).length);",
-    "new": "const n = harrierCountFor(here.length);",
+    "old": "      const n = Math.min(harrierCountFor(here.length), HARRIERS_MAX - H.ads.filter((a) => a.k === HOST.harrier).length);",
+    "new": "      const n = harrierCountFor(here.length);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "AUDIT-WB11-D7-a-mark-never-kept",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (!mark || now - a.tgAt >= HOST_RETARGET_MS) {",
-    "new": "if (true) {",
+    "old": "  if (!mark || now - a.tgAt >= HOST_RETARGET_MS) {",
+    "new": "  if (true) {",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-WB11-D7-healed-past-his-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "f.hp = Math.min(f.max, f.hp + SAP_HEAL * f.max);",
-    "new": "f.hp = f.hp + SAP_HEAL * f.max;",
+    "old": "      f.hp = Math.min(f.max, f.hp + SAP_HEAL * f.max);",
+    "new": "      f.hp = f.hp + SAP_HEAL * f.max;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "AUDIT-WB11-D7-ah-every-beat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (!H || now - (H.hSentAt ?? 0) < HP_SEND_MS) return;",
-    "new": "if (!H) return;",
+    "old": "  if (!H || now - (H.hSentAt ?? 0) < HP_SEND_MS) return;",
+    "new": "  if (!H) return;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-WB11-D7-the-foot-uncounted",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "host: (n) => `His host: ${n}`,",
-    "new": "host: (n) => 'His host',",
+    "old": "  host: (n) => `His host: ${n}`,",
+    "new": "  host: (n) => 'His host',",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "AUDIT-WB11-D7-a-kind-outrunning-a-runner",
     "file": "src/net/gate/gateBrain.js",
-    "old": "key: 'harrier', r: 0.5, h: 1.5, speed: 5 }",
-    "new": "key: 'harrier', r: 0.5, h: 1.5, speed: 8 }",
+    "old": "  Object.freeze({ id: 0, key: 'harrier', r: 0.5, h: 1.5, speed: 5 }),",
+    "new": "  Object.freeze({ id: 0, key: 'harrier', r: 0.5, h: 1.5, speed: 8 }),",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "AUDIT-WB11-D7-the-bite-too-wide",
     "file": "src/net/gate/gateBrain.js",
-    "old": "recover: 900, r: 2, pct: 0.12, base: 4, el: null }",
-    "new": "recover: 900, r: 4, pct: 0.12, base: 4, el: null }",
+    "old": "    r: 2,",
+    "new": "    r: 4,",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-WB11-D7-sappers-sized-off-one",
     "file": "src/net/gate/gateBrain.js",
-    "old": "hostTeamHpFor(SAPPER_TEAM_S, levels(), spots.length)",
-    "new": "hostTeamHpFor(SAPPER_TEAM_S, levels().slice(0, 1), spots.length)",
+    "old": "          raiseHost(f, HOST.sapper, spots, hostTeamHpFor(SAPPER_TEAM_S, levels(), spots.length), now, out);",
+    "new": "          raiseHost(f, HOST.sapper, spots, hostTeamHpFor(SAPPER_TEAM_S, levels().slice(0, 1), spots.length), now, out);",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js",
       "test/net/gate/audit_wb11.test.js"
@@ -514,8 +514,8 @@
   {
     "name": "AUDIT-WB11-D7-a-stale-landing-struck",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';\n",
-    "new": "",
+    "old": "  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';\n  return Number.isFinite(px) && Number.isFinite(pz) && Math.hypot(px - atk.x, pz - atk.z) <= B.r ? 'hit' : 'miss';",
+    "new": "  return Number.isFinite(px) && Number.isFinite(pz) && Math.hypot(px - atk.x, pz - atk.z) <= B.r ? 'hit' : 'miss';",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]

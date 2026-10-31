@@ -3,8 +3,16 @@
 // please!"; bible/06-Systems/Bounty-Boards.md section 12): THE HUNT'S LAW, both ends'. A paid bounty is reported to the
 // account service and kept in its ledger; the hunter's rank is read off a character's clears, and its rewards are
 // sideways - titles, a weekly named beast, a trophy, a little seat influence - never gear. Pure: no clock, no DOM.
-import { BOUNTY_TIERS, BOUNTY_FULL_PURSE, BOUNTY_LEVEL_MAX, bountyTierIndex, parseBountyId, bountyHash, MINUTES_PER_DAY } from '../systems/bounty/bountyBoard.js';
-import { sharedClassicMinutes, ONLINE_MINUTES_PER_MS, worldPixelOk } from './wire.js';   // SHIP AUDIT: a mark's town the world's pixel, as LAIR-WORLD's board notices
+import {
+  BOUNTY_TIERS,
+  BOUNTY_FULL_PURSE,
+  BOUNTY_LEVEL_MAX,
+  bountyTierIndex,
+  parseBountyId,
+  bountyHash,
+  MINUTES_PER_DAY,
+} from '../systems/bounty/bountyBoard.js';
+import { sharedClassicMinutes, ONLINE_MINUTES_PER_MS, worldPixelOk } from './wire.js'; // SHIP AUDIT: a mark's town the world's pixel, as LAIR-WORLD's board notices
 import { seatWeekOf } from './townSeatLaw.js';
 import { PROFESSIONS } from './professionLaw.js';
 
@@ -77,7 +85,14 @@ export function huntClearOf(id, nowMs) {
   const week = huntWeekAt(nowMs);
   if (m.week < week - 1) return { why: 'late' };
   if (m.week > week) return { why: 'early' };
-  return { kind: 'mark', id: String(id), key: `m.${m.week}`, level: m.level, tier: bountyTierIndex(m.level), week: m.week };
+  return {
+    kind: 'mark',
+    id: String(id),
+    key: `m.${m.week}`,
+    level: m.level,
+    tier: bountyTierIndex(m.level),
+    week: m.week,
+  };
 }
 
 /** HOW FAR A CLEAR'S LEVEL MAY STAND FROM THE CHARACTER'S: a level the realm trusts (`seen` - realm_characters
@@ -93,8 +108,22 @@ export function huntTierFits(level, seen) {
 
 /** The marks' given names - a beast is called "<name> the <beast>". The port's own, never translated (names). */
 export const HUNT_MARK_NAMES = Object.freeze([
-  'Grimtooth', 'Ashmaw', 'Scarneck', 'Bloodhide', 'Gorefang', 'Hollowgut', 'Nightclaw', 'Rotmaw',
-  'Stonehide', 'Greymaw', 'Mudjaw', 'Ironback', 'Blackmane', 'Hookclaw', 'Soot', 'Rimefang',
+  'Grimtooth',
+  'Ashmaw',
+  'Scarneck',
+  'Bloodhide',
+  'Gorefang',
+  'Hollowgut',
+  'Nightclaw',
+  'Rotmaw',
+  'Stonehide',
+  'Greymaw',
+  'Mudjaw',
+  'Ironback',
+  'Blackmane',
+  'Hookclaw',
+  'Soot',
+  'Rimefang',
 ]);
 const SALT = Object.freeze({ beast: 0x6d1, name: 0x6d2, site: 0x6d3, traits: 0x6d4 });
 /** The week's named beast of a level's tier: `{ tier, foe, name }` - one a tier a week, the same at every board. */
@@ -102,14 +131,16 @@ export function huntMarkOf(week, level) {
   const tier = bountyTierIndex(level);
   const foes = BOUNTY_TIERS[tier].foes;
   return {
-    tier, foe: foes[bountyHash(week, tier, SALT.beast) % foes.length],
+    tier,
+    foe: foes[bountyHash(week, tier, SALT.beast) % foes.length],
     name: HUNT_MARK_NAMES[bountyHash(week, tier, SALT.name) % HUNT_MARK_NAMES.length],
   };
 }
 /** The seed its traits are drawn from, the same on every client (systems/bossTraits.js rollBossTraits). */
 export const huntMarkSeed = (week, tier) => bountyHash(week, tier, SALT.traits);
 /** Where a board's mark lairs: one of the board's own open-ground sites (bountySites), the week's - or null. */
-export const huntMarkSite = (week, px, py, sites) => (Array.isArray(sites) && sites.length ? sites[bountyHash(week, px, py, SALT.site) % sites.length] : null);
+export const huntMarkSite = (week, px, py, sites) =>
+  Array.isArray(sites) && sites.length ? sites[bountyHash(week, px, py, SALT.site) % sites.length] : null;
 /** What a mark pays: three full packs' purse of its tier (BOUNTY-PURSE's), and a trophy - never a piece of kit. */
 export const HUNT_MARK_PURSE_X = 3;
 export const HUNT_MARK_TOP_PURSE = 200;
@@ -121,22 +152,52 @@ export const huntMarkGold = (level) => {
 // ─── THE TITLES (MARKS OF MASTERY) ───────────────────────────────────
 
 /** The hunt's titles: the account's board clears, every character's together. */
-export const HUNT_TITLES = Object.freeze([['bloodhound', 25], ['beastbane', 100], ['grandhuntsman', 300], ['huntlegend', 750]].map((r) => Object.freeze(r)));
+export const HUNT_TITLES = Object.freeze(
+  [
+    ['bloodhound', 25],
+    ['beastbane', 100],
+    ['grandhuntsman', 300],
+    ['huntlegend', 750],
+  ].map((r) => Object.freeze(r)),
+);
 /** A title each profession's Master holds (rank 100 on a living character), in the professions' order. */
 export const MASTERY_TITLES = Object.freeze(Object.fromEntries(PROFESSIONS.map((p) => [p.id, `master${p.id}`])));
 /** Sailing's: the serpents an account helped slay at sea - the relay's own receipts (server-account/src/serpents.js). */
-export const SEA_TITLES = Object.freeze([['serpenthunter', 10], ['deepbane', 40]].map((r) => Object.freeze(r)));
+export const SEA_TITLES = Object.freeze(
+  [
+    ['serpenthunter', 10],
+    ['deepbane', 40],
+  ].map((r) => Object.freeze(r)),
+);
 /** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): a tamed Dwarven Dragon's -
  *  Wyrm Rider while the account holds a brass one, Aether Rider an Aetherbright (server-account dragon_mounts), and each
  *  First for the earliest tame of its look. The owner: "DONT COUNT ADMINS" - a developer's tame is never a First. */
-export const DRAGON_TITLES = Object.freeze({ rider: 'wyrmrider', first: 'firstwyrmrider', aether: 'aetherrider', firstAether: 'firstaetherrider' });
+export const DRAGON_TITLES = Object.freeze({
+  rider: 'wyrmrider',
+  first: 'firstwyrmrider',
+  aether: 'aetherrider',
+  firstAether: 'firstaetherrider',
+});
 /** Every title of this law, in TITLES' order (net/identityToken.js). */
-export const MASTERY_MARKS = Object.freeze([...HUNT_TITLES.map(([t]) => t), ...Object.values(MASTERY_TITLES), ...SEA_TITLES.map(([t]) => t), ...Object.values(DRAGON_TITLES)]);
+export const MASTERY_MARKS = Object.freeze([
+  ...HUNT_TITLES.map(([t]) => t),
+  ...Object.values(MASTERY_TITLES),
+  ...SEA_TITLES.map(([t]) => t),
+  ...Object.values(DRAGON_TITLES),
+]);
 
 /** The titles an account holds off its counts: `clears` its board clears, `masters` the professions a living character
  *  of it has mastered, `serpents` its serpent kills, `dragons` and `aethers` its tamed brass and Aetherbright dragons, and
  *  `firstTame` and `firstAether` whether it holds the earliest of each (WYRM-RIDER). */
-export function masteryMarksOf({ clears = 0, masters = [], serpents = 0, dragons = 0, aethers = 0, firstTame = false, firstAether = false } = {}) {
+export function masteryMarksOf({
+  clears = 0,
+  masters = [],
+  serpents = 0,
+  dragons = 0,
+  aethers = 0,
+  firstTame = false,
+  firstAether = false,
+} = {}) {
   const out = [];
   for (const [t, n] of HUNT_TITLES) if (clearsOk(clears) >= n) out.push(t);
   for (const p of PROFESSIONS) if (Array.isArray(masters) && masters.includes(p.id)) out.push(MASTERY_TITLES[p.id]);

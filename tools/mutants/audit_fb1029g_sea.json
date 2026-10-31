@@ -1,34 +1,327 @@
 [
-  {"name": "AFB-SEA-F1-the-journey-read-unguarded", "file": "src/systems/naval/etherCrossing.js", "old": "      const under = !!journey?.isTravelActive, n = journey?.arrived ?? 0;", "new": "      const under = !!journey.isTravelActive, n = journey.arrived ?? 0;", "tests": ["test/systems/naval/auditcaptsea.test.js", "test/systems/naval/ethercross.test.js"], "why": "the audit's F1: Travel Options off (its own switch, offline) is null - the crossing's check threw at every helm and stopped the frame"},
-  {"name": "AFB-SEA-F3-F4-the-gate-untold-under-way", "file": "src/scenes/world.js", "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;", "new": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions?.isTravelActive) return;", "tests": ["test/systems/naval/auditcaptsea.test.js"], "why": "the journey's gate as the PR had it (null-safe): the gate never told she left the waters under a journey (F4), and a stop there - an enemy, a window - asked mid-voyage (F3)"},
-  {"name": "AFB-SEA-F3-the-journey-waters-unmarked", "file": "src/systems/naval/etherCrossing.js", "old": "      if (under && way && asked == null) { asked = way; ours = true; }\n", "new": "", "tests": ["test/systems/naval/auditcaptsea.test.js", "test/systems/naval/ethercross.test.js"], "why": "waters a journey sails into not its own - asked across its way, and at any stop there"},
-  {"name": "AFB-SEA-F4-the-arrival-unheard", "file": "src/systems/naval/etherCrossing.js", "old": "      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }", "new": "      if (way !== asked) { asked = null; ours = false; }", "tests": ["test/systems/naval/auditcaptsea.test.js", "test/systems/naval/ethercross.test.js"], "why": "a journey that arrives at the spot she picked in the crossing's waters never asks there"},
-  {"name": "AFB-SEA-F4-an-arrival-forgets-a-refusal", "file": "src/systems/naval/etherCrossing.js", "old": "(ours && n !== arrivals)", "new": "(n !== arrivals)", "tests": ["test/systems/naval/ethercross.test.js"], "why": "refused in the waters, a journey that never left them asks again at its arrival - a captain who said no nagged"},
-  {"name": "AFB-SEA-F4-the-route-arrival-uncounted", "file": "src/systems/travel/travelOptions.js", "old": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n    st.arrived++;   // SEA-ROWS\n", "new": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the travel view's journeys (a route, a spot at sea) arrive uncounted - the crossing never asks where they end"},
-  {"name": "AFB-SEA-F4-the-place-arrival-uncounted", "file": "src/systems/travel/travelOptions.js", "old": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n", "new": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the mod's own journey to a place arrives uncounted"},
-  {"name": "AFB-SEA-F4-the-pixel-arrival-uncounted", "file": "src/systems/travel/travelOptions.js", "old": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n", "new": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the mod's own journey to a map pixel arrives uncounted"},
-  {"name": "AFB-SEA-F5-the-reach-edge", "file": "src/world/ethericSea.js", "old": "seaPx >= CROSS_SEA_PX;", "new": "seaPx > CROSS_SEA_PX;", "tests": ["test/world/ethersea.test.js"], "why": "CROSS_SEA_PX from the sailed sea is out of sight of it, as CROSS_LAND_PX from land is"},
-  {"name": "AFB-SEA-F5-measured-before-the-lanes-settle", "file": "src/systems/naval/etherCrossing.js", "old": "    if (!book?.settled()) return null;", "new": "    if (!book) return null;", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the lanes past the Bay not yet made, their sea read as open ocean - a ship on a far lane asked to cross while the picture comes"},
-  {"name": "AFB-SEA-F5-the-ring-unread", "file": "src/systems/naval/etherCrossing.js", "old": "    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity", "new": "    let d = Infinity", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the serpent's waters not the sailed sea - a site the hub told, on no lane this game holds, asked to cross"},
-  {"name": "AFB-SEA-F5-past-the-reach-kept", "file": "src/systems/naval/etherCrossing.js", "old": "d: d > reach ? Infinity : d };", "new": "d };", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a distance past the reach answered from the lanes inside it alone - a nearer lane outside the bound unasked"},
-  {"name": "AFB-SEA-F5-the-bound-unpadded", "file": "src/systems/naval/etherCrossing.js", "old": "if (!book.near(lane, here, reach + 1)) continue;", "new": "if (!book.near(lane, here)) continue;", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the lanes' bound the packets' own (LANE_NEAR_PX) - a lane passing within the reach left out"},
-  {"name": "AFB-SEA-F5-a-half-answer", "file": "src/systems/naval/etherCrossing.js", "old": "    if (!whole) return null;\n", "new": "", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "an answer before every lane in reach is walked - the open ocean said where a lane runs"},
-  {"name": "AFB-SEA-F5-no-way-walked", "file": "src/systems/naval/etherCrossing.js", "old": "if (fresh++ && now() - t0 > CROSS_WALK_MS)", "new": "if (now() - t0 > CROSS_WALK_MS)", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a check that spent its budget before its first way walks none - never an answer on a slow machine"},
-  {"name": "AFB-SEA-F5-every-check-measured-again", "file": "src/systems/naval/etherCrossing.js", "old": "    if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;\n", "new": "", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the helm's same pixel measured again every CROSS_CHECK_S"},
-  {"name": "AFB-SEA-F5-the-leg-unclamped", "file": "src/systems/naval/etherCrossing.js", "old": "Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))", "new": "((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a leg measured as its whole line - near water past its end read as the sailed sea"},
-  {"name": "AFB-SEA-F5-the-host-unmeasured", "file": "src/scenes/world.js", "old": ": 0, crossSeaPx);", "new": ": 0, Infinity);", "tests": ["test/systems/naval/auditcaptsea.test.js"], "why": "the helm's waters never measured against the sailed sea - Sumurset's lanes and the serpent's waters asked to cross"},
-  {"name": "AFB-SEA-F5-no-word-forgets", "file": "src/systems/naval/etherCrossing.js", "old": "      if (way === undefined) return false;\n", "new": "", "tests": ["test/systems/naval/auditcaptsea.test.js", "test/systems/naval/ethercross.test.js"], "why": "a check with the sea not yet measured read as the waters left - a refusal forgotten, and the captain asked again a check later"},
-  {"name": "AFB-SEA-F5-unmeasured-read-as-open", "file": "src/systems/naval/etherCrossing.js", "old": "  if (sea === null) return undefined;\n", "new": "", "tests": ["test/systems/naval/auditcaptsea.test.js", "test/systems/naval/ethercross.test.js"], "why": "the sea not yet measured read as no crossing water - the gate told she left them"},
-  {"name": "AFB-SEA-F5-measured-by-the-coast", "file": "src/systems/naval/etherCrossing.js", "old": "  if (!crossingWaters(px, py, landPx, Infinity)) return null;\n", "new": "", "tests": ["test/systems/naval/ethercross.test.js"], "why": "the sailed sea measured where the land already says no - every coast's lanes walked for nothing"},
-  {"name": "AFB-SEA-F5-settled-before-the-picture", "file": "src/scenes/naval/worldLanes.js", "old": "    settled: () => !!bayPorts() && (!beyond() || !!tamrielTrace()),", "new": "    settled: () => !!bayPorts(),", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the lanes past the Bay read as made before their picture comes"},
-  {"name": "AFB-SEA-F5-settled-without-the-directory", "file": "src/scenes/naval/worldLanes.js", "old": "    settled: () => !!bayPorts() && (!beyond() || !!tamrielTrace()),", "new": "    settled: () => !beyond() || !!tamrielTrace(),", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "the Bay's lanes read as made before the map's directory is"},
-  {"name": "AFB-SEA-F5-the-bays-bound-unpadded", "file": "src/scenes/naval/worldLanes.js", "old": "LANE_PATH_PX / 2 + pad;", "new": "LANE_PATH_PX / 2 + LANE_NEAR_PX;", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a Bay lane's bound not padded to the crossing's reach - its way left out where it passes the Bay's mouth"},
-  {"name": "AFB-SEA-F5-the-far-bound-unpadded", "file": "src/scenes/naval/worldLanes.js", "old": "beyondPathPx(lane) + 2 * pad;", "new": "beyondPathPx(lane) + 2 * LANE_NEAR_PX;", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a lane past the Bay's bound not padded to the crossing's reach"},
-  {"name": "AFB-SEA-F5-the-cross-bound-unpadded", "file": "src/scenes/naval/worldLanes.js", "old": "CROSS_LANE_PATH_PX + 2 * pad;", "new": "CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;", "tests": ["test/systems/naval/fb1029g_searows.test.js"], "why": "a lane across the Bay's edge's bound not padded to the crossing's reach"},
-  {"name": "AFB-SEA-F2-the-gallop-unsliced", "file": "src/systems/travel/travelRoute.js", "old": "      ok = t; step *= 2;\n      if (asked >= slice) { slice = asked + PLAN_YIELD_CELLS; yield; }   // PLAN-SLICES\n", "new": "      ok = t; step *= 2;\n", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "the gallop's lines asked in one task"},
-  {"name": "AFB-SEA-F2-the-bisect-unsliced", "file": "src/systems/travel/travelRoute.js", "old": "      if (clear(pixels[i], pixels[mid])) ok = mid; else bad = mid;\n      if (asked >= slice) { slice = asked + PLAN_YIELD_CELLS; yield; }   // PLAN-SLICES\n", "new": "      if (clear(pixels[i], pixels[mid])) ok = mid; else bad = mid;\n", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "the bisect's lines asked in one task"},
-  {"name": "AFB-SEA-F2-uncounted", "file": "src/systems/travel/travelRoute.js", "old": "    if (tally) tally.n++;\n    asked++;\n", "new": "    asked++;\n", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "the pull's cells not the plan's - the slicer's frame budget blind to it"},
-  {"name": "AFB-SEA-F2-the-plan-unsliced", "file": "src/systems/travel/travelRoute.js", "old": "const taut = yield* seaTautSteps(pixels, isWater, tally);", "new": "const taut = seaTaut(pixels, isWater);", "tests": ["test/systems/travel/fb1029g_seataut.test.js"], "why": "the audit's F2: the voyage's pull in one block, uncounted - the landing frame of a long voyage held 67 to 147 ms"},
-  {"name": "AFB-SEA-F9-the-bay-everywhere", "file": "src/systems/naval/etherCrossing.js", "old": "const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);", "new": "const bayAt = () => true;", "tests": ["test/systems/naval/ethercross.test.js"], "why": "a captain west of Sumurset told the Iliac Bay lies ahead, and landed there in its name"},
-  {"name": "AFB-SEA-F9-the-landfall-unread", "file": "src/scenes/world.js", "old": "setMidScreenText(crossingWords(way, to), 7);", "new": "setMidScreenText(crossingWords(way), 7);", "tests": ["test/systems/comeSailAway/fb1012d_etherstrand.test.js"], "why": "the landfall's words read no landfall"}
+  {
+    "name": "AFB-SEA-F1-the-journey-read-unguarded",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      const under = !!journey?.isTravelActive,\n        n = journey?.arrived ?? 0;",
+    "new": "      const under = !!journey.isTravelActive,\n        n = journey.arrived ?? 0;",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "the audit's F1: Travel Options off (its own switch, offline) is null - the crossing's check threw at every helm and stopped the frame"
+  },
+  {
+    "name": "AFB-SEA-F3-F4-the-gate-untold-under-way",
+    "file": "src/scenes/world.js",
+    "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
+    "new": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior' || travelOptions?.isTravelActive) return;",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js"
+    ],
+    "why": "the journey's gate as the PR had it (null-safe): the gate never told she left the waters under a journey (F4), and a stop there - an enemy, a window - asked mid-voyage (F3)"
+  },
+  {
+    "name": "AFB-SEA-F3-the-journey-waters-unmarked",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (under && way && asked == null) {\n        asked = way;\n        ours = true;\n      }\n      return !!way && asked == null;",
+    "new": "      return !!way && asked == null;",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "waters a journey sails into not its own - asked across its way, and at any stop there"
+  },
+  {
+    "name": "AFB-SEA-F4-the-arrival-unheard",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (way !== asked) {",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "a journey that arrives at the spot she picked in the crossing's waters never asks there"
+  },
+  {
+    "name": "AFB-SEA-F4-an-arrival-forgets-a-refusal",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (way !== asked || (ours && n !== arrivals)) {",
+    "new": "      if (way !== asked || n !== arrivals) {",
+    "tests": [
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "refused in the waters, a journey that never left them asks again at its arrival - a captain who said no nagged"
+  },
+  {
+    "name": "AFB-SEA-F4-the-route-arrival-uncounted",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n    st.arrived++;   // SEA-ROWS\n",
+    "new": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the travel view's journeys (a route, a spot at sea) arrive uncounted - the crossing never asks where they end"
+  },
+  {
+    "name": "AFB-SEA-F4-the-place-arrival-uncounted",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
+    "new": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the mod's own journey to a place arrives uncounted"
+  },
+  {
+    "name": "AFB-SEA-F4-the-pixel-arrival-uncounted",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
+    "new": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the mod's own journey to a map pixel arrives uncounted"
+  },
+  {
+    "name": "AFB-SEA-F5-the-reach-edge",
+    "file": "src/world/ethericSea.js",
+    "old": "seaPx >= CROSS_SEA_PX;",
+    "new": "seaPx > CROSS_SEA_PX;",
+    "tests": [
+      "test/world/ethersea.test.js"
+    ],
+    "why": "CROSS_SEA_PX from the sailed sea is out of sight of it, as CROSS_LAND_PX from land is"
+  },
+  {
+    "name": "AFB-SEA-F5-measured-before-the-lanes-settle",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    if (!book?.settled()) return null;",
+    "new": "    if (!book) return null;",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the lanes past the Bay not yet made, their sea read as open ocean - a ship on a far lane asked to cross while the picture comes"
+  },
+  {
+    "name": "AFB-SEA-F5-the-ring-unread",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity,",
+    "new": "    let d = Infinity,",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the serpent's waters not the sailed sea - a site the hub told, on no lane this game holds, asked to cross"
+  },
+  {
+    "name": "AFB-SEA-F5-past-the-reach-kept",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    at = { px, py, s, list, d: d > reach ? Infinity : d };",
+    "new": "    at = { px, py, s, list, d };",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a distance past the reach answered from the lanes inside it alone - a nearer lane outside the bound unasked"
+  },
+  {
+    "name": "AFB-SEA-F5-the-bound-unpadded",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (!book.near(lane, here, reach + 1)) continue;",
+    "new": "      if (!book.near(lane, here)) continue;",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the lanes' bound the packets' own (LANE_NEAR_PX) - a lane passing within the reach left out"
+  },
+  {
+    "name": "AFB-SEA-F5-a-half-answer",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    if (!whole) return null;\n    at = { px, py, s, list, d: d > reach ? Infinity : d };",
+    "new": "    at = { px, py, s, list, d: d > reach ? Infinity : d };",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "an answer before every lane in reach is walked - the open ocean said where a lane runs"
+  },
+  {
+    "name": "AFB-SEA-F5-no-way-walked",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "        if (fresh++ && now() - t0 > CROSS_WALK_MS) {",
+    "new": "        if (now() - t0 > CROSS_WALK_MS) {",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a check that spent its budget before its first way walks none - never an answer on a slow machine"
+  },
+  {
+    "name": "AFB-SEA-F5-every-check-measured-again",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "    if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;\n    const x = px + 0.5,",
+    "new": "    const x = px + 0.5,",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the helm's same pixel measured again every CROSS_CHECK_S"
+  },
+  {
+    "name": "AFB-SEA-F5-the-leg-unclamped",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "  const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) : 0;",
+    "new": "  const t = dx || dy ? ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy) : 0;",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a leg measured as its whole line - near water past its end read as the sailed sea"
+  },
+  {
+    "name": "AFB-SEA-F5-the-host-unmeasured",
+    "file": "src/scenes/world.js",
+    "old": ": 0, crossSeaPx);",
+    "new": ": 0, Infinity);",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js"
+    ],
+    "why": "the helm's waters never measured against the sailed sea - Sumurset's lanes and the serpent's waters asked to cross"
+  },
+  {
+    "name": "AFB-SEA-F5-no-word-forgets",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "      if (way === undefined) return false;\n      const under = !!journey?.isTravelActive,",
+    "new": "      const under = !!journey?.isTravelActive,",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "a check with the sea not yet measured read as the waters left - a refusal forgotten, and the captain asked again a check later"
+  },
+  {
+    "name": "AFB-SEA-F5-unmeasured-read-as-open",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "  if (sea === null) return undefined;\n  return crossingWaters(px, py, landPx, sea) ? 'out' : null;",
+    "new": "  return crossingWaters(px, py, landPx, sea) ? 'out' : null;",
+    "tests": [
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "the sea not yet measured read as no crossing water - the gate told she left them"
+  },
+  {
+    "name": "AFB-SEA-F5-measured-by-the-coast",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "  if (!crossingWaters(px, py, landPx, Infinity)) return null;\n  const sea = typeof seaPx === 'function' ? seaPx(px, py) : seaPx;",
+    "new": "  const sea = typeof seaPx === 'function' ? seaPx(px, py) : seaPx;",
+    "tests": [
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "the sailed sea measured where the land already says no - every coast's lanes walked for nothing"
+  },
+  {
+    "name": "AFB-SEA-F5-settled-before-the-picture",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    settled: () => !!bayPorts() && (!beyond() || !!tamrielTrace()),",
+    "new": "    settled: () => !!bayPorts(),",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the lanes past the Bay read as made before their picture comes"
+  },
+  {
+    "name": "AFB-SEA-F5-settled-without-the-directory",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    settled: () => !!bayPorts() && (!beyond() || !!tamrielTrace()),",
+    "new": "    settled: () => !beyond() || !!tamrielTrace(),",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "the Bay's lanes read as made before the map's directory is"
+  },
+  {
+    "name": "AFB-SEA-F5-the-bays-bound-unpadded",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
+    "new": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a Bay lane's bound not padded to the crossing's reach - its way left out where it passes the Bay's mouth"
+  },
+  {
+    "name": "AFB-SEA-F5-the-far-bound-unpadded",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own",
+    "new": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX; // NIBEN-SEA: a canal harbour's lane its own",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a lane past the Bay's bound not padded to the crossing's reach"
+  },
+  {
+    "name": "AFB-SEA-F5-the-cross-bound-unpadded",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * pad;",
+    "new": "      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
+    "tests": [
+      "test/systems/naval/fb1029g_searows.test.js"
+    ],
+    "why": "a lane across the Bay's edge's bound not padded to the crossing's reach"
+  },
+  {
+    "name": "AFB-SEA-F2-the-gallop-unsliced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      step *= 2;\n      if (asked >= slice) {\n        slice = asked + PLAN_YIELD_CELLS;\n        yield;\n      } // PLAN-SLICES\n    }",
+    "new": "      step *= 2;\n    }",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "the gallop's lines asked in one task"
+  },
+  {
+    "name": "AFB-SEA-F2-the-bisect-unsliced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      else bad = mid;\n      if (asked >= slice) {\n        slice = asked + PLAN_YIELD_CELLS;\n        yield;\n      } // PLAN-SLICES\n    }",
+    "new": "      else bad = mid;\n    }",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "the bisect's lines asked in one task"
+  },
+  {
+    "name": "AFB-SEA-F2-uncounted",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (tally) tally.n++;\n    asked++;",
+    "new": "    asked++;",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "the pull's cells not the plan's - the slicer's frame budget blind to it"
+  },
+  {
+    "name": "AFB-SEA-F2-the-plan-unsliced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const taut = yield* seaTautSteps(pixels, isWater, tally);",
+    "new": "  const taut = seaTaut(pixels, isWater);",
+    "tests": [
+      "test/systems/travel/fb1029g_seataut.test.js"
+    ],
+    "why": "the audit's F2: the voyage's pull in one block, uncounted - the landing frame of a long voyage held 67 to 147 ms"
+  },
+  {
+    "name": "AFB-SEA-F9-the-bay-everywhere",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);",
+    "new": "const bayAt = () => true;",
+    "tests": [
+      "test/systems/naval/ethercross.test.js"
+    ],
+    "why": "a captain west of Sumurset told the Iliac Bay lies ahead, and landed there in its name"
+  },
+  {
+    "name": "AFB-SEA-F9-the-landfall-unread",
+    "file": "src/scenes/world.js",
+    "old": "setMidScreenText(crossingWords(way, to), 7);",
+    "new": "setMidScreenText(crossingWords(way), 7);",
+    "tests": [
+      "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
+    ],
+    "why": "the landfall's words read no landfall"
+  }
 ]

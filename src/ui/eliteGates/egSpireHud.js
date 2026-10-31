@@ -53,29 +53,42 @@
 // One node each, UPDATED, NOT REBUILT, hidden with the HUD. The models are pure.
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
-import { egHallOf, egCircleOfHall, egSlotOfHall, egCountText, EG_LAST_WORD_MS, EG_COUNT_START_MS, EG_REDOUBT_HOLD_MS, EG_BANDS, EG_DECREES, EG_DECREE_BY_KEY, EG_TWIST_LINES, EG_TEXT } from '../../net/eliteGates/egLaw.js';
+import {
+  egHallOf,
+  egCircleOfHall,
+  egSlotOfHall,
+  egCountText,
+  EG_LAST_WORD_MS,
+  EG_COUNT_START_MS,
+  EG_REDOUBT_HOLD_MS,
+  EG_BANDS,
+  EG_DECREES,
+  EG_DECREE_BY_KEY,
+  EG_TWIST_LINES,
+  EG_TEXT,
+} from '../../net/eliteGates/egLaw.js';
 import { egCountAt, egLivingCount, egMemberOf, egRunOfMember } from '../../net/eliteGates/egLink.js';
-import { egGatherOf } from '../../net/eliteGates/egLink.js';   // AUDIT EG V (c, L3-10): the gather, as the room counts it
+import { egGatherOf } from '../../net/eliteGates/egLink.js'; // AUDIT EG V (c, L3-10): the gather, as the room counts it
 import { EG_ROLE, EG_FL } from '../../net/eliteGates/egBodies.js';
 import { EG_BOSS_KEYS, egBossName, egTtkRef } from '../../net/eliteGates/egLords.js';
-import { egMarkynazDecree } from '../../net/eliteGates/egLords.js';   // EG-ZS (section 8.5): the decree the Markynaz lays, named on his card
-import { EG_CHAMPIONS } from '../../net/eliteGates/egLaw.js';   // EG-ZS: the champion's signature's title
-import { egProgressText, EG_MARK_NAMES, EG_POTIONS_PER_HALL } from './egHud.js';
-import { egNextCircleText } from './egHud.js';   // AUDIT EG V (L2-11): a rest's beacon - the next circle's decrees and lord
-import { egObjectiveText } from './egHud.js';   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the objective as the screen says it (the Gauntlet's in the player's language)
-import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
+import { egMarkynazDecree } from '../../net/eliteGates/egLords.js'; // EG-ZS (section 8.5): the decree the Markynaz lays, named on his card
+import { EG_CHAMPIONS } from '../../net/eliteGates/egLaw.js'; // EG-ZS: the champion's signature's title
+import { egProgressText, EG_MARK_NAMES, egPotionPip } from './egHud.js';
+import { egNextCircleText } from './egHud.js'; // AUDIT EG V (L2-11): a rest's beacon - the next circle's decrees and lord
+import { egObjectiveText } from './egHud.js'; // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the objective as the screen says it (the Gauntlet's in the player's language)
+import { egTwistShown } from '../../net/eliteGates/egRun.js'; // AUDIT EG V (L2-4): no Bargain's line when no family is free
 import { EG_PRES_TEXT, EG_BAND_LINES } from './egBeats.js';
 import { EG_PARTY_CSS } from './egParty.js';
 import { titleCardModel, TITLE_CARD_CSS, TITLE_CARD_STYLE_ID } from '../gate/gateTitleCard.js';
-import { BOSS_BAR_TEXT } from '../gate/gateBossBar.js';   // FB1018D WARD-BAR: the gate bar's word for a warded lord
+import { BOSS_BAR_TEXT } from '../gate/gateBossBar.js'; // FB1018D WARD-BAR: the gate bar's word for a warded lord
 import { DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from '../native/nativePanel.js';
 import { PIXEL_FONT_CSS } from '../pixelifyFive.js';
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
-import { egSigilsOf, egEclipseAt, egEclipseChip, egEclipseOfBlows } from '../../world/eliteGates/egTelegraph.js';   // EG-ZG: the marks' sigils, the Eclipse's chip
-import { t } from '../../systems/textManager.js';   // AUDIT EG V (c): the words this audit adds, in the player's language
-import { egStakeText } from './egHud.js';   // AUDIT EG V (c, NEW-1): the rest card's stake, on the Spire's own HUD
-import { EG_TIDE_NAMES } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (c, L2-9): the Hungering Dark, named on the rest card
-import { spireOrreryOf, spireRiddleLines } from '../../systems/eliteGates/spireOrrery.js';   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's riddles
+import { egSigilsOf, egEclipseAt, egEclipseChip, egEclipseOfBlows } from '../../world/eliteGates/egTelegraph.js'; // EG-ZG: the marks' sigils, the Eclipse's chip
+import { t } from '../../systems/textManager.js'; // AUDIT EG V (c): the words this audit adds, in the player's language
+import { egStakeText } from './egHud.js'; // AUDIT EG V (c, NEW-1): the rest card's stake, on the Spire's own HUD
+import { EG_TIDE_NAMES } from '../../net/eliteGates/egRun.js'; // AUDIT EG V (c, L2-9): the Hungering Dark, named on the rest card
+import { spireOrreryOf, spireRiddleLines } from '../../systems/eliteGates/spireOrrery.js'; // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's riddles
 
 // ── the layouts (section 27.1) ────────────────────────────────────────────────────────────────────────────────
 /** A phone is a screen whose short side is this or less (CSS px - the party panel's and the arena's own line). */
@@ -88,14 +101,14 @@ export function egFormFactor({ w = 1280, h = 720 } = {}) {
   return h >= w ? 'upright' : 'sideways';
 }
 /** What each layout shows (pinned): the decrees as a row, folded to a press, or kept for the cards; the lord's bar's
- *  height (px); the Reliquaries in the count's own chip; the potion pip and how many stand, a desk's alone. AUDIT EG V (c,
+ *  height (px); the Reliquaries in the count's own chip; how many stand, a desk's alone (the potion pip every layout's). AUDIT EG V (c,
  *  L7-22; section 27.1): a phone held sideways folds its decrees to a press as an upright one does - the page's pause sheet
  *  is the port's menu, which no breach's readout stands in, and the fold is the same words one tap away without leaving
  *  the hall; each arrival card says them still. */
 export const EG_LAYOUTS = Object.freeze({
-  desktop: Object.freeze({ dec: 'row', lordH: 30, relInChip: false, potion: true, standing: true }),
-  upright: Object.freeze({ dec: 'fold', lordH: 30, relInChip: true, potion: false, standing: false }),
-  sideways: Object.freeze({ dec: 'fold', lordH: 44, relInChip: false, potion: false, standing: false }),   // AUDIT EG V (c, L7-22): the decrees folded to a press, as upright, besides each arrival card's
+  desktop: Object.freeze({ dec: 'row', lordH: 30, relInChip: false, standing: true }),
+  upright: Object.freeze({ dec: 'fold', lordH: 30, relInChip: true, standing: false }),
+  sideways: Object.freeze({ dec: 'fold', lordH: 44, relInChip: false, standing: false }), // AUDIT EG V (c, L7-22): the decrees folded to a press, as upright, besides each arrival card's
 });
 
 // ── THE COUNT CHIP (section 27.2) ─────────────────────────────────────────────────────────────────────────────
@@ -106,7 +119,13 @@ export const EG_CHIP_PULSE_MS = 30_000;
 /** The chip's glyphs: the pause while it holds, the seal of the last word. */
 export const EG_CHIP_GLYPHS = Object.freeze({ held: '❚❚', seal: '◈' });
 /** A hold's reason as the chip shows it (section 6.2 - shown, never said). */
-export const EG_HOLD_WORDS = Object.freeze({ rest: 'Redoubt', respite: 'Respite', closing: 'Door', stair: 'Stair', hold: 'Held' });
+export const EG_HOLD_WORDS = Object.freeze({
+  rest: 'Redoubt',
+  respite: 'Respite',
+  closing: 'Door',
+  stair: 'Stair',
+  hold: 'Held',
+});
 
 /** Why the count holds now, or '' while it runs (pure): a rest's, a respite's (the room's `respite` line still running),
  *  the closing's, the pull's to the wake, or a hold's. */
@@ -135,8 +154,16 @@ export function egCountChip(E, now) {
   const why = held ? egHoldWhy(E, now) || 'stair' : '';
   const tone = shown > EG_CHIP_GOLD_MS ? 'gold' : shown >= EG_CHIP_RED_MS ? 'white' : 'red';
   const text = egCountText(shown);
-  return { text, tone, pulse: !held && shown < EG_CHIP_PULSE_MS, held, why, seal, glyph: seal ? EG_CHIP_GLYPHS.seal : held ? EG_CHIP_GLYPHS.held : '',
-    label: `${seal ? `${EG_PRES_TEXT.lastWhy}: ` : 'The count: '}${text}${held ? ` - ${EG_PRES_TEXT.held}` : ''}` };
+  return {
+    text,
+    tone,
+    pulse: !held && shown < EG_CHIP_PULSE_MS,
+    held,
+    why,
+    seal,
+    glyph: seal ? EG_CHIP_GLYPHS.seal : held ? EG_CHIP_GLYPHS.held : '',
+    label: `${seal ? `${EG_PRES_TEXT.lastWhy}: ` : 'The count: '}${text}${held ? ` - ${EG_PRES_TEXT.held}` : ''}`,
+  };
 }
 /**
  * A Redoubt's gain as it flies in (pure), or null (the Covenant spoke: no time): `g` the count gained (ms), `press`
@@ -182,8 +209,15 @@ export function egChipWarnings(said, E, now) {
   const due = [];
   if (!E?.b || E.end || !(E.wk > 0) || !(E.ca > 0)) return due;
   const left = egCountAt(E, now);
-  for (const k of ['press5', 'toll1', 'toll10']) if (!said.has(k) && left <= EG_CHIP_WARNINGS[k].at && left > 0) { said.add(k); due.push(k); }
-  if (!said.has('court') && E.sg === 'trial' && E.h > 0 && egSlotOfHall(E.h) !== 5 && left < egCourtNeedMs(E.h)) { said.add('court'); due.push('court'); }
+  for (const k of ['press5', 'toll1', 'toll10'])
+    if (!said.has(k) && left <= EG_CHIP_WARNINGS[k].at && left > 0) {
+      said.add(k);
+      due.push(k);
+    }
+  if (!said.has('court') && E.sg === 'trial' && E.h > 0 && egSlotOfHall(E.h) !== 5 && left < egCourtNeedMs(E.h)) {
+    said.add('court');
+    due.push('court');
+  }
   return due;
 }
 
@@ -202,17 +236,20 @@ const theOf = (name) => String(name ?? '').replace(/^The /, 'the ');
  */
 export function egArrivalCard(E, { first = false } = {}) {
   if (!E?.b || !(E.h > 0)) return null;
-  const spec = egHallOf(E.seed, E.h, E.geo ?? 0), band = EG_BANDS[spec.band];
+  const spec = egHallOf(E.seed, E.h, E.geo ?? 0),
+    band = EG_BANDS[spec.band];
   const court = spec.kind === 'court';
-  const dec = (E.dc ?? []).map(([id, rank]) => `${EG_DECREES[id]?.name ?? ''}${rank >= 2 ? ' II' : ''}`).filter(Boolean);
+  const dec = (E.dc ?? [])
+    .map(([id, rank]) => `${EG_DECREES[id]?.name ?? ''}${rank >= 2 ? ' II' : ''}`)
+    .filter(Boolean);
   const bandCard = first || EG_BAND_FIRST_HALLS.includes(E.h);
   return {
-    kicker: bandCard || court ? band?.name ?? '' : spec.name,
+    kicker: bandCard || court ? (band?.name ?? '') : spec.name,
     main: court ? EG_PRES_TEXT.hallCourt(E.h) : EG_PRES_TEXT.hallBand(E.h, theOf(band?.name)),
     sub: court ? spec.name : egObjectiveText(spec),
-    twist: egTwistShown(spec, E.dc) ? EG_TWIST_LINES[spec.twist] ?? '' : '',
+    twist: egTwistShown(spec, E.dc) ? (EG_TWIST_LINES[spec.twist] ?? '') : '',
     dec: dec.length ? dec.join(' - ') : '',
-    band: bandCard ? EG_BAND_LINES[spec.band] ?? '' : '',
+    band: bandCard ? (EG_BAND_LINES[spec.band] ?? '') : '',
     lays: egMarkynazLine(E, spec),
   };
 }
@@ -227,7 +264,8 @@ export function egArrivalCard(E, { first = false } = {}) {
 export function egMarkynazLine(E, spec) {
   if (spec?.champ !== 'markynaz') return '';
   const D = Object.fromEntries((E?.dc ?? []).map(([id, rank]) => [EG_DECREES[id]?.key, rank]).filter(([k]) => k));
-  const key = egMarkynazDecree(D, E.h), C = EG_CHAMPIONS.find((c) => c.key === 'markynaz');
+  const key = egMarkynazDecree(D, E.h),
+    C = EG_CHAMPIONS.find((c) => c.key === 'markynaz');
   return key && C ? EG_PRES_TEXT.champDecree(C.title, EG_DECREE_BY_KEY[key]?.name ?? '') : '';
 }
 /** The card's words for a screen reader (the card itself is aria-hidden): the hall and its objective - EG-ZS: and the decree
@@ -236,7 +274,10 @@ export const egArrivalLive = (card) => `${card.main}. ${card.sub}${card.lays ? `
 /** The card's fade over its stand (the gate card's law - ui/gate/gateTitleCard.js titleCardModel), or null. */
 export function egArrivalShown(card, at, now) {
   if (!card) return null;
-  const m = titleCardModel({ kind: 'arrive', at, until: at + EG_CARD_MS, kicker: card.kicker, main: card.main, sub: card.sub }, now);
+  const m = titleCardModel(
+    { kind: 'arrive', at, until: at + EG_CARD_MS, kicker: card.kicker, main: card.main, sub: card.sub },
+    now,
+  );
   return m ? { ...card, key: m.key, alpha: m.alpha, fresh: m.fresh } : null;
 }
 
@@ -249,13 +290,23 @@ export const EG_DOOR_AHEAD_RAD = 0.6;
  * is ahead, where the marker stands on the screen (0-1 of its width and height) and how far it is.
  */
 export function egDoorMarker(me, door, yaw) {
-  const dx = door.x - me.x, dz = door.z - me.z;
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const dx = door.x - me.x,
+    dz = door.z - me.z;
+  const fx = Math.sin(yaw),
+    fz = Math.cos(yaw),
+    rx = Math.cos(yaw),
+    rz = -Math.sin(yaw);
   const rel = Math.atan2(dx * rx + dz * rz, dx * fx + dz * fz);
   const ahead = Math.abs(rel) <= EG_DOOR_AHEAD_RAD;
   const x = ahead ? 0.5 + 0.4 * (rel / EG_DOOR_AHEAD_RAD) : 0.5 + 0.46 * Math.sin(rel);
   const y = ahead ? 0.14 : 0.5 - 0.42 * Math.cos(rel);
-  return { rel, ahead, x: Math.round(x * 1000) / 1000, y: Math.round(y * 1000) / 1000, dist: Math.round(Math.hypot(dx, dz)) };
+  return {
+    rel,
+    ahead,
+    x: Math.round(x * 1000) / 1000,
+    y: Math.round(y * 1000) / 1000,
+    dist: Math.round(Math.hypot(dx, dz)),
+  };
 }
 
 // ── THE LORD'S BAR ────────────────────────────────────────────────────────────────────────────────────────────
@@ -263,25 +314,38 @@ export function egDoorMarker(me, door, yaw) {
  *  standing awake (never a mirror, a friend, one still asleep). AUDIT EG V (lane1 #22): never one FALLEN - in a Court of two
  *  lords (Clan Feud's champion, THE TWIN COURT's and THE OLD MASTERS' second) the bar is the lord still standing, never the first
  *  at nought (egLordBars). */
-export function egLordBar(E) { return egLordBars(E)[0] ?? null; }
+export function egLordBar(E) {
+  return egLordBars(E)[0] ?? null;
+}
 /** AUDIT EG V (lane1 #22): the bars of every true lord standing awake, in the fight's order (the Court's own first), at most
  *  EG_LORD_BARS_MAX - each `{ name, court, frac, phase, ward }`. FB1018D WARD-BAR (section 25.2, "the cage on the lord's bar
  *  is red-bronze and hatched"): `ward` while the room says the lord warded (EG_FL.ward - Ilthys's banners holding it, an
  *  errand's ward, Unyielding's), when no blow lands on it. Pure. */
 export const EG_LORD_BARS_MAX = 2;
 /** The model's lord bars: the first (`lord`) and a second lord standing (`lord2`), in a Court alone. Pure. */
-const egLordBarsOf = (E) => { const bars = egLordBars(E); return bars[0]?.court ? { lord: bars[0], lord2: bars[1] ?? null } : { lord: null, lord2: null }; };
+const egLordBarsOf = (E) => {
+  const bars = egLordBars(E);
+  return bars[0]?.court ? { lord: bars[0], lord2: bars[1] ?? null } : { lord: null, lord2: null };
+};
 export function egLordBars(E) {
   if (!E?.b || !(E.h > 0) || E.fight?.h !== E.h) return [];
   const spec = egHallOf(E.seed, E.h, E.geo ?? 0);
-  return (E.fight.bodies ?? []).filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0).slice(0, EG_LORD_BARS_MAX)   // standing: a fall says its nought (`efell`, `ehp`), a raise its health
-    .map((L) => ({ name: egBossName(EG_BOSS_KEYS[L.k] ?? '', L.pt), court: spec.kind === 'court', frac: L.max > 0 ? Math.round(Math.max(0, Math.min(1, L.hp / L.max)) * 1000) / 1000 : 0, phase: ['', 'I', 'II', 'III'][L.ph] ?? '',
-      ward: (L.fl & EG_FL.ward) !== 0 }));   // FB1018D WARD-BAR
+  return (E.fight.bodies ?? [])
+    .filter((b) => b.role === EG_ROLE.lord && b.ph > 0 && (b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0)
+    .slice(0, EG_LORD_BARS_MAX) // standing: a fall says its nought (`efell`, `ehp`), a raise its health
+    .map((L) => ({
+      name: egBossName(EG_BOSS_KEYS[L.k] ?? '', L.pt),
+      court: spec.kind === 'court',
+      frac: L.max > 0 ? Math.round(Math.max(0, Math.min(1, L.hp / L.max)) * 1000) / 1000 : 0,
+      phase: ['', 'I', 'II', 'III'][L.ph] ?? '',
+      ward: (L.fl & EG_FL.ward) !== 0,
+    })); // FB1018D WARD-BAR
 }
 
 /** A lord's bar's line: its name, its phase and - FB1018D WARD-BAR - the gate bar's own word while it stands warded
  *  (ui/gate/gateBossBar.js BOSS_BAR_TEXT), so a blow that lands on nothing is told why. Pure. */
-export const egLordLine = (L) => `${L.name}${L.phase ? ` - ${L.phase}` : ''}${L.ward ? ` - ${BOSS_BAR_TEXT.warded}` : ''}`;
+export const egLordLine = (L) =>
+  `${L.name}${L.phase ? ` - ${L.phase}` : ''}${L.ward ? ` - ${BOSS_BAR_TEXT.warded}` : ''}`;
 /** FB1018D WARD-BAR: a bar's track caged (`ward`) or not, its class written only when it changes. */
 function wardOn(track, on) {
   const cls = on ? 'eg-lord-track ward' : 'eg-lord-track';
@@ -295,10 +359,21 @@ export const egHereText = (k, n) => t('eg.gather.here', '{k} of {n} here.', { k,
 function stageLine(E, now) {
   const left = E.su > 0 ? Math.max(0, E.su - now) : 0;
   switch (E.sg) {
-    case 'arrive': { const G = egGatherOf(E), g = G.n > 1 ? ` ${egHereText(G.here, G.n)}` : ''; return left > 0 ? `${EG_TEXT.wakes.replace('.', '')} in ${egCountText(left)}.${g}` : `Gather on the arrival plate.${g}`; }   // AUDIT EG V (c, L3-10): *3 of 6 here*
-    case 'closing': return `${EG_TEXT.door} Step through the door.`;
-    case 'rest': return left > 0 ? `${EG_TEXT.descend.replace('.', '')} in ${egCountText(left)} - or take the way home.` : EG_TEXT.descend;
-    default: return '';
+    case 'arrive': {
+      const G = egGatherOf(E),
+        g = G.n > 1 ? ` ${egHereText(G.here, G.n)}` : '';
+      return left > 0
+        ? `${EG_TEXT.wakes.replace('.', '')} in ${egCountText(left)}.${g}`
+        : `Gather on the arrival plate.${g}`;
+    } // AUDIT EG V (c, L3-10): *3 of 6 here*
+    case 'closing':
+      return `${EG_TEXT.door} Step through the door.`;
+    case 'rest':
+      return left > 0
+        ? `${EG_TEXT.descend.replace('.', '')} in ${egCountText(left)} - or take the way home.`
+        : EG_TEXT.descend;
+    default:
+      return '';
   }
 }
 
@@ -306,29 +381,44 @@ function stageLine(E, now) {
 /** The stage line's Spirebridge words (pure): each plank standing in this hall with its seconds (who raised it - the room's
  *  word), and the ask offered while mine may be asked (`ready`). '' none. */
 export function egBridgeLine(E, now, ready = false) {
-  const stand = (E?.fight?.bridges ?? []).filter((q) => q.h === E.h && now >= q.at && now < q.until).map((q) => EG_PRES_TEXT.bridgeStands(q.n || 'A companion', Math.ceil((q.until - now) / 1000)));
+  const stand = (E?.fight?.bridges ?? [])
+    .filter((q) => q.h === E.h && now >= q.at && now < q.until)
+    .map((q) => EG_PRES_TEXT.bridgeStands(q.n || 'A companion', Math.ceil((q.until - now) / 1000)));
   return [...stand, ready ? EG_PRES_TEXT.bridgeReady : ''].filter(Boolean).join(' ');
 }
 
 // ── TOUCH AND THE PAD (section 27.8) ──────────────────────────────────────────────────────────────────────────
 /** AUDIT EG V (c, L7-7): the ping's button and the pad's row - and its cooldown's seconds on the button while it cools. */
-export const egPingLabel = (left = 0) => (left > 0 ? t('eg.touch.pingCool', 'Ping {s}s', { s: Math.ceil(left / 1000) }) : t('eg.touch.ping', 'Ping'));
+export const egPingLabel = (left = 0) =>
+  left > 0 ? t('eg.touch.pingCool', 'Ping {s}s', { s: Math.ceil(left / 1000) }) : t('eg.touch.ping', 'Ping');
 /** The touch buttons a moment asks for (pure): a witness's eye before and after, its ping (AUDIT EG V, c, L7-7 - its cooldown
  *  on it, `ping` the ms left) and forsaking; a Redoubt's way home; AUDIT EG III (section 15): Spirebridge while its holder
  *  may ask it (a gap ahead, unspent this span). */
 export function egTouchButtons({ witness = false, rest = false, bridge = false, ping = 0 } = {}) {
   const T = EG_PRES_TEXT.touch;
-  if (witness) return [{ id: 'prev', label: T.prev }, { id: 'next', label: T.next }, { id: 'ping', label: egPingLabel(ping) }, { id: 'forsake', label: T.forsake }];
+  if (witness)
+    return [
+      { id: 'prev', label: T.prev },
+      { id: 'next', label: T.next },
+      { id: 'ping', label: egPingLabel(ping) },
+      { id: 'forsake', label: T.forsake },
+    ];
   if (rest) return [{ id: 'home', label: T.home }];
   if (bridge) return [{ id: 'bridge', label: T.bridge }];
   return [];
 }
 /** The d-pad's codes (systems/inputActions.js DEFAULT_SECONDARY_BINDINGS' diamond; ui/plus/plusPad.js HELM_DPAD). */
-export const EG_PAD_DIRS = Object.freeze({ JoystickAxis7Button0: 'up', JoystickAxis7Button1: 'down', JoystickAxis6Button1: 'left', JoystickAxis6Button0: 'right' });
+export const EG_PAD_DIRS = Object.freeze({
+  JoystickAxis7Button0: 'up',
+  JoystickAxis7Button1: 'down',
+  JoystickAxis6Button1: 'left',
+  JoystickAxis6Button0: 'right',
+});
 const PAD_OF_DIR = Object.freeze(Object.fromEntries(Object.entries(EG_PAD_DIRS).map(([c, d]) => [d, c])));
 /** Whether the d-pad is the Spire's now: a recap standing, the panel open, or a witness's eye - AUDIT EG III: or a Spirebridge
  *  its holder may ask (a gap ahead of it, unspent this span). */
-export const egPadUp = ({ recap = false, panel = false, witness = false, bridge = false } = {}) => !!(recap || panel || witness || bridge);
+export const egPadUp = ({ recap = false, panel = false, witness = false, bridge = false } = {}) =>
+  !!(recap || panel || witness || bridge);
 /**
  * A d-pad press in the Spire (pure): `dir` up | down | left | right, `kind` tap | hold | release. The recap closes on any
  * tap; the panel's choices move left and right, up takes, down says no; a witness's left and right change whom, a held
@@ -337,10 +427,17 @@ export const egPadUp = ({ recap = false, panel = false, witness = false, bridge 
 export function egPadAct(dir, kind, { recap = false, panel = false, witness = false, bridge = false } = {}) {
   if (kind === 'release') return null;
   if (recap && kind === 'tap') return { k: 'close' };
-  if (panel && kind === 'tap') return dir === 'left' ? { k: 'focus', d: -1 } : dir === 'right' ? { k: 'focus', d: 1 } : dir === 'up' ? { k: 'take' } : { k: 'no' };
+  if (panel && kind === 'tap')
+    return dir === 'left'
+      ? { k: 'focus', d: -1 }
+      : dir === 'right'
+        ? { k: 'focus', d: 1 }
+        : dir === 'up'
+          ? { k: 'take' }
+          : { k: 'no' };
   if (witness) {
     if (kind === 'tap' && (dir === 'left' || dir === 'right')) return { k: 'watch', d: dir === 'left' ? -1 : 1 };
-    if (kind === 'tap' && dir === 'up') return { k: 'ping' };   // AUDIT EG V (c, L7-7): a witness's ping, the pad's up
+    if (kind === 'tap' && dir === 'up') return { k: 'ping' }; // AUDIT EG V (c, L7-7): a witness's ping, the pad's up
     if (kind === 'hold' && dir === 'down') return { k: 'forsake' };
   }
   if (bridge && !panel && !witness && kind === 'tap' && dir === 'up') return { k: 'bridge' };
@@ -350,9 +447,19 @@ export function egPadAct(dir, kind, { recap = false, panel = false, witness = fa
 export function egPadPrompts({ recap = false, panel = false, witness = false, bridge = false } = {}) {
   const P = EG_PRES_TEXT.pad;
   if (recap) return [[[PAD_OF_DIR.up], P.close]];
-  if (panel) return [[[PAD_OF_DIR.left, PAD_OF_DIR.right], P.choose], [[PAD_OF_DIR.up], P.take], [[PAD_OF_DIR.down], P.no]];
-  if (witness) return [[[PAD_OF_DIR.left, PAD_OF_DIR.right], P.watch], [[PAD_OF_DIR.up], egPingLabel()], [[PAD_OF_DIR.down], P.forsake]];   // AUDIT EG V (c, L7-7): the ping
-  if (bridge) return [[[PAD_OF_DIR.up], P.bridge]];   // AUDIT EG III
+  if (panel)
+    return [
+      [[PAD_OF_DIR.left, PAD_OF_DIR.right], P.choose],
+      [[PAD_OF_DIR.up], P.take],
+      [[PAD_OF_DIR.down], P.no],
+    ];
+  if (witness)
+    return [
+      [[PAD_OF_DIR.left, PAD_OF_DIR.right], P.watch],
+      [[PAD_OF_DIR.up], egPingLabel()],
+      [[PAD_OF_DIR.down], P.forsake],
+    ]; // AUDIT EG V (c, L7-7): the ping
+  if (bridge) return [[[PAD_OF_DIR.up], P.bridge]]; // AUDIT EG III
   return null;
 }
 
@@ -362,7 +469,9 @@ export function egPadPrompts({ recap = false, panel = false, witness = false, br
 export function egWatchLine(watch) {
   if (!watch?.name) return '';
   const who = `${watch.numeral ?? ''} ${watch.name}`.trim();
-  return Number.isFinite(watch.pct) ? t('eg.witness.watching', 'Watching {who} - health {pct}%.', { who, pct: Math.round(watch.pct) }) : t('eg.witness.watchingName', 'Watching {who}.', { who });
+  return Number.isFinite(watch.pct)
+    ? t('eg.witness.watching', 'Watching {who} - health {pct}%.', { who, pct: Math.round(watch.pct) })
+    : t('eg.witness.watchingName', 'Watching {who}.', { who });
 }
 /** AUDIT EG V (c, L7-7; sections 16.4 and 16.5 - "its cooldown shown"): a ping asked or shown inside its cooldown (`s` its
  *  seconds left). */
@@ -378,10 +487,15 @@ export function egRestLine(E, run, restP = 1) {
   const stake = egStakeText(run?.rw ?? []);
   let less = '';
   if (restP > 0 && restP < 1) {
-    const D = EG_DECREE_BY_KEY.ashen, ash = (E?.dc ?? []).find(([id]) => id === D.id)?.[1] ?? 0;
-    const why = [ash ? `${D.name}${ash >= 2 ? ' II' : ''}` : '', E?.td === 'hungering' ? EG_TIDE_NAMES.hungering : ''].filter(Boolean).join(', ');
+    const D = EG_DECREE_BY_KEY.ashen,
+      ash = (E?.dc ?? []).find(([id]) => id === D.id)?.[1] ?? 0;
+    const why = [ash ? `${D.name}${ash >= 2 ? ' II' : ''}` : '', E?.td === 'hungering' ? EG_TIDE_NAMES.hungering : '']
+      .filter(Boolean)
+      .join(', ');
     const pct = Math.round(restP * 100);
-    less = why ? t('eg.rest.less', 'The rest heals {pct}%: {why}.', { pct, why }) : t('eg.rest.lessBare', 'The rest heals {pct}%.', { pct });
+    less = why
+      ? t('eg.rest.less', 'The rest heals {pct}%: {why}.', { pct, why })
+      : t('eg.rest.lessBare', 'The rest heals {pct}%.', { pct });
   }
   return [stake ? `${stake}.` : '', less].filter(Boolean).join(' ');
 }
@@ -400,33 +514,92 @@ export function egRestLine(E, run, restP = 1) {
  * watches (`{ numeral, name, pct }` - their health's share, null unknown) and `ping` what is left of my ping's cooldown (ms),
  * both on a witness's stage line, the ping's on its button too. AUDIT EG V (c, L2-9, NEW-1): `restP` the rest's heal share
  * (the room's `eheal`), its line and the stake's on the rest card.
- * @param {{ ff?: string, witness?: boolean, potions?: number, gain?: { text: string, blue?: boolean }|null, first?: string, door?: any, live?: string, touch?: boolean, foldOpen?: boolean, held?: { k: string, text: string }[], bridge?: boolean, watch?: { numeral: string, name: string, pct: number|null }|null, ping?: number, restP?: number }} [o]
+ * @param {{ ff?: string, witness?: boolean, potions?: [string, number][], gain?: { text: string, blue?: boolean }|null, first?: string, door?: any, live?: string, touch?: boolean, foldOpen?: boolean, held?: { k: string, text: string }[], bridge?: boolean, watch?: { numeral: string, name: string, pct: number|null }|null, ping?: number, restP?: number }} [o]
  */
-export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, potions = EG_POTIONS_PER_HALL, gain = null, first = '', door = null, live = '', touch = false, foldOpen = false, held = [], bridge = false, watch = null, ping = 0, restP = 1 } = {}) {
+export function egSpireHudModel(
+  E,
+  me,
+  now,
+  {
+    ff = 'desktop',
+    witness = false,
+    potions = [],
+    gain = null,
+    first = '',
+    door = null,
+    live = '',
+    touch = false,
+    foldOpen = false,
+    held = [],
+    bridge = false,
+    watch = null,
+    ping = 0,
+    restP = 1,
+  } = {},
+) {
   if (!E?.b || !(E.h > 0) || E.end) return null;
   const L = EG_LAYOUTS[ff] ?? EG_LAYOUTS.desktop;
   const spec = egHallOf(E.seed, E.h, E.geo ?? 0);
-  const run = me ? egRunOfMember(E, me) : null, mine = me ? egMemberOf(E, me) : null;
-  const dec = (E.dc ?? []).map(([id, rank]) => `${EG_DECREES[id]?.name ?? ''}${rank >= 2 ? ' II' : ''}`).filter(Boolean);
+  const run = me ? egRunOfMember(E, me) : null,
+    mine = me ? egMemberOf(E, me) : null;
+  const dec = (E.dc ?? [])
+    .map(([id, rank]) => `${EG_DECREES[id]?.name ?? ''}${rank >= 2 ? ' II' : ''}`)
+    .filter(Boolean);
   const watching = witness || !!mine?.wit;
   const memento = me ? (E.mm ?? []).find((q) => q[0] === me) : null;
-  const witLine = watching ? [egWatchLine(watch), ping > 0 ? egPingWait(Math.ceil(ping / 1000)) : '', mine?.recall ? (memento ? `Your Memento lies in Hall ${memento[1]}. You will be called back at Redoubt ${egCircleOfHall(E.h)}.` : `You will be called back at Redoubt ${egCircleOfHall(E.h)}.`) : `${EG_TEXT.fallen} Forsaking leaves for good.`].filter(Boolean).join(' ') : '';   // AUDIT EG V (c, L7-20): in no one input's words
-  const marks = me ? egSigilsOf(E.fight?.mk ?? [], me, now) : [];   // EG-ZG: sigils, never a line of text
+  const witLine = watching
+    ? [
+        egWatchLine(watch),
+        ping > 0 ? egPingWait(Math.ceil(ping / 1000)) : '',
+        mine?.recall
+          ? memento
+            ? `Your Memento lies in Hall ${memento[1]}. You will be called back at Redoubt ${egCircleOfHall(E.h)}.`
+            : `You will be called back at Redoubt ${egCircleOfHall(E.h)}.`
+          : `${EG_TEXT.fallen} Forsaking leaves for good.`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : ''; // AUDIT EG V (c, L7-20): in no one input's words
+  const marks = me ? egSigilsOf(E.fight?.mk ?? [], me, now) : []; // EG-ZG: sigils, never a line of text
   const n = E.co.length;
   return {
-    ff, chip: egCountChip(E, now), rel: run ? EG_PRES_TEXT.reliquaries(run.rel) : '', relInChip: L.relInChip,
+    ff,
+    chip: egCountChip(E, now),
+    rel: run ? EG_PRES_TEXT.reliquaries(run.rel) : '',
+    relInChip: L.relInChip,
     standing: L.standing && n > 1 ? EG_PRES_TEXT.standing(egLivingCount(E), n) : '',
-    potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',
-    recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '',   // my last life (PARTY8-B's law: a fact when it is actionable)
-    dec, decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '', foldOpen,
-    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
-    riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '',   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
-    stage: watching ? witLine : [stageLine(E, now), E.sg === 'rest' ? egRestLine(E, run, restP) : '', egNextCircleText(E), egBridgeLine(E, now, bridge && !watching)].filter(Boolean).join(' '),   // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
-    marks, marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),
-    eclipse: E.sg === 'trial' || E.sg === 'closing' ? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now)) : '',   // EG-PERFECT: and a lord's own (Seyth's)   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)
-    ...egLordBarsOf(E), lordH: L.lordH,   // only in a Court (a Proving Walk's champion has none); AUDIT EG V (lane1 #22): a second lord standing its own bar
-    gain, first, door, live, touch: touch ? egTouchButtons({ witness: watching, rest: E.sg === 'rest', bridge: bridge && !watching, ping }) : [],
-    held: watching ? [] : held,   // AUDIT EG III: the holder's chips
+    potion: egPotionPip(potions), // POTION-CLOCK: each kind still waiting (section 17.4) - AUDIT POTION-MIGHT C4: on every layout, standing only while one waits
+    recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '', // my last life (PARTY8-B's law: a fact when it is actionable)
+    dec,
+    decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '',
+    foldOpen,
+    objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '',
+    progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',
+    riddles: E.sg === 'trial' && !watching ? spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\n') : '', // FIELD BUGS 2026-10-17e (ORRERY-SIGHT): an Athenaeum's six, a line each - the truth the stones are turned to
+    stage: watching
+      ? witLine
+      : [
+          stageLine(E, now),
+          E.sg === 'rest' ? egRestLine(E, run, restP) : '',
+          egNextCircleText(E),
+          egBridgeLine(E, now, bridge && !watching),
+        ]
+          .filter(Boolean)
+          .join(' '), // AUDIT EG V (c, L2-9, NEW-1): the rest card's stake and its heal; (a1, L2-11): the next circle named
+    marks,
+    marksSaid: marks.map((m) => `${EG_MARK_NAMES[m.k] ?? ''} ${m.secs}s`).join(' - '),
+    eclipse:
+      E.sg === 'trial' || E.sg === 'closing'
+        ? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now))
+        : '', // EG-PERFECT: and a lord's own (Seyth's)   // EG-ZG (section 25.5): *The Eclipse - 5*, while the place's hazards run (the fight's own stages)
+    ...egLordBarsOf(E),
+    lordH: L.lordH, // only in a Court (a Proving Walk's champion has none); AUDIT EG V (lane1 #22): a second lord standing its own bar
+    gain,
+    first,
+    door,
+    live,
+    touch: touch ? egTouchButtons({ witness: watching, rest: E.sg === 'rest', bridge: bridge && !watching, ping }) : [],
+    held: watching ? [] : held, // AUDIT EG III: the holder's chips
   };
 }
 
@@ -444,6 +617,7 @@ export const EG_SPIRE_CSS = `
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px; max-width: 300px; }
 .eg-chips { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .eg-chip { padding: 2px 7px; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.eg-chip.eg-potion { white-space: normal; max-width: 100%; }   /* AUDIT POTION-MIGHT C5: three kinds waiting wrap between kinds */
 .eg-spire.enhanced .eg-chip { border-width: 2px; border-style: solid; }   /* EG-PLUS: the kit's chip paints it (ui/enhanced/enhancedFrame.js FRAME_ROLES) */
 .eg-spire.classic .eg-chip { background: rgba(0,0,0,0.55); border: 1px solid ${EG_CLASSIC_SHADOW_CSS}; }
 .eg-chip:empty { display: none; }
@@ -513,50 +687,132 @@ export const EG_SPIRE_CSS = `
 .eg-spire.still .eg-count.pulse .eg-time, .eg-spire.still .eg-gain.fly { animation: none; }
 ${EG_PARTY_CSS}`;
 
-let root = null, P = null;
-let card = null, cardP = null;
-const SHOWN = () => ({ cls: '', vals: {}, chipCls: '', lordW: '', lordW2: '', lordH: '', doorL: '', doorT: '', doorR: '', touchKey: null, decKey: null, gainKey: null, danger: '', scale: '', heldKey: '' });
-let shown = SHOWN(), cardShown = { key: '', alpha: -1, vis: '', cls: '' };
+let root = null,
+  P = null;
+let card = null,
+  cardP = null;
+const SHOWN = () => ({
+  cls: '',
+  vals: {},
+  chipCls: '',
+  lordW: '',
+  lordW2: '',
+  lordH: '',
+  doorL: '',
+  doorT: '',
+  doorR: '',
+  touchKey: null,
+  decKey: null,
+  gainKey: null,
+  danger: '',
+  scale: '',
+  heldKey: '',
+});
+let shown = SHOWN(),
+  cardShown = { key: '', alpha: -1, vis: '', cls: '' };
 
 function ensureStyle(doc) {
   if (doc.getElementById && !doc.getElementById(EG_SPIRE_STYLE_ID)) {
     const st = doc.createElement('style');
     st.id = EG_SPIRE_STYLE_ID;
-    st.textContent = EG_SPIRE_CSS + EG_FALL_CSS;   // EG-ZD: and THE FALL's
+    st.textContent = EG_SPIRE_CSS + EG_FALL_CSS; // EG-ZD: and THE FALL's
     (doc.head ?? doc.body)?.append(st);
     if (doc.head) injectEnhancedFonts(doc);
   }
 }
 function build(doc) {
   ensureStyle(doc);
-  const el = (tag, cls) => { const n = doc.createElement(tag); n.className = cls; return n; };
+  const el = (tag, cls) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    return n;
+  };
   root = el('div', 'eg-spire');
   root.setAttribute?.('aria-hidden', 'false');
-  const col = el('div', 'eg-col'), chips = el('div', 'eg-chips');
-  const count = el('div', 'eg-chip eg-count'), glyph = el('span', 'eg-glyph'), time = el('span', 'eg-time'), why = el('span', 'eg-why');
+  const col = el('div', 'eg-col'),
+    chips = el('div', 'eg-chips');
+  const count = el('div', 'eg-chip eg-count'),
+    glyph = el('span', 'eg-glyph'),
+    time = el('span', 'eg-time'),
+    why = el('span', 'eg-why');
   count.append(glyph, time, why);
-  const rel = el('div', 'eg-chip eg-rel'), standing = el('div', 'eg-chip eg-standing'), potion = el('div', 'eg-chip eg-potion'), recall = el('div', 'eg-chip eg-recall');
-  const eclipse = el('div', 'eg-chip eg-eclipse');   // EG-ZG: *The Eclipse - 5*
-  const held = el('span', 'eg-heldrow');   // AUDIT EG III: the holder's chips
+  const rel = el('div', 'eg-chip eg-rel'),
+    standing = el('div', 'eg-chip eg-standing'),
+    potion = el('div', 'eg-chip eg-potion'),
+    recall = el('div', 'eg-chip eg-recall');
+  const eclipse = el('div', 'eg-chip eg-eclipse'); // EG-ZG: *The Eclipse - 5*
+  const held = el('span', 'eg-heldrow'); // AUDIT EG III: the holder's chips
   chips.append(count, rel, standing, potion, recall, eclipse, held);
-  const gain = el('div', 'eg-gain'), dec = el('div', 'eg-dec'), fold = el('button', 'eg-fold');
-  const obj = el('div', 'eg-obj'), objLine = el('span', 'eg-objline'), prog = el('span', 'eg-prog');
+  const gain = el('div', 'eg-gain'),
+    dec = el('div', 'eg-dec'),
+    fold = el('button', 'eg-fold');
+  const obj = el('div', 'eg-obj'),
+    objLine = el('span', 'eg-objline'),
+    prog = el('span', 'eg-prog');
   obj.append(objLine, prog);
-  const riddles = el('div', 'eg-riddles');   // FIELD BUGS 2026-10-17e (ORRERY-SIGHT)
-  const stage = el('div', 'eg-stage'), marks = el('div', 'eg-marks'), first = el('div', 'eg-first');
+  const riddles = el('div', 'eg-riddles'); // FIELD BUGS 2026-10-17e (ORRERY-SIGHT)
+  const stage = el('div', 'eg-stage'),
+    marks = el('div', 'eg-marks'),
+    first = el('div', 'eg-first');
   col.append(chips, gain, dec, fold, obj, riddles, stage, marks, first);
-  const lord = el('div', 'eg-lord'), lordName = el('div', 'eg-lord-name'), track = el('div', 'eg-lord-track'), fill = el('div', 'eg-lord-fill');
+  const lord = el('div', 'eg-lord'),
+    lordName = el('div', 'eg-lord-name'),
+    track = el('div', 'eg-lord-track'),
+    fill = el('div', 'eg-lord-fill');
   track.append(fill);
-  const two = el('div', 'eg-lord-two'), lordName2 = el('div', 'eg-lord-name'), track2 = el('div', 'eg-lord-track'), fill2 = el('div', 'eg-lord-fill');   // AUDIT EG V (lane1 #22): the second lord's
-  track2.append(fill2); two.append(lordName2, track2); lord.append(lordName, track, two);
-  const door = el('div', 'eg-door'), arrow = el('span', 'eg-door-arrow'), doorText = el('span', 'eg-door-text');
+  const two = el('div', 'eg-lord-two'),
+    lordName2 = el('div', 'eg-lord-name'),
+    track2 = el('div', 'eg-lord-track'),
+    fill2 = el('div', 'eg-lord-fill'); // AUDIT EG V (lane1 #22): the second lord's
+  track2.append(fill2);
+  two.append(lordName2, track2);
+  lord.append(lordName, track, two);
+  const door = el('div', 'eg-door'),
+    arrow = el('span', 'eg-door-arrow'),
+    doorText = el('span', 'eg-door-text');
   arrow.textContent = '▲';
   door.append(arrow, doorText);
-  const touch = el('div', 'eg-touch'), live = el('div', 'eg-live');
+  const touch = el('div', 'eg-touch'),
+    live = el('div', 'eg-live');
   live.setAttribute?.('aria-live', 'polite');
   root.append(col, lord, door, touch, live);
   (doc.body ?? doc.documentElement)?.append(root);
-  P = { col, chips, count, glyph, time, why, rel, standing, potion, recall, eclipse, held, gain, dec, fold, obj, objLine, prog, riddles, stage, marks, first, lord, lordName, track, fill, lordName2, track2, fill2, door, arrow, doorText, touch, live };   // FB1018D WARD-BAR: the tracks, for the cage
+  P = {
+    col,
+    chips,
+    count,
+    glyph,
+    time,
+    why,
+    rel,
+    standing,
+    potion,
+    recall,
+    eclipse,
+    held,
+    gain,
+    dec,
+    fold,
+    obj,
+    objLine,
+    prog,
+    riddles,
+    stage,
+    marks,
+    first,
+    lord,
+    lordName,
+    track,
+    fill,
+    lordName2,
+    track2,
+    fill2,
+    door,
+    arrow,
+    doorText,
+    touch,
+    live,
+  }; // FB1018D WARD-BAR: the tracks, for the cage
 }
 
 /**
@@ -566,72 +822,169 @@ function build(doc) {
  * @param {any} model
  * @param {{ hidden?: boolean, doc?: any, skin?: string, still?: boolean, danger?: string, scale?: string|number, onTouch?: (id: string) => void, onFold?: () => void }} [o]
  */
-export function drawEgSpireHud(model, { hidden = false, doc = globalThis.document, skin = 'enhanced', still = false, danger = '', scale = '', onTouch = () => {}, onFold = () => {} } = {}) {
+export function drawEgSpireHud(
+  model,
+  {
+    hidden = false,
+    doc = globalThis.document,
+    skin = 'enhanced',
+    still = false,
+    danger = '',
+    scale = '',
+    onTouch = () => {},
+    onFold = () => {},
+  } = {},
+) {
   const want = !hidden && !!model;
-  if (!root) { if (!want || !doc?.createElement) return; build(doc); }
-  if (!want) { if (root.style.display !== 'none') root.style.display = 'none'; return; }
+  if (!root) {
+    if (!want || !doc?.createElement) return;
+    build(doc);
+  }
+  if (!want) {
+    if (root.style.display !== 'none') root.style.display = 'none';
+    return;
+  }
   if (root.style.display === 'none') root.style.display = '';
   const cls = `eg-spire ${model.ff} ${skin === 'classic' ? 'classic' : 'enhanced'}${still ? ' still' : ''}`;
-  if (cls !== shown.cls) { shown.cls = cls; root.className = cls; }
-  if (danger && danger !== shown.danger) { shown.danger = danger; root.style.setProperty?.('--eg-danger', danger); }
+  if (cls !== shown.cls) {
+    shown.cls = cls;
+    root.className = cls;
+  }
+  if (danger && danger !== shown.danger) {
+    shown.danger = danger;
+    root.style.setProperty?.('--eg-danger', danger);
+  }
   const sc = String(scale || '');
-  if (sc && sc !== shown.scale) { shown.scale = sc; root.style.setProperty?.('--hud-scale', sc); }
-  const put = (k, node, v) => { const s = v ?? ''; if (shown.vals[k] !== s) { shown.vals[k] = s; node.textContent = s; } };
+  if (sc && sc !== shown.scale) {
+    shown.scale = sc;
+    root.style.setProperty?.('--hud-scale', sc);
+  }
+  const put = (k, node, v) => {
+    const s = v ?? '';
+    if (shown.vals[k] !== s) {
+      shown.vals[k] = s;
+      node.textContent = s;
+    }
+  };
   const c = model.chip;
-  put('glyph', P.glyph, c?.glyph); put('time', P.time, c ? (model.relInChip && model.rel ? `${c.text} - ${model.rel.replace('Reliquaries ', 'R')}` : c.text) : '');
-  put('why', P.why, c?.held ? EG_HOLD_WORDS[c.why] ?? EG_PRES_TEXT.held : '');
+  put('glyph', P.glyph, c?.glyph);
+  put(
+    'time',
+    P.time,
+    c ? (model.relInChip && model.rel ? `${c.text} - ${model.rel.replace('Reliquaries ', 'R')}` : c.text) : '',
+  );
+  put('why', P.why, c?.held ? (EG_HOLD_WORDS[c.why] ?? EG_PRES_TEXT.held) : '');
   const chipCls = `eg-chip eg-count${c ? ` ${c.tone}` : ''}${c?.pulse ? ' pulse' : ''}${c?.held ? ' held' : ''}${c?.seal ? ' seal' : ''}`;
-  if (chipCls !== shown.chipCls) { shown.chipCls = chipCls; P.count.className = chipCls; P.count.setAttribute?.('aria-label', c?.label ?? ''); }
-  put('rel', P.rel, model.relInChip ? '' : model.rel); put('standing', P.standing, model.standing); put('potion', P.potion, model.potion); put('recall', P.recall, model.recall);
-  put('eclipse', P.eclipse, model.eclipse);   // EG-ZG
+  if (chipCls !== shown.chipCls) {
+    shown.chipCls = chipCls;
+    P.count.className = chipCls;
+    P.count.setAttribute?.('aria-label', c?.label ?? '');
+  }
+  put('rel', P.rel, model.relInChip ? '' : model.rel);
+  put('standing', P.standing, model.standing);
+  put('potion', P.potion, model.potion);
+  put('recall', P.recall, model.recall);
+  put('eclipse', P.eclipse, model.eclipse); // EG-ZG
   // AUDIT EG III: the holder's chips, rebuilt only when what they say changes
   const hk = (model.held ?? []).map((c) => `${c.k}=${c.text}`).join('|');
   if (hk !== shown.heldKey) {
     shown.heldKey = hk;
     P.held.replaceChildren?.();
-    for (const c of model.held ?? []) { const n = doc.createElement('div'); n.className = `eg-chip eg-held eg-held-${c.k.replace(/[^a-zA-Z0-9-]/g, '-')}`; n.textContent = c.text; P.held.append(n); }
+    for (const c of model.held ?? []) {
+      const n = doc.createElement('div');
+      n.className = `eg-chip eg-held eg-held-${c.k.replace(/[^a-zA-Z0-9-]/g, '-')}`;
+      n.textContent = c.text;
+      P.held.append(n);
+    }
   }
   const gk = model.gain ? `${model.gain.text}@${model.gain.at ?? 0}` : '';
-  if (gk !== shown.gainKey) { shown.gainKey = gk; P.gain.textContent = model.gain?.text ?? ''; P.gain.className = `eg-gain${model.gain?.blue ? ' blue' : ''}${model.gain ? ' fly' : ''}`; }
+  if (gk !== shown.gainKey) {
+    shown.gainKey = gk;
+    P.gain.textContent = model.gain?.text ?? '';
+    P.gain.className = `eg-gain${model.gain?.blue ? ' blue' : ''}${model.gain ? ' fly' : ''}`;
+  }
   put('dec', P.dec, model.decFold && !model.foldOpen ? '' : model.dec.join(' - '));
-  if (model.decFold !== shown.decKey) { shown.decKey = model.decFold; P.fold.textContent = model.decFold; if (!P.fold.egWired) { P.fold.egWired = true; P.fold.addEventListener?.('click', () => onFold()); } }
-  put('obj', P.objLine, model.objective); put('prog', P.prog, model.progress); put('riddles', P.riddles, model.riddles);
-  put('stage', P.stage, model.stage); put('first', P.first, model.first); put('live', P.live, model.live);
+  if (model.decFold !== shown.decKey) {
+    shown.decKey = model.decFold;
+    P.fold.textContent = model.decFold;
+    if (!P.fold.egWired) {
+      P.fold.egWired = true;
+      P.fold.addEventListener?.('click', () => onFold());
+    }
+  }
+  put('obj', P.objLine, model.objective);
+  put('prog', P.prog, model.progress);
+  put('riddles', P.riddles, model.riddles);
+  put('stage', P.stage, model.stage);
+  put('first', P.first, model.first);
+  put('live', P.live, model.live);
   // EG-ZG: my marks as their sigils (each its own shape), their names said to a screen reader
   const mh = (model.marks ?? []).map(egSigilHtml).join('');
-  if (shown.vals.marks !== mh) { shown.vals.marks = mh; P.marks.innerHTML = mh; P.marks.setAttribute?.('aria-label', model.marksSaid ?? ''); }
+  if (shown.vals.marks !== mh) {
+    shown.vals.marks = mh;
+    P.marks.innerHTML = mh;
+    P.marks.setAttribute?.('aria-label', model.marksSaid ?? '');
+  }
   // the lord's bar
-  const L = model.lord, L2 = model.lord2 ?? null;
+  const L = model.lord,
+    L2 = model.lord2 ?? null;
   const lordCls = `eg-lord${L ? ' on' : ''}${L && L2 ? ' two' : ''}`;
   if (P.lord.className !== lordCls) P.lord.className = lordCls;
   put('lord', P.lordName, L ? egLordLine(L) : '');
-  wardOn(P.track, !!L?.ward); wardOn(P.track2, !!L2?.ward);   // FB1018D WARD-BAR: the cage while the room says the ward
+  wardOn(P.track, !!L?.ward);
+  wardOn(P.track2, !!L2?.ward); // FB1018D WARD-BAR: the cage while the room says the ward
   const lw = L ? `${(L.frac * 100).toFixed(1)}%` : '0%';
-  if (lw !== shown.lordW) { shown.lordW = lw; P.fill.style.width = lw; }
+  if (lw !== shown.lordW) {
+    shown.lordW = lw;
+    P.fill.style.width = lw;
+  }
   // AUDIT EG V (c, L7-18; section 27.1 - a desk's bar, and "a 44 px lord's bar" on a phone held sideways): the bar's height
   // the layout's own (EG_LAYOUTS lordH - the name over it, the track the rest), never a sheet's literal
   const lh = `${Number(model.lordH) || EG_LAYOUTS.desktop.lordH}px`;
-  if (lh !== shown.lordH) { shown.lordH = lh; P.lord.style.setProperty?.('--eg-lord-h', lh); }
-  put('lord2', P.lordName2, L2 ? egLordLine(L2) : '');   // AUDIT EG V (lane1 #22): the second lord standing
+  if (lh !== shown.lordH) {
+    shown.lordH = lh;
+    P.lord.style.setProperty?.('--eg-lord-h', lh);
+  }
+  put('lord2', P.lordName2, L2 ? egLordLine(L2) : ''); // AUDIT EG V (lane1 #22): the second lord standing
   const lw2 = L2 ? `${(L2.frac * 100).toFixed(1)}%` : '0%';
-  if (lw2 !== shown.lordW2) { shown.lordW2 = lw2; P.fill2.style.width = lw2; }
+  if (lw2 !== shown.lordW2) {
+    shown.lordW2 = lw2;
+    P.fill2.style.width = lw2;
+  }
   // the door's marker
   const D = model.door;
   const doorCls = `eg-door${D ? ' on' : ''}`;
   if (P.door.className !== doorCls) P.door.className = doorCls;
   if (D) {
-    const l = `${(D.x * 100).toFixed(1)}%`, t = `${(D.y * 100).toFixed(1)}%`, r = `rotate(${Math.round((D.rel * 180) / Math.PI)}deg)`;
-    if (l !== shown.doorL) { shown.doorL = l; P.door.style.left = l; }
-    if (t !== shown.doorT) { shown.doorT = t; P.door.style.top = t; }
-    if (r !== shown.doorR) { shown.doorR = r; P.arrow.style.transform = r; }
+    const l = `${(D.x * 100).toFixed(1)}%`,
+      t = `${(D.y * 100).toFixed(1)}%`,
+      r = `rotate(${Math.round((D.rel * 180) / Math.PI)}deg)`;
+    if (l !== shown.doorL) {
+      shown.doorL = l;
+      P.door.style.left = l;
+    }
+    if (t !== shown.doorT) {
+      shown.doorT = t;
+      P.door.style.top = t;
+    }
+    if (r !== shown.doorR) {
+      shown.doorR = r;
+      P.arrow.style.transform = r;
+    }
     put('door', P.doorText, EG_PRES_TEXT.wayDown(D.dist));
   }
   // the touch buttons
-  const tk = model.touch.map((b) => `${b.id}=${b.label}`).join(',');   // AUDIT EG V (c, L7-7): a label moves too (the ping's seconds)
+  const tk = model.touch.map((b) => `${b.id}=${b.label}`).join(','); // AUDIT EG V (c, L7-7): a label moves too (the ping's seconds)
   if (tk !== shown.touchKey) {
     shown.touchKey = tk;
     P.touch.replaceChildren?.();
-    for (const b of model.touch) { const n = doc.createElement('button'); n.className = `eg-touch-${b.id}`; n.textContent = b.label; n.addEventListener?.('click', () => onTouch(b.id)); P.touch.append(n); }
+    for (const b of model.touch) {
+      const n = doc.createElement('button');
+      n.className = `eg-touch-${b.id}`;
+      n.textContent = b.label;
+      n.addEventListener?.('click', () => onTouch(b.id));
+      P.touch.append(n);
+    }
   }
 }
 
@@ -643,7 +996,8 @@ export const EG_SIGIL_PATHS = Object.freeze({
   gem: 'M7 3h10l4 6-9 12L3 9z',
   flame: 'M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 1.5-5 3-6.5 0 2.5 1 4 2.5 4.5C10.5 9 11 5 12 2z',
   flake: 'M11 2h2v20h-2zM2 11h20v2H2zM4.9 6.3l1.4-1.4 12.8 12.8-1.4 1.4zM17.7 4.9l1.4 1.4L6.3 19.1l-1.4-1.4z',
-  chain: 'M2 12a5 5 0 0 1 5-5h4v3H7a2 2 0 0 0 0 4h4v3H7a5 5 0 0 1-5-5zM13 7h4a5 5 0 0 1 0 10h-4v-3h4a2 2 0 0 0 0-4h-4zM8 11h8v2H8z',
+  chain:
+    'M2 12a5 5 0 0 1 5-5h4v3H7a2 2 0 0 0 0 4h4v3H7a5 5 0 0 1-5-5zM13 7h4a5 5 0 0 1 0 10h-4v-3h4a2 2 0 0 0 0-4h-4zM8 11h8v2H8z',
   cage: 'M4 3h16v2H4zM4 19h16v2H4zM5 5h2v14H5zM9 5h2v14H9zM13 5h2v14h-2zM17 5h2v14h-2z',
   ring: 'M12 2a10 10 0 1 1 0 20a10 10 0 1 1 0-20zM12 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12z',
   eye: 'M1 12C4 6 8 4 12 4s8 2 11 8c-3 6-7 8-11 8S4 18 1 12zM12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z',
@@ -652,12 +1006,14 @@ export const EG_SIGIL_PATHS = Object.freeze({
 /** One sigil's markup (world/eliteGates/egTelegraph.js egSigilsOf's `{ sigil, secs, rim }`): its shape, and a soul-mark's seconds
  *  beside its gem. Pure. */
 export function egSigilHtml(s) {
-  if (s?.sigil === 'given' || s?.sigil === 'stone') return `<span class="eg-sig eg-sig-${s.sigil}"><b>${String(s.text ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)}</b></span>`;   // AUDIT EG IV (lane1 #15): an errand's members by numeral (scenes/eliteGates/egFight.js egGivenWords), in Battlemage blue
+  if (s?.sigil === 'given' || s?.sigil === 'stone')
+    return `<span class="eg-sig eg-sig-${s.sigil}"><b>${String(s.text ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)}</b></span>`; // AUDIT EG IV (lane1 #15): an errand's members by numeral (scenes/eliteGates/egFight.js egGivenWords), in Battlemage blue
   const d = EG_SIGIL_PATHS[s?.sigil];
   if (!d) return '';
   return `<span class="eg-sig eg-sig-${s.sigil}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}" fill="currentColor" fill-rule="evenodd" stroke="${s.rim ? rgbCss(s.rim) : '#140606'}" stroke-width="${s.rim ? 1.8 : 1.2}"/></svg>${s.sigil === 'gem' ? `<b>${s.secs | 0}</b>` : ''}</span>`;
 }
-let sigRoot = null, sigDoc = null;
+let sigRoot = null,
+  sigDoc = null;
 const sigRows = new Map();
 /**
  * THE MARKS OVER HEADS: each marked companion's sigils where the camera sees their head (`list` - scenes/eliteGates/egFight.js's
@@ -671,27 +1027,47 @@ export function drawEgSigils(list, { hidden = false, doc = globalThis.document, 
   if (!sigRoot) {
     if (!want || !doc?.createElement) return;
     ensureStyle(doc);
-    sigDoc = doc;   // the rows are made in the document the layer was
+    sigDoc = doc; // the rows are made in the document the layer was
     sigRoot = doc.createElement('div');
     sigRoot.className = 'eg-sigils';
     (doc.body ?? doc.documentElement)?.append(sigRoot);
   }
-  if (!want || !list) { if (sigRoot.style.display !== 'none') sigRoot.style.display = 'none'; return; }
+  if (!want || !list) {
+    if (sigRoot.style.display !== 'none') sigRoot.style.display = 'none';
+    return;
+  }
   if (sigRoot.style.display === 'none') sigRoot.style.display = '';
   const c = danger ? rgbCss(danger) : '';
-  if (c && sigRoot.egDanger !== c) { sigRoot.egDanger = c; sigRoot.style.setProperty?.('--eg-danger', c); }
+  if (c && sigRoot.egDanger !== c) {
+    sigRoot.egDanger = c;
+    sigRoot.style.setProperty?.('--eg-danger', c);
+  }
   const seen = new Set();
   for (const it of list) {
     seen.add(it.key);
     let row = sigRows.get(it.key);
-    if (!row) { row = sigDoc.createElement('div'); row.className = 'eg-sigrow'; row.egHtml = ''; sigRoot.append(row); sigRows.set(it.key, row); }
+    if (!row) {
+      row = sigDoc.createElement('div');
+      row.className = 'eg-sigrow';
+      row.egHtml = '';
+      sigRoot.append(row);
+      sigRows.set(it.key, row);
+    }
     const html = it.marks.map(egSigilHtml).join('');
-    if (row.egHtml !== html) { row.egHtml = html; row.innerHTML = html; }
-    const l = `${(it.x * 100).toFixed(2)}%`, t = `${(it.y * 100).toFixed(2)}%`;
+    if (row.egHtml !== html) {
+      row.egHtml = html;
+      row.innerHTML = html;
+    }
+    const l = `${(it.x * 100).toFixed(2)}%`,
+      t = `${(it.y * 100).toFixed(2)}%`;
     if (row.style.left !== l) row.style.left = l;
     if (row.style.top !== t) row.style.top = t;
   }
-  for (const [k, row] of sigRows) if (!seen.has(k)) { row.remove?.(); sigRows.delete(k); }
+  for (const [k, row] of sigRows)
+    if (!seen.has(k)) {
+      row.remove?.();
+      sigRows.delete(k);
+    }
 }
 
 /** Draw the arrival card for a shown card (egArrivalShown; null hides it). */
@@ -699,25 +1075,52 @@ export function drawEgArrivalCard(m, { hidden = false, doc = globalThis.document
   const want = !hidden && !!m;
   if (!card) {
     if (!want || !doc?.createElement) return;
-    if (doc.getElementById && !doc.getElementById(TITLE_CARD_STYLE_ID)) { const st = doc.createElement('style'); st.id = TITLE_CARD_STYLE_ID; st.textContent = TITLE_CARD_CSS; (doc.head ?? doc.body)?.append(st); }
+    if (doc.getElementById && !doc.getElementById(TITLE_CARD_STYLE_ID)) {
+      const st = doc.createElement('style');
+      st.id = TITLE_CARD_STYLE_ID;
+      st.textContent = TITLE_CARD_CSS;
+      (doc.head ?? doc.body)?.append(st);
+    }
     ensureStyle(doc);
-    const el = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
+    const el = (cls) => {
+      const n = doc.createElement('div');
+      n.className = cls;
+      return n;
+    };
     card = el('wb-title-card eg-card');
-    card.setAttribute?.('aria-hidden', 'true');   // the live line says it in words
-    cardP = { kicker: el('wb-title-kicker'), main: el('wb-title-main'), rule: el('wb-title-rule'), sub: el('wb-title-sub'), twist: el('wb-title-sub eg-card-twist'), dec: el('wb-title-sub eg-card-dec'), band: el('wb-title-sub eg-card-band'), lays: el('wb-title-sub eg-card-lays') };   // EG-ZS: the Markynaz's decree
+    card.setAttribute?.('aria-hidden', 'true'); // the live line says it in words
+    cardP = {
+      kicker: el('wb-title-kicker'),
+      main: el('wb-title-main'),
+      rule: el('wb-title-rule'),
+      sub: el('wb-title-sub'),
+      twist: el('wb-title-sub eg-card-twist'),
+      dec: el('wb-title-sub eg-card-dec'),
+      band: el('wb-title-sub eg-card-band'),
+      lays: el('wb-title-sub eg-card-lays'),
+    }; // EG-ZS: the Markynaz's decree
     card.append(cardP.kicker, cardP.main, cardP.rule, cardP.sub, cardP.lays, cardP.twist, cardP.dec, cardP.band);
     (doc.body ?? doc.documentElement)?.append(card);
   }
   const vis = want ? 'on' : 'off';
-  if (vis !== cardShown.vis) { cardShown.vis = vis; card.style.display = want ? '' : 'none'; }
+  if (vis !== cardShown.vis) {
+    cardShown.vis = vis;
+    card.style.display = want ? '' : 'none';
+  }
   if (!want || !m) return;
   if (m.key !== cardShown.key) {
     cardShown.key = m.key;
     for (const k of ['kicker', 'main', 'sub', 'lays', 'twist', 'dec', 'band']) cardP[k].textContent = m[k] ?? '';
   }
-  const cls = `wb-title-card eg-card on${m.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`;   // AUDIT EG V (c, L7-17): the rule never sweeps under reduced motion
-  if (cls !== cardShown.cls) { cardShown.cls = cls; card.className = cls; }
-  if (m.alpha !== cardShown.alpha) { cardShown.alpha = m.alpha; card.style.opacity = String(m.alpha); }
+  const cls = `wb-title-card eg-card on${m.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`; // AUDIT EG V (c, L7-17): the rule never sweeps under reduced motion
+  if (cls !== cardShown.cls) {
+    cardShown.cls = cls;
+    card.className = cls;
+  }
+  if (m.alpha !== cardShown.alpha) {
+    cardShown.alpha = m.alpha;
+    card.style.opacity = String(m.alpha);
+  }
 }
 
 // ── EG-ZD: THE FALL (section 16.5) ─────────────────────────────────────────────────────────────────────────────
@@ -731,9 +1134,19 @@ export const EG_FALL_SINK_M = 1.2;
 export const EG_FALL_SAT = 0.2;
 /** The dither's levels past none: an ordered 2x2 dither's quarters (its cells darkened in Bayer's order). */
 export const EG_FALL_DITHER_STEPS = 4;
-const BAYER2 = Object.freeze([[0, 0], [1, 1], [1, 0], [0, 1]]);
+const BAYER2 = Object.freeze([
+  [0, 0],
+  [1, 1],
+  [1, 0],
+  [0, 1],
+]);
 /** THE FALL's words (the client's alone - net/eliteGates/egLaw.js EG_TEXT is the relay's bundle's; its final line is the law's). */
-export const EG_FALL_TEXT = Object.freeze({ main: 'Fallen', first: 'The next Redoubt can call you back.', final: EG_TEXT.fallen, lost: (n) => `Reliquaries lost: ${n}` });
+export const EG_FALL_TEXT = Object.freeze({
+  main: 'Fallen',
+  first: 'The next Redoubt can call you back.',
+  final: EG_TEXT.fallen,
+  lost: (n) => `Reliquaries lost: ${n}`,
+});
 /**
  * THE FALL at `now` (pure), or null before it and once the witness view stands: `fall` is `{ at, final, lost }` - when it
  * began, whether it was the last (no recall left), the Reliquaries it cost. Answers `{ phase, sink, sat, eye, veil, card }`:
@@ -747,22 +1160,57 @@ export function egFallModel(fall, now, { still = false } = {}) {
   if (!fall || !Number.isFinite(fall.at)) return null;
   const u = now - fall.at;
   if (!(u >= 0) || u >= EG_FALL_MS) return null;
-  const S = EG_FALL_SINK_MS, C = S + EG_FALL_CARD_MS, k = Math.min(1, u / S);
+  const S = EG_FALL_SINK_MS,
+    C = S + EG_FALL_CARD_MS,
+    k = Math.min(1, u / S);
   const phase = u < S ? 'sink' : u < C ? 'card' : 'dither';
-  let sat = still ? EG_FALL_SAT : 1 - (1 - EG_FALL_SAT) * k, eye = 'fall', veil = 0;
+  let sat = still ? EG_FALL_SAT : 1 - (1 - EG_FALL_SAT) * k,
+    eye = 'fall',
+    veil = 0;
   if (phase === 'dither') {
     const d = (u - C) / EG_FALL_DITHER_MS;
-    if (still || d >= 0.5) { eye = 'witness'; sat = 1; }
+    if (still || d >= 0.5) {
+      eye = 'witness';
+      sat = 1;
+    }
     if (!still) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;
   }
-  const m = titleCardModel({ kind: 'fall', at: fall.at + S, until: fall.at + C + EG_FALL_DITHER_MS / 2, main: fall.down ? t('eg.fall.down', 'Down') : EG_FALL_TEXT.main, sub: fall.down ? t('eg.fall.raise', 'A party member can raise you. Enter: give up.') : fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }, now);   // AUDIT WORLD-EVENTS L1-4: lying down, a raise to come
+  const m = titleCardModel(
+    {
+      kind: 'fall',
+      at: fall.at + S,
+      until: fall.at + C + EG_FALL_DITHER_MS / 2,
+      main: fall.down ? t('eg.fall.down', 'Down') : EG_FALL_TEXT.main,
+      sub: fall.down
+        ? t('eg.fall.raise', 'A party member can raise you. Enter: give up.')
+        : fall.final
+          ? EG_FALL_TEXT.final
+          : EG_FALL_TEXT.first,
+    },
+    now,
+  ); // AUDIT WORLD-EVENTS L1-4: lying down, a raise to come
   return {
-    phase, sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000, sat: Math.round(sat * 1000) / 1000, eye, veil,
-    card: m ? { key: m.key, main: m.main, sub: m.sub, lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : '', alpha: m.alpha, fresh: m.fresh && !still, still: !!still } : null,   // AUDIT EG V (c, L7-17): `still` - its rule never sweeps
+    phase,
+    sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,
+    sat: Math.round(sat * 1000) / 1000,
+    eye,
+    veil,
+    card: m
+      ? {
+          key: m.key,
+          main: m.main,
+          sub: m.sub,
+          lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : '',
+          alpha: m.alpha,
+          fresh: m.fresh && !still,
+          still: !!still,
+        }
+      : null, // AUDIT EG V (c, L7-17): `still` - its rule never sweeps
   };
 }
 /** The cells of an ordered 2x2 dither darkened at `level` (0-1, in quarters), in Bayer's order (pure). */
-export const egDitherCells = (level) => BAYER2.slice(0, Math.max(0, Math.min(4, Math.round(level * EG_FALL_DITHER_STEPS))));
+export const egDitherCells = (level) =>
+  BAYER2.slice(0, Math.max(0, Math.min(4, Math.round(level * EG_FALL_DITHER_STEPS))));
 /** The dither's veil as a CSS background (pure): none, the whole screen black, or a 2x2 cell pattern at 4 px a cell. */
 export function egDitherCss(level) {
   const cells = egDitherCells(level);
@@ -777,8 +1225,21 @@ export const EG_FALL_CSS = `
 .eg-fall-veil { image-rendering: pixelated; }
 .eg-fall-lost { font-size: 18px; letter-spacing: 0.06em; min-height: 22px; color: #ff5a3a; }
 .eg-fall-lost:empty { display: none; }`;
-let fall = null, fallP = null, fallCard = null;
-const FALL_SHOWN = () => ({ vis: '', sat: -1, veil: -1, main: null, sub: null, lost: null, alpha: -1, cls: '', cardVis: '', danger: '' });
+let fall = null,
+  fallP = null,
+  fallCard = null;
+const FALL_SHOWN = () => ({
+  vis: '',
+  sat: -1,
+  veil: -1,
+  main: null,
+  sub: null,
+  lost: null,
+  alpha: -1,
+  cls: '',
+  cardVis: '',
+  danger: '',
+});
 let fallShown = FALL_SHOWN();
 /**
  * Draw THE FALL for a model (egFallModel; null takes it down): the screen's colour drained behind everything (a
@@ -789,37 +1250,91 @@ let fallShown = FALL_SHOWN();
 export function drawEgFall(m, { hidden = false, doc = globalThis.document, danger = '' } = {}) {
   if (!fall) {
     if (!m || !doc?.createElement) return;
-    if (doc.getElementById && !doc.getElementById(TITLE_CARD_STYLE_ID)) { const st = doc.createElement('style'); st.id = TITLE_CARD_STYLE_ID; st.textContent = TITLE_CARD_CSS; (doc.head ?? doc.body)?.append(st); }
+    if (doc.getElementById && !doc.getElementById(TITLE_CARD_STYLE_ID)) {
+      const st = doc.createElement('style');
+      st.id = TITLE_CARD_STYLE_ID;
+      st.textContent = TITLE_CARD_CSS;
+      (doc.head ?? doc.body)?.append(st);
+    }
     ensureStyle(doc);
-    const el = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
+    const el = (cls) => {
+      const n = doc.createElement('div');
+      n.className = cls;
+      return n;
+    };
     fall = el('eg-fall');
-    fall.setAttribute?.('aria-hidden', 'true');   // the HUD's live line says it in words
+    fall.setAttribute?.('aria-hidden', 'true'); // the HUD's live line says it in words
     fallP = { drain: el('eg-fall-drain'), veil: el('eg-fall-veil') };
     fall.append(fallP.drain, fallP.veil);
     fallCard = el('wb-title-card eg-fall-card');
     fallCard.setAttribute?.('aria-hidden', 'true');
-    Object.assign(fallP, { kicker: el('wb-title-kicker'), main: el('wb-title-main'), rule: el('wb-title-rule'), sub: el('wb-title-sub'), lost: el('eg-fall-lost') });
+    Object.assign(fallP, {
+      kicker: el('wb-title-kicker'),
+      main: el('wb-title-main'),
+      rule: el('wb-title-rule'),
+      sub: el('wb-title-sub'),
+      lost: el('eg-fall-lost'),
+    });
     fallCard.append(fallP.kicker, fallP.main, fallP.rule, fallP.sub, fallP.lost);
     (doc.body ?? doc.documentElement)?.append(fall, fallCard);
   }
   const vis = m ? 'on' : 'off';
-  if (vis !== fallShown.vis) { fallShown.vis = vis; fall.style.display = m ? '' : 'none'; }
-  const C = m && !hidden ? m.card : null, cardVis = C ? 'on' : 'off';
-  if (cardVis !== fallShown.cardVis) { fallShown.cardVis = cardVis; fallCard.style.display = C ? '' : 'none'; }
+  if (vis !== fallShown.vis) {
+    fallShown.vis = vis;
+    fall.style.display = m ? '' : 'none';
+  }
+  const C = m && !hidden ? m.card : null,
+    cardVis = C ? 'on' : 'off';
+  if (cardVis !== fallShown.cardVis) {
+    fallShown.cardVis = cardVis;
+    fallCard.style.display = C ? '' : 'none';
+  }
   if (!m) return;
-  if (m.sat !== fallShown.sat) { fallShown.sat = m.sat; const f = m.sat < 1 ? `saturate(${m.sat})` : ''; fallP.drain.style.backdropFilter = f; fallP.drain.style.webkitBackdropFilter = f; }
-  if (m.veil !== fallShown.veil) { fallShown.veil = m.veil; fallP.veil.style.background = egDitherCss(m.veil); }
-  if (danger && danger !== fallShown.danger) { fallShown.danger = danger; fallP.lost.style.color = danger; }
+  if (m.sat !== fallShown.sat) {
+    fallShown.sat = m.sat;
+    const f = m.sat < 1 ? `saturate(${m.sat})` : '';
+    fallP.drain.style.backdropFilter = f;
+    fallP.drain.style.webkitBackdropFilter = f;
+  }
+  if (m.veil !== fallShown.veil) {
+    fallShown.veil = m.veil;
+    fallP.veil.style.background = egDitherCss(m.veil);
+  }
+  if (danger && danger !== fallShown.danger) {
+    fallShown.danger = danger;
+    fallP.lost.style.color = danger;
+  }
   if (!C) return;
-  for (const k of ['main', 'sub', 'lost']) if (C[k] !== fallShown[k]) { fallShown[k] = C[k]; fallP[k].textContent = C[k]; }   // the room's word can make it the last while it stands
-  const cls = `wb-title-card eg-fall-card on${C.fresh ? ' in' : ''}${C.still ? ' still' : ''}`;   // AUDIT EG V (c, L7-17)
-  if (cls !== fallShown.cls) { fallShown.cls = cls; fallCard.className = cls; }
-  if (C.alpha !== fallShown.alpha) { fallShown.alpha = C.alpha; fallCard.style.opacity = String(C.alpha); }
+  for (const k of ['main', 'sub', 'lost'])
+    if (C[k] !== fallShown[k]) {
+      fallShown[k] = C[k];
+      fallP[k].textContent = C[k];
+    } // the room's word can make it the last while it stands
+  const cls = `wb-title-card eg-fall-card on${C.fresh ? ' in' : ''}${C.still ? ' still' : ''}`; // AUDIT EG V (c, L7-17)
+  if (cls !== fallShown.cls) {
+    fallShown.cls = cls;
+    fallCard.className = cls;
+  }
+  if (C.alpha !== fallShown.alpha) {
+    fallShown.alpha = C.alpha;
+    fallCard.style.opacity = String(C.alpha);
+  }
 }
 
 /** The page is going (a test's reset): the nodes leave with it. */
 export function destroyEgSpireHud() {
-  root?.remove?.(); card?.remove?.(); fall?.remove?.(); fallCard?.remove?.();   // EG-ZD: and THE FALL's
-  root = null; P = null; card = null; cardP = null; fall = null; fallP = null; fallCard = null;
-  shown = SHOWN(); cardShown = { key: '', alpha: -1, vis: '', cls: '' }; fallShown = FALL_SHOWN();
+  root?.remove?.();
+  card?.remove?.();
+  fall?.remove?.();
+  fallCard?.remove?.(); // EG-ZD: and THE FALL's
+  root = null;
+  P = null;
+  card = null;
+  cardP = null;
+  fall = null;
+  fallP = null;
+  fallCard = null;
+  shown = SHOWN();
+  cardShown = { key: '', alpha: -1, vis: '', cls: '' };
+  fallShown = FALL_SHOWN();
 }
