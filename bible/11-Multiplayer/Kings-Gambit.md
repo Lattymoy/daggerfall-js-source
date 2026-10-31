@@ -291,7 +291,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 - FACT: the interior host keeps one slot a game (`worldModes.js:"let iliacGame = null;"`, beside Hold'em's `cardGame`),
   each game opening by closing the other, and every road off the seat closing both
   (`worldModes.js:"function standFromCardTable({ cashOut = true } = {}) {"`). The King's Gambit takes a third slot, its
-  half in its own module with Iliac Hand's handle (`iliacTableGame.js:"export function openIliacTableGame(d) {"`: press,
+  half in its own module with Iliac Hand's handle (`iliacTableGame.js:"export function openIliacTableGame"`: press,
   frame, relay, draw, playing, staked, close).
 
 ## 4. What ports 1:1 - the law

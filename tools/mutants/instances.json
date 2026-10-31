@@ -348,8 +348,8 @@
   {
     "name": "INSTANCES-LEAVE-ENTERS",
     "file": "src/scenes/instanceDoor.js",
-    "old": "    async atDoor(site, go) { const entry = await choose(site); return entry ? go(entry) : true; },",
-    "new": "    async atDoor(site, go) { const entry = await choose(site); return go(entry); },",
+    "old": "      return entry ? go(entry) : true;",
+    "new": "      return go(entry);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -378,8 +378,8 @@
   {
     "name": "INSTANCES-RECORD-UNCHECKED",
     "file": "src/scenes/instanceDoor.js",
-    "old": "if (ok && await stillHeld(site, inst, recorded.staff === true)) return",
-    "new": "if (ok && inst) return",
+    "old": "      if (ok && (await stillHeld(site, inst, recorded.staff === true))) return { instance: inst, whole: true };",
+    "new": "      if (ok && inst) return { instance: inst, whole: true };",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -398,8 +398,8 @@
   {
     "name": "INSTANCES-PARTY-APART",
     "file": "src/scenes/instanceDoor.js",
-    "old": "    if (partner) return { instance: { owner: partner.owner, epoch: partner.epoch }, whole: true };\n",
-    "new": "",
+    "old": "    if (partner) return { instance: { owner: partner.owner, epoch: partner.epoch }, whole: true };\n    const inst = await mine(site);",
+    "new": "    const inst = await mine(site);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -418,8 +418,8 @@
   {
     "name": "INSTANCES-REFUSED-EVERY-FRAME",
     "file": "src/scenes/instanceDoor.js",
-    "old": " || !isInstanceRoom(room) || refusedRoom === room) return false;",
-    "new": " || !isInstanceRoom(room)) return false;",
+    "old": "      if (!session?.terminal || session.error !== INSTANCE_DOOR_WORD || !isInstanceRoom(room) || refusedRoom === room)\n        return false;",
+    "new": "      if (!session?.terminal || session.error !== INSTANCE_DOOR_WORD || !isInstanceRoom(room)) return false;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -489,8 +489,8 @@
   {
     "name": "INSTANCES-ZONE-INSTANCED",
     "file": "src/scenes/instanceDoor.js",
-    "old": " && !keepsNone(site) && !deps.wild?.();",
-    "new": " && !keepsNone(site);",
+    "old": "  const can = (site) => online() && !!deps.instanceOk?.() && !keepsNone(site) && !deps.wild?.();",
+    "new": "  const can = (site) => online() && !!deps.instanceOk?.() && !keepsNone(site);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

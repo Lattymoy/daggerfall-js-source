@@ -21,8 +21,8 @@
   {
     "name": "AC6-B1-win-returns",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (held) addItem(d.entity.items, held);\n",
-    "new": "",
+    "old": "      if (held) addItem(d.entity.items, held);\n      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
+    "new": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AC6-B1-draw-returns",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    } else if (held) addItem(d.entity.items, held);   // a draw: nobody pays, the stake comes home\n",
-    "new": "    }\n",
+    "old": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    }",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AC6-B1-take-said",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);",
-    "new": "",
+    "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);\n    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AC6-B13-closed",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    staked: () => !g.closed && g.phase === 'playing'",
-    "new": "    staked: () => g.phase === 'playing'",
+    "old": "    staked: () => !g.closed && g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
+    "new": "    staked: () => g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]

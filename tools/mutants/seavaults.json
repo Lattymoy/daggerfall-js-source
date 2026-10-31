@@ -110,8 +110,8 @@
   {
     "name": "SEA-VAULTS-door-keys-instances",
     "file": "src/scenes/instanceDoor.js",
-    "old": "wdunHallOfRoom(base) != null || seaRoomCell(base) != null; };",
-    "new": "wdunHallOfRoom(base) != null; };",
+    "old": "  return !base || !!site.home || wdunHallOfRoom(base) != null || seaRoomCell(base) != null;",
+    "new": "  return !base || !!site.home || wdunHallOfRoom(base) != null;",
     "tests": [
       "test/systems/sea/seavaults.test.js"
     ]

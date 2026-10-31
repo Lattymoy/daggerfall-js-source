@@ -2,8 +2,8 @@
   {
     "name": "QUEST-FIRST-relaid-never-passed",
     "file": "src/scenes/instanceDoor.js",
-    "old": "questHere: questHere(site), relaid: site.relaid === true, partners:",
-    "new": "questHere: questHere(site), partners:",
+    "old": "      relaid: site.relaid === true,\n      partners: ok ? await partnersAt(site) : [],",
+    "new": "      partners: ok ? await partnersAt(site) : [],",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

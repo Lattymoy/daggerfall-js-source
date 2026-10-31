@@ -22,8 +22,8 @@
   {
     "name": "WIPE-RETURN-never-offered-by-the-door",
     "file": "src/scenes/instanceDoor.js",
-    "old": "(acct) => owners.get(acct) ?? null, instanceOf(stood));",
-    "new": "(acct) => owners.get(acct) ?? null);",
+    "old": "    return partnerInstances(\n      deps.members?.() ?? [],\n      siteBase(site),\n      (acct) => owners.get(acct) ?? null,\n      instanceOf(stood),\n    );",
+    "new": "    return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WIPE-RETURN-kept-from-outside",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n      stood = room;\n",
-    "new": "      stood = room;\n      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n",
+    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n      stood = room;",
+    "new": "      stood = room;\n      if (mode === 'exterior' || !isInstanceRoom(room)) return {};",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WIPE-RETURN-kept-past-a-refusal",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      if (stood === room) stood = null;\n",
-    "new": "",
+    "old": "      if (stood === room) stood = null;\n      deps.say?.(INSTANCE_TEXT.refused());",
+    "new": "      deps.say?.(INSTANCE_TEXT.refused());",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

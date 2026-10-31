@@ -47,8 +47,8 @@
   {
     "name": "HUNTERS-MARK-II-crown-stand-trait-kept",
     "file": "src/scenes/huntersMark.js",
-    "old": "    e.bossTraits = undefined; e.bossWard = undefined;",
-    "new": "    void e;",
+    "old": "    e.bossTraits = undefined;\n    e.bossWard = undefined; // HUNTERS-MARK-II: the week's two in place of any its stand drew as an elite (RAID5's leader's law) - a mate's screen reads the mark off them",
+    "new": "    void e; // HUNTERS-MARK-II: the week's two in place of any its stand drew as an elite (RAID5's leader's law) - a mate's screen reads the mark off them",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HUNTERS-MARK-II-the-mark-keeps-the-elite-kit",
     "file": "src/scenes/huntersMark.js",
-    "old": "    withdrawEliteLoot(e);   // HUNTERS-MARK-II: an elite its stand rolled keeps no elite's pieces - a mark is never kit",
-    "new": "    ;",
+    "old": "    withdrawEliteLoot(e); // HUNTERS-MARK-II: an elite its stand rolled keeps no elite's pieces - a mark is never kit\n    e.bossTraits = undefined;",
+    "new": "    e.bossTraits = undefined;",
     "tests": [
       "test/scenes/huntersmark2_wire.test.js"
     ]

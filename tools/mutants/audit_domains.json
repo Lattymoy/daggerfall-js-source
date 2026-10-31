@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-DOMAINS-R1-any-door",
     "file": "src/scenes/instanceDoor.js",
-    "old": "const c = site?.siteType === SITE_TYPES.Dungeon ? deps.castle?.(site) ?? null : null;",
-    "new": "const c = deps.castle?.(site) ?? null;",
+    "old": "    const c = site?.siteType === SITE_TYPES.Dungeon ? (deps.castle?.(site) ?? null) : null;",
+    "new": "    const c = deps.castle?.(site) ?? null;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

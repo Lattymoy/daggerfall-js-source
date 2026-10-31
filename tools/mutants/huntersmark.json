@@ -292,8 +292,8 @@
   {
     "name": "HUNTERS-MARK-mark-below-rung",
     "file": "src/scenes/huntersMark.js",
-    "old": "if (n == null || !huntMarksOpen(n)) return null;",
-    "new": "if (n == null) return null;",
+    "old": "    if (n == null || !huntMarksOpen(n)) return null;",
+    "new": "    if (n == null) return null;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "HUNTERS-MARK-mark-two-beasts",
     "file": "src/scenes/huntersMark.js",
-    "old": "mobileType: p.foe, count: 1, stage: 0,",
-    "new": "mobileType: p.foe, count: 2, stage: 0,",
+    "old": "      mobileType: p.foe,\n      count: 1,",
+    "new": "      mobileType: p.foe,\n      count: 2,",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "HUNTERS-MARK-mark-uncrowned",
     "file": "src/scenes/huntersMark.js",
-    "old": "    e.raidLeader = { name: p.title };",
-    "new": "    void p;",
+    "old": "    e.raidLeader = { name: p.title }; // its name over it (systems/foeTitle.js) and a leader's size",
+    "new": "    void p; // its name over it (systems/foeTitle.js) and a leader's size",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "HUNTERS-MARK-mark-trophy-unnamed",
     "file": "src/scenes/huntersMark.js",
-    "old": "giveTrophy(entity, p.foe, { nameIndex: p.nameIndex,",
-    "new": "giveTrophy(entity, p.foe, { nameIndex: null,",
+    "old": "    giveTrophy(entity, p.foe, { nameIndex: p.nameIndex, day: Math.floor(wallNow() / 86_400_000) });",
+    "new": "    giveTrophy(entity, p.foe, { nameIndex: null, day: Math.floor(wallNow() / 86_400_000) });",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "HUNTERS-MARK-mark-never-lapses",
     "file": "src/scenes/huntersMark.js",
-    "old": "if (!p || p.week < week()) {",
-    "new": "if (!p) {",
+    "old": "    if (!p || p.week < week()) {",
+    "new": "    if (!p) {",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "HUNTERS-MARK-mark-no-repaint-on-word",
     "file": "src/scenes/huntersMark.js",
-    "old": "  book?.onChange(() => deps.repaint());",
-    "new": "  void book;",
+    "old": "  book?.onChange(() => deps.repaint()); // the service's word redraws an open board's header",
+    "new": "  void book; // the service's word redraws an open board's header",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -806,8 +806,8 @@
   {
     "name": "AUDIT-F4-board-closed-reads-forever",
     "file": "src/scenes/huntersMark.js",
-    "old": "return book ? (book.closed ? { closed: true } : { reading: true }) : null;",
-    "new": "return book ? { reading: true } : null;",
+    "old": "    if (n == null) return book ? (book.closed ? { closed: true } : { reading: true }) : null;",
+    "new": "    if (n == null) return book ? { reading: true } : null;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]

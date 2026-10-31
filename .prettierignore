@@ -802,6 +802,9 @@
 !/src/scenes/hideouts.js
 !/src/scenes/holdDoor.js
 !/src/scenes/homesBootHost.js
+!/src/scenes/huntersMark.js
+!/src/scenes/iliacTableGame.js
+!/src/scenes/instanceDoor.js
 !/src/scenes/ketch/
 /src/scenes/ketch/*
 !/src/scenes/ketch/ketchClient.js

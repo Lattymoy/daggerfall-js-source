@@ -237,8 +237,8 @@
   {
     "name": "QUEST-ELSEWHERE-relaid-never",
     "file": "src/scenes/instanceDoor.js",
-    "old": "relaid: relaidOnline(dfLocation) };",
-    "new": "relaid: false };",
+    "old": "    relaid: relaidOnline(dfLocation),",
+    "new": "    relaid: false,",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
