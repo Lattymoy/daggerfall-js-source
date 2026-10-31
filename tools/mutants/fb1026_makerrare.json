@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-MAKER-RARE-B2-market-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "    if (h === 'yours' && !asMinted(item)) return changedPieceWhy();",
-    "new": "",
+    "old": "    if (h === 'yours' && !asMinted(item)) return changedPieceWhy(); // AUDIT MAKER-RARE B2: the Crafted list leaves it out too",
+    "new": "    // AUDIT MAKER-RARE B2: the Crafted list leaves it out too",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]

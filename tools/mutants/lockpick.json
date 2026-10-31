@@ -383,8 +383,8 @@
   {
     "name": "LOCKPICK-chambers-touch",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const G = LOCK_GEOM, span = G.right - G.left - 90;",
-    "new": "const G = LOCK_GEOM, span = G.right - G.left + 400;",
+    "old": "    span = G.right - G.left - 90;",
+    "new": "    span = G.right - G.left + 400;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]

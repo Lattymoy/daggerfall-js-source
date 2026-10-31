@@ -24,7 +24,7 @@
     "name": "PACK-PICK-crafted-first-by-default",
     "file": "src/ui/marketTab.js",
     "old": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk])) st.list.pieces[pk] = '';",
-    "new": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk])) st.list.pieces[pk] = pieces[0]?.item.provenance ?? '';",
+    "new": "      if (!pieces.some((p) => p.item.provenance === st.list.pieces[pk]))\n        st.list.pieces[pk] = pieces[0]?.item.provenance ?? '';",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -32,8 +32,8 @@
   {
     "name": "PACK-PICK-kind-unkept",
     "file": "src/ui/marketTab.js",
-    "old": "        KIND_KEPT.set(m.book, k);",
-    "new": "",
+    "old": "        KIND_KEPT.set(m.book, k);\n        if (st.list.kind !== k) {",
+    "new": "        if (st.list.kind !== k) {",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PACK-PICK-kind-kept-unread",
     "file": "src/ui/marketTab.js",
-    "old": "kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null)",
-    "new": "kind: /** @type {string|null} */ (null)",
+    "old": "      kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null),",
+    "new": "      kind: /** @type {string|null} */ (null),",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -51,7 +51,7 @@
   {
     "name": "PACK-PICK-pack-not-first",
     "file": "src/ui/marketTab.js",
-    "old": "    if (!st.list.kind) st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
+    "old": "    if (!st.list.kind)\n      st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
     "new": "    if (!st.list.kind) st.list.kind = 'material';",
     "tests": [
       "test/ui/packpick.test.js",
@@ -61,8 +61,8 @@
   {
     "name": "PACK-PICK-press-never-lets-go",
     "file": "src/ui/marketTab.js",
-    "old": "pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); }",
-    "new": "pick: (it) => { st.list.good = it; ui.rerender(); }",
+    "old": "            st.list.good = st.list.good === it ? null : it;",
+    "new": "            st.list.good = it;",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "PACK-PICK-sell-not-on-the-pack",
     "file": "src/ui/marketTab.js",
-    "old": "() => { st.list.kind = 'item'; KIND_KEPT.set(m.book, 'item'); go('mine'); }",
-    "new": "() => { go('mine'); }",
+    "old": "      st.list.kind = 'item';\n      KIND_KEPT.set(m.book, 'item');\n      go('mine');",
+    "new": "      go('mine');",
     "tests": [
       "test/ui/packpick.test.js"
     ]

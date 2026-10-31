@@ -248,8 +248,8 @@
   {
     "name": "GOLDMARKET-tab-courier-drakes",
     "file": "src/ui/marketTab.js",
-    "old": " * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)",
-    "new": "",
+    "old": "  const courierOf = (row, units) =>\n    row.region === m.region\n      ? 0\n      : row.road\n        ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)\n        : null;",
+    "new": "  const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? courierFee(units, row.road.road) : null);",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "GOLDMARKET-tab-lists-drakes-goods",
     "file": "src/ui/marketTab.js",
-    "old": "(currency === 'gold' ? (s.gold | 0) : s.bought)",
-    "new": "s.bought + (s.gold | 0)",
+    "old": "export const listableUnits = (s, currency) => (s ? s.own + (currency === 'gold' ? s.gold | 0 : s.bought) : 0);",
+    "new": "export const listableUnits = (s, currency) => (s ? s.own + s.bought + (s.gold | 0) : 0);",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "GOLDMARKET-tab-gold-buy-no-currency",
     "file": "src/ui/marketTab.js",
-    "old": "hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint)",
-    "new": "hubs: m.hubs, ...at() }, m.mint)",
+    "old": "              ...(gold ? { currency: 'gold' } : {}),\n            },",
+    "new": "            },",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "GOLDMARKET-tab-purse-unasked",
     "file": "src/ui/marketTab.js",
-    "old": "const shortOf = (amount, currency) => (currency === 'gold' ? (purse() ?? 0) < amount : short(amount));",
-    "new": "const shortOf = (amount) => short(amount);",
+    "old": "  const shortOf = (amount, currency) => (currency === 'gold' ? (purse() ?? 0) < amount : short(amount));",
+    "new": "  const shortOf = (amount) => short(amount);",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "PROF-541-R2-C7-spoiled-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "    if (h === 'yours' && (item.foodStage ?? 0) > 0) return SPOILED_DISH_WHY;\n",
-    "new": "",
+    "old": "    if (h === 'yours' && (item.foodStage ?? 0) > 0) return SPOILED_DISH_WHY;\n    if (h === 'yours' && !asMinted(item)) return changedPieceWhy(); // AUDIT MAKER-RARE B2: the Crafted list leaves it out too",
+    "new": "    if (h === 'yours' && !asMinted(item)) return changedPieceWhy(); // AUDIT MAKER-RARE B2: the Crafted list leaves it out too",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]

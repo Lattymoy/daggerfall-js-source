@@ -728,8 +728,8 @@
   {
     "name": "AUDIT31-tab-empty-filter",
     "file": "src/ui/marketTab.js",
-    "old": "st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind is up for auction.' :",
-    "new": "false ? 'No Masterwork of that kind is up for auction.' :",
+    "old": "            st.family || marketQueryOf(st.find)\n              ? 'No Masterwork of that kind is up for auction.'\n              : 'No Masterwork is up for auction.',",
+    "new": "            false ? 'No Masterwork of that kind is up for auction.' : 'No Masterwork is up for auction.',",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -737,8 +737,8 @@
   {
     "name": "AUDIT31-tab-hint-add-late",
     "file": "src/ui/marketTab.js",
-    "old": "adds ${AUCTION_ADD_S / 60} minutes. You get the top bid",
-    "new": "adds ${AUCTION_LATE_S / 60} minutes. You get the top bid",
+    "old": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
+    "new": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_LATE_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
     "tests": [
       "test/net/prof5b_client.test.js"
     ],

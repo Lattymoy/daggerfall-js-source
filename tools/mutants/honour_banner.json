@@ -2,8 +2,8 @@
   {
     "name": "HONOUR-BANNER-dropped-as-not-held",
     "file": "src/ui/lootBanner.js",
-    "old": "canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e) });",
-    "new": "canEnter: (e) => !held || bannerStillHeld(held, e) });",
+    "old": "      canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e),",
+    "new": "      canEnter: (e) => !held || bannerStillHeld(held, e),",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HONOUR-BANNER-a-gradient-title-its-first-stop",
     "file": "src/ui/lootBanner.js",
-    "old": "gradientAt(badge.gradient, 0.5)",
-    "new": "gradientAt(badge.gradient, 0)",
+    "old": "  const rgba = badge?.gradient?.length > 1 ? gradientAt(badge.gradient, 0.5) : (badge?.rgba ?? null);",
+    "new": "  const rgba = badge?.gradient?.length > 1 ? gradientAt(badge.gradient, 0) : (badge?.rgba ?? null);",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "HONOUR-BANNER-the-tiers-colour-kept",
     "file": "src/ui/lootBanner.js",
-    "old": "  if (e.honour) paintHonour(node, e.honour);   // HONOUR-BANNER: the title's colour over the tier's",
+    "old": "  if (e.honour) paintHonour(node, e.honour); // HONOUR-BANNER: the title's colour over the tier's",
     "new": "",
     "tests": [
       "test/systems/lootbanner.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "HONOUR-BANNER-small",
     "file": "src/ui/lootBanner.js",
-    "old": "exalted: false, big: true, count: 1, codex: false, image: null,",
-    "new": "exalted: false, big: false, count: 1, codex: false, image: null,",
+    "old": "    big: true,",
+    "new": "    big: false,",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HONOUR-BANNER-the-classic-skin-built",
     "file": "src/ui/lootBanner.js",
-    "old": "    if (!doc?.body || !isEnhanced()) return false;\n    const e = honourEntry({ kind, key });",
-    "new": "    if (!doc?.body) return false;\n    const e = honourEntry({ kind, key });",
+    "old": "    if (!doc?.body || !isEnhanced()) return false;",
+    "new": "    if (!doc?.body) return false;",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]

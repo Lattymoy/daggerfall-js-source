@@ -581,8 +581,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-never-sent",
     "file": "src/ui/marketTab.js",
-    "old": "MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}",
-    "new": "MARKET_PAGED_VIEWS.includes(st.view) && st.page < 0 ? { page: st.page } : {}",
+    "old": "      ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}),",
+    "new": "      ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page < 0 ? { page: st.page } : {}),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "BOARD-SIFT-market-a-default-page-sent",
     "file": "src/ui/marketTab.js",
-    "old": "MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}",
-    "new": "MARKET_PAGED_VIEWS.includes(st.view) && st.page >= 0 ? { page: st.page } : {}",
+    "old": "      ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}),",
+    "new": "      ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page >= 0 ? { page: st.page } : {}),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "BOARD-SIFT-market-a-default-order-sent",
     "file": "src/ui/marketTab.js",
-    "old": "...(sorts && st.sort && st.sort !== sorts[0] ? { sort: st.sort } : {})",
-    "new": "...(sorts && st.sort ? { sort: st.sort } : {})",
+    "old": "      ...(sorts && st.sort && st.sort !== sorts[0] ? { sort: st.sort } : {}),",
+    "new": "      ...(sorts && st.sort ? { sort: st.sort } : {}),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "BOARD-SIFT-market-the-search-unsent",
     "file": "src/ui/marketTab.js",
-    "old": "...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),",
-    "new": "",
+    "old": "      ...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),\n      ...(st.view === 'crafted' && st.quality > 0 ? { quality: st.quality } : {}),",
+    "new": "      ...(st.view === 'crafted' && st.quality > 0 ? { quality: st.quality } : {}),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "BOARD-SIFT-market-the-shown-names-unread",
     "file": "src/ui/marketTab.js",
-    "old": "recipesNamed(find, families, recipeShownName)",
-    "new": "recipesNamed(find, families)",
+    "old": "      ...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),",
+    "new": "      ...(find ? { recipes: recipesNamed(find, families) } : {}),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "BOARD-SIFT-market-the-shown-name-unminted",
     "file": "src/ui/marketTab.js",
-    "old": "name = it ? itemLongName(it) : null;",
-    "new": "name = null;",
+    "old": "      name = it ? itemLongName(it) : null;",
+    "new": "      name = null;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "BOARD-SIFT-market-the-query-field-unbounded",
     "file": "src/ui/marketTab.js",
-    "old": "    find.maxLength = MARKET_QUERY_MAX;\n",
-    "new": "",
+    "old": "    find.maxLength = MARKET_QUERY_MAX;\n    find.value = st.find;",
+    "new": "    find.value = st.find;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "BOARD-SIFT-market-next-past-the-last",
     "file": "src/ui/marketTab.js",
-    "old": "next.disabled = page + 1 >= pages;",
-    "new": "next.disabled = false;",
+    "old": "    next.disabled = page + 1 >= pages;",
+    "new": "    next.disabled = false;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "BOARD-SIFT-market-the-pager-on-one-page",
     "file": "src/ui/marketTab.js",
-    "old": "    if (pages <= 1) return null;\n",
-    "new": "",
+    "old": "    if (pages <= 1) return null;\n    const nav = el('nav', 'market-pager');",
+    "new": "    const nav = el('nav', 'market-pager');",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -662,8 +662,8 @@
   {
     "name": "BOARD-SIFT-market-the-cap-unread",
     "file": "src/ui/marketTab.js",
-    "old": "Math.min(MARKET_PAGES_MAX, Math.ceil(total / MARKET_SHOWN))",
-    "new": "Math.ceil(total / MARKET_SHOWN)",
+    "old": "    const pages = Math.max(page + 1, Math.min(MARKET_PAGES_MAX, Math.ceil(total / MARKET_SHOWN)));",
+    "new": "    const pages = Math.max(page + 1, Math.ceil(total / MARKET_SHOWN));",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -671,8 +671,8 @@
   {
     "name": "BOARD-SIFT-market-the-floor-lost",
     "file": "src/ui/marketTab.js",
-    "old": "const pages = Math.max(page + 1, Math.min(",
-    "new": "const pages = Math.max(1, Math.min(",
+    "old": "    const pages = Math.max(page + 1, Math.min(MARKET_PAGES_MAX, Math.ceil(total / MARKET_SHOWN)));",
+    "new": "    const pages = Math.max(1, Math.min(MARKET_PAGES_MAX, Math.ceil(total / MARKET_SHOWN)));",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "BOARD-SIFT-market-the-turn-twice",
     "file": "src/ui/marketTab.js",
-    "old": "const turn = (to) => { if (st.loading) return; st.page = to;",
-    "new": "const turn = (to) => { st.page = to;",
+    "old": "      if (st.loading) return;\n      st.page = to;",
+    "new": "      st.page = to;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "BOARD-SIFT-market-the-list-left-where-it-was",
     "file": "src/ui/marketTab.js",
-    "old": "st.picked = null; st.toTop = true; load(false); };",
-    "new": "st.picked = null; st.toTop = false; load(false); };",
+    "old": "      st.toTop = true;",
+    "new": "      st.toTop = false;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -698,8 +698,8 @@
   {
     "name": "BOARD-SIFT-market-the-emptied-page-shown",
     "file": "src/ui/marketTab.js",
-    "old": "&& !rows.length && st.page > last) { st.page = last;",
-    "new": "&& false) { st.page = last;",
+    "old": "    if (r.ok && MARKET_PAGED_VIEWS.includes(st.view) && Number.isSafeInteger(total) && !rows.length && st.page > last) {",
+    "new": "    if (r.ok && MARKET_PAGED_VIEWS.includes(st.view) && Number.isSafeInteger(total) && false) {",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-kept-through-a-search",
     "file": "src/ui/marketTab.js",
-    "old": "const refilter = () => { st.page = 0; st.picked = null; load(false); };",
-    "new": "const refilter = () => { st.picked = null; load(false); };",
+    "old": "    st.page = 0;\n    st.picked = null;",
+    "new": "    st.picked = null;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -716,8 +716,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-kept-through-the-currency",
     "file": "src/ui/marketTab.js",
-    "old": "st.currency = v === 'gold' ? 'gold' : 'marks'; refilter(); }",
-    "new": "st.currency = v === 'gold' ? 'gold' : 'marks'; st.picked = null; load(false); }",
+    "old": "        st.currency = v === 'gold' ? 'gold' : 'marks';\n        refilter();",
+    "new": "        st.currency = v === 'gold' ? 'gold' : 'marks';\n        st.picked = null;\n        load(false);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -725,8 +725,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-kept-through-the-order",
     "file": "src/ui/marketTab.js",
-    "old": "(v) => { st.sort = v; refilter(); }",
-    "new": "(v) => { st.sort = v; load(false); }",
+    "old": "            st.sort = v;\n            refilter();",
+    "new": "            st.sort = v;\n            load(false);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -734,8 +734,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-kept-through-the-quality",
     "file": "src/ui/marketTab.js",
-    "old": "Math.floor(Number(v)) || 0)); refilter(); }",
-    "new": "Math.floor(Number(v)) || 0)); load(false); }",
+    "old": "            st.quality = Math.max(0, Math.min(MASTERWORK, Math.floor(Number(v)) || 0));\n            refilter();",
+    "new": "            st.quality = Math.max(0, Math.min(MASTERWORK, Math.floor(Number(v)) || 0));\n            load(false);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "BOARD-SIFT-market-the-page-kept-through-the-family",
     "file": "src/ui/marketTab.js",
-    "old": "(v) => { st.family = v || null; refilter(); }",
-    "new": "(v) => { st.family = v || null; load(false); }",
+    "old": "          st.family = v || null;\n          refilter();",
+    "new": "          st.family = v || null;\n          load(false);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "BOARD-SIFT-market-the-landed-sort-over-every-order",
     "file": "src/ui/marketTab.js",
-    "old": "return sorts && st.sort && st.sort !== sorts[0] ? [...rows] :",
-    "new": "return false ? [...rows] :",
+    "old": "    return sorts && st.sort && st.sort !== sorts[0]\n      ? [...rows]\n      : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
+    "new": "    return false ? [...rows] : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "BOARD-SIFT-market-the-landed-sort-lost-when-chosen",
     "file": "src/ui/marketTab.js",
-    "old": "st.sort !== sorts[0] ? [...rows]",
-    "new": "true ? [...rows]",
+    "old": "    return sorts && st.sort && st.sort !== sorts[0]\n      ? [...rows]\n      : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
+    "new": "    return sorts && st.sort && true ? [...rows] : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -770,8 +770,8 @@
   {
     "name": "BOARD-SIFT-market-a-view-keeps-the-last-ones-filters",
     "file": "src/ui/marketTab.js",
-    "old": "    st.page = 0; st.sort = null; st.find = ''; st.quality = 0;   // BOARD-SIFT: a view opens on its first page, its own order\n",
-    "new": "",
+    "old": "    st.page = 0;\n    st.sort = null;\n    st.find = '';\n    st.quality = 0; // BOARD-SIFT: a view opens on its first page, its own order\n    st.data = m.book.cached(view, q());",
+    "new": "    st.data = m.book.cached(view, q());",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "BOARD-SIFT-market-the-chosen-list-held",
     "file": "src/ui/marketTab.js",
-    "old": "s.onchange = () => { s.setAttribute('data-chosen', '1'); onChange(s.value); };",
-    "new": "s.onchange = () => { onChange(s.value); };",
+    "old": "    s.setAttribute('data-chosen', '1');\n    onChange(s.value);",
+    "new": "    onChange(s.value);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "BOARD-SIFT-market-auctions-empty-wording-blind-to-a-search",
     "file": "src/ui/marketTab.js",
-    "old": "st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind",
-    "new": "st.family ? 'No Masterwork of that kind",
+    "old": "            st.family || marketQueryOf(st.find)\n              ? 'No Masterwork of that kind is up for auction.'\n              : 'No Masterwork is up for auction.',",
+    "new": "            st.family ? 'No Masterwork of that kind is up for auction.' : 'No Masterwork is up for auction.',",
     "tests": [
       "test/ui/boardsift.test.js"
     ]

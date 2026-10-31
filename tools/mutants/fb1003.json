@@ -239,7 +239,7 @@
     "name": "WLOOK-radians",
     "file": "src/ui/lookSettings.js",
     "old": "  return [(look?.[0] ?? 0) * k, (look?.[1] ?? 0) * k * lookInvert()];",
-    "new": "  return [(look?.[0] ?? 0), (look?.[1] ?? 0)];",
+    "new": "  return [look?.[0] ?? 0, look?.[1] ?? 0];",
     "tests": [
       "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WLOOK-field",
     "file": "src/ui/lookSettings.js",
-    "old": "(180 / Math.PI) / (LOOK_SENSITIVITY_FIELD * getFloat(",
-    "new": "(180 / Math.PI) / (1 * getFloat(",
+    "old": "  const k = 180 / Math.PI / (LOOK_SENSITIVITY_FIELD * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0));",
+    "new": "  const k = 180 / Math.PI / (1 * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0));",
     "tests": [
       "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WLOOK-invert-kept",
     "file": "src/ui/lookSettings.js",
-    "old": "(look?.[1] ?? 0) * k * lookInvert()]",
-    "new": "(look?.[1] ?? 0) * k]",
+    "old": "  return [(look?.[0] ?? 0) * k, (look?.[1] ?? 0) * k * lookInvert()];",
+    "new": "  return [(look?.[0] ?? 0) * k, (look?.[1] ?? 0) * k];",
     "tests": [
       "test/combat/weapon/fb1003_widgetlook.test.js"
     ]

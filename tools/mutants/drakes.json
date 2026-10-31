@@ -56,8 +56,8 @@
   {
     "name": "DRAKES-a-market-label-old",
     "file": "src/ui/marketTab.js",
-    "old": "const unitWord = gold ? 'gold' : 'silver';",
-    "new": "const unitWord = gold ? 'gold' : 'Marks';",
+    "old": "    const unitWord = gold ? 'gold' : 'silver';",
+    "new": "    const unitWord = gold ? 'gold' : 'Marks';",
     "tests": [
       "test/ui/drakes.test.js"
     ]

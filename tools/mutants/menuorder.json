@@ -245,8 +245,8 @@
   {
     "name": "MENUORDER-market-picture-never-asked",
     "file": "src/ui/marketTab.js",
-    "old": "const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');",
-    "new": "const matPic = (key) => (key, null);",
+    "old": "  const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');",
+    "new": "  const matPic = (key) => (key, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "MENUORDER-market-picture-wrong-key",
     "file": "src/ui/marketTab.js",
-    "old": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material))",
-    "new": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(String(row.id)))",
+    "old": "      named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material)),",
+    "new": "      named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(String(row.id))),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "MENUORDER-market-supplier-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "matPic(w.key)), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
-    "new": "null), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
+    "old": "      row.append(\n        named(m.name(w.key), matPic(w.key)),\n        el('span', 'market-price', `${marksText(w.marks)} a bolt`),\n        inp,\n        b,\n      );",
+    "new": "      row.append(named(m.name(w.key), null), el('span', 'market-price', `${marksText(w.marks)} a bolt`), inp, b);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "MENUORDER-market-name-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "const named = (text, pic) => { const n = el('b', null, text); if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); } return n; };",
-    "new": "const named = (text) => el('b', null, text);",
+    "old": "  const named = (text, pic) => {\n    const n = el('b', null, text);\n    if (pic) {\n      if (n.prepend) n.prepend(pic);\n      else n.append(pic);\n    }\n    return n;\n  };",
+    "new": "  const named = (text) => el('b', null, text);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "MENUORDER-market-views-bare",
     "file": "src/ui/marketTab.js",
-    "old": "        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list');   // MENU-ORDER\n",
-    "new": "",
+    "old": "        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list'); // MENU-ORDER\n        if (st.view === id) t.setAttribute('aria-current', 'page');",
+    "new": "        if (st.view === id) t.setAttribute('aria-current', 'page');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "MENUORDER-market-piece-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');",
-    "new": "const piecePic = (p) => (p, null);",
+    "old": "  const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');",
+    "new": "  const piecePic = (p) => (p, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

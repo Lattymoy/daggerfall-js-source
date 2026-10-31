@@ -351,7 +351,7 @@ test('PROF12 goods: the Apothecaries\' sixteen withdraw as DFU\'s own ingredient
   // BOARD-UI (PIN MOVED): the counters folded under the suppliers' line, which the Materials view hangs
   assert.match(m, /if \(\(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
   assert.match(m, /if \(st\.view === 'materials'\) box\.append\(suppliersNode\(\)\);/);
-  assert.match(m, /box\.append\(el\('h4', null, 'The Apothecaries\\' counter'\)\);/);
+  assert.match(m, /box\.append\(el\('h4', null, "The Apothecaries' counter"\)\);/);
   assert.match(hostText('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
 });
 

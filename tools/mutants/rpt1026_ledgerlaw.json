@@ -182,8 +182,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-goods-row-untagged",
     "file": "src/ui/marketTab.js",
-    "old": "    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));",
-    "new": "",
+    "old": "    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing",
+    "new": "    // RPT1026-LEDGERLAW: the theft's mark rides the listing",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-goods-bar-silent",
     "file": "src/ui/marketTab.js",
-    "old": "    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));",
-    "new": "",
+    "old": "    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine())); // RPT1026-LEDGERLAW: what buying it means",
+    "new": "    // RPT1026-LEDGERLAW: what buying it means",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],

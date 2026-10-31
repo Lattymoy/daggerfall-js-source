@@ -56,8 +56,8 @@
   {
     "name": "SILVER-a-market-label-old",
     "file": "src/ui/marketTab.js",
-    "old": "[['marks', 'Priced in silver'], ['gold', 'Priced in gold']]",
-    "new": "[['marks', 'Priced in Drakes'], ['gold', 'Priced in gold']]",
+    "old": "              ['marks', 'Priced in silver'],",
+    "new": "              ['marks', 'Priced in Drakes'],",
     "tests": [
       "test/net/silver.test.js"
     ]

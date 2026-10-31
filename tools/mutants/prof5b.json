@@ -318,8 +318,8 @@
   {
     "name": "PROF5b-tab-any-piece-auctioned",
     "file": "src/ui/marketTab.js",
-    "old": "const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);",
-    "new": "const all = m.pieces();",
+    "old": "      const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);",
+    "new": "      const all = m.pieces();",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "PROF5b-tab-bid-redraws",
     "file": "src/ui/marketTab.js",
-    "old": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); refresh(); };",
-    "new": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); ui.rerender(); };",
+    "old": "        st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX);\n        refresh();",
+    "new": "        st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX);\n        ui.rerender();",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "PROF5b-tab-leader-bids",
     "file": "src/ui/marketTab.js",
-    "old": "    if (a.leading) {\n      bar.append(el('span', 'market-ask', `Your bid of",
-    "new": "    if (false) {\n      bar.append(el('span', 'market-ask', `Your bid of",
+    "old": "    if (a.leading) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "PROF5b-tab-held-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "${held > 0 ? ` (${marksText(held)} held in bids)` : ''}",
-    "new": "",
+    "old": "      `Your silver: ${balance() == null ? '-' : marksText(balance())}${held > 0 ? ` (${marksText(held)} held in bids)` : ''}${gold}${st.stale ? ' - the market may be out of date' : ''}`,",
+    "new": "      `Your silver: ${balance() == null ? '-' : marksText(balance())}${gold}${st.stale ? ' - the market may be out of date' : ''}`,",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]

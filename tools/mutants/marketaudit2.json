@@ -110,8 +110,8 @@
   {
     "name": "MARKET-AUDIT2-tab-refusal-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "    const refused = (r?.refused ?? []).find(Boolean);",
-    "new": "    const refused = null;",
+    "old": "      const refused = (r?.refused ?? []).find(Boolean);",
+    "new": "      const refused = null;",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MARKET-AUDIT2-tab-kept-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "      : !r?.ok ? accountRefusalText(r?.error) : m.book.pending ? MARKET_KEPT_TEXT : '' };",
-    "new": "      : !r?.ok ? accountRefusalText(r?.error) : '' };",
+    "old": "              : m.book.pending\n                ? MARKET_KEPT_TEXT\n                : '',",
+    "new": "              : '',",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MARKET-AUDIT2-settle-blank",
     "file": "src/ui/marketTab.js",
-    "old": "(st.loading = true, ui.rerender(), settle())",
-    "new": "settle()",
+    "old": "    const settling = m.book.pending || arrived().length ? ((st.loading = true), ui.rerender(), settle()) : null;",
+    "new": "    const settling = m.book.pending || arrived().length ? settle() : null;",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MARKET-AUDIT2-closed-as-left",
     "file": "src/ui/marketTab.js",
-    "old": ": l.state === 'open' ? `${m.name(l.material)} - ${l.units} of ${l.listed} left` : `${m.name(l.material)} x${l.listed}`),",
-    "new": ": `${m.name(l.material)} - ${l.units} of ${l.listed} left`),",
+    "old": "              : l.state === 'open'\n                ? `${m.name(l.material)} - ${l.units} of ${l.listed} left`\n                : `${m.name(l.material)} x${l.listed}`,",
+    "new": "              : `${m.name(l.material)} - ${l.units} of ${l.listed} left`,",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "MARKET-AUDIT2-redraw-under-list",
     "file": "src/ui/marketTab.js",
-    "old": "    if (a?.tagName === 'SELECT' && (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) && a.getAttribute?.('data-chosen') !== '1') {",
+    "old": "    if (\n      a?.tagName === 'SELECT' &&\n      (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) &&\n      a.getAttribute?.('data-chosen') !== '1'\n    ) {",
     "new": "    if (false) {",
     "tests": [
       "test/systems/marketaudit2.test.js"

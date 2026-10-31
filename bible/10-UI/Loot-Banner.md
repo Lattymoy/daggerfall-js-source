@@ -65,7 +65,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
 - **The top tiers** (Aetheric, Artifact, Gilded) stand taller, their picture larger, the edge wider, with a glow that
   breathes twice, and hold longer. The frame they land in plays the Arena's fanfare (SOUND.ArenaFanfareLevelUp) once,
   behind the port's own sounds switch (`systems/enhancedSounds.js`).
-- **The law** (`lootBanner.js:"export function createBannerQueue("`, pure): three stand at most, the newest on top. Each
+- **The law** (`lootBanner.js:"export function createBannerQueue"`, pure): three stand at most, the newest on top. Each
   holds 4.5 s (a big one 7 s) and slides out; a banner sliding out holds no place. What arrives while three stand waits,
   the best tier first, at most twelve. A second card of a kind whose banner stands or waits adds to its count.
 - **The HUD's hide gate.** Under a window - the loot window, a shop's counter, the Broker's - the stack stands hidden and
@@ -85,7 +85,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
 
 Mac: *"The title/aura in the abyss dungeon should also have a loot popup"*, and of the lamp keeper's title: *"ensure
 there is a loot popup for obtaining the title"*. A title or an aura is no piece in the pack, so the watcher never sees
-one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour(kind, key, { doc = docOf() } = {}) {"`).
+one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour"`).
 The Hour's (`net/superDungeon/sdClaims.js` - Hourbreaker and The Turning Hour, when the account service answers a claim with the
 grant), the lamp's (`systems/lampKeeper.js`, I Love Lamp) and - SERPENT5 (`11-Multiplayer/Sea-Serpent.md` section 17) -
 the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, on the Hour's own law) are its three doors.

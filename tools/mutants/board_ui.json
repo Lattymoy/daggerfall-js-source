@@ -85,7 +85,7 @@
     "name": "BOARD-UI-the-read-after-the-settle",
     "file": "src/ui/marketTab.js",
     "old": "    await Promise.all([load(again), settling]);",
-    "new": "    await settling; await load(again);",
+    "new": "    await settling;\n    await load(again);",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "BOARD-UI-a-view-in-two-parts",
     "file": "src/ui/marketTab.js",
-    "old": "(['Sell', Object.freeze(['orders', 'mine'])]),",
-    "new": "(['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
+    "old": "    /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine'])]),",
+    "new": "    /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "BOARD-UI-the-list-press-the-lists-class",
     "file": "src/ui/marketTab.js",
-    "old": "const b = button('primary market-dolist', 'List', () => send());",
-    "new": "const b = button('primary market-list', 'List', () => send());",
+    "old": "    const b = button('primary market-dolist', 'List', () => send()); // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding",
+    "new": "    const b = button('primary market-list', 'List', () => send()); // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

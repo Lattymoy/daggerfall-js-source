@@ -512,7 +512,7 @@
   {
     "name": "MARKET-ANY-tab-another-piece-offered-as-crafted",
     "file": "src/ui/marketTab.js",
-    "old": "  const pieceListedAsCrafted = (pv) => (st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true);",
+    "old": "  const pieceListedAsCrafted = (pv) =>\n    st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true;",
     "new": "  const pieceListedAsCrafted = () => true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
@@ -521,8 +521,8 @@
   {
     "name": "MARKET-ANY-tab-own-make-from-the-pack",
     "file": "src/ui/marketTab.js",
-    "old": "h === 'yours' ? 'made by you. List it as a crafted piece' :",
-    "new": "h === 'yours' ? null :",
+    "old": "        ? 'made by you. List it as a crafted piece'",
+    "new": "        ? null",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "MARKET-ANY-tab-the-pieces-unsent",
     "file": "src/ui/marketTab.js",
-    "old": "      ...(st.view === 'mine' ? { pieces: heldIds() } : {}),   // MARKET-ANY",
-    "new": "      ...({}),   // MARKET-ANY",
+    "old": "      ...(st.view === 'mine' ? { pieces: heldIds() } : {}), // MARKET-ANY",
+    "new": "      ...{}, // MARKET-ANY",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "MARKET-ANY-tab-arrivals-unasked",
     "file": "src/ui/marketTab.js",
-    "old": "(x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id));",
-    "new": "x.kind === 'piece' && x.ready && mine(x) && !tried.has(x.id));",
+    "old": "    (m.book.state.road ?? []).filter(\n      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),\n    ); // MARKET-ANY: a pack's piece too",
+    "new": "    (m.book.state.road ?? []).filter((x) => x.kind === 'piece' && x.ready && mine(x) && !tried.has(x.id)); // MARKET-ANY: a pack's piece too",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

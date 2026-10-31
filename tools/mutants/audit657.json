@@ -122,8 +122,8 @@
   {
     "name": "AUDIT657-B4-a-refused-early-read-answers-the-press",
     "file": "src/ui/marketTab.js",
-    "old": "const again = prefetchFailed;",
-    "new": "const again = false;",
+    "old": "    const again = prefetchFailed;",
+    "new": "    const again = false;",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "AUDIT657-B4-the-early-reads-refusal-unheard",
     "file": "src/ui/marketTab.js",
-    "old": "Promise.resolve(m.book.read(st.view, q(), { force: false })).then((r) => { prefetchFailed = !r?.ok; }, () => { prefetchFailed = true; });",
-    "new": "Promise.resolve(m.book.read(st.view, q(), { force: false })).catch(() => {});",
+    "old": "      Promise.resolve(m.book.read(st.view, q(), { force: false })).then(\n        (r) => {\n          prefetchFailed = !r?.ok;\n        },\n        () => {\n          prefetchFailed = true;\n        },\n      );",
+    "new": "      Promise.resolve(m.book.read(st.view, q(), { force: false })).catch(() => {});",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "AUDIT657-B12-the-silver-over-a-shut-market",
     "file": "src/ui/marketTab.js",
-    "old": "if (!shut) box.append(walletNode());",
-    "new": "box.append(walletNode());",
+    "old": "    if (!shut) box.append(walletNode());",
+    "new": "    box.append(walletNode());",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDIT657-B9-no-fee-said-of-a-fee",
     "file": "src/ui/marketTab.js",
-    "old": "st.list.kind === 'item' ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee",
-    "new": "st.list.kind === 'item' ? `No fee. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee",
+    "old": "            ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`",
+    "new": "            ? `No fee. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT657-B9-the-late-bids-unit-dropped",
     "file": "src/ui/marketTab.js",
-    "old": "adds ${AUCTION_ADD_S / 60} minutes. You get",
-    "new": "adds ${AUCTION_ADD_S / 60}. You get",
+    "old": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
+    "new": "                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60}. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]

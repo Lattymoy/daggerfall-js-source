@@ -177,8 +177,8 @@
   {
     "name": "MINE-PERKS-lode-hour-once-risen",
     "file": "src/ui/lodeMapMark.js",
-    "old": "Number.isFinite(l.opensAt) && nowS < l.opensAt ? clock(l.opensAt) : null;",
-    "new": "Number.isFinite(l.opensAt) ? clock(l.opensAt) : null;",
+    "old": "  const at = clock && Number.isFinite(l.opensAt) && nowS < l.opensAt ? clock(l.opensAt) : null;",
+    "new": "  const at = clock && Number.isFinite(l.opensAt) ? clock(l.opensAt) : null;",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "MINE-PERKS-lode-off-its-pixel",
     "file": "src/ui/lodeMapMark.js",
-    "old": "out.push({ cx: l.x + 0.5, cy: l.y + 0.5,",
-    "new": "out.push({ cx: l.x, cy: l.y,",
+    "old": "    out.push({ cx: l.x + 0.5, cy: l.y + 0.5, r: BOUNTY_RING_R, label: lodeLabel(l, nowS, { oreName, clock }) });",
+    "new": "    out.push({ cx: l.x, cy: l.y, r: BOUNTY_RING_R, label: lodeLabel(l, nowS, { oreName, clock }) });",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

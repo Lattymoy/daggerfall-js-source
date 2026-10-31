@@ -68,25 +68,54 @@
 // is looked at - its rows and magic (systems/item/itemLook.js) - beside its price; and the Goods view holds the way to
 // sell from the pack.
 import { accountRefusalText } from '../net/accountClient.js';
-import { MARKET_MOVED, MARKET_KEPT_TEXT } from '../net/marketBook.js';   // AUDIT 31 B8
+import { MARKET_MOVED, MARKET_KEPT_TEXT } from '../net/marketBook.js'; // AUDIT 31 B8
 import {
-  MARKET_VIEWS, MARKET_FAMILIES, CRAFTED_FAMILIES, MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, MARKET_WORTH_MAX,
-  listingFee, saleTax, fillTaxOn, sellerGets, courierFee, wearOf, wearText, medianText, marketCatalogue, AUCTION_S, AUCTION_RAISE_PCT, AUCTION_LATE_S, AUCTION_ADD_S, AUCTION_BID_MAX,
-  goldText, goldSaleOf, GOODS_FAMILIES, MARKET_HELD_MAX,
-  MARKET_SHOWN, MARKET_PAGED_VIEWS, MARKET_PAGES_MAX, MARKET_SORTS, MARKET_QUERY_MAX, marketQueryOf, recipesNamed,   // BOARD-SIFT
+  MARKET_VIEWS,
+  MARKET_FAMILIES,
+  CRAFTED_FAMILIES,
+  MARKET_PRICE_MAX,
+  MARKET_UNITS_MAX,
+  MARKET_LISTINGS_MAX,
+  MARKET_ORDERS_MAX,
+  MARKET_WORTH_MAX,
+  listingFee,
+  saleTax,
+  fillTaxOn,
+  sellerGets,
+  courierFee,
+  wearOf,
+  wearText,
+  medianText,
+  marketCatalogue,
+  AUCTION_S,
+  AUCTION_RAISE_PCT,
+  AUCTION_LATE_S,
+  AUCTION_ADD_S,
+  AUCTION_BID_MAX,
+  goldText,
+  goldSaleOf,
+  GOODS_FAMILIES,
+  MARKET_HELD_MAX,
+  MARKET_SHOWN,
+  MARKET_PAGED_VIEWS,
+  MARKET_PAGES_MAX,
+  MARKET_SORTS,
+  MARKET_QUERY_MAX,
+  marketQueryOf,
+  recipesNamed, // BOARD-SIFT
 } from '../net/marketLaw.js';
 import { QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText, MARK_WORTH_GOLD } from '../net/marksLaw.js';
-import { pictureNode, frameWake } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
-import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
-import { mintPiece, asMinted, mintMarketPiece } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is; MARKET-LOOK: a listed piece as it arrives
-import { goodItemOf } from '../systems/tradePack.js';   // MARKET-LOOK: a pack's piece listed, as it arrives
+import { pictureNode, frameWake } from './menu/menuGlyphs.js'; // MENU-ORDER: a row's picture, the host's
+import { t, currentLocale } from '../systems/textManager.js'; // BOARD-SIFT: the pages' and the orders' words in the player's language
+import { mintPiece, asMinted, mintMarketPiece } from '../systems/smithItems.js'; // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is; MARKET-LOOK: a listed piece as it arrives
+import { goodItemOf } from '../systems/tradePack.js'; // MARKET-LOOK: a pack's piece listed, as it arrives
 import { itemLongName } from '../systems/item/itemInfo.js';
-import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what a listing may not take, said
-import { isStolen, stolenTag, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
-import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
-import { packPickerNode, packCardNode, freshPackSift, packTierWord } from './packPicker.js';   // PACK-PICK: a piece chosen from its picture
-import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: and looked at before it is listed; MARKET-LOOK: and before it is bought
+import { walledText } from './storesWalled.js'; // RPT1026-MARKET STORES-SAID: what a listing may not take, said
+import { isStolen, stolenTag, stolenLine } from '../systems/stolenGoods.js'; // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
+import { typedField } from './workSift.js'; // AUDIT BOARD-SIFT: a search read once its word is whole
+import { packPickerNode, packCardNode, freshPackSift, packTierWord } from './packPicker.js'; // PACK-PICK: a piece chosen from its picture
+import { itemLookRows } from '../systems/item/itemLook.js'; // PACK-PICK: and looked at before it is listed; MARKET-LOOK: and before it is bought
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -98,7 +127,10 @@ const el = (tag, cls = null, text = null) => {
 const button = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `act ${cls}`, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e?.stopPropagation?.(); return onPress(); };
+  b.onclick = (e) => {
+    e?.stopPropagation?.();
+    return onPress();
+  };
   return b;
 };
 /** AUDIT PACK-PICK A5: a press drawn as the views' chips (`notice-tab`) - never the frame's `.act`, whose rules outrank a
@@ -106,13 +138,19 @@ const button = (cls, text, onPress) => {
 const chipButton = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `notice-tab ${cls}`, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e?.stopPropagation?.(); return onPress(); };
+  b.onclick = (e) => {
+    e?.stopPropagation?.();
+    return onPress();
+  };
   return b;
 };
 /** A number field, named (AUDIT 30 U22) and keyed for the focus a redraw keeps (U8). */
 const numberInput = (value, min, max, label, focus) => {
   const i = /** @type {HTMLInputElement} */ (el('input', 'notice-input market-num'));
-  i.type = 'number'; i.min = String(min); i.max = String(max); i.value = String(value);
+  i.type = 'number';
+  i.min = String(min);
+  i.max = String(max);
+  i.value = String(value);
   i.setAttribute('aria-label', label);
   i.setAttribute('data-focus', focus);
   return i;
@@ -120,18 +158,42 @@ const numberInput = (value, min, max, label, focus) => {
 const select = (options, value, onChange, label = null) => {
   const s = /** @type {HTMLSelectElement} */ (el('select', 'notice-select market-select'));
   if (label) s.setAttribute('aria-label', label);
-  for (const [v, label] of options) { const o = /** @type {HTMLOptionElement} */ (el('option', null, label)); o.value = v; if (v === value) o.selected = true; s.append(o); }
-  s.onchange = () => { s.setAttribute('data-chosen', '1'); onChange(s.value); };   // AUDIT BOARD-SIFT: the choice made - redraw's hold lets it go
+  for (const [v, label] of options) {
+    const o = /** @type {HTMLOptionElement} */ (el('option', null, label));
+    o.value = v;
+    if (v === value) o.selected = true;
+    s.append(o);
+  }
+  s.onchange = () => {
+    s.setAttribute('data-chosen', '1');
+    onChange(s.value);
+  }; // AUDIT BOARD-SIFT: the choice made - redraw's hold lets it go
   return s;
 };
-const intOf = (s, lo, hi) => { const n = Math.floor(Number(s)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo; };
+const intOf = (s, lo, hi) => {
+  const n = Math.floor(Number(s));
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo;
+};
 /** The units a picked row offers first, and its courier quotes for (AUDIT 30 U18). */
 const PICK_UNITS = 20;
 /** PACK-PICK: the List form's kinds, each one press - [kind, its icon (ui/menu/menuGlyphs.js)]; the pack's first, where it
  *  is offered (a realm character's, for gold). Their words are `listKindWord`'s. */
-export const LIST_KINDS = Object.freeze([['item', 'own'], ['material', 'ore'], ['piece', 'station'], ['auction', 'gavel']].map((k) => Object.freeze(k)));
-const listKindWord = (k) => (k === 'item' ? t('market.list.kindPack', 'From your pack') : k === 'material' ? t('market.list.kindStores', 'From the Stores')
-  : k === 'piece' ? t('market.list.kindCrafted', 'A crafted piece') : t('market.list.kindAuction', 'An auction (Masterworks)'));
+export const LIST_KINDS = Object.freeze(
+  [
+    ['item', 'own'],
+    ['material', 'ore'],
+    ['piece', 'station'],
+    ['auction', 'gavel'],
+  ].map((k) => Object.freeze(k)),
+);
+const listKindWord = (k) =>
+  k === 'item'
+    ? t('market.list.kindPack', 'From your pack')
+    : k === 'material'
+      ? t('market.list.kindStores', 'From the Stores')
+      : k === 'piece'
+        ? t('market.list.kindCrafted', 'A crafted piece')
+        : t('market.list.kindAuction', 'An auction (Masterworks)');
 /** PACK-PICK: the kind the List form was last left on, the market book's for the session - a board opened again opens
  *  its form there (a seller of the pack's pieces pressed "A piece from your pack" at every board). */
 const KIND_KEPT = new WeakMap();
@@ -164,7 +226,12 @@ export function recipeShownName(/** @type {any} */ r) {
   const key = `${currentLocale()}|${r?.id}`;
   if (!_shown.has(key)) {
     let name = null;
-    try { const it = mintPiece({ recipe: r.id, quality: 1, seed: 0, maker: null }, '0000000000000000'); name = it ? itemLongName(it) : null; } catch { name = null; }
+    try {
+      const it = mintPiece({ recipe: r.id, quality: 1, seed: 0, maker: null }, '0000000000000000');
+      name = it ? itemLongName(it) : null;
+    } catch {
+      name = null;
+    }
     _shown.set(key, name);
   }
   return _shown.get(key);
@@ -173,12 +240,22 @@ export function recipeShownName(/** @type {any} */ r) {
  *  listings - "Sell"), and the record. Every view of MARKET_VIEWS once (a pin holds it). */
 /** @type {ReadonlyArray<readonly [string, ReadonlyArray<string>]>} */
 /** MENU-ORDER: each view its picture (ui/menu/menuGlyphs.js), so the views read as the market's own and never as the board's tabs. */
-export const MARKET_VIEW_ICONS = Object.freeze({ materials: 'ore', crafted: 'station', auctions: 'gavel', goods: 'own', orders: 'list', mine: 'treasure', history: 'chart' });
-export const MARKET_VIEW_GROUPS = Object.freeze([
-  /** @type {const} */ (['Buy', Object.freeze(['materials', 'crafted', 'auctions', 'goods'])]),
-  /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine'])]),
-  /** @type {const} */ (['', Object.freeze(['history'])]),
-].map((g) => Object.freeze(g)));
+export const MARKET_VIEW_ICONS = Object.freeze({
+  materials: 'ore',
+  crafted: 'station',
+  auctions: 'gavel',
+  goods: 'own',
+  orders: 'list',
+  mine: 'treasure',
+  history: 'chart',
+});
+export const MARKET_VIEW_GROUPS = Object.freeze(
+  [
+    /** @type {const} */ (['Buy', Object.freeze(['materials', 'crafted', 'auctions', 'goods'])]),
+    /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine'])]),
+    /** @type {const} */ (['', Object.freeze(['history'])]),
+  ].map((g) => Object.freeze(g)),
+);
 /** BOARD-UI: the market's fixed words, in one place. */
 export const MARKET_WORDS = Object.freeze({
   reading: 'Reading the market...',
@@ -201,7 +278,7 @@ export const priceText = (n, currency) => (currency === 'gold' ? goldText(n) : m
 /** GOLD-MARKET: the views whose rows are in one currency - the switch stands beside them. */
 const CURRENCY_VIEWS = Object.freeze(['materials', 'crafted', 'history']);
 /** GOLD-MARKET: the Stores units a listing in `currency` may take - its own, and what was bought in its own currency. */
-export const listableUnits = (s, currency) => (s ? s.own + (currency === 'gold' ? (s.gold | 0) : s.bought) : 0);
+export const listableUnits = (s, currency) => (s ? s.own + (currency === 'gold' ? s.gold | 0 : s.bought) : 0);
 /** "32 minutes", "2 hours", "arrived". */
 export function arrivalText(atS, nowS) {
   const s = (Number(atS) || 0) - nowS;
@@ -228,13 +305,22 @@ export function medianLineNode(line) {
   if (pts.length < 2 || !doc.createElementNS) return null;
   const NS = 'http://www.w3.org/2000/svg';
   const vals = pts.map(([, v]) => Number(v));
-  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const lo = Math.min(...vals),
+    hi = Math.max(...vals);
   const svg = doc.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 60 16');
   svg.setAttribute('class', 'market-line');
   svg.setAttribute('aria-hidden', 'true');
   const poly = doc.createElementNS(NS, 'polyline');
-  poly.setAttribute('points', pts.map(([i, v]) => `${((Number(i) / 6) * 58 + 1).toFixed(1)},${(hi === lo ? 8 : 15 - ((Number(v) - lo) / (hi - lo)) * 14).toFixed(1)}`).join(' '));
+  poly.setAttribute(
+    'points',
+    pts
+      .map(
+        ([i, v]) =>
+          `${((Number(i) / 6) * 58 + 1).toFixed(1)},${(hi === lo ? 8 : 15 - ((Number(v) - lo) / (hi - lo)) * 14).toFixed(1)}`,
+      )
+      .join(' '),
+  );
   svg.append(poly);
   return svg;
 }
@@ -272,17 +358,39 @@ export function createMarketTab(m, ui) {
   /** SEAT1d (Seats-Arc 7.2): the board's town pixel on every post and buy - the seat whose bailiwick it is takes the Tithe. */
   const at = () => (m.board ? { board: m.board } : {});
   const st = {
-    view: 'materials', family: /** @type {string|null} */ (null), tier: 0, query: '', picked: /** @type {string|null} */ (null),
-    qty: 1, data: /** @type {any} */ (null), error: /** @type {string|null} */ (null), stale: false, loading: false,
+    view: 'materials',
+    family: /** @type {string|null} */ (null),
+    tier: 0,
+    query: '',
+    picked: /** @type {string|null} */ (null),
+    qty: 1,
+    data: /** @type {any} */ (null),
+    error: /** @type {string|null} */ (null),
+    stale: false,
+    loading: false,
     // PACK-PICK: the kind the book kept (null: the form's own default), and each picker's sift
-    list: { kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null), material: '', units: 1, price: 1, pieces: { piece: '', auction: '' }, currency: 'marks', good: /** @type {any} */ (null),
-      sifts: { item: freshPackSift(), piece: freshPackSift(), auction: freshPackSift() } }, post: { material: '', units: 1, price: 1 },
-    currency: 'marks',   // GOLD-MARKET: the currency the Materials, Crafted and History views show
-    fills: /** @type {Record<string, number>} */ ({}), weave: /** @type {Record<string, number>} */ ({}),
-    bid: /** @type {Record<string, number>} */ ({}),   // PROF5b: the bids typed, by auction
-    suppliersOpen: false,   // BOARD-UI: the suppliers' counters opened
+    list: {
+      kind: /** @type {string|null} */ (KIND_KEPT.get(m.book) ?? null),
+      material: '',
+      units: 1,
+      price: 1,
+      pieces: { piece: '', auction: '' },
+      currency: 'marks',
+      good: /** @type {any} */ (null),
+      sifts: { item: freshPackSift(), piece: freshPackSift(), auction: freshPackSift() },
+    },
+    post: { material: '', units: 1, price: 1 },
+    currency: 'marks', // GOLD-MARKET: the currency the Materials, Crafted and History views show
+    fills: /** @type {Record<string, number>} */ ({}),
+    weave: /** @type {Record<string, number>} */ ({}),
+    bid: /** @type {Record<string, number>} */ ({}), // PROF5b: the bids typed, by auction
+    suppliersOpen: false, // BOARD-UI: the suppliers' counters opened
     // BOARD-SIFT: a paged view's page, the order asked (null: the view's own), a search of the pieces, the least quality
-    page: 0, sort: /** @type {string|null} */ (null), find: '', quality: 0, toTop: false,
+    page: 0,
+    sort: /** @type {string|null} */ (null),
+    find: '',
+    quality: 0,
+    toTop: false,
   };
   const balance = () => m.book.state.balance;
   const short = (marks) => balance() != null && balance() < marks;
@@ -295,22 +403,42 @@ export function createMarketTab(m, ui) {
   const searched = () => {
     const needle = st.query.trim().toLowerCase();
     if (!needle) return null;
-    return marketCatalogue().filter((c) => (!st.family || c.family === st.family) && (!st.tier || c.tier === st.tier)
-      && m.name(c.key).toLowerCase().includes(needle)).map((c) => c.key);
+    return marketCatalogue()
+      .filter(
+        (c) =>
+          (!st.family || c.family === st.family) &&
+          (!st.tier || c.tier === st.tier) &&
+          m.name(c.key).toLowerCase().includes(needle),
+      )
+      .map((c) => c.key);
   };
   /** MARKET-ANY: a pack piece's name, and its stack ("x12"). */
-  const goodName = (rec) => `${m.goodName?.(rec) ?? 'a piece'}${(rec?.stackCount ?? 1) > 1 ? ` x${rec.stackCount}` : ''}`;
+  const goodName = (rec) =>
+    `${m.goodName?.(rec) ?? 'a piece'}${(rec?.stackCount ?? 1) > 1 ? ` x${rec.stackCount}` : ''}`;
   /** MARKET-ANY: the crafted pieces the save holds, for the service to say how each may list ("My listings" reads them). */
-  const heldIds = () => [...new Set([...m.pieces().map((p) => p.item?.provenance), ...(m.goods?.() ?? []).map((g) => g.item?.provenance)]
-    .filter((pv) => typeof pv === 'string'))].sort().slice(0, MARKET_HELD_MAX);
+  const heldIds = () =>
+    [
+      ...new Set(
+        [...m.pieces().map((p) => p.item?.provenance), ...(m.goods?.() ?? []).map((g) => g.item?.provenance)].filter(
+          (pv) => typeof pv === 'string',
+        ),
+      ),
+    ]
+      .sort()
+      .slice(0, MARKET_HELD_MAX);
   const q = () => {
     const found = st.view === 'materials' ? searched() : null;
-    return { region: m.region, hubs: m.hubs, ...(['materials', 'orders', 'crafted', 'auctions', 'goods'].includes(st.view) ? { family: st.family } : {}),
-      ...at(),   // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts
-      ...(st.view === 'mine' ? { pieces: heldIds() } : {}),   // MARKET-ANY
-      ...(st.view === 'materials' && st.tier ? { tier: st.tier } : {}), ...(found ? { materials: found } : {}),
-      ...(viewCurrency() === 'gold' ? { currency: 'gold' } : {}),   // GOLD-MARKET: a gold view asks gold's rows
-      ...sifted() };
+    return {
+      region: m.region,
+      hubs: m.hubs,
+      ...(['materials', 'orders', 'crafted', 'auctions', 'goods'].includes(st.view) ? { family: st.family } : {}),
+      ...at(), // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts
+      ...(st.view === 'mine' ? { pieces: heldIds() } : {}), // MARKET-ANY
+      ...(st.view === 'materials' && st.tier ? { tier: st.tier } : {}),
+      ...(found ? { materials: found } : {}),
+      ...(viewCurrency() === 'gold' ? { currency: 'gold' } : {}), // GOLD-MARKET: a gold view asks gold's rows
+      ...sifted(),
+    };
   };
   /** BOARD-SIFT: what a paged view asks past its defaults - its page, its order, a search of the pieces, the least quality
    *  (a default asks nothing, so a read is the one it always was). AUDIT BOARD-SIFT: a search as the recipes whose name,
@@ -319,9 +447,12 @@ export function createMarketTab(m, ui) {
     const find = SEARCHED_VIEWS.includes(st.view) ? marketQueryOf(st.find) : '';
     const sorts = /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[st.view] ?? null;
     const families = st.family ? [st.family] : st.view === 'crafted' ? CRAFTED_FAMILIES.map(([f]) => f) : null;
-    return { ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}),
-      ...(sorts && st.sort && st.sort !== sorts[0] ? { sort: st.sort } : {}), ...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),
-      ...(st.view === 'crafted' && st.quality > 0 ? { quality: st.quality } : {}) };
+    return {
+      ...(MARKET_PAGED_VIEWS.includes(st.view) && st.page > 0 ? { page: st.page } : {}),
+      ...(sorts && st.sort && st.sort !== sorts[0] ? { sort: st.sort } : {}),
+      ...(find ? { recipes: recipesNamed(find, families, recipeShownName) } : {}),
+      ...(st.view === 'crafted' && st.quality > 0 ? { quality: st.quality } : {}),
+    };
   };
   /** AUDIT 30 U3: the last read asked - an answer to an earlier one (a view or a filter since left) is dropped. */
   let seq = 0;
@@ -338,11 +469,17 @@ export function createMarketTab(m, ui) {
     if (!ui.alive() || mine !== seq) return;
     // AUDIT BOARD-SIFT (lane B M2): a page an act emptied - its last row bought, filled or gone - read again as the last
     // page that stands; it said "Nothing like that is for sale" under "Page 3 of 3 · 200 in all"
-    const total = Number(r.data?.total), rows = (st.view === 'orders' ? r.data?.orders : r.data?.rows) ?? [];
+    const total = Number(r.data?.total),
+      rows = (st.view === 'orders' ? r.data?.orders : r.data?.rows) ?? [];
     const last = Math.max(0, Math.ceil(total / MARKET_SHOWN) - 1);
-    if (r.ok && MARKET_PAGED_VIEWS.includes(st.view) && Number.isSafeInteger(total) && !rows.length && st.page > last) { st.page = last; return load(force, { underAct }); }
+    if (r.ok && MARKET_PAGED_VIEWS.includes(st.view) && Number.isSafeInteger(total) && !rows.length && st.page > last) {
+      st.page = last;
+      return load(force, { underAct });
+    }
     st.loading = false;
-    st.data = r.data; st.error = r.ok ? null : r.error; st.stale = !!r.stale;
+    st.data = r.data;
+    st.error = r.ok ? null : r.error;
+    st.stale = !!r.stale;
     redraw();
     collectArrived();
   }
@@ -353,36 +490,62 @@ export function createMarketTab(m, ui) {
   function redraw() {
     const a = /** @type {any} */ (globalThis.document?.activeElement);
     // AUDIT PACK-PICK A2: and a pack picker's (ui/packPicker.js), whose lists close under the pointer as the tab's own did
-    if (a?.tagName === 'SELECT' && (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) && a.getAttribute?.('data-chosen') !== '1') {
-      a.addEventListener?.('blur', () => { if (ui.alive()) ui.rerender(); }, { once: true });
+    if (
+      a?.tagName === 'SELECT' &&
+      (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) &&
+      a.getAttribute?.('data-chosen') !== '1'
+    ) {
+      a.addEventListener?.(
+        'blur',
+        () => {
+          if (ui.alive()) ui.rerender();
+        },
+        { once: true },
+      );
       return;
     }
     ui.rerender();
   }
   /** AUDIT 30 U4: the kept acts settled and the arrived pieces collected - an act through the window's door, so no
    *  other press is made while it runs (the market book refuses one, `market-busy`, besides). */
-  const settle = () => ui.run(async () => {
-    const r = await m.book.settle(m.mint, m.putBack, m.drop ?? null);
-    for (const x of arrived()) if (r?.ok) tried.add(x.id);
-    if (r?.settled) load(true, { underAct: true });
-    // MARKET-AUDIT P5: a collect refused is said, and an act still kept - each was said nowhere, and asked after no more
-    const refused = (r?.refused ?? []).find(Boolean);
-    return { ok: !!r?.ok && !refused, text: refused ? accountRefusalText(refused) : r?.settled ? MARKET_WORDS.settled
-      : !r?.ok ? accountRefusalText(r?.error) : m.book.pending ? MARKET_KEPT_TEXT : '' };
-  });
+  const settle = () =>
+    ui.run(async () => {
+      const r = await m.book.settle(m.mint, m.putBack, m.drop ?? null);
+      for (const x of arrived()) if (r?.ok) tried.add(x.id);
+      if (r?.settled) load(true, { underAct: true });
+      // MARKET-AUDIT P5: a collect refused is said, and an act still kept - each was said nowhere, and asked after no more
+      const refused = (r?.refused ?? []).find(Boolean);
+      return {
+        ok: !!r?.ok && !refused,
+        text: refused
+          ? accountRefusalText(refused)
+          : r?.settled
+            ? MARKET_WORDS.settled
+            : !r?.ok
+              ? accountRefusalText(r?.error)
+              : m.book.pending
+                ? MARKET_KEPT_TEXT
+                : '',
+      };
+    });
   /** MARKET-AUDIT U7: whether a delivery is this character's - another of the account's waits for that one (the book's settle
    *  collects this character's alone), and is never asked after here. */
   const mine = (x) => x.character == null || m.book.me?.() == null || x.character === m.book.me();
   /** AUDIT 30 U10: a piece arrived while the tab stands is collected - each delivery asked once a showing (a refusal is
    *  said, and the next showing asks again). */
   const tried = new Set();
-  const arrived = () => (m.book.state.road ?? []).filter((x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id));   // MARKET-ANY: a pack's piece too
-  const collectArrived = () => { if (arrived().length && !ui.busy()) settle(); };
+  const arrived = () =>
+    (m.book.state.road ?? []).filter(
+      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),
+    ); // MARKET-ANY: a pack's piece too
+  const collectArrived = () => {
+    if (arrived().length && !ui.busy()) settle();
+  };
   /** On the tab shown: the kept acts settled (and the arrived pieces collected), and the view read - BOARD-UI: beside the
    *  settle, never after it (a settle that moved anything lets the book's cache go, and the read asks again). */
   async function open() {
     // MARKET-AUDIT P4: the opening settle reads as the read does - its kept acts may take a while, never a blank tab
-    const settling = m.book.pending || arrived().length ? (st.loading = true, ui.rerender(), settle()) : null;
+    const settling = m.book.pending || arrived().length ? ((st.loading = true), ui.rerender(), settle()) : null;
     // AUDIT 657 B4: a read the prefetch was refused is asked again - the book keeps a failed read its minute too, and the
     // first press said "did not load" of a market back up since (a read still under way is joined, as before)
     const again = prefetchFailed;
@@ -395,30 +558,63 @@ export function createMarketTab(m, ui) {
   let prefetchFailed = false;
   function prefetch() {
     try {
-      Promise.resolve(m.book.read(st.view, q(), { force: false })).then((r) => { prefetchFailed = !r?.ok; }, () => { prefetchFailed = true; });
-    } catch { /* the press reads it */ }
+      Promise.resolve(m.book.read(st.view, q(), { force: false })).then(
+        (r) => {
+          prefetchFailed = !r?.ok;
+        },
+        () => {
+          prefetchFailed = true;
+        },
+      );
+    } catch {
+      /* the press reads it */
+    }
   }
   const go = (view) => {
-    ui.hush?.(); st.view = view; st.picked = null; st.family = null; st.tier = 0;
-    st.page = 0; st.sort = null; st.find = ''; st.quality = 0;   // BOARD-SIFT: a view opens on its first page, its own order
-    st.data = m.book.cached(view, q()); load(false);
-  };   // MARKET-AUDIT U6: the last act's word is its view's
+    ui.hush?.();
+    st.view = view;
+    st.picked = null;
+    st.family = null;
+    st.tier = 0;
+    st.page = 0;
+    st.sort = null;
+    st.find = '';
+    st.quality = 0; // BOARD-SIFT: a view opens on its first page, its own order
+    st.data = m.book.cached(view, q());
+    load(false);
+  }; // MARKET-AUDIT U6: the last act's word is its view's
   /** PACK-PICK: from the Goods to the List form opened on the pack - a press where the way was a view, a list and a choice. */
   const sellPackButton = () => {
-    const b = chipButton('market-sellpack', t('market.goods.sell', 'Sell from your pack'), () => { st.list.kind = 'item'; KIND_KEPT.set(m.book, 'item'); go('mine'); });
+    const b = chipButton('market-sellpack', t('market.goods.sell', 'Sell from your pack'), () => {
+      st.list.kind = 'item';
+      KIND_KEPT.set(m.book, 'item');
+      go('mine');
+    });
     b.setAttribute('data-dficon', 'own');
-    b.setAttribute('data-focus', 'list-kind|item');   // AUDIT PACK-PICK B2: the focus carried to the pack's kind it opens on
+    b.setAttribute('data-focus', 'list-kind|item'); // AUDIT PACK-PICK B2: the focus carried to the pack's kind it opens on
     return b;
   };
   /** BOARD-SIFT: a filter or an order changed - the first page of it read (the picked row let go). */
-  const refilter = () => { st.page = 0; st.picked = null; load(false); };
+  const refilter = () => {
+    st.page = 0;
+    st.picked = null;
+    load(false);
+  };
   /** An act through the window's door; its word, then the view read again - a press the market says has moved too. */
-  const act = (start, okText) => ui.run(async () => {
-    const r = await start();
-    if (r?.ok) { st.picked = null; load(true, { underAct: true }); return { ok: true, text: typeof okText === 'function' ? okText(r.data) : okText }; }
-    if (MOVED.includes(r?.error)) { st.picked = null; load(true, { underAct: true }); }
-    return { ok: false, text: r?.text ?? accountRefusalText(r?.error) };
-  });
+  const act = (start, okText) =>
+    ui.run(async () => {
+      const r = await start();
+      if (r?.ok) {
+        st.picked = null;
+        load(true, { underAct: true });
+        return { ok: true, text: typeof okText === 'function' ? okText(r.data) : okText };
+      }
+      if (MOVED.includes(r?.error)) {
+        st.picked = null;
+        load(true, { underAct: true });
+      }
+      return { ok: false, text: r?.text ?? accountRefusalText(r?.error) };
+    });
   /** What the Stores may spend or sell for Drakes of a material - never what gold bought (GOLD-MARKET's wall). */
   const inStores = (key) => listableUnits(m.stores().get(key), 'marks');
   /** MARKET-BAG (FIELD, 2026-10-04: "the market board is broken" - since BAG1 every harvest is carried, and the List form and
@@ -428,19 +624,39 @@ export function createMarketTab(m, ui) {
   /** MARKET-BAG: the Stores' shortfall of `n` put in from the bag and the pack (as a station's inputs are), then the act -
    *  a put-in refused is the act's word, and nothing is asked. */
   const fromCarried = async (key, n, then) => {
-    if (m.putIn && n > inStores(key)) { const r = await m.putIn(key, n); if (!r?.ok) return { ok: false, error: r?.error ?? 'materials-short' }; }
+    if (m.putIn && n > inStores(key)) {
+      const r = await m.putIn(key, n);
+      if (!r?.ok) return { ok: false, error: r?.error ?? 'materials-short' };
+    }
     return then();
   };
   const where = (row) => (row.region === m.region ? 'here' : m.regionNameOf(row.region));
   /** The units a row's pick starts at, and its courier's quote is for. */
-  const pickOf = (row) => (row.kind === 'piece' || row.kind === 'auction' || row.kind === 'item' ? 1 : Math.max(1, Math.min(row.units, PICK_UNITS)));
+  const pickOf = (row) =>
+    row.kind === 'piece' || row.kind === 'auction' || row.kind === 'item'
+      ? 1
+      : Math.max(1, Math.min(row.units, PICK_UNITS));
   // GOLD-MARKET: a gold row's courier a Drake's worth of gold a Drake, as the service charges it
-  const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1) : null);
+  const courierOf = (row, units) =>
+    row.region === m.region
+      ? 0
+      : row.road
+        ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)
+        : null;
   /** AUDIT 30 U16: a unit's price landed here - its courier's share of the pick's. */
-  const landed = (row) => { const n = pickOf(row), c = courierOf(row, n); return c == null ? Infinity : row.price + c / n; };
+  const landed = (row) => {
+    const n = pickOf(row),
+      c = courierOf(row, n);
+    return c == null ? Infinity : row.price + c / n;
+  };
   /** GLOBAL-MARKET: what a fill of `n` units of an order pays this filler - its price less the tax on the order's running
    *  total (fillTaxOn, as the service takes it) and the courier to the order's region; null with no road. */
-  const fillPay = (o, n) => { const c = courierOf(o, n); return c == null ? null : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left) - c; };   // MARKET-AUDIT S2: the service's own tax
+  const fillPay = (o, n) => {
+    const c = courierOf(o, n);
+    return c == null
+      ? null
+      : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left) - c;
+  }; // MARKET-AUDIT S2: the service's own tax
   const roadText = (row) => {
     if (row.region === m.region) return '';
     if (!row.road) return ' no courier knows the road';
@@ -459,9 +675,11 @@ export function createMarketTab(m, ui) {
       for (const id of ids) {
         const t = el('button', `notice-tab market-view${st.view === id ? ' on' : ''}`, labels.get(id) ?? id);
         t.setAttribute('type', 'button');
-        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list');   // MENU-ORDER
+        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list'); // MENU-ORDER
         if (st.view === id) t.setAttribute('aria-current', 'page');
-        t.onclick = () => { if (st.view !== id) go(id); };
+        t.onclick = () => {
+          if (st.view !== id) go(id);
+        };
         g.append(t);
       }
       nav.append(g);
@@ -478,8 +696,12 @@ export function createMarketTab(m, ui) {
   /** BOARD-UI: Your silver (and what bids hold, and the gold here) at the top of every view. */
   function walletNode() {
     const held = m.book.state.held ?? 0;
-    const gold = goldOk() && purse() != null ? ` · Your gold here: ${goldText(purse())}` : '';   // GOLD-MARKET: the purse and the account here
-    return el('p', 'market-wallet', `Your silver: ${balance() == null ? '-' : marksText(balance())}${held > 0 ? ` (${marksText(held)} held in bids)` : ''}${gold}${st.stale ? ' - the market may be out of date' : ''}`);
+    const gold = goldOk() && purse() != null ? ` · Your gold here: ${goldText(purse())}` : ''; // GOLD-MARKET: the purse and the account here
+    return el(
+      'p',
+      'market-wallet',
+      `Your silver: ${balance() == null ? '-' : marksText(balance())}${held > 0 ? ` (${marksText(held)} held in bids)` : ''}${gold}${st.stale ? ' - the market may be out of date' : ''}`,
+    );
   }
 
   function roadNode() {
@@ -489,10 +711,22 @@ export function createMarketTab(m, ui) {
     box.append(el('h4', null, 'On the road'));
     for (const x of road) {
       const from = x.from == null ? '' : ` from ${m.regionNameOf(x.from)}`;
-      const what = x.kind === 'material' ? `${x.units} ${m.countName(x.material, x.units)}` : x.kind === 'item' ? goodName(x.item) : m.pieceName(x.piece);
-      const when = x.kind === 'material' ? (x.waiting ? 'arrived, and waiting for room in your Stores' : arrivalText(x.arrivesAt, ui.nowS()))
-        : !mine(x) && x.ready ? 'waiting for another of your characters'   // MARKET-AUDIT U7: never "arrived" forever
-          : x.why === 'returned' ? 'back from the market' : arrivalText(x.arrivesAt, ui.nowS());
+      const what =
+        x.kind === 'material'
+          ? `${x.units} ${m.countName(x.material, x.units)}`
+          : x.kind === 'item'
+            ? goodName(x.item)
+            : m.pieceName(x.piece);
+      const when =
+        x.kind === 'material'
+          ? x.waiting
+            ? 'arrived, and waiting for room in your Stores'
+            : arrivalText(x.arrivesAt, ui.nowS())
+          : !mine(x) && x.ready
+            ? 'waiting for another of your characters' // MARKET-AUDIT U7: never "arrived" forever
+            : x.why === 'returned'
+              ? 'back from the market'
+              : arrivalText(x.arrivesAt, ui.nowS());
       box.append(el('p', 'market-roadline', `${what}${from} - ${when}`));
     }
     return box;
@@ -509,23 +743,74 @@ export function createMarketTab(m, ui) {
       // AUDIT 30 U2: the words read from the service once the typing rests - the field is never redrawn under the keys.
       // AUDIT BOARD-SIFT: nor mid-word - a composed word is read once it is whole (workSift.js typedField)
       const typed = typedField(search, 300, () => load(false));
-      search.oninput = () => { st.query = search.value; st.picked = null; typed(); };
+      search.oninput = () => {
+        st.query = search.value;
+        st.picked = null;
+        typed();
+      };
       row.append(search);
     }
-    if (SEARCHED_VIEWS.includes(st.view)) row.append(findNode());   // BOARD-SIFT: the pieces by name
-    row.append(select([['', 'All'], ...families], st.family ?? '', (v) => { st.family = v || null; refilter(); }, 'Family'));
+    if (SEARCHED_VIEWS.includes(st.view)) row.append(findNode()); // BOARD-SIFT: the pieces by name
+    row.append(
+      select(
+        [['', 'All'], ...families],
+        st.family ?? '',
+        (v) => {
+          st.family = v || null;
+          refilter();
+        },
+        'Family',
+      ),
+    );
     const cur = currencyNode();
     if (cur) row.append(cur);
     if (st.view === 'materials') {
-      row.append(select([['0', 'Any grade'], ...[1, 2, 3, 4, 5, 6, 7].map((t) => [String(t), `Tier ${t}`])], String(st.tier), (v) => { st.tier = Number(v) || 0; st.picked = null; load(false); }, 'Tier'));
+      row.append(
+        select(
+          [['0', 'Any grade'], ...[1, 2, 3, 4, 5, 6, 7].map((t) => [String(t), `Tier ${t}`])],
+          String(st.tier),
+          (v) => {
+            st.tier = Number(v) || 0;
+            st.picked = null;
+            load(false);
+          },
+          'Tier',
+        ),
+      );
     }
     // BOARD-SIFT: Crafted's least quality, and the order a view of pieces is read in
     if (st.view === 'crafted') {
-      row.append(select([['0', t('market.sift.anyQuality', 'Any quality')], ...QUALITY_NAMES.slice(1).map((n, i) => [String(i + 1), i + 1 === MASTERWORK ? n : t('prof.work.comm.orBetter', '{quality} or better', { quality: n })])],
-        String(st.quality), (v) => { st.quality = Math.max(0, Math.min(MASTERWORK, Math.floor(Number(v)) || 0)); refilter(); }, t('market.sift.qualityLabel', 'Least quality')));
+      row.append(
+        select(
+          [
+            ['0', t('market.sift.anyQuality', 'Any quality')],
+            ...QUALITY_NAMES.slice(1).map((n, i) => [
+              String(i + 1),
+              i + 1 === MASTERWORK ? n : t('prof.work.comm.orBetter', '{quality} or better', { quality: n }),
+            ]),
+          ],
+          String(st.quality),
+          (v) => {
+            st.quality = Math.max(0, Math.min(MASTERWORK, Math.floor(Number(v)) || 0));
+            refilter();
+          },
+          t('market.sift.qualityLabel', 'Least quality'),
+        ),
+      );
     }
     const sorts = /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[st.view] ?? null;
-    if (sorts) row.append(select(sorts.map((k) => [k, sortWord(k)]), st.sort ?? sorts[0], (v) => { st.sort = v; refilter(); }, t('market.sift.sortLabel', 'Order')));
+    if (sorts)
+      row.append(
+        select(
+          sorts.map((k) => [k, sortWord(k)]),
+          st.sort ?? sorts[0],
+          (v) => {
+            st.sort = v;
+            refilter();
+          },
+          t('market.sift.sortLabel', 'Order'),
+        ),
+      );
     return row;
   }
   /** BOARD-SIFT: the search of the pieces - its words read by the service once the typing rests, as the materials' are. */
@@ -536,13 +821,24 @@ export function createMarketTab(m, ui) {
     find.setAttribute('data-focus', `find|${st.view}`);
     find.maxLength = MARKET_QUERY_MAX;
     find.value = st.find;
-    const typed = typedField(find, 300, refilter);   // AUDIT BOARD-SIFT: a composed word read once it is whole
-    find.oninput = () => { st.find = find.value; typed(); };
+    const typed = typedField(find, 300, refilter); // AUDIT BOARD-SIFT: a composed word read once it is whole
+    find.oninput = () => {
+      st.find = find.value;
+      typed();
+    };
     return find;
   }
   /** BOARD-SIFT: an order's name. */
-  const sortWord = (k) => (k === 'dear' ? t('market.sift.dear', 'Dearest first') : k === 'new' ? t('market.sift.new', 'Newest first')
-    : k === 'quality' ? t('market.sift.quality', 'Best quality first') : k === 'ending' ? t('market.sift.ending', 'Ending soonest') : t('market.sift.cheap', 'Cheapest first'));
+  const sortWord = (k) =>
+    k === 'dear'
+      ? t('market.sift.dear', 'Dearest first')
+      : k === 'new'
+        ? t('market.sift.new', 'Newest first')
+        : k === 'quality'
+          ? t('market.sift.quality', 'Best quality first')
+          : k === 'ending'
+            ? t('market.sift.ending', 'Ending soonest')
+            : t('market.sift.cheap', 'Cheapest first');
   /**
    * BOARD-SIFT: A PAGED VIEW'S PAGES under its rows - Previous, "Page 2 of 7 · 643 in all", Next - while there is more than
    * one (the service's `page` and `total`, the page drawn; while the next is read, its presses do nothing). A turn reads
@@ -556,14 +852,28 @@ export function createMarketTab(m, ui) {
     if (pages <= 1) return null;
     const nav = el('nav', 'market-pager');
     nav.setAttribute('aria-label', t('market.page.label', 'Pages'));
-    const turn = (to) => { if (st.loading) return; st.page = to; st.picked = null; st.toTop = true; load(false); };
+    const turn = (to) => {
+      if (st.loading) return;
+      st.page = to;
+      st.picked = null;
+      st.toTop = true;
+      load(false);
+    };
     const prev = button('market-page market-prev', t('market.page.prev', 'Previous'), () => turn(page - 1));
     const next = button('market-page market-next', t('market.page.next', 'Next'), () => turn(page + 1));
     prev.disabled = page === 0;
     next.disabled = page + 1 >= pages;
     prev.setAttribute('data-focus', 'pager|prev');
     next.setAttribute('data-focus', 'pager|next');
-    const said = el('span', 'market-pageof', t('market.page.of', 'Page {page, number} of {pages, number} · {total, number} in all', { page: page + 1, pages, total }));
+    const said = el(
+      'span',
+      'market-pageof',
+      t('market.page.of', 'Page {page, number} of {pages, number} · {total, number} in all', {
+        page: page + 1,
+        pages,
+        total,
+      }),
+    );
     said.setAttribute('aria-live', 'polite');
     nav.append(prev, said, next);
     return nav;
@@ -572,37 +882,67 @@ export function createMarketTab(m, ui) {
   const toTop = (list) => {
     if (!st.toTop || st.loading) return;
     st.toTop = false;
-    Promise.resolve().then(() => { try { list.scrollIntoView?.({ block: 'start' }); } catch { /* none to scroll */ } });
+    Promise.resolve().then(() => {
+      try {
+        list.scrollIntoView?.({ block: 'start' });
+      } catch {
+        /* none to scroll */
+      }
+    });
   };
 
   /** GOLD-MARKET: the currency switch - a realm character's alone; a view shows one currency at a time. */
   function currencyNode() {
     if (!goldOk() || !CURRENCY_VIEWS.includes(st.view)) return null;
-    return select([['marks', 'Silver'], ['gold', 'Gold']], st.currency, (v) => { st.currency = v === 'gold' ? 'gold' : 'marks'; refilter(); }, 'Currency');   // AUDIT BOARD-SIFT (lane B M1): from the first page
+    return select(
+      [
+        ['marks', 'Silver'],
+        ['gold', 'Gold'],
+      ],
+      st.currency,
+      (v) => {
+        st.currency = v === 'gold' ? 'gold' : 'marks';
+        refilter();
+      },
+      'Currency',
+    ); // AUDIT BOARD-SIFT (lane B M1): from the first page
   }
 
-  const pick = (row) => { st.picked = st.picked === row.id ? null : row.id; st.qty = pickOf(row); ui.rerender(); };
+  const pick = (row) => {
+    st.picked = st.picked === row.id ? null : row.id;
+    st.qty = pickOf(row);
+    ui.rerender();
+  };
   /** MENU-ORDER: a row's name with its picture before it - a material's (the item the Stores withdraw it as) or a piece's
    *  own, the host's to make (`m.picture`, `m.itemPicture`); none (no data, or not made yet) is the name alone. */
-  const wake = frameWake(() => ui.rerender());   // AUDIT PACK-PICK A1: once a frame, however many land in it
-  const named = (text, pic) => { const n = el('b', null, text); if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); } return n; };
+  const wake = frameWake(() => ui.rerender()); // AUDIT PACK-PICK A1: once a frame, however many land in it
+  const named = (text, pic) => {
+    const n = el('b', null, text);
+    if (pic) {
+      if (n.prepend) n.prepend(pic);
+      else n.append(pic);
+    }
+    return n;
+  };
   const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');
   const itemPic = (it) => pictureNode(m.itemPicture?.(it, wake) ?? null, el, 'market-pic');
   const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');
   function rowButton(row, cls) {
     const b = el('button', `market-row${cls}${st.picked === row.id ? ' on' : ''}`);
     b.setAttribute('type', 'button');
-    b.setAttribute('aria-expanded', st.picked === row.id ? 'true' : 'false');   // AUDIT 30 U22
+    b.setAttribute('aria-expanded', st.picked === row.id ? 'true' : 'false'); // AUDIT 30 U22
     b.onclick = () => pick(row);
     return b;
   }
   function materialRow(row) {
     const med = st.data?.medians?.[row.material];
     const b = rowButton(row, '');
-    b.append(named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material)),
+    b.append(
+      named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material)),
       el('span', 'market-price', `${priceText(row.price, row.currency)} each`),
       el('span', 'market-where', `${where(row)}${roadText(row)}`),
-      el('span', 'market-median', `median ${medianText(med?.median ?? null)}`));
+      el('span', 'market-median', `median ${medianText(med?.median ?? null)}`),
+    );
     const line = medianLineNode(med?.line);
     if (line) b.append(line);
     if (row.mine) b.append(el('span', 'market-mine', 'yours'));
@@ -612,10 +952,18 @@ export function createMarketTab(m, ui) {
   function pieceRow(row) {
     const p = row.piece;
     const b = rowButton(row, ' market-piece');
-    b.append(named(m.pieceName(p), piecePic(p)),
-      el('span', 'market-quality', [QUALITY_NAMES[p.quality] ?? null, p.maker ? `made by ${p.maker}` : null, wearText(p.wear)].filter(Boolean).join(' · ')),
+    b.append(
+      named(m.pieceName(p), piecePic(p)),
+      el(
+        'span',
+        'market-quality',
+        [QUALITY_NAMES[p.quality] ?? null, p.maker ? `made by ${p.maker}` : null, wearText(p.wear)]
+          .filter(Boolean)
+          .join(' · '),
+      ),
       el('span', 'market-price', priceText(row.price, row.currency)),
-      el('span', 'market-where', `${where(row)}${roadText(row)}`));
+      el('span', 'market-where', `${where(row)}${roadText(row)}`),
+    );
     if (row.mine) b.append(el('span', 'market-mine', 'yours'));
     if (row.reports != null) b.append(el('span', 'market-mod', plural(row.reports, 'report')));
     return b;
@@ -624,11 +972,13 @@ export function createMarketTab(m, ui) {
   function goodRow(row) {
     const it = row.item;
     const b = rowButton(row, ' market-piece market-good');
-    b.append(named(goodName(it), itemPic(it)),
+    b.append(
+      named(goodName(it), itemPic(it)),
       el('span', 'market-quality', wearText(wearOf(it)) ?? 'whole'),
       el('span', 'market-price', priceText(row.price, row.currency)),
-      el('span', 'market-where', `${where(row)}${roadText(row)}`));
-    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
+      el('span', 'market-where', `${where(row)}${roadText(row)}`),
+    );
+    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing
     if (row.mine) b.append(el('span', 'market-mine', 'yours'));
     if (row.reports != null) b.append(el('span', 'market-mod', plural(row.reports, 'report')));
     return b;
@@ -642,7 +992,15 @@ export function createMarketTab(m, ui) {
   const offeredItem = (row) => {
     const rec = row?.kind === 'item' ? row.item : row?.piece;
     if (!rec || typeof rec !== 'object') return null;
-    if (!looked.has(rec)) { let it = null; try { it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec); } catch { it = null; } looked.set(rec, it); }
+    if (!looked.has(rec)) {
+      let it = null;
+      try {
+        it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec);
+      } catch {
+        it = null;
+      }
+      looked.set(rec, it);
+    }
     return looked.get(rec);
   };
   /** MARKET-LOOK: the picked row's piece looked at, over its bar - the List form's card (ui/packPicker.js packCardNode):
@@ -652,7 +1010,10 @@ export function createMarketTab(m, ui) {
     const it = offeredItem(row);
     if (!it) return null;
     const name = row.kind === 'item' ? goodName(row.item) : m.pieceName(row.piece);
-    const card = packCardNode({ item: it, name, sub: packTierWord(it) }, { picture: m.itemPicture ?? null, wake, look: itemLookRows, none: '' });
+    const card = packCardNode(
+      { item: it, name, sub: packTierWord(it) },
+      { picture: m.itemPicture ?? null, wake, look: itemLookRows, none: '' },
+    );
     card.className += ' market-look';
     return card;
   }
@@ -662,47 +1023,105 @@ export function createMarketTab(m, ui) {
    *  words and the button that hang on it, never the bar (AUDIT 30 U8). */
   function pickedBar(row) {
     const bar = el('div', 'market-bar');
-    const piece = row.kind === 'piece' || row.kind === 'item';   // MARKET-ANY: a pack's piece is bought whole
+    const piece = row.kind === 'piece' || row.kind === 'item'; // MARKET-ANY: a pack's piece is bought whole
     const unitsNow = () => (piece ? 1 : intOf(st.qty, 1, row.units));
-    const what = (units) => (row.kind === 'item' ? goodName(row.item) : piece ? m.pieceName(row.piece) : `${units} ${m.countName(row.material, units)}`);
+    const what = (units) =>
+      row.kind === 'item'
+        ? goodName(row.item)
+        : piece
+          ? m.pieceName(row.piece)
+          : `${units} ${m.countName(row.material, units)}`;
     const ask = el('span', 'market-ask');
     ask.setAttribute('aria-live', 'polite');
-    const gold = row.currency === 'gold';   // GOLD-MARKET: bought off the purse, at its exact cost
+    const gold = row.currency === 'gold'; // GOLD-MARKET: bought off the purse, at its exact cost
     const buy = button('primary market-buy', m.book.busy ? 'Buying...' : 'Buy', () => {
-      const units = unitsNow(), courier = courierOf(row, units), w = what(units);
-      return act(() => m.book.buy({ region: m.region, listing: row.id, units, max: units * row.price + (courier ?? 0), hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),
-        (d) => (d?.sale?.here ? `Bought ${w}.` : `Bought ${w} - the courier brings it from ${m.regionNameOf(row.region)} in ${arrivalText(d?.sale?.arrivesAt, ui.nowS())}.`));
+      const units = unitsNow(),
+        courier = courierOf(row, units),
+        w = what(units);
+      return act(
+        () =>
+          m.book.buy(
+            {
+              region: m.region,
+              listing: row.id,
+              units,
+              max: units * row.price + (courier ?? 0),
+              hubs: m.hubs,
+              ...at(),
+              ...(gold ? { currency: 'gold' } : {}),
+            },
+            m.mint,
+          ),
+        (d) =>
+          d?.sale?.here
+            ? `Bought ${w}.`
+            : `Bought ${w} - the courier brings it from ${m.regionNameOf(row.region)} in ${arrivalText(d?.sale?.arrivesAt, ui.nowS())}.`,
+      );
     });
     const refresh = () => {
-      const units = unitsNow(), courier = courierOf(row, units), total = units * row.price;
-      ask.textContent = courier == null ? `The couriers do not know the road to ${m.regionNameOf(row.region)} yet.`
-        : gold ? `Buy ${what(units)} for ${goldText(total)}${courier ? ` + ${goldText(courier)} courier` : ''}? From your purse, then your account here.`
-          : `Buy ${what(units)} for ${marksText(total)}${courier ? ` + ${courier} courier` : ''}?`;
-      buy.disabled = ui.busy() || row.mine || courier == null || (gold && !goldOk()) || shortOf(total + (courier ?? 0), row.currency);
+      const units = unitsNow(),
+        courier = courierOf(row, units),
+        total = units * row.price;
+      ask.textContent =
+        courier == null
+          ? `The couriers do not know the road to ${m.regionNameOf(row.region)} yet.`
+          : gold
+            ? `Buy ${what(units)} for ${goldText(total)}${courier ? ` + ${goldText(courier)} courier` : ''}? From your purse, then your account here.`
+            : `Buy ${what(units)} for ${marksText(total)}${courier ? ` + ${courier} courier` : ''}?`;
+      buy.disabled =
+        ui.busy() ||
+        row.mine ||
+        courier == null ||
+        (gold && !goldOk()) ||
+        shortOf(total + (courier ?? 0), row.currency);
     };
     if (!piece) {
       const n = numberInput(unitsNow(), 1, row.units, 'Units to buy', `qty|${row.id}`);
-      n.oninput = () => { st.qty = intOf(n.value, 1, row.units); refresh(); };
+      n.oninput = () => {
+        st.qty = intOf(n.value, 1, row.units);
+        refresh();
+      };
       bar.append(n);
     }
     refresh();
-    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));   // RPT1026-LEDGERLAW: what buying it means
+    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine())); // RPT1026-LEDGERLAW: what buying it means
     bar.append(ask, buy);
-    if (!row.mine) bar.append(button('market-report', 'Report', () => act(() => m.book.report(row.id), 'Reported. A moderator will look at it.')));
-    if (row.reports != null) bar.append(button('market-remove', 'Remove', () => act(() => m.book.remove(row.id), 'Removed. Its goods go back to its seller.')));
+    if (!row.mine)
+      bar.append(
+        button('market-report', 'Report', () =>
+          act(() => m.book.report(row.id), 'Reported. A moderator will look at it.'),
+        ),
+      );
+    if (row.reports != null)
+      bar.append(
+        button('market-remove', 'Remove', () =>
+          act(() => m.book.remove(row.id), 'Removed. Its goods go back to its seller.'),
+        ),
+      );
     return bar;
   }
 
   // ─── PROF5b: THE AUCTIONS ────────────────────────────────────────
   const endsText = (endsAt) => (endsAt - ui.nowS() <= 0 ? 'ended' : `ends in ${arrivalText(endsAt, ui.nowS())}`);
-  const standing = (a) => (a.high == null ? `opening ${marksText(a.opening)} - no bids yet` : `${marksText(a.high)} (${plural(a.bids, 'bid')})`);
+  const standing = (a) =>
+    a.high == null
+      ? `opening ${marksText(a.opening)} - no bids yet`
+      : `${marksText(a.high)} (${plural(a.bids, 'bid')})`;
   function auctionRow(a) {
     const p = a.piece;
     const b = rowButton(a, ' market-piece market-auction');
-    b.append(named(m.pieceName(p), piecePic(p)),
-      el('span', 'market-quality', [QUALITY_NAMES[p.quality] ?? null, p.maker ? `made by ${p.maker}` : null, wearText(p.wear)].filter(Boolean).join(' · ')),
+    b.append(
+      named(m.pieceName(p), piecePic(p)),
+      el(
+        'span',
+        'market-quality',
+        [QUALITY_NAMES[p.quality] ?? null, p.maker ? `made by ${p.maker}` : null, wearText(p.wear)]
+          .filter(Boolean)
+          .join(' · '),
+      ),
       el('span', 'market-price', standing(a)),
-      el('span', 'market-where', `${where(a)}${roadText({ ...a, kind: 'piece' })} · ${endsText(a.endsAt)}`));
+      el('span', 'market-where', `${where(a)}${roadText({ ...a, kind: 'piece' })} · ${endsText(a.endsAt)}`),
+    );
     if (a.mine) b.append(el('span', 'market-mine', 'yours'));
     else if (a.leading) b.append(el('span', 'market-mine', 'your bid leads'));
     if (a.reports != null) b.append(el('span', 'market-mod', plural(a.reports, 'report')));
@@ -713,12 +1132,29 @@ export function createMarketTab(m, ui) {
   function auctionBar(a) {
     const bar = el('div', 'market-bar');
     if (a.mine) {
-      bar.append(el('span', 'market-ask', a.bids ? `Your auction - ${standing(a)}. It cannot be cancelled once bid on.` : 'Your auction. No bids yet.'));
-      if (!a.bids) bar.append(button('market-cancel', 'Cancel', () => act(() => m.book.cancel(a.id, m.mint), 'Canceled. Your Masterwork is back; the fee is kept.')));
+      bar.append(
+        el(
+          'span',
+          'market-ask',
+          a.bids ? `Your auction - ${standing(a)}. It cannot be cancelled once bid on.` : 'Your auction. No bids yet.',
+        ),
+      );
+      if (!a.bids)
+        bar.append(
+          button('market-cancel', 'Cancel', () =>
+            act(() => m.book.cancel(a.id, m.mint), 'Canceled. Your Masterwork is back; the fee is kept.'),
+          ),
+        );
       return bar;
     }
     if (a.leading) {
-      bar.append(el('span', 'market-ask', `Your bid of ${marksText(a.high)} leads. It is held until you are outbid or the auction ends.`));
+      bar.append(
+        el(
+          'span',
+          'market-ask',
+          `Your bid of ${marksText(a.high)} leads. It is held until you are outbid or the auction ends.`,
+        ),
+      );
     } else if (a.next > AUCTION_BID_MAX) {
       // AUDIT 31 L6: the next bid past what any balance can hold - said, never a Bid that cannot be pressed for no reason
       bar.append(el('span', 'market-ask', `The next bid (${marksText(a.next)}) is more than an account can hold.`));
@@ -730,27 +1166,41 @@ export function createMarketTab(m, ui) {
       ask.setAttribute('aria-live', 'polite');
       const go = button('primary market-bid', 'Bid', () => {
         const amount = amountNow();
-        return act(() => m.book.bid({ region: m.region, auction: a.id, amount, hubs: m.hubs }),
-          `Your bid of ${marksText(amount)} leads. It is held until you are outbid or the auction ends.`);
+        return act(
+          () => m.book.bid({ region: m.region, auction: a.id, amount, hubs: m.hubs }),
+          `Your bid of ${marksText(amount)} leads. It is held until you are outbid or the auction ends.`,
+        );
       });
       const refresh = () => {
         const amount = amountNow();
-        ask.textContent = courier == null ? `The couriers do not know the road to ${m.regionNameOf(a.region)} yet.`
-          : `Bid ${marksText(amount)}${courier ? ` + ${courier} courier` : ''}? At least ${marksText(a.next)}.`;
+        ask.textContent =
+          courier == null
+            ? `The couriers do not know the road to ${m.regionNameOf(a.region)} yet.`
+            : `Bid ${marksText(amount)}${courier ? ` + ${courier} courier` : ''}? At least ${marksText(a.next)}.`;
         go.disabled = ui.busy() || courier == null || short(amount + (courier ?? 0));
       };
-      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); refresh(); };
+      n.oninput = () => {
+        st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX);
+        refresh();
+      };
       refresh();
       bar.append(n, ask, go);
     }
-    bar.append(button('market-report', 'Report', () => act(() => m.book.report(a.id), 'Reported. A moderator will look at it.')));
-    if (a.reports != null) bar.append(button('market-remove', 'Remove', () => act(() => m.book.remove(a.id), 'Removed. Its bid is returned and its piece goes back to its seller.')));
+    bar.append(
+      button('market-report', 'Report', () => act(() => m.book.report(a.id), 'Reported. A moderator will look at it.')),
+    );
+    if (a.reports != null)
+      bar.append(
+        button('market-remove', 'Remove', () =>
+          act(() => m.book.remove(a.id), 'Removed. Its bid is returned and its piece goes back to its seller.'),
+        ),
+      );
     return bar;
   }
 
   function weaversNode() {
     const box = el('div', 'market-counter');
-    box.append(el('h4', null, 'The Weavers\' counter'));
+    box.append(el('h4', null, "The Weavers' counter"));
     for (const w of m.weavers) {
       const row = el('div', 'market-counterrow');
       const count = () => intOf(st.weave[w.key] ?? 1, 1, 100);
@@ -758,14 +1208,22 @@ export function createMarketTab(m, ui) {
       const b = button('market-weave', '', () => ui.run(() => m.stock(w.key, count())));
       const refresh = () => {
         b.textContent = `Buy for ${marksText(w.marks * count())}`;
-        b.disabled = ui.busy() || short(w.marks * count());   // AUDIT 30 U12, U13
+        b.disabled = ui.busy() || short(w.marks * count()); // AUDIT 30 U12, U13
       };
-      inp.oninput = () => { st.weave[w.key] = intOf(inp.value, 1, 100); refresh(); };
+      inp.oninput = () => {
+        st.weave[w.key] = intOf(inp.value, 1, 100);
+        refresh();
+      };
       refresh();
-      row.append(named(m.name(w.key), matPic(w.key)), el('span', 'market-price', `${marksText(w.marks)} a bolt`), inp, b);
+      row.append(
+        named(m.name(w.key), matPic(w.key)),
+        el('span', 'market-price', `${marksText(w.marks)} a bolt`),
+        inp,
+        b,
+      );
       box.append(row);
     }
-    box.append(el('p', 'notice-tip', 'Into your Stores, for the loom.'));   // AUDIT 32 R5: Outfitting practised since PROF7 - a bolt withdraws, and sews
+    box.append(el('p', 'notice-tip', 'Into your Stores, for the loom.')); // AUDIT 32 R5: Outfitting practised since PROF7 - a bolt withdraws, and sews
     return box;
   }
 
@@ -773,16 +1231,18 @@ export function createMarketTab(m, ui) {
   function suppliersNode() {
     const box = /** @type {any} */ (el('details', 'market-suppliers'));
     box.open = st.suppliersOpen === true;
-    box.addEventListener?.('toggle', () => { st.suppliersOpen = !!box.open; });
+    box.addEventListener?.('toggle', () => {
+      st.suppliersOpen = !!box.open;
+    });
     box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());
-    if ((m.apothecaries ?? []).length) box.append(apothecariesNode());   // PROF12
+    if ((m.apothecaries ?? []).length) box.append(apothecariesNode()); // PROF12
     return box;
   }
   /** PROF12 (PROF0 4.5: "The Apothecaries' counter, the supplier's second"): the sixteen ingredients DFU's potion recipes need
    *  and no gathering yields, a measure at a time, into the Stores for the alchemy station - the Weavers' counter's shape. */
   function apothecariesNode() {
     const box = el('div', 'market-counter');
-    box.append(el('h4', null, 'The Apothecaries\' counter'));
+    box.append(el('h4', null, "The Apothecaries' counter"));
     for (const w of m.apothecaries ?? []) {
       const row = el('div', 'market-counterrow');
       const count = () => intOf(st.weave[w.key] ?? 1, 1, 100);
@@ -790,11 +1250,19 @@ export function createMarketTab(m, ui) {
       const b = button('market-weave', '', () => ui.run(() => m.stock(w.key, count())));
       const refresh = () => {
         b.textContent = `Buy for ${marksText(w.marks * count())}`;
-        b.disabled = short(w.marks * count()) || ui.busy();   // the Weavers' AUDIT 30 U12, U13
+        b.disabled = short(w.marks * count()) || ui.busy(); // the Weavers' AUDIT 30 U12, U13
       };
-      inp.oninput = () => { st.weave[w.key] = intOf(inp.value, 1, 100); refresh(); };
+      inp.oninput = () => {
+        st.weave[w.key] = intOf(inp.value, 1, 100);
+        refresh();
+      };
       refresh();
-      row.append(named(m.name(w.key), matPic(w.key)), el('span', 'market-price', `${marksText(w.marks)} a measure`), inp, b);
+      row.append(
+        named(m.name(w.key), matPic(w.key)),
+        el('span', 'market-price', `${marksText(w.marks)} a measure`),
+        inp,
+        b,
+      );
       box.append(row);
     }
     box.append(el('p', 'notice-tip', 'For the alchemy station, into your Stores.'));
@@ -803,9 +1271,11 @@ export function createMarketTab(m, ui) {
 
   /** MARKET-ANY: how the service says a crafted piece the save holds may list ("My listings" reads it, `ways`) - `yours`,
    *  `other`, `elsewhere`, `none` - or null while it has not said. */
-  const heldState = (pv) => (st.view !== 'mine' ? null : st.data?.ways?.[pv] ?? (st.data?.ways && !heldIds().includes(pv) ? 'unasked' : null));   // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked
+  const heldState = (pv) =>
+    st.view !== 'mine' ? null : (st.data?.ways?.[pv] ?? (st.data?.ways && !heldIds().includes(pv) ? 'unasked' : null)); // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked
   /** A crafted piece offered as one: the service's `yours` - or, from a service that names none, every one (as before). */
-  const pieceListedAsCrafted = (pv) => (st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true);
+  const pieceListedAsCrafted = (pv) =>
+    st.data?.ways ? ['yours', 'unasked'].includes(/** @type {string} */ (heldState(pv))) : true;
   /** Why a pack piece with a maker's record does not list from the pack (null: it does - its record names another). */
   const craftedWhy = (item) => {
     if (typeof item?.provenance !== 'string') return null;
@@ -813,8 +1283,14 @@ export function createMarketTab(m, ui) {
     // AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - its record mints it
     // fresh (smithItems.js asMinted), so the Crafted list leaves it out - and is said so, never "list it as a crafted piece"
     if (h === 'yours' && (item.foodStage ?? 0) > 0) return SPOILED_DISH_WHY;
-    if (h === 'yours' && !asMinted(item)) return changedPieceWhy();   // AUDIT MAKER-RARE B2: the Crafted list leaves it out too
-    return h === 'other' || h === 'none' || h === 'unasked' ? null : h === 'yours' ? 'made by you. List it as a crafted piece' : h === 'elsewhere' ? 'on the market already' : 'being looked up';
+    if (h === 'yours' && !asMinted(item)) return changedPieceWhy(); // AUDIT MAKER-RARE B2: the Crafted list leaves it out too
+    return h === 'other' || h === 'none' || h === 'unasked'
+      ? null
+      : h === 'yours'
+        ? 'made by you. List it as a crafted piece'
+        : h === 'elsewhere'
+          ? 'on the market already'
+          : 'being looked up';
   };
   /** BOARD-UI: a form's field under its name. */
   const field = (name, input, cls = '') => {
@@ -831,7 +1307,10 @@ export function createMarketTab(m, ui) {
     for (const [k, icon] of kinds) {
       const b = chipButton(`market-kind${st.list.kind === k ? ' on' : ''}`, listKindWord(k), () => {
         KIND_KEPT.set(m.book, k);
-        if (st.list.kind !== k) { st.list.kind = k; ui.rerender(); }
+        if (st.list.kind !== k) {
+          st.list.kind = k;
+          ui.rerender();
+        }
       });
       b.setAttribute('aria-pressed', st.list.kind === k ? 'true' : 'false');
       b.setAttribute('data-kind', k);
@@ -854,49 +1333,110 @@ export function createMarketTab(m, ui) {
     // (AUDIT PACK-PICK: a pack that holds nothing that may go opens the Stores' form instead - the pack's said only why not)
     const packOk = goldOk() && !!m.goods;
     if (st.list.kind === 'item' && !packOk) st.list.kind = null;
-    if (!st.list.kind) st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';
+    if (!st.list.kind)
+      st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';
     box.append(kindsNode(LIST_KINDS.filter(([k]) => k !== 'item' || packOk)));
     // GOLD-MARKET: a realm character prices a Stores material or a piece in Drakes or gold (an auction stays Drakes')
     const gold = goldOk() && st.list.kind !== 'auction' && (st.list.currency === 'gold' || st.list.kind === 'item');
     if (goldOk() && st.list.kind !== 'auction' && st.list.kind !== 'item') {
-      fields.append(field('Priced in', select([['marks', 'Priced in silver'], ['gold', 'Priced in gold']], st.list.currency, (v) => { st.list.currency = v === 'gold' ? 'gold' : 'marks'; ui.rerender(); }, 'Currency')));
+      fields.append(
+        field(
+          'Priced in',
+          select(
+            [
+              ['marks', 'Priced in silver'],
+              ['gold', 'Priced in gold'],
+            ],
+            st.list.currency,
+            (v) => {
+              st.list.currency = v === 'gold' ? 'gold' : 'marks';
+              ui.rerender();
+            },
+            'Currency',
+          ),
+        ),
+      );
     }
     const cur = gold ? 'gold' : 'marks';
     const unitWord = gold ? 'gold' : 'silver';
     const price = numberInput(st.list.price, 1, MARKET_PRICE_MAX, `Price in ${unitWord}`, 'list-price');
     const hint = el('p', 'notice-tip');
     const notes = el('div', 'market-formnotes');
-    const b = button('primary market-dolist', 'List', () => send());   // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding
-    b.setAttribute('data-focus', 'list-do');   // AUDIT PACK-PICK B2: a redraw keeps the focus on it
-    const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX;   // AUDIT SEATS-3 D2: the board's own cap, as the service says it
+    const b = button('primary market-dolist', 'List', () => send()); // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding
+    b.setAttribute('data-focus', 'list-do'); // AUDIT PACK-PICK B2: a redraw keeps the focus on it
+    const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it
     const full = (m.book.state.counts?.listings ?? 0) >= listingsMax;
-    let can = () => false, send = () => {}, worth = () => 0;
+    let can = () => false,
+      send = () => {},
+      worth = () => 0;
     if (st.list.kind === 'material') {
       // GOLD-MARKET: the units a listing in its currency may take - never the other currency's bought ones. MARKET-BAG: a
       // silver listing's what the bag and the pack carry too, put in first (a gold listing's are its Stores' own and gold's)
       const listable = (key) => (gold ? listableUnits(m.stores().get(key), cur) : held(key));
-      const keys = [...new Set([...m.stores().keys(), ...(gold ? [] : [...(m.carried?.().keys() ?? [])])])].filter((k) => listable(k) > 0);
+      const keys = [...new Set([...m.stores().keys(), ...(gold ? [] : [...(m.carried?.().keys() ?? [])])])].filter(
+        (k) => listable(k) > 0,
+      );
       if (!keys.includes(st.list.material)) st.list.material = keys[0] ?? '';
       const most = listable(st.list.material);
       st.list.units = intOf(st.list.units, 1, Math.max(1, Math.min(most, MARKET_UNITS_MAX)));
-      const units = numberInput(st.list.units, 1, Math.max(1, Math.min(most, MARKET_UNITS_MAX)), 'Units to list', 'list-units');
+      const units = numberInput(
+        st.list.units,
+        1,
+        Math.max(1, Math.min(most, MARKET_UNITS_MAX)),
+        'Units to list',
+        'list-units',
+      );
       const carriedSaid = el('p', 'notice-tip');
       const sayCarried = () => {
         const short = gold || !st.list.material ? 0 : Math.max(0, st.list.units - inStores(st.list.material));
-        carriedSaid.textContent = short ? `${plural(short, 'unit')} of it ${short === 1 ? 'goes' : 'go'} into your Stores from your bag and pack first.` : '';
+        carriedSaid.textContent = short
+          ? `${plural(short, 'unit')} of it ${short === 1 ? 'goes' : 'go'} into your Stores from your bag and pack first.`
+          : '';
       };
-      units.oninput = () => { st.list.units = intOf(units.value, 1, Math.max(1, Math.min(most, MARKET_UNITS_MAX))); sayCarried(); refresh(); };
-      fields.append(keys.length ? field('Material', select(keys.map((k) => [k, `${m.name(k)} (${listable(k).toLocaleString('en-US')})`]), st.list.material, (v) => { st.list.material = v; ui.rerender(); }, 'Material'), 'market-field-wide')
-        : el('span', 'notice-tip', gold ? 'Your Stores hold nothing that sells for gold.' : MARKET_WORDS.noStores),
-      field('Units', units), field(`${unitWord} each`, price));
+      units.oninput = () => {
+        st.list.units = intOf(units.value, 1, Math.max(1, Math.min(most, MARKET_UNITS_MAX)));
+        sayCarried();
+        refresh();
+      };
+      fields.append(
+        keys.length
+          ? field(
+              'Material',
+              select(
+                keys.map((k) => [k, `${m.name(k)} (${listable(k).toLocaleString('en-US')})`]),
+                st.list.material,
+                (v) => {
+                  st.list.material = v;
+                  ui.rerender();
+                },
+                'Material',
+              ),
+              'market-field-wide',
+            )
+          : el('span', 'notice-tip', gold ? 'Your Stores hold nothing that sells for gold.' : MARKET_WORDS.noStores),
+        field('Units', units),
+        field(`${unitWord} each`, price),
+      );
       notes.append(carriedSaid);
-      const walled = walledText(m.stores(), gold ? 'gold' : 'marks', m.name);   // RPT1026-MARKET STORES-SAID: what the Stores hold that this listing may not take, and why
+      const walled = walledText(m.stores(), gold ? 'gold' : 'marks', m.name); // RPT1026-MARKET STORES-SAID: what the Stores hold that this listing may not take, and why
       if (walled) notes.append(el('p', 'notice-tip market-refused', walled));
       worth = () => st.list.units * st.list.price;
-      can = () => !!st.list.material && most >= st.list.units && worth() <= MARKET_WORTH_MAX;   // MARKET-AUDIT: the worth the service takes
-      const req = () => ({ region: m.region, kind: 'material', material: st.list.material, units: st.list.units, price: st.list.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) });
-      send = () => act(() => (gold ? m.book.list(req()) : fromCarried(st.list.material, st.list.units, () => m.book.list(req()))),
-        `Listed ${st.list.units} ${m.countName(st.list.material, st.list.units)} at ${priceText(st.list.price, cur)} each.`);
+      can = () => !!st.list.material && most >= st.list.units && worth() <= MARKET_WORTH_MAX; // MARKET-AUDIT: the worth the service takes
+      const req = () => ({
+        region: m.region,
+        kind: 'material',
+        material: st.list.material,
+        units: st.list.units,
+        price: st.list.price,
+        hubs: m.hubs,
+        ...at(),
+        ...(gold ? { currency: 'gold' } : {}),
+      });
+      send = () =>
+        act(
+          () => (gold ? m.book.list(req()) : fromCarried(st.list.material, st.list.units, () => m.book.list(req()))),
+          `Listed ${st.list.units} ${m.countName(st.list.material, st.list.units)} at ${priceText(st.list.price, cur)} each.`,
+        );
       sayCarried();
     } else if (st.list.kind === 'item') {
       // MARKET-ANY: every piece of the pack that may go, and of the rest why not - a crafted piece as the service says.
@@ -906,28 +1446,65 @@ export function createMarketTab(m, ui) {
       const goods = all.filter((g) => !g.why);
       if (!goods.some((g) => g.item === st.list.good)) st.list.good = null;
       const chosen = goods.find((g) => g.item === st.list.good) ?? null;
-      const entries = all.map((g) => ({ item: g.item, name: goodName(g.item), sub: goodSub(g.item), why: g.why }));   // keyed by name (AUDIT PACK-PICK A8)
-      above.push(packPickerNode({ entries, chosen: st.list.good, sift: st.list.sifts.item, pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); },
-        picture: m.itemPicture ?? null, wake, label: t('market.list.packLabel', 'The pieces in your pack'), focus: 'list-good',
-        empty: t('market.list.packEmpty', 'Nothing in your pack can go on the market.'), refusedWhat: t('market.list.refused', 'Not for the market'), redraw: () => ui.rerender() }),
-      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: itemLookRows,
-        none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
+      const entries = all.map((g) => ({ item: g.item, name: goodName(g.item), sub: goodSub(g.item), why: g.why })); // keyed by name (AUDIT PACK-PICK A8)
+      above.push(
+        packPickerNode({
+          entries,
+          chosen: st.list.good,
+          sift: st.list.sifts.item,
+          pick: (it) => {
+            st.list.good = st.list.good === it ? null : it;
+            ui.rerender();
+          },
+          picture: m.itemPicture ?? null,
+          wake,
+          label: t('market.list.packLabel', 'The pieces in your pack'),
+          focus: 'list-good',
+          empty: t('market.list.packEmpty', 'Nothing in your pack can go on the market.'),
+          refusedWhat: t('market.list.refused', 'Not for the market'),
+          redraw: () => ui.rerender(),
+        }),
+        packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, {
+          picture: m.itemPicture ?? null,
+          wake,
+          look: itemLookRows,
+          none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.'),
+        }),
+      );
       fields.append(field('Price in gold', price));
       worth = () => st.list.price;
       can = () => !!chosen;
-      send = () => act(() => {
-        const g = /** @type {any} */ (m.good)?.(chosen?.item);
-        if (!g?.offered || !(g.pick >= 0)) return Promise.resolve({ ok: false, error: 'piece-held' });
-        const hub = m.hubs?.[m.region];
-        return m.book.list({ region: m.region, kind: 'item', item: g.offered, pick: g.pick, price: st.list.price, hubs: hub ? { [m.region]: hub } : {}, currency: 'gold' }, null, g);
-      }, `Listed ${chosen ? goodName(chosen.item) : 'it'} at ${goldText(st.list.price)}.`);
+      send = () =>
+        act(
+          () => {
+            const g = /** @type {any} */ (m.good)?.(chosen?.item);
+            if (!g?.offered || !(g.pick >= 0)) return Promise.resolve({ ok: false, error: 'piece-held' });
+            const hub = m.hubs?.[m.region];
+            return m.book.list(
+              {
+                region: m.region,
+                kind: 'item',
+                item: g.offered,
+                pick: g.pick,
+                price: st.list.price,
+                hubs: hub ? { [m.region]: hub } : {},
+                currency: 'gold',
+              },
+              null,
+              g,
+            );
+          },
+          `Listed ${chosen ? goodName(chosen.item) : 'it'} at ${goldText(st.list.price)}.`,
+        );
     } else {
       // PROF5b: an auction offers the Masterworks alone (10.2)
       const auction = st.list.kind === 'auction';
       // MARKET-ANY: only the pieces whose maker's record is this account's, standing nowhere else, as the service says
       const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);
       const pieces = all.filter((p) => pieceListedAsCrafted(p.item.provenance));
-      const others = all.filter((p) => heldState(p.item.provenance) === 'other' || heldState(p.item.provenance) === 'none').length;
+      const others = all.filter(
+        (p) => heldState(p.item.provenance) === 'other' || heldState(p.item.provenance) === 'none',
+      ).length;
       const elsewhere = all.filter((p) => heldState(p.item.provenance) === 'elsewhere').length;
       // PACK-PICK: none chosen until one is pressed, as the pack's
       // AUDIT PACK-PICK B3: each kind its own choice, as its own sift - one shared, a look at the auction let the crafted
@@ -937,28 +1514,119 @@ export function createMarketTab(m, ui) {
       const chosen = pieces.find((p) => p.item.provenance === st.list.pieces[pk]) ?? null;
       // MARKET-AUDIT U2: each its quality (an auction's are all Masterworks) and wear - a Crude, a Fine and a worn piece of one
       // name were three like options. PACK-PICK: on its tile's line, under its picture and name
-      const pieceSub = (p) => [packTierWord(p.item), auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(' · ') || null;
-      const entries = pieces.map((p) => ({ key: `piece|${p.item.provenance}`, item: p.item, name: p.name, sub: pieceSub(p), why: null }));
-      above.push(packPickerNode({ entries, chosen: chosen?.item ?? null, sift: st.list.sifts[auction ? 'auction' : 'piece'],
-        pick: (it) => { st.list.pieces[pk] = st.list.pieces[pk] === it.provenance ? '' : it.provenance; ui.rerender(); },
-        // AUDIT PACK-PICK B6: a crafted piece may lie in a home - the search is no pack's
-        words: { find: t('market.sift.find', 'Search by name'), findLabel: t('market.sift.find', 'Search by name'), none: t('pack.pick.noneAny', 'Nothing matches.') },
-        picture: m.itemPicture ?? null, wake, label: auction ? t('market.list.mwLabel', 'Your Masterworks') : t('market.list.craftedLabel', 'Your crafted pieces'), focus: auction ? 'list-mw' : 'list-piece',
-        empty: auction ? t('market.list.mwEmpty', 'You carry no Masterwork to auction.') : t('market.list.craftedEmpty', 'You carry no crafted piece to sell.'), refusedWhat: t('market.list.refused', 'Not for the market'), redraw: () => ui.rerender() }),
-      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: itemLookRows,
-        none: auction ? t('market.list.pickMw', 'Press a Masterwork above to look at it and set its opening bid.') : t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
+      const pieceSub = (p) =>
+        [
+          packTierWord(p.item),
+          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),
+          wearText(wearOf(p.item)),
+          p.where === 'home' ? 'your home' : null,
+        ]
+          .filter(Boolean)
+          .join(' · ') || null;
+      const entries = pieces.map((p) => ({
+        key: `piece|${p.item.provenance}`,
+        item: p.item,
+        name: p.name,
+        sub: pieceSub(p),
+        why: null,
+      }));
+      above.push(
+        packPickerNode({
+          entries,
+          chosen: chosen?.item ?? null,
+          sift: st.list.sifts[auction ? 'auction' : 'piece'],
+          pick: (it) => {
+            st.list.pieces[pk] = st.list.pieces[pk] === it.provenance ? '' : it.provenance;
+            ui.rerender();
+          },
+          // AUDIT PACK-PICK B6: a crafted piece may lie in a home - the search is no pack's
+          words: {
+            find: t('market.sift.find', 'Search by name'),
+            findLabel: t('market.sift.find', 'Search by name'),
+            none: t('pack.pick.noneAny', 'Nothing matches.'),
+          },
+          picture: m.itemPicture ?? null,
+          wake,
+          label: auction
+            ? t('market.list.mwLabel', 'Your Masterworks')
+            : t('market.list.craftedLabel', 'Your crafted pieces'),
+          focus: auction ? 'list-mw' : 'list-piece',
+          empty: auction
+            ? t('market.list.mwEmpty', 'You carry no Masterwork to auction.')
+            : t('market.list.craftedEmpty', 'You carry no crafted piece to sell.'),
+          refusedWhat: t('market.list.refused', 'Not for the market'),
+          redraw: () => ui.rerender(),
+        }),
+        packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, {
+          picture: m.itemPicture ?? null,
+          wake,
+          look: itemLookRows,
+          none: auction
+            ? t('market.list.pickMw', 'Press a Masterwork above to look at it and set its opening bid.')
+            : t('market.list.pickPack', 'Press a piece above to look at it and set its price.'),
+        }),
+      );
       fields.append(field(auction ? 'Opening bid (silver)' : `Price in ${unitWord}`, price));
       const them = (n) => (n === 1 ? 'it' : 'them');
-      if (others) notes.append(el('p', 'notice-tip', `${plural(others, 'crafted piece')} you hold ${others === 1 ? 'is' : 'are'} made by another player, and only the maker can sell ${them(others)} as crafted.${goldOk() && m.goods ? ` List ${them(others)} from your pack for gold instead.` : ''}`));
-      if (elsewhere) notes.append(el('p', 'notice-tip', `${plural(elsewhere, 'crafted piece')} you hold ${elsewhere === 1 ? 'is' : 'are'} already listed, on the road or in a home.`));
+      if (others)
+        notes.append(
+          el(
+            'p',
+            'notice-tip',
+            `${plural(others, 'crafted piece')} you hold ${others === 1 ? 'is' : 'are'} made by another player, and only the maker can sell ${them(others)} as crafted.${goldOk() && m.goods ? ` List ${them(others)} from your pack for gold instead.` : ''}`,
+          ),
+        );
+      if (elsewhere)
+        notes.append(
+          el(
+            'p',
+            'notice-tip',
+            `${plural(elsewhere, 'crafted piece')} you hold ${elsewhere === 1 ? 'is' : 'are'} already listed, on the road or in a home.`,
+          ),
+        );
       worth = () => st.list.price;
       can = () => !!chosen;
-      const piece = () => ({ item: chosen.item, where: chosen.where, take: () => m.take(chosen.item, chosen.where), putBack: m.putBack });
+      const piece = () => ({
+        item: chosen.item,
+        where: chosen.where,
+        take: () => m.take(chosen.item, chosen.where),
+        putBack: m.putBack,
+      });
       send = auction
-        ? () => act(() => m.book.auction({ region: m.region, provenance: chosen.item.provenance, wear: wearOf(chosen.item), opening: st.list.price, hubs: m.hubs, ...at() }, piece()),
-          `${chosen?.name} is up for auction, opening at ${marksText(st.list.price)}.`)
-        : () => act(() => m.book.list({ region: m.region, kind: 'piece', provenance: chosen.item.provenance, wear: wearOf(chosen.item), price: st.list.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, piece()),
-          `Listed ${chosen?.name} at ${priceText(st.list.price, cur)}.`);
+        ? () =>
+            act(
+              () =>
+                m.book.auction(
+                  {
+                    region: m.region,
+                    provenance: chosen.item.provenance,
+                    wear: wearOf(chosen.item),
+                    opening: st.list.price,
+                    hubs: m.hubs,
+                    ...at(),
+                  },
+                  piece(),
+                ),
+              `${chosen?.name} is up for auction, opening at ${marksText(st.list.price)}.`,
+            )
+        : () =>
+            act(
+              () =>
+                m.book.list(
+                  {
+                    region: m.region,
+                    kind: 'piece',
+                    provenance: chosen.item.provenance,
+                    wear: wearOf(chosen.item),
+                    price: st.list.price,
+                    hubs: m.hubs,
+                    ...at(),
+                    ...(gold ? { currency: 'gold' } : {}),
+                  },
+                  piece(),
+                ),
+              `Listed ${chosen?.name} at ${priceText(st.list.price, cur)}.`,
+            );
     }
     // AUDIT 30 U13: a listing the fee or the board's limit would refuse is not offered - the words say which.
     // BOARD-UI: the terms in one short line each - the fee, how long, what reaches the seller
@@ -969,19 +1637,26 @@ export function createMarketTab(m, ui) {
       const pct = m.tithe?.() ?? null;
       const less = pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` : `${saleTax(100)}% tax`;
       const goldGets = goldText(goldSaleOf(0, worth()).gets);
-      hint.textContent = full ? `You have ${listingsMax} listings up, the most allowed here. Cancel one or wait for a sale.`
-        : worth() > MARKET_WORTH_MAX ? `A listing is worth at most ${priceText(MARKET_WORTH_MAX, cur)} - list fewer, or ask less.`   // MARKET-AUDIT: never offered to be refused
-        // GOLD-MARKET: no fee now - each sale pays its share and the tax; the gold is held for the seller to collect
-        // MARKET-ANY: a piece from the pack - where it goes, and why gold alone
-        // AUDIT 657 B9: the 1% is a fee - the sale's (goldSaleOf), never the listing's
-        : st.list.kind === 'item' ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`
-        : gold ? `No fee to list. Up for 72 hours on every board. If it all sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. Goods bought with silver, and pieces made with them, sell only for silver.`
-        : st.list.kind === 'auction'
-          ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`
-          : `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;
+      hint.textContent = full
+        ? `You have ${listingsMax} listings up, the most allowed here. Cancel one or wait for a sale.`
+        : worth() > MARKET_WORTH_MAX
+          ? `A listing is worth at most ${priceText(MARKET_WORTH_MAX, cur)} - list fewer, or ask less.` // MARKET-AUDIT: never offered to be refused
+          : // GOLD-MARKET: no fee now - each sale pays its share and the tax; the gold is held for the seller to collect
+            // MARKET-ANY: a piece from the pack - where it goes, and why gold alone
+            // AUDIT 657 B9: the 1% is a fee - the sale's (goldSaleOf), never the listing's
+            st.list.kind === 'item'
+            ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`
+            : gold
+              ? `No fee to list. Up for 72 hours on every board. If it all sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. Goods bought with silver, and pieces made with them, sell only for silver.`
+              : st.list.kind === 'auction'
+                ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`
+                : `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;
       b.disabled = ui.busy() || full || !can() || (!gold && short(fee));
     };
-    price.oninput = () => { st.list.price = intOf(price.value, 1, MARKET_PRICE_MAX); refresh(); };
+    price.oninput = () => {
+      st.list.price = intOf(price.value, 1, MARKET_PRICE_MAX);
+      refresh();
+    };
     refresh();
     fields.append(b);
     box.append(...above, fields, notes, hint);
@@ -996,20 +1671,53 @@ export function createMarketTab(m, ui) {
     const units = numberInput(st.post.units, 1, MARKET_UNITS_MAX, 'Units wanted', 'post-units');
     const price = numberInput(st.post.price, 1, MARKET_PRICE_MAX, 'Silver each', 'post-price');
     const fields = el('div', 'market-fields');
-    fields.append(field('Material', select(cat.map((c) => [c.key, `${m.name(c.key)} (tier ${c.tier})`]), st.post.material, (v) => { st.post.material = v; ui.rerender(); }, 'Material wanted'), 'market-field-wide'),
-      field('Units', units), field('Silver each', price));
+    fields.append(
+      field(
+        'Material',
+        select(
+          cat.map((c) => [c.key, `${m.name(c.key)} (tier ${c.tier})`]),
+          st.post.material,
+          (v) => {
+            st.post.material = v;
+            ui.rerender();
+          },
+          'Material wanted',
+        ),
+        'market-field-wide',
+      ),
+      field('Units', units),
+      field('Silver each', price),
+    );
     const hint = el('p', 'notice-tip');
     const full = (m.book.state.counts?.orders ?? 0) >= MARKET_ORDERS_MAX;
-    const b = button('primary market-post', 'Post the order', () => act(() => m.book.order({ region: m.region, material: st.post.material, units: st.post.units, price: st.post.price, hubs: m.hubs }),
-      `Your order for ${st.post.units} ${m.countName(st.post.material, st.post.units)} is up.`));
+    const b = button('primary market-post', 'Post the order', () =>
+      act(
+        () =>
+          m.book.order({
+            region: m.region,
+            material: st.post.material,
+            units: st.post.units,
+            price: st.post.price,
+            hubs: m.hubs,
+          }),
+        `Your order for ${st.post.units} ${m.countName(st.post.material, st.post.units)} is up.`,
+      ),
+    );
     const refresh = () => {
       const cost = st.post.units * st.post.price;
-      hint.textContent = full ? `You have ${MARKET_ORDERS_MAX} orders up, the most allowed.`
+      hint.textContent = full
+        ? `You have ${MARKET_ORDERS_MAX} orders up, the most allowed.`
         : `${marksText(cost)} is held while it stands (7 days, on every board). Sellers outside ${m.regionName} pay the courier. What is not filled comes back.`;
       b.disabled = ui.busy() || full || !st.post.material || short(cost);
     };
-    units.oninput = () => { st.post.units = intOf(units.value, 1, MARKET_UNITS_MAX); refresh(); };
-    price.oninput = () => { st.post.price = intOf(price.value, 1, MARKET_PRICE_MAX); refresh(); };
+    units.oninput = () => {
+      st.post.units = intOf(units.value, 1, MARKET_UNITS_MAX);
+      refresh();
+    };
+    price.oninput = () => {
+      st.post.price = intOf(price.value, 1, MARKET_PRICE_MAX);
+      refresh();
+    };
     refresh();
     fields.append(b);
     box.append(fields, hint);
@@ -1018,13 +1726,33 @@ export function createMarketTab(m, ui) {
 
   function orderRow(o) {
     const li = el('li', `market-order${o.mine ? ' mine' : ''}`);
-    li.append(el('b', null, `${m.name(o.material)}`), el('span', 'market-price', `${o.left.toLocaleString('en-US')} of ${o.units.toLocaleString('en-US')} wanted at ${marksText(o.price)} each`));
+    li.append(
+      el('b', null, `${m.name(o.material)}`),
+      el(
+        'span',
+        'market-price',
+        `${o.left.toLocaleString('en-US')} of ${o.units.toLocaleString('en-US')} wanted at ${marksText(o.price)} each`,
+      ),
+    );
     const med = st.data?.medians?.[o.material];
     if (med) li.append(el('span', 'market-median', `median ${medianText(med.median)}`));
     if (o.mine) {
-      li.append(el('span', 'market-mine', 'yours'),
-        el('span', 'market-state', o.state === 'open' ? `${plural(Math.max(0, Math.ceil((o.expiresAt - ui.nowS()) / 86400)), 'day')} left` : o.state));
-      if (o.state === 'open') li.append(button('market-unorder', 'Withdraw', () => act(() => m.book.unorder(o.id), 'Withdrawn. What was held for it is back.')));
+      li.append(
+        el('span', 'market-mine', 'yours'),
+        el(
+          'span',
+          'market-state',
+          o.state === 'open'
+            ? `${plural(Math.max(0, Math.ceil((o.expiresAt - ui.nowS()) / 86400)), 'day')} left`
+            : o.state,
+        ),
+      );
+      if (o.state === 'open')
+        li.append(
+          button('market-unorder', 'Withdraw', () =>
+            act(() => m.book.unorder(o.id), 'Withdrawn. What was held for it is back.'),
+          ),
+        );
       return li;
     }
     const have = held(o.material);
@@ -1032,21 +1760,42 @@ export function createMarketTab(m, ui) {
     const count = () => intOf(st.fills[o.id] ?? Math.min(have, o.left), 1, most);
     const inp = numberInput(count(), 1, most, `Units of ${m.name(o.material)} to fill`, `fill|${o.id}`);
     // MARKET-BAG: what the Stores lack of it put in from the bag and the pack first, as a station's inputs are
-    const b = button('primary market-fill', '', () => { const n = count(); return act(() => fromCarried(o.material, n, () => m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, least: fillPay(o, n) ?? 1, ...at() })),
-      (d) => `Filled: ${marksText(d?.fill?.pay ?? 0)}.`); });
-    const stores = inStores(o.material), carried = carriedOf(o.material);
+    const b = button('primary market-fill', '', () => {
+      const n = count();
+      return act(
+        () =>
+          fromCarried(o.material, n, () =>
+            m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, least: fillPay(o, n) ?? 1, ...at() }),
+          ),
+        (d) => `Filled: ${marksText(d?.fill?.pay ?? 0)}.`,
+      );
+    });
+    const stores = inStores(o.material),
+      carried = carriedOf(o.material);
     const haveText = `${stores.toLocaleString('en-US')} in your Stores${carried ? `, ${carried.toLocaleString('en-US')} carried` : ''}`;
     // GLOBAL-MARKET: what a fill pays here - the price less the tax and, from another region, the courier
     const says = el('span', 'notice-tip');
     says.setAttribute('aria-live', 'polite');
     const refresh = () => {
-      const n = count(), pay = fillPay(o, n), c = courierOf(o, n);
+      const n = count(),
+        pay = fillPay(o, n),
+        c = courierOf(o, n);
       b.textContent = `Fill ${n} from the Stores`;
       b.disabled = ui.busy() || have < 1 || pay == null || pay < 1;
-      says.textContent = `${haveText} - ${c == null ? `the couriers do not know the road to ${m.regionNameOf(o.region)} yet`
-        : pay < 1 ? (c ? `the courier to ${m.regionNameOf(o.region)} would take all it pays` : 'after the tax it pays nothing. Fill more at once') : `pays you ${marksText(pay)}${c ? ` after ${c} courier and tax` : ' after tax'}`}`;
+      says.textContent = `${haveText} - ${
+        c == null
+          ? `the couriers do not know the road to ${m.regionNameOf(o.region)} yet`
+          : pay < 1
+            ? c
+              ? `the courier to ${m.regionNameOf(o.region)} would take all it pays`
+              : 'after the tax it pays nothing. Fill more at once'
+            : `pays you ${marksText(pay)}${c ? ` after ${c} courier and tax` : ' after tax'}`
+      }`;
     };
-    inp.oninput = () => { st.fills[o.id] = intOf(inp.value, 1, most); refresh(); };
+    inp.oninput = () => {
+      st.fills[o.id] = intOf(inp.value, 1, most);
+      refresh();
+    };
     refresh();
     li.append(el('span', 'market-where', where(o)), inp, b, says);
     return li;
@@ -1057,9 +1806,15 @@ export function createMarketTab(m, ui) {
     const n = m.book.state.goldHeld ?? 0;
     if (!goldOk() || !(n > 0)) return null;
     const box = el('div', 'market-goldheld');
-    box.append(el('span', 'market-ask', `Your sales hold ${goldText(n)} for you.`),
-      button('primary market-collectgold', 'Collect into your bank here', () => act(() => m.book.collectGold(m.region),
-        (d) => `${goldText(d?.gold ?? n)} into your account at the bank of ${m.regionName}.`)));
+    box.append(
+      el('span', 'market-ask', `Your sales hold ${goldText(n)} for you.`),
+      button('primary market-collectgold', 'Collect into your bank here', () =>
+        act(
+          () => m.book.collectGold(m.region),
+          (d) => `${goldText(d?.gold ?? n)} into your account at the bank of ${m.regionName}.`,
+        ),
+      ),
+    );
     return box;
   }
 
@@ -1068,18 +1823,46 @@ export function createMarketTab(m, ui) {
     const goldHeld = goldHeldNode();
     if (goldHeld) box.append(goldHeld);
     box.append(listForm());
-    box.append(el('h4', null, MARKET_WORDS.yourListings));   // BOARD-UI: the listings under their own name
+    box.append(el('h4', null, MARKET_WORDS.yourListings)); // BOARD-UI: the listings under their own name
     const rows = st.data?.rows ?? [];
     const ul = el('ul', 'market-list');
     for (const l of rows) {
       const li = el('li', `market-listing state-${l.state}`);
       // MARKET-AUDIT: a closed listing's units are its listed whole - "5 of 10 left · cancelled" read as if five stood
-      li.append(el('b', null, l.kind === 'piece' ? m.pieceName(l.piece) : l.kind === 'item' ? goodName(l.item) : l.state === 'open' ? `${m.name(l.material)} - ${l.units} of ${l.listed} left` : `${m.name(l.material)} x${l.listed}`),
+      li.append(
+        el(
+          'b',
+          null,
+          l.kind === 'piece'
+            ? m.pieceName(l.piece)
+            : l.kind === 'item'
+              ? goodName(l.item)
+              : l.state === 'open'
+                ? `${m.name(l.material)} - ${l.units} of ${l.listed} left`
+                : `${m.name(l.material)} x${l.listed}`,
+        ),
         el('span', 'market-price', `${priceText(l.price, l.currency)}${l.kind === 'material' ? ' each' : ''}`),
         el('span', 'market-where', l.region === m.region ? 'here' : m.regionNameOf(l.region)),
-        el('span', 'market-state', l.state === 'open' ? `${plural(Math.max(0, Math.ceil((l.expiresAt - ui.nowS()) / 3600)), 'hour')} left` : l.state));
+        el(
+          'span',
+          'market-state',
+          l.state === 'open'
+            ? `${plural(Math.max(0, Math.ceil((l.expiresAt - ui.nowS()) / 3600)), 'hour')} left`
+            : l.state,
+        ),
+      );
       // MARKET-AUDIT: a gold listing (a pack's piece among them) paid no fee to keep
-      if (l.state === 'open') li.append(button('market-cancel', 'Cancel', () => act(() => m.book.cancel(l.id, m.mint), l.currency === 'gold' ? 'Canceled. The goods are back.' : 'Canceled. The goods are back; the fee is kept.')));
+      if (l.state === 'open')
+        li.append(
+          button('market-cancel', 'Cancel', () =>
+            act(
+              () => m.book.cancel(l.id, m.mint),
+              l.currency === 'gold'
+                ? 'Canceled. The goods are back.'
+                : 'Canceled. The goods are back; the fee is kept.',
+            ),
+          ),
+        );
       ul.append(li);
     }
     if (!rows.length && st.data) ul.append(el('li', 'notice-empty', MARKET_WORDS.noListings));
@@ -1089,12 +1872,25 @@ export function createMarketTab(m, ui) {
     if (auctions.length) {
       box.append(el('h4', null, 'Your auctions'));
       const al = el('ul', 'market-list');
-      const said = { sold: (a) => `sold for ${marksText(a.high)}`, unsold: () => 'no bid came, and it is on its way back', cancelled: () => 'cancelled', removed: () => 'removed by a moderator' };
+      const said = {
+        sold: (a) => `sold for ${marksText(a.high)}`,
+        unsold: () => 'no bid came, and it is on its way back',
+        cancelled: () => 'cancelled',
+        removed: () => 'removed by a moderator',
+      };
       for (const a of auctions) {
         const li = el('li', `market-listing state-${a.state}`);
-        li.append(el('b', null, m.pieceName(a.piece)), el('span', 'market-price', standing(a)),
-          el('span', 'market-state', a.state === 'open' ? endsText(a.endsAt) : (said[a.state]?.(a) ?? a.state)));
-        if (a.state === 'open' && !a.bids) li.append(button('market-cancel', 'Cancel', () => act(() => m.book.cancel(a.id, m.mint), 'Canceled. Your Masterwork is back; the fee is kept.')));
+        li.append(
+          el('b', null, m.pieceName(a.piece)),
+          el('span', 'market-price', standing(a)),
+          el('span', 'market-state', a.state === 'open' ? endsText(a.endsAt) : (said[a.state]?.(a) ?? a.state)),
+        );
+        if (a.state === 'open' && !a.bids)
+          li.append(
+            button('market-cancel', 'Cancel', () =>
+              act(() => m.book.cancel(a.id, m.mint), 'Canceled. Your Masterwork is back; the fee is kept.'),
+            ),
+          );
         al.append(li);
       }
       box.append(al);
@@ -1104,13 +1900,29 @@ export function createMarketTab(m, ui) {
       box.append(el('h4', null, 'Your bids'));
       const bl = el('ul', 'market-list');
       for (const b of bids) {
-        const word = b.state === 'high' ? (b.auctionState === 'open' ? `leading - ${endsText(b.endsAt)}` : 'leading')
-          : b.state === 'won' ? 'won, and it is on its way to you'
-            // AUDIT 31 S3: a void bid is a removed auction's, or a won one its seller could not be paid for in seven days;
-            // U13: its Marks come back when this tab is next read - never "when you next open the market", which it is
-            : b.state === 'void' ? (b.returned ? 'void. Your silver is back' : 'void. Your silver comes back the next time you look')
-              : b.returned ? 'outbid. Your silver is back' : 'outbid. Your silver comes back the next time you look';
-        bl.append(el('li', `market-listing state-${b.state}`, `${m.pieceName(b.piece)} - ${marksText(b.amount)}${b.courier ? ` + ${b.courier} courier` : ''} - ${word}`));
+        const word =
+          b.state === 'high'
+            ? b.auctionState === 'open'
+              ? `leading - ${endsText(b.endsAt)}`
+              : 'leading'
+            : b.state === 'won'
+              ? 'won, and it is on its way to you'
+              : // AUDIT 31 S3: a void bid is a removed auction's, or a won one its seller could not be paid for in seven days;
+                // U13: its Marks come back when this tab is next read - never "when you next open the market", which it is
+                b.state === 'void'
+                ? b.returned
+                  ? 'void. Your silver is back'
+                  : 'void. Your silver comes back the next time you look'
+                : b.returned
+                  ? 'outbid. Your silver is back'
+                  : 'outbid. Your silver comes back the next time you look';
+        bl.append(
+          el(
+            'li',
+            `market-listing state-${b.state}`,
+            `${m.pieceName(b.piece)} - ${marksText(b.amount)}${b.courier ? ` + ${b.courier} courier` : ''} - ${word}`,
+          ),
+        );
       }
       box.append(bl);
     }
@@ -1126,30 +1938,54 @@ export function createMarketTab(m, ui) {
 
   function historyNode() {
     const box = el('div', 'market-history');
-    const cur = currencyNode();   // GOLD-MARKET: the week's prices in one currency
-    if (cur) { const row = el('div', 'market-filters'); row.append(cur); box.append(row); }
+    const cur = currencyNode(); // GOLD-MARKET: the week's prices in one currency
+    if (cur) {
+      const row = el('div', 'market-filters');
+      row.append(cur);
+      box.append(row);
+    }
     const ul = el('ul', 'market-list');
     for (const h of st.data?.history ?? []) {
       const li = el('li', 'market-histrow');
-      li.append(el('b', null, m.name(h.material)), el('span', 'market-units', `${h.units.toLocaleString('en-US')} sold this week`),
-        el('span', 'market-median', `median ${medianText(h.median)}`));
+      li.append(
+        el('b', null, m.name(h.material)),
+        el('span', 'market-units', `${h.units.toLocaleString('en-US')} sold this week`),
+        el('span', 'market-median', `median ${medianText(h.median)}`),
+      );
       const line = medianLineNode(h.line);
       if (line) li.append(line);
       ul.append(li);
     }
-    if (st.data && !(st.data.history?.length)) ul.append(el('li', 'notice-empty', MARKET_WORDS.noHistory));
+    if (st.data && !st.data.history?.length) ul.append(el('li', 'notice-empty', MARKET_WORDS.noHistory));
     box.append(ul);
     const trades = st.data?.trades ?? [];
     if (trades.length) {
       box.append(el('h4', null, 'Your trades'));
       const tl = el('ul', 'market-list');
       // AUDIT 30 U15: the Marks each trade moved - paid with its courier, or taken after the tax and the Tithe
-      const verb = { bought: ['Bought', 'paid'], sold: ['Sold', 'to you'], filled: ['Filled an order with', 'to you'], ordered: ['Your order took', 'paid'],
-        won: ['Won at auction', 'paid'], auctioned: ['Sold at auction', 'to you'] };   // PROF5b
+      const verb = {
+        bought: ['Bought', 'paid'],
+        sold: ['Sold', 'to you'],
+        filled: ['Filled an order with', 'to you'],
+        ordered: ['Your order took', 'paid'],
+        won: ['Won at auction', 'paid'],
+        auctioned: ['Sold at auction', 'to you'],
+      }; // PROF5b
       for (const t of trades) {
-        const what = t.kind === 'piece' ? 'a crafted piece' : t.kind === 'item' ? goodName(t.item) : `${t.units} ${m.countName(t.material, t.units)}`;
+        const what =
+          t.kind === 'piece'
+            ? 'a crafted piece'
+            : t.kind === 'item'
+              ? goodName(t.item)
+              : `${t.units} ${m.countName(t.material, t.units)}`;
         const [v, way] = verb[t.side] ?? [t.side, ''];
-        tl.append(el('li', 'market-trade', `${v} ${what} - ${priceText(t.total, t.currency)} ${way} - ${agoText(t.at, ui.nowS())}`));
+        tl.append(
+          el(
+            'li',
+            'market-trade',
+            `${v} ${what} - ${priceText(t.total, t.currency)} ${way} - ${agoText(t.at, ui.nowS())}`,
+          ),
+        );
       }
       box.append(tl);
     }
@@ -1162,7 +1998,9 @@ export function createMarketTab(m, ui) {
   /** AUDIT 30 U16: the rows cheapest landed first - BOARD-SIFT: in the cheapest order alone; any other the service's. */
   const byLanded = (rows) => {
     const sorts = /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[st.view] ?? null;
-    return sorts && st.sort && st.sort !== sorts[0] ? [...rows] : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);
+    return sorts && st.sort && st.sort !== sorts[0]
+      ? [...rows]
+      : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);
   };
   /** BOARD-SIFT: a paged view's pages under its rows, and a turned page's first row brought into view. */
   const paged = (box, list) => {
@@ -1182,8 +2020,15 @@ export function createMarketTab(m, ui) {
     const road = roadNode();
     if (road) box.append(road);
     if (st.error && !st.data) {
-      const p = el('p', 'notice-empty', shut ? accountRefusalText(st.error) : st.error === 'offline' || st.error === 'server'
-        ? MARKET_WORDS.slow : accountRefusalText(st.error));
+      const p = el(
+        'p',
+        'notice-empty',
+        shut
+          ? accountRefusalText(st.error)
+          : st.error === 'offline' || st.error === 'server'
+            ? MARKET_WORDS.slow
+            : accountRefusalText(st.error),
+      );
       if (!shut) p.append(button('notice-retry', 'Try again', () => load(true)));
       box.append(p);
       // MARKET-AUDIT U5: a read that failed leaves the view's filters (a filter may be what to change) and the counters,
@@ -1201,22 +2046,39 @@ export function createMarketTab(m, ui) {
         if (st.picked === a.id) list.append(...pickedNodes(a, auctionBar(a)));
       }
       // AUDIT 31 U14: the empty words say the filter's kind, as the Crafted view's do (BOARD-SIFT: and a search's)
-      if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.family || marketQueryOf(st.find) ? 'No Masterwork of that kind is up for auction.' : 'No Masterwork is up for auction.'));
+      if (st.data && !rows.length)
+        list.append(
+          el(
+            'p',
+            'notice-empty',
+            st.family || marketQueryOf(st.find)
+              ? 'No Masterwork of that kind is up for auction.'
+              : 'No Masterwork is up for auction.',
+          ),
+        );
       box.append(list);
       paged(box, list);
     } else if (st.view === 'materials' || st.view === 'crafted') {
       box.append(filtersNode(st.view === 'materials' ? LISTED_FAMILIES : CRAFTED_FAMILIES));
       const rows = byLanded(st.data?.rows ?? []);
       const list = el('div', 'market-rows');
-      if (rows.length) list.append(st.view === 'materials' ? listHead('market-materialhead', ['Material', 'Price', 'From', '7-day median']) : listHead('market-piece', ['Piece', 'Quality', 'Price', 'From']));
+      if (rows.length)
+        list.append(
+          st.view === 'materials'
+            ? listHead('market-materialhead', ['Material', 'Price', 'From', '7-day median'])
+            : listHead('market-piece', ['Piece', 'Quality', 'Price', 'From']),
+        );
       for (const r of rows) {
         list.append(st.view === 'materials' ? materialRow(r) : pieceRow(r));
         if (st.picked === r.id) list.append(...pickedNodes(r, pickedBar(r)));
       }
-      if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.view === 'materials' ? MARKET_WORDS.noMaterials : MARKET_WORDS.noCrafted));
+      if (st.data && !rows.length)
+        list.append(
+          el('p', 'notice-empty', st.view === 'materials' ? MARKET_WORDS.noMaterials : MARKET_WORDS.noCrafted),
+        );
       box.append(list);
       paged(box, list);
-      if (st.view === 'materials') box.append(suppliersNode());   // BOARD-UI: the Weavers' and (PROF12) the Apothecaries' counters, folded
+      if (st.view === 'materials') box.append(suppliersNode()); // BOARD-UI: the Weavers' and (PROF12) the Apothecaries' counters, folded
     } else if (st.view === 'goods') {
       // MARKET-ANY: the pieces listed from packs, in gold - bought off the purse as any gold row. PACK-PICK: and beside the
       // filters, the way to sell one of your own - My listings' form, opened on the pack
@@ -1230,7 +2092,8 @@ export function createMarketTab(m, ui) {
         list.append(goodRow(r));
         if (st.picked === r.id) list.append(...pickedNodes(r, pickedBar(r)));
       }
-      if (st.data && !rows.length) list.append(el('p', 'notice-empty', st.family ? MARKET_WORDS.noGoodsKind : MARKET_WORDS.noGoods));
+      if (st.data && !rows.length)
+        list.append(el('p', 'notice-empty', st.family ? MARKET_WORDS.noGoodsKind : MARKET_WORDS.noGoods));
       if (!goldOk()) list.append(el('p', 'notice-tip', accountRefusalText('market-gold-realm')));
       box.append(list);
       paged(box, list);

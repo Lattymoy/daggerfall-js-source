@@ -360,8 +360,8 @@
   {
     "name": "AUDIT30-U3-a-late-answer-drawn",
     "file": "src/ui/marketTab.js",
-    "old": "if (!ui.alive() || mine !== seq) return;",
-    "new": "if (!ui.alive()) return;",
+    "old": "    if (!ui.alive() || mine !== seq) return;",
+    "new": "    if (!ui.alive()) return;",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "AUDIT30-U2-the-search-filtered-on-the-client",
     "file": "src/ui/marketTab.js",
-    "old": " ...(found ? { materials: found } : {}),",
-    "new": "",
+    "old": "      ...(found ? { materials: found } : {}),\n      ...(viewCurrency() === 'gold' ? { currency: 'gold' } : {}), // GOLD-MARKET: a gold view asks gold's rows",
+    "new": "      ...(viewCurrency() === 'gold' ? { currency: 'gold' } : {}), // GOLD-MARKET: a gold view asks gold's rows",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "AUDIT30-U8-a-number-redraws",
     "file": "src/ui/marketTab.js",
-    "old": "      n.oninput = () => { st.qty = intOf(n.value, 1, row.units); refresh(); };",
-    "new": "      n.oninput = () => { st.qty = intOf(n.value, 1, row.units); ui.rerender(); };",
+    "old": "        st.qty = intOf(n.value, 1, row.units);\n        refresh();",
+    "new": "        st.qty = intOf(n.value, 1, row.units);\n        ui.rerender();",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "AUDIT30-U10-an-arrival-waits-for-the-next-showing",
     "file": "src/ui/marketTab.js",
-    "old": "    redraw();\n    collectArrived();\n",
-    "new": "    redraw();\n",
+    "old": "    collectArrived();\n  }",
+    "new": "  }",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "AUDIT30-U13-a-listing-past-the-thirty",
     "file": "src/ui/marketTab.js",
-    "old": "b.disabled = ui.busy() || full || !can() || (!gold && short(fee));",
-    "new": "b.disabled = ui.busy() || !can();",
+    "old": "      b.disabled = ui.busy() || full || !can() || (!gold && short(fee));",
+    "new": "      b.disabled = ui.busy() || !can();",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "AUDIT30-U13-a-bolt-past-the-balance",
     "file": "src/ui/marketTab.js",
-    "old": "b.disabled = ui.busy() || short(w.marks * count());",
-    "new": "b.disabled = ui.busy();",
+    "old": "        b.disabled = ui.busy() || short(w.marks * count()); // AUDIT 30 U12, U13",
+    "new": "        b.disabled = ui.busy(); // AUDIT 30 U12, U13",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "AUDIT30-U16-the-listed-order",
     "file": "src/ui/marketTab.js",
-    "old": ": [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
-    "new": ": [...rows].sort((a, b) => a.price - b.price);",
+    "old": "    return sorts && st.sort && st.sort !== sorts[0]\n      ? [...rows]\n      : [...rows].sort((a, b) => landed(a) - landed(b) || a.price - b.price);",
+    "new": "    return sorts && st.sort && st.sort !== sorts[0] ? [...rows] : [...rows].sort((a, b) => a.price - b.price);",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT30-U7-one-s-own-orders-hidden",
     "file": "src/ui/marketTab.js",
-    "old": "      for (const o of orders) ul.append(orderRow(o));\n      if (st.data && !orders.length)",
-    "new": "      for (const o of orders.filter((x) => !x.mine)) ul.append(orderRow(o));\n      if (st.data && !orders.length)",
+    "old": "      for (const o of orders) ul.append(orderRow(o));",
+    "new": "      for (const o of orders.filter((x) => !x.mine)) ul.append(orderRow(o));",
     "tests": [
       "test/net/audit30_client.test.js"
     ]

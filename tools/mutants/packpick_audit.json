@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-PACK-PICK-C15-market-pictures-unread",
     "file": "src/ui/marketTab.js",
-    "old": "      above.push(packPickerNode({ entries, chosen: st.list.good, sift: st.list.sifts.item, pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); },\n        picture: m.itemPicture ?? null,",
-    "new": "      above.push(packPickerNode({ entries, chosen: st.list.good, sift: st.list.sifts.item, pick: (it) => { st.list.good = st.list.good === it ? null : it; ui.rerender(); },\n        picture: null,",
+    "old": "            ui.rerender();\n          },\n          picture: m.itemPicture ?? null,\n          wake,",
+    "new": "            ui.rerender();\n          },\n          picture: null,\n          wake,",
     "tests": [
       "test/ui/packpick.test.js",
       "test/systems/fb1001_market_goods.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-PACK-PICK-C21-crafted-sub-tierless",
     "file": "src/ui/marketTab.js",
-    "old": "const pieceSub = (p) => [packTierWord(p.item), auction ?",
-    "new": "const pieceSub = (p) => [auction ?",
+    "old": "          packTierWord(p.item),\n          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),",
+    "new": "          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js",
@@ -181,8 +181,8 @@
   {
     "name": "AUDIT-PACK-PICK-C22-crafted-sub-home-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "p.where === 'home' ? 'your home' : null].filter(Boolean).join(' · ') || null;",
-    "new": "null].filter(Boolean).join(' · ') || null;",
+    "old": "        [\n          packTierWord(p.item),\n          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),\n          wearText(wearOf(p.item)),\n          p.where === 'home' ? 'your home' : null,\n        ]",
+    "new": "        [packTierWord(p.item), auction ? null : (QUALITY_NAMES[p.item.quality] ?? null), wearText(wearOf(p.item)), null]",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js",
@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-PACK-PICK-C23-crafted-press-never-lets-go",
     "file": "src/ui/marketTab.js",
-    "old": "pick: (it) => { st.list.pieces[pk] = st.list.pieces[pk] === it.provenance ? '' : it.provenance; ui.rerender(); },",
-    "new": "pick: (it) => { st.list.pieces[pk] = it.provenance; ui.rerender(); },",
+    "old": "            st.list.pieces[pk] = st.list.pieces[pk] === it.provenance ? '' : it.provenance;",
+    "new": "            st.list.pieces[pk] = it.provenance;",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js",
@@ -216,8 +216,8 @@
   {
     "name": "AUDIT-PACK-PICK-C25-crafted-card-unlooked",
     "file": "src/ui/marketTab.js",
-    "old": "      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: itemLookRows,\n        none: auction ?",
-    "new": "      packCardNode(entries.find((e) => e.item === chosen?.item) ?? null, { picture: m.itemPicture ?? null, wake, look: null,\n        none: auction ?",
+    "old": "          wake,\n          look: itemLookRows,\n          none: auction",
+    "new": "          wake,\n          look: null,\n          none: auction",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js",
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-PACK-PICK-C26-auction-and-crafted-share-a-sift",
     "file": "src/ui/marketTab.js",
-    "old": "sift: st.list.sifts[auction ? 'auction' : 'piece'],",
-    "new": "sift: st.list.sifts.piece,",
+    "old": "          sift: st.list.sifts[auction ? 'auction' : 'piece'],",
+    "new": "          sift: st.list.sifts.piece,",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js",
@@ -240,8 +240,8 @@
   {
     "name": "AUDIT-PACK-PICK-C27-auction-prompt-as-sale",
     "file": "src/ui/marketTab.js",
-    "old": "none: auction ? t('market.list.pickMw', 'Press a Masterwork above to look at it and set its opening bid.') : t('market.list.pickPack',",
-    "new": "none: auction ? t('market.list.pickPack', 'Press a piece above to look at it and set its price.') : t('market.list.pickPack',",
+    "old": "            ? t('market.list.pickMw', 'Press a Masterwork above to look at it and set its opening bid.')",
+    "new": "            ? t('market.list.pickPack', 'Press a piece above to look at it and set its price.')",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/prof5b_client.test.js",
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-PACK-PICK-C28-sell-press-kind-unkept",
     "file": "src/ui/marketTab.js",
-    "old": "() => { st.list.kind = 'item'; KIND_KEPT.set(m.book, 'item'); go('mine'); }",
-    "new": "() => { st.list.kind = 'item'; go('mine'); }",
+    "old": "      KIND_KEPT.set(m.book, 'item');\n      go('mine');",
+    "new": "      go('mine');",
     "tests": [
       "test/ui/packpick.test.js",
       "test/systems/fb1001_market_goods.test.js"
@@ -271,8 +271,8 @@
   {
     "name": "AUDIT-PACK-PICK-C30-kinds-reordered",
     "file": "src/ui/marketTab.js",
-    "old": "[['item', 'own'], ['material', 'ore'], ['piece', 'station'], ['auction', 'gavel']]",
-    "new": "[['material', 'ore'], ['item', 'own'], ['piece', 'station'], ['auction', 'gavel']]",
+    "old": "    ['item', 'own'],\n    ['material', 'ore'],",
+    "new": "    ['material', 'ore'],\n    ['item', 'own'],",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "AUDIT-PACK-PICK-C31-kind-icons-swapped",
     "file": "src/ui/marketTab.js",
-    "old": "[['item', 'own'], ['material', 'ore'], ['piece', 'station'], ['auction', 'gavel']]",
-    "new": "[['item', 'ore'], ['material', 'own'], ['piece', 'gavel'], ['auction', 'station']]",
+    "old": "    ['item', 'own'],\n    ['material', 'ore'],\n    ['piece', 'station'],\n    ['auction', 'gavel'],",
+    "new": "    ['item', 'ore'],\n    ['material', 'own'],\n    ['piece', 'gavel'],\n    ['auction', 'station'],",
     "tests": [
       "test/ui/packpick.test.js",
       "test/systems/fb1001_market_goods.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-PACK-PICK-C40-kind-focus-key-gone",
     "file": "src/ui/marketTab.js",
-    "old": "      b.setAttribute('data-focus', `list-kind|${k}`);\n",
-    "new": "\n",
+    "old": "      b.setAttribute('data-focus', `list-kind|${k}`);",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js",
       "test/systems/fb1001_market_goods.test.js"
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-PACK-PICK-C44-kinds-group-unlabelled",
     "file": "src/ui/marketTab.js",
-    "old": "    row.setAttribute('aria-label', t('market.list.kinds', 'What to list'));\n",
-    "new": "\n",
+    "old": "    row.setAttribute('aria-label', t('market.list.kinds', 'What to list'));",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -429,7 +429,7 @@
     "name": "AUDIT-PACK-PICK-C48-kind-kept-from-board-not-book",
     "file": "src/ui/marketTab.js",
     "old": "const KIND_KEPT = new WeakMap();",
-    "new": "const KIND_KEPT = { k: null, get() { return this.k; }, set(_b, v) { this.k = v; } };",
+    "new": "const KIND_KEPT = {\n  k: null,\n  get() {\n    return this.k;\n  },\n  set(_b, v) {\n    this.k = v;\n  },\n};",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "AUDIT-PACK-PICK-A1-market-wake-raw",
     "file": "src/ui/marketTab.js",
-    "old": "  const wake = frameWake(() => ui.rerender());",
-    "new": "  const wake = () => ui.rerender();",
+    "old": "  const wake = frameWake(() => ui.rerender()); // AUDIT PACK-PICK A1: once a frame, however many land in it",
+    "new": "  const wake = () => ui.rerender(); // AUDIT PACK-PICK A1: once a frame, however many land in it",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -534,8 +534,8 @@
   {
     "name": "AUDIT-PACK-PICK-A2-picker-lists-unheld",
     "file": "src/ui/marketTab.js",
-    "old": "(a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu'))",
-    "new": "a.classList?.contains?.('market-select')",
+    "old": "      (a.classList?.contains?.('market-select') || a.classList?.contains?.('packpick-menu')) &&",
+    "new": "      a.classList?.contains?.('market-select') &&",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -584,8 +584,8 @@
   {
     "name": "AUDIT-PACK-PICK-A5-kinds-as-act",
     "file": "src/ui/marketTab.js",
-    "old": "      const b = chipButton(`market-kind",
-    "new": "      const b = button(`market-kind",
+    "old": "      const b = chipButton(`market-kind${st.list.kind === k ? ' on' : ''}`, listKindWord(k), () => {",
+    "new": "      const b = button(`market-kind${st.list.kind === k ? ' on' : ''}`, listKindWord(k), () => {",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -594,8 +594,8 @@
   {
     "name": "AUDIT-PACK-PICK-A5-sell-as-act",
     "file": "src/ui/marketTab.js",
-    "old": "    const b = chipButton('market-sellpack'",
-    "new": "    const b = button('market-sellpack'",
+    "old": "    const b = chipButton('market-sellpack', t('market.goods.sell', 'Sell from your pack'), () => {",
+    "new": "    const b = button('market-sellpack', t('market.goods.sell', 'Sell from your pack'), () => {",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -664,7 +664,7 @@
   {
     "name": "AUDIT-PACK-PICK-pack-opened-with-nothing-to-sell",
     "file": "src/ui/marketTab.js",
-    "old": "    if (!st.list.kind) st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
+    "old": "    if (!st.list.kind)\n      st.list.kind = packOk && (m.goods?.() ?? []).some((g) => !(g.why ?? craftedWhy(g.item))) ? 'item' : 'material';",
     "new": "    if (!st.list.kind) st.list.kind = packOk ? 'item' : 'material';",
     "tests": [
       "test/ui/packpick.test.js"
@@ -764,8 +764,8 @@
   {
     "name": "AUDIT-PACK-PICK-B2-list-unkeyed",
     "file": "src/ui/marketTab.js",
-    "old": "    b.setAttribute('data-focus', 'list-do');",
-    "new": "",
+    "old": "    b.setAttribute('data-focus', 'list-do'); // AUDIT PACK-PICK B2: a redraw keeps the focus on it",
+    "new": "    // AUDIT PACK-PICK B2: a redraw keeps the focus on it",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -784,8 +784,8 @@
   {
     "name": "AUDIT-PACK-PICK-B2-sell-focus-dropped",
     "file": "src/ui/marketTab.js",
-    "old": "    b.setAttribute('data-focus', 'list-kind|item');",
-    "new": "",
+    "old": "    b.setAttribute('data-focus', 'list-kind|item'); // AUDIT PACK-PICK B2: the focus carried to the pack's kind it opens on",
+    "new": "    // AUDIT PACK-PICK B2: the focus carried to the pack's kind it opens on",
     "tests": [
       "test/ui/packpick.test.js"
     ],

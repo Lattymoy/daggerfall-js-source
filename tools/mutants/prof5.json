@@ -851,8 +851,8 @@
   {
     "name": "PROF5-tab-whole-courier",
     "file": "src/ui/marketTab.js",
-    "old": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1) : null);",
-    "new": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? row.road.courier : null);",
+    "old": "  const courierOf = (row, units) =>\n    row.region === m.region\n      ? 0\n      : row.road\n        ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)\n        : null;",
+    "new": "  const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? row.road.courier : null);",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "PROF5-tab-max-price-only",
     "file": "src/ui/marketTab.js",
-    "old": "listing: row.id, units, max: units * row.price + (courier ?? 0), hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
-    "new": "listing: row.id, units, max: units * row.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
+    "old": "              max: units * row.price + (courier ?? 0),",
+    "new": "              max: units * row.price,",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -878,8 +878,8 @@
   {
     "name": "PROF5-tab-fee-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": ": `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours",
-    "new": ": `Fee kept if you cancel. Up for 72 hours",
+    "old": "                : `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;",
+    "new": "                : `Fee kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "PROF5-tab-weavers-gone",
     "file": "src/ui/marketTab.js",
-    "old": "box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
-    "new": "box.append(el('summary', null, MARKET_WORDS.suppliers));",
+    "old": "    box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
+    "new": "    box.append(el('summary', null, MARKET_WORDS.suppliers));",
     "tests": [
       "test/net/prof5_client.test.js"
     ]

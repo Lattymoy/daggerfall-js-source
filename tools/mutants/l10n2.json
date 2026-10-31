@@ -173,8 +173,8 @@
   {
     "name": "L10N2-face-per-switch",
     "file": "src/ui/localeFaces.js",
-    "old": "    _faces.set(code, face);\n",
-    "new": "",
+    "old": "    _faces.set(code, face);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "L10N2-no-forcer",
     "file": "src/ui/localeFaces.js",
-    "old": "  setSdfForcer(forceSdf);\n",
-    "new": "",
+    "old": "  setSdfForcer(forceSdf);\n  let face = _faces.get(code);",
+    "new": "  let face = _faces.get(code);",
     "tests": [
       "test/ui/l10n2.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "L10N2-script-from-registry-only",
     "file": "src/ui/localeFaces.js",
-    "old": "FACE_FAMILIES[localeInfo(code)?.script ?? catalogLocale(code)?.script]",
-    "new": "FACE_FAMILIES[localeInfo(code)?.script]",
+    "old": "  const list = FACE_FAMILIES[code] ?? FACE_FAMILIES[localeInfo(code)?.script ?? catalogLocale(code)?.script] ?? LATIN;",
+    "new": "  const list = FACE_FAMILIES[code] ?? FACE_FAMILIES[localeInfo(code)?.script] ?? LATIN;",
     "tests": [
       "test/ui/l10n2.test.js"
     ]

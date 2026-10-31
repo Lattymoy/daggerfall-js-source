@@ -88,7 +88,7 @@ test('AUDIT 30 C5 + U4: one act at a time - another press while one is under way
   assert.equal(await first, await same, 'the same press is that act');
   assert.equal(book.busy, false);
   // the tab's opening settle is an act through the window's door
-  assert.match(src('src/ui/marketTab.js'), /const settle = \(\) => ui\.run\(async \(\) => \{\n\s*const r = await m\.book\.settle\(/);
+  assert.match(src('src/ui/marketTab.js'), /const settle = \(\) =>\n\s*ui\.run\(async \(\) => \{\n\s*const r = await m\.book\.settle\(/);
 });
 
 test('AUDIT 30 C6: a read an act\'s answer overtook tells nothing - its older balance is never the last the Marks book hears, its view never cached', async () => {

@@ -120,8 +120,8 @@
   {
     "name": "SEATS3-D2-the-static-cap",
     "file": "src/ui/marketTab.js",
-    "old": "const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX;",
-    "new": "const listingsMax = MARKET_LISTINGS_MAX;",
+    "old": "    const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
+    "new": "    const listingsMax = MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SEATS3-D2-board-unsent",
     "file": "src/ui/marketTab.js",
-    "old": "      ...at(),   // AUDIT SEATS-3 D2",
-    "new": "      // AUDIT SEATS-3 D2",
+    "old": "      ...at(), // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
+    "new": "      // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SEATS3-D3-the-tithe-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` :",
-    "new": "pct > 0 ? `${saleTax(100)}% tax` :",
+    "old": "      const less = pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` : `${saleTax(100)}% tax`;",
+    "new": "      const less = pct > 0 ? `${saleTax(100)}% tax` : `${saleTax(100)}% tax`;",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

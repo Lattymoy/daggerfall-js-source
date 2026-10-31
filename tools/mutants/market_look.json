@@ -50,8 +50,8 @@
   {
     "name": "MARKET-LOOK-raw-record",
     "file": "src/ui/marketTab.js",
-    "old": "it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec);",
-    "new": "it = row.kind === 'item' ? rec : mintMarketPiece(rec);",
+    "old": "        it = row.kind === 'item' ? goodItemOf(rec) : mintMarketPiece(rec);",
+    "new": "        it = row.kind === 'item' ? rec : mintMarketPiece(rec);",
     "tests": [
       "test/ui/market_look.test.js"
     ],

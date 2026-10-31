@@ -13,7 +13,7 @@
 // Not a DFU member. Ledger A (MINE-PERKS).
 import { MOTHERLODE_MARK_CSS } from './nodeMarks.js';
 import { BOUNTY_RING_R } from './bounty/bountyMapMark.js';
-import { t } from '../systems/textManager.js';   // L10N4: the words through the text core (tools/l10n/ROUTE-BRIEF.md)
+import { t } from '../systems/textManager.js'; // L10N4: the words through the text core (tools/l10n/ROUTE-BRIEF.md)
 
 /** The held map's ink - a deep teal, the compass's aqua (LODE-MARK, MOTHERLODE_MARK_CSS) darkened to be read: the
  *  circle's label rides the parchment's halo in the ring's ink, and the aqua stood 1.2 : 1 on it (AUDIT MINE-PERKS; the
