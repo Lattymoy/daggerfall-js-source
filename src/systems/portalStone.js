@@ -37,6 +37,7 @@ import { t } from './textManager.js';
 import { eventGroundAt } from './eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 import { registerItemUseHandler } from './item/itemTemplates.js';
 import { POSE_BOUND, POSE_Y_BOUND, worldPixelOk } from '../net/wire.js';
+import { nativePointOk, nativeOnPixel } from './portalBook.js';   // PORTAL-BOOK: a portal's landing at a kept door
 
 export { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, isPortalStone };
 
@@ -225,7 +226,8 @@ const q2 = (v) => Math.round(v * 100) / 100;
  *  each receiver reads it off its own map. */
 export const portalWire = (gate, nowMs = 0) => {
   const p = gate.native;
-  return { i: gate.id, p: [q2(p[0]), q2(p[1]), q2(p[2])], d: [gate.dest.pixel.x, gate.dest.pixel.y], r: Math.max(0, Math.round(gate.until - nowMs)) };
+  const a = gate.dest.at;   // PORTAL-BOOK: a kept house's door - where a step in lands, on the destination's pixel
+  return { i: gate.id, p: [q2(p[0]), q2(p[1]), q2(p[2])], d: [gate.dest.pixel.x, gate.dest.pixel.y], r: Math.max(0, Math.round(gate.until - nowMs)), ...(a ? { a: [q2(a[0]), q2(a[1]), q2(a[2])] } : {}) };
 };
 /** The record projected, or null: a field outside its law refuses the record WHOLE (wire.js's rule). */
 export function validPortalRecord(r) {
@@ -238,5 +240,6 @@ export function validPortalRecord(r) {
   // the wire's own bound
   if (!worldPixelOk(r.d[0]) || !worldPixelOk(r.d[1])) return null;
   if (!Number.isFinite(r.r) || r.r <= 0 || r.r > PORTAL_OPEN_MS) return null;
-  return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r };
+  if (r.a !== undefined && !(nativePointOk(r.a) && nativeOnPixel(r.a, r.d))) return null;   // PORTAL-BOOK: a landing off the destination's pixel refuses the record
+  return { i: r.i, p: [r.p[0], r.p[1], r.p[2]], d: [r.d[0], r.d[1]], r: r.r, ...(r.a !== undefined ? { a: [r.a[0], r.a[1], r.a[2]] } : {}) };
 }

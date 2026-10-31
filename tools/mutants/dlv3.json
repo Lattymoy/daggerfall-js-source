@@ -2,8 +2,8 @@
   {
     "name": "DLV3-wire-relay-min-moved",
     "file": "src/net/wire.js",
-    "old": "export const DELVE_RELAY_MIN = 292;",
-    "new": "export const DELVE_RELAY_MIN = 291;",
+    "old": "export const DELVE_RELAY_MIN = 298;",
+    "new": "export const DELVE_RELAY_MIN = 297;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
@@ -1013,8 +1013,8 @@
   {
     "name": "DLV3-host-won-rolled",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "r.vault = online() ? null : rollVault(rollPile, lv());",
-    "new": "r.vault = rollVault(rollPile, lv());",
+    "old": "r.vault = online() ? null : myVault();",
+    "new": "r.vault = myVault();",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"
     ]
@@ -1031,7 +1031,7 @@
   {
     "name": "DLV3-host-share-unrolled",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      r.vault = rollVault(rollPile, lv());   // my share",
+    "old": "      r.vault = myVault();   // my share",
     "new": "      r.vault = [];   // my share",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"

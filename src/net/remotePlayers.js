@@ -1294,6 +1294,8 @@ export class RemotePlayers {
   batchOf(id) { return this._batches.get(id)?.batch ?? null; }
   /** AURA-ON-DRAGON: a peer's class sprite's drawn height (m) - a dragon's rider's, the dragon's - or 0 with none drawn. */
   spriteHeightOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' && e.height > 0 ? e.height : 0; }
+  /** AURA-SEAT: the record a peer's class sprite draws this frame (`"record#frame"`), or null with none drawn. */
+  spriteRecordOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' ? e.batch?.record ?? null : null; }
 
   /** CAPE-CARD (2026-10-30): the way a peer's picture faces as `eye` sees it, SPRITE-FACE's { yaw, turn } (peerRiders.js
    *  faceOf) - a doll shows every eye its front; a class sprite the view it was drawn in (mobilePortrayedYaw). `turn` the

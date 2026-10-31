@@ -9889,6 +9889,11 @@
   "tr": "28255bdd735e",
   "by": "claude-in-session"
  },
+ "coll.part.tunes": {
+  "en": "69dbff037ed2",
+  "tr": "83365c67c395",
+  "by": "claude-in-session"
+ },
  "coll.season.on": {
   "en": "20219242b724",
   "tr": "3d35f23b9fbe",
@@ -10037,6 +10042,26 @@
  "coll.trophies.none": {
   "en": "cd9242cb1f32",
   "tr": "d6beadd47b45",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.head": {
+  "en": "94b218aa738b",
+  "tr": "9dccb6206f8f",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.how": {
+  "en": "2ae9a1ed3c0a",
+  "tr": "f63ee1fca855",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.none": {
+  "en": "b9881ac7b986",
+  "tr": "017799db6390",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.row": {
+  "en": "999dcc2b7438",
+  "tr": "0b2981d98249",
   "by": "claude-in-session"
  },
  "coll.wear.hide": {
@@ -11027,6 +11052,11 @@
  "decor.station.cooking": {
   "en": "36967130897c",
   "tr": "3d083e5893a5",
+  "by": "claude-in-session"
+ },
+ "decor.station.music": {
+  "en": "23cd36ca1d2c",
+  "tr": "d1353b978443",
   "by": "claude-in-session"
  },
  "decor.strandedBack": {
@@ -14092,6 +14122,16 @@
  "features.wildernessCamps.title": {
   "en": "c86a78ce52db",
   "tr": "d7a33459d011",
+  "by": "claude-in-session"
+ },
+ "features.wildlife.note": {
+  "en": "31f535af642e",
+  "tr": "e54ee324d477",
+  "by": "claude-in-session"
+ },
+ "features.wildlife.title": {
+  "en": "f00edc13965e",
+  "tr": "8fb8bcec8144",
   "by": "claude-in-session"
  },
  "features.wind.note": {
@@ -26614,6 +26654,121 @@
   "tr": "1e461fe2074b",
   "by": "claude-in-session"
  },
+ "music.box.count": {
+  "en": "b89bb70910eb",
+  "tr": "794e674148cc",
+  "by": "claude-in-session"
+ },
+ "music.box.none": {
+  "en": "93e15de091ff",
+  "tr": "8c590d0fd03b",
+  "by": "claude-in-session"
+ },
+ "music.box.off": {
+  "en": "404bdbe2d46b",
+  "tr": "58b572a5343f",
+  "by": "claude-in-session"
+ },
+ "music.box.playing": {
+  "en": "2e40b0995076",
+  "tr": "eed9e3adbc68",
+  "by": "claude-in-session"
+ },
+ "music.box.quiet": {
+  "en": "2c0e8f99d406",
+  "tr": "c4ec741ec8f1",
+  "by": "claude-in-session"
+ },
+ "music.group.day": {
+  "en": "987b9ced08d4",
+  "tr": "abc34dace1e5",
+  "by": "claude-in-session"
+ },
+ "music.group.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "2ed18c33a0f1",
+  "by": "claude-in-session"
+ },
+ "music.group.home": {
+  "en": "dc8745ba30be",
+  "tr": "2a183aff1cf1",
+  "by": "claude-in-session"
+ },
+ "music.group.mages": {
+  "en": "321cb9f19c9f",
+  "tr": "c9c0820a08e2",
+  "by": "claude-in-session"
+ },
+ "music.group.night": {
+  "en": "1097b553dcf8",
+  "tr": "d85aee2696d8",
+  "by": "claude-in-session"
+ },
+ "music.group.overcast": {
+  "en": "139327a2e6bf",
+  "tr": "e4711d4e320f",
+  "by": "claude-in-session"
+ },
+ "music.group.palace": {
+  "en": "9b435eba8e33",
+  "tr": "8a4b99dcc122",
+  "by": "claude-in-session"
+ },
+ "music.group.rain": {
+  "en": "0a858c95bc97",
+  "tr": "c23f5a462ce1",
+  "by": "claude-in-session"
+ },
+ "music.group.shop": {
+  "en": "55de88709232",
+  "tr": "c32ee096d976",
+  "by": "claude-in-session"
+ },
+ "music.group.sneaking": {
+  "en": "4559e7867506",
+  "tr": "e1dd0ae533cd",
+  "by": "claude-in-session"
+ },
+ "music.group.snow": {
+  "en": "9c8238f65551",
+  "tr": "e1c5df9070d4",
+  "by": "claude-in-session"
+ },
+ "music.group.tavern": {
+  "en": "ac0c0b8a73f3",
+  "tr": "7706511a7039",
+  "by": "claude-in-session"
+ },
+ "music.group.temple": {
+  "en": "5e83789be88e",
+  "tr": "ca369317e7d6",
+  "by": "claude-in-session"
+ },
+ "music.sheet.found": {
+  "en": "88b803a82ef9",
+  "tr": "bd4125b56bf5",
+  "by": "claude-in-session"
+ },
+ "music.sheet.item": {
+  "en": "9f2117b01dbe",
+  "tr": "0f183de2dac9",
+  "by": "claude-in-session"
+ },
+ "music.sheet.known": {
+  "en": "a6e18caa4ea7",
+  "tr": "e5d0886ac62c",
+  "by": "claude-in-session"
+ },
+ "music.sheet.learned": {
+  "en": "09a9dede853d",
+  "tr": "4e913289a2de",
+  "by": "claude-in-session"
+ },
+ "music.tune": {
+  "en": "4eed3629fe66",
+  "tr": "4eed3629fe66",
+  "by": "claude-in-session"
+ },
  "naval.class.fishingSkiff": {
   "en": "7038dbd7a355",
   "tr": "c40d5efa4d39",
@@ -32002,6 +32157,111 @@
  "poi.where.thumb": {
   "en": "78b203f1a581",
   "tr": "9bd95c3c55df",
+  "by": "claude-in-session"
+ },
+ "portal.book.close": {
+  "en": "3305e25fb67b",
+  "tr": "1c99e3edd0da",
+  "by": "claude-in-session"
+ },
+ "portal.book.empty": {
+  "en": "b0159deb9f25",
+  "tr": "0a3c6ea8241a",
+  "by": "claude-in-session"
+ },
+ "portal.book.forget": {
+  "en": "4a0da9b0a114",
+  "tr": "853ad64d259a",
+  "by": "claude-in-session"
+ },
+ "portal.book.forgetWhich": {
+  "en": "1d790f9d7695",
+  "tr": "ef9943d83a99",
+  "by": "claude-in-session"
+ },
+ "portal.book.forgot": {
+  "en": "42e097638814",
+  "tr": "ead0ee07498b",
+  "by": "claude-in-session"
+ },
+ "portal.book.friend": {
+  "en": "d72d8e7c8a4b",
+  "tr": "4ac274d733c5",
+  "by": "claude-in-session"
+ },
+ "portal.book.full": {
+  "en": "dcd52c78a7d1",
+  "tr": "5321221313f3",
+  "by": "claude-in-session"
+ },
+ "portal.book.hall": {
+  "en": "8dc319216de9",
+  "tr": "3b29510be1e8",
+  "by": "claude-in-session"
+ },
+ "portal.book.home": {
+  "en": "058e409f84de",
+  "tr": "865c3c8b75cf",
+  "by": "claude-in-session"
+ },
+ "portal.book.indoors": {
+  "en": "fb00cb79a345",
+  "tr": "0c6628737e45",
+  "by": "claude-in-session"
+ },
+ "portal.book.keep": {
+  "en": "218965319562",
+  "tr": "2f60e063076a",
+  "by": "claude-in-session"
+ },
+ "portal.book.kept": {
+  "en": "0157543ff62d",
+  "tr": "8e6620e41fc9",
+  "by": "claude-in-session"
+ },
+ "portal.book.line1": {
+  "en": "f10396e24f50",
+  "tr": "8d8d6a624ae8",
+  "by": "claude-in-session"
+ },
+ "portal.book.line2": {
+  "en": "22059361d3a5",
+  "tr": "c69d4c4234b1",
+  "by": "claude-in-session"
+ },
+ "portal.book.line3": {
+  "en": "a31518fb9807",
+  "tr": "4f85dae881e2",
+  "by": "claude-in-session"
+ },
+ "portal.book.moved": {
+  "en": "fe69a85e9617",
+  "tr": "876b91ed5cb2",
+  "by": "claude-in-session"
+ },
+ "portal.book.myHall": {
+  "en": "547600fccbfc",
+  "tr": "f6f8b2f9d68e",
+  "by": "claude-in-session"
+ },
+ "portal.book.noHouse": {
+  "en": "95db298655df",
+  "tr": "53f090e77f6d",
+  "by": "claude-in-session"
+ },
+ "portal.book.noStone": {
+  "en": "50469da898c5",
+  "tr": "fbbfaaa6a117",
+  "by": "claude-in-session"
+ },
+ "portal.book.stones": {
+  "en": "20f010a3904c",
+  "tr": "3016d9fbe74c",
+  "by": "claude-in-session"
+ },
+ "portal.book.title": {
+  "en": "6e3b089578bb",
+  "tr": "c69a93551047",
   "by": "claude-in-session"
  },
  "portal.buy.ask": {
@@ -42017,6 +42277,11 @@
  "shop.who.reading": {
   "en": "9964cedb67bf",
   "tr": "729b82f19e27",
+  "by": "claude-in-session"
+ },
+ "shop.who.unread": {
+  "en": "dcec3bbdb56e",
+  "tr": "4430c2b0ced6",
   "by": "claude-in-session"
  },
  "shop.yourName": {

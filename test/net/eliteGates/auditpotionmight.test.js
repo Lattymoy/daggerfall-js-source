@@ -100,7 +100,7 @@ test('AUDIT POTION-MIGHT C2, THE ROOM\'S HALF: a health potion\'s word is believ
   assert.equal(egPotion({ mem: { 'acct-0': m }, end: null }, 'acct-0', now + 10 + 3 * PVP_POTION_MS, line), 0, 'a fallen member drinks nothing');
   // the wire and the relay
   assert.deepEqual(validEgIn({ k: 'pot' }), { k: 'pot' });
-  assert.deepEqual([EG_POT_RELAY_MIN, relaySupportsEgPot('world297'), relaySupportsEgPot('world298')], [298, false, true]);
+  assert.deepEqual([EG_POT_RELAY_MIN, relaySupportsEgPot('world298'), relaySupportsEgPot('world299')], [299, false, true]);
   const relay = readFileSync(new URL('../../../server/src/index.js', import.meta.url), 'utf8');
   assert.match(relay, /if \(m\.k === 'pot'\) \{ egPotion\(B, a\.sub, now, this\._egLine\(\), EG_BODY_ENFORCE\); return; \}/);
 });

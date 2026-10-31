@@ -198,6 +198,7 @@ const DEED_TEXT = Object.freeze({
 export function shopWhoText(/** @type {any} */ flow) {
   if (!flow || flow.stage === 'loading') return t('shop.who.reading', 'Reading your account...');
   if (flow.stage !== 'in') return t('shop.who.out', 'Sign in from your profile to buy.');
+  if (!flow.shop) return t('shop.who.unread', 'The shop could not be read. Open it again when you are online.');   // SHOP-UNTOLD: offline, no card
   if (!flow.account?.handle) return t('shop.who.guest', 'A guest account cannot buy. Add a username from your profile first.');
   if (!flow.shop?.on && !flow.aurum?.open) return t('shop.who.closed', 'The shop does not take payments yet.');   // AURUM-ONLY: a ware is bought with Aurum
   return t('shop.who.for', 'Purchases go to the account {name}, for every character on it.', { name: flow.account.handle });
@@ -220,11 +221,13 @@ export const shopBundleRows = (/** @type {any} */ flow, /** @type {{ gives: Read
   const g = shopWareById(id), held = shopHeldAny(flow, id);
   return { id, name: g ? shopWareName(g) : id, kind: g ? KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (g.kind)]?.() ?? g.kind : '', held, part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)) };
 });
-/** STOREFRONT: the sections the window shows - each with a ware the card lists (every one sold alone with no card);
- *  PASS-PANELS: the Folios' always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
+/** SHOP-UNTOLD (2026-10-31): whether the window lists a ware - sold alone and on the card. With no card (loading,
+ *  offline, signed out) nothing: the client cannot see the schedule, and a drop not out yet is not told (S2). Pure. */
+export const shopListed = (/** @type {any} */ flow, /** @type {any} */ w) => !!w?.alone && !!rowOf(flow, w.id);
+/** STOREFRONT: the sections the window shows - each with a ware the card lists (shopListed); PASS-PANELS: the Folios'
+ *  always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
 export function shopSections(/** @type {any} */ flow) {
-  const listed = (/** @type {any} */ w) => w.alone && (!flow?.shop || !!rowOf(flow, w.id));
-  const out = SHOP_CATEGORIES.filter((c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && listed(w)));
+  const out = SHOP_CATEGORIES.filter((c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && shopListed(flow, w)));
   if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');
   return out;
 }
@@ -237,6 +240,14 @@ export function shopUntilText(/** @type {number} */ untilMs, /** @type {boolean}
   const days = Math.ceil((untilMs - nowMs) / 86_400_000);
   const left = days <= 1 ? t('shop.until.today', 'Ends today') : t('shop.until.days', '{n} days left', { n: days });
   return limited ? t('shop.until.limited', 'Limited: sold only until {day}. {left}.', { day: dayText(untilMs - 1), left }) : t('shop.until.featured', 'Featured until {day}. {left}.', { day: dayText(untilMs - 1), left });
+}
+
+/** SHOP-REREAD (2026-10-31): the signed-in account read again - the window's focus and every press of the gem ask it, so
+ *  a card read from an older service (a deploy's gap: no Aurum, no Folios) mends at the next open. Nothing for no flow. */
+export function shopReread(/** @type {any} */ fl) {
+  if (fl?.stage !== 'in' || typeof fl.refresh !== 'function') return false;
+  Promise.resolve(fl.refresh()).catch(() => {});
+  return true;
 }
 
 /** The gem: the button at the end of the row of marks. */
@@ -566,7 +577,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   let headNode = /** @type {HTMLElement|null} */ (null), headKey = '', dailyKey = '';
   /** The wares a section lists: the day's for the deals, else each sold alone that the card lists. */
   const waresOf = (/** @type {string} */ c, /** @type {any} */ fl) => (c === 'daily' ? dailyWares(fl)
-    : SHOP_WARES.filter((x) => x.category === c && x.alone && (!fl?.shop || !!rowOf(fl, x.id))));
+    : SHOP_WARES.filter((x) => x.category === c && shopListed(fl, x)));
   const buildPanels = () => {
     stopLive();
     drawn = new Map();
@@ -873,7 +884,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   draw();
   // BACK FROM THE BROWSER, the account is read again - a payment that landed shows here (the account card's way)
   const view = doc.defaultView;
-  const onFocus = () => { const fl = f(); if (win.isConnected && fl?.stage === 'in') Promise.resolve(fl.refresh?.()).catch(() => {}); };
+  const onFocus = () => { if (win.isConnected) shopReread(f()); };
   view?.addEventListener?.('focus', onFocus);
   if (focus) globalThis.requestAnimationFrame?.(() => tabOf.get(cat)?.focus?.({ preventScroll: true }));
   return {

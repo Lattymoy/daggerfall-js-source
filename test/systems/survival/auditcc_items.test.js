@@ -89,8 +89,8 @@ test('AUDIT C&C I5: FOOD THAT SPOILS IN THE PACK IS DRESSED AT EVERY STAGE - the
 
 test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY TIER WITH THE ARC ON - Boons, Casual and Hard: two sacks of rations, a full skin, the Formal cloak drawn hood up and the Shoes of their own wardrobe at a quarter of their condition, in the pack and not worn, worn camping gear (25 uses) and the port\'s Campfire - on the wizard\'s mint and on the fallback; Off sets out with DFU\'s bag alone', () => {
   const BAG = {
-    male: [[132, 'Spellbook'], [165, 'Short Shirt'], [151, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [155, 'Formal Cloak'], [147, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet']],
-    female: [[132, 'Spellbook'], [206, 'Short Shirt'], [190, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [192, 'Formal Cloak'], [186, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet']],
+    male: [[132, 'Spellbook'], [165, 'Short Shirt'], [151, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [155, 'Formal Cloak'], [147, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],   // PIN MOVED (PORTAL-BOOK): the book after the wallet
+    female: [[132, 'Spellbook'], [206, 'Short Shirt'], [190, 'Casual Pants'], [116, 'Shortsword'], [531, 'Rations'], [539, 'Waterskin'], [192, 'Formal Cloak'], [186, 'Shoes'], [530, 'Camping Equipment'], [541, 'Campfire'], [580, 'Wallet'], [577, 'Portal Book']],   // PIN MOVED (PORTAL-BOOK): the book after the wallet
   };
   /** The start's clothes as minted: [template, group, variant, dye, condition, of, value, worn slot, hood up]. */
   const CLOTHES = {
@@ -107,7 +107,7 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
       assert.deepEqual(added.map((i) => [i.templateIndex, i.name]), BAG[gender], `${tier}, ${gender}: the mod's start after DFU's bag, in the order it adds them`);
       assert.deepEqual(clothesOf(added), CLOTHES[gender], `${tier}, ${gender}: the cloak hooded and the shoes, Blue, a quarter of their condition, carried`);
       assert.deepEqual(equipTableOf(e).filter(Boolean).map((i) => i.templateIndex).sort((a, b) => a - b), gender === 'male' ? [151, 165] : [190, 206], 'only DFU\'s own shirt and pants are worn');
-      const kit = added.filter((i) => i.group === 'UselessItems2' && i.templateIndex !== 580);
+      const kit = added.filter((i) => i.group === 'UselessItems2' && i.templateIndex !== 580 && i.templateIndex !== 577);   // PIN MOVED (PORTAL-BOOK): nor the book
       assert.deepEqual(kit.map((i) => [i.templateIndex, i.stackCount, i.currentCondition, i.maxCondition, i.water ?? null]),
         [[531, 2, 10, 10, null], [539, 1, 10, 10, 2], [530, 1, 25, 50, null], [541, 1, 8, 8, null]], 'two sacks, a full skin, the gear at 25 of 50, a full Campfire');
       const fallback = { gender, items: [] };
@@ -118,7 +118,7 @@ test('AUDIT C&C I7: A NEW CHARACTER SETS OUT WITH THE MOD\'S OWN START IN EVERY 
   }
   _resetForTests(); setPref(SURVIVAL_PREF, SURVIVAL_STORED.off);
   const off = { gender: 'female', items: [], stats: { ...STATS } };
-  assert.deepEqual(assignStartingGear(off, { classIndex: 0, rolls: () => 0.3, torchesFromItems: false }).map((i) => i.templateIndex), [132, 206, 190, 116, 580], 'Off: DFU\'s bag and the wallet (Mac: "No, not off")');
+  assert.deepEqual(assignStartingGear(off, { classIndex: 0, rolls: () => 0.3, torchesFromItems: false }).map((i) => i.templateIndex), [132, 206, 190, 116, 580, 577], 'Off: DFU\'s bag and the wallet (Mac: "No, not off")');   // PIN MOVED (PORTAL-BOOK): and the book
   const offFallback = { gender: 'female', items: [] };
   seedStartingEquipment(offFallback);
   assert.deepEqual(offFallback.items.map((i) => i.templateIndex), [113]);

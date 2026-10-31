@@ -130,3 +130,15 @@ test('DRAGON-POV (mob: "saddle over lay is in alot of uis"): the saddle is not p
   } finally { setDragonSaddleCovered(null); }
   assert.match(rd('src/scenes/world.js'), /setDragonSaddleCovered\(\(\) => pointerSurfaces\.size > 0 \|\| !!townTalk\.hudHidden/);
 });
+
+test('AURA-SEAT (mob: "aura floating"): a dragon rider\'s aura sits where the art seats the rider, under the camera\'s pivot, lower in the hover', async () => {
+  const { dragonAuraLift, dragonSeatOver, dragonRiderSeatShare, DRAGON_AURA_DROP_M, DRAGON_RIDER_SEAT, DRAGON_RIDER_SEAT_HOVER } = await import('../../src/scenes/dragonViewHost.js');
+  const h = 262 / 40;   // the pictures' height at Daggerfall's 40 pixels a metre
+  assert.equal(dragonRiderSeatShare('0#3'), DRAGON_RIDER_SEAT, 'walking: the walk records seat the rider near 0.6');
+  assert.equal(dragonRiderSeatShare('22#5'), DRAGON_RIDER_SEAT_HOVER, 'hovering: records 20-24 sit the rider lower');
+  assert.equal(dragonRiderSeatShare(undefined), DRAGON_RIDER_SEAT);
+  assert.ok(Math.abs(dragonAuraLift(h, '0#0') - (h * 0.6 - DRAGON_AURA_DROP_M)) < 1e-9);
+  assert.ok(dragonAuraLift(h, '20#0') < dragonAuraLift(h, '0#0'), 'the hover sits lower than the walk');
+  assert.ok(dragonAuraLift(h, '0#0') + DRAGON_AURA_DROP_M < dragonSeatOver(h) - 0.5, 'never at the camera\'s pivot over the rider\'s head');
+  assert.equal(dragonAuraLift(0), DRAGON_VIEW_SEAT_M - DRAGON_AURA_DROP_M, 'before the sprite is up, the stand-in seat');
+});

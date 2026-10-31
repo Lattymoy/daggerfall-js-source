@@ -22,7 +22,9 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   const who = await S.registered('Wyrmward');
   const r = await mintDragonReceipt({ q: W, b: 1, s: who.id, c: 5, x: 'dealt', l: 12 }, S.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: who.character, cid: 'a1b2c3d4e5f60718' }, who.secret)).status, 200);
-  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked)
+  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked). The
+  // claim's own draw, when it tamed, is cleared first: its random id beside this one failed the pin one run in a hundred.
+  S.env.DB._raw.prepare('DELETE FROM dragon_mounts WHERE account = ?').run(who.id);
   S.env.DB._raw.prepare('INSERT OR IGNORE INTO dragon_mounts (id, account, char_id, look, watch, at) VALUES (?, ?, ?, ?, ?, ?)').run('dg0123456789abcdef', who.id, who.character, 1, W, 1);
   assert.equal((await S.call('/v1/dragon/tames', {}, null)).status, 401, 'behind a session');
   const tames = await S.call('/v1/dragon/tames', {}, who.secret);
@@ -31,8 +33,9 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   const other = await S.registered('Coilward');
   assert.deepEqual((await S.call('/v1/dragon/tames', {}, other.secret)).body.tames, [], 'another account\'s none');
   const idx = src('server-account/src/index.js');
-  assert.match(idx, /serpents: await serpentRecordOf\(ctx, who\.player\.id\), dragons: await dragonRecordOf\(ctx, who\.player\.id\),/, 'the account\'s own view');
-  assert.match(idx, /serpents: await serpentRecordOf\(ctx, body\.id\), dragons: await dragonSlainOf\(ctx, body\.id\),/, 'the Inspect card\'s answer');
+  // PIN MOVED (AURA-FAST): the reads asked together, each in its place
+  assert.match(idx, /const \[duels, gates, raids, serpents, dragons, [^\]]*\] = await Promise\.all\(\[\s*duelRecordOf\(ctx, who\.player\.id\), gateRecordOf\(ctx, who\.player\.id\), raidRecordOf\(ctx, who\.player\.id\), serpentRecordOf\(ctx, who\.player\.id\),\s*dragonRecordOf\(ctx, who\.player\.id\),/, 'the account\'s own view');
+  assert.match(idx, /const \[duels, gates, raids, serpents, dragons, [^\]]*\] = await Promise\.all\(\[duelRecordOf\(ctx, body\.id\), gateRecordOf\(ctx, body\.id\), raidRecordOf\(ctx, body\.id\), serpentRecordOf\(ctx, body\.id\), dragonSlainOf\(ctx, body\.id\),/, 'the Inspect card\'s answer');
   const card = await S.call('/v1/duel/record', { id: who.id }, other.secret);
   assert.deepEqual(card.body.dragons, { slain: 1 }, 'a stranger is told the dragons slain, never the tames');
   const own = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${who.secret}` } })).json();
