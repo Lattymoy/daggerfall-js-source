@@ -7,6 +7,7 @@
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js WIRED; scenes/worldModes.js WIRED through world.js's doorTargets and
 // buildingDataForDoor (no line of its own); scenes/exterior.js and scenes/dungeonContext.js FLAGGED: they stream no pixel.
 import { registerCustomModelFamily } from '../world/customModels.js';
+import { installFabricDoors } from '../world/imperialFabricBuildings.js';   // the doors' models: the Imperial City installs them only when it builds
 import { SETTLEMENT_ROWS, settlementInput } from '../world/settlement/settlementPlaces.js';
 import { dressSettlement } from '../world/settlement/settlementGen.js';
 import { groundModel, buildingPiece, buildingInterior, buildingRecord, groundModelId, buildingModelId, isSettlementModelId } from '../world/settlement/settlementModels.js';
@@ -19,10 +20,11 @@ import { trs } from '../world/mat4.js';
 /** The models the family answers, by id: made when a settlement is stood, dropped when it goes. */
 const _models = new Map();
 let _family = false;
-/** The family, once a page (world/customModels.js): solid, its pictures the capitals' own (climate-free). */
+/** The family, once a page (world/customModels.js): solid, its pictures the capitals' own (climate-free); and the fabric's doors. */
 export function installSettlementModels() {
   if (_family) return;
   _family = true;
+  installFabricDoors();
   registerCustomModelFamily({ owns: isSettlementModelId, build: (id) => _models.get(id) ?? null, keep: 4096, climateFree: true });
 }
 

@@ -42,7 +42,7 @@ try {
   console.log('booted; the game fits', JSON.stringify(where.fit), '- jumping to', where.name, 'at', px, py);
   await page.evaluate(([x, y]) => window.__tesaJump(x, y), [px, py]);
   let last = '';
-  const view = await until(() => { const v = window.__settlementView?.(); return v?.length && v[0].ready >= v[0].meshes * 0.9 ? v : null; }, 600000).catch(() => null)
+  const view = await until(() => { const v = window.__settlementView?.(); return v?.length && v[0].ready >= v[0].meshes ? v : null; }, 600000).catch(() => null)
     ?? null;
   if (!view) {
     last = await page.evaluate(() => JSON.stringify({ hook: typeof window.__settlementView, view: window.__settlementView?.() ?? null, at: window.__currentPixel?.() })).catch((e) => e.message);

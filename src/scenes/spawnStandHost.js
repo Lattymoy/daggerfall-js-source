@@ -7,6 +7,7 @@ import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';
 import { inEther } from '../world/ethericSea.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
 import { pathFreePixel, spawnsDungeon } from '../world/spawnedDungeons.js';
+import { settlementOnPixel } from '../world/settlement/settlementPlaces.js';   // RMB-CONTRACTS RMBC5: a settlement's pixel
 import { wildInside } from '../systems/wild/wildZone.js';
 
 /** @param {any} host */
@@ -80,6 +81,7 @@ export function createSpawnStand(host) {
    *  Bay's roads sweep takes one back (_dropRoadedSpawns: the index and its clocks), unless the player stands in it - the
    *  layer's landing builds the pixels it reaches again (scenes/tamrielSweepsHost.js arenaRoadsLanded). */
   function spawnPastBayAt(px, py) {
+    if (settlementOnPixel(px, py)) return null;   // RMB-CONTRACTS RMBC5: a settlement keeps its pixel from the spawn roll
     const key = `${px},${py}`;
     const loc = locationIndex.get(key);
     if (!loc?.spawned || loc.wildHall) return spawnedDungeonAt(px, py);
