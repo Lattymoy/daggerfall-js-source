@@ -59,8 +59,8 @@
   {
     "name": "AUDIT-SEA-PATHS-AI-2-the-detour-chased-for-good",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (dist2(here, e.detour) > wayReachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);",
-    "new": "      if (dist2(here, e.detour) > wayReachOf(ship.hull)) return plan(e.detour, 0.6);",
+    "old": "      if (dist2(here, e.detour) > reachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);",
+    "new": "      if (dist2(here, e.detour) > reachOf(ship.hull)) return plan(e.detour, 0.6);",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "AUDIT-SEA-PATHS-AI-2-the-reach-held-to-35",
     "file": "src/systems/naval/shipLife.js",
-    "old": "export const wayReachOf = (hull) => {\n  const b = hullBuild(hull);\n  return Math.max(REACH_M, (b.bowZ - b.aftZ) / 2);\n};",
-    "new": "export const wayReachOf = (hull) => REACH_M;",
+    "old": "export const reachOf = (hull) => {\n  const b = hullBuild(hull);\n  return Math.max(REACH_M, (b.bowZ - b.aftZ) / 2);\n};",
+    "new": "export const reachOf = (hull) => REACH_M;",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]

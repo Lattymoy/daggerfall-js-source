@@ -8,7 +8,7 @@
 // transition). One sampler a pixel, kept KERNEL_SEA_PIXELS deep. Native units: 32768 a pixel, z north.
 import { sampleKernel, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 import { isWaterHeight, sampleHeight } from '../terrain/terrainTiles.js';
-import { groundTopOf } from '../landforms.js';
+import { createLandforms, groundTopOf } from '../landforms.js';
 import { rumareSeaPixel } from '../rumareWaters.js'; // The Imperial City's lake, the sea's by its own stamp
 
 const NP = 32768;
@@ -16,13 +16,11 @@ const NP = 32768;
 export const KERNEL_SEA_PIXELS = 4096;
 
 /**
- * The kernel's sea at a native point - `(x, z) => boolean` over the reader `woodsOf()` hands and the landforms
- * `landformsOf()` builds on it: the world's own, on its sites and climates, so the sea is the ground the game builds
- * (null: the bare kernel, as the ground stands with the landforms off). Both are asked again when the reader is another,
- * as the world's reader is rebound past the Bay. No reader: every point the sea (nothing to refuse it with).
- * @param {() => any} woodsOf @param {() => any} [landformsOf]
+ * The kernel's sea at a native point - `(x, z) => boolean` over the reader `woodsOf()` hands (made again when it is
+ * another, as the world's reader is rebound past the Bay). No reader: every point the sea (nothing to refuse it with).
+ * @param {() => any} woodsOf
  */
-export function createKernelSea(woodsOf, landformsOf = () => null) {
+export function createKernelSea(woodsOf) {
   let woods = null,
     landform = null;
   const kernels = new Map();
@@ -35,7 +33,7 @@ export function createKernelSea(woodsOf, landformsOf = () => null) {
     if (!w) return true;
     if (w !== woods) {
       woods = w;
-      landform = landformsOf() ?? null;
+      landform = createLandforms({ woods: w, sites: null, climates: null });
       kernels.clear();
       lastPx = NaN;
     }

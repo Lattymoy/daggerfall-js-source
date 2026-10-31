@@ -25,6 +25,7 @@ import { studioListing, STUDIO_TREE } from '../../scripts/studioArtIndex.mjs';  
 import { writePng } from '../../tools/pngIO.mjs';   // AUDIT STUDIO1 C12: the studio arm's own pictures
 import { dwarvenDragonSpriteEntries, DWARVEN_DRAGON_ART } from '../../src/characters/dwarvenDragon.js';   // DWARVEN-DRAGON: its sprites' rows
 import { SADDLE_PICTURES } from '../../src/systems/staffDragon.js';   // DRAGON-RIDE: its saddle's two
+import { SKYRIM_FLORA_PATHS } from '../../src/world/tamriel/skyrimFlora.js';   // Skyrim's plant PNGs
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tracked = (dir) => execFileSync('git', ['ls-files', '-z', dir], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })   // RRI1: 13,000 tracked sprites outgrew the 1 MB default (ENOBUFS)
@@ -882,6 +883,9 @@ const PUBLIC_ALLOWLIST = new Map([
     "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
   // DRAGON-RIDE (2026-10-28): the saddle drawn over an Admin's view on the dragon - our own model's rider view again
   ...SADDLE_PICTURES.map((n) => [`public/${DWARVEN_DRAGON_ART}${n}.png`, "OURS - the Dwarven Dragon's saddle view (DRAGON-RIDE, 2026-10-28), rendered from our own model, 320x97 indexed"]),
+  // Skyrim's plant billboards under src/assets/skyrim/flora/ - original artist PNGs for the four Lands zones
+  // (pinewood, reach, frozenCoast, tundra), stood as archive 38362 (world/tamriel/skyrimFloraArt.js).
+  ...SKYRIM_FLORA_PATHS.map((p) => [p, "SUPPLIED - Skyrim plant billboard, original artist PNG under src/assets/skyrim/flora/; no ARENA2 pixel in it"]),
 ]);
 
 test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {
