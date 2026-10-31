@@ -22,7 +22,7 @@
 //     no blow reaches it, and the camera orbits a living member (Q and E to change whom); THE RECALL's word stands me
 //     where it calls me at its share of my health; the room's heals (a rest, a Rally, a Mending, the fray's lash); the
 //     Vestige offer and the company's word on THE PANEL (ui/eliteGates/egHud.js - keys 1-6, Y and N, or `/breach pick`, `/breach
-//     vote`); Cantrips, the Sutler, pings, forsaking and a Surplus in `/breach` words; THE POTION LAW's count; THE RECAP.
+//     vote`); Cantrips, the Sutler, pings, forsaking and a Surplus in `/breach` words; THE POTION CLOCK's pip; THE RECAP.
 //
 //   EG-H1 (EG8d, 2026-10-12; sections 21 and 10.8): WHAT THE RELAY JUDGES, this screen's half - THE SHARED CLOCK CORRECTED
 //     (net/eliteGates/egClock.js: the room's `clk` pinged, the median of five half round trips, again every 30 s - the breach's link,
@@ -139,7 +139,9 @@ import { egRcId } from '../../net/eliteGates/egDurable.js';   // AUDIT EG IV (la
 import { dungeonToRealm } from '../../net/superDungeon/sdBrain.js';
 import { egToDungeon } from '../../world/eliteGates/egHall.js';
 import { restackWeirKeys, setWeirKeyOpener, weirKeysHeld } from '../../systems/eliteGates/weirKey.js';   // AUDIT EG IV (lane3 #10): the keys the pack shows, for the rust's line
-import { egHudModel, drawEgHud, egPanelModel, drawEgPanel, egRecapModel, EG_POTIONS_PER_HALL } from '../../ui/eliteGates/egHud.js';
+import { egHudModel, drawEgHud, egPanelModel, drawEgPanel, egRecapModel } from '../../ui/eliteGates/egHud.js';
+import { potionWaits } from '../../combat/pvpPotions.js';   // POTION-CLOCK (Elite-Gates.md section 17.4): each kind's wait, the pip's
+import { registerSpirePotionTold } from '../../systems/eliteGates/spireKit.js';   // AUDIT POTION-MIGHT C2: the room told a health potion
 import { EG_CANTRIPS } from '../../net/eliteGates/egRun.js';
 import { egVOf } from '../../net/eliteGates/egVestige.js';
 import { egResonance, EG_WALL_X } from '../../net/eliteGates/egVestige.js';   // EG-ZS: Rooted's and Rallying Cry's resonance; Living Wall's share
@@ -268,9 +270,6 @@ export const EG_HOME_CONFIRM_MS = 6000;
 export const EG_HEAL_SEND_MS = 1000;
 /** EG-ZF: the breaches whose board's line this screen holds for a recap still to be made. */
 const EG_RECAPS_BOARDS = 8;
-/** AUDIT EG V (c, L2-14; section 17.4): where THE POTION LAW's count is kept on the device - `{ k, n }`, its breach, hall and
- *  stage (`b:h:t` a trial's, `b:h:r` a rest's) and the potions left there. */
-export const EG_POTIONS_KEY = 'eg.potions';
 /** AUDIT EG V (c, L7-8; section 27.6): where THE RECAP's log is kept on the device - `{ b, l, f }`, its breach, its halls
  *  (`[h, falls]`) and each member's falls counted into them. */
 export const EG_LOG_KEY = 'eg.log';
@@ -540,7 +539,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   const clock = egClockNew();
   const now = () => { const off = egClockOffset(clock); return off == null ? hostNow() : Date.now() + off; };
   const sayBody = bodySayer((v) => !!online()?.sendEg?.('vt', { v }));
-  const link = createEgLink({ now, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w) });
+  const link = createEgLink({ now, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w), might: () => online()?.might ?? null });
   let fight = null;
   /** an open in flight: its request id, the service's order, whether the hub took it */
   let opening = null;
@@ -560,9 +559,9 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   let unfair = { h: 0, w: '' };
   let keysAt = -Infinity, claimAt = -Infinity, rdSeen = 0, callSaid = '';
   let door = null, doorH = 0, portal = null;
-  /** THE WITNESS VIEW: my fall's place, whom I watch; THE POTION LAW's count this hall; THE RECAP's log; my answers to
-   *  the company's word; a recap standing; a forsake asked once. */
-  let witness = null, potions = EG_POTIONS_PER_HALL, potionHall = '', recap = null, recapUntil = 0, forsakeAskAt = -Infinity, logH = 0;
+  /** THE WITNESS VIEW: my fall's place, whom I watch; THE RECAP's log; my answers to the company's word; a recap standing;
+   *  a forsake asked once. */
+  let witness = null, recap = null, recapUntil = 0, forsakeAskAt = -Infinity, logH = 0;
   /** EG-FULL LAYER THREE: the pages of the Annals this breach has given me (the account keeps them - EG-E). AUDIT EG V (c,
    *  L7-5): and the pages the account keeps (`/v1/eg/keys` `annals`, a bit a page), read at each answer - so every page ever
    *  found is read anywhere, a reload or another breach later. */
@@ -575,10 +574,6 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   const log = [];
   let logB = '', logFalls = /** @type {Record<string, number>} */ ({});
   const voted = {};
-  /** AUDIT EG V (c, L2-14; section 17.4): THE POTION LAW's count kept on the device with its breach and hall (EG_POTIONS_KEY),
-   *  so a reload never refills the hall's two. */
-  try { const v = JSON.parse(store?.getItem?.(EG_POTIONS_KEY) ?? 'null'); if (v && typeof v.k === 'string' && Number.isSafeInteger(v.n) && v.n >= 0 && v.n <= EG_POTIONS_PER_HALL) { potionHall = v.k; potions = v.n; } } catch { /* none kept */ }
-  const potionsKeep = () => { try { store?.setItem?.(EG_POTIONS_KEY, JSON.stringify({ k: potionHall, n: potions })); } catch { /* the session's alone */ } };
   /** AUDIT EG V (c, L7-7): when my last ping went (the shared clock) - its cooldown shown. */
   let pingAt = -Infinity;
   const me = () => account?.me?.() ?? null;
@@ -586,6 +581,9 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   let portalSet = null;
   const portals = () => (portalSet ??= renderer?.createBillboardBatch ? createPortalSet({ renderer, audio }) : null);
   const inSpire = () => modes()?.egHallBreach?.() != null;
+  // AUDIT POTION-MIGHT C2 (section 17.4): a health potion drunk in a breach is told to its room, which believes its heal on its
+  // own clock - outside the count's budget, which a potion every 15 s outran
+  registerSpirePotionTold((kinds) => { const o = online(); if (inSpire() && o?.egPotOk && kinds.includes('health')) o.sendEg?.('pot'); });
   // EG-ZG (Elite-Gates.md section 25.4): THE QUIET COMPANY's allies - another player's spell effects at 60% with no light of
   // their own during a trial, read by the spell engine every host shares (scenes/hostMagic.js through ui/eliteGates/egAccess.js)
   egAllyLookSet(() => { if (!inSpire()) return null; const q = egQuietCompany(link.state()?.sg); return { alpha: q.allyAlpha, glow: q.allyGlow }; });
@@ -1231,11 +1229,6 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     lawFrame(E);   // EG-H2 (section 22): the halls of a breach of another law, asked
     // THE RECAP's log: each hall the company stood in, its glyph and its falls (AUDIT EG V, c, L7-8: the room's, kept)
     logFrame(E);
-    // THE POTION LAW: two restoring potions a hall, refilled at each wake and at the rest. AUDIT EG V (c, L2-14): the count kept
-    // on the device by its breach, hall and stage - a reload refills nothing; another breach's count is its own
-    const pk = `${E.b}:${E.h}:${E.sg === 'rest' ? 'r' : 't'}`;
-    if (!potionHall.startsWith(`${E.b}:`)) { potionHall = `${E.b}:0:t`; potions = EG_POTIONS_PER_HALL; potionsKeep(); }
-    if ((E.sg === 'trial' || E.sg === 'rest') && potionHall !== pk) { potionHall = pk; potions = EG_POTIONS_PER_HALL; potionsKeep(); }
     const c = egCircleOfHall(E.h);
     if (E.sg === 'rest' && c === M.egHallCircle?.()) prebuild(E, c + 1);   // EG-H3 (EG10): THE SWAP'S BUILD - the next circle's level made while the Court rests (AUDIT EG V, E NEW-2: under another law from the halls the room gave)
     // EG-ZD (section 22): a circle - or a seed - my record had wrong is rebuilt in place on a return, as a new circle is
@@ -1743,7 +1736,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     for (const n of spireVestigeNews()) beatNow(n.k, n);
     const held = egHolderWatch(holdMemo, egHolderNow(witness ? null : fight, E, me(), spireWeaveReady()), t, E.h);
     for (const b of held.beats) beatNow(b.k, b);
-    const model = egSpireHudModel(E, me(), t, { ff, witness: !!witness, potions, gain: pres.gain && t - pres.gain.at < EG_GAIN_MS ? pres.gain : null,
+    const model = egSpireHudModel(E, me(), t, { ff, witness: !!witness, potions: potionWaits(), gain: pres.gain && t - pres.gain.at < EG_GAIN_MS ? pres.gain : null,
       first: pres.first && t - pres.firstAt < FIRST_SHOW_MS ? pres.first : '', door, live: pres.live, touch: pres.touch ??= isTouchDevice(win), foldOpen: pres.foldOpen, held: held.chips, bridge: bridgeGap() >= 0,   // AUDIT EG III: Spirebridge offered
       watch: witness ? watchedOf(E) : null, ping: witness ? pingLeft() : 0, restP: pres.restP?.b === E.b && pres.restP.h === E.h ? pres.restP.p : 1 });   // AUDIT EG V (c, L7-7, L2-9): the witness's seat; the rest's heal
     drawEgSpireHud(model, { hidden: hudHidden(), skin: isEnhanced() ? 'enhanced' : 'classic', still: acc.still, danger: rgbCss(acc.palette.danger), scale: hudScaleNow(),
@@ -2140,9 +2133,6 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       c.pos = egWitnessClear(p.pos, witness.eye.p, cast);
       return true;
     },
-    /** THE POTION LAW: may I drink a restoring potion now (two a hall), and one drunk. */
-    potionAllowed: () => !inSpire() || potions > 0,
-    potionUsed() { if (inSpire()) { potions = Math.max(0, potions - 1); potionsKeep(); } },   // AUDIT EG V (c, L2-14): kept
     push: (dx, dz, m) => pushBy(dx, dz, m),
     /** Iron Footing's share off a push (the spans' Gust and Pendulum read it - systems/eliteGates/spireKit.js spireFooting). */
     footing: () => (inSpire() ? footing() : 0),
@@ -2197,7 +2187,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         if (leaving || (E.end && E.b)) { leaving = false; link.forget(); }
         if (door || portal) dropDoor();
       }
-      drawEgHud(inSpire() ? null : egHudModel(link.state(), me(), t, { inSpire: false, witness: !!witness, potions }), { hidden: hudHidden() });   // EG-G1: inside, the Spire's HUD
+      drawEgHud(inSpire() ? null : egHudModel(link.state(), me(), t, { inSpire: false, witness: !!witness }), { hidden: hudHidden() });   // EG-G1: inside, the Spire's HUD
       chartFrame(link.state());   // EG-ZF (section 27.6): the lord's fall's chart
       if (recap && Date.now() > recapUntil) recap = null;
       if (recap && pres.rel < (recap.opened ?? 0) && Date.now() - pres.relAt >= 400) { pres.rel++; pres.relAt = Date.now(); playSound(EG_BEAT_SOUNDS.rare); }   // EG-G1: one each 400 ms, the Rare chime

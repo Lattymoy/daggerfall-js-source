@@ -1,0 +1,42 @@
+[
+  {
+    "name": "STRIKE-AHEAD-thrusts-only",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!thrust && D0 >= STRIKE_SHORT * len) return null;",
+    "new": "  if (!thrust) return null;",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "a strike at the camera draws every weapon but a thrust's a stub"
+  },
+  {
+    "name": "STRIKE-AHEAD-every-strike",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!thrust && D0 >= STRIKE_SHORT * len) return null;",
+    "new": "",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "a chop not at the camera loses its own line"
+  },
+  {
+    "name": "STRIKE-AHEAD-short-too-short",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "export const STRIKE_SHORT = 0.45;",
+    "new": "export const STRIKE_SHORT = 0.2;",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "male 7-2's strike stays a stub"
+  },
+  {
+    "name": "STRIKE-AHEAD-back-forward",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!thrust && (view | 0) === 3) return",
+    "new": "  if (false) return",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "from behind three quarters the weapon strikes behind the body: a guard and a pommel left"
+  },
+  {
+    "name": "STRIKE-AHEAD-handle-drawn",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "c = !thrust ? 'x' : blade === 'x'",
+    "new": "c = !thrust ? 'f' : blade === 'x'",
+    "tests": ["test/player/eyeOfTheBeholder/layered_weapons.test.js"],
+    "why": "the handle drawn over the fist and the arm"
+  }
+]

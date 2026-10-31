@@ -70,7 +70,7 @@ export function createDragonRewards(host) {
     const level = spoilsLevel(entry.ch === who() ? (playerEntity.level ?? 1) : Number(entry.lv) || c.l || 1, c.l);
     return spoilsLock(() =>
       spoils.grant({
-        day: dragonSpoilsDay(c.q),
+        day: dragonSpoilsDay(c.q, c.p),
         acct: c.s,
         roll: () => dragonSpoilsList(c.c, level, c.x),
         text: DRAGON_SPOILS_TEXT.granted(c.b),

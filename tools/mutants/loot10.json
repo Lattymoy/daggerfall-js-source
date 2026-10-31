@@ -319,9 +319,9 @@
   },
   {
     "name": "LOOT10-power-sleeps",
-    "file": "src/systems/loot/lootPowers.js",
-    "old": "  it?.rarity === 'rare' ? it.imprint : null,",
-    "new": "  null,",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "it?.rarity === 'rare' ? it.imprint : null, it?.rarity",
+    "new": "null, it?.rarity",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]

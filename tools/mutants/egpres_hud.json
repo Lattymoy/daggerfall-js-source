@@ -20,8 +20,8 @@
   {
     "name": "EGPRES-the-upright-decrees-unfolded",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "  upright: Object.freeze({ dec: 'fold', lordH: 30, relInChip: true, potion: false, standing: false }),",
-    "new": "  upright: Object.freeze({ dec: 'row', lordH: 30, relInChip: true, potion: false, standing: false }),",
+    "old": "  upright: Object.freeze({ dec: 'fold', lordH: 30, relInChip: true, standing: false }),",
+    "new": "  upright: Object.freeze({ dec: 'row', lordH: 30, relInChip: true, standing: false }),",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGPRES-the-potion-pip-on-a-phone",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',",
-    "new": "    potion: `${potions}/${EG_POTIONS_PER_HALL}`,",
+    "old": "    potion: egPotionPip(potions), // POTION-CLOCK: each kind still waiting (section 17.4) - AUDIT POTION-MIGHT C4: on every layout, standing only while one waits",
+    "new": "    potion: L.standing ? egPotionPip(potions) : '', // POTION-CLOCK: each kind still waiting (section 17.4) - AUDIT POTION-MIGHT C4: on every layout, standing only while one waits",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]

@@ -534,7 +534,7 @@ test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACR
   const cape = (/** @type {any} */ marks, /** @type {number} */ mpp) => auraSpriteBones({ base: 0, mpp, marks })['bip01 l upperarm'][1];
   assert.ok(Math.abs(cape(drawn, 0.02 / A) - cape(full, 0.02)) < 1e-9, 'the cape\'s shoulders at the body\'s own');
   // every reader hands the record's scale over (the world's body, a peer's, the profile's stage)
-  for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(px, width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);
+  for (const f of ['src/player/eyeOfTheBeholder/eotbBody.js', 'src/net/peer/peerRiders.js']) assert.match(rd(f), /spriteMarks\(withoutShield\(px, (?:img|raw)\.shield, width, height, s\.mirror\), width, height, \{ arms: spriteArmsSeen\(s\.view\), art: spriteArtScale\(s\.archive, s\.record\) \}\)/, f);   // PIN MOVED (LAYERED-SHIELD): read without the shield's air
   assert.match(rd('src/render/characterStage.js'), /art: shown\.art,\n\s*\}/);
   assert.match(rd('src/ui/profileBody.js'), /art: spriteArtScale\(s\.archive, s\.record\),\n\s*\};/);
 });

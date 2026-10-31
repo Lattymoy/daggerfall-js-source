@@ -32,12 +32,12 @@
   {
     "name": "DRAGON2-the-site-day-a-gates",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonSiteDay = (o) => DRAGON_SITE_BASE + (dragonRoll(o, 5) % DRAGON_SITE_BASE);",
-    "new": "export const dragonSiteDay = (o) => o.w;",
+    "old": "export const dragonSitePick = (o) => dragonRoll(o, 5);",
+    "new": "export const dragonSitePick = (o) => o.w;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "DRAGON2-the-orbits-pace",
@@ -258,11 +258,12 @@
   {
     "name": "DRAGON2-the-fan-unbounded",
     "file": "server/src/dragonFights.js",
-    "old": "  return Math.hypot(c.x, c.z) <= dragonBrain.DRAGON_FAN_R;",
-    "new": "  return true;",
+    "old": "  if (Math.hypot(c.x, c.z) > dragonBrain.DRAGON_FAN_R) return false;\n  // AUDIT DRAGON-CELL III G7: a fight's words name its site, so a passer-by hears them once its account is granted the",
+    "new": "  // AUDIT DRAGON-CELL III G7: a fight's words name its site, so a passer-by hears them once its account is granted the",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-an-older-game-fought",
@@ -307,15 +308,17 @@
     "new": "  if (false) {",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "DRAGON2-the-hello-handed-nothing",
     "file": "server/src/dragonFights.js",
-    "old": "  say(room, ws, { k: 'rcpt', r: kept.r });\n}",
+    "old": "  for (const x of good) say(room, ws, { k: 'rcpt', r: x.r });\n}",
     "new": "}",
     "tests": [
       "test/net/dragon/dragon2_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): the hub hands each kept receipt."
   }
 ]

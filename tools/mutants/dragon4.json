@@ -29,8 +29,8 @@
   {
     "name": "DRAGON4-two-dragons-a-character",
     "file": "server-account/src/dragons.js",
-    "old": "       SELECT ?4, ?2, ?5, ?6, ?1, ?7 WHERE ?8 = 1 AND ${mine}\n         AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,",
-    "new": "       SELECT ?4, ?2, ?5, ?6, ?1, ?7 WHERE ?8 = 1 AND ${mine}`,",
+    "old": "       SELECT ?4, ?2, ?5, ?6, ?1, ?9, ?7 WHERE ?8 = 1 AND ${mine}\n         AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,",
+    "new": "       SELECT ?4, ?2, ?5, ?6, ?1, ?9, ?7 WHERE ?8 = 1 AND ${mine}`,",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]

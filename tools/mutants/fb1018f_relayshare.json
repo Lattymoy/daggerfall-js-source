@@ -142,8 +142,8 @@
   {
     "name": "RELAY-SHARE-the-breach-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,\n        ),",
-    "new": "        entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX),",
+    "old": "        entity: breachStandIn(\n          hostStandIn(\n            { mobile: look.mobile, name: look.name },\n            b.i,\n            () => wordShare(d.target?.hp, d.target?.m),\n            myBlowX,\n          ),\n        ),",
+    "new": "        entity: breachStandIn(hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX)),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "RELAY-SHARE-the-breach-objects-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
-    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX),",
+    "old": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),",
+    "new": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX)),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "RELAY-SHARE-the-breach-object-reader-stale",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
-    "new": "        entity: crystalStandIn(\n          { mobile: 31, scale: 1 },\n          b.i,\n          (\n            (s0) => () =>\n              s0\n          )(b.max > 0 ? b.hp / b.max : 0),\n          myBlowX,\n        ),",
+    "old": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),",
+    "new": "        entity: breachStandIn(\n          crystalStandIn(\n            { mobile: 31, scale: 1 },\n            b.i,\n            (\n              (s0) => () =>\n                s0\n            )(b.max > 0 ? b.hp / b.max : 0),\n            myBlowX,\n          ),\n        ),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

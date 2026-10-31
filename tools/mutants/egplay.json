@@ -174,8 +174,8 @@
   {
     "name": "EGPLAY-the-spire-unwarded",
     "file": "src/systems/madeLevel.js",
-    "old": "    potions: 'counted',\n    levitate: 'banned',",
-    "new": "    potions: 'counted',\n    levitate: null,",
+    "old": "    potions: 'timed',\n    levitate: 'banned',",
+    "new": "    potions: 'timed',\n    levitate: null,",
     "tests": [
       "test/net/eliteGates/egplay_client.test.js"
     ]

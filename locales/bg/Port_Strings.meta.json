@@ -1339,11 +1339,6 @@
   "tr": "b015a31b54ef",
   "by": "claude-in-session"
  },
- "account.refusal.cacheCapped": {
-  "en": "9104ce44c542",
-  "tr": "444b56c3b5d3",
-  "by": "claude-in-session"
- },
  "account.refusal.cacheClosed": {
   "en": "e8e601ad45b4",
   "tr": "07bc8740396e",
@@ -12574,6 +12569,11 @@
   "tr": "243519033eee",
   "by": "claude-in-session"
  },
+ "eg.potion.wait": {
+  "en": "3ee335241484",
+  "tr": "3a18a0405aef",
+  "by": "claude-in-session"
+ },
  "eg.progress.gauntlet": {
   "en": "83d2b8b37cf7",
   "tr": "fa654fef4cdc",
@@ -20634,9 +20634,9 @@
   "tr": "c55035ba6328",
   "by": "claude-in-session"
  },
- "madeRules.potions": {
-  "en": "88310252fc38",
-  "tr": "93dc963bff65",
+ "madeRules.potionClock": {
+  "en": "74ec7fa1a624",
+  "tr": "b2559a7a6648",
   "by": "claude-in-session"
  },
  "madeRules.regen": {

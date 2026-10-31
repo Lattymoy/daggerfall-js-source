@@ -265,8 +265,8 @@
   {
     "name": "EGZQ-shares-a-joiner-brought-whole",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "p = fs[sub] = { share: L.per * dpsRef(lv), retired: true };",
-    "new": "{ p = fs[sub] = { share: L.per * dpsRef(lv), retired: false }; L.max += p.share; L.hp += p.share; }",
+    "old": "p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: true };",
+    "new": "{ p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: false }; L.max += p.share; L.hp += p.share; }",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "EGZQ-shares-a-joiner-unbrought",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "p = fs[sub] = { share: L.per * dpsRef(lv), retired: true };",
-    "new": "p = fs[sub] = { share: L.per * dpsRef(lv), retired: false };",
+    "old": "p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: true };",
+    "new": "p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: false };",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]
@@ -283,7 +283,7 @@
   {
     "name": "EGZQ-shares-a-joiner-by-level",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "p = fs[sub] = { share: L.per * dpsRef(lv), retired: true };",
+    "old": "p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: true };",
     "new": "p = fs[sub] = { share: L.per * lv, retired: true };",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
@@ -337,7 +337,7 @@
   {
     "name": "EGZQ-shares-the-seam-moves-none",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits)",
+    "old": "egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null); if (!o.admits)",
     "new": "void 0; if (!o.admits)",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "EGZQ-shares-the-seam-admits-all",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits)",
-    "new": "egLordsShare(f.F, sub, lv, true); if (!o.admits)",
+    "old": "egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null); if (!o.admits)",
+    "new": "egLordsShare(f.F, sub, lv, true, o.mg ?? null); if (!o.admits)",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]
@@ -364,7 +364,7 @@
   {
     "name": "EGZQ-shares-director-sizes-no-company",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  const F = egFightNew(spec, now, lvs, subs);\n  F.D = egDecreeRanks(B);\n  if ((B.strata",
+    "old": "  const F = egFightNew(spec, now, lvs, subs, mgs);\n  F.D = egDecreeRanks(B);\n  if ((B.strata",
     "new": "  const F = egFightNew(spec, now, lvs);\n  F.D = egDecreeRanks(B);\n  if ((B.strata",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
@@ -373,7 +373,7 @@
   {
     "name": "EGZQ-shares-a-fall-unjoined",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  if (B.F) EG_SEAM.join(egLordsFight(B.F, null, {}, now), sub, m.name, m.lv, now, null, { admits: false });",
+    "old": "  if (B.F) EG_SEAM.join(egLordsFight(B.F, null, {}, now), sub, m.name, m.lv, now, null, { admits: false, mg: m.mg });",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "EGZQ-shares-no-seen-step",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "for (const b of inHall) { const mm = B.mem[b.sub]; EG_SEAM.join(lf, b.sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home }); }",
-    "new": "for (const b of []) { const mm = B.mem[b.sub]; EG_SEAM.join(lf, b.sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home }); }",
+    "old": "for (const b of inHall) { const mm = B.mem[b.sub]; EG_SEAM.join(lf, b.sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home, mg: mm.mg }); }",
+    "new": "for (const b of []) { const mm = B.mem[b.sub]; EG_SEAM.join(lf, b.sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home, mg: mm.mg }); }",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]

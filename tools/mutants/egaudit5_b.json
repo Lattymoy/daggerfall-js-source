@@ -265,8 +265,8 @@
   {
     "name": "AUDIT EG V L1-8: a fallen member left chained",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits) egUnchain(f.F, sub); }",
-    "new": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits); }",
+    "old": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null); if (!o.admits) egUnchain(f.F, sub); }",
+    "new": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null); }",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]

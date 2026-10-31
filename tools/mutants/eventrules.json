@@ -105,8 +105,8 @@
   {
     "name": "EVENT-RULES-the-potions-everywhere",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (r('potions') === 'counted')\n    out.push(t('madeRules.potions', '{n} restoring potions a hall.', { n: EG_POTIONS_PER_HALL }));",
-    "new": "  if (true) out.push(t('madeRules.potions', '{n} restoring potions a hall.', { n: EG_POTIONS_PER_HALL }));",
+    "old": "  if (r('potions') === 'timed')",
+    "new": "  if (true)",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]

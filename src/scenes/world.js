@@ -365,7 +365,7 @@ import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, pathFreePixel, createSpawnGround, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
-import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
+import { createGateLanes, createTheatreGateScans, pageIdle } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
 import { gateSeatRegion, gateClaimWaits } from './gate/gateSeat.js';   // WW-GATES-EVERYWHERE (A2b): where a gate's kill counts - a lane past the Bay's its own province's
 import { gateScanner, findGateSite, gateSeaPixel } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
@@ -386,7 +386,7 @@ import { openEgStartWindow, egStartAsk, egStartListDoors } from '../ui/eliteGate
 import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the gate's clearing and every standing arch's, one set - STAR-CLEAR: and every fallen star's
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
-import { registerSpirePotionLaw, registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW (two restoring potions a hall); Iron Footing on the spans
+import { registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: Iron Footing on the spans (POTION-CLOCK: the potions' law is the made level's - spireKit.js)
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
 import { accountKetch } from '../net/accountClient.js';   // KETCH: the Ketchmaster's hold - a Tonal Warden's receipt carried to the service
 import { createKetchClient } from './ketch/ketchClient.js';   // KETCH (HOST-SPLIT): the sky-ketch on this screen - the sky over Daggerfall, the anchor-lift, the ship aboard, the hold
@@ -21677,12 +21677,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   let _gateWarming = false;
   const warmGateScan = () => {
-    if (_gateScan || _gateWarming || !maps || typeof globalThis.requestIdleCallback !== 'function') return;
+    const idle = pageIdle();   // AUDIT DRAGON-CELL II E7: a page with no idle callback (Safari) warms on a timer's slices, as the theatres' scans do
+    if (_gateScan || _gateWarming || !maps || !idle) return;
     _gateWarming = true;
-    globalThis.requestIdleCallback(function slice(deadline) {
+    idle(function slice(deadline) {
       // a page that is never idle still gets there: a slice the timeout forced takes 4 ms of rows and asks again soon
       const until = performance.now() + (deadline.didTimeout ? 4 : 0);
-      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { globalThis.requestIdleCallback(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
+      try { if (!gateScanOf(() => deadline.timeRemaining() > 2 || performance.now() < until)) { idle(slice, { timeout: 250 }); return; } } catch (e) { console.warn('[gate] no site', e?.message ?? e); }
       _gateWarming = false;
     }, { timeout: 4000 });
   };
@@ -22280,7 +22281,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   registerMadeLevelHere(() => modes?.madeLevel?.() ?? null, () => !!egClient?.onTraverse?.() || !!ketch?.onTraverse?.());   // KETCH: and the Sailwalk   // EG-H2 (Elite-Gates.md section 24): where the player stands, for the made level's doors with no host in reach (an item, a technique, the motor) - and the Spire's traversal ground (section 10.7)
   registerJumpForgiveness(() => madeRuleHere('jumpBuffer'), () => madeRuleHere('latePress'));   // EG-H2 (section 10.8): THE FORGIVENESS - the Spire's jump buffer and late press; elsewhere none, DFU's motor
   registerPlayerDamageMod('eg-witness', (e, d) => (egClient?.witnessing() ? 0 : d));   // EG-FULL: no blow reaches a witness
-  registerSpirePotionLaw(egClient ? { allowed: () => egClient.potionAllowed(), used: () => egClient.potionUsed() } : null);   // EG-FULL: THE POTION LAW's count
   registerSpireFooting(egClient ? () => egClient.footing() : null);   // EG-FULL LAYER TWO: Iron Footing against the spans' Gust and Pendulum
   registerSpireWake(egClient ? () => { const E = egClient.state(); return { h: E.h | 0, hw: E.hw || 0, tm: E.tm || 0 }; } : null);   // EG-FULL LAYER TWO: a Falling Wall falls from its hall's wake; EG-PERFECT: a routed hall's tube from the company at its mouth
   registerSpireObjs(egClient ? () => egClient.objs() : null);   // EG-FULL LAYER THREE: Grath's islands fall, the false walls stand, as the relay says

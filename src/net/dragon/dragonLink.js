@@ -2,7 +2,7 @@
 // DRAGON3 (bible/11-Multiplayer/Dwarven-Dragon.md sections 4 and 9): WHAT THE CLIENT HOLDS OF A DRAGON'S FIGHT - the cell's
 // words (net/wire.js validDragonOut) folded into one state: its look, phase, health, mode, ward, the plan its body flies
 // (net/dragon/dragonBody.js planAt walks it as the relay does), its blows in flight, its fall and its leaving; and this
-// account's receipts by watch. The serpent's link's twin (net/serpent/serpentLink.js): only this machine's own site's words
+// account's receipts by watch and place. The serpent's link's twin (net/serpent/serpentLink.js): only this machine's own site's words
 // are folded, so a forged site's fight is never drawn as mine. `foldDragon` is pure. Not a DFU member. Ledger A (DRAGON).
 import { readDragonReceipt } from './dragonReceipt.js';
 import { dragonSiteKey } from './dragonLaw.js';
@@ -118,7 +118,7 @@ export function foldDragon(s, w, now) {
 }
 
 /**
- * The link: the state of this machine's own site's fight, the receipts by watch, a refusal said once until the fight is
+ * The link: the state of this machine's own site's fight, the receipts by watch and place, a refusal said once until the fight is
  * left. `site()` this machine's site for the dragon the clock is about (`{w, sx, sz}`, null unknown); `onReceipt` hears each
  * new receipt once.
  * @param {{now: () => number, say?: (code: string) => void, onReceipt?: (r: string) => void, site?: () => ({w: number, sx: number, sz: number}|null)}} deps
@@ -140,19 +140,20 @@ export function createDragonLink({ now, say = () => {}, onReceipt = () => {}, si
         return;
       }
       if (w.k === 'rcpt') {
-        const c = readDragonReceipt(w.r);
-        if (c && !receipts.has(c.q)) {
-          receipts.set(c.q, w.r);
+        const c = readDragonReceipt(w.r),
+          k = c ? `${c.q}|${c.p ?? -1}` : null;
+        if (k && !receipts.has(k)) {
+          receipts.set(k, w.r);
           onReceipt(w.r);
         }
         return;
-      }
+      } // DRAGON-EACH: one a dragon
       const mine = site();
       if (!mine || w.w !== mine.w || !sameDragonSite(mine, w)) return;
       state = foldDragon(state, w, now());
     },
     state: () => state,
-    receipt: (w) => receipts.get(w) ?? null,
+    receipt: (w, p = -1) => receipts.get(`${w}|${p}`) ?? null,
     /** Out of its fight: the state forgotten, a refusal said again next time. */
     leave() {
       state = DRAGON_STATE_EMPTY;

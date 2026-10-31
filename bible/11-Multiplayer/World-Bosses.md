@@ -2806,7 +2806,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   most one blow lands at any relay: the gate's cap at LV_MAX (780) grown by the most a breach's bucket grows, over the
   serpent's (SERPENT_HIT_CAP_X of a galley's reference, 182) and a bout's (`arenaBlowCap`, 122 at most); and under the least
   ceiling nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Every stand-in stands at it
-  (`gateBoss.js:"e.maxHealth = e.health"`). A Disintegrate counts it whole, every wire carries it and
+  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`). A Disintegrate counts it whole, every wire carries it and
   the relay's own law weighs and clips it - his stun heavier, an Unyielding ward 15% lighter (975 of it still past the cap
   at the level cap), the bucket. The serpent's door already held its claim to 5,000; it carries the whole as it is.
 - **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown"`):

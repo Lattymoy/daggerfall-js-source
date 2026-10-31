@@ -451,7 +451,7 @@
   },
   {
     "name": "MARTIAL2-the-half-not-doubled",
-    "file": "src/systems/weaponMastery.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const WEAPON_HALF_PER_POINT = 2 * WEAPON_POTENCY_PER_POINT;",
     "new": "export const WEAPON_HALF_PER_POINT = 1.5 * WEAPON_POTENCY_PER_POINT;",
     "tests": [

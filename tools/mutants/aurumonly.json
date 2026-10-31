@@ -101,8 +101,8 @@
   {
     "name": "CACHES-ONCE-BALANCE-the-Aurum-left-at-twenty-five",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_AURUM = 10;",
-    "new": "export const AURUM_CACHE_AURUM = 25;",
+    "old": "export const AURUM_CACHE_AURUM_MAX = 10;",
+    "new": "export const AURUM_CACHE_AURUM_MAX = 25;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]

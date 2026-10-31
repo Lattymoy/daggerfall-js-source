@@ -17,7 +17,7 @@ import { WILD_TEXT, zoneWord } from '../../systems/wild/wildZone.js';
 import { zoneSafe, ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js'; // ZONE-SAFE: a settlement's streets are peace
 import { madeLevelRule } from '../../systems/madeLevel.js'; // EVENT-RULES: what a world event's made level holds
 import { REGEN_HELD_HURT_MS, regenHeldNow } from '../../systems/courtRules.js';
-import { EG_POTIONS_PER_HALL } from '../eliteGates/egHud.js';
+import { PVP_POTION_MS } from '../../combat/pvpPotions.js'; // POTION-CLOCK: the wait a made level's potions keep
 import { SD_REZ_MS } from '../../net/superDungeon/sdLaw.js'; // SD-REZ: the Hour's window for a friend's Resurrect
 import { SD_REZ_PAGE_SLACK_MS } from '../../systems/superDungeon/sdSlots.js'; // AUDIT WORLD-EVENTS L1-5: the page's own part of it
 import { mentorTipCard } from '../../systems/mentorText.js'; // MENTOR2: the mentor's tile, in its own words
@@ -309,8 +309,12 @@ export function madeRulesLines(level) {
     );
   if (r('portalStone') === 'refused') out.push(t('madeRules.noPortal', 'No Portal Stone.'));
   if (r('companions') === 'out') out.push(t('madeRules.companions', 'Companions wait outside.'));
-  if (r('potions') === 'counted')
-    out.push(t('madeRules.potions', '{n} restoring potions a hall.', { n: EG_POTIONS_PER_HALL }));
+  if (r('potions') === 'timed')
+    out.push(
+      t('madeRules.potionClock', 'Each kind of potion waits {s} seconds after the last one.', {
+        s: PVP_POTION_MS / 1000,
+      }),
+    );
   if (r('levitate') === 'banned')
     out.push(
       r('slowfall') === 'banned'

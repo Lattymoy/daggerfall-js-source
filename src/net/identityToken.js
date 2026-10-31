@@ -506,7 +506,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, sc?: 1, ar?: number, cl?: number, wa?: [number, 0|1], vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, sc?: 1, ar?: number, cl?: number, wa?: [number, 0|1], mg?: number, vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -545,7 +545,7 @@ export function nameIsIssuable(name) {
  *      and 1 where a lawful bow is among them; beside a 1 `rc` alone,
  *      absent before its first judged checkpoint and from a service
  *      before INT7. Every referee's clip of a blow between players
- *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap)
+ *      (net/siege/siegeRef.js siegeBlowMax, net/arena/arenaLaw.js arenaBlowCap); `mg` that character's MIGHT (EG-MIGHT, net/mightLaw.js), beside a 1 `rc` alone - an Elite Breach's purse grows by it
  *   hd 1 on a HIDDEN STAFF SPECTATOR's token (STAFF-PANEL5-HIDDEN, mob: "true
  *      invis not lattys invis"), absent on every other: an Admin's or a
  *      Moderator's while they hold a live staff session with Hide me on.
@@ -583,6 +583,12 @@ export const armsIssuable = (wa) =>
   wa[0] >= 0 &&
   wa[0] <= TOKEN_ARMS_TOP_MAX &&
   (wa[1] === 0 || wa[1] === 1);
+/** EG-MIGHT: a might's bounds on a token (net/mightLaw.js MIGHT_NONE and MIGHT_MOST, pinned equal - this leaf imports only
+ *  the token's). */
+export const TOKEN_MIGHT_MIN = 100;
+export const TOKEN_MIGHT_MAX = 1000;
+/** EG-MIGHT: a might a token may carry - a whole per cent in bounds. */
+export const mightIssuable = (mg) => Number.isSafeInteger(mg) && mg >= TOKEN_MIGHT_MIN && mg <= TOKEN_MIGHT_MAX;
 
 /** PVP-VILLAIN-KEEP: the villain meter's top on a token (systems/wild/villainLaw.js VILLAIN.max, pinned - this leaf imports
  *  only the token's). */
@@ -680,6 +686,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;
   // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused
   if (c.wa !== undefined && !(c.rc === 1 && armsIssuable(c.wa))) return false;
+  if (c.mg !== undefined && !(c.rc === 1 && mightIssuable(c.mg))) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone
   if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone
   if (!houseClaimOk(c)) return false; // LEGACY7: the house - absent for none, each field of its shape or refused
   // STAFF-PANEL5 (design doc "DFO Staff Panel: design", Invisible follow; the hidden builder's claim and the follow
@@ -711,7 +718,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, sc?:1, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, sc?:1, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], mg?:number, vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -743,6 +750,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.ar !== undefined) claims.ar = who.ar; // ARENA4: only for a registered account - a guest mints the bytes it always did
   if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before
   if (who?.wa !== undefined) claims.wa = who.wa; // INT7: only for a realm character judged since - before one, the bytes as before
+  if (who?.mg !== undefined) claims.mg = who.mg; // EG-MIGHT: only for a realm character judged since - before one, the bytes as before
   if (who?.vl !== undefined) claims.vl = who.vl; // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before
   // LEGACY7: only for a realm character of a Project Legacy line - a character of none, the bytes as before
   if (who?.hn !== undefined) {

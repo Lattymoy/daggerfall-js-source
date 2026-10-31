@@ -472,15 +472,15 @@ whole blow can land, at most ~300 at level 20 and 780 at 60. Duels had met the s
 had been patched at its own producer (AUDIT WBX F1).
 
 THE FIX - ONE WHOLE, ONE DOOR.
-- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975), at the
-  stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`): the most one blow lands at any relay - the gate's cap
+- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE"`, 975), at the
+  stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`): the most one blow lands at any relay - the gate's cap
   at LV_MAX (780) grown by the most a breach's bucket grows - over the serpent's (182) and a bout's (122), under the least
   ceiling nobody clamps (the bout's 10,000) with the rest of a spell's room beside it. A Disintegrate counts it whole, every
   wire carries it, and the relay weighs and clips it by its own law (a stun heavier; an Unyielding ward 15% lighter, 975 of
   it still past the cap at the level cap; the bucket). Pinned against the real constants and every validator.
 - **The number** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
   min(the claim, my one-blow cap at my level) - an Elite Breach's grown by my Vestiges' declared factor, which egFight hands its
-  stand-ins (`egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
+  stand-ins (`egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
   (ARENA_SPELL_MAX, 60). The paths' riders are told the same (`took` - what the foe could lose, AUDIT SCHOOLS L1 M6). The claim
   still goes out whole: clipped here, it would lose what the relay weighs before its cap.
 - **The door is one** (HOST-SPLIT): `spellOnBoss`, `spellOnCrystal`, `spellOnHost` and `spellOnRival` were four copies in
@@ -633,7 +633,7 @@ times, and the door opened. So the law held, and everything that tells it pointe
 - The words: the objective was `gauntlet: 'Silence the casters.'` (`EG_OBJECTIVES`) and the line
   `` `Casters left: ${pg.left ?? 0}` `` (`egProgressText`). Neither named a plate, and "left" read as a body count.
 - The screen: nothing on the client read `spots.pillar[].plate`. WINCH-PLATES (2026-10-18d) marked the Winch's plates
-  (`egFight.js:"  function winchPlates(F, t) {"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
+  (`egFight.js:"function winchPlates"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
   would cut the slope". That was law 9's lay. From spec law 10 (THE BROKEN WAY) each plate stands on its pillar's flat top,
   beside its stair's head.
 
@@ -643,17 +643,17 @@ THE FIX.
   (`egBrain.js:"P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);"`) and at
   every beat (`egBrain.js:"      F.pg.silenced = F.gauntlet.map((g) => g.done);"`). The wire's `egProgress` already
   passes a short list of numbers (DUEL-RING's `ring` rides the same way), and `left` is unchanged.
-- THE SCREEN MARKS THEM. `egFight.js:"  function gauntletPlates(F, t) {"`, beside `winchPlates`, draws each plate in play
+- THE SCREEN MARKS THEM. `egFight.js:"function gauntletPlates"`, beside `winchPlates`, draws each plate in play
   as the Winch's are drawn through the trial: gold, `EG_TOUCH_M` about, on its own surface. Its height is its ground's,
-  `egFight.js:"export function egPlateY(spec, q) {"`: the pillar's top (2 m) from law 10, the stair's height under it at
+  `egFight.js:"export function egPlateY"`: the pillar's top (2 m) from law 10, the stair's height under it at
   laws 8 and 9, and the walkway's floor before them. A plate whose word says silenced dims to the unlit rune's 0.35
-  (`egFight.js:"sh.alpha = said?.[j] ? 0.35 : 0.85;"`), so a company sees which plates are still to hold. A pillar the
+  (`egFight.js:"sh.alpha = said?.[j]"`), so a company sees which plates are still to hold. A pillar the
   company was not given is not marked (the hall lays six, and a company of n is given `2 + ceil(n/2)`). A screen facing a
   relay before world232 gets no `silenced`, so it draws every plate the hall lays while `left` is above nought
-  (`egFight.js:"    if (!said && !(F.pg.left > 0)) return;"`).
+  (`egFight.js:"if (!said && !(F.pg.left > 0))"`).
 - THE WORDS NAME BOTH WAYS. The objective is *Silence each caster: stand on its plate, or slay it.* and the line is
   *Casters left: 3. Hold a plate 3 s or slay its caster*, its seconds `EG_SILENCE_MS`'s. Both are said in the player's language through the catalog
-  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText = (spec) =>"`,
+  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText"`,
   which the tracker's line, the Spire HUD's chip and the arrival card all read. It is the first objective said in the
   player's language; the rest stay the law's English. The English catalog was regenerated (`tools/l10nExtract.mjs`), the
   thirteen finished languages were drafted in-session (`tools/l10nInSession.mjs`, recorded as the machine's), and the
@@ -1266,21 +1266,21 @@ read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since t
 could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
-(`review.js:"async function mendAct(ctx, row, by, note, body) {"`; its law
+(`review.js:"async function mendAct"`; its law
 `repairLaw.js:"export function applyPurseMend(save, { was, gold }) {"`, the service's and the tool's). The record's
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays
 for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds(tradePrice,"`, DaggerfallTradeWindow's
 sell arm), so it is how an honest sale of a lot that big pays; a purse of coin would weigh tonnes. The act shares the
-repair's machinery, which both run now (`review.js:"async function staffMend(ctx, row, kind, ticket, change, steps, answer) {"`):
+repair's machinery, which both run now (`review.js:"async function staffMend"`):
 a developer's alone, the dead never, once a ticket in `realm_repairs` (a mend's row names no faction and no bit, 0 and 0,
 `was` the purse it found and `gold` the letter - so no migration; a ticket names one act, and the other kind's is
 `repair-ticket`), the record seized one sequence on with its seat taken from any tab, the gold witnessed and counted as
 the `repair` faucet, the act written among the findings. AND THE HOLD THE PURSE MADE GOES WITH IT. When the hold is the
 law's, the finding it stands on is the purse's alone (`PURSE_SIG`, `lawSigOf` of the judge's `gold`) and no timed hold
 stands, the mend lifts it as the next clean checkpoint would
-(`review.js:"const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);"`): the hold
+(`review.js:"const lift = row.held"`): the hold
 and its signature go, `judge_rev` moves one on, guarded on the judgement the act read. The strike stands and fades as
 every strike does - which strike the purse struck, the row does not say. Any other hold stands: the law's beside another
 finding and a timed one are the next checkpoint's, and staff's own is staff's. `realm-findings` says the purse

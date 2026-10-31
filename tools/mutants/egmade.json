@@ -20,8 +20,8 @@
   {
     "name": "EGMADE-the-spire-glides",
     "file": "src/systems/madeLevel.js",
-    "old": "    potions: 'counted',\n    levitate: 'banned',\n    slowfall: 'banned',\n    techFlight: 'refused',",
-    "new": "    potions: 'counted',\n    levitate: 'banned',\n    slowfall: null,\n    techFlight: 'refused',",
+    "old": "    potions: 'timed',\n    levitate: 'banned',\n    slowfall: 'banned',\n    techFlight: 'refused',",
+    "new": "    potions: 'timed',\n    levitate: 'banned',\n    slowfall: null,\n    techFlight: 'refused',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -209,15 +209,6 @@
     "file": "src/combat/techniques.js",
     "old": "    if (madeRuleHere('techFlight') === 'refused' && madeOnTraverse()) return madeSaysHere('techFlight');",
     "new": "    if (madeRuleHere('techFlight') === 'refused') return madeSaysHere('techFlight');",
-    "tests": [
-      "test/systems/eliteGates/egmade_law.test.js"
-    ]
-  },
-  {
-    "name": "EGMADE-the-count-everywhere",
-    "file": "src/systems/eliteGates/spireKit.js",
-    "old": "  if (madeRuleHere('potions') !== 'counted' || !_law || !isRestoringPotion(item)) return null;",
-    "new": "  if (!_law || !isRestoringPotion(item)) return null;",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]

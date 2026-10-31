@@ -169,7 +169,7 @@
   {
     "name": "WIREAUDIT-6-the-floor-unsaid",
     "file": "src/net/wire.js",
-    "old": " ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
+    "old": "its ROLLBACK FLOOR: world297 while acct230 or later mints `gb`",
     "new": "",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "WIREAUDIT-9-the-kill-fields-misnamed",
     "file": "src/net/wire.js",
-    "old": "a pose's kill (`xk`, `xp`, `xh`)",
-    "new": "a pose's kill (`kc`, `kp`, `ks`)",
+    "old": "(STOREFRONT): a pose's kill (`xk`, `xp`, `xh`)",
+    "new": "(STOREFRONT): a pose's kill (`kc`, `kp`, `ks`)",
     "tests": [
       "test/net/storefront_wireaudit.test.js"
     ],

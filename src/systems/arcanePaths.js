@@ -104,6 +104,15 @@ export const PATH_NUMBERS = Object.freeze({
   sanctify: Object.freeze({ chance: 30, rounds: 6 }),
 });
 const N = PATH_NUMBERS;
+/** AUDIT POTION-MIGHT A5: the most each path's passive adds to a damage spell (per cent) - arcanePowers.js wholeSpellPower at
+ *  its best moment; the account judge's kit might reads it (net/kitMight.js). A path with no spell power is not here. */
+export const PATH_SPELL_MOST = Object.freeze({
+  battlemage: N.spellsteel.pct,
+  shadowcaster: N.unseenStrike.pct,
+  bloodmage: N.sanguine.most,
+  elementalist: N.conflux.pct * N.conflux.stacks,
+  lightbringer: N.dawnsWard.pct,
+});
 const pc = (x) => Math.round(x * 100); // a share, as the percent the words print
 
 // THE SIGNATURE SPELLS' NAMES IN ENGLISH - each one home, read by its words' t() below and minted into the record

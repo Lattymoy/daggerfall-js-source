@@ -3764,8 +3764,11 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
+      // TURN-FREE (2026-10-31, the owner: "Allow players to view all rotations of their character when idle or moving in a
+      // direction with the camera facing another direction"): the bundle ships 2, When Weapon Readied, and a readied body
+      // only ever showed its back. The port ships 1: it faces the camera only while a blow or a cast plays.
       'Graphics.TurnToView': Object.freeze({
-        default: 2,
+        default: 1,
         options: lazyWords(
           () => t('mods.eyeOfTheBeholder.option.never', 'Never'),
           () => t('mods.eyeOfTheBeholder.option.onlyWhenAnimating', 'Only When Animating'),

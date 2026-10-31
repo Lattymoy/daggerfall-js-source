@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-was-unread",
     "file": "server-account/src/realm.js",
-    "old": "    (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally",
-    "new": "    NULL AS census_tally",
+    "old": "    (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally,",
+    "new": "    NULL AS census_tally,",
     "why": "the checkpoint cannot tell an unchanged tally",
     "tests": [
       "test/server/staffpanel4census.test.js"

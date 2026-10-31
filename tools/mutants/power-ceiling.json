@@ -254,9 +254,9 @@
   },
   {
     "name": "POWER-CEILING-a-tier-dropped-from-the-measure",
-    "file": "tools/powerCeiling.mjs",
-    "old": "  'bound-in-silk': (v) => v.more,\n  undertow: (v) => v.more, // the open sea",
-    "new": "  undertow: (v) => v.more, // the open sea",
+    "file": "src/systems/powerBlows.js",
+    "old": "  'bound-in-silk': (/** @type {any} */ v) => v.more,\n",
+    "new": "",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

@@ -14,7 +14,7 @@ import { TITLES, GLYPHS, ICONS, AURAS } from '../../src/net/identityToken.js';
 import { effectOf } from '../../src/net/effectLaw.js';
 import { shopWareById } from '../../src/net/shopLaw.js';
 import { AURUM_DAILY, AURUM_DEEDS } from '../../src/net/aurumLaw.js';
-import { AURUM_CACHE_AURUM } from '../../src/net/aurumCacheLaw.js';
+import { AURUM_CACHE_AURUM_MIN, AURUM_CACHE_AURUM_MAX } from '../../src/net/aurumCacheLaw.js';
 
 const S1 = passSeasonById('s1');
 const DAY = 86_400_000;
@@ -74,8 +74,9 @@ test('PASS-PANELS the prices: the free track costs 2,300 Aurum, the premium 1,00
   assert.ok(30 * PASS_DAY_AURUM >= sum(free), 'the free track inside a month of finds');
   assert.ok(days * PASS_DAY_AURUM + challenges >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium.slice(0, -1)) - 2000, 'both tracks but the capstone within reach of the season, a little short without the deeds and caches');
   const deeds = Object.values(AURUM_DEEDS).reduce((a, n) => a + n, 0) * (days / 7);
-  // PIN MOVED (CACHES-ONCE): two caches a day at 25; now a dedicated day's, six new dungeons of ten at 10 - about the same Aurum
-  assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 6 * AURUM_CACHE_AURUM >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and a dedicated day\'s caches');
+  // PIN MOVED (CACHE-SPREAD): six new dungeons a day at 10; now 5 to 10 a cache, 7.5 on the mean, so seven (CACHES-ONCE: two caches a day at 25)
+  const cache = (AURUM_CACHE_AURUM_MIN + AURUM_CACHE_AURUM_MAX) / 2;
+  assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 7 * cache >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and seven new dungeons a day');
 });
 
 test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, its season\'s tracks not open yet, held, the premium track shut, its panel shut - in that order; bought on an open panel once the track opens it; the tracks sell from the season\'s first instant for good (mutants: a premium item sold on a shut track; a shut panel sold; the tracks closed with the season)', () => {

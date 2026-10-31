@@ -42,7 +42,7 @@
   {
     "name": "STAND-IN-WHOLE-the-factor-unclamped",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);",
+    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(BLOW_X_MAX, bx)) : 1);",
     "new": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, bx) : 1);",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAND-IN-WHOLE-the-factor-unfloored",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);",
-    "new": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.min(EG_BUCKET_X_MAX, bx) : 1);",
+    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(BLOW_X_MAX, bx)) : 1);",
+    "new": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.min(BLOW_X_MAX, bx) : 1);",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-reader-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,\n        ),",
-    "new": "        entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m)),",
+    "old": "          hostStandIn(\n            { mobile: look.mobile, name: look.name },\n            b.i,\n            () => wordShare(d.target?.hp, d.target?.m),\n            myBlowX,\n          ),",
+    "new": "          hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m)),",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-objects-reader-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
-    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp),",
+    "old": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),",
+    "new": "        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp)),",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-reader-answers-one",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1;",
-    "new": "    return 1;",
+    "old": "    return (E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1) * egPurseX(link.might?.());",
+    "new": "    return 1 * egPurseX(link.might?.());",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],

@@ -56,20 +56,22 @@
   {
     "name": "AUDIT-DRAGON-none-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k);",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k);",
     "new": "  for (const [k] of kept) {\n    last = k;",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-the-live-one-swept",
     "file": "server/src/dragonFights.js",
-    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k);",
+    "old": "  for (const [k, v] of kept) {\n    last = k;\n    if (!keptOf(v).some((x) => now < x.e * 1000)) dead.push(k);",
     "new": "  for (const [k] of kept) {\n    last = k;\n    dead.push(k);",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-EACH): an account's keep a list."
   },
   {
     "name": "AUDIT-DRAGON-no-retry",
@@ -87,17 +89,18 @@
     "new": "    noRcpt: new Map(),",
     "tests": [
       "test/net/dragon/dragonaudit_relay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II). Re-aimed by content (AUDIT DRAGON-CELL III)."
   },
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",
     "file": "src/net/wire.js",
-    "old": "export const DRAGON_RELAY_MIN = 294;",
-    "new": "export const DRAGON_RELAY_MIN = 293;",
+    "old": "export const DRAGON_RELAY_MIN = 299;",
+    "new": "export const DRAGON_RELAY_MIN = 298;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-the-route-unlisted",

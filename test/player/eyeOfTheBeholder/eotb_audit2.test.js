@@ -319,7 +319,10 @@ test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and
 // THE FACING, THE ORIENTATION CLOCK, THE STRIDE, THE HIDES [IL]
 // ─────────────────────────────────────────────────────────────────
 
-test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async () => {
+test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async (t) => {
+  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
+  setModSetting(MOD, 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
   const { b } = await liveBody();
   // walking toward +z with the camera behind: the back
   ticks(b, 20, walk());

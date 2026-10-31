@@ -1005,7 +1005,7 @@ shape it would take.
 - 48 (sent from 0.0.256): Field-Bugs-2026-10-19f BOSS-DOT. The relay's bodies carry a spell's lasting rounds
   (`scenes/gate/standInSpell.js` createStandInRounds, ticked by `dungeonContext.js:"standInRound();"`).
 - 55 (0.0.256): Field-Bugs-2026-10-19f STAND-IN-WHOLE. A stand-in holds a count the wire carries
-  (`world/gate/gateBoss.js:"e.maxHealth = e.health"`), so a Disintegrate's claim is landed, not refused.
+  (`world/gate/gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`), so a Disintegrate's claim is landed, not refused.
 - 34 (0.0.244): Field-Bugs-2026-10-19f DUEL-BAR, the owner's call. The duel's vitality is shown on the player's own bar
   (`net/duel/duelBar.js` duelVitality).
 

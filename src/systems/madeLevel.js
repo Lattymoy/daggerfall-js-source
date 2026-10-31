@@ -18,7 +18,7 @@
 // The Burning Court and the Hour were re-plugged unchanged (EG7) - every value for them what their doors did before this
 // law, pinned by their own tests and by the law's - and EVENT-RULES moved two rows since (AUDIT WORLD-EVENTS L5-14): their
 // regeneration held, not off, and no level refusing a party member's Resurrect. The Spire's column is section 24's, with
-// THE POTION LAW, THE FORGIVENESS (section 10.8), the flight bans (section 10.7), AvoidDeath refused and DEATH-PENALTY none.
+// THE POTION CLOCK (POTION-CLOCK, section 17.4), THE FORGIVENESS (section 10.8), the flight bans (section 10.7), AvoidDeath refused and DEATH-PENALTY none.
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { isGateArena, COURT_TEXT } from '../world/gate/gateArena.js';
@@ -58,8 +58,8 @@ export const EG_NO_FLIGHT_TEXT = "The Spire's spans are walked, not flown.";
  *   companions    'out'      - GATE-ALONE, SD-ALONE: lifted at the door, stood again outside
  *   regen         'held'     - the court's law (systems/courtRules.js): natural regeneration at half, and none for 5 s
  *                              after a hurt (EVENT-RULES - it was 'off', WBX6's)
- *   potions       'counted'  - THE POTION LAW: two restoring potions a hall (systems/eliteGates/spireKit.js, the count the breach's
- *                              client keeps - ui/eliteGates/egHud.js EG_POTIONS_PER_HALL)
+ *   potions       'timed'    - THE POTION CLOCK: every potion drunk, each kind 15 s after the last of its kind (combat/pvpPotions.js,
+ *                              run by systems/eliteGates/spireKit.js - POTION-CLOCK)
  *   levitate      'banned'   - the Levitate ward (characters/playerEntity.js registerLevitateWard)
  *   slowfall      'banned'   - the motor's slow fall written false (the effect still runs)
  *   techFlight    'refused'  - a weapon technique's leap or dash, on traversal ground
@@ -156,7 +156,7 @@ export const MADE_LEVEL_RULES = Object.freeze({
     portalStone: 'refused',
     companions: 'out',
     regen: 'held',
-    potions: 'counted',
+    potions: 'timed',
     levitate: 'banned',
     slowfall: 'banned',
     techFlight: 'refused',

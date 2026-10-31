@@ -1,11 +1,12 @@
 // @ts-check
 // DRAGON2 (bible/11-Multiplayer/Dwarven-Dragon.md section 8): A DRAGON'S RECEIPT, the serpent's twin and read rung for rung
-// as it is: z1.<base64url({ q the watch, b the look (1 the Aetherbright), s the account, c the hoard's seed, x 'dealt' or
-// 'stood', l the level, m? the relay's body count, i issued, e expires })>.<Ed25519 signature>. The version is inside the
+// as it is: z1.<base64url({ q the watch, p? the place (DRAGON-EACH), b the look (1 the Aetherbright), s the account, c the
+// hoard's seed, x 'dealt' or 'stood', l the level, m? the relay's body count, i issued, e expires })>.<Ed25519 signature>. The version is inside the
 // signed bytes, and the claim shapes are disjoint (a dragon's `q` no other carries; their fields refused here), so no
 // verifier takes another's. A relay with no key sends it unsigned and the service declines it. Pure. Ledger A (DRAGON).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from '../identityToken.js';
 import { bodyMeasureValid } from '../bossBody.js';
+import { DRAGON_PLACES } from './dragonLaw.js';
 
 /** The only version this file reads or writes. */
 export const DRAGON_RECEIPT_V = 'z1';
@@ -25,6 +26,7 @@ export function dragonReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   for (const k of ['d', 'h', 'w', 'y', 'n', 'k', 't', 'o', 'r']) if (c[k] !== undefined) return false;
   if (!Number.isSafeInteger(c.q) || c.q < 0) return false;
+  if (c.p !== undefined && !(Number.isSafeInteger(c.p) && c.p >= 0 && c.p < DRAGON_PLACES)) return false; // DRAGON-EACH: none from a relay before it
   if (c.b !== 0 && c.b !== 1) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
@@ -37,13 +39,24 @@ export function dragonReceiptValid(c) {
 
 /**
  * MINT - the relay's half. With no key the receipt goes out unsigned (`z1.<body>.`) - the seed still rides it.
- * @param {{q: number, b: number, s: string, c: number, x: string, l: number, m?: number[]}} what
+ * @param {{q: number, p?: number, b: number, s: string, c: number, x: string, l: number, m?: number[]}} what
  * @param {CryptoKey|null} privateKey @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */
-export async function mintDragonReceipt({ q, b, s, c, x, l, m }, privateKey, { subtle, nowS }) {
+export async function mintDragonReceipt({ q, p, b, s, c, x, l, m }, privateKey, { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintDragonReceipt needs an integer epoch-seconds clock');
-  const claims = { q, b, s, c, x, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + DRAGON_RECEIPT_TTL_S };
+  const claims = {
+    q,
+    ...(p !== undefined ? { p } : {}),
+    b,
+    s,
+    c,
+    x,
+    l,
+    ...(m !== undefined ? { m } : {}),
+    i: nowS,
+    e: nowS + DRAGON_RECEIPT_TTL_S,
+  };
   if (!dragonReceiptValid(claims)) throw new TypeError('mintDragonReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${DRAGON_RECEIPT_V}.${body}.`;

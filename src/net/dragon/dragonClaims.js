@@ -11,7 +11,7 @@ import { readDragonReceipt } from './dragonReceipt.js';
 import { DRAGON_CLAIM_TEXT } from '../../systems/dragon/dragonWords.js';
 import { noteAct } from '../../systems/questlines/qlActs.js';
 
-/** The device's receipts not yet settled: `[{ r, ch, nm, lv, cid }]`; those settled - `watch|account` - never claimed again. */
+/** The device's receipts not yet settled: `[{ r, ch, nm, lv, cid }]`; those settled - `watch|place|account` (DRAGON-EACH) - never claimed again. */
 export const DRAGON_CLAIMS_KEY = 'dragon4.claims';
 export const DRAGON_SETTLED_KEY = 'dragon4.settled';
 export const DRAGON_SETTLED_MAX = 32;
@@ -28,7 +28,7 @@ const mintCid = () => {
   globalThis.crypto.getRandomValues(b);
   return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 };
-const settledKeyOf = (c) => `${c.q}|${c.s}`;
+const settledKeyOf = (c) => (c.p === undefined ? `${c.q}|${c.s}` : `${c.q}|${c.p}|${c.s}`); // DRAGON-EACH: one a dragon; a receipt from before it, one a watch
 
 /** What the service's answer does to a kept receipt: 'done' (let it go) or 'keep'. */
 export function dragonClaimVerdict(answer) {
@@ -181,7 +181,7 @@ export function createDragonClaims({
   }
 
   return {
-    /** A receipt the relay handed this socket, with the character that fought it and its level: kept (one a watch AND
+    /** A receipt the relay handed this socket, with the character that fought it and its level: kept (one a dragon AND
      *  account; never one this device settled) and offered at once. Answers whether it is kept. */
     add(r, character, name = null, level = 1) {
       const c = live(r);
@@ -197,7 +197,7 @@ export function createDragonClaims({
       if (
         !list.some((k) => {
           const o = readDragonReceipt(k.r);
-          return k.r === r || (o?.q === c.q && o?.s === c.s);
+          return k.r === r || (o?.q === c.q && o?.p === c.p && o?.s === c.s);
         })
       ) {
         keep(

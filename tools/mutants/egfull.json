@@ -244,37 +244,10 @@
     ]
   },
   {
-    "name": "EGFULL-the-potions-never-refilled",
-    "file": "src/scenes/eliteGates/egClient.js",
-    "old": "potionHall !== pk) { potionHall = pk; potions = EG_POTIONS_PER_HALL; potionsKeep(); }",
-    "new": "potionHall !== pk) { potionHall = pk; potionsKeep(); }",
-    "tests": [
-      "test/net/eliteGates/egfull_client.test.js"
-    ]
-  },
-  {
     "name": "EGFULL-a-card-key-ignored",
     "file": "src/scenes/eliteGates/egClient.js",
     "old": "      if (m && E.offer?.v?.length) {",
     "new": "      if (false) {",
-    "tests": [
-      "test/net/eliteGates/egfull_client.test.js"
-    ]
-  },
-  {
-    "name": "EGFULL-a-stamina-potion-counted",
-    "file": "src/systems/eliteGates/spireKit.js",
-    "old": "    .filter((r) => r.effect === SPIRE_RESTORING_EFFECT || (r.secondary ?? []).includes(SPIRE_RESTORING_EFFECT))",
-    "new": "    .filter((r) => true || (r.secondary ?? []).includes(SPIRE_RESTORING_EFFECT))",
-    "tests": [
-      "test/net/eliteGates/egfull_client.test.js"
-    ]
-  },
-  {
-    "name": "EGFULL-the-bottle-drunk-anyway",
-    "file": "src/systems/useItem.js",
-    "old": "  else if (isPotion(item) && spirePotionRefusal(item)) out = { kind: 'refused', refused: true, text: spirePotionRefusal(item) };\n",
-    "new": "",
     "tests": [
       "test/net/eliteGates/egfull_client.test.js"
     ]

@@ -75,10 +75,11 @@ import {
   bossFrame,
   crystalStandIn,
   hostStandIn,
+  breachStandIn,
   hostCue,
   BOSS_CUES,
   CRYSTAL_CLIPS,
-} from '../../world/gate/gateBoss.js';
+} from '../../world/gate/gateBoss.js'; // AUDIT POTION-MIGHT B2: a stand-in at the breach's whole
 import { wordShare } from '../../combat/healthShare.js'; // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's health's share, the relay's word
 import {
   GateTelegraphRenderer,
@@ -210,6 +211,7 @@ import { egFightView } from '../../net/eliteGates/egWalkGraph.js'; // EG-ZP: the
 import { egFeetY, egBears, egByHeight, egOneStorey, egStoreyY } from '../../net/eliteGates/egWalkGraph.js'; // THE ASCENT - HEIGHT: a zone lies on its own floor, a blow is mine on my storey alone
 import { egRunOfMember } from '../../net/eliteGates/egLink.js'; // EG-ZP: each member's Vestiges and Mastery
 import { egVOf, egHymnOf, egDeclaredX, EG_BLOODIED_UNDER, EG_HYMN_MS } from '../../net/eliteGates/egVestige.js'; // EG-ZR (section 15): the holder's Vestiges, Shield-Hymn's pair
+import { egPurseX } from '../../net/eliteGates/egMight.js'; // AUDIT POTION-MIGHT B5: my might's factor, the room's own
 import { egAccordMates, EG_ECHO_Q } from '../../net/eliteGates/egVestige.js'; // EG-ZS (section 15): the pair law; an Echo's number
 import { EG_MASTERIES } from '../../net/eliteGates/egVestige.js'; // AUDIT EG III (lane4 #10): Immovable's number - the census asked only for its holder
 import { egHolderBlow } from '../../systems/eliteGates/spireVestiges.js'; // EG-ZR: a blow of mine with the Vestiges I hold
@@ -1281,8 +1283,8 @@ export function createEgFight({
    *  this hall (world/gate/gateBoss.js standInBlowCap). */
   const myBlowX = () => {
     const E = link.state();
-    return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1;
-  };
+    return (E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1) * egPurseX(link.might?.());
+  }; // AUDIT POTION-MIGHT B5: and my token's might, as the room grows my purse
   /** One body drawn: its look's sprite at its act's frame, at its place. EG-LOOK (section 9): at its DRAWN size (a lord's
    *  presence over its body's scale), its feet on the body's place - the quad stands up from its base - a flyer's hover its
    *  drawn one; a grown sprite casts no shadow; `top` its drawn head this frame (NaN while it stands nowhere on this screen). */
@@ -1355,11 +1357,13 @@ export function createEgFight({
         feet: [0, 0, 0],
         height: 2,
         radius: 0.6,
-        entity: hostStandIn(
-          { mobile: look.mobile, name: look.name },
-          b.i,
-          () => wordShare(d.target?.hp, d.target?.m),
-          myBlowX,
+        entity: breachStandIn(
+          hostStandIn(
+            { mobile: look.mobile, name: look.name },
+            b.i,
+            () => wordShare(d.target?.hp, d.target?.m),
+            myBlowX,
+          ),
         ),
         mobile: look.mobile,
         name: look.name,
@@ -1427,7 +1431,7 @@ export function createEgFight({
         feet: [0, 0, 0],
         height: CRYSTAL_H,
         radius: CRYSTAL_R,
-        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),
+        entity: breachStandIn(crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)),
         mobile: 31,
         name: key,
         m: b.max,

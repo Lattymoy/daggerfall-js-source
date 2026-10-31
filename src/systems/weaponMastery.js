@@ -34,7 +34,7 @@ import { SKILLS, skillModOf } from './skills.js';
 import { SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { isOnlinePage } from './online/onlineLane.js';
 import { sigilDueling } from './sigil/sigil.js';
-import { SCHOOL_POTENCY_PER_POINT, fightingClimb } from './spell/spellPower.js'; // CLIMB-PAST's one number: a point past 100 is 1%; MENTOR2: the climb fought with
+import { fightingClimb } from './spell/spellPower.js'; // MENTOR2: the climb fought with (CLIMB-PAST's one number, a point past 100 1%, is powerBlows.js's)
 import { registerWeaponBlowMod } from './entityMods.js';
 import { blowRoom } from './powerCeiling.js'; // POWER-CEILING: the blow's one product
 import { registerSwingPaceMod } from '../characters/weaponStates.js';
@@ -42,17 +42,16 @@ import { swingFamily } from '../combat/swingLaw.js'; // AUDIT MARTIAL L2 F3: the
 import { techniqueFamily } from '../combat/technique/techniqueRoster.js';
 import { healthShare } from '../combat/healthShare.js'; // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 
-/** Each effective point of a weapon's climb past 100 is this much more of what it does (BAL9b's per point). */
-export const WEAPON_POTENCY_PER_POINT = SCHOOL_POTENCY_PER_POINT;
-/** The Axe's and the Blunt Weapon's: twice that, on their half of a foe's health. */
-export const WEAPON_HALF_PER_POINT = 2 * WEAPON_POTENCY_PER_POINT;
+// AUDIT POTION-MIGHT D8: the climb's and the gear's numbers, in their one home (powerBlows.js) - the account's judge reads them
+import {
+  WEAPON_POTENCY_PER_POINT,
+  WEAPON_HALF_PER_POINT,
+  WEAPON_GEAR_PER_POINT,
+  WEAPON_GEAR_PCT_MOST,
+} from './powerBlows.js';
+export { WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT, WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST };
 /** The line between the two halves: a share of the foe's health. */
 export const WEAPON_HALF_LINE = 0.5;
-/** WEAPON-GEAR: the percent each point of gear on a weapon skill adds to its blow (0.44: a sheet of 872, trained 200
- *  and 672 on it, is the climb's 40 + 296 = x4.36, the top mob was shown). */
-export const WEAPON_GEAR_PER_POINT = 0.44;
-/** WEAPON-GEAR: the most percent gear adds (727 points) - with the axe's 80, the ceiling's mastery top of 400. */
-export const WEAPON_GEAR_PCT_MOST = 320;
 
 /** The skill a blow is struck with, by its family (combat/technique/techniqueRoster.js techniqueFamily - an RRI class's
  *  own included): the bare hand Hand-to-Hand, the Thunderlock Archery (it is scored on it). Null for anything else. */
