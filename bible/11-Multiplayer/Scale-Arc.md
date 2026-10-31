@@ -3816,7 +3816,7 @@ and a blow either one dropped went without a word. The arm is a method of its ow
 the lines), and its drops are counted.
 
 **The metrics point's blobs.** RoomMetrics writes all twenty doubles Analytics Engine takes, so the counts past them
-are blobs (`server/src/relayScale.js:"blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls),"`),
+are blobs (`server/src/relayScale.js:"indexes: [kind],"`),
 each its count in decimal:
 
 | Blob | Holds |
@@ -4512,7 +4512,7 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
 | the grant's cell and pixel (`server/src/index.js:"_grantHere(ws, a, id) {"`, `_grantMint`) | my pose goes ahead of the ask (pinned) |
 | raid, rite, star, serpent site, the Hour's door, the Wild zone's word, a duel's open | my pose ahead of the word; a referee's cell is never quiet (`rf`) |
 | SEAT1b's Watch (`server/src/index.js:"async _watchTick(ws, sub, p, moved, now) {"`) | it ticks on a pose that finds its last tick WATCH_TICK_MS (120 s) old, at that pose's pixel - a minute's poses tick every two minutes as a pose a second does (pinned: 5 receipts in 10 minutes either way); WATCH_MOVED_MS (300 s) is five of them |
-| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose(room, ws, p, now) {"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS = 3_000;"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
+| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
 | duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet; but the cell says it only at the pose or hello after the referee began, and the zone's `wildPose` steps every pose through `refereeStep` (a window's walk at most - a minute's would be a jump, and a jump refuses the fighter's blows for WILD_REF.jumpMs), so a session that has said it stands in the open zone is never quiet from that word on (pinned); a serpent's fight is the host's `haloWhole` the frame it begins |
 | siege and Royal `refereeStep`, a court, the Hour, a ship, the arena, an instance | not world cells - never quiet |
 | the warden's throw (first frame in the room) | at most a minute late, nobody there to see it but me |

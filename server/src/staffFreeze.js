@@ -62,7 +62,13 @@ export const STAFF_IN_MAX = 512;
 const AIMED = new Set(['trade', 'cast', 'duel', 'wild', 'wed', 'siege']);
 
 /** A token's claims as signed - read only off a hello whose token `_named` verified already. @param {any} tok */
-const claimsOf = (tok) => { try { return JSON.parse(new TextDecoder().decode(_b64url.decode(tokenBodyOf(tok)))); } catch { return null; } };
+const claimsOf = (tok) => {
+  try {
+    return JSON.parse(new TextDecoder().decode(_b64url.decode(tokenBodyOf(tok))));
+  } catch {
+    return null;
+  }
+};
 
 /** Whether this attachment is frozen at `nowS`. @param {any} a @param {number} nowS */
 export const frozenAt = (a, nowS) => Number(a?.fz) > nowS;
@@ -70,7 +76,8 @@ export const frozenAt = (a, nowS) => Number(a?.fz) > nowS;
 export const seatBarred = (a) => Number(a?.fz) > 0;
 
 /** A book entry still worth keeping: its freeze stands, or it is new enough to outrank a token minted before it. */
-const kept = (/** @type {{ i: number, fz: number }} */ b, /** @type {number} */ nowS) => b.fz > nowS || b.i > nowS - MAX_TTL_S - SKEW_S;
+const kept = (/** @type {{ i: number, fz: number }} */ b, /** @type {number} */ nowS) =>
+  b.fz > nowS || b.i > nowS - MAX_TTL_S - SKEW_S;
 
 /** THE BOOK, read once a wake from storage (a ban's law, `_loadBans`): an entry heard since the wake wins if newer. A read
  *  that fails is asked again by the next. @param {any} room @param {number} nowS */
@@ -78,7 +85,13 @@ export function loadFreezes(room, nowS) {
   room._freezes ??= new Map();
   room._freezesLoad ??= (async () => {
     let book = null;
-    try { book = await room.state.storage.get(FREEZES_KEY); } catch (e) { room._freezesLoad = null; console.warn('[freeze] read', /** @type {any} */ (e)?.message ?? e); return; }
+    try {
+      book = await room.state.storage.get(FREEZES_KEY);
+    } catch (e) {
+      room._freezesLoad = null;
+      console.warn('[freeze] read', /** @type {any} */ (e)?.message ?? e);
+      return;
+    }
     if (!book || typeof book !== 'object') return;
     for (const [s, v] of Object.entries(book)) {
       if (!Array.isArray(v) || !Number.isSafeInteger(v[0]) || !Number.isSafeInteger(v[1])) continue;
@@ -93,7 +106,14 @@ export function loadFreezes(room, nowS) {
 /** The book written back, pruned to what can still matter. @param {any} room @param {number} nowS */
 async function saveFreezes(room, nowS) {
   for (const [s, b] of room._freezes) if (!kept(b, nowS)) room._freezes.delete(s);
-  try { await room.state.storage.put(FREEZES_KEY, Object.fromEntries([...room._freezes].map(([s, b]) => [s, [b.i, b.fz, b.sig]]))); } catch (e) { console.warn('[freeze] write', /** @type {any} */ (e)?.message ?? e); }
+  try {
+    await room.state.storage.put(
+      FREEZES_KEY,
+      Object.fromEntries([...room._freezes].map(([s, b]) => [s, [b.i, b.fz, b.sig]])),
+    );
+  } catch (e) {
+    console.warn('[freeze] write', /** @type {any} */ (e)?.message ?? e);
+  }
 }
 
 /** The book's freeze for `sub` over a token issued at `ti`: its end (0 lifted) when the order is the newer word (a tie is
@@ -113,7 +133,7 @@ async function bookOver(room, sub, ti, nowS) {
 export async function takeStaffOrder(room, c, order, now, oldWords) {
   const nowS = Math.floor(now / 1000);
   if (c.o === 'staffline') {
-    const joined = room._staffIn ??= new Map();
+    const joined = (room._staffIn ??= new Map());
     joined.delete(c.s);
     if (joined.size >= STAFF_IN_MAX) joined.delete(joined.keys().next().value);
     joined.set(c.s, c.i);
@@ -131,11 +151,12 @@ export async function takeStaffOrder(room, c, order, now, oldWords) {
   await saveFreezes(room, nowS);
   const told = JSON.stringify({ t: 'frozen', until: fz });
   for (const [ws, b] of [...room._all()]) {
-    if (b.sub !== c.s || b.gio > c.i) continue;   // a token minted after the order carries the truth already (`_takeOrder`'s law)
+    if (b.sub !== c.s || b.gio > c.i) continue; // a token minted after the order carries the truth already (`_takeOrder`'s law)
     const next = { ...b, fz };
     room._setAttach(ws, next);
     room._send(ws, told);
-    if (fz && b.fv !== 1) room._refuse(ws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON);   // Weak spots: "Old game builds show no freeze screen"
+    if (fz && b.fv !== 1)
+      room._refuse(ws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON); // Weak spots: "Old game builds show no freeze screen"
     else freezeMoved(room, b, next);
   }
   return true;
@@ -154,11 +175,14 @@ export async function frozenHello(room, ws, key, who, m, now, oldWords) {
   const nowS = Math.floor(now / 1000);
   const fz = claimsOf(m.tok)?.fz;
   const own = Number.isSafeInteger(fz) && fz > nowS ? fz : 0;
-  const book = key === SOCIAL_ROOM ? await bookOver(room, who.subject, who.gio, nowS) : undefined;   // the hub keeps the book (its law door's)
+  const book = key === SOCIAL_ROOM ? await bookOver(room, who.subject, who.gio, nowS) : undefined; // the hub keeps the book (its law door's)
   who.fz = book ?? own;
-  if (who.fz && m.fv !== 1) { room._refuse(ws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON); return true; }
+  if (who.fz && m.fv !== 1) {
+    room._refuse(ws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON);
+    return true;
+  }
   if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);
-  if (who.fz || (book !== undefined && book !== own)) room._send(ws, JSON.stringify({ t: 'frozen', until: who.fz }));   // a reload's screen is told too; a lift the token never heard of, said
+  if (who.fz || (book !== undefined && book !== own)) room._send(ws, JSON.stringify({ t: 'frozen', until: who.fz })); // a reload's screen is told too; a lift the token never heard of, said
   return false;
 }
 
@@ -171,15 +195,21 @@ export async function busFreeze(room, vws, a, ti, now, oldWords) {
   const nowS = Math.floor(now / 1000);
   const book = await bookOver(room, a.sub, ti, nowS);
   const next = book === undefined ? a : { ...a, fz: book };
-  if (frozenAt(next, nowS) && next.fv !== 1) { vws.att = next; room._refuse(vws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON); return null; }
-  if (book !== undefined && book !== (Number(a.fz) > nowS ? a.fz : 0)) room._send(vws, JSON.stringify({ t: 'frozen', until: book }));
+  if (frozenAt(next, nowS) && next.fv !== 1) {
+    vws.att = next;
+    room._refuse(vws, oldWords, CLOSE_POLICY, FREEZE_OLD_REASON);
+    return null;
+  }
+  if (book !== undefined && book !== (Number(a.fz) > nowS ? a.fz : 0))
+    room._send(vws, JSON.stringify({ t: 'frozen', until: book }));
   return next;
 }
 
 /** Where `sub`'s socket in this room stands (a camera's pose, no step), or null. @param {any} room @param {unknown} sub */
 function posedHere(room, sub) {
   if (typeof sub !== 'string' || !sub) return null;
-  for (const [, b] of room._all()) if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };
+  for (const [, b] of room._all())
+    if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };
   return null;
 }
 
@@ -203,7 +233,10 @@ export function frozenFrame(room, a, m) {
   if (frozenAt(a, nowS) && m.t !== 'ping') {
     if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;
     // the camera: the pose it stood in, its yaw and pitch alone new - no step, no swing, no weapon drawn
-    if (m.t === 'pose' && a.pose && typeof a.pose === 'object') { m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 }; return false; }
+    if (m.t === 'pose' && a.pose && typeof a.pose === 'object') {
+      m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 };
+      return false;
+    }
     return true;
   }
   return aimedAtFrozen(room, a, m, nowS);
@@ -230,10 +263,13 @@ function aimedAtFrozen(room, a, m, nowS) {
  * @param {any} room @param {any} ws @param {any} a @param {any} frame @param {number} now
  */
 export function staffLine(room, ws, a, frame, now) {
-  if (frame.t !== 'chat' || !isSocialRoom(a.key)) { room._junk(ws); return; }
+  if (frame.t !== 'chat' || !isSocialRoom(a.key)) {
+    room._junk(ws);
+    return;
+  }
   const sl = /^[1-9]\d{0,14}$/.test(frame.text) ? Number(frame.text) : 0;
   if (!sl || typeof a.sub !== 'string' || !a.sub) return;
-  if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return;   // no thread of theirs this hub knows
+  if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return; // no thread of theirs this hub knows
   const budget = tokenGate(room._staffNudges, now, STAFF_NUDGE_HZ_MAX);
   room._staffNudges = budget.bucket;
   if (!budget.pass) return;
@@ -252,9 +288,15 @@ export function staffLine(room, ws, a, frame, now) {
  */
 export async function busMissed(room, events) {
   for (const [vid, kind, said] of Array.isArray(events) ? events : []) {
-    if (kind !== 'f' || !said.startsWith('{"t":"lease"')) continue;   // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone
-    const ws = room._byVid(vid), a = ws && room._pastWait(ws);
-    if (a) try { await room._leaseRead(ws, a, { t: 'lease' }, said, Date.now()); } catch (e) { console.warn('[freeze] pass', /** @type {any} */ (e)?.message ?? e); }
+    if (kind !== 'f' || !said.startsWith('{"t":"lease"')) continue; // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone
+    const ws = room._byVid(vid),
+      a = ws && room._pastWait(ws);
+    if (a)
+      try {
+        await room._leaseRead(ws, a, { t: 'lease' }, said, Date.now());
+      } catch (e) {
+        console.warn('[freeze] pass', /** @type {any} */ (e)?.message ?? e);
+      }
   }
 }
 

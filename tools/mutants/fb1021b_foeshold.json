@@ -299,8 +299,8 @@
   {
     "name": "FH-a-hold-blob-dropped",
     "file": "server/src/relayScale.js",
-    "old": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
-    "new": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(level), String(c.cellMoves), String(c.cellBlocked)]",
+    "old": "            String(c.beats),\n            String(level),",
+    "new": "            String(level),",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ],
@@ -309,8 +309,8 @@
   {
     "name": "FH-hold-blobs-out-of-order",
     "file": "server/src/relayScale.js",
-    "old": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
-    "new": "String(c.heldSent), String(c.held), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
+    "old": "            String(c.held),\n            String(c.heldSent),",
+    "new": "            String(c.heldSent),\n            String(c.held),",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ],
@@ -319,8 +319,8 @@
   {
     "name": "FH-hold-counts-unreset",
     "file": "server/src/relayScale.js",
-    "old": "fulls: 0, held: 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0, cellMoves: 0, cellBlocked: 0 };",
-    "new": "fulls: 0, held: this.c?.held ?? 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0, cellMoves: 0, cellBlocked: 0 };",
+    "old": "      held: 0,",
+    "new": "      held: this.c?.held ?? 0,",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]

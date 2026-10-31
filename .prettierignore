@@ -145,6 +145,16 @@
 !/server/src/foesHold.js
 !/server/src/pvpLinger.js
 !/server/src/relay.js
+!/server/src/relayScale.js
+!/server/src/sdCopy.js
+!/server/src/staffEvents.js
+!/server/src/staffFeedLaw.js
+!/server/src/staffFeeds.js
+!/server/src/staffFollow.js
+!/server/src/staffFreeze.js
+!/server/src/staffHidden.js
+!/server/src/staffMessage.js
+!/server/src/staffTeleport.js
 !/src/
 /src/*
 !/src/ai/

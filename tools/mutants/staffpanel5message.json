@@ -282,8 +282,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-hub-everyone",
     "file": "server/src/staffMessage.js",
-    "old": "for (const ws of [...(room._bySub().get(r.claims.s) ?? [])]) {",
-    "new": "for (const ws of [...room._all().keys()]) {",
+    "old": "  for (const ws of [...(room._bySub().get(r.claims.s) ?? [])]) {",
+    "new": "  for (const ws of [...room._all().keys()]) {",
     "why": "every hub socket nudged",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

@@ -419,8 +419,8 @@
   {
     "name": "COST2-blob11-dropped",
     "file": "server/src/relayScale.js",
-    "old": "String(c.beats), String(level), String(c.cellMoves)",
-    "new": "String(c.beats), String(c.cellMoves)",
+    "old": "            String(level),\n            String(c.cellMoves),",
+    "new": "            String(c.cellMoves),",
     "tests": [
       "test/server/cellnodes.test.js"
     ]

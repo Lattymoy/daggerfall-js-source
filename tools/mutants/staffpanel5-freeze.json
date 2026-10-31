@@ -342,8 +342,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-older-order-applied",
     "file": "server/src/staffFreeze.js",
-    "old": "if (held && (c.i < held.i || held.sig === sig)) return true;",
-    "new": "if (held && held.sig === sig) return true;",
+    "old": "  if (held && (c.i < held.i || held.sig === sig)) return true;",
+    "new": "  if (held && held.sig === sig) return true;",
     "why": "an older lift lifts a newer freeze",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-book-unsaved",
     "file": "server/src/staffFreeze.js",
-    "old": "  await saveFreezes(room, nowS);\n  const told",
-    "new": "  const told",
+    "old": "  await saveFreezes(room, nowS);\n  const told = JSON.stringify({ t: 'frozen', until: fz });",
+    "new": "  const told = JSON.stringify({ t: 'frozen', until: fz });",
     "why": "the book lost at a wake",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-old-build-kept",
     "file": "server/src/staffFreeze.js",
-    "old": "if (fz && b.fv !== 1) room._refuse(",
-    "new": "if (false) room._refuse(",
+    "old": "    if (fz && b.fv !== 1)",
+    "new": "    if (false)",
     "why": "an old build frozen with no screen stays",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-book-unread-at-hello",
     "file": "server/src/staffFreeze.js",
-    "old": "const book = key === SOCIAL_ROOM ? await bookOver(",
-    "new": "const book = key === 'never' ? await bookOver(",
+    "old": "  const book = key === SOCIAL_ROOM ? await bookOver(room, who.subject, who.gio, nowS) : undefined; // the hub keeps the book (its law door's)",
+    "new": "  const book = key === 'never' ? await bookOver(room, who.subject, who.gio, nowS) : undefined; // the hub keeps the book (its law door's)",
     "why": "a reload sheds the freeze at the hub",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-old-build-hello-kept",
     "file": "server/src/staffFreeze.js",
-    "old": "if (who.fz && m.fv !== 1) { room._refuse(",
-    "new": "if (false) { room._refuse(",
+    "old": "  if (who.fz && m.fv !== 1) {",
+    "new": "  if (false) {",
     "why": "an old build's frozen hello let in",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-seat-unsaid",
     "file": "server/src/staffFreeze.js",
-    "old": "if (seatBarred(was) === seatBarred(now) || isChatRoom(was?.key)) return;",
-    "new": "if (true) return;",
+    "old": "  if (seatBarred(was) === seatBarred(now) || isChatRoom(was?.key)) return;",
+    "new": "  if (true) return;",
     "why": "the seat moves unsaid",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-staff-line-dropped",
     "file": "server/src/staffFreeze.js",
-    "old": "if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;",
-    "new": "if (m.t === 'never') return false;",
+    "old": "    if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;",
+    "new": "    if (m.t === 'never') return false;",
     "why": "a frozen player cannot talk to staff",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-camera-whole",
     "file": "server/src/staffFreeze.js",
-    "old": "{ m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 }; return false; }",
-    "new": "{ return false; }",
+    "old": "      m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 };\n      return false;",
+    "new": "      return false;",
     "why": "a frozen camera walks",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -483,8 +483,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-words-carried",
     "file": "server/src/staffFreeze.js",
-    "old": "th: a.sub, sl, id: a.id, name: a.name, at: now });",
-    "new": "th: a.sub, sl, id: a.id, name: a.name, at: now, text: frame.text });",
+    "old": "  nudge(room, a.sub, { t: 'chat', ch: 'staff', th: a.sub, sl, id: a.id, name: a.name, at: now });",
+    "new": "  nudge(room, a.sub, { t: 'chat', ch: 'staff', th: a.sub, sl, id: a.id, name: a.name, at: now, text: frame.text });",
     "why": "the nudge carries words",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -493,8 +493,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-members-all",
     "file": "server/src/staffFreeze.js",
-    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
-    "new": "if (b.id) room._send(other, out);",
+    "old": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "  for (const [other, b] of [...room._all()]) if (b.id) room._send(other, out);",
     "why": "a nudge to everyone",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -504,8 +504,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-no-thread-nudges",
     "file": "server/src/staffFreeze.js",
-    "old": "if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return;",
-    "new": "if (false) return;",
+    "old": "  if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return; // no thread of theirs this hub knows",
+    "new": "  if (false) return; // no thread of theirs this hub knows",
     "why": "a player in no thread nudges staff",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -514,8 +514,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-join-lost",
     "file": "server/src/staffFreeze.js",
-    "old": "  joined.set(c.s, c.i);",
-    "new": "  void joined;",
+    "old": "    joined.set(c.s, c.i);",
+    "new": "    void joined;",
     "why": "a staff line joins nobody",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -534,8 +534,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-cell-staff-line",
     "file": "server/src/staffFreeze.js",
-    "old": "if (frame.t !== 'chat' || !isSocialRoom(a.key)) { room._junk(ws); return; }",
-    "new": "if (frame.t !== 'chat') { room._junk(ws); return; }",
+    "old": "  if (frame.t !== 'chat' || !isSocialRoom(a.key)) {",
+    "new": "  if (frame.t !== 'chat') {",
     "why": "a staff nudge from a cell",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -724,8 +724,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-hello-pose-taken",
     "file": "server/src/staffFreeze.js",
-    "old": "if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);",
-    "new": "if (false) m.pose = posedHere(room, who.subject);",
+    "old": "  if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);",
+    "new": "  if (false) m.pose = posedHere(room, who.subject);",
     "why": "finding 22: a frozen hello stands where it says - a reconnect is a step",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -734,8 +734,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-pose-of-anyone",
     "file": "server/src/staffFreeze.js",
-    "old": "if (b.sub === sub && b.pose && typeof b.pose === 'object') return",
-    "new": "if (b.pose && typeof b.pose === 'object') return",
+    "old": "  for (const [, b] of room._all())\n    if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
+    "new": "  for (const [, b] of room._all()) if (b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
     "why": "finding 22: a frozen hello stands where anyone in the room stands",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-pose-walking",
     "file": "server/src/staffFreeze.js",
-    "old": "return { ...b.pose, mv: 0 };",
-    "new": "return b.pose;",
+    "old": "  for (const [, b] of room._all())\n    if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
+    "new": "  for (const [, b] of room._all()) if (b.sub === sub && b.pose && typeof b.pose === 'object') return b.pose;",
     "why": "finding 22: a frozen reconnect stands walking",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -754,8 +754,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-staff-by-hd",
     "file": "server/src/staffFreeze.js",
-    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
-    "new": "if (b.id && (b.sub === sub || b.hd === 1)) room._send(other, out);",
+    "old": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || b.hd === 1)) room._send(other, out);",
     "why": "findings 19, 24, 30: staff matched on `hd` 1, which no attachment carries - no staff socket nudged",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -946,8 +946,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-for-any-frame",
     "file": "server/src/staffFreeze.js",
-    "old": "if (kind !== 'f' || !said.startsWith('{\"t\":\"lease\"')) continue;",
-    "new": "if (kind !== 'f') continue;",
+    "old": "    if (kind !== 'f' || !said.startsWith('{\"t\":\"lease\"')) continue; // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone",
+    "new": "    if (kind !== 'f') continue; // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone",
     "why": "round two, item 2: a missed hand-up's line answered with a pass",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"

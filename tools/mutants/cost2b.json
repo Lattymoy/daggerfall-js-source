@@ -562,8 +562,8 @@
   {
     "name": "COST2B-staff-call-by-the-fine-key",
     "file": "server/src/staffEvents.js",
-    "old": "cellCall(room.env, worldRoom(e.px, e.py), 0, SEV_INTERNAL_CALL, body, CALL_MS)",
-    "new": "cellCall({}, worldRoom(e.px, e.py), 0, SEV_INTERNAL_CALL, body, CALL_MS)",
+    "old": "    const res = await cellCall(room.env, worldRoom(e.px, e.py), 0, SEV_INTERNAL_CALL, body, CALL_MS);",
+    "new": "    const res = await cellCall({}, worldRoom(e.px, e.py), 0, SEV_INTERNAL_CALL, body, CALL_MS);",
     "tests": [
       "test/server/cellmoves.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "COST2B-moves-blobs-swapped",
     "file": "server/src/relayScale.js",
-    "old": "String(level), String(c.cellMoves), String(c.cellBlocked)]",
-    "new": "String(level), String(c.cellBlocked), String(c.cellMoves)]",
+    "old": "            String(c.cellMoves),\n            String(c.cellBlocked),",
+    "new": "            String(c.cellBlocked),\n            String(c.cellMoves),",
     "tests": [
       "test/server/cellmoves.test.js"
     ]

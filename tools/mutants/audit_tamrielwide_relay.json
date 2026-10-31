@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-record",
     "file": "server/src/sdCopy.js",
-    "old": "room.state.storage.get(sdLaneKey(SD_KEY, lane))",
-    "new": "room.state.storage.get(SD_KEY)",
+    "old": "  const rec = await room.state.storage.get(sdLaneKey(SD_KEY, lane));",
+    "new": "  const rec = await room.state.storage.get(SD_KEY);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-receipt",
     "file": "server/src/sdCopy.js",
-    "old": "room.state.storage.get(sdReceiptKey(c.a, lane))",
-    "new": "room.state.storage.get(sdReceiptKey(c.a))",
+    "old": "  const rc = await room.state.storage.get(sdReceiptKey(c.a, lane));",
+    "new": "  const rc = await room.state.storage.get(sdReceiptKey(c.a));",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-TW-B1-one-death-key",
     "file": "server/src/sdCopy.js",
-    "old": "(lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`)",
-    "new": "`sdac:${sub}`",
+    "old": "export const sdAcctKey = (sub, lane = 0) => (lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`);",
+    "new": "export const sdAcctKey = (sub, lane = 0) => `sdac:${sub}`;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-TW-B1-the-bays-key-moved",
     "file": "server/src/sdCopy.js",
-    "old": "(lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`)",
-    "new": "`sdac:${sub}.${lane}`",
+    "old": "export const sdAcctKey = (sub, lane = 0) => (lane ? `sdac:${sub}.${lane}` : `sdac:${sub}`);",
+    "new": "export const sdAcctKey = (sub, lane = 0) => `sdac:${sub}.${lane}`;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],

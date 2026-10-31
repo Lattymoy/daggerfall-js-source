@@ -3742,8 +3742,8 @@ the relay's `_message` one existing line.
 The hub's answer to a realm (`sdAcctInternal`) read the Bay's lane alone: the record under SD_KEY and the Bay's death and
 receipt keys. Since WW5 a province's Hollow is kept under its lane's keys, so a slot past the Bay never matched: the hub
 answered ok and kept nothing. A player who died in one party's copy of a province's Hour came into another's, and a
-winner came into a second. The hub now reads the slot's own lane (`server/src/sdCopy.js:"const lane = sdLaneOf(c.s);"`):
+winner came into a second. The hub now reads the slot's own lane (`server/src/sdCopy.js:"const lane = sdLaneOf"`):
 its record, its receipt, and a death kept as `sdac:<account>.<lane>`
-(`server/src/sdCopy.js:"export const sdAcctKey = (sub, lane = 0) =>"`). The Bay's key is `sdac:<account>`, as it was.
+(`server/src/sdCopy.js:"export const sdAcctKey"`). The Bay's key is `sdac:<account>`, as it was.
 Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B1 (the Bay's Hollow beside Skyrim's). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (5, dead); `sdparty.json` SD-BACK-the-last-copy-kept
 re-aimed by content. Relay world284.

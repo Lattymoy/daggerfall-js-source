@@ -566,8 +566,8 @@
   {
     "name": "SCALE5b-peak-at-end",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
-    "new": "c.full, c.drops, sockets, c.foes,",
+    "old": "            Math.max(c.peak, sockets),",
+    "new": "            sockets,",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -576,8 +576,8 @@
   {
     "name": "SCALE5b-peak-under-now",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
-    "new": "c.full, c.drops, c.peak, c.foes,",
+    "old": "            Math.max(c.peak, sockets),",
+    "new": "            c.peak,",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -596,8 +596,8 @@
   {
     "name": "SCALE5b-full-not-busy",
     "file": "server/src/relayScale.js",
-    "old": " + c.refusals + c.full > 0; }",
-    "new": " + c.refusals > 0; }",
+    "old": "    return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals + c.full > 0;",
+    "new": "    return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals > 0;",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -606,8 +606,8 @@
   {
     "name": "SCALE5b-doubles-order",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
-    "new": "c.drops, c.full, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
+    "old": "            c.full,\n            c.drops,",
+    "new": "            c.drops,\n            c.full,",
     "tests": [
       "test/net/scale5b.test.js"
     ],

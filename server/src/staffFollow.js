@@ -13,7 +13,14 @@
 // following it stands in the room (`_fol`, counted from those sockets' tokens), and only then tells the bus that
 // account came or went (FOLLOW_INTERNAL_SAY) - nothing for anyone nobody follows, so it costs nothing where nobody
 // follows (design doc, Server load: "Costs only while someone follows").
-import { FOLLOW_INTERNAL_SAY, FOLLOWERS_MAX, FOLLOWED_MAX, NOTE_STALE_MS, noteWhere, validFollowSay } from '../../src/net/staffFollow.js';
+import {
+  FOLLOW_INTERNAL_SAY,
+  FOLLOWERS_MAX,
+  FOLLOWED_MAX,
+  NOTE_STALE_MS,
+  noteWhere,
+  validFollowSay,
+} from '../../src/net/staffFollow.js';
 import { isChatRoom, isSocialRoom, SOCIAL_ROOM } from '../../src/net/wire.js';
 import { ROOM_CALL_MS } from './relayScale.js';
 
@@ -34,7 +41,10 @@ function followersOf(room, sub) {
   const set = room._follows?.get(sub);
   if (!set) return null;
   for (const ws of set) if (!live(room, ws)) set.delete(ws);
-  if (!set.size) { room._follows?.delete(sub); return null; }
+  if (!set.size) {
+    room._follows?.delete(sub);
+    return null;
+  }
   return set;
 }
 
@@ -44,7 +54,10 @@ function followersOf(room, sub) {
  *  @param {FollowRoom} room @param {string} sub @param {number} now @returns {{ p: any, at: number } | null} */
 export function noteOf(room, sub, now) {
   let pm = null;
-  for (const ws of socketsOf(room, sub)) { const b = room._attach(ws); if (b.pm && (!pm || b.pm.at > pm.at)) pm = b.pm; }
+  for (const ws of socketsOf(room, sub)) {
+    const b = room._attach(ws);
+    if (b.pm && (!pm || b.pm.at > pm.at)) pm = b.pm;
+  }
   if (!pm || !(now - pm.at <= NOTE_STALE_MS)) return null;
   const { at, ...p } = pm;
   return { p, at };
@@ -66,7 +79,8 @@ function tell(room, sub, frame) {
  *  @param {FollowRoom} room @param {any} a the attachment before the note @param {any} p the pose, parsed */
 export function followNoted(room, a, p) {
   const was = a.pm;
-  if (a.sub && room._follows?.has(a.sub) && noteWhere(was) !== noteWhere(p)) tell(room, a.sub, { k: 'note', sub: a.sub, p, ag: 0 });
+  if (a.sub && room._follows?.has(a.sub) && noteWhere(was) !== noteWhere(p))
+    tell(room, a.sub, { k: 'note', sub: a.sub, p, ag: 0 });
   const { rk, ...fan } = p;
   void rk;
   return fan;
@@ -75,7 +89,11 @@ export function followNoted(room, a, p) {
 /** (the bus) A member's note as its party's view says it (index.js `_partyView`): a copy without its room (`rk`), the
  *  staff's to read and never a member's - so index.js never names `rk` (the relay reads nothing inside a foes
  *  frame, test/systems/raid2_raidsOnline.test.js: `rk` is a raid's word there). @param {any} p */
-export const withoutRoom = (p) => { const { rk, ...rest } = p; void rk; return rest; };
+export const withoutRoom = (p) => {
+  const { rk, ...rest } = p;
+  void rk;
+  return rest;
+};
 
 /** (the bus) A HUB LINK'S HELLO - a spectator's (its verified `fo`) is held as one following that account, at most
  *  FOLLOWERS_MAX to an account and FOLLOWED_MAX accounts, and told `on`, then the note the hub holds - or `gone`.
@@ -86,14 +104,15 @@ export function followHello(room, ws, now) {
   const follows = (room._follows ??= new Map());
   let set = followersOf(room, a.fo);
   if (!set) {
-    if (follows.size >= FOLLOWED_MAX) return;   // never told `on`: its game follows nobody
-    follows.set(a.fo, set = new Set());
+    if (follows.size >= FOLLOWED_MAX) return; // never told `on`: its game follows nobody
+    follows.set(a.fo, (set = new Set()));
   }
   if (set.size >= FOLLOWERS_MAX) return;
   set.add(ws);
   room._send(ws, JSON.stringify({ t: 'fol', k: 'on', sub: a.fo }));
   const n = noteOf(room, a.fo, now);
-  if (n) room._send(ws, JSON.stringify({ t: 'fol', k: 'note', sub: a.fo, p: n.p, ag: Math.floor((now - n.at) / 1000) }));
+  if (n)
+    room._send(ws, JSON.stringify({ t: 'fol', k: 'note', sub: a.fo, p: n.p, ag: Math.floor((now - n.at) / 1000) }));
   else if (!socketsOf(room, a.fo).length) room._send(ws, JSON.stringify({ t: 'fol', k: 'gone', sub: a.fo }));
 }
 
@@ -107,8 +126,17 @@ function say(room, sub, k, a) {
   if (!rooms?.idFromName || !rooms?.get) return;
   const body = JSON.stringify({ sub, k, room: a.key, ...(a.ly ? { ly: a.ly } : {}), id: a.id });
   void (async () => {
-    try { await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${FOLLOW_INTERNAL_SAY}`, { method: 'POST', body, signal: AbortSignal.timeout(ROOM_CALL_MS) })); }
-    catch (e) { console.warn('[follow] the bus did not hear a room', /** @type {any} */ (e)?.message ?? e); }
+    try {
+      await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(
+        new Request(`https://relay.internal${FOLLOW_INTERNAL_SAY}`, {
+          method: 'POST',
+          body,
+          signal: AbortSignal.timeout(ROOM_CALL_MS),
+        }),
+      );
+    } catch (e) {
+      console.warn('[follow] the bus did not hear a room', /** @type {any} */ (e)?.message ?? e);
+    }
   })();
 }
 
@@ -136,7 +164,10 @@ export function followLeft(room, ws, a) {
     const set = room._follows?.get(a.fo);
     if (set?.delete(ws) && !set.size) room._follows?.delete(a.fo);
     const n = room._fol?.get(a.fo);
-    if (n != null) { if (n > 1) room._fol?.set(a.fo, n - 1); else room._fol?.delete(a.fo); }
+    if (n != null) {
+      if (n > 1) room._fol?.set(a.fo, n - 1);
+      else room._fol?.delete(a.fo);
+    }
     return;
   }
   // asked of the follow maps first: a leave anywhere nobody follows costs one look-up
@@ -149,7 +180,11 @@ export function followLeft(room, ws, a) {
  *  alone) - told to the spectators following that account. @param {FollowRoom} room @param {Request} request */
 export async function followSayInternal(room, request) {
   let b;
-  try { b = validFollowSay(await request.json()); } catch { b = null; }
+  try {
+    b = validFollowSay(await request.json());
+  } catch {
+    b = null;
+  }
   if (!b) return Response.json({ error: 'bad' }, { status: 400 });
   return Response.json({ ok: 1, told: tell(room, b.sub, b) });
 }
