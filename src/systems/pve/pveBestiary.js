@@ -5,7 +5,10 @@
 // and what it needs (a faction's presence, an event). A species with no record spawns nowhere; one with no art in the
 // game spawns nowhere whatever its record says. Each record says how it stands in lore. Pure and seeded by nothing:
 // the same place gives every player the same list. The spawn stage reads it. Ledger A (FIXED-PVE).
-import { SPECIES_BY_KEY, CANDIDATE_SPECIES } from './pveSpecies.js';
+import { SPECIES_BY_KEY, SPECIES_BY_BODY, CANDIDATE_SPECIES, DEX_SPECIES } from './pveSpecies.js';
+import { tamrielBiomeAt } from '../../world/tamriel/tamrielBiomes.js';   // REGIONAL-PVE: Latty's zones past the Bay
+import { ROSTERS, faunaRoster } from '../tamrielFauna.js';   // ... and what each one's wild holds
+import { dexLoaded } from '../enemyExpansion/dexSwitches.js';
 import { MOB_TEMPLATES } from './pveTemplates.js';
 import { PROVINCES } from '../../world/tamriel/tamrielGeography.js';
 import { CLIMATES } from '../../formats/mapsTables.js';
@@ -81,6 +84,9 @@ export const BESTIARY = Object.freeze([
     R({ species, provinces: { [ALL]: 'secondary' }, climates: LAND, dungeons: [D.HumanStronghold, D.Prison, D.RuinedCastle, D.BarbarianStronghold], factions: ['bandits'], lore: 'inferred' })),
   ...['mage', 'sorcerer', 'battlemage', 'spellsword'].map((species) =>
     R({ species, provinces: { [ALL]: 'localized' }, dungeons: [D.Laboratory, D.Coven, D.Crypt], lore: 'inferred', note: 'necromancers and conjurers' })),
+  // REGIONAL-PVE: Daggerfall Enemy Expansion's creatures live past the Bay through their zone's roster alone - no
+  // province of PvE's own list holds them, so the Bay stays as it was (zoneRosterAt above)
+  ...DEX_SPECIES.map((s) => R({ species: s.key, provinces: {}, lore: 'established', note: 'past the Bay, by its zone roster' })),
   // a species the spec names with no art: a record, never a spawn
   ...CANDIDATE_SPECIES.map((c) => R({ species: c.key, provinces: {}, lore: 'proposed', note: 'no art yet' })),
 ]);
@@ -122,14 +128,58 @@ export function speciesStandingAt(r, { province, region = null, climate = null, 
   if (cat === 'unavailable') return cat;
   if (dungeon != null && dungeon !== DUNGEON_TYPES.NoDungeon) { if (!r.dungeons?.includes(dungeon)) return 'unavailable'; }
   else if (!r.climates || (climate != null && !r.climates.includes(climate))) return 'unavailable';
+  else if (SPECIES_BY_KEY.get(r.species)?.aquatic && climate !== CLIMATES.Ocean) return 'unavailable';   // REGIONAL-PVE: a water body never moves on land (AUDIT TESA-BIOME F1)
   const metSet = new Set(met), held = new Set(factions);
   if (r.needs?.length && !r.needs.every((n) => metSet.has(n))) return 'unavailable';
   if (r.factions?.length && !r.factions.some((f) => held.has(f))) return 'unavailable';
   return cat;
 }
 
-/** The species a place may hold and each one's share, by key - the same list for every player. @param {Parameters<typeof speciesStandingAt>[1]} at */
+// REGIONAL-PVE (2026-10-31; bible/03-World/Tamriel-Biomes.md "The rosters"): PAST THE BAY, OUTDOORS, THE ZONE'S ROSTER
+// DECIDES. Latty's 44 zones each name what their wild holds by day and by night, at a rarity; PvE takes that list for
+// which species stand at a place and how often, and keeps its own law for everything else - its fixed level bands, its
+// templates, its factions (a people's record still asks its faction), its dungeons (a dungeon keeps PvE's own list, as
+// the encounter law keeps DFU's dungeon tables). On the Bay, at sea and inside, nothing changes.
+/** A roster rarity's share of a spawn table: common as primary, uncommon as secondary, rare below it, very rare as the
+ *  exceptional (so the rare population draws it). */
+export const ROSTER_SHARE = Object.freeze({ C: DISTRIBUTION.primary, U: DISTRIBUTION.secondary, R: 0.15, V: DISTRIBUTION.exceptional });
+const ROSTER_STANDING = Object.freeze({ C: 'primary', U: 'secondary', R: 'rare', V: 'exceptional' });
+
+/** The zone roster at world pixel (`px`, `py`) - [species key, rarity] pairs, by day or by night, the bodies the game
+ *  loaded (faunaRoster: Enemy Expansion's, else each one's classic stand-in) - or null: no pixel, the Bay, the sea.
+ *  @param {number|undefined} px @param {number|undefined} py @param {boolean} night */
+export function zoneRosterAt(px, py, night, dex = dexLoaded()) {
+  if (!Number.isFinite(px) || !Number.isFinite(py)) return null;
+  const b = tamrielBiomeAt(Math.floor(/** @type {number} */ (px)), Math.floor(/** @type {number} */ (py)));
+  const r = b && ROSTERS[b.key];
+  if (!r) return null;
+  const out = [];
+  for (const [id, rarity] of faunaRoster(night ? r.night : r.day, dex)) {
+    const sp = SPECIES_BY_BODY.get(id);
+    if (sp && !sp.aquatic) out.push([sp.key, rarity]);
+  }
+  return { zone: b.key, entries: out };
+}
+
+/** The species a place may hold and each one's share, by key - the same list for every player. Past the Bay outdoors,
+ *  the zone's roster (REGIONAL-PVE). @param {Parameters<typeof speciesStandingAt>[1] & { px?: number, py?: number }} at */
 export function regionalSpecies(at) {
+  const indoors = at.dungeon != null && at.dungeon !== DUNGEON_TYPES.NoDungeon;
+  const roster = indoors ? null : zoneRosterAt(at.px, at.py, [...(at.met ?? [])].includes('night'));
+  if (roster) {
+    // the roster sets the creatures; people (the outlaws, the orc clans' and the mages') keep PvE's own law, so a road's
+    // bands and a camp's groups stand past the Bay as on it
+    const beasts = roster.entries.filter(([k]) => SPECIES_BY_KEY.get(k)?.kind === 'monster' && !ORC_SPECIES.has(k))
+      .map(([species, rarity]) => ({ species, standing: ROSTER_STANDING[rarity], weight: ROSTER_SHARE[rarity] }));
+    const people = ownSpecies(at).filter((x) => SPECIES_BY_KEY.get(x.species)?.kind === 'class' || ORC_SPECIES.has(x.species));
+    return [...beasts, ...people].sort((a, b) => a.species.localeCompare(b.species));
+  }
+  return ownSpecies(at);
+}
+/** The orcs are a people here (their clans, their strongholds), whatever body they wear. */
+const ORC_SPECIES = new Set(['orc', 'orc-sergeant', 'orc-shaman', 'orc-warlord']);
+/** PvE's own list at a place (the bestiary's records). @param {Parameters<typeof speciesStandingAt>[1]} at */
+function ownSpecies(at) {
   return BESTIARY.map((r) => ({ species: r.species, standing: speciesStandingAt(r, at) }))
     .filter((x) => DISTRIBUTION[x.standing] > 0)
     .map((x) => ({ ...x, weight: DISTRIBUTION[x.standing] }))

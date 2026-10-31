@@ -38,12 +38,33 @@ export const SPECIES = Object.freeze(BODY_IDS.map((id) => {
   });
 }));
 
-export const SPECIES_BY_KEY = new Map(SPECIES.map((s) => [s.key, s]));
+/** REGIONAL-PVE (2026-10-31): the Daggerfall Enemy Expansion monsters Latty's regional rosters name
+ *  (systems/tamrielFauna.js ROSTERS) - [id, name, group, behaviour] as the mod's MonsterBase.mdb.csv gives them (a test
+ *  holds them to it). Written out, not read from the mod's tables, so this file stays a leaf the account service can
+ *  load. Their bodies stand only with the mod loaded, which an online room forces (bible/04-Characters/Enemy-Expansion.md). */
+const DEX_ROWS = Object.freeze([
+  [256, 'Goblin', 'humanoid', 'General'], [258, 'Lizard Man', 'humanoid', 'General'], [259, 'Lizard Warrior', 'humanoid', 'General'],
+  [262, 'Wolf', 'animal', 'General'], [263, 'Snow Wolf', 'animal', 'General'], [266, 'Skeletal Soldier', 'undead', 'General'],
+  [267, 'Dog', 'animal', 'General'], [269, 'Minotaur', 'humanoid', 'General'], [271, 'Blood Spider', 'animal', 'General'],
+  [272, 'Troll', 'humanoid', 'General'], [274, 'Faded Ghost', 'undead', 'Spectral'], [277, 'Ghoul', 'undead', 'General'],
+  [278, 'Boar', 'animal', 'General'], [279, 'Land Dreugh', 'humanoid', 'General'], [280, 'Mountain Lion', 'animal', 'General'],
+  [281, 'Mudcrab', 'animal', 'General'], [282, 'Ogre', 'humanoid', 'General'], [283, "Will-o'-wisp", 'none', 'Spectral'],
+  [288, 'Scamp', 'daedra', 'General'], [289, 'Centurion Sphere', 'none', 'General'], [290, 'Steam Centurion', 'none', 'General'],
+]);
+/** @type {ReadonlyArray<Species & { dex: true }>} */
+export const DEX_SPECIES = Object.freeze(DEX_ROWS.map(([id, name, group, behaviour]) => Object.freeze({
+  key: speciesKey(name), name, body: id, kind: /** @type {'monster'} */ ('monster'), group, aquatic: false,
+  flying: behaviour === 'Flying', shoots: false, casts: MONSTER_SPELL_LISTS[id] != null, vanillaLevel: null, dex: /** @type {true} */ (true),
+})));
+
+export const SPECIES_BY_KEY = new Map([...SPECIES, ...DEX_SPECIES].map((s) => [s.key, s]));
+/** A species by its body's mobile id (Latty's rosters name bodies). */
+export const SPECIES_BY_BODY = new Map([...SPECIES, ...DEX_SPECIES].map((s) => [s.body, s]));
 
 /** The spec's species with no body in the game yet: data for a later art pass, never spawned. */
 export const CANDIDATE_SPECIES = Object.freeze([
   'Riekr', 'Echatere', 'Durzog', 'Duneripper', 'Assassin Beetle', 'Draugr', 'Falmer', 'Chaurus', 'Frost Troll',
-  'Ice Wraith', 'Horker', 'Mammoth', 'Hagraven', 'Minotaur', 'Goblin', 'Ogre', 'Will-o-the-Wisp', 'Nix-Hound', 'Guar',
+  'Ice Wraith', 'Horker', 'Mammoth', 'Hagraven', 'Nix-Hound', 'Guar',
   'Kagouti', 'Alit', 'Netch', 'Kwama', 'Shalk', 'Ash Hopper', 'Dwemer Construct', 'Wamasu', 'Voriplasm', 'Haj Mota',
   'Crocodile', 'Senche', 'Terror Bird', 'Strangle Vine', 'Hoarvor', 'Lurcher', 'Gryphon', 'Indrik', 'Yaghra', 'Nixad',
 ].map((name) => Object.freeze({ key: speciesKey(name), name, body: null, status: 'candidate' })));

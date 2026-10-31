@@ -51,7 +51,8 @@ test('STAGE 5: each province keeps a signature species of the spec\'s matrix, dr
   assert.equal(at('harpy', { province: 'HighRock', climate: CLIMATES.Mountain }), 'primary');
   assert.equal(at('giant', { province: 'Skyrim', climate: CLIMATES.Mountain }), 'primary');
   assert.equal(at('giant-scorpion', { province: 'Hammerfell', climate: CLIMATES.Desert }), 'primary');
-  assert.equal(at('lamia', { province: 'BlackMarsh', climate: CLIMATES.Swamp }), 'primary');
+  assert.equal(at('lamia', { province: 'BlackMarsh', climate: CLIMATES.Ocean }), 'primary', 'REGIONAL-PVE: a water body stands in water');
+  assert.equal(at('lamia', { province: 'BlackMarsh', climate: CLIMATES.Swamp }), 'unavailable', 'never on the swamp\'s land');
   assert.equal(at('spriggan', { province: 'Valenwood', climate: CLIMATES.Rainforest }), 'primary');
   assert.equal(at('giant-scorpion', { province: 'Skyrim', climate: CLIMATES.Desert }), 'unavailable', 'not by climate alone');
 });

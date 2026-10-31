@@ -33,7 +33,7 @@ export function spawnTable(at) {
   if (!zone) return null;
   const event = at.event ?? null;
   const met = [...(at.night ? ['night'] : []), ...(event === 'incursion' ? ['incursion'] : [])];
-  const p = encounterPool(zone.band, { province: at.province, region: at.region, area: zoneAreaOf(at.region), climate: at.climate ?? null,
+  const p = encounterPool(zone.band, { px: at.px, py: at.py, province: at.province, region: at.region, area: zoneAreaOf(at.region), climate: at.climate ?? null,
     dungeon: at.dungeon ?? null, met, factions: at.factions ?? [] });
   const of = (keep) => byKey(p.pool.filter(keep).map((x) => ({ key: x.t.key, w: x.w })));
   const hostile = (x) => meetsHostile(x.t, event);
