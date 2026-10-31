@@ -26,10 +26,12 @@ import {
   TITLE_GRADIENT,
   AURA_PAINT,
   cssRgba,
+  ARMORY_LINE_GRADIENT,
+  armoryLineBadge,
 } from '../playerBadge.js';
 import { armoryPieceOf } from '../../net/armoryLaw.js'; // ARMORY: a piece's slot and line
 import { profileIconNode } from '../profileIcons.js';
-import { inkColour, GRIMOIRE_DRESS } from '../grimoireDress.js'; // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page
+import { inkPaintedWord } from '../grimoireDress.js'; // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page (one home since AUDIT-STOREFRONT II)
 import {
   WARDROBE_SOURCES,
   AVAIL_NOW,
@@ -61,10 +63,11 @@ export function wardrobeFilterPasses(
   /** @type {any} */ e,
   /** @type {any} */ wardrobe,
   nowMs = Date.now(),
+  /** @type {any} */ shop = null,
 ) {
   if (filter === 'held') return wardrobeHeld(e.kind, e.key, wardrobe);
   if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe); // a character's own is not "missing" from an account that never keeps it
-  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs));
+  if (filter === 'now') return AVAIL_NOW.includes(wardrobeAvail(e, nowMs, shop));
   return true;
 }
 
@@ -210,18 +213,18 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
         : kind === 'armory'
           ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')]
           : null; // ARMORY: a piece in its line's aura's paint
+  const line = kind === 'armory' && !paintKey ? armoryLineBadge(armoryPieceOf(key)?.line ?? '') : null; // AUDIT lane 3 F5: a line no title paints
+  if (line && word.style) {
+    paintTitle(word, line, false);
+    inkPaintedWord(word);
+  }
   if (paintKey && word.style) {
     paintTitle(word, titleBadge({ title: paintKey }), kind === 'title'); // SHOP: a title's flame plate, never an aura's word
-    if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);
+    inkPaintedWord(word); // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)
   }
   plate.append(word);
   cell.append(plate);
   return cell;
-}
-/** A painted word's colours, each inked for the page. */
-function inkPaint(/** @type {any} */ word) {
-  const ink = (/** @type {string} */ s) => String(s).replace(/#[0-9a-f]{6}\b/gi, (h) => inkColour(h) ?? h);
-  for (const k of ['color', 'backgroundImage', 'filter']) if (word.style[k]) word.style[k] = ink(word.style[k]);
 }
 /** AN AURA'S PICTURE: the ring it lights about the feet, in its title's colours (the account card's paint, AURA_PAINT) -
  *  a sign of the aura, never the aura (that is render/auraRing.js's, drawn in the world). Null with no SVG door. */
@@ -234,10 +237,11 @@ export function auraRingNode(/** @type {any} */ doc, /** @type {string} */ key, 
     return n;
   };
   const paint = AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)];
-  const stops = TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [
-    TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
-    TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
-  ];
+  const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ??
+    TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [
+      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
+      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],
+    ]; // AUDIT lane 3 F5
   const id = `coll-aura-${key}-${++_ringSerial}`;
   const svg = node('svg', {
     viewBox: '0 0 40 26',
@@ -372,7 +376,7 @@ export function drawWardrobePart(detail, rerender, kit, kind, flow) {
   // "Not held" listed everything
   if (!wardrobe && (_filter === 'held' || _filter === 'missing')) _filter = 'all';
   detail.append(filterRow(el, rerender, !!wardrobe));
-  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now));
+  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop)); // AUDIT-STOREFRONT S2: the shop's own word
   if (!shown.length) {
     detail.append(el('p', 'px-note', t('coll.none', 'Nothing here.')));
     return;
@@ -445,7 +449,7 @@ function rowOf(ctx, e) {
   const tags = el('span', 'coll-tags');
   if (held) tags.append(el('span', `coll-tag ${worn ? 'is-worn' : 'is-held'}`, stateWord(e.kind, e, wardrobe)));
   else if (!known) tags.append(el('span', 'coll-tag is-char', t('coll.state.character', 'Per character')));
-  const avail = wardrobeAvail(e, ctx.now);
+  const avail = wardrobeAvail(e, ctx.now, ctx.flow?.shop);
   tags.append(
     el('span', ['coll-tag', `av-${avail}`].join(' '), AVAIL_TAG[/** @type {keyof typeof AVAIL_TAG} */ (avail)]()),
   );
@@ -474,7 +478,10 @@ function wholeOf(ctx, e) {
   text.append(paintedWord(el, e.kind, e.key, 'coll-bigword')); // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)
   if (e.look) text.append(el('p', 'coll-look', e.look()));
   text.append(el('h5', null, t('coll.whole.how', 'How to get it')), el('p', 'coll-how', e.how()));
-  text.append(el('h5', null, t('coll.whole.avail', 'Availability')), el('p', 'coll-availline', availLine(e, ctx.now)));
+  text.append(
+    el('h5', null, t('coll.whole.avail', 'Availability')),
+    el('p', 'coll-availline', availLine(e, ctx.now, ctx.flow?.shop)),
+  );
   const held = wardrobeHeld(e.kind, e.key, wardrobe);
   if (!wardrobeKnown(e))
     text.append(

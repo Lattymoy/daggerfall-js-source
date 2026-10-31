@@ -63,8 +63,8 @@ const fileOf = (files, name) => (files instanceof Map ? files.get(name) : files?
  */
 export function readMapSaveDiscovery(mapSave, regionLocationCounts) {
   const discovered = [];
+  // BAY-OWN: a classic save holds the Bay's 62 MAPSAVE files
   for (let regionIndex = 0; regionIndex < 62; regionIndex++) {
-    // BAY-OWN: a classic save holds the Bay's 62 MAPSAVE files
     const name = `MAPSAVE.${String(regionIndex).padStart(3, '0')}`;
     const index = mapSave.getRecordIndex(name);
     if (index === -1) return null;

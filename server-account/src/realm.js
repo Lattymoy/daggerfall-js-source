@@ -54,6 +54,7 @@ import {
   REALM_BIRTH_LEVEL,
   REALM_BIRTH_WEALTH_MAX,
 } from '../../src/net/realm/realmGoldLaw.js';
+import { birthSkillOk } from '../../src/systems/levelClimb.js'; // LEVEL-45: a birth's skill start is a real creation's (skills zeroed / start forged → no birth)
 import { cardWorthOf, cardPacksOf, customsCardAllowance, STARTER_DECK_WORTH } from '../../src/net/card/cardWorthLaw.js'; // CARDS9: the cards' customs - the client's law   // AUDIT REALM2 S1: the first save, measured as customs measures it
 import { ID_RE, armsIssuable } from '../../src/net/identityToken.js'; // CUSTOMS-PASS: an account named by its id; INT7: the arms' claim
 import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js'; // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
@@ -613,7 +614,7 @@ export async function realmSaveTextOf(/** @type {any} */ object) {
  * AUDIT REALM2 S1: THE FIRST SAVE IS READ. The service took any bytes as a character's first checkpoint, so a character
  * "born online" could be any offline save (ten million gold, level sixty), customs' allowance was the client's alone to
  * apply - and the first save is the start every later check of the realm measures from. A character born online starts
- * as chargen starts one: level REALM_BIRTH_LEVEL, and no more liquid wealth than REALM_BIRTH_WEALTH_MAX ('realm-birth').
+ * as chargen starts one: level REALM_BIRTH_LEVEL, wealth to REALM_BIRTH_WEALTH_MAX, skills a creation's ('realm-birth').
  * A customs character brings no more than the allowance at the level customs was asked at - the level on its row's
  * summary, which nothing writes before the first save lands, never the first save's own word ('customs-allowance').
  * Wealth is customs' own measure (net/realm/realmGoldLaw.js liquidWealthOf): the purse, the banks, and every gold-piece item
@@ -633,8 +634,11 @@ export function firstSaveRefusal(text, row) {
   if (!row.origin_id) {
     // CARDS9: and no more cards than the binder's gift - the starter deck's worth (net/card/cardWorthLaw.js). AUDIT CARDS-6 A1:
     // and no sealed pack - chargen hands none, and the first save lands before the world is played
+    // LEVEL-45 / BIRTH-SKILL: the skill start, current sum, 3/3/6 career and 35 skills agree; only a Legacy person's
+    // Hearth may use the larger start ceiling
     return shaped &&
       save.level === REALM_BIRTH_LEVEL &&
+      birthSkillOk(save, { legacy: row.lineage_id != null }) &&
       liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX &&
       cardWorthOf(save) <= STARTER_DECK_WORTH &&
       cardPacksOf(save) === 0
@@ -769,7 +773,7 @@ export async function checkpointRealm(
     // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep)
     db
       .prepare(
-        `SELECT seq, lease, obj, prev, origin_id, summary, dead_at, ${JUDGE_COLUMNS},
+        `SELECT seq, lease, obj, prev, origin_id, lineage_id, summary, dead_at, ${JUDGE_COLUMNS},
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
     (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,

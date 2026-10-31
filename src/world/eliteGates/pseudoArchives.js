@@ -222,6 +222,20 @@ export const PSEUDO_ARCHIVES = Object.freeze([
     "a guild hall's furniture - its wood, gilt, velvet and iron, and the hall's banner and shield (GUILD-SHOP)",
   ),
   N(
+    38351,
+    'world/aurumCofferArt.js',
+    'AURUM_COFFER_ARCHIVE',
+    'port',
+    'an Aurum coffer - shut and full, open and empty (AURUM-CACHES)',
+  ),
+  N(
+    38361,
+    'world/fissureArt.js',
+    'FISSURE_ARCHIVE',
+    'port',
+    'a Brass Fissure - its scorched earth, its crack, its slabs and its wreckage (STOREFRONT)',
+  ), // 38341 on its branch, GUILD-SHOP's at the merge of main
+  N(
     38400,
     'world/capitalShapes.js',
     'CAPITAL_ARCHIVE',

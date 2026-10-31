@@ -84,6 +84,7 @@ import { conditionPercentage } from '../../systems/item/itemInfo.js';   // SW1: 
 import { isShieldTemplate } from '../../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { rriNativeMaterialValue } from '../../systems/roleplayRealismItems/rriItems.js';
 import { riddenHorseLook } from '../../systems/horse/horseCoats.js';   // COATS1: the sprite body's mount wears the ridden horse's look   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
+import { ownMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: my mount look on my body's horse
 import { createHandheldTorches, isHeldLight } from '../../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { lanternAtWaist } from '../../systems/playerTorch.js';   // HT-WAIST: a lantern hung at the waist is in no hand - the ladder, the Morrowind body and the sprite ask the one question
 import { liveVampirism } from '../../systems/racialLive.js';   // PORTRAIT3D: a vampire's body wears the race's vampire head
@@ -780,6 +781,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);
   };
   bindArm();
+  // LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair's right
+  // and left weapons for the layered body, and the hand whose blow is in flight - nothing of it outside a pair
+  const layeredPair = () => (playerWeapon.handsMode !== HANDS_MODE.Dual ? { pairRight: null, pairLeft: null, pairStrike: null } : {
+    pairRight: playerWeapon.handItem('R'), pairLeft: playerWeapon.handItem('L'),
+    pairStrike: playerWeapon.machine.state !== 'Idle' && playerWeapon.strike ? playerWeapon.strike.hand : null,
+  });
+  // SPELL-BURST: the cast's element, drawn in the layered body's hands, and a weapon kept in hand beside the spell
+  const layeredCast = () => ({ castElement: castPlaying() ? cast.element : null, spellHand: !!spellHandNow() });
+  // AUDIT (2026-10-31): a gathering act's tool in the body's hands, as the walkers draw mine (peerRiders walkerHands,
+  // WALK_GATHER_STROKES): held ready, each blow the swing's second stroke - odd counts, one a blow
+  let toolBlows = 0, toolStriking = false;
+  const layeredTool = () => {
+    const tool = actTool(), strike = !!tool && !!tool.state && tool.state !== 'Idle';
+    if (strike && !toolStriking) toolBlows++;
+    toolStriking = strike;
+    return tool ? { heldWeapon: tool, toolInHand: true, usingBow: false, spellcasting: false, attacking: strike, swingN: -(2 * toolBlows + 1), pairRight: null, pairLeft: null, pairStrike: null } : {};
+  };
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
   // worldModes.js and dungeonContext.js - none of them carries a call,
@@ -822,9 +840,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     sheathed: playerWeapon.sheathed,
     spellcasting: spellArmed(),
     usingBow: !!playerWeapon.machine.isBow,
+    heldWeapon: playerWeapon.weapon ?? null,   // LAYERED-WEAPONS: the item the sprite's hands hold (player/eyeOfTheBeholder/layeredWeapon.js)
+    ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking
+    ...layeredCast(),   // SPELL-BURST: the cast's element and the spell hand
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
-    horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code
+    horseLook: entity ? ownMountLook(riddenHorseLook(entity.items ?? [])) : 0,   // COATS1: its code; STOREFRONT: my mount look over it
     died: !!entity && (entity.health ?? 1) <= 0,
     motion: camera?.()?.move ?? null,
     attacking: playerWeapon.machine.state !== 'Idle',
@@ -842,6 +863,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     animCtx: playerWeapon.animCtx(),
     concealment: entity ? concealmentFlags(entity) : null,
     hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
+    handItem: playerWeapon.handItem(playerWeapon.leadHand),   // BACK-HOLSTER: the weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn
+    handWraps: playerWeapon.wrapsOf(playerWeapon.leadHand),   // BACK-HOLSTER GLOW: and a bare fist's Hand Wraps, as handGlowOf asks them
+    hasAmmo: hasAmmoFor(entity?.items, playerWeapon.handItem(playerWeapon.leadHand)),   // QUIVER: arrows in the quiver on the sprite's back (WS1's)
+    ...layeredTool(),   // AUDIT: a gathering act's tool over the weapon's hands
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
@@ -2042,7 +2067,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.
         const m = playerWeapon.machine;
-        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
+        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);   // MW-DRAW-PACE: a held draw's loose on the classic clock
         fpArm.update(dt);
       }
       if (paralyzed) return [];

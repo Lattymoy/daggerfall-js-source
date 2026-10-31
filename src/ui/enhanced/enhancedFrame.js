@@ -215,10 +215,27 @@ export const FRAME_ROLES = {
     'body .dftown-panel', // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)
     '.px-sys .cmp-sheet', // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
     '.px-sys .coll-whole', // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
-    '.px-sys .codex-whole',
-  ], // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
+    '.px-sys .codex-whole', // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
+    // AUDIT-STOREFRONT II (lane E 1): the shop's ware, its carousel, its pass and its daily wares - boxes in its window
+    '.px-shopwin .sh-panel',
+    '.px-shopwin .sh-carousel',
+    '.px-shopwin .sh-pass',
+    '.px-shopwin .sh-dailyhead',
+    '.px-shopwin .sh-aurumhead',
+    '.px-shopwin .sh-proceeds',
+    '.px-shopwin .sh-folio',
+    '.px-shopwin .sh-spread',
+    '.px-shopwin .sh-pchal',
+  ], // PASS-PANELS: a folio's cover, an open folio and the challenges
   // panels that carry a brass edge on the left as their own mark
-  panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'], // PLUS-DRESS: the two that wore a brass line
+  panelAccent: [
+    'body .rvncard',
+    '.notice',
+    '.inputbox',
+    'body .dfsocial-toast',
+    'body .dfdecor-bar', // PLUS-DRESS: the two that wore a brass line
+    '.px-shopwin .sh-proceeds',
+  ], // AUDIT-STOREFRONT II: the shop's disclaimer, first and marked
   button: [
     '.port-host .port-btn',
     '.pack-shell .statflip-btn',
@@ -319,9 +336,12 @@ export const FRAME_ROLES = {
     'body .eg-k-x',
     'body .eg-spire.enhanced .eg-fold',
     'body .eg-spire.enhanced .eg-touch button',
+    '.px-shopwin .act', // AUDIT-STOREFRONT II (lane E 1): the shop's Close, Wear, the carousel's steps - the kit's presses
     'body .dftown-panel .dftown-btn',
   ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board
   primary: [
+    '.px-shopwin .sh-buy',
+    '.px-shopwin .sh-getaurum', // AUDIT-STOREFRONT II: Buy - what the shop is for; PASS-PANELS: Get Aurum, its way when short
     'body .dftown-panel .dftown-btn.primary', // NOTICE-PANEL: the Notice Board - what the panel is for
     '.lv-ok',
     '.hmroot .act:not(.hmtool)',
@@ -391,6 +411,8 @@ export const FRAME_ROLES = {
     '.px-sys .coll-filter',
     '.px-sys .coll-with',
     '.px-sys .coll-retry', // COLLECTIONS-II: the wardrobe's filters, and a "comes with" press - AUDIT COLLECTIONS-II: and a failed read's Try again
+    '.px-shopwin .sh-fcover',
+    '.px-shopwin .sh-pitem', // PASS-PANELS: a folio's cover pressed to open it, an item on its page
     'body .eg-k-tile',
   ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
   // HOLDINGS: where a holding is (`.hld-state`)
@@ -428,7 +450,13 @@ export const FRAME_ROLES = {
     '.px-sys .coll-tag', // COLLECTIONS-II: a row's readouts - whose it is, whether it can be had
     'body .eg-k-chip',
     'body .eg-spire.enhanced .eg-chip',
-  ], // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
+    '.px-shopwin .sh-tag',
+    '.px-shopwin .sh-phase',
+    '.px-shopwin .sh-balance',
+    '.px-shopwin .sh-stagechip',
+    '.px-shopwin .sh-deed',
+    '.px-shopwin .sh-pspent',
+  ], // AUDIT-STOREFRONT II: the shop's readouts   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
   well: [
     'body .lk-canvas',
@@ -485,8 +513,12 @@ export const FRAME_ROLES = {
     'body .dfiliac .season', // CARDS-PLUS: the board's cards, the hand held and the season's board, sunk into the stone
     'body .dfgambit-face',
     'body .dfgambit-meter', // KG3: the unit shown large, a piece's health well
-    '.px-sys .binder-edit input',
-  ], // COLLECTIONS (CARDS-PLUS): a deck's name
+    '.px-sys .binder-edit input', // COLLECTIONS (CARDS-PLUS): a deck's name
+    '.px-shopwin .sh-stage',
+    '.px-shopwin .sh-daybar',
+    '.px-shopwin .sh-cmeter',
+    '.px-shopwin .sh-pitempic',
+  ], // AUDIT-STOREFRONT II: a ware's stage and the pass's meters, sunk; PASS-PANELS: an item's picture
   input: [
     '.shell .opt-search',
     '.wizard .namebox',
@@ -502,7 +534,7 @@ export const FRAME_ROLES = {
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-find',
   ],
-  meterFill: ['.px-fill', 'body .dfgambit-fill'], // KG3: a piece's health, banded like the vitals
+  meterFill: ['.px-fill', 'body .dfgambit-fill', '.px-shopwin .sh-dayfill', '.px-shopwin .sh-cfill'], // KG3: a piece's health, banded like the vitals
   header: [
     '.port-host .port-head',
     '.px-win .px-tabs',
@@ -529,8 +561,9 @@ export const FRAME_ROLES = {
     'body .dfcards .tablehead',
     'body .dfiliac .tablehead',
     'body .dfgambit .tablehead',
-    'body .eg-k-head',
-  ], // EG-PLUS: the band that names a breach window   // CARDS-PLUS: the band that names a card table's panel
+    'body .eg-k-head', // EG-PLUS: the band that names a breach window
+    '.px-shopwin .sh-head',
+  ], // AUDIT-STOREFRONT II: the shop's own   // CARDS-PLUS: the band that names a card table's panel
   headerRule: [
     'body .rvncard-name',
     '.shell .ft-drawer-label',
@@ -547,8 +580,10 @@ export const FRAME_ROLES = {
     'body .dfnaval-sechead', // NAV-F: the plunder window's three heads
     'body .dfgambit-sec > summary',
     'body .dfgambit-sec > h3',
-    'body .eg-k-sechead',
-  ], // EG-PLUS: a breach window's section head   // KG3: a section's head
+    'body .eg-k-sechead', // EG-PLUS: a breach window's section head
+    '.px-shopwin .sh-subhead',
+    '.px-shopwin .sh-spreadhead',
+  ], // KG3: a section's head   // PASS-PANELS: an open folio's
   footer: [
     '.port-host .port-foot',
     '.dlg-shell .dlg-acts',
@@ -557,6 +592,7 @@ export const FRAME_ROLES = {
     '.pack-shell .packbar',
     '.talk-say',
     'body .eg-k-dock',
+    '.px-shopwin .sh-foot',
   ], // EG-PLUS: the band a breach window's presses stand on
   footerRule: ['.lv-foot', '.wizard .actionbar'],
   rule: [
@@ -607,7 +643,15 @@ export const FRAME_ROLES = {
   wingFlip: ['.px-qwing.px-flip'],
   railRight: ['.px-qrail', '.shell .side', '.shell .subrail'],
   railLeft: ['.talk-topics', '.shell .detail', 'body .dfchat-who'],
-  tabs: ['.px-tabs button', '.talk-mode', 'body .dfsocial-tab', 'body .dfchat-tab', 'body .eg-k-tab'], // EG-PLUS: the boards' tabs
+  tabs: [
+    '.px-tabs button',
+    '.talk-mode',
+    'body .dfsocial-tab',
+    'body .dfchat-tab',
+    'body .eg-k-tab',
+    '.px-shopwin .sh-tab',
+    '.px-shopwin .sh-pagetab',
+  ], // PASS-PANELS: a folio's pages   // EG-PLUS: the boards' tabs
   // the CHOSEN option of a row of several (Cloud quality: Default / Low / High, and
   // every tier row like it) - filled green, the colour of a switch that is on.
   // On/off switches already carry their own green and red (.ft-seg-switch).

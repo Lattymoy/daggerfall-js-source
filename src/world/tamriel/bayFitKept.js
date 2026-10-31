@@ -16,6 +16,7 @@ export const BAY_FIT_SCOPE = 'fv-bayfit:';
 /** The key of the fit over these inputs. @param {(x: number, y: number) => boolean} bayLand @param {{ w: number, h: number, land: ArrayLike<number> }} trace */
 export function bayFitKey(bayLand, trace) {
   const bay = new Uint8Array(Math.ceil((BAY_W * BAY_H) / 8));
+  // BAY-OWN: the fit's key reads the Bay's own grid, a bit a pixel (the formatter put its two loops on two lines)
   for (let y = 0; y < BAY_H; y++)
     for (let x = 0; x < BAY_W; x++)
       if (bayLand(x, y)) {

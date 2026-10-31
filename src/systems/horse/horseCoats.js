@@ -47,6 +47,16 @@
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
 import { TRANSPORT_HORSE } from '../item/itemTemplates.js';
+import { MOUNT_LOOKS } from '../../net/effectLaw.js'; // STOREFRONT: the account's mount looks, in the kit's order
+import {
+  paintMountHide,
+  paintMountPoint,
+  mountAnatomy,
+  mountFacing,
+  lightOf,
+  EDGE_MAX,
+  HEART_UP,
+} from './mountPaint.js'; // AUDIT-STOREFRONT: the looks painted
 
 /** The coats, in the order the Stable lists them and the item keeps them (`horseCoat`); the first the bay as drawn. */
 export const HORSE_COATS = Object.freeze(['bay', 'chestnut', 'black', 'grey', 'dun', 'buckskin', 'palomino']);
@@ -57,6 +67,12 @@ export const HORSE_PATTERN_MAX = HORSE_PATTERNS.length - 1;
 /** The legs (`horseLegs`), the first the coat's own. */
 export const HORSE_LEGS = Object.freeze(['plain', 'socks', 'stockings']);
 export const HORSE_LEGS_MAX = HORSE_LEGS.length - 1;
+/** STOREFRONT (2026-10-29; bible/06-Systems/Storefront.md section 7): THE MOUNT LOOKS (`mount`), the first none - the
+ *  account's (net/effectLaw.js MOUNT_LOOKS): a fifth part laid over the other four, never the item's and never on the
+ *  wire's code - the signed token carries it, and each screen lays it on locally (`withMountLook`; `wireHorseLook`
+ *  takes it off a code bound for the wire). */
+export const HORSE_MOUNTS = Object.freeze(['none', ...MOUNT_LOOKS]);
+export const HORSE_MOUNT_MAX = HORSE_MOUNTS.length - 1;
 /** The highest seed (`horseSeed`); 0 is no seed - a horse not yet born, or the art as drawn. */
 export const HORSE_SEED_MAX = 65535;
 /** What each is called on the Stable card. */
@@ -142,36 +158,53 @@ const pick = (weights, r) => {
   return 0;
 };
 
-/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0. */
+/** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0 - and STOREFRONT's `mount` with
+ *  them only while one is laid over it (an item's look never carries one). */
 export function readHorseLook(v) {
   const o = v && typeof v === 'object' ? v : {};
+  const mount = index(o.mount, HORSE_MOUNT_MAX);
   return {
     coat: index(o.coat, HORSE_COAT_MAX),
     pattern: index(o.pattern, HORSE_PATTERN_MAX),
     legs: index(o.legs, HORSE_LEGS_MAX),
     seed: index(o.seed, HORSE_SEED_MAX),
+    ...(mount ? { mount } : {}),
   };
 }
 const C = HORSE_COATS.length,
   P = HORSE_PATTERNS.length,
   L = HORSE_LEGS.length;
-/** The look as the wire says it: one number, 0 the bay as drawn. */
+/** The codes of the item's four parts - the wire's - and STOREFRONT's mount look over them, its highest factor. */
+const BASE = C * P * L * (HORSE_SEED_MAX + 1);
+/** The look as one number, 0 the bay as drawn - the wire's (no mount look) under BASE. */
 export const horseLookCode = (look) => {
   const l = readHorseLook(look);
-  return l.coat + C * (l.pattern + P * (l.legs + L * l.seed));
+  return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)) + BASE * (l.mount ?? 0);
 };
-/** The highest code a look can be. */
-export const HORSE_LOOK_CODE_MAX = C * P * L * (HORSE_SEED_MAX + 1) - 1;
+/** The highest code the WIRE may say: the item's four parts (a mount look is the token's, never a peer's word). */
+export const HORSE_LOOK_CODE_MAX = BASE - 1;
+/** STOREFRONT: the highest code a screen draws - a mount look laid over it. */
+export const HORSE_LOOK_WORN_MAX = BASE * HORSE_MOUNTS.length - 1;
 /** The look a code names - the bay as drawn for anything the law does not know. */
 export function horseLookOfCode(code) {
-  if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_CODE_MAX) return readHorseLook(null);
+  if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_WORN_MAX) return readHorseLook(null);
+  const b = code % BASE;
   return readHorseLook({
-    coat: code % C,
-    pattern: Math.floor(code / C) % P,
-    legs: Math.floor(code / (C * P)) % L,
-    seed: Math.floor(code / (C * P * L)),
+    coat: b % C,
+    pattern: Math.floor(b / C) % P,
+    legs: Math.floor(b / (C * P)) % L,
+    seed: Math.floor(b / (C * P * L)),
+    mount: Math.floor(code / BASE),
   });
 }
+/** STOREFRONT: a code with mount look `key` laid over it (net/effectLaw.js MOUNT_LOOKS; null or unknown: none). */
+export const withMountLook = (/** @type {unknown} */ code, /** @type {unknown} */ key) => {
+  const l = horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0);
+  return horseLookCode({ ...l, mount: Math.max(0, HORSE_MOUNTS.indexOf(/** @type {string} */ (key))) });
+};
+/** STOREFRONT: a code as the wire says it - its mount look taken off. */
+export const wireHorseLook = (/** @type {unknown} */ code) =>
+  horseLookCode({ ...horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0), mount: 0 });
 /** A look or its code, as a look. */
 const lookOf = (v) => (typeof v === 'number' ? horseLookOfCode(v) : readHorseLook(v));
 /** A look in words: "chestnut", "black pinto with socks", "dapple grey with stockings". */
@@ -576,6 +609,193 @@ function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
   }
 }
 
+// ── STOREFRONT: the mount looks ─────────────────────────────────────────────────────────────────────────────────────
+// AUDIT-STOREFRONT: each look painted by systems/horse/mountPaint.js - its own ramp by the art's light, its marks by the
+// horse's own shape. The coat is dyed first and the look laid over it, so a look taken off is the coat again.
+
+/** Where the points' leather-brown shading starts, a share of the hide's height down from its top - the belly. */
+export const POINT_BELLY = 0.56;
+/** Every mount look paints the points (the ghost's deep blue, the charger's fire, the warhorse's burning, steel). */
+export const dyesPoints = (/** @type {number} */ mount) => !!HORSE_MOUNTS[mount] && HORSE_MOUNTS[mount] !== 'none';
+/** The light a point is scaled by: the points are the art's near-black, POINT_VAL its brightest. */
+const pointLight = (/** @type {Uint8Array|ArrayLike<number>} */ c, /** @type {number} */ o) =>
+  clamp01(lightOf(c[o], c[o + 1], c[o + 2]) / POINT_VAL);
+/** One reused pixel record for the painters. @type {import('./mountPaint.js').MountPixel} */
+const _px = {
+  t: 0,
+  up: 0,
+  ur: 0,
+  edge: EDGE_MAX,
+  leg: 0,
+  hem: 0,
+  far: 0,
+  heart: Infinity,
+  px: 0,
+  py: 0,
+  seed: 0,
+  legs: true,
+  flat: false,
+  face: 0,
+};
+
+/** AUDIT-STOREFRONT: THE 3D HORSE'S MANE AND TAIL - its hair picture's rows `r0` to `r1` (not including it), `src`'s
+ *  texels in mount look `mount` into `out` (a copy of `src`), as the sprites' points; its alpha its own.
+ *  @param {Uint8Array} src @param {Uint8Array} out @param {number} width @param {number} mount @param {number} r0 @param {number} r1 */
+export function dyeHorseHairRows(src, out, width, mount, r0, r1) {
+  const look = HORSE_MOUNTS[mount],
+    p = _px;
+  p.flat = true;
+  p.leg = 0;
+  p.hem = 0;
+  p.far = 6;
+  p.heart = Infinity;
+  p.edge = 2;
+  p.legs = false;
+  p.up = 1;
+  p.ur = 0;
+  p.face = 0; // a strand's middle
+  // AUDIT-STOREFRONT II (lane C 4): seed 0 - one picture for every horse in the look (world/horseRig.js keeps it by look),
+  // never the flicker of whichever horse the shared record was last dyed for
+  p.seed = 0;
+  for (let o = r0 * width * 4, end = r1 * width * 4; o < end; o += 4) {
+    if (!src[o + 3]) continue;
+    p.t = clamp01(lightOf(src[o], src[o + 1], src[o + 2]) / 0.6);
+    p.px = (o / 4) % width;
+    p.py = Math.floor(o / 4 / width);
+    paintMountPoint(out, o, look, p);
+  }
+}
+/** Whether a pixel is one of the horse's points: near-black and all but grey (POINT_*), as the art paints them. */
+const isPointPixel = (r, g, b) => {
+  const H = hsv(r, g, b);
+  return H[1] < POINT_SAT && H[2] < POINT_VAL;
+};
+/** AUDIT-STOREFRONT: a point is near-black under this value and this saturation - the art's mane, tail and shading, never
+ *  a rider's leather, steel or cloth. */
+export const POINT_VAL = 0.35;
+export const POINT_SAT = 0.15;
+/** AUDIT-STOREFRONT: THE HORSE'S POINTS in a picture - its near-black pixels, and below its belly the leather-brown
+ *  its shading is painted in, joined to its hide through such pixels alone (8-connected, nearest first). Never one
+ *  climbing more than POINT_ABOVE of the hide's height over where its run left the hide (a rider's bow or spear rising
+ *  off the neck; a mane sits on it, a tail falls from the croup), nor a thin line (fewer than POINT_BODY of its
+ *  neighbours the horse's). A bridle drawn in the points' black is among them: across the hide it is drawn as the
+ *  shading is, a dark band, and a rule that spared it blacked the small sprites' shading. `down(i)` a pixel's depth. */
+function pointsOf(src, w, h, hide, tack, down, hideH, spare) {
+  const n = w * h,
+    horse = new Uint8Array(n),
+    out = [];
+  for (const i of hide.at) horse[i] = 2;
+  const belly = POINT_BELLY * hideH,
+    reach = POINT_ABOVE * hideH;
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    if (
+      !horse[i] &&
+      src[o + 3] &&
+      !spare?.[i] &&
+      (isPointPixel(src[o], src[o + 1], src[o + 2]) ||
+        (tack && down(i) > belly && isCoatPixel(src[o], src[o + 1], src[o + 2], false)))
+    )
+      horse[i] = 1;
+  }
+  const near = (/** @type {number} */ p, /** @type {(q: number) => void} */ f) => {
+    const x = p % w,
+      y = (p - x) / w;
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        const X = x + dx,
+          Y = y + dy;
+        if ((dx || dy) && X >= 0 && X < w && Y >= 0 && Y < h) f(Y * w + X);
+      }
+  };
+  const body = new Uint8Array(n);
+  for (let i = 0; i < n; i++)
+    if (horse[i] === 1) {
+      let k = 0;
+      near(i, (q) => {
+        if (horse[q]) k++;
+      });
+      body[i] = k >= POINT_BODY ? 1 : 0;
+    }
+  const seen = new Uint8Array(n),
+    base = new Float64Array(n),
+    queue = [];
+  let from = 0;
+  const visit = (/** @type {number} */ q, /** @type {number} */ b) => {
+    if (seen[q] || !body[q] || b - down(q) > reach) return;
+    seen[q] = 1;
+    base[q] = b;
+    out.push(q);
+    queue.push(q);
+  };
+  for (const i of hide.at) near(i, (q) => visit(q, down(i)));
+  while (from < queue.length) {
+    const p = queue[from++];
+    near(p, (q) => visit(q, base[p]));
+  }
+  // a strand's shine: a grey lighter than the points, held among them - the mane's streaks seen from the saddle
+  for (let pass = 0; pass < 2; pass++) {
+    const shine = [];
+    for (let i = 0; i < n; i++) {
+      const o = i * 4;
+      if (seen[i] || horse[i] === 2 || !src[o + 3] || spare?.[i] || hsv(src[o], src[o + 1], src[o + 2])[1] >= POINT_SAT)
+        continue;
+      let k = 0;
+      near(i, (q) => {
+        if (seen[q]) k++;
+      });
+      if (k >= POINT_SHINE) shine.push(i);
+    }
+    for (const i of shine) {
+      seen[i] = 1;
+      out.push(i);
+    }
+  }
+  // THE VISUAL PASS: the art's rose sheen on the hooves and the poll is neither hide nor point, so a look left it the
+  // bay's own (pink under a ghost's dissolved hooves). Taken with the points, grown from the horse: a speck touching it
+  // with POINT_SPECK neighbours the horse's, sheen or the toe's grey. A grey itself stays the shine's rule's (a rider's
+  // steel beside a mane).
+  const sheen = new Uint8Array(n); // 1 a speck of sheen, 2 a grey it may lean on
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    if (seen[i] || horse[i] === 2 || !src[o + 3] || spare?.[i]) continue;
+    if (isSpeckPixel(src[o], src[o + 1], src[o + 2])) sheen[i] = 1;
+    else if (hsv(src[o], src[o + 1], src[o + 2])[1] < POINT_SAT) sheen[i] = 2;
+  }
+  for (let pass = 0; pass < 4; pass++) {
+    const specks = [];
+    for (let i = 0; i < n; i++) {
+      if (sheen[i] !== 1 || seen[i]) continue;
+      let k = 0,
+        s = 0;
+      near(i, (q) => {
+        if (seen[q] || horse[q] === 2) k++;
+        else if (sheen[q]) s++;
+      });
+      if (k >= 1 && k + s >= POINT_SPECK) specks.push(i);
+    }
+    for (const i of specks) {
+      seen[i] = 1;
+      out.push(i);
+    }
+  }
+  return out;
+}
+/** THE VISUAL PASS: how many of a speck's eight neighbours are the horse's or sheen for it to be taken with the points. */
+export const POINT_SPECK = 3;
+/** The rose sheen the art paints the horse's hooves and poll with: hue 290-345 degrees, coloured. */
+export const isSpeckPixel = (/** @type {number} */ r, /** @type {number} */ g, /** @type {number} */ b) => {
+  const H = hsv(r, g, b);
+  return H[0] >= 290 && H[0] < 345 && H[1] >= 0.2;
+};
+/** AUDIT-STOREFRONT: how many of a grey pixel's eight neighbours are points for it to be a strand's shine among them. */
+export const POINT_SHINE = 5;
+/** AUDIT-STOREFRONT: how many of a point's eight neighbours are the horse's - a mane's, a tail's or an outline's are most;
+ *  a line drawn across the air has two or three. */
+export const POINT_BODY = 4;
+/** AUDIT-STOREFRONT: how far over the hide a run of points may climb, a share of the hide's height - a mane's crest. */
+export const POINT_ABOVE = 0.06;
+
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
  *  not the tack's leather. */
 export function isCoatPixel(r, g, b, tack = true) {
@@ -594,14 +814,17 @@ export function isCoatPixel(r, g, b, tack = true) {
  * billboards' order, formats/color32Order.js - the pool's and Eye Of The Beholder's pictures; the legs' white climbs
  * from the hooves, and the markings hang from the top); `legs` false where no hoof is drawn (the riding sprite's head
  * and neck), so no white is laid along the picture's lower edge; `tack` false where no saddle is (the riding sprite's
- * neck: its shadow along the mane is the leather band's colour, and without a saddle to spare it is the hide's).
+ * neck: its shadow along the mane is the leather band's colour, and without a saddle to spare it is the hide's); `spare`
+ * 1 a pixel never the horse's (a rider's, eotbRiderMasks.js); `view` its view (mountPaint.js VIEW_FRONT..VIEW_BACK).
  * @template {{ width: number, height: number, colors: ArrayLike<number> & { buffer: ArrayBufferLike, byteOffset: number, byteLength: number } }} T
- * @param {T} image
- * @param {any} look
- * @param {{ bottomFirst?: boolean, legs?: boolean, tack?: boolean }} [opts]
+ * @param {T} image @param {any} look @param {{ bottomFirst?: boolean, legs?: boolean, tack?: boolean, spare?: Uint8Array|null, view?: number }} [opts]
  * @returns {T}
  */
-export function recolorHorse(image, look, { bottomFirst = true, legs = true, tack = true } = {}) {
+export function recolorHorse(
+  image,
+  look,
+  { bottomFirst = true, legs = true, tack = true, spare = null, view = undefined } = {},
+) {
   const l = lookOf(look);
   if (!horseLookCode(l) || !image?.colors) return image;
   const dye = COAT_DYES[HORSE_COATS[l.coat]];
@@ -610,7 +833,7 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
   const n = w * h;
   if (src.length < n * 4) return image;
   const out = new Uint8Array(src); // a copy
-  const hide = hideOf(image.colors, src, w, h, tack);
+  const hide = hideOf(image.colors, src, w, h, tack, bottomFirst, spare);
   if (hide.at.length) {
     const { at, x0, r0, r1 } = hide;
     const hideW = Math.max(1, hide.x1 - x0 + 1),
@@ -634,6 +857,41 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
       if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1; // the legs' white, its top ragged
       dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
     }
+    if (l.mount) {
+      // STOREFRONT: the mount look over the coat - AUDIT-STOREFRONT: its hide and its points, by the horse's shape
+      const look = HORSE_MOUNTS[l.mount],
+        downOf = (/** @type {number} */ i) => {
+          const r = (i - (i % w)) / w;
+          return bottomFirst ? r1 - r : r - r0;
+        };
+      const pts = pointsOfImage(image.colors, src, w, h, tack, bottomFirst, spare, hide, downOf, hideH);
+      const an = anatomyOfImage(image.colors, src, w, h, tack, bottomFirst, spare, at, pts, downOf, hideW, hideH);
+      const { face, heart } = mountFacing(an, w, at, pts, downOf, hideW, hideH, view);
+      const p = _px,
+        span = an.hi - an.lo;
+      p.seed = l.seed;
+      p.legs = legs;
+      p.flat = false;
+      p.face = legs ? face : 0; // without hooves, the view along the neck from the saddle
+      const paint = (/** @type {number} */ i, /** @type {boolean} */ point) => {
+        const o = i * 4,
+          x = i % w,
+          along = (x - x0) / hideW;
+        p.t = point ? pointLight(src, o) : clamp01((lightOf(src[o], src[o + 1], src[o + 2]) - an.lo) / span);
+        p.up = 1 - downOf(i) / hideH;
+        p.ur = face < 0 ? 1 - along : along;
+        p.edge = an.edge[i];
+        p.leg = an.leg[i];
+        p.hem = an.hem[i];
+        p.far = an.far[i];
+        p.px = x;
+        p.py = (i - x) / w;
+        p.heart = Math.hypot(x - heart[0], p.py - heart[1]) / heart[2]; // NaN where no chest is seen: never the heart
+        if (!(point ? paintMountPoint(out, o, look, p) : paintMountHide(out, o, look, p))) out[o + 3] = 0;
+      };
+      for (let j = 0; j < at.length; j++) paint(at[j], false);
+      for (let j = 0; j < pts.length; j++) paint(pts[j], true);
+    }
   }
   const Ctor = /** @type {any} */ (image.colors).constructor;
   const colors = Ctor === Uint8Array ? out : new Ctor(out.buffer, 0, Ctor.BYTES_PER_ELEMENT === 4 ? n : n * 4);
@@ -642,6 +900,32 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
 
 /** PERF-HIDE: each picture's hide, kept by its pixels' array - one entry a `tack` (0 without, 1 with). */
 const _hides = new WeakMap();
+/** AUDIT-STOREFRONT: and its points, found once a picture a `tack` the first time a mount look asks. */
+const _points = new WeakMap();
+const pointsOfImage = (colors, src, w, h, tack, bottomFirst, spare, hide, down, hideH) =>
+  keptOf(_points, colors, slotOf(tack, bottomFirst, spare), () => pointsOf(src, w, h, hide, tack, down, hideH, spare));
+/** AUDIT-STOREFRONT: and its shape for the looks (mountPaint.js mountAnatomy), a `tack` and a row order each. */
+const _anatomy = new WeakMap();
+const anatomyOfImage = (colors, src, w, h, tack, bottomFirst, spare, at, pts, down, hideW, hideH) =>
+  keptOf(_anatomy, colors, slotOf(tack, bottomFirst, spare), () =>
+    mountAnatomy(src, w, h, at, pts, down, hideW, hideH, bottomFirst ? -1 : 1),
+  );
+/** PERF-HIDE: what `cache` keeps for a picture's pixels' array and a `tack` - `make`'s answer, asked once. */
+function keptOf(cache, colors, k, make) {
+  let kept = cache.get(colors);
+  if (!kept) {
+    kept = [null, null, null, null, null, null, null, null];
+    cache.set(colors, kept);
+  }
+  return kept[k] ?? (kept[k] = make());
+}
+/** A picture's slot in what is kept for it: its `tack`, and its row order (AUDIT-STOREFRONT: its points and its shape are
+ *  measured from its top, so a picture asked in both orders keeps each), and whether a rider is spared in it. */
+const slotOf = (
+  /** @type {boolean} */ tack,
+  /** @type {boolean} */ bottomFirst,
+  /** @type {Uint8Array|null} */ spare,
+) => (tack ? 1 : 0) + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);
 
 /**
  * PERF-HIDE (2026-10-12, a profile of a player's client in its first seconds in the world: the wagon pool's looks dyed
@@ -658,38 +942,37 @@ const _hides = new WeakMap();
  * @param {boolean} tack
  * @returns {{ at: Int32Array, x0: number, x1: number, r0: number, r1: number }}
  */
-function hideOf(colors, src, w, h, tack) {
-  let kept = _hides.get(colors);
-  if (!kept) {
-    kept = [null, null];
-    _hides.set(colors, kept);
-  }
-  const k = tack ? 1 : 0;
-  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));
+function hideOf(colors, src, w, h, tack, bottomFirst, spare) {
+  return keptOf(_hides, colors, slotOf(tack, bottomFirst, spare), () => findHide(src, w, h, tack, spare));
 }
 
 /** PERF-HIDE: the hide `recolorHorse` dyes `image` by - the one it keeps for the picture (`tack` as recolorHorse's).
  *  Named `pictureHide`, not `horseHide`: the 3D horse's measure is `world/horseModel.js` horseHide, and one name is one
  *  module's (test/systems/talk/audit24_onehome.test.js's ratchet).
  *  @param {{ width: number, height: number, colors: ArrayLike<number> & { buffer: ArrayBufferLike, byteOffset: number, byteLength: number } }} image */
-export function pictureHide(image, { tack = true } = {}) {
+export function pictureHide(
+  image,
+  { tack = true, bottomFirst = true, spare = /** @type {Uint8Array|null} */ (null) } = {},
+) {
   return hideOf(
     image.colors,
     new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength),
     image.width,
     image.height,
     tack,
+    bottomFirst,
+    spare,
   );
 }
 
 /** THE DYE's hide of one picture - its regions, the horse's among them, and their frame (see hideOf). */
-function findHide(src, w, h, tack) {
+function findHide(src, w, h, tack, spare) {
   const n = w * h;
-  // the hide's pixels, and their 8-connected regions
+  // the hide's pixels, and their 8-connected regions - never a spared pixel (a rider's skin is as warm as a bay)
   const coatMask = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const o = i * 4;
-    if (src[o + 3] && isCoatPixel(src[o], src[o + 1], src[o + 2], tack)) coatMask[i] = 1;
+    if (src[o + 3] && !spare?.[i] && isCoatPixel(src[o], src[o + 1], src[o + 2], tack)) coatMask[i] = 1;
   }
   const region = new Int32Array(n).fill(-1);
   const sizes = [],
@@ -845,6 +1128,64 @@ export function recolorHorseTexels(image, look, map) {
   return /** @type {T} */ ({ ...image, colors });
 }
 
+/** AUDIT-STOREFRONT: where the 3D horse's legs end, a share of its height over the hooves - the belly. */
+export const LEG_UP_3D = 0.5;
+/** AUDIT-STOREFRONT: the 3D hide's light, its 5th to 95th share, read once a picture. */
+const _texLight = new WeakMap();
+function texLightOf(/** @type {Uint8Array} */ src, /** @type {any} */ map) {
+  let k = _texLight.get(src.buffer);
+  if (!k) {
+    const v = [];
+    for (let i = 0; i < map.hide.length; i++)
+      if (map.hide[i] && src[i * 4 + 3]) v.push(lightOf(src[i * 4], src[i * 4 + 1], src[i * 4 + 2]));
+    v.sort((a, b) => a - b);
+    const lo = v.length ? v[Math.floor(v.length * 0.05)] : 0,
+      hi = v.length ? v[Math.floor(v.length * 0.95)] : 1;
+    k = { lo, span: Math.max(0.05, hi - lo) };
+    _texLight.set(src.buffer, k);
+  }
+  return k;
+}
+/** AUDIT-STOREFRONT: where the 3D chest's front is at the heart's height, along the flank's plane (1 the nose) - read off
+ *  the map once, as the sprites' is off their pixels (mountAnatomy): a number guessed for it stood in the air. */
+const _chest = new WeakMap();
+function chestOf(/** @type {any} */ map) {
+  let ur = _chest.get(map.up);
+  if (ur === undefined) {
+    let along = 1;
+    for (let i = 0; i < map.hide.length; i++) {
+      if (!map.hide[i] || Math.abs(map.up[i] - HEART_UP) > 0.02 || map.planes[i * 9 + 2] < 0.3) continue; // on a flank
+      const a = map.planes[i * 9];
+      along = Math.min(along, a > 30 ? a - 37.3 : a);
+    }
+    _chest.set(map.up, (ur = 1 - along));
+  }
+  return ur;
+}
+/** AUDIT-STOREFRONT: a 3D hide texel in its mount look - lit by the world, so no rim; its legs and its belly by its
+ *  height, its place along by the flank's plane (0 its nose). */
+function paintTexel(out, o, src, l, map, i, x, y) {
+  const p = _px,
+    L = texLightOf(src, map),
+    up = map.up[i],
+    a = map.planes[i * 9];
+  p.flat = true;
+  p.legs = true;
+  p.seed = l.seed;
+  p.face = -1;
+  p.edge = EDGE_MAX;
+  p.far = 0;
+  p.t = clamp01((lightOf(src[o], src[o + 1], src[o + 2]) - L.lo) / L.span);
+  p.up = up;
+  p.leg = up < LEG_UP_3D ? 1 : 0;
+  p.hem = up >= LEG_UP_3D && up < LEG_UP_3D + 0.03 ? 1 : 0;
+  p.ur = clamp01(1 - (a > 30 ? a - 37.3 : a));
+  p.px = x;
+  p.py = y;
+  p.heart = Math.hypot((p.ur - chestOf(map) + 0.03) / 0.035, (up - HEART_UP) / 0.05); // just in from the chest's front
+  paintMountHide(out, o, HORSE_MOUNTS[l.mount], p);
+}
+
 /**
  * recolorHorseTexels's work, rows `r0` to `r1` (not including it) of a `width`-wide picture: `src`'s texels dyed into
  * `out` (a copy of `src`, the rows outside left as they are). Apart so a renderer can spread one look's dye over a
@@ -894,5 +1235,6 @@ export function dyeHorseTexelRows(src, out, width, look, map, r0, r1) {
     else if (pattern === 'roan') white = roanFleck(s, x, y, field);
     if (band > 0 && map.up[i] < band * (0.8 + 0.4 * rag)) white = 1; // the legs' white, its top ragged
     dyeInto(out, src, o, dye, hueJ, valJ, white, dark, WHITE_FLOOR_3D);
+    if (l.mount) paintTexel(out, o, src, l, map, i, x, y); // STOREFRONT: the mount look over the coat; its alpha the 3D horse's own
   }
 }

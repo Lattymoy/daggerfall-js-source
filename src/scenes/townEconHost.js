@@ -100,7 +100,8 @@ export function createTownEconHost({
     players: (mapId) => book?.shareOf(mapId) ?? 0,
     patronsIn: (region) => chapters?.patronsIn(region) ?? [],
     lanesAt,
-  });
+    regional: (region) => book?.regionalOf(region) ?? 0,
+  }); // FOUNDATION F2
   /** SEA-TRADE: the town of a port (its map pixel's location), or null - none past the Veil. @param {any} port */
   const portTown = (port) => {
     if (!port || port.ether || !Number.isSafeInteger(port.px) || !Number.isSafeInteger(port.py)) return null;

@@ -20,7 +20,7 @@ import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../../src/scenes/hostCombat.js';
 import { renownFoeStruck, renownFoeDied } from '../../src/net/renownTracker.js';   // RENOWN1: the kill door's stamps, in the harness's scope
-import { reportPlayerKill } from '../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
+import { reportPlayerKill, killFxOf } from '../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope; STOREFRONT: and where a kill falls
 import { partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../../src/systems/party/partyScale.js';
 import { stampWonWeapons } from '../../src/systems/loot/lootRarity.js';   // SIGIL1: the kill door's stamp, the real one (offline: nothing marked)
 import { rollCorpseKit } from '../../src/systems/foeLootCap.js';   // KIT-ROLL: the kill door's kit roll, the real one (no plain foe's stamp here: nothing rolled)
@@ -108,7 +108,7 @@ function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordC
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, foeDeps, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
-    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied, reportPlayerKill,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
+    markFoeStruck: () => {}, markConcealedHit: () => {}, makeEnemiesHostile: () => {}, peerCandidate: () => null, renownFoeStruck, renownFoeDied, reportPlayerKill, killFxOf,   // RENOWN1: the kill door's two stamps, the real ones (no handler: nothing paid)
     partyFoeLoses, noteFighter, foeFighters, takeWholeBlow, PARTY_ME, registerFoeDoor, bossStrikeAt, bossTakeAt, bossClockS, strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame,   // BOSS-TRAITS: the door's two halves   // PSCALE1: the real weight - only my own blows land here, so every foe fights one and every blow lands whole
     ownRides: () => false,   // PSCALE-OWN / SUMMON-SYNC: nothing of mine on the own lane here
     damageShieldPool: (e, n) => n, attemptSoulTrap, peerSoulTrapOf, fillEmptyTrap, isAzurasStarEquipped: () => false,
@@ -510,7 +510,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
       foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, ...TRAIT_DOORS, opts: { selfId: () => self },
       appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
-      renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), egFindStruck: async () => false,   // PIN MOVED (EG-E3): the joiner's door asks the dungeon's find beside the kill report (systems/eliteGates/egFind.js)
+      renownFoeDied: () => {}, reportPlayerKill: (e, info) => kills.push([self, e, info]), killFxOf, egFindStruck: async () => false,   // PIN MOVED (EG-E3): the joiner's door asks the dungeon's find beside the kill report (systems/eliteGates/egFind.js)
       rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [],
       dropFoeCard: () => null,   // PIN MOVED (AUDIT CARDS-6 A3): the copy's own card, drawn at the copy door - not this seam
       sayEnemyDied, hudText: { add: () => {} },   // LOOT7-CHECK DUNGEON-DIED: the striker's notice (test/systems/loot7check.test.js reads its line)

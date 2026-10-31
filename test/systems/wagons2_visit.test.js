@@ -32,6 +32,7 @@ import { readCaravanRoom, isCaravanRoom, turnCaravanScene, CARAVAN_TEXT } from '
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { RECEIVER_MARKS } from '../../src/net/realm/realmTradeLaw.js';
+import { withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';   // INDOOR-FLOOR: the key block's pose and law read a room's floor
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(read(`src/assets/wagons/${kind}.json`));
@@ -403,7 +404,7 @@ test('WAGONS2-VISIT THE KNOWN BUG: inside my caravan online my room is the carav
   assert.ok(start > -1 && end > start);
   const args = { modes: { mode: 'interior', sailingCabin: null, roomIdentity: () => ({ kind: 'interior', private: true, privateRoom: visitRoom }) },
     state: { compensation: [0, 100, 0], localFromWorld: (x, z) => [x - 500, z - 600], worldCoords: (p) => ({ x: p[0] + 500, z: p[2] + 600 }) },
-    player: { pos: [1, -30, 2] }, cam: { yaw: 0.2, pitch: 0.1 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf,
+    player: { pos: [1, -30, 2] }, cam: { yaw: 0.2, pitch: 0.1 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf, withIndoorFloor, indoorSceneY,
     _questLoc: () => null, privateRoomHere: town.privateRoomHere, siegeSession: null, royalSession: null, campToWire: (p) => [p[0] + 500, p[1] - 100, p[2] + 600] };
   const route = new Function(...Object.keys(args), `let onlineToScene, sceneToOnline; ${W.slice(start, end)} return { key, pose, onlineToScene };`)(...Object.values(args));
   assert.equal(route.key, visitRoom);

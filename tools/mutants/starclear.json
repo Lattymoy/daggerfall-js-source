@@ -2,8 +2,8 @@
   {
     "name": "STAR-CLEAR-the-stars-left-out-of-the-set",
     "file": "src/world/gate/gateClearance.js",
-    "old": "  const list = [\n    ...(gate ? [gate] : []),\n    ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M),\n    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),\n  ];",
-    "new": "  const list = [...(gate ? [gate] : []), ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M)];",
+    "old": "    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),\n    ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M),",
+    "new": "    ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M),",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STAR-CLEAR-the-stars-never-remake-the-set",
     "file": "src/world/gate/gateClearance.js",
-    "old": "    if (gate !== g || arches !== a || stars !== s) {",
-    "new": "    if (gate !== g || arches !== a) {",
+    "old": "    if (gate !== g || arches !== a || stars !== s || fissures !== b) {",
+    "new": "    if (gate !== g || arches !== a || fissures !== b) {",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAR-CLEAR-the-host-never-hands-its-stars",
     "file": "src/scenes/world.js",
-    "old": "egClient?.archClears() ?? null, starfall?.starClears() ?? null);",
-    "new": "egClient?.archClears() ?? null, null);",
+    "old": "egClient?.archClears() ?? null, starfall?.starClears() ?? null, passSeason?.fissureClears() ?? null);",
+    "new": "egClient?.archClears() ?? null, null, passSeason?.fissureClears() ?? null);",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]

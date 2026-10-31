@@ -56,6 +56,7 @@ import {
   questInstanceEpoch,
   remainsWholeAt,
   remainsInstanceEpoch,
+  startPublicShut,
 } from '../systems/instancePlaces.js';
 import { isPrivateersHold } from '../systems/startDungeon.js'; // HOLD-ONCE: online the Hold's public room is entered once - its instance any time
 import { relaidOnline } from '../world/smallerDungeons.js'; // QUEST-ELSEWHERE: the size the world builds a dungeon's public room at (DELVE II: and its curated block)
@@ -155,6 +156,13 @@ export function createInstanceDoor(deps) {
   /** A running quest of mine names this place (the Hold is no quest's) - or the death quest does: the line's remains lie
    *  in it whole (HEIR-WHOLE), which only a build of its own stands. */
   const questHere = (site) => !site.isHold && (openerQuestOf(machine(), site) != null || remainsHere(site).length > 0);
+  /** START-INSTANCE: a province start's dungeon whose public room cannot stand its commission (startPublicShut). */
+  const startShut = (site) =>
+    startPublicShut({
+      startLair: !!deps.startLair?.(site.mapId),
+      questHere: questHere(site),
+      relaid: site.relaid === true,
+    });
   /** My owner digest - worked out once an account. */
   async function myOwner() {
     const a = deps.account?.() ?? null;
@@ -235,7 +243,8 @@ export function createInstanceDoor(deps) {
   async function entryFor(site, recorded = undefined) {
     if (!online()) return PUBLIC;
     const ok = can(site);
-    if (recorded != null) {
+    if (recorded != null && !(recorded.ins == null && startShut(site))) {
+      // AUDIT START-INSTANCE S3: a Recall to the shut public room goes in by the quest
       const inst = instanceOfWord(recorded.ins);
       if (ok && (await stillHeld(site, inst, recorded.staff === true))) return { instance: inst, whole: true };
       return { instance: null, whole: !!(recorded.whole || inst) };
@@ -261,6 +270,7 @@ export function createInstanceDoor(deps) {
   async function choose(site) {
     const ok = can(site);
     const castle = ok ? await castleHere(site) : null; // DOMAIN2: my guild's own castle, where it stands here
+    const startLair = !!deps.startLair?.(site.mapId); // START-INSTANCE: a province start's dungeon, its commission still in it
     const rows = instanceOffer({
       online: online(),
       instanceOk: ok,
@@ -269,8 +279,12 @@ export function createInstanceDoor(deps) {
       relaid: site.relaid === true,
       partners: ok ? await partnersAt(site) : [],
       castle,
+      startLair,
     }); // QUEST-FIRST: Public last where the quest's dungeon is laid smaller
-    if (!rows) return entryFor(site);
+    if (!rows) {
+      if (startShut(site)) deps.say?.(INSTANCE_TEXT.questHere()); // AUDIT START-INSTANCE S2: no popup, so the line says why
+      return entryFor(site);
+    }
     const row = await new Promise((resolve) => {
       let settled = false;
       const done = (r) => {
@@ -290,7 +304,7 @@ export function createInstanceDoor(deps) {
       // QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a quest's place laid smaller in public says, before the choice, that its
       // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen; the
       // death quest's remains laid whole among them (HEIR-WHOLE)
-      const quest = !site.isHold && site.relaid === true && questHere(site);
+      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site); // START-INSTANCE: no Public row to warn of
       const castleOnly = !quest && rows.every((r) => r.kind === 'public' || r.kind === 'castle'); // DOMAIN2: a castle's door says what a castle is
       const win = new ChoiceWindow({
         lines: [

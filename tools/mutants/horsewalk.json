@@ -254,8 +254,8 @@
   {
     "name": "HORSEWALK-host-slow-unhanded",
     "file": "src/scenes/world.js",
-    "old": "{ look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide }",
-    "new": "{ look: riddenHorseLook(playerEntity.items ?? []), slow: false }",
+    "old": "{ look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: player.slowRide }",
+    "new": "{ look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: false }",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

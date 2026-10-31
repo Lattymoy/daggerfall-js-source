@@ -184,6 +184,16 @@ export const arenaRoadsLayer = () => _layer;
 /** Moves on every install. */
 export const arenaRoadsVersion = () => _version;
 
+/** W14 (STOREFRONT): the host that lays this layer on this thread (scenes/tamrielRoadsHost.js), kept as it is made - its
+ *  `landedIn(x0, y0, x1, y1)` (the layer whole over a box) and `build()` read by the season's fissures past the Bay, which
+ *  keep off these roads (scenes/seasonHost.js). Null while none lays them. */
+let _host = null;
+/** @param {?{ landedIn: (x0: number, y0: number, x1: number, y1: number) => boolean, build: () => number }} host */
+export const keepArenaRoadsHost = (host) => {
+  _host = host ?? null;
+};
+export const keptArenaRoadsHost = () => _host;
+
 /** TESA13: the layer is walked into the sheet's chains a tile this many Bay pixels a side at a time (ui/tamrielInk.js) -
  *  TESA15: and stamped by it here, so a region landing re-inks the tiles it reaches and no others. */
 export const ROAD_TILE = 64;

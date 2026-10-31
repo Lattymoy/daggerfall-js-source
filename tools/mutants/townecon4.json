@@ -22,8 +22,8 @@
   {
     "name": "TOWNECON4-lanes-unread",
     "file": "src/net/townEconLaw.js",
-    "old": "      share +\n      townSeaTerm(lanes),",
-    "new": "      share,",
+    "old": "      townSeaTerm(lanes) +\n      regionTermOf(regional),",
+    "new": "      regionTermOf(regional),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],

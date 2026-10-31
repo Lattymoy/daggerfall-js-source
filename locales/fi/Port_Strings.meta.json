@@ -1614,6 +1614,11 @@
   "tr": "aabc5d09bf90",
   "by": "claude-in-session"
  },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "acbab1f86d6a",
+  "by": "claude-in-session"
+ },
  "account.refusal.homeUpdate": {
   "en": "9f0916254709",
   "tr": "5c55cf0f7d26",
@@ -2047,6 +2052,11 @@
  "account.refusal.noLineage": {
   "en": "1720f337da24",
   "tr": "7aa27bb15336",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "71332eb6da11",
   "by": "claude-in-session"
  },
  "account.refusal.noMember": {
@@ -6062,6 +6072,11 @@
  "home.mute.undone": {
   "en": "5b03bedff4c8",
   "tr": "71821f128c6c",
+  "by": "claude-in-session"
+ },
+ "input.action.pvpFlag": {
+  "en": "1452b34a6cd2",
+  "tr": "9681b8875cf3",
   "by": "claude-in-session"
  },
  "interior.setDown.buried": {
@@ -14529,14 +14544,19 @@
   "tr": "cb20cb836e41",
   "by": "claude-in-session"
  },
+ "pvp.flag.noKey": {
+  "en": "31eb2159f79d",
+  "tr": "0c7e459440bc",
+  "by": "claude-in-session"
+ },
  "pvp.flag.off": {
   "en": "4fc64767da48",
   "tr": "471edc0a56aa",
   "by": "claude-in-session"
  },
  "pvp.flag.offTitle": {
-  "en": "9644167313cd",
-  "tr": "9f3d6dc5fd8f",
+  "en": "401f5d098ff9",
+  "tr": "496d03dd8efc",
   "by": "claude-in-session"
  },
  "pvp.flag.on": {
@@ -14545,8 +14565,8 @@
   "by": "claude-in-session"
  },
  "pvp.flag.onTitle": {
-  "en": "ab2d677be3ee",
-  "tr": "30c01ad3305e",
+  "en": "e34a21eef0e1",
+  "tr": "abd4358a5201",
   "by": "claude-in-session"
  },
  "pvp.flag.villain": {
@@ -16092,6 +16112,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "3881bd259145",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "e044ec6b399e",
   "by": "claude-in-session"
  },
  "wild.death.away": {

@@ -33,6 +33,7 @@ import {
   capitalDims,
   capitalCanalOpen,
 } from './tamrielCapitals.js';
+import { THEATRE_KEYS, areaOfDistrict, districtOf } from './worldWide/worldGrid.js'; // FOUNDATION F1: a capital's slice its province's
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -55,14 +56,21 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
       const D = capitalDims(cap),
         many = D.w * D.h > 1;
       const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null; // the place of its name, pinned on its centre
+      // FOUNDATION F1: every slice in its capital's province - Alinor's harbour and Torval's docks stand on the picture's
+      // sea, where the pixel's own read named no province (region -1)
+      const t = THEATRE_KEYS.indexOf(cap.province);
       for (let s = 0; s < D.w * D.h; s++) {
         const sx = s % D.w,
-          sy = (s - sx) / D.w;
+          sy = (s - sx) / D.w,
+          px = at.px + sx - D.mx,
+          py = at.py + sy - D.my,
+          [cx, cy] = districtOf(px, py);
         rows.push({
           mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)),
           name: capitalSliceName(cap, s),
-          px: at.px + sx - D.mx,
-          py: at.py + sy - D.my,
+          px,
+          py,
+          ...(t > 0 ? { area: areaOfDistrict(t, cx, cy) } : {}),
           type: LOCATION_TYPES.TownCity,
           w: many ? 8 : cap.plan[0].length,
           h: many ? 8 : cap.plan.length,

@@ -30,11 +30,11 @@ import { bailiwickOf, seatTipOf } from '../../net/townSeatLaw.js'; // TE0 decisi
 /**
  * @param {{ online: () => boolean, townOf: (mapId: number) => ({ name: string, px: number, py: number, region: number, type: number }|null|undefined),
  *   seatAt: (mapId: number) => any, seats: () => (any[]|null), raidedAt: (px: number, py: number) => boolean, nowMs?: () => number,
- *   players?: (mapId: number) => number, patronsIn?: (region: number) => any[], lanesAt?: (px: number, py: number) => number }} host
+ *   players?: (mapId: number) => number, patronsIn?: (region: number) => any[], lanesAt?: (px: number, py: number) => number, regional?: (region: number) => number }} host
  *   `townOf` a town's row by its map id; `seatAt` its own seat, dressed (null where none); `seats` every seat known here,
  *   dressed - null where the seats are not known (closed, unread); `raidedAt` whether a raid runs at a pixel now;
  *   `players` TE2's share at a town by its map id; `patronsIn` TE3's chapters' patrons of a region; `lanesAt` SEA-TRADE's
- *   sea lanes of the port town at a map pixel
+ *   sea lanes of the port town at a map pixel; `regional` FOUNDATION F2's prosperity of a region (net/townEconBook.js)
  */
 export function createTownEcon(host) {
   const nowMs = host.nowMs ?? (() => Date.now());
@@ -49,8 +49,9 @@ export function createTownEcon(host) {
     const raided = host.raidedAt(town.px, town.py) === true;
     const players = host.players?.(id) ?? 0; // TE2: the service keys a town by its map id
     const lanes = host.lanesAt?.(town.px, town.py) ?? 0; // SEA-TRADE: a port town's sea lanes
+    const regional = host.regional?.(town.region) ?? 0; // FOUNDATION F2: its region's prosperity
     const day = townDayOf(nowMs());
-    const at = (d) => townProsperity({ key, type: town.type, day: d, seat, raided, players, lanes });
+    const at = (d) => townProsperity({ key, type: town.type, day: d, seat, raided, players, lanes, regional });
     return { id, town, key, seat, raided, players, lanes, p: at(day), prevOf: () => at(day - 1) }; // yesterday's for the card alone - a counter asks once an item
   };
   /** The area's seat of a town that is no seat (TE0 decision 5, bailiwickOf), or undefined where the seats are not known. */

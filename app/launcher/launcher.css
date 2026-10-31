@@ -118,11 +118,13 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
 .actions:empty { display: none; }
 
 /* THE OPTIONS: the player's own doors, beside the news. */
-.side { flex: none; width: 236px; display: flex; flex-direction: column; gap: 16px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.side { flex: none; width: 236px; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
 .opt { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .opt > .caps { margin: 0; font-size: 13px; }
 .files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
 .files .path { font-size: 14px; }
+#backend-note { font-size: 13px; line-height: 1.35; }
+#backend-note:empty { display: none; }
 .check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .check input {
   appearance: none; flex: none; margin: 0; width: 18px; height: 18px; cursor: pointer;

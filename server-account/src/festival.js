@@ -114,10 +114,10 @@ const orphansHome = (/** @type {any} */ db, /** @type {string} */ id) =>
 
 /**
  * THE ACCOUNT'S FESTIVAL: its cakes and bowls, the account wares it bought, what its offerings gave and what it took,
- * and whether the festival is open - `{ cakes, bowls, wares, given, taken, today, open, offerings }` (`today` the cakes its
- * finds gave this UTC day, findFestival's count - CAKE-CAP-SAID; `offerings` its own
- * standing, each `{ mapId, buildingKey, character, stock }`). An orphaned offering comes home first (orphansHome). A guest
- * answers `guest`.
+ * and whether the switch opens it for the account (AUDIT PASS 2: both ends read its days from the law - a page that read
+ * `open` before them kept it after) - `{ cakes, bowls, wares, given, taken, today, open, offerings }` (`today` the cakes
+ * its finds gave this UTC day - CAKE-CAP-SAID; `offerings` its own standing, each `{ mapId, buildingKey, character,
+ * stock }`). An orphaned offering comes home first (orphansHome). A guest answers `guest`.
  * @param {{ db: any, nowS: number }} ctx @param {{ id: string, handle?: string|null }} player @param {any} env
  */
 export async function festivalOf({ db, nowS }, player, env) {
@@ -152,7 +152,7 @@ export async function festivalOf({ db, nowS }, player, env) {
     given: int(row?.fest_given),
     taken: int(row?.fest_taken),
     today: int(finds?.found),
-    open: festivalOpenFor(player, env) && inDays(nowS),
+    open: festivalOpenFor(player, env),
     offerings: (mine ?? []).map((/** @type {any} */ r) => ({
       mapId: int(r.map_id),
       buildingKey: int(r.building_key),

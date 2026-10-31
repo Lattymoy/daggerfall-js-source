@@ -549,9 +549,9 @@ export function bakeMeetsAt(woods, locationRectAt) {
     let out = null;
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) {
-        // BAY-OWN: the bake's own grid, the Bay's - a meet past it there is none
         const x = px + dx,
           y = py + dy,
+          // BAY-OWN: the bake's own grid, the Bay's - a meet past it there is none
           m = x >= 0 && y >= 0 && x < MAP_W && y < MAP_H ? meetOf(x, y) : null;
         if (m) (out ??= []).push({ px: x, py: y, meet: m });
       }

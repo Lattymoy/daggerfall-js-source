@@ -38,7 +38,14 @@
 // the one layer is the law above, unchanged: the sea refused.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA, MAP_W, MAP_H } from '../../world/road/roadNetwork.js';
-import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH, beyondKey, beyondPixel } from '../../world/arenaRoads.js'; // VOYAGER2.1: the roads past the Bay, walked as roads
+import {
+  arenaRoadByte,
+  arenaRoadsLayer,
+  arenaRoadsVersion,
+  JOIN_DEPTH,
+  beyondKey,
+  beyondPixel,
+} from '../../world/arenaRoads.js'; // VOYAGER2.1: the roads past the Bay, walked as roads
 import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js'; // AUDIT RELEASE R1-2: the ground past the table kept a land
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js'; // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
@@ -246,6 +253,9 @@ export function routeGround(
     get pathsBeyond() {
       return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond;
     },
+    /** ROAD-GRAPH: the roads' graph searchByRoad keeps between plans (planRoute `roadKeep`) - this ground's, so it goes
+     *  with the ground the host lets go. */
+    roadKeep: { graph: null },
     peakAt: peak,
     openBlocked,
     /** FIRST-VISIT: what the pieces are folded from, for their stamp (systems/travel/landPiecesKept.js). */
@@ -518,7 +528,7 @@ class Heap {
  *   peakAt?: ((x:number, y:number) => boolean)|null,
  *   apart?: ((from:{x:number,y:number}, to:{x:number,y:number}, net:{roads:any, tracks:any}) => boolean)|null,
  *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null, lanes?: boolean,
- *   endPad?: number, pathsBeyond?: ((kind: string, x: number, y: number) => number)|null, tally?: { n: number }, costLaw?: boolean }} [opts] - VOYAGER2.1: `pathsBeyond` the
+ *   endPad?: number, pathsBeyond?: ((kind: string, x: number, y: number) => number)|null, tally?: { n: number }, costLaw?: boolean, roadKeep?: { graph: any }|null }} [opts] - VOYAGER2.1: `pathsBeyond` the
  *   roads past the Bay's reader (routeGround's), walked where `roads` or `tracks` is handed;
  *   `openBlocked`: an OPEN step refused (OW-MOUNTAINS) - never a road's or a track's; AUDIT OW3 J5: asked of the step out
  *   of the start too, and of the step onto the goal unless `goalExempt` (a place: a town among the peaks is reached; a
@@ -615,21 +625,23 @@ export function* planRouteSteps(from, to, opts = {}) {
   // ROAD-BEYOND (2026-10-26, the owner: "road travel in the overworld needs to work properly outside of tamriel"; Travel-View.md
   // ROAD-BEYOND): A PLAN WITH AN END PAST THE BAY'S TABLE. (1) By the roads first, where it is handed them (`beyond`, the
   // layer past the Bay - VOYAGER2.1) and walks the land: the search over the roads and tracks alone, the open ground only
-  // about its two ends (searchByRoad) - bounded by its own count of cells, never the plane's every field (the ladder's
+  // about its two ends (searchByRoad) - its own network's, never the plane's every field (ROAD-GRAPH: no spend; the ladder's
   // A* priced a road a step under the field's 3.5, so a plan of 700 pixels past the Bay flooded ~200 000 cells a rung
   // and took 4 to 11 seconds). (2) The ladder below past the table: its box reaches `margin` past an end beyond the
   // table (`reachOf` - it stopped at the end's own row and column, so the Imperial City's way out south of its lake was
   // never in any box: no way to Bruma, Chorrol or Cheydinhal), its whole spend BEYOND_MAX_EXPANSIONS (there is no map's
   // edge to bound it), and an all-open plan's heuristic the field's own price (`hCost`: a FREE walk is the straight one).
   const past = offTable(from) || offTable(to);
-  const tally = opts.tally ?? { n: 0 },
-    spent = tally.n; // ROAD-BEYOND: the cells a plan expands, counted (a caller's own count, the pins')
+  const tally = opts.tally ?? { n: 0 }; // ROAD-BEYOND: the cells a plan expands, counted (a caller's own count, the pins')
+  let spent = tally.n;
   let byRoad = null,
     tried = false;
   // FAST-REFUSAL (Travel-View.md FAST-REFUSAL): no way by land past the Bay said at once from the land's pieces (landPieces.js
   // apartPastBay) - where it spent the whole count of cells first. THE MERGE: a boat's crossing is none of the land's pieces
   if (past && !sea && apart && apartPastBay(from, to, width, height)) return null;
   if (past && !sea && apart && apartExact(from, to)) return null; // EXACT-PIECES: and at the pixel, once the roads' regions have all landed
+  // ROAD-GRAPH: with a boat to hand, land the pieces part is no way by the roads - the boat's search is asked alone
+  const landApart = past && !!sea && !!apart && (apartPastBay(from, to, width, height) || apartExact(from, to));
   // ROAD-FOLLOW (Travel-View.md ROAD-FOLLOW): a plan handed the roads keeps to them wherever they join its two ends, the
   // open ground walked on each end's own leg alone (roadEndsSteps) - `costLaw` (its own call again, below) TV2's law
   const ends =
@@ -638,18 +650,22 @@ export function* planRouteSteps(from, to, opts = {}) {
       : null;
   if (past && beyond && ends?.strict && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {
     tried = true;
-    byRoad = yield* searchByRoadSteps(from, to, {
-      roads,
-      tracks,
-      isWater,
-      width,
-      height,
-      openBlocked,
-      goalExempt,
-      beyond,
-      tally,
-      ends,
-    });
+    byRoad = landApart
+      ? null
+      : yield* searchByRoadSteps(from, to, {
+          roads,
+          tracks,
+          isWater,
+          width,
+          height,
+          openBlocked,
+          goalExempt,
+          beyond,
+          tally,
+          ends,
+          keep: opts.roadKeep ?? null,
+        });
+    spent = tally.n; // ROAD-GRAPH: its answer is whole, so the ladder after it spends a count of its own (AUDIT ROAD-GRAPH H1)
     // ROAD-FOLLOW: the roads join the two - kept, however much dearer than the straight walk across the field they wind
     // round (TV2's law asked the ladder then, and kept its cut across the field - a road worth a detour of three and a
     // half times its length and no more)
@@ -758,8 +774,6 @@ export const BEYOND_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
  *  whole map's rung there was a box of the ends and a thousand pixels about them: millions of cells to allot for none). */
 export const BEYOND_MARGIN = 240;
-/** ROAD-BEYOND: the most cells searchByRoad expands - the roads and tracks past the Bay, and the ground about its ends. */
-export const BY_ROAD_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: searchByRoad leans on its goal by this much (a weighted A*: a way by the roads at most this much dearer than
  *  the cheapest, for a search that does not walk every road of a province to prove it). */
 export const BY_ROAD_GREED = 1.25;
@@ -932,23 +946,145 @@ const endLegOf = (from, to, ends) => (ax, ay, bx, by) =>
 /**
  * ROAD-BEYOND: A PLAN BY THE ROADS, past the Bay - A* over the roads and the tracks (the Bay's arrays on the table, the
  * layer's past it; stepKind's law, TV2's prices: a road 1, a track 1.6), the open ground (3.5) walked only on an end's own
- * leg (ROAD-FOLLOW: roadEndsSteps' `ends`, asked here when none is handed). Cells kept in maps by pixel, the spend
- * BY_ROAD_MAX_EXPANSIONS cells. planRoute's `{ pixels, cost, kinds }`, or null: no road joins the two within the spend.
+ * leg (ROAD-FOLLOW: roadEndsSteps' `ends`, asked here when none is handed). ROAD-GRAPH: elsewhere a chain at a time (roadGraphFor),
+ * with no spend - a flood back from the goal says no way at its side's cost. `{ pixels, cost, kinds }`.
  * @param {{x:number,y:number}} from @param {{x:number,y:number}} to
  * @param {{ roads?: ArrayLike<number>|null, tracks?: ArrayLike<number>|null, isWater?: (x:number,y:number)=>boolean, width?: number, height?: number,
- *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, maxExpansions?: number, tally?: { n: number }|null,
+ *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, tally?: { n: number }|null,
  *   ends?: { f: number, t: number, strict: boolean, bridges?: Set<number> }|null }} [o]
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
 export function searchByRoad(from, to, o = {}) {
   return drainPlan(searchByRoadSteps(from, to, o));
 }
+
+/** ROAD-GRAPH: the road and track steps out of a pixel under the ordinary step law, written to `out` as direction and
+ *  kind pairs; answers how many numbers it wrote. */
+function roadOuts(s, x, y, out) {
+  const here = s.pathAt(x, y);
+  let n = 0;
+  if (!here) return 0;
+  for (let d = 0; d < 8; d++) {
+    if (!(here & STEP_BIT[d])) continue;
+    const k = stepKind(
+      x,
+      y,
+      x + STEP_DX[d],
+      y + STEP_DY[d],
+      STEP_BIT[d],
+      s.width,
+      s.height,
+      s.roads,
+      s.tracks,
+      s.isWater,
+      null,
+      0,
+      false,
+      s.beyond,
+    );
+    if (k === 0 || k === 1) {
+      out[n++] = d;
+      out[n++] = k;
+    }
+  }
+  return n;
+}
+/** ROAD-GRAPH: the flood back from the goal steps one pixel for each this many of the search's own. */
+export const ROAD_BACK_EVERY = 4;
+/** ROAD-GRAPH: a kept graph whose chains hold more pixels than this is dropped whole when the next plan begins. */
+export const ROAD_GRAPH_MAX_PIXELS = 1 << 21;
+const growTo = (a, n) => {
+  if (n <= a.length) return a;
+  let m = a.length * 2;
+  while (m < n) m *= 2;
+  const b = new a.constructor(m);
+  b.set(a);
+  return b;
+};
+/** What the step law reads that can move under a kept graph: the installed layer (the world's reader) and the land. */
+const lawStamp = (beyond) => `${beyond === arenaRoadByte ? arenaRoadsVersion() : 0}|${tamrielLandVersion()}`;
+/**
+ * ROAD-GRAPH: THE ROADS' GRAPH - a junction is a road pixel with other than two steps out (roadOuts); a chain the pixels
+ * between two, walked once and read either way. Flat arrays: a node's steps out and the chain each leads to (`nChain`: 0
+ * unwalked, +id read forward, -id back), a chain's pixels in one pool (`pk`, and `pd` the kind of the step onto each),
+ * its offset, steps, price and box. Kept in `keep` (routeGround's own) for the network it was walked on, else this plan's.
+ */
+function roadGraphFor(keep, roads, tracks, beyond, isWater, width, height) {
+  const stamp = lawStamp(beyond),
+    fit = tamrielFit();
+  const k = keep?.graph;
+  if (
+    k &&
+    k.roads === roads &&
+    k.tracks === tracks &&
+    k.beyond === beyond &&
+    k.isWater === isWater &&
+    k.width === width &&
+    k.height === height &&
+    k.stamp === stamp &&
+    k.fit === fit &&
+    k.pixels <= ROAD_GRAPH_MAX_PIXELS
+  )
+    return k;
+  const pathAt = (x, y) =>
+    x >= 0 && y >= 0 && x < width && y < height
+      ? (roads ? roads[y * width + x] : 0) | (tracks ? tracks[y * width + x] : 0) | beyond('join', x, y)
+      : beyond('roads', x, y) | beyond('tracks', x, y);
+  const g = {
+    roads,
+    tracks,
+    beyond,
+    isWater,
+    width,
+    height,
+    stamp,
+    fit,
+    pathAt,
+    ids: new Map(),
+    nodes: 0,
+    nN: new Uint8Array(256),
+    nDir: new Int8Array(2048),
+    nKind: new Int8Array(2048),
+    nChain: new Int32Array(2048),
+    chains: 0,
+    cOff: new Int32Array(256),
+    cLen: new Int32Array(256),
+    cCost: new Float64Array(256),
+    cBox: new Int32Array(1024),
+    pixels: 0,
+    pk: new Uint32Array(2048),
+    pd: new Uint8Array(2048),
+  };
+  if (keep && beyond === arenaRoadByte) keep.graph = g; // another reader's bytes carry no version to know them by
+  return g;
+}
+const _outs = new Int8Array(16);
+/** ROAD-GRAPH: the node at pixel key `k` - made, with its steps out, the first time it is asked. */
+function roadNode(g, k, x, y) {
+  let id = g.ids.get(k);
+  if (id !== undefined) return id;
+  id = g.nodes++;
+  if (id >= g.nN.length) {
+    g.nN = growTo(g.nN, id + 1);
+    g.nDir = growTo(g.nDir, 8 * id + 8);
+    g.nKind = growTo(g.nKind, 8 * id + 8);
+    g.nChain = growTo(g.nChain, 8 * id + 8);
+  }
+  const n = roadOuts(g, x, y, _outs) >> 1;
+  g.nN[id] = n;
+  for (let o = 0; o < n; o++) {
+    g.nDir[8 * id + o] = _outs[2 * o];
+    g.nKind[8 * id + o] = _outs[2 * o + 1];
+    g.nChain[8 * id + o] = 0;
+  }
+  g.ids.set(k, id);
+  return id;
+}
+
 /** PLAN-SLICES: searchByRoad's own body, a generator (planRouteSteps). @param {{x:number,y:number}} from
- *  @param {{x:number,y:number}} to @param {Parameters<typeof searchByRoad>[2]} [o] @returns {Generator<void, ReturnType<typeof searchByRoad>, void>} */
-function* searchByRoadSteps(
-  from,
-  to,
-  {
+ *  @param {{x:number,y:number}} to @param {Parameters<typeof searchByRoad>[2] & { keep?: any }} [o] @returns {Generator<void, ReturnType<typeof searchByRoad>, void>} */
+function* searchByRoadSteps(from, to, o = {}) {
+  const {
     roads = null,
     tracks = null,
     isWater = () => false,
@@ -957,16 +1093,15 @@ function* searchByRoadSteps(
     openBlocked = null,
     goalExempt = true,
     beyond = null,
-    maxExpansions = BY_ROAD_MAX_EXPANSIONS,
     tally = null,
     ends = null,
-  } = {},
-) {
+    keep = null,
+  } = o;
   if (!beyond) return null;
-  const pathAt = (x, y) =>
-    x >= 0 && y >= 0 && x < width && y < height
-      ? (roads ? roads[y * width + x] : 0) | (tracks ? tracks[y * width + x] : 0) | beyond('join', x, y)
-      : beyond('roads', x, y) | beyond('tracks', x, y);
+  const graph = roadGraphFor(keep, roads, tracks, beyond, isWater, width, height),
+    pathAt = graph.pathAt;
+  // ROAD-GRAPH: what the law reads moved under a sliced plan (an install, the land) - planned again as it lies now
+  const moved = () => lawStamp(beyond) !== graph.stamp || tamrielFit() !== graph.fit;
   // ROAD-FOLLOW: the open ground on the ends' own legs alone (roadEnds) - it was any of it within BY_ROAD_REACH (24
   // pixels) of either end, so a way by the roads left them there for a field's corner whenever they wound round it
   const legs = ends ?? (yield* roadEndsSteps(from, to, { roads, tracks, width, height, beyond, isWater, tally }));
@@ -978,6 +1113,30 @@ function* searchByRoadSteps(
     Math.max(Math.abs(x - from.x), Math.abs(y - from.y)) <= rf ||
     Math.max(Math.abs(x - to.x), Math.abs(y - to.y)) <= rt ||
     legs.bridges.has(beyondKey(x, y));
+  // ROAD-GRAPH: a pixel stepped a pixel at a time - the ends' legs, the gaps, and the goal's neighbours (a step onto the goal
+  // is asked under the goal's own law); everywhere else a chain at a time
+  const tr = Math.max(rt, 1);
+  const local = (x, y) => near(x, y) || Math.max(Math.abs(x - to.x), Math.abs(y - to.y)) <= tr;
+  let bx0 = Infinity,
+    by0 = Infinity,
+    bx1 = -Infinity,
+    by1 = -Infinity;
+  for (const k of legs.bridges) {
+    const [x, y] = beyondPixel(k);
+    if (x < bx0) bx0 = x;
+    if (x > bx1) bx1 = x;
+    if (y < by0) by0 = y;
+    if (y > by1) by1 = y;
+  }
+  const hits = (c, x0, y0, x1, y1) =>
+    graph.cBox[4 * c] <= x1 &&
+    graph.cBox[4 * c + 2] >= x0 &&
+    graph.cBox[4 * c + 1] <= y1 &&
+    graph.cBox[4 * c + 3] >= y0;
+  const touches = (c) =>
+    hits(c, from.x - rf, from.y - rf, from.x + rf, from.y + rf) ||
+    hits(c, to.x - tr, to.y - tr, to.x + tr, to.y + tr) ||
+    hits(c, bx0, by0, bx1, by1);
   const h = (x, y) => {
     const dx = Math.abs(x - to.x),
       dy = Math.abs(y - to.y);
@@ -986,25 +1145,230 @@ function* searchByRoadSteps(
   /** @type {Map<number, number>} */ const g = new Map();
   /** @type {Map<number, number>} */ const came = new Map();
   /** @type {Map<number, number>} */ const via = new Map();
+  /** @type {Map<number, number[]>} */ const link = new Map();
   /** @type {Set<number>} */ const closed = new Set();
   const start = beyondKey(from.x, from.y),
     goal = beyondKey(to.x, to.y);
   const pix = (k) => ({ x: (k % 65536) - 32768, y: Math.floor(k / 65536) - 32768 });
-  g.set(start, 0);
   const open = new Heap();
+  const reach = (n, ng, c, nx, ny) => {
+    g.set(n, ng);
+    came.set(n, c);
+    open.push(ng + BY_ROAD_GREED * h(nx, ny), n);
+  };
+  // a chain read forward (+id) or back (-id): its j-th step's pixel and kind, and its end
+  const stepAt = (ref, j) => {
+    const c = Math.abs(ref) - 1,
+      off = graph.cOff[c],
+      L = graph.cLen[c];
+    return ref > 0 ? off + 1 + j : off + L - 1 - j;
+  };
+  const kindAt = (ref, j) => {
+    const c = Math.abs(ref) - 1,
+      off = graph.cOff[c],
+      L = graph.cLen[c];
+    return graph.pd[ref > 0 ? off + 1 + j : off + L - j];
+  };
+  // ROAD-GRAPH: THE FLOOD BACK FROM THE GOAL, a pixel for each ROAD_BACK_EVERY of the search's - the pixels the goal is
+  // reached from, by the search's own law. Run dry before it meets a pixel the search reached, it proves no way, at the cost
+  // of the goal's side (the search alone walked the start's whole network first).
+  /** @type {Set<number>|null} */ let back = new Set([goal]);
+  let bq = [to.x, to.y],
+    bh = 0,
+    backed = 0;
+  const backStep = () => {
+    // false once the flood has run dry
+    if (bh === bq.length) return false;
+    const px = bq[bh++],
+      py = bq[bh++],
+      pk = beyondKey(px, py);
+    for (let d = 0; d < 8 && back; d++) {
+      const qx = px + STEP_DX[d],
+        qy = py + STEP_DY[d],
+        q = beyondKey(qx, qy),
+        bit = STEP_BIT[(d + 4) & 7];
+      if (back.has(q)) continue;
+      const here = pathAt(qx, qy);
+      if (local(qx, qy)) {
+        if (!(here & bit) && !near(px, py)) continue;
+        const kind = stepKind(
+          qx,
+          qy,
+          px,
+          py,
+          bit,
+          width,
+          height,
+          roads,
+          tracks,
+          isWater,
+          openBlocked,
+          pk !== goal ? 0 : goalExempt ? 2 : 1,
+          false,
+          beyond,
+        );
+        if (kind < 0 || (kind === 2 && !endLeg(qx, qy, px, py))) continue;
+      } else {
+        if (!(here & bit)) continue;
+        const kind = stepKind(qx, qy, px, py, bit, width, height, roads, tracks, isWater, null, 0, false, beyond);
+        if (kind !== 0 && kind !== 1) continue;
+      }
+      if (g.has(q)) {
+        back = null;
+        bq = [];
+      } // met: the search's own
+      else {
+        back.add(q);
+        bq.push(qx, qy);
+      }
+    }
+    return true;
+  };
+  const walk = new Int8Array(16),
+    wk = [],
+    wd = [];
+  let cells = 0,
+    next = PLAN_YIELD_CELLS,
+    fw = 0; // the cells worked (the slices'), the search's own of them (the flood's pace)
+  /** The flood back caught up with the search's pace - false once it has run dry (no way). */
+  const backPace = () => {
+    while (back && backed * ROAD_BACK_EVERY < fw) {
+      backed++;
+      cells++;
+      if (tally) tally.n++;
+      if (!backStep()) return false;
+    }
+    return true;
+  };
+  g.set(start, 0);
   open.push(BY_ROAD_GREED * h(from.x, from.y), start);
-  let expanded = 0;
   while (open.size) {
     const c = open.pop();
     if (closed.has(c)) continue;
     closed.add(c);
     if (c === goal) break;
-    if (expanded && (expanded & (PLAN_YIELD_CELLS - 1)) === 0) yield; // PLAN-SLICES: a slice may end here
+    if (++cells >= next) {
+      next += PLAN_YIELD_CELLS;
+      yield;
+      if (moved()) return yield* searchByRoadSteps(from, to, { ...o, ends: null });
+    } // PLAN-SLICES: a slice may end here
     if (tally) tally.n++;
-    if (++expanded > maxExpansions) return null;
+    fw++;
+    if (!backPace()) return null;
     const { x: cx, y: cy } = pix(c),
-      gc = g.get(c),
-      here = pathAt(cx, cy);
+      gc = g.get(c);
+    if (!local(cx, cy)) {
+      // ROAD-GRAPH: each step out, the chain it leads to - walked the first time, kept - to its junction, or to the first
+      // pixel of it an end or a gap holds
+      const u = roadNode(graph, c, cx, cy);
+      for (let o8 = 0; o8 < graph.nN[u]; o8++) {
+        let ref = graph.nChain[8 * u + o8];
+        if (!ref) {
+          let sd = graph.nDir[8 * u + o8],
+            kind = graph.nKind[8 * u + o8],
+            x = cx + STEP_DX[sd],
+            y = cy + STEP_DY[sd],
+            cost = 0;
+          let x0 = Math.min(cx, x),
+            y0 = Math.min(cy, y),
+            x1 = Math.max(cx, x),
+            y1 = Math.max(cy, y);
+          wk.length = 0;
+          wd.length = 0;
+          for (;;) {
+            wk.push(beyondKey(x, y));
+            wd.push(kind);
+            cost += (STEP_DX[sd] && STEP_DY[sd] ? Math.SQRT2 : 1) * KIND_COST[kind];
+            if (x < x0) x0 = x;
+            if (x > x1) x1 = x;
+            if (y < y0) y0 = y;
+            if (y > y1) y1 = y;
+            if (++cells >= next) {
+              next += PLAN_YIELD_CELLS;
+              yield;
+              if (moved()) return yield* searchByRoadSteps(from, to, { ...o, ends: null });
+            }
+            if (tally) tally.n++;
+            fw++;
+            if (!backPace()) return null; // a long chain walked, the flood back keeping its pace
+            if (x === cx && y === cy) break; // a ring, back where it began
+            if (roadOuts(graph, x, y, walk) !== 4) break; // an end or a fork
+            const bx = x - STEP_DX[sd],
+              by = y - STEP_DY[sd];
+            const back0 = x + STEP_DX[walk[0]] === bx && y + STEP_DY[walk[0]] === by;
+            const back1 = x + STEP_DX[walk[2]] === bx && y + STEP_DY[walk[2]] === by;
+            if (back0 === back1) break; // a step back the law refuses: a junction of its own
+            sd = back0 ? walk[2] : walk[0];
+            kind = back0 ? walk[3] : walk[1];
+            x += STEP_DX[sd];
+            y += STEP_DY[sd];
+          }
+          // kept whole once walked: its two ends, the pixels between, each step's kind
+          const id = graph.chains++,
+            L = wk.length,
+            off = graph.pixels;
+          if (id >= graph.cOff.length) {
+            graph.cOff = growTo(graph.cOff, id + 1);
+            graph.cLen = growTo(graph.cLen, id + 1);
+            graph.cCost = growTo(graph.cCost, id + 1);
+            graph.cBox = growTo(graph.cBox, 4 * id + 4);
+          }
+          graph.pk = growTo(graph.pk, off + L + 1);
+          graph.pd = growTo(graph.pd, off + L + 1);
+          graph.pk[off] = c;
+          for (let j = 0; j < L; j++) {
+            graph.pk[off + 1 + j] = wk[j];
+            graph.pd[off + 1 + j] = wd[j];
+          }
+          graph.pixels += L + 1;
+          graph.cOff[id] = off;
+          graph.cLen[id] = L;
+          graph.cCost[id] = cost;
+          graph.cBox[4 * id] = x0;
+          graph.cBox[4 * id + 1] = y0;
+          graph.cBox[4 * id + 2] = x1;
+          graph.cBox[4 * id + 3] = y1;
+          ref = id + 1;
+          graph.nChain[8 * u + o8] = ref;
+          // read back from its far junction too, when it is the same walk that way: from a junction, to a junction
+          const end = wk[L - 1];
+          if (end !== c && graph.nN[u] !== 2) {
+            const v = roadNode(graph, end, x, y),
+              bd = (sd + 4) & 7;
+            for (let q = 0; q < graph.nN[v]; q++)
+              if (graph.nDir[8 * v + q] === bd && graph.nKind[8 * v + q] === kind && !graph.nChain[8 * v + q])
+                graph.nChain[8 * v + q] = -ref;
+          }
+        }
+        const cid = Math.abs(ref) - 1,
+          L = graph.cLen[cid];
+        let i = L - 1,
+          cost = graph.cCost[cid];
+        if (touches(cid)) {
+          cost = 0;
+          for (let j = 0, qx = cx, qy = cy; j < L; j++) {
+            const key = graph.pk[stepAt(ref, j)],
+              kx = (key % 65536) - 32768,
+              ky = Math.floor(key / 65536) - 32768;
+            cost += (kx !== qx && ky !== qy ? Math.SQRT2 : 1) * KIND_COST[kindAt(ref, j)];
+            if (local(kx, ky)) {
+              i = j;
+              break;
+            }
+            qx = kx;
+            qy = ky;
+          }
+        }
+        const nk = graph.pk[stepAt(ref, i)];
+        if (closed.has(nk) || !(gc + cost < (g.get(nk) ?? Infinity))) continue;
+        const [nx, ny] = beyondPixel(nk);
+        reach(nk, gc + cost, c, nx, ny);
+        link.set(nk, [ref, i]);
+        via.delete(nk);
+      }
+      continue;
+    }
+    const here = pathAt(cx, cy);
     for (let d = 0; d < 8; d++) {
       const nx = cx + STEP_DX[d],
         ny = cy + STEP_DY[d],
@@ -1029,20 +1393,28 @@ function* searchByRoadSteps(
       if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue; // ROAD-FOLLOW: the open ground on an end's own leg alone
       const ng = gc + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1) * KIND_COST[kind];
       if (ng < (g.get(n) ?? Infinity)) {
-        g.set(n, ng);
-        came.set(n, c);
+        reach(n, ng, c, nx, ny);
         via.set(n, kind);
-        open.push(ng + BY_ROAD_GREED * h(nx, ny), n);
+        link.delete(n);
       }
     }
   }
   if (!closed.has(goal)) return null;
   const pixels = [],
     kinds = [];
-  for (let c = goal; c !== undefined; c = came.get(c)) {
-    pixels.push(pix(c));
-    if (c !== start) kinds.push(KIND_NAMES[via.get(c)]);
+  for (let c = goal; c !== start; c = came.get(c)) {
+    const l = link.get(c);
+    if (l)
+      for (let j = l[1]; j >= 0; j--) {
+        pixels.push(pix(graph.pk[stepAt(l[0], j)]));
+        kinds.push(KIND_NAMES[kindAt(l[0], j)]);
+      }
+    else {
+      pixels.push(pix(c));
+      kinds.push(KIND_NAMES[via.get(c)]);
+    }
   }
+  pixels.push(pix(start));
   pixels.reverse();
   kinds.reverse();
   return { pixels, cost: g.get(goal), kinds };

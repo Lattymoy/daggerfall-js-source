@@ -38,6 +38,10 @@ import { dragonKeepDoor } from '../systems/dragon/dragonKeep.js';   // DRAGON5b:
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { RidingAnimator, loadRidingArt, ridingRect, ridingLook, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look, which the sprite wears
+import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: and the mount look I wear over it
+import { createMountFx } from '../systems/horse/mountFx.js';   // STOREFRONT: and its beat in the world
+import { effectWorn } from '../net/effectLaw.js';   // STOREFRONT: the mount look worn
+import { ownEffects } from '../systems/ownGlyphs.js';
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
 import { enhancedWindow } from '../ui/enhanced/enhancedPorts.js';   // PORT4: the transport picker, in the enhanced skin
 import { ownsShip } from '../systems/banking.js';
@@ -100,6 +104,7 @@ export function createMountRig({
 }) {
   const animator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
   const voice = createHorseVoice();   // HORSE-VOICE: the voices said on the neigh's clock, the gallop's breath, the spook
+  const mountFx = createMountFx();   // STOREFRONT: my mount look's beat - its hooves, and its mane where I can see it
   // RR2: the terrain ring (EnhancedRiding.cs:26-31) and the pitch floor the
   // component sets (`PitchMaxLimit = terrainAngle + 18`, :288) - registered
   // for as long as this rig stands; off the mount, the owner's floor
@@ -167,7 +172,7 @@ export function createMountRig({
     loadArt(mode);
   }
   /** COATS1: the look the mount under the player wears now (the cart's sprite is never dyed - riding.js ridingLook). */
-  const lookNow = (mode) => ridingLook(mode, riddenHorseLook(playerEntity?.items ?? []));
+  const lookNow = (mode) => ridingLook(mode, ownMountLook(riddenHorseLook(playerEntity?.items ?? [])));   // STOREFRONT: my mount look over it
   /** COATS1: the mount and look the last load was asked for (`mode:look`) - asked once, loaded or failed, so a failed
    *  load is not asked again every frame (HC1's art is asked by the mode's change alone). */
   let _artFor = null;
@@ -263,6 +268,9 @@ export function createMountRig({
       }
       if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume * horse, pitch: r.pitch });
       else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume * horse, pitch: r.pitch });
+      // STOREFRONT: my mount look's beat - on a horse (never the cart), not while paused
+      const mounted = player.transportMode === TRANSPORT_MODES.Horse && !ridePaused;
+      mountFx.step('self', mounted ? effectWorn(ownEffects(), 'mount') : null, player.pos ? [player.pos[0], player.pos[1], player.pos[2]] : null, lookYaw?.() ?? 0, player.standing ? 0 : player.isRunning ? 2 : 1, dt, { mane: mwViewThirdPerson() });
       // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
       // game is paused - `!GameManager.IsGamePaused` sits in the same
       // condition as the Repaint test. Under an open window DFU shows

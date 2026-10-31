@@ -36,7 +36,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1:
 import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, dungeonExitFeet, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -386,6 +386,7 @@ import { crownRulerFactionId, crownRulerHere, crownHallPlan, CROWN_HALL_TEXT } f
 import { hallPlaquePlan, PLAQUE_MODEL, PLAQUE_BARE_MODEL } from '../world/arena/arenaPlaques.js';   // ARENA5: the Hall of Champions' plaque wall
 import { bannerKeyOf } from './hallBanners.js';   // CROWN-HALL: the throne room's cloth, keyed as the street's
 import { HOME_ENTRIES, homePriceOk, homeOnlinePrice, rentCost, rentDaysLeft } from '../net/homeLaw.js';   // HOME-PRICE: what a home costs online
+import { homeListedPrice } from '../net/homeListingLaw.js';   // FOUNDATION F3: a row's price
 // HOME-RENT: a home's rooms, rented at its door and offered, priced and collected in its owner's decorator
 import {
   homeRooms, rentable, rentHomeRoom, collectHomeRent, rentPickLines, rentDaysLines, rentConfirmLines, rentDoneLine, rentShortLine,
@@ -5445,7 +5446,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
-    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone - ZONE-BANK: but a settlement's
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -7522,7 +7523,7 @@ export function createWorldModes(host) {
    *  nobody can measure. */
   function homeListPrice(bd) {
     const price = homeOnlinePrice(houseFootprintM2(bd), bd?.townBlocks ?? 0);
-    return homePriceOk(price) ? price : 0;
+    return homePriceOk(price) ? homeListedPrice(homeTownOf(bd), bd?.buildingKey, price, undefined, homeClaimLayout(homeTownOf(bd))) : 0;   // FOUNDATION F3: its row's price, where one sets it
   }
   /** What a house I could buy costs - online, its town known, nobody's home, for sale (no quest in it) - at its online
    *  price (homeListPrice); 0 for none. */
@@ -9718,7 +9719,7 @@ export function createWorldModes(host) {
           onArenaHit: (hit) => !!host.onArenaHit?.(hit),   // ARENA4: and the door a blow's number on them leaves through - to the referee
           spoilContents: (key) => host.spoilContents?.(key) ?? null,   // WB9f: a piece of his spoils, listed on the plaque
           onActions: (data) => host.onActions?.(data), peers: () => host.peers?.() ?? null, selfId: () => host.selfId?.() ?? null, party: () => host.partyNear?.() ?? [], nodeMarks: (feet) => host.professionMarks?.(feet) ?? null, questMarks: () => dungeonQuestMarksHere(), grants: () => host.grants?.() ?? null,   // GUIDE8: the Exact tier's quest resources, on the dungeon's map and compass; NODE-MARKS: the dungeon's nodes on its compass, at its own feet; WORLD3: a door moved goes out; the peers the foes see; whose blow a puppet's is
-          postItem: (text, item) => host.postItem?.(text, item) ?? false, linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack posts through the outer host
+          linkItem: (item) => host.linkItem?.(item) ?? false, canPostItem: () => host.canPostItem?.() ?? false,   // CHAT-POST: the dungeon's pack links through the outer host
           allyMarks: (sp) => host.allyMarks?.(sp) ?? null,   // AID1 onto ALLY-CAST: the party mates' bodies, in the dungeon's frame - SPELL-GIFT: with the spell
           companionBodies: () => host.companionBodies?.() ?? null,   // COMPANION-KIT: my companions underground (the dungeon's own records)
           fates: !!host.openRevenantFate, shakeCamera: (k) => host.shakeCamera?.(k),   // REVENANT-FATE: the host opens a beaten revenant's choice; an execution's blow felt
@@ -10155,7 +10156,7 @@ export function createWorldModes(host) {
     if (key.startsWith('plaque:')) { readPlaque(key); return true; }   // ARENA5: a plaque in the Hall of Champions reads its champion
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:')) {   // SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:') || key.startsWith('aurum:')) {   // AURUM-CACHES: today's coffer, answered by the context's takeLoot; SEARCH1: a searchable takes the mode (Steal picks its lock); AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
       dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
@@ -10233,7 +10234,7 @@ export function createWorldModes(host) {
   const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)) ?? dungeonReturn.from ?? null);   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
   function exitDungeonNow() {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
-    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
+    // PositionPlayerToDungeonExit, but for its height (TALL-DOOR, player/enterExit.js dungeonExitFeet); the camera faces the normal.
     const landing = returnLanding();   // WB3b: before the gate, out of the court
     dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)
     const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3: before the room's memory goes - AUDIT REST II H4: said outside, below
@@ -10267,7 +10268,7 @@ export function createWorldModes(host) {
     if (landing) {
       // RepositionPlayer(DungeonEntrance): same law as the building
       // door - the door centre is the controller's centre, not the feet.
-      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
+      player.spawn(landing.pos[0], dungeonExitFeet(player.collider, landing), landing.pos[2]);   // TALL-DOOR: never over the floor before the door
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
       // DE2: PositionPlayerToDungeonExit ends on
       // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs
@@ -11253,7 +11254,6 @@ export function createWorldModes(host) {
       magic.firePending([...cam.pos], eyeDir(), overlayHeld);   // AUDIT SPELL-HAND L4-6: a kept press never leaves under a window
       magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
-      magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
     // arm (dungeon mode runs dungeonContext's frame, which carries its
@@ -11262,6 +11262,7 @@ export function createWorldModes(host) {
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }
     if (interiorCtx.animateChars) interiorCtx.animateChars((performance.now() - _charT0) / 1000, _charAnimMode);
     for (const d of interiorCtx.charDraws) renderer.drawCharacter(d.mesh, d.matrix);
+    magic?.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the room's last opaque draw (its characters) - no depth written, so a body drawn after them painted over them
     host.drawVeiledPeerBodies?.();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the room's opaque draws, before the weapon's screen quads
     interiorFoes?.drawVeiledBodies();   // MWNPC5c: the concealed foes' bodies, beside the peers'
     interiorGuards?.drawVeiledBodies();   // MWNPC6: and the watch's

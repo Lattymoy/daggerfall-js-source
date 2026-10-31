@@ -143,8 +143,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-days-read",
     "file": "server-account/src/townEcon.js",
-    "old": "  try {\n    towns = row ? JSON.parse(String(row.towns)) : null;\n  } catch {\n    towns = null;\n  }\n  if (!Array.isArray(towns)) towns = await countTownShares(db, nowS);",
-    "new": "  if (!Array.isArray(towns)) towns = await countTownShares(db, nowS);",
+    "old": "    towns = row ? JSON.parse(String(row.towns)) : null;\n  } catch {\n    towns = null;\n  }\n  try {\n    regions = row?.regions ? JSON.parse(String(row.regions)) : null;",
+    "new": "    regions = row?.regions ? JSON.parse(String(row.regions)) : null;",
     "tests": [
       "test/server/townecon_service.test.js"
     ],

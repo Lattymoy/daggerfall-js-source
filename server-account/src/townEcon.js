@@ -31,6 +31,7 @@ import { verifyWatchReceipt, WATCH_RECEIPT_TTL_S } from '../../src/net/watchRece
 import { isDeveloper } from './titles.js'; // AUDIT TOWN-ECON 2 SVC-1: a false town struck, the registry audited - a developer's
 import { RAID_KEY_RE } from '../../src/net/raid/raidLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { regionsProsperity, _resetRegionClockForTests } from './regionClock.js'; // FOUNDATION F2: the regions' prosperity, answered with the shares
 import {
   TOWN_ECON_CAPS,
   TOWN_ECON_DAYS,
@@ -416,7 +417,7 @@ export async function claimTownWatch({ db, nowS, subtle }, player, _env, { recei
   return { ok: true, counted, sea: seaCounted, why, full: [...full] };
 }
 
-/** @type {{ at: number, towns: Array<[number, number]> } | null} */
+/** @type {{ at: number, towns: Array<[number, number]>, regions: Array<[number, number]> } | null} */
 let _kept = null;
 /** The clock's last keeping of the shares in this isolate (keepTownShares) - a fresh row asks the database nothing. */
 let _keptAt = -Infinity;
@@ -424,7 +425,8 @@ let _keptAt = -Infinity;
 export const _resetTownEconForTests = () => {
   _kept = null;
   _keptAt = -Infinity;
-};
+  _resetRegionClockForTests();
+}; // FOUNDATION F2: and the regions' clock's day
 /** AUDIT TOWN-ECON 2 SVC-3: how long an isolate holds the kept answer before it reads the kept row again. */
 export const TOWN_ECON_ISOLATE_S = 60;
 
@@ -463,11 +465,12 @@ export async function keepTownShares(db, nowS) {
     return 0;
   }
   const towns = await countTownShares(db, nowS);
+  const regions = await regionsProsperity(db, nowS); // FOUNDATION F2: the regions' prosperity, kept beside them
   await db
     .prepare(
-      'INSERT INTO town_econ_kept (id, at, towns) VALUES (1, ?1, ?2) ON CONFLICT (id) DO UPDATE SET at = excluded.at, towns = excluded.towns',
+      'INSERT INTO town_econ_kept (id, at, towns, regions) VALUES (1, ?1, ?2, ?3) ON CONFLICT (id) DO UPDATE SET at = excluded.at, towns = excluded.towns, regions = excluded.regions',
     )
-    .bind(nowS, JSON.stringify(towns))
+    .bind(nowS, JSON.stringify(towns), JSON.stringify(regions))
     .run();
   _keptAt = nowS;
   return towns.length;
@@ -475,23 +478,31 @@ export async function keepTownShares(db, nowS) {
 
 /**
  * THE TOWNS' SHARES (POST /v1/towns/econ): `{ towns: [[map, share], ...] }` - every town whose players' share is
- * TOWN_ECON_SHARE_LEAST or more today, one decimal. AUDIT TOWN-ECON 2 SVC-3: read off the row the clock keeps
+ * TOWN_ECON_SHARE_LEAST or more today, one decimal - and FOUNDATION F2's `regions: [[region, v], ...]`, each region's
+ * prosperity above nothing (regionClock.js). AUDIT TOWN-ECON 2 SVC-3: read off the row the clock keeps
  * (keepTownShares), held by the isolate TOWN_ECON_ISOLATE_S; counted here only where no row is kept yet (a service the
  * clock has not run on).
  * @param {{ db: any, nowS: number }} ctx
  */
 export async function townsEcon({ db, nowS }) {
-  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };
-  const row = await db.prepare('SELECT towns FROM town_econ_kept WHERE id = 1').first();
-  let towns = null;
+  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns, regions: _kept.regions };
+  const row = await db.prepare('SELECT towns, regions FROM town_econ_kept WHERE id = 1').first();
+  let towns = null,
+    regions = null;
   try {
     towns = row ? JSON.parse(String(row.towns)) : null;
   } catch {
     towns = null;
   }
+  try {
+    regions = row?.regions ? JSON.parse(String(row.regions)) : null;
+  } catch {
+    regions = null;
+  }
   if (!Array.isArray(towns)) towns = await countTownShares(db, nowS);
-  _kept = { at: nowS, towns };
-  return { ok: true, towns };
+  if (!Array.isArray(regions)) regions = await regionsProsperity(db, nowS);
+  _kept = { at: nowS, towns, regions };
+  return { ok: true, towns, regions };
 }
 
 /** The hourly sweep's SQL: a town's acts and days past the days kept (cron.js HOUR_JOBS, from townEconKeptFrom), and

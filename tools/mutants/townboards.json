@@ -119,8 +119,8 @@
   {
     "name": "TB2-the-join-through-a-building",
     "file": "src/world/urban/townFabric.js",
-    "old": "        const fill = between.find((i) => kind[i] === K.main) ?? between.find((i) => kind[i] === K.open);",
-    "new": "        const fill = between.find((i) => kind[i] === K.main) ?? between[0];",
+    "old": "        const fill =\n          between.find((i) => can(i) && kind[i] === K.main) ?? between.find((i) => can(i) && kind[i] === K.open);",
+    "new": "        const fill = between.find((i) => can(i) && kind[i] === K.main) ?? between[0];",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TB2-the-carriageways-surface-not-taken",
     "file": "src/world/urban/townFabric.js",
-    "old": "    for (const i of cells) kind[i] = meets ? K.main : K.open;",
-    "new": "    for (const i of cells) kind[i] = K.open;",
+    "old": "    for (const i of cells) if (can(i)) kind[i] = meets ? K.main : K.open;",
+    "new": "    for (const i of cells) if (can(i)) kind[i] = K.open;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TB2-a-short-piece-of-none-left-the-streets",
     "file": "src/world/urban/townFabric.js",
-    "old": "    for (const i of cells) kind[i] = meets ? K.main : K.open;",
-    "new": "    for (const i of cells) kind[i] = K.main;",
+    "old": "    for (const i of cells) if (can(i)) kind[i] = meets ? K.main : K.open;",
+    "new": "    for (const i of cells) if (can(i)) kind[i] = K.main;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TB2-an-islands-surface-not-taken",
     "file": "src/world/urban/townFabric.js",
-    "old": "    for (const i of cells) kind[i] = meets ? K.pave : K.open;",
-    "new": "    for (const i of cells) kind[i] = K.open;",
+    "old": "    for (const i of cells) if (can(i)) kind[i] = meets ? K.pave : K.open;",
+    "new": "    for (const i of cells) if (can(i)) kind[i] = K.open;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]

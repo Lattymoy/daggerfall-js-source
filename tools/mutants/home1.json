@@ -191,8 +191,8 @@
   {
     "name": "HOME1-quest-building-for-sale",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && bd.hasInterior !== false;",
+    "old": "  bd.hasInterior !== false &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  bd.hasInterior !== false;",
     "tests": [
       "test/server/home1.test.js"
     ]

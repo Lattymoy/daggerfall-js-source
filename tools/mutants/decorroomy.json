@@ -47,7 +47,7 @@
   {
     "name": "DECORROOMY-claim-unkept",
     "file": "server-account/src/homes.js",
-    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, price, ground, townBlocks, layout)) ? homeGroundKept(ground) : null;",
     "new": "  const kept = null;",
     "tests": [
       "test/server/decorroomy_service.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "DECORROOMY-claim-unheld",
     "file": "server-account/src/homes.js",
-    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, price, ground, townBlocks, layout)) ? homeGroundKept(ground) : null;",
     "new": "  const kept = typeof ground === 'number' ? homeGroundKept(ground) : null;",
     "tests": [
       "test/server/decorroomy_service.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "DECORROOMY-ground-rewritten",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };",
-    "new": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };",
+    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "DECORROOMY-ground-unheld",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n  const kept = homeGroundKept(ground);",
+    "old": "  if (\n    !homeGroundOk(\n      ground,\n      townBlocks,\n      homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null),\n    )\n  )\n    return { error: 'bad-home' }; // AUDIT FOUNDATION P2: a row's price, the law's ground\n  const kept = homeGroundKept(ground);",
     "new": "  const kept = homeGroundKept(ground);",
     "tests": [
       "test/server/decorroomy_service.test.js"

@@ -4,6 +4,7 @@
 // noise, into a strip of frames (flameSheetPixels, pure, so a pin can read it), and every DOM face shows it as one CSS
 // background stepped a frame at a time - a background-position animation, no script a frame, however many names burn.
 // The frames loop whole: the noise is periodic round the strip and over the loop, so the plate tiles and never jumps.
+// STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6): a plate a style, each its own painter (PLATE_PAINTERS).
 import { TITLE_FLAME } from './playerBadge.js';
 
 /** WYRM-RIDER (the owner: "naw just make the name plate", "perfect titles"): A TITLE ON A METAL PLATE (plateCss, below;
@@ -95,9 +96,8 @@ function ramp(/** @type {ReadonlyArray<readonly number[]>} */ stops, /** @type {
 
 /**
  * THE SHEET: `spec.frames` frames of `spec.w` x `spec.h` pixels, stacked top to bottom, as unpremultiplied RGBA. Each
- * frame is the fire at one moment of its loop: tongues rising out of a bed at the foot, their roots in `root` (the
- * blue a hot flame burns at its base), their bodies and tips in `tips` (into violet and its white heart), swaying,
- * with embers rising past them. Pure. @param {any} spec one of TITLE_FLAME
+ * frame is the plate at one moment of its loop, painted by its style's painter (PLATE_PAINTERS). Pure.
+ * @param {any} spec one of TITLE_FLAME
  */
 export function flameSheetPixels(spec) {
   const data = new Uint8ClampedArray(spec.w * spec.h * spec.frames * 4);
@@ -110,8 +110,78 @@ export function flameFramePixels(
   /** @type {number} */ f,
   /** @type {Uint8ClampedArray} */ data,
 ) {
+  (PLATE_PAINTERS[/** @type {keyof typeof PLATE_PAINTERS} */ (spec.style)] ?? paintFire)(spec, f, data);
+}
+
+const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's picture
+/** `c` (RGB 0..1) laid over the pixel at `at` with cover `a` - unpremultiplied, as the fire lays its tongues. */
+function over(
+  /** @type {Uint8ClampedArray} */ data,
+  /** @type {number} */ at,
+  /** @type {ArrayLike<number>} */ c,
+  /** @type {number} */ a,
+) {
+  if (!(a > 0)) return;
+  const fa = Math.min(1, a),
+    ba = data[at + 3] / 255,
+    oa = fa + ba * (1 - fa);
+  for (let i = 0; i < 3; i++) data[at + i] = (c[i] * 255 * fa + data[at + i] * ba * (1 - fa)) / Math.max(oa, 1e-3);
+  data[at + 3] = oa * 255;
+}
+/** A soft dot of light `g` strong in colour `c` at (`ex`, `ey`) of frame `f`, wrapped round the strip, never in the gutter. */
+function glowDot(
+  /** @type {any} */ spec,
+  /** @type {number} */ f,
+  /** @type {Uint8ClampedArray} */ data,
+  /** @type {number} */ ex,
+  /** @type {number} */ ey,
+  /** @type {ArrayLike<number>} */ c,
+  /** @type {number} */ g,
+  spread = 1.1,
+) {
+  const { w, h } = spec;
+  for (let dy = -2; dy <= 2; dy++)
+    for (let dx = -2; dx <= 2; dx++) {
+      const py = Math.round(ey) + dy,
+        px = (((Math.round(ex) + dx) % w) + w) % w;
+      if (py < 0 || py >= h - GUTTER) continue;
+      const k = g * Math.exp(-(dx * dx + dy * dy) / spread);
+      if (k < 0.02) continue;
+      const at = ((f * h + py) * w + px) * 4;
+      const a = data[at + 3] / 255,
+        na = Math.min(1, a + k);
+      for (let i = 0; i < 3; i++)
+        data[at + i] = Math.min(255, (data[at + i] * a + c[i] * 255 * k) / Math.max(na, 1e-3));
+      data[at + 3] = na * 255;
+    }
+}
+/** EMBERS: `spec.embers` motes, each rising a whole number of times a loop from its own place, swaying, fading as it climbs. */
+function embersInto(
+  /** @type {any} */ spec,
+  /** @type {number} */ f,
+  /** @type {Uint8ClampedArray} */ data,
+  /** @type {ArrayLike<number>} */ c,
+) {
+  const { w, h, frames: n, seed, embers } = spec,
+    t = f / n;
+  for (let e = 0; e < embers; e++) {
+    const laps = 1 + (e % 2),
+      phase = hash2(e, 7, seed),
+      x0 = hash2(e, 3, seed);
+    const climb = (t * laps + phase) % 1;
+    const ex = ((((x0 + 0.04 * Math.sin(2 * Math.PI * (t * laps * 2 + phase))) % 1) + 1) % 1) * w,
+      ey = (1 - climb) * (h - GUTTER);
+    glowDot(spec, f, data, ex, ey, c, (1 - climb) ** 1.4 * (0.6 + 0.4 * Math.sin(2 * Math.PI * (t * 4 + phase))));
+  }
+}
+/** How far `u` is from `c` round the strip, -0.5..0.5. */
+const wrapped = (/** @type {number} */ u, /** @type {number} */ c) => ((((u - c) % 1) + 1.5) % 1) - 0.5;
+
+/** THE FIRE (Genesis, Eternal Champion): tongues rising out of a bed at the foot, their roots in `root` (the colour a hot
+ *  flame burns at its base), their bodies and tips in `tips`, swaying, with embers rising past them; a `rim`, a gold edge
+ *  along the plate's top with a glint running along it. */
+function paintFire(/** @type {any} */ spec, /** @type {number} */ f, /** @type {Uint8ClampedArray} */ data) {
   const { w, h, frames: n, seed, root, tips, tongues, embers, haze } = spec;
-  const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's fire
   const PX = tongues * 2,
     PY = 2,
     LOOP = 4; // noise cells round the strip, up one plate, and plates climbed a loop
@@ -147,32 +217,180 @@ export function flameFramePixels(
       data[at + 3] = oa * 255;
     }
   }
-  // EMBERS: each rising a whole number of times a loop from its own place, swaying, fading as it climbs
+  if (embers) embersInto(spec, f, data, tips[tips.length - 1]);
+  if (!spec.rim) return;
+  // STOREFRONT: THE GOLD EDGE over the fire's top, a glint running along it twice a loop
+  for (let y = 0; y < 3; y++)
+    for (let x = 0; x < w; x++) {
+      const glint = Math.exp(-((wrapped((x + 0.5) / w, t * 2) / 0.08) ** 2));
+      over(
+        data,
+        ((f * h + y) * w + x) * 4,
+        mix(/** @type {number[]} */ ([...spec.rim]), [1, 1, 1], glint * 0.6),
+        y < 2 ? 0.95 : 0.4,
+      );
+    }
+}
+
+/** STOREFRONT: THE RAYS (Dawnbringer) - a dusk glowing at the foot as the sun comes up under it, `tongues` rays of gold
+ *  rising out of it, light running up each, swaying; and motes. `root` the dusk into the sun, `tips` a ray's light. */
+function paintRays(/** @type {any} */ spec, /** @type {number} */ f, /** @type {Uint8ClampedArray} */ data) {
+  const { w, h, frames: n, seed, root, tips, tongues: rays, haze } = spec,
+    t = f / n,
+    H = h - GUTTER;
+  for (let y = 0; y < H; y++) {
+    const up = 1 - (y + 0.5) / H,
+      sun = Math.max(0, 1 - up * 1.05);
+    for (let x = 0; x < w; x++) {
+      const u = (x + 0.5) / w,
+        at = ((f * h + y) * w + x) * 4;
+      const sky = mix(/** @type {number[]} */ ([...haze]), ramp(root, 0.3 + 0.45 * sun), sun * 0.8);
+      data[at] = sky[0] * 255;
+      data[at + 1] = sky[1] * 255;
+      data[at + 2] = sky[2] * 255;
+      data[at + 3] = haze[3] * (0.7 + 0.3 * sun) * 255;
+      let ray = 0;
+      for (let k = 0; k < rays; k++) {
+        const cx = (k + 0.5) / rays + 0.025 * Math.sin(2 * Math.PI * (t + hash2(k, 5, seed)));
+        const half = 0.016 + 0.034 * up,
+          du = wrapped(u, cx) / half;
+        const run = 0.55 + 0.45 * Math.sin(2 * Math.PI * (up * 1.5 - t * 2 + hash2(k, 9, seed))); // light climbing the ray
+        ray = Math.max(ray, Math.exp(-du * du) * run * (0.6 + 0.4 * hash2(k, 1, seed)) * (1 - 0.55 * up * up));
+      }
+      over(data, at, ramp(tips, 0.2 + 0.6 * ray), Math.min(1, ray * 1.1));
+      over(data, at, root[3], Math.exp(-((up / 0.1) ** 2)) * 0.55); // the sun's line at the foot
+    }
+  }
+  embersInto(spec, f, data, tips[tips.length - 1]);
+}
+
+/** STOREFRONT: THE VOID (Voidwalker) - a dark plate, a nebula of violet rolling in it and a rift breathing along its
+ *  middle; `embers` stars, each drawn from the plate's edge into the rift on a curve, shrinking, its trail behind it. */
+function paintVoid(/** @type {any} */ spec, /** @type {number} */ f, /** @type {Uint8ClampedArray} */ data) {
+  const { w, h, frames: n, seed, root, tips, tongues, embers, haze } = spec,
+    t = f / n,
+    H = h - GUTTER,
+    PX = tongues * 2;
+  for (let y = 0; y < H; y++) {
+    const up = 1 - (y + 0.5) / H;
+    for (let x = 0; x < w; x++) {
+      const u = (x + 0.5) / w,
+        at = ((f * h + y) * w + x) * 4;
+      const neb = fbm(u * PX, up * 2 - t * 2, PX, 2, seed);
+      const c = ramp(root, 0.08 + 0.5 * neb * neb);
+      data[at] = c[0] * 255;
+      data[at + 1] = c[1] * 255;
+      data[at + 2] = c[2] * 255;
+      data[at + 3] = haze[3] * 255;
+      const rift = Math.exp(-(((up - 0.5) / 0.07) ** 2)) * (0.4 + 0.2 * Math.sin(2 * Math.PI * (t * 2 + u * tongues)));
+      over(data, at, tips[0], rift);
+    }
+  }
   for (let e = 0; e < embers; e++) {
     const laps = 1 + (e % 2),
       phase = hash2(e, 7, seed),
-      x0 = hash2(e, 3, seed);
-    const climb = (t * laps + phase) % 1;
-    const ex = ((((x0 + 0.04 * Math.sin(2 * Math.PI * (t * laps * 2 + phase))) % 1) + 1) % 1) * w,
-      ey = (1 - climb) * (h - GUTTER);
-    const glow = (1 - climb) ** 1.4 * (0.6 + 0.4 * Math.sin(2 * Math.PI * (t * 4 + phase)));
-    for (let dy = -2; dy <= 2; dy++)
-      for (let dx = -2; dx <= 2; dx++) {
-        const py = Math.round(ey) + dy,
-          px = (((Math.round(ex) + dx) % w) + w) % w;
-        if (py < 0 || py >= h - GUTTER) continue;
-        const g = glow * Math.exp(-(dx * dx + dy * dy) / 1.1);
-        if (g < 0.02) continue;
-        const at = ((f * h + py) * w + px) * 4;
-        const top = tips[tips.length - 1];
-        const a = data[at + 3] / 255,
-          na = Math.min(1, a + g);
-        for (let i = 0; i < 3; i++)
-          data[at + i] = Math.min(255, (data[at + i] * a + top[i] * 255 * g) / Math.max(na, 1e-3));
-        data[at + 3] = na * 255;
-      }
+      x0 = hash2(e, 3, seed),
+      side = hash2(e, 5, seed) < 0.5 ? 1 : -1;
+    for (let s = 0; s < 4; s++) {
+      // the star, then its trail
+      const p = (((t * laps + phase - s * 0.025) % 1) + 1) % 1,
+        fall = (1 - p) ** 1.6;
+      const ex = ((((x0 + 0.07 * Math.cos(2 * Math.PI * (p * 0.75 + phase))) % 1) + 1) % 1) * w,
+        ey = (0.5 - side * 0.5 * fall) * (H - 1);
+      const lit = Math.min(1, p / 0.15) * (1 - Math.max(0, (p - 0.8) / 0.2)) * (1 - s * 0.3);
+      glowDot(spec, f, data, ex, ey, s ? tips[0] : tips[1], lit * (1 - 0.5 * p), 0.6 + 1.2 * fall);
+    }
   }
 }
+
+/** STOREFRONT: BRASS - a brushed plate in `root`, bevelled light at its top and dark at its foot, the plate's own `haze`
+ *  cover. The pulse's and the gears' ground. */
+function brassAt(/** @type {any} */ spec, /** @type {number} */ u, /** @type {number} */ up) {
+  const grain = noise(u * 6, up * 30, 6, 30, spec.seed + 1);
+  const bevel = 0.22 * Math.max(0, (up - 0.85) / 0.15) - 0.2 * Math.max(0, 1 - up / 0.12);
+  return ramp(spec.root, Math.max(0, Math.min(1, 0.4 + 0.25 * grain + bevel)));
+}
+
+/** STOREFRONT: THE PULSE (Heart-Waker) - brass, riveted, with aetherium veins through it; a slow wave of blue light runs
+ *  along it once a loop and the whole plate breathes, the veins lit as it passes. `tips` the aetherium's light. */
+function paintPulse(/** @type {any} */ spec, /** @type {number} */ f, /** @type {Uint8ClampedArray} */ data) {
+  const { w, h, frames: n, seed, root, tips, tongues: rivets, haze } = spec,
+    t = f / n,
+    H = h - GUTTER;
+  for (let y = 0; y < H; y++) {
+    const up = 1 - (y + 0.5) / H;
+    for (let x = 0; x < w; x++) {
+      const u = (x + 0.5) / w,
+        at = ((f * h + y) * w + x) * 4,
+        c = brassAt(spec, u, up);
+      data[at] = c[0] * 255;
+      data[at + 1] = c[1] * 255;
+      data[at + 2] = c[2] * 255;
+      data[at + 3] = haze[3] * 255;
+      const ru = wrapped(u, (Math.floor(u * rivets) + 0.5) / rivets) * w,
+        rv = (Math.abs(up - 0.5) - 0.32) * H;
+      over(data, at, root[3], Math.exp(-(ru * ru + rv * rv) / 1.6) * 0.9); // a rivet, above and below
+      const light = Math.exp(-((wrapped(u, t) / 0.2) ** 2)) * 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(2 * Math.PI * t));
+      const vein = Math.abs(noise(u * 8, up * 3, 8, 3, seed + 5) - 0.5),
+        band = up > 0.18 && up < 0.82 ? 1 : 0;
+      over(
+        data,
+        at,
+        ramp(tips, 0.25 + 0.7 * light),
+        band * (1 - Math.min(1, Math.max(0, (vein - 0.02) / 0.04))) * (0.3 + 0.7 * light),
+      );
+      over(data, at, tips[1], band * light * 0.4);
+    }
+  }
+}
+
+/** STOREFRONT: THE GEARS (Echo of Numidium) - a brass plate whose top and foot are gear teeth, `tongues` round the strip,
+ *  the top's turning one way and the foot's the other, two teeth a loop; a blue glow breathing between them, and sparks. */
+function paintGears(/** @type {any} */ spec, /** @type {number} */ f, /** @type {Uint8ClampedArray} */ data) {
+  const { w, h, frames: n, root, tips, tongues: teeth, haze } = spec,
+    t = f / n,
+    H = h - GUTTER,
+    EDGE = 0.16;
+  for (let y = 0; y < H; y++) {
+    const up = 1 - (y + 0.5) / H,
+      top = up > 1 - EDGE,
+      foot = up < EDGE;
+    for (let x = 0; x < w; x++) {
+      const u = (x + 0.5) / w,
+        at = ((f * h + y) * w + x) * 4;
+      const c = brassAt(spec, u, up);
+      let cover = haze[3];
+      if (top || foot) {
+        const pitch = (((u * teeth + (top ? -2 : 2) * t) % 1) + 1) % 1,
+          reach = top ? (up - (1 - EDGE)) / EDGE : (EDGE - up) / EDGE;
+        const half = 0.3 - 0.12 * reach; // a tooth narrows to its tip
+        cover = Math.abs(pitch - 0.5) < half ? 0.95 : 0;
+      }
+      data[at] = c[0] * 255;
+      data[at + 1] = c[1] * 255;
+      data[at + 2] = c[2] * 255;
+      data[at + 3] = cover * 255;
+      if (!cover) continue;
+      const rimLine = Math.exp(-(((Math.min(Math.abs(up - (1 - EDGE)), Math.abs(up - EDGE)) * H) / 0.8) ** 2));
+      over(data, at, root[3], rimLine * 0.8);
+      const glow =
+        Math.exp(-(((up - 0.5) / 0.22) ** 2)) *
+        (0.6 + 0.2 * Math.sin(2 * Math.PI * t * 2)) *
+        (0.85 + 0.15 * Math.cos(2 * Math.PI * (u * 2 + t)));
+      over(data, at, ramp(tips, 0.35 + 0.5 * glow), glow);
+    }
+  }
+  embersInto(spec, f, data, tips[tips.length - 1]);
+}
+
+/** STOREFRONT: ONE PAINTER A STYLE (TITLE_FLAME's `style`) - a new plate is a new entry here, never a branch in another. */
+export const PLATE_PAINTERS = Object.freeze({
+  fire: paintFire,
+  rays: paintRays,
+  void: paintVoid,
+  pulse: paintPulse,
+  gears: paintGears,
+});
 
 /** The class a flame title wears, and its key's own - every face that paints a title adds or takes them off. */
 export const FLAME_CLASS = 'dftitle-flame';

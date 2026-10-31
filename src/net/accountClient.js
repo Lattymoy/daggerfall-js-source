@@ -45,6 +45,7 @@ import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, GUILD_L
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
 import { AURAS, ICONS } from './identityToken.js';
+import { effectKitOk } from './effectLaw.js';   // STOREFRONT: a stored effects kit is a kit of known effects, or none
 import { armoryKitOk } from './armoryLaw.js';   // ARMORY: a stored kit is a kit of known pieces, or none   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
@@ -77,6 +78,7 @@ import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the car
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 import { tradeHeldSaid } from './realm/realmTradeLaw.js';   // RPT1026-MARKET HOLD-SAID: the standing hold's own notice
 import { MINT_VERSION } from './productRecord.js';   // AUDIT FB1026d C3: a craft asks its record be stamped with the version this build mints
+import { AURUM_CACHE_DAY_MAX } from './aurumCacheLaw.js';   // AURUM-CACHES: the day's forgery bound, in its refusal
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -178,6 +180,35 @@ const REFUSAL_WORDS = {
   live: () => t('account.refusal.live', 'You hold a breach already.'),
   rehearsed: () => t('account.refusal.rehearsed', 'You have rehearsed the Spire today. A Weir Key opens it again.'),
   spent: () => t('account.refusal.spent', 'That breach is spent.'),
+  taken: () => t('account.refusal.taken', 'You took the Resonant Maul today. Fell the Colossus again tomorrow for another.'),   // AUDIT-STOREFRONT: the Maul's day (seasonClaim.js)
+  // AURUM (bible/06-Systems/Aurum.md): a ware's refusals for Aurum (server-account/src/aurum.js buyWare)
+  'aurum-guest': () => t('account.refusal.aurumGuest', 'Aurum needs a registered account. Add a username and password first.'),
+  'aurum-closed': () => t('account.refusal.aurumShut', 'Aurum is closed for now.'),
+  'aurum-ware': () => t('account.refusal.aurumWare', 'That is not sold for Aurum.'),
+  'aurum-sale': () => t('account.refusal.aurumSale', 'That is not on sale now.'),   // AURUM-ONLY
+  'aurum-price': () => t('account.refusal.aurumPrice', 'Its price changed. Check the new price, then buy again.'),   // AURUM-ONLY: a deal turned at midnight
+  'aurum-held': () => t('account.refusal.aurumHeld', 'Your account holds that already.'),
+  'aurum-short': () => t('account.refusal.aurumShort', 'Your account has too little Aurum for that.'),
+  'aurum-busy': () => t('account.refusal.aurumBusy', 'The shop is busy. Try again in a moment.'),
+  // PASS-PANELS (bible/06-Systems/Battle-Pass.md): a folio's or an item's refusals (server-account/src/battlePass.js) - the
+  // player reads Folios and pages, never a pass, a track or a panel (the owner: "It shouldnt be called battle pass")
+  'pass-guest': () => t('account.refusal.passGuest', 'The Folios need a registered account. Add a username and password first.'),
+  'pass-closed': () => t('account.refusal.passClosed', 'The Folios are closed for now.'),
+  'pass-season': () => t('account.refusal.passSeason', 'That is not a season the Folios know.'),
+  'pass-item': () => t('account.refusal.passItem', 'That is not in this season\'s Folios.'),
+  'pass-soon': () => t('account.refusal.passSoon', 'This season has not begun yet.'),
+  'pass-held': () => t('account.refusal.passHeld', 'Your account holds that already.'),
+  'pass-track': () => t('account.refusal.passTrack', 'Unlock the Gilded Folio first.'),
+  'pass-panel': () => t('account.refusal.passPanel', 'That page is still locked. Buy more in this folio to open it.'),
+  'pass-short': () => t('account.refusal.passShort', 'Your account has too little Aurum for that.'),
+  'pass-busy': () => t('account.refusal.passBusy', 'The Folios are busy. Try again in a moment.'),
+  // AURUM-CACHES: a cache's refusals (server-account/src/aurumCache.js claimCache)
+  'cache-guest': () => t('account.refusal.cacheGuest', 'Aurum caches need a registered account. Add a username and password first.'),
+  'cache-closed': () => t('account.refusal.cacheClosed', 'Aurum is closed for now. The coffer stays shut.'),
+  'cache-id': () => t('account.refusal.cacheId', 'This coffer cannot be opened. Reload the game and try again.'),
+  'cache-taken': () => t('account.refusal.cacheTaken', 'You emptied this coffer already.'),
+  'cache-proof': () => t('account.refusal.cacheProof', 'Wait a moment in the dungeon, then open the coffer again.'),
+  'cache-capped': () => t('account.refusal.cacheCapped', 'You have opened {n, plural, one {# Aurum coffer} other {# Aurum coffers}} today. Come back after midnight, UTC, to open this one.', { n: AURUM_CACHE_DAY_MAX }),
   breach: () => t('account.refusal.breach', 'That breach is not one the Spire knows.'),
   none: () => t('account.refusal.none', 'The Spire took no key for that.'),   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose ask never reached it
   // EG-E3: a dungeon elite's find (server-account/src/eg.js findEg)
@@ -343,6 +374,7 @@ const REFUSAL_WORDS = {
   'home-rent-due': () => t('account.refusal.homeRentDue', 'Rent is waiting to be collected at your home. Collect it first.'),
   // ARENA4b: a home the arena displaced (homes.js arenaMoveHome), and a house of its block an old build would buy
   'home-arena': () => ARENA_TEXT.homeMove.arena,
+  'home-unlisted': () => t('account.refusal.homeUnlisted', 'That house is not for sale.'),   // FOUNDATION F3: off the market by its row (net/homeListingLaw.js)
   'home-unmoved': () => ARENA_TEXT.homeMove.unmoved,
   'home-changed': () => ARENA_TEXT.homeMove.changed,
   // HOME-VOTE: a town's word on a player's house (server-account/src/homeVotes.js) - met at its door
@@ -738,6 +770,7 @@ const REFUSAL_WORDS = {
   'logo-file': () => t('account.refusal.logoFile', 'That file is too large. Choose a picture under 8 MB.'),
   'logo-soon': () => t('account.refusal.logoSoon', 'A guild can send one logo every {min} minutes. Try again soon.', { min: GUILD_LOGO_GAP_S / 60 }),
   'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
+  'no-logo': () => t('account.refusal.noLogo', 'That logo is not shown now.'),   // GUILD-SHOP: a picture under no review and worn by no guild
   'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
   'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),
   'logo-square': () => t('account.refusal.logoSquare', 'A logo must be square.'),
@@ -1338,9 +1371,20 @@ export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura
 export const equipArmory = (io, slot, piece) => call(io, '/v1/account/armory', { slot, piece: piece ?? null });
 /** ARMORY: a whole kit at once (the Eternal set's Wear), or `null` to bare every slot - the same door. */
 export const equipArmoryKit = (io, kit) => call(io, '/v1/account/armory', { kit: kit ?? null });
+/** STOREFRONT: wear an effect in its slot (`kill`, `portal`, `mount`), or null to bare it - the same wardrobe answer. */
+export const equipEffect = (io, slot, key) => call(io, '/v1/account/effect', { slot, key: key ?? null });
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
+/** AURUM (bible/06-Systems/Aurum.md): a ware bought for Aurum (AURUM-ONLY: any but a pack) at the `price` the window
+ *  showed - the wardrobe after it and the Aurum's card. The service refuses `aurum-short`, `aurum-sale` (not sold now),
+ *  `aurum-price` (its price moved: a deal turned, a giver's share), `aurum-held` and `aurum-closed`. */
+export const buyAurumWare = (io, ware, price) => call(io, '/v1/aurum/buy', { ware, ...(Number.isSafeInteger(price) ? { price } : {}) });
+/** PASS-PANELS (bible/06-Systems/Battle-Pass.md): a season's premium track (the Gilded Folio) opened for Aurum, and an
+ *  item on its tracks bought for Aurum - each the wardrobe after it, the Aurum's card and the pass's. The service refuses
+ *  `pass-short`, `pass-held`, `pass-track` (the premium track shut), `pass-panel` (a panel not yet open), `pass-closed`. */
+export const passUnlock = (io, season) => call(io, '/v1/pass/unlock', { season });
+export const passBuy = (io, season, grant) => call(io, '/v1/pass/buy', { season, grant });
 /** GLYPH-WEAR (2026-10-02, Mac: "players can also equip/unequip their glyphs"): show one glyph (`on` true) or hide it -
  *  the wardrobe after the write (`glyphs` still all that is true, `glyphsOff` the ones taken off). The service refuses
  *  `not-held` for a glyph that is not true of this account. */
@@ -1428,10 +1472,10 @@ export function storedSession(storage) {
  *  NEVER PART OF THIS - `register`, `recover` and `newRecoveryCodes`
  *  hand them back and they are the screen's to show and the player's to
  *  write down. */
-export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt }) {
+export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt }) {
   try {
-    // ARMORY-SEEN: every field adoptIdentity writes is kept here - a field it writes and this drops never lands
-    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
+    // ARMORY-SEEN: every field adoptIdentity writes is kept here - a field it writes and this drops never lands (AUDIT-STOREFRONT: the effects kit was one)
+    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
     return true;
   } catch { return false; }
 }
@@ -1491,9 +1535,9 @@ export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs
  * profile mark and the account card read it here (systems/ownGlyphs.js ownIcon).
  *
  * @param {any} storage
- * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, effects?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, icon, nameAsAt, secret } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, effects, icon, nameAsAt, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
   if (typeof secret === 'string' && was.secret !== secret) return false;
@@ -1505,9 +1549,10 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, ar
   if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;   // WB9g: one that exists, or none
   if (icon !== undefined) next.icon = typeof icon === 'string' && ICONS.includes(icon) ? icon : null;   // WITCH1: likewise
   if (armory !== undefined) next.armory = armoryKitOk(armory) ? armory : null;   // ARMORY: likewise
+  if (effects !== undefined) next.effects = effectKitOk(effects) ? effects : null;   // STOREFRONT: likewise
   if (Number.isSafeInteger(nameAsAt) && nameAsAt > 0 && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;   // NAME-AS: forward only
   const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
-  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null);   // WITCH1: and the icon; ARMORY: and the kit
+  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null) && (next.effects ?? null) === (was.effects ?? null);   // WITCH1: and the icon; ARMORY: and the kit; STOREFRONT: and the effects
   if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }
@@ -1789,6 +1834,8 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...(Array.isArray(answer.data.glyphsOff) ? { glyphsOff: answer.data.glyphsOff } : {}),   // absent for none
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
+          // STOREFRONT: the effects kit I wear (null for none) - absent from a service before this release, which says nothing
+          ...('effects' in answer.data ? { effects: typeof answer.data.effects === 'string' ? answer.data.effects : null } : {}),
           // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing
           ...('icon' in answer.data ? { icon: typeof answer.data.icon === 'string' ? answer.data.icon : null } : {}),
           // ARMORY-SEEN: the Aura Armory kit I wear (null for none) - absent from a service before acct209, which says nothing
@@ -2120,6 +2167,40 @@ export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
     me: () => storedSession(storage)?.id ?? null,
     guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };
+}
+
+/** STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS (server-account/src/battlePass.js) through the one door -
+ *  the account's season (`mine`) and a deed's find (`find`, by its source - AUDIT-STOREFRONT II (lane B 2): and its own
+ *  id, so a find asked again is answered as it was). `call`'s shape, never a throw. The premium track opened and an item
+ *  bought are the shop's (passUnlock, passBuy). */
+export function accountBattlePass({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    mine: () => post('/v1/pass/mine', {}),
+    find: (/** @type {string} */ source, /** @type {string} */ rid) => post('/v1/pass/find', { source, rid }),
+    me: () => storedSession(storage)?.id ?? null,
+    guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
+  };
+}
+
+/**
+ * STOREFRONT (AUDIT LANE 5): THE RESONANT MAUL'S DAY (server-account/src/seasonClaim.js) - asked when a Brass Colossus this
+ * character struck falls with a body (scenes/seasonHost.js), with the ask's own id (`rid`, 16 hex), so an answer lost and
+ * asked again is a yes again. `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`.
+ */
+export function accountSeasonMaul({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return { claim: (/** @type {string} */ rid) => post('/v1/season/maul', { rid }) };
+}
+
+/** AURUM-CACHES (bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE CLAIMED by its id (server-account/src/aurumCache.js),
+ *  when a coffer is opened (scenes/aurumCacheHost.js). `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session
+ *  is `no-session`. */
+export function accountAurumCache({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  // AUDIT AURUM-CACHES E1: with the relay's proof that this account stood in the dungeon (net/cacheProof.js); `as` the
+  // account the coffer was stood for - another signed in since is `no-session`, never a claim for it (AUDIT 625 S4)
+  return { claim: (/** @type {string} */ id, /** @type {string|null} */ proof = null, /** @type {string|null} */ as = null) => post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) }, as) };
 }
 
 /**

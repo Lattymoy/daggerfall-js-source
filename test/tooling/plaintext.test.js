@@ -98,7 +98,8 @@ test('PLAIN-TEXT the verdict: an entry the baseline does not list is over at its
 
 test('PLAIN-TEXT LEGIBLE 3: a cite into our code is one word however long its quote, and a code line that opens with a JSDoc cast is code, not comment (mutants: the anchor counted; the cast read as comment)', () => {
   const words = Array.from({ length: 150 }, () => 'word').join(' ');
-  assert.equal(paragraphExcess(`${words} world.js:"const a = b + c + d + e + f"`), 1, 'the anchor one word');
+  const cite = ['world.js', '"const a = b + c + d + e + f"'].join(':');
+  assert.equal(paragraphExcess(`${words} ${cite}`), 1, 'the anchor one word');
   assert.equal(paragraphExcess(`${words} a b c d e f`), 6);
   const block = Array.from({ length: 8 }, () => '// why').join('\n');
   assert.equal(commentExcess(`/** @type {any} */ (x).y();\n${block}`), 0, 'the cast line is code');

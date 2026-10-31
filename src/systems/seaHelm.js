@@ -62,6 +62,9 @@ export const SEA_HELM = Object.freeze({
   deadDeg: 4,
   /** Beating: the mark's bearing may swing this far past the wind's eye (degrees) before the boat goes about. */
   laneDeg: 20,
+  /** BEAT-LANE: ...or until she stands this far (m) past the wind's line through the mark. An angle's lane widens with
+   *  the mark's distance: SEA-TAUT's legs run 29 to 43 km in the Eltheric Ocean, and a tack ran 9 km off the line. */
+  laneM: 400,
   /** How close to the wind a rig with a lateen, a gaff or a staysail sails (degrees off its eye). */
   noGoFore: 35,
   /** ...and square sails alone: past 68 their pull falls faster than the course gains (GetSailPower's square law). */
@@ -110,14 +113,14 @@ export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0, reach: 0 });
  * @param {{ tack: number, stall: number, oars: number, reach?: number }} st
  * @param {{ heading: number, bearing: number, wind: number[], hasSails: boolean, squareOnly?: boolean, sailsUp: boolean,
  *   canSail: boolean, way: number, dt: number, landfall?: boolean, landAhead?: number, freer?: number, crewed?: boolean,
- *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number, hullAhead?: number }} q
+ *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number, hullAhead?: number, dist?: number }} q
  *   `heading` the bow's and `bearing` the mark's (degrees, clockwise from north); `wind` the wind's flat vector (where
  *   it blows); `way` the boat's speed along its bow (m/s, astern negative); `landAhead` the metres to land along the
  *   bow (Infinity: none seen); `freer` the hand with more water (-1 left, 1 right); `landfall` this leg ends ashore;
  *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s); `free` the
  *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail; `markAhead` the metres to land
  *   along the mark's own bearing (AUDIT SHIPS A2 - Infinity: none seen; a landfall's, its hulls alone); `hullAhead` the
- *   metres to a ship's hull along her looks (AUDIT FERRY-CLEAR F1 - Infinity: none).
+ *   metres to a ship's hull along her looks (AUDIT FERRY-CLEAR F1 - Infinity: none); `dist` the metres to the mark (BEAT-LANE).
  * @returns {{ turn: -1|0|1, sails: 'raise'|'lower'|null, row: boolean, course: number }}
  */
 export function seaHelmStep(st, q) {
@@ -144,7 +147,8 @@ export function seaHelmStep(st, q) {
     const off = foldDeg(q.bearing - eye);
     if (Math.abs(off) < noGo) {
       if (st.tack === 0) st.tack = off >= 0 ? 1 : -1;
-      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack; // the mark swung past the eye: go about
+      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)
+        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about
       course = foldDeg(eye + st.tack * noGo);
     } else st.tack = 0;
   } else st.tack = 0;

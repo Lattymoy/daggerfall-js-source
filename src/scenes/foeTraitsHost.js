@@ -14,6 +14,7 @@ import {
   bossTraitsOf,
   bossTraitMask,
   bossTraitsOfMask,
+  bossTraitsMost,
   giveBossTraits,
   hasBossTrait,
   markBossWrath,
@@ -49,13 +50,13 @@ export function traitWire(entity, seeded = false) {
 }
 /** The fields' share of the record's change key. */
 export const traitWireKey = (r) => `${r.bw ?? 0},${r.bv ?? -1}`;
-/** A joiner's copy takes the host's word on it: an own lane's elite and its traits (at most an elite's one, two a raid's
- *  leader's), its wrath, its ward's share - the ward's break and the wrath said here too (`say`, in `nameOf()`). */
+/** A joiner's copy takes the host's word on it: an own lane's elite and its traits (at most what it carries -
+ *  bossTraitsMost), its wrath, its ward's share - the ward's break and the wrath said here too (`say`, in `nameOf()`). */
 export function readTraitWire(entity, r, say, nameOf) {
   if (!entity || !r) return;
   if (r.z === 1 && !entity.eliteFoe) promoteEliteFoe(entity, { own: false });
   if (entity.eliteFoe && Number.isInteger(r.bt) && !bossTraitsOf(entity).length)
-    giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: false });
+    giveBossTraits(entity, bossTraitsOfMask(r.bt, bossTraitsMost(!!entity.raidLeader)), { own: false });
   if (r.bw === 1 && markBossWrath(entity)) say?.(bossWrathLine(nameOf()));
   if (r.bv !== undefined && hasBossTrait(entity, 'warded')) {
     if (entity.bossWardShown > 0 && r.bv === 0) say?.(bossWardBrokeLine(nameOf()));

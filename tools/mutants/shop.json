@@ -2,8 +2,8 @@
   {
     "name": "SHOP-price-moved",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('title', 'genesis', 500, 1),",
-    "new": "  ware('title', 'genesis', 400, 1),",
+    "old": "  ware('title', 'genesis', 500, pre(1)),",
+    "new": "  ware('title', 'genesis', 400, pre(1)),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHOP-two-bits-shared",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('aura', 'eternal', 2000, 4),",
-    "new": "  ware('aura', 'eternal', 2000, 2),",
+    "old": "  ware('aura', 'eternal', 2000, pre(4)),",
+    "new": "  ware('aura', 'eternal', 2000, pre(2)),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHOP-kind-read-as-another",
     "file": "src/net/shopLaw.js",
-    "old": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) =>",
-    "new": "  const keys = SHOP_WARES.filter((w) => held.includes(w.id)).flatMap((w) =>",
+    "old": "  return SHOP_WARES.filter((w) => w.kind === kind && !w.gives.length && held.includes(w.id)).map((w) => w.key);",
+    "new": "  return SHOP_WARES.filter((w) => !w.gives.length && held.includes(w.id)).map((w) => w.key);",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHOP-client-card-http-kept",
     "file": "src/net/shopLaw.js",
-    "old": "    const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
-    "new": "    const buy = typeof r.buy === 'string' && r.buy.startsWith('http') && r.buy.length <= 2048 ? r.buy : null;",
+    "old": "    const buy =\n      w.cash && typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
+    "new": "    const buy = w.cash && typeof r.buy === 'string' && r.buy.startsWith('http') && r.buy.length <= 2048 ? r.buy : null;",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SHOP-handle-guard-dropped",
     "file": "server-account/src/titles.js",
-    "old": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) =>\n  typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : [];",
-    "new": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => shopKeysOf(player?.shop_wares, kind);",
+    "old": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) =>\n  typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : [];",
+    "new": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => shopKeysOf(player, kind);",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -74,20 +74,23 @@
   {
     "name": "SHOP-sale-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };\n  const player = await db",
+    "old": "  if (!shopSoldForMoney(env, ware, nowS)) return { page: 'sold' };\n  const player = await db",
     "new": "  const player = await db",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "SHOP-held-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' }; // ADMIN-ALL\n  const open = await db",
-    "new": "  const open = await db",
+    "old": "  if (shopHolds(player, env, ware)) return { page: 'held' }; // ADMIN-ALL: an admin's too\n  const cents = ware.cents,",
+    "new": "  const cents = ware.cents,",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AURUM-ONLY (2026-10-30): shopCheckout goes on only for an Aurum pack (shopRepeatable before it), and a pack is never held (shopOwns answers false for one, ADMIN-ALL holds none), so this guard cannot fire - a press for an item answers the 'aurum' page first. Kept as the money path's belt for a ware ever sold for money again."
   },
   {
     "name": "SHOP-second-order",
@@ -110,11 +113,13 @@
   {
     "name": "SHOP-grant-guard-dropped",
     "file": "server-account/src/shop.js",
-    "old": "        .prepare(\n          \"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\",\n        )\n        .bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n      mustChange(db),",
-    "new": "        .prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\")\n        .bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),",
+    "old": "        .prepare(\n          \"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\",\n        )\n        .bind(order.id, nowS, pi),\n      mustChange(db),",
+    "new": "        .prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\")\n        .bind(order.id, nowS, pi),",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT-STOREFRONT S7: the grant's batch is guarded on the row as read too (shop.js rowWrite), and every grant moves the row - a ware already held is refunded, never granted - so a second word on the order fails that guard and settles as moved. The order's own guard stays, belt and braces: it says the rule where the order moves."
   },
   {
     "name": "SHOP-delayed-payment-granted",
@@ -128,8 +133,8 @@
   {
     "name": "SHOP-part-refund-revokes",
     "file": "server-account/src/shop.js",
-    "old": "      return o.refunded === true ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 }; // a part refund keeps the ware",
-    "new": "      return o.amount_refunded > 0 ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 }; // a part refund keeps the ware",
+    "old": "      if (o.refunded !== true || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 }; // a part refund keeps the ware",
+    "new": "      if (!(o.amount_refunded > 0) || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -137,8 +142,8 @@
   {
     "name": "SHOP-other-order-ware-taken",
     "file": "server-account/src/shop.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`,",
-    "new": "        AND ?3 = ?3 AND ?4 = ?4`,",
+    "old": "  if (!others.some((o) => o.ware === w.id)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -146,8 +151,8 @@
   {
     "name": "SHOP-dispute-lost-restores",
     "file": "server-account/src/shop.js",
-    "old": "      return o.status === 'won' || o.status === 'warning_closed'\n        ? restoreOrder(ctx, o.payment_intent)\n        : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
-    "new": "      return o.status ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
+    "old": "      const ours = o.status === 'won' || o.status === 'warning_closed'; // an inquiry closed: no chargeback",
+    "new": "      const ours = !!o.status; // an inquiry closed: no chargeback",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -155,8 +160,8 @@
   {
     "name": "SHOP-disclaimer-after-panels",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  body.append(head, proceeds, tabs, panels, say, foot);",
-    "new": "  body.append(head, tabs, panels, proceeds, say, foot);",
+    "old": "  body.append(head, proceeds, tabs, scroll);",
+    "new": "  body.append(head, tabs, scroll, proceeds);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -164,8 +169,8 @@
   {
     "name": "SHOP-buy-to-a-guest",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null };\n  if (!flow.shop) return { state: 'closed', buy: null };",
-    "new": "  if (!flow.shop) return { state: 'closed', buy: null };",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null, ...base };\n  if (!flow.shop) return { state: 'closed', buy: null, ...base };",
+    "new": "  if (!flow.shop) return { state: 'closed', buy: null, ...base };",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -173,8 +178,8 @@
   {
     "name": "SHOP-buy-off-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (row && !row.sale) return { state: 'gone', buy: null };\n  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null };",
-    "new": "  if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null };",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null, ...base };\n  if (aurum) {",
+    "new": "  if (aurum) {",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -182,8 +187,8 @@
   {
     "name": "SHOP-landing-never-said",
     "file": "src/ui/accountFlow.js",
-    "old": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held)) {",
-    "new": "    if (self.shopWaiting && self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never')) {",
+    "old": "        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held))",
+    "new": "        : self.shop?.wares.some((w) => w.id === self.shopWaiting && w.held && w.sale === 'never'))",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -191,8 +196,8 @@
   {
     "name": "SHOP-flame-gutter-filled",
     "file": "src/ui/titleFlame.js",
-    "old": "  const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's fire",
-    "new": "  const GUTTER = 0; // clear rows at a frame's foot, so a scaled plate never samples the next frame's fire",
+    "old": "const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's picture",
+    "new": "const GUTTER = 0; // clear rows at a frame's foot, so a scaled plate never samples the next frame's picture",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -272,8 +277,8 @@
   {
     "name": "SHOP-failed-grant-told-done",
     "file": "server-account/src/shop.js",
-    "old": "    throw e; // the grant never written: a 5xx, and Stripe tells it again",
-    "new": "    return { ok: true, applied: 0 };",
+    "old": "      if (i === 2) throw e; // never written: a 5xx, and Stripe tells it again",
+    "new": "      if (i === 2) return { ok: true, applied: 0 };",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -281,8 +286,8 @@
   {
     "name": "SHOP-revoke-letter-draws-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), null, nowS)] : []), // no ware: a letter with nothing on the account",
-    "new": "      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), w.id, nowS)] : []), // no ware: a letter with nothing on the account",
+    "old": "              null,",
+    "new": "              w.id,",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -308,8 +313,8 @@
   {
     "name": "SHOP-inquiry-closed-keeps-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "      return o.status === 'won' || o.status === 'warning_closed'\n        ? restoreOrder(ctx, o.payment_intent)\n        : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
-    "new": "      return o.status === 'won' ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
+    "old": "      const ours = o.status === 'won' || o.status === 'warning_closed'; // an inquiry closed: no chargeback",
+    "new": "      const ours = o.status === 'won'; // an inquiry closed: no chargeback",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -317,8 +322,8 @@
   {
     "name": "SHOP-tax-read-as-the-price",
     "file": "server-account/src/shop.js",
-    "old": "      return fulfilOrder(ctx, orderOf(), {\n        intent: o.payment_intent,\n        amount: o.amount_subtotal ?? o.amount_total,\n        currency: o.currency,\n      }); // the price before any tax Stripe adds",
-    "new": "      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_total, currency: o.currency }); // the price before any tax Stripe adds",
+    "old": "        ctx,\n        orderOf(),\n        { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
+    "new": "        ctx,\n        orderOf(),\n        { intent: o.payment_intent, amount: o.amount_total, currency: o.currency },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -376,5 +381,26 @@
     "tests": [
       "test/ui/shop_window.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-II-a-ware-over-the-cap",
+    "file": "src/net/shopLaw.js",
+    "old": "  ware('bundle', 'lordofoblivion', 3000, {",
+    "new": "  ware('bundle', 'lordofoblivion', 4000, {",
+    "tests": [
+      "test/server/shop_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-ONLY-a-pack-owned",
+    "file": "src/net/shopLaw.js",
+    "old": "  return !!w && !shopRepeatable(w) && worthLeft(w, shopHeldIds(row)) === 0;",
+    "new": "  return !!w && worthLeft(w, shopHeldIds(row)) === 0;",
+    "tests": [
+      "test/server/shop_service.test.js",
+      "test/server/admin_all_storefront.test.js"
+    ],
+    "note": "AURUM-ONLY (2026-10-30): a pack's Aurum price is none, which worthLeft read as nothing left to buy - every pack owned, its checkout refused as held."
   }
 ]

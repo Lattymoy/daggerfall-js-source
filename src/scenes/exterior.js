@@ -102,6 +102,7 @@ import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6:
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: the presentation, world.js's twin on this host
 import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { birthHorses, riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the horses born; COATS3D: and the ridden one's look, for the 3D horse
+import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: the 3D horse under me in my mount look
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification
@@ -5691,7 +5692,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const mwv = (!shotMode || walkMode) && !riding
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
-          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
+          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look (STOREFRONT: my mount look over it); HORSE-WALK: held under the gallop on a slow ride
           ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it, the camera's feet the seat's (after `feet`: it wins)
           pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
           cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
@@ -6123,7 +6124,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -6216,6 +6216,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
       if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];
     const precipShown = enhancedFront ? fx.shown : precipMode;

@@ -1,0 +1,114 @@
+[
+  {
+    "name": "CACHE-PROOF-the-proof-unread",
+    "file": "server-account/src/aurumCache.js",
+    "old": "  if (!(await provedHere(ctx, player, id, body?.proof, env))) {",
+    "new": "  if (false) {",
+    "tests": ["test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-account-unmatched",
+    "file": "server-account/src/aurumCache.js",
+    "old": "return v.ok && v.claims.s === player.id && cacheProofPlace(v.claims.m) === id;",
+    "new": "return v.ok && cacheProofPlace(v.claims.m) === id;",
+    "tests": ["test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-dungeon-unmatched",
+    "file": "server-account/src/aurumCache.js",
+    "old": "return v.ok && v.claims.s === player.id && cacheProofPlace(v.claims.m) === id;",
+    "new": "return v.ok && v.claims.s === player.id;",
+    "tests": ["test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-a-held-cache-called-unproved",
+    "file": "server-account/src/aurumCache.js",
+    "old": "return { error: held ? 'cache-taken' : 'cache-proof' };",
+    "new": "return { error: 'cache-proof' };",
+    "tests": ["test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-signature-unchecked",
+    "file": "src/net/cacheProof.js",
+    "old": "  if (!good) return { ok: false, why: 'signature' };\n",
+    "new": "",
+    "tests": ["test/net/cache_proof.test.js", "test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-expiry-unchecked",
+    "file": "src/net/cacheProof.js",
+    "old": "  if (!Number.isSafeInteger(nowS) || nowS >= claims.e) return { ok: false, why: 'expired' };\n",
+    "new": "",
+    "tests": ["test/net/cache_proof.test.js", "test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-instance-unread",
+    "file": "src/net/cacheProof.js",
+    "old": "(?:[.:]|$)/.exec(",
+    "new": "(?:\\.[msc]|$)/.exec(",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-port-id-keyed-by-its-low-bits",
+    "file": "src/net/cacheProof.js",
+    "old": "return aurumCacheDungeonKey(low < CACHE_BAY_IDS ? low : /** @type {number} */ (mapId) >>> 0);",
+    "new": "return aurumCacheDungeonKey(low);",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-kept-for-any-room",
+    "file": "src/net/cacheProof.js",
+    "old": "if (c && place && cacheProofPlace(c.m) === place) _kept",
+    "new": "if (c && place) _kept",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-relay-field-unsent",
+    "file": "server/src/index.js",
+    "old": "${await this._cacheProofField(a.key, who)}",
+    "new": "",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-a-guest-proved",
+    "file": "server/src/index.js",
+    "old": "s = who?.kind === 'guest' ? null : who?.subject;",
+    "new": "s = who?.subject;",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-page-keeps-nothing",
+    "file": "src/net/online.js",
+    "old": "      if (primary) keepCacheProof(room, m.cp);",
+    "new": "      if (primary) keepCacheProof(room, null);",
+    "tests": ["test/net/cache_proof.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-press-sends-no-proof",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "claim(id, cacheProofFor(id), me.id)",
+    "new": "claim(id, null, me.id)",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-press-names-no-account",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "claim(id, cacheProofFor(id), me.id)",
+    "new": "claim(id, cacheProofFor(id))",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-the-door-ignores-the-account",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) }, as)",
+    "new": "post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) })",
+    "tests": ["test/server/aurum_cache_service.test.js"]
+  },
+  {
+    "name": "CACHE-PROOF-a-corrupt-note-kept",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "return v && typeof v === 'object' && !Array.isArray(v) ? v : {};",
+    "new": "return v ?? {};",
+    "tests": ["test/scenes/aurum_cache_world.test.js"]
+  }
+]

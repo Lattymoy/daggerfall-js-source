@@ -17,6 +17,7 @@
 //     where it stands beside the town's pixel, and flagged `sea` in the claim. One tick vouches one dealing.
 // Online only: the world host builds none offline.
 // ═══════════════════════════════════════════════════════════════════
+import { regionClockOk } from './regionClockLaw.js'; // FOUNDATION F2: a region's number
 import { readWatchReceipt } from './watchReceipt.js';
 import { jittered } from './backoff.js'; // a failed claim's wait, jittered as every book's is
 import {
@@ -71,6 +72,8 @@ export function createTownEconBook({
   // ── the shares ──
   /** @type {Map<number, number>} */
   let shares = new Map();
+  /** FOUNDATION F2: each region's prosperity as last read (net/regionClockLaw.js). @type {Map<number, number>} */
+  let regions = new Map();
   let readAt = -Infinity,
     busy = false,
     stopped = false,
@@ -90,11 +93,18 @@ export function createTownEconBook({
               if (Array.isArray(t) && Number.isSafeInteger(t[0]) && Number.isFinite(t[1]) && t[1] > 0)
                 next.set(t[0] >>> 0, t[1]);
             shares = next;
+            /** @type {Map<number, number>} */
+            const byRegion = new Map();
+            for (const g of Array.isArray(r.data.regions) ? r.data.regions : [])
+              if (Array.isArray(g) && regionClockOk(g[0]) && Number.isSafeInteger(g[1]) && g[1] > 0)
+                byRegion.set(g[0], g[1]);
+            regions = byRegion;
             heard = true;
           } else if (TOWN_ECON_STOPS.includes(r?.error)) {
             stopped = true;
             heard = true;
             shares = new Map();
+            regions = new Map();
           }
         },
         () => {
@@ -260,6 +270,11 @@ export function createTownEconBook({
         if (due()) book.claim();
       }
       return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);
+    },
+    /** FOUNDATION F2: A REGION'S PROSPERITY as last read (0 for none) - read with the shares. @param {unknown} region */
+    regionalOf(region) {
+      refresh();
+      return regionClockOk(region) ? (regions.get(/** @type {number} */ (region)) ?? 0) : 0;
     },
     get stopped() {
       return stopped;

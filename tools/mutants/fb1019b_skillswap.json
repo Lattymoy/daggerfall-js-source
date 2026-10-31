@@ -52,7 +52,7 @@
   {
     "name": "SKILL-SWAP-start-sum-left",
     "file": "src/systems/skillSwap.js",
-    "old": "  entity.startingLevelUpSkillSum = (entity.startingLevelUpSkillSum ?? 0) + rise;\n  entity.currentLevelUpSkillSum = held + rise;",
+    "old": "  entity.startingLevelUpSkillSum = startAfterRise(entity, held, held + rise);\n  entity.currentLevelUpSkillSum = held + rise;",
     "new": "  entity.currentLevelUpSkillSum = held + rise;",
     "tests": [
       "test/systems/fb1019b_skillswap.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "SKILL-SWAP-current-sum-left",
     "file": "src/systems/skillSwap.js",
-    "old": "  entity.currentLevelUpSkillSum = held + rise;\n  return {",
-    "new": "  return {",
+    "old": "  entity.currentLevelUpSkillSum = held + rise;\n  const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group), other: groupWord(other) };",
+    "new": "  const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group), other: groupWord(other) };",
     "tests": [
       "test/systems/fb1019b_skillswap.test.js"
     ],

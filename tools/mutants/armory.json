@@ -178,8 +178,8 @@
   {
     "name": "ARMORY-the-kit-never-said-again",
     "file": "src/scenes/auraHost.js",
-    "old": " || (armoryHeard !== undefined && kit !== armoryHeard)) {",
-    "new": ") {",
+    "old": " || (armoryHeard !== undefined && kit !== armoryHeard) || (effectsHeard",
+    "new": " || (effectsHeard",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "ARMORY-the-arrival-in-english",
     "file": "src/ui/accountFlow.js",
-    "old": "        name: String(self.shopWaiting).startsWith('armory:')\n          ? armoryPieceName(String(self.shopWaiting).slice(7))\n          : (SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting),",
-    "new": "        name: SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (self.shopWaiting)] ?? self.shopWaiting,",
+    "old": "  if (kind === 'armory') return armoryPieceName(key);\n  if (kind === 'kill' || kind === 'portal' || kind === 'mount') return effectName(kind, key);",
+    "new": "  if (kind === 'kill' || kind === 'portal' || kind === 'mount') return effectName(kind, key);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "ARMORY-the-set-priced-as-the-singles",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('armory', 'eternalset', 2000, 256),",
-    "new": "  ware('armory', 'eternalset', 3000, 256),",
+    "old": "  ware('armory', 'eternalset', 2000, {",
+    "new": "  ware('armory', 'eternalset', 3000, {",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "ARMORY-the-set-holding-nothing",
     "file": "src/net/shopLaw.js",
-    "old": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) =>\n    kind === 'armory' ? armoryWarePieces(w.key) : [w.key],\n  );",
-    "new": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) => [w.key]);",
+    "old": "  ware('armory', 'eternalset', 2000, {\n    ...pre(256),\n    gives: armoryLinePieces(ARMORY_SETS.eternalset).map((p) => `armory:${p.key}`),\n  }),",
+    "new": "  ware('armory', 'eternalset', 2000, pre(256)),",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "ARMORY-a-single-sold-over-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "  return gives.length > 0 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
-    "new": "  return gives.length > 1 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
+    "old": "    for (const g of w?.gives ?? [])\n      if (!out.has(g) && !lost.has(g)) {\n        out.add(g);\n        stack.push(g);\n      }\n  }",
+    "new": "  }",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "ARMORY-four-singles-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "  return gives.length > 0 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
-    "new": "  return gives.length > 0 && gives.some((k) => shopKeysOf(bits, 'armory').includes(k));",
+    "old": "  if (!w || held.includes(w.id)) return 0;",
+    "new": "  if (!w || held.includes(w.id) || w.gives.some((g) => held.includes(g))) return 0;",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"

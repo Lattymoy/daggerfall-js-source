@@ -5,8 +5,8 @@
     "tests": [
       "test/ui/grim1_dress.test.js"
     ],
-    "old": "  if (h >= 38 && h <= 72) return hsla(5, 0.8, 0.29, a);",
-    "new": "  if (h >= 38 && h <= 72) return hsla(h, 0.8, 0.29, a);"
+    "old": "  if (h >= 38 && h <= 72) return hsla(5, 0.8, RED_L, a);",
+    "new": "  if (h >= 38 && h <= 72) return hsla(h, 0.8, RED_L, a);"
   },
   {
     "name": "GRIM1-ink-lightened",

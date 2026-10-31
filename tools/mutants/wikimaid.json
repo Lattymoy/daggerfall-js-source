@@ -215,7 +215,7 @@
   {
     "name": "WIKIMAID-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "  wikimaid: 'wikimaid',\n  nirnrootsage: 'nirnrootsage',",
+    "old": "  wikimaid: 'wikimaid',\n  nirnrootsage: 'nirnrootsage',\n  coldharbour: 'coldharbour',",
     "new": "  wikimaid: 'crystalfist',",
     "tests": [
       "test/net/wikimaid.test.js"
@@ -225,8 +225,8 @@
   {
     "name": "WIKIMAID-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "  wikimaid: 'lilacwarren',\n  nirnrootsage: 'sagesmoke',\n}); // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
-    "new": "}); // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
+    "old": "  wikimaid: 'lilacwarren',\n  nirnrootsage: 'sagesmoke',\n  coldharbour: 'vampirichaze',\n}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
+    "new": "}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

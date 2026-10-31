@@ -1,0 +1,450 @@
+[
+  {
+    "name": "AUDIT3-C1-the-focus-left-on-the-press-taken-away",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "if (d.act) { host.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); } else if (had) home()?.focus?.({ preventScroll: true });",
+    "new": "if (d.act) { host.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C2-the-next-arrow-disabled-again",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "s.next.setAttribute('aria-disabled', s.page >= s.tabList.length - 1 ? 'true' : 'false');",
+    "new": "s.next.disabled = s.page >= s.tabList.length - 1;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C2-the-prev-arrow-disabled-again",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "s.prev.setAttribute('aria-disabled', s.page <= 0 ? 'true' : 'false');",
+    "new": "s.prev.disabled = s.page <= 0;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C3-the-day-words-column-max-content",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": ".px-shopwin .sh-passday { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }",
+    "new": ".px-shopwin .sh-passday { display: grid; grid-template-columns: max-content minmax(90px, 1fr); align-items: center; gap: 4px 12px; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C4-roman-numerals-under-the-dress",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "passPanelNumeral(p, doc.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS)",
+    "new": "passPanelNumeral(p)",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C4-the-arabic-numeral-unread",
+    "file": "src/ui/passText.js",
+    "old": "(arabic ? String(p + 1) : ['I', 'II', 'III', 'IV', 'V', 'VI'][p] ?? String(p + 1))",
+    "new": "(['I', 'II', 'III', 'IV', 'V', 'VI'][p] ?? String(p + 1))",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C5-an-item-silent-before-the-season",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "reasonOf(st.state) || (shut ? W.locked() : '')",
+    "new": "(shut ? W.locked() : '')",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C5-the-unlock-silent-before-the-season",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "(st.state === 'short' ? W.short(st.need) : reasonOf(st.state))",
+    "new": "(st.state === 'short' ? W.short(st.need) : '')",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-a-painted-word-inked-by-its-hex-alone",
+    "file": "src/ui/grimoireDress.js",
+    "old": "String(s).replace(COLOUR_TOKEN, (h) => inkColour(h) ?? h)",
+    "new": "String(s).replace(/#[0-9a-f]{6}\\b/gi, (h) => inkColour(h) ?? h)",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-the-red-ink-at-29",
+    "file": "src/ui/grimoireDress.js",
+    "old": "const RED_L = 0.26;",
+    "new": "const RED_L = 0.29;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/grim1_dress.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-the-shop-panels-unwashed",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G}:not([data-grim-pages=\"scroll\"]) :is(${list(SHOP_PANELS)}) { background: linear-gradient(${SHOP_WASH}, ${SHOP_WASH}), ${SCROLL}; }",
+    "new": "",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-the-closed-tab-old-ink",
+    "file": "src/ui/grimoireDress.js",
+    "old": "color: #0c0602 !important; text-shadow: 0 1px 0 rgba(255,232,180,0.32) !important;",
+    "new": "color: #2a1a0a !important; text-shadow: 0 1px 0 rgba(255,232,180,0.32) !important;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-the-open-tab-the-pack-red",
+    "file": "src/ui/grimoireDress.js",
+    "old": "  color: ${INK_RED} !important; text-shadow: 0 1px 0 rgba(255,244,210,0.45) !important;",
+    "new": "  color: ${T.red} !important; text-shadow: 0 1px 0 rgba(255,244,210,0.45) !important;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C6-back-the-pack-red",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} [data-grim-cancel][data-grim-on=\"page\"] { color: ${INK_RED} !important;",
+    "new": "${G} [data-grim-cancel][data-grim-on=\"page\"] { color: ${T.red} !important;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C7-the-tab-count-dimmed",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; }   /* AUDIT-STOREFRONT III C7: dimmed, it read 3.9:1 on Stone */",
+    "new": ".px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; opacity: 0.75; }   /* AUDIT-STOREFRONT III C7: dimmed, it read 3.9:1 on Stone */",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C7-a-held-item-price-at-0.6",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": ".px-shopwin .sh-pitem-held .sh-price { font-size: 13px; opacity: 0.8; }",
+    "new": ".px-shopwin .sh-pitem-held .sh-price { font-size: 13px; opacity: 0.6; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C7-a-held-ware-price-at-0.6",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ".px-shopwin .sh-buyrow-held .sh-price { font-size: 15px; opacity: 0.8; }",
+    "new": ".px-shopwin .sh-buyrow-held .sh-price { font-size: 15px; opacity: 0.6; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C7-stone-gold-heads-unlit",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ":root[data-plus-theme=\"stone\"] .px-shopwin :is(.sh-ppanelnum, .sh-subhead) { color: #e8c98a; }   /* AUDIT-STOREFRONT III C7: #d8b56a read 4.3:1 */",
+    "new": "   /* AUDIT-STOREFRONT III C7: #d8b56a read 4.3:1 */",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C8-back-never-closing-a-folio",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const back = () => { if (!spread) return false; showCovers(spread.track); return true; };",
+    "new": "const back = () => false;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C8-the-window-back-unasked",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    back: () => passView?.back() ?? false, // AUDIT-STOREFRONT III C8: Escape asks this first - an open folio closes to its covers",
+    "new": "    back: () => false, // AUDIT-STOREFRONT III C8: Escape asks this first - an open folio closes to its covers",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C8-escape-shuts-the-shop-from-a-folio",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": ": shopOpen && shopView ? () => { if (!shopView.back()) closeShop(); }",
+    "new": ": shopOpen && shopView ? () => closeShop()",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C9-a-price-a-bare-number",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "return [seen, el('span', 'sh-sr', W.price(n))];",
+    "new": "return [seen];",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C9-a-wear-press-names-nothing",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      b.setAttribute('aria-label', wearLabel(w, st.worn)); // AUDIT-STOREFRONT III C9: which item it wears",
+    "new": "      // AUDIT-STOREFRONT III C9: which item it wears",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C9-a-daily-price-unsaid",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;\n    } else {",
+    "new": "    } else {",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C9-the-balance-unsaid",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "      if (balanceSay.textContent !== bs) balanceSay.textContent = bs;",
+    "new": "",
+    "tests": [
+      "test/ui/aurum_shop.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C10-the-window-line-says-it-too",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "    const line = passView?.says(fl) ? '' : fl?.error || fl?.note || ''; // AUDIT-STOREFRONT III C10/C11: said once, by the Folios",
+    "new": "    const line = fl?.error || fl?.note || ''; // AUDIT-STOREFRONT III C10/C11: said once, by the Folios",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C10-the-item-in-its-own-words",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "said = { id, error, text: accountRefusalText(error) };",
+    "new": "said = { id, error, text: accountRefusalText('server') };",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C10-busy-a-word-no-table-says",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (self.busy || self.stage !== 'in') return { ok: false, error: 'pass-busy' }; // AUDIT-STOREFRONT III C10: a word the refusals' table says",
+    "new": "    if (self.busy || self.stage !== 'in') return { ok: false, error: 'busy' }; // AUDIT-STOREFRONT III C10: a word the refusals' table says",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C11-the-answer-left-at-the-foot",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const noteText = says(fl) && !said ? heard?.note ?? '' : '';",
+    "new": "const noteText = '';",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C11-the-note-out-of-the-folio",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "box.append(top, nav, note, host);",
+    "new": "box.append(top, nav, host);",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C12-buy-again-while-it-goes",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "going ? words[2] : on ? words[1] : words[0]",
+    "new": "on ? words[1] : words[0]",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C12-a-daily-buy-again-while-it-goes",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "        going\n          ? t('shop.pass.buying', 'Buying...')\n          : on\n            ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n })\n            : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }),",
+    "new": "        on\n          ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n })\n          : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }),",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C13-the-spent-read-off-what-is-held",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "W.spent(card.spent?.[track] ?? passSpentOn(sid, track, bought))",
+    "new": "W.spent(passSpentOn(sid, track, bought))",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C13-the-card-drops-the-spent",
+    "file": "src/net/battlePassLaw.js",
+    "old": "spent: c.spent && typeof c.spent === 'object' ? { free: whole(c.spent.free, 1e9), premium: whole(c.spent.premium, 1e9) } : null,",
+    "new": "spent: null,",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/server/storefront_audit3_spent.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C13-the-service-says-no-spent",
+    "file": "server-account/src/battlePass.js",
+    "old": "dayMax: PASS_DAY_AURUM, spent,",
+    "new": "dayMax: PASS_DAY_AURUM,",
+    "tests": [
+      "test/server/storefront_audit3_spent.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C13-a-line-to-the-wrong-folio",
+    "file": "server-account/src/battlePass.js",
+    "old": "if (at) spent[/** @type {'free'|'premium'} */ (at.track)] += Math.max(0, -int(l.amount));",
+    "new": "if (at) spent.free += Math.max(0, -int(l.amount));",
+    "tests": [
+      "test/server/storefront_audit3_spent.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C13-another-season-counted",
+    "file": "server-account/src/battlePass.js",
+    "old": "AND kind = 'panel' AND ref LIKE ?2\").bind(player.id, `${season.id}:%`),",
+    "new": "AND kind = 'panel' AND ref LIKE ?2\").bind(player.id, '%'),",
+    "tests": [
+      "test/server/storefront_audit3_spent.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C14-the-pause-face-drawn-under-the-shop",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": ".px-home > .px-stage:has(~ .px-shopstage) { visibility: hidden; }   /* AUDIT-STOREFRONT III C14: the inert pause window under it, unseen */",
+    "new": "   /* AUDIT-STOREFRONT III C14: the inert pause window under it, unseen */",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C15-a-finger-press-under-44",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  .px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 44px; }",
+    "new": "  .px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 36px; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C15-the-dots-24",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  .px-shopwin .sh-cdot { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }",
+    "new": "  .px-shopwin .sh-cdot { width: 24px; height: 24px; min-width: 24px; min-height: 24px; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C15-a-numeral-tab-27-wide",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  .px-shopwin .sh-pagetab { min-width: 44px; justify-content: center; }\n  .px-shopwin .sh-terms { display: inline-flex; align-items: center; min-height: 44px; }",
+    "new": "  .px-shopwin .sh-terms { display: inline-flex; align-items: center; min-height: 44px; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C16-the-sections-wrapped",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  .px-shopwin .sh-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; flex-shrink: 0; }",
+    "new": "  .px-shopwin .sh-tabs { flex-wrap: wrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; flex-shrink: 0; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C16-the-page-tabs-wrapped",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": ".px-shopwin .sh-pagetabs { display: flex; flex: 1; justify-content: center; flex-wrap: nowrap;",
+    "new": ".px-shopwin .sh-pagetabs { display: flex; flex: 1; justify-content: center; flex-wrap: wrap;",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C16-a-name-broken-anywhere",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "overflow-wrap: break-word; hyphens: auto; }",
+    "new": "overflow-wrap: anywhere; }",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C16-no-numeral-for-a-narrow-tab",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "tb.append(el('span', 'sh-pagetabword', W.page(numeral(p))), num, lockNode(doc, 'sh-tablock')",
+    "new": "tb.append(el('span', 'sh-pagetabword', W.page(numeral(p))), lockNode(doc, 'sh-tablock')",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-C17-the-page-aurum-asked-first",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio() };\n    if (!passPanelOpen(sid, track, p, bought)) return { locked: true, words: W.pageLocked(panel.open - passSpentOn(sid, track, bought)) };",
+    "new": "    if (!passPanelOpen(sid, track, p, bought)) return { locked: true, words: W.pageLocked(panel.open - passSpentOn(sid, track, bought)) };\n    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio() };",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js",
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B3-the-folios-switch-unread",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "if (!flow.pass?.open || !flow.aurum?.open) return 'closed';",
+    "new": "if (!flow.pass || !flow.aurum?.open) return 'closed';",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B8-the-device-clock-always",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());",
+    "new": "export const shopNow = () => Date.now();",
+    "tests": [
+      "test/ui/storefront_audit3_window.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-B8-the-menu-passes-no-clock",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "wearer: shopBody, now: shopNow });",
+    "new": "wearer: shopBody });",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  }
+]

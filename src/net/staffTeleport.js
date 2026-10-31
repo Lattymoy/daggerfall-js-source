@@ -159,7 +159,7 @@ export function validStaffDestination(d) {
       !a ||
       !worldPixelOk(a.PitMapX) ||
       !worldPixelOk(a.PitMapY) ||
-      !integer(a.TemplateMapX, 999) ||
+      !integer(a.TemplateMapX, 999) || // BAY-OWN: a template is a Bay dungeon's pixel
       !integer(a.TemplateMapY, 499) ||
       !integer(a.TemplateRegionIndex, 61) ||
       !integer(a.TemplateLocationIndex, 65535) ||

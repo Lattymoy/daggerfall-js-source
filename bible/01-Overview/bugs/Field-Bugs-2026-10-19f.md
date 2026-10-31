@@ -62,9 +62,9 @@ FOUND, on the code. The account's count (`players.eg_keys`) is the balance. The 
 (`egClient.js:"    if (restackWeirKeys(entity.items, n)) saved();"`). That happens at sign-in and every
 `EG_KEYS_EVERY_MS`, ten minutes (`egClient.js:"      if (Date.now() - keysAt >= EG_KEYS_EVERY_MS) askKeys();"`), and
 on every preflight, open and claim answer. A pack that holds no face is given a fresh stack
-(`weirKey.js:"if (want > 0) items.push"`). But a face could leave the pack. The row was `bound` and not
+(`weirKey.js:"  if (want > 0) items.push(weirKeys(want));"`). But a face could leave the pack. The row was `bound` and not
 `packOnly`, and a bound piece goes to the player's wagon and storage
-(`itemBound.js:"export const BOUND_KEEPS"` - a home's chest, a ship's hold and a
+(`itemBound.js:"export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);"` - a home's chest, a ship's hold and a
 companion's pack are all the pack's `storage`). So a key stowed in the wagon disappeared from the pack. At the next ask
 the pack was given a new face, and every ten minutes that happened again. Driven on the real client (`createEgClient`,
 one key held): seven stows over seventy minutes left the wagon holding seven faces and the pack one. Emptied back, the
@@ -76,7 +76,7 @@ allowed to go.
 
 THE FIX - THE FACE IS THE PACK'S ALONE. The row is pack-only
 (`weirKeyRow.js:"packOnly: true, //"`), the Wallet's and the Card Binder's
-law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly"`). Every door that already reads it
+law (WALLET1, `06-Systems/Wallet.md`; `itemBound.js:"export const isPackOnly = "`). Every door that already reads it
 now keeps the face in the pack:
 - both skins' put to the wagon, to storage, to a container, to the ground and to a reward tray, and the enhanced pack's
   drag and its bulk Store, which refuse it with *Weir Key stays in your pack.*;
@@ -91,7 +91,7 @@ counters' Sell and the keyed shelf, the realm market (`marketLaw.js` `boundRecor
 melt and the junk sweep. The rest never take one: the repairer takes a damaged piece and nothing wears a key; the court
 takes stolen pieces; letters carry words alone; an heirloom is a worn weapon or armour. Several lists hold faces from
 before the fix: the wagon, a storage piece, a chest, a ship's hold, a companion's pack, a room's own things, or a body
-the find threw one on (`egFind.js:"if (Array.isArray(entity?.items))"`) that the player never took up. Such
+the find threw one on (`egFind.js:"  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);"`) that the player never took up. Such
 a save loads with every face out of the pack folded away
 (`save.js:"const strayKeys = foldStrayWeirKeys("`). The fold runs beside the load's item repairs, over every list the
 save holds but the pack (the one walk, `savedItemLists`) and over each scene's `decorOwn` (one item a piece, no list).
@@ -278,7 +278,7 @@ THE ZONE'S WORDS A LEAF OF THEIR OWN (found at the integration). The fix first h
 `WILD_NEVER_GROUPS` there - pulling the drop law's whole graph, the item law among it (which installs itself on the
 wire's door, `loot.js setItemLaw`), into every client graph that stands a revenant: SIGIL1's, CURSE-SYNC's and SET4's
 wire pins went red on their hand-built pieces. The three words need no graph: `wild/wildLeaf.js` holds them with no
-imports (`wildLeaf.js:"export const WILD_NEVER_GROUPS"`),
+imports (`wildLeaf.js:"export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));"`),
 `wildDropLaw.js` re-exports them for its readers and the account service, and the two modules read the leaf. Two of
 this list's records follow their lines to the leaf (52 dead, 1 equivalent as recorded, with STEED-KEPT's).
 
@@ -463,24 +463,24 @@ A Disintegrate deals its target the health it has left
 (`effects.js:"if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }"`), so the cast
 claimed 1e9 - and every wire refuses that: the gate's `hit`, `ahit`, `xhit` and the Abyss's at GATE_DMG_WIRE_MAX
 (`wire.js:"if (!finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX) return null;"`, 100,000), an Elite Breach's at 1e6
-(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000)"`). The relay dropped the
+(`validEgIn`), a bout's at 10,000 (`arenaLaw.js:"const d = num(m.d, 10000),"`). The relay dropped the
 whole cast while the spell door popped `Math.round(dealt)`: a nine-digit number, a bar that never moved. The relay caps
-a blow anyway (`gateBrain.js:"HIT_CAP_X * ref, p.bucket, f.hp"`, spendPurse
+a blow anyway (`gateBrain.js:"const got = Math.max(0, Math.min(want, HIT_CAP_X * ref, p.bucket, f.hp, H ? H.h * f.max : Infinity));"`, spendPurse
 the same, an Elite Breach's bucket grown by the Vestiges' declared factor up to 1.25) - so the number was never what a
 whole blow can land, at most ~300 at level 20 and 780 at 60. Duels had met the same and solved it at the stand-in
 (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling). Mehrunes' Razor, the other whole-body producer,
 had been patched at its own producer (AUDIT WBX F1).
 
 THE FIX - ONE WHOLE, ONE DOOR.
-- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE"`, 975), at the
-  stand-in (`gateBoss.js:"e.maxHealth = e.health"`): the most one blow lands at any relay - the gate's cap
+- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975), at the
+  stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`): the most one blow lands at any relay - the gate's cap
   at LV_MAX (780) grown by the most a breach's bucket grows - over the serpent's (182) and a bout's (122), under the least
   ceiling nobody clamps (the bout's 10,000) with the rest of a spell's room beside it. A Disintegrate counts it whole, every
   wire carries it, and the relay weighs and clips it by its own law (a stun heavier; an Unyielding ward 15% lighter, 975 of
   it still past the cap at the level cap; the bucket). Pinned against the real constants and every validator.
-- **The number** says what can land (`standInSpell.js:"const shown = standInShown"`):
+- **The number** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
   min(the claim, my one-blow cap at my level) - an Elite Breach's grown by my Vestiges' declared factor, which egFight hands its
-  stand-ins (`egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
+  stand-ins (`egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
   (ARENA_SPELL_MAX, 60). The paths' riders are told the same (`took` - what the foe could lose, AUDIT SCHOOLS L1 M6). The claim
   still goes out whole: clipped here, it would lose what the relay weighs before its cap.
 - **The door is one** (HOST-SPLIT): `spellOnBoss`, `spellOnCrystal`, `spellOnHost` and `spellOnRival` were four copies in
@@ -492,9 +492,9 @@ THE FIX - ONE WHOLE, ONE DOOR.
   on every factory (two Disintegrates and a swing, the whole untouched). `healthShare` and the masteries read the relay's
   word (`relayHealth`, RELAY-SHARE). The blood ladder read the placeholder and bled the bottom rung every blow; at 975 it
   would bleed a body of 975's rungs, so it measures no whole on a stand-in
-  (`bloodDecals.js:"maxHealth: Number.isFinite"`) - the same
+  (`bloodDecals.js:"maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,"`) - the same
   rung, by law. Berserker's leech reads `min(damage, target.health)`: unchanged under 975.
-- **Mehrunes' Razor stays passed by** (`artifactEffects.js:"if (!target || !item || target.spareGear)"`). Its two
+- **Mehrunes' Razor stays passed by** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`). Its two
   reasons were the 1e9 billed to its condition and a blow the wire refused. The wire carries the whole now and no Strikes
   payload bills wear on a stand-in (AUDIT WBX F2) - and that is why it must stay: the Razor's kill is paid in its own condition,
   the health it removes (DFU `MehrunesRazorEffect`), and on a body the relay runs nothing would pay it - a free whole blow every
@@ -539,11 +539,11 @@ said "continuous families are not his to carry", and WBX7 ("his stand-in forgets
 Trap alone. THE DECISION (the owner, 2026-10-19): "Carry DoTs".
 
 THE FIX - CARRIED, AS THE TRAP IS.
-- **What is carried** (`standInSpell.js:"export const carriedOnStandIn"`): Continuous Damage on health (1,0, DFU's
+- **What is carried** (`standInSpell.js:"export const carriedOnStandIn = (a) =>"`): Continuous Damage on health (1,0, DFU's
   ContinuousDamageHealth) with a round to run. Its fatigue and magicka siblings (1,1 and 1,2) have nothing to fall on - a
   relay body is health alone - and the duel's other lasting families (Paralyze, Silence, Drain) are the relay brain's to
   know, never a claim: not carried.
-- **Kept a body** (`standInSpell.js:"export function createStandInRounds"`):
+- **Kept a body** (`standInSpell.js:"export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}) {"`):
   him `b`, one of his host `h<i>`, a crystal `c<n>` (the Hour's Remnant, Echoes and Hearts and an Elite Breach's bodies
   through the same seams). A cast lays the body's running rounds on its stand-in first, as copies - the incumbent a recast
   RENEWS (`renewRounds`, STACK-CAP; a renewal fires no first round, as DFU's AddState) - and keeps what the cast leaves only
@@ -633,7 +633,7 @@ times, and the door opened. So the law held, and everything that tells it pointe
 - The words: the objective was `gauntlet: 'Silence the casters.'` (`EG_OBJECTIVES`) and the line
   `` `Casters left: ${pg.left ?? 0}` `` (`egProgressText`). Neither named a plate, and "left" read as a body count.
 - The screen: nothing on the client read `spots.pillar[].plate`. WINCH-PLATES (2026-10-18d) marked the Winch's plates
-  (`egFight.js:"function winchPlates"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
+  (`egFight.js:"  function winchPlates(F, t) {"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
   would cut the slope". That was law 9's lay. From spec law 10 (THE BROKEN WAY) each plate stands on its pillar's flat top,
   beside its stair's head.
 
@@ -643,17 +643,17 @@ THE FIX.
   (`egBrain.js:"P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);"`) and at
   every beat (`egBrain.js:"      F.pg.silenced = F.gauntlet.map((g) => g.done);"`). The wire's `egProgress` already
   passes a short list of numbers (DUEL-RING's `ring` rides the same way), and `left` is unchanged.
-- THE SCREEN MARKS THEM. `egFight.js:"function gauntletPlates"`, beside `winchPlates`, draws each plate in play
+- THE SCREEN MARKS THEM. `egFight.js:"  function gauntletPlates(F, t) {"`, beside `winchPlates`, draws each plate in play
   as the Winch's are drawn through the trial: gold, `EG_TOUCH_M` about, on its own surface. Its height is its ground's,
-  `egFight.js:"export function egPlateY"`: the pillar's top (2 m) from law 10, the stair's height under it at
+  `egFight.js:"export function egPlateY(spec, q) {"`: the pillar's top (2 m) from law 10, the stair's height under it at
   laws 8 and 9, and the walkway's floor before them. A plate whose word says silenced dims to the unlit rune's 0.35
-  (`egFight.js:"sh.alpha = said?.[j]"`), so a company sees which plates are still to hold. A pillar the
+  (`egFight.js:"sh.alpha = said?.[j] ? 0.35 : 0.85;"`), so a company sees which plates are still to hold. A pillar the
   company was not given is not marked (the hall lays six, and a company of n is given `2 + ceil(n/2)`). A screen facing a
   relay before world232 gets no `silenced`, so it draws every plate the hall lays while `left` is above nought
-  (`egFight.js:"if (!said && !(F.pg.left > 0))"`).
+  (`egFight.js:"    if (!said && !(F.pg.left > 0)) return;"`).
 - THE WORDS NAME BOTH WAYS. The objective is *Silence each caster: stand on its plate, or slay it.* and the line is
   *Casters left: 3. Hold a plate 3 s or slay its caster*, its seconds `EG_SILENCE_MS`'s. Both are said in the player's language through the catalog
-  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText"`,
+  (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText = (spec) =>"`,
   which the tracker's line, the Spire HUD's chip and the arrival card all read. It is the first objective said in the
   player's language; the rest stay the law's English. The English catalog was regenerated (`tools/l10nExtract.mjs`), the
   thirteen finished languages were drafted in-session (`tools/l10nInSession.mjs`, recorded as the machine's), and the
@@ -699,7 +699,7 @@ points at it).
 
 FOUND, on the code. FINDME built Find me for the bay: glide to the player's world pixel at FOCUS_SCALE and blink a red
 cross over it for three seconds, the cross painted by the world sheet's own overlay. FINDME-SHEET (`10-UI/Overhauls.md`)
-kept the button on the town's sheet. But the town map opens through `townMapDoor.js:"...(deps.travel ?? {})"`, and
+kept the button on the town's sheet. But the town map opens through `townMapDoor.js:"...(deps.travel ?? {}),"`, and
 neither host passes a `travel` bag: world.js and exterior.js deliberately hand the town window no bay (EM4's decision,
 DFU's open-time travel guards). So the window had no `getPlayerPixel`, and its constructor stood the bay's middle in for
 it (`const p = deps.getPlayerPixel?.() ?? { x: this._size.width >> 1, y: this._size.height >> 1 };`, main `9e00d52e9`).
@@ -952,7 +952,7 @@ they had just replaced (unseen in an interior's one slot, but the same null the 
 been fixed for).
 
 THE FIX. The popups' doors close saying why and naming the quest still open:
-`offerFlow.js:"export function questorBusy"` - `{ kind: 'close', reason: 'activeQuestor', quest }`, the quest
+`offerFlow.js:"export function questorBusy(machine) {"` - `{ kind: 'close', reason: 'activeQuestor', quest }`, the quest
 off the very scan `IsLastNPCClickedAnActiveQuestor` makes (`machine.js:"lastNPCClickedQuestorOf() {"`; the DFU member
 answers from it, its mcp stamp, log line and QUEST-SHELF's set-aside skip unchanged). The bridge boxes it
 (`questBridge.js:"case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];"`):
@@ -1166,7 +1166,7 @@ piece and stays off the list as before (a judgment within the decision: the repo
 listing every stew as "under one Essence" would bury it). HOST-SPLIT: the list is made by the page's own module,
 `disenchantableOf(items, { kept, book })` - the pack's crafted pieces (a provenance and a recipe) that may leave the pack
 (`tradeRefusal`, `isLocked`) and carry no market act (`kept`, the host's `pieceKept`), each its points, its Essence (a
-Disenchanter's twice, read off `book`'s Enchanting) and its recipe (AUDIT PROF12 E2). `world.js` keeps one line,
+Disenchanter's twice, read off `book`'s Enchanting) and its recipe (AUDIT PROF12 E2). `world.js` kept one line (since moved with the professions, HOST-SPLIT PROFESSIONS),
 `professionsHost.js:"disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),"`, and its
 alchemyLaw import went with the list: bootWorld 36,190 -> 36,182 logical lines, its ceiling 36,233 -> 36,225
 (`test/scenes/hostceiling.test.js`). The four hosts: the station's hooks are bootWorld's alone (worldModes' `enchantHere`
@@ -1197,7 +1197,7 @@ having it in the pack (DFU's `Items.Contains(Transportation, Horse)`; the stable
 `merchantYards.js yardStock`), and a stable's horse is worth more than most of a pack. Reproduced on the real module
 (`pickTaken`, 1,000 ids): a stable-minted horse beside a worn steel longsword and four spare weapons was drawn 165
 times - "X took your Horse." - while the open zone's own law already calls a vehicle and a deed pieces that never
-change hands (`wildLeaf.js:"export const WILD_NEVER_GROUPS"`).
+change hands (`wildLeaf.js:"export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));"`).
 The same law let it take a ship's deed or her packed parts (Come Sail Away's own two, filed under UselessItems2, which
 the trade never hands on - a deed handed on is a second boat), a deed as Daggerfall files one (House_Deed, Ship_Deed -
 MiscItems, not the Deeds group), and the spellbook (KEEP-SPELLBOOK: "Your spellbook never leaves you").
@@ -1256,31 +1256,31 @@ too (a 25-million lot at a quality-10 counter, Mercantile and Personality 40, pa
 `inventory.js:"export const GOLD_PIECE_WEIGHT_KG = 0.0025;"` times -8,000,000 is -20,000 kg, beside about 5 kg of
 pieces, and the purse's write is unclamped, as DFU's setter is (`inventory.js:"entity.goldPieces = goldPiecesOf(entity) + amount;"`).
 A purse already below nothing stays there. Every price is more than it, so every payment spends the letters first
-(`court.js:"const loc = items.find"`), and the judge finds it
+(`court.js:"const loc = items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);"`), and the judge finds it
 at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
-made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag))"`)
+made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag)) return null;"`)
 and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js`'s `law_excused = law_sig` at d5a4c9c6a), so
 a later purse below nothing would hold nothing (RPT1026-LEDGERLAW, 2026-10-26, since: the excuse is of the purse staff
 read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since the clean checkpoint. And staff
 could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
-(`review.js:"async function mendAct"`; its law
-`repairLaw.js:"export function applyPurseMend"`, the service's and the tool's). The record's
+(`review.js:"async function mendAct(ctx, row, by, note, body) {"`; its law
+`repairLaw.js:"export function applyPurseMend(save, { was, gold }) {"`, the service's and the tool's). The record's
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays
-for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds"`, DaggerfallTradeWindow's
+for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds(tradePrice,"`, DaggerfallTradeWindow's
 sell arm), so it is how an honest sale of a lot that big pays; a purse of coin would weigh tonnes. The act shares the
-repair's machinery, which both run now (`review.js:"async function staffMend"`):
+repair's machinery, which both run now (`review.js:"async function staffMend(ctx, row, kind, ticket, change, steps, answer) {"`):
 a developer's alone, the dead never, once a ticket in `realm_repairs` (a mend's row names no faction and no bit, 0 and 0,
 `was` the purse it found and `gold` the letter - so no migration; a ticket names one act, and the other kind's is
 `repair-ticket`), the record seized one sequence on with its seat taken from any tab, the gold witnessed and counted as
 the `repair` faucet, the act written among the findings. AND THE HOLD THE PURSE MADE GOES WITH IT. When the hold is the
 law's, the finding it stands on is the purse's alone (`PURSE_SIG`, `lawSigOf` of the judge's `gold`) and no timed hold
 stands, the mend lifts it as the next clean checkpoint would
-(`review.js:"const lift = row.held"`): the hold
+(`review.js:"const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);"`): the hold
 and its signature go, `judge_rev` moves one on, guarded on the judgement the act read. The strike stands and fades as
 every strike does - which strike the purse struck, the row does not say. Any other hold stands: the law's beside another
 finding and a timed one are the next checkpoint's, and staff's own is staff's. `realm-findings` says the purse
@@ -1291,17 +1291,17 @@ THE LEFTOVERS, both what they seemed. The haggle message reads its band off `cos
 (`guildServiceActions.js cureOfferMessageOffset`, the temple's and the trade window's one home). Past 2^31 the shift
 wrapped int32 to a negative half, so a lot that big never got the cheerful line and a bought one could get the wrong
 grudging one: 25,000 Daedric claymores at a quality-10 counter named the wrong band in three of four modes and skills.
-Halved and quartered by division now (`guildServiceActions.js:"if (Math.floor(costBeforeBargaining / 2) <= cost)"`),
+Halved and quartered by division now (`guildServiceActions.js:"if (Math.floor(costBeforeBargaining / 2) <= cost) {"`),
 the shifts' band for every cost an int holds. DFU's `cost` is C#'s int (DaggerfallTradeWindow.ShowTradePopup), which a
 lot that big had wrapped already - TRADE-WRAP's departure at one more site. The Reforge said its purse as
 `Math.max(0, gold | 0)` of the coins and the letters together (`court.js totalGoldAmount`), so two letters of one int's
 worth each read "0 gold". It says the gold whole now
-(`reforgeWindow.js:"const goldSaid ="`), the guild's pages and the
+(`reforgeWindow.js:"const goldSaid = (gold) => Math.max(0, Math.trunc(gold) || 0);"`), the guild's pages and the
 temple's alike.
 
 What PURSE-MEND does not reach. A purse a payment has since set to nothing is no longer below nothing. The service's
 payFromSave counts a purse below nothing as none, and where the letters fall short it pays the rest from the bank and
-writes the purse 0 (`realmGoldLaw.js:"} else {"`). The sale's loss then stands with
+writes the purse 0 (`realmGoldLaw.js:"owed -= purse;"`). The sale's loss then stands with
 nothing in the record to show it, the mend refuses it (`mend-not-negative`), and no act gives gold alone: the repair's
 needs a faction's flag. An offline character's purse is its own device's save, which no judge reads and no staff act
 reaches. And an online lot the old arithmetic overpaid left a purse above nothing, with no finding; the budget's measure
@@ -1334,7 +1334,7 @@ instance door, the build an entry makes off worldModes.js's own text, the world 
 a death records the size its dungeon was BUILT at (`world.js:"dungeon: dl ? { regionIndex: dl.regionIndex,"`'s
 `builtDungeonSize`, AUDIT FB1013d B1), and the remains stand and open only in a build of that size
 (`world.js:"const legacyInDungeonOf = (h, place) =>"` - another size is another layout). An instance is always the dungeon
-whole (`smallerDungeons.js:"if (online) return whole"`), and the online world
+whole (`smallerDungeons.js:"if (online) return whole ? 'full' : onlineDungeonSize(dfLocation);"`), and the online world
 draws three dungeons in four small or medium in public (SD-ONLINE), and builds 2,005 of the 4,232 smaller. The fallen died in another player's instance, so the
 row said `size: 'full'`; the heir's door offered an instance only where a quest of theirs named the place
 (`instanceOffer`'s `questHere`), and none did, so every visit was the public room - for a ruin laid medium, the door
@@ -1372,7 +1372,7 @@ dungeon at or under its size's threshold is never laid anew, so its public room 
 'full'`, the door offered the heir a private instance under "The shared dungeon is smaller and has none of it", and
 `entryFor` took them into it, while the public room stood the remains; QUEST-ELSEWHERE's line was false there too (the
 mount stood the quest's things). `relaid` is now the size built
-(`smallerDungeons.js:"export function builtSizeFor"`: no build and no DFRandom draw, off the
+(`smallerDungeons.js:"export function builtSizeFor(dfLocation, deps = {}) {"`: no build and no DFRandom draw, off the
 build's own `laidAnew` test), so every one of the 4,232 sites agrees with its build.
 
 - **Pinned**: `test/systems/legacy/fb1019f_heirwhole.test.js` (7: the report - the death in another player's instance of

@@ -61,12 +61,14 @@ export const NORMAL_POWER_CONCEALMENTS = Object.freeze(['chameleonNormal', 'invi
 export function breakNormalPowerConcealment(entity) {
   const list = entity?.activeEffects;
   if (!list || !list.length) return false;
+  for (const a of list) if (a.heldItem && a.ended && NORMAL_POWER_CONCEALMENTS.includes(a.kind)) a.endedRounds = 0; // AUDIT WORN-CONCEAL C2: each blow keeps a worn one down
   const broken = list.filter((a) => NORMAL_POWER_CONCEALMENTS.includes(a.kind) && !a.ended);
   if (!broken.length) return false;
   for (const a of broken) {
     if (a.heldItem) {
       a.roundsRemaining = 0;
       a.ended = true;
+      a.endedRounds = 0;
     }
   }
   entity.activeEffects = list.filter((a) => a.heldItem || !broken.includes(a));

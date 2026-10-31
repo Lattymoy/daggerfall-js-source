@@ -43,7 +43,7 @@ test('SEASON1 THE HALL OF RECORDS\' LAW: a row\'s week in its Season\'s words - 
   assert.deepEqual(hallOfRecordsChapters(rows, ANTICLERE, null).map((c) => [c.heading, c.lines.length]), [[null, 5]], 'none counted: one chapter, unheaded');
   assert.deepEqual([hallOfRecordsChapters([], ANTICLERE), hallOfRecordsChapters(null, ANTICLERE)], [[], []]);
   assert.equal(hallOfRecordsTitle(ANTICLERE), 'The Hall of Records of Anticlere');
-  assert.equal(HALL_OF_RECORDS_EMPTY, 'Nothing is written here yet.');
+  assert.equal(HALL_OF_RECORDS_EMPTY, 'No guild has held this seat yet. Its claims, sieges and holders are written here.');   // PIN MOVED (RECORDS-SAID, FIELD BUGS 2026-10-30b): what the book is for
   assert.equal(HALL_OF_RECORDS_ROWS, 400);
 });
 

@@ -36,6 +36,8 @@ import { WATCH_TICK_MS } from '../../src/net/watchReceipt.js';
 import { TIDE_EFFECTS } from '../../src/net/tideLaw.js';
 import { MARKS_FAUCETS } from '../../src/net/marksLaw.js';
 import { writXp } from '../../src/net/professionLaw.js';
+import { PASS_DAY_ASKS } from '../../src/net/battlePassLaw.js';
+import { FIND_ASKS_PER_DAY } from '../../src/net/festivalLaw.js';
 
 /** A raid's game day is two real hours (systems/raidingParties.js GAME_DAY_REAL_HOURS - the test holds the two equal). */
 const RAID_GAME_DAY_HOURS = 2;
@@ -55,6 +57,8 @@ export const PROGRESS_LINE = Object.freeze({
     find: Object.freeze({ rate: MARKS_FAUCETS.find.perDay, cap: MARKS_FAUCETS.find.perDay }), // silver finds
     gather: Object.freeze({ rate: MARKS_FAUCETS.gather.perDay, cap: MARKS_FAUCETS.gather.perDay }), // a harvest's silver
     prof: Object.freeze({ rate: 10_000, cap: 20_000 }), // profession XP - no route bounded it by the hour; a guess
+    pass: Object.freeze({ rate: PASS_DAY_ASKS, cap: PASS_DAY_ASKS }), // AUDIT PASS 3: the Battle Pass's finds - the day's asks
+    festival: Object.freeze({ rate: FIND_ASKS_PER_DAY, cap: FIND_ASKS_PER_DAY }), // and the Witches' Festival's, the same way
   }),
 });
 /** The streams, in the line's order. */
@@ -76,6 +80,15 @@ export const PROGRESS_ROUTES = Object.freeze({
   // whose Watch bucket is empty refuses it as it refuses the seats'
   '/v1/towns/watch': Object.freeze(['watch', false]),
   '/v1/marks/find': Object.freeze(['find', false]),
+  // AUDIT PASS 3: a Battle Pass find (battlePass.js) and a Soul Cake's (festival.js) - a session's secret alone farmed
+  // them with no game running. Each its own stream: an honest page asks both for one kill, and the silver finds' twenty
+  // a day would refuse it
+  '/v1/pass/find': Object.freeze(['pass', false]),
+  '/v1/festival/find': Object.freeze(['festival', false]),
+  // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the
+  // season's finds are, on their stream; the UTC day bounds it, and its answer (no `xp`) spends nothing
+  '/v1/season/maul': Object.freeze(['pass', false]),
+  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)
   '/v1/prof/harvest': Object.freeze(['prof', true]),
   '/v1/prof/smelt': Object.freeze(['prof', true]),
   '/v1/prof/craft': Object.freeze(['prof', true]),
@@ -108,6 +121,12 @@ export function progressConfigOf(/** @type {unknown} */ v) {
     streams: Object.fromEntries(PROGRESS_STREAMS.map((k) => [k, { rate: c.streams[k].rate, cap: c.streams[k].cap }])),
   };
 }
+/** AUDIT PASS 3: a line staff wrote before a stream was added reads that stream's first line - the whole line was refused
+ *  for the stream it lacked, and an enforced line stood measuring again unsaid. A write still names every stream. */
+const withStreamsAdded = (/** @type {any} */ v) =>
+  v && typeof v === 'object' && v.streams && typeof v.streams === 'object' && !Array.isArray(v.streams)
+    ? { ...v, streams: { ...PROGRESS_LINE.streams, ...v.streams } }
+    : v;
 /** How long an isolate keeps the config it read - a change staff make is read at once where they made it, within a minute everywhere. */
 export const PROGRESS_CONFIG_KEEP_MS = 60_000;
 /** @type {WeakMap<object, { at: number, config: any }>} */
@@ -121,7 +140,7 @@ export async function progressConfig(/** @type {any} */ db) {
   const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'progress'").first();
   let c = null;
   try {
-    c = progressConfigOf(JSON.parse(row?.value ?? 'null'));
+    c = progressConfigOf(withStreamsAdded(JSON.parse(row?.value ?? 'null')));
   } catch {
     c = null;
   }
@@ -296,6 +315,10 @@ export function progressSpentOf(path, a) {
     case '/v1/marks/find':
       if (n(a.struck)) add('find', 1);
       break;
+    case '/v1/pass/find':
+    case '/v1/festival/find':
+      add(PROGRESS_ROUTES[path][0], 1);
+      break; // AUDIT PASS 3: an ask answered (PASS-PANELS: a pass's Aurum is the account's, never a profession's)
     case '/v1/writs/deliver':
       if (a.ok) {
         add('prof', writXp(n(a.pay)));

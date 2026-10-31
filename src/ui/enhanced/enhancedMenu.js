@@ -254,7 +254,7 @@ import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
 import { postMark, postWindow, watchPostMark, anchorPost } from './enhancedPost.js';   // SERVER-POST: the mailbox beside the hourglass, and its window
 import { seasonMark, seasonWindow, seasonSource, anchorSeason } from './enhancedSeason.js';   // SEASON-BOOK: the laurel beside the envelope, and its window
-import { shopMark, shopWindow } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window
+import { shopMark, shopWindow, shopNow, shopReread } from './enhancedShop.js';   // SHOP: the gem at the end of the row of marks, and its window - AUDIT-STOREFRONT III B8: its clock the shared one
 import { profileBadge, portraitSave, liveCharacter, characterLine } from '../profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { profileIconNode } from '../profileIcons.js';   // WITCH1: a profile icon worn, in the mark's portrait
 import { ownIcon } from '../../systems/ownGlyphs.js';   // WITCH1: the icon the stored session says this device's player wears
@@ -471,7 +471,8 @@ const shopFlowOf = () => {
 /** SHOP (the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"): THE
  *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
 function shopGem(home, chain) {
-  const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; render(); } });
+  if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop
+  const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); } });   // SHOP-REREAD: this visit's read again
   home.append(gem);
   shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
   if (shopFocusBack && !shopOpen) { shopFocusBack = false; globalThis.requestAnimationFrame?.(() => gem.focus?.()); }
@@ -1234,6 +1235,15 @@ function bodyWho(save) {
     return { gender: playerEntity.gender, outfit: outfitOfSlots(slots) };
   }
   return save ? { gender: save.gender, outfit: save.outfit ?? null } : null;
+}
+/** AUDIT-STOREFRONT: the body the shop's stages wear - the profile's (its Morrowind body where one stands, else its sprite),
+ *  none with no character, so the stand-in stays. */
+function shopBody() {
+  const save = profileCharacter(), who = bodyWho(save);
+  if (!who) return null;
+  const bodies = profileBodies({ arm: mode === 'pause' ? fpArm : null, who: () => who });
+  const kind = bodies.kinds()[0];
+  return kind ? bodies.of(kind) : null;
 }
 
 /** Is there a session on this device? A storage read, no network - so
@@ -3143,6 +3153,8 @@ function portRowsInterface({ pause = false } = {}) {
   if (!pause) { const packRow = translationPackRow(); if (packRow) out.push(packRow); }   // L10N3b: and its translation pack
   out.push(hudScaleRow());
   out.push(mapScaleRow());   // MAP-SCALE
+  out.push(prefRow('shopHidden', t('menu.shop.hide', 'Hide the shop'),
+    t('menu.shop.hideNote', 'Take the shop off the pause screen. Your Aurum and your items stay on your account.')));   // SHOP-HIDE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
     'Show your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page, including ones you don\'t belong to.'));   // EVERY-STANDING
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it
@@ -4656,7 +4668,7 @@ function renderHome() {
     else if (shopOpen) {
       // SHOP: the shop's window, on the hourglass's own stage; its flow is the visit's, read on its first open
       const shstage = el('div', 'px-stage px-timersstage px-shopstage');
-      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn });
+      shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody, now: shopNow });
       shopFocusIn = false;
       shstage.append(shopView.root);
       home.append(shstage);
@@ -6400,7 +6412,7 @@ function onKey(e) {
     : timersOpen && timersView ? () => { timersOpen = false; timersFocusBack = true; render(); }   // TIMERS1: the window first, ahead of the pause face's resume (AUDIT UI-11: a window that is drawn)
     : postOpen && postView ? () => { postOpen = false; postKeep = {}; postFocusBack = true; render(); }   // SERVER-POST: the mailbox's window, as the timers'
     : seasonOpen && seasonView ? () => closeSeason()   // SEASON-BOOK: the season window, as the timers'
-    : shopOpen && shopView ? () => closeShop()   // SHOP: the shop's window, as the timers'
+    : shopOpen && shopView ? () => { if (!shopView.back()) closeShop(); }   // SHOP: the shop's window, as the timers' - AUDIT-STOREFRONT III C8: an open folio first
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
     : confirming ? () => { answered(); render(); }   // RPT1026-MISC CONFIRM-SHEET: and the sheet the ask raised

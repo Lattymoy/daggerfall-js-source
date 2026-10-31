@@ -152,7 +152,7 @@
   {
     "name": "NIRNROOT-SAGE-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "  nirnrootsage: 'nirnrootsage',",
+    "old": "  nirnrootsage: 'nirnrootsage',\n  coldharbour: 'coldharbour',",
     "new": "  nirnrootsage: 'wikimaid',",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -162,7 +162,7 @@
   {
     "name": "NIRNROOT-SAGE-aura-grant",
     "file": "server-account/src/titles.js",
-    "old": "  nirnrootsage: 'sagesmoke',",
+    "old": "  nirnrootsage: 'sagesmoke',\n  coldharbour: 'vampirichaze',",
     "new": "  nirnrootsage: 'lilacwarren',",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -212,7 +212,7 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world295';",
+    "old": "export const RELAY_VERSION = 'world298';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"

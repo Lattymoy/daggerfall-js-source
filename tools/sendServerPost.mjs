@@ -12,7 +12,7 @@
 //   node tools/sendServerPost.mjs --look <handles> <batch>                                 the dry run's statement
 //   node tools/sendServerPost.mjs --words <subject> <message>                              the words as they will be sent
 //   node tools/sendServerPost.mjs --sql <handles> <batch> <item> <subject> <message>       the send's statement
-//   node tools/sendServerPost.mjs --migration hours-first|tamriel                          a frozen send's migration
+//   node tools/sendServerPost.mjs --migration hours-first|tamriel|thanks                   a frozen send's migration
 //
 // `handles` is comma-separated, as the config's lists are; `item` is one of POST_ITEMS - an item is MINTED here by the
 // game's own code (the Hourlock as its drop mints it, src/systems/gilded.js), never typed into a workflow; `message`
@@ -30,6 +30,7 @@ import { isMain } from './lib/isMain.mjs';
 import { HANDLE_RE } from '../src/net/handleShape.js';
 import { POST_BATCH_RE, POST_SENDER, POST_SUBJECT_MAX, POST_BODY_MAX } from '../src/net/postLaw.js';
 import { mintHourlock } from '../src/systems/gilded.js';
+import { GIFTS } from '../src/net/giftLaw.js'; // THANKS-POST: what the update's gift gives
 
 /** THE ITEMS A PIECE MAY HOLD, by name - each minted by the game's own code. `none` a message alone. */
 export const POST_ITEMS = Object.freeze({
@@ -86,6 +87,27 @@ export const TAMRIEL_POST = Object.freeze({
 /** TAMRIEL-POST: the stones' record as 0188 sends it - `portalStones(10)` that day (systems/gate/gateSpoils.js), frozen. */
 export const TAMRIEL_POST_RECORD =
   '{"group":"UselessItems2","templateIndex":572,"name":"Portal Stone","value":1250,"maxCondition":1000,"currentCondition":1000,"stackCount":10}';
+
+/** THANKS-POST (2026-10-30, the owner: "every current player should be grant 500 free aurem on the update to their inbox
+ *  and a free arm armoury aura", with the letter's words to clean up): the Storefront update's letter, to every registered
+ *  account, naming its gift - 500 Aurum and the Crystal Spurs, on the account already (net/giftLaw.js). Migration 0202
+ *  (`--migration thanks`) sends it; its words are FROZEN here, as TAMRIEL_POST's. */
+export const THANKS_POST = Object.freeze({
+  batch: 'thanks-aurum-spurs',
+  gift: 'thanks',
+  sender: 'The DFO Team',
+  subject: 'Thank you, from all of us',
+  body: [
+    'Through the good times and the bad, thank you for staying with us. None of this would be possible without your support.',
+    '',
+    'As a thank-you, 500 Aurum and the Crystal Spurs are on your account now. The Spurs are an Aura Armory piece for your arms. Wear them from your profile.',
+    '',
+    "Let's continue our journey, together.",
+    '',
+    'With love,',
+    'The DFO Team',
+  ].join('\n'),
+});
 
 /** A word as an SQL string, its quotes doubled - nothing in it can end the string. */
 export const sqlText = (/** @type {string} */ s) => `'${String(s).replaceAll("'", "''")}'`;
@@ -170,15 +192,27 @@ export const hoursFirstSql = () => sendSql({ ...HOURS_FIRST, record: HOURS_FIRST
 
 /** TAMRIEL-POST: a send to EVERY registered account standing when it runs - a migration's alone (the workflow names its
  *  accounts, POST_RECIPIENTS_MAX at most); once a send an account, as sendSql's. */
-export function everyoneSql({ batch, sender = POST_SENDER, subject, body, record = null }) {
+export function everyoneSql({ batch, sender = POST_SENDER, subject, body, record = null, gift = null }) {
   const b = postBatch(batch),
     words = postWords({ subject, body });
-  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
-SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)
+  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})
+SELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)${gift ? `, ${sqlText(gift)}` : ''}
 FROM players p WHERE p.handle IS NOT NULL;`;
 }
 /** TAMRIEL-POST: the update's letter, as migration 0188 holds it. */
 export const tamrielPostSql = () => everyoneSql({ ...TAMRIEL_POST, record: TAMRIEL_POST_RECORD });
+/** THANKS-POST: THE GIFT, as migration 0202 gives it to every registered account standing - its key on the account, its
+ *  Aurum a ledger line (`gift`, once an account by the line's key), and the letter naming it. Each once, run again. */
+export function thanksPostSql() {
+  const g = THANKS_POST.gift,
+    now = "CAST(strftime('%s', 'now') AS INTEGER)";
+  return `UPDATE players SET gifts = trim(gifts || ' ' || ${sqlText(g)})
+WHERE handle IS NOT NULL AND instr(' ' || gifts || ' ', ${sqlText(` ${g} `)}) = 0;
+INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)
+SELECT p.id, 'gift', ${sqlText(g)}, ${GIFTS[g].aurum}, ${now} / 86400, ${now}
+FROM players p WHERE p.handle IS NOT NULL;
+${everyoneSql(THANKS_POST)}`;
+}
 
 function main(argv) {
   if (argv[0] === '--names' && argv.length === 2)
@@ -194,8 +228,10 @@ function main(argv) {
     return void process.stdout.write(`${hoursFirstSql()}\n`);
   if (argv[0] === '--migration' && argv[1] === 'tamriel' && argv.length === 2)
     return void process.stdout.write(`${tamrielPostSql()}\n`);
+  if (argv[0] === '--migration' && argv[1] === 'thanks' && argv.length === 2)
+    return void process.stdout.write(`${thanksPostSql()}\n`);
   throw new Error(
-    'usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --words <subject> <message> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first|tamriel',
+    'usage: node tools/sendServerPost.mjs --names <handles> | --look <handles> <batch> | --words <subject> <message> | --sql <handles> <batch> <item> <subject> <message> | --migration hours-first|tamriel|thanks',
   );
 }
 

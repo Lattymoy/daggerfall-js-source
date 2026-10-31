@@ -217,8 +217,8 @@
   {
     "name": "QUEST-ELSEWHERE-no-line",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
-    "new": "      const quest = false;",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site); // START-INSTANCE: no Public row to warn of",
+    "new": "      const quest = false; // START-INSTANCE: no Public row to warn of",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -227,8 +227,8 @@
   {
     "name": "QUEST-ELSEWHERE-every-dungeon",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
-    "new": "      const quest = !site.isHold && questHere(site);",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site); // START-INSTANCE: no Public row to warn of",
+    "new": "      const quest = !site.isHold && !startLair && questHere(site); // START-INSTANCE: no Public row to warn of",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

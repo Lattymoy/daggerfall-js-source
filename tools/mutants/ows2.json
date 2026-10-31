@@ -137,8 +137,8 @@
   {
     "name": "OWS2-helm-tack-never-about",
     "file": "src/systems/seaHelm.js",
-    "old": "      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack; // the mark swung past the eye: go about",
-    "new": "      else if (false) st.tack = -st.tack; // the mark swung past the eye: go about",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)\n        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
+    "new": "      else if (false) st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OWS2-helm-about-early",
     "file": "src/systems/seaHelm.js",
-    "old": "      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack; // the mark swung past the eye: go about",
-    "new": "      else if (st.tack * off < 0) st.tack = -st.tack; // the mark swung past the eye: go about",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
+    "new": "      else if (st.tack * off < 0 || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

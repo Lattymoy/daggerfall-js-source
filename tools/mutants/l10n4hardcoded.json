@@ -38,7 +38,7 @@
   {
     "name": "L10N4-scan-skips-templates",
     "file": "tools/l10nHardcoded.mjs",
-    "old": "          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });\n        }",
+    "old": "          if (isProse(s) && !CLASS_LIST.test(asClasses)) out.push({ file, line: n.loc.start.line, text: s });\n        }",
     "new": "        }",
     "tests": [
       "test/systems/l10n4_hardcoded.test.js"

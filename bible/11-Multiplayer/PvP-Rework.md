@@ -136,6 +136,16 @@ a flag carried out comes down once the lock and a villain's meter let it (`pvpFl
 centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT"`); flag down,
 it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
 
+PVP-KEY (2026-10-30, Discord #suggestions, WiKeD: "please let us remap the PVP to a key of our choosing like most
+things"): the flag's key is the registry's `PvpFlag`, Caps Lock by default, in the Controls pane's Online group
+(`inputActions.js:"['CapsLock', 'PvpFlag'],"`). The host read Caps Lock raw, so Caps Lock bound to the Overworld did both.
+It now reads a key, a combo or a mouse button on the world as any listener does, never under a window
+(`pvpFlagHost.js:"if (here() && acts.includes(PVP_FLAG_ACTION))"`), and the button's title names the key. A
+file that already spends Caps Lock keeps it, and the player is told the flag has no key. Chat's capitals fix notes the
+light where a game press did something. Pins: `test/net/pvpkey.test.js`. Audit: `01-Overview/audits/Audit-Trade-Key.md`.
+
+Not done, asked: the thread's "turn some HUD stuff off" and its "green cube", which names nothing found in the tree.
+
 ## PVP-SKULL: the mark over a flagged player
 
 "no skull when not", "when you agro skull turns gold", "make the gold and red glow sloightly": a 16-pixel skull

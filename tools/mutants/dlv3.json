@@ -1387,5 +1387,14 @@
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]
+  },
+  {
+    "name": "WEIGH-POSE-acts-at-this-frame",
+    "file": "src/scenes/delve/delveHost.js",
+    "old": "    kindFrame(\n      r,\n      heardFeet,\n      holds(site, heardFeet),\n      r.plates ? plateAt(r.plates, heardFeet[0], heardFeet[1], heardFeet[2]) : -1,\n    ); // my acts judged where the room hears me (WEIGH-POSE)",
+    "new": "    kindFrame(r, feet, iw, plate); // my acts judged where the room hears me (WEIGH-POSE)",
+    "tests": [
+      "test/scenes/delve/dlv3_online.test.js"
+    ]
   }
 ]

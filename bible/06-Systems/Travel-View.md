@@ -1282,6 +1282,9 @@ so away from row 250 none comes within sight - recorded here for that branch; th
   so a crewless boat sails). A sailed leg that comes no 20 m nearer its mark in 180 game seconds stops the journey
   ("Your boat can make no way toward its mark."); a boat beached on a leg that does not land stops it ("Your boat has
   run aground.").
+- **The tack's lane** (BEAT-LANE, `01-Overview/bugs/Field-Bugs-2026-10-30d.md`): a tack also goes about once she
+  stands 400 m past the wind's line through the mark. An angle's lane widens with the mark's distance, and SEA-TAUT's
+  sea legs run to 43 km.
 - **The landfall** (`tvSeaLand`, `tvSeaAshore`): on the landfall leg, beached - or 10 m off the shore and all but
   stopped - the helm is left by the mod's own disembark key ("You stop controlling the boat!", the sails lowered); when
   its second's hold is over the traveller is set on the first dry ground ahead of the bow, else about the boat, within
@@ -2925,8 +2928,8 @@ their cost:
   road or track to an end in the wilds (within BY_ROAD_SEEK, 96). (ROAD-FOLLOW, below, retired BY_ROAD_REACH: a way by
   the roads cut a field's corner anywhere within it - each end's own leg and a gap's crossing now.) Its cells are kept by pixel (no table's edge), a step
   away from the ends leaves by a road's or a track's edge (no other neighbour is asked), it leans on its goal by
-  BY_ROAD_GREED (1.25: a way at most a quarter dearer than the roads' cheapest), and it gives up after
-  BY_ROAD_MAX_EXPANSIONS cells (100,000). **TV2's law kept**: a way by the roads dearer than the straight walk across
+  BY_ROAD_GREED (1.25: at most a quarter dearer than the roads' cheapest), and gave up after
+  BY_ROAD_MAX_EXPANSIONS cells (100,000; ROAD-GRAPH: none). **TV2's law kept**: a way by the roads dearer than the straight walk across
   the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept. (ROAD-FOLLOW, below, retired
   it: a way by the roads is kept, the ladder asked only where none joins the two.)
 - **The ladder past the table** (no way by the roads, FREE, a crossing): its box reaches `margin` past an end beyond the
@@ -2935,7 +2938,7 @@ their cost:
   BEYOND_MAX_EXPANSIONS cells (100,000) over every rung, and a plan with no road, track or boat in it leans on the
   field's own price (`hCost` 3.5: the straight walk, a few cells a pixel). A plan by the roads that neither found walks
   across country (the FREE plan's own) - never "no way" for a field the spend did not reach. So a plan past the Bay
-  expands at most 100,000 + 2 x 100,000 cells, an op count the pins hold (`tally`), never a clock.
+  expanded at most 100,000 + 2 x 100,000 cells, an op count the pins hold (`tally`), never a clock.
 - `routeGround`'s keep of the ground past the table is keyed by number (`beyondKey`) and holds 2^18 answers.
 
 **The journeys** (the merged head's ground and places, the layer as the 48 regions lay it; one machine, four cores
@@ -4014,3 +4017,49 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## ROAD-GRAPH - a road journey past the Bay searched a chain at a time, to its network's edge (2026-10-30, the owner)
+
+The owner: *"overworld travel in the pvp zone currently looks to be bugged ... not allowing you to traverse to different
+locations reliably"*; of a first fix that only raised the spend, *"Yes a proper fix"*; and of that, *"Audit"* (AUDIT
+ROAD-GRAPH, `01-Overview/audits/Audit-Road-Graph.md`).
+
+**What stood.** Past the Bay a journey by the roads searched them a pixel at a time (`searchByRoad`, ROAD-BEYOND) and
+gave up after 100,000 cells. Cyrodiil's roads wind, and a long trip there needs more. On the freeware, with the roads of
+Cyrodiil and its neighbours laid as the game lays them (24 regions), 111 of 992 trips between the zone's 32 towns said
+"There is no way there by land" after some 316,000 cells and up to two seconds. A flood over the same ground joins every
+one. A spend of 300,000 reached them all, but the cells grow with the network, not the trip.
+
+**What it is now.** A road pixel with other than two steps out under the step law (`roadOuts`) is a junction. The pixels
+between two junctions are a chain, walked once and read either way (`travelRoute.js:"function roadGraphFor"`). The
+search moves junction to junction a chain at a time, at the same prices and the same lean (BY_ROAD_GREED). The ends' own
+legs, the gaps' crossings and the goal's neighbours are searched a pixel at a time under ROAD-FOLLOW's law, and a chain
+that reaches one stops there. There is no spend: BY_ROAD_MAX_EXPANSIONS is gone, and with it ROAD-BEYOND's bound of
+100,000 + 2 x 100,000 cells a plan. A flood back from the goal, a pixel for each ROAD_BACK_EVERY (4) of the search's,
+says no way when it runs dry before it meets the search, so a refusal costs the goal's side, never the start's network.
+
+**Kept, owned, bounded.** The graph is kept on the ground the host owns (`routeGround`'s `roadKeep`, which
+`...tvRouteGround()` hands to planRoute), one at a time, in flat typed arrays. A caller with no keep keeps nothing. It is
+walked afresh when the layer is installed again, the land moves, or the water or the Bay's arrays are another's, and
+past ROAD_GRAPH_MAX_PIXELS (2,097,152) it is dropped whole at the next plan. A sliced plan whose network moves under it
+is planned again as the network lies. The ladder after a roads' search that found none spends a count of its own, and
+with a boat to hand a trip the land's pieces part never asks the roads' search (FAST-REFUSAL's law).
+
+**Measured** (the same 992 trips, in node): all are ways. Over one kept graph, as the game plans them, a plan takes 125
+ms on average and up to 1.7 s, the first; with a fresh graph each time 514 ms and up to 3.4 s, where the spend of
+300,000 took 480 ms and up to 3.6 s. The graph after them holds 98,649 nodes and 112,783 chains in 15 MB of arrays.
+Bruma to a road that no road of Cyrodiil's joins: the roads' search says no way in 54,677 cells (0.43 s), where it had
+walked 1,360,957 (8.1 s); the whole plan 2.1 s. From five cities to 83 towns of the six provinces round Cyrodiil, 405 of
+415 are ways; the 10 refused are two towns of Morrowind that no land joins.
+
+- Every province: the same law past the Bay. The Bay's own plans never ask the roads' search (ROAD-BEYOND).
+- OPEN: the first journey over a network, and the first after a region lands, walks its chains (the worst here 3.4 s,
+  in slices - PLAN-SLICES). A chain from an end's own pixel is walked from both its ends and never read back: kept, the
+  graph and so a plan would hang on what was planned before. The ends' floods (some 60 ms a plan) are as they were.
+  FREE mode's box stands (GREEDY-BEYOND's OPEN). Before a region's roads land, a trip has only the walk across country.
+- The hosts: none changes; `bootWorld` does not grow (the ground holds the keep).
+- Pins `test/systems/travel/road_graph.test.js` (13, Cyrodiil and Skyrim among them); mutants
+  `tools/mutants/road_graph.json` (20, all dead). PIN MOVED in `road_beyond.test.js`: the dial, a spend's two pins, the
+  lattice's count (36,011; 67,180 without the lean), two bounds' one cell over a spend, three titles. Its records:
+  -the-search-unbounded retired with the spend, -no-layer-still-searched re-aimed, and
+  -the-ends-open-ground-everywhere killed again in road_graph (two ends' legs that meet in a field).

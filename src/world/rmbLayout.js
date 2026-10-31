@@ -74,6 +74,20 @@ export function modelScaleVector(obj) {
   return [obj.xScale || 1, obj.yScale || 1, obj.zScale || 1];
 }
 
+/** A misc model record's place in its block (RMBLayout's AddProps, below) - its own export (AUDIT PROP-GROUND: the town's
+ *  fabric finds a foot plate where the block stands it, world/urban/townFabricStand.js fabricBlockOf). */
+export function miscModelMatrix(obj) {
+  return trs(
+    obj.xPos * GLOBAL_SCALE,
+    (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
+    (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
+    -obj.xRotation / ROTATION_DIVISOR,
+    -obj.yRotation / ROTATION_DIVISOR,
+    -obj.zRotation / ROTATION_DIVISOR,
+    ...modelScaleVector(obj),
+  );
+}
+
 /** WD3: the classic model Kamer's prefab REPLACES (MeshReplacement, `41600.prefab`) - in ARCH3D (record 8176) and
  *  placed by no classic block. Kamer's own seven farms stand it through PLACEMENTS; a town mod's farm stands it among
  *  its own records (Beautiful Villages' six - FARMAA04, 05, 07 and FARMBA05, 08, 09 - and 34 of Beautiful Cities' blocks). */
@@ -129,15 +143,7 @@ export function layoutRmbBlock(dfBlock, { enhanced = false, windmills = true } =
 
   // Miscellaneous scene models.
   for (const obj of rmb.misc3dObjectRecords) {
-    const miscMatrix = trs(
-      obj.xPos * GLOBAL_SCALE,
-      (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,
-      (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,
-      -obj.xRotation / ROTATION_DIVISOR,
-      -obj.yRotation / ROTATION_DIVISOR,
-      -obj.zRotation / ROTATION_DIVISOR,
-      ...modelScaleVector(obj),
-    );
+    const miscMatrix = miscModelMatrix(obj);
     if (millsHere && obj.modelIdNum === WINDMILL_MODEL_ID) {
       ownMills.push({ matrix: miscMatrix });
       continue;

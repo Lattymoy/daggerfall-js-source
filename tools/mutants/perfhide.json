@@ -2,8 +2,8 @@
   {
     "name": "PH-hide-found-every-dye",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "  return kept[k] ?? (kept[k] = findHide(src, w, h, tack));",
-    "new": "  return (kept[k] = findHide(src, w, h, tack));",
+    "old": "  return kept[k] ?? (kept[k] = make());",
+    "new": "  return (kept[k] = make());",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PH-one-hide-either-tack",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "  const k = tack ? 1 : 0;",
-    "new": "  const k = 0;",
+    "old": ") => (tack ? 1 : 0) + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
+    "new": ") => 0 + (bottomFirst ? 2 : 0) + (spare ? 4 : 0);",
     "tests": [
       "test/systems/horse/perfhide.test.js"
     ]

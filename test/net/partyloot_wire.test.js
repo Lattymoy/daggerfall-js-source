@@ -208,7 +208,7 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     quickLootTake: () => false, showPickups: null, lootPile: () => null, pileBody: () => null, RANDOM_TREASURE_ARCHIVE: 216, surfacePlayer: () => {},
     // the kill door's neighbours (test/systems/loot7check.test.js's killDoor): nothing here reads a loot law
     feudWeakBlow: () => false, blowClassOf: () => null, lastPlayerFeet: [0, 0, 0], foeDeps: null, audio: {},
-    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, takeWholeBlow: () => false, bossStrikeAt, bossTakeAt, bossClockS, strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, markFoeStruck: () => {}, markConcealedHit: () => {},
+    renownFoeStruck: () => {}, renownFoeDied: () => {}, reportPlayerKill: () => {}, killFxOf: () => null, takeWholeBlow: () => false, bossStrikeAt, bossTakeAt, bossClockS, strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, markFoeStruck: () => {}, markConcealedHit: () => {},
     handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', partyFoeLoses: (f, n) => n,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: () => {} }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied: () => null, playRareDrop: () => {}, addCorpseFood: () => {},

@@ -50,7 +50,8 @@
     "old": "      if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue; // ROAD-FOLLOW: the open ground on an end's own leg alone",
     "new": "      if (kind < 0) continue;",
     "tests": [
-      "test/systems/travel/road_beyond.test.js"
+      "test/systems/travel/road_beyond.test.js",
+      "test/systems/travel/road_graph.test.js"
     ]
   },
   {
@@ -74,19 +75,10 @@
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-search-unbounded",
-    "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (++expanded > maxExpansions) return null;\n    const { x: cx, y: cy } = pix(c),",
-    "new": "    const { x: cx, y: cy } = pix(c),",
-    "tests": [
-      "test/systems/travel/road_beyond.test.js"
-    ]
-  },
-  {
     "name": "ROAD-BEYOND-no-layer-still-searched",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!beyond) return null;\n  const pathAt = (x, y) =>",
-    "new": "  const pathAt = (x, y) =>",
+    "old": "  if (!beyond) return null;\n  const graph = roadGraphFor(keep, roads, tracks, beyond, isWater, width, height),",
+    "new": "  const graph = roadGraphFor(keep, roads, tracks, beyond, isWater, width, height),",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -113,8 +105,8 @@
   {
     "name": "ROAD-BEYOND-no-greed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
-    "new": "        open.push(ng + h(nx, ny), n);",
+    "old": "    open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
+    "new": "    open.push(ng + h(nx, ny), n);",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]

@@ -455,8 +455,8 @@
   {
     "name": "PORTAL1-pool-vortex-follows-eye",
     "file": "src/scenes/portalGates.js",
-    "old": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true });",
-    "new": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: false });",
+    "old": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true, skin: skinOf(g) });",
+    "new": "    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: false, skin: skinOf(g) });",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "PORTAL1-vortex-follows-the-eye",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (p.fixed) {\n        p.origin[0] = p.feet[0];\n        p.origin[2] = p.feet[2];\n      } // PORTAL1: a gate stands where it opened\n      else if (eye) {",
-    "new": "      if (eye) {",
+    "old": "      if (p.fixed) {\n        p.origin[0] = p.feet[0];\n        p.origin[2] = p.feet[2];\n      } // PORTAL1: a gate stands where it opened\n      else if (from) {",
+    "new": "      if (from) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

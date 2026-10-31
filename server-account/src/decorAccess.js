@@ -6,6 +6,7 @@
 import { accountKind, displayName } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk, homeGroundOk, homeGroundKept } from '../../src/net/homeLaw.js'; // DECOR-ROOMY: a home's ground
+import { homeGroundPrice } from '../../src/net/homeListingLaw.js'; // AUDIT FOUNDATION P2: a curated home's ground
 import { homeSceneName } from '../../src/net/homeScene.js';
 import { DECOR_ID_RE, DECOR_REST_ID } from '../../src/net/decorLaw.js';
 import { OWNS } from './decor.js';
@@ -936,12 +937,19 @@ async function setHomeGround(ctx, player, { mapId, buildingKey, character, groun
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };
   if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };
   const home = await db
-    .prepare('SELECT price, ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?')
+    .prepare('SELECT price, ground, guild_id, layout FROM homes WHERE map_id = ? AND building_key = ?')
     .bind(mapId, buildingKey)
     .first();
   if (!home || home.guild_id != null) return { error: 'no-home' };
   if (home.ground != null) return { ok: true, ground: home.ground };
-  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };
+  if (
+    !homeGroundOk(
+      ground,
+      townBlocks,
+      homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null),
+    )
+  )
+    return { error: 'bad-home' }; // AUDIT FOUNDATION P2: a row's price, the law's ground
   const kept = homeGroundKept(ground);
   await db
     .prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ? AND ground IS NULL')

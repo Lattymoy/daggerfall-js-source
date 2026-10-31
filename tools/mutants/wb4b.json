@@ -38,8 +38,8 @@
   {
     "name": "WB4b-the-missile-without-his-radius",
     "file": "src/systems/spellcast.js",
-    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius); // WB4b: a body's own radius, where it states one",
-    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height); // WB4b: a body's own radius, where it states one",
+    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius, from); // WB4b: a body's own radius, where it states one",
+    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, undefined, from); // WB4b: a body's own radius, where it states one",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "WB4b-a-shaft-passes-through-him",
     "file": "src/scenes/dungeonContext.js",
-    "old": "          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius)) {",
+    "old": "          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius, _from)) {",
     "new": "          if (false) {",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"

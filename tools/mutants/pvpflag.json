@@ -144,8 +144,8 @@
   {
     "name": "PVP-FLAG-the-field-unread",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "      if (\n        e.code !== 'CapsLock' ||\n        e.repeat ||\n        el?.isContentEditable ||\n        /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')\n      )\n        return;",
-    "new": "      if (e.code !== 'CapsLock' || e.repeat) return;",
+    "old": "      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;",
+    "new": "      if (e.repeat) return;",
     "tests": [
       "test/net/pvpflag.test.js"
     ],

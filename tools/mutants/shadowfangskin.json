@@ -92,8 +92,8 @@
   {
     "name": "SFSKIN-glyphs-not-kept",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, icon, armory, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, icon, armory, effects, nameAsAt })",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],

@@ -50,8 +50,8 @@
   {
     "name": "TAMRIEL2-the-sea-wears-a-climate",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
-    "new": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Woodlands;",
+    "old": "tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;   // FOUNDATION F4",
+    "new": "tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Woodlands;   // FOUNDATION F4",
     "tests": [
       "test/world/tamriel2.test.js"
     ]

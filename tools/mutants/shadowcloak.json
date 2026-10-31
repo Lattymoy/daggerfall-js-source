@@ -813,8 +813,8 @@
   {
     "name": "SHADOWCLOAK-the-draw-commented-out",
     "file": "src/scenes/auraHost.js",
-    "old": "        pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
-    "new": "        // pass?.draw(auraDraw, proj, view, eye, now, fogNow());",
+    "old": "pass.draw(run, proj, view, eye, now, fog); ",
+    "new": "",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

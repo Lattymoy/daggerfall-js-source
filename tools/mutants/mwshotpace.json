@@ -52,5 +52,43 @@
     "tests": [
       "test/formats/morrowind/fparm.test.js"
     ]
+  },
+  {
+    "name": "MW-DRAW-PACE-the-draw-unpaced",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (blow?.draw && holdWindUp && actionState && blow.hitAt > 0) return",
+    "new": "    if (false) return",
+    "tests": [
+      "test/combat/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MW-DRAW-PACE-the-loose-unpaced",
+    "file": "src/combat/fpArm.js",
+    "old": "blowPlan = held && blow && !blow.draw && blow.hitAt > 0",
+    "new": "blowPlan = false && blow && !blow.draw && blow.hitAt > 0",
+    "tests": [
+      "test/combat/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MW-DRAW-PACE-no-draw-schedule",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (drawUp)",
+    "new": "  if (drawUp) return null;\n  if (false)",
+    "tests": [
+      "test/combat/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MW-DRAW-PACE-the-rig-hands-nothing",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);",
+    "new": "fpArm.release(null);",
+    "tests": [
+      "test/combat/mwpace1.test.js",
+      "test/combat/weapon/weaponrig.test.js",
+      "test/combat/audit28_bowdrawback.test.js"
+    ]
   }
 ]

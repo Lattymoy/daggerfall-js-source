@@ -2,8 +2,8 @@
   {
     "name": "CRYPTSALE-gate-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  bd.hasInterior !== false &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  !(isActiveQuestBuilding?.(bd) ?? false);",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRYPTSALE-unstamped-refused",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && bd.hasInterior === true && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  bd.hasInterior !== false &&",
+    "new": "  bd.hasInterior === true &&",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CRYPTSALE-arena-move-unasked",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "    (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false),",
-    "new": "    (summaries ?? []).filter((s) => homeCandidate(s)),",
+    "old": "      (s) =>\n        homeCandidate(s) &&\n        s.hasInterior !== false &&\n        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),",
+    "new": "      (s) => homeCandidate(s) && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

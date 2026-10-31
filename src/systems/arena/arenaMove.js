@@ -46,8 +46,9 @@ import {
 import { stampLayout } from '../layoutPins.js'; // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the new house's record, in the layout it was picked in
 import { isResidence } from '../../world/buildingNames.js';
 import { templateByIndex } from '../item/itemTemplates.js'; // ARENA-FIX 11: a torch left burning, back into an item
-import { homeCandidate } from '../online/onlineHomes.js'; // ARENA4b: the buildings an online home may be
+import { homeCandidate, homeClaimLayout } from '../online/onlineHomes.js'; // ARENA4b: the buildings an online home may be; AUDIT FOUNDATION II P6: its town's layout
 import { regionDeedsOf } from '../../net/homeLaw.js'; // HOUSES-3: a region's three deeds
+import { homeListedOff } from '../../net/homeListingLaw.js'; // AUDIT FOUNDATION P3: the property rows
 
 /** The market's generator (banking.js housesForSale), seeded by what names this move. */
 function pick(n, mapId, oldKey) {
@@ -100,9 +101,14 @@ export function arenaHomeFor(o, summaries, opts = {}) {
   // CUSTAA05 two House6 with no room (FIELD BUGS 2026-10-05 CRYPT-SALE's law, homePurchasable's)
   return arenaHouseFor(
     o,
-    (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false),
+    (summaries ?? []).filter(
+      (s) =>
+        homeCandidate(s) &&
+        s.hasInterior !== false &&
+        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),
+    ),
     opts,
-  );
+  ); // AUDIT FOUNDATION P3: never a house off the market
 }
 
 /** The key of the new house's first container in its scene (scenes/worldModes.js restoreInteriorScene's `container:i`). */

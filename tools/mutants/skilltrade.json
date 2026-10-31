@@ -1,0 +1,194 @@
+[
+  {
+    "name": "SKILL-TRADE-not-offered",
+    "file": "src/systems/skillSwap.js",
+    "old": "  return group ? swapOutChoices(entity).filter((id) => careerGroupOf(entity, id) !== group) : [];",
+    "new": "  return [];",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "the trade refused: another group's class skill never taken in"
+  },
+  {
+    "name": "SKILL-TRADE-same-group",
+    "file": "src/systems/skillSwap.js",
+    "old": "  return group ? swapOutChoices(entity).filter((id) => careerGroupOf(entity, id) !== group) : [];",
+    "new": "  return group ? swapOutChoices(entity).filter((id) => id !== out) : [];",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a skill of out's own group taken in - a duplicate in one list"
+  },
+  {
+    "name": "SKILL-TRADE-out-lost",
+    "file": "src/systems/skillSwap.js",
+    "old": "  const traded = back ? { [back]: entity.career[back].map((id) => (id === inn ? out : id)) } : {};",
+    "new": "  const traded = {};",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "the other group keeps inn: one skill in two groups, out in none"
+  },
+  {
+    "name": "SKILL-TRADE-mastered-moved",
+    "file": "src/systems/skillSwap.js",
+    "old": "    return isMasteredSkill(entity, inn)",
+    "new": "    return false",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a mastered skill's refusal unsaid"
+  },
+  {
+    "name": "SKILL-TRADE-done-words",
+    "file": "src/systems/skillSwap.js",
+    "old": "    text: other",
+    "new": "    text: false",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a trade told as a swap - out said to have left the class"
+  },
+  {
+    "name": "SKILL-TRADE-page-not-offered",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const ins = [...sw.in, ...sw.trade(_swapOut)];",
+    "new": "  const ins = [...sw.in];",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "the form never offers a trade"
+  },
+  {
+    "name": "SKILL-TRADE-page-group-unnamed",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      const o = el('option', null, g && ids === ins ? t(",
+    "new": "      const o = el('option', null, false ? t(",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "a class skill offered without its group"
+  },
+  {
+    "name": "SKILL-TRADE-page-swap-ask",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      ...(other ? [t('growth.swap.askTrade',",
+    "new": "      ...(false ? [t('growth.swap.askTrade',",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "a trade asked as a swap - out said to become miscellaneous"
+  },
+  {
+    "name": "SKILL-TRADE-page-slots-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    ...(other && sw.slotsLeft(inn) === 0 ? [",
+    "new": "    ...(false ? [",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "out moved into a group whose slots are spent, unsaid"
+  },
+  {
+    "name": "SKILL-TRADE-hint-blind",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "(swap.in.includes(inn) || swap.trade(out).includes(inn))",
+    "new": "swap.in.includes(inn)",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "the family hint where only a trade opens a path"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-A2-online-start-as-offline",
+    "file": "src/systems/skillSwap.js",
+    "old": "  if (entity._online !== true || !(room > 0) || now >= LEVEL_SUM_TOP || now === held) return start + (now - held);",
+    "new": "  if (true || !(room > 0) || now >= LEVEL_SUM_TOP || now === held) return start + (now - held);",
+    "tests": [
+      "test/systems/skilltrade.test.js",
+      "test/systems/fb1019b_skillswap.test.js",
+      "test/systems/swapcycle.test.js"
+    ],
+    "why": "online a rise moves the start as much as the stored sum, and the online level rises"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-A2-float-edge-unwalked",
+    "file": "src/systems/skillSwap.js",
+    "old": "  for (let i = 0; i < 8 && onlineLevelFor(s, now) !== level; i++) s += onlineLevelFor(s, now) > level ? 1e-9 : -1e-9; // a float's edge",
+    "new": "  for (let i = 0; i < 0 && onlineLevelFor(s, now) !== level; i++) s += onlineLevelFor(s, now) > level ? 1e-9 : -1e-9; // a float's edge",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a level's exact edge, where the float tips the online level one down"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-A1-lock-words-swapped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const fromPrimary = other === 'primary',",
+    "new": "  const fromPrimary = false,",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "a trade out of the primaries names the wrong skill in the 95 lock's words"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-A3-picks-kept",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      if (r.ok) { _swapOut = null; _swapIn = null; }",
+    "new": "",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "the reverse trade left picked, one Yes away"
+  },
+  {
+    "name": "SKILL-TRADE-dearer",
+    "file": "src/systems/skillSwap.js",
+    "old": "  payUndoable(entity, SKILL_SWAP_GOLD, entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);",
+    "new": "  payUndoable(\n    entity,\n    other ? SKILL_SWAP_GOLD + 1 : SKILL_SWAP_GOLD,\n    entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null,\n  );",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a trade dearer than a swap (AUDIT SKILL-TRADE C14: a mutant the pin's title named, now recorded)"
+  },
+  {
+    "name": "SKILL-TRADE-current-sum-left",
+    "file": "src/systems/skillSwap.js",
+    "old": "  entity.currentLevelUpSkillSum = held + rise;",
+    "new": "  void held;",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a trained skill traded in leaves the stored sum the old class's"
+  },
+  {
+    "name": "SKILL-TRADE-start-sum-left",
+    "file": "src/systems/skillSwap.js",
+    "old": "  entity.startingLevelUpSkillSum = startAfterRise(entity, held, held + rise);",
+    "new": "  void startAfterRise;",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a trained skill traded in pays levels"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-C8-primary-label",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "(g === 'primary' ? t('growth.swap.label.primary', 'Primary')",
+    "new": "(g === 'primary' ? t('growth.swap.label.major', 'Major')",
+    "tests": [
+      "test/ui/growth/skilltrade_page.test.js"
+    ],
+    "why": "a primary skill offered as a major one"
+  },
+  {
+    "name": "AUDIT-SKILL-TRADE-C9-gold-first",
+    "file": "src/systems/skillSwap.js",
+    "old": "  if (isMasteredSkill(entity, out)) return t('skillswap.refuse.mastered', 'A mastered skill stays in your class.');",
+    "new": "  if (resetGold(entity) < SKILL_SWAP_GOLD)\n    return t('skillswap.refuse.gold', 'Changing a class skill costs {gold, number} gold. You have {have, number}.', {\n      gold: SKILL_SWAP_GOLD,\n      have: resetGold(entity),\n    });\n  if (isMasteredSkill(entity, out)) return t('skillswap.refuse.mastered', 'A mastered skill stays in your class.');",
+    "tests": [
+      "test/systems/skilltrade.test.js"
+    ],
+    "why": "a player short of gold told the price before a wrong pick"
+  }
+]

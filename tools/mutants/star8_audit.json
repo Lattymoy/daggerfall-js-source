@@ -181,9 +181,9 @@
   },
   {
     "name": "AUDIT-STAR8-T1-the-window-a-find",
-    "file": "src/systems/festival/festivalClient.js",
-    "old": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);",
-    "new": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain']);",
+    "file": "src/systems/questlines/qlActs.js",
+    "old": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
+    "new": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'ketch-boarded', 'ketch-cell-banked']);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-STAR8-T1-the-kind",
     "file": "src/systems/questlines/qlActs.js",
-    "old": "  'wyrd-met': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)",
-    "new": "  'wyrd-mett': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)",
+    "old": "  'wyrd-met': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (ACT_NOT_FOUND)",
+    "new": "  'wyrd-mett': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (ACT_NOT_FOUND)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

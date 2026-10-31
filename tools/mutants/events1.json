@@ -1212,8 +1212,8 @@
   {
     "name": "EVENTS2-a-kind-without-its-mark",
     "file": "src/ui/eventBoard.js",
-    "old": "  festival: '#9fd18b',\n});",
-    "new": "});",
+    "old": "  festival: '#9fd18b',\n  season: FISSURE_BRASS_CSS, // STOREFRONT: the season's brass, its fissures' on the map",
+    "new": "  season: FISSURE_BRASS_CSS, // STOREFRONT: the season's brass, its fissures' on the map",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]

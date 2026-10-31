@@ -237,7 +237,7 @@
   {
     "name": "COMPANION-PORTAL-never-freed",
     "file": "src/scenes/portalFx.js",
-    "old": "      if (done) {\n        try {\n          renderer.destroyBillboardBatch(p.batch);\n        } catch {\n          /* gone */\n        }\n        list.splice(i, 1);",
+    "old": "      if (done) {\n        dropDress(p);\n        try {\n          renderer.destroyBillboardBatch(p.batch);\n        } catch {\n          /* gone */\n        }\n        list.splice(i, 1);",
     "new": "      if (false) {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"

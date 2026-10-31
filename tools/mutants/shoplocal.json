@@ -11,8 +11,8 @@
   {
     "name": "SL-the-line-dropped",
     "file": "server-account/src/shop.js",
-    "old": "      \"Stripe can show the price in your own currency, with your country's ways to pay.\",\n      'A pre-alpha item: it is sold only during the pre-alpha.',",
-    "new": "      'A pre-alpha item: it is sold only during the pre-alpha.',",
+    "old": "      \"Stripe can show the price in your own currency, with your country's ways to pay.\",\n      ...(ware.preAlpha ? ['A pre-alpha item: it is sold only during the pre-alpha.'] : []),",
+    "new": "      ...(ware.preAlpha ? ['A pre-alpha item: it is sold only during the pre-alpha.'] : []),",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SL-the-presentment-read",
     "file": "server-account/src/shop.js",
-    "old": "        intent: o.payment_intent,\n        amount: o.amount_subtotal ?? o.amount_total,\n        currency: o.currency,\n      }); // the price before any tax Stripe adds",
-    "new": "        intent: o.payment_intent,\n        amount: o.presentment_details?.presentment_amount ?? o.amount_subtotal ?? o.amount_total,\n        currency: o.presentment_details?.presentment_currency ?? o.currency,\n      }); // the price before any tax Stripe adds",
+    "old": "        ctx,\n        orderOf(),\n        { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
+    "new": "        ctx,\n        orderOf(),\n        {\n          intent: o.payment_intent,\n          amount: o.presentment_details?.presentment_amount ?? o.amount_subtotal ?? o.amount_total,\n          currency: o.presentment_details?.presentment_currency ?? o.currency,\n        },\n        { env, fetch },\n      ); // the price before any tax Stripe adds",
     "tests": [
       "test/server/shoplocal.test.js"
     ]

@@ -2566,8 +2566,8 @@
   {
     "name": "AUDIT-WB12d-T-wod-rite-site-refused",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "export const WOD_SITE_RE =\n  /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`)",
-    "new": "export const WOD_SITE_RE = /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`)",
+    "old": "  /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`); STOREFRONT: a Brass Fissure's",
+    "new": "  /^-?\\d{1,5},-?\\d{1,5}:(?:\\d{1,10}(?:\\.\\d{1,3})?|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/; // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`); STOREFRONT: a Brass Fissure's",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/scenes/wod7_sharedcamps.test.js",

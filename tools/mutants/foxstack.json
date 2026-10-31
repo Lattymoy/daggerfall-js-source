@@ -1,0 +1,53 @@
+[
+  {
+    "name": "FOX-STACK-every-copy-counts",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (seen.has(id)) return false;\n    seen.add(id);",
+    "new": "    seen.add(id);",
+    "why": "a second copy of a Legendary record folds its lines again - six Foxgloves are +90 Luck",
+    "tests": [
+      "test/systems/loot/foxstack.test.js"
+    ]
+  },
+  {
+    "name": "FOX-STACK-one-legendary-of-any-record",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const id = it?.rarity === 'legendary' && typeof it.legendary === 'string' ? it.legendary : null;",
+    "new": "    const id = it?.rarity === 'legendary' && typeof it.legendary === 'string' ? 'legendary' : null;",
+    "why": "every Legendary past the first counts nothing - two different records no longer add up",
+    "tests": [
+      "test/systems/loot/foxstack.test.js"
+    ]
+  },
+  {
+    "name": "FOX-STACK-the-fold-uncounted",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return countedPieces(worn);",
+    "new": "  return worn;",
+    "why": "the affix fold and the card's resistance read every copy",
+    "tests": [
+      "test/systems/loot/foxstack.test.js"
+    ]
+  },
+  {
+    "name": "FOX-STACK-the-powers-pieces-uncounted",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "export const wornPieces = (entity) => (entity ? countedPieces(equipTableOf(entity).filter(Boolean)) : []); // FOX-STACK: a Legendary's lines once",
+    "new": "export const wornPieces = (entity) => (entity ? equipTableOf(entity).filter(Boolean) : []); // FOX-STACK: a Legendary's lines once",
+    "why": "wornSum's lines (thorns, focus, potency, the wellspring, cast speed) count every copy",
+    "tests": [
+      "test/systems/loot/foxstack.test.js"
+    ]
+  },
+  {
+    "name": "FOX-STACK-fortune-a-half",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "kind: 'fortune', mult: 1.25,",
+    "new": "kind: 'fortune', mult: 1.5,",
+    "why": "Fortune's Favour back at half",
+    "tests": [
+      "test/systems/loot/foxstack.test.js",
+      "test/systems/loot5_powers.test.js"
+    ]
+  }
+]

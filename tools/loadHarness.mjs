@@ -112,6 +112,16 @@ import { MOTHERLODE_READ_MS } from '../src/net/motherlodeBook.js';
 import { PROF_CLOSED_RECHECK_MS } from '../src/net/profBook.js';
 import { utcDayOfMs } from '../src/net/nodeLaw.js';
 import { routeLabel } from '../server-account/src/metrics.js';
+import { ROLLED_START_MIN } from '../src/systems/levelClimb.js';
+/** BIRTH-SKILL (#1484): a first save the realm takes carries a creation's skills - the least one gives (test/realmSeat.mjs freshSave's). */
+const BIRTH = (() => {
+  const career = { primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
+  const skills = new Array(35).fill(3);
+  for (const id of career.primarySkills) skills[id] = 30;
+  for (const id of career.majorSkills) skills[id] = 20;
+  for (const id of career.minorSkills) skills[id] = 14;
+  return { career, skills, startingLevelUpSkillSum: ROLLED_START_MIN, currentLevelUpSkillSum: ROLLED_START_MIN };
+})();
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** SCALE4c: the tab's one heartbeat (src/net/heartbeat.js), where the tree under test has it - its bots then keep the
@@ -750,7 +760,7 @@ export async function setUp(bot, o) {
     hidden: () => false,
     watchHidden: () => {},
   });
-  const first = await rs.checkpoint(JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items: [] }));
+  const first = await rs.checkpoint(JSON.stringify({ name: bot.name, level: 1, goldPieces: 100, items: [], ...BIRTH })); // BIRTH-SKILL (#1484)
   if (!first?.ok) throw new Error(`bot ${bot.n}: the first save did not land (${first?.error})`);
   bot.realm = { id: c.data.id, session: rs };
   bot.minter = accountTokenMinter({ fetch: bot.fetch, storage: bot.storage, character: () => bot.realm.id });

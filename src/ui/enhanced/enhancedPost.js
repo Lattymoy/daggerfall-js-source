@@ -16,6 +16,8 @@ import { placeBeside } from './enhancedTimers.js';
 import { reportPane, reportPaneKey } from './enhancedReport.js'; // PRIVATE-REPORT
 import { t } from '../../systems/textManager.js';
 import { shopWareTag, injectShopStyle } from './enhancedShop.js'; // SHOP: a receipt's ware, in its own paint
+import { giftOf } from '../../net/giftLaw.js'; // THANKS-POST: the gift a letter brought
+import { armoryPieceName } from '../armoryText.js';
 
 /** How often the mark's count and the open window look at the box's version, ms. */
 export const POST_TICK_MS = 500;
@@ -32,6 +34,14 @@ export const postRefusalText = (/** @type {string|undefined} */ w) =>
 /** A piece's date, in the player's own clock: "8 Oct". */
 export const postDayText = (/** @type {number} */ sentAtS) =>
   new Date(sentAtS * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+/** THANKS-POST: what a letter's gift gave, in words - its Aurum and each piece's name; [] for no gift. */
+export const postGiftWords = (/** @type {unknown} */ key) => {
+  const g = giftOf(key);
+  return g
+    ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))]
+    : [];
+};
 
 /** An item's rarity as its name wears it (`data-rarity`, LR1's attribute - the sheet colours each rung, enhancedStyle.js),
  *  or null: a rung's word alone, never anything the sheet could read as more. */
@@ -346,6 +356,14 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
           chip.append(tag, el('span', 'pm-state', t('post.wareHeld', 'On your account')));
           row.append(chip);
         }
+      } else if (p.gift) {
+        // THANKS-POST: a gift - on the account already, nothing to claim
+        const chip = el('span', 'pm-chip');
+        chip.append(
+          el('span', null, postGiftWords(p.gift).join(', ')),
+          el('span', 'pm-state', t('post.wareHeld', 'On your account')),
+        );
+        row.append(chip);
       }
       row.addEventListener('click', () => openOne(p.id));
       list.append(row);
@@ -413,6 +431,13 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
       if (tag) {
         const card = el('div', 'pm-item');
         card.append(tag, el('span', 'pm-state', t('post.wareWear', 'Wear it from your profile.')));
+        piece.append(card);
+      }
+    } else if (head.gift) {
+      // THANKS-POST: the gift, each part on the account already
+      for (const words of postGiftWords(head.gift)) {
+        const card = el('div', 'pm-item');
+        card.append(el('span', 'pm-itemname', words), el('span', 'pm-state', t('post.wareHeld', 'On your account')));
         piece.append(card);
       }
     }

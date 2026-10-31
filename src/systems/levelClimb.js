@@ -39,6 +39,48 @@ export const ROLLED_START_MIN =
 /** The average creation's start, no biography (chargen.js rollSkills with its pools spent lowest-first, 200,000 rolls:
  *  153.8). What a character whose start is no roll's is given. */
 export const ROLLED_START_AVERAGE = 154;
+/** The highest start a creation can give: every counted skill's best roll, each group's six points spent where the
+ *  level sum reads them (169). A Project Legacy birth can add Hearth's three to three primaries and two counted majors. */
+export const ROLLED_START_MAX =
+  3 * (PRIMARY_SKILL_MIN + 3) +
+  BONUS_POOL_PER_SKILL_GROUP +
+  2 * (MAJOR_SKILL_MIN + 3) +
+  BONUS_POOL_PER_SKILL_GROUP +
+  MINOR_SKILL_MIN +
+  3 +
+  BONUS_POOL_PER_SKILL_GROUP;
+export const LEGACY_START_MAX = ROLLED_START_MAX + 5 * 3;
+
+/** A newborn's skill sums the realm takes at its first save: a real creation's start, the same current and live sum,
+ *  over one valid 3/3/6 career and all 35 skills. Online creation skips the biography; the six-hour skill check cannot
+ *  run before realmBirth's first save. Project Legacy alone gets its Hearth allowance in the upper bound. */
+export function birthSkillOk(save, { legacy = false } = {}) {
+  const start = save?.startingLevelUpSkillSum;
+  const max = legacy ? LEGACY_START_MAX : ROLLED_START_MAX;
+  if (!(Number.isInteger(start) && start >= ROLLED_START_MIN && start <= max)) return false;
+  const cur = save?.currentLevelUpSkillSum;
+  if (cur !== start || !Array.isArray(save?.skills) || save.skills.length !== 35) return false;
+  const c = save.career;
+  if (
+    !c ||
+    !Array.isArray(c.primarySkills) ||
+    c.primarySkills.length !== 3 ||
+    !Array.isArray(c.majorSkills) ||
+    c.majorSkills.length !== 3 ||
+    !Array.isArray(c.minorSkills) ||
+    c.minorSkills.length !== 6
+  )
+    return false;
+  const ids = [...c.primarySkills, ...c.majorSkills, ...c.minorSkills];
+  if (new Set(ids).size !== 12 || ids.some((id) => !Number.isInteger(id) || id < 0 || id >= 35)) return false;
+  let live;
+  try {
+    live = levelUpSkillSum(save);
+  } catch {
+    return false;
+  }
+  return live === start;
+}
 
 /** The level a start and a current sum make online, 1 to ONLINE_LEVEL_CAP. Integer arithmetic, so the top is exactly 45. */
 export function onlineLevelFor(startingSum, currentSum) {

@@ -146,8 +146,8 @@
   {
     "name": "SERAPHWINGS-no-heart",
     "file": "src/render/auraRing.js",
-    "old": "+ WING_CORE * core * (0.42 + 0.28 * pulse)",
-    "new": "+ WING_CORE * 0.0 * (0.42 + 0.28 * pulse)",
+    "old": "+ wingCore() * core * (0.42 + 0.28 * pulse)",
+    "new": "+ wingCore() * 0.0 * (0.42 + 0.28 * pulse)",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SERAPHWINGS-the-look-a-shade",
     "file": "src/render/auraRing.js",
-    "old": "glyphs: WING_CARDS, mesh: 'wings' }),",
-    "new": "glyphs: WING_CARDS, mesh: 'wings', shade: true }),",
+    "old": "seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),",
+    "new": "seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings', shade: true }),",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SERAPHWINGS-the-motes-dropped",
     "file": "src/render/auraRing.js",
-    "old": "glyphs: WING_CARDS, mesh: 'wings' }),",
-    "new": "glyphs: 0, mesh: 'wings' }),",
+    "old": "seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),",
+    "new": "seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: 0, mesh: 'wings' }),",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "SERAPHWINGS-a-stale-figure",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null;\n",
-    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null;\n",
+    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
+    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "SERAPHWINGS-the-backlight-not-white",
     "file": "src/render/auraRing.js",
-    "old": "vec3 col = WING_CORE * exp(-r * r * 16.0) * 0.07 + WING_GOLD *",
-    "new": "vec3 col = WING_GOLD * exp(-r * r * 16.0) * 0.07 + WING_GOLD *",
+    "old": "vec3 col = wingCore() * exp(-r * r * 16.0) * 0.07 + wingGold() *",
+    "new": "vec3 col = wingGold() * exp(-r * r * 16.0) * 0.07 + wingGold() *",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -664,7 +664,7 @@
   {
     "name": "SERAPHWINGS-the-light-white",
     "file": "src/render/auraRing.js",
-    "old": "color: [L.rgb[0] * k, L.rgb[1] * k, L.rgb[2] * k]",
+    "old": "color: [rgb[0] * k, rgb[1] * k, rgb[2] * k]",
     "new": "color: [k, k, k]",
     "tests": [
       "test/net/seraphwings.test.js"
@@ -955,8 +955,8 @@
   {
     "name": "WINGSFIT-the-old-blaze",
     "file": "src/render/auraRing.js",
-    "old": "+ WING_CORE * core * (0.42 + 0.28 * pulse)",
-    "new": "+ WING_CORE * core * (0.6 + 0.6 * pulse)",
+    "old": "+ wingCore() * core * (0.42 + 0.28 * pulse)",
+    "new": "+ wingCore() * core * (0.6 + 0.6 * pulse)",
     "tests": [
       "test/net/seraphwings.test.js"
     ]

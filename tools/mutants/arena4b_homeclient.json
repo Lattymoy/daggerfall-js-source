@@ -2,8 +2,8 @@
   {
     "name": "ARENA4B-PICK-FILTER",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "  return arenaHouseFor(\n    o,\n    (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false),\n    opts,\n  );",
-    "new": "  return arenaHouseFor(o, summaries, opts);",
+    "old": "  return arenaHouseFor(\n    o,\n    (summaries ?? []).filter(\n      (s) =>\n        homeCandidate(s) &&\n        s.hasInterior !== false &&\n        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),\n    ),\n    opts,\n  ); // AUDIT FOUNDATION P3: never a house off the market",
+    "new": "  return arenaHouseFor(o, summaries, opts); // AUDIT FOUNDATION P3: never a house off the market",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-REALM2-S1-a-birth-at-any-level",
     "file": "server-account/src/realm.js",
-    "old": "      save.level === REALM_BIRTH_LEVEL &&\n      liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX &&",
-    "new": "      liquidWealthOf(save) <= REALM_BIRTH_WEALTH_MAX &&",
+    "old": "      save.level === REALM_BIRTH_LEVEL &&\n      birthSkillOk(save, { legacy: row.lineage_id != null }) &&",
+    "new": "      birthSkillOk(save, { legacy: row.lineage_id != null }) &&",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

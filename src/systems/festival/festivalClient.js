@@ -34,7 +34,7 @@ import {
 } from '../../net/accountClient.js';
 import { appStorage } from '../appStorage.js';
 import { registerPlayerKillListener } from '../playerKills.js';
-import { hearActs, ACT_KINDS } from '../questlines/qlActs.js';
+import { hearActs, ACT_KINDS, ACT_NOT_FOUND } from '../questlines/qlActs.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import {
@@ -48,6 +48,7 @@ import {
   FIND_CAKES_PER_DAY,
 } from '../../net/festivalLaw.js';
 import { utcDay } from '../../net/marksLaw.js'; // CAKE-CAP-SAID: the service's own day (server-account/src/festival.js)
+import { createAskRest } from '../../net/askRest.js';
 import { restackSoulCakes, restackHearthOfferings, isHearthOffering } from './soulCake.js';
 import { foeFindSource } from './festivalFoes.js';
 import { cakesFoundText, festivalRefusalText, isFestivalRefusal, findsFullText } from './festivalWords.js';
@@ -102,6 +103,9 @@ const changed = () => {
     }
   }
 };
+/** AUDIT PASS 2 (the festival's twin): the page's rest after the service said shut or refused a find - the Battle Pass's
+ *  rule (net/askRest.js). A shut word ends with its rest and is read again, never kept for the page. */
+const _rest = createAskRest({ nowMs: () => _doors.nowMs(), account: () => festivalAccount() });
 
 /** THE HOST'S DOORS: `online()` the world plays online, `entity()` the player, `say(line)` a line on the screen,
  *  `selfId()` this client's peer id, `saved()` the save asked for, `room()` the relay's client (my own badge worn at once -
@@ -116,6 +120,7 @@ export function bindFestival(doors = null) {
         storage: appStorage(),
       }))
     : null;
+  _rest.reset();
   if (doors) refreshFestival().catch(() => {});
   return _api;
 }
@@ -135,13 +140,13 @@ export const festivalState = () => (_stateOf === festivalAccount() ? _state : UN
  *  a find, a sale and an offering may do is the service's days, read off the shared clock (the host's `nowMs`). */
 export const festivalNowMs = () => _doors.nowMs();
 /** WHY THIS PAGE DOES NOT PLAY THE FESTIVAL NOW - `offline` (unbound, or no relay), `guest` (signed out, or a guest's
- *  session: a guest's cakes would be a cleared browser's), `closed` (outside its days, or the service has said it is shut
- *  for this account) - or null when it does. */
+ *  session: a guest's cakes would be a cleared browser's), `closed` (outside its days, or the service said it is shut
+ *  for this account, while that word's rest stands) - or null when it does. */
 export function festivalShut() {
   if (!_api || !_doors.online()) return 'offline';
   const s = storedSession(appStorage());
   if (!s || s.kind === 'guest') return 'guest';
-  if (!festivalOpen(festivalNowMs()) || festivalState().open === false) return 'closed';
+  if (!festivalOpen(festivalNowMs()) || _rest.shut()) return 'closed';
   return null;
 }
 /** The account this page asks for (the stored session's), or null - a host clears what it stood when it changes. */
@@ -234,12 +239,18 @@ function sayDayFull() {
   _doors.say(findsFullText(today.max, today.resetMs));
 }
 
-/** Ask the service for the account's festival, and a pending sale's answer after it. Answers whether it was heard. */
-export async function refreshFestival() {
+/** The account's festival read, its `open` heard (net/askRest.js). Answers whether it was heard. */
+async function readFestival() {
   if (!_api || !_doors.online()) return false;
   const r = await _api.mine().catch(() => null);
   if (!r?.ok) return false;
   learn(r.data);
+  _rest.heard(r.data?.open);
+  return true;
+}
+/** Ask the service for the account's festival, and a pending sale's answer after it. Answers whether it was heard. */
+export async function refreshFestival() {
+  if (!(await readFestival())) return false;
   await resumeSale();
   return true;
 }
@@ -257,15 +268,22 @@ const neverPays = (/** @type {any} */ e) =>
  * @param {string} source
  */
 export function askFind(source) {
-  if (!isFindSource(source) || !festivalLive()) return Promise.resolve(0);
+  if (!isFindSource(source) || !festivalLive() || _rest.resting()) return Promise.resolve(0);
   const run = async () => {
+    if (_rest.resting()) return 0; // a refusal ahead of it in the queue stood the page back
     // CAKE-CAP-SAID: the day's finds spent, nothing is asked until the day turns - a find past them was a miss's answer
     // and a write for nothing, every kill - and the player is told why (once a day)
     if (festivalFindsToday().full) {
       sayDayFull();
       return 0;
     }
+    if (_rest.due(festivalState().open) && !(await readFestival())) {
+      _rest.unheard();
+      return 0;
+    } // a shut word read again
+    if (festivalState().open === false) return 0;
     const r = await _api.find(source).catch(() => null);
+    if (!r?.ok) _rest.refused(r?.error);
     const d = r?.ok ? r.data : r; // a refusal (`capped`) carries the count too
     const found = r?.ok && Number.isSafeInteger(d?.found) ? d.found : 0;
     learn(d);
@@ -295,9 +313,8 @@ registerPlayerKillListener(FESTIVAL_FIND, (/** @type {any} */ entity) => {
 });
 /** ONE DEED, ONE FIND: an elite foe's fall is its kill's find (`elite`, above), never its act's too; and the acts one
  *  receipt says together - a breach closed with its rite broken, a Valkynaz's Redoubt taken - ask one find of their family,
- *  not one each (the acts a turn says are one deed). AUDIT STAR8 T1: and a Wyrd Sister's window opened is no deed at all -
- *  a press at her door is never a Soul Cake. */
-const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);
+ *  not one each (the acts a turn says are one deed). The acts that are no deed at all are the leaf's one list
+ *  (qlActs.js ACT_NOT_FOUND), the pass's too. */
 let _actTurn = /** @type {Set<string>|null} */ (null);
 hearActs(FESTIVAL_FIND, (/** @type {string} */ kind) => {
   const g = ACT_KINDS[/** @type {keyof typeof ACT_KINDS} */ (kind)];
@@ -540,8 +557,7 @@ export async function offeringMove(/** @type {'set'|'fill'|'takeIn'|'take'} */ m
 export async function townOfferings(/** @type {number} */ mapId) {
   if (!_api || !_doors.online()) return null;
   const r = await _api.town(mapId).catch(() => null);
-  if (r?.ok && typeof r.data?.open === 'boolean' && r.data.open !== festivalState().open) learn({ open: r.data.open }); // the switch, as it stands
-  return r?.ok ? r.data : null;
+  return r?.ok ? r.data : null; // AUDIT PASS 2: its `open` is the town's view (its days too), never the switch's word
 }
 
 /** Tests only. */
@@ -558,4 +574,5 @@ export function _resetFestivalClientForTests() {
   _fullSaid = null;
   _hear.clear();
   _version = 0;
+  _rest.reset();
 }

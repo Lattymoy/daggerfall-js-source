@@ -143,8 +143,8 @@
   {
     "name": "WITCH1-the-peer-icon-unread",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), ak: readArmory(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), ak: readArmory(p), fx: readEffects(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -332,9 +332,9 @@
   },
   {
     "name": "WITCH1-AUDIT-the-elite-act-finds-too",
-    "file": "src/systems/festival/festivalClient.js",
-    "old": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);",
-    "new": "const ACT_NOT_FOUND = Object.freeze(['wyrd-met']);",
+    "file": "src/systems/questlines/qlActs.js",
+    "old": "export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
+    "new": "export const ACT_NOT_FOUND = Object.freeze(['wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "WITCH1-AUDIT-icon-unkept",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, armory, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, armory, effects, nameAsAt })",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],

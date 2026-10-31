@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-STARTS-W3-any-pixel",
     "file": "src/scenes/startsHost.js",
-    "old": "      if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
-    "new": "      if (at && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "old": "    return !!px && commissionIn((sd) => sd.worldPixel?.x === px.x && sd.worldPixel?.y === px.y);",
+    "new": "    return !!px && commissionIn((sd) => !!sd.worldPixel);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-STARTS-W3-commission-found-still-inside",
     "file": "src/scenes/startsHost.js",
-    "old": "      if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
-    "new": "      if (at && at.x === px.x && at.y === px.y) return true;",
+    "old": "      if (sd && lairIs(sd) && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "      if (sd && lairIs(sd)) return true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

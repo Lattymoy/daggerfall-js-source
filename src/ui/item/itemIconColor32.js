@@ -33,16 +33,16 @@ export function itemIconKey(img) {
 /**
  * The item's own picture as `{ key, width, height, colors }` (color32 order), or null. AUDIT WBX S6: `identity` the
  * wearer (the pack's own - systems/item/itemTemplates.js inventoryItemImage: a weapon or armour is drawn for its wearer's
- * gender and race), so the floor draws what the pack will.
+ * gender and race), so the floor draws what the pack will. LAYERED-WEAPONS: `image`, another picture of the item's.
  * @param {any} item
- * @param {{ wait?: (ms: number) => Promise<void>, identity?: any }} [opts]
+ * @param {{ wait?: (ms: number) => Promise<void>, identity?: any, image?: any }} [opts]
  * @returns {Promise<{key: string, width: number, height: number, colors: Uint8ClampedArray}|null>}
  */
 export async function itemIconColor32(
   item,
-  { wait = (ms) => new Promise((r) => setTimeout(r, ms)), identity = undefined } = {},
+  { wait = (ms) => new Promise((r) => setTimeout(r, ms)), identity = undefined, image = undefined } = {},
 ) {
-  const img = item ? inventoryItemImage(item, identity) : null;
+  const img = image ?? (item ? inventoryItemImage(item, identity) : null);
   if (
     img?.archive == null ||
     !Number.isInteger(img.record) ||

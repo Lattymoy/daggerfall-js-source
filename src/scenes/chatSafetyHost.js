@@ -564,8 +564,7 @@ export function createChatSafetyHost({
     return true;
   };
   /** AUDIT SAFE CLIENT-13 (2026-10-17): EVERY LINE A ROOM IS ASKED TO CARRY PASSES THE CODE OF CONDUCT'S GATE - each
-   *  session asks before it sends (OnlineSession.mayChat), so an item posted from the pack (CHAT-POST, world.js
-   *  postItemInChat - it went straight to the tab's session, and a player who had never agreed posted to World) is held
+   *  session asks before it sends (OnlineSession.mayChat), so a line with a linked item from the pack is held
    *  as a typed line is: the card stands and nothing goes. A typed line was held before it got here (onSend). */
   const mayChat = () => {
     if (agreed !== false) return true;

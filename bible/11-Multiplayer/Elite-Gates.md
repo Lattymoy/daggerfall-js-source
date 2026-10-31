@@ -338,8 +338,8 @@ THE COUNT CHIP, THE RECAP, THE REHEARSAL, RIDDEN POSES, THE SPIRE MIX, ROLE READ
 **The item.** Template **575**, free today (the gate's 570-572 and the Ayleid stones' 573-574 come before it). It is a
 row of its own, `WEIR_KEY_ROW` in `src/systems/eliteGates/weirKey.js`:
 
-- `{index:575, baseWeight:0.25, hitPoints:1000, basePrice:500, rarity:20, bound:true, stackable:true, packOnly:true}`
-  (the leaf `WEIR_KEY_LAW_ROW`, `src/systems/eliteGates/weirKeyRow.js`, since KEY-LAW; pack-only since KEY-FACE, below), in the
+- `{index:575, baseWeight:0, hitPoints:1000, basePrice:500, rarity:20, bound:true, stackable:true, packOnly:true}`
+  (the leaf `WEIR_KEY_LAW_ROW`, `src/systems/eliteGates/weirKeyRow.js`, since KEY-LAW; pack-only since KEY-FACE, below; weightless since KEY-WEIGHT, below), in the
   miscellany group (`UselessItems2`), never a gem (PORTAL1's lesson: every Gems piece is a crystal a slot takes);
 - its art: a Battlemage's key in gold leaf with a blue stone in its bow, painted in code under the Spire's held archive
   block (`src/world/eliteGates/egKeyArt.js`, EG-ZH), which EG1's registry holds - never a borrowed record, because Port-Doctrine
@@ -398,6 +398,11 @@ real relay instance, so the key is a service-side balance and the item is its fa
   never had, and the pack stood a key short of the balance for each. A find answered after the player left the visit it was
   asked in puts its key in the pack, not on the body left behind.
   The key's card says the keys are the account's (above).
+- **It weighs nothing** (KEY-WEIGHT, 2026-10-31, Mac: "Remove weight from weir keys"). It was 0.25 kg. A key leaves the
+  pack only to the Spire's own stake, so it is no load to carry, as CAKE-WEIGHT made the Soul Cake
+  (`src/systems/festival/festivalRows.js` SOUL_CAKE_LAW_ROW). A face carries no `weightInKg` of its own (`weirKey.js` weirKeys), so every stack a
+  save holds reads the row. Pinned: `test/systems/eliteGates/key_weight.test.js` (1), `tools/mutants/key_weight.json`
+  (1, dead).
   Pinned: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (3), `test/scenes/audit_rpt1026_client.test.js` (K1, 5).
 
 **Where they come from.** The service rolls every one with its own `rand`, at a claim it already verifies. This is

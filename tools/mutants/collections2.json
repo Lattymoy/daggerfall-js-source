@@ -92,8 +92,8 @@
   {
     "name": "C2-retired-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'retired']);",
+    "old": "]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
+    "new": "  'retired',\n]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
     "tests": [
       "test/ui/collections2.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "C2-the-filter-never-applied",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now));",
-    "new": "  const shown = entries;",
+    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop)); // AUDIT-STOREFRONT S2: the shop's own word",
+    "new": "  const shown = entries; // AUDIT-STOREFRONT S2: the shop's own word",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "C2A-closed-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'closed']);",
+    "old": "]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
+    "new": "  'closed',\n]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
     "tests": [
       "test/ui/collections2.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "C2A-the-glyph-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
-    "new": ", '/v1/account/icon', '/v1/account/armory']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
+    "new": ", '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "C2A-the-icon-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
-    "new": ", '/v1/account/glyph', '/v1/account/armory']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory', '/v1/account/effect']);",
+    "new": ", '/v1/account/glyph', '/v1/account/armory', '/v1/account/effect']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -538,7 +538,7 @@
   {
     "name": "C2A-the-grimoire-never-inked",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (globalThis.document?.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS) inkPaint(word);\n  }",
+    "old": "    inkPaintedWord(word); // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)\n  }",
     "new": "  }",
     "tests": [
       "test/ui/collections2.test.js"

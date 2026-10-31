@@ -442,14 +442,20 @@ export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
  *  "shoot release" comes with the classic loose and a shot repeats as fast on both looks. Null for anything but a bow's
  *  release not yet loosed. */
 export function shotSchedule(m, dt = 0) {
-  if (!m || !m.isBow || m.state !== 'StrikeDown') return null;
+  if (!m || !m.isBow || (m.state !== 'StrikeDown' && m.state !== 'StrikeUp')) return null;
   const tick = m.tick ?? CLASSIC_UPDATE_INTERVAL;
   if (!(tick > 0) || !Number.isFinite(tick)) return null;
   const at = m.frame > 0 ? m.frame | 0 : 0;
+  const drawUp = m.state === 'StrikeUp';
+  // MW-DRAW-PACE (mob, 2026-10-30: "Long bow shoot same speed in Morrowind as short"): Bow Drawback's draw, timed to
+  // the hold frame the classic bow stops on, so the arm's long bow comes to full draw as soon as the sprite's
+  if (drawUp && at >= BOW_DRAWN_HOLD_FRAME) return null;
   const hitFrame = m.hitFrame ?? HIT_FRAME_BOW;
   if (at >= hitFrame) return null;
   const frames = (m.frames ?? BOW_NUM_FRAMES).StrikeDown ?? BOW_NUM_FRAMES.StrikeDown;
   const step = dt > 0 ? dt * Math.max(1, Math.ceil(tick / dt - 1e-9)) : tick;
+  if (drawUp)
+    return { seconds: (BOW_DRAWN_HOLD_FRAME - at) * step, hitAt: (BOW_DRAWN_HOLD_FRAME - at) * step, step, draw: true };
   return { seconds: (frames - at) * step, hitAt: (hitFrame - at) * step, step };
 }
 

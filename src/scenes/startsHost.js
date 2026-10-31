@@ -210,12 +210,19 @@ export function createStartsHost(host) {
    *  re-entered the public room, which online is laid at the world's size and holds none of a quest's things. Such a
    *  load stands inside, through the quest's own entry (scenes/instanceDoor.js entryFor: its instance, whole). */
   function resumesAt(px) {
-    if (!px) return false;
+    return !!px && commissionIn((sd) => sd.worldPixel?.x === px.x && sd.worldPixel?.y === px.y);
+  }
+  /** START-INSTANCE (FIELD BUGS 2026-10-30g): is dungeon `mapId` a running province start's own, its commission still in
+   *  it? Its door offers no Public row then (scenes/instanceDoor.js): that room is laid smaller and stands none of it. */
+  function lairOpen(mapId) {
+    return Number.isFinite(mapId) && commissionIn((sd) => Number(sd.mapId) >>> 0 === mapId >>> 0);
+  }
+  function commissionIn(lairIs) {
     for (const q of machine?.()?.quests?.values?.() ?? []) {
       if (!q || q.questComplete || q.questTombstoned || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase()))
         continue;
-      const at = q.getPlace?.(LAIR)?.siteDetails?.worldPixel;
-      if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;
+      const sd = q.getPlace?.(LAIR)?.siteDetails;
+      if (sd && lairIs(sd) && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;
     }
     return false;
   }
@@ -249,6 +256,7 @@ export function createStartsHost(host) {
     settled,
     writ,
     resumesAt,
+    lairOpen,
     restored,
     /** Which start this character takes (tests, the probes). */
     get start() {

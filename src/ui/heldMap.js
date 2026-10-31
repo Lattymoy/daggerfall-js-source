@@ -225,6 +225,7 @@ import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's 
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
+import { readFissureMarksIn, fissureMarksKey, FISSURE_BRASS_CSS, fissureLegendText } from './fissureMapMark.js';   // STOREFRONT: the season's Brass Fissures
 import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -743,6 +744,8 @@ export class HeldMapWindow {
     // STAR6: the night's fallen stars (the host's `stars`, on the same poll) - each its card, the raids' reader's
     this._stars = [];
     this._starsKey = '';
+    this._fissures = [];   // STOREFRONT: the season's Brass Fissures
+    this._fissuresKey = '';
     // GUIDE5: where the quests point (the host's `quests`, on the same poll) - each place the player's map holds
     this._quests = [];
     this._questsKey = '';
@@ -1469,6 +1472,7 @@ export class HeldMapWindow {
           pois: this._pois,   // POI-2
           raids: this._raids,   // EVENT-TIP: the towns under attack
           stars: this._stars,   // STAR6: the night's fallen stars
+          fissures: this._fissures,   // STOREFRONT: the season's Brass Fissures
           quests: this._quests,   // GUIDE5: where the quests point
           vendor: this._vendor,   // HOME-VENDOR: the trader's waypoint
           travellers: this._trav.filter((t) => playersOnMaps() && playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
@@ -2293,6 +2297,10 @@ export class HeldMapWindow {
     const stars = readRaidMarksIn(this.deps.stars, sheet);
     const starsKey = raidMarksKey(stars);
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
+    // STOREFRONT: and the season's Brass Fissures - a stage turning, the day's gate beside one while the map stands open
+    const fissures = readFissureMarksIn(this.deps.fissures, sheet);
+    const fissuresKey = fissureMarksKey(fissures);   // AUDIT-STOREFRONT II (lane D 3): kept for the list it was read as
+    if (fissuresKey !== this._fissuresKey) { this._fissuresKey = fissuresKey; this._fissures = fissures; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
     const quests = readQuestMarks(this.deps.quests, this._size, sheet).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
@@ -2341,7 +2349,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !this._fissures.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2414,6 +2422,11 @@ export class HeldMapWindow {
       const dot = el('span', 'hmlegdot');
       dot.style.background = STAR_VIOLET_CSS;
       leg.append(dot, el('span', 'hmlegtext', STAR_CARD_TEXT.legend()));
+    }
+    if (this._fissures.length) {   // STOREFRONT: and a Brass Fissure
+      const dot = el('span', 'hmlegdot');
+      dot.style.background = FISSURE_BRASS_CSS;
+      leg.append(dot, el('span', 'hmlegtext', fissureLegendText()));
     }
     // GUIDE5: and a quest's place - the legend's dot turned to the mark's own diamond. AUDIT GUIDE U16: both kinds, as
     // the sheet draws them - the followed quest's filled with the pen's ink, the rest hollow, each edged in gold
@@ -2721,6 +2734,18 @@ export class HeldMapWindow {
   _starAt(sx, sy) {
     let best = null, bestD = RAID_HIT_PX * RAID_HIT_PX;
     for (const m of this._stars) {
+      const [x, y] = toPaper(this._view, m.x, m.y);
+      const d = (x - sx) ** 2 + (y - sy) ** 2;
+      if (d < bestD) { best = m; bestD = d; }
+    }
+    return best;
+  }
+
+  /** STOREFRONT: the Brass Fissure under the cursor - its cog on its pixel (inkMap.js paintFissureMark), within the
+   *  location marks' own reach. */
+  _fissureAt(sx, sy) {
+    let best = null, bestD = RAID_HIT_PX * RAID_HIT_PX;
+    for (const m of this._fissures) {
       const [x, y] = toPaper(this._view, m.x, m.y);
       const d = (x - sx) ** 2 + (y - sy) ** 2;
       if (d < bestD) { best = m; bestD = d; }
@@ -4081,6 +4106,9 @@ export class HeldMapWindow {
     // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)
     const star = this._starAt(sx, sy);
     if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };
+    // STOREFRONT: a Brass Fissure answers as itself (its card names its town and what waits at it)
+    const fissure = this._fissureAt(sx, sy);
+    if (fissure) return { label: fissure.label, cursor: m ? 'pointer' : '', tip: fissure.tip };
     // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it
     const quest = this._questAt(sx, sy);
     if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };

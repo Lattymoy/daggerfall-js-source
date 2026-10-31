@@ -476,7 +476,10 @@ test('AUDIT 64 F16: a 216 pile is centred on its marker; only the RANDOM pile is
     'the RANDOM arm keeps AlignBillboardToGround (RDBLayout.cs:1619-1620)');
   // pile.half is set BEFORE the branch, so lootTargets and restorePiles
   // read one consistent record.
-  assert.ok(d.indexOf('pile.half = [size.w / 2, size.h / 2];') < d.indexOf('const g = pile.isFixed'));
+  // PIN MOVED (AUDIT-STOREFRONT III D1): the half is set beside the archive's own (`lawHalf`) - and found at all, which
+  // the bare indexOf (-1 below anything) never asked
+  const half = d.indexOf('[pile.half, pile.lawHalf] = [[size.w / 2, size.h / 2], [law.w / 2, law.h / 2]];');
+  assert.ok(half > 0 && half < d.indexOf('const g = pile.isFixed'));
 });
 
 // ---------------------------------------------------------------------------

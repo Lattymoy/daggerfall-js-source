@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-a-returning-peer-not-seen-afresh",
     "file": "src/net/peer/peerFx.js",
-    "old": "      if (!s || s.tick < tick - 1) {\n        seen.set(id, { hk, hu, tick });",
-    "new": "      if (!s) {\n        seen.set(id, { hk, hu });",
+    "old": "      if (!s || s.tick < tick - 1) {\n        seen.set(id, { hk, hu, xk, tick });",
+    "new": "      if (!s) {\n        seen.set(id, { hk, hu, xk });",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-the-frame-counter-never-advanced",
     "file": "src/net/peer/peerFx.js",
-    "old": "      tick++;\n      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded",
-    "new": "      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded",
+    "old": "      tick++;\n      mounts.sweep(); // STOREFRONT: a rider not seen this frame lets its beat go",
+    "new": "      mounts.sweep(); // STOREFRONT: a rider not seen this frame lets its beat go",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-blows-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "        if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
-    "new": "        if (at) {",
+    "old": "        if (at && within(at, feet, BLOW_PEER_M) && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "        if (at && within(at, feet, BLOW_PEER_M)) {",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

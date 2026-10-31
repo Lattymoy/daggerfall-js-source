@@ -11,7 +11,7 @@
   {
     "name": "NATUREGROUND-every-flat-lifted",
     "file": "src/scenes/pixelBuild.js",
-    "old": ": flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;",
+    "old": ": flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y + lift;",
     "new": ": locLocal[1] + flat.y + groundOffPlane(samples, avg, fx, fz);",
     "tests": [
       "test/world/terrain/natureground.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "NATUREGROUND-lift-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "? locLocal[1] + flat.y + off : blockY + flat.y;",
-    "new": "? locLocal[1] + flat.y : blockY + flat.y;",
+    "old": "? locLocal[1] + flat.y + off : blockY + flat.y + lift;",
+    "new": "? locLocal[1] + flat.y : blockY + flat.y + lift;",
     "tests": [
       "test/world/terrain/natureground.test.js"
     ]

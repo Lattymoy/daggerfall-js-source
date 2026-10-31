@@ -29,6 +29,7 @@
 // cache miss, never an error.
 
 import { ROAD_DIALS } from './road/roadNetwork.js';
+import { landLayer } from './land/landLayer.js'; // FOUNDATION F4: the land's rows
 
 /** Bump when the generator changes shape. The dials are in the key on
  *  their own, so a tuned number does not need this.
@@ -39,11 +40,11 @@ export const GENERATOR_VERSION = 20;
 const DB = 'daggerfall-roads',
   STORE = 'networks';
 
-export function roadsCacheKey({ settlements, woodsLength, dials = {} }) {
+export function roadsCacheKey({ settlements, woodsLength, dials = {}, land = landLayer().stamp }) {
   let sum = 0;
   for (const s of settlements) sum = (sum + s.x * 31 + s.y * 17 + (s.type | 0) * 7) >>> 0;
   const d = { ...ROAD_DIALS, ...dials };
-  return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}`;
+  return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}${land ? `:land${land}` : ''}`; // FOUNDATION F4: the land's rows move the ground the roads were laid on
 }
 
 /** The IndexedDB store. Every method answers null on any failure.

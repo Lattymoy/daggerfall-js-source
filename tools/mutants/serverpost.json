@@ -353,8 +353,8 @@
   {
     "name": "TAMRIEL-POST-the-send-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "    words = postWords({ subject, body });\n  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
-    "new": "    words = postWords({ subject, body });\n  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
+    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})",
+    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],

@@ -95,7 +95,7 @@ test('GRIM1: THE INK - a light word becomes the pack\'s brown ink, darker the br
   assert.equal(bone.h, 26);
   assert.equal(inkColour('rgb(243,239,44)'), GRIM_YELLOW, 'Daggerfall\'s yellow stays its yellow on a page, as the pack writes a value');
   const brass = hslOf(inkColour('#f3cf86'));
-  assert.deepEqual([brass.h, brass.l], [5, 0.29], 'Plus\'s brass is the pack\'s red');
+  assert.deepEqual([brass.h, brass.l], [5, 0.26], 'Plus\'s brass is the pack\'s red - PIN MOVED (AUDIT-STOREFRONT III C6): at 29% it read 4.48:1 on the darkest page');
   assert.deepEqual([snapSize(12), snapSize(20), snapSize(21), snapSize(26), snapSize(46)], [16, 16, 32, 32, 48], 'every size on the face\'s 16px grid');
   const green = hslOf(inkColour('#6fcf8a'));
   assert.ok(green.h > 120 && green.h < 150 && green.l <= 0.25 && green.l >= 0.15, 'a gain stays green, in ink - INK-READ: deepened only as far as it reads at 4.5:1');
@@ -130,7 +130,7 @@ test('GRIM1: a rule re-said - the face for everywhere (the pack\'s Alagard over 
   assert.match(css, /\.x:is\(\[data-grim="wood"\], \[data-grim="wood"\] \*\) \{ color: hsl\(40 /);
   assert.match(css, /\.x:is\(\[data-grim-desk\] \*\):not\(\[data-grim\], \[data-grim\] \*\) \{ color: hsl\(40 /);
   assert.match(css, /\.y:is\(\[data-grim="ink"\][^{]*\)::before \{ color: #f4e04c; text-shadow: /, 'a value in yellow carries its hard edge');
-  assert.match(inkCss('.z.on { color: rgb(243,239,44); }'), /\.z\.on:is[^{]*\{ color: hsl\(5 80% 29%\)/, 'a CHOSEN word is the pack\'s red');
+  assert.match(inkCss('.z.on { color: rgb(243,239,44); }'), /\.z\.on:is[^{]*\{ color: hsl\(5 80% 26%\)/, 'a CHOSEN word is the pack\'s red (PIN MOVED, AUDIT-STOREFRONT III C6)');
   assert.match(css, /\.y::before \{ content: none \}/);
   assert.doesNotMatch(css, /@keyframes/, 'a keyframe is a moment of an animation, never a page');
   assert.match(css, /@media \(max-width: 10px\) \{\n[^}]*\.z/);

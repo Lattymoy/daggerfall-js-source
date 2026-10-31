@@ -19,6 +19,7 @@ export const ARMORY_LINE_TEXT = Object.freeze({
   dagonfire: () => t('armory.line.dagonfire', 'Dagonfire'),
   eternal: () => t('armory.line.eternal', 'Eternal'),
   guild: () => t('armory.line.guild', 'Guild'), // GUILD-SHOP
+  crystal: () => t('armory.line.crystal', 'Crystal'), // THANKS-POST
 });
 /** Each piece's name. */
 export const ARMORY_TEXT = Object.freeze({
@@ -33,6 +34,7 @@ export const ARMORY_TEXT = Object.freeze({
   eternalgreaves: () => t('armory.name.eternalgreaves', 'Eternal Greaves'),
   eternaledge: () => t('armory.name.eternaledge', 'Eternal Edge'),
   insigniaarmlet: () => t('armory.name.insigniaarmlet', 'Insignia Armlet'), // GUILD-SHOP
+  crystalspurs: () => t('armory.name.crystalspurs', 'Crystal Spurs'), // THANKS-POST
 });
 /** What each piece looks like, in a sentence or two. */
 export const ARMORY_LOOK = Object.freeze({
@@ -88,6 +90,11 @@ export const ARMORY_LOOK = Object.freeze({
       'armory.look.insigniaarmlet',
       "A gilt band round the left upper arm, enamelled in your guild's colors, with its arms on a shield of beaten gold.",
     ), // GUILD-SHOP
+  crystalspurs: () =>
+    t(
+      'armory.look.crystalspurs',
+      'Small spurs of crystal along both arms, each a different size. Their colors shift slowly from amethyst to aqua to rose.',
+    ), // THANKS-POST
 });
 /** A SET's name and look (the shop's Eternal Set, its five pieces at once). */
 export const ARMORY_SET_TEXT = Object.freeze({ eternalset: () => t('armory.name.eternalset', 'The Eternal Set') });

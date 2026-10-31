@@ -68,6 +68,7 @@ import { PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';
 import { SD_RING_MAP_CSS } from './superDungeon/sdMapMark.js';
+import { FISSURE_BRASS_CSS } from './fissureMapMark.js';
 
 export const EVENT_BOARD_STYLE_ID = 'dagger-event-board-style';
 export const EVENT_BOARD_KIT_ID = 'dagger-event-board-kit';
@@ -108,6 +109,7 @@ export const EVENT_KIND_CSS = Object.freeze({
   star: STAR_VIOLET_CSS,
   raid: '#f2c46b',
   festival: '#9fd18b',
+  season: FISSURE_BRASS_CSS, // STOREFRONT: the season's brass, its fissures' on the map
 });
 
 /**

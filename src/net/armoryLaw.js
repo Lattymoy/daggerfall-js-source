@@ -10,11 +10,12 @@ export const ARMORY_SLOTS = Object.freeze(['head', 'torso', 'arms', 'legs', 'wea
 /** An empty slot in a kit. */
 export const ARMORY_EMPTY = '0';
 /** The lines a piece belongs to: where it is had, and the colours it is drawn in. */
-export const ARMORY_LINES = Object.freeze(['dagonfire', 'eternal', 'guild']);
+export const ARMORY_LINES = Object.freeze(['dagonfire', 'eternal', 'guild', 'crystal']);
 /** How a line's pieces are had (the owner: "The dagon breach set should be very expensive from the dagon breach shop
  *  dealer"): the Sigil Broker sells the Dagonfire line for Deadlands Embers (insignia.js); the shop sells the Eternal line;
- *  GUILD-SHOP: the guild shop sells the guild line for silver (guildShopLaw.js), drawn in the wearer's guild's arms. */
-export const ARMORY_SOURCE = Object.freeze({ dagonfire: 'broker', eternal: 'shop', guild: 'guild' });
+ *  GUILD-SHOP: the guild shop sells the guild line for silver (guildShopLaw.js), drawn in the wearer's guild's arms.
+ *  THANKS-POST: the crystal line is a gift, never sold (net/giftLaw.js). */
+export const ARMORY_SOURCE = Object.freeze({ dagonfire: 'broker', eternal: 'shop', guild: 'guild', crystal: 'gift' });
 
 const piece = (
   /** @type {string} */ key,
@@ -36,6 +37,7 @@ export const ARMORY_PIECES = Object.freeze([
   piece('eternalgreaves', 'legs', 'b', 'eternal'),
   piece('eternaledge', 'weapon', 'b', 'eternal'),
   piece('insigniaarmlet', 'arms', 'c', 'guild'), // GUILD-SHOP: the guild's arms on one upper arm
+  piece('crystalspurs', 'arms', 'd', 'crystal'), // THANKS-POST: small crystal spurs along both arms, the update's gift
 ]);
 /** Every piece's key. */
 export const ARMORY_KEYS = Object.freeze(ARMORY_PIECES.map((p) => p.key));
@@ -65,6 +67,7 @@ export const ARMORY_NAME = Object.freeze({
   eternalgreaves: 'Eternal Greaves',
   eternaledge: 'Eternal Edge',
   insigniaarmlet: 'Insignia Armlet',
+  crystalspurs: 'Crystal Spurs',
   eternalset: 'The Eternal Set',
 });
 

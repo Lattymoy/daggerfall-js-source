@@ -20,6 +20,7 @@ import { noteMyBlow, poseFx, createPeerFxPlayer, FX_MIN_GAP_S, _resetPeerFxForTe
 import { validPose, POSE_HZ_MAX } from '../../src/net/wire.js';
 import { StreamingWorldState } from '../../src/world/streamingWorld.js';
 import { privateInteriorOf } from '../../src/net/privateInterior.js';
+import { withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';   // INDOOR-FLOOR: the frame's pose and law read a room's floor
 import * as HB from '../../src/systems/quickslots.js';
 import { equipTableOf, EQUIP_SLOTS, equipItem, isEquipped } from '../../src/systems/equip.js';
 import { TEMPLATES } from '../../src/systems/useItem.js';
@@ -90,7 +91,7 @@ function bootOf(slices, { origin, comp, pos }) {
   const host = mount(
     `'use strict';\n${slices.camp}\n${slices.toScene}\n${slices.toWire}\n${slices.observer}\n`
       + `const frameIn = (mode, key = null) => { const overworld = mode === 'exterior'; const wc = state.worldCoords(player.pos);\n${slices.frame}\nreturn pose; };`,
-    { state, player, privateInteriorOf, cam: { yaw: 0.5, pitch: -0.1 }, noteMyBlow, peerFxPlayer: { splashed() {} }, setSplashObserver: (fn) => { observer = fn; } },
+    { state, player, privateInteriorOf, withIndoorFloor, indoorSceneY, modes: null, cam: { yaw: 0.5, pitch: -0.1 }, noteMyBlow, peerFxPlayer: { splashed() {} }, setSplashObserver: (fn) => { observer = fn; } },
     'return { frameIn, toScene: (p) => onlineToScene(p), campToWire };');
   return { ...host, strike: (pos) => observer(3, pos.slice(), { fromPlayer: true, damage: 5, maxHealth: 20 }) };
 }
@@ -113,7 +114,7 @@ test('AUDIT MERGE-PLUS B1 the struck point rides the mode\'s own law, by source:
   assert.match(W, /let onlineToScene = \(p\) => \[p\.x, p\.y, p\.z\];\s+let sceneToOnline = campToWire;/, 'declared beside the pose\'s own law');
   assert.match(W, /setSplashObserver\(\(bloodIndex, pos, hit\) => \{ peerFxPlayer\.splashed\(pos\); if \(hit\?\.fromPlayer\) noteMyBlow\(pos, bloodIndex, hit, \(q\) => sceneToOnline\(q\)\); \}\);/, 'my blow goes out through the law of the frame it was struck in');
   assert.ok(!/noteMyBlow\([^;]*campToWire/.test(W), 'no blow of mine is mapped by the overworld\'s law alone');
-  assert.match(frame, /\(p\) => \[p\.x, shedY \? p\.y \+ state\.compensation\[1\] : p\.y, p\.z\];\s*sceneToOnline = nativeFrame \? campToWire : \(q\) => \[q\[0\], shedY \? q\[1\] - state\.compensation\[1\] : q\[1\], q\[2\]\];$/, 'written each frame, beside its inverse');
+  assert.match(frame, /\(p\) => \[p\.x, shedY \? indoorSceneY\(p, mode === 'interior' && modes\?\.interiorCtx, state\.compensation\[1\]\) : p\.y, p\.z\];\s*sceneToOnline = nativeFrame \? campToWire : \(q\) => \[q\[0\], shedY \? q\[1\] - state\.compensation\[1\] : q\[1\], q\[2\]\];$/, 'written each frame, beside its inverse');   // PIN MOVED (INDOOR-FLOOR, FIELD BUGS 2026-10-30b): over the room's floor where both say one
   assert.equal((W.match(/\bsceneToOnline =/g) ?? []).length, 2, 'the declaration and the frame, nowhere else');
 });
 

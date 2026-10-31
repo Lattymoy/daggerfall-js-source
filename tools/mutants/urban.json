@@ -273,8 +273,8 @@
   {
     "name": "U3M-a-kerb-against-a-house",
     "file": "src/world/urban/townFabricModel.js",
-    "old": "      if (nx >= 0 && nz >= 0 && nx < W && nz < H && (pave[j] || plan.kind[j] === K.built)) return;",
-    "new": "      if (nx >= 0 && nz >= 0 && nx < W && nz < H && pave[j]) return;",
+    "old": "      if (inside && (pave[j] || surf[j] === K.built)) return;",
+    "new": "      if (inside && pave[j]) return;",
     "tests": [
       "test/world/urban/urban3_model.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "U3M-cobbles-in-a-hamlet",
     "file": "src/world/urban/townFabricModel.js",
-    "old": "  if (cobbles && st.side) flat(cobble, of(K.side), FABRIC_ROAD_Y);",
-    "new": "  if (st.side) flat(cobble, of(K.side), FABRIC_ROAD_Y);",
+    "old": "    k === K.pave ? F.flags : (k === K.main && st.carriage) || (k === K.side && cobbles && st.side) ? F.road : F.none,",
+    "new": "    k === K.pave ? F.flags : (k === K.main && st.carriage) || (k === K.side && st.side) ? F.road : F.none,",
     "tests": [
       "test/world/urban/urban3_model.test.js"
     ]

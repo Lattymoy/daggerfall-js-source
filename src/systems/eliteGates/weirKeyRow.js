@@ -15,8 +15,10 @@ export const WEIR_KEY_TEMPLATE = 575;
  *  stowed in the wagon or the player's own storage was never seen - the pack was given a new one, and the stowed ones,
  *  carried back, all turned to rust at the next answer. The law reads no `packOnly`. */
 export const WEIR_KEY_LAW_ROW = Object.freeze({
+  // KEY-WEIGHT (2026-10-31, Mac: "Remove weight from weir keys"): a key leaves the pack only to the Spire's own stake, so it
+  // weighs nothing, as CAKE-WEIGHT made the Soul Cake. A face carries no `weightInKg` of its own (weirKey.js weirKeys).
   index: WEIR_KEY_TEMPLATE,
-  baseWeight: 0.25,
+  baseWeight: 0,
   hitPoints: 1000,
   basePrice: 500,
   rarity: 20,

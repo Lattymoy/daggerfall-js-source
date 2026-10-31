@@ -153,7 +153,7 @@ export class Quest {
     // Q3-i: Clock's travel arms over the world seam - flag&16's 2.5x
     // cautious ALL-places trip and _2place_'s one-way. null with no
     // world (headless), so the clock's HELD arm still pends loudly.
-    this.travelSeconds = () => (this.hooks?.world ? travelTimeSeconds(this) : null);
+    this.travelSeconds = (opts) => (this.hooks?.world ? travelTimeSeconds(this, null, true, opts) : null); // TRIP-HOME: { home } - a deadline's way back to its questors
     this.travelSecondsTo = (place) => (this.hooks?.world ? travelTimeSeconds(this, place, false) : null);
 
     // Q2 lifecycle state

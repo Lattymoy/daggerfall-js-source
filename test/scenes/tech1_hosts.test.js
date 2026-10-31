@@ -25,7 +25,7 @@ const rigBag = (src, open) => { const i = src.indexOf(open); assert.ok(i >= 0, o
 
 test('TECH1 THE ACTION: WeaponTechnique appended last, a port row the classic windows yield, on Mouse3 alone, in Combat - and a touch corner\'s, a d-pad\'s and a pad button\'s to choose (mutants: inserted mid-list; another key; the group)', () => {
   assert.equal(TECHNIQUE_ACTION, 'WeaponTechnique');
-  assert.equal(ACTIONS.at(-8), 'WeaponTechnique',   // PIN MOVED (TECH-KEY2: the signature key appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)
+  assert.equal(ACTIONS.at(-9), 'WeaponTechnique',   // PIN MOVED (TECH-KEY2: the signature key appended last)   // SHOT-KINDS: the guns' load after the hold   // PIN MOVED (UI-CALM: the saddle panel's key; CARGO-ANYWHERE: the hold's last; PARTY-PING: the ping's; Decorate)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
     'appended - the classic grid and a saved file resolve by position (SPYGLASS\' glass after it - PIN MOVED)');
   assert.ok(PORT_ACTIONS.includes('WeaponTechnique'));
   assert.deepEqual(DEFAULT_BINDINGS.filter(([, a]) => a === 'WeaponTechnique'), [['Mouse3', 'WeaponTechnique']]);
@@ -123,11 +123,11 @@ test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm 
   const dc = code('src/scenes/dungeonContext.js');
   assert.match(dc, /const rv = m\.technique \? null : arenaRivalBody\(\);/);
   assert.match(dc, /const boss = struckBy\(gateBossBody\(\)\) \? null : gateBossBody\(\);/);
-  assert.match(dc, /const cr = gateCrystalBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);\s*if \(cr\) \{/, 'AUDIT TECH1: a struck crystal passed, the next one under the shaft met');
-  assert.match(dc, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius\)\);\s*if \(hb\) \{/, 'AUDIT TECH1: a struck body of his host passed, the next one met');
+  assert.match(dc, /const cr = gateCrystalBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius, _from\)\);\s*if \(cr\) \{/, 'AUDIT TECH1: a struck crystal passed, the next one under the shaft met');
+  assert.match(dc, /const hb = gateHostBodies\(\)\.find\(\(q\) => !struckBy\(q\) && missileHitsCapsule\(m\.pos, q\.ai\.feet, q\.ai\.height, q\.ai\.radius, _from\)\);\s*if \(hb\) \{/, 'AUDIT TECH1: a struck body of his host passed, the next one met');
   assert.match(dc, /if \(f\.dead \|\| f\.companion != null\) continue;[^\n]*\n\s*if \(struckBy\(f\)\) continue;/);
   assert.match(dc, /if \(techniquePierces\(m, f\)\) continue;/);
-  assert.match(dc, /if \(missileHitsFoe\(m\.pos, f\)\) \{\s*nextArenaQ\(\);\s*_arenaQ = shaftSequence\(m, _arenaQ\);/, 'AUDIT TECH1: a piercing shaft is one blow to the arena\'s referee');
+  assert.match(dc, /if \(missileHitsFoe\(m\.pos, f, _from\)\) \{\s*nextArenaQ\(\);\s*_arenaQ = shaftSequence\(m, _arenaQ\);/, 'AUDIT TECH1: a piercing shaft is one blow to the arena\'s referee');
 });
 
 test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s name, the recentre\'s shift beside the foes\' (AUDIT TACT D3); the HUD\'s chip wears the marks\' blue from the leaf; every host keeps the browser\'s Back off the side buttons (mutants: the chip off world.js\'s own rig; the shift; the guard)', () => {

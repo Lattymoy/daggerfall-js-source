@@ -1,0 +1,391 @@
+[
+  {
+    "name": "AURUM-CACHES-the-amount",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "export const AURUM_CACHE_AURUM = 10;",
+    "new": "export const AURUM_CACHE_AURUM = 15;",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-ONCE-the-forgery-bound",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "export const AURUM_CACHE_DAY_MAX = 10;",
+    "new": "export const AURUM_CACHE_DAY_MAX = 11;",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-leading-zero-let-through",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "aurumCacheDungeonKey(Number(id.slice(1))) === id",
+    "new": "aurumCacheDungeonKey(Number(id.slice(1))) !== null",
+    "tests": [
+      "test/net/aurum_cache_law.test.js",
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-pile-not-the-ids",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "pile: aurumCacheUnit(`${id}|pile`)",
+    "new": "pile: aurumCacheUnit('pile')",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-dungeon-bound-short",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "/** @type {number} */ (id) <= AURUM_CACHE_DUNGEON_MAX",
+    "new": "/** @type {number} */ (id) < AURUM_CACHE_DUNGEON_MAX",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-lines-amount",
+    "file": "server-account/src/aurumCache.js",
+    "old": ".bind(player.id, id, AURUM_CACHE_AURUM, day, nowS, AURUM_CACHE_DAY_MAX)",
+    "new": ".bind(player.id, id, 1, day, nowS, AURUM_CACHE_DAY_MAX)",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-repeat-answered-yes",
+    "file": "server-account/src/aurumCache.js",
+    "old": "INSERT OR IGNORE INTO aurum_ledger",
+    "new": "INSERT OR REPLACE INTO aurum_ledger",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-repeat-called-capped",
+    "file": "server-account/src/aurumCache.js",
+    "old": "return { error: held?.results?.length ? 'cache-taken' : 'cache-capped' };",
+    "new": "return { error: 'cache-capped' };",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-bound-off-by-one",
+    "file": "server-account/src/aurumCache.js",
+    "old": "AND kind = 'cache' AND day = ?4) < ?6",
+    "new": "AND kind = 'cache' AND day = ?4) <= ?6",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-bound-ignored",
+    "file": "server-account/src/aurumCache.js",
+    "old": "WHERE (SELECT COUNT(*) FROM aurum_ledger WHERE account = ?1 AND kind = 'cache' AND day = ?4) < ?6",
+    "new": "WHERE ?6 > 0 AND ?4 >= 0",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-ONCE-the-bound-made-lifelong",
+    "file": "server-account/src/aurumCache.js",
+    "old": "const day = utcDay(nowS);",
+    "new": "const day = 0;",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-id-unchecked",
+    "file": "server-account/src/aurumCache.js",
+    "old": "if (!aurumCacheIdOk(id)) return { error: 'cache-id' };",
+    "new": "if (typeof id !== 'string') return { error: 'cache-id' };",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-guest-claims",
+    "file": "server-account/src/aurumCache.js",
+    "old": "if (!player?.handle) return { error: 'cache-guest' };",
+    "new": "if (!player?.id) return { error: 'cache-guest' };",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-switch-unread",
+    "file": "server-account/src/aurumCache.js",
+    "old": "if (!aurumOpenFor(player, env)) return { error: 'cache-closed' };",
+    "new": "if (!env) return { error: 'cache-closed' };",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-route-no-progression-claim",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "new": "  // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-id-unsent",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/aurum/cache', { id, ...(proof ? { proof } : {}) }, as)",
+    "new": "post('/v1/aurum/cache', { ...(proof ? { proof } : {}) }, as)",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ],
+    "note": "AUDIT AURUM-CACHES E1 (re-aimed by content): beside the proof and the account"
+  },
+  {
+    "name": "AURUM-CACHES-a-made-level-stands-one",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (madeLevelOf(loc) || dungeonTier(loc) === 'super'",
+    "new": "if (dungeonTier(loc) === 'super'",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-bays-id-not-masked",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "return aurumCacheDungeonKey(dungeonIdOf(mapId));",
+    "new": "return aurumCacheDungeonKey(mapId);",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-pick-not-the-hashs",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "Math.floor(spot.pile * list.length)",
+    "new": "0",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-clear-ray-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "    if (Number.isFinite(collider.raycast(from, dir, off + AURUM_CACHE_CLEAR_M, MESH_ONLY))) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-step-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": " || Math.abs(at[1] - down - floor) > AURUM_CACHE_STEP_M",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-sides-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (!walled(collider, foot) && clear(foot)) return foot;",
+    "new": "if (clear(foot)) return foot;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-foot-left-at-knee-height",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "const foot = [at[0], at[1] - down, at[2]];",
+    "new": "const foot = [at[0], at[1], at[2]];",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-offline-stands-one",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (_closed || !online() || !me?.id || me.kind === 'guest') return null;",
+    "new": "if (_closed || !me?.id || me.kind === 'guest') return null;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-guest-stands-one",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (_closed || !online() || !me?.id || me.kind === 'guest') return null;",
+    "new": "if (_closed || !online() || !me?.id) return null;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-ONCE-a-capped-coffer-kept-as-emptied",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (r?.ok || r?.error === 'cache-taken') keepId(",
+    "new": "if (r?.ok || r?.error === 'cache-taken' || r?.error === 'cache-capped') keepId(",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "CACHES-ONCE-a-days-id-kept-on-the-device",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter(aurumCacheIdOk);",
+    "new": "all[k] = (Array.isArray(all[k]) ? all[k] : []).filter((x) => typeof x === 'string');",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-ask-repeated",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "    if (asking) return true;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-open-not-kept",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-picture-not-swapped",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "const opened = () => { coffer.open = true; stand(); };",
+    "new": "const opened = () => { coffer.open = true; };",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-taken-left-shut",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (r?.error === 'cache-taken') opened();",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-closed-forgotten",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (r?.error === 'cache-closed') _closed = true;",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-late-answer-stands-a-picture",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "      if (gone) { if (r?.ok) lateSay(found()); return; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-modal-ladders-arm-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "key.startsWith('delve:') || key.startsWith('aurum:')) {   // AURUM-CACHES",
+    "new": "key.startsWith('delve:')) {   // AURUM-CACHES",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-benchs-arm-dropped",
+    "file": "src/scenes/dungeon.js",
+    "old": "key.startsWith('delve:') || key.startsWith('aurum:'))) {",
+    "new": "key.startsWith('delve:'))) {",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-sizes",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "shut: Object.freeze({ w: 33, h: 24 })",
+    "new": "shut: Object.freeze({ w: 32, h: 24 })",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-plinth",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "plinth = rect(0, y0 + 10, 33, y0 + 12)",
+    "new": "plinth = rect(1, y0 + 10, 32, y0 + 12)",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-heart-dimmed",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "x === MID && y === cy, ramp: SUN, light: () => 1",
+    "new": "x === MID && y === cy, ramp: SUN, light: () => 0.4",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-rim-painted-bright",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "{ hit: rim, ramp: GOLD, flat: [...GOLD[0]] },",
+    "new": "{ hit: rim, ramp: GOLD, flat: [...GOLD[3]] },",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-mouth-lit",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "{ hit: mouth, ramp: HOLLOW,",
+    "new": "{ hit: mouth, ramp: GOLD,",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-a-record-lost",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "[AURUM_COFFER_ART.shut]: cofferShutArt, [AURUM_COFFER_ART.open]: cofferOpenArt",
+    "new": "[AURUM_COFFER_ART.shut]: cofferShutArt",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-registered-twice",
+    "file": "src/world/aurumCofferArt.js",
+    "old": "if (_registered || typeof addVendorTextures !== 'function') return 0;",
+    "new": "if (typeof addVendorTextures !== 'function') return 0;",
+    "tests": [
+      "test/world/aurum_coffer_art.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-CACHES-the-contexts-arm-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (kind === 'aurum') return _aurumCache?.press(key) ? 1 : 0;",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  }
+]

@@ -35,6 +35,7 @@ import { firstSaveRefusal } from '../../server-account/src/realm.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { goodRefusal } from '../../src/net/marketLaw.js';
 import { tradeableRecord } from '../../src/net/realm/realmTradeLaw.js';
+import { freshSave } from '../realmSeat.mjs';   // BIRTH-SKILL: the real first-save shape
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** A source that answers `vals` in turn, then `rest`, and counts its draws. */
@@ -252,7 +253,7 @@ test('CARDS9 THE CUSTOMS: a character brings cards worth the starter deck\'s and
   assert.equal(customsCardAllowance(1), STARTER_DECK_WORTH + 150);
   assert.equal(customsCardAllowance(10), STARTER_DECK_WORTH + 1500);
   assert.equal(customsCardAllowance(0), customsCardAllowance(1), 'a level under 1 is 1');
-  const born = { level: 1, goldPieces: 100, items: [] };
+  const born = freshSave();
   giveBinderAtChargen(born);
   assert.equal(cardWorthOf(born), STARTER_DECK_WORTH, 'the gift is the starter deck\'s worth');
   assert.equal(firstSaveRefusal(JSON.stringify(born), { origin_id: null }), null, 'a born character with its gift crosses');

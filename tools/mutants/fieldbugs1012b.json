@@ -110,8 +110,8 @@
   {
     "name": "YARD-LINE-the-record-unstamped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced:",
-    "new": "rects, parts: [[cpu, local]], terraced:",
+    "old": "rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced:",
+    "new": "rects, grounds: [ground], parts: [[cpu, local]], terraced:",
     "tests": [
       "test/scenes/fb1012b_yardline.test.js"
     ]

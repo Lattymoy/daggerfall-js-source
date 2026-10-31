@@ -324,24 +324,6 @@
     ]
   },
   {
-    "name": "CARD-FIT-U10-post-with-the-posters-count",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (set) lines.push(worn ? (setLines(item)[0] ?? set.name) : `${set.name} set`);",
-    "new": "  if (set) lines.push(setLines(item)[0] ?? set.name);",
-    "tests": [
-      "test/ui/enhanced/cardfit.test.js"
-    ]
-  },
-  {
-    "name": "CARD-FIT-U10-post-on-the-long-list",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    ...itemBriefLines(item, d)].filter(Boolean);",
-    "new": "    ...itemPowerLines(item, d)].filter(Boolean);",
-    "tests": [
-      "test/ui/enhanced/cardfit.test.js"
-    ]
-  },
-  {
     "name": "CARD-FIT-U4-strip-grows",
     "file": "src/ui/enhanced/enhancedPlayerTrade.js",
     "old": ".ptrade-shell .trade-detail-info { max-height: min(30dvh, 180px); overflow-y: auto; overscroll-behavior: contain; }\n",

@@ -307,6 +307,10 @@ export function createDelveHost({
     lastYaw = 0,
     weapon = /** @type {any} */ (null);
   const myFeet = [0, 0, 0];
+  /** WEIGH-POSE: where the room hears me stand - last frame's feet. The world says my pose before the dungeon moves me
+   *  (scenes/world.js onlineFrame runs before modes.frame), so an act said on the frame I reach a plate was judged a
+   *  step short of it, and the weight fell to the floor beside it. */
+  const heardFeet = [0, 0, 0];
   // DLV3: online, the room's - the plan said until it answers, a refusal of it (another plan stands) standing all down
   let planSaidAt = -Infinity,
     planHeard = false,
@@ -694,7 +698,12 @@ export function createDelveHost({
       }
     }
     if (!led || r.won) return;
-    kindFrame(r, feet, iw, plate);
+    kindFrame(
+      r,
+      heardFeet,
+      holds(site, heardFeet),
+      r.plates ? plateAt(r.plates, heardFeet[0], heardFeet[1], heardFeet[2]) : -1,
+    ); // my acts judged where the room hears me (WEIGH-POSE)
     siteTail(r, iw);
   }
   /** DLV3: my machine named for a site's foes mid-attempt: the rest of its running wave stood (the room counted the
@@ -999,6 +1008,10 @@ export function createDelveHost({
         for (const r of runs) pieces.standChest(r.site.i, r.site.vault, chestYaw(r.site));
       } // online: once the room keeps the plan
       if (online()) for (const r of runs) if (r.led && r.led.p !== DP.won) r.led.ec += ms; // each view's clock run on between its states
+      const was = lastFeet ?? feet;
+      heardFeet[0] = was[0];
+      heardFeet[1] = was[1];
+      heardFeet[2] = was[2];
       myFeet[0] = feet[0];
       myFeet[1] = feet[1];
       myFeet[2] = feet[2]; // my own copy: the motor's feet are its live Float32Array

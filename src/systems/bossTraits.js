@@ -97,8 +97,15 @@ let _clockS = 0,
   /** @type {number|null} */ _clockAt = null;
 export const bossClockS = () => _clockS;
 
-/** The traits as a mask, and back - unknown names dropped, an unknown bit dropped; `most` the most a reader stands (AUDIT
- *  WORLD-EVENTS L2-11: an elite one, a raid's leader two), the later of an exclusive pair dropped. */
+/** AUDIT WORLD-EVENTS L2-11: the most traits a reader stands off an owner's mask - an elite's one, a raid's leader's two.
+ *  STOREFRONT (AUDIT LANE 5): and a leader on a Heart Fissure's site, the season's Brass Colossus, its three
+ *  (scenes/seasonHost.js COLOSSUS_TRAITS) - capped at two, every copy and its heir lost Blade-turning. One law for every
+ *  reader (scenes/exteriorFoes.js, scenes/foeTraitsHost.js) and the save's restore. */
+export const BOSS_TRAITS_MOST = Object.freeze({ elite: 1, leader: 2, colossus: 3 });
+export const bossTraitsMost = (/** @type {boolean} */ leader, colossus = false) =>
+  !leader ? BOSS_TRAITS_MOST.elite : colossus ? BOSS_TRAITS_MOST.colossus : BOSS_TRAITS_MOST.leader;
+/** The traits as a mask, and back - unknown names dropped, an unknown bit dropped; `most` the most a reader stands
+ *  (bossTraitsMost), the later of an exclusive pair dropped. */
 export const bossTraitMask = (traits) =>
   (Array.isArray(traits) ? traits : []).reduce((m, id) => {
     const i = BOSS_TRAITS.indexOf(id);

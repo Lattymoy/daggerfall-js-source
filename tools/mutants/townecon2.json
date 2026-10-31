@@ -162,8 +162,8 @@
   {
     "name": "TOWNECON2-read-unkept",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };\n  const row = await db.prepare('SELECT towns FROM town_econ_kept WHERE id = 1').first();",
-    "new": "  const row = await db.prepare('SELECT towns FROM town_econ_kept WHERE id = 1').first();",
+    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns, regions: _kept.regions };\n  const row = await db.prepare('SELECT towns, regions FROM town_econ_kept WHERE id = 1').first();",
+    "new": "  const row = await db.prepare('SELECT towns, regions FROM town_econ_kept WHERE id = 1').first();",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -262,7 +262,7 @@
   {
     "name": "TOWNECON2-book-unstopped",
     "file": "src/net/townEconBook.js",
-    "old": "          } else if (TOWN_ECON_STOPS.includes(r?.error)) {\n            stopped = true;\n            heard = true;\n            shares = new Map();\n          }",
+    "old": "          } else if (TOWN_ECON_STOPS.includes(r?.error)) {\n            stopped = true;\n            heard = true;\n            shares = new Map();\n            regions = new Map();\n          }",
     "new": "          }",
     "tests": [
       "test/net/townecon_client.test.js"

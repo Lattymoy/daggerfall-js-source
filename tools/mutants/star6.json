@@ -209,8 +209,8 @@
   {
     "name": "STAR6-the-stars-unpainted",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);\n  // GUIDE5: where the quests point, over the raids and under the party - the diamond above its place, the followed",
-    "new": "  // GUIDE5: where the quests point, over the raids and under the party - the diamond above its place, the followed",
+    "old": "  for (const m of opts.stars ?? []) if (visible(m.x, m.y)) paintStarMark(ctx, view, m, pulse);\n  // STOREFRONT: the season's Brass Fissures, beside the stars - the Heart Fissures larger, ringed",
+    "new": "  // STOREFRONT: the season's Brass Fissures, beside the stars - the Heart Fissures larger, ringed",
     "tests": [
       "test/ui/starfall/star6_compass.test.js"
     ]

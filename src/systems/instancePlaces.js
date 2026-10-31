@@ -103,6 +103,11 @@ export const questMountsHere = ({ online, builtSize }) => !online || builtSize =
  *  relay) and a running quest names it: Mac's first answer ("1"), folded into the instances as their fallback. */
 export const questDungeonWhole = ({ online, instanceOk, questHere }) => !!(online && !instanceOk && questHere);
 
+/** START-INSTANCE: a province start's dungeon, its commission in it (`startLair`, startsHost.js lairOpen), whose public
+ *  room is laid smaller (`relaid`) - that room cannot stand the commission, so the door never enters it. */
+export const startPublicShut = ({ startLair = false, questHere = false, relaid = false }) =>
+  !!(startLair && questHere && relaid);
+
 /**
  * The party's instances at this place: each instance a member stands in (its party pose's `ins`, the instance's room
  * key - net/wire.js validPartyPose) whose public room is `base` (net/online.js roomKeyFor's, the place's: a dungeon
@@ -143,7 +148,7 @@ export function partnerInstances(members, base, ownerOf = () => null, stood = nu
 /**
  * WHAT THE DOOR OFFERS - null for no popup (the door opens on the public room, as it always did), else the rows, in
  * this order:
- *   { kind: 'public' }                              the place's shared room - never Privateer's Hold online (HOLD-ONCE)
+ *   { kind: 'public' }                              the place's shared room - never the Hold's (HOLD-ONCE) or a start's (START-INSTANCE)
  *   { kind: 'join', name, acct, owner, epoch }      a party member's instance standing here now, or the one I last stood
  *                                                   in here (partnerInstances' `stood`, WIPE-RETURN)
  *   { kind: 'mine' }                                my instance - a quest of mine names the place, or the Hold
@@ -168,11 +173,13 @@ export function instanceOffer({
   relaid = false,
   partners = [],
   castle = null,
+  startLair = false,
 }) {
   if (!online || !instanceOk) return null;
   const rows = [];
   const publicLast = questHere && relaid;
-  if (!isHold && !publicLast) rows.push({ kind: 'public' });
+  const noPublic = isHold || startPublicShut({ startLair, questHere, relaid }); // START-INSTANCE (AUDIT S1: a public room laid whole stands it)
+  if (!noPublic && !publicLast) rows.push({ kind: 'public' });
   if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });
   // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is
   // another room, and taking the first instance row by habit after a death split them from the party.
@@ -181,7 +188,7 @@ export function instanceOffer({
   // a quest of mine names). At the merge of main into TESA: main's order, TESA's bound - my own row keeps its key.
   // QUEST-FIRST (main): where the quest's dungeon is laid smaller (`relaid`) the public room goes last - its key kept too.
   const mine = questHere || isHold,
-    lastPublic = !isHold && publicLast;
+    lastPublic = !noPublic && publicLast;
   for (const p of (partners ?? []).slice(
     0,
     Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),

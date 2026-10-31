@@ -270,7 +270,11 @@ test('AUDIT FB1029g P1: past the Bay the registry holds every capital\'s every s
   const village = econ.panelLinesAt(vid);
   assert.match(village[0] ?? '', /^Under the Crown Charter of Summerset/, 'the village\'s control - its area\'s holder');
   assert.match(village[1] ?? '', /^Economy: /, 'and its prosperity');
-  assert.match(econ.panelLinesAt(capitalPlaceId(k, 1))[0] ?? '', /^Economy: /, 'the harbour slice has its economy');
+  // FOUNDATION F1: the harbour slice stands on the picture's sea and was in no province (region -1); now its capital's,
+  // it names its control before its economy, as the village does
+  const harbourLines = econ.panelLinesAt(capitalPlaceId(k, 1));
+  assert.match(harbourLines[0] ?? '', /^Under the Crown Charter of Summerset/, 'the harbour slice\'s control - its province\'s');
+  assert.match(harbourLines[1] ?? '', /^Economy: /, 'the harbour slice has its economy');
 });
 
 test('AUDIT FB1029g P6, P13: on the classic skin the panel stands on the compass the HUD last drew - the corner box over its Detect row, or the large bar\'s compass - in the page\'s pixels whatever the canvas\'s own (mutants: the box unrecorded; the canvas\'s pixels read as the page\'s)', () => {
