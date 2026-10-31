@@ -63,7 +63,7 @@ test('SPELL-SKILL WIRED: applySpell reads the effect\'s levels, a player\'s pric
   assert.match(body, /const levelsOf = \(e\) => \(noSchool \? null : castLevels\(caster\?\.entity \?\? null, schoolOf\(e\)\)\);/);
   assert.doesNotMatch(body, /rollDuration\(e, casterLevel\)|chanceValue\(e, casterLevel\)|effectMagnitude\(e, casterLevel,|effect: e, casterLevel,/, 'every read through the effect\'s level');
   const cost = readFileSync(new URL('../../../src/systems/spellcost.js', import.meta.url), 'utf8');
-  assert.match(cost, /castLevels\(casterEntity, castSchool\(casterEntity, spell, e\)\) \? skillPricedCost\(e, skillOf, \{ online \}\) : effectCost\(e, skillOf, \{ online \}\)/);
+  assert.match(cost, /castLevels\(casterEntity, castSchool\(casterEntity, spell, e\)\)\s*\? skillPricedCost\(e, skillOf, \{ online \}\)\s*: effectCost\(e, skillOf, \{ online \}\)/);
 });
 
 test('SPELL-SKILL BUDGET: no effect grows faster per level than the fastest stock spell; base settings stay free', () => {
