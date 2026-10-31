@@ -1,6 +1,6 @@
 // @ts-check
-// SKYRIM-FLORA (2026-10-31): Skyrim's plant flat catalog - archive, records, Lands picks. Pure (worker-safe): no texture
-// door. Pictures and registration live in skyrimFloraArt.js.
+// Skyrim plant flat catalog - archive, records, Lands picks. Pure (worker-safe): no texture door.
+// Pictures and registration live in skyrimFloraArt.js.
 
 /** Pseudo-archive for every Skyrim plant flat (world/eliteGates/pseudoArchives.js). */
 export const SKYRIM_FLORA_ARCHIVE = 38362;

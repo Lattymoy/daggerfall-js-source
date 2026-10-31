@@ -335,7 +335,7 @@ export function isExteriorWindow(archive, record) {
 }
 
 /** Verbatim GetNatureArchive: winter bumps the four woodland sets by 1.
- *  SKYRIM-FLORA: a Lands flat past TEXTURE.511 (PSEUDO_ARCHIVE_FLOOR) already named its stand-in - keep it.
+ *  A Lands flat past TEXTURE.511 (PSEUDO_ARCHIVE_FLOOR) already named its stand-in - keep it.
  *  DFU's unknown→TemperateWoodland would rewrite every plant to 504. */
 export function getNatureArchive(baseNatureArchive, season) {
   if (!NATURE_SETS.has(baseNatureArchive)) {

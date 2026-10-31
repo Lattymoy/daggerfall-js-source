@@ -6,7 +6,7 @@
 // its climate's land. Pure and worker-safe (world/ and formats/ alone): the terrain worker reads the flora and the props.
 import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
-import { skyrimCoverPicks } from './skyrimFlora.js';   // SKYRIM-FLORA: Skyrim's plant picks (art door: skyrimFloraArt.js)
+import { skyrimCoverPicks } from './skyrimFlora.js';   // Skyrim plant picks (art door: skyrimFloraArt.js)
 
 /**
  * THE FOREST FIELD'S QUANTILES (terrainNature.js forestCover), every 1%, measured over 400,000 world tiles of the
@@ -143,7 +143,7 @@ const fleck = (colors, share) => Object.freeze({ colors: Object.freeze(colors), 
 // ── Daggerfall's nature flats the recipes draw on (TEXTURE.500-510's summer records; world/terrain/terrainNature.js
 //    TREE_RECORDS the Trees among them) ─────────────────────────────────────────────────────────────────────────────────
 /** @typedef {readonly [number, number, number]} Pick - a flat: [summer nature archive, record 1-31, weight] */
-/** SKYRIM-FLORA: each zone's own undergrowth (skyrimFloraArt.js) - mixed with a few classic rocks where the ground asks. */
+/** Each Skyrim zone's own undergrowth (skyrimFloraArt.js) - mixed with a few classic rocks where the ground asks. */
 const SKYRIM_PINEWOOD_COVER = skyrimCoverPicks('pinewood');
 const SKYRIM_REACH_COVER = skyrimCoverPicks('reach');
 const SKYRIM_FROZEN_COVER = skyrimCoverPicks('frozenCoast');

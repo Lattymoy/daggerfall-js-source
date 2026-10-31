@@ -1,5 +1,5 @@
 // @ts-check
-// SKYRIM-FLORA playground: biome pixels, mesh helpers, vite entry.
+// Flora playground: biome pixels, mesh helpers, vite entry.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';

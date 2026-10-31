@@ -1,5 +1,5 @@
 // @ts-check
-// SKYRIM-FLORA (2026-10-31): stand Skyrim's plant PNGs on the texture door. Catalog is skyrimFlora.js (worker-safe);
+// Stand Skyrim's plant PNGs on the texture door. Catalog is skyrimFlora.js (worker-safe);
 // this file is the browser door (festivalArt.js's law).
 import { addVendorTextures, decodePng } from '../../systems/textureReplacement.js';
 import { SKYRIM_FLORA, SKYRIM_FLORA_ARCHIVE } from './skyrimFlora.js';

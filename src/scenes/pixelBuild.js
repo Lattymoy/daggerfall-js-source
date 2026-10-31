@@ -36,7 +36,7 @@ import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { footGroundAt, footRectsAt, modelFootParts } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs, tamrielLandsOn } from './shared.js';
 import { landGroundSet, landsNine } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
-import { SKYRIM_FLORA_ARCHIVE } from '../world/tamriel/skyrimFlora.js';   // SKYRIM-FLORA: crossed plants + hanging moss
+import { SKYRIM_FLORA_ARCHIVE, SKYRIM_HANGING_RECORDS } from '../world/tamriel/skyrimFlora.js';   // Skyrim crossed plants + hanging moss
 import { isSkyrimMossRock, standSkyrimFlora } from '../world/tamriel/skyrimFloraMesh.js';
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
@@ -203,7 +203,7 @@ export function createPixelBuild(host) {
       const base = g.natureBase(archive) ?? archive;
       const asTree = g.natureSet.has(archive) && isTreeRecord(base, record);
       coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: asTree }));   // PROP-BODIES: the record's own, whichever picture stands
-      // SKYRIM-FLORA: ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
+      // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
       if (archive === SKYRIM_FLORA_ARCHIVE) {
         skyrimPlants.push({ record, centers, size: plain });
         if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: false }));
@@ -1249,9 +1249,16 @@ export function createPixelBuild(host) {
     const skyrimPlants = [], hangHosts = [];
     await standFlatGroups({ px, py, groups, wild: wildFlats, natureSet, natureBase, tilemap, paths, vergeNet, uploadRecord, uploadRecordFrame, flatAnims, unionBox },
       { batches, forestGroups, coverItems, lptHandles, lptGroups, skyrimPlants, hangHosts });
-    // SKYRIM-FLORA: crossed ground plants; HangingMoss only in the Reach (from trees, rock flats, spires)
+    // Crossed ground plants; HangingMoss only in the Reach (from trees, rock flats, spires)
     const skyrimReach = landsNine(px, py)[4]?.key === 'skyrimReach';
     if (skyrimPlants.length || (skyrimReach && (hangHosts.length || landStood?.set.props?.length))) {
+      // Hanging records are never cover picks, so standFlatGroups never uploads them
+      if (skyrimReach && SKYRIM_HANGING_RECORDS.length) {
+        const hangTex = await getTexture(SKYRIM_FLORA_ARCHIVE);
+        for (const r of SKYRIM_HANGING_RECORDS) {
+          if (r < hangTex.recordCount) uploadRecord(SKYRIM_FLORA_ARCHIVE, r);
+        }
+      }
       standSkyrimFlora(skyrimPlants, skyrimReach ? hangHosts : [], skyrimReach ? landStood?.set.props : null, px, py, {
         addStatic: (m, at, own) => addStatic(m, at, own),
         unionBox,
@@ -1717,7 +1724,8 @@ export function createPixelBuild(host) {
     const flatsTurn = pics.some((pic, j) => pic[0] !== sk.log[j].archive || pic[1] !== sk.log[j].record);
     const law = `climate:${p.townClimate}.${pixelSeason}`, turns = remapLawOf(p.texRemap) !== law;
     const lawOf = (c) => (a, r) => applyClimate(a, r, c, pixelSeason);
-    const made = { mesh: undefined, batches: [], forestGroups: new Map(), coverItems: [], lptHandles: [], lptGroups: [] };
+    // hangHosts / skyrimPlants: standFlatGroups pushes into them; without them a snow re-skin throws on every nature tree
+    const made = { mesh: undefined, batches: [], forestGroups: new Map(), coverItems: [], lptHandles: [], lptGroups: [], skyrimPlants: [], hangHosts: [] };
     let traded = false;
     try {
       // THE BUILDINGS' SEASON: the table, the merge drawn through it, the homes' looks, the mills' bodies

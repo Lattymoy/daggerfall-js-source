@@ -1,5 +1,5 @@
 // @ts-check
-// SKYRIM-FLORA: Skyrim's plant flats on the Lands recipes and the texture door.
+// Skyrim's plant flats on the Lands recipes and the texture door.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';

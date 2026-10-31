@@ -1,5 +1,5 @@
 // @ts-check
-// SKYRIM-FLORA playground: one full Lands pixel (dressed ground + nature + landmarks) for artists.
+// Skyrim flora playground: one full Lands pixel (dressed ground + nature + landmarks) for artists.
 // Not on the play path. ARENA2 required. HUD: biome, catalog sprite, PNG upload overlay.
 import { ensureArena2, getBytes } from '../scenes/dataSource.js';
 import { fetchBytes } from '../scenes/shared.js';
@@ -36,7 +36,7 @@ import '../world/tamriel/skyrimFloraArt.js'; // register stand-ins
 
 const PREVIEW_ARCHIVE = 38399; // lab-only overlay (not game)
 const TEX_PREVIEW = /** @type {const} */ ([PREVIEW_ARCHIVE, 0]);
-const PIXEL_T = Object.freeze([0, 0, 0]);
+const PIXEL_T = /** @type {[number, number, number]} */ ([0, 0, 0]);
 
 export const BIOMES = Object.freeze(Object.keys(LANDS).filter((k) => /** @type {any} */ (LANDS)[k].ground));
 export { SKYRIM_FLORA };
@@ -224,8 +224,8 @@ async function boot() {
     for (const m of skyrimMeshes) renderer.destroyMesh?.(m);
     skyrimMeshes = [];
     clearPreview();
-    terrain = null;
-    tilemapTex = null;
+    if (terrain) { renderer.destroyMesh?.(terrain); terrain = null; }
+    if (tilemapTex) { renderer.gl?.deleteTexture?.(tilemapTex); tilemapTex = null; }
     landPixel = null;
     grassField = null;
     tilemapBytes = null;
@@ -420,7 +420,7 @@ async function boot() {
 
   const t0 = performance.now();
   function frame() {
-    const dpr = Math.min(2, devicePixelRatio || 1);
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     const w = canvas.clientWidth | 0, h = canvas.clientHeight | 0;
     if (canvas.width !== (w * dpr | 0) || canvas.height !== (h * dpr | 0)) {
       canvas.width = w * dpr | 0; canvas.height = h * dpr | 0;

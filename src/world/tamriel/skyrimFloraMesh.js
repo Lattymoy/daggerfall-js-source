@@ -1,5 +1,5 @@
 // @ts-check
-// SKYRIM-FLORA: crossed ground plants (meadow 3@60°) and HangingMoss drapes from trees/rocks.
+// Crossed ground plants (meadow 3@60°) and HangingMoss drapes from trees/rocks.
 import { MeshBuilder } from '../detStandIns.js';
 import { PIXEL_FRAME } from '../road/bridgeModels.js';
 import { tileDraw } from '../terrain/terrainNature.js';
