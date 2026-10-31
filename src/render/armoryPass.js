@@ -19,6 +19,9 @@ import { logoImage } from '../ui/guild/guildLogoImages.js';
 /** A tube's steps round and along; the most cards one draw floats; the footfall embers a wearer keeps. */
 export const ARMORY_ROUND = 32;
 export const ARMORY_ALONG = 6;
+/** AUDIT lane 3 F7: a spur's own mesh - six sides, one step: the shader draws six facets, so a round tube's 1,152 corners
+ *  were 32 times more than it shows. */
+export const ARMORY_SPIKE_ROUND = 6;
 export const ARMORY_CARDS = 12;
 export const ARMORY_TRAIL = 8;
 /** THE CARD LAW: how far toward the eye a sprite's piece is lifted (m) - off the card's plane, where it would fight it. */
@@ -72,6 +75,7 @@ export const PRISM_RGB = Object.freeze([Object.freeze([0.55, 0.32, 1]), Object.f
 /** How bright a spur is drawn at most (its added light): small and quiet beside the other pieces. */
 export const ARMORY_SPUR_GAIN = 0.85;
 const SPURS = ARMORY_PIECE_INDEX.crystalspurs;
+const SPUR_TAN = ARMORY_SPURS.map((p) => Math.tan(p.turn));
 
 const v3 = (/** @type {ReadonlyArray<number>} */ c) => `vec3(${c.map((x) => x.toFixed(3)).join(', ')})`;
 /** A rate (Hz) as GLSL multiplies by it EXACTLY - a division by its whole period (the auras' hzGlsl law). */
@@ -390,7 +394,7 @@ vec3 crystalLight() {
   float edge = lineAt(min(fract(f), 1.0 - fract(f)), 0.08);
   float h = uTime ${hz(ARMORY_HZ.prism)} + uSeed + float(uPart) * 0.17 + vP.y * 0.35;
   float tip = smoothstep(0.5, 1.0, vP.y);
-  float run = fract(uTime ${hz(ARMORY_HZ.glint)} + float(uPart) * 0.29), glint = exp(-pow((vP.y - run * 1.4 + 0.2) / 0.08, 2.0)) * edge;
+  float run = fract(uTime ${hz(ARMORY_HZ.glint)} + float(uPart) * 0.29), g = (vP.y - run * 1.4 + 0.2) / 0.08, glint = exp(-g * g) * edge;   // AUDIT lane 3: never pow() of a negative
   return (prism(h) * (lit * (0.45 + 0.55 * tip) + edge * 0.25) + vec3(1.0) * glint * 0.6) * ${ARMORY_SPUR_GAIN.toFixed(2)};
 }
 `;
@@ -473,11 +477,11 @@ export const ARMORY_BODY_PIECES = Object.freeze(ARMORY_PIECES.filter((p) => p.sl
 export const ARMORY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(ARMORY_BODY_PIECES.flatMap((k) => armoryPrograms(ARMORY_PIECES.findIndex((p) => p.key === k)))));
 const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror']);   // GUILD-SHOP: the armlet's crest and colours
 
-/** A tube's grid: ARMORY_ROUND steps round by ARMORY_ALONG along, two triangles a cell, as (round, along) pairs. Pure. */
-export function armoryTubeGrid() {
+/** A tube's grid: `round` steps round by `along` along, two triangles a cell, as (round, along) pairs. Pure. */
+export function armoryTubeGrid(round = ARMORY_ROUND, along = ARMORY_ALONG) {
   const out = [];
-  for (let j = 0; j < ARMORY_ALONG; j++) for (let i = 0; i < ARMORY_ROUND; i++) {
-    const u0 = i / ARMORY_ROUND, u1 = (i + 1) / ARMORY_ROUND, v0 = j / ARMORY_ALONG, v1 = (j + 1) / ARMORY_ALONG;
+  for (let j = 0; j < along; j++) for (let i = 0; i < round; i++) {
+    const u0 = i / round, u1 = (i + 1) / round, v0 = j / along, v1 = (j + 1) / along;
     out.push(u0, v0, u1, v0, u1, v1, u0, v0, u1, v1, u0, v1);
   }
   return new Float32Array(out);
@@ -543,7 +547,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const fwd = [Math.sin(yaw), 0, Math.cos(yaw)];
   const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + 0.35)); };
   const out = [];
-  const tube = (part, A, B, r0, r1, N = fwd) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1 });
+  const tube = (part, A, B, r0, r1, N = fwd, spike = false) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1, ...(spike ? { spike: true } : {}) });
   // embers and motes only near; a glow or the Origin's spark (`always`) at any distance the piece is drawn
   const cards = (part, count, A, B, U, r = [0, 0], size = 0, face = 1, gain = 1, always = false) => { if (near || always) out.push({ mesh: CARDS, part, A, B, N: fwd, U, r, size, count, face, gain }); };
   const decal = (part, A, N, size, face) => out.push({ mesh: DECAL, part, A, B: A, N, U: UP, r: [0, 0], size, count: 0, face, gain: 1 });
@@ -600,9 +604,9 @@ export function armoryDraws(key, w, eye, near, right = null) {
         const [a, b] = p.seg === 'upper' ? [sh, el] : [el, wa], d = unit(sub(b, a)), on = mix(a, b, p.at);
         const flat = [lat[0], 0, lat[2]], along = flat[0] * d[0] + flat[2] * d[2];
         const outward = unit(sub(flat, [d[0] * along, d[1] * along, d[2] * along])), back = [-fwd[0], 0, -fwd[2]];
-        const dir = unit(add(add(outward, back, Math.tan(p.turn)), d, p.lean));
+        const dir = unit(add(add(outward, back, SPUR_TAN[k]), d, p.lean));
         const root = add(on, dir, ARMORY_SPUR_ROOT * s);
-        tube(k, root, add(root, dir, p.len * s), p.r, 0.0015);
+        tube(k, root, add(root, dir, p.len * s), p.r, 0.0015, fwd, true);
       });
     }
   } else if (key === 'insigniaarmlet') {
@@ -727,6 +731,11 @@ export class ArmoryRenderer {
     this.tubeBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.tubeBuf);
     gl.bufferData(gl.ARRAY_BUFFER, armoryTubeGrid(), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    this.spikeVao = gl.createVertexArray();
+    gl.bindVertexArray(this.spikeVao);
+    this.spikeBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.spikeBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, armoryTubeGrid(ARMORY_SPIKE_ROUND, 1), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     this.cardVao = gl.createVertexArray();
     gl.bindVertexArray(this.cardVao);
     this.cardBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.cardBuf);
@@ -806,7 +815,7 @@ export class ArmoryRenderer {
             gl.uniform3fv(U.uA, d.A); gl.uniform3fv(U.uB, d.B); gl.uniform3fv(U.uN, d.N); gl.uniform3fv(U.uU, d.U);
             gl.uniform2fv(U.uR, d.r); gl.uniform1f(U.uSize, d.size); gl.uniform1f(U.uFace, d.face); gl.uniform1f(U.uGain, d.gain);
             if (key === 'insigniaarmlet') gl.uniform1f(U.uLift, ((w.pose.card ? ARMORY_LIFT_M : 0) + (d.mesh === DECAL ? ARMORY_ARMLET.lift : 0)) * (w.pose.scale > 0 ? w.pose.scale : 1));   // GUILD-SHOP
-            if (d.mesh === TUBE) { gl.bindVertexArray(this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, ARMORY_ROUND * ARMORY_ALONG * 6); }
+            if (d.mesh === TUBE) { gl.bindVertexArray(d.spike ? this.spikeVao : this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, (d.spike ? ARMORY_SPIKE_ROUND : ARMORY_ROUND * ARMORY_ALONG) * 6); }
             else { gl.bindVertexArray(this.cardVao); gl.drawArrays(gl.TRIANGLES, 0, (d.mesh === DECAL ? 1 : Math.min(d.count, ARMORY_CARDS)) * 6); }
           }
           this.drawn++;
@@ -896,8 +905,8 @@ export class ArmoryRenderer {
   /** EVERY ALLOCATION HAS AN OWNER: the pass's buffers and arrays. */
   dispose() {
     const gl = this.gl;
-    gl.deleteBuffer(this.tubeBuf); gl.deleteBuffer(this.cardBuf);
-    gl.deleteVertexArray(this.tubeVao); gl.deleteVertexArray(this.cardVao);
+    gl.deleteBuffer(this.tubeBuf); gl.deleteBuffer(this.cardBuf); gl.deleteBuffer(this.spikeBuf);
+    gl.deleteVertexArray(this.tubeVao); gl.deleteVertexArray(this.cardVao); gl.deleteVertexArray(this.spikeVao);
     for (const e of this._crests.values()) if (e.tex) gl.deleteTexture(e.tex);   // GUILD-SHOP: the crests
     this._crests.clear();
   }

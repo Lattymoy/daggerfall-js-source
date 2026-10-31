@@ -304,7 +304,68 @@ with the lane's own tools, before and after.
 | E2 | LOW | The relay graph's note left two of the branch's versions out | FIXED |
 | E3 | LOW | The first merge said every title keeps 40 apart; only this arc's six are held to it | FIXED in the record; main's pairs below |
 
+## AUDIT-STOREFRONT IV (2026-10-31, before the ship)
+
+The owner: **"Can we also do a deep comprehensive audit across everything to ensure perfection before we ship this?
+Ensure security on aurem caches so nobody can dupe or cheat"**. Three cold lanes, each told to reproduce a finding
+before reporting it: 1 what earns Aurum (the caches, Patreon), 2 what spends it, 3 the page, the pictures, the token and
+the deploy. Every FIXED is pinned in the test it names and guarded by a mutant (`tools/mutants/audit_aurum.json`,
+`cache_proof.json`, `coldharbour.json`, `thanks_post.json`).
+
+### 1 - what earns
+
+Pins: `test/server/aurum_cache_service.test.js`, `test/net/cache_proof.test.js`, `test/scenes/aurum_cache_world.test.js`,
+`test/server/patreon_link.test.js`. A cache held: one spelling a dungeon, once ever, ten a day atomic under 40
+concurrent claims, by the server's day.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| E1 | MED | The service holds no map, so a script claimed any dungeon's coffer by its id, never there | FIXED: the relay signs a proof into a dungeon room's welcome and the claim pays only with it (`Aurum.md` section 3a) |
+| H1 | HIGH | A widened Patreon grant read another campaign's total and paid it | FIXED: PATREON_CAMPAIGN_ID's member where set, else a grant of `identity` alone |
+| P2 | LOW | A charge Patreon calls Refunded or Fraud kept its Aurum | FIXED: its fall taken back, and a total reached again pays again |
+| P3 | LOW | The confirm page did not say what linking pays, or where | FIXED |
+| A1 | LOW | AURUM_OPEN shut, a link or a webhook still paid | FIXED |
+
+### 2 - what spends
+
+Pins: `test/server/audit_aurum_spend.test.js`.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| F1 | CRIT | A money piece credited into a set bought with Aurum was kept after its refund or chargeback | FIXED: the `buy` line keeps its credit (migration 0201) and the refund reads it |
+| F2 | MED | A lost ware's mark survived an Aurum buy that paid for it | FIXED |
+| F3 | HIGH | A pack charged back after its Aurum was spent leaves a debt and keeps the wares | KNOWN (below): the owner's to decide |
+| F4 | LOW | A dispute won after the ware was bought again with Aurum did not give that Aurum back | FIXED: once |
+| F5, F6 | LOW | A debt was not counted in what a buy still needs, and `aurum-short` did not read the account again | FIXED |
+
+### 3 - the page, the pictures and the deploy
+
+Pins: `test/server/accountdeploy.test.js`, `test/net/coldharbour.test.js`, `test/server/thanks_post.test.js`,
+`test/scenes/aurum_cache_world.test.js`. Checked sound: every aura program links, Sage's Smoke unchanged to the pixel,
+the widest token under its bound, the migrations in order on a live database, every new string in 13 languages.
+
+| # | Sev | Finding | Verdict |
+|---|---|---|---|
+| F1 | MED | The migrations ran before the deploy's wait for the relay, so main's service showed 0202's gift letter for up to five and a half hours | FIXED: the wait comes first |
+| F2 | MED | A coffer pressed after another account signed in paid that account and marked the first one's emptied | FIXED: the claim goes under the account it was stood for |
+| F3 | LOW | Each blood rune showed a square at its card's edge | FIXED: the card darkens to its edge |
+| F4 | LOW | A rising drop's tail was drawn above it | FIXED |
+| F5 | LOW | The Crystal Spurs had no colour off the world, and locked looked owned | FIXED: in their prism; every line's locked piece dimmed |
+| F6 | LOW | A corrupt coffer note on the device was never repaired | FIXED: it starts again |
+| F7 | LOW | Each spur drew a round tube of 1,152 corners | FIXED: six sides, one step, 36 |
+| F8 | LOW | The rollback floor left out what an older relay refuses | FIXED (`Storefront.md`) |
+
 ## Known, and not changed
+
+- IV E1: a script that says a hello into a dungeon's room is welcomed and proved, so the proof raises the bar and does
+  not end it. The day's bound, ten coffers and 100 Aurum, still holds. Finds and the Wardens' challenges are scriptable
+  in the same way, under their own day's bounds.
+- IV F3: a pack charged back after its Aurum is spent leaves the balance below zero and the wares kept. The owner
+  decides: take the newest buys back, or answer each dispute by hand.
+- IV: the developers are named by handle (DEVELOPER_HANDLES), not by account id; a handle changed or taken over is a
+  developer. Main's, before this arc.
+- IV P4: deleting an account deletes its Patreon history with it; no route deletes an account today.
+- IV: the Stripe endpoint's API version is not pinned in the code; it is the endpoint's own, set in Stripe.
 
 - E1: an Admin who is a moderator, the arena's #1 and a sprout, hides every glyph and wears a house at its widest can
   pass the token's body bound; the minter then leaves the house out. The token is never refused. The fix is `gx` as a

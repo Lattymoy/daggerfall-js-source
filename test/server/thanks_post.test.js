@@ -16,7 +16,9 @@ import { THANKS_POST, thanksPostSql } from '../../tools/sendServerPost.mjs';
 import { postHead } from '../../src/net/postLaw.js';
 import { postGiftWords } from '../../src/ui/enhanced/enhancedPost.js';
 import { verifyToken } from '../../src/net/identityToken.js';
-import { ARMORY_SPURS, ARMORY_SPUR_ROOT, ARMORY_SPUR_GAIN, PRISM_RGB, ARMORY_PIECE_INDEX, armoryDraws, armoryPrograms, armoryRatesWhole } from '../../src/render/armoryPass.js';
+import { ARMORY_SPURS, ARMORY_SPUR_ROOT, ARMORY_SPUR_GAIN, PRISM_RGB, ARMORY_PIECE_INDEX, ARMORY_SPIKE_ROUND, armoryDraws, armoryPrograms, armoryRatesWhole, armoryTubeGrid } from '../../src/render/armoryPass.js';
+import { ARMORY_LINE_GRADIENT, badgeCss } from '../../src/ui/playerBadge.js';
+import { auraRingNode } from '../../src/ui/collections/wardrobePart.js';
 import { newPose, poseFromFigure } from '../../src/render/armoryPose.js';
 import { glslFunctions } from '../glsl.mjs';
 
@@ -133,4 +135,21 @@ test('THANKS-POST the spurs\' shader RUN: a prism\'s three colours - amethyst, a
   assert.ok(sum(at([0.5, 0.5], { facing: 1 })) > sum(at([0.5, 0.5], { facing: 0 })), 'a facet facing the eye brighter');
   for (let i = 0; i < 20; i++) { const o = at([i / 20, (i * 7 % 20) / 20], { t: i * 1.7 }); assert.ok(Math.max(...o.slice(0, 3)) <= 1.6 * ARMORY_SPUR_GAIN + 1e-6, 'never past the gain'); }
   assert.equal(PRISM_RGB.length, 3);
+});
+
+test('AUDIT lane 3 F5, F7: the Crystal Spurs in their prism off the world too - the button, its word and its ring - and a locked piece of any line dimmed; each spur one six-sided step, never a round tube\'s grid (mutants: the spurs a round tube, the prism unpainted, the locked look two lines\' alone)', () => {
+  assert.deepEqual(ARMORY_LINE_GRADIENT.crystal.map((c) => c.slice(0, 3)), PRISM_RGB.map((c) => [...c]), 'the shader\'s prism');
+  const css = badgeCss();
+  assert.match(css, /\.card button\.acttitle\.actaura\.aura-crystal \{ color: #8c52ff; \}/);
+  assert.match(css, /\.aura-crystal \.actauraword \{ background-image: linear-gradient\(90deg, #8c52ff, #38d9f2, #ff61b8\);/);
+  assert.match(src('src/ui/enhanced/enhancedStyle.js'), /^\.card button\.actarmory\.locked \{ opacity: 0\.4; border-style: dashed; \}/m, 'every line\'s locked piece');
+  const node = (tag) => ({ tag, attrs: {}, kids: [], setAttribute(k, v) { this.attrs[k] = v; }, append(...c) { this.kids.push(...c); } });
+  const svg = auraRingNode({ createElementNS: (_, tag) => node(tag) }, 'crystal');
+  const stops = svg.kids[0].kids[0].kids.map((k) => k.attrs['stop-color']);
+  assert.deepEqual(stops, ['#8c52ff', '#38d9f2', '#ff61b8'], 'its ring');
+  const rig = { at: [0, 0, 0], yaw: 0, pose: newPose(), vel: [0, 0, 0] }, eye = [0, 1.6, 3];
+  assert.ok(armoryDraws('crystalspurs', rig, eye, true).every((d) => d.spike === true), 'each spur its own mesh');
+  assert.ok(armoryDraws('ashbound', rig, eye, true).every((d) => !d.spike), 'the other pieces round');
+  assert.equal(armoryTubeGrid(ARMORY_SPIKE_ROUND, 1).length, ARMORY_SPIKE_ROUND * 12, 'six sides, one step: 36 corners');
+  assert.equal(ARMORY_SPIKE_ROUND, 6);
 });

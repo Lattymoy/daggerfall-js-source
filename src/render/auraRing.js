@@ -2824,19 +2824,21 @@ vec4 hazeCard(vec2 uv, vec3 s) {
   vec2 q = (vec2(uv.x, 1.0 - uv.y) - 0.5) * ${g3(HAZE_EMBER_M)};
   float open = smoothstep(${g3(HAZE_RUNE_AT - 0.1)}, ${g3(HAZE_RUNE_AT + 0.1)}, age);
   float fade = 1.0 - smoothstep(0.8, 1.0, age);
-  // the bead: round, drawn out below as it rises - a short tail of its own glow
-  vec2 b = vec2(q.x, q.y < 0.0 ? q.y * 0.45 : q.y);
+  // the bead: round, drawn out below as it rises - a short tail of its own glow (q.y is down: AUDIT lane 3 F4)
+  vec2 b = vec2(q.x, q.y > 0.0 ? q.y * 0.45 : q.y);
   float r2 = dot(b, b);
   float bead = 1.0 - smoothstep(0.018, 0.028, sqrt(r2));
-  float heart = 1.0 - smoothstep(0.0, 0.012, length(q - vec2(-0.006, 0.007)));
+  float heart = 1.0 - smoothstep(0.0, 0.012, length(q - vec2(-0.006, -0.007)));
   float glow = exp(-r2 / 0.003);
   vec3 drop = (HZ_CRIMSON * bead + HZ_ROSE * heart * 0.8) + HZ_CRIMSON * glow * 0.6;
   float da = bead * 0.9;
   // the rune it opens into, lit in the blood
   float d = runeD(q / 0.6, HAZE_SCRIPT[k]) * 0.6;
-  vec3 rune = hazeInked(d, 0.008) + HZ_MAGENTA * exp(-r2 / 0.004) * 0.15;
-  vec3 col = mix(drop, rune, open) * fade * cover;
-  float a = da * (1.0 - open) * fade * cover;
+  vec3 rune = hazeInked(d, 0.008) + HZ_MAGENTA * exp(-dot(q, q) / 0.004) * 0.15;
+  // AUDIT lane 3 F3: dark at the card's edge, so a rune's glow shows no square
+  float edge = 1.0 - smoothstep(0.8, 1.0, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);
+  vec3 col = mix(drop, rune, open) * fade * cover * edge;
+  float a = da * (1.0 - open) * fade * cover * edge;
   return vec4(col, a);
 }
 `;

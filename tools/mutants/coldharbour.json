@@ -191,11 +191,12 @@
   {
     "name": "COLDHARBOUR-rune-covering",
     "file": "src/render/auraRing.js",
-    "old": "  float a = da * (1.0 - open) * fade * cover;",
-    "new": "  float a = max(da * (1.0 - open), open) * fade * cover;",
+    "old": "  float a = da * (1.0 - open) * fade * cover * edge;",
+    "new": "  float a = max(da * (1.0 - open), open) * fade * cover * edge;",
     "tests": [
       "test/net/coldharbour.test.js"
-    ]
+    ],
+    "note": "AUDIT lane 3 F3 (re-aimed by content): beside the card's edge"
   },
   {
     "name": "COLDHARBOUR-wisp-not-violet",
@@ -229,6 +230,24 @@
     "file": "src/render/auraRing.js",
     "old": "    light += hazeInked(d, 0.009) * lit * breath;",
     "new": "    light += hazeInked(d, 0.009) * 0.0;",
+    "tests": [
+      "test/net/coldharbour.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F3-the-card-edge-unfaded",
+    "file": "src/render/auraRing.js",
+    "old": "  float edge = 1.0 - smoothstep(0.8, 1.0, max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0);\n",
+    "new": "  float edge = 1.0;\n",
+    "tests": [
+      "test/net/coldharbour.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANE3-F4-the-tail-above",
+    "file": "src/render/auraRing.js",
+    "old": "vec2 b = vec2(q.x, q.y > 0.0 ? q.y * 0.45 : q.y);",
+    "new": "vec2 b = vec2(q.x, q.y < 0.0 ? q.y * 0.45 : q.y);",
     "tests": [
       "test/net/coldharbour.test.js"
     ]

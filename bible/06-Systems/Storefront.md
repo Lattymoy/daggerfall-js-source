@@ -258,9 +258,13 @@ effects. The service answers glyphs in GLYPHS' order, the order the mask gives t
 end. Pinned by `test/net/storefront_wireaudit.test.js`.
 
 **Deploy, and the rollback floor.** The relay (world297) goes before the account service (acct230) that mints `gb`, and
-`account-deploy.yml` waits for it. A relay before world297 drops a `gb` token's glyphs, or refuses one that also carries
-`gx`. So world297 is the relay's floor while acct230 or later mints: to roll the relay back, roll the service back first
-and wait MAX_TTL_S (five minutes) for its tokens to lapse.
+`account-deploy.yml` waits for it, before its migrations too (AUDIT lane 3 F1: 0202's letter waits for the service that
+shows its gift). A relay before world297 drops a `gb` token's glyphs, or refuses one that also carries `gx`. Its
+claimsValid also refuses the whole token of anyone wearing the Crystal Spurs (`ak` code `d`, which every account made
+before the update holds), the Vampiric Haze or the Blood of Coldharbour title: they could not say a hello.
+So world297 is the relay's floor while acct230 or later mints: to roll the relay back, roll the service back first and
+wait MAX_TTL_S (five minutes) for its tokens to lapse. A dungeon room of an older relay signs no cache proof, so no coffer
+pays until world297 is back (Aurum.md section 3a).
 
 **An Admin holds it all** (ADMIN-ALL, main's, at the merge of 2026-10-30; the owner: "give staff all in shop items" -
 "everything" - "always"). An Admin holds every kill effect, portal skin and mount look, the Folios' items with both

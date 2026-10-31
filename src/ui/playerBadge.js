@@ -1065,9 +1065,20 @@ export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */
+/** AUDIT lane 3 F5: an armory line no title paints - the Crystal Spurs in their prism (render/armoryPass.js PRISM_RGB,
+ *  pinned equal), the guild's pieces in brass: its button, its word and its ring (collections/wardrobePart.js). */
+export const ARMORY_LINE_GRADIENT = Object.freeze({
+  crystal: Object.freeze([Object.freeze([0.55, 0.32, 1, 1]), Object.freeze([0.22, 0.85, 0.95, 1]), Object.freeze([1, 0.38, 0.72, 1])]),
+  guild: Object.freeze([Object.freeze([0.753, 0.541, 0.243, 1]), Object.freeze([0.91, 0.75, 0.42, 1])]),
+});
+/** A line's paint as a badge titlePaint reads. */
+export const armoryLineBadge = (/** @type {string} */ line) => {
+  const g = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (line)];
+  return g ? { key: line, text: '', rgba: g[0], gradient: g, edge: null, flame: false, plate: false } : null;
+};
 const CSS_NAME = { backgroundImage: 'background-image', webkitBackgroundClip: '-webkit-background-clip', backgroundClip: 'background-clip', webkitTextFillColor: '-webkit-text-fill-color', webkitTextStroke: '-webkit-text-stroke', fontWeight: 'font-weight', textShadow: 'text-shadow', filter: 'filter' };
-const wordCss = (t) => {
-  const p = titlePaint(titleBadge({ title: t }));
+const wordCss = (t, badge = titleBadge({ title: t })) => {
+  const p = titlePaint(badge);
   return Object.entries(CSS_NAME).filter(([k]) => p[k]).map(([k, css]) => `${css}: ${p[k]};`).join(' ');
 };
 export const badgeCss = () => [
@@ -1082,7 +1093,9 @@ export const badgeCss = () => [
   // WB9g: an aura's button wears the Gatebreaker's own fire - the Broker's two pieces are one family of colour - its
   // word (.actauraword, the aura's name: a title's word rule stays one per gradient title) painted as that title's is.
   // AEGIS: each aura in ITS title's paint (AURA_PAINT) - the Oblivion Ward in the Aegis of Oblivion's violets
-  ...Object.keys(AURA_TEXT).map((a) => `.card button.acttitle.actaura.aura-${a} { color: ${cssRgba(TITLE_RGBA[AURA_PAINT[a]])}; }\n.card button.acttitle.actaura.aura-${a} .actauraword { ${wordCss(AURA_PAINT[a])} }`),
+  // AUDIT lane 3 F5: and an armory line no title paints, in its own
+  ...[...Object.keys(AURA_TEXT).map((a) => [a, TITLE_RGBA[AURA_PAINT[a]], wordCss(AURA_PAINT[a])]), ...Object.keys(ARMORY_LINE_GRADIENT).map((l) => [l, ARMORY_LINE_GRADIENT[l][0], wordCss(null, armoryLineBadge(l))])]
+    .map(([a, rgba, word]) => `.card button.acttitle.actaura.aura-${a} { color: ${cssRgba(rgba)}; }\n.card button.acttitle.actaura.aura-${a} .actauraword { ${word} }`),
 ].join('\n');
 
 /** The classic face's whole suffix: the marks, run together, or ''.

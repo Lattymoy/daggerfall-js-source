@@ -17,7 +17,7 @@
 // Dressed by the kit's roles (ui/enhanced/enhancedFrame.js FRAME_ROLES): the filters are tiles, a row a list line, a row
 // opened a panel, a tag a chip, Wear the kit's button - this sheet writes geometry and the words' colours alone.
 import { t } from '../../systems/textManager.js';
-import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_RGBA, TITLE_GRADIENT, AURA_PAINT, cssRgba } from '../playerBadge.js';
+import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_RGBA, TITLE_GRADIENT, AURA_PAINT, cssRgba, ARMORY_LINE_GRADIENT, armoryLineBadge } from '../playerBadge.js';
 import { armoryPieceOf } from '../../net/armoryLaw.js';   // ARMORY: a piece's slot and line
 import { profileIconNode } from '../profileIcons.js';
 import { inkPaintedWord } from '../grimoireDress.js';   // AUDIT COLLECTIONS-II (lane 3): a painted word inked on the Grimoire's page (one home since AUDIT-STOREFRONT II)
@@ -158,6 +158,8 @@ function paintedWord(el, /** @type {string} */ kind, /** @type {string} */ key, 
   const word = el('span', 'coll-word', wardrobeName(kind, key));
   const paintKey = kind === 'title' ? key : kind === 'aura' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)]
     : kind === 'armory' ? AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (armoryPieceOf(key)?.line ?? 'eternal')] : null;   // ARMORY: a piece in its line's aura's paint
+  const line = kind === 'armory' && !paintKey ? armoryLineBadge(armoryPieceOf(key)?.line ?? '') : null;   // AUDIT lane 3 F5: a line no title paints
+  if (line && word.style) { paintTitle(word, line, false); inkPaintedWord(word); }
   if (paintKey && word.style) {
     paintTitle(word, titleBadge({ title: paintKey }), kind === 'title');   // SHOP: a title's flame plate, never an aura's word
     inkPaintedWord(word);   // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)
@@ -173,7 +175,7 @@ export function auraRingNode(/** @type {any} */ doc, /** @type {string} */ key, 
   const NS = 'http://www.w3.org/2000/svg';
   const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs) => { const n = doc.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v)); return n; };
   const paint = AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (key)];
-  const stops = TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)], TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)]];
+  const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ?? TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)], TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)]];   // AUDIT lane 3 F5
   const id = `coll-aura-${key}-${++_ringSerial}`;
   const svg = node('svg', { viewBox: '0 0 40 26', width: size, height: Math.round(size * 0.65), class: 'coll-ring', 'aria-hidden': 'true' });
   const defs = node('defs', {});

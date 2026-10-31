@@ -275,3 +275,19 @@ test('BLOOD-OF-COLDHARBOUR the card\'s vertex, RUN: a drop stands square to the 
   assert.ok(Math.abs(mid.vWorld[0] - 10.3) < 1e-6 && Math.abs(mid.vWorld[1] - 1.2) < 1e-6 && Math.abs(mid.vWorld[2] + 4) < 1e-6, 'at its place about the feet');
   assert.deepEqual(mid.vS.map((x) => Math.round(x * 1e4) / 1e4), [2.75, 0.4, 1], 'the drop\'s look handed on');
 });
+
+test('AUDIT lane 3 F3, F4: a drop\'s card is dark at its edge - a rune\'s glow shows no square - and a rising drop\'s tail is drawn below its bead, the card\'s top being up (mutants: the edge unfaded, the tail above)', () => {
+  const lit = (c) => (c ? Math.max(...c.slice(0, 3)) * 255 : 0);
+  let worst = 0;
+  for (let k = 0; k < HAZE_RUNES; k++) {
+    const vS = [2 + (k + 0.5) / HAZE_RUNES, 0.78, 1];   // a drop opened into rune k
+    for (let i = 0; i <= 20; i++) {
+      const s = i / 20;
+      for (const uv of [[s, 0.0005], [s, 0.9995], [0.0005, s], [0.9995, s]]) worst = Math.max(worst, lit(hazeAt(2, uv, { vS })));
+    }
+  }
+  assert.ok(worst < 2, `the brightest texel at a card's edge: ${worst.toFixed(1)} / 255`);
+  const bead = [2.35, 0.3, 1];
+  const above = lit(hazeAt(2, [0.5, 0.8], { vS: bead })), below = lit(hazeAt(2, [0.5, 0.2], { vS: bead }));
+  assert.ok(below > 2 * above, `the tail below (${below.toFixed(0)}), not above (${above.toFixed(0)})`);
+});
