@@ -52,7 +52,7 @@ test('APPEARANCES THE PART: a tile of its own after the account\'s four, every c
   for (const it of [sword, chest]) equipItem(me, it);
   noteHeldLooks(me);
   wearAppearance(me, sword, lookOfKey('121.7.0'));
-  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'trophies', 'fish', 'annals'], 'every character\'s, after the account\'s five');   // PIN MOVED (HUNTERS-MARK, at the merge): the gathered parts after it, always shown; PIN MOVED (ARMORY): the Aura Armory's part after Auras
+  assert.deepEqual(collectionParts(me).map(([id]) => id), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'trophies', 'fish', 'tunes', 'annals'], 'every character\'s, after the account\'s five');   // PIN MOVED (HUNTERS-MARK, at the merge): the gathered parts after it, always shown; PIN MOVED (ARMORY): the Aura Armory's part after Auras
   // PIN MOVED (AUDIT HORIZONTAL E3): 473 looks - chain boots' second style is none
   assert.deepEqual(partCount('appearances', null, me), { held: 3, total: 473 }, 'the character\'s - no account read');
   setCollectionsPart('appearances');

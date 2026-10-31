@@ -35,6 +35,7 @@ import { CHART_ROW } from '../../src/systems/naval/treasureCharts.js';   // CAPT
 import { UPKEEP_ITEM_ROWS } from '../../src/systems/upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the nineteenth registrar
 import { DRAGON_MOUNT_ROW } from '../../src/systems/dragon/dragonMount.js';   // DRAGON5: the twentieth
 import { WEIR_KEY_ROW } from '../../src/systems/eliteGates/weirKey.js';   // EG-PLAY: the twentieth - the Weir Key, bound
+import { MUSIC_SHEET_ROW } from '../../src/systems/musicSheetRow.js';   // MUSIC-BOX: the Sheet music
 import { SOUL_CAKE_ROW, HEARTH_OFFERING_ROW } from '../../src/systems/festival/soulCake.js';   // WITCH1: the twenty-first - the Soul Cake and the Hearth Offering, bound
 import { STARGLASS_ROW } from '../../src/systems/starfall/starglass.js';   // STAR7: the twenty-second - Starglass, not bound
 import { LOCKPICK_ROW } from '../../src/systems/lockpick/lockpickItem.js';   // LOCKPICK: the Lockpick, not bound
@@ -167,6 +168,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     ...FORAGING_TEMPLATES, ...MINING_TEMPLATE_ROWS, ...WOOD_TEMPLATE_ROWS, REPAIR_KIT_ROW,   // MERGE 2: Foraging's and the professions' rows - none bound: a material and a tool change hands
     STORES_ROW,   // SEA-REPAIR: the carpenter's stores - not bound: timber and pitch change hands
     ...REST_ITEM_ROWS,   // REST6: the seven rest supplies - none bound: a Bedroll or a Tonic changes hands
+    MUSIC_SHEET_ROW,   // MUSIC-BOX: the Sheet music - not bound: a sheet changes hands, and a known tune's is sold
     KEEPSAKE_ROW,   // LW6c: a keepsake of the fallen of a dive - not bound: it changes hands
     REMAINS_ROW,   // LEGACY4: an ancestor's remains - not bound: worth nothing, and only their own line can lay them to rest
     WALLET_ROW,   // WALLET1: the wallet - bound (and pack-only): it never changes hands
@@ -194,6 +196,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
   // PIN MOVED (LOCKPICK, bible/06-Systems/Lockpicking.md): the Lockpick (systems/lockpick/lockpickItem.js), its row joined above
   // PIN MOVED (DRAGON5, bible/11-Multiplayer/Dwarven-Dragon.md): the Dwarven Dragon (systems/dragon/dragonMount.js), its row joined above
   // PIN MOVED (HAND-WRAPS, bible/05-Combat/Hand-Wraps.md): the Hand Wraps (systems/handWraps.js), its row joined above
+  // PIN MOVED (MUSIC-BOX): the Sheet music (systems/musicSheetRow.js), its row joined above
   const registrars = [];
   const walk = (dir) => {
     for (const e of readdirSync(new URL(`../../${dir}`, import.meta.url), { withFileTypes: true })) {
@@ -203,7 +206,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     }
   };
   walk('src');
-  assert.deepEqual(registrars.sort(), ['src/systems/ayleidStones.js', 'src/systems/comeSailAway/comeSailAwayItems.js', 'src/systems/deepWater/deepWatersFishItems.js', 'src/systems/dragon/dragonMount.js', 'src/systems/eliteGates/weirKey.js', 'src/systems/festival/soulCake.js', 'src/systems/foraging/foragingInstall.js', 'src/systems/gate/gateSpoils.js', 'src/systems/gems.js', 'src/systems/handWraps.js', 'src/systems/iliac/iliacItems.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/lockpick/lockpickItem.js', 'src/systems/naval/navalStores.js', 'src/systems/naval/tradeGoods.js', 'src/systems/naval/treasureCharts.js', 'src/systems/pistolet.js', 'src/systems/professions/profTemplates.js', 'src/systems/rest/restItems.js', 'src/systems/roleplayRealismItems/rriInstall.js', 'src/systems/starfall/starglass.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/upkeep/upkeepItemRows.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains; LOOT21: the fourteenth, the Ayleid stones
+  assert.deepEqual(registrars.sort(), ['src/systems/ayleidStones.js', 'src/systems/comeSailAway/comeSailAwayItems.js', 'src/systems/deepWater/deepWatersFishItems.js', 'src/systems/dragon/dragonMount.js', 'src/systems/eliteGates/weirKey.js', 'src/systems/festival/soulCake.js', 'src/systems/foraging/foragingInstall.js', 'src/systems/gate/gateSpoils.js', 'src/systems/gems.js', 'src/systems/handWraps.js', 'src/systems/iliac/iliacItems.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/lockpick/lockpickItem.js', 'src/systems/musicSheetRow.js', 'src/systems/naval/navalStores.js', 'src/systems/naval/tradeGoods.js', 'src/systems/naval/treasureCharts.js', 'src/systems/pistolet.js', 'src/systems/professions/profTemplates.js', 'src/systems/rest/restItems.js', 'src/systems/roleplayRealismItems/rriInstall.js', 'src/systems/starfall/starglass.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/upkeep/upkeepItemRows.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains; LOOT21: the fourteenth, the Ayleid stones
   // and the honest client never offers one: the window's pack refuses it before a half is ever written
   const holder = { items: [{ ...sigilStone(), stackCount: 2 }], goldPieces: 0 };
   assert.equal(createTradePack(holder).offerable(holder.items[0]), tradeRefusal(holder.items[0]));

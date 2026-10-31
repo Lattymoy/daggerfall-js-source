@@ -9889,6 +9889,11 @@
   "tr": "2fdbe97fd6ec",
   "by": "claude-in-session"
  },
+ "coll.part.tunes": {
+  "en": "69dbff037ed2",
+  "tr": "6d4fc6ff96fb",
+  "by": "claude-in-session"
+ },
  "coll.season.on": {
   "en": "20219242b724",
   "tr": "2af0ae15d7d9",
@@ -10037,6 +10042,26 @@
  "coll.trophies.none": {
   "en": "cd9242cb1f32",
   "tr": "b2264acb9ff0",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.head": {
+  "en": "94b218aa738b",
+  "tr": "68393714c8d9",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.how": {
+  "en": "2ae9a1ed3c0a",
+  "tr": "e6a3ff985f95",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.none": {
+  "en": "b9881ac7b986",
+  "tr": "380ddd92ffe9",
+  "by": "claude-in-session"
+ },
+ "coll.tunes.row": {
+  "en": "999dcc2b7438",
+  "tr": "58bb5f0354c2",
   "by": "claude-in-session"
  },
  "coll.wear.hide": {
@@ -11027,6 +11052,11 @@
  "decor.station.cooking": {
   "en": "36967130897c",
   "tr": "9a18e2eb9716",
+  "by": "claude-in-session"
+ },
+ "decor.station.music": {
+  "en": "23cd36ca1d2c",
+  "tr": "9b84ab03bc74",
   "by": "claude-in-session"
  },
  "decor.strandedBack": {
@@ -26607,6 +26637,121 @@
  "monument.travelers": {
   "en": "0c52cabb8d6b",
   "tr": "f2d6cf948392",
+  "by": "claude-in-session"
+ },
+ "music.box.count": {
+  "en": "b89bb70910eb",
+  "tr": "46a28da86ac7",
+  "by": "claude-in-session"
+ },
+ "music.box.none": {
+  "en": "93e15de091ff",
+  "tr": "3bf796d6de6c",
+  "by": "claude-in-session"
+ },
+ "music.box.off": {
+  "en": "404bdbe2d46b",
+  "tr": "4b73611b6c5a",
+  "by": "claude-in-session"
+ },
+ "music.box.playing": {
+  "en": "2e40b0995076",
+  "tr": "39abb45889c5",
+  "by": "claude-in-session"
+ },
+ "music.box.quiet": {
+  "en": "2c0e8f99d406",
+  "tr": "206b0ca7735c",
+  "by": "claude-in-session"
+ },
+ "music.group.day": {
+  "en": "987b9ced08d4",
+  "tr": "f571947280ea",
+  "by": "claude-in-session"
+ },
+ "music.group.dungeon": {
+  "en": "ef947e3aef31",
+  "tr": "2d885635f4b2",
+  "by": "claude-in-session"
+ },
+ "music.group.home": {
+  "en": "dc8745ba30be",
+  "tr": "9ea949c3dee5",
+  "by": "claude-in-session"
+ },
+ "music.group.mages": {
+  "en": "321cb9f19c9f",
+  "tr": "f15fd100d50d",
+  "by": "claude-in-session"
+ },
+ "music.group.night": {
+  "en": "1097b553dcf8",
+  "tr": "a1b16ea2c33f",
+  "by": "claude-in-session"
+ },
+ "music.group.overcast": {
+  "en": "139327a2e6bf",
+  "tr": "857468591de1",
+  "by": "claude-in-session"
+ },
+ "music.group.palace": {
+  "en": "9b435eba8e33",
+  "tr": "8996059593e3",
+  "by": "claude-in-session"
+ },
+ "music.group.rain": {
+  "en": "0a858c95bc97",
+  "tr": "d1127480c3a4",
+  "by": "claude-in-session"
+ },
+ "music.group.shop": {
+  "en": "55de88709232",
+  "tr": "754711c62a0c",
+  "by": "claude-in-session"
+ },
+ "music.group.sneaking": {
+  "en": "4559e7867506",
+  "tr": "854de5e9d597",
+  "by": "claude-in-session"
+ },
+ "music.group.snow": {
+  "en": "9c8238f65551",
+  "tr": "eb6e734ce277",
+  "by": "claude-in-session"
+ },
+ "music.group.tavern": {
+  "en": "ac0c0b8a73f3",
+  "tr": "54350e63e7b6",
+  "by": "claude-in-session"
+ },
+ "music.group.temple": {
+  "en": "5e83789be88e",
+  "tr": "af00a53a9ca6",
+  "by": "claude-in-session"
+ },
+ "music.sheet.found": {
+  "en": "88b803a82ef9",
+  "tr": "756d373d1811",
+  "by": "claude-in-session"
+ },
+ "music.sheet.item": {
+  "en": "9f2117b01dbe",
+  "tr": "9aeaa1ba6012",
+  "by": "claude-in-session"
+ },
+ "music.sheet.known": {
+  "en": "a6e18caa4ea7",
+  "tr": "87db97967447",
+  "by": "claude-in-session"
+ },
+ "music.sheet.learned": {
+  "en": "09a9dede853d",
+  "tr": "583e52de9e41",
+  "by": "claude-in-session"
+ },
+ "music.tune": {
+  "en": "4eed3629fe66",
+  "tr": "4eed3629fe66",
   "by": "claude-in-session"
  },
  "naval.class.fishingSkiff": {

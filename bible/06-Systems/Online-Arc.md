@@ -17650,3 +17650,40 @@ moved: `test/ui/enhanced/enhancedInventory.test.js` (the seam's first act admits
 and the gate) and `test/systems/disc22c_classic_loot.test.js`'s draw line kept by the order of the try's statements.
 Mutants: `tools/mutants/rpt1026_world.json` CONFIRM-REREAD (3), CONFIRM-ONCE (2), DECOR-VERBS (8), all dead;
 `worldhover.json`'s two gate records re-aimed by content (dead).
+
+## MUSIC-BOX - a music box in the house, its tunes a collection (2026-10-31, the owner)
+
+The owner: *"Music box collection - Music box with unlockable existing tracks to play inside of the house"*, and on the
+first build, which unlocked a tune the first time the game played it: *"this is a collectable - not just given to
+player"*. The port's own; DFU has no music box.
+
+THE LAW (`systems/musicBox.js`):
+
+- **The tunes** are Daggerfall's own songs: the General MIDI half of SongManager's playlists (`song/songManager.js`),
+  each once, named by the first place the game plays it ("Day 1", "Tavern 3", "Shop") - 62 of them. FM records and
+  quest-only songs are no tunes; an FM twin plays as its General MIDI tune.
+- **Sheet music** (template 1830, DFU's Parchment picture, 25 gold at a counter, never shelved) carries one tune. A foe
+  of the player's own killing blow (`playerKills.js`) drops one into the pack one time in 40, once a body, said on the
+  HUD; three sheets in four are a tune the character does not hold while any is left. Used, a sheet adds its tune and
+  is spent; a tune already held keeps the sheet, to sell. Hearing a song collects nothing.
+- **The music box** is a placed piece made the `music` station (`net/decorLaw.js` DECOR_STATIONS, after the cooking
+  station so the stations counted from the end stand; 5,000 gold, a tenth of a craft's licence; "Music box"). Pressed
+  (`scenes/musicBoxPress.js`, after the piece's own use and before a station's craft), it lists Off and each tune held,
+  the one playing marked. The pick plays in that room, looped, over the room's own music, and fades when the player
+  leaves. Anyone in the room may press it; what it plays is the presser's own - the piece carries no tune, so the
+  account service learns nothing new beyond the station.
+- **Kept** in the save's per-mod slot (`musicBox`): the tunes and the UTC day each was learned, and the boxes' picks
+  (the newest 32). The Collections page lists the Tunes after the Fish (`ui/collections/gatheredPart.js`).
+
+THE FOUR HOSTS: the interior host (`worldModes.js`) presses the box and answers `musicBoxHere(id)`; `world.js` runs
+the box's score last in its music chain, before the director (`createMusicBoxScore`); `exterior.js` stands yards,
+whose pieces take no station; `dungeonContext.js` places no decor. createWorldModes +4 logical lines, its ceiling
+raised with the reason (`test/scenes/hostceiling.test.js`). The station is the shared law, so it waits on the account
+deploy (`acct231`).
+
+**Pins.** `test/systems/musicbox.test.js`. Pins moved for the station and the chain: `test/net/audit29_client.test.js`,
+`test/net/prof2_client.test.js`, `test/ui/homestations.test.js`, `test/systems/decor/decoruse.test.js`,
+`test/systems/huntersmark_trophies.test.js`, `test/ui/collections2.test.js`, `test/scenes/arena2_hosts.test.js`,
+`test/scenes/soundscapehost.test.js`, `test/systems/gate/wb7_boss_audio.test.js`,
+`test/systems/superDungeon/sd13_score.test.js`; the chain's mutant records in `arena2.json`, `soundscape.json`,
+`sd13.json` and `wb7.json` re-aimed by content.
