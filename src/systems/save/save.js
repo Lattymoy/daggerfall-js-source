@@ -20,7 +20,7 @@ import { rebuildEquipState, isEquipped, unequipSlot } from '../equip.js';   // A
 import { templateByIndex } from '../item/itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
 import { heldOutOf } from '../item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: a counter's staged lot is still the player's
 import { restartHeldEnchantments } from '../enchantments.js';   // E2: the held bundles' restore half
-import { repairSoulSets } from '../enchanting.js';   // SOUL-KEPT: a bound soul's set made whole on load
+import { repairSoulSets } from '../enchanting.js';   // a bound soul's set made whole on load
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from '../weather/weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from '../region/regionConditions.js';
 import { arenaLadderSnapshot, arenaLadderRestore } from '../arena/arenaLadder.js';
@@ -794,7 +794,7 @@ export function repairItemLists(repairLists) {
   for (const list of repairLists) cleanBinders(list);
   // PARTS-WEIGHT (FIELD BUGS 2026-10-18e): a boat's parts weigh her timbers alone now - parts her hold had made too heavy
   // to lift, in a chest or anywhere, given her hull's packed weight (comeSailAwayItems.js repairPartsWeights)
-  // SOUL-KEPT: a bound soul's drawbacks the item maker's Remove took laid back (enchanting.js repairSoulSets)
+  // A bound soul's drawbacks the item maker's Remove took, laid back (enchanting.js repairSoulSets)
   for (const list of repairLists) {
     const n = repairSoulSets(list);
     if (n) console.info(`[save] SOUL-KEPT: ${n} soul-bound piece(s) given back their soul's forced rows`);

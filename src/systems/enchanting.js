@@ -144,7 +144,7 @@ export function enchantmentRowCost(e) {
 /** A row the item maker laid - the catalogue's settings row, which carries its `enchantCost` (applyEnchantments); the
  *  item law reads a row so (itemLaw.js isMakerRow), and the temple's lift never takes one (lootCurse.js liftCurse). */
 export const makerLaid = (e) => e?.enchantCost !== undefined;
-/** SOUL-KEPT: A BOUND SOUL'S SET MADE WHOLE on
+/** A BOUND SOUL'S SET MADE WHOLE on
  *  load. The window's Remove took a soul's forced row with a chosen row of its kind (enchantmentCatalogue.js
  *  removeEnchantment), so a piece could carry a Daedra Lord without its drawbacks - and the item law held its owner. Each
  *  missing forced row is laid back after the rest; where that passes DFU's eleven rows, the newest rows the player chose

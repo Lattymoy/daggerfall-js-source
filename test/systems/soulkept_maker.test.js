@@ -1,4 +1,4 @@
-// SOUL-KEPT (a player's report, 2026-10-31: a Daedric mace made at the Mages Guild's item maker - a Masterwork Rare, nine
+// A player's report: a Daedric mace made at the Mages Guild's item maker - a Masterwork Rare, nine
 // rows laid on it and a Daedra Lord bound - held their trading, gathering and crafting: "it carries a Mace the game could not
 // have made"). The piece carried Soul Bound: Daedra Lord without the two drawbacks the soul forces (User Takes Damage in
 // holy places, Extra Weight), and the item law (itemLaw.js makerFindings) is right that a soul's set is whole or forged.

@@ -508,7 +508,7 @@ export class ItemMakerWindow {
    *  its forced children out of BOTH lists with it. */
   _removeRow(entry) {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    this.powers = removeEnchantment(this.powers, entry.key, entry.parentEnchantment ?? 0); // SOUL-KEPT: never a soul's forced row of its kind
+    this.powers = removeEnchantment(this.powers, entry.key, entry.parentEnchantment ?? 0); // never a soul's forced row of its kind
     this.sideEffects = removeEnchantment(this.sideEffects, entry.key, entry.parentEnchantment ?? 0);
   }
 
