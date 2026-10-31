@@ -11,7 +11,7 @@
   {
     "name": "RRI2-2-the-mob-keys-are-not-read",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "export const rriEnemyLootTableKey = (mobileType, key) => (lootRebalanceOn() ? (RRI_MOB_LOOT_KEYS[mobileType] ?? key) : key);",
+    "old": "export const rriEnemyLootTableKey = (mobileType, key) =>\n  lootRebalanceOn() ? (RRI_MOB_LOOT_KEYS[mobileType] ?? key) : key;",
     "new": "export const rriEnemyLootTableKey = (mobileType, key) => key;",
     "tests": [
       "test/systems/rri2_realism.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "RRI2-7-the-loot-condition-roll-wears-artifacts",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "    if ((item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books') && !item.artifact) {\n      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);",
-    "new": "    if ((item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books')) {\n      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);",
+    "old": "    if ((item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books') && !item.artifact) {",
+    "new": "    if (item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books') {",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "RRI2-8-quality-18-stocks-used",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "  if (quality <= 17) return 0.75;       // 14 - 17, almost new+\n  return null;",
+    "old": "  if (quality <= 17) return 0.75; // 14 - 17, almost new+\n  return null;",
     "new": "  return 0.75;",
     "tests": [
       "test/systems/rri2_realism.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "RRI2-9-the-alchemist-potion-is-not-doubled",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      item.value = itemValueOf(item) * 2;",
-    "new": "      item.value = itemValueOf(item);",
+    "old": "      item.value = itemValueOf(item) * 2; // AUDIT 68 S27-wth-nan: JAN1's one value read - `??` let a NaN value through to be doubled",
+    "new": "      item.value = itemValueOf(item); // AUDIT 68 S27-wth-nan: JAN1's one value read - `??` let a NaN value through to be doubled",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ],
@@ -138,7 +138,7 @@
   {
     "name": "RRI2-16-the-upgrade-forgets-the-forbidden-steel",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "  if ((upgrade && !materialForbidden(career, MATERIAL_BITS.steel)) || materialForbidden(career, MATERIAL_BITS.iron)) weaponMaterial = WEAPON_MATERIALS.Steel;",
+    "old": "  if ((upgrade && !materialForbidden(career, MATERIAL_BITS.steel)) || materialForbidden(career, MATERIAL_BITS.iron))\n    weaponMaterial = WEAPON_MATERIALS.Steel;",
     "new": "  if (upgrade || materialForbidden(career, MATERIAL_BITS.iron)) weaponMaterial = WEAPON_MATERIALS.Steel;",
     "tests": [
       "test/systems/rri2_realism.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "RRI2-17-rise-is-not-primary-only",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      classic(2);   // Buoyancy\n      if (primary) spells.push(RRI_SPELLS.rise);",
-    "new": "      classic(2);   // Buoyancy\n      spells.push(RRI_SPELLS.rise);",
+    "old": "      if (primary) spells.push(RRI_SPELLS.rise);",
+    "new": "      spells.push(RRI_SPELLS.rise);",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]

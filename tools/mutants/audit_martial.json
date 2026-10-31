@@ -1059,8 +1059,8 @@
   {
     "name": "AUDIT-MARTIAL-BAL10-the-items-kit-hands-no-short-blade",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade',",
-    "new": "    shortBlade: false,",
+    "old": "    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // BAL10: a short blade handles as a dagger, whatever sprite draws it",
+    "new": "    shortBlade: false, // BAL10: a short blade handles as a dagger, whatever sprite draws it",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

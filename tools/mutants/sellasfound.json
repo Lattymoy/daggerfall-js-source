@@ -2,8 +2,8 @@
   {
     "name": "SELL-AS-FOUND-a-pile-or-body-unmarked",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition;   // SELL-AS-FOUND\n    }\n  }\n  return items;\n}\n/** CalculateConditionCost",
-    "new": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }\n  return items;\n}\n/** CalculateConditionCost",
+    "old": "      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition; // SELL-AS-FOUND\n    }\n  }",
+    "new": "      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SELL-AS-FOUND-a-shelf-unmarked",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition;   // SELL-AS-FOUND\n    }\n  }\n  return items;\n}\nexport const storeQualityOn",
-    "new": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }\n  return items;\n}\nexport const storeQualityOn",
+    "old": "      const conditionMod = low + rolls() * (1 - low);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition; // SELL-AS-FOUND\n    }\n  }",
+    "new": "      const conditionMod = low + rolls() * (1 - low);\n      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"

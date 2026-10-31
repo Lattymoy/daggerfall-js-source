@@ -97,7 +97,7 @@ the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType"`).
 "do the plate cost and half its cost for chain": while a refereed fight may hold the player, each worn piece adds to a
 spell's cost and takes off the cast rate by its own type
 (`pvpArmourCasting.js:"export const PVP_ARMOUR_CAST ="`): plate 6% and 3%, chain half, leather nothing.
-An RRI light set piece reads leather (`rriItems.js:"export function rriNativeMaterialValue(item) {"`). Full plate
+An RRI light set piece reads leather (`rriItems.js:"export function rriNativeMaterialValue"`). Full plate
 costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no such cost.
 
 ## PVP-SPELL-CRIT: a spell at a player crits

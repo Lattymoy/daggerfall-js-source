@@ -1256,6 +1256,12 @@
 !/src/systems/roleplayRealism/rrQuestLine.js
 !/src/systems/roleplayRealism/rrRealism.js
 !/src/systems/roleplayRealism/rrVariants.js
+!/src/systems/roleplayRealismItems/
+/src/systems/roleplayRealismItems/*
+!/src/systems/roleplayRealismItems/rriIndex.js
+!/src/systems/roleplayRealismItems/rriItems.js
+!/src/systems/roleplayRealismItems/rriKits.js
+!/src/systems/roleplayRealismItems/rriRealism.js
 !/src/systems/roomLoot.js
 !/src/systems/rumorMill.js
 !/src/systems/sailingCabin.js

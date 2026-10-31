@@ -2,8 +2,8 @@
   {
     "name": "RRI1-2-the-armor-switch-is-not-read",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "  if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null;",
-    "new": "",
+    "old": "  if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null; // rriModule reads Enabled too",
+    "new": "  // rriModule reads Enabled too",
     "tests": [
       "test/systems/rri1_items.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RRI1-4-brigandine-draws-the-leather-record",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "  if (raw(item) >= ARMOR_MATERIAL.Iron) return 8 + offset;\n  return (offset < 4) ? 16 : 17;",
-    "new": "  return (offset < 4) ? 16 : 17;",
+    "old": "  if (raw(item) >= ARMOR_MATERIAL.Iron) return 8 + offset;\n  return offset < 4 ? 16 : 17;",
+    "new": "  return offset < 4 ? 16 : 17;",
     "tests": [
       "test/systems/rri1_items.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RRI1-5-the-chain-table-loses-a-cell",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "    case M.Orcish: return 17;\n    case M.Daedric: return 18;",
-    "new": "    case M.Orcish: return 17;\n    case M.Daedric: return 17;",
+    "old": "      return 18;",
+    "new": "      return 17;",
     "tests": [
       "test/systems/rri1_items.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RRI1-12-the-helmet-takes-the-chain-table",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "  inventoryTextureRecord: helmet ? helmetRecord : lightRecord,\n  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),\n  materialArmorValue: (item) => leatherMaterialArmorValue(raw(item), msg(item)),",
-    "new": "  inventoryTextureRecord: helmet ? helmetRecord : lightRecord,\n  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),\n  materialArmorValue: (item) => chainmailMaterialArmorValue(raw(item)),",
+    "old": "    materialArmorValue: (item) => leatherMaterialArmorValue(raw(item), msg(item)),",
+    "new": "    materialArmorValue: (item) => chainmailMaterialArmorValue(raw(item)),",
     "tests": [
       "test/systems/rri1_items.test.js"
     ]

@@ -191,8 +191,8 @@
   {
     "name": "SWING-LAW-RRI-keeps-its-hyperbola",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) });",
-    "new": "  return (3 * (115 - adjustedSpeed)) / 980;",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "new": "  return (3 * (115 - adjustedSpeed)) / 980; // BAL10: `shortBlade` - the dagger's handling for every short blade",
     "tests": [
       "test/systems/rri2_realism.test.js",
       "test/systems/swinglaw.test.js",
@@ -202,8 +202,8 @@
   {
     "name": "SWING-LAW-RRI-blind-to-the-kind",
     "file": "src/systems/roleplayRealismItems/rriRealism.js",
-    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) });",
-    "new": "  return swingFrameSeconds(adjustedSpeed, { handling: 1 });",
+    "old": "  return swingFrameSeconds(adjustedSpeed, { handling: swingHandling(weaponType, twoHanded, shortBlade) }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
+    "new": "  return swingFrameSeconds(adjustedSpeed, { handling: 1 }); // BAL10: `shortBlade` - the dagger's handling for every short blade",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SWING-LAW-RRI-override-hands-no-hands",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    weaponType: ctx.weaponType, twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both,",
-    "new": "    weaponType: ctx.weaponType, twoHanded: false,",
+    "old": "    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // SWING-LAW: the handling the port's law reads",
+    "new": "    twoHanded: false, // SWING-LAW: the handling the port's law reads",
     "tests": [
       "test/systems/swinglaw.test.js",
       "test/systems/rri2_realism.test.js"

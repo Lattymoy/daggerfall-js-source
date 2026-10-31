@@ -20,8 +20,8 @@
   {
     "name": "DISC21-A-the-kit-s-mint-dropped",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      mintCondition(dagger);\n",
-    "new": "",
+    "old": "      mintCondition(dagger);\n      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC21-A-the-kit-wears-nothing",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
-    "new": "      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0);\n",
+    "old": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0);",
     "tests": [
       "test/systems/disc21.test.js"
     ]

@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-start-kit-unmarked",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "    markFound(item);   // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is\n",
-    "new": "",
+    "old": "    markFound(item); // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-questions-dagger-unmarked",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      markFound(dagger);   // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)\n",
-    "new": "",
+    "old": "      markFound(dagger); // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],
