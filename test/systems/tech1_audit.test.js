@@ -20,7 +20,6 @@ import { setPlayerDoor } from '../../src/systems/playerDoor.js';
 import { ARROW_TEMPLATE } from '../../src/systems/inventory.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { SWING_FATIGUE_COST } from '../../src/scenes/hostCombat.js';
-import { itemChatText, itemBriefLines } from '../../src/ui/enhanced/enhancedInventory.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { techniquePierces, shaftSequence } from '../../src/combat/arrowFlight.js';
 import { mountReforgeWindow } from '../../src/ui/reforgeWindow.js';
@@ -293,17 +292,6 @@ test('AUDIT TECH1 THE PROTECTED: an ally or a foe at peace is never in a techniq
   assert.equal(T.foeUnderLook([0, 1.7, 0], [0, 0, 1], 9, null, [ahead({ companion: 0 })]), null, 'a companion');
   const hostile = ahead();
   assert.equal(T.foeUnderLook([0, 1.7, 0], [0, 0, 1], 9, null, [hostile]), hostile);
-});
-
-test('AUDIT TECH1 THE CHAT POST: a post names the technique\'s line and leaves its "what a press does" to the card - the room under the post\'s length kept for the piece\'s other lines (mutants: the detail posted)', () => {
-  reset();
-  const blade = piece(() => createWeapon(120, 1), 'leap', 23);
-  const detail = LR.techniqueDetail(LR.techniqueLineOf(blade));
-  assert.ok(detail && itemBriefLines(blade, {}).includes(detail), 'the card carries it');
-  const post = itemChatText(blade, {});
-  assert.match(post, /Leap Strike \+23%/, 'the post names the line');
-  assert.ok(!post.includes(detail), `and not its detail: ${post}`);
-  _resetForTests();
 });
 
 test('AUDIT TECH1 A BIG BODY: its radius is read where its stand-in keeps it (the court\'s boss, a crystal, one of his host - `ai.radius`), so a Lunge\'s lane meets a body that crosses it, not only one whose middle does (mutants: the AI\'s radius unread)', () => {

@@ -1,0 +1,183 @@
+[
+  {
+    "name": "ROAD-GRAPH-the-chains-not-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          graph.nChain[8 * u + o8] = ref;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-keep-never-reused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "k.pixels <= ROAD_GRAPH_MAX_PIXELS) return k;",
+    "new": "k.pixels > ROAD_GRAPH_MAX_PIXELS) return k;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-keep-unhanded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "keep: opts.roadKeep ?? null });",
+    "new": "keep: null });",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-install-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const lawStamp = (beyond) => `${beyond === arenaRoadByte ? arenaRoadsVersion() : 0}|${tamrielLandVersion()}`;",
+    "new": "const lawStamp = (beyond) => `0|${tamrielLandVersion()}`;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-water-unkeyed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "k.isWater === isWater && ",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-walk-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "            if (++cells >= next) { next += PLAN_YIELD_CELLS; yield; if (moved()) return yield* searchByRoadSteps(from, to, { ...o, ends: null }); }\n            if (tally) tally.n++;",
+    "new": "            if (++cells >= next) { next += PLAN_YIELD_CELLS; yield; }\n            if (tally) tally.n++;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-ends-as-chains",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (!local(cx, cy)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/travel/road_graph.test.js",
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-a-chain-past-an-end",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "        if (touches(cid)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-gaps-unboxed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": " || hits(c, bx0, by0, bx1, by1);",
+    "new": ";",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-a-fork-passed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (roadOuts(graph, x, y, walk) !== 4) break;",
+    "new": "if (roadOuts(graph, x, y, walk) < 4) break;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-goals-neighbours-chained",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const tr = Math.max(rt, 1);",
+    "new": "const tr = rt;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-scan-unpriced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          cost = 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-diagonal-unpriced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "            cost += (STEP_DX[sd] && STEP_DY[sd] ? Math.SQRT2 : 1) * KIND_COST[kind];",
+    "new": "            cost += KIND_COST[kind];",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-ring-unseen",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "            if (x === cx && y === cy) break;   // a ring, back where it began\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-a-turns-kind-swapped",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "kind = back0 ? walk[3] : walk[1];",
+    "new": "kind = back0 ? walk[1] : walk[3];",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-read-back-off-by-one",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "return graph.pd[ref > 0 ? off + 1 + j : off + L - j]; };",
+    "new": "return graph.pd[ref > 0 ? off + 1 + j : off + L - 1 - j]; };",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-link-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "{ reach(n, ng, c, nx, ny); via.set(n, kind); link.delete(n); }",
+    "new": "{ reach(n, ng, c, nx, ny); via.set(n, kind); }",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-flood-back-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "            if (!backPace()) return null;   // a long chain walked, the flood back keeping its pace\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-ladders-count-not-its-own",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    spent = tally.n;   // ROAD-GRAPH: its answer is whole, so the ladder after it spends a count of its own (AUDIT ROAD-GRAPH H1)\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-roads-asked-anyway",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    byRoad = landApart ? null : yield* searchByRoadSteps(",
+    "new": "    byRoad = false ? null : yield* searchByRoadSteps(",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  }
+]

@@ -116,12 +116,13 @@ import { audio } from '../systems/audio.js';
 import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
 import { getBytes, forgetBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { landServedBytes } from '../world/land/landLayer.js';   // FOUNDATION F4: the land as data
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
  *  source (memory -> IndexedDB -> network); signature unchanged. */
 export async function fetchBytes(name) {
-  return getBytes(name);
+  return landServedBytes(name, await getBytes(name));   // FOUNDATION F4: WOODS.WLD and CLIMATE.PAK with the land's rows on the Bay
 }
 
 /**
@@ -2355,7 +2356,19 @@ export function setBeforeTitleExit(fn) { _beforeTitleExit = typeof fn === 'funct
  *  pressed anywhere online lands in the realm and no offline door ever lists a realm character. */
 let _realmSaveSink = null;
 export function setRealmSaveSink(fn) { _realmSaveSink = typeof fn === 'function' ? fn : null; }
-export const realmSaveSink = () => _realmSaveSink;
+/** AUDIT-STOREFRONT II (lane D 2): told as the sink is handed each save - `fn(snap)`, which may answer a `(answer) =>
+ *  void` told the realm's answer (`{ ok }`) - so a module lets go of what a landed save holds without a host binding
+ *  (scenes/seasonHost.js: the Resonant Maul held on the device). Answers its remover. */
+const _realmSaveHeard = new Set();
+export function hearRealmSaves(fn) { _realmSaveHeard.add(fn); return () => { _realmSaveHeard.delete(fn); }; }
+function heardPut(sink, snap) {
+  const told = [];
+  for (const fn of _realmSaveHeard) { try { const then = fn(snap); if (typeof then === 'function') told.push(then); } catch { /* a listener's throw is not the save's */ } }
+  const put = sink(snap);
+  if (told.length) Promise.resolve(put).then((r) => { for (const then of told) { try { then(r); } catch { /* nor its answer's */ } } }, () => {});
+  return put;
+}
+export const realmSaveSink = () => { const sink = _realmSaveSink; return sink ? (/** @type {any} */ snap) => heardPut(sink, snap) : null; };
 
 export function exitToTitleMenu() {
   claimFrame();   // P0: the old loop dies before the navigation

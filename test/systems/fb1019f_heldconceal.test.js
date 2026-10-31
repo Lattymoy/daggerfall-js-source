@@ -13,7 +13,7 @@
 import '../modsOff.js';   // the blow is the stock core's
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ENCHANTMENT_TYPES as T, setDefaultEnchantCtx, REROLL_MINIMUM_HOURS } from '../../src/systems/enchantments.js';
+import { ENCHANTMENT_TYPES as T, setDefaultEnchantCtx, REROLL_MINIMUM_HOURS, WORN_CONCEAL_BACK_ROUNDS } from '../../src/systems/enchantments.js';
 import { applySpell, isInvisible, isBlending, isAShade, concealBits, hasActiveEffect } from '../../src/systems/effects.js';
 import { breakNormalPowerConcealment } from '../../src/systems/concealment.js';
 import { equipItem, unequipSlot } from '../../src/systems/equip.js';
@@ -83,13 +83,15 @@ test('HELD-CONCEAL: a worn Invisibility a landed blow broke is broken now - unre
   assert.deepEqual(pins(w), [['invisNormal', 'ended', 0]], 'EndIncumbentEffect: RoundsRemaining = 0, End() - the entry stays on its item');
   assert.deepEqual(icons(w), [], 'the HUD shows no concealment that is not there');
   assert.equal(breakNormalPowerConcealment(w), false, 'an ended one is nothing left to break');
-  until(REROLL_AT - 1);
-  assert.equal(isInvisible(w), false, 'within the item\'s six hours it stays broken (rerollMinimumHours)');
+  // PIN MOVED (WORN-CONCEAL, FIELD BUGS 2026-10-30g): the piece casts it again WORN_CONCEAL_BACK_ROUNDS on, where DFU
+  // waits for the six-hour reroll (test/systems/fb1030g_wornconceal.test.js)
+  until(EQUIPPED_AT + WORN_CONCEAL_BACK_ROUNDS - 1);
+  assert.equal(isInvisible(w), false, 'broken for a round');
   assert.deepEqual(pins(w), [['invisNormal', 'ended', 0]]);
-  until(REROLL_AT);
-  assert.equal(isInvisible(w), true, 'the reroll recast it - it stood broken for as long as the ring was worn');
-  assert.deepEqual(pins(w), [['invisNormal']], 'fresh, the ended one stripped first');
-  assert.equal(ring.timeEffectsLastRerolled, REROLL_AT);
+  until(EQUIPPED_AT + WORN_CONCEAL_BACK_ROUNDS);
+  assert.equal(isInvisible(w), true, 'it stands again, still worn');
+  assert.deepEqual(pins(w), [['invisNormal']], 'the same entry, no longer ended (AUDIT WORN-CONCEAL C1: in place)');
+  assert.equal(ring.timeEffectsLastRerolled, EQUIPPED_AT, 'no reroll: the piece\'s clock stands');
   assert.deepEqual(icons(w), [['Invisibility', true]]);
 }));
 

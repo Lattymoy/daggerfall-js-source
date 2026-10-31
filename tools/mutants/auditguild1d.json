@@ -67,7 +67,7 @@
   {
     "name": "AUDIT-GUILD1d-S7-entry-rank-in-the-write",
     "file": "server-account/src/halls.js",
-    "old": "AND rank IN (${HALL_POWERS.hallEntry.join(', ')}))`).bind(entry, a.me.guild_id, a.me.rid)",
+    "old": "AND ${guildPowerSql('hallEntry', 'rank', '?2')})`).bind(entry, a.me.guild_id, a.me.rid)",
     "new": "AND rank IN (0, 1, 2, 3))`).bind(entry, a.me.guild_id, a.me.rid)",
     "tests": [
       "test/net/auditguild1d.test.js"

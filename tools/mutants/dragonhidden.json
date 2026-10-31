@@ -1,0 +1,115 @@
+[
+  {
+    "name": "DRAGON-HIDDEN-the-label-the-leases",
+    "file": "src/net/dragon/dragonSeed.js",
+    "old": "export const DRAGON_SEED_INFO = 'dfo-dragon-seed:v1';",
+    "new": "export const DRAGON_SEED_INFO = 'dfo-room-lease:v1';",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-watch-unread",
+    "file": "src/net/dragon/dragonSeed.js",
+    "old": "enc.encode(`dragon-watch:${w}`)",
+    "new": "enc.encode('dragon-watch')",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-bytes-shortened",
+    "file": "src/net/dragon/dragonSeed.js",
+    "old": "return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "new": "return ((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-told-before-its-landing",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_LAND_SPAN_MS : nowMs >= dragonQuietAt(w));",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js",
+      "test/net/dragon/dragon2_law.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "DRAGON-HIDDEN-told-for-any-watch",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const o = await dragonOmenOf(room, m.w);",
+    "new": "  const o = await dragonOmenOf(room, m.w);",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
+    "file": "server/src/dragonFights.js",
+    "old": "say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });",
+    "new": "say(room, ws, { k: 'omen', w: m.w, s: m.w });",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-brains-floor-left",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "export const DRAGON_BRAIN_MIN = 2;",
+    "new": "export const DRAGON_BRAIN_MIN = 1;",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-asked-before-the-landing",
+    "file": "src/scenes/dragonHost.js",
+    "old": "if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS ||",
+    "new": "if (omens.has(w) ||",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-ask-never-again",
+    "file": "src/scenes/dragonHost.js",
+    "old": "t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS",
+    "new": "asked.has(w)",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-the-omen-to-the-link",
+    "file": "src/scenes/dragonHost.js",
+    "old": "word: (w) => (w?.k === 'omen' ? host.omen(w) : link.word(w)),",
+    "new": "word: (w) => link.word(w),",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-HIDDEN-a-watch-to-come-told",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_WATCH_MS : nowMs >= dragonQuietAt(w) - DRAGON_WATCH_MS);",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ],
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+  },
+  {
+    "name": "DRAGON-HIDDEN-a-dragon-drawn-untold",
+    "file": "src/scenes/dragonHost.js",
+    "old": "if (s == null || !isDragonOmen(o)) continue;",
+    "new": "if (s != null && !isDragonOmen(o)) continue;",
+    "tests": [
+      "test/net/dragon/dragonhidden.test.js"
+    ]
+  }
+]

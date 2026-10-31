@@ -184,8 +184,8 @@
   {
     "name": "KEEPHEIGHT-3-the-missile-ducks",
     "file": "src/systems/spellcast.js",
-    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius);",
-    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.controllerHeight, foe?.ai?.radius);",
+    "old": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius, from);",
+    "new": "  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.controllerHeight, foe?.ai?.radius, from);",
     "tests": [
       "test/characters/enemy/fb1014b_doorjam.test.js"
     ]

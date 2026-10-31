@@ -85,10 +85,16 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and ARMORY's ONE (`armoryText.js`: the Aura Armory's slots, pieces and looks in the player's language - `04-Characters/Aura-Armory.md`);
 - and PROFILE-SLOTS' THREE (`characterSlots.js`: the profile's Character section - the eight slots round the character's stage, a picker each, a choice tried on and worn; `profileBody.js`: the body that stage draws, Morrowind's or the sprite the world draws; `namePlate.js`: the world's plate over its head, still - `04-Characters/Aura-Armory.md` section 10);
 - and VULKAN-FLIP's GUARD (`vulkanBackdrop.js`: the desktop app on Vulkan drops every window's backdrop blur, which its compositor drew upside down - `01-Overview/Desktop-App.md` VULKAN-FLIP);
+- and AUDIT-STOREFRONT's THREE (`effectEmblems.js`: a kill effect's, a portal skin's and a mount look's emblem, where the effect cannot play; `icons/effectEmblemArt.js`: those twelve emblems' art, drawn by the profile icons' engine; `wareArt.js`: a ware's or a reward's picture, one door for the bundles, the pass's track and the season's banners - `06-Systems/Storefront.md` section 9);
+- and AURUM's FOUR (`aurumArt.js`: the Aurum's coin and its packs' pictures; `icons/iconKit.js`: the profile icons' shared shapes and motions; `icons/seasonIconArt.js` and `icons/dailyIconArt.js`: Season One's three icons and the daily wares' eight, none a figure - `06-Systems/Aurum.md` section 7);
 - and SHADER-EASE GFX-BAR's ONE (`gfxPrepBar.js`: the boot menus' graphics bar and Fix stutter panel - `10-UI/Loading-Screens.md`);
 - and NOTICE-PANEL's ONE (`hud/townPanel.js`: the town's panel under the compass, its Notice Board and Bounty Board - `01-Overview/bugs/Field-Bugs-2026-10-29g.md`);
 - and PVP-HUD's ONE (`pvpHud.js`: the combat lock's ring, banner and last hits - `11-Multiplayer/PvP-Rework.md` PVP-HUD);
-469 modules
+- and GUILD-SHOP's NINE (`sailClothPanel.js`: the Fleet's sailcloth; `guild/guildShopText.js`, `guildShopPage.js`, `guildWareArt.js`: the guild window's Shop page, its words and its pictures; `guild/guildCrestArt.js`, `guildLogoImages.js`, `guildLogoPick.js`, `guildLogoPage.js`: a guild's crest, its logo loaded, picked and sent; `guild/guildWindowLook.js`: the window's look - `11-Multiplayer/Guild-Shop.md`);
+- and GUILD-RANKS' and GUILD-REQUESTS' TWO (`guild/guildRanksPage.js`: the guild window's Ranks page, the names and the grid of powers; `guild/guildRequestNodes.js`: a request to join sent and answered - `11-Multiplayer/Guild-Shop.md` sections 13 and 14);
+- and FIGUREHEAD's ONE (`figureheadPanel.js`: a ship's carving on her Fleet card - `03-World/Naval-Refit.md` FIGUREHEAD);
+- and PASS-PANELS' ONE (`enhanced/enhancedPass.js`: the shop's Folios - their covers and their pages - `06-Systems/Battle-Pass.md` section 7);
+496 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

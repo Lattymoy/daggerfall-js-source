@@ -199,7 +199,9 @@ session's door (`net/online.js` sendDelve), the one link (`net/delve/delveLink.j
   silence 5 s. A stranger is told once, and its page holds its words there until the site's state moves. An account
   runs one attempt at a time in a room.
 - **REACH AND LEVEL.** A step, carry or blow is judged from the pose the room last heard; the page makes it current
-  before each word, as `sendPose` says it. The level is the token's, or a word's lower one (a mentor's).
+  before each word, as `sendPose` says it. The level is the token's, or a word's lower one (a mentor's). That pose is
+  taken before the dungeon moves the player, so the page judges its walked-to acts at last frame's feet (WEIGH-POSE,
+  2026-10-30: a weight said set on the frame its carrier reached a plate fell to the floor beside it).
 - **THE WAVES.** The room names the foes' machine: the first word in the ward offers it, and a named machine keeps
   holding them. It stands the foes under the `delve` grant kind (12 a grant, a world room's alone). Named mid-wave, it
   stands the rest and counts on from the room's deaths. An encounter's foe is never handed on at a door.

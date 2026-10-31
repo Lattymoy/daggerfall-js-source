@@ -8377,25 +8377,23 @@ frame, and the commit the goods will ride is the longer frame - it is measured n
 **Not changed:** the classic Info box, the wire's item law, TRADE_ITEMS_MAX. Pins: `test/systems/tradeinfo.test.js` (3),
 `tools/mutants/trade_info.json` (8 dead). Re-aimed: `test/systems/lr1_lootrarity.test.js` (the card reads itemPowerLines).
 
-## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item posted in chat
+## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item linked in chat
 
-**ONE LINE** (`ui/enhanced/enhancedInventory.js` itemChatText / itemChatLabel): the item's name in brackets - a stack
-of more than one as `[Ruby x260]` - and (for an older relay) its headline stat and its magic (itemBriefLines), cut at
-a whole word to CHAT_MAX. Beside the words the frame carries the linked records (`items`, net/wire.js validChatItems -
+**ONE LINK** (`ui/enhanced/enhancedInventory.js` itemChatLabel): the item's name in brackets - a stack of more than
+one as `[Ruby x260]`. Beside the words the frame carries the linked records (`items`, net/wire.js validChatItems -
 shape only, at most CHAT_ITEMS_MAX; a single legacy `item` still reads). The receiving client projects each through
 validLootItem and draws coloured `[Name]`s inside the words (`ui/chatItemLink.js` chatTextParts); hover opens the
 pack's own tip card (`showItemHover`). Nothing on the line is put in a pack - the card is a look, as a trade offer's
 is before a commit. An older relay drops the records and the line is the words alone.
 
 **THE DOOR.** "Link in chat" inserts `[Label]` into the chat field (`chatPanel.linkItem`) so a typed message can carry
-the piece; "Post in chat" still says the item as its own line. Both sit on the pack's card and its right-click menu
-(`itemActs`), only where the host hands the door (`deps.canPostItem` - online, with a chat tab open). Typing `[` in
-the field also lists matching bag pieces (`bagItems` → `matchBagItems`); Tab or Enter finishes the bracket. The host
-sends through `chatSend` (`scenes/world.js`), so every tab's own reasons hold. The building's pack posts through
-world.js's host object, and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no
-chat).
+the piece. It sits on the pack's card and its right-click menu (`itemActs`), only where the host hands the door
+(`deps.canPostItem` - online, with a chat tab open). Typing `[` in the field also lists matching bag pieces
+(`bagItems` → `matchBagItems`); Tab or Enter finishes the bracket. The host sends the finished line through
+`chatSend` (`scenes/world.js`), so every tab's own reasons hold. The building's pack links through world.js's host
+object, and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no chat).
 
-**Deploy the relay** that fans `items` before the site that draws the links, or every post is words alone. Pins:
+**Deploy the relay** that fans `items` before the site that draws the links, or every link is words alone. Pins:
 `test/systems/chatpost.test.js`, `tools/mutants/chat_post.json`.
 
 ## CHAT-FIND (2026-10-11, the owner: "search for a player's name in the chat in every ui"; "put the search bar above the player list for better visibility") - the chat's search
@@ -12794,7 +12792,8 @@ Seats-Arc 9.2. New: `src/ui/hallOfRecords.js`.
   Anyone the seats are open to may read it, as the standings; the standings keep their own eight.
 - **The book** (`townSeatLaw.js` `hallOfRecordsChapters`, `hallOfRecordsTitle`; `ui/hallOfRecords.js`): "The Hall of
   Records of Anticlere", centred in the title face; one chapter a Season under its name, centred; each line a paragraph;
-  "Nothing is written here yet." for an empty Hall. Opened through the reader's one door (`ui/bookDoor.js`), so the
+  "No guild has held this seat yet. Its claims, sieges and holders are written here." for an empty Hall (RECORDS-SAID,
+  `01-Overview/bugs/Field-Bugs-2026-10-30b.md` section 6; it said "Nothing is written here yet."). Opened through the reader's one door (`ui/bookDoor.js`), so the
   enhanced skin reads it in its book window and the classic in its scroll.
 - **Where it is read** (`worldModes.js` `hallOfRecordsHere`, `openHallOfRecords`; the host's `hallOfRecords` in
   `scenes/world.js`): DECIDED, a seat's palace's shelf-set models - geometry in DFU's palace, no shop and no bookshelf -

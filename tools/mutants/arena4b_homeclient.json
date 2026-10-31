@@ -2,7 +2,7 @@
   {
     "name": "ARENA4B-PICK-FILTER",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false), opts);",
+    "old": "return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId))), opts);",
     "new": "return arenaHouseFor(o, summaries, opts);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"

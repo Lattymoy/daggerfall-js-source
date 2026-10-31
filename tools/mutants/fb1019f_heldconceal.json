@@ -2,8 +2,8 @@
   {
     "name": "HELD-CONCEAL-the-worn-one-left-live",
     "file": "src/systems/concealment.js",
-    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }\n",
-    "new": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = false; }\n",
+    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; a.endedRounds = 0; }\n",
+    "new": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = false; a.endedRounds = 0; }\n",
     "tests": [
       "test/systems/fb1019f_heldconceal.test.js",
       "test/systems/audit24_wave31.test.js",
@@ -14,8 +14,8 @@
   {
     "name": "HELD-CONCEAL-its-rounds-not-zeroed",
     "file": "src/systems/concealment.js",
-    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }\n",
-    "new": "    if (a.heldItem) { a.roundsRemaining = 1; a.ended = true; }\n",
+    "old": "    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; a.endedRounds = 0; }\n",
+    "new": "    if (a.heldItem) { a.roundsRemaining = 1; a.ended = true; a.endedRounds = 0; }\n",
     "tests": [
       "test/systems/fb1019f_heldconceal.test.js",
       "test/systems/audit24_wave31.test.js",

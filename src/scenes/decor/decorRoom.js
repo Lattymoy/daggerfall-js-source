@@ -36,6 +36,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { trs } from '../../world/mat4.js';
+import { registerGuildFurniture } from '../../world/guildFurniture.js';   // GUILD-SHOP: the guild's own hall pieces
+import { wearGuildArt } from '../../world/guildFurnitureArt.js';
+import { guildWareOfModel } from '../../net/guild/guildShopLaw.js';
+import { hallArms } from '../../net/guild/guildArmsBook.js';
 import { localAabb, transformedAabb, aabbOutside } from '../../render/frustum.js';   // PERF-YARD: and the view's box test
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';
 import { billboardSize } from '../../world/rmbFlats.js';
@@ -359,6 +363,9 @@ export function createDecorRoom({
 }) {
   /** DECOR-CLEAR: the gate of the collider the room stands in now (the host's collider is a visit's), or none. */
   const late = () => lateSolidsOf(collider?.());
+  registerGuildFurniture();   // GUILD-SHOP: the guild's own hall pieces on the model door
+  /** GUILD-SHOP: how many of the guild's own pieces stand - while any does, their pictures (the hall's arms) are worn */
+  let guildPieces = 0;
   /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, wbox?: number[] | null, cpu: any, mesh?: any, merged?: boolean, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any, quiet?: boolean}>} */
   const standing = new Map();
   // YARD-MERGE: the pool's merge - { gpu, matrix, box, wbox, n } - and when the pool last changed
@@ -528,7 +535,9 @@ export function createDecorRoom({
     const o = origin?.() ?? [0, 0, 0];
     // FB1001 YARD-RECENTRE: `o`, the origin it stands from, and `cpu`, its model's (once stood) - restand() moves it
     const entry = { piece, o: [o[0], o[1], o[2]], gpu: null, box: null, cpu: null, matrix: decorMatrix(piece, o), batch: null, anims: null, size: null, light: null, mount: null, door: null };
+    if (guildWareOfModel(standing.get(piece.id)?.piece?.model)) guildPieces--;
     standing.set(piece.id, entry);
+    if (guildWareOfModel(piece.model)) guildPieces++;   // GUILD-SHOP
     if (decorIsFigure(piece)) figs.add(entry);   // MWNPC18: one of Daggerfall's people - the people lane's
     if (decorIsMount(piece)) {   // DECOR2c: hung flat on its surface, as its pack picture (MW-MOUNT: or its Morrowind one)
       artOf(piece).then((art) => {
@@ -598,6 +607,7 @@ export function createDecorRoom({
     const e = standing.get(id);
     unmount(e);
     standing.delete(id);
+    if (guildWareOfModel(e?.piece?.model)) guildPieces--;   // GUILD-SHOP
     return e?.piece ?? null;
   }
 
@@ -653,6 +663,7 @@ export function createDecorRoom({
   function set(pieces) {
     for (const e of standing.values()) unmount(e);
     standing.clear();
+    guildPieces = 0;   // AUDIT GUILD-SHOP R5: counted again from the load
     for (const p of pieces ?? []) put(p);
   }
 
@@ -669,6 +680,8 @@ export function createDecorRoom({
    *  box (no triangles to measure) is drawn, as before; a room's host gives none - a building is drawn whole. */
   function draw(r = renderer, texRemap = null, cull = null) {
     let n = 0;
+    // GUILD-SHOP: the guild's pieces wear the hall's arms - and in a hall before its first stands, for the ghost (AUDIT R4)
+    if (guildPieces > 0 || hallArms()) wearGuildArt(r ?? renderer, hallArms());
     // DECOR-CLEAR: the host's per-frame call hands the collider's gate the body it guards - every piece withheld (the
     // room's own put back among them, decorBase.js show) that the body is now clear of stands
     if (body) late()?.settle(body);

@@ -5104,6 +5104,8 @@ export function createFpArm() {
    * too (shotSchedule): its "shoot release" at the classic loose, not a long bow's 1.5 s draw.
    */
   function blowPace(blow, k) {
+    // MW-DRAW-PACE: a held draw (Bow Drawback) is fitted to the classic draw alone - its loose is paced at release()
+    if (blow?.draw && holdWindUp && actionState && blow.hitAt > 0) return { seconds: blow.seconds, hitAt: blow.hitAt, clock: 0, rate: blowRate(actionState.stopTime - actionState.startTime, blow.hitAt) };
     if (!blow || holdWindUp) return null;
     if (!(blow.hitAt > 0) || !(blow.seconds >= blow.hitAt) || !Number.isFinite(blow.seconds)) return null;
     const span = (a, b) => { const t0 = keyTime(a); const t1 = keyTime(b); return t0 >= 0 && t1 > t0 ? t1 - t0 : 0; };
@@ -5735,6 +5737,11 @@ export function createFpArm() {
       })();
     },
 
+    /** TECH-CANCEL: a technique cuts the blow the arm is in - its wind-up, release or follow-through - so its own
+     *  strike's clip starts at once - asked whenever a technique's strike began (PlayerWeapon.techniqueStrike). */
+    cutAttack() {
+      if (upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) endAttack();
+    },
     /**
      * A BLOW STARTS. `strike` is Daggerfall's own six-way gesture result,
      * which rule 11's recorded divergence maps onto Morrowind's three
@@ -6378,10 +6385,16 @@ export function createFpArm() {
       return upper === UPPER_BODY.Equipping || upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease;
     },
 
-    release() {
+    release(blow = null) {
       if (upper !== UPPER_BODY.AttackWindUp) return false;
+      const held = holdWindUp;
       holdWindUp = false;
-      if (actionState && actionState.playing) return true;   // still winding up; the machine takes it
+      // MW-DRAW-PACE: a held draw let go - the loose the classic machine now times (shotSchedule), as an unheld shot's
+      blowPlan = held && blow && !blow.draw && blow.hitAt > 0 && blow.seconds >= blow.hitAt ? { seconds: blow.seconds, hitAt: blow.hitAt, clock: 0, rate: 1 } : held ? null : blowPlan;
+      if (actionState && actionState.playing) {
+        if (held && blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.hitAt);
+        return true;   // still winding up; the machine takes it
+      }
       beginRelease();
       return true;
     },

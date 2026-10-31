@@ -29,7 +29,7 @@
   {
     "name": "GUILD-YARD-keepers-any-rank",
     "file": "server-account/src/decor.js",
-    "old": "      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n      AND EXISTS",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS",
     "new": "      AND g.rank >= 0\n      AND EXISTS",
     "tests": [
       "test/net/guild_yard.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-GUILD-YARD-Y1-the-keeper-off-the-rank-alone",
     "file": "server-account/src/homes.js",
-    "old": "hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true }",
-    "new": "hallMay(rank, 'decorate') ? { keeper: true }",
+    "old": "guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true }",
+    "new": "guildMay(rank, 'decorate', powers) ? { keeper: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-PROF-541-G2-hallEntry-asks-a-realm-character",
     "file": "server-account/src/homes.js",
-    "old": "hallMay(rank, 'hallEntry') ? { hallEntry: true }",
-    "new": "hallMay(rank, 'hallEntry') && h.me_realm === 1 ? { hallEntry: true }",
+    "old": "guildMay(rank, 'hallEntry', powers) ? { hallEntry: true }",
+    "new": "guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

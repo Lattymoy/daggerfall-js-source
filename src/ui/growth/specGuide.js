@@ -19,7 +19,7 @@ import { MAGIC_SKILLS, SKILL_NAMES } from '../../systems/skills.js';
 import { masterSkillsActive, masterSkillsSwitchable, isMasteredSkill, careerGroupOf, masterySlots, masterableCount, masterCappedSkill } from '../../systems/masterSkills.js';
 import { signatureSpell } from '../../systems/signatureSpells.js';
 import { specResetRefusal, resetSpec, resetField } from '../../systems/specReset.js';   // SPEC-RESET: a held path given up, for gold
-import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens, swapShortfall } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
+import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, swapTradeChoices, skillSwapRefusal, swapGroupOf, swapSkill, swappedCareer, swapOpens, swapShortfall } from '../../systems/skillSwap.js';   // SKILL-SWAP: a class skill given up for another, for gold
 import { alreadyMasteredASkill } from '../../systems/advancement.js';   // AUDIT SUGGESTIONS-1019 L5-2: the 95 lock a swap moves
 import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // SWAP-CYCLE: the skill sum levels nothing on Oblivion's bar
 import { computeEntityMods } from '../../systems/entityMods.js';   // AUDIT SPEC-RESET L1-3: a chosen path's stats now
@@ -59,6 +59,9 @@ export function skillStandText(s) {
   }
 }
 const groupWord = (g) => (g === 'primary' ? t('growth.spec.group.primary', 'primary') : g === 'major' ? t('growth.spec.group.major', 'major') : t('growth.spec.group.minor', 'minor'));
+/** SKILL-TRADE: a group's name standing alone, in a pick's label - its own words (AUDIT SKILL-TRADE C10: the level-up
+ *  screen's read as "head" and "beside" in German and Norwegian there). */
+const groupLabel = (g) => (g === 'primary' ? t('growth.swap.label.primary', 'Primary') : g === 'major' ? t('growth.swap.label.major', 'Major') : t('growth.swap.label.minor', 'Minor'));
 
 /** A signature spell in the spellbook's words: what it is cast at, its element, and each effect's line. Pure. */
 export function spellLines(pathId) {
@@ -223,7 +226,7 @@ export function specGuideModel(entity) {
   });
   // SKILL-SWAP (systems/skillSwap.js): the class skill given up for one outside it - the choices, and the law's words
   const swap = entity?.career ? {
-    out: swapOutChoices(entity), in: swapInChoices(entity),
+    out: swapOutChoices(entity), in: swapInChoices(entity), trade: (out) => swapTradeChoices(entity, out),
     refusal: (out, inn) => skillSwapRefusal(entity, out, inn), group: (out) => swapGroupOf(entity, out), go: (out, inn) => swapSkill(entity, out, inn),
     // AUDIT SUGGESTIONS-1019 L5-1: the group's mastery slots left - none, and what comes in can never be mastered
     slotsLeft: (out) => masterySlots(entity, swapGroupOf(entity, out)).left,
@@ -239,7 +242,7 @@ export function specGuideModel(entity) {
   // AUDIT SUGGESTIONS-1019 L5-1: a family's hint only where ONE swap would open a path, the masteries and slots as they stand
   for (const f of families) {
     const law = FAMILY_LAW[f.id];
-    f.swapOpens = !!swap && !f.possible && swap.out.some((out) => law.skills.some((inn) => swap.in.includes(inn) && swapOpens(entity, out, inn, law.possible)));
+    f.swapOpens = !!swap && !f.possible && swap.out.some((out) => law.skills.some((inn) => (swap.in.includes(inn) || swap.trade(out).includes(inn)) && swapOpens(entity, out, inn, law.possible)));
   }
   return { masterOn: on, switchable: masterSkillsSwitchable(entity), families, swap };
 }
@@ -403,28 +406,38 @@ export function drawSpecGuide(detail, rerender, { el, divider, skillMeter = null
  *  swap, asked first; refused (the press stands, disabled, and says why) short of the gold. */
 function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
   if (!sw.out.includes(_swapOut)) _swapOut = sw.out[0];
-  if (!sw.in.includes(_swapIn)) _swapIn = sw.in[0];
+  const ins = [...sw.in, ...sw.trade(_swapOut)];   // SKILL-TRADE: another group's class skills after the outsiders
+  if (!ins.includes(_swapIn)) _swapIn = ins[0];
   detail.append(divider(t('growth.swap.title', 'Change a class skill')));
   detail.append(el('p', 'gr-lead', t('growth.swap.lead', 'Give up a class skill you have not mastered, and take a skill from outside your class in its place, in the same group. It costs {gold, number} gold. Your level and your skills\' values do not change.', { gold: SKILL_SWAP_GOLD })));
+  detail.append(el('p', 'gr-lead', t('growth.swap.leadTrade', 'You can also take an unmastered class skill from another group. The two skills change groups.')));
   const box = el('section', 'px-mgroup gr-swap');
   const pick = (label, ids, value, onPick) => {
     const s = el('select', 'act');
     s.setAttribute('aria-label', label);
-    for (const id of ids) { const o = el('option', null, SKILL_NAMES[id] ?? String(id)); o.value = String(id); if (id === value) o.selected = true; s.append(o); }
+    for (const id of ids) {
+      const name = SKILL_NAMES[id] ?? String(id), g = sw.group(id);
+      const o = el('option', null, g && ids === ins ? t('growth.swap.inGroup', '{skill} ({group})', { skill: name, group: groupLabel(g) }) : name);
+      o.value = String(id); if (id === value) o.selected = true; s.append(o);
+    }
     s.onchange = () => { onPick(Number(s.value)); rerender(); };
     return s;
   };
   box.append(el('div', 'gr-skilltop', t('growth.swap.out', 'Give up')), pick(t('growth.swap.out', 'Give up'), sw.out, _swapOut, (v) => { _swapOut = v; }));
-  box.append(el('div', 'gr-skilltop', t('growth.swap.in', 'Take instead')), pick(t('growth.swap.in', 'Take instead'), sw.in, _swapIn, (v) => { _swapIn = v; }));
-  const out = _swapOut, inn = _swapIn, refusal = sw.refusal(out, inn);
-  const words = { out: SKILL_NAMES[out], inn: SKILL_NAMES[inn], gold: SKILL_SWAP_GOLD, group: groupWord(sw.group(out)) };
+  box.append(el('div', 'gr-skilltop', t('growth.swap.in', 'Take instead')), pick(t('growth.swap.in', 'Take instead'), ins, _swapIn, (v) => { _swapIn = v; }));
+  const out = _swapOut, inn = _swapIn, refusal = sw.refusal(out, inn), other = sw.group(inn);
+  const words = { out: SKILL_NAMES[out], inn: SKILL_NAMES[inn], gold: SKILL_SWAP_GOLD, group: groupWord(sw.group(out)), other: other ? groupWord(other) : '' };
   // AUDIT SUGGESTIONS-1019 L5-1/L5-2 and SWAP-CYCLE: what the swap costs beyond the gold, said beside the picks and again in the ask
   const lock = sw.lockTurn(out, inn), short = Math.ceil(sw.shortfall(out, inn));
+  // AUDIT SKILL-TRADE A1: the lock's words name the skill entering the primaries and the one leaving - on a trade from
+  // the primaries those are `out` and `inn`, not `inn` and `out`
+  const fromPrimary = other === 'primary', lockWords = { inn: SKILL_NAMES[fromPrimary ? out : inn], out: SKILL_NAMES[fromPrimary ? inn : out] };
   const warns = [
     ...(short > 0 ? [t('growth.swap.ground', 'Your level stays, but your class skills then earn nothing toward your next level until they make up {n, plural, one {# point} other {# points}}.', { n: short })] : []),
     ...(sw.slotsLeft(out) === 0 ? [t('growth.swap.noSlots', 'Your {group} mastery slots are spent, so {inn} could never be mastered.', words)] : []),
-    ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', words)]
-      : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', words)] : []),
+    ...(other && sw.slotsLeft(inn) === 0 ? [t('growth.swap.noSlotsOut', 'Your {other} mastery slots are spent, so {out} could never be mastered.', words)] : []),
+    ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', lockWords)]
+      : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', lockWords)] : []),
   ];
   for (const w of warns) box.append(el('p', 'gr-fine gr-swap-warn', w));
   const acts = el('div', 'gr-acts');
@@ -433,10 +446,17 @@ function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
   b.onclick = () => {
     if (refusal) return;
     askCard([
-      t('growth.swap.ask', 'Give up {out} for {inn} for {gold, number} gold?', words),
-      t('growth.swap.askGroup', '{inn} becomes one of your {group} skills. {out} becomes a miscellaneous skill: it keeps its value but can no longer be mastered.', words),
+      ...(other ? [t('growth.swap.askTrade', 'Exchange {out} and {inn} for {gold, number} gold?', words),
+        t('growth.swap.askTradeGroup', '{inn} becomes one of your {group} skills, and {out} one of your {other} skills. Both keep their values.', words)]
+        : [t('growth.swap.ask', 'Give up {out} for {inn} for {gold, number} gold?', words),
+          t('growth.swap.askGroup', '{inn} becomes one of your {group} skills. {out} becomes a miscellaneous skill: it keeps its value but can no longer be mastered.', words)]),
       ...warns,
-    ], () => { _note = sw.go(out, inn).text; _noteFresh = true; rerender(); });
+    ], () => {
+      const r = sw.go(out, inn);
+      _note = r.text; _noteFresh = true;
+      if (r.ok) { _swapOut = null; _swapIn = null; }   // AUDIT SKILL-TRADE A3: a trade's two stayed picked - the reverse, one Yes away
+      rerender();
+    });
   };
   acts.append(b);
   box.append(acts);
@@ -494,7 +514,8 @@ export function pathSteps(p) {
  *  (combat/techniques.js techniqueInHand). */
 export function useLine(kind) {
   if (kind === 'spell') return t('growth.spec.useSpell', 'Once chosen, buy it wherever spells are sold and cast it like any other spell.');
-  return lootRarityOn() ? t('growth.spec.useTechniqueOwn', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills. A weapon with a technique of its own uses that instead.')
+  // TECH-KEY2 (AUDIT TECH-FEEDBACK II): and the Martial Technique key uses the signature whatever the weapon carries
+  return lootRarityOn() ? t('growth.spec.useTechniqueBoth', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills. A weapon with a technique of its own uses that instead, and your Martial Technique key uses this one.')
     : t('growth.spec.useTechnique', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills.');
 }
 

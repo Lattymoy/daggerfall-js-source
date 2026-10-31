@@ -72,8 +72,8 @@
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "sagesmoke: 'witchwarden', eternal: 'genesis' });",
+    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -152,7 +152,7 @@
   {
     "name": "NIRNROOT-SAGE-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'nirnrootsage' });",
+    "old": "nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "new": "nirnrootsage: 'wikimaid' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -162,7 +162,7 @@
   {
     "name": "NIRNROOT-SAGE-aura-grant",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'sagesmoke' });",
+    "old": "nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "new": "nirnrootsage: 'lilacwarren' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'witchfire', 'eternal']);",
+    "old": "'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "'witchfire', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -212,12 +212,12 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world293';",
+    "old": "export const RELAY_VERSION = 'world297';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "Re-aimed by content (THE MERGES OF MAIN INTO THE DWARVEN DRAGON'S BRANCH AT 45342d9fa, c72b366b5 AND f2e1fe700): world288, the pose keeps rd 3 and the dragon's fight (world281, world283, world284, world285, world286 then world287 on its branch, renumbered past main's world281 to world287 at the merges). Re-aimed by content (CAPE-TOGGLE): world285, a look's `hc` (world284 on its branch, past AUDIT TAMRIEL-WIDE at the merge of main). Re-aimed by content (THE MERGES OF MAIN INTO AUDIT TAMRIEL-WIDE): world284, past main's world281 to world283. Re-aimed by content (AUDIT TAMRIEL-WIDE B1, B2, B5 and E3): world280. Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb INTO DRAGON-HARDER/HIDDEN): world293, past DELVE II's world292. Re-aimed by content (DRAGON-HARDER): world292, the dragon's health raised and its rolls hidden (world289, world290 then world291 on its branch, renumbered past HAND-WRAPS, PVP-LINGER and GILDED-GLOW). Re-aimed by content (THE MERGES OF MAIN INTO THE DWARVEN DRAGON'S BRANCH AT 45342d9fa, c72b366b5 AND f2e1fe700): world288, the pose keeps rd 3 and the dragon's fight (world281, world283, world284, world285, world286 then world287 on its branch, renumbered past main's world281 to world287 at the merges). Re-aimed by content (CAPE-TOGGLE): world285, a look's `hc` (world284 on its branch, past AUDIT TAMRIEL-WIDE at the merge of main). Re-aimed by content (THE MERGES OF MAIN INTO AUDIT TAMRIEL-WIDE): world284, past main's world281 to world283. Re-aimed by content (AUDIT TAMRIEL-WIDE B1, B2, B5 and E3): world280. Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
   },
   {
     "name": "NIRNROOT-SAGE-the-kind",
