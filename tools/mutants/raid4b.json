@@ -2,8 +2,8 @@
   {
     "name": "RAID4b-raid-set-in-the-world",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "filter((s) => !s.aetheric).map((s) => s.id)",
-    "new": "filter((s) => !s.aetheric || s.raid === 2).map((s) => s.id)",
+    "old": "    .filter((s) => !s.aetheric)",
+    "new": "    .filter((s) => !s.aetheric || s.raid === 2)",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAID4b-party-wrong-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "find((s) => 'raid' in s && s.raid === party)",
-    "new": "find((s) => 'raid' in s && s.raid === (party + 1) % 3)",
+    "old": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === party) ?? null;",
+    "new": "export const raidSetOf = (party) =>\n  Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === (party + 1) % 3) ?? null;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAID4b-no-party-a-world-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "find((s) => 'raid' in s && s.raid === party) ?? null;",
-    "new": "find((s) => s.raid === party) ?? null;",
+    "old": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => 'raid' in s && s.raid === party) ?? null;",
+    "new": "export const raidSetOf = (party) => Object.values(SIGIL_SETS).find((s) => s.raid === party) ?? null;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID4b-oath-part-left-out",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (oath) { for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
-    "new": "if (oath) { for (let p = 1; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
+    "old": "    for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
+    "new": "    for (let p = 1; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID4b-oath-wrong-stat",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().stats, 'willpower', oath.willpower)",
-    "new": "add(m().stats, 'endurance', oath.willpower)",
+    "old": "    add(m().stats, 'willpower', oath.willpower);",
+    "new": "    add(m().stats, 'endurance', oath.willpower);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RAID4b-keen-wrong-skill",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().skills, SKILLS.Archery, keen.archery)",
-    "new": "add(m().skills, SKILLS.LongBlade, keen.archery)",
+    "old": "    add(m().skills, SKILLS.Archery, keen.archery);",
+    "new": "    add(m().skills, SKILLS.LongBlade, keen.archery);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAID4b-keen-wrong-stat",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().stats, 'agility', keen.agility)",
-    "new": "add(m().stats, 'speed', keen.agility)",
+    "old": "    add(m().stats, 'agility', keen.agility);",
+    "new": "    add(m().stats, 'speed', keen.agility);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RAID4b-hide-wrong-skill",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().skills, SKILLS.BluntWeapon, hide.blunt)",
-    "new": "add(m().skills, SKILLS.Axe, hide.blunt)",
+    "old": "    add(m().skills, SKILLS.BluntWeapon, hide.blunt);",
+    "new": "    add(m().skills, SKILLS.Axe, hide.blunt);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RAID4b-hide-wrong-stat",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().stats, 'endurance', hide.endurance)",
-    "new": "add(m().stats, 'strength', hide.endurance)",
+    "old": "    add(m().stats, 'endurance', hide.endurance);",
+    "new": "    add(m().stats, 'strength', hide.endurance);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RAID4b-riposte-never-spent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ pct += oath[1].more; if (keep) _s.riposteUntil = 0; }",
-    "new": "{ pct += oath[1].more; }",
+    "old": "    if (keep) _s.riposteUntil = 0;\n  } // RAID4b: Riposte - the next blow alone",
+    "new": "  } // RAID4b: Riposte - the next blow alone",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RAID4b-riposte-window-never-closes",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (oath?.[1] && now < _s.riposteUntil)",
-    "new": "if (oath?.[1] && _s.riposteUntil > 0)",
+    "old": "  if (oath?.[1] && now < _s.riposteUntil) {",
+    "new": "  if (oath?.[1] && _s.riposteUntil > 0) {",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RAID4b-riposte-a-fall-arms",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n",
-    "new": "  if (!blow) { bloodied(entity); return; }\n",
+    "old": "  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath",
+    "new": "  if (!blow) {\n    bloodied(entity);\n    return;\n  }",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RAID4b-riposte-a-swallowed-blow-arms",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (before - after > 0) bloodied(entity);",
-    "new": "  bloodied(entity);",
+    "old": "  if (before - after > 0) bloodied(entity); // RAID4b: Riposte, Blood for Blood",
+    "new": "  bloodied(entity); // RAID4b: Riposte, Blood for Blood",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RAID4b-riposte-no-window",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (t.get('oath')?.[1]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
-    "new": "if (t.get('oath')?.[1]) _s.riposteUntil = now;",
+    "old": "  if (t.get('oath')?.[1]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
+    "new": "  if (t.get('oath')?.[1]) _s.riposteUntil = now;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RAID4b-riposte-two-pieces",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (t.get('oath')?.[1]) _s.riposteUntil",
-    "new": "if (t.get('oath')?.[0]) _s.riposteUntil",
+    "old": "  if (t.get('oath')?.[1]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
+    "new": "  if (t.get('oath')?.[0]) _s.riposteUntil = now + RIPOSTE_SECONDS;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RAID4b-run-at-half",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (taker?.[1] && belowHalf(target)) pct += taker[1].more;",
-    "new": "if (taker?.[1] && target.health <= target.maxHealth / 2) pct += taker[1].more;",
+    "old": "  if (taker?.[1] && belowHalf(target)) pct += taker[1].more; // RAID4b: Run Them Down",
+    "new": "  if (taker?.[1] && target.health <= target.maxHealth / 2) pct += taker[1].more; // RAID4b: Run Them Down",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RAID4b-run-my-health",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (taker?.[1] && belowHalf(target))",
-    "new": "if (taker?.[1] && belowHalf(attacker))",
+    "old": "  if (taker?.[1] && belowHalf(target)) pct += taker[1].more; // RAID4b: Run Them Down",
+    "new": "  if (taker?.[1] && belowHalf(attacker)) pct += taker[1].more; // RAID4b: Run Them Down",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RAID4b-mark-the-last",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;\n    reach = d; best = f;",
-    "new": "    if (d > MARK_METRES || door.clear?.(feet, f.ai.feet) === false) continue;\n    reach = d; best = f;",
+    "old": "    if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;",
+    "new": "    if (d > MARK_METRES || door.clear?.(feet, f.ai.feet) === false) continue;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RAID4b-mark-the-killed",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (f.dead || f.entity === killed || !f.entity",
-    "new": "if (f.dead || !f.entity",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RAID4b-mark-reach-ignored",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "let best = null, reach = MARK_METRES;",
-    "new": "let best = null, reach = Infinity;",
+    "old": "    reach = MARK_METRES;",
+    "new": "    reach = Infinity;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RAID4b-mark-through-a-wall",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;",
-    "new": "if (d > reach) continue;",
+    "old": "    if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;",
+    "new": "    if (d > reach) continue;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RAID4b-mark-an-ally",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "|| !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
-    "new": "|| !f.ai?.feet || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RAID4b-mark-a-storey-up",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "|| spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
-    "new": "|| spared(f)) continue;",
+    "old": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)\n      continue;",
+    "new": "    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f)) continue;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RAID4b-mark-never-ends",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null);",
-    "new": "export const markedFoe = (now = _now()) => (!(_s.marked?.health <= 0) ? (_s.marked ?? null) : null);",
+    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "new": "export const markedFoe = (now = _now()) => (!(_s.marked?.health <= 0) ? (_s.marked ?? null) : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RAID4b-mark-no-bonus",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more;",
-    "new": "if (taker?.[2] && markedFoe(now) === target) pct += 0;",
+    "old": "  if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more; // RAID4b: No Escape",
+    "new": "  if (taker?.[2] && markedFoe(now) === target) pct += 0; // RAID4b: No Escape",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RAID4b-mark-four-pieces",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
-    "new": "if (t.get('thieftaker')?.[1]) markNext(door, entity, now);",
+    "old": "  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
+    "new": "  if (t.get('thieftaker')?.[1]) markNext(door, entity, now);",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RAID4b-mark-unsaid",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  say('No Escape! The nearest enemy is marked.');\n  sound('mark');\n",
-    "new": "",
+    "old": "  say('No Escape! The nearest enemy is marked.');\n  sound('mark');\n}",
+    "new": "}",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RAID4b-blood-no-cap",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_s.blood = Math.min(BLOOD_STACKS, bloodStacks(now) + 1);",
-    "new": "_s.blood = bloodStacks(now) + 1;",
+    "old": "    _s.blood = Math.min(BLOOD_STACKS, bloodStacks(now) + 1);",
+    "new": "    _s.blood = bloodStacks(now) + 1;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RAID4b-blood-window-from-first",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.bloodUntil = now + BLOOD_SECONDS;\n",
-    "new": "    if (!bloodStacks(now)) _s.bloodUntil = now + BLOOD_SECONDS;\n",
+    "old": "    _s.bloodUntil = now + BLOOD_SECONDS;",
+    "new": "    if (!bloodStacks(now)) _s.bloodUntil = now + BLOOD_SECONDS;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RAID4b-blood-no-share",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now);",
-    "new": "if (orcs?.[1]) pct += orcs[1].stack;",
+    "old": "  if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now); // RAID4b: Blood for Blood",
+    "new": "  if (orcs?.[1]) pct += orcs[1].stack; // RAID4b: Blood for Blood",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RAID4b-hold-at-half",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (hold && d > 0 && belowHalf(entity)) {",
-    "new": "if (hold && d > 0 && entity.health <= entity.maxHealth / 2) {",
+    "old": "  if (hold && d > 0 && belowHalf(entity)) {",
+    "new": "  if (hold && d > 0 && entity.health <= entity.maxHealth / 2) {",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RAID4b-hold-carry-dropped",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _holdOwed = owed - cut;\n",
-    "new": "",
+    "old": "    _holdOwed = owed - cut;\n    d -= cut;",
+    "new": "    d -= cut;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RAID4b-hold-four-pieces",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const hold = tierOf(entity, 'oath', 2);",
-    "new": "const hold = tierOf(entity, 'oath', 1) && { less: 10 };",
+    "old": "  const hold = tierOf(entity, 'oath', 2);",
+    "new": "  const hold = tierOf(entity, 'oath', 1) && { less: 10 };",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "RAID4b-ward-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (hide && now >= _s.wardReady) {",
-    "new": "if (hide) {",
+    "old": "  if (hide && now >= _s.wardReady) {",
+    "new": "  if (hide) {",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RAID4b-ward-stacked",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.ward = hide.ward;\n",
-    "new": "    _s.ward += hide.ward;\n",
+    "old": "    _s.ward = hide.ward;",
+    "new": "    _s.ward += hide.ward;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "RAID4b-ward-never-spent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.ward -= took;\n",
-    "new": "",
+    "old": "    _s.ward -= took;\n    d -= took;",
+    "new": "    d -= took;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "RAID4b-ward-asleep",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (_s.ward > 0 && d > 0 && tierOf(entity, 'orcsbane', 2)) {",
-    "new": "if (_s.ward > 0 && d > 0) {",
+    "old": "  if (_s.ward > 0 && d > 0 && tierOf(entity, 'orcsbane', 2)) {",
+    "new": "  if (_s.ward > 0 && d > 0) {",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "RAID4b-ward-never-ready",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  ward: { at: () => _s.wardReady, line: 'Iron Hide is ready again.', set: 'orcsbane', tier: 2, spent: () => !(_s.ward > 0) },",
-    "new": "  ward: { at: () => Infinity, line: 'Iron Hide is ready again.', set: 'orcsbane', tier: 2, spent: () => !(_s.ward > 0) },",
+    "old": "    at: () => _s.wardReady,",
+    "new": "    at: () => Infinity,",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "RAID4b-chip-ward-time",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "name: 'Iron Hide', text: String(st.ward), state: 'active' }",
-    "new": "name: 'Iron Hide', text: time(st.ward), state: 'active' }",
+    "old": "    if (st.ward) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: String(st.ward), state: 'active' });",
+    "new": "    if (st.ward) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: time(st.ward), state: 'active' });",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RAID4b-chip-mark-four",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (t.get('thieftaker')?.[2] && st.markLeft)",
-    "new": "if (t.get('thieftaker')?.[1] && st.markLeft)",
+    "old": "  if (t.get('thieftaker')?.[2] && st.markLeft)",
+    "new": "  if (t.get('thieftaker')?.[1] && st.markLeft)",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "RAID4b-chip-ward-four",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (t.get('orcsbane')?.[2]) {\n",
-    "new": "  if (t.get('orcsbane')?.[1]) {\n",
+    "old": "  if (t.get('orcsbane')?.[2]) {",
+    "new": "  if (t.get('orcsbane')?.[1]) {",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]

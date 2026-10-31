@@ -2,8 +2,8 @@
   {
     "name": "SETS-L1-mark-on-a-body",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null);",
-    "new": "export const markedFoe = (now = _now()) => (now < _s.markUntil ? _s.marked : null);",
+    "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
+    "new": "export const markedFoe = (now = _now()) => (now < _s.markUntil ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SETS-L1-kill-keeps-the-mark",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (entity && _s.marked === entity) _s.markUntil = 0;",
-    "new": "  if (false) _s.markUntil = 0;",
+    "old": "  if (entity && _s.marked === entity) _s.markUntil = 0; // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)",
+    "new": "  if (false) _s.markUntil = 0; // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SETS-L5-re-mark-said",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (had === best.entity) return;",
-    "new": "  if (false) return;",
+    "old": "  if (had === best.entity) return; // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)",
+    "new": "  if (false) return; // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SETS-L2-your-the",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`;",
-    "new": "  const line = `Your ${set.name} brightens: ${stage.name}.`;",
+    "old": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`; // AUDIT SETS L2: never \"Your The Broken Oath\"",
+    "new": "  const line = `Your ${set.name} brightens: ${stage.name}.`; // AUDIT SETS L2: never \"Your The Broken Oath\"",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SETS-L3-not-remarked",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "export function remarkPlayerBlow(b) { if (b?.attacker) _blow = { attacker: b.attacker, at: _now() }; }",
-    "new": "export function remarkPlayerBlow(b) { }",
+    "old": "export function remarkPlayerBlow(b) {\n  if (b?.attacker) _blow = { attacker: b.attacker, at: _now() };\n}",
+    "new": "export function remarkPlayerBlow(b) {}",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SETS-L4-warded-blow-modded",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (target.warded) return damage;",
-    "new": "  if (false) return damage;",
+    "old": "  if (target.warded) return damage; // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)",
+    "new": "  if (false) return damage; // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)",
     "tests": [
       "test/systems/auditsetsonline.test.js"
     ]

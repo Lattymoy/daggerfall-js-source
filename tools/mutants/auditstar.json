@@ -104,8 +104,8 @@
   {
     "name": "AUDIT-STAR-S1-cut-whole-only",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed",
-    "new": "  if (whole && had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed",
+    "old": "  if (had >= STRAND_HITS - 1)",
+    "new": "  if (whole && had >= STRAND_HITS - 1)",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-STAR-S1-strike-unweighed",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  stranded(attacker, target, info?.blow !== false);",
-    "new": "  stranded(attacker, target, true);",
+    "old": "  stranded(attacker, target, info?.blow !== false); // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight",
+    "new": "  stranded(attacker, target, true); // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "AUDIT-STAR-W6-veil-rounds-not-seconds",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  say(VEIL_TEXT.proc(v.rounds * ROUND_SECONDS));",
-    "new": "  say(VEIL_TEXT.proc(v.rounds));",
+    "old": "  say(VEIL_TEXT.proc(v.rounds * ROUND_SECONDS)); // AUDIT STAR (W6): the effect and how long, as the card says it",
+    "new": "  say(VEIL_TEXT.proc(v.rounds)); // AUDIT STAR (W6): the effect and how long, as the card says it",
     "tests": [
       "test/systems/starfall/auditstar.test.js",
       "test/systems/starfall/star7_rewards.test.js"
@@ -141,8 +141,8 @@
   {
     "name": "AUDIT-STAR-W6-veil-chip-english",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "name: VEIL_TEXT.chip(), text: time(st.veilRecoverLeft)",
-    "new": "name: 'Veil', text: time(st.veilRecoverLeft)",
+    "old": "    out.push({\n      key: 'veil',\n      set: 'starspun',\n      name: VEIL_TEXT.chip(),\n      text: time(st.veilRecoverLeft),\n      state: 'recovering',\n    });",
+    "new": "    out.push({ key: 'veil', set: 'starspun', name: 'Veil', text: time(st.veilRecoverLeft), state: 'recovering' });",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-STAR-S2-chip-tierless",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  for (const c of out) c.tier = CHIP_TIER;\n",
-    "new": "",
+    "old": "  for (const c of out) c.tier = CHIP_TIER;\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/starfall/auditstar.test.js",
       "test/systems/set5_ui.test.js",

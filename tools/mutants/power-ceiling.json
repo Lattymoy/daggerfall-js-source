@@ -101,8 +101,8 @@
   {
     "name": "POWER-CEILING-the-sigil-not-asking",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil');",
-    "new": "  const pct = (sigilPercent(held.sigil, _renown));",
+    "old": "  const pct = blowRoom(sigilPercent(held.sigil, _renown), 'sigil'); // POWER-CEILING: its room under the blow's one product",
+    "new": "  const pct = sigilPercent(held.sigil, _renown); // POWER-CEILING: its room under the blow's one product",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "POWER-CEILING-the-sets-not-asking",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (pct > 0) pct = blowRoom(pct, 'sets');   // POWER-CEILING: the sets'",
-    "new": "  if (pct > 0) pct = (pct);   // POWER-CEILING: the sets'",
+    "old": "  if (pct > 0) pct = blowRoom(pct, 'sets'); // POWER-CEILING: the sets' room under the blow's one product",
+    "new": "  if (pct > 0) pct = pct; // POWER-CEILING: the sets' room under the blow's one product",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "POWER-CEILING-unbroken-not-asking",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
-    "new": "Math.floor((dmg * (100 - UNBROKEN_LESS)) / 100)",
+    "old": "    ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "new": "    ? Math.floor((dmg * (100 - UNBROKEN_LESS)) / 100)",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "POWER-CEILING-hold-the-line-not-asking",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed;",
-    "new": "    const owed = (d * hold.less) / 100 + _holdOwed;",
+    "old": "    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed; // POWER-CEILING",
+    "new": "    const owed = (d * hold.less) / 100 + _holdOwed; // POWER-CEILING",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "POWER-CEILING-gearward-not-asking",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100);",
-    "new": "        d -= Math.round((d * gear.lighter) / 100);",
+    "old": "        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100); // POWER-CEILING: the winding spent, its share under the guards' one",
+    "new": "        d -= Math.round((d * gear.lighter) / 100); // POWER-CEILING: the winding spent, its share under the guards' one",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "POWER-CEILING-bound-in-silk-at-150",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ more: [60, 140] },",
-    "new": "{ more: [60, 150] },",
+    "old": "        { more: [60, 140] },",
+    "new": "        { more: [60, 150] },",
     "tests": [
       "test/combat/powerceiling.test.js",
       "test/combat/powerceiling_walk.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "POWER-CEILING-ruhns-fire-past-50",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "tier(2, 'burning-gate', 'The Burning Gate', { fire: [15, 45], sear: [2, 6] },",
-    "new": "tier(2, 'burning-gate', 'The Burning Gate', { fire: [15, 51], sear: [2, 6] },",
+    "old": "        { fire: [15, 45], sear: [2, 6] },",
+    "new": "        { fire: [15, 51], sear: [2, 6] },",
     "tests": [
       "test/combat/powerceiling_walk.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "POWER-CEILING-a-recovery-shorter-than-any",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "tier(4, 'gearward', 'Gearward', { lighter: [15, 30], recover: [18, 12] },",
-    "new": "tier(4, 'gearward', 'Gearward', { lighter: [15, 30], recover: [18, 9] },",
+    "old": "        { lighter: [15, 30], recover: [18, 12] },",
+    "new": "        { lighter: [15, 30], recover: [18, 9] },",
     "tests": [
       "test/combat/powerceiling_walk.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "SET-CATCHUP-the-best-rank-a-reach",
     "file": "src/systems/sigil/setReach.js",
-    "old": "sorted[REACH_PIECES - 1] : -1;",
-    "new": "sorted[0] : -1;",
+    "old": "  return sorted.length >= REACH_PIECES ? sorted[REACH_PIECES - 1] : -1;",
+    "new": "  return sorted.length >= REACH_PIECES ? sorted[0] : -1;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "SET-CATCHUP-a-stage-past-ascendant-taken",
     "file": "src/systems/sigil/setReach.js",
-    "old": "m[id] >= 0 && m[id] <= STAGE_MAX) out[id] = m[id];",
-    "new": "m[id] >= 0 && m[id] <= STAGE_MAX + 1) out[id] = m[id];",
+    "old": "  for (const id of SIGIL_SET_IDS) if (Number.isInteger(m[id]) && m[id] >= 0 && m[id] <= STAGE_MAX) out[id] = m[id];",
+    "new": "  for (const id of SIGIL_SET_IDS) if (Number.isInteger(m[id]) && m[id] >= 0 && m[id] <= STAGE_MAX + 1) out[id] = m[id];",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -435,7 +435,7 @@
   {
     "name": "SET-CATCHUP-every-piece-drinking-whole",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };",
+    "old": "  const drink = (p) => {\n    const id = setIdOf(p);\n    return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp;\n  };",
     "new": "  const drink = () => xp;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
@@ -444,7 +444,7 @@
   {
     "name": "SET-CATCHUP-every-piece-drinking-fast",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  const drink = (p) => { const id = setIdOf(p); return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp; };",
+    "old": "  const drink = (p) => {\n    const id = setIdOf(p);\n    return id ? catchUpXp(xp, p.sigil?.xp, reach.get(id) ?? -1) : xp;\n  };",
     "new": "  const drink = () => xp * CATCH_UP_MULT;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "SET-CATCHUP-a-rise-not-recorded",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  if (awake) noteReach(wornSetRanks(entity));   // SET-CATCHUP: a rise",
-    "new": "  if (awake) void 0;   // SET-CATCHUP: a rise",
+    "old": "  if (awake) noteReach(wornSetRanks(entity)); // SET-CATCHUP: a rise this drink made is the set's reach from now on",
+    "new": "  if (awake) void 0; // SET-CATCHUP: a rise this drink made is the set's reach from now on",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "SET-CATCHUP-said-for-a-piece-at-the-reach",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "st.heldPiece && sigilRank(st.heldPiece.sigil) < reach ?",
-    "new": "st.heldPiece && sigilRank(st.heldPiece.sigil) <= reach ?",
+    "old": "    st.heldPiece && sigilRank(st.heldPiece.sigil) < reach",
+    "new": "    st.heldPiece && sigilRank(st.heldPiece.sigil) <= reach",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "SET-CATCHUP-the-tooltip-unsaid",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "${v.catchUp ? `, ${catchUpText(v.catchUp)}` : ''}`;   // SET-CATCHUP",
-    "new": "${''}`;   // SET-CATCHUP",
+    "old": "  const head = `${v.name}: ${v.count} of ${v.of} worn${v.stageName ? `, ${v.stageName}` : ''}${why ? ` (${why})` : ''}${v.catchUp ? `, ${catchUpText(v.catchUp)}` : ''}`; // SET-CATCHUP",
+    "new": "  const head = `${v.name}: ${v.count} of ${v.of} worn${v.stageName ? `, ${v.stageName}` : ''}${why ? ` (${why})` : ''}${''}`; // SET-CATCHUP",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "SET-CATCHUP-the-pace-said-wrong",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "c.name === next ? `${c.mult}x XP`",
-    "new": "c.name !== next ? `${c.mult}x XP`",
+    "old": "  !c ? '' : c.name === next ? `${c.mult}x XP` : `${c.mult}x XP to ${c.name}`;",
+    "new": "  !c ? '' : c.name !== next ? `${c.mult}x XP` : `${c.mult}x XP to ${c.name}`;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -500,7 +500,7 @@
     "name": "AUDIT-HORIZONTAL-D1-the-pack-counted-again",
     "file": "src/systems/sigil/sigilSets.js",
     "old": "  return new Map([...wornSetPieces(entity)].map(([id, pieces]) => [id, pieces.map((p) => sigilRank(p.sigil))]));",
-    "new": "  const m = new Map(); for (const it of entity?.items ?? []) { const id = setIdOf(it); if (id) m.set(id, [...(m.get(id) ?? []), sigilRank(it.sigil)]); } return m;",
+    "new": "  const m = new Map();\n  for (const it of entity?.items ?? []) {\n    const id = setIdOf(it);\n    if (id) m.set(id, [...(m.get(id) ?? []), sigilRank(it.sigil)]);\n  }\n  return m;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D2-unbroken-spends-its-raw-half",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
-    "new": "Math.floor((dmg * (100 - UNBROKEN_LESS + 0 * guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "old": "    ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "new": "    ? Math.floor((dmg * (100 - UNBROKEN_LESS + 0 * guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
     "tests": [
       "test/combat/powerceiling_rooms.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D6-a-german-pace-in-the-english-line",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "`${c.mult}x XP to ${c.name}`",
-    "new": "`${c.mult}x EP bis ${c.name}`",
+    "old": "  !c ? '' : c.name === next ? `${c.mult}x XP` : `${c.mult}x XP to ${c.name}`;",
+    "new": "  !c ? '' : c.name === next ? `${c.mult}x XP` : `${c.mult}x EP bis ${c.name}`;",
     "tests": [
       "test/systems/sigil/setcatchup.test.js"
     ]

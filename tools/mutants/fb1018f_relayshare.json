@@ -282,8 +282,8 @@
   {
     "name": "RELAY-SHARE-the-sets-keep-their-own-copy",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;",
-    "new": "const belowHalf = (e) => Number.isFinite(e?.health) && e.maxHealth > 0 && e.health < e.maxHealth / 2;",
+    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
+    "new": "const belowHalf = (e) => Number.isFinite(e?.health) && e.maxHealth > 0 && e.health < e.maxHealth / 2; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "RELAY-SHARE-the-sets-read-no-word-as-under",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;",
-    "new": "const belowHalf = (e) => (healthShare(e) ?? 0) < 0.5;",
+    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
+    "new": "const belowHalf = (e) => (healthShare(e) ?? 0) < 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

@@ -314,8 +314,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-riposte-spent-by-the-page",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ pct += oath[1].more; if (keep) _s.riposteUntil = 0; }",
-    "new": "{ pct += oath[1].more; _s.riposteUntil = 0; }",
+    "old": "    if (keep) _s.riposteUntil = 0;",
+    "new": "    _s.riposteUntil = 0;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-discipline-spent-by-the-page",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (keep) _s.armed = -1; }",
-    "new": "_s.armed = -1; }",
+    "old": "    if (keep) _s.armed = -1;",
+    "new": "    _s.armed = -1;",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-the-sigil-carries-the-estimate",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  if (!info?.estimate) _carry.set(held, Math.max(0, exact - more));",
-    "new": "  _carry.set(held, Math.max(0, exact - more));",
+    "old": "  if (!info?.estimate) _carry.set(held, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
+    "new": "  _carry.set(held, Math.max(0, exact - more)); // AUDIT MARTIAL L2 F7: the Stats page's estimate keeps nothing",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]

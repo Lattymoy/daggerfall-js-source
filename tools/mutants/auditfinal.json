@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-FINAL-F10-the-mark-taken-only-by-a-landed-hurt",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _pending = landedBlow();\n",
-    "new": "  _pending = _blow;\n",
+    "old": "  _pending = landedBlow();",
+    "new": "  _pending = _blow;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-FINAL-F11-cleave-through-a-wall",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n",
-    "new": "",
+    "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n    bestD = d;",
+    "new": "    bestD = d;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

@@ -167,8 +167,8 @@
   {
     "name": "FULLGUARD-the-probe-unset",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "setFoeBlowProbe(() => _pending != null);",
-    "new": "",
+    "old": "setFoeBlowProbe(() => _pending != null); // FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is",
+    "new": "// FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is",
     "tests": [
       "test/systems/sigil/fb1011b_fullguard.test.js"
     ]

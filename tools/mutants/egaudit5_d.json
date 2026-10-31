@@ -332,8 +332,8 @@
   {
     "name": "EG5D-L8-1-the-mark-read-by-no-save",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "",
+    "old": "  if (!blow && spire) {\n    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);\n    return;\n  } // AUDIT EG V (L8-1): a Spire foe's blow - its two saves",
+    "new": "  // AUDIT EG V (L8-1): a Spire foe's blow - its two saves",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "EG5D-L8-1-the-reprieve-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "if (!blow && spire) { shed(entity, before, after, saved); return; }",
+    "old": "    reprieve(entity, before, after, saved);\n    return;",
+    "new": "    return;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "EG5D-L8-1-shed-skin-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "if (!blow && spire) { reprieve(entity, before, after, saved); return; }",
+    "old": "    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);",
+    "new": "    reprieve(entity, before, after, saved);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]

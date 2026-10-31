@@ -722,8 +722,8 @@
   {
     "name": "EGZ-sets-door-never-called",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "for (const fn of _spireRedoubts.values()) { try { fn(); }",
-    "new": "for (const fn of [].values()) { try { fn(); }",
+    "old": "  for (const fn of _spireRedoubts.values()) {",
+    "new": "  for (const fn of [].values()) {",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]

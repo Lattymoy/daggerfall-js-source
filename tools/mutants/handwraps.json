@@ -504,8 +504,8 @@
   {
     "name": "HANDWRAPS-sigil",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;",
-    "new": "  const held = weapon;",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil",
+    "new": "  const held = weapon; // HAND-WRAPS (AUDIT B4): a fist's blow carries its wraps' sigil",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

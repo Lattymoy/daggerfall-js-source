@@ -522,8 +522,8 @@
   {
     "name": "AUDIT625-P1-shed-deaf",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
+    "old": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * SHED_BELOW;",
+    "new": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;\n  const line = max * SHED_BELOW;",
     "why": "Shed Skin heals on top of a death save",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "AUDIT625-P2-the-sigil-deaf",
     "file": "src/systems/sigil/sigil.js",
-    "old": "|| target.isPlayer || _dueling) return damage;",
-    "new": "|| target.isPlayer) return damage;",
+    "old": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling)\n    return damage;",
+    "new": "  if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;",
     "why": "the weapon's sigil bites a player's stand-in",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "AUDIT625-P2-the-word-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "export function setSetsDueling(on) { setSigilDueling(on); }",
-    "new": "export function setSetsDueling(on) { void on; }",
+    "old": "  setSigilDueling(on);",
+    "new": "  void on;",
     "why": "the sets' word kept apart from the sigil's",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "AUDIT625-P3-one-coil-again",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
-    "new": "  _s.coils = new WeakMap(); _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
+    "old": "  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS }); // AUDIT 625 P3: its own",
+    "new": "  _s.coils = new WeakMap();\n  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS }); // AUDIT 625 P3: its own",
     "why": "one coil, moved to the foe struck last",
     "tests": [
       "test/systems/audit625_serpent.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "AUDIT625-P3-a-death-ends-every-coil",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (entity) _s.coils.delete(entity);",
-    "new": "  if (entity) _s.coils = new WeakMap();",
+    "old": "  if (entity) _s.coils.delete(entity); // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)",
+    "new": "  if (entity) _s.coils = new WeakMap(); // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)",
     "why": "a foe's death unwinds every coil",
     "tests": [
       "test/systems/audit625_serpent.test.js"

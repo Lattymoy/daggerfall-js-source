@@ -206,8 +206,8 @@
   {
     "name": "CARDFIT-a-brief-over-the-line",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "(v) => `Cheat death, then half damage ${v.halved}s`)",
-    "new": "(v) => `Cheat death, then all damage is halved for ${v.halved}s`)",
+    "old": "        (v) => `Cheat death, then half damage ${v.halved}s`,",
+    "new": "        (v) => `Cheat death, then all damage is halved for ${v.halved}s`,",
     "tests": [
       "test/ui/enhanced/cardfit.test.js"
     ]
@@ -215,8 +215,8 @@
   {
     "name": "CARDFIT-a-brief-saying-its-recovery",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "(v) => `A kill: a ${v.ward}-point ward`)",
-    "new": "(v) => `A kill: a ${v.ward}-point ward, every ${v.recover}s`)",
+    "old": "        (v) => `A kill: a ${v.ward}-point ward`,",
+    "new": "        (v) => `A kill: a ${v.ward}-point ward, every ${v.recover}s`,",
     "tests": [
       "test/ui/enhanced/cardfit.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "CARDFIT-the-recovery-dropped-from-the-view",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "        recover: Number.isFinite(values.recover) ? values.recover : null };",
-    "new": "        recover: null };",
+    "old": "        recover: Number.isFinite(values.recover) ? values.recover : null,",
+    "new": "        recover: null,",
     "tests": [
       "test/ui/enhanced/cardfit.test.js",
       "test/systems/set5_ui.test.js"
@@ -234,8 +234,8 @@
   {
     "name": "CARDFIT-the-line-saying-the-sentence",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "`${t.at} pieces - ${t.name}: ${t.brief}${t.recover != null",
-    "new": "`${t.at} pieces - ${t.name}: ${t.text}${t.recover != null",
+    "old": "        `${t.at} pieces - ${t.name}: ${t.brief}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at - v.count} more)` : ' (inactive)'}`,",
+    "new": "        `${t.at} pieces - ${t.name}: ${t.text}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at - v.count} more)` : ' (inactive)'}`,",
     "tests": [
       "test/ui/enhanced/cardfit.test.js",
       "test/systems/set5_ui.test.js"

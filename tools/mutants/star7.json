@@ -110,8 +110,8 @@
   {
     "name": "STAR7-silk-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [60, 140] },",
-    "new": "tier(4, 'bound-in-silk', 'Bound in Silk', { more: [50, 140] },",
+    "old": "        { more: [60, 140] },",
+    "new": "        { more: [50, 140] },",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "STAR7-thread-frost",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (thread) { add(m().resist, 'poison', thread.poison);",
-    "new": "if (thread) { add(m().resist, 'frost', thread.poison);",
+    "old": "    add(m().resist, 'poison', thread.poison);",
+    "new": "    add(m().resist, 'frost', thread.poison);",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "STAR7-silk-late",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "strandsAt(target, now) >= STRAND_HITS - 1) pct += silk.more;",
-    "new": "strandsAt(target, now) >= STRAND_HITS) pct += silk.more;",
+    "old": "  if (silk && weapon && strandsAt(target, now) >= STRAND_HITS - 1) pct += silk.more; // STAR7: Bound in Silk - the blow the web holds (its landing cuts the count: setStrike)",
+    "new": "  if (silk && weapon && strandsAt(target, now) >= STRAND_HITS) pct += silk.more; // STAR7: Bound in Silk - the blow the web holds (its landing cuts the count: setStrike)",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "STAR7-silk-never-cut",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed\n  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+    "old": "  if (had >= STRAND_HITS - 1)\n    _s.strands.delete(target); // the held blow landed\n  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
     "new": "  if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "STAR7-silk-forever",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
-    "new": "else if (whole) _s.strands.set(target, { n: had + 1, until: Infinity });",
+    "old": "  else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });",
+    "new": "  else if (whole) _s.strands.set(target, { n: had + 1, until: Infinity });",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "STAR7-one-count-moved",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const now = _now(), had = strandsAt(target, now);",
-    "new": "const now = _now(), had = strandsAt(_s.strandFoe === target ? target : null, now);",
+    "old": "    had = strandsAt(target, now);",
+    "new": "    had = strandsAt(_s.strandFoe === target ? target : null, now);",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "STAR7-death-kept",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (entity) _s.strands.delete(entity);   // STAR7: and its strands\n",
-    "new": "",
+    "old": "  if (entity) _s.strands.delete(entity); // STAR7: and its strands\n  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
+    "new": "  if (t.get('thieftaker')?.[2]) markNext(door, entity, now);",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "STAR7-veil-unheard",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  veil(entity, before, after, saved);   // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line\n",
-    "new": "",
+    "old": "  veil(entity, before, after, saved); // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line\n  const v = tierOf(entity, 'ruhn', 2);",
+    "new": "  const v = tierOf(entity, 'ruhn', 2);",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "STAR7-veil-on-a-kill",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
-    "new": "  if (!v || !(max > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
+    "old": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
+    "new": "  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || saved) return;\n  const line = max * VEIL_BELOW;",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]

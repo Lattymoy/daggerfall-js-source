@@ -1291,6 +1291,12 @@
 !/src/systems/shotGallery.js
 !/src/systems/shotTally.js
 !/src/systems/siegeField.js
+!/src/systems/sigil/
+/src/systems/sigil/*
+!/src/systems/sigil/setReach.js
+!/src/systems/sigil/sigil.js
+!/src/systems/sigil/sigilSetPowers.js
+!/src/systems/sigil/sigilSets.js
 !/src/systems/signatureSpells.js
 !/src/systems/silverFinds.js
 !/src/systems/skillSoftcap.js

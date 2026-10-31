@@ -138,7 +138,7 @@ unaware - a spell cast first under True Invisibility gives it (reasoned, not pin
 
 A set's stage is still its lowest worn piece's. A piece below the highest stage that set has stood at for this
 character drinks three times the Renown XP until it reaches that stage, and never faster past it
-(`systems/sigil/setReach.js:"export const CATCH_UP_MULT = 3;"`). The set's card says so beside the piece holding it:
+(`systems/sigil/setReach.js:"export const CATCH_UP_MULT"`). The set's card says so beside the piece holding it:
 "Kindled: grow your Helm (3x XP to Radiant)". The record is `11-Multiplayer/Sigil-Sets.md` section 5 and its SET-CATCHUP
 section.
 

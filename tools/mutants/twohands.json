@@ -1311,8 +1311,8 @@
   {
     "name": "TWOHANDS-AUDIT2-coil-every-blow",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (info?.blow !== false) coiled(attacker, target);",
-    "new": "coiled(attacker, target);",
+    "old": "  if (info?.blow !== false) coiled(attacker, target); // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)",
+    "new": "  coiled(attacker, target); // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)",
     "tests": [
       "test/systems/audit625_serpent.test.js"
     ]

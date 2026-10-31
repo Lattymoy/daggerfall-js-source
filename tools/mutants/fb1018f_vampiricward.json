@@ -53,8 +53,8 @@
   {
     "name": "VAMPIRIC-WARD-sets-strike-blind",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!(damage > 0) || !weapon || target?.warded) return;",
-    "new": "if (!(damage > 0) || !weapon) return;",
+    "old": "  if (!(damage > 0) || !weapon || target?.warded) return; // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)",
+    "new": "  if (!(damage > 0) || !weapon) return; // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)",
     "tests": [
       "test/systems/fb1018f_vampiricward.test.js"
     ],

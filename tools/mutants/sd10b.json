@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-SD-C7-the-boss-unanswered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const gear = d > 0 && (_pending || _pendingBoss) ? tierOf",
-    "new": "const gear = d > 0 && _pending ? tierOf",
+    "old": "  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
+    "new": "  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-SD-C7-the-mark-lying",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;\n  _bossBlowAt = -Infinity;",
-    "new": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
+    "old": "  _bossBlowAt = -Infinity;\n  _pendingSpire = _now() - _spireBlowAt <= BLOW_WINDOW_S;",
+    "new": "  _pendingSpire = _now() - _spireBlowAt <= BLOW_WINDOW_S;",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-SD-C7-a-reach-power-hears-the-boss",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _pending = landedBlow();\n  _pendingBoss",
-    "new": "  _pending = landedBlow() ?? (_now() - _bossBlowAt <= BLOW_WINDOW_S ? { attacker: null } : null);\n  _pendingBoss",
+    "old": "  _pending = landedBlow();",
+    "new": "  _pending = landedBlow() ?? (_now() - _bossBlowAt <= BLOW_WINDOW_S ? { attacker: null } : null);",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "SIGIL-UI-the-bar-from-zero",
     "file": "src/systems/sigil/sigil.js",
-    "old": "(s.xp - from) / (next.xp - from)",
-    "new": "s.xp / next.xp",
+    "old": "    frac: next ? Math.max(0, Math.min(1, (s.xp - from) / (next.xp - from))) : 1,",
+    "new": "    frac: next ? Math.max(0, Math.min(1, s.xp / next.xp)) : 1,",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]
