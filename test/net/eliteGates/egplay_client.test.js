@@ -372,7 +372,7 @@ test('EG-PLAY THE TRACKER: outside, the call for my company - when it opens, the
   assert.equal(m.line, egHallOf(7, 3).objective);
   assert.match(m.company, /^1 of 2 standing\n/);
   assert.match(m.company, /Ann.*(watching|witness)/i, 'a fallen companion watches');
-  assert.match(m.run, /potions 2\/2/, 'THE POTION LAW\'s pip');
+  assert.doesNotMatch(m.run, /potions/, 'PIN MOVED (POTION-CLOCK): no count of potions - the Spire\'s pip says each kind\'s wait');
   assert.equal(egHudModel({ ...inside, ca: T0 }, ME, T0 + 20 * 60_000 - 9 * 60_000, { inSpire: true }).countCls, '');
   assert.equal(egHudModel({ ...inside, ca: T0 }, ME, T0 + 20 * 60_000 - EG_HUD_LOW_MS + 1000, { inSpire: true }).countCls, 'low');
   assert.equal(egHudModel({ ...inside, ca: 0 }, ME, T0, { inSpire: true }).countCls, 'held');

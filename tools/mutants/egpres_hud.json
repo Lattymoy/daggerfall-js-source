@@ -29,8 +29,8 @@
   {
     "name": "EGPRES-the-potion-pip-on-a-phone",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',",
-    "new": "potion: `${potions}/${EG_POTIONS_PER_HALL}`,",
+    "old": "    potion: egPotionPip(potions),",
+    "new": "    potion: L.standing ? egPotionPip(potions) : '',",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]

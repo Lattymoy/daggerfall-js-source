@@ -212,7 +212,7 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world298';",
+    "old": "export const RELAY_VERSION = 'world300';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"

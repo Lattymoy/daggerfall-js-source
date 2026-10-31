@@ -279,33 +279,6 @@
     ]
   },
   {
-    "name": "AUDIT-EG-V-c-L2-14-count-in-memory",
-    "file": "src/scenes/eliteGates/egClient.js",
-    "old": "  try { const v = JSON.parse(store?.getItem?.(EG_POTIONS_KEY) ?? 'null'); if (v",
-    "new": "  try { const v = null; if (v",
-    "tests": [
-      "test/net/eliteGates/egaudit5_c.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-EG-V-c-L2-14-used-unkept",
-    "file": "src/scenes/eliteGates/egClient.js",
-    "old": "potions = Math.max(0, potions - 1); potionsKeep(); }",
-    "new": "potions = Math.max(0, potions - 1); }",
-    "tests": [
-      "test/net/eliteGates/egaudit5_c.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-EG-V-c-L2-14-other-breach-carried",
-    "file": "src/scenes/eliteGates/egClient.js",
-    "old": "    if (!potionHall.startsWith(`${E.b}:`)) { potionHall = `${E.b}:0:t`; potions = EG_POTIONS_PER_HALL; potionsKeep(); }",
-    "new": "",
-    "tests": [
-      "test/net/eliteGates/egaudit5_c.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-EG-V-c-L7-23-device-dropped",
     "file": "src/ui/eliteGates/egBeats.js",
     "old": "((Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0))",
