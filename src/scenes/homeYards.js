@@ -218,6 +218,10 @@ export const YARD_ON_ROAD = 'That is the road. Keep the street and its paths cle
 /** YARD-HEIGHT: what the decorator says of a piece standing higher than a yard's may (net/decorLaw.js DECOR_YARD_HIGH) -
  *  AUDIT Y3: the service's own refusal's sentence. */
 export const YARD_TOO_HIGH = DECOR_YARD_HIGH_WHY;
+/** YARD-WALLS: how high a piece standing free of its house may stand, metres - Mac's 4 m against towers (YARD-HEIGHT). On
+ *  or against its house a piece stands to the house's top, within DECOR_YARD_HIGH (yardByHouse). */
+export const YARD_FREE_HIGH = 4;
+export const yardTooHighFree = () => t('decor.yard.tooHighFree', 'Too high. Above {m} m, a decoration must stand on or against the building, no higher than its roof.', { m: YARD_FREE_HIGH });
 /** How far into a wall's (or a road's) ground a piece may reach and still stand clear of it - touching is not in it. */
 export const YARD_EDGE_PAD = 0.05;
 /** FB1009 HOME-FOOT: the side of the cells a model's ground is measured in, metres (half Daggerfall's 0.8 m wall step). */
@@ -433,9 +437,9 @@ export function footGroundAt(parts, m) {
 /**
  * A LOT from a building's frame: `origin` its own place and `box` the box round its models ([minX, minY, minZ, maxX,
  * maxY, maxZ]), both in one frame - answered relative to the origin: `house` that box's footprint [x0, z0, x1, z1] and
- * `lot` the box grown by `margin` [x0, z0, x1, z1], and `y` the ground's height (the box's foot). FB1009 HOME-FOOT:
- * `walls` the ground the house stands on - `rects` (its models' faces seen from above, world.js, in the box's frame)
- * relative to the origin, or its box where none are known.
+ * `lot` the box grown by `margin` [x0, z0, x1, z1], `y` the ground's height (the box's foot) and `top` its top. FB1009
+ * HOME-FOOT: `walls` the ground the house stands on - `rects` (its models' faces seen from above, world.js, in the box's
+ * frame) relative to the origin, or its box where none are known.
  */
 export function yardLot(origin, box, margin = YARD_MARGIN, rects = null, frame = null) {
   if (!Array.isArray(origin) || !Array.isArray(box) || box.length < 6) return null;
@@ -450,7 +454,7 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null, frame =
     loose: g.loose.map(from), solid: g.solid.map(from), decks: g.decks.map((r) => [...from(r), r[4] - origin[1]]),
     walls: lines(g.walls), storeys: g.storeys.map(([y, ls]) => [y - origin[1], lines(ls)]),
   })) : null;
-  return { house, walls, ...(grounds ? { grounds, loose: [] } : {}), lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
+  return { house, walls, ...(grounds ? { grounds, loose: [] } : {}), lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1], top: box[4] - origin[1] };
 }
 /** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - never grown round a terraced house: an
  *  Imperial City house's one model is its door, so a lot grown round it held its own rooms, the neighbours' and the street.
@@ -622,7 +626,7 @@ function yardRoadsUnder(lot, pos, ground, bottom, rs) {
  * it on the lot, none of it in the house or on another building's ground (its middle alone let a long piece straddle a
  * wall). FB1001 YARD-CORNER: "none of it" is the ground it covers, not its corners (yardFootMeets). FB1001 ROAD-LOT:
  * nor on the town's road or a path (`roads`, the road's tiles in the same frame - yardRoadsOf). YARD-HEIGHT: nor
- * higher over the ground than DECOR_YARD_HIGH (the frame's origin stands on the town's ground - scenes/world.js).
+ * higher than DECOR_YARD_HIGH over the frame's origin (the town's ground), YARD-WALLS: nor YARD_FREE_HIGH off its house.
  * HOME-LINE (FIELD BUGS 2026-10-11b, ShikiX3: "I can't place in front of my door but I can place in front of another's
  * home"; afjiz: "my property line goes a little far into the property beside me"; Mac: "Split at the midline"): nor any
  * of it nearer another building's ground than the house's own - the lot is the house grown YARD_MARGIN, and two houses'
@@ -648,8 +652,15 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   if (!lot.alone && points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's; IC-BACKYARD: an `alone` lot's line is the fabric's
   roads = yardRoadsUnder(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0), roads);   // DECK-ROAD: a deck over the road is the house's
   if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;
+  if (pos[1] > YARD_FREE_HIGH && !yardByHouse(lot, x, z, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return yardTooHighFree();   // YARD-WALLS
   if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;
+}
+/** YARD-WALLS: whether a piece stands by its house - its middle or its ground (`ground`) on the house's box seen from above
+ *  or touching it, its foot (`bottom`) no higher than the house's top. A lot that knows no top (hand-built) has none. */
+function yardByHouse(lot, x, z, ground, bottom) {
+  if (!(bottom <= (lot.top ?? -Infinity) + YARD_DECK_SLACK)) return false;
+  return inRect(x, z, lot.house, YARD_EDGE_PAD) || yardFootMeets(ground, lot.house, -YARD_EDGE_PAD);
 }
 /**
  * YARD-LINE (FIELD BUGS 2026-10-12b): WHETHER A NEIGHBOURING BUILDING HOLDS A LOT the ground between it and a yard is split
@@ -1379,8 +1390,13 @@ export function createHomeYards(deps) {
     treeSets,
     /** YARD-LIGHT: the yards' lamps, for the world's lanterns. */
     lamps,
-    /** The lot's edge while a piece is placed, on the world's decal pass. */
-    drawDecals: (r = deps.renderer) => tool.drawMounts(r),
+    /** The lot's edge while a piece is placed, on the world's decal pass - YARD-WALLS: and the pictures hung on the walls
+     *  of the yards within reach, as a room's mounts are (decorRoom.js drawMounts). */
+    drawDecals(r = deps.renderer) {
+      const eye = deps.eye?.() ?? null;
+      for (const y of yards.values()) if (nearEye(y, eye)) y.pool.drawMounts(r);
+      return tool.drawMounts(r);
+    },
     drawPreview: () => tool.drawPreview(cur ? remapOf(cur.yard) : null),   // AUDIT 05b A5: in the yard's climate, as it will stand
     cameraOverride: (c) => tool.cameraOverride(c),
     flying: () => tool.flying(),

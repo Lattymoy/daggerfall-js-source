@@ -10869,6 +10869,48 @@ was written against among them.
   standing, a room's high shelf kept, a malformed place passed over, a second run nothing more), the town read, the
   client's yard over the real pool; `tools/mutants/yardsweep.json` (5, all killed).
 
+### YARD-WALLS - a house's walls and balconies take a piece, and a picture hangs flat on a wall (2026-10-31)
+
+Discord #feature-feedback ("Feedback Doc 2"), handed over by the owner as the call to loosen the yard: "Decoration
+restriction need to be looser on the exterior of houses, sure roads are a no go. But I should be able to decorate the
+walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
+
+- **Measured** over BLOCKS.BSA's town blocks (the freeware's data): of 8,058 residences, 2,042 are under 2 m (graveyard
+  plots and the like). Of the 6,016 houses, a quarter's walls stop at 3.22 m, half's at 6.45 m, three quarters' at
+  8.05 m. 1,633 houses stand a flat roof of 4 m² or more at 6.45 m, and 4 m refused every one.
+- **The height.** `decorLaw.js:"export const DECOR_YARD_HIGH = 8;"`, at both ends. Above
+  `homeYards.js:"export const YARD_FREE_HIGH = 4;"` a piece stands on or against its house: its middle or its ground on
+  the house's box seen from above, or touching it, and its foot no higher than the house's top (yardLot's `top`,
+  yardByHouse). Free of the house, Mac's 4 m holds, so no tower stands in the yard and none over a roof. The decorator
+  says "Too high. Above 4 m, a decoration must stand on or against the building, no higher than its roof." The service
+  knows no house and holds the 8 m alone.
+- **The walls.** A yard's catalogue picture set on a wall hangs flat on it, a hair off
+  (`decorPlacer.js:"if (wall && hangs) return mountAt("`), as one's own weapon hangs indoors (DECOR2c). It stood off the
+  wall by half its width as a billboard (WALL-CLEAR). Its place says `hung` (decorPlaceOf, carried only when true, and
+  stored by the service's placeJson), so every client draws it on the decal pass (decorIsMount), the yards' within
+  reach (homeYards.js drawDecals). The service needs no `item`. Its ground is its quad seen from above, a line along the
+  wall (decorHungFoot). A model, one's own item, a person or a yard's plant never hangs; on the ground a picture is a
+  billboard, as before. A hung lantern lights at its flame, from its middle (decorLightLift).
+- **Not changed.** YARD_DECK_MIN stays 4 m². No level roof inside a house's walls measures between 1.28 and 2.56 m², and
+  every one of 1.28 or 2.56 m² is a stair's tread, 0.4 m a step (ARCH3D 455, 512, 707 to 710, 856, 857). The small
+  balconies (563's 2.4 m², 605, 607, 608) stand past the ground floor's walls and were the yard's already. No porch rule:
+  4 houses hold a level face of 2 m² or more outside the walls below 2 m, the landing of 856's and 857's stair. The road
+  refuses as before, at every height.
+- **History kept.** Migrations 0109 (YARD-SWEEP) and 0121 (the reseat) ran at 4 m and keep it
+  (test/server/yardsweep.test.js `SWEPT`, `tools/yardReseat.mjs` YARD_RESEAT_HIGH).
+- **The four hosts.** `scenes/world.js` WIRED: its decal pass already draws `yards.drawDecals`. `scenes/exterior.js`,
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no yard.
+- **Deploy.** acct230, no migration. The account service before the site: an older service refuses a piece over 4 m
+  (`yard-high`) and stores a hung picture unhung. An older site draws a hung picture as a billboard where it hangs.
+- **Pinned**: `test/scenes/yardwalls.test.js` (7: the law on synthetic houses, ARCH3D 709 and, past the Bay, Solitude's
+  house in BANKBL00), and the pins moved on purpose - `test/net/yardheight.test.js` (the bound, a free piece at 4.5 m,
+  one past 8 m against a tall house),
+  `test/world/fb1030_yarddeck.test.js` (the storey's 6.45 m roof now the yard's), `test/server/yardsweep.test.js` (the
+  sweep's own 4 m), `test/ui/homestations.test.js` (placeJson) and the account version's pins.
+  `tools/mutants/yardwalls.json` 28 of 28 dead; the records whose lines moved re-aimed by content (yardheight, decor1e,
+  decor2c, home_stations, huntersmark, fb1016b_stallshape and the version records) and the 140 touching the yard's
+  law run again, all dead.
+
 ### YARD-TOWN - a town's yards bound at the placement, and stood a few a frame (2026-10-25)
 
 Two field reports: "There's a bug in the top right part of Daggerfall City's map. Decorative items placed in any house

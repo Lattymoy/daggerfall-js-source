@@ -590,7 +590,7 @@
   "src/net/chatVoice.js": 12,
   "src/net/craftWritLaw.js": 39,
   "src/net/dayTurn.js": 13,
-  "src/net/decorLaw.js": 44,
+  "src/net/decorLaw.js": 42,
   "src/net/dice.js": 8,
   "src/net/domainLaw.js": 20,
   "src/net/duel/duelBar.js": 10,

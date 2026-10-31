@@ -11,20 +11,22 @@
   {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!it || !Array.isArray(piece.flat)) return false;",
+    "old": "if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "if (!piece || !Array.isArray(piece.flat)) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-no-flat-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!it || piece.model != null) return false;",
+    "old": "if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "if (!piece || piece.model != null) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-the-frame-mirrored",
@@ -212,11 +214,12 @@
   {
     "name": "DECOR2c-a-moved-mount-from-its-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
+    "old": "yaw: from ? wrapTurn((mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
     "new": "yaw: from ? wrapTurn((from.rot?.[0]) ?? 0) : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-a-mount-set-as-it-stands",

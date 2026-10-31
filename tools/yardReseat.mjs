@@ -23,7 +23,7 @@
 // stand where they stood, and the scale divided by what the stand-in grew (`k`), so the piece is the size its owner saw.
 // No piece is made smaller than the law's least scale (DECOR_SCALE_MIN, a boulder of 8 placed under 2 stands at it,
 // bigger than it was), none moves past its yard's bound (DECOR_YARD_POS_MAX, down as well - decorPlaceOf drops a place
-// past it on any axis) or up past its height (DECOR_YARD_HIGH),
+// past it on any axis) or up past its height (YARD_RESEAT_HIGH),
 // and a piece re-seated carries `reseat` in its place (decorPlaceOf reads past it), which this statement never moves
 // twice. A piece placed before the deploy (`placed_at`, the service's own clock) was placed by WD3's stand-ins; one placed
 // since, by TEMPLE-STEPS' - its rocks are STALL-SHAPE's, and only the second stall moved. No record says a piece was moved
@@ -39,9 +39,12 @@
 // builders, so a stand-in whose box moves again fails there until its saved pieces are re-seated.
 import { writeFileSync, readFileSync } from 'node:fs';
 import { isMain } from './lib/isMain.mjs';
-import { DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_YARD_POS_MAX, DECOR_YARD_HIGH } from '../src/net/decorLaw.js';
+import { DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_YARD_POS_MAX } from '../src/net/decorLaw.js';
 
 export const YARD_RESEAT_FILE = 'server-account/migrations/0121_yard_reseat.sql';
+/** The yard's height when 0121 was written - DECOR_YARD_HIGH before YARD-WALLS raised it to 8 m. Every piece it re-seats
+ *  was placed under it, and the migration is the record of what ran. */
+export const YARD_RESEAT_HIGH = 4;
 /** What a re-seated piece's place carries, and the statement asks before it moves one. */
 export const YARD_RESEAT_MARK = 'STALL-SHAPE';
 /** TEMPLE-STEPS' stand-ins reached the players: #934's web deploy done, 2026-10-16T00:43:25Z (the service's seconds). */
@@ -123,7 +126,7 @@ export function reseatMove({ was, now, k }, scale, yaw) {
 export function reseatPlace(place, reseat) {
   const { scale, d } = reseatMove(reseat, place.scale, place.rot[0]);
   const B = DECOR_YARD_POS_MAX;
-  const pos = [round(clamp(place.pos[0] + d[0], -B, B), 3), round(clamp(place.pos[1] + d[1], -B, DECOR_YARD_HIGH), 3), round(clamp(place.pos[2] + d[2], -B, B), 3)];
+  const pos = [round(clamp(place.pos[0] + d[0], -B, B), 3), round(clamp(place.pos[1] + d[1], -B, YARD_RESEAT_HIGH), 3), round(clamp(place.pos[2] + d[2], -B, B), 3)];
   return { ...place, pos, scale, reseat: YARD_RESEAT_MARK };
 }
 
@@ -177,7 +180,7 @@ export function reseatSql() {
 -- and as it is (\`now\`), turned by its own turn and times its scale - its origin moved so the box's middle and its foot
 -- stand where they stood, and its scale divided by what the model grew (\`k\`), never under ${DECOR_SCALE_MIN} or over ${DECOR_SCALE_MAX}
 -- (net/decorLaw.js), never past its yard's +-${B} m on any axis (decorPlaceOf drops a place past it) nor up past
--- ${DECOR_YARD_HIGH} m. A piece placed before the deploy was placed by WD3's stand-ins (\`before\` 1); one since, by TEMPLE-STEPS'
+-- ${YARD_RESEAT_HIGH} m. A piece placed before the deploy was placed by WD3's stand-ins (\`before\` 1); one since, by TEMPLE-STEPS'
 -- (only the second stall has moved since). A re-seated place carries "reseat": "${YARD_RESEAT_MARK}", and no place that
 -- carries it is moved again. Rooms (\`yard\` 0) hold neither. A place that is not JSON is passed over, whatever order
 -- the terms are read in (0109's care: json_extract would throw).
@@ -189,7 +192,7 @@ ${rows.join(',\n')}
 UPDATE home_decor SET place = (
   SELECT json_set(home_decor.place,
     '$.pos[0]', ROUND(MIN(${B}, MAX(-${B}, x + c * dx + sn * dz)), 3),
-    '$.pos[1]', ROUND(MIN(${DECOR_YARD_HIGH}, MAX(-${B}, y + dy)), 3),
+    '$.pos[1]', ROUND(MIN(${YARD_RESEAT_HIGH}, MAX(-${B}, y + dy)), 3),
     '$.pos[2]', ROUND(MIN(${B}, MAX(-${B}, z - sn * dx + c * dz)), 3),
     '$.scale', s2,
     '$.reseat', '${YARD_RESEAT_MARK}')

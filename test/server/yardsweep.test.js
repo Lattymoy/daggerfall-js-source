@@ -14,6 +14,8 @@ import { fakeDoc, fakeWin, settle, townCellsApi } from '../decorFakes.mjs';
 import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const SWEEP = readFileSync(new URL('../../server-account/migrations/0109_yard_height_sweep.sql', import.meta.url), 'utf8');
+/** Migration 0109's own bound - DECOR_YARD_HIGH when it ran (YARD-WALLS raised the law to 8 m; what ran is its record). */
+const SWEPT = 4;
 const piece = (id, y) => ({ id, model: 41000, flat: null, pos: [8, y, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120 });
 
 /** A home with three yard pieces and a room's high shelf, one yard piece then raised past the bound by hand - a tower
@@ -25,7 +27,7 @@ async function towered(t) {
   const o = await svc.seatHome(owner, { mapId: 7, buildingKey: 300, region: 17, price: 5000 });
   const at = () => ({ id: o.character, ...svc.env.DB._raw.prepare('SELECT lease, seq FROM realm_characters WHERE id = ?').get(o.character) });
   const place = (p, yard) => svc.call('/v1/homes/decor/place', { mapId: 7, buildingKey: 300, character: o.character, realm: at(), piece: p, yard }, owner.secret);
-  for (const [id, y] of [['low', 0], ['top', DECOR_YARD_HIGH], ['tower', 0]]) assert.equal((await place(piece(id, y), true)).status, 200, id);
+  for (const [id, y] of [['low', 0], ['top', SWEPT], ['tower', 0]]) assert.equal((await place(piece(id, y), true)).status, 200, id);
   assert.equal((await place(piece('shelf', 9), false)).status, 200, 'a room\'s high shelf');
   const raw = svc.env.DB._raw;
   const row = raw.prepare('SELECT place FROM home_decor WHERE id = ?').get('tower');
@@ -37,7 +39,7 @@ async function towered(t) {
   return { svc, raw, yards, ids };
 }
 
-test('YARD-SWEEP the migration: every yard piece standing past DECOR_YARD_HIGH is deleted, one at the bound and below stands, a room\'s high piece is never asked, a malformed place never throws (mutants: the bound, the comparison, the room asked)', async (t) => {
+test('YARD-SWEEP the migration: every yard piece standing past its 4 m is deleted (PIN MOVED, YARD-WALLS: the sweep\'s own bound, not the law\'s 8 m), one at the bound and below stands, a room\'s high piece is never asked, a malformed place never throws (mutants: the bound, the comparison, the room asked)', async (t) => {
   const { raw, ids } = await towered(t);
   raw.prepare("INSERT INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard) VALUES (7, 300, 'junk', 41000, NULL, NULL, 'not json', 1, NULL, 0, 1)").run();
   assert.deepEqual(ids(), ['junk', 'low', 'shelf', 'top', 'tower']);
