@@ -121,7 +121,7 @@
   {
     "name": "AUDITSURV-a-dropped-wait-window-never-closes",
     "file": "src/ui/waitWindow.js",
-    "old": "  dispose() { this._end(false); }",
+    "old": "  dispose() {\n    this._end(false);\n  }",
     "new": "  dispose() {}",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "AUDITSURV-the-last-dot-is-never-drawn",
     "file": "src/ui/waitWindow.js",
-    "old": "  get dots() { return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1)); }",
-    "new": "  get dots() { return '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS))); }",
+    "old": "    return '.'.repeat(Math.min(BUSY_DOTS, Math.floor(this.progress * BUSY_DOTS) + 1));",
+    "new": "    return '.'.repeat(Math.max(1, Math.round(this.progress * BUSY_DOTS)));",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]

@@ -146,8 +146,8 @@
   {
     "name": "L10N3g-ui-toolTip-202-grammar",
     "file": "src/ui/toolTip.js",
-    "old": "  rows.forEach((r, i) => drawText(renderer, font, processGrammar(r),",
-    "new": "  rows.forEach((r, i) => drawText(renderer, font, (r),",
+    "old": "      processGrammar(r),",
+    "new": "      r,",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]

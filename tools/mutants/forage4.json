@@ -3,7 +3,7 @@
     "name": "FORAGE4-2-escape-walks-out-of-the-wait",
     "file": "src/ui/waitWindow.js",
     "old": "  input() {}",
-    "new": "  input(code) { if (code === 'Escape' || code === 'back') this._end(false); }",
+    "new": "  input(code) {\n    if (code === 'Escape' || code === 'back') this._end(false);\n  }",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FORAGE4-3-a-foe-never-interrupts",
     "file": "src/ui/waitWindow.js",
-    "old": "    if (this._interruptWhen?.()) { this._end(false); return; }   // a foe near ends it, the rest forgiven\n",
-    "new": "",
+    "old": "    if (this._interruptWhen?.()) {\n      this._end(false);\n      return;\n    } // a foe near ends it, the rest forgiven\n    this._elapsed += Math.max(0, dt || 0);",
+    "new": "    this._elapsed += Math.max(0, dt || 0);",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FORAGE4-4-the-wait-never-ends",
     "file": "src/ui/waitWindow.js",
-    "old": "    if (this._elapsed >= this.seconds) this._end(true);\n",
-    "new": "",
+    "old": "    if (this._elapsed >= this.seconds) this._end(true);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FORAGE4-5-a-second-wait-is-lost",
     "file": "src/ui/waitWindow.js",
-    "old": "  extend(seconds) { if (!this.done && seconds > 0) this.seconds += seconds; }",
-    "new": "  extend(seconds) { void seconds; }",
+    "old": "    if (!this.done && seconds > 0) this.seconds += seconds;",
+    "new": "    void seconds;",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]

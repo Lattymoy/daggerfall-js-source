@@ -735,7 +735,7 @@
     "name": "STUDIO1-icons-blind-to-the-studio",
     "file": "src/ui/textureCanvas.js",
     "old": "const iconsGeneration = () => `${dfmodGeneration()}:${studioGeneration()}`;",
-    "new": "const iconsGeneration = () => `${dfmodGeneration()}`; void studioGeneration;",
+    "new": "const iconsGeneration = () => `${dfmodGeneration()}`;\nvoid studioGeneration;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

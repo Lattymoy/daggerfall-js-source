@@ -364,8 +364,8 @@
   {
     "name": "TEMPUI-warmer-always-better",
     "file": "src/ui/temperatureCard.js",
-    "old": "const better = discomfort(w.after.felt) < discomfort(w.before.felt), worse = discomfort(w.after.felt) > discomfort(w.before.felt);",
-    "new": "const better = w.after.felt > w.before.felt, worse = w.after.felt < w.before.felt;",
+    "old": "  const better = discomfort(w.after.felt) < discomfort(w.before.felt),\n    worse = discomfort(w.after.felt) > discomfort(w.before.felt);",
+    "new": "  const better = w.after.felt > w.before.felt,\n    worse = w.after.felt < w.before.felt;",
     "why": "off in the desert noon called worse",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -374,8 +374,8 @@
   {
     "name": "TEMPUI-the-plaque-on-the-record",
     "file": "src/ui/temperatureCard.js",
-    "old": "  const t = feltNow(entity);\n  if (t) {",
-    "new": "  const t = null;\n  if (t) {",
+    "old": "  const t = feltNow(entity);",
+    "new": "  const t = null;",
     "why": "the pack waits for the next minute",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "TEMPUI-the-plaque-says-no-sum",
     "file": "src/ui/temperatureCard.js",
-    "old": "${sum.length ? `\\n${sum.join('\\n')}` : ''}",
-    "new": "",
+    "old": "  n.title = `Felt temperature ${r.text}: ${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})${sum.length ? `\\n${sum.join('\\n')}` : ''}`;",
+    "new": "  n.title = `Felt temperature ${r.text}: ${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})`;",
     "why": "the plaque's title without its parts",
     "tests": [
       "test/systems/survival/tempui.test.js"

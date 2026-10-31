@@ -2,8 +2,8 @@
   {
     "name": "WAIT-hover-not-taken",
     "file": "src/ui/waitWindow.js",
-    "old": "  hover() {}\n",
-    "new": "",
+    "old": "  hover() {}\n  release() {}",
+    "new": "  release() {}",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]

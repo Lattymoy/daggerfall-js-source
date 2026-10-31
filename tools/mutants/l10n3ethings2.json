@@ -192,8 +192,8 @@
   {
     "name": "L10N3e-shown-ui-useMagicItemWindow-84-Item",
     "file": "src/ui/useMagicItemWindow.js",
-    "old": "  isEnchanted = defaultIsEnchanted, nameOf = (it) => itemLongName(it) } = {}) {",
-    "new": "  isEnchanted = defaultIsEnchanted, nameOf = (it) => (it).name ?? '' } = {}) {",
+    "old": "  nameOf = (it) => itemLongName(it),",
+    "new": "  nameOf = (it) => it.name ?? '',",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]

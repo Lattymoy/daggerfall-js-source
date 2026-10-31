@@ -173,8 +173,8 @@
   {
     "name": "ATV-one-pitch-for-every-line",
     "file": "src/ui/virtualRows.js",
-    "old": "h = Math.max(h, s > 0 ? s : guess); }",
-    "new": "h = Math.max(h, guess); }",
+    "old": "      h = Math.max(h, s > 0 ? s : guess);",
+    "new": "      h = Math.max(h, guess);",
     "tests": [
       "test/ui/virtheights.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ATV-no-hold",
     "file": "src/ui/virtualRows.js",
-    "old": "    hold(eye, was);\n",
-    "new": "",
+    "old": "    hold(eye, was);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/ui/virtheights.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "ATV-heights-kept-across-a-remeasure",
     "file": "src/ui/virtualRows.js",
-    "old": "        for (const it of items) sized.set?.(it, 0);\n",
-    "new": "",
+    "old": "        for (const it of items) sized.set?.(it, 0);\n        knownSum = 0;",
+    "new": "        knownSum = 0;",
     "tests": [
       "test/ui/virtheights.test.js"
     ]

@@ -819,7 +819,7 @@ TRADE-VIRT's 120-row threshold), the merchant's counter in Sell and Buy drew eve
 priced it (5,000 gold to sell, 5,625 to buy at quality 10) in 52-78 ms, and moved the Ogre's gem onto the counter and back
 by double click; the trade between players drew all 152 rows. Filling a gem writes no value (SoulTrap.cs:158 writes only
 the soul), its picture is the template's, virtualRows' aim loop is bounded
-(`virtualRows.js:"    for (let pass = 0; pass < AIM_PASSES && steer(); pass++);"`), and a landing pass walks the waiting
+(`virtualRows.js:"for (let pass = 0; pass < AIM_PASSES && steer(); pass++)"`), and a landing pass walks the waiting
 tiles once (`landingTiles.js:"export function landingTiles(draw, { alive = () => true, later = nextFrame } = {}) {"`).
 
 TRADE-WHOLE (found on the way). The trade between players writes the giver's offer for the wire through validLootList,

@@ -617,8 +617,8 @@
   {
     "name": "WAIT-panel-painted-once-and-left-stale",
     "file": "src/ui/waitWindow.js",
-    "old": "    const rows = [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
-    "new": "    const rows = this._rowsOnce ??= [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
+    "old": "    const rows = [\n      { text: this.busy, center: true },\n      { text: this.dots, center: true },\n    ];",
+    "new": "    const rows = (this._rowsOnce ??= [\n      { text: this.busy, center: true },\n      { text: this.dots, center: true },\n    ]);",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -910,7 +910,7 @@
   {
     "name": "WAIT-parchment-drawn-under-the-panel",
     "file": "src/ui/waitWindow.js",
-    "old": "    if (noticeFrame(this, rows, { hint: false })) { this._box = null; return; }",
+    "old": "    if (noticeFrame(this, rows, { hint: false })) {\n      this._box = null;\n      return;\n    }",
     "new": "    noticeFrame(this, rows, { hint: false });",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"

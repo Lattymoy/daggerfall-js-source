@@ -362,8 +362,8 @@
   {
     "name": "DECOR-MODFLATS-the-old-four-turns",
     "file": "src/ui/textureCanvas.js",
-    "old": "  await settling.get(key);   // in flight: until it lands or misses; a miss already known: at once\n",
-    "new": "  await getArchive(archive);\n  for (let i = 0; i < 4; i++) await Promise.resolve();\n",
+    "old": "  await settling.get(key); // in flight: until it lands or misses; a miss already known: at once",
+    "new": "  await getArchive(archive);\n  for (let i = 0; i < 4; i++) await Promise.resolve();",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DECOR-MODFLATS-the-throw-unsettled",
     "file": "src/ui/textureCanvas.js",
-    "old": "}).catch((e) => { missed(); console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
-    "new": "}).catch((e) => { console.warn(`[icons] ${archive}_${record} would not draw`, e); });",
+    "old": "      missed();\n      console.warn(`[icons] ${archive}_${record} would not draw`, e);",
+    "new": "      console.warn(`[icons] ${archive}_${record} would not draw`, e);",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "DECOR-MODFLATS-a-miss-unsettled",
     "file": "src/ui/textureCanvas.js",
-    "old": "  const missed = () => { waiting.delete(key); settling.delete(key); settle(); };",
-    "new": "  const missed = () => { waiting.delete(key); settling.delete(key); };",
+    "old": "    settle();\n  }; // a miss is cached as the null above, and wakes no one",
+    "new": "  }; // a miss is cached as the null above, and wakes no one",
     "tests": [
       "test/systems/decor/decormodflats.test.js"
     ]

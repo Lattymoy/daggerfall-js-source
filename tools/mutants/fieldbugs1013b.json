@@ -29,8 +29,8 @@
   {
     "name": "PLEA-LOOP-a-push-holds-nothing",
     "file": "src/ui/windowStack.js",
-    "old": "    windows.splice(at, 0, win);\n    hold(win);",
-    "new": "    windows.splice(at, 0, win);",
+    "old": "    hold(win);\n    win.onPush?.();",
+    "new": "    win.onPush?.();",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLEA-LOOP-a-pop-keeps-its-window",
     "file": "src/ui/windowStack.js",
-    "old": "      windows.pop();\n      unhold(oldWindow);",
-    "new": "      windows.pop();",
+    "old": "      unhold(oldWindow);\n      oldWindow.onPop?.();",
+    "new": "      oldWindow.onPop?.();",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLEA-LOOP-keepOnly-keeps-its-drained",
     "file": "src/ui/windowStack.js",
-    "old": "        windows.splice(i, 1);\n        unhold(w);",
-    "new": "        windows.splice(i, 1);",
+    "old": "        unhold(w);\n        onDrop?.(w);",
+    "new": "        onDrop?.(w);",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLEA-LOOP-a-replacement-holds-nothing",
     "file": "src/ui/windowStack.js",
-    "old": "      unhold(t);\n      hold(live);",
-    "new": "      unhold(t);",
+    "old": "      hold(live);\n      if (pauseWhileOpen(live)) gamePaused = true;",
+    "new": "      if (pauseWhileOpen(live)) gamePaused = true;",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]

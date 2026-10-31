@@ -110,8 +110,8 @@
   {
     "name": "DRAGON5-the-row-for-anyone",
     "file": "src/ui/transportWindow.js",
-    "old": "      dragon: !!hooks.hasDragon,",
-    "new": "      dragon: true,",
+    "old": "      dragon: !!hooks.hasDragon, // DRAGON5: no row at all without one",
+    "new": "      dragon: true, // DRAGON5: no row at all without one",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DRAGON5-the-click-unheard",
     "file": "src/ui/transportWindow.js",
-    "old": "    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) { this._pick(TRANSPORT_MODES.Dragon); return true; }\n",
-    "new": "",
+    "old": "    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) {\n      this._pick(TRANSPORT_MODES.Dragon);\n      return true;\n    }\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

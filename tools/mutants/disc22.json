@@ -185,8 +185,8 @@
     "tests": [
       "test/ui/enhanced/disc22d_flail_icon.test.js"
     ],
-    "old": "    preloadTextureRecord(archive, record, 0, 'Albedo', dye).then((img) => {",
-    "new": "    preloadTextureRecord(archive, record, 0, 'Albedo', null).then((img) => {"
+    "old": "    preloadTextureRecord(archive, record, 0, 'Albedo', dye)",
+    "new": "    preloadTextureRecord(archive, record, 0, 'Albedo', null)"
   },
   {
     "name": "D22D-trade-drops-the-metal",

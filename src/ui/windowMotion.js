@@ -22,10 +22,20 @@
 // motion is OFF, so every geometry and "the window is gone" probe
 // measures the same page it always did; `?motion` turns it back on for
 // a screenshot. Reduced motion keeps only a short fade.
-import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageHas } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 /** The window roles that open and close with motion. */
-export const MOTION_WINDOWS = ['.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.px-support', '.hmbox', '.inputbox', '.dlg-win'];   // SUPPORT1: the door's asks unfold with its other two corner marks
+export const MOTION_WINDOWS = [
+  '.px-win',
+  '.pack-win',
+  '.loot-win',
+  '.px-about',
+  '.px-profile',
+  '.px-support',
+  '.hmbox',
+  '.inputbox',
+  '.dlg-win',
+]; // SUPPORT1: the door's asks unfold with its other two corner marks
 export const MOTION_IN_MS = 240;
 export const MOTION_OUT_MS = 180;
 const SEL = MOTION_WINDOWS.join(', ');
@@ -62,7 +72,7 @@ export const MOTION_CSS = `
 
 /** Is motion on for this page? Off under automation unless asked for. */
 export function motionEnabled(win = globalThis) {
-  const search = win.location?.search ?? '';   // PERF-URL: the page query's one parse, keyed on this window's search
+  const search = win.location?.search ?? ''; // PERF-URL: the page query's one parse, keyed on this window's search
   if (pageHas('nomotion', search)) return false;
   if (pageHas('motion', search)) return true;
   return !win.navigator?.webdriver;
@@ -82,9 +92,19 @@ const kindOf = (node) => windowsIn(node)[0]?.className ?? '';
 // observer sees it.
 const scrolls = new WeakMap();
 let installed = null;
-let ghostSerial = 0;   // AUDIT A2: each afterimage's own suffix for the ids it carries
+let ghostSerial = 0; // AUDIT A2: each afterimage's own suffix for the ids it carries
 /** The attributes that reference an element by `url(#id)` (an svg's paint servers, clips, masks, filters, markers). */
-const URL_ATTRS = ['fill', 'stroke', 'clip-path', 'mask', 'filter', 'marker-start', 'marker-mid', 'marker-end', 'style'];
+const URL_ATTRS = [
+  'fill',
+  'stroke',
+  'clip-path',
+  'mask',
+  'filter',
+  'marker-start',
+  'marker-mid',
+  'marker-end',
+  'style',
+];
 
 /** SHADOW-FANG (AUDIT A2): A GHOST'S IDS ARE RENAMED, NOT DROPPED. An svg inside a window paints through one - a
  *  gradient glyph's `fill: url(#dfglyph-grad-N)` - and with the id stripped the ghost's wolf folded away hollow. Each
@@ -92,7 +112,11 @@ const URL_ATTRS = ['fill', 'stroke', 'clip-path', 'mask', 'filter', 'marker-star
  *  its own names. @returns {Map<string, string>} old id -> the ghost's */
 export function renameGhostIds(els, tag) {
   const renamed = new Map();
-  for (const el of els) if (el.id) { renamed.set(el.id, el.id + tag); el.id += tag; }
+  for (const el of els)
+    if (el.id) {
+      renamed.set(el.id, el.id + tag);
+      el.id += tag;
+    }
   if (!renamed.size) return renamed;
   const moved = (v) => v.replace(/url\(#([^)]+)\)/g, (m, id) => (renamed.has(id) ? `url(#${renamed.get(id)})` : m));
   for (const el of els) {
@@ -114,19 +138,32 @@ function afterimage(host, doc) {
   const restore = [];
   for (let i = 0; i < a.length && i < b.length; i++) {
     if (a[i].tagName === 'CANVAS' && a[i].width && a[i].height) {
-      try { b[i].getContext('2d')?.drawImage(a[i], 0, 0); } catch { /* a webgl or tainted canvas stays blank */ }
+      try {
+        b[i].getContext('2d')?.drawImage(a[i], 0, 0);
+      } catch {
+        /* a webgl or tainted canvas stays blank */
+      }
     }
     const s = scrolls.get(a[i]);
     if (s) restore.push([b[i], s]);
   }
-  renameGhostIds(b, `-wm-ghost${++ghostSerial}`);   // the real window may reopen at once, under its own
+  renameGhostIds(b, `-wm-ghost${++ghostSerial}`); // the real window may reopen at once, under its own
   clone.classList.add('wm-ghost', 'wm-host-out');
   clone.setAttribute('aria-hidden', 'true');
   clone.inert = true;
   for (const w of windowsIn(clone)) w.classList.add('wm-out');
   doc.body.append(clone);
-  for (const [el, s] of restore) { el.scrollTop = s.top; el.scrollLeft = s.left; }
-  const drop = () => { try { clone.remove(); } catch { /* gone */ } };
+  for (const [el, s] of restore) {
+    el.scrollTop = s.top;
+    el.scrollLeft = s.left;
+  }
+  const drop = () => {
+    try {
+      clone.remove();
+    } catch {
+      /* gone */
+    }
+  };
   setTimeout(drop, MOTION_OUT_MS + 60);
 }
 
@@ -145,12 +182,17 @@ export function installWindowMotion(doc = globalThis.document) {
   const Observer = (doc?.defaultView ?? globalThis).MutationObserver;
   if (!doc?.body || installed || typeof Observer !== 'function') return;
   if (!motionEnabled(doc.defaultView ?? globalThis)) return;
-  doc.addEventListener('scroll', (e) => {
-    const t = e.target;
-    if (t?.nodeType === 1) scrolls.set(t, { top: t.scrollTop, left: t.scrollLeft });
-  }, { capture: true, passive: true });
+  doc.addEventListener(
+    'scroll',
+    (e) => {
+      const t = e.target;
+      if (t?.nodeType === 1) scrolls.set(t, { top: t.scrollTop, left: t.scrollLeft });
+    },
+    { capture: true, passive: true },
+  );
   installed = new Observer((records) => {
-    const added = [], removed = [];
+    const added = [],
+      removed = [];
     for (const r of records) {
       for (const n of r.addedNodes) if (windowsIn(n).length && !n.classList?.contains('wm-ghost')) added.push(n);
       for (const n of r.removedNodes) if (windowsIn(n).length && !n.classList?.contains('wm-ghost')) removed.push(n);

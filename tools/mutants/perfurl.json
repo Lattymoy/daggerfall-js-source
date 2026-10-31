@@ -65,8 +65,8 @@
   {
     "name": "PERFURL-motion-reads-the-page-not-the-window",
     "file": "src/ui/windowMotion.js",
-    "old": "const search = win.location?.search ?? '';",
-    "new": "const search = globalThis.location?.search ?? '';",
+    "old": "  const search = win.location?.search ?? ''; // PERF-URL: the page query's one parse, keyed on this window's search",
+    "new": "  const search = globalThis.location?.search ?? ''; // PERF-URL: the page query's one parse, keyed on this window's search",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

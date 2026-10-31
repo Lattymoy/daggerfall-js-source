@@ -128,8 +128,8 @@
   {
     "name": "UI1-the-second-waiter-dropped",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
-    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); return pic; }",
+    "old": "    hear(fitWaiting.get(key), onReady);\n    return pic;",
+    "new": "    return pic;",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "UI1-the-waiter-not-heard",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (icons.has(key)) { hear(waiting.get(key), onReady); return icons.get(key); }",
-    "new": "  if (icons.has(key)) { return icons.get(key); }",
+    "old": "    hear(waiting.get(key), onReady);\n    return icons.get(key);",
+    "new": "    return icons.get(key);",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "UI1-the-size-dropped",
     "file": "src/ui/textureCanvas.js",
-    "old": "    width: `${pic.w}px`, height: `${pic.h}px`, maxWidth: '100%',",
+    "old": "    width: `${pic.w}px`,\n    height: `${pic.h}px`,\n    maxWidth: '100%',",
     "new": "    maxWidth: '100%',",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-UI-A1-an-inline-auto-again",
     "file": "src/ui/textureCanvas.js",
-    "old": "objectFit: 'contain', imageRendering: '',",
-    "new": "objectFit: 'contain', imageRendering: 'auto',",
+    "old": "    imageRendering: '',",
+    "new": "    imageRendering: 'auto',",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "MERGE-UI1xDYE-the-swatch-dropped-at-the-fitted-door",
     "file": "src/ui/textureCanvas.js",
-    "old": "(wake) => requestIcon(archive, record, { scale: 1, dye, dyeTarget, onReady: wake })",
-    "new": "(wake) => requestIcon(archive, record, { scale: 1, dye, onReady: wake })",
+    "old": "    (wake) => requestIcon(archive, record, { scale: 1, dye, dyeTarget, onReady: wake }),",
+    "new": "    (wake) => requestIcon(archive, record, { scale: 1, dye, onReady: wake }),",
     "tests": [
       "test/ui/enhanced/ui1_slots.test.js",
       "test/systems/dw3_icons.test.js"

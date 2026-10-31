@@ -392,7 +392,7 @@
   {
     "name": "WWAUDIT-A2-ids-stripped",
     "file": "src/ui/windowMotion.js",
-    "old": "  for (const el of els) if (el.id) { renamed.set(el.id, el.id + tag); el.id += tag; }",
+    "old": "  for (const el of els)\n    if (el.id) {\n      renamed.set(el.id, el.id + tag);\n      el.id += tag;\n    }",
     "new": "  for (const el of els) if (el.id) el.id = '';",
     "tests": [
       "test/ui/shadowfang.test.js"

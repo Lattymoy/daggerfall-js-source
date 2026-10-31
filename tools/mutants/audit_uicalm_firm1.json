@@ -905,8 +905,8 @@
   {
     "name": "AUF-L3H1-stage-fixed-reserve",
     "file": "src/ui/uiCalmStyle.js",
-    "old": ".px-home:not(.px-over)[style*=\"--px-foot-h\"] > .px-stage:not(.px-acctstage) { height: calc(100% - var(--px-foot-h)); padding-bottom: 12px; }\n",
-    "new": "",
+    "old": ".px-home:not(.px-over)[style*=\"--px-foot-h\"] > .px-stage:not(.px-acctstage) { height: calc(100% - var(--px-foot-h)); padding-bottom: 12px; }\n@media (max-width: 480px), (max-height: 560px) {",
+    "new": "@media (max-width: 480px), (max-height: 560px) {",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "AUF-L3H1-plaques-stand-four-high",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "  .px-home:not(.px-over) .px-footright, .px-home:not(.px-over) .px-footleft { display: contents; }\n",
-    "new": "",
+    "old": "  .px-home:not(.px-over) .px-footright, .px-home:not(.px-over) .px-footleft { display: contents; }\n  .px-home:not(.px-over) .px-foot .px-build { order: 9; flex-basis: 100%; text-align: center; }",
+    "new": "  .px-home:not(.px-over) .px-foot .px-build { order: 9; flex-basis: 100%; text-align: center; }",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -959,8 +959,8 @@
   {
     "name": "AUF-L3M4-bar-runs-off",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "  .wizard .actionbar { flex-wrap: wrap; }\n",
-    "new": "",
+    "old": "  .wizard .actionbar { flex-wrap: wrap; }\n  .wizard .actionbar .act.primary { min-width: 0; }",
+    "new": "  .wizard .actionbar .act.primary { min-width: 0; }",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -968,8 +968,8 @@
   {
     "name": "AUF-L3M4-way-on-floor",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "  .wizard .actionbar .act.primary { min-width: 0; }\n",
-    "new": "",
+    "old": "  .wizard .actionbar .act.primary { min-width: 0; }\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "AUF-L3M5-waiting-way-faded",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "${P} .wizard .act.primary[disabled] { opacity: 1; color: #bdb4a0; }",
-    "new": "${P} .wizard .act.primary[disabled] { opacity: 0.72; }",
+    "old": "${P} .wizard .act.primary[disabled] { opacity: 1; color: #bdb4a0; }   /* AUDIT UICALM-FIRM1 L3 M5: an ink of its own - the opacity alone over the shell's disabled grey read at 1.46:1 */",
+    "new": "${P} .wizard .act.primary[disabled] { opacity: 0.72; }   /* AUDIT UICALM-FIRM1 L3 M5: an ink of its own - the opacity alone over the shell's disabled grey read at 1.46:1 */",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -1004,8 +1004,8 @@
   {
     "name": "AUF-L3M7-sheet-unbounded",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "  .wizard .stagebody > .detail.wizsheet:has(> .dcard.confirm) { display: flex; flex-direction: column; overflow: hidden; }\n",
-    "new": "",
+    "old": "  .wizard .stagebody > .detail.wizsheet:has(> .dcard.confirm) { display: flex; flex-direction: column; overflow: hidden; }\n  .wizard .stagebody > .detail.wizsheet > .sheet-close { flex: none; }",
+    "new": "  .wizard .stagebody > .detail.wizsheet > .sheet-close { flex: none; }",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -1013,8 +1013,8 @@
   {
     "name": "AUF-L3M7-card-runs-on",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "  .wizard .stagebody > .detail.wizsheet > .dcard.confirm { flex: 1 1 auto; min-height: 0; max-height: none; }\n",
-    "new": "",
+    "old": "  .wizard .stagebody > .detail.wizsheet > .dcard.confirm { flex: 1 1 auto; min-height: 0; max-height: none; }\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -1067,8 +1067,8 @@
   {
     "name": "AUF-L3L3-tools-under-floor",
     "file": "src/ui/uiCalmStyle.js",
-    "old": ".opt-tools .act, .wizard .poolk { font-size: 12px; }\n",
-    "new": "",
+    "old": ".opt-tools .act, .wizard .poolk { font-size: 12px; }\n.sec-jump { padding: 6px 20px 14px; gap: 6px; }",
+    "new": ".sec-jump { padding: 6px 20px 14px; gap: 6px; }",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -1085,8 +1085,8 @@
   {
     "name": "AUF-L3L4-rail-head-in-a-slot",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "@media (max-width: 860px), (pointer: coarse) { .shell:not(.wizard) .rail .railgroup { flex: 0 0 100%; margin: 8px 12px 0; } }\n",
-    "new": "",
+    "old": "@media (max-width: 860px), (pointer: coarse) { .shell:not(.wizard) .rail .railgroup { flex: 0 0 100%; margin: 8px 12px 0; } }\n${P} .rail .railgroup { color: #9c937d; }",
+    "new": "${P} .rail .railgroup { color: #9c937d; }",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -1158,8 +1158,8 @@
   {
     "name": "AUF-L5L3-way-rule-for-both",
     "file": "src/ui/uiCalmStyle.js",
-    "old": "text-transform: uppercase; border-bottom: 1px solid transparent; }",
-    "new": "text-transform: uppercase; border-bottom: 1px solid rgba(192,138,62,0.45); }",
+    "old": "  text-transform: uppercase; border-bottom: 1px solid transparent; }",
+    "new": "  text-transform: uppercase; border-bottom: 1px solid rgba(192,138,62,0.45); }",
     "tests": [
       "test/ui/enhanced/uicalm.test.js"
     ]

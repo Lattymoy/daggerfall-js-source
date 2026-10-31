@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-DYE-ICON-2-loadIcon-asking-the-bare-key",
     "file": "src/ui/textureCanvas.js",
-    "old": "  const key = iconKey(archive, record, scale, dye, dyeTarget);\n  await settling.get(key);",
-    "new": "  const key = iconKey(archive, record, scale, dye, null);\n  await settling.get(key);",
+    "old": "  if (already) return already;\n  const key = iconKey(archive, record, scale, dye, dyeTarget);",
+    "new": "  if (already) return already;\n  const key = iconKey(archive, record, scale, dye, null);",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

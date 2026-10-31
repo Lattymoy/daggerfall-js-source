@@ -175,8 +175,8 @@
   {
     "name": "WP-menu-escape-reaches-the-host",
     "file": "src/ui/waypointMenu.js",
-    "old": "      e.preventDefault?.(); e.stopImmediatePropagation?.(); e.stopPropagation?.();\n      closeWaypointMenu();",
-    "new": "      e.preventDefault?.();\n      closeWaypointMenu();",
+    "old": "      e.stopImmediatePropagation?.();\n      e.stopPropagation?.();\n      closeWaypointMenu();",
+    "new": "      closeWaypointMenu();",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]

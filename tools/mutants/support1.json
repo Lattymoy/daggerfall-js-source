@@ -236,8 +236,8 @@
   {
     "name": "SUPPORT1-no-unfold",
     "file": "src/ui/windowMotion.js",
-    "old": "'.px-profile', '.px-support', '.hmbox'",
-    "new": "'.px-profile', '.hmbox'",
+    "old": "  '.px-support',\n  '.hmbox',",
+    "new": "  '.hmbox',",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],

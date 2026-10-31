@@ -101,8 +101,8 @@
   {
     "name": "DYE-ICON-the-DOM-door-undyed",
     "file": "src/ui/textureCanvas.js",
-    "old": "const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);",
-    "new": "const bmp = changeMask(got.file.getDFBitmap(record, 0));",
+    "old": "          const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);",
+    "new": "          const bmp = changeMask(got.file.getDFBitmap(record, 0));",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DYE-ICON-the-DOM-key-by-name-alone",
     "file": "src/ui/textureCanvas.js",
-    "old": "_${scale}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
-    "new": "_${scale}${token ? `_${token}` : ''}`;",
+    "old": "  return `${archive}_${record}_${scale}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
+    "new": "  return `${archive}_${record}_${scale}${token ? `_${token}` : ''}`;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

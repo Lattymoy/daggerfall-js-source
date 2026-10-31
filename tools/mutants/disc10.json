@@ -497,8 +497,8 @@
   {
     "name": "DISC10-E-L3-the-counter-opens-for-the-beast",
     "file": "src/ui/tradeDoor.js",
-    "old": "  if (sup) { messageBox(sup.text); return null; }\n",
-    "new": "",
+    "old": "  if (sup) {\n    messageBox(sup.text);\n    return null;\n  }\n  noteFirstUse('shops'); // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)",
+    "new": "  noteFirstUse('shops'); // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

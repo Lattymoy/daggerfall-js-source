@@ -75,7 +75,7 @@ export function thumbSpan(barH, totalUnits, displayUnits, scrollIndex) {
   if (totalUnits <= displayUnits) return null;
   let h = barH * (displayUnits / totalUnits);
   if (h < THUMB_MIN_H) h = THUMB_MIN_H;
-  return { y: scrollIndex * (barH - h) / (totalUnits - displayUnits), h };
+  return { y: (scrollIndex * (barH - h)) / (totalUnits - displayUnits), h };
 }
 
 /** MouseClick (:142-150) over a bar-local y. Answers the NEW scroll
@@ -114,7 +114,9 @@ export class VerticalScrollBar {
     this._dragStartIndex = 0;
   }
 
-  get barH() { return this.rect[3]; }
+  get barH() {
+    return this.rect[3];
+  }
 
   /** Reset (:171-176) - "resets scroll properties without triggering
    *  events". */
@@ -130,10 +132,14 @@ export class VerticalScrollBar {
     return this.scrollIndex;
   }
 
-  setScrollIndexWithoutRaisingScrollEvent(value) { return this.setScrollIndex(value, true); }
+  setScrollIndexWithoutRaisingScrollEvent(value) {
+    return this.setScrollIndex(value, true);
+  }
 
   /** The live thumb, bar-local. */
-  get thumbSpan() { return thumbSpan(this.barH, this.totalUnits, this.displayUnits, this.scrollIndex); }
+  get thumbSpan() {
+    return thumbSpan(this.barH, this.totalUnits, this.displayUnits, this.scrollIndex);
+  }
 
   /** Is an owner-space point inside the bar? */
   contains(x, y) {
@@ -166,18 +172,31 @@ export class VerticalScrollBar {
    *  OWNER-space and may be off the bar entirely - DFU keeps dragging
    *  wherever the cursor goes, which is what a scroll bar must do. */
   update(held, y) {
-    if (!held) { this.draggingThumb = false; return false; }
+    if (!held) {
+      this.draggingThumb = false;
+      return false;
+    }
     if (!this.draggingThumb) return false;
     const localY = y - this.rect[1];
-    const next = dragScrollIndex(localY, this._dragStartY, this._dragStartIndex,
-      this.barH, this.totalUnits, this.displayUnits);
+    const next = dragScrollIndex(
+      localY,
+      this._dragStartY,
+      this._dragStartIndex,
+      this.barH,
+      this.totalUnits,
+      this.displayUnits,
+    );
     if (next !== this.scrollIndex) this.setScrollIndex(next);
     return true;
   }
 
   /** MouseScrollUp/Down (:152-162). */
-  scrollUp() { this.setScrollIndex(this.scrollIndex - 1); }
-  scrollDown() { this.setScrollIndex(this.scrollIndex + 1); }
+  scrollUp() {
+    this.setScrollIndex(this.scrollIndex - 1);
+  }
+  scrollDown() {
+    this.setScrollIndex(this.scrollIndex + 1);
+  }
 }
 
 /** Draw the three art slices over a VIRTUAL rect (Draw + DrawScrollBar,
@@ -188,7 +207,8 @@ export function drawScrollThumb(renderer, m, rect, span) {
   const [rx, ry, rw] = rect;
   // The three rects, each origin truncated as DFU's (int) casts do.
   const topY = Math.trunc(ry + span.y);
-  const topH = 1, bottomH = 1;              // the textures are 1px tall
+  const topH = 1,
+    bottomH = 1; // the textures are 1px tall
   const bodyY = topY + topH;
   const bodyH = Math.trunc(span.h - topH - bottomH);
   const bottomY = bodyY + bodyH;
@@ -197,10 +217,17 @@ export function drawScrollThumb(renderer, m, rect, span) {
     if (h <= 0) return;
     for (let c = 0; c < THUMB_COLUMNS; c++) {
       const v = row[c] / 255;
-      renderer.drawScreenQuad(null, {
-        x: m.ox + (rx + c * colW) * m.s, y: m.oy + y * m.s,
-        w: colW * m.s, h: h * m.s,
-      }, undefined, [v, v, v, 1]);
+      renderer.drawScreenQuad(
+        null,
+        {
+          x: m.ox + (rx + c * colW) * m.s,
+          y: m.oy + y * m.s,
+          w: colW * m.s,
+          h: h * m.s,
+        },
+        undefined,
+        [v, v, v, 1],
+      );
     }
   };
   band(THUMB_TOP_ROW, topY, topH);

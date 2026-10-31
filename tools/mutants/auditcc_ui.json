@@ -553,8 +553,8 @@
   {
     "name": "AUDITCC-UI-S14-the-plaque-unlabelled",
     "file": "src/ui/temperatureCard.js",
-    "old": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${levelSaid(r.label, r.level)}`);",
-    "new": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${r.label}`);",
+    "old": "  n.setAttribute('aria-label', `Felt temperature ${r.text}, ${levelSaid(r.label, r.level)}`);",
+    "new": "  n.setAttribute('aria-label', `Felt temperature ${r.text}, ${r.label}`);",
     "why": "the plaque's label says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "AUDITCC-UI-S14-the-plaque-untitled",
     "file": "src/ui/temperatureCard.js",
-    "old": "${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})",
-    "new": "${r.label.toLowerCase()} (${BAND_TEXT})",
+    "old": "  n.title = `Felt temperature ${r.text}: ${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})${sum.length ? `\\n${sum.join('\\n')}` : ''}`;",
+    "new": "  n.title = `Felt temperature ${r.text}: ${r.label.toLowerCase()} (${BAND_TEXT})${sum.length ? `\\n${sum.join('\\n')}` : ''}`;",
     "why": "the plaque's title says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -594,8 +594,8 @@
   {
     "name": "AUDITCC-UI-R7-the-wear-s-wardrobe-unread",
     "file": "src/ui/temperatureCard.js",
-    "old": "const after = feltNow(entity, { worn: slots, mods: modsForSlots(entity, slots) });",
-    "new": "const after = feltNow(entity, { worn: slots });",
+    "old": "  const after = feltNow(entity, { worn: slots, mods: modsForSlots(entity, slots) });",
+    "new": "  const after = feltNow(entity, { worn: slots });",
     "why": "a lined cloak's card counts the cloak and not its lining: +12 for +16",
     "tests": [
       "test/systems/auditcc_ui.test.js"

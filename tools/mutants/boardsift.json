@@ -257,8 +257,8 @@
   {
     "name": "BOARD-SIFT-sift-the-kind-unsearched",
     "file": "src/ui/workSift.js",
-    "old": "wordsIn(words, `${e.words} ${named.get(e.kind) ?? ''}`)",
-    "new": "wordsIn(words, e.words)",
+    "old": "  return (/** @type {WorkEntry} */ e) =>\n    (!sift?.fill || e.fill) && wordsIn(words, `${e.words} ${named.get(e.kind) ?? ''}`);",
+    "new": "  return (/** @type {WorkEntry} */ e) => (!sift?.fill || e.fill) && wordsIn(words, e.words);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "BOARD-SIFT-sift-the-done-mixed-in",
     "file": "src/ui/workSift.js",
-    "old": "(Number(b.open) - Number(a.open)) || by(a, b) || i - j",
-    "new": "by(a, b) || i - j",
+    "old": "    .sort(([a, i], [b, j]) => Number(b.open) - Number(a.open) || by(a, b) || i - j)",
+    "new": "    .sort(([a, i], [b, j]) => by(a, b) || i - j)",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "BOARD-SIFT-sift-the-ties-reordered",
     "file": "src/ui/workSift.js",
-    "old": "(Number(b.open) - Number(a.open)) || by(a, b) || i - j",
-    "new": "(Number(b.open) - Number(a.open)) || by(a, b) || j - i",
+    "old": "    .sort(([a, i], [b, j]) => Number(b.open) - Number(a.open) || by(a, b) || i - j)",
+    "new": "    .sort(([a, i], [b, j]) => Number(b.open) - Number(a.open) || by(a, b) || j - i)",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "BOARD-SIFT-sift-no-end-first",
     "file": "src/ui/workSift.js",
-    "old": "(Number.isFinite(e.ends) && e.ends > 0 ? e.ends : Infinity)",
-    "new": "(Number.isFinite(e.ends) && e.ends > 0 ? e.ends : 0)",
+    "old": "  const ends = (/** @type {WorkEntry} */ e) => (Number.isFinite(e.ends) && e.ends > 0 ? e.ends : Infinity);",
+    "new": "  const ends = (/** @type {WorkEntry} */ e) => (Number.isFinite(e.ends) && e.ends > 0 ? e.ends : 0);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "BOARD-SIFT-sift-the-page-uncut",
     "file": "src/ui/workSift.js",
-    "old": "return { rows: rows.slice(0, shown), matched: rows.length };",
-    "new": "return { rows, matched: rows.length };",
+    "old": "  return { rows: rows.slice(0, shown), matched: rows.length };",
+    "new": "  return { rows, matched: rows.length };",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "BOARD-SIFT-sift-an-unknown-kind-kept",
     "file": "src/ui/workSift.js",
-    "old": "const kind = WORK_KINDS.includes(sift?.kind) ? sift.kind : 'all';",
-    "new": "const kind = sift?.kind ?? 'all';",
+    "old": "  const kind = WORK_KINDS.includes(sift?.kind) ? sift.kind : 'all';",
+    "new": "  const kind = sift?.kind ?? 'all';",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "BOARD-SIFT-sift-the-counts-blind-to-the-search",
     "file": "src/ui/workSift.js",
-    "old": "if (!n.has(e.kind) || !stands(e)) continue;",
-    "new": "if (!n.has(e.kind)) continue;",
+    "old": "    if (!n.has(e.kind) || !stands(e)) continue;",
+    "new": "    if (!n.has(e.kind)) continue;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "BOARD-SIFT-bar-a-kind-with-none-offered",
     "file": "src/ui/workSift.js",
-    "old": "WORK_KINDS.filter((k) => /** @type {number} */ (counts.get(k)) > 0 || sift.kind === k)",
-    "new": "WORK_KINDS.filter((k) => true || sift.kind === k)",
+    "old": "  const offered = WORK_KINDS.filter((k) => /** @type {number} */ (counts.get(k)) > 0 || sift.kind === k);",
+    "new": "  const offered = WORK_KINDS.filter((k) => true || sift.kind === k);",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "BOARD-SIFT-bar-show-more-adds-nothing",
     "file": "src/ui/workSift.js",
-    "old": "sift.shown = shown + WORK_SHOWN;",
-    "new": "sift.shown = shown;",
+    "old": "      sift.shown = shown + WORK_SHOWN;",
+    "new": "      sift.shown = shown;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "BOARD-SIFT-bar-a-change-keeps-the-page",
     "file": "src/ui/workSift.js",
-    "old": "const changed = () => { sift.shown = WORK_SHOWN; refresh(); };",
-    "new": "const changed = () => { refresh(); };",
+    "old": "    sift.shown = WORK_SHOWN;\n    refresh();",
+    "new": "    refresh();",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "BOARD-SIFT-bar-the-composition-unread",
     "file": "src/ui/workSift.js",
-    "old": "input.addEventListener('compositionend', () => { whole(); rest(); });",
-    "new": "input.addEventListener('compositionend', () => { whole(); });",
+    "old": "    rest();\n  });",
+    "new": "  });",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "BOARD-SIFT-bar-read-mid-word",
     "file": "src/ui/workSift.js",
-    "old": "return () => { if (!composing) rest(); };",
-    "new": "return () => { rest(); };",
+    "old": "    if (!composing) rest();",
+    "new": "    rest();",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "BOARD-SIFT-bar-the-focus-dropped",
     "file": "src/ui/workSift.js",
-    "old": "      /** @type {any} */ (slot?.querySelector?.('.work-sift-more'))?.focus?.({ preventScroll: true });\n",
-    "new": "",
+    "old": "      /** @type {any} */ (slot?.querySelector?.('.work-sift-more'))?.focus?.({ preventScroll: true });\n    };",
+    "new": "    };",
     "tests": [
       "test/ui/boardsift.test.js"
     ]

@@ -191,8 +191,8 @@
   {
     "name": "SHOP-flame-gutter-filled",
     "file": "src/ui/titleFlame.js",
-    "old": "  const GUTTER = 2;",
-    "new": "  const GUTTER = 0;",
+    "old": "  const GUTTER = 2; // clear rows at a frame's foot, so a scaled plate never samples the next frame's fire",
+    "new": "  const GUTTER = 0; // clear rows at a frame's foot, so a scaled plate never samples the next frame's fire",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SHOP-flame-sheet-at-once",
     "file": "src/ui/titleFlame.js",
-    "old": "  for (let f = 0; f < spec.frames; f++) { await idle(); flameFramePixels(spec, f, data); }",
-    "new": "  await idle(); for (let f = 0; f < spec.frames; f++) flameFramePixels(spec, f, data);",
+    "old": "  for (let f = 0; f < spec.frames; f++) {\n    await idle();\n    flameFramePixels(spec, f, data);\n  }",
+    "new": "  await idle();\n  for (let f = 0; f < spec.frames; f++) flameFramePixels(spec, f, data);",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SHOP-flame-laid-twice",
     "file": "src/ui/titleFlame.js",
-    "old": "doc.getElementById?.(FLAME_STYLE_ID) || laying) return laying;",
-    "new": "doc.getElementById?.(FLAME_STYLE_ID)) return laying;",
+    "old": "  if (!doc?.head || doc.getElementById?.(FLAME_STYLE_ID) || laying) return laying;",
+    "new": "  if (!doc?.head || doc.getElementById?.(FLAME_STYLE_ID)) return laying;",
     "tests": [
       "test/ui/shop_window.test.js"
     ]
