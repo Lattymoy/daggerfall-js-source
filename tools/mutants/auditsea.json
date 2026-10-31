@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-SEA-E7-press-past-purse",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "can: !w.busy && !(w.purse < n), n }))",
-    "new": "can: !w.busy, n }))",
+    "old": "      can: !w.busy && !(w.purse < n),",
+    "new": "      can: !w.busy,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

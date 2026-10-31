@@ -778,8 +778,8 @@
   {
     "name": "SEA-BOUNTY-tab-pressable-busy",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "can: !w.busy && !(w.purse < n), n })),",
-    "new": "can: !(w.purse < n), n })),",
+    "old": "      can: !w.busy && !(w.purse < n),",
+    "new": "      can: !(w.purse < n),",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "SEA-BOUNTY-tab-collect-busy",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "{ gold: g(w.owed) }), press: t('sea.bounty.collect', 'Collect'), can: !w.busy } : null,",
-    "new": "{ gold: g(w.owed) }), press: t('sea.bounty.collect', 'Collect'), can: true } : null,",
+    "old": "            words: t('sea.bounty.owed', '{gold} gold for the wanted captains you ended at sea.', { gold: g(w.owed) }),\n            press: t('sea.bounty.collect', 'Collect'),\n            can: !w.busy,\n          }",
+    "new": "            words: t('sea.bounty.owed', '{gold} gold for the wanted captains you ended at sea.', { gold: g(w.owed) }),\n            press: t('sea.bounty.collect', 'Collect'),\n            can: true,\n          }",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "SEA-BOUNTY-tab-owed-nothing",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    owed: w.owed > 0 ? {",
-    "new": "    owed: w.owed >= 0 ? {",
+    "old": "      w.owed > 0",
+    "new": "      w.owed >= 0",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "SEA-BOUNTY-tab-mine-nothing",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    mine: w.mine > 0 ? t(",
-    "new": "    mine: w.mine >= 0 ? t(",
+    "old": "      w.mine > 0 ? t('sea.bounty.mine', 'A bounty of {gold} gold stands on your own head.', { gold: g(w.mine) }) : null,",
+    "new": "      w.mine >= 0\n        ? t('sea.bounty.mine', 'A bounty of {gold} gold stands on your own head.', { gold: g(w.mine) })\n        : null,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "SEA-BOUNTY-tab-asking-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lede: w.asking ? t('sea.bounty.asking',",
-    "new": "    lede: false ? t('sea.bounty.asking',",
+    "old": "    lede: w.asking",
+    "new": "    lede: false",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "SEA-BOUNTY-tab-no-section",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "wanted: o.wanted ? wantedText(o.wanted) : null, season:",
-    "new": "wanted: null, season:",
+    "old": "    wanted: o.wanted ? wantedText(o.wanted) : null,",
+    "new": "    wanted: null,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "SEA-BOUNTY-win-press-greyed",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, p.can);",
-    "new": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, false);",
+    "old": "        able(b, p.can);",
+    "new": "        able(b, false);",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -850,8 +850,8 @@
   {
     "name": "SEA-BOUNTY-win-press-wrong-sum",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, p.can);",
-    "new": "() => w.post({ char: r.id, name: r.title }, r.presses[0].n)); able(b, p.can);",
+    "old": "        const b = button(p.label, 'dfnaval-btn dfnaval-tradebuy', () => w.post({ char: r.id, name: r.title }, p.n));",
+    "new": "        const b = button(p.label, 'dfnaval-btn dfnaval-tradebuy', () =>\n          w.post({ char: r.id, name: r.title }, r.presses[0].n),\n        );",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -868,7 +868,7 @@
   {
     "name": "SEA-BOUNTY-win-office-hides",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec])\n      n.style.display = tab === 'office' ? '' : 'none';",
     "new": "    for (const n of [oLede, boardSec, heldSec, lettersSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
     "tests": [
       "test/systems/sea/seabounty.test.js"

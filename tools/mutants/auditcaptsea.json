@@ -11,8 +11,8 @@
   {
     "name": "ACS-B16-words",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : r.exotic ? 'not sold here' : 'none to buy today'",
-    "new": "r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : 'none to buy today'",
+    "old": "            r.sells > 0\n              ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)`\n              : r.exotic\n                ? 'not sold here'\n                : 'none to buy today',",
+    "new": "            r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : 'none to buy today',",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "ACS-B11-lede",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "const room = x.room == null ? '' : x.room > 0 ? ` (room for ${x.room} kg more)` : ' (the ship can\\'t carry any more)';",
-    "new": "const room = '';",
+    "old": "  const room = x.room == null ? '' : x.room > 0 ? ` (room for ${x.room} kg more)` : \" (the ship can't carry any more)\"; // AUDIT CAPTAIN'S SEA B11",
+    "new": "  const room = ''; // AUDIT CAPTAIN'S SEA B11",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "ACS-D19-word",
     "file": "src/ui/naval/navalHud.js",
-    "old": "export const etherWatersWords = (e) => (e.veil ? 'The Veil' :",
-    "new": "export const etherWatersWords = (e) => (false ? 'The Veil' :",
+    "old": "  e.veil",
+    "new": "  false",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1788,8 +1788,8 @@
   {
     "name": "ACS-L10-office-words",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "harbormaster. Your notoriety in these waters is too high for any favors.`",
-    "new": "navy hunts you: its harbormaster grants no favors until your notoriety falls.`",
+    "old": "    ? `${o.port} - ${o.crown}'s harbormaster. Your notoriety in these waters is too high for any favors.`",
+    "new": "    ? `${o.port} - ${o.crown}'s navy hunts you: its harbormaster grants no favors until your notoriety falls.`",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1806,8 +1806,8 @@
   {
     "name": "ACS-B14-an",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "`${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`",
-    "new": "`a ${o.rank}`",
+    "old": "    : `${o.port} - ${o.crown}'s harbormaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;",
+    "new": "    : `${o.port} - ${o.crown}'s harbormaster. You are ${o.rank === 'Unsworn' ? 'Unsworn' : `a ${o.rank}`} of ${o.crown} (standing ${o.standing}).`;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1824,8 +1824,8 @@
   {
     "name": "ACS-B15-whole-gold",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "const c = Math.ceil(n * r.price - 1e-9); paid += c; purse -= c; }",
-    "new": "const c = n * r.price; paid += c; purse -= c; }",
+    "old": "    const c = Math.ceil(n * r.price - 1e-9);",
+    "new": "    const c = n * r.price;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2349,8 +2349,8 @@
   {
     "name": "ACS-S17-order-tags",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 3;",
-    "new": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 5;",
+    "old": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; ${PIXEL_FONT_CSS} }   /* AUDIT CAPTAIN'S SEA S17: under the glass (4), with the world's other labels */",
+    "new": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; ${PIXEL_FONT_CSS} }   /* AUDIT CAPTAIN'S SEA S17: under the glass (4), with the world's other labels */",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2549,8 +2549,8 @@
   {
     "name": "ACS-S24-hud-gate",
     "file": "src/ui/naval/navalHud.js",
-    "old": "const bars = t.card?.hull != null;",
-    "new": "const bars = !!t.card;",
+    "old": "    const bars = t.card?.hull != null; // AUDIT CAPTAIN'S SEA S24: an unknown hull's card has no bars",
+    "new": "    const bars = !!t.card; // AUDIT CAPTAIN'S SEA S24: an unknown hull's card has no bars",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2769,8 +2769,8 @@
   {
     "name": "ACS-X10-join",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "b.can ? b.terms : [b.terms, b.why].filter(Boolean).join(' - ')",
-    "new": "b.can ? b.terms : `${b.terms} - ${b.why}`",
+    "old": "        officeRow(\n          b.title,\n          b.words,\n          b.can ? b.terms : [b.terms, b.why].filter(Boolean).join(' - '),\n          b.press,\n          b.can,\n          () => {\n            const r = o.take(b.id);\n            note = r?.text ? { text: r.text, warn: !r.ok } : null;\n            render();\n          },\n        ),",
+    "new": "        officeRow(b.title, b.words, b.can ? b.terms : `${b.terms} - ${b.why}`, b.press, b.can, () => {\n          const r = o.take(b.id);\n          note = r?.text ? { text: r.text, warn: !r.ok } : null;\n          render();\n        }),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2778,8 +2778,8 @@
   {
     "name": "ACS-X11-heard-shown",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    o.hear?.();   // AUDIT CAPTAIN'S SEA X11",
-    "new": "    void o;   // AUDIT CAPTAIN'S SEA X11",
+    "old": "    o.hear?.(); // AUDIT CAPTAIN'S SEA X11: the quay's talk heard where the harbourmaster's tab is shown, never in the model's read",
+    "new": "    void o; // AUDIT CAPTAIN'S SEA X11: the quay's talk heard where the harbourmaster's tab is shown, never in the model's read",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

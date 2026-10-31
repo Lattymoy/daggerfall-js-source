@@ -497,8 +497,8 @@
   {
     "name": "OFFICE-ether-tab",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  if (o.ether) return etherOfficeText(o);   // ETHER-SEA",
-    "new": "  if (false) return etherOfficeText(o);   // ETHER-SEA",
+    "old": "  if (o.ether) return etherOfficeText(o); // ETHER-SEA: a freeport past the Veil",
+    "new": "  if (false) return etherOfficeText(o); // ETHER-SEA: a freeport past the Veil",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "OFFICE-rumour-press",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "({ id: `rumour:${i}`, title: 'Talk on the quay', words: r, terms: '', press: '', can: false, why: '' })",
-    "new": "({ id: `rumour:${i}`, title: 'Talk on the quay', words: r, terms: '', press: 'Take', can: false, why: '' })",
+    "old": "    press: '',",
+    "new": "    press: 'Take',",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "OFFICE-isles-plural",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.",
-    "new": "Your charts hold ${o.charted} isles.",
+    "old": "  const lede = `${o.port} - a freeport of ${ETHER_SEA_NAME}, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.`;",
+    "new": "  const lede = `${o.port} - a freeport of ${ETHER_SEA_NAME}, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} isles.`;",
     "tests": [
       "test/systems/naval/ethercross.test.js"
     ]

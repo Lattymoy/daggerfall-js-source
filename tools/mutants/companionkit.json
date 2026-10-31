@@ -268,8 +268,8 @@
   {
     "name": "CK-bar-no-name",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('name', mate ? p.name : '', (v) => { slot.word.textContent = v; });",
-    "new": "    set('name', '', (v) => { slot.word.textContent = v; });",
+    "old": "    set('name', mate ? p.name : '', (v) => {",
+    "new": "    set('name', '', (v) => {",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "CK-bar-no-digits",
     "file": "src/ui/naval/navalHud.js",
-    "old": "? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}` : ''",
-    "new": "? '' : ''",
+    "old": "    set(\n      'hp',\n      mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0\n        ? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}`\n        : '',\n      (v) => {\n        slot.hp.textContent = v;\n      },\n    );",
+    "new": "    set('hp', mate && Number.isFinite(p.hp) && Number.isFinite(p.hpMax) && p.hpMax > 0 ? '' : '', (v) => {\n      slot.hp.textContent = v;\n    });",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "CK-bar-fx-uncapped",
     "file": "src/ui/naval/navalHud.js",
-    "old": "p.fx.slice(0, MATE_FX_MAX) : [];",
-    "new": "p.fx.slice() : [];",
+    "old": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice(0, MATE_FX_MAX) : [];",
+    "new": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice() : [];",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

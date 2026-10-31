@@ -128,8 +128,8 @@
   {
     "name": "GUN-HOLD-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    hint: model.aiming && model.armed && !ship.wrecked ?",
-    "new": "    hint: false ?",
+    "old": "        hint:\n          model.aiming && model.armed && !ship.wrecked\n            ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`\n            : model.board\n              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`\n              : ship.wrecked\n                ? ship.repairing\n                  ? 'Crippled, crew repairing'\n                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n                : !model.armed\n                  ? 'No guns aboard'\n                  : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "new": "        hint: false\n          ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`\n          : model.board\n            ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`\n            : ship.wrecked\n              ? ship.repairing\n                ? 'Crippled, crew repairing'\n                : ship.repairOrdered\n                  ? 'Crippled, repairs ordered'\n                  : ship.stores > 0\n                    ? 'Crippled. Order repairs, or make for port'\n                    : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n              : !model.armed\n                ? 'No guns aboard'\n                : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
     "tests": [
       "test/systems/deckfield.test.js",
       "test/ui/naval/nav_f_ui.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "GUN-HOLD-wreck-hidden",
     "file": "src/ui/naval/navalHud.js",
-    "old": "model.aiming && model.armed && !ship.wrecked ?",
-    "new": "model.aiming && model.armed ?",
+    "old": "          model.aiming && model.armed && !ship.wrecked",
+    "new": "          model.aiming && model.armed",
     "tests": [
       "test/systems/deckfield.test.js",
       "test/ui/naval/nav_f_ui.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "GUN-HOLD-pad-row-lost",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (codes.board && model.aiming) rows.push([[codes.board], 'Hold fire']);",
-    "new": "  if (false) rows.push([[codes.board], 'Hold fire']);",
+    "old": "  if (codes.board && model.aiming)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/deckfield.test.js",
       "test/systems/naval/navaudit_presentation.test.js"

@@ -396,7 +396,7 @@ test('AUDIT CC-D7: a knock after a load still costs her crew - the event lands o
 
 test('AUDIT CC-D8: the plate says her repairs while the order stands; the card marks a hand ashore; the next hand answers for a First Mate ashore', () => {
   assert.match(rd('src/scenes/naval/navalHost.js'), /repairing: !!st\.repairing, repairOrdered: st\.crew\.order === CREW_ORDERS\.repair,/);
-  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered \? 'Crippled, repairs ordered'/);
+  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered\n\s*\? 'Crippled, repairs ordered'/);
   const lines = crewCard({ morale: 60, hands: [{ name: 'Aldric', role: 'First Mate', fights: 0, boardings: 0 }, { name: 'Brand', role: 'Bard', fights: 1, boardings: 0 }] }, { ashore: new Set(['Aldric']) });
   assert.ok(lines.some((l) => /^Aldric, First Mate.*ashore with you/.test(l)));
   assert.match(rd('src/scenes/naval/navalHost.js'), /const mateOf = \(boat, st\) =>/);

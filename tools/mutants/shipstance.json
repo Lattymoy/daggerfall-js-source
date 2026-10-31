@@ -218,7 +218,7 @@
   {
     "name": "HUD-card-no-bound",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
+    "old": "  return {\n    text: [stance, t.bound].filter(Boolean).join(' - '),\n    kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '',\n  };",
     "new": "  return { text: stance, kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
     "tests": [
       "test/systems/naval/shipstance.test.js"
@@ -227,7 +227,7 @@
   {
     "name": "HUD-card-state-unkinded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
+    "old": "  return {\n    text: [stance, t.bound].filter(Boolean).join(' - '),\n    kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '',\n  };",
     "new": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: '' };",
     "tests": [
       "test/systems/naval/shipstance.test.js",
@@ -237,8 +237,8 @@
   {
     "name": "HUD-card-friendly-hostile",
     "file": "src/ui/naval/navalHud.js",
-    "old": "friendly: !!tgt.friendly && !tgt.hostile,",
-    "new": "friendly: !!tgt.friendly,",
+    "old": "        friendly: !!tgt.friendly && !tgt.hostile,",
+    "new": "        friendly: !!tgt.friendly,",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "HUD-card-class-unfriendly",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${t.card.hostile ? ' hostile' : ''}${t.card.friendly ? ' friendly' : ''}${hit}",
-    "new": "${t.card.hostile ? ' hostile' : ''}${hit}",
+    "old": "      t.card\n        ? `dfnaval-card ${t.card.faction}${t.card.hostile ? ' hostile' : ''}${t.card.friendly ? ' friendly' : ''}${hit}`\n        : 'dfnaval-card fight',",
+    "new": "      t.card ? `dfnaval-card ${t.card.faction}${t.card.hostile ? ' hostile' : ''}${hit}` : 'dfnaval-card fight',",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "HUD-tag-friendly-hostile",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${t.friendly && !t.hostile ? ' friendly' : ''}",
-    "new": "${t.friendly ? ' friendly' : ''}",
+    "old": "      `dfnaval-tag ${t.faction}${t.hostile ? ' hostile' : ''}${t.friendly && !t.hostile ? ' friendly' : ''}${t.target ? ' target' : ''}`,",
+    "new": "      `dfnaval-tag ${t.faction}${t.hostile ? ' hostile' : ''}${t.friendly ? ' friendly' : ''}${t.target ? ' target' : ''}`,",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "HUD-tag-class-unfriendly",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${t.friendly && !t.hostile ? ' friendly' : ''}",
-    "new": "",
+    "old": "    set(\n      'cls',\n      `dfnaval-tag ${t.faction}${t.hostile ? ' hostile' : ''}${t.friendly && !t.hostile ? ' friendly' : ''}${t.target ? ' target' : ''}`,\n      (v) => {\n        slot.n.className = v;\n      },\n    );",
+    "new": "    set('cls', `dfnaval-tag ${t.faction}${t.hostile ? ' hostile' : ''}${t.target ? ' target' : ''}`, (v) => {\n      slot.n.className = v;\n    });",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "HUD-green-bar-gone",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-tag.friendly .dfnaval-tag-bar > i { background: linear-gradient(180deg, #b8ffb8 0 1px, ${CREW_GREEN} 1px); }\n",
-    "new": "",
+    "old": ".dfnaval-tag.friendly .dfnaval-tag-bar > i { background: linear-gradient(180deg, #b8ffb8 0 1px, ${CREW_GREEN} 1px); }\n.dfnaval-tag-line { font-size: 11px; letter-spacing: 0.06em; color: #c9bfa4; text-shadow: ${OUTLINED}; }",
+    "new": ".dfnaval-tag-line { font-size: 11px; letter-spacing: 0.06em; color: #c9bfa4; text-shadow: ${OUTLINED}; }",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "HUD-green-hull-gone",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-card.friendly .dfnaval-track.hull .dfnaval-fill { background: linear-gradient(180deg, #b9f0c4 0 2px, #5fc27c 2px 4px, #2f9152 4px 8px, #216b3b 8px 10px, #134526 10px); }\n",
-    "new": "",
+    "old": ".dfnaval-card.friendly .dfnaval-track.hull .dfnaval-fill { background: linear-gradient(180deg, #b9f0c4 0 2px, #5fc27c 2px 4px, #2f9152 4px 8px, #216b3b 8px 10px, #134526 10px); }\n.dfnaval-card-sub { margin: 2px 0 6px; font-size: 11px; letter-spacing: 0.05em; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }",
+    "new": ".dfnaval-card-sub { margin: 2px 0 6px; font-size: 11px; letter-spacing: 0.05em; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "HUD-card-state-green-gone",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-card-state.friendly { color: #9fe0a8; }\n",
-    "new": "",
+    "old": ".dfnaval-card-state.friendly { color: #9fe0a8; }\n.dfnaval-card-state.hostile { color: #ff9c8a; }",
+    "new": ".dfnaval-card-state.hostile { color: #ff9c8a; }",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]
@@ -336,7 +336,7 @@
   {
     "name": "HUD-tag-line-unwritten",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('line', t.detail ? tagLine(t) : '', (v) => { slot.line.textContent = v; });",
+    "old": "    set('line', t.detail ? tagLine(t) : '', (v) => {\n      slot.line.textContent = v;\n    });",
     "new": "    set('line', t.detail ? tagLine(t) : '', () => {});",
     "tests": [
       "test/systems/naval/shipstance.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "HUD-tag-line-empty-shown",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-tag-line:empty { display: none; }\n",
-    "new": "",
+    "old": ".dfnaval-tag-line:empty { display: none; }\n.dfnaval-tag.friendly .dfnaval-tag-line { color: #bfe6c3; }",
+    "new": ".dfnaval-tag.friendly .dfnaval-tag-line { color: #bfe6c3; }",
     "tests": [
       "test/systems/naval/shipstance.test.js"
     ]

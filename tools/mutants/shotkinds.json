@@ -434,8 +434,8 @@
   {
     "name": "SHOT-hud-aim-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `,",
-    "new": " - `,",
+    "old": "          : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'}${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `, // SHOT-KINDS: and its load",
+    "new": "          : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'} - `, // SHOT-KINDS: and its load",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SHOT-hud-chasers-chain",
     "file": "src/ui/naval/navalHud.js",
-    "old": "heavy: 'great guns', chain: 'chasers', barrel:",
-    "new": "heavy: 'great guns', chain: 'chain shot', barrel:",
+    "old": "  chain: 'chasers',",
+    "new": "  chain: 'chain shot',",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]

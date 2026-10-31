@@ -20,8 +20,8 @@
   {
     "name": "EL-yard-literal",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "a freeport of ${ETHER_SEA_NAME}, in",
-    "new": "a freeport of the Eltheric Ocean, in",
+    "old": "  const lede = `${o.port} - a freeport of ${ETHER_SEA_NAME}, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.`;",
+    "new": "  const lede = `${o.port} - a freeport of the Eltheric Ocean, in ${o.waters}. No crown's writ runs past the Veil, and no crown's favors. Your charts hold ${o.charted} ${o.charted === 1 ? 'isle' : 'isles'}.`;",
     "tests": [
       "test/world/eltheric.test.js"
     ]

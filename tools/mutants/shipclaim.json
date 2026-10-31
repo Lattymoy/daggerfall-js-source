@@ -419,8 +419,8 @@
   {
     "name": "SC-win-text-raid-offered",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "claim: model.raid ? null : model.claimOffer?.()?.detail ?? null,",
-    "new": "claim: model.claimOffer?.()?.detail ?? null,",
+    "old": "    claim: model.raid ? null : (model.claimOffer?.()?.detail ?? null),",
+    "new": "    claim: model.claimOffer?.()?.detail ?? null,",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "SC-win-raid-has-claim",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "const claim = sail ? null : button('Claim',",
-    "new": "const claim = button('Claim',",
+    "old": "  const claim = sail\n    ? null\n    : button('Claim', 'dfnaval-btn dfnaval-claim', () => {\n        if (m.fate?.('claim') === false) {\n          note = { text: \"This ship can't be claimed.\", warn: true };\n          render();\n          return;\n        }\n        exit('fate');\n      });",
+    "new": "  const claim = button('Claim', 'dfnaval-btn dfnaval-claim', () => {\n    if (m.fate?.('claim') === false) {\n      note = { text: \"This ship can't be claimed.\", warn: true };\n      render();\n      return;\n    }\n    exit('fate');\n  });",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "SC-win-always-shown",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "for (const n of [claim, claimNote]) if (n) { if (t.claim) n.removeAttribute('hidden'); else n.setAttribute('hidden', ''); }",
-    "new": "for (const n of [claim, claimNote]) if (n) n.removeAttribute('hidden');",
+    "old": "    for (const n of [claim, claimNote])\n      if (n) {\n        if (t.claim) n.removeAttribute('hidden');\n        else n.setAttribute('hidden', '');\n      }",
+    "new": "    for (const n of [claim, claimNote]) if (n) n.removeAttribute('hidden');",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "SC-win-press-untold",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "    if (m.fate?.('claim') === false) {",
-    "new": "    if (false) {",
+    "old": "        if (m.fate?.('claim') === false) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "SC-win-refusal-leaves",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "{ note = { text: 'This ship can\\'t be claimed.', warn: true }; render(); return; }",
-    "new": "{ note = { text: 'This ship can\\'t be claimed.', warn: true }; render(); }",
+    "old": "          return;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "SC-win-line-unsaid",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "    claimNote.textContent = t.claim ?? '';\n",
-    "new": "",
+    "old": "    claimNote.textContent = t.claim ?? '';\n    if (claim && t.claim) claim.setAttribute('title', t.claim);",
+    "new": "    if (claim && t.claim) claim.setAttribute('title', t.claim);",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "SC-win-title-unset",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "    if (claim && t.claim) claim.setAttribute('title', t.claim);\n",
-    "new": "",
+    "old": "    if (claim && t.claim) claim.setAttribute('title', t.claim);\n    // the choice: the tiles, once one is taken the rest shut",
+    "new": "    // the choice: the tiles, once one is taken the rest shut",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]

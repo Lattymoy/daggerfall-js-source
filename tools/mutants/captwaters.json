@@ -201,8 +201,8 @@
   {
     "name": "CW-plate",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${model.waters === 'deep' ? ', deep' : ''}",
-    "new": "${''}",
+    "old": "          model.ether\n            ? etherWatersWords(model.ether)\n            : `${model.notoriety.crown} waters${model.waters === 'deep' ? ', deep' : ''}`,",
+    "new": "          model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown} waters${''}`,",
     "tests": [
       "test/systems/naval/captwaters.test.js"
     ]

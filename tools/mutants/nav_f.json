@@ -2,8 +2,8 @@
   {
     "name": "NAV-F-the-singular",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`${b.guns} ${b.guns === 1 ? GUN_WORDS[b.gun].replace(/s$/, '') : GUN_WORDS[b.gun]}`",
-    "new": "`${b.guns} ${GUN_WORDS[b.gun]}`",
+    "old": "      b.gun === 'barrel'\n        ? `${b.barrels ?? 0} barrel${b.barrels === 1 ? '' : 's'}`\n        : `${b.guns} ${b.guns === 1 ? GUN_WORDS[b.gun].replace(/s$/, '') : GUN_WORDS[b.gun]}`,",
+    "new": "      b.gun === 'barrel' ? `${b.barrels ?? 0} barrel${b.barrels === 1 ? '' : 's'}` : `${b.guns} ${GUN_WORDS[b.gun]}`,",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NAV-F-the-board-hint-shadowed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : model.board ? `${boardKey}: ${model.board.kind === 'hold'",
-    "new": "      : false ? `${boardKey}: ${model.board.kind === 'hold'",
+    "old": "            : model.board",
+    "new": "            : false",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAV-F-the-prize-missed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (t.state === 'prize') return",
-    "new": "  if (false) return",
+    "old": "  if (t.state === 'prize')",
+    "new": "  if (false)",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "NAV-F-a-rebuild-a-frame",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (!root) {\n    if (!want || !doc?.createElement) return;",
-    "new": "  if (want || !root) {\n    if (!want || !doc?.createElement) return;",
+    "old": "  if (!root) {",
+    "new": "  if (want || !root) {",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "NAV-F-the-scale-on-the-plate-alone",
     "file": "src/ui/naval/navalHud.js",
-    "old": "root.style.setProperty?.('--hud-scale', String(scale));",
-    "new": "parts.plate.style.setProperty?.('--hud-scale', String(scale));",
+    "old": "    root.style.setProperty?.('--hud-scale', String(scale));",
+    "new": "    parts.plate.style.setProperty?.('--hud-scale', String(scale));",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "NAV-F-the-foe-bar-over-the-card",
     "file": "src/ui/naval/navalHud.js",
-    "old": "body:has(.hud-foe.on) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_FOE}; }\n",
-    "new": "",
+    "old": "body:has(.hud-foe.on) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_FOE}; }\nbody:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }",
+    "new": "body:has(.hud-foe.on.blade) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_BLADE}; }",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "NAV-F-the-keys-named-to-a-finger",
     "file": "src/ui/naval/navalHud.js",
-    "old": "boardKey = touch ? 'Tap' : (keys.board ?? 'Activate')",
-    "new": "boardKey = keys.board ?? 'Activate'",
+    "old": "    boardKey = touch ? 'Tap' : (keys.board ?? 'Activate'),",
+    "new": "    boardKey = keys.board ?? 'Activate',",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "NAV-F-the-finger-told-to-hold-a-key",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`",
-    "new": "`Hold ${aimKey} to aim - ${bracePress}`",
+    "old": "                  : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "new": "                  : `Hold ${aimKey} to aim - ${bracePress}`,",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "NAV-F-the-plate-on-the-presses",
     "file": "src/ui/naval/navalHud.js",
-    "old": ".dfnaval-hud.touch .dfnaval-plate { right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(var(--nc-foot, ${NAVAL_PLATE_TOUCH_BOTTOM}px) + env(safe-area-inset-bottom, 0px)); }\n",
-    "new": "",
+    "old": ".dfnaval-hud.touch .dfnaval-plate { right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(var(--nc-foot, ${NAVAL_PLATE_TOUCH_BOTTOM}px) + env(safe-area-inset-bottom, 0px)); }\n.dfnaval-plate { position: absolute; right: 18px; bottom: var(--nc-foot, ${NAVAL_PLATE_BOTTOM}px); width: ${NAVAL_PLATE_W}px; padding: 10px 12px 9px;",
+    "new": ".dfnaval-plate { position: absolute; right: 18px; bottom: var(--nc-foot, ${NAVAL_PLATE_BOTTOM}px); width: ${NAVAL_PLATE_W}px; padding: 10px 12px 9px;",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "NAV-F-the-finger-root-never-marked",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  cls('rootc', root, `dfnaval-hud${touch ? ' touch' : ''}${compass ? ' classic' : ''}${short ? ' short' : ''}${aside ? ' aside' : ''}`);\n",
-    "new": "",
+    "old": "  cls(\n    'rootc',\n    root,\n    `dfnaval-hud${touch ? ' touch' : ''}${compass ? ' classic' : ''}${short ? ' short' : ''}${aside ? ' aside' : ''}`,\n  );\n  show('plate', parts.plate, !!p);",
+    "new": "  show('plate', parts.plate, !!p);",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]

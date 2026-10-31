@@ -340,8 +340,8 @@
   {
     "name": "CREW-TRADE-tab-stand-words",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  const CREW_STAND = { makes: t('sea.crew.standMakes', 'Sailors to spare here: cheap'), wants: t('sea.crew.standWants', 'Short of sailors here: dear'), neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price') };",
-    "new": "  const CREW_STAND = STAND;",
+    "old": "  const CREW_STAND = {\n    makes: t('sea.crew.standMakes', 'Sailors to spare here: cheap'),\n    wants: t('sea.crew.standWants', 'Short of sailors here: dear'),\n    neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price'),\n  }; // CREW-TRADE; AUDIT CREW-TRADE R4: a port that is neither says so",
+    "new": "  const CREW_STAND = STAND; // CREW-TRADE; AUDIT CREW-TRADE R4: a port that is neither says so",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ],
@@ -350,8 +350,8 @@
   {
     "name": "CREW-TRADE-tab-buy-full",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell :",
-    "new": "canBuy: crew ? r.sells > 0 && (Number(x.gold) || 0) >= r.sell :",
+    "old": "      canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
+    "new": "      canBuy: crew ? r.sells > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
     "note": "Re-aimed by content (AUDIT CREW-TRADE R3): Buy greyed when the purse cannot pay a man, too",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
@@ -360,8 +360,8 @@
   {
     "name": "CREW-TRADE-tab-sell-last",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canSell: crew ? r.spare > 0 && r.buys > 0 :",
-    "new": "canSell: crew ? r.have > 0 && r.buys > 0 :",
+    "old": "      canSell: crew ? r.spare > 0 && r.buys > 0 : r.have > 0 && r.buys > 0,",
+    "new": "      canSell: crew ? r.have > 0 && r.buys > 0 : r.have > 0 && r.buys > 0,",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "CREW-TRADE-tab-aboard",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "const aboard = crew ? t('sea.crew.aboard', 'Aboard: {have} of {whole} crew', { have: r.have, whole: r.whole }) : '';",
-    "new": "const aboard = '';",
+    "old": "    const aboard = crew ? t('sea.crew.aboard', 'Aboard: {have} of {whole} crew', { have: r.have, whole: r.whole }) : '';",
+    "new": "    const aboard = '';",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ],

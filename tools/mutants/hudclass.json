@@ -22,8 +22,8 @@
   {
     "name": "HUD-CLASS-bare-battery",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${b.empty ? ' gun-empty' : ''}",
-    "new": "${b.empty ? ' empty' : ''}",
+    "old": "        `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' gun-empty' : ''}${p.blow === side ? ' struck' : ''}`,",
+    "new": "        `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' empty' : ''}${p.blow === side ? ' struck' : ''}`,",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HUD-CLASS-chip-a-component",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.fire ? 'fire' : null",
-    "new": "ship.fire ? 'empty' : null",
+    "old": "          ship.fire ? 'fire' : null,",
+    "new": "          ship.fire ? 'empty' : null,",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HUD-CLASS-card-state-a-component",
     "file": "src/ui/naval/navalHud.js",
-    "old": "return { text: 'Going down', kind: 'sinking' };",
-    "new": "return { text: 'Going down', kind: 'empty' };",
+    "old": "  if (t.state === 'sinking') return { text: 'Going down', kind: 'sinking' };",
+    "new": "  if (t.state === 'sinking') return { text: 'Going down', kind: 'empty' };",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "HUD-CLASS-crew-guard-dropped",
     "file": "src/ui/naval/navalHud.js",
-    "old": "p.kind === 'sing' || p.kind === 'shout' ?",
-    "new": "p.kind ?",
+    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => {",
+    "new": "    set('kind', p.kind ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => {",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],

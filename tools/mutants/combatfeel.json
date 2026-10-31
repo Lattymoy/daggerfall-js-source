@@ -452,8 +452,8 @@
   {
     "name": "CF-secs-none",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    secs: b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0) ? '' : t(",
-    "new": "    secs: true ? '' : t(",
+    "old": "    secs:\n      b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0)\n        ? ''\n        : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),",
+    "new": "    secs: true ? '' : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "CF-secs-loaded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    secs: b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0) ? ''",
-    "new": "    secs: b.gun === 'barrel' || !(b.left > 0) ? ''",
+    "old": "    secs:\n      b.gun === 'barrel' || (b.loaded ?? b.ready) || !(b.left > 0)\n        ? ''\n        : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),",
+    "new": "    secs: b.gun === 'barrel' || !(b.left > 0) ? '' : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "CF-secs-rounded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "{ n: Math.ceil(b.left) }",
-    "new": "{ n: Math.round(b.left) }",
+    "old": "        : t('naval.gun.secs', '{n}s', { n: Math.ceil(b.left) }),",
+    "new": "        : t('naval.gun.secs', '{n}s', { n: Math.round(b.left) }),",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "CF-card-crew-text",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    crew: tgt.crew == null ? null : pct(tgt.crew),",
-    "new": "    crew: null,",
+    "old": "        crew: tgt.crew == null ? null : pct(tgt.crew), // CARD-CREW (COMBAT-FEEL): her men, as grape thins them",
+    "new": "        crew: null, // CARD-CREW (COMBAT-FEEL): her men, as grape thins them",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "CF-men-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": ", tl.men ? t('naval.tally.men'",
-    "new": ", false ? t('naval.tally.men'",
+    "old": "          tl.men ? t('naval.tally.men', '{n, plural, one {# crew down} other {# crew down}}', { n: tl.men }) : null,",
+    "new": "          false ? t('naval.tally.men', '{n, plural, one {# crew down} other {# crew down}}', { n: tl.men }) : null,",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "CF-blow-text",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    blow: ship.blow ?? null,",
-    "new": "    blow: null,",
+    "old": "        blow: ship.blow ?? null, // HULL-BLOW (COMBAT-FEEL): the side a ball just struck her from",
+    "new": "        blow: null, // HULL-BLOW (COMBAT-FEEL): the side a ball just struck her from",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "CF-rose-unmarked",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    cls('rosec', parts.rose, `dfnaval-rose${p.blow ? ` blow-${p.blow}` : ''}`);",
-    "new": "    cls('rosec', parts.rose, 'dfnaval-rose');",
+    "old": "    cls('rosec', parts.rose, `dfnaval-rose${p.blow ? ` blow-${p.blow}` : ''}`); // HULL-BLOW: the side she was struck from",
+    "new": "    cls('rosec', parts.rose, 'dfnaval-rose'); // HULL-BLOW: the side she was struck from",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "CF-gun-unmarked",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${b.empty ? ' gun-empty' : ''}${p.blow === side ? ' struck' : ''}`);",
-    "new": "${b.empty ? ' gun-empty' : ''}`);",
+    "old": "        `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' gun-empty' : ''}${p.blow === side ? ' struck' : ''}`,",
+    "new": "        `dfnaval-gun ${side}${b.ready ? ' ready' : ''}${b.fresh ? ' fresh' : ''}${b.active ? ' active' : ''}${b.empty ? ' gun-empty' : ''}`,",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "CF-plate-id-untold",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    id: ship.id ?? null, name: ship.name, waters:",
-    "new": "    name: ship.name, waters:",
+    "old": "        id: ship.id ?? null,\n        name: ship.name,",
+    "new": "        name: ship.name,",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "CF-plate-by-none",
     "file": "src/ui/naval/navalHud.js",
-    "old": "barLoss(plateBar, p.id, p.hull,",
-    "new": "barLoss(plateBar, null, p.hull,",
+    "old": "    const blown = barLoss(plateBar, p.id, p.hull, dt, 'plateg', parts.plateGhost, parts.plateChunks); // HULL-BLOW: her bar's loss, as the card's",
+    "new": "    const blown = barLoss(plateBar, null, p.hull, dt, 'plateg', parts.plateGhost, parts.plateChunks); // HULL-BLOW: her bar's loss, as the card's",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]

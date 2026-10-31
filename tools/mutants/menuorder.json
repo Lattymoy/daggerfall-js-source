@@ -380,8 +380,8 @@
   {
     "name": "MENUORDER-navalyard-tabs-bare",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  yardTab.setAttribute('data-dficon', 'saw'); officeTab.setAttribute('data-dficon', 'anchor'); tradeTab.setAttribute('data-dficon', 'treasure');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "  yardTab.setAttribute('data-dficon', 'saw');\n  officeTab.setAttribute('data-dficon', 'anchor');\n  tradeTab.setAttribute('data-dficon', 'treasure'); // MENU-ORDER: each page its picture\n  const exchange = () => (typeof m.exchange === 'function' ? m.exchange() : null);",
+    "new": "  const exchange = () => (typeof m.exchange === 'function' ? m.exchange() : null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

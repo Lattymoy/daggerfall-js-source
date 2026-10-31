@@ -435,8 +435,8 @@
   {
     "name": "SHIPMATES-bars-never-hidden",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const want = covered ? [] : points ?? [];\n  if (!tagRoot) {\n    if (!want.length || !doc?.createElement) return;\n    injectSheets(doc);\n    tagRoot = el(doc, 'div', 'dfnaval-tags');\n    tagRoot.setAttribute?.('aria-hidden', 'true');\n    (doc.body ?? doc.documentElement)?.append(tagRoot);\n  }\n  while (crewSlots",
-    "new": "  const want = points ?? [];\n  if (!tagRoot) {\n    if (!want.length || !doc?.createElement) return;\n    injectSheets(doc);\n    tagRoot = el(doc, 'div', 'dfnaval-tags');\n    tagRoot.setAttribute?.('aria-hidden', 'true');\n    (doc.body ?? doc.documentElement)?.append(tagRoot);\n  }\n  while (crewSlots",
+    "old": "  const want = covered ? [] : (points ?? []);",
+    "new": "  const want = points ?? [];",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "SHIPMATES-bars-fade-reversed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
-    "new": "tagAlpha(CREW_BAR_RANGE - p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
+    "old": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM) * 100) / 100), (v) => {\n      slot.n.style.opacity = v;\n    });",
+    "new": "    set(\n      'a',\n      String(Math.round(tagAlpha(CREW_BAR_RANGE - p.distance, CREW_BAR_RANGE, CREW_FADE_FROM) * 100) / 100),\n      (v) => {\n        slot.n.style.opacity = v;\n      },\n    );",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "SHIPMATES-bars-the-ships-fade",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
-    "new": "tagAlpha(p.distance, CREW_BAR_RANGE)",
+    "old": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM) * 100) / 100), (v) => {",
+    "new": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_BAR_RANGE) * 100) / 100), (v) => {",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "SHIPMATES-bars-fill-unread",
     "file": "src/ui/naval/navalHud.js",
-    "old": "set('share', pct(p.share), (v) => { slot.fill.style.width",
-    "new": "set('share', pct(1), (v) => { slot.fill.style.width",
+    "old": "    set('share', pct(p.share), (v) => {",
+    "new": "    set('share', pct(1), (v) => {",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]

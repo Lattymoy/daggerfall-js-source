@@ -2,8 +2,8 @@
   {
     "name": "CLUTTER-overlap-unread",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    if (placed.some((q) => b.left - pad < q.right",
-    "new": "    if (false && placed.some((q) => b.left - pad < q.right",
+    "old": "      placed.some(",
+    "new": "      false &&\n      placed.some(",
     "tests": [
       "test/ui/naval/shipclutter.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CLUTTER-no-hold",
     "file": "src/ui/naval/navalHud.js",
-    "old": "(TAG_CLEAR + (held?.has(t.id) ? TAG_HOLD : 0)) * scale",
-    "new": "TAG_CLEAR * scale",
+    "old": "    const pad = (TAG_CLEAR + (held?.has(t.id) ? TAG_HOLD : 0)) * scale;",
+    "new": "    const pad = TAG_CLEAR * scale;",
     "tests": [
       "test/ui/naval/shipclutter.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CLUTTER-by-distance-alone",
     "file": "src/ui/naval/navalHud.js",
-    "old": "const rank = (t) => (t === lead ? 0 : t.hostile ? 1 : 2);",
-    "new": "const rank = () => 0;",
+    "old": "  const rank = (t) => (t === lead ? 0 : t.hostile ? 1 : 2);",
+    "new": "  const rank = () => 0;",
     "tests": [
       "test/ui/naval/shipclutter.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CLUTTER-target-unread",
     "file": "src/ui/naval/navalHud.js",
-    "old": "let lead = list.find((t) => t.target) ?? null;",
-    "new": "let lead = null;",
+    "old": "  let lead = list.find((t) => t.target) ?? null;",
+    "new": "  let lead = null;",
     "tests": [
       "test/ui/naval/shipclutter.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CLUTTER-draw-unlaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "const want = covered ? [] : layoutNavalTags(points, { scale, focus, held: tagHeld });",
-    "new": "const want = covered ? [] : (points ?? []).map((t) => ({ ...t, detail: true }));",
+    "old": "  const want = covered ? [] : layoutNavalTags(points, { scale, focus, held: tagHeld });",
+    "new": "  const want = covered ? [] : (points ?? []).map((t) => ({ ...t, detail: true }));",
     "tests": [
       "test/ui/naval/shipclutter.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "CLUTTER-hold-never-kept",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  tagHeld = new Set((covered ? [] : points ?? []).filter((t) => t && !drawn.has(t.id)).map((t) => t.id));",
+    "old": "  tagHeld = new Set((covered ? [] : (points ?? [])).filter((t) => t && !drawn.has(t.id)).map((t) => t.id));",
     "new": "  tagHeld = new Set();",
     "tests": [
       "test/ui/naval/shipclutter.test.js"

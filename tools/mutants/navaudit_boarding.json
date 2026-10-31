@@ -337,8 +337,8 @@
   {
     "name": "NAVB-B11-leave-a-plain-close",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "() => exit(m.raid ? 'close' : 'leave')",
-    "new": "() => exit('close')",
+    "old": "  const close = button(m.raid ? 'Close' : 'Leave', 'dfnaval-btn dfnaval-close', () => exit(m.raid ? 'close' : 'leave'));",
+    "new": "  const close = button(m.raid ? 'Close' : 'Leave', 'dfnaval-btn dfnaval-close', () => exit('close'));",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js",
       "test/ui/naval/nav_f_ui.test.js"

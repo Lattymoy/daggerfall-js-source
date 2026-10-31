@@ -596,8 +596,8 @@
   {
     "name": "SEA-SEASON-tab-no-section",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "season: o.season ? seasonText(o.season) : null };",
-    "new": "season: null };",
+    "old": "    season: o.season ? seasonText(o.season) : null,",
+    "new": "    season: null,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "SEA-SEASON-words-days",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft })",
-    "new": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft + 1 })",
+    "old": "            days: s.daysLeft,",
+    "new": "            days: s.daysLeft + 1,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "SEA-SEASON-words-plural",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) }",
-    "new": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n: 2, figure: g(n) }",
+    "old": "    t('sea.season.leagues', '{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) });",
+    "new": "    t('sea.season.leagues', '{n, plural, one {{figure} league} other {{figure} leagues}}', { n: 2, figure: g(n) });",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "SEA-SEASON-words-figure-plain",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) }",
-    "new": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: n }",
+    "old": "    t('sea.season.legends', '{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) });",
+    "new": "    t('sea.season.legends', '{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: n });",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "SEA-SEASON-words-mine-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    s.mine?.deep ? t('sea.season.mineDeep',",
-    "new": "    false ? t('sea.season.mineDeep',",
+    "old": "    s.mine?.deep",
+    "new": "    false",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "SEA-SEASON-words-last-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lastLegends ? t('sea.season.lastLegends',",
-    "new": "    false ? t('sea.season.lastLegends',",
+    "old": "    lastLegends ? t('sea.season.lastLegends', \"Last season's most legends ended: {who}.\", { who: lastLegends }) : '',",
+    "new": "    false ? t('sea.season.lastLegends', \"Last season's most legends ended: {who}.\", { who: lastLegends }) : '',",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "SEA-SEASON-words-asking-lists",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lists: s.asking ? [] : [",
-    "new": "    lists: [",
+    "old": "    lists: s.asking\n      ? []\n      : [\n          {\n            title: t('sea.season.deepTitle', 'Deepest voyages'),\n            rows: rows(s.deep ?? [], leagues),\n            none: t('sea.season.deepNone', 'No captain has sailed past the Veil this season.'),\n          },\n          {\n            title: t('sea.season.legendsTitle', 'Legends ended'),\n            rows: rows(s.legends ?? [], legends),\n            none: t('sea.season.legendsNone', 'No legend has been sunk or taken this season.'),\n          },\n        ],",
+    "new": "    lists: [\n      {\n        title: t('sea.season.deepTitle', 'Deepest voyages'),\n        rows: rows(s.deep ?? [], leagues),\n        none: t('sea.season.deepNone', 'No captain has sailed past the Veil this season.'),\n      },\n      {\n        title: t('sea.season.legendsTitle', 'Legends ended'),\n        rows: rows(s.legends ?? [], legends),\n        none: t('sea.season.legendsNone', 'No legend has been sunk or taken this season.'),\n      },\n    ],",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "SEA-SEASON-words-asking-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lede: s.asking ? t('sea.season.asking',",
-    "new": "    lede: false ? t('sea.season.asking',",
+    "old": "    lede: s.asking",
+    "new": "    lede: false",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "SEA-SEASON-win-no-titles",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      seasonList.append(el('li', 'dfnaval-item more', list.title));\n",
-    "new": "",
+    "old": "      seasonList.append(el('li', 'dfnaval-item more', list.title));\n      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));",
+    "new": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "SEA-SEASON-win-no-none",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));\n",
-    "new": "",
+    "old": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));\n      for (const r of list.rows) seasonList.append(officeRow(r.title, r.words));",
+    "new": "      for (const r of list.rows) seasonList.append(officeRow(r.title, r.words));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -713,7 +713,7 @@
   {
     "name": "SEA-SEASON-win-office-hides",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec])\n      n.style.display = tab === 'office' ? '' : 'none';",
     "new": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec]) n.style.display = tab === 'office' ? '' : 'none';",
     "tests": [
       "test/systems/sea/seaseason.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "SEA-SEASON-win-unrendered",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    renderSeason(ot.season);   // SEA-SEASON\n",
-    "new": "",
+    "old": "    renderSeason(ot.season); // SEA-SEASON\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

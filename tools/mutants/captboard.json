@@ -605,8 +605,8 @@
   {
     "name": "TAB-take-unpressed",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "b.press, b.can, () => { const r = o.take(b.id);",
-    "new": "b.press, b.can, () => { const r = null;",
+    "old": "            const r = o.take(b.id);",
+    "new": "            const r = null;",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]

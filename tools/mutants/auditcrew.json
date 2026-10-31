@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-CC-D8-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairOrdered ? 'Crippled, repairs ordered' : ",
-    "new": "",
+    "old": "                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other",
+    "new": "                  : ship.stores > 0\n                    ? 'Crippled. Order repairs, or make for port'\n                    : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js",

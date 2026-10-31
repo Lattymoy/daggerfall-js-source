@@ -344,8 +344,8 @@
   {
     "name": "SAY-never-hidden",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
-    "new": "  const want = layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
+    "old": "  const want = covered ? [] : layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
+    "new": "  const want = layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 }); // CREW-SAY: laid out, never over each other",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SAY-fade-unread",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(p.distance, CREW_SAY_RANGE, CREW_SAY_FADE_FROM)",
-    "new": "tagAlpha(0, CREW_SAY_RANGE, CREW_SAY_FADE_FROM)",
+    "old": "    set('a', String(Math.round(tagAlpha(p.distance, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
+    "new": "    set('a', String(Math.round(tagAlpha(0, CREW_SAY_RANGE, CREW_SAY_FADE_FROM) * 100) / 100), (v) => {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SAY-song-plain",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => { slot.n.className = v; });",
-    "new": "    set('kind', 'dfnaval-say', (v) => { slot.n.className = v; });",
+    "old": "    set('kind', p.kind === 'sing' || p.kind === 'shout' ? `dfnaval-say ${p.kind}` : 'dfnaval-say', (v) => {",
+    "new": "    set('kind', 'dfnaval-say', (v) => {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]

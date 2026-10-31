@@ -1615,6 +1615,11 @@
 /src/ui/menu/*/
 !/src/ui/merchant/
 /src/ui/merchant/*/
+!/src/ui/naval/
+/src/ui/naval/*
+!/src/ui/naval/navalHud.js
+!/src/ui/naval/navalPlunderWindow.js
+!/src/ui/naval/navalYardWindow.js
 !/src/ui/poi/
 /src/ui/poi/*/
 !/src/ui/profileIcons.js

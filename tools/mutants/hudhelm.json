@@ -47,8 +47,8 @@
   {
     "name": "HUD-HELM-the-card-centred-on-the-screen",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    const left = top && cx != null ? `${Math.round(cx)}px` : '';",
-    "new": "    const left = '';",
+    "old": "    const left = top && cx != null ? `${Math.round(cx)}px` : ''; // HUD-HELM: centred on the helm panel's bar, not the screen",
+    "new": "    const left = ''; // HUD-HELM: centred on the helm panel's bar, not the screen",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HUD-HELM-a-hidden-bar-still-read",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const helm = under && read && standing(under) ? rectOf(under) : null;",
-    "new": "  const helm = under && read ? rectOf(under) : null;",
+    "old": "  const helm = under && read && standing(under) ? rectOf(under) : null; // HUD-HELM: a bar turned off in play stands nowhere",
+    "new": "  const helm = under && read ? rectOf(under) : null; // HUD-HELM: a bar turned off in play stands nowhere",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]

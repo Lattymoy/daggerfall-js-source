@@ -229,8 +229,8 @@
   {
     "name": "NAV1H-the-tail-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
-    "new": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: a.hot ? ' - on target' : '',",
+    "old": "        target: aimTail(a),",
+    "new": "        target: a.hot ? ' - on target' : '',",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "NAV1H-never-dimmed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
-    "new": "dim: false, target: aimTail(a),",
+    "old": "        dim: !!a.state && a.state !== 'ready',",
+    "new": "        dim: false,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "NAV1H-crippled-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    case 'crippled': return ' - guns silent';\n",
-    "new": "",
+    "old": "    case 'crippled':\n      return ' - guns silent';\n    case 'empty':",
+    "new": "    case 'empty':",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "NAV1H-the-finger-to-the-look",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const hold = (on) => (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); touchBrace = on; };",
-    "new": "  const hold = (on) => (e) => { e?.preventDefault?.(); touchBrace = on; };",
+    "old": "    e?.stopPropagation?.();\n    touchBrace = on;",
+    "new": "    touchBrace = on;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "NAV1H-a-press-surviving-its-plate",
     "file": "src/ui/naval/navalHud.js",
-    "old": "if (!braceOn) touchBrace = false; }",
-    "new": "}",
+    "old": "    if (!braceOn) touchBrace = false;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "NAV1H-a-press-surviving-a-cover",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (!want) { shown.braceBtn = false; touchBrace = false; for",
-    "new": "  if (!want) { shown.braceBtn = false; for",
+    "old": "    touchBrace = false;\n    for (const c of parts.cardChunks) stowChunk(c);",
+    "new": "    for (const c of parts.cardChunks) stowChunk(c);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "NAV1H-the-brace-for-a-mouse",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    brace: touch && !!model.armed,",
-    "new": "    brace: !!model.armed,",
+    "old": "        brace: touch && !!model.armed,",
+    "new": "        brace: !!model.armed,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "NAV1H-the-finger-told-crouch",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`;",
-    "new": "  const bracePress = `${braceKey}: brace`;",
+    "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`; // AUDIT NAV1: a finger's is the plate's own press",
+    "new": "  const bracePress = `${braceKey}: brace`; // AUDIT NAV1: a finger's is the plate's own press",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "NAV1H-the-mend-chip-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairing ? 'repair' : ship.mending ? 'mend' : null]",
-    "new": "ship.repairing ? 'repair' : null]",
+    "old": "          ship.repairing ? 'repair' : ship.mending ? 'mend' : null,",
+    "new": "          ship.repairing ? 'repair' : null,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -750,8 +750,8 @@
   {
     "name": "NAV1H-the-wreck-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled, crew repairing' : ship.repairOrdered ? 'Crippled, repairs ordered' : ship.stores > 0 ? 'Crippled. Order repairs, or make for port' : 'Crippled. Make for port and a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
-    "new": "",
+    "old": "              : ship.wrecked\n                ? ship.repairing\n                  ? 'Crippled, crew repairing'\n                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n                : !model.armed\n                  ? 'No guns aboard'\n                  : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "new": "              : !model.armed\n                ? 'No guns aboard'\n                : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -760,8 +760,8 @@
   {
     "name": "NAV1H-the-yard-a-ship-to-board",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`",
-    "new": "`open ${model.board.name}'s hold` : `board ${model.board.name}`}`",
+    "old": "              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`",
+    "new": "              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : `board ${model.board.name}`}`",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -769,7 +769,7 @@
   {
     "name": "NAV1H-a-rows-press-unwired",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => { note = yardNote(m.buy?.(r.id)); render(); });",
+    "old": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => {\n        note = yardNote(m.buy?.(r.id));\n        render();\n      });",
     "new": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => {});",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -778,7 +778,7 @@
   {
     "name": "NAV1H-the-whole-press-unwired",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.buyAll?.()); render(); });",
+    "old": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => {\n    note = yardNote(m.buyAll?.());\n    render();\n  });",
     "new": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => {});",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -796,8 +796,8 @@
   {
     "name": "NAV1H-a-crewless-boats-hands",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "r.id === 'crew' ? sh.maxCrew > 0 :",
-    "new": "r.id === 'crew' ? true :",
+    "old": "    r.id === 'sail'\n      ? sh.maxSail > 0\n      : r.id === 'crew'\n        ? sh.maxCrew > 0\n        : r.id === 'barrels'\n          ? model.hasBarrels !== false\n          : true;",
+    "new": "    r.id === 'sail' ? sh.maxSail > 0 : r.id === 'crew' ? true : r.id === 'barrels' ? model.hasBarrels !== false : true;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "NAV1H-never-greyed",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      able(press, r.can);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
-    "new": "      able(press, true);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
+    "old": "        render();\n      });\n      able(press, r.can);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
+    "new": "        render();\n      });\n      able(press, true);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -815,7 +815,7 @@
   {
     "name": "NAV1H-the-yard-back-key-deaf",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit('close'); }",
+    "old": "    if (overlayAction(e) === 'back') {\n      e.preventDefault();\n      e.stopPropagation();\n      exit('close');\n    }",
     "new": "    void e;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"

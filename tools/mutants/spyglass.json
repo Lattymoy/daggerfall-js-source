@@ -665,8 +665,8 @@
   {
     "name": "SPY-N-tap-kept",
     "file": "src/ui/naval/navalHud.js",
-    "old": "export function navalTouchGlass() { const tapped = touchGlass > 0; touchGlass = 0; return tapped; }",
-    "new": "export function navalTouchGlass() { return touchGlass > 0; }",
+    "old": "  const tapped = touchGlass > 0;\n  touchGlass = 0;\n  return tapped;",
+    "new": "  return touchGlass > 0;",
     "tests": [
       "test/systems/naval/spyglass.test.js"
     ]

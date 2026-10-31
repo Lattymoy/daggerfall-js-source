@@ -1406,8 +1406,8 @@
   {
     "name": "SHIP-PVP-tab-prizes-none",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    prizes: w.prizes > 0 ? {",
-    "new": "    prizes: w.prizes >= 0 ? {",
+    "old": "      w.prizes > 0",
+    "new": "      w.prizes >= 0",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1415,8 +1415,8 @@
   {
     "name": "SHIP-PVP-tab-prizes-busy",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "{ n: w.prizes }), can: !w.busy, press: t('sea.bounty.collect', 'Collect') } : null,",
-    "new": "{ n: w.prizes }), can: true, press: t('sea.bounty.collect', 'Collect') } : null,",
+    "old": "            ),\n            can: !w.busy,",
+    "new": "            ),\n            can: true,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1424,8 +1424,8 @@
   {
     "name": "SHIP-PVP-tab-back-none",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    back: w.back > 0 ? {",
-    "new": "    back: w.back >= 0 ? {",
+    "old": "      w.back > 0",
+    "new": "      w.back >= 0",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1433,8 +1433,8 @@
   {
     "name": "SHIP-PVP-win-prizes-press",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "() => w.collectPrizes()));   // SHIP-PVP",
-    "new": "() => w.collect()));   // SHIP-PVP",
+    "old": "        officeRow(wt.prizes.title, wt.prizes.words, null, wt.prizes.press, wt.prizes.can, () => w.collectPrizes()),",
+    "new": "        officeRow(wt.prizes.title, wt.prizes.words, null, wt.prizes.press, wt.prizes.can, () => w.collect()),",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1442,8 +1442,8 @@
   {
     "name": "SHIP-PVP-win-back-press",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "wt.back.can, () => w.reclaim()));",
-    "new": "wt.back.can, () => w.collect()));",
+    "old": "      wantedList.append(officeRow(wt.back.title, wt.back.words, null, wt.back.press, wt.back.can, () => w.reclaim()));",
+    "new": "      wantedList.append(officeRow(wt.back.title, wt.back.words, null, wt.back.press, wt.back.can, () => w.collect()));",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

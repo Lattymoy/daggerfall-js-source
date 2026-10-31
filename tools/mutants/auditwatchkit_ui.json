@@ -137,8 +137,8 @@
   {
     "name": "WK-U8-dpr-dropped",
     "file": "src/ui/naval/navalHud.js",
-    "old": "return iconOf(e.i, { box: MATE_FX_BOX, dpr });",
-    "new": "return iconOf(e.i, { box: MATE_FX_BOX });",
+    "old": "        return iconOf(e.i, { box: MATE_FX_BOX, dpr });",
+    "new": "        return iconOf(e.i, { box: MATE_FX_BOX });",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WK-U8-picture-unsized",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tile.append(showFitted(img, pics[k]));",
-    "new": "img.src = pics[k].src; tile.append(img);",
+    "old": "          tile.append(showFitted(img, pics[k]));",
+    "new": "          img.src = pics[k].src;\n          tile.append(img);",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WK-U8-tile-12",
     "file": "src/ui/naval/navalHud.js",
-    "old": "width: ${MATE_FX_BOX}px; height: ${MATE_FX_BOX}px; box-shadow",
-    "new": "width: 12px; height: 12px; box-shadow",
+    "old": ".dfnaval-crew-fxe { position: relative; width: ${MATE_FX_BOX}px; height: ${MATE_FX_BOX}px; box-shadow: 0 0 0 1px #050608; background: #1b2618; overflow: hidden;",
+    "new": ".dfnaval-crew-fxe { position: relative; width: 12px; height: 12px; box-shadow: 0 0 0 1px #050608; background: #1b2618; overflow: hidden;",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WK-U8-never-refitted",
     "file": "src/ui/naval/navalHud.js",
-    "old": "join('')}@${dpr}`, () => {",
-    "new": "join('')}`, () => {",
+    "old": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`, () => {",
+    "new": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}`, () => {",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LD-NH-art-landing-ignored",
     "file": "src/ui/naval/navalHud.js",
-    "old": "set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`,",
-    "new": "set('fx', `${partyFxKey(fx)}@${dpr}`,",
+    "old": "    set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`, () => {",
+    "new": "    set('fx', `${partyFxKey(fx)}@${dpr}`, () => {",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "LD-NH-debuff-unmarked",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`dfnaval-crew-fxe${e.d ? ' debuff' : ''}`",
-    "new": "'dfnaval-crew-fxe'",
+    "old": "        const tile = el(doc, 'span', `dfnaval-crew-fxe${e.d ? ' debuff' : ''}`);",
+    "new": "        const tile = el(doc, 'span', 'dfnaval-crew-fxe');",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]

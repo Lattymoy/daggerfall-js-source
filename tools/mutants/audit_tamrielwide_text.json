@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-TW-D6-the-carrack",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'Only an Admiralty sells a carrack. The title goes to your Fleet.'",
-    "new": "'The only carrack for sale in the Bay. The title goes to your Fleet.'",
+    "old": "      words: o.admiralty.can ? 'Only an Admiralty sells a carrack. The title goes to your Fleet.' : o.admiralty.why,",
+    "new": "      words: o.admiralty.can ? 'The only carrack for sale in the Bay. The title goes to your Fleet.' : o.admiralty.why,",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

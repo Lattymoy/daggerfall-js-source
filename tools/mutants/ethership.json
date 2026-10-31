@@ -418,8 +418,8 @@
   {
     "name": "SHIP-plate-words",
     "file": "src/ui/naval/navalHud.js",
-    "old": "[model.ether ? etherWatersWords(model.ether) : `${model.notoriety.crown}",
-    "new": "[false ? etherWatersWords(model.ether) : `${model.notoriety.crown}",
+    "old": "          model.ether",
+    "new": "          false",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "SHIP-plate-anchors",
     "file": "src/ui/naval/navalHud.js",
-    "old": "anchors: model.ether ? 0 : model.notoriety.level,",
-    "new": "anchors: model.notoriety.level,",
+    "old": "        anchors: model.ether ? 0 : model.notoriety.level,",
+    "new": "        anchors: model.notoriety.level,",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "SHIP-plate-league",
     "file": "src/ui/naval/navalHud.js",
-    "old": "Math.round(Number(e.depth) || 0) === 1 ? 'league' : 'leagues'",
-    "new": "'leagues'",
+    "old": "    : `${String(e.bandName ?? '').replace(/^./, (c) => c.toUpperCase())}, ${Math.max(0, Math.round(Number(e.depth) || 0))} ${Math.round(Number(e.depth) || 0) === 1 ? 'league' : 'leagues'} past the Veil`;",
+    "new": "    : `${String(e.bandName ?? '').replace(/^./, (c) => c.toUpperCase())}, ${Math.max(0, Math.round(Number(e.depth) || 0))} ${'leagues'} past the Veil`;",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ]

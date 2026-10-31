@@ -152,8 +152,8 @@
   {
     "name": "ACT-O1-why-unshown",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "r.spare <= 0 && r.buys > 0 ? r.why : ''",
-    "new": "''",
+    "old": "        ? [aboard, r.spare <= 0 && r.buys > 0 ? r.why : ''].filter(Boolean).join(' - ')",
+    "new": "        ? [aboard, ''].filter(Boolean).join(' - ')",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "ACT-O3-prices-english",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "words: crew ? crewWords(r) :",
-    "new": "words: false ? crewWords(r) :",
+    "old": "      words: crew",
+    "new": "      words: false",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "ACT-R2-sell-all-on-crew",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "if (r.id === CREW.id) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
-    "new": "if (false) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
+    "old": "      if (r.id === CREW.id) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
+    "new": "      if (false) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "ACT-R3-purse-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": " && (Number(x.gold) || 0) >= r.sell :",
-    "new": " :",
+    "old": "      canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
+    "new": "      canBuy: crew ? r.sells > 0 && r.room > 0 : r.sells > 0 && x.weight != null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "ACT-R4-neither-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price') };",
-    "new": "neither: '' };",
+    "old": "    neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price'),",
+    "new": "    neither: '',",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "ACT-P9-buy-stock-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canBuy: crew ? r.sells > 0 && r.room > 0",
-    "new": "canBuy: crew ? r.room > 0",
+    "old": "      canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
+    "new": "      canBuy: crew ? r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "ACT-P9-sell-stock-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canSell: crew ? r.spare > 0 && r.buys > 0 :",
-    "new": "canSell: crew ? r.spare > 0 :",
+    "old": "      canSell: crew ? r.spare > 0 && r.buys > 0 : r.have > 0 && r.buys > 0,",
+    "new": "      canSell: crew ? r.spare > 0 : r.have > 0 && r.buys > 0,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
