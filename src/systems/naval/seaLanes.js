@@ -29,7 +29,7 @@ import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
-import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // WW3: a lane's pixels the world's
+import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js'; // WW3: a lane's pixels the world's
 
 /** How far from its town a port's roadstead may lie (map pixels), and how many ports a port runs packets to, within how
  *  far of it (map pixels between roadsteads: about 25 km). */
@@ -67,23 +67,37 @@ const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
 export function lanePixels(from, to, water) {
   if (!water(from.x, from.y) || !water(to.x, to.y)) return null;
   const key = worldPixelKey;
-  const g = new Map([[key(from.x, from.y), 0]]), came = new Map(), shut = new Set();
+  const g = new Map([[key(from.x, from.y), 0]]),
+    came = new Map(),
+    shut = new Set();
   const h = (x, y) => Math.hypot(x - to.x, y - to.y);
   // the open list a binary heap on f: [f, x, y]
   const heap = [[h(from.x, from.y), from.x, from.y]];
-  const push = (n) => { heap.push(n); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const push = (n) => {
+    heap.push(n);
+    let i = heap.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (heap[p][0] <= heap[i][0]) break;
+      [heap[p], heap[i]] = [heap[i], heap[p]];
+      i = p;
+    }
+  };
   const pop = () => {
-    const top = heap[0], last = heap.pop();
+    const top = heap[0],
+      last = heap.pop();
     if (heap.length) {
       heap[0] = last;
       let i = 0;
       for (;;) {
-        const l = 2 * i + 1, r = l + 1;
+        const l = 2 * i + 1,
+          r = l + 1;
         let m = i;
         if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
         if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
         if (m === i) break;
-        [heap[m], heap[i]] = [heap[i], heap[m]]; i = m;
+        [heap[m], heap[i]] = [heap[i], heap[m]];
+        i = m;
       }
     }
     return top;
@@ -97,20 +111,25 @@ export function lanePixels(from, to, water) {
     const gk = g.get(k);
     if (x === to.x && y === to.y) {
       const path = [{ x, y }];
-      for (let c = came.get(k); c != null; c = came.get(c)) { const [cx, cy] = worldPixelOfKey(c); path.push({ x: cx, y: cy }); }
+      for (let c = came.get(k); c != null; c = came.get(c)) {
+        const [cx, cy] = worldPixelOfKey(c);
+        path.push({ x: cx, y: cy });
+      }
       return path.reverse();
     }
     expanded++;
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
-        const nx = x + dx, ny = y + dy;
+        const nx = x + dx,
+          ny = y + dy;
         if (!inWorldGrid(nx, ny) || !water(nx, ny)) continue;
-        if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue;   // no corner cut past land
+        if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue; // no corner cut past land
         const ng = gk + (dx && dy ? Math.SQRT2 : 1);
         const nk = key(nx, ny);
         if (ng >= (g.get(nk) ?? Infinity) || ng > LANE_PATH_PX) continue;
-        g.set(nk, ng); came.set(nk, k);
+        g.set(nk, ng);
+        came.set(nk, k);
         push([ng + h(nx, ny), nx, ny]);
       }
     }
@@ -119,7 +138,10 @@ export function lanePixels(from, to, water) {
 }
 
 /** A pixel's centre in native units. */
-const centreOf = (p) => { const o = nativeOfPixel(p.x, p.y); return { x: o.x + NATIVE_PIXEL / 2, z: o.z + NATIVE_PIXEL / 2 }; };
+const centreOf = (p) => {
+  const o = nativeOfPixel(p.x, p.y);
+  return { x: o.x + NATIVE_PIXEL / 2, z: o.z + NATIVE_PIXEL / 2 };
+};
 /** Whether the line between two native points holds to the water (LANE_STRAIGHT_STEPS a pixel of it). */
 function holds(a, b, waterNative) {
   const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
@@ -147,16 +169,28 @@ export function straighten(pixels, waterNative) {
  * SEA-SQUARE: `roomy` (the lanes past the Bay) - of a ring's pixels the one with the most open sea about it first.
  */
 export function roadsteadOf(port, open, roomy = false) {
-  const room = (/** @type {number} */ x, /** @type {number} */ y) => { let n = 0; for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if ((i || j) && open(x + i, y + j)) n++; return n; };
+  const room = (/** @type {number} */ x, /** @type {number} */ y) => {
+    let n = 0;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if ((i || j) && open(x + i, y + j)) n++;
+    return n;
+  };
   for (let r = 1; r <= ROADSTEAD_PX; r++) {
-    let best = null, bd = Infinity, br = -1;
+    let best = null,
+      bd = Infinity,
+      br = -1;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        const x = port.px + dx, y = port.py + dy;
+        const x = port.px + dx,
+          y = port.py + dy;
         if (!open(x, y)) continue;
-        const d = dx * dx + dy * dy, n = roomy ? room(x, y) : 0;
-        if (n > br || (n === br && d < bd)) { br = n; bd = d; best = { x, y }; }
+        const d = dx * dx + dy * dy,
+          n = roomy ? room(x, y) : 0;
+        if (n > br || (n === br && d < bd)) {
+          br = n;
+          bd = d;
+          best = { x, y };
+        }
       }
     }
     if (best) return best;
@@ -173,12 +207,19 @@ export function roadsteadOf(port, open, roomy = false) {
  * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX). `roomy` roadsteadOf's.
  */
 export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false) {
-  const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);   // SEA-SQUARE: past the Bay the roomiest roadstead
+  const sea = [...ports]
+    .sort((p, q) => p.id - q.id)
+    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) }))
+    .filter((p) => p.road); // SEA-SQUARE: past the Bay the roomiest roadstead
   const pairs = new Map();
   for (const p of sea) {
-    const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
-    const near = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
-      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
+    const reach = Math.max(maxPx, p.reach ?? 0); // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
+    const near = sea
+      .filter((q) => q !== p)
+      .map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
+      .filter((x) => x.d > 0 && x.d <= reach)
+      .sort((x, y) => x.d - y.d || x.q.id - y.q.id)
+      .slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;
@@ -194,7 +235,8 @@ export function laneWay(lane, water, waterNative) {
   if (!px) return null;
   const pts = straighten(px, waterNative);
   let len = 0;
-  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
+  for (let i = 1; i < pts.length; i++)
+    len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
   return { pts, len };
 }
 
@@ -206,9 +248,14 @@ export function packetOf(lane, k = 0, count = 1) {
   const seed = hash32(laneSeed(lane), k >>> 0, LANE_SALT);
   const r = mulberry32(seed);
   const faction = r() < LANE_NAVY ? 'navy' : 'merchant';
-  let cls = classFor(faction, LANE_LEVEL, r());   // one level for every player: her class is the lane's, never a reader's
+  let cls = classFor(faction, LANE_LEVEL, r()); // one level for every player: her class is the lane's, never a reader's
   if (cls?.hull === HULL.LargeGalley) cls = classFor(faction, 1, r());
-  return { seed, cls, speed: (cls?.speed ?? 4) * LANE_CRUISE, phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1 };
+  return {
+    seed,
+    cls,
+    speed: (cls?.speed ?? 4) * LANE_CRUISE,
+    phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1,
+  };
 }
 
 /** The point `s` metres along `pts` (native) from its start, and the leg it lies on (`dx`, `dz`, native: the caller
@@ -216,7 +263,8 @@ export function packetOf(lane, k = 0, count = 1) {
 function along(pts, s) {
   let left = Math.max(0, s);
   for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i];
+    const a = pts[i - 1],
+      b = pts[i];
     const seg = Math.hypot(b.x - a.x, b.z - a.z) * M_PER_NATIVE;
     if (left <= seg || i === pts.length - 1) {
       const k = seg > 0 ? Math.min(1, left / seg) : 1;
@@ -259,22 +307,61 @@ export function packetAt(lane, way, ms, k = 0, count = 1) {
   const tau = t - voyage * period;
   const seeds = [];
   for (let j = 0; j < LANE_LINEAGE; j++) seeds.push(hash32(p.seed, (voyage - j) >>> 0, LANE_SALT));
-  const base = { id: `L${lane.key}.${k}.${voyage}`, lane: lane.key, k, voyage, seed: seeds[0], seeds, cls: p.cls, region: lane.a.region ?? -1 };
+  const base = {
+    id: `L${lane.key}.${k}.${voyage}`,
+    lane: lane.key,
+    k,
+    voyage,
+    seed: seeds[0],
+    seeds,
+    cls: p.cls,
+    region: lane.a.region ?? -1,
+  };
   const rev = [...way.pts].reverse();
   const sailing = (pts, s, from, to) => {
     const here = along(pts, s);
-    return { ...base, phase: 'sail', from, to, port: null, at: { x: here.x, z: here.z }, dir: { x: here.dx, z: here.dz }, leg: pts, until: null };
+    return {
+      ...base,
+      phase: 'sail',
+      from,
+      to,
+      port: null,
+      at: { x: here.x, z: here.z },
+      dir: { x: here.dx, z: here.dz },
+      leg: pts,
+      until: null,
+    };
   };
   const end = (pts) => pts[pts.length - 1];
-  const start = voyage * period - p.phase * period;   // her voyage's first second on the shared clock
+  const start = voyage * period - p.phase * period; // her voyage's first second on the shared clock
   if (tau < leg) return sailing(way.pts, tau * p.speed, lane.a, lane.b);
   if (tau < leg + LANE_DWELL_S) {
     const e = end(way.pts);
-    return { ...base, phase: 'dwell', from: lane.a, to: lane.a, port: lane.b, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: way.pts, until: start + leg + LANE_DWELL_S };
+    return {
+      ...base,
+      phase: 'dwell',
+      from: lane.a,
+      to: lane.a,
+      port: lane.b,
+      at: { x: e.x, z: e.z },
+      dir: { x: 0, z: 0 },
+      leg: way.pts,
+      until: start + leg + LANE_DWELL_S,
+    };
   }
   if (tau < 2 * leg + LANE_DWELL_S) return sailing(rev, (tau - leg - LANE_DWELL_S) * p.speed, lane.b, lane.a);
   const e = end(rev);
-  return { ...base, phase: 'dwell', from: lane.b, to: lane.b, port: lane.a, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: rev, until: start + period };
+  return {
+    ...base,
+    phase: 'dwell',
+    from: lane.b,
+    to: lane.b,
+    port: lane.a,
+    at: { x: e.x, z: e.z },
+    dir: { x: 0, z: 0 },
+    leg: rev,
+    until: start + period,
+  };
 }
 
 /**
@@ -288,21 +375,36 @@ export function pursue(leg, x, z, ahead) {
   if (!leg?.length) return null;
   if (leg.length === 1) return { x: leg[0][0], z: leg[0][1], left: 0 };
   const len = (i) => Math.hypot(leg[i][0] - leg[i - 1][0], leg[i][1] - leg[i - 1][1]);
-  let best = Infinity, seg = 1, t = 0;
+  let best = Infinity,
+    seg = 1,
+    t = 0;
   for (let i = 1; i < leg.length; i++) {
-    const ax = leg[i - 1][0], az = leg[i - 1][1], dx = leg[i][0] - ax, dz = leg[i][1] - az, l2 = dx * dx + dz * dz;
+    const ax = leg[i - 1][0],
+      az = leg[i - 1][1],
+      dx = leg[i][0] - ax,
+      dz = leg[i][1] - az,
+      l2 = dx * dx + dz * dz;
     const k = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)) : 0;
     const d = (x - (ax + dx * k)) ** 2 + (z - (az + dz * k)) ** 2;
-    if (d < best) { best = d; seg = i; t = k; }
+    if (d < best) {
+      best = d;
+      seg = i;
+      t = k;
+    }
   }
   let left = len(seg) * (1 - t);
   for (let i = seg + 1; i < leg.length; i++) left += len(i);
   let need = Math.max(0, ahead);
   for (let i = seg, k = t; i < leg.length; i++, k = 0) {
-    const L = len(i), rest = L * (1 - k);
+    const L = len(i),
+      rest = L * (1 - k);
     if (L > 0 && need <= rest) {
       const kk = k + need / L;
-      return { x: leg[i - 1][0] + (leg[i][0] - leg[i - 1][0]) * kk, z: leg[i - 1][1] + (leg[i][1] - leg[i - 1][1]) * kk, left };
+      return {
+        x: leg[i - 1][0] + (leg[i][0] - leg[i - 1][0]) * kk,
+        z: leg[i - 1][1] + (leg[i][1] - leg[i - 1][1]) * kk,
+        left,
+      };
     }
     need -= rest;
   }

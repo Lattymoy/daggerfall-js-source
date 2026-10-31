@@ -201,8 +201,8 @@
   {
     "name": "SHIPYARDS-two-first-mates",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "      if (role === FIRST_MATE) for (const o of hands) if (o.role === FIRST_MATE) o.role = 'Deckhand';\n",
-    "new": "",
+    "old": "      if (role === FIRST_MATE) for (const o of hands) if (o.role === FIRST_MATE) o.role = 'Deckhand';\n      /** @type {'male'|'female'} */",
+    "new": "      /** @type {'male'|'female'} */",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SHIPYARDS-a-name-twice",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "!r.name || hands.some((h) => h.name === r.name)) return null;",
-    "new": "!r.name) return null;",
+    "old": "      if (!r || typeof r.name !== 'string' || !r.name || hands.some((h) => h.name === r.name)) return null;",
+    "new": "      if (!r || typeof r.name !== 'string' || !r.name) return null;",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "PIERS-no-braces",
     "file": "src/systems/naval/quays.js",
-    "old": "      braces.push([[a[0], top, a[1]], [b[0], low, b[1]]], [[a[0], low, a[1]], [b[0], top, b[1]]]);\n",
-    "new": "",
+    "old": "      braces.push(\n        [\n          [a[0], top, a[1]],\n          [b[0], low, b[1]],\n        ],\n        [\n          [a[0], low, a[1]],\n          [b[0], top, b[1]],\n        ],\n      );\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "PIERS-a-fender-in-the-lane",
     "file": "src/systems/naval/quays.js",
-    "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) || ladders.some(",
-    "new": "    if (ladders.some(",
+    "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) || ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
+    "new": "    if (ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]
@@ -462,7 +462,7 @@
   {
     "name": "PIERS-a-crane-at-every-berth",
     "file": "src/systems/naval/quays.js",
-    "old": "  if ((index >>> 0) === 0) {",
+    "old": "  if (index >>> 0 === 0) {",
     "new": "  if (true) {",
     "tests": [
       "test/systems/naval/piers1.test.js"
@@ -471,8 +471,8 @@
   {
     "name": "PIERS-the-jib-out-of-the-quay",
     "file": "src/systems/naval/quays.js",
-    "old": "dir: -end, up: CRANE_UP,",
-    "new": "dir: end, up: CRANE_UP,",
+    "old": "      crane = { x: x1 - 0.75, z: cz, dir: -end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP }; // its jib along the quay, toward its middle",
+    "new": "      crane = { x: x1 - 0.75, z: cz, dir: end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP }; // its jib along the quay, toward its middle",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "PIERS-no-jetty-lamps",
     "file": "src/systems/naval/quays.js",
-    "old": "      jettyLanterns.push([lx, side > 0 ? jetty.z0 + 0.06 : jetty.z1 - 0.06, side]);\n",
-    "new": "",
+    "old": "      jettyLanterns.push([lx, side > 0 ? jetty.z0 + 0.06 : jetty.z1 - 0.06, side]);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "PIERS-hung-out-over-the-water",
     "file": "src/systems/naval/quays.js",
-    "old": "[lx, deck + LANTERN_UP - LANTERN_DROP, lz + side * LANTERN_ARM];",
-    "new": "[lx, deck + LANTERN_UP - LANTERN_DROP, lz - side * LANTERN_ARM];",
+    "old": "export const jettyLanternHead = (lx, lz, side, deck) => [lx, deck + LANTERN_UP - LANTERN_DROP, lz + side * LANTERN_ARM];",
+    "new": "export const jettyLanternHead = (lx, lz, side, deck) => [lx, deck + LANTERN_UP - LANTERN_DROP, lz - side * LANTERN_ARM];",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "PIERS-the-jettys-lamps-unlit",
     "file": "src/systems/naval/quays.js",
-    "old": "    ...(plan.jettyLanterns ?? []).map(",
-    "new": "    ...[].map(",
+    "old": "    ...(plan.jettyLanterns ?? []).map(([lx, lz, side]) => at(jettyLanternHead(lx, lz, side, plan.deck))),",
+    "new": "    ...[].map(([lx, lz, side]) => at(jettyLanternHead(lx, lz, side, plan.deck))),",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]

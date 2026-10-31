@@ -110,8 +110,8 @@
   {
     "name": "A2-exchange-buys-back",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
-    "new": "buy: Math.max(1, Math.round(p.mid * (1 - k) * pay)), exotic,",
+    "old": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))),",
+    "new": "      buy: Math.max(1, Math.round(p.mid * (1 - k) * pay)),",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

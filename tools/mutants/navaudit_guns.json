@@ -499,8 +499,8 @@
   {
     "name": "NAV1G-the-bits-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "sh.fire ? 1 : 0, (sh.runOut | 0) & 15,",
-    "new": "sh.fire ? 1 : 0, 0,",
+    "old": "      (sh.runOut | 0) & 15,",
+    "new": "      0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "NAV1G-an-old-word-refused",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(w.length !== 16 && w.length !== 17 && w.length !== 19)",
-    "new": "(w.length !== 17 && w.length !== 19)",
+    "old": "  if (!Array.isArray(w) || (w.length !== 16 && w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite))\n    return null;",
+    "new": "  if (!Array.isArray(w) || (w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite)) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "NAV1G-the-barrel-fire-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "f: fire === 'barrel' ? 2 : fire ? 1 : 0,",
-    "new": "f: fire ? 1 : 0,",
+    "old": "    f: fire === 'barrel' ? 2 : fire ? 1 : 0,",
+    "new": "    f: fire ? 1 : 0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]

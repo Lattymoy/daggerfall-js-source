@@ -101,8 +101,8 @@
   {
     "name": "TD-shared-never",
     "file": "src/systems/naval/seaClock.js",
-    "old": "  for (const p of peers) if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;\n",
-    "new": "",
+    "old": "  for (const p of peers)\n    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TD-shared-height",
     "file": "src/systems/naval/seaClock.js",
-    "old": "Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2])",
-    "new": "Math.hypot(p.feet[0] - feet[0], p.feet[1] - feet[1], p.feet[2] - feet[2])",
+    "old": "    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;",
+    "new": "    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[1] - feet[1], p.feet[2] - feet[2]) <= radius)\n      return true;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]

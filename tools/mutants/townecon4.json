@@ -52,8 +52,8 @@
   {
     "name": "TOWNECON4-ask-unread",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask));",
-    "new": "const sell = Math.max(2, Math.round(p.mid * (1 + k)));",
+    "old": "    const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask)); // SEA-TRADE: the port town's asking factor",
+    "new": "    const sell = Math.max(2, Math.round(p.mid * (1 + k))); // SEA-TRADE: the port town's asking factor",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TOWNECON4-pay-unread",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "Math.round(p.mid * (1 - k) * pay)",
-    "new": "Math.round(p.mid * (1 - k))",
+    "old": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))),",
+    "new": "      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k)))),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TOWNECON4-pay-unheld",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "? Math.min(ask, town.pay) : 1;",
-    "new": "? town.pay : 1;",
+    "old": "  const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? Math.min(ask, town.pay) : 1;",
+    "new": "  const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? town.pay : 1;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TOWNECON4-bad-factor",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;",
-    "new": "const ask = town && town.ask != null ? Number(town.ask) || 0.01 : 1;",
+    "old": "  const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;",
+    "new": "  const ask = town && town.ask != null ? Number(town.ask) || 0.01 : 1;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],

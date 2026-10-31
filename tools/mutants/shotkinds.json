@@ -2,8 +2,8 @@
   {
     "name": "SHOT-grape-no-men",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 4,",
-    "new": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 1,",
+    "old": "    crew: 4,",
+    "new": "    crew: 1,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHOT-sweep-unswept",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "radius: gun.radius + Math.max(0, a.sweep - o.sweep),",
-    "new": "radius: gun.radius,",
+    "old": "    radius: gun.radius + Math.max(0, a.sweep - o.sweep),",
+    "new": "    radius: gun.radius,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHOT-cycle-back-forward",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "(dir < 0 ? SHOT_ORDER.length - 1 : 1)",
-    "new": "1",
+    "old": "export const nextShot = (shot, dir = 1) =>\n  SHOT_ORDER[(SHOT_ORDER.indexOf(shotId(shot)) + (dir < 0 ? SHOT_ORDER.length - 1 : 1)) % SHOT_ORDER.length];",
+    "new": "export const nextShot = (shot, dir = 1) => SHOT_ORDER[(SHOT_ORDER.indexOf(shotId(shot)) + 1) % SHOT_ORDER.length];",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SHOT-heated-cold",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "  const c = shot == null ? fireChance : SHOT[shotId(shot)].fire ?? fireChance;",
+    "old": "  const c = shot == null ? fireChance : (SHOT[shotId(shot)].fire ?? fireChance);",
     "new": "  const c = fireChance;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "SHOT-wire-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]);   // SHOT-KINDS",
-    "new": "",
+    "old": "    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]); // SHOT-KINDS\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "SHOT-wire-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  for (const vo of volleys) { const w = loaded.find((x) => x[0] === vo.id); if (w) vo.shot = SHOT_ORDER[w[1]]; }",
+    "old": "  for (const vo of volleys) {\n    const w = loaded.find((x) => x[0] === vo.id);\n    if (w) vo.shot = SHOT_ORDER[w[1]];\n  }",
     "new": "",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "SHOT-wire-door-open",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[1], 0, SHOT_ORDER.length - 1)) return null;",
-    "new": "!int(w[1], 0, 9)) return null;",
+    "old": "    if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, U32) || !int(w[1], 0, SHOT_ORDER.length - 1)) return null;",
+    "new": "    if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, U32) || !int(w[1], 0, 9)) return null;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]

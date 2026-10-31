@@ -57,8 +57,8 @@
   {
     "name": "ACS-B16-exotic",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
-    "new": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic: false,",
+    "old": "      exotic, // SEA-TRADE: and its paying factor   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here",
+    "new": "      exotic: false, // SEA-TRADE: and its paying factor   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "ACS-B6-redraw-loop",
     "file": "src/systems/naval/treasureCharts.js",
-    "old": "    if (!site) continue;\n",
-    "new": "    if (!site) return null;\n",
+    "old": "    if (!site) continue;",
+    "new": "    if (!site) return null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "ACS-C7-count",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "for (const x of hands) held.set(x.role, (held.get(x.role) ?? 0) + 1);",
-    "new": "void hands;",
+    "old": "        for (const x of hands) held.set(x.role, (held.get(x.role) ?? 0) + 1);",
+    "new": "        void hands;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "ACS-C7-order",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best)",
-    "new": "((held.get(r) ?? 0) <= (held.get(best) ?? 0) ? r : best)",
+    "old": "      : ROLES.reduce((best, r) => ((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best), ROLES[0]);",
+    "new": "      : ROLES.reduce((best, r) => ((held.get(r) ?? 0) <= (held.get(best) ?? 0) ? r : best), ROLES[0]);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "ACS-C8-hire-apart",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "fights: 0, boardings: 0, prior: start };",
-    "new": "fights: start, boardings: 0, prior: 0 };",
+    "old": "          fights: 0,\n          boardings: 0,\n          prior: start,",
+    "new": "          fights: start,\n          boardings: 0,\n          prior: 0,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "ACS-C8-prior-kept",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "        prior: clamp(h.prior | 0, 0, VETERANCY[VETERANCY.length - 1].at),",
-    "new": "        prior: 0,",
+    "old": "          prior: clamp(h.prior | 0, 0, VETERANCY[VETERANCY.length - 1].at), // AUDIT CAPTAIN'S SEA C8: a hire's service, kept apart",
+    "new": "          prior: 0, // AUDIT CAPTAIN'S SEA C8: a hire's service, kept apart",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/captcrew.test.js",
@@ -471,8 +471,8 @@
   {
     "name": "ACS-C10-wear-guard",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
-    "new": "seaT += dt / Math.max(1, wear);",
+    "old": "        seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
+    "new": "        seaT += dt / Math.max(1, wear);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "ACS-D8-wire-ships",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (sh.deep) d.push(sh.n | 0);",
-    "new": "    void sh;",
+    "old": "    if (sh.deep) d.push(sh.n | 0); // AUDIT CAPTAIN'S SEA D8",
+    "new": "    void sh; // AUDIT CAPTAIN'S SEA D8",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "ACS-D8-wire-casks",
     "file": "src/systems/naval/navalWire.js",
-    "old": " if (c.deep) e.push(c.id >>> 0); }",
-    "new": " }",
+    "old": "      if (c.deep) e.push(c.id >>> 0);\n    } // AUDIT CAPTAIN'S SEA D8",
+    "new": "    } // AUDIT CAPTAIN'S SEA D8",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -680,7 +680,7 @@
   {
     "name": "ACS-D8-read-checked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (!Array.isArray(deepShips) || deepShips.length > NAVAL_WIRE_SHIPS || !deepShips.every((x) => int(x, 0, 0xffff))) return null;",
+    "old": "  if (!Array.isArray(deepShips) || deepShips.length > NAVAL_WIRE_SHIPS || !deepShips.every((x) => int(x, 0, 0xffff)))\n    return null;",
     "new": "  if (!Array.isArray(deepShips)) return null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -1207,8 +1207,8 @@
   {
     "name": "ACS-H1-reach-unread",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
-    "new": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > HARBOUR_REACH) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
+    "new": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > HARBOUR_REACH) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2376,8 +2376,8 @@
   {
     "name": "ACS-S11-tone",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "rows, tone: 'unknown', study, hint };   // AUDIT CAPTAIN'S SEA S11",
-    "new": "rows, tone: f.hostile ? 'hostile' : 'unknown', study, hint };   // AUDIT CAPTAIN'S SEA S11",
+    "old": "    return { title: unknownName(f.hull), sub: 'Colors not yet identified', rows, tone: 'unknown', study, hint }; // AUDIT CAPTAIN'S SEA S11: nothing of her stance - not even a red title",
+    "new": "    return {\n      title: unknownName(f.hull),\n      sub: 'Colors not yet identified',\n      rows,\n      tone: f.hostile ? 'hostile' : 'unknown',\n      study,\n      hint,\n    }; // AUDIT CAPTAIN'S SEA S11: nothing of her stance - not even a red title",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2385,8 +2385,8 @@
   {
     "name": "ACS-S18-one-hand",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "crew < 1.5 ? 'a hand' : crew < 2.5",
-    "new": "crew < 2.5",
+    "old": "  crew <= 0\n    ? 'no hands'\n    : crew < 1.5\n      ? 'a hand'\n      : crew < 2.5\n        ? 'a hand or two'\n        : `about ${Math.round(crew / 5) * 5} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
+    "new": "  crew <= 0 ? 'no hands' : crew < 2.5 ? 'a hand or two' : `about ${Math.round(crew / 5) * 5} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2394,8 +2394,8 @@
   {
     "name": "ACS-S18-two-hands",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "crew < 2.5 ? 'a hand or two' : ",
-    "new": "",
+    "old": "  crew <= 0\n    ? 'no hands'\n    : crew < 1.5\n      ? 'a hand'\n      : crew < 2.5\n        ? 'a hand or two'\n        : `about ${Math.round(crew / 5) * 5} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
+    "new": "  crew <= 0 ? 'no hands' : crew < 1.5 ? 'a hand' : `about ${Math.round(crew / 5) * 5} hands`; // AUDIT CAPTAIN'S SEA S18: never \"about 1 hands\"",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2403,8 +2403,8 @@
   {
     "name": "ACS-S22-two-master",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "[HULL.SmallShip]: 'two-master'",
-    "new": "[HULL.SmallShip]: 'galleon'",
+    "old": "  [HULL.SmallShip]: 'two-master',",
+    "new": "  [HULL.SmallShip]: 'galleon',",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2484,8 +2484,8 @@
   {
     "name": "ACS-S19-field-clamp",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "angle <= Math.min(field, Math.max(",
-    "new": "angle <= Math.min(Math.PI, Math.max(",
+    "old": "    field,",
+    "new": "    Math.PI,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

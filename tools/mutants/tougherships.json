@@ -184,8 +184,8 @@
   {
     "name": "QUICK-REPAIRS-damage-control-as-strong-as-before",
     "file": "src/systems/naval/navalYard.js",
-    "old": "export const SEA_REPAIR_UNDER_FIRE = 0.125;",
-    "new": "export const SEA_REPAIR_UNDER_FIRE = 0.3;",
+    "old": "export const SEA_REPAIR_UNDER_FIRE = 0.125; // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)",
+    "new": "export const SEA_REPAIR_UNDER_FIRE = 0.3; // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SALVAGE-the-wire-key-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const lots = raw.f ?? [], wrecks = raw.w ?? [],",
-    "new": "const lots = raw.f ?? [], wrecks = [],",
+    "old": "    wrecks = raw.w ?? [],",
+    "new": "    wrecks = [],",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]

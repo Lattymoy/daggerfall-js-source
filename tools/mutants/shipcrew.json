@@ -2,8 +2,8 @@
   {
     "name": "SC-role-mate",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "(i === 0 ? FIRST_MATE : mobile === MOBILE.Bard ? 'Bard' : ROLES.reduce(",
-    "new": "(mobile === MOBILE.Bard ? 'Bard' : ROLES.reduce(",
+    "old": "  i === 0\n    ? FIRST_MATE\n    : mobile === MOBILE.Bard\n      ? 'Bard'\n      : ROLES.reduce((best, r) => ((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best), ROLES[0]);",
+    "new": "  mobile === MOBILE.Bard\n    ? 'Bard'\n    : ROLES.reduce((best, r) => ((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best), ROLES[0]);",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SC-hire-name-reused",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "name: handName(seed, hires++, gender, regionIndex, bank)",
-    "new": "name: handName(seed, i, gender, regionIndex, bank)",
+    "old": "          name: handName(seed, hires++, gender, regionIndex, bank),",
+    "new": "          name: handName(seed, i, gender, regionIndex, bank),",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ],
@@ -39,7 +39,7 @@
   {
     "name": "SC-fight-never-over",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "    fightOver() { losses = 0; },",
+    "old": "    fightOver() {\n      losses = 0;\n    },",
     "new": "    fightOver() {},",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "SC-port-uncapped",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "        if (morale < PORT_CAP) { portT += dt; const k = Math.floor(portT / PORT_RISE_S); if (k > 0) { portT -= k * PORT_RISE_S; morale = Math.min(PORT_CAP, morale + k); } } else portT = 0;",
-    "new": "        { portT += dt; const k = Math.floor(portT / PORT_RISE_S); if (k > 0) { portT -= k * PORT_RISE_S; morale = Math.min(MORALE_MAX, morale + k); } }",
+    "old": "        if (morale < PORT_CAP) {\n          portT += dt;\n          const k = Math.floor(portT / PORT_RISE_S);\n          if (k > 0) {\n            portT -= k * PORT_RISE_S;\n            morale = Math.min(PORT_CAP, morale + k);\n          }\n        } else portT = 0;",
+    "new": "        {\n          portT += dt;\n          const k = Math.floor(portT / PORT_RISE_S);\n          if (k > 0) {\n            portT -= k * PORT_RISE_S;\n            morale = Math.min(MORALE_MAX, morale + k);\n          }\n        }",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "SC-sea-clock-unkept",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "if (k > 0) { seaT -= k * SEA_DECAY_S; bump(-k); }",
-    "new": "if (k > 0) { seaT = 0; bump(-k); }",
+    "old": "          seaT -= k * SEA_DECAY_S;",
+    "new": "          seaT = 0;",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ],
@@ -77,7 +77,7 @@
   {
     "name": "SC-reload-unscaled",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "export const reloadScaleOf = (m, order = null) => (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
+    "old": "export const reloadScaleOf = (m, order = null) =>\n  (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
     "new": "export const reloadScaleOf = (m, order = null) => (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "SC-guns-order-unread",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "(order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
-    "new": "1;",
+    "old": "export const reloadScaleOf = (m, order = null) =>\n  (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
+    "new": "export const reloadScaleOf = (m, order = null) => (1 - MORALE_RELOAD * moraleFactor(m)) * 1;",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "SC-rail-no-hand",
     "file": "src/systems/naval/shipCrew.js",
-    "old": " + (order === CREW_ORDERS.rail ? 1 : 0);",
-    "new": ";",
+    "old": "export const handsBonusOf = (m, order = null) =>\n  (m >= HIGH_SPIRITS ? 1 : 0) - (m <= LOW_SPIRITS ? 1 : 0) + (order === CREW_ORDERS.rail ? 1 : 0);",
+    "new": "export const handsBonusOf = (m, order = null) => (m >= HIGH_SPIRITS ? 1 : 0) - (m <= LOW_SPIRITS ? 1 : 0);",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]
@@ -131,7 +131,7 @@
   {
     "name": "SC-orders-crewless-guns",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "  const ids = crewed ? [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand] : [CREW_ORDERS.repair, CREW_ORDERS.stand];",
+    "old": "  const ids = crewed\n    ? [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand]\n    : [CREW_ORDERS.repair, CREW_ORDERS.stand];",
     "new": "  const ids = [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand];",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "SR-alone-full",
     "file": "src/systems/naval/navalYard.js",
-    "old": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;   // AUDIT CC-D2",
-    "new": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : 1;   // AUDIT CC-D2",
+    "old": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE; // AUDIT CC-D2",
+    "new": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : 1; // AUDIT CC-D2",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ],

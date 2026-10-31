@@ -317,8 +317,8 @@
   {
     "name": "WW7-8-wire-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (named) r.push([sh.n | 0, ...named]);\n",
-    "new": "",
+    "old": "    if (named) r.push([sh.n | 0, ...named]);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WW7-8-reader-region-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (sh.region < 0 && nm.region >= 0) sh.region = nm.region;\n",
-    "new": "",
+    "old": "    if (sh.region < 0 && nm.region >= 0) sh.region = nm.region;\n    sh.area = nm.area;",
+    "new": "    sh.area = nm.area;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WW7-8-reader-area-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    sh.area = nm.area;\n",
-    "new": "",
+    "old": "    sh.area = nm.area;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WW7-8-door-length",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (!Array.isArray(w) || w.length !== 3 || !int(w[0], 0, 0xffff) || !(w[1] === -1 || provinceRegionOk(w[1]))",
-    "new": "if (!Array.isArray(w) || w.length < 2 || !int(w[0], 0, 0xffff) || !(w[1] === -1 || provinceRegionOk(w[1]))",
+    "old": "      w.length !== 3 ||",
+    "new": "      w.length < 2 ||",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WW7-8-door-says-nothing",
     "file": "src/systems/naval/navalWire.js",
-    "old": " || (w[1] === -1 && w[2] === -1)) return null;",
-    "new": ") return null;",
+    "old": "      !(w[2] === -1 || provinceAreaOk(w[2])) ||\n      (w[1] === -1 && w[2] === -1)",
+    "new": "      !(w[2] === -1 || provinceAreaOk(w[2]))",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "WW7-8-door-count",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (!Array.isArray(raw) || raw.length > NAVAL_WIRE_SHIPS) return null;\n  for (const w of raw) {\n    if (!Array.isArray(w) || w.length !== 3",
-    "new": "  if (!Array.isArray(raw) || raw.length > 99) return null;\n  for (const w of raw) {\n    if (!Array.isArray(w) || w.length !== 3",
+    "old": "function validNaming(raw) {\n  const out = new Map();\n  if (raw === undefined) return out;\n  if (!Array.isArray(raw) || raw.length > NAVAL_WIRE_SHIPS) return null;\n  for (const w of raw) {\n    if (",
+    "new": "function validNaming(raw) {\n  const out = new Map();\n  if (raw === undefined) return out;\n  if (!Array.isArray(raw) || raw.length > 99) return null;\n  for (const w of raw) {\n    if (",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]

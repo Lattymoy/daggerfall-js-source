@@ -282,8 +282,8 @@
   {
     "name": "SHIPS2-L-the-fallbacks-gangway-dropped",
     "file": "src/systems/naval/quays.js",
-    "old": "export const MOD_GANGWAYS = Object.freeze({ 1: MOD_LARGE_BOAT_GANGWAY, ",
-    "new": "export const MOD_GANGWAYS = Object.freeze({ ",
+    "old": "export const MOD_GANGWAYS = Object.freeze({\n  1: MOD_LARGE_BOAT_GANGWAY,\n  2: MOD_SMALL_SHIP_GANGWAY,\n  4: MOD_CARRACK_GANGWAY,\n});",
+    "new": "export const MOD_GANGWAYS = Object.freeze({ 2: MOD_SMALL_SHIP_GANGWAY, 4: MOD_CARRACK_GANGWAY });",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],

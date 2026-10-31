@@ -2,8 +2,8 @@
   {
     "name": "PORTSHIPS-berth-unasked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;",
-    "new": "      if (stands && false) continue;",
+    "old": "        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town",
+    "new": "        if (stands && false) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PORTSHIPS-approach-unasked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;",
-    "new": "      if (stands && false) continue;",
+    "old": "        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue; // PORT-SHIPS: and her approach's hull",
+    "new": "        if (stands && false) continue; // PORT-SHIPS: and her approach's hull",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PORTSHIPS-quay-band-unsampled",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);",
-    "new": "  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth;",
+    "old": "    inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);",
+    "new": "    inn = halfWidth;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PORTSHIPS-ground-a-bank-afloat",
     "file": "src/systems/naval/shipLife.js",
-    "old": "if (ground(p[0], p[1]) > BERTH_DRY_M) return false; }",
-    "new": "if (ground(p[0], p[1]) > 10) return false; }",
+    "old": "        if (ground(p[0], p[1]) > BERTH_DRY_M) return false;",
+    "new": "        if (ground(p[0], p[1]) > 10) return false;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]

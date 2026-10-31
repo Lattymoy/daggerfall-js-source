@@ -263,8 +263,8 @@
   {
     "name": "FISH-C4-a-fisher-on-s",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(cls < NAVAL_WIRE_OLD_CLASSES ? s : h).push([sh.n | 0,",
-    "new": "(cls < NAVAL_WIRE_OLD_CLASSES + 2 ? s : h).push([sh.n | 0,",
+    "old": "    (cls < NAVAL_WIRE_OLD_CLASSES ? s : h).push([",
+    "new": "    (cls < NAVAL_WIRE_OLD_CLASSES + 2 ? s : h).push([",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "FISH-C4-her-wreckage-on-w",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const old = cls < NAVAL_WIRE_OLD_CLASSES;",
-    "new": "const old = cls <= NAVAL_WIRE_OLD_CLASSES;",
+    "old": "    const old = cls < NAVAL_WIRE_OLD_CLASSES; // AUDIT HORIZONTAL C4: a later class's on `j`",
+    "new": "    const old = cls <= NAVAL_WIRE_OLD_CLASSES; // AUDIT HORIZONTAL C4: a later class's on `j`",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "FISH-C4-h-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (h.length) out.h = h;\n",
-    "new": "",
+    "old": "  if (h.length) out.h = h;\n  if (j.length) out.j = j;",
+    "new": "  if (j.length) out.j = j;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "FISH-C4-h-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "b = raw.b ?? [], later = raw.h ?? [];",
-    "new": "b = raw.b ?? [], later = [];",
+    "old": "    later = raw.h ?? [];",
+    "new": "    later = [];",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "FISH-C4-j-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "wrecks = raw.w ?? [], later2 = raw.j ?? [];",
-    "new": "wrecks = raw.w ?? [], later2 = [];",
+    "old": "    later2 = raw.j ?? [];",
+    "new": "    later2 = [];",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "FISH-C4-the-doors-ships",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (s.length + later.length > NAVAL_WIRE_SHIPS ||",
-    "new": "if (s.length > NAVAL_WIRE_SHIPS ||",
+    "old": "  if (s.length + later.length > NAVAL_WIRE_SHIPS || v.length > NAVAL_WIRE_VOLLEYS || b.length > NAVAL_WIRE_BARRELS)\n    return null;",
+    "new": "  if (s.length > NAVAL_WIRE_SHIPS || v.length > NAVAL_WIRE_VOLLEYS || b.length > NAVAL_WIRE_BARRELS) return null;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "FISH-C4-the-shared-casks",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS",
-    "new": "(salvage ? w : f).length >= NAVAL_WIRE_CASKS",
+    "old": "    if ((salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS) continue;",
+    "new": "    if ((salvage ? w : f).length >= NAVAL_WIRE_CASKS) continue;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "FISH-C4-a-lot-on-w",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!wrecks.every((w) => w?.length === 5)",
-    "new": "!wrecks.every((w) => w?.length >= 5)",
+    "old": "  if (!lots.every((w) => w?.length === 6) || !wrecks.every((w) => w?.length === 5)) return null;",
+    "new": "  if (!lots.every((w) => w?.length === 6) || !wrecks.every((w) => w?.length >= 5)) return null;",
     "tests": [
       "test/systems/naval/fishboats.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "QUAY-C10-the-hulls-way-unsaid",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "if (t < d) { d = t; way = Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0); }",
-    "new": "if (t < d) { d = t; way = 0; }",
+    "old": "        way = Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0);",
+    "new": "        way = 0;",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "QUAY-C10-the-host-look-unled",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "const t = hullAlong(p, dx, dz, far, ledHulls(box, v));",
-    "new": "const t = hullAlong(p, dx, dz, far, []);",
+    "old": "      const t = hullAlong(p, dx, dz, far, ledHulls(box, v));",
+    "new": "      const t = hullAlong(p, dx, dz, far, []);",
     "tests": [
       "test/scenes/naval/passagequay.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "ALDBRUGH-the-square-read-round",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
-    "new": "      if ((square ? Math.hypot(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
+    "new": "      if ((square ? Math.hypot(dx, dz) : Math.hypot(dx, dz)) > reach) continue; // ALDBRUGH-QUAY: `square`, the port law's own ring of pixels, corners and all",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]

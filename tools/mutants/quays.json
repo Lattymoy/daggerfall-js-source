@@ -29,8 +29,8 @@
   {
     "name": "QUAY-face-no-gap",
     "file": "src/systems/naval/quays.js",
-    "old": "  const x0 = frame.halfWidth + QUAY_GAP, x1 = x0 + QUAY_WIDTH;",
-    "new": "  const x0 = frame.halfWidth, x1 = x0 + QUAY_WIDTH;",
+    "old": "  const x0 = frame.halfWidth + QUAY_GAP,",
+    "new": "  const x0 = frame.halfWidth,",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QUAY-no-ends",
     "file": "src/systems/naval/quays.js",
-    "old": "  const z0 = frame.z0 - QUAY_ENDS, z1 = frame.z1 + QUAY_ENDS;",
-    "new": "  const z0 = frame.z0, z1 = frame.z1;",
+    "old": "  const z0 = frame.z0 - QUAY_ENDS,\n    z1 = frame.z1 + QUAY_ENDS;",
+    "new": "  const z0 = frame.z0,\n    z1 = frame.z1;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QUAY-unbuilt-laid",
     "file": "src/systems/naval/quays.js",
-    "old": "    if (!Number.isFinite(g)) { unbuilt = true; return NaN; }",
-    "new": "    if (!Number.isFinite(g)) { return NaN; }",
+    "old": "      unbuilt = true;\n      return NaN;",
+    "new": "      return NaN;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QUAY-pile-foot-unbounded",
     "file": "src/systems/naval/quays.js",
-    "old": "  const footOf = (lx, lz) => { const g = ground(lx, lz); return Math.max(-PILE_DEPTH, Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH); };",
-    "new": "  const footOf = (lx, lz) => { const g = ground(lx, lz); return Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH; };",
+    "old": "    return Math.max(-PILE_DEPTH, Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH);",
+    "new": "    return Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "QUAY-one-row-of-piles",
     "file": "src/systems/naval/quays.js",
-    "old": "  pileRow(x1 - PILE_R, z0 + PILE_R, z1 - PILE_R);\n",
-    "new": "",
+    "old": "  pileRow(x1 - PILE_R, z0 + PILE_R, z1 - PILE_R);\n  // the shore, walked from the quay's back along +x at her waist",
+    "new": "  // the shore, walked from the quay's back along +x at her waist",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "QUAY-bank-no-land-in",
     "file": "src/systems/naval/quays.js",
-    "old": "x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0), z0",
-    "new": "x1: x1 + t, z0",
+    "old": "      jetty = {\n        x0: x1,\n        x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0),\n        z0: zJ - JETTY_WIDTH / 2,\n        z1: zJ + JETTY_WIDTH / 2,\n      };",
+    "new": "      jetty = { x0: x1, x1: x1 + t, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };",
     "tests": [
       "test/systems/naval/quays.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "QUAY-ramp-under-the-ground",
     "file": "src/systems/naval/quays.js",
-    "old": "        if (y <= gs + 0.05) { end = s; endY = Math.max(y, gs); break; }",
-    "new": "        if (y <= gs + 0.05) { end = s; endY = y; break; }",
+    "old": "          endY = Math.max(y, gs);",
+    "new": "          endY = y;",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "QUAY-ramp-never-meets",
     "file": "src/systems/naval/quays.js",
-    "old": "        if (y <= gs + 0.05) { end = s; endY = Math.max(y, gs); break; }",
-    "new": "        if (y <= gs - 50) { end = s; endY = Math.max(y, gs); break; }",
+    "old": "        if (y <= gs + 0.05) {",
+    "new": "        if (y <= gs - 50) {",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -147,7 +147,7 @@
   {
     "name": "QUAY-cargo-in-the-jetty",
     "file": "src/systems/naval/quays.js",
-    "old": "    if (Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 || Math.abs(lz) < GANGWAY_LANE || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
+    "old": "    if (\n      Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 ||\n      Math.abs(lz) < GANGWAY_LANE ||\n      Math.abs(lz - z0) < 1.6 ||\n      Math.abs(lz - z1) < 1.6\n    )\n      continue;",
     "new": "    if (Math.abs(lz) < GANGWAY_LANE || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
     "tests": [
       "test/systems/naval/quays.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "QUAY-dock-taken",
     "file": "src/systems/naval/quays.js",
-    "old": "    if (b.free === false) continue;",
-    "new": "",
+    "old": "    if (b.free === false) continue;\n    const at = alongside(b.berth, ship.hull, b.hull ?? BERTH_HULL);",
+    "new": "    const at = alongside(b.berth, ship.hull, b.hull ?? BERTH_HULL);",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "QUAY-moored-at-the-point",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } };   // QUAYS: her side to its quay",
-    "new": "      return { hold: { pos: b.pos, yaw: b.yaw } };   // QUAYS: her side to its quay",
+    "old": "      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } }; // QUAYS: her side to its quay",
+    "new": "      return { hold: { pos: b.pos, yaw: b.yaw } }; // QUAYS: her side to its quay",
     "tests": [
       "test/systems/naval/quays.test.js",
       "test/systems/naval/shiplife.test.js"

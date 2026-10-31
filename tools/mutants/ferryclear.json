@@ -48,8 +48,8 @@
   {
     "name": "FERRYCLEAR-alongside-blind",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "    if (hit && hit.t === 0) hit = segmentBoxEntry(a, b, box, 0);   // within her clearance already: her side itself\n",
-    "new": "",
+    "old": "    if (hit && hit.t === 0) hit = segmentBoxEntry(a, b, box, 0); // within her clearance already: her side itself\n    if (!hit || hit.t === 0) continue;",
+    "new": "    if (!hit || hit.t === 0) continue;",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "AUDITFERRY-F3-peers-unseen",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "    for (const p of host.peerBoats()) if (p?.boat) out.push([host.hullBox(p.boat), p.vel]);\n",
-    "new": "",
+    "old": "    for (const p of host.peerBoats()) if (p?.boat) out.push([host.hullBox(p.boat), p.vel]);\n    const mine = host.myBoat();",
+    "new": "    const mine = host.myBoat();",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "AUDITFERRY-F3-the-helms-own-seen",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "if (b !== mine) out.push([host.hullBox(b), null]);",
-    "new": "out.push([host.hullBox(b), null]);",
+    "old": "    for (const b of host.myBoats()) if (b !== mine) out.push([host.hullBox(b), null]);",
+    "new": "    for (const b of host.myBoats()) out.push([host.hullBox(b), null]);",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
     ]

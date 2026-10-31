@@ -610,8 +610,8 @@
   {
     "name": "NAV1H-the-crews-share-unread",
     "file": "src/systems/naval/navalYard.js",
-    "old": "(crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE)",
-    "new": "(crewed ? 1 : FIELD_MEND_ALONE)",
+    "old": "  const rate =\n    FIELD_MEND_PER_S *\n    (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) *\n    Math.max(0, scale) *\n    Math.max(0, dt);",
+    "new": "  const rate = FIELD_MEND_PER_S * (crewed ? 1 : FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "NAV1H-the-lone-hand-rate",
     "file": "src/systems/naval/navalYard.js",
-    "old": ": FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);",
-    "new": ": 1) * Math.max(0, scale) * Math.max(0, dt);",
+    "old": "    FIELD_MEND_PER_S *\n    (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) *\n    Math.max(0, scale) *\n    Math.max(0, dt);",
+    "new": "    FIELD_MEND_PER_S * (crewed ? Math.max(0, Math.min(1, crewShare)) : 1) * Math.max(0, scale) * Math.max(0, dt);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],

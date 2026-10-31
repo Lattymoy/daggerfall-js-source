@@ -412,8 +412,8 @@
   {
     "name": "ACT-P10-isle-by-key",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "  if (port?.ether) return 'wants';\n  const r = mulberry32(hashKey(`${port?.key ?? ''}:crew`) >>> 0);",
-    "new": "  if (port?.ether && port?.key === '700,40') return 'wants';\n  const r = mulberry32(hashKey(`${port?.key ?? ''}:crew`) >>> 0);",
+    "old": "  if (port?.ether) return 'wants';",
+    "new": "  if (port?.ether && port?.key === '700,40') return 'wants';",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"

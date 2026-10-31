@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-GN-G3-lay-never-said",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (laid) out.g = laid;\n",
-    "new": "",
+    "old": "  if (laid) out.g = laid;\n  if (k.length) out.k = k;",
+    "new": "  if (k.length) out.k = k;",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-GN-G3-lay-never-read",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const laid = SIDE_CODES.filter((_, i) => ((raw.g ?? 0) & (1 << i)) !== 0);",
-    "new": "const laid = [];",
+    "old": "  const laid = SIDE_CODES.filter((_, i) => ((raw.g ?? 0) & (1 << i)) !== 0);",
+    "new": "  const laid = [];",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-GN-G3-lay-unchecked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (raw.g !== undefined && !int(raw.g, 0, 15)) return null;\n",
-    "new": "",
+    "old": "  if (raw.g !== undefined && !int(raw.g, 0, 15)) return null;\n  const laid = SIDE_CODES.filter((_, i) => ((raw.g ?? 0) & (1 << i)) !== 0);",
+    "new": "  const laid = SIDE_CODES.filter((_, i) => ((raw.g ?? 0) & (1 << i)) !== 0);",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]

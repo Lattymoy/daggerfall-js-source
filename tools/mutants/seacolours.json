@@ -2,8 +2,8 @@
   {
     "name": "SEA-navy-paint-lost",
     "file": "src/systems/naval/seaColours.js",
-    "old": "    : f === 'navy' ? CROWN_COLOURS[who.crown ?? '']?.livery ?? null\n",
-    "new": "    : f === 'navy' ? null\n",
+    "old": "      ? (CROWN_COLOURS[who.crown ?? '']?.livery ?? null)",
+    "new": "      ? null",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SEA-merchant-unpainted",
     "file": "src/systems/naval/seaColours.js",
-    "old": "    : f === 'merchant' ? houseOf(who).livery\n",
-    "new": "    : f === 'merchant' ? null\n",
+    "old": "      : f === 'merchant'\n        ? houseOf(who).livery",
+    "new": "      : f === 'merchant'\n        ? null",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEA-disguise-crew-paint",
     "file": "src/systems/naval/seaColours.js",
-    "old": "    : f === 'pirate' ? (who.disguise ? houseOf(who).livery : crewOf(who).livery)\n",
-    "new": "    : f === 'pirate' ? crewOf(who).livery\n",
+    "old": "          ? who.disguise\n            ? houseOf(who).livery\n            : crewOf(who).livery",
+    "new": "          ? crewOf(who).livery",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SEA-legend-ignored",
     "file": "src/systems/naval/seaColours.js",
-    "old": "  const raw = legend ? legend.livery\n",
-    "new": "  const raw = false ? legend.livery\n",
+    "old": "  const raw = legend",
+    "new": "  const raw = false",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SEA-merchant-shape",
     "file": "src/systems/naval/seaColours.js",
-    "old": "  return c ? fitFlag({ shape: 'swallowtail', field: c.field,",
-    "new": "  return c ? fitFlag({ shape: 'flag', field: c.field,",
+    "old": "        shape: 'swallowtail',",
+    "new": "        shape: 'flag',",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEA-merchant-unparted",
     "file": "src/systems/naval/seaColours.js",
-    "old": "field: c.field, division: house.division, field2: house.colour,",
-    "new": "field: c.field, division: 'plain', field2: house.colour,",
+    "old": "        division: house.division,",
+    "new": "        division: 'plain',",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEA-colours-never-down",
     "file": "src/systems/naval/seaColours.js",
-    "old": "  if (colours !== 'hers') return null;\n",
-    "new": "",
+    "old": "  if (colours !== 'hers') return null;\n  const legend = who.legend ? LEGEND_COLOURS[who.legend] : null;",
+    "new": "  const legend = who.legend ? LEGEND_COLOURS[who.legend] : null;",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "SEA-navy-unflagged",
     "file": "src/systems/naval/seaColours.js",
-    "old": "    return c ? fitFlag({ shape: 'flag', field: c.field, division: 'plain', border: c.border, device: c.device, charge: c.charge }) : null;",
+    "old": "    return c\n      ? fitFlag({\n          shape: 'flag',\n          field: c.field,\n          division: 'plain',\n          border: c.border,\n          device: c.device,\n          charge: c.charge,\n        })\n      : null;",
     "new": "    return null;",
     "tests": [
       "test/systems/naval/seacolours.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "SEA-navy-device-lost",
     "file": "src/systems/naval/seaColours.js",
-    "old": "border: c.border, device: c.device, charge: c.charge })",
-    "new": "border: c.border, device: null, charge: null })",
+    "old": "      ? fitFlag({\n          shape: 'flag',\n          field: c.field,\n          division: 'plain',\n          border: c.border,\n          device: c.device,\n          charge: c.charge,\n        })",
+    "new": "      ? fitFlag({ shape: 'flag', field: c.field, division: 'plain', border: c.border, device: null, charge: null })",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-reach-ignored",
     "file": "src/systems/naval/seaColours.js",
-    "old": "    if (!(d <= SEA_FLAG_M)) continue;\n",
-    "new": "",
+    "old": "    if (!(d <= SEA_FLAG_M)) continue;\n    const flag = seaFlagOf(whoOf(e), e.colours);",
+    "new": "    const flag = seaFlagOf(whoOf(e), e.colours);",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEA-unsorted",
     "file": "src/systems/naval/seaColours.js",
-    "old": "  out.sort((a, b) => a.d - b.d);\n",
-    "new": "",
+    "old": "  out.sort((a, b) => a.d - b.d);\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]

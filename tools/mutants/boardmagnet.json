@@ -149,8 +149,8 @@
   {
     "name": "BM-an-old-builds-foul-refused",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's\n",
-    "new": "  if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's\n  if (nv.u !== undefined) return null;\n",
+    "old": "  if (nv.r !== undefined && (nv.r !== 1 || nv.g !== undefined || nv.k !== undefined)) return null; // a ram is a blow's",
+    "new": "  if (nv.u !== undefined) return null;\n  if (nv.r !== undefined && (nv.r !== 1 || nv.g !== undefined || nv.k !== undefined)) return null; // a ram is a blow's",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]

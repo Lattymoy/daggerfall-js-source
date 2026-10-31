@@ -59,7 +59,7 @@
   {
     "name": "QUAY-CROSSING-the-boxes-unweighed",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (boxes.some((o) => boxesMeet(o, box))) continue;",
+    "old": "        if (boxes.some((o) => boxesMeet(o, box))) continue;",
     "new": "",
     "tests": [
       "test/systems/naval/quaycrossing.test.js"

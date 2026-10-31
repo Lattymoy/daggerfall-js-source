@@ -20,8 +20,8 @@
   {
     "name": "LD-SL-night-without-harbour",
     "file": "src/systems/naval/shipLife.js",
-    "old": "const night = !!ctx.night && !!hb;",
-    "new": "const night = !!ctx.night;",
+    "old": "      const night = !!ctx.night && !!hb;",
+    "new": "      const night = !!ctx.night;",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LD-SL-lurk-sails-day-place",
     "file": "src/systems/naval/shipLife.js",
-    "old": "dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS",
-    "new": "dist2(here, e.at) > LURK_R * 0.5 ? 1 : LURK_SAILS",
+    "old": "      return plan(e.path[e.i], dist2(here, at) > LURK_R * 0.5 ? 1 : LURK_SAILS);",
+    "new": "      return plan(e.path[e.i], dist2(here, e.at) > LURK_R * 0.5 ? 1 : LURK_SAILS);",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LD-SL-ring-clear-from-day",
     "file": "src/systems/naval/shipLife.js",
-    "old": "if (clear(at, q)) ring.push(q);",
-    "new": "if (clear(e.at, q)) ring.push(q);",
+    "old": "          if (clear(at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
+    "new": "          if (clear(e.at, q)) ring.push(q); // AUDIT SHIP-LIFE A4: as the patrol's",
     "tests": [
       "test/systems/naval/auditwatchkit_net.test.js"
     ]

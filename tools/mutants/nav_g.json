@@ -11,8 +11,8 @@
   {
     "name": "NAV-G-the-ships-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (s.length + h.length >= NAVAL_WIRE_SHIPS) break;",
-    "new": "",
+    "old": "    if (s.length + h.length >= NAVAL_WIRE_SHIPS) break;\n    const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);",
+    "new": "    const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAV-G-the-states-range",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[12], 0, WIRE_STATES.length - 1)",
-    "new": "!int(w[12], 0, WIRE_STATES.length)",
+    "old": "  if (!int(w[9], 0, 100) || !int(w[10], 0, 100) || !int(w[11], 0, 100) || !int(w[12], 0, WIRE_STATES.length - 1))",
+    "new": "  if (!int(w[9], 0, 100) || !int(w[10], 0, 100) || !int(w[11], 0, 100) || !int(w[12], 0, WIRE_STATES.length))",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NAV-G-the-hits-ceiling",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(nv.h, 0, NAVAL_HIT_MAX)",
-    "new": "!int(nv.h, 0, 1e9)",
+    "old": "  if (!int(nv.n, 0, 0xffff) || !int(nv.h, 0, NAVAL_HIT_MAX) || !int(nv.s, 0, NAVAL_HIT_MAX) || !int(nv.c, 0, 60))\n    return null;",
+    "new": "  if (!int(nv.n, 0, 0xffff) || !int(nv.h, 0, 1e9) || !int(nv.s, 0, NAVAL_HIT_MAX) || !int(nv.c, 0, 60)) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "NAV-G-the-zones-swapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0 };",
-    "new": "z: zone === 'rig' ? 2 : zone === 'holed' ? 1 : 0 };",
+    "old": "    z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0,",
+    "new": "    z: zone === 'rig' ? 2 : zone === 'holed' ? 1 : 0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]

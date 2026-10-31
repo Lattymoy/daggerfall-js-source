@@ -39,38 +39,166 @@ export const GOODS_GROUP = 'UselessItems2';
 /** The goods, in the exchange's order: `{ id, name, unit, base (gold), kg, icon: [archive, record], ether? }`.
  *  @type {readonly Good[]} */
 export const GOODS = Object.freeze([
-  Object.freeze({ id: 'wine', name: 'Wine', unit: 'cask', units: 'casks', base: 30, kg: 10, icon: Object.freeze([205, 11]) }),
-  Object.freeze({ id: 'grain', name: 'Grain', unit: 'sack', units: 'sacks', base: 12, kg: 10, icon: Object.freeze([205, 17]) }),
-  Object.freeze({ id: 'wool', name: 'Wool', unit: 'bale', units: 'bales', base: 18, kg: 10, icon: Object.freeze([205, 24]) }),
-  Object.freeze({ id: 'iron', name: 'Iron', unit: 'pig', units: 'pigs', base: 24, kg: 12, icon: Object.freeze([254, 63]) }),
-  Object.freeze({ id: 'spice', name: 'Spices', unit: 'sack', units: 'sacks', base: 60, kg: 4, icon: Object.freeze([205, 18]) }),
-  Object.freeze({ id: 'silk', name: 'Silk', unit: 'bolt', units: 'bolts', base: 75, kg: 4, icon: Object.freeze([205, 21]) }),
-  Object.freeze({ id: 'silver', name: 'Silver', unit: 'bar', units: 'bars', base: 90, kg: 6, icon: Object.freeze([254, 65]) }),
-  Object.freeze({ id: 'ivory', name: 'Ivory', unit: 'tusk', units: 'tusks', base: 110, kg: 8, icon: Object.freeze([254, 70]) }),
+  Object.freeze({
+    id: 'wine',
+    name: 'Wine',
+    unit: 'cask',
+    units: 'casks',
+    base: 30,
+    kg: 10,
+    icon: Object.freeze([205, 11]),
+  }),
+  Object.freeze({
+    id: 'grain',
+    name: 'Grain',
+    unit: 'sack',
+    units: 'sacks',
+    base: 12,
+    kg: 10,
+    icon: Object.freeze([205, 17]),
+  }),
+  Object.freeze({
+    id: 'wool',
+    name: 'Wool',
+    unit: 'bale',
+    units: 'bales',
+    base: 18,
+    kg: 10,
+    icon: Object.freeze([205, 24]),
+  }),
+  Object.freeze({
+    id: 'iron',
+    name: 'Iron',
+    unit: 'pig',
+    units: 'pigs',
+    base: 24,
+    kg: 12,
+    icon: Object.freeze([254, 63]),
+  }),
+  Object.freeze({
+    id: 'spice',
+    name: 'Spices',
+    unit: 'sack',
+    units: 'sacks',
+    base: 60,
+    kg: 4,
+    icon: Object.freeze([205, 18]),
+  }),
+  Object.freeze({
+    id: 'silk',
+    name: 'Silk',
+    unit: 'bolt',
+    units: 'bolts',
+    base: 75,
+    kg: 4,
+    icon: Object.freeze([205, 21]),
+  }),
+  Object.freeze({
+    id: 'silver',
+    name: 'Silver',
+    unit: 'bar',
+    units: 'bars',
+    base: 90,
+    kg: 6,
+    icon: Object.freeze([254, 65]),
+  }),
+  Object.freeze({
+    id: 'ivory',
+    name: 'Ivory',
+    unit: 'tusk',
+    units: 'tusks',
+    base: 110,
+    kg: 8,
+    icon: Object.freeze([254, 70]),
+  }),
   // ETHER-PORTS: the Eltheric Ocean's, made on its isles alone
-  Object.freeze({ id: 'etheramber', name: 'Ether-amber', unit: 'lump', units: 'lumps', base: 240, kg: 2, icon: Object.freeze([254, 8]), ether: true }),
-  Object.freeze({ id: 'starglass', name: 'Starglass', unit: 'shard', units: 'shards', base: 320, kg: 1, icon: Object.freeze([254, 4]), ether: true }),
-  Object.freeze({ id: 'voidsilk', name: 'Voidsilk', unit: 'bolt', units: 'bolts', base: 280, kg: 2, icon: Object.freeze([254, 6]), ether: true }),
+  Object.freeze({
+    id: 'etheramber',
+    name: 'Ether-amber',
+    unit: 'lump',
+    units: 'lumps',
+    base: 240,
+    kg: 2,
+    icon: Object.freeze([254, 8]),
+    ether: true,
+  }),
+  Object.freeze({
+    id: 'starglass',
+    name: 'Starglass',
+    unit: 'shard',
+    units: 'shards',
+    base: 320,
+    kg: 1,
+    icon: Object.freeze([254, 4]),
+    ether: true,
+  }),
+  Object.freeze({
+    id: 'voidsilk',
+    name: 'Voidsilk',
+    unit: 'bolt',
+    units: 'bolts',
+    base: 280,
+    kg: 2,
+    icon: Object.freeze([254, 6]),
+    ether: true,
+  }),
 ]);
 export const goodById = (id) => GOODS.find((g) => g.id === id) ?? null;
 /** A good's template index (GOODS' order from GOODS_TEMPLATE). */
-export const goodTemplate = (id) => { const i = GOODS.findIndex((g) => g.id === id); return i < 0 ? null : GOODS_TEMPLATE + i; };
+export const goodTemplate = (id) => {
+  const i = GOODS.findIndex((g) => g.id === id);
+  return i < 0 ? null : GOODS_TEMPLATE + i;
+};
 /** The good a template index is, or null. */
-export const goodOfTemplate = (t) => (Number.isInteger(t) && t >= GOODS_TEMPLATE && t < GOODS_TEMPLATE + GOODS.length ? GOODS[t - GOODS_TEMPLATE] : null);
+export const goodOfTemplate = (t) =>
+  Number.isInteger(t) && t >= GOODS_TEMPLATE && t < GOODS_TEMPLATE + GOODS.length ? GOODS[t - GOODS_TEMPLATE] : null;
 
 /** The goods' template rows (none bound: a cask of wine changes hands). */
-export const GOODS_ROWS = Object.freeze(GOODS.map((g, i) => Object.freeze({
-  index: GOODS_TEMPLATE + i, name: g.name, baseWeight: g.kg, hitPoints: 1, capacityOrTarget: 0, basePrice: g.base,
-  enchantmentPoints: 0, rarity: g.ether ? 8 : 2, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: g.icon[0], worldTextureRecord: g.icon[1], playerTextureArchive: 0,
-  playerTextureRecord: 0, stackable: true,
-})));
+export const GOODS_ROWS = Object.freeze(
+  GOODS.map((g, i) =>
+    Object.freeze({
+      index: GOODS_TEMPLATE + i,
+      name: g.name,
+      baseWeight: g.kg,
+      hitPoints: 1,
+      capacityOrTarget: 0,
+      basePrice: g.base,
+      enchantmentPoints: 0,
+      rarity: g.ether ? 8 : 2,
+      variants: 0,
+      drawOrderOrEffect: 0,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: g.icon[0],
+      worldTextureRecord: g.icon[1],
+      playerTextureArchive: 0,
+      playerTextureRecord: 0,
+      stackable: true,
+    }),
+  ),
+);
 registerCustomTemplates(GOODS_ROWS);
 
 /** `n` of a good as one stack. */
-export const mintGood = (id, n) => mintCondition(setItemFields({ group: GOODS_GROUP, templateIndex: goodTemplate(id), material: 0, flags: 0, variant: 0, message: 0, stackCount: Math.max(1, n | 0) }));
+export const mintGood = (id, n) =>
+  mintCondition(
+    setItemFields({
+      group: GOODS_GROUP,
+      templateIndex: goodTemplate(id),
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: Math.max(1, n | 0),
+    }),
+  );
 /** How many of a good a list of items holds. */
-export const goodIn = (items, id) => { const t = goodTemplate(id); return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? Math.max(1, it.stackCount | 0) : 0), 0); };
+export const goodIn = (items, id) => {
+  const t = goodTemplate(id);
+  return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? Math.max(1, it.stackCount | 0) : 0), 0);
+};
 /** `n` of a good taken from a list of items (the stacks' counts down, a spent stack gone). Answers how many were taken. */
 export function takeGood(items, id, n) {
   const t = goodTemplate(id);
@@ -79,18 +207,36 @@ export function takeGood(items, id, n) {
     const it = items[i];
     if (it?.templateIndex !== t) continue;
     const have = Math.max(1, it.stackCount | 0);
-    if (have > left) { it.stackCount = have - left; left = 0; } else { items.splice(i, 1); left -= have; }
+    if (have > left) {
+      it.stackCount = have - left;
+      left = 0;
+    } else {
+      items.splice(i, 1);
+      left -= have;
+    }
   }
   return Math.max(0, n | 0) - left;
 }
 /** The weight of the goods in a list of items (kg). */
-export const goodsWeight = (items) => (items ?? []).reduce((kg, it) => { const g = goodOfTemplate(it?.templateIndex); return kg + (g ? g.kg * Math.max(1, it.stackCount | 0) : 0); }, 0);
+export const goodsWeight = (items) =>
+  (items ?? []).reduce((kg, it) => {
+    const g = goodOfTemplate(it?.templateIndex);
+    return kg + (g ? g.kg * Math.max(1, it.stackCount | 0) : 0);
+  }, 0);
 
 /** CREW-TRADE: a man at the exchange - half what the shipwright asks to find one (navalDamage.js REPAIR_PRICE.crew,
  *  pinned equal: this module is in the item law's graph, which the account service reads, and the sea's is not). */
 export const CREW_BASE = 15;
 /** CREW-TRADE: crew, the exchange's row that is no item - a headcount on the deck of the ship at the quay. */
-export const CREW = Object.freeze({ id: 'crew', name: 'Crew', unit: 'man', units: 'men', base: CREW_BASE, kg: 0, crew: true });
+export const CREW = Object.freeze({
+  id: 'crew',
+  name: 'Crew',
+  unit: 'man',
+  units: 'men',
+  base: CREW_BASE,
+  kg: 0,
+  crew: true,
+});
 /** CREW-TRADE: how a port stands to sailors - 'makes' (men to spare), 'wants' (short of them) or 'neither', a third of
  *  the Bay's ports each, off its key on its own scrambled draw (isleGood's: a plain hash bunches neighbours); every isle
  *  of the Veil short of them. The same on every client, as the key is. @param {{ key: string, ether?: boolean }} port */
@@ -113,13 +259,26 @@ export const TRADE_MOST = 0.75;
 export const EXOTIC_K = 1.4;
 /** What each crown's ports make and want. */
 export const CROWN_TRADE = Object.freeze({
-  Daggerfall: Object.freeze({ makes: Object.freeze(['grain', 'iron', 'wool']), wants: Object.freeze(['wine', 'spice', 'silk']) }),
-  Wayrest: Object.freeze({ makes: Object.freeze(['wine', 'silver']), wants: Object.freeze(['iron', 'ivory', 'grain']) }),
-  Sentinel: Object.freeze({ makes: Object.freeze(['spice', 'silk', 'ivory']), wants: Object.freeze(['wool', 'iron', 'silver']) }),
+  Daggerfall: Object.freeze({
+    makes: Object.freeze(['grain', 'iron', 'wool']),
+    wants: Object.freeze(['wine', 'spice', 'silk']),
+  }),
+  Wayrest: Object.freeze({
+    makes: Object.freeze(['wine', 'silver']),
+    wants: Object.freeze(['iron', 'ivory', 'grain']),
+  }),
+  Sentinel: Object.freeze({
+    makes: Object.freeze(['spice', 'silk', 'ivory']),
+    wants: Object.freeze(['wool', 'iron', 'silver']),
+  }),
 });
 /** A day's dealing a port does in one good: it sells up to `sell` and buys up to `buy` - by whether it makes it, wants
  *  it, or neither. */
-export const DAY_STOCK = Object.freeze({ makes: Object.freeze({ sell: 30, buy: 4 }), wants: Object.freeze({ sell: 2, buy: 30 }), neither: Object.freeze({ sell: 10, buy: 12 }) });
+export const DAY_STOCK = Object.freeze({
+  makes: Object.freeze({ sell: 30, buy: 4 }),
+  wants: Object.freeze({ sell: 2, buy: 30 }),
+  neither: Object.freeze({ sell: 10, buy: 12 }),
+});
 const BAY = GOODS.filter((g) => !g.ether).map((g) => g.id);
 const ETHER = GOODS.filter((g) => g.ether).map((g) => g.id);
 
@@ -142,9 +301,13 @@ export function isleGood(port) {
  * @param {{ key: string, crown?: string|null, ether?: boolean }} port
  */
 export function portTrade(port) {
-  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) }; }
+  if (port?.ether) {
+    const own = isleGood(port);
+    return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };
+  }
   const base = CROWN_TRADE[port?.crown] ?? { makes: [], wants: [] };
-  const makes = [...base.makes], wants = [...base.wants];
+  const makes = [...base.makes],
+    wants = [...base.wants];
   const free = BAY.filter((g) => !makes.includes(g) && !wants.includes(g));
   const h = hashKey(`${port?.key ?? ''}:trade`);
   if (free.length) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);
@@ -178,7 +341,13 @@ export function priceOf(port, id, day) {
   const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;
   const r = mulberry32((hashKey(`${port?.key ?? ''}:${id}`) ^ Math.imul((day | 0) + 1, 0x85ebca6b)) >>> 0);
   const mid = g.base * mood * (1 - PRICE_DRIFT + 2 * PRICE_DRIFT * r());
-  return { id, stand, mid, sell: Math.max(1, Math.round(mid * (1 + SPREAD))), buy: Math.max(1, Math.round(mid * (1 - SPREAD))) };
+  return {
+    id,
+    stand,
+    mid,
+    sell: Math.max(1, Math.round(mid * (1 + SPREAD))),
+    buy: Math.max(1, Math.round(mid * (1 - SPREAD))),
+  };
 }
 
 /**
@@ -205,16 +374,25 @@ export function exchangeOf(port, day, dealt = {}, edge = 0, town = null, crew = 
   for (const g of dealing) {
     const stand = standOf(port, g.id);
     const other = !g.crew && !!g.ether !== !!port?.ether;
-    if (other && stand === 'neither') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)
+    if (other && stand === 'neither') continue; // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)
     const p = priceOf(port, g.id, day);
     const stock = DAY_STOCK[stand];
-    const exotic = other && stand !== 'makes';   // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made
+    const exotic = other && stand !== 'makes'; // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made
     // AUDIT 2: never buying at what it sells - a cheap good's two prices, the spread closed by the captain's stars, rounded
     // to one number (made grain at the tree's most: 7 and 7), and the round trip was free and paid the log's `traded`
-    const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask));   // SEA-TRADE: the port town's asking factor
+    const sell = Math.max(2, Math.round(p.mid * (1 + k) * ask)); // SEA-TRADE: the port town's asking factor
     rows.push({
-      id: g.id, name: g.name, unit: g.unit, units: g.units, kg: g.kg, stand, sell, buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,   // SEA-TRADE: and its paying factor   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
-      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)), buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),
+      id: g.id,
+      name: g.name,
+      unit: g.unit,
+      units: g.units,
+      kg: g.kg,
+      stand,
+      sell,
+      buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))),
+      exotic, // SEA-TRADE: and its paying factor   // AUDIT CAPTAIN'S SEA B16: the other sea's - never sold here
+      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),
+      buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),
     });
   }
   return rows;

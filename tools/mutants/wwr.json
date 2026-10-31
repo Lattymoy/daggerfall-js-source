@@ -222,8 +222,8 @@
   {
     "name": "WWR-a-province-on-the-naval-wire",
     "file": "src/systems/naval/navalWire.js",
-    "old": "sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);",
-    "new": "sh.region >= 0 && sh.region < 71 ? sh.region : -1]);",
+    "old": "      Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1,",
+    "new": "      Number.isInteger(sh.region) && sh.region >= 0 && sh.region < 71 ? sh.region : -1,",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

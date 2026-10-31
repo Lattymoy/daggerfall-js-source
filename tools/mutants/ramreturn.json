@@ -470,8 +470,8 @@
   {
     "name": "RR-the-wire-drops-the-ram",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (ram && !grapple && cask == null) nv.r = 1;\n",
-    "new": "",
+    "old": "  if (ram && !grapple && cask == null) nv.r = 1;\n  if (grapple) nv.g = 1;",
+    "new": "  if (grapple) nv.g = 1;",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "RR-the-reader-drops-the-ram",
     "file": "src/systems/naval/navalWire.js",
-    "old": "cask: nv.k ?? null, answer: nv.a === 1, ram: nv.r === 1,",
-    "new": "cask: nv.k ?? null, answer: nv.a === 1, ram: false,",
+    "old": "    ram: nv.r === 1,",
+    "new": "    ram: false,",
     "tests": [
       "test/systems/naval/ramreturn.test.js"
     ]

@@ -485,8 +485,8 @@
   {
     "name": "AUDIT-STARTS-U8-the-crowns-writ-row",
     "file": "src/systems/naval/passage.js",
-    "old": "t('passage.rowWrit', '{port} - {wind}, by writ'",
-    "new": "t('passage.rowWrit', \"{port} - {wind}, the Crown's writ\"",
+    "old": "        ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })",
+    "new": "        ? t('passage.rowWrit', \"{port} - {wind}, the Crown's writ\", { port: d.port.name, wind: windText(d.bearing) })",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

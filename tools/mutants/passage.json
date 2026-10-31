@@ -2,8 +2,8 @@
   {
     "name": "PASSAGE-the-Rowboat-carried",
     "file": "src/systems/naval/passage.js",
-    "old": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
-    "new": "Object.freeze([HULL.Rowboat, HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
+    "old": "export const PASSAGE_HULLS = Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack]);",
+    "new": "export const PASSAGE_HULLS = Object.freeze([HULL.Rowboat, HULL.LargeBoat, HULL.SmallShip, HULL.Carrack]);",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PASSAGE-the-galley-carried",
     "file": "src/systems/naval/passage.js",
-    "old": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
-    "new": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley, HULL.Carrack])",
+    "old": "export const PASSAGE_HULLS = Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack]);",
+    "new": "export const PASSAGE_HULLS = Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley, HULL.Carrack]);",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PASSAGE-the-fare-no-floor",
     "file": "src/systems/naval/passage.js",
-    "old": "Math.max(1, passagePixels(from, to))",
-    "new": "passagePixels(from, to)",
+    "old": "export const passageFare = (from, to) =>\n  calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true }).totalCost;",
+    "new": "export const passageFare = (from, to) => calculateTripCost(0, passagePixels(from, to), { travelShip: true }).totalCost;",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PASSAGE-the-shorter-axis",
     "file": "src/systems/naval/passage.js",
-    "old": "=> Math.max(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
-    "new": "=> Math.min(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
+    "old": "  Math.max(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
+    "new": "  Math.min(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PASSAGE-the-ocean-share-alone",
     "file": "src/systems/naval/passage.js",
-    "old": "calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true })",
-    "new": "calculateTripCost(0, Math.max(1, passagePixels(from, to)) >> 1, { travelShip: true })",
+    "old": "  calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true }).totalCost;",
+    "new": "  calculateTripCost(0, Math.max(1, passagePixels(from, to)) >> 1, { travelShip: true }).totalCost;",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PASSAGE-y-read-north",
     "file": "src/systems/naval/passage.js",
-    "old": "dn = (from.y | 0) - (to.y | 0);",
-    "new": "dn = (to.y | 0) - (from.y | 0);",
+    "old": "    dn = (from.y | 0) - (to.y | 0);",
+    "new": "    dn = (to.y | 0) - (from.y | 0);",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PASSAGE-the-port-I-stand-at-listed",
     "file": "src/systems/naval/passage.js",
-    "old": "if (!port?.name || port.key === hereKey || !known(port)) continue;",
-    "new": "if (!port?.name || !known(port)) continue;",
+    "old": "    if (!port?.name || port.key === hereKey || !known(port)) continue;",
+    "new": "    if (!port?.name || !known(port)) continue;",
     "tests": [
       "test/systems/naval/passage.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "PASSAGE-an-unknown-port-listed",
     "file": "src/systems/naval/passage.js",
-    "old": "if (!port?.name || port.key === hereKey || !known(port)) continue;",
-    "new": "if (!port?.name || port.key === hereKey) continue;",
+    "old": "    if (!port?.name || port.key === hereKey || !known(port)) continue;",
+    "new": "    if (!port?.name || port.key === hereKey) continue;",
     "tests": [
       "test/systems/naval/passage.test.js",
       "test/scenes/naval/passagehost.test.js"
@@ -77,8 +77,8 @@
   {
     "name": "PASSAGE-the-far-first",
     "file": "src/systems/naval/passage.js",
-    "old": "a.pixels - b.pixels ||",
-    "new": "b.pixels - a.pixels ||",
+    "old": "  return out.sort((a, b) => a.pixels - b.pixels || a.port.name.localeCompare(b.port.name));",
+    "new": "  return out.sort((a, b) => b.pixels - a.pixels || a.port.name.localeCompare(b.port.name));",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "PASSAGE-a-nameless-port-kept",
     "file": "src/systems/naval/passage.js",
-    "old": "typeof to.name !== 'string' || !to.name ||",
-    "new": "typeof to.name !== 'string' ||",
+    "old": "  if (!to || typeof to.name !== 'string' || !to.name || !Number.isFinite(to.px) || !Number.isFinite(to.py)) return null;",
+    "new": "  if (!to || typeof to.name !== 'string' || !Number.isFinite(to.px) || !Number.isFinite(to.py)) return null;",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "PASSAGE-the-pixel-unread",
     "file": "src/systems/naval/passage.js",
-    "old": "!Number.isFinite(to.px) || !Number.isFinite(to.py)",
-    "new": "!Number.isFinite(to.px)",
+    "old": "  if (!to || typeof to.name !== 'string' || !to.name || !Number.isFinite(to.px) || !Number.isFinite(to.py)) return null;",
+    "new": "  if (!to || typeof to.name !== 'string' || !to.name || !Number.isFinite(to.px)) return null;",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "AUDIT-PASSAGE-A1-a-near-port-listed",
     "file": "src/systems/naval/passage.js",
-    "old": "    if (passagePixels(here, to) <= VOYAGE_LANDFALL_PX) continue;",
-    "new": "",
+    "old": "    if (passagePixels(here, to) <= VOYAGE_LANDFALL_PX) continue; // a port she would put me ashore at from here is walked to",
+    "new": "    // a port she would put me ashore at from here is walked to",
     "tests": [
       "test/systems/naval/passage.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "AUDIT-PASSAGE-B5-the-door-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!Array.isArray(gone) || gone.length > NAVAL_WIRE_GONE ||",
-    "new": "!Array.isArray(gone) ||",
+    "old": "  if (!Array.isArray(gone) || gone.length > NAVAL_WIRE_GONE || !gone.every((x) => int(x, 0, U32))) return null;",
+    "new": "  if (!Array.isArray(gone) || !gone.every((x) => int(x, 0, U32))) return null;",
     "tests": [
       "test/scenes/naval/passagesea.test.js"
     ]

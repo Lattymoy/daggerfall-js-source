@@ -397,8 +397,8 @@
   {
     "name": "AH-Q1-the-head-in-her-side",
     "file": "src/systems/naval/quays.js",
-    "old": "  Object.freeze([6.21, 8.31]),   // 4 Carrack",
-    "new": "  Object.freeze([5.86, 7.6]),   // 4 Carrack",
+    "old": "  Object.freeze([6.21, 8.31]), // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck",
+    "new": "  Object.freeze([5.86, 7.6]), // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "AH-Q1-a-boats-head-under-her-gunwale",
     "file": "src/systems/naval/quays.js",
-    "old": "  Object.freeze([0.95, 0.7]),    // 0 Rowboat",
-    "new": "  Object.freeze([0.95, 0.5]),    // 0 Rowboat",
+    "old": "  Object.freeze([0.95, 0.7]), // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)",
+    "new": "  Object.freeze([0.95, 0.5]), // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "AH-Q1-cargo-in-the-gangways-lane",
     "file": "src/systems/naval/quays.js",
-    "old": " || Math.abs(lz) < GANGWAY_LANE ||",
-    "new": " ||",
+    "old": "    if (\n      Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 ||\n      Math.abs(lz) < GANGWAY_LANE ||\n      Math.abs(lz - z0) < 1.6 ||\n      Math.abs(lz - z1) < 1.6\n    )\n      continue;",
+    "new": "    if (Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -424,7 +424,7 @@
   {
     "name": "AH-Q2-a-galley-warped-in",
     "file": "src/systems/naval/quays.js",
-    "old": "  if (DOCK_REFUSED.includes(ship.hull)) return null;   // AUDIT HOLDINGS Q2",
+    "old": "  if (DOCK_REFUSED.includes(ship.hull)) return null; // AUDIT HOLDINGS Q2",
     "new": "  // AUDIT HOLDINGS Q2",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
@@ -451,8 +451,8 @@
   {
     "name": "AH-Q9-a-jetty-into-the-wall",
     "file": "src/systems/naval/quays.js",
-    "old": "x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0)",
-    "new": "x1 + t + JETTY_LAND",
+    "old": "      jetty = {\n        x0: x1,\n        x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0),\n        z0: zJ - JETTY_WIDTH / 2,\n        z1: zJ + JETTY_WIDTH / 2,\n      };",
+    "new": "      jetty = { x0: x1, x1: x1 + t + JETTY_LAND, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "AH-C3-a-bard-at-the-bow",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard) return { ok: false,",
-    "new": "      if (false) return { ok: false,",
+    "old": "      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard)\n        return { ok: false, text: `${h.name} leads the songs and doesn't keep lookout.` }; // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)",
+    "new": "      if (false) return { ok: false, text: `${h.name} leads the songs and doesn't keep lookout.` }; // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

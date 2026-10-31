@@ -236,8 +236,8 @@
   {
     "name": "CT-fire-uncapped",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
-    "new": "return c * k;",
+    "old": "  return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
+    "new": "  return c * k;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CT-fire-k-unread",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
-    "new": "return c;",
+    "old": "  return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
+    "new": "  return c;",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

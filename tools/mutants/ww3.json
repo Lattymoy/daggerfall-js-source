@@ -219,8 +219,8 @@
   {
     "name": "WW3-the-names-area-unread",
     "file": "src/systems/naval/shipNameBank.js",
-    "old": "export const shipNameBank = (regionIndex, area = -1) => (Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)",
-    "new": "export const shipNameBank = (regionIndex, area = -1) => (false ? nameBankOfArea(area)",
+    "old": "  Number.isInteger(area) && area >= BAY_AREA_COUNT",
+    "new": "  false",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "WW3-the-bays-area-a-provinces",
     "file": "src/systems/naval/shipNameBank.js",
-    "old": "Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)",
-    "new": "Number.isInteger(area) && area >= 0 && area !== regionIndex ? nameBankOfArea(area)",
+    "old": "  Number.isInteger(area) && area >= BAY_AREA_COUNT",
+    "new": "  Number.isInteger(area) && area >= 0 && area !== regionIndex",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

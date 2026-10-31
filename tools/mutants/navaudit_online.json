@@ -212,8 +212,8 @@
   {
     "name": "NAV1O-region-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);",
-    "new": "sh.region | 0]);",
+    "old": "      Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1,",
+    "new": "      sh.region | 0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "NAV1O-door-handover-unchecked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, BAY_REGION_COUNT - 1))) return null;",
-    "new": "",
+    "old": "  if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, BAY_REGION_COUNT - 1))) return null; // WW-R: the Bay's regions alone on `s` - a province's on `r`",
+    "new": "  // WW-R: the Bay's regions alone on `s` - a province's on `r`",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "NAV1O-old-word-first-claim",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    gen: w[17] ?? 0, region: w[18] ?? -1 };",
-    "new": "    gen: w[17] ?? 1, region: w[18] ?? -1 };",
+    "old": "    gen: w[17] ?? 0,",
+    "new": "    gen: w[17] ?? 1,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "NAV1O-wire-barrel-shooter-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "Number.isInteger(ba.shooter) && ba.shooter >= 0 && ba.shooter <= 0xffff ? ba.shooter : -1]",
-    "new": "-1]",
+    "old": "    b.push([\n      ba.id >>> 0,\n      r2(p[0]),\n      r2(p[1]),\n      r2(p[2]),\n      Number.isInteger(ba.shooter) && ba.shooter >= 0 && ba.shooter <= 0xffff ? ba.shooter : -1,\n    ]);",
+    "new": "    b.push([ba.id >>> 0, r2(p[0]), r2(p[1]), r2(p[2]), -1]);",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -557,8 +557,8 @@
   {
     "name": "NAV1O-wire-barrel-shooter-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "barrels.push({ id: w[0], pos, shooter: w[4] ?? -1 });",
-    "new": "barrels.push({ id: w[0], pos, shooter: -1 });",
+    "old": "    barrels.push({ id: w[0], pos, shooter: w[4] ?? -1 });",
+    "new": "    barrels.push({ id: w[0], pos, shooter: -1 });",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -567,8 +567,8 @@
   {
     "name": "NAV1O-wire-barrel-shooter-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(w.length === 5 && !int(w[4], -1, 0xffff))",
-    "new": "false",
+    "old": "    if (!inBounds(pos) || (w.length === 5 && !int(w[4], -1, 0xffff))) return null;",
+    "new": "    if (!inBounds(pos) || false) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -576,8 +576,8 @@
   {
     "name": "NAV1O-wire-boat-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (me) out.p = ",
-    "new": "if (false) out.p = ",
+    "old": "  if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];",
+    "new": "  if (false) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -586,8 +586,8 @@
   {
     "name": "NAV1O-wire-boat-setting-inverted",
     "file": "src/systems/naval/navalWire.js",
-    "old": "me.boarders === false ? 0 : 1]",
-    "new": "me.boarders === false ? 1 : 0]",
+    "old": "  if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];",
+    "new": "  if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 1 : 0];",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -596,8 +596,8 @@
   {
     "name": "NAV1O-wire-law-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (law.length) out.n = law;",
-    "new": "void law;",
+    "old": "  if (law.length) out.n = law;",
+    "new": "  void law;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -606,8 +606,8 @@
   {
     "name": "NAV1O-wire-law-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "law.push([i, Math.min(NOTORIETY.max, n)]);",
-    "new": "law.push([i, n]);",
+    "old": "    if (n > 0) law.push([i, Math.min(NOTORIETY.max, n)]);",
+    "new": "    if (n > 0) law.push([i, n]);",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "NAV1O-wire-self-alone-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "return s.length || h.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.j || out.l || out.g || out.q ? out : null;",
-    "new": "return s.length || h.length || v.length || b.length || out.n || out.t !== undefined || out.f || out.w || out.j || out.l || out.g || out.q ? out : null;",
+    "old": "    out.p ||\n    out.n ||",
+    "new": "    out.n ||",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "NAV1O-door-boat-hull-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(p[0], 0, 100)",
-    "new": "!int(p[0], 0, 1000)",
+    "old": "    if (!Array.isArray(p) || p.length !== 3 || !int(p[0], 0, 100) || !int(p[1], 0, 1) || !int(p[2], 0, 1)) return null;",
+    "new": "    if (!Array.isArray(p) || p.length !== 3 || !int(p[0], 0, 1000) || !int(p[1], 0, 1) || !int(p[2], 0, 1)) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "NAV1O-door-boat-wreck-bit",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(p[1], 0, 1)",
-    "new": "!int(p[1], 0, 2)",
+    "old": "    if (!Array.isArray(p) || p.length !== 3 || !int(p[0], 0, 100) || !int(p[1], 0, 1) || !int(p[2], 0, 1)) return null;",
+    "new": "    if (!Array.isArray(p) || p.length !== 3 || !int(p[0], 0, 100) || !int(p[1], 0, 2) || !int(p[2], 0, 1)) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "NAV1O-door-too-many-crowns",
     "file": "src/systems/naval/navalWire.js",
-    "old": "raw.n.length > CROWNS.length",
-    "new": "false",
+    "old": "    if (!Array.isArray(raw.n) || raw.n.length > CROWNS.length) return null;",
+    "new": "    if (!Array.isArray(raw.n) || false) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "NAV1O-door-no-such-crown",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[0], 0, CROWNS.length - 1)",
-    "new": "!int(w[0], 0, CROWNS.length)",
+    "old": "      if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, CROWNS.length - 1) || !int(w[1], 0, NOTORIETY.max))",
+    "new": "      if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, CROWNS.length) || !int(w[1], 0, NOTORIETY.max))",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "NAV1O-door-notoriety-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[1], 0, NOTORIETY.max)) return null;",
-    "new": "!int(w[1], 0, 1e9)) return null;",
+    "old": "      if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, CROWNS.length - 1) || !int(w[1], 0, NOTORIETY.max))\n        return null;",
+    "new": "      if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, CROWNS.length - 1) || !int(w[1], 0, 1e9)) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -670,8 +670,8 @@
   {
     "name": "NAV1O-door-grapple-with-hurt",
     "file": "src/systems/naval/navalWire.js",
-    "old": "(nv.g !== 1 || nv.h || nv.s || nv.c || nv.f)",
-    "new": "(nv.g !== 1)",
+    "old": "  if (nv.g !== undefined && (nv.g !== 1 || nv.h || nv.s || nv.c || nv.f)) return null; // a grapple carries no hurt",
+    "new": "  if (nv.g !== undefined && nv.g !== 1) return null; // a grapple carries no hurt",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -679,8 +679,8 @@
   {
     "name": "NAV1O-door-grapple-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "zone: ['hull', 'rig', 'holed'][nv.z], grapple: nv.g === 1,",
-    "new": "zone: ['hull', 'rig', 'holed'][nv.z], grapple: false,",
+    "old": "    grapple: nv.g === 1,",
+    "new": "    grapple: false,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -689,8 +689,8 @@
   {
     "name": "NAV1O-grapple-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (grapple) nv.g = 1;",
-    "new": "void grapple;",
+    "old": "  if (grapple) nv.g = 1;",
+    "new": "  void grapple;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -774,8 +774,8 @@
   {
     "name": "NAV1O-wire-age-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "Math.max(0, Math.min(NAVAL_VOLLEY_KEEP_MS, Math.round(vo.age ?? 0)))]);",
-    "new": "0]);",
+    "old": "      Math.max(0, Math.min(NAVAL_VOLLEY_KEEP_MS, Math.round(vo.age ?? 0))),",
+    "new": "      0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -784,8 +784,8 @@
   {
     "name": "NAV1O-wire-age-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "skill: w[12], age: w[13] ?? 0 });",
-    "new": "skill: w[12], age: 0 });",
+    "old": "      age: w[13] ?? 0,",
+    "new": "      age: 0,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -794,8 +794,8 @@
   {
     "name": "NAV1O-wire-age-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (w.length === 14 && !int(w[13], 0, NAVAL_VOLLEY_KEEP_MS)) return null;",
-    "new": "void 0;",
+    "old": "    if (w.length === 14 && !int(w[13], 0, NAVAL_VOLLEY_KEEP_MS)) return null;",
+    "new": "    void 0;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "NAV1O-wire-traffic-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (t >= 0 && view?.traffic !== TRAFFIC_DEFAULT) out.t = t;",
-    "new": "void t;",
+    "old": "  if (t >= 0 && view?.traffic !== TRAFFIC_DEFAULT) out.t = t;",
+    "new": "  void t;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -813,8 +813,8 @@
   {
     "name": "NAV1O-wire-traffic-default-said",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (t >= 0 && view?.traffic !== TRAFFIC_DEFAULT) out.t = t;",
-    "new": "if (t >= 0) out.t = t;",
+    "old": "  if (t >= 0 && view?.traffic !== TRAFFIC_DEFAULT) out.t = t;",
+    "new": "  if (t >= 0) out.t = t;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -823,8 +823,8 @@
   {
     "name": "NAV1O-wire-traffic-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "traffic: raw.t === undefined ? TRAFFIC_DEFAULT : DENSITY_KEYS[raw.t], casks, captains, boat, spent: [...spent], gone: [...gone], laid };",
-    "new": "traffic: TRAFFIC_DEFAULT, casks, captains, boat, spent: [...spent], gone: [...gone], laid };",
+    "old": "    traffic: raw.t === undefined ? TRAFFIC_DEFAULT : DENSITY_KEYS[raw.t],",
+    "new": "    traffic: TRAFFIC_DEFAULT,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -833,8 +833,8 @@
   {
     "name": "NAV1O-wire-traffic-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (raw.t !== undefined && !int(raw.t, 0, DENSITY_KEYS.length - 1)) return null;",
-    "new": "void 0;",
+    "old": "  if (raw.t !== undefined && !int(raw.t, 0, DENSITY_KEYS.length - 1)) return null;",
+    "new": "  void 0;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "NAV1O-wire-casks-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (f.length) out.f = f;\n",
-    "new": "",
+    "old": "  if (f.length) out.f = f;\n  if (w.length) out.w = w;",
+    "new": "  if (w.length) out.w = w;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -852,8 +852,8 @@
   {
     "name": "NAV1O-wire-casks-unquantized",
     "file": "src/systems/naval/navalWire.js",
-    "old": "const p = toWire(c.pos.map((x) => Math.round(x * 2) / 2));",
-    "new": "const p = toWire(c.pos);",
+    "old": "    const p = toWire(c.pos.map((x) => Math.round(x * 2) / 2));",
+    "new": "    const p = toWire(c.pos);",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "NAV1O-wire-casks-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if ((salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS) continue;\n",
-    "new": "",
+    "old": "    if ((salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS) continue;\n    const cls = SHIP_CLASSES.findIndex((k) => k.id === c.from),",
+    "new": "    const cls = SHIP_CLASSES.findIndex((k) => k.id === c.from),",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -880,8 +880,8 @@
   {
     "name": "NAV1O-wire-cask-lot-unbounded",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[5], 0, LOT_KEYS.length - 1)",
-    "new": "!int(w[5], 0, LOT_KEYS.length)",
+    "old": "  if (\n    !inBounds(pos) ||\n    !int(w[4], 0, SHIP_CLASSES.length - 1) ||\n    (w.length === 6 && !int(w[5], 0, LOT_KEYS.length - 1))\n  )",
+    "new": "  if (!inBounds(pos) || !int(w[4], 0, SHIP_CLASSES.length - 1) || (w.length === 6 && !int(w[5], 0, LOT_KEYS.length)))",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -889,8 +889,8 @@
   {
     "name": "NAV1O-wire-casks-over-word",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (caskWords.filter((w) => w?.length === 6).length > NAVAL_WIRE_CASKS || caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS) return null;",
-    "new": "if (caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS) return null;",
+    "old": "  if (\n    caskWords.filter((w) => w?.length === 6).length > NAVAL_WIRE_CASKS ||\n    caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS\n  )\n    return null;",
+    "new": "  if (caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "NAV1O-wire-cask-frame-unwritten",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (cask != null) { nv.k = cask >>> 0; if (answer) nv.a = 1; }",
-    "new": "void cask;",
+    "old": "  if (cask != null) {\n    nv.k = cask >>> 0;\n    if (answer) nv.a = 1;\n  }",
+    "new": "  void cask;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -908,8 +908,8 @@
   {
     "name": "NAV1O-wire-cask-frame-hurt",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (nv.k !== undefined && (!int(nv.k, 0, U32) || nv.g !== undefined || nv.h || nv.s || nv.c || nv.f)) return null;",
-    "new": "if (nv.k !== undefined && !int(nv.k, 0, U32)) return null;",
+    "old": "  if (nv.k !== undefined && (!int(nv.k, 0, U32) || nv.g !== undefined || nv.h || nv.s || nv.c || nv.f)) return null; // nor a cask's word",
+    "new": "  if (nv.k !== undefined && !int(nv.k, 0, U32)) return null; // nor a cask's word",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -917,8 +917,8 @@
   {
     "name": "NAV1O-wire-answer-without-cask",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;",
-    "new": "if (nv.a !== undefined && nv.a !== 1) return null;",
+    "old": "  if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null; // an answer is a cask's",
+    "new": "  if (nv.a !== undefined && nv.a !== 1) return null; // an answer is a cask's",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -926,8 +926,8 @@
   {
     "name": "NAV1O-wire-cask-hit-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "cask: nv.k ?? null, answer: nv.a === 1,",
-    "new": "cask: null, answer: nv.a === 1,",
+    "old": "    cask: nv.k ?? null,",
+    "new": "    cask: null,",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"

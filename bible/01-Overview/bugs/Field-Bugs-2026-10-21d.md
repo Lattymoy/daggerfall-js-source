@@ -271,7 +271,7 @@ THE LAW NOW.
   straight run) is aimed again once it is (`travelOptions.js:"st.route.seaUnbuilt === st.route.i"`; the host's reader
   answers null there). On the same 56 voyages, none aimed at land - 25 dry legs passed, which the first count had
   filtered out.
-  (b) `passage.js:"export function voyageSails(from, to, plan) {"`: a voyage's plan may be walked when it sails, or when she
+  (b) `passage.js:"export function voyageSails"`: a voyage's plan may be walked when it sails, or when she
   already lies within VOYAGE_LANDFALL_PX of her port - no quay left is that near a port booked (`passageDestinations`).
   (c) A pixel reached under sail or by embarking is walked round no town (`travelRoute.js:"const afloat = (i) =>"`) - the
   land a party embarks from or makes landfall on keeps its ring (AUDIT FB1021d PS-3).

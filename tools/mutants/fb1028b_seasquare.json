@@ -63,8 +63,8 @@
   {
     "name": "SEA-SQUARE-room-unread",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "n = roomy ? room(x, y) : 0;",
-    "new": "n = 0;",
+    "old": "          n = roomy ? room(x, y) : 0;",
+    "new": "          n = 0;",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "SEA-SQUARE-bay-roomy",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "road: roadsteadOf(p, open, roomy) })",
-    "new": "road: roadsteadOf(p, open, true) })",
+    "old": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) }))",
+    "new": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, true) }))",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],

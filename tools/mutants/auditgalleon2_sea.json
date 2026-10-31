@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water",
     "file": "src/systems/naval/shipLife.js",
-    "old": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {",
-    "new": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = hull, max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {",
+    "old": "  deep = deepestBerther(),",
+    "new": "  deep = hull,",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
     ],

@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-SHIPYARDS-a-fender-by-its-middle",
     "file": "src/systems/naval/quays.js",
-    "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) ||",
-    "new": "    if (inLane(lz, DRESS_LANE) ||",
+    "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) || ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
+    "new": "    if (inLane(lz, DRESS_LANE) || ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "AUDIT-SHIPYARDS-a-coil-by-its-middle",
     "file": "src/systems/naval/quays.js",
-    "old": "      if (inLane(cz, DRESS_LANE + r) ||",
-    "new": "      if (inLane(cz, DRESS_LANE) ||",
+    "old": "      if (inLane(cz, DRESS_LANE + r) || cz < z0 + 0.8 || cz > z1 - 0.8) continue;",
+    "new": "      if (inLane(cz, DRESS_LANE) || cz < z0 + 0.8 || cz > z1 - 0.8) continue;",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

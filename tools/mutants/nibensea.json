@@ -131,8 +131,8 @@
   {
     "name": "LANES-reach-unread",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    const reach = Math.max(maxPx, p.reach ?? 0);",
-    "new": "    const reach = maxPx;",
+    "old": "    const reach = Math.max(maxPx, p.reach ?? 0); // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)",
+    "new": "    const reach = maxPx; // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)",
     "tests": [
       "test/world/nibensea.test.js"
     ]

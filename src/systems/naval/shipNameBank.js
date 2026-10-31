@@ -13,5 +13,7 @@ import { BAY_AREA_COUNT } from '../../world/worldWide/worldGrid.js';
 import { REGION_NAMES } from '../../formats/mapsTables.js';
 
 /** The bank of the waters' people. @param {number} regionIndex @param {number} [area] */
-export const shipNameBank = (regionIndex, area = -1) => (Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)
-  : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17));
+export const shipNameBank = (regionIndex, area = -1) =>
+  Number.isInteger(area) && area >= BAY_AREA_COUNT
+    ? nameBankOfArea(area)
+    : getNameBankOfRegion(regionIndex >= 0 && regionIndex < REGION_NAMES.length ? regionIndex : 17);
