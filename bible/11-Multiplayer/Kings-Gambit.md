@@ -303,7 +303,7 @@ structure ours.
   the board and its build, the hazards, the units and the roster, the deployment, the legal commands and their effect, a
   turn's end, the game's end, and each seat's view (KG1 found none to make - section 11). A refused command answers a
   refusal word and changes nothing (a relay keeps the last good state - `net/card/cardLaw.js`'s way).
-- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const VANILLA_ENEMY_BASICS = deepFreeze("` (DEX1, 2026-10-19: the table's vanilla rows by name, copied before any mod writes one - Daggerfall Enemy Expansion writes its classic lines into the live table, as DFU's EnemyBasics.Enemies is written, and a client reading this module after that would have built another roster; ONE DFU
+- THE ROSTER IS DFU's TABLE: the units read `enemyBasics.js:"export const VANILLA_ENEMY_BASICS"` (DEX1, 2026-10-19: the table's vanilla rows by name, copied before any mod writes one - Daggerfall Enemy Expansion writes its classic lines into the live table, as DFU's EnemyBasics.Enemies is written, and a client reading this module after that would have built another roster; ONE DFU
   MEMBER, ONE EXPORT - never a second literal of the levels and the health), at float32 with RoundToInt's half to even,
   pinned deepEqual against section 2.2's table. DECIDED: the vanilla rows, never a mod's overlay. Meaner Monsters is
   applied at a foe's mint (`applyMeanerMonsters`, `characters/enemy/enemyEntity.js`), not to the table, and one roster for every

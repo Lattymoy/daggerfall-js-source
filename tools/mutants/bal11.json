@@ -204,7 +204,7 @@
   {
     "name": "BAL11-the-poise-takes-the-hero",
     "file": "src/characters/enemy/enemyEntity.js",
-    "old": "  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth;   // BAL11: TELL1's poise reads the kind's own health",
+    "old": "  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth; // BAL11: TELL1's poise reads the kind's own health",
     "new": "",
     "tests": [
       "test/systems/bal11_hero.test.js"

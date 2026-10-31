@@ -238,8 +238,8 @@
   {
     "name": "DISC28-H-hang-unfloored",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;\n",
-    "new": "",
+    "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;\n  return feet;",
+    "new": "  return feet;",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "DISC28-H-floor-above-marker-lifts",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "floorY <= centre[1] && ",
-    "new": "",
+    "old": "  if (Number.isFinite(floorY) && floorY <= centre[1] && feet[1] < floorY) feet[1] = floorY;",
+    "new": "  if (Number.isFinite(floorY) && feet[1] < floorY) feet[1] = floorY;",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "DISC28-H-builder-reads-no-floor",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH))",
-    "new": "flyerSpawnFeet(at, idleH, null)",
+    "old": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
+    "new": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, null);",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]

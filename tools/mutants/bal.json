@@ -212,8 +212,8 @@
   {
     "name": "BAL3-the-writer-forgets-the-place",
     "file": "src/characters/enemy/enemyEntity.js",
-    "old": "place: scaling.place ?? 0, ",
-    "new": "",
+    "old": "    place: scaling.place ?? 0,\n    edge: scaling.edge,",
+    "new": "    edge: scaling.edge,",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "HALT-ONE-gap",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
-    "new": "if (quiet || !callers.length) return null;",
+    "old": "    if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
+    "new": "    if (quiet || !callers.length) return null;",
     "tests": [
       "test/scenes/haltone_watch.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HALT-ONE-nearest",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "for (const c of callers) if (c.dist < near.dist) near = c;",
-    "new": "for (const c of callers) if (c.dist > near.dist) near = c;",
+    "old": "    for (const c of callers) if (c.dist < near.dist) near = c;",
+    "new": "    for (const c of callers) if (c.dist > near.dist) near = c;",
     "tests": [
       "test/scenes/haltone_watch.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HALT-ONE-window",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
-    "new": "if (!callers.length || this.since < HALT_GAP_S) return null;",
+    "old": "    if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
+    "new": "    if (!callers.length || this.since < HALT_GAP_S) return null;",
     "tests": [
       "test/scenes/haltone_watch.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HALT-ONE-end",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "  end() { this.since = Infinity; }",
-    "new": "  end() { }",
+    "old": "  end() {\n    this.since = Infinity;\n  }",
+    "new": "  end() {}",
     "tests": [
       "test/scenes/haltone_watch.test.js"
     ],

@@ -161,6 +161,14 @@
 !/src/characters/dyes.js
 !/src/characters/encounterTableDoor.js
 !/src/characters/encounterTables.js
+!/src/characters/enemy/
+/src/characters/enemy/*
+!/src/characters/enemy/customEnemies.js
+!/src/characters/enemy/enemyAnchor.js
+!/src/characters/enemy/enemyBasics.js
+!/src/characters/enemy/enemyEntity.js
+!/src/characters/enemy/enemySounds.js
+!/src/characters/enemy/foeLook.js
 !/src/characters/engineRig.js
 !/src/characters/equipRules.js
 !/src/characters/equipTable.js

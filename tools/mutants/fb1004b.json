@@ -111,8 +111,8 @@
   {
     "name": "QUIET-scale-dropped",
     "file": "src/characters/enemy/enemySounds.js",
-    "old": "const wait = companion ? this.waitTime * COMPANION_ATTRACT_SCALE : this.waitTime;",
-    "new": "const wait = this.waitTime;",
+    "old": "    const wait = companion ? this.waitTime * COMPANION_ATTRACT_SCALE : this.waitTime;",
+    "new": "    const wait = this.waitTime;",
     "tests": [
       "test/scenes/fb1004b_companions.test.js"
     ]

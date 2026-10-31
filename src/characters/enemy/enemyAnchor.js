@@ -20,15 +20,15 @@ import { mobileBillboardSize } from '../../world/rmbFlats.js';
 /** SetupDemoEnemy.cs:103-115 - the CharacterController height. */
 export function enemyControllerHeight(idleH, behaviour) {
   let h = idleH;
-  if (behaviour === 'Flying') h = h / 2;   // :108-110, ControllerJustification.BOTTOM
-  if (h < 1.6) h = 1.6;                    // :112-114, BOTTOM again
+  if (behaviour === 'Flying') h = h / 2; // :108-110, ControllerJustification.BOTTOM
+  if (h < 1.6) h = 1.6; // :112-114, BOTTOM again
   return h;
 }
 
 /** The idle record's scaled sprite height - dfMobile.GetSize() at setup
  *  (:104, the Idle state the unit is set up in). */
 export function idleSpriteHeight(t) {
-  return mobileBillboardSize(t, 0).h;   // AUDIT MM1: dfMobile.GetSize() reads RecordSizes, the xml applied
+  return mobileBillboardSize(t, 0).h; // AUDIT MM1: dfMobile.GetSize() reads RecordSizes, the xml applied
 }
 
 /** DFU's transform is the sprite's CENTRE (localPosition zero); the
@@ -97,11 +97,19 @@ export function keepRebuiltSpawn(sf, feet, idleH, behaviour, marker = null) {
   // never grounds by gravity - so an un-stamped ghost still AT its raw
   // marker keeps the floor-landed rebuild. The marker rides the record.
   if (behaviour === 'Spectral') {
-    return !!marker && Math.abs(sf.feet[0] - marker[0]) < eps && Math.abs(sf.feet[1] - marker[1]) < eps && Math.abs(sf.feet[2] - marker[2]) < eps;
+    return (
+      !!marker &&
+      Math.abs(sf.feet[0] - marker[0]) < eps &&
+      Math.abs(sf.feet[1] - marker[1]) < eps &&
+      Math.abs(sf.feet[2] - marker[2]) < eps
+    );
   }
   if (behaviour !== 'Flying' || idleH === undefined) return false;
-  return Math.abs(sf.feet[0] - feet[0]) < eps && Math.abs(sf.feet[2] - feet[2]) < eps
-    && Math.abs(sf.feet[1] - (feet[1] + idleH / 2)) < eps;
+  return (
+    Math.abs(sf.feet[0] - feet[0]) < eps &&
+    Math.abs(sf.feet[2] - feet[2]) < eps &&
+    Math.abs(sf.feet[1] - (feet[1] + idleH / 2)) < eps
+  );
 }
 
 /** DaggerfallMobileUnit.cs:398-411 as a base: a flyer or swimmer keeps
@@ -109,5 +117,5 @@ export function keepRebuiltSpawn(sf, feet, idleH, behaviour, marker = null) {
  *  keeps its FEET. The port's shader bottom-anchors, so the walker's
  *  origin is its feet and the flyer's is centre - recordH/2. */
 export function spriteOriginY(feetY, idleH, recordH, behaviour) {
-  return (behaviour === 'Flying' || behaviour === 'Aquatic') ? feetY + (idleH - recordH) / 2 : feetY;
+  return behaviour === 'Flying' || behaviour === 'Aquatic' ? feetY + (idleH - recordH) / 2 : feetY;
 }

@@ -173,7 +173,7 @@ languages).
 FOUND. A body is skinned by its foe's id and nothing else: `professionLaw.js:"export const hideOfFoe"`
 finds the hide whose `foes` hold the id, and the ten hides held PROF0 4.4's classic foes by DFU's MobileTypes
 (DaggerfallUnityEnums.cs:142-211, "Monster IDs are 0-42"). Daggerfall Enemy Expansion (#1067) adds fifty rows past the
-classic table (BestiaryMod.cs:665 and 1343; `enemyBasics.js:"export function registerEnemyRows(rows) {"`): its monsters
+classic table (BestiaryMod.cs:665 and 1343; `enemyBasics.js:"export function registerEnemyRows"`): its monsters
 are 256-290 and its classes 384-398 (the 128 bit, DaggerfallEntity.cs:976-979), and each of its foes carries the mod's
 own id - a DEX Wolf stood by the street's real pool (`exteriorFoes.js` spawnFoe) has `mobileType` 262. Every step a hide
 takes refused it:
@@ -840,7 +840,7 @@ FIXED.
 - LAW 9 (`itemLaw.js:"const MOD_SOULS = new Set(DEX_ENEMY_IDS);"`): a Soul Gem or Azura's Star may hold the soul of any
   of the mod's fifty. The service installs no mod, so the ids are read headless from the mod's own tables
   (`dexIds.js:"export const DEX_ENEMY_IDS"`): every `.mdb.csv` line's ID that is not one of DFU's
-  MobileTypes (`enemyBasics.js:"export const isClassicEnemyId = "`), with MUDEX's tables read after the mod's - the same
+  MobileTypes (`enemyBasics.js:"export const isClassicEnemyId"`), with MUDEX's tables read after the mod's - the same
   reading the install registers, and a pin holds the two equal. A soul no creature has is still a finding.
 - THE SERVICE. acct166 carries law 9 (`service.js`'s ACCOUNT_VERSION, `'acct166'` at `1feee3838` - FIELD BUGS 2026-10-21b
   CAKE-CAP-SAID's acct167 after it, renumbered past this at its merge - and wrangler.toml), one
