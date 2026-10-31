@@ -20,7 +20,7 @@ import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
 import { regionLattice, regionsByNearness, regionWanted, regionAt, inputsPrint, REGION_APRON, GROUND_ROLL_VERSION } from '../world/tamrielRoads.js';
 import { keptLandRegions, fnv32 } from '../world/tamriel/tamrielBootCache.js';   // AUDIT RELEASE R4-4: the boot's continent kept
 import { BIOMES_VERSION } from '../world/tamriel/tamrielBiomes.js';
-import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
+import { arenaJoins, joinLayer, joinRunPixels, keepArenaRoadsHost, keptArenaRoadsHost } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay, BAY_W, BAY_H } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
 import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel, capitalCentrePixel, capitalSpan } from '../world/tamrielCapitals.js';
@@ -72,7 +72,7 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
   /** @type {Array<{ key: string, x0: number, y0: number, x1: number, y1: number }>} */ let grids = [];
   /** @type {Set<string>} */ let done = new Set();
   /** @type {Array<(grid: { x0: number, y0: number, x1: number, y1: number }, build: number) => void>} */ const told = [];
-  return {
+  const api = {
     /**
      * Each frame, with the player's pixel: a build when what stands moved, the build re-ordered as the player goes.
      * @param {?{ x: number, y: number }} player
@@ -112,8 +112,10 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     },
     /** WW7-9: `fn(grid, build)` told as each region lands - its grid, the pixels its layer and its places may move. */
     onRegion(fn) { told.push(fn); },
-    dispose() { roadsClient?.dispose(); clearExactPieces(); },
+    dispose() { roadsClient?.dispose(); clearExactPieces(); if (keptArenaRoadsHost() === api) keepArenaRoadsHost(null); },
   };
+  keepArenaRoadsHost(api);   // W14: the season's fissures past the Bay keep off these roads once they are laid (scenes/seasonHost.js)
+  return api;
 
   function start(towns, spec, capitals, held, player) {
     roadsClient ??= createTamrielRoadsClient({ log });

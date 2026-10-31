@@ -100,6 +100,8 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/census/find', '/v1/staff/census', '/v1/staff/census/jumps', '/v1/staff/contested', '/v1/staff/contested/piece', '/v1/staff/contested/trail',
     // STAFF-PANEL3-ECON: the economy (staffEconomy.js)
     '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/harvests', '/v1/staff/econ/stream',
+    // STOREFRONT: the shop's demand by day (staffShop.js)
+    '/v1/staff/econ/shop',
     // STAFF-PANEL5-FOLLOW: a follow token (staffFollow.js)
     '/v1/staff/follow',
     // STAFF-PANEL5-MESSAGE: Message on screen (staffMessage.js)

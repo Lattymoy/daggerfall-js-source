@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-a-returning-peer-not-seen-afresh",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, tick }); return; }",
-    "new": "if (!s) { seen.set(id, { hk, hu }); return; }",
+    "old": "if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, xk, tick }); return; }",
+    "new": "if (!s) { seen.set(id, { hk, hu, xk }); return; }",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-blows-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
-    "new": "if (at) {",
+    "old": "if (at && within(at, feet, BLOW_PEER_M) && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "if (at && within(at, feet, BLOW_PEER_M)) {",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

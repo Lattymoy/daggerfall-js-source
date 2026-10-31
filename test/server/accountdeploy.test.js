@@ -599,7 +599,9 @@ test('AUDIT B1 (SHADOW-FANG, 2026-09-26): the service deploys only once the rela
   const wait = step('Wait for the relay to serve this push\'s version');
   const deploy = step('Deploy');
   assert.ok(wait < deploy, 'the relay first, then the service');
-  const body = wf.slice(wait, deploy);
+  // AUDIT STOREFRONT lane 3 F1: and before the migrations - a migration's letter waits for the service that shows it
+  assert.ok(wait < step('Record the database\'s bookmark before the migrations') && wait < step('Apply migrations'), 'the relay first, then the migrations');
+  const body = wf.slice(wait, wf.indexOf('- name: ', wait + 8));
   const live = body.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
   assert.match(live, /grep -oP "\^export const RELAY_VERSION = '\\K\[\^'\]\+" src\/net\/wire\.js/, 'the version wire.js names - one home');
   assert.match(live, /grep -oP "\^export const DEFAULT_SERVER = 'wss:\/\/\\K\[\^'\/\]\+" src\/net\/online\.js/, 'the relay\'s address, the client\'s own');

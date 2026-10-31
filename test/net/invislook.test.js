@@ -258,7 +258,7 @@ test('INVIS-LOOK by source: the host - the look read once a frame and handed to 
   assert.ok(flats > 0 && grass > flats && late > grass && wall > late, 'the exterior: after the flats and the grass, before the foreign passes that follow');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /lateWorldDraw: \(\) => \{ host\.drawVeiledPeerBodies\?\.\(\); [^\n]*\},/, 'the dungeon: through its context');   // PIN MOVED (AUDIT SD IV R1): the Hour's light after them, in the same slot
-  assert.match(m, /for \(const d of interiorCtx\.charDraws\) renderer\.drawCharacter\(d\.mesh, d\.matrix\);\n\s*host\.drawVeiledPeerBodies\?\.\(\);/, 'the building: after its last opaque draw');
+  assert.match(m, /for \(const d of interiorCtx\.charDraws\) renderer\.drawCharacter\(d\.mesh, d\.matrix\);\n\s*magic\?\.drawFx\?\.\(\);[^\n]*\n\s*host\.drawVeiledPeerBodies\?\.\(\);/, 'the building: after its last opaque draw');   // PIN MOVED (AUDIT STOREFRONT RENDER L3): the bursts between, no depth written - the dungeon's order
   const d = rd('src/scenes/dungeonContext.js');
   const foes = d.indexOf('renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],');
   const hook = d.indexOf('opts.lateWorldDraw?.();');

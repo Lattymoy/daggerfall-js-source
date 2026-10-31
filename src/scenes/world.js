@@ -382,6 +382,7 @@ import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';  
 import { gateSeatRegion, gateClaimWaits } from './gate/gateSeat.js';   // WW-GATES-EVERYWHERE (A2b): where a gate's kill counts - a lane past the Bay's its own province's
 import { gateScanner, findGateSite, gateSeaPixel } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
+import { createSeasonHost } from './seasonHost.js';   // STOREFRONT: the season in the world - the pass, the tremor, the Brass Fissures, the Colossus
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
 import { createRocketHost } from './rocketHost.js';   // ROCKET1: /event rocket - the mounds, their poop, the farting horses and the frenzy
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
@@ -774,6 +775,7 @@ import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } 
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
 import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
+import { standBountyDungeonPack } from './bountyDungeonPack.js';   // BOUNTY1: a bounty's pack underground, out of bootWorld (HOST-SPLIT)
 import { trophyDoor } from '../systems/hunt/trophies.js';   // HUNTERS-MARK: a Trophy Hunter's trophy into the pack
 import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
 import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a look's point for the party, and the floor route while one follows
@@ -795,6 +797,7 @@ import { SEATED_EYE_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the dri
 import { wagonLookOf, paintDrivenWagon } from '../systems/wagon/wagonLooks.js';
 import { horseRigFor } from '../world/horseRig.js';   // COATS3D: the 3D horse - the peers' in the saddle
 import { riddenHorseLook, birthHorses } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look - the pool's, the pose's; and the horses born   // WAGONS2: the driven wagon's paint
+import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: the 3D horse under me in my mount look
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
@@ -1196,6 +1199,7 @@ import { setItemFields, mintCondition } from '../systems/item/itemTemplates.js';
 import { registerItemUseHandler } from '../systems/item/itemTemplates.js';   // CSA-H: the boat items' UseItem on the item-use door
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAway/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
+import { createMusicBoxScore } from '../systems/musicBox.js';   // MUSIC-BOX: a house's music box holds the music in its room
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
@@ -1246,6 +1250,7 @@ import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): a dungeon's window holds its foes offline alone
 import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createPortalBookHost } from './portalBookHost.js'; import { isPortalBook } from '../systems/gate/gateSpoils.js';   // PORTAL-BOOK: the kept house doors
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
@@ -12141,48 +12146,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!stood) return null;
     return { foes: stood.foes, dx: stood.anchorFeet[0] - feet[0], dz: stood.anchorFeet[2] - feet[2] };
   };
-  // BOUNTY1 (Mac: "Dungeon bounties (notices name a nearby dungeon)"): A BOUNTY'S PACK UNDERGROUND - its lair deeper in:
-  // the anchor is one of the dungeon's own places 25 to 90 metres from the hunter (the farthest there is when none is in
-  // that band), and the members stand round it through the dungeon's own chain (spawnLooseFoe - a loose
-  // stand rides the room's lane to everyone in it online, SUMMON-SYNC). A member with no floor near the anchor is not
-  // stood: the host stands what is left of the pack again on the next visit.
-  // FIELD BUGS 29h (BOUNTY-LAIR; the Discord: "Bounty targets can spawn in inaccessible parts of dungeons"): the places are
-  // the dungeon's QUEST SPAWN MARKERS - where DFU's Place stands every dungeon quest's foe (199.11, questSpawnSpots) - and
-  // its own foes' only where it has none. A foe stands at every enemy marker of every block, sealed rooms, water and the
-  // far side of a held door among them, and none of those places was ever asked to be reached; a quest's are.
-  const _standBountyDungeonPack = ({ mobileType, count }) => {
-    const d = _dungeonPool();
-    if (!d?.spawnLooseFoe || !d.collider) return null;
-    const feet = enchantFeet();
-    const dist = (p) => Math.hypot(p[0] - feet[0], p[2] - feet[2]);
-    const spots = d.questSpawnSpots?.() ?? [];
-    const places = spots.length ? spots : (d.foes ?? []).filter((f) => f?.ai?.feet && !f.puppet && f._ownFrom == null).map((f) => f.ai.feet);
-    if (!places.length) return null;
-    const band = places.filter((p) => { const m = dist(p); return m >= 25 && m <= 90; });
-    const at = band.length ? band[Math.floor(Math.random() * band.length)] : places.reduce((a, b) => (dist(b) > dist(a) ? b : a));
-    const anchorFeet = [at[0], at[1], at[2]];
-    const campId = exteriorFoes.newCampId();   // OW6 (MERGE 2): the one counter, the pool's - a pack never shares a camp's number
-    const stands = [];
-    for (let k = 0; k < count; k++) {
-      const env = placeFoeEnv({
-        collider: d.collider,
-        playerFeet: [anchorFeet[0], anchorFeet[1] + 0.9, anchorFeet[2]],
-        playerYawRad: Math.random() * Math.PI * 2,
-        fovDegrees: 0,
-        isOccupied: entityOccupancy((f) => f.ai?.feet ?? f.feet, () => d.foes ?? [], anchorFeet),
-      });
-      let spot = null;
-      for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) spot = placeFoeFreely(env, { minDistance: 1, maxDistance: 6, lineOfSightCheck: false });
-      if (!spot) continue;
-      const fly = (ENEMY_BASICS[mobileType]?.behaviour ?? 'General') === 'Flying';
-      stands.push(Promise.resolve(d.spawnLooseFoe(mobileType, [spot.x, fly ? spot.y + 1.5 : spot.y, spot.z], { yawRad: Math.random() * Math.PI * 2 })).then((f) => {
-        if (f) { f.campId = campId; if (f.entity) f.entity.campId = campId; }
-        return f;
-      }).catch(() => null));
-    }
-    if (!stands.length) return null;
-    return { foes: Promise.all(stands), dx: anchorFeet[0] - feet[0], dz: anchorFeet[2] - feet[2] };
-  };
   const _standLooseFoe = (mobileType, opts = {}) => {
     const mode = _mode();
     // ROAD-G G1: THE INTERIOR ARM, through the pool that exists.
@@ -12400,7 +12363,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const packDoors = {
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
-    openPortal: (item, list) => openPortalStone(item, list),   // PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
+    openPortal: (item, list) => (isPortalBook(item) ? portalBook.open() : openPortalStone(item, list)),   // PORTAL-BOOK: the book's window; PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
     // U42: USING the Spellbook item opens the book
     // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
     // the slot, so this bypasses toggleSpellbook's already-open guard
@@ -13366,6 +13329,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wardenShows?.destroyAll();   // WARDEN1: and a throw in flight - its team set down where it landed
     riteHost?.destroyAll();   // WB12d: and the faithful's circle - its faithful went with the live pools; it stands again the next frame
     starfall?.destroyAll();   // STAR4: and the Starfall's stars - its coven went with the live pools; they stand again the next frame
+    passSeason?.destroyAll();   // STOREFRONT: and the season's fissures and their constructs, the same
     csaReanchor(state.initOffset);   // FIELD-CSA1: and every placed boat with it
     // AUDIT ENVIRONS I2: AND THE SNOW, THE WIND AND THE HAZE, by the same move. Each keeps scene places a recentre
     // carries (their offsetOrigin), and `state.init` gives none to ride: the snow's window and ring held the old place's
@@ -15694,7 +15658,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+  const { openPortalStone, portalArrive, portalHoldNow, openToSpot } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
     _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
     hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
     worldMoveBusy,
@@ -15706,6 +15670,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
+    get modes() { return modes; }, get campToScene() { return campToScene; },   // PORTAL-BOOK: the landing at a kept door
+  });
+  const portalBook = createPortalBookHost({   // PORTAL-BOOK (scenes/portalBookHost.js): the Portal Book's window
+    townTalk, playerEntity, mode: _mode, house: () => modes?.portalBookHere?.() ?? null, pixel: () => playerTravelPixel(),
+    townName: (px) => portalGates.destOf(px.x, px.y)?.name ?? null, campToWire: (p) => campToWire(p),
+    openToSpot: (spot) => openToSpot(spot), saved: () => saveSoon.changed(),
   });
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
@@ -16174,6 +16144,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       serpent: () => serpentOmen?.mapMark() ?? null,   // SERPENT1: the sea serpent's ring, in the sea's colours - the held map alone draws it
       sd: () => sdHost?.mapMarks() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it; WW5: every lane's
       stars: () => starfall?.mapMarks() ?? [],   // STAR6: the night's fallen stars, each its card
+      fissures: () => passSeason?.mapMarks() ?? [],   // STOREFRONT: the season's Brass Fissures, each its card
       arch: () => egClient?.archMapMark() ?? null,   // EG-F: my company's Elite arch while it stands, in its gold - the held map alone draws it
       ketch: () => ketch?.mapMarks() ?? [],   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky - the held map alone draws it; KETCH-EVERYWHERE: every station's
       // GUIDE5: WHERE THE QUESTS POINT - every active quest's place the player's map holds, the followed one filled
@@ -19483,7 +19454,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const auraHost = createAuraHost({
     renderer, online: () => online, travelActive: () => !!travelView?.active, quiet: () => !!egClient?.quiet?.(), player: () => player, camYaw: () => cam.yaw,
     spawned: () => playerSpawned, beast: () => !!liveLycanthropy(playerEntity)?.isTransformed, veiled: (id) => _veils.has(id), toScene: (shown) => onlineToScene(shown),
-    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
+    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0, remotePlayers?.spriteRecordOf(d.id)) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
   });
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
@@ -23332,7 +23303,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     // EG-F: the gate's clearing and every standing arch's, one set (world/gate/gateClearance.js gateClearSet) - made again only when either moves;
     // STAR-CLEAR: and every fallen star's, from its town's naming until it is gone (scenes/starfall/starfallHost.js starClears)
-    return _gateClearSetOf(_gateClearOf.clear, egClient?.archClears() ?? null, starfall?.starClears() ?? null);
+    return _gateClearSetOf(_gateClearOf.clear, egClient?.archClears() ?? null, starfall?.starClears() ?? null, passSeason?.fissureClears() ?? null);
   };
   /** DISCORD-GATES: THIS GAME'S WORD OF WHERE THE GATE STANDS, to the hub (net/online.js sendGateSite, once a socket and
    *  day): the clearing's own site - the gate the clock is about, from its scan's end on, ~85 real minutes before its
@@ -23571,6 +23542,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
   let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
   const _hourScore = createHourScore();
+  const musicBoxScore = createMusicBoxScore({ music, here: (id) => modes?.musicBoxHere?.(id) === true });   // MUSIC-BOX (systems/musicBox.js): last of the scores, before the director
   const _spireScore = createSpireScoreHost({ music, now: () => Date.now() + _sharedOffsetMs });   // EG-G2: the Spire's score holds the music before the Hour's (systems/eliteGates/egScore.js)
   const sdScoreWhere = () => {
     if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
@@ -23703,7 +23675,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  calendar, net/festivalLaw.js - starfallStands, to the last star it saw land): a coven's three stars a night in its region's wilds, found over the gate's scan; each one's omen, fall and
    *  crater; its coven's waves and master on the camp law (`px,py:star.<night>.<k>`), its cell's ledger and receipts; the
    *  tracker, the bar, the map, the compass and the timers. It reads what it needs of this scope by name. */
-  const starfall = params.has('online') ? createStarfallHost({
+  const _eventHostDeps = {   // STOREFRONT: the world's bindings, one object the Starfall and the season share
     renderer, state, exteriorFoes, gateScanOf, warmGateScan, surfaceAt, gateGroundAt, player, gamePaused, townTalk,
     _wodPeerSprung, wodPeerHeldAgo, wodForgetPeer, wodSprang, wodUnsprang, _questRegionIndex,
     get chatNotice() { return chatNotice; },   // made below
@@ -23711,7 +23683,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get labGrassField() { return labGrassField; }, get _sharedOffsetMs() { return _sharedOffsetMs; },
     // STAR7: the rewards' (scenes/starfall/starRewards.js) - the pack's door, the relay's clock, the silver, the Renown
     takeSpoil, relayNowS, marksBook, renownXpAdopt, renownAdopt, renownRose, get renownSaid() { return renownSaid; },
-  }) : null;
+  };
+  const starfall = params.has('online') ? createStarfallHost(_eventHostDeps) : null;
+  // STOREFRONT (bible/06-Systems/Battle-Pass.md section 6): THE SEASON IN THE WORLD - the Battle Pass bound, the hourly
+  // tremor, the Brass Fissures and their constructs, the Brass Colossus and its Resonant Maul (scenes/seasonHost.js)
+  const passSeason = params.has('online') ? createSeasonHost(_eventHostDeps) : null;
   /** ROCKET1: THE ROCKET (scenes/rocketHost.js) - the hub's third live event word: mounds round the traveller on the world's
    *  own grid, their poop, the horses farting across the sky and the diarrhea frenzy, on the shared clock. Offline nothing sets it. */
   const rocket = createRocketHost(renderer, sunbabyGround, state);
@@ -26011,7 +25987,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // where the player crossed in from, not necessarily the dungeon's)
     dungeonPixel: () => bountyDungeonPixel(modes, playerTravelPixel),   // HOST-SPLIT (LAIR-WORLD): the board's own question, scenes/bountyHost.js
     canStandDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon' && !!modes?.dungeonCtx && !gamePaused() && !playerEntity.isResting,
-    standDungeonPack: (o) => _standBountyDungeonPack(o),
+    standDungeonPack: (o) => standBountyDungeonPack({ pool: _dungeonPool(), feet: enchantFeet(), newCampId: () => exteriorFoes.newCampId() }, o),   // BOUNTY1: its lair underground (scenes/bountyDungeonPack.js)
     canStand: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && !gamePaused() && !playerEntity.isResting
       && !travelOptions?.isTravelActive && !(walkMode && player.isPlayerSwimming) && !playerAfloat(),   // SEA-HUNT: no trail is read, no pack stood, from a deck
     standPack: (o) => _standBountyPack(o),
@@ -27458,7 +27434,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!online) return;
     for (const p of online.peers.values()) {
       if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id) || !peerRange.shows(p.id)) { peerFxPlayer.forget(p?.id); continue; }   // GATE-CROWD: no spark nor cry from a player the crowd's count leaves undrawn; PEER-RANGE: nor from one past the distance
-      peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0);
+      peerFxPlayer.update(p.id, p.shown, onlineToScene(p.shown), peerBodies?.heightOf?.(p.id) || 0, p.fx ?? null, _hiddenPeers.has(p.id) || _veils.has(p.id));   // STOREFRONT: and the effects their token signed; AUDIT-STOREFRONT II (lane C 1): and whether the draw conceals them, so a concealed rider's mount look throws no beat - last frame's word (the effects play before the peers sync), as the cart pool's
     }
     peerFxPlayer.frame();
   };
@@ -27770,7 +27746,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // whose halo is still connecting (net/online.js `crossesNow` - the join waits for it, my pose sent meanwhile, where
     // the hold sent none); otherwise the hold
     else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isGateRoom(key) && isGateRoom(online.room)) || (isCellRoom(key) && online.crossesNow(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.layerHint = partyLayerAt(key); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
-    else online.sendPose({ ...pose, ...arm, ...poseFx() });   // PEERFX1: and my landed blows and the blows I took
+    else online.sendPose({ ...pose, ...arm, ...poseFx(sceneToOnline) });   // PEERFX1: and my landed blows and the blows I took; STOREFRONT: and my kills with an effect, in the pose's own frame
     siegeSession?.tick();   // SEAT2a part four: the battle's pass, its `in`, its HUD, its window
     if (siegeNpcs) { if (inSiegeRoom()) siegeNpcs.frame(siegeSession.npcs(), battleNowMs()); else siegeNpcs.leave(); }   // SEAT2b part two (c): the relay's own fighters, in its room alone
     royalSession?.tick();   // CROWN1 part two: the tourney's pass, its `in`, its HUD, its week
@@ -31177,7 +31153,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
     const frameMusic = () => {   // PERF-V8 (AUDIT SOUNDSCAPE: the sea's score in the chain put the host's frame past three quarters of the ceiling)
-    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -32453,7 +32429,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       eyeOverride: travelView?.eye ?? null,
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
       dt, dragon: dragonView.ride(player, playerEntity.items), riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
-      horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
+      horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look (STOREFRONT: my mount look over it); HORSE-WALK: held under the gallop on a slow ride
       ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it (the sprite plays no stride), the camera's feet the seat's (after `feet`: it wins)
       pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
       cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
@@ -32762,6 +32738,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { sigilBroker?.frame(dt); } catch (e) { console.warn('[broker] pool', e?.message ?? e); }   // SET7: the Broker stands where the clock stands her - BROKER-CAGE: in her cage at the faithful's circle
     try { riteHost?.frame(); } catch (e) { console.warn('[rite] host', e?.message ?? e); }   // WB12d: the faithful's circle, before the lights (its braziers light the ground)
     if (_mode() === 'exterior') starfall?.frame();   // STAR4-STAR6: the night's stars, before the lights (a stone's glow, a landing's flash) - its own catch
+    if (_mode() === 'exterior') passSeason?.frame();   // STOREFRONT: the season's tremor and its fissures, before the lights - its own catch
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
@@ -32817,7 +32794,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // DW-D: UnderwaterPresentationEffects.SuppressPlayerTorch - EnablePlayerTorch's light dark under the fog (the fuel burns on, the light is the only thing it takes)
       meterFor(renderer.gl)?.markCpu('lightset');   // PERF-SIM3: the hand lights, the peers' torches, the camps' fires added, the set handed to the renderer
       const lit = withPlayerLights(wodSel ? wodSel.data : _lanterns,   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the broadsides' flashes and the burning decks beside the Thunderlock's own flash - the brightest things for a frame, cut last by the cap
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...(passSeason?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the broadsides' flashes and the burning decks beside the Thunderlock's own flash - the brightest things for a frame, cut last by the cap
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32, renderer.lightingLane ? capFadeColors(lit, lit.length / 4 - _lanterns.length / 4, cam.pos, renderer.maxPointLights, CITY_LIGHT_COLOR_F32) : null);   // LA-LIGHTS2
     } else {
@@ -32828,7 +32805,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit || csaLit.length ? _wodSelect(0, _csaFill(wodLit ? _wodFill(0) : 0, csaLit)) : null;   // AUDIT PRE-MERGE 0928 R2: the boats' lanterns by day too (DungeonLightHandler lights them near)
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the flashes by day too
+        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...(passSeason?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the flashes by day too
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -32863,6 +32840,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     riteHost?.draw(renderer, null, mwv.eye);   // WB12d: the faithful's circle and their tents - AUDIT WB12d (G6): its sigil from near the eye alone
     sigilBroker?.draw(renderer);   // BROKER-CAGE: the Sigil Broker's cage beside it, and its door
     starfall?.draw(renderer);   // STAR4: the craters and their stones
+    passSeason?.draw(renderer);   // STOREFRONT: the Brass Fissures
     gatePool?.draw(renderer);   // WB2: the Oblivion Gate's stone
     ketch?.drawSky(renderer);   // KETCH: the Sky-Ketch over Daggerfall, and her anchor-lift let down to the fields
     camps.draw(renderer, null, yardCull);   // SURV3: the tents, the cart's own pass; PERF-WAGON: by the street's view test
@@ -33254,7 +33232,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null, floraSwayOn() && wd.on ? windfallLaw : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway); WINDFALL1: by the mod's law while it is on
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T2 towns: every built populated pixel runs its own pool
     // (PopulationManager is per-location); the pool sees the player in
     // the pixel's LOCATION frame, and live persons draw through the
@@ -33641,7 +33618,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // expensive because of the string it built; the arithmetic it
       // repeats is free. A stash here would be mutable state and a
       // coordinate guard bought for no measured gain.
-      const _bare = riteHost?.clearing() ?? starfall?.clearing() ?? null;   // AUDIT WB12d (G2): the faithful's burned earth, this frame; STAR4: or a star's crater (a star never falls beside the gate)
+      const _bare = riteHost?.clearing() ?? starfall?.clearing() ?? passSeason?.clearing() ?? null;   // AUDIT WB12d (G2): the faithful's burned earth, this frame; STAR4: or a star's crater (a star never falls beside the gate)
       const keep = (x, z, floor = false) => {   // BANTHA2: `floor` the jungle floor's keep - its records (grass and dirt), and the meadow kept out of every point it claims
         const hit = pieceAt(x, z);
         if (!hit) return null;
@@ -33811,6 +33788,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     };
     frameHaze();
     renderer.drawHeld(camRight, bbUp);   // GRASS-PORTAL: the street's blended flats, over the grass behind them
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, once the opaque world is whole - no depth written, so the street's flats, the grass and the banners drawn after them painted over them (RAIN-OVER-GRASS's law)
     poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);   // POI-2: a POI's glass and its like, after every opaque thing and the sea's top, the farthest first; AUDIT POI R4: and after the grass, the banners, the Windfall and the haze, which write depth its glass does not (RAIN-OVER-GRASS's law) - and R14: the farthest from the view's own eye
     if (poiEditor?.drawLines(proj, view)) renderer.markForeignPass();   // POI-3: the editor's boxes where the models stand, then its handles over everything (AUDIT POI R4: over the glass too, moved with it)
     drawFalling();   // RAIN-OVER-GRASS: after the grass and the banners, before the translucent bodies and the fires

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "AETHERWINGS-the-blue-drawn-gold",
+    "file": "src/render/auraRing.js",
+    "old": "gold: Object.freeze([0.48, 0.8, 1]), amber: Object.freeze([0.18, 0.5, 0.95]) });",
+    "new": "gold: Object.freeze([1, 0.76, 0.32]), amber: Object.freeze([0.95, 0.5, 0.14]) });",
+    "tests": ["test/net/seraphwings.test.js"]
+  },
+  {
+    "name": "AETHERWINGS-the-palette-never-chosen",
+    "file": "src/render/auraRing.js",
+    "old": "vec3 wingGold() { return uAura == 19 ?",
+    "new": "vec3 wingGold() { return uAura == 99 ?",
+    "tests": ["test/net/seraphwings.test.js"]
+  },
+  {
+    "name": "AETHERWINGS-not-drawn-as-wings",
+    "file": "src/render/auraRing.js",
+    "old": "  if (uAura == 4 || uAura == 19) { vec3 wl = uKind == 0 ? wingsGround(vP)",
+    "new": "  if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP)",
+    "tests": ["test/net/seraphwings.test.js"]
+  },
+  {
+    "name": "AETHERWINGS-the-world-lit-gold",
+    "file": "src/render/auraRing.js",
+    "old": "    const rgb = w.aura === 'aetherwings' ? AETHER_WING_LIGHT_RGB : L.rgb;",
+    "new": "    const rgb = L.rgb;",
+    "tests": ["test/net/seraphwings.test.js"]
+  },
+  {
+    "name": "AETHERWINGS-the-capstone-open-early",
+    "file": "src/net/battlePassLaw.js",
+    "old": "      panel(6400, [item('aura:aetherwings', 2000)]),",
+    "new": "      panel(2400, [item('aura:aetherwings', 2000)]),",
+    "tests": ["test/net/passpanels_law.test.js"]
+  },
+  {
+    "name": "AETHERWINGS-the-capstone-priced-off",
+    "file": "src/net/battlePassLaw.js",
+    "old": "      panel(6400, [item('aura:aetherwings', 2000)]),",
+    "new": "      panel(6400, [item('aura:aetherwings', 1600)]),",
+    "tests": ["test/net/passpanels_law.test.js"]
+  }
+]

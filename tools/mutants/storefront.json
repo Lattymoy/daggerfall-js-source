@@ -1,0 +1,533 @@
+[
+  {
+    "name": "STOREFRONT-an-empty-effects-kit-a-claim",
+    "file": "src/net/effectLaw.js",
+    "old": "    any = true;\n  }\n  return any;",
+    "new": "    any = true;\n  }\n  return true;",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-bundle-never-prorated",
+    "file": "src/net/shopLaw.js",
+    "old": "  return Math.max(SHOP_MIN_PRICE, Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id))));",
+    "new": "  return w.price;",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "STOREFRONT-the-price-floor-dropped",
+    "file": "src/net/shopLaw.js",
+    "old": "  return Math.max(SHOP_MIN_PRICE, Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id))));",
+    "new": "  return Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id)));",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "No ware in the catalogue gives so much that a leftover share prices under fifty cents (the least is the Daedric Champion's last glyph, $3.52); the floor is the law for a bundle to come. test/server/storefront_service.test.js walks every giver with every part held.",
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "STOREFRONT-a-bundles-own-ware-sold-alone",
+    "file": "src/net/shopLaw.js",
+    "old": "  return SHOP_WARES.filter((w) => w.alone && named.has(w.id)).map((w) => w.id);",
+    "new": "  return SHOP_WARES.filter((w) => named.has(w.id)).map((w) => w.id);",
+    "tests": [
+      "test/server/storefront_service.test.js",
+      "test/server/shop_service.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-challenge-paid-twice",
+    "file": "server-account/src/battlePass.js",
+    "old": "AND n >= ?5 AND paid = 0 RETURNING challenge",
+    "new": "AND n >= ?5 RETURNING challenge",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-day-unbounded",
+    "file": "server-account/src/battlePass.js",
+    "old": "UPDATE pass_days SET last = MIN(?3, MAX(0, ?4 - aurum)), aurum = aurum + MIN(?3, MAX(0, ?4 - aurum))",
+    "new": "UPDATE pass_days SET last = ?3 + 0 * ?4, aurum = aurum + ?3",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-any-effects-string-badged",
+    "file": "src/net/wire.js",
+    "old": "if (effectKitOk(from?.fx)) row.fx = from.fx;",
+    "new": "if (from?.fx) row.fx = from.fx;",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-kill-no-pose-change",
+    "file": "src/net/wire.js",
+    "old": "|| (a.xk | 0) !== (b.xk | 0)",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-peers-kill-with-no-kit-played",
+    "file": "src/net/peer/peerFx.js",
+    "old": "        const look = effectWorn(kit, 'kill');",
+    "new": "        const look = effectWorn(kit, 'kill') ?? 'ashen';",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-others-choice-ignored",
+    "file": "src/net/peer/peerFx.js",
+    "old": "  if (!othersEffectShown(q.at)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-mount-beat-on-the-cart",
+    "file": "src/net/peer/peerFx.js",
+    "old": "const ridden = pose.rd === POSE_RIDE.Horse && !pose.wb && othersEffectShown(feet) ?",
+    "new": "const ridden = pose.rd && !pose.wb && othersEffectShown(feet) ?",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-one-cap-for-kills-and-breaths",
+    "file": "src/render/killFx.js",
+    "old": "    for (const x of this.bursts) if (x.pool === pool && x.fade < 0) mine++;",
+    "new": "    for (const x of this.bursts) if (x.fade < 0) mine++;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-peers-gate-in-my-skin",
+    "file": "src/scenes/portalGates.js",
+    "old": "const skinOf = (g) => (g.owner === null ? ownPortalSkin() : peerEffectWorn(g.owner, 'portal'));",
+    "new": "const skinOf = (g) => ownPortalSkin();",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-skins-pieces-never-freed",
+    "file": "src/scenes/portalFx.js",
+    "old": "if (done) { dropDress(p); try {",
+    "new": "if (done) { try {",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-mount-look-on-the-wire",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "export const wireHorseLook = (/** @type {unknown} */ code) => horseLookCode({ ...horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0), mount: 0 });",
+    "new": "export const wireHorseLook = (/** @type {unknown} */ code) => horseLookCode(horseLookOfCode(Number.isInteger(code) ? /** @type {number} */ (code) : 0));",
+    "tests": [
+      "test/systems/horse/mountlook.test.js",
+      "test/systems/horse/coats1_horsecoats.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-mount-look-dyeing-the-tack",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);",
+    "new": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);\n      for (let q = 0; q < w * h; q++) out[q * 4] = 255;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-beat-with-no-look",
+    "file": "src/systems/horse/mountFx.js",
+    "old": "      if (!look || !feet || !feet.every?.(Number.isFinite)) { clocks.delete(id); return false; }",
+    "new": "      if (!feet || !feet.every?.(Number.isFinite)) { clocks.delete(id); return false; }",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-beats-remainder-dropped",
+    "file": "src/systems/horse/mountFx.js",
+    "old": "      c.t = Math.min(c.t - beat, beat);",
+    "new": "      c.t = 0;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-locked-effect-worn",
+    "file": "src/ui/characterSlots.js",
+    "old": "row.append(choice(b, { slot: picked, key: e.key }, () => flow.wearEffect(picked, e.key), !own));",
+    "new": "row.append(choice(b, { slot: picked, key: e.key }, () => flow.wearEffect(picked, e.key), false));",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-carousel-turning-while-held",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS;",
+    "new": "c.n > 1 && !c.paused && !c.reduced && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS;",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-bundles-held-piece-unmarked",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (w.kind === 'glyph') return has(wd.glyphs);\n  if (w.kind === 'aura') return has(wd.auras);",
+    "new": "  if (w.kind === 'aura') return has(wd.auras);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-watch-paying-the-pass",
+    "file": "src/systems/pass/passClient.js",
+    "old": "  if (!entity || typeof entity !== 'object' || neverPays(entity) || _asked.has(entity)) return;",
+    "new": "  if (!entity || typeof entity !== 'object' || _asked.has(entity)) return;",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-construct-read-as-a-foe",
+    "file": "src/systems/pass/passClient.js",
+    "old": "(e?.passConstruct === true || PASS_CONSTRUCT_MOBILES.includes(e?.mobileType) ? 'construct' : foeFindSource(e))",
+    "new": "foeFindSource(e)",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-clip-loaded-twice",
+    "file": "src/systems/storefrontSounds.js",
+    "old": "  if (!m.has(key)) {\n    m.set(key, (async () => {",
+    "new": "  if (true) {\n    m.set(key, (async () => {",
+    "tests": [
+      "test/systems/storefront_sounds.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-body-never-back-on-the-stage",
+    "file": "src/render/effectStage.js",
+    "old": "  if (t < STAGE_KILL_S.whole) { const u = (t - STAGE_KILL_S.back) / (STAGE_KILL_S.whole - STAGE_KILL_S.back); return 1 - u * u * (3 - 2 * u); }\n  return 0;",
+    "new": "  return 1;",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-stray-day-aurum-kept",
+    "file": "src/net/battlePassLaw.js",
+    "old": "today: whole(c.today, PASS_DAY_AURUM), dayMax",
+    "new": "today: c.today, dayMax",
+    "tests": [
+      "test/net/passpanels_law.test.js",
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-limited-ware-sold-after-its-window",
+    "file": "src/net/shopLaw.js",
+    "old": "  return !limits.length || limits.some((e) => nowMs >= e.fromMs && nowMs < e.toMs);",
+    "new": "  return true;",
+    "tests": [
+      "test/server/storefront_service.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-maul-rolled",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const pool = legendaryPool ?? legendariesFor(item).filter((l) => !l.unrolled);",
+    "new": "    const pool = legendaryPool ?? legendariesFor(item);",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-maul-unlawful",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "import '../pass/resonantMaul.js';",
+    "new": "import '../pass/seasonWords.js';",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-tremor-one-force",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "kick: TREMOR_KICK[at.stage] * swell",
+    "new": "kick: TREMOR_KICK[0] * swell",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-tremor-all-hour",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "  if (since >= TREMOR_MS) return null;",
+    "new": "  if (since >= TREMOR_EVERY_MS) return null;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-fissures-bunched",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "out.every((f) => apart(f, x, y, FISSURE_APART_PX))",
+    "new": "out.every((f) => apart(f, x, y, 0))",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ],
+    "note": "W14: re-aimed by content - an area's draws (seasonWorld.js drawFissures) read a pixel by its theatre's law, the Bay's the region's as before."
+  },
+  {
+    "name": "STOREFRONT-a-heart-every-stage",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "heart = stage === HEART_STAGE && k === 0;",
+    "new": "heart = k === 0;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-gate-ignored",
+    "file": "src/systems/pass/seasonWorld.js",
+    "old": "=> !!gate && !apart(f, gate.px, gate.py, FISSURE_GATE_PX + 1);",
+    "new": "=> false;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-tremor-line-every-frame",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (tremor.hour !== tr.hour) {",
+    "new": "    if (tremor.hour !== tr.hour || true) {",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-kick-never-repeated",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (t - tremor.kickAt >= TREMOR_KICK_MS) { tremor.kickAt = t; shake(tr.kick); }",
+    "new": "    if (tremor.kickAt === -Infinity) { tremor.kickAt = t; shake(tr.kick); }",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-peers-camp-stood-over",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (!(camp.peerHeldAgo(F.f.site) >= SEASON_ORPHAN_MS)) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-colossus-unpromoted",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    promoteRaidLeader(e, { name: COLOSSUS_TEXT.name() });\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-maul-every-fall",
+    "file": "server-account/src/seasonClaim.js",
+    "old": "'INSERT OR IGNORE INTO season_mauls",
+    "new": "'INSERT OR REPLACE INTO season_mauls",
+    "tests": [
+      "test/server/seasonmaul_service.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-maul-unstruck",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (struckAt(fo) == null) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-camp-stood-again-at-once",
+    "file": "src/scenes/seasonHost.js",
+    "old": "    if (q != null && t - q < SEASON_QUIET_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-clearings-every-frame",
+    "file": "src/scenes/seasonHost.js",
+    "old": "      if (key !== clears.key) { clears.key = key;",
+    "new": "      if (true) { clears.key = key;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-fissure-never-built",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        ensureMesh(F);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-collider-forgotten",
+    "file": "src/scenes/seasonHost.js",
+    "old": "          place(F);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-hum-from-afar",
+    "file": "src/scenes/seasonHost.js",
+    "old": "        if (d <= SEASON_HUM_M && t - F.humAt >= SEASON_HUM_MS)",
+    "new": "        if (d <= SEASON_BUILD_M && t - F.humAt >= SEASON_HUM_MS)",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-pipe-on-the-pillar",
+    "file": "src/world/fissureModel.js",
+    "old": "pipe: [-Math.PI / 2 - 0.75, 0.22]",
+    "new": "pipe: [Math.PI / 2, 0.35]",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-crack-unlit",
+    "file": "src/world/fissureArt.js",
+    "old": "    if (v < 0.08) return [ramp(R.deep, 0.2 * g, x, y), ramp(R.aether, 0.85 + 0.15 * g, x, y)];",
+    "new": "    if (v < 0.08) return [ramp(R.deep, 0.2 * g, x, y), BLACK];",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-challenge-unsaid",
+    "file": "src/scenes/seasonHost.js",
+    "old": "if (e.kind === 'challenge') tell(PASS_EVENT_TEXT.challenge(passChallengeText(e.key), e.aurum));",
+    "new": "if (e.kind === 'challenge') void 0;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-challenge-aurum-unsaid",
+    "file": "src/scenes/seasonHost.js",
+    "old": "PASS_EVENT_TEXT.challenge(passChallengeText(e.key), e.aurum)",
+    "new": "PASS_EVENT_TEXT.challenge(passChallengeText(e.key), 0)",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-heart-unringed",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  if (m.heart) { ctx.strokeStyle = FISSURE_BRASS_CSS;",
+    "new": "  if (false) { ctx.strokeStyle = FISSURE_BRASS_CSS;",
+    "tests": [
+      "test/scenes/season_world.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-find-before-the-read",
+    "file": "src/systems/pass/passClient.js",
+    "old": "    if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }",
+    "new": "    if (due && !(await readPass()) && due) { _rest.unheard(); return 0; }",
+    "tests": [
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-mask-with-a-trailing-zero-read",
+    "file": "src/net/identityToken.js",
+    "old": "  if (typeof bits !== 'string' || !GLYPH_BITS_RE.test(bits) || bits.endsWith('0')) return null;",
+    "new": "  if (typeof bits !== 'string' || !GLYPH_BITS_RE.test(bits)) return null;",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-glyphs-said-two-ways",
+    "file": "src/net/identityToken.js",
+    "old": "    if (c.gb !== undefined) return false;   // STOREFRONT: one way of saying them\n",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-mask-never-read-back",
+    "file": "src/net/identityToken.js",
+    "old": "  if (r.ok && r.claims.gb !== undefined) { r.claims.g = /** @type {string[]} */ (glyphsOfBits(r.claims.gb)); delete r.claims.gb; }",
+    "new": "",
+    "tests": [
+      "test/net/storefront_wire.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-woken-socket-without-its-glyphs",
+    "file": "server/src/index.js",
+    "old": "const unpackAttach = (a) => (typeof a?.gb === 'string' ? (({ gb, ...rest }) => ({ ...rest, glyphs: glyphsOfBits(gb) ?? [] }))(a) : a);",
+    "new": "const unpackAttach = (a) => a;",
+    "tests": [
+      "test/net/storefront_wire.test.js",
+      "test/net/auditattach.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-the-glyphs-attached-as-words",
+    "file": "server/src/index.js",
+    "old": "const packAttach = (a) => (Array.isArray(a?.glyphs) && a.glyphs.length ? (({ glyphs, ...rest }) => ({ ...rest, gb: glyphBitsOf(glyphs) }))(a) : a);",
+    "new": "const packAttach = (a) => a;",
+    "tests": [
+      "test/net/auditattach.test.js"
+    ]
+  },
+  {
+    "name": "STOREFRONT-a-class-list-read-as-english",
+    "file": "tools/l10nHardcoded.mjs",
+    "old": "          if (isProse(s) && !CLASS_LIST.test(asClasses)) out.push({ file, line: n.loc.start.line, text: s });",
+    "new": "          if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-STOREFRONT-the-session-drops-the-effects",
+    "file": "src/net/accountClient.js",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, effects, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
+    "tests": [
+      "test/net/armorylive.test.js"
+    ]
+  }
+]

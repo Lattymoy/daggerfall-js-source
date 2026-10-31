@@ -43,7 +43,7 @@ export const CATEGORIES = Object.freeze([
       "Enhancements/NightAmbientLightScale", "Enhancements/PlayerTorchLightScale", "Spells/EnableSpellLighting", "Spells/EnableSpellShadows",
       "Video/AmbientLitInteriors"]),
     sec("sky", "Sky, water & weather", [
-      "feat:enhanced-environments", "feat:enhanced-water", "feat:water-quality", "feat:armory-others", "feat:mod-heat-haze", "feat:mod-snowfall"]),
+      "feat:enhanced-environments", "feat:enhanced-water", "feat:water-quality", "feat:armory-others", "feat:killfx-others", "feat:mod-heat-haze", "feat:mod-snowfall"]),
     sec("plants", "Plants, wind & wildlife", [
       "feat:grass", "feat:wind", "feat:mod-windfall", "feat:wildlife", "feat:mod-low-poly-trees", "feat:mod-seasons-iliac-bay"]),
     sec("looks", "Textures & looks", [
@@ -122,6 +122,7 @@ export const CATEGORIES = Object.freeze([
   tab("interface", "Interface", [
     // L10N1b: the language the game's words are shown in, and under it a Daggerfall Unity translation pack (L10N3b)
     sec("language", "Language", ["port:language"]),
+    sec("shop", "Shop", ["port:shopHidden"]),   // SHOP-HIDE
     sec("hud", "HUD", [
       "port:hudScale", "port:hudLock", "port:hudBars", "port:hudReset", "feat:calm-hud", "port:foeBarStyle", "feat:quick-slots", "GUI/Crosshair",
       "GUI/EnableVitalsIndicators", "GUI/InteractionModeIcon", "GUI/EnableArrowCounter", "GUI/IconsPositioningScheme", "feat:near-death-warning",

@@ -12,7 +12,7 @@
 //    so no frame pays a look's whole 50-120 ms, and uploaded with its mips once done; a horse whose look is not up yet wears the bay's. Past
 //    HORSE3D_LOOKS_KEPT looks, the one longest undrawn is let go - never one drawn this frame or the last, so a crowd of
 //    more looks than that keeps them all rather than thrash; a look asked for and then not again for LOOK_ASK_STALE
-//    frames (its horse gone, the lane left) leaves the queue undyed. The mane and tail's picture is the art's on every look.
+//    frames (its horse gone, the lane left) leaves the queue undyed. The mane and tail's picture: the art's, a mount look's shaded.
 //  - THE DRAWS. A horse alone is a Morrowind mesh in the world, so it draws as the Morrowind body does - a picture
 //    through the sprite pass at the viewer's Morrowind dial (render/characterSprite.js drawBodyPicture, mwModelPixel); a horse under
 //    a rider is in the RIDER's picture (`also`, fpArm.js drawThird); in first person the rider's eye is on its back, so
@@ -21,12 +21,14 @@
 //
 // Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
 import { HORSE_MODEL_URL, HORSE_PICTURE_URLS, horseSkinStream, horsePaletteShape, horsePoseScratch, horseGait, stepHorseGait, writeHorsePalette, startTexelMap, rgbaMips, horseHide } from './horseModel.js';
-import { dyeHorseTexelRows, horseLookCode, horseLookOfCode } from '../systems/horse/horseCoats.js';
+import { dyeHorseTexelRows, dyeHorseHairRows, dyesPoints, horseLookCode, horseLookOfCode } from '../systems/horse/horseCoats.js';
 import { drawBodyPicture, mwModelPixel } from '../render/characterSprite.js';
 import { CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { multiply, trs, transformPoint } from './mat4.js';
 
+/** AUDIT-STOREFRONT: rows of the hair picture a frame's shade takes: 64 of 512, a mount look's mane and tail up in eight. */
+export const HAIR_ROWS = 64;
 /** Dyed looks kept on the GPU (the bay's is always kept). */
 export const HORSE3D_LOOKS_KEPT = 12;
 /** Rows of the body's picture a frame's dye takes: 32 of 256, some 6-15 ms - a look up in eight frames. */
@@ -70,18 +72,21 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
   /** @type {any} */ let bake = null;
   let base = null, shape = null, stream = null, hide = null, seatBone = -1, seatLocal = null;
   /** @type {{ width: number, height: number, data: Uint8Array } | null} */ let body = null;
-  let hairTex = null, map = null, mapJob = null, failed = null;
+  let hairTex = null, hairImg = null, map = null, mapJob = null, failed = null;
   /** @type {Promise<void> | null} */ let loading = null;
   const looks = new Map();   // code -> { tex, last }
   const asked = new Map();   // code -> the frame it was last asked for: the codes waiting for their dye, oldest first
   let job = null;   // { code, out, row }
+  const hairs = new Map();   // AUDIT-STOREFRONT: mount look -> its mane and tail's texture, made once (four at most)
+  const hairAsked = new Set();
+  let hairJob = null;   // { mount, out, row }
   let frame = 0;
 
   function load() {
     if (loading || !renderer) return loading;
     loading = (async () => {
       const [b, bodyBytes, hairBytes] = await Promise.all([fetchJson(HORSE_MODEL_URL), fetchBytes(HORSE_PICTURE_URLS.body), fetchBytes(HORSE_PICTURE_URLS.hair)]);
-      const [bodyImg, hairImg] = await Promise.all([decode(bodyBytes), decode(hairBytes)]);
+      const [bodyImg, hairPic] = await Promise.all([decode(bodyBytes), decode(hairBytes)]);
       bake = b;
       body = bodyImg;
       shape = horsePaletteShape(bake);
@@ -95,6 +100,7 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
       base = renderer.createSkinnedCharacterMesh(stream.stream, { floats: stream.floats, pairs: stream.pairs, width: shape.width, height: shape.height });
       renderer.releaseCharacterSkin(base);   // the shared mesh poses no horse - each horse brings its own palette
       looks.set(0, { tex: renderer.createCharacterTexture(rgbaMips(body.width, body.height, body.data)), last: Infinity });
+      hairImg = hairPic;
       hairTex = renderer.createCharacterTexture(rgbaMips(hairImg.width, hairImg.height, hairImg.data));
     })().catch((e) => { failed = String(e?.message ?? e); });
     return loading;
@@ -109,11 +115,39 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     return looks.get(0)?.tex ?? null;
   }
 
+  /** AUDIT-STOREFRONT: the mane and tail's texture in mount look `mount` - asked for when it is not up, the art's
+   *  meanwhile and for a look that keeps its black. */
+  function hairTexOf(mount) {
+    if (!dyesPoints(mount)) return hairTex;
+    const have = hairs.get(mount);
+    if (have) return have;
+    if (hairJob?.mount !== mount) hairAsked.add(mount);
+    return hairTex;
+  }
+
+  /** AUDIT-STOREFRONT: one frame's shade of a mount look's mane and tail, HAIR_ROWS of it, uploaded when its last row is in. */
+  function tickHair() {
+    if (!hairJob && hairAsked.size) {
+      const mount = /** @type {number} */ (hairAsked.values().next().value);
+      hairAsked.delete(mount);
+      hairJob = { mount, out: new Uint8Array(hairImg.data), row: 0 };
+    }
+    if (!hairJob) return;
+    const r1 = Math.min(hairImg.height, hairJob.row + HAIR_ROWS);
+    dyeHorseHairRows(hairImg.data, hairJob.out, hairImg.width, hairJob.mount, hairJob.row, r1);
+    hairJob.row = r1;
+    if (r1 >= hairImg.height) {
+      hairs.set(hairJob.mount, renderer.createCharacterTexture(rgbaMips(hairImg.width, hairImg.height, hairJob.out)));
+      hairJob = null;
+    }
+  }
+
   /** One frame's dye: DYE_ROWS of the oldest look asked for, uploaded when its last row is in; then the kept looks
    *  trimmed to HORSE3D_LOOKS_KEPT, the longest undrawn let go. */
   function tick() {
     frame++;
     if (!base || !body) return;
+    if (hairImg) tickHair();
     for (const [c, at] of asked) if (frame - at > LOOK_ASK_STALE) asked.delete(c);   // AUDIT COATS3D A2: nobody draws it now
     if (!job && asked.size) {
       // the texel map first, a slice a frame (world/horseModel.js startTexelMap - built once, some 40-85 ms whole)
@@ -173,6 +207,8 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     else h.stale = true;
     h.look = horseLookCode(horseLookOfCode(look | 0));
     h.mesh.ranges[0].tex = lookTex(h.look);
+    const hair = hairTexOf(horseLookOfCode(h.look).mount);
+    for (let i = 0; i < h.mesh.ranges.length; i++) if (stream.ranges[i].texture === 'hair') h.mesh.ranges[i].tex = hair;
     return place(h, feet, yaw);
   }
 

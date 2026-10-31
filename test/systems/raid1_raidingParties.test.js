@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import {
   RAIDING_PARTIES_VENDOR, raidingPartiesOn, RAID_DURATION_MINUTES, RAID_START_SPAN, MOD_DAILY_RAIDS, RAID_KILLS_MIN,
   RAID_KILLS_MAX_EXCLUSIVE, MAX_RAID_ENEMIES, MAX_RAID_DEFENDERS, SPAWN_INTERVAL_MAX_S, ORC_SPAWN_INTERVAL_MAX_S,
-  PENDING_TIMEOUT_S, PENDING_BACKOFF_S, ACTOR_SWEEP_S, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE, raidSpawnRange, RAID_TOWN_TYPES,
+  PENDING_TIMEOUT_S, PENDING_BACKOFF_S, ACTOR_SWEEP_S, STAFF_PACK_STEP_S, RAID_CLASSIC_PACK_MAX, raidClassicGapS, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE, raidSpawnRange, RAID_TOWN_TYPES,
   RAID_REGION_REAL_HOURS, raidsPerDay, raidTypeName, raidTypeAdjective, attackLine, withdrawnLine, cleansedLine,
   chooseRaider, raidRegions, rollRaids, raidsForDay, raidKey, raidActive, grantRaidReputation, outOfSight,
   newRaidSaveData as newSaveData, getRaidSaveData as getSaveData, restoreRaidSaveData as restoreSaveData, raidState, setRaidingPartiesHost, raidFrame as frame, raidDefendingHere,
@@ -301,22 +301,24 @@ test('RAID1 Update, standing a raid: a defender first, then a raider; the clocks
   assert.equal(log.raiders.length, before + 1, 'one fallen (health 0 is not standing): one more');
 });
 
-test('RAID1 Update, the clocks: an orc raid\'s raider comes every 1-8 s, any other every 1-10, defenders 1-10; a pause holds them (fix 7) (mutants: 8 for every party; the pause spends time)', async () => {
-  const { at } = rig();
+test('RAID1 Update, the clocks - PIN MOVED (RAID-PACKS): the raiders come in packs of 3-5, a pack\'s steps STAFF_PACK_STEP_S apart, then the mod\'s mean wait (an orc raid\'s 4.5 s, any other 5.5); defenders 1-10; a pause holds them (fix 7) (mutants: one gap for every party; the pause spends time)', async () => {
+  const { at, log } = rig();
   restoreSaveData({ lastSelectedDay: DAY, raids: [raidRec({ type: 2 })] });
   at.roll = 1;   // the maximum
   at.allowed = false;   // no defenders: watch the raider clock alone
   frame(20); await tick();
-  assert.equal(_raidRuntime().nextSpawnIn, ORC_SPAWN_INTERVAL_MAX_S);
+  assert.equal(_raidRuntime().nextSpawnIn, STAFF_PACK_STEP_S, 'the pack\'s next step');
   assert.equal(_raidRuntime().nextDefenderIn, SPAWN_INTERVAL_MAX_S, 'the defender clock rescheduled though none came');
   frame(0); frame(0); frame(0);
-  assert.equal(_raidRuntime().nextSpawnIn, ORC_SPAWN_INTERVAL_MAX_S, 'a paused frame spends nothing');
-  _resetRaidingParties();
-  const r2 = rig();
-  restoreSaveData({ lastSelectedDay: DAY, raids: [raidRec({ type: 0 })] });
-  r2.at.roll = 1; r2.at.allowed = false;
-  frame(20); await tick();
-  assert.equal(_raidRuntime().nextSpawnIn, SPAWN_INTERVAL_MAX_S, 'knights: ten');
+  assert.equal(_raidRuntime().nextSpawnIn, STAFF_PACK_STEP_S, 'a paused frame spends nothing');
+  assert.equal(log.raiders.length, 1, 'its leader');
+  const pack = RAID_CLASSIC_PACK_MAX + 1;   // roll 1: the top of the range, past its end
+  for (let i = 1; i < pack; i++) { frame(STAFF_PACK_STEP_S); await tick(); }
+  assert.equal(log.raiders.length, pack, 'one pack, whole');
+  assert.equal(_raidRuntime().nextSpawnIn, raidClassicGapS(2), 'orcs: 4.5 s to the next pack');
+  assert.equal(raidClassicGapS(2), (1 + ORC_SPAWN_INTERVAL_MAX_S) / 2);
+  assert.equal(raidClassicGapS(0), (1 + SPAWN_INTERVAL_MAX_S) / 2, 'knights: 5.5');
+  assert.equal(raidClassicGapS(1), (1 + SPAWN_INTERVAL_MAX_S) / 2, 'bandits: 5.5');
 });
 
 test('RAID1 Update, a spawn in flight: it lapses after eight seconds and both clocks wait ten; a spot not found costs nothing (fix 10); leaving the town cancels it, and what lands after is taken back (mutants: no lapse; the back-off on a miss; the cancel ignored)', async () => {
@@ -336,7 +338,7 @@ test('RAID1 Update, a spawn in flight: it lapses after eight seconds and both cl
   frame(PENDING_BACKOFF_S + 1);
   await tick();
   assert.equal(_raidRuntime().pending, null);
-  assert.equal(_raidRuntime().nextSpawnIn, 1, 'no spot: the clock\'s own next tick (roll 0: one second), no ten-second wait');
+  assert.equal(_raidRuntime().nextSpawnIn, STAFF_PACK_STEP_S, 'no spot: the pack\'s next step (PIN MOVED, RAID-PACKS: the clock\'s own next tick), no ten-second wait');
   assert.equal(_raidRuntime().nextDefenderIn, 1, 'and the defenders\' clock its own');
   // the player leaves mid-spawn
   at.raiderSpot = true; at.hold = true;
@@ -502,7 +504,7 @@ test('RAID1 the world host by source: the seams answered where GameManager would
   const body = rh.slice(at, rh.indexOf('\n  });', at));
   assert.match(w, /\n {2}createRaidHost\(\{/, 'the host constructs it');
   assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true, eventFoe: boss \}\)/);   // PIN MOVED (STAR-MASTER-FLED): a staff event's boss asked as an event's own
-  assert.match(body, /\}, mobileType, raidSpawnRange\(at\)\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange - a town raid's the mod's own, a staff event pack's its own
+  assert.match(body, /\}, mobileType, \{ \.\.\.raidSpawnRange\(at\), reach: \(spot\) => host\.raidSites\?\.reachable\?\.\(spot, at\?\.at \?\? at\?\.near \?\? enchantFeet\(\)\) \?\? true \}\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange; PIN MOVED (RAID-REACH): and a spot on its player's streets
   assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN: never in a house or building
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G7): nor the Eltheric Ocean, whose composed politic is the isles' region's

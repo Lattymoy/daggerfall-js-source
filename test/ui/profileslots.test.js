@@ -47,7 +47,7 @@ function slotsDoc() {
 }
 
 test('PROFILE-SLOTS the slots: the body\'s five down the left, over the head, the weapon, the portrait and the aura down the right - what each wears, and the stage\'s look with a choice tried on (mutants: a slot left out; a tried piece put in the wrong slot)', () => {
-  assert.deepEqual(CHARACTER_SLOTS.map((s) => `${s.side}:${s.id}`), ['left:head', 'left:torso', 'left:arms', 'left:legs', 'right:plate', 'right:weapon', 'right:icon', 'right:aura']);
+  assert.deepEqual(CHARACTER_SLOTS.map((s) => `${s.side}:${s.id}`), ['left:head', 'left:torso', 'left:arms', 'left:legs', 'right:plate', 'right:weapon', 'right:icon', 'right:aura', 'under:kill', 'under:portal', 'under:mount']);   // STOREFRONT: the effects under the stage
   assert.deepEqual([characterSlotName('plate'), characterSlotName('aura'), characterSlotName('icon'), characterSlotName('head')], ['Over the head', 'Aura', 'Portrait', 'Head']);
   const w = { title: 'gatebreaker', aura: 'dagonfire', icon: null, armory: 'ab000', glyphs: ['sprout', 'origin'], glyphsOff: ['origin'] };
   assert.deepEqual(slotWorn(w, 'head'), { kind: 'armory', key: 'burningcrown', word: 'Crown of the Burning Door' });
@@ -87,9 +87,9 @@ test('PROFILE-SLOTS the section: a tile opens its picker; a choice pointed at is
   const paint = () => { sec = slots.node(paint); };   // as the card repaints: the section built afresh round the one canvas
   let sec = slots.node(paint);
   assert.equal(started.length, 1, 'the stage started once, with the canvas');
-  assert.deepEqual(started[0], { kit: 'a0000', aura: null });
+  assert.deepEqual({ ...started[0], cue: typeof started[0].cue }, { kit: 'a0000', aura: null, cue: 'function' }, 'STOREFRONT: and an effect\'s loop rings');
   const find = (/** @type {(n: any) => boolean} */ f) => sec.all.find(f);
-  assert.equal(sec.all.filter((n) => n.tag === 'button' && n.className.startsWith('slottile')).length, 8, 'a tile a slot');
+  assert.equal(sec.all.filter((n) => n.tag === 'button' && n.className.startsWith('slottile')).length, 11, 'a tile a slot (STOREFRONT: and the three effects)');
   const plate = find((n) => n.className === 'slots-platehost').children[0];
   assert.equal(plate.style.transform, 'translate(100px, 55px) translate(-50%, -100%)', 'the plate\'s bottom the gap over the head point, as the world\'s names stand');
   assert.equal(slots.state().picked, 'head', 'the head\'s picker first');
@@ -281,4 +281,46 @@ test('PROFILE-SLOTS the stage\'s life on the card: a stage that stopped itself (
   } finally {
     globalThis.requestAnimationFrame = raf; globalThis.cancelAnimationFrame = caf;
   }
+});
+
+test('STOREFRONT the effects under the stage: a tile each for the kill effect, the portals and the mount, saying what is worn; a kill or a portal pointed at plays on the stage, the open slot\'s worn one when none is (a portal\'s none the violet vortex); one not held is tried, never worn; one held is worn through the flow\'s own door; its look and how it is had said under the row (mutants: the try-on never reaching the stage; a locked effect worn; the worn one not shown)', () => {
+  const pressed = [];
+  const flow = {
+    busy: false,
+    wardrobe: { titles: [], title: null, glyphs: [], glyphsOff: [], auras: [], aura: null, icons: [], icon: null, armoryHeld: [], armory: null,
+      effectsHeld: { kill: ['pyre'], portal: ['runic'], mount: [] }, effects: 'c00' },
+    wearEffect: (/** @type {string} */ s, /** @type {string|null} */ k) => { pressed.push([s, k]); return true; },
+  };
+  const fx = /** @type {any[]} */ ([]);
+  const stage = { setKit() {}, setAura() {}, setBody() {}, setEffect: (/** @type {any} */ s, /** @type {any} */ k) => fx.push([s, k]), headAt: () => null, stop() {} };
+  const doc = slotsDoc();
+  const entryOf = (/** @type {string} */ kind, /** @type {string} */ key) => ({ how: () => `Buy the ${key} (${kind}) from the shop.` });
+  const slots = characterSlots(doc, flow, { start: () => stage, entryOf });
+  const paint = () => { sec = slots.node(paint); };
+  let sec = slots.node(paint);
+  const find = (/** @type {(n: any) => boolean} */ f) => sec.all.find(f);
+  const tile = (/** @type {string} */ id) => find((n) => n.tag === 'button' && n.className.startsWith('slottile') && n.children[0]?.textContent === characterSlotName(id));
+  assert.deepEqual(['kill', 'portal', 'mount'].map((id) => slotWorn(flow.wardrobe, id).word), ['Daedric Pyre', null, null]);
+  assert.deepEqual(['kill', 'portal', 'mount'].map(characterSlotName), ['Kill effect', 'Portals', 'Mount']);
+  tile('kill').onclick();
+  assert.equal(slots.state().picked, 'kill');
+  assert.deepEqual(fx.at(-1), ['kill', 'pyre'], 'the slot opened plays the kill effect worn');
+  const voidrend = find((n) => n.tag === 'button' && n.className.includes('acteffect') && n.children[0]?.textContent === 'Voidrend');
+  assert.ok(voidrend.className.includes('locked'), 'not held: locked');
+  voidrend.onpointerenter();
+  assert.deepEqual(fx.at(-1), ['kill', 'voidrend'], 'tried on the stage');
+  assert.match(find((n) => n.className === 'meta slots-look').textContent, /^A rift tears open .* Buy the voidrend \(kill\) from the shop\.$/, 'its look, and how it is had');
+  assert.equal(voidrend.onclick(), false, 'a press tries it, never wears it');
+  assert.deepEqual(pressed, []);
+  voidrend.onpointerleave();
+  assert.deepEqual(fx.at(-1), ['kill', 'pyre'], 'and goes back to the one worn');
+  tile('portal').onclick();
+  assert.deepEqual(fx.at(-1), ['portal', null], 'no skin worn: the violet vortex plays');
+  const runic = find((n) => n.tag === 'button' && n.className.includes('acteffect') && n.children[0]?.textContent === 'Runic Stone');
+  runic.onclick();
+  assert.deepEqual(pressed, [['portal', 'runic']], 'held: worn through the flow');
+  tile('mount').onclick();
+  assert.deepEqual(fx.at(-1), [null, null], 'the mount slot plays nothing on the stage - its horse stands over the choices');
+  assert.ok(find((n) => n.className === 'slots-mount'), 'the mount\'s horse');
+  slots.dispose();
 });

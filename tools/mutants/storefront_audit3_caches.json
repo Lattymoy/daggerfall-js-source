@@ -1,0 +1,155 @@
+[
+  {
+    "name": "AUDIT3-D1-the-distance-fixed",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "reach = pile.lawHalf[0] + COFFER_HW + AURUM_CACHE_GAP_M;",
+    "new": "reach = 0.9;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-the-diagonal-unscaled",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "const off = reach / Math.max(Math.abs(dir[0]), Math.abs(dir[2])), from",
+    "new": "const off = reach, from",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-the-other-piles-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "return !boxes.some((b) => meets(box, b, AURUM_CACHE_GAP_M / 2)) && ",
+    "new": "return ",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-the-devices-size",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "law = classicBillboardSize(t, pile.record);",
+    "new": "law = billboardSize(t, pile.record);",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-a-wall-an-eighth-round-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "const EIGHT = Object.freeze(Array.from({ length: 8 },",
+    "new": "const EIGHT = Object.freeze(Array.from({ length: 1 },",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-the-shin-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "[AURUM_CACHE_SHIN_M, AURUM_CACHE_KNEE_M].some(",
+    "new": "[AURUM_CACHE_KNEE_M].some(",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D1-the-ceiling-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "Number.isFinite(collider.raycast([f[0], f[1] + 0.02, f[2]], UP, COFFER_H, MESH_ONLY))",
+    "new": "false",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D2-the-movers-pile-kept",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "  if (under?.key !== MESH) return null;",
+    "new": "  if (!Number.isFinite(under?.dist)) return null;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D2-one-pile-tried",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "for (let n = 0; n < list.length; n++) {",
+    "new": "for (let n = 0; n < 1; n++) {",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D2-the-order-from-the-first",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "list[(first + n) % list.length]",
+    "new": "list[n]",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D2-the-piles-foot-kept",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "    if (foot) return foot;\n  }\n  return null;\n}",
+    "new": "    if (foot) return foot;\n  }\n  return list[first].pos;\n}",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D3-the-doors-and-movers-unread",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": " && !others.some((b) => meets(box, b, AURUM_CACHE_GAP_M / 2))",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D3-the-mesh-read-as-a-door",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "const NOT_MESH = Object.freeze({ skip: Object.freeze([MESH]) });",
+    "new": "const NOT_MESH = Object.freeze({ skip: Object.freeze([]) });",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D4-cache-id-left-standing",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "      if (r?.error === 'cache-id') takeAway();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D5-kept-only-while-the-level-stands",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);",
+    "new": "      if (!gone && (r?.ok || r?.error === 'cache-taken')) keepId(storage, me.id, id);",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D5-the-late-find-unsaid",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (gone) { if (r?.ok) lateSay(found()); return; }",
+    "new": "if (gone) return;",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT3-D5-a-late-refusal-said-as-a-find",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "if (gone) { if (r?.ok) lateSay(found()); return; }",
+    "new": "if (gone) { lateSay(found()); return; }",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  }
+]
