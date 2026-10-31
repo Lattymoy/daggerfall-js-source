@@ -119,6 +119,11 @@ try {
     const gap = (k) => Math.max(0, ...doors.filter((d) => d.kind === k).map((d) => Math.abs(d.lift - d.exact)));
     console.log(`${town.name}: ${doors.length} doors for ${town.buildings} buildings (${ids.size} distinct); each floor over the stream's ground within ${Math.max(0, ...plinths.map((d) => Math.abs(d.lift - d.want))).toFixed(2)} m of the region's as sampled; ${doors.filter((d) => d.kind === 'terrace').length} on pads, ${doors.length - plinths.length} on stilts; the sampling's gap to the exact ground at a door: plinth ${gap('plinth').toFixed(2)} m, terrace ${gap('terrace').toFixed(2)} m`);
     if (ids.size < town.buildings || doors.length < town.buildings) fail(`${town.name}: ${ids.size} buildings with a door of ${town.buildings}`);
+    // WG-14: no door under the ground the game draws before it (bible/03-World/World-2-Arc.md)
+    const low = (k) => { const v = doors.filter((d) => d.kind === k).map((d) => d.lift); return v.length ? `${Math.min(...v).toFixed(2)} m` : 'none'; };
+    const sunk = plinths.filter((d) => d.lift < -0.05);
+    console.log(`${town.name}: the lowest sill over the drawn ground: plinth ${low('plinth')}, terrace ${low('terrace')}`);
+    if (sunk.length) fail(`${town.name}: a door under the drawn ground: ${sunk.slice(0, 4).map((d) => `${d.id} ${d.lift.toFixed(2)}`).join('; ')}`);
     if (off.length) fail(`${town.name}: floors off the region's ground as the stream samples it: ${off.slice(0, 4).map((d) => `${d.id} ${d.lift.toFixed(2)} for ${d.want.toFixed(2)}`).join('; ')}`);
     if (wrong.length) fail(`${town.name}: a door reads another building's type: ${wrong.slice(0, 4).map((d) => `${d.id} ${d.read} for ${d.type}`).join('; ')}`);
     // the photographs: over the town from its arrival, and its features where it has them
