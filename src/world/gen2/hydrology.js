@@ -54,16 +54,18 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
     const k = cellIndex(elev, s.x, s.y);
     if (k >= 0) { own[k] += s.flow; springs.push({ ...s, cell: k }); }
   }
-  // the hollows that hold water: deeper than LAKE_DEPTH and wider than the ground's roughness
+  // the hollows that hold water: deeper than LAKE_DEPTH and wider than the ground's roughness; inside one the water runs
+  // down the real ground to its floor and the lake is one node of the network (basinNet), so no river crosses the flood's
+  // flat in a straight line
   const hollows = hollowsOf(rt, elev).filter((hw) => hw.deep > LAKE_DEPTH && hw.cells.length >= HOLLOW_CELLS);
-  const outletOf = new Map(hollows.map((hw) => [hw.outlet, hw]));
-  // the water down the drainage, upstream first: a dry land's rivers lose water; a hollow's balance is struck at its outlet
-  const Q = Float64Array.from(own), lakeId = new Field(w, H, elev.frame, Uint16Array), lakes = [];
-  for (let o2 = n - 1; o2 >= 0; o2--) {
-    const k = rt.order[o2], r = rt.rcv[k];
-    const hw = outletOf.get(k);
-    if (hw) {
-      const evap = evaporation(air.temp.data[k]);
+  const net = basinNet(rt, elev, hollows, cellM), m = net.rcv.length, up = net.up;
+  // the water down the network, upstream first: a dry land's rivers lose water; a hollow's balance is struck at its node
+  const Q = new Float64Array(m), lakeId = new Field(w, H, elev.frame, Uint16Array), lakes = [], lakeOf = new Int32Array(hollows.length);
+  Q.set(own);
+  for (const k of up) {
+    const r = net.rcv[k];
+    if (k >= n) {
+      const hw = hollows[k - n], evap = evaporation(air.temp.data[hw.outlet]);
       const inflowYr = Q[k] * YEAR_S, cells = hw.cells.slice().sort((a, b) => elev.data[a] - elev.data[b] || a - b);
       const full = cells.length * area * evap;
       let level, kept;
@@ -82,46 +84,48 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
       for (const c of at) { lakeId.data[c] = lake.id; sx += c % w; sy += (c / w) | 0; }
       lake.x = elev.x0 + (sx / at.length + 0.5) / elev.res; lake.y = elev.y0 + (sy / at.length + 0.5) / elev.res;
       lakes.push(lake);
+      lakeOf[k - n] = lake.id;
     }
     if (r < 0) continue;
-    const dry = air.precip.data[k] < DRY_MM ? DRY_LOSS * (rt.dist[k] / 1000) * (1 - air.precip.data[k] / DRY_MM) : 0;
+    const p = k < n ? air.precip.data[k] : DRY_MM, dry = p < DRY_MM ? DRY_LOSS * (net.dist[k] / 1000) * (1 - p / DRY_MM) : 0;
     Q[r] += Q[k] * (1 - dry);
   }
   // the rivers' cells, and each one's surface: at most every river cell that drains to it, at most its own ground
-  const water = new Field(w, H, elev.frame, Uint8Array), S = new Float64Array(n).fill(Infinity), order = new Uint8Array(n);
-  const cellsKm2 = area / 1e6, drained = new Float64Array(n).fill(cellsKm2);
-  for (let o2 = n - 1; o2 >= 0; o2--) { const k = rt.order[o2], r = rt.rcv[k]; if (r >= 0) drained[r] += drained[k]; }
-  const isRiver = (k) => Q[k] >= RIVER_Q && drained[k] >= RIVER_KM2 && !lakeId.data[k];
-  for (let o2 = n - 1; o2 >= 0; o2--) {
-    const k = rt.order[o2];
+  const water = new Field(w, H, elev.frame, Uint8Array), S = new Float64Array(m).fill(Infinity), order = new Uint8Array(m);
+  const cellsKm2 = area / 1e6, drained = new Float64Array(m).fill(cellsKm2);
+  for (const k of up) { const r = net.rcv[k]; if (r >= 0) drained[r] += drained[k]; }
+  const isRiver = (k) => k < n && Q[k] >= RIVER_Q && drained[k] >= RIVER_KM2 && !lakeId.data[k];
+  for (const k of up) {
+    if (k >= n) continue;
     if (lakeId.data[k]) water.data[k] |= lakes[lakeId.data[k] - 1].kind === 'playa' ? WATER.playa : WATER.lake;
     if (!isRiver(k)) continue;
     water.data[k] |= WATER.river;
     S[k] = Math.min(S[k], elev.data[k]);
     if (!order[k]) order[k] = 1;
-    const r = rt.rcv[k];
-    if (r >= 0) {
+    const r = net.rcv[k];
+    if (r >= 0 && r < n) {
       S[r] = Math.min(S[r], S[k]);
       order[r] = order[r] === order[k] ? order[k] + 1 : Math.max(order[r], order[k]);
     }
   }
   for (const s of springs) water.data[s.cell] |= WATER.spring;
-  const rivers = traceRivers(elev, rt, Q, S, order, isRiver, lakeId);
+  const rivers = traceRivers(elev, net, Q, S, order, isRiver, lakeId, lakeOf);
   const falls = [];
   for (let k = 0; k < n; k++) {
-    const r = rt.rcv[k];
-    if (!(water.data[k] & WATER.river) || r < 0 || !(S[r] < Infinity)) continue;
-    const drop = S[k] - S[r], slope = drop / rt.dist[k];
+    const r = net.rcv[k];
+    if (!(water.data[k] & WATER.river) || r < 0 || r >= n || !(S[r] < Infinity)) continue;
+    const drop = S[k] - S[r], slope = drop / net.dist[k];
     if (drop >= FALL_DROP && slope >= FALL_SLOPE) { water.data[k] |= WATER.fall; falls.push({ x: cx(elev, k, r), y: cy(elev, k, r), drop, q: Q[k], kind: 'fall' }); }
     else if (drop >= RAPIDS_DROP && slope >= FALL_SLOPE * 0.3) falls.push({ x: cx(elev, k, r), y: cy(elev, k, r), drop, q: Q[k], kind: 'rapids' });
   }
   // the valley floor under a river stands at its water (the channel itself is carved by the vector river, WG-6)
   const carved = elev.clone();
   for (let k = 0; k < n; k++) if (water.data[k] & WATER.river) carved.data[k] = Math.min(carved.data[k], S[k] + 0.5);
-  // height above the nearest water down the drainage, and that water's depth (for the flood plain), downstream first
-  const hand = elev.like(), chanH = new Float64Array(n), chanD = new Float64Array(n), chanN = new Int32Array(n);
-  for (let o2 = 0; o2 < n; o2++) {
-    const k = rt.order[o2], r = rt.rcv[k], lk = lakeId.data[k];
+  // height above the nearest water down the network, and that water's depth (for the flood plain), downstream first
+  const hand = elev.like(), chanH = new Float64Array(m), chanD = new Float64Array(m), chanN = new Int32Array(m);
+  for (let o2 = up.length - 1; o2 >= 0; o2--) {
+    const k = up[o2], r = net.rcv[k], lk = k < n ? lakeId.data[k] : 0;
+    if (k >= n) { chanH[k] = lakes[lakeOf[k - n] - 1].level; chanD[k] = 0; chanN[k] = 0; continue; }
     if (water.data[k] & WATER.river) { chanH[k] = S[k]; chanD[k] = riverDepth(Q[k]); chanN[k] = 0; }
     else if (lk) { chanH[k] = lakes[lk - 1].level; chanD[k] = 0; chanN[k] = 0; }
     else if (r >= 0) { chanH[k] = chanH[r]; chanD[k] = chanD[r]; chanN[k] = chanN[r] + 1; }
@@ -160,12 +164,11 @@ function slopeAtCell(f, k, cellM) {
  * river (a junction), a lake, the region's edge or the sand. Each point: world pixel x, y, discharge q, width, depth
  * and surface s (metres); a course's surface never rises. Chaikin-smoothed twice, its ends kept.
  */
-function traceRivers(elev, rt, Q, S, order, isRiver, lakeId) {
+function traceRivers(elev, net, Q, S, order, isRiver, lakeId, lakeOf) {
   const { w } = elev, n = w * elev.h, fed = new Uint8Array(n), taken = new Int32Array(n).fill(-1), rivers = [];
-  for (let k = 0; k < n; k++) { const r = rt.rcv[k]; if (r >= 0 && isRiver(k) && isRiver(r)) fed[r] = 1; }
-  // sources in drainage order from upstream, so a longer stem is traced before the tributaries that join it
-  for (let o2 = n - 1; o2 >= 0; o2--) {
-    const src = rt.order[o2];
+  for (let k = 0; k < n; k++) { const r = net.rcv[k]; if (r >= 0 && r < n && isRiver(k) && isRiver(r)) fed[r] = 1; }
+  // sources upstream first, so a longer stem is traced before the tributaries that join it
+  for (const src of net.up) {
     if (!isRiver(src) || fed[src]) continue;
     const cells = [];
     let k = src, into = 'edge';
@@ -173,8 +176,9 @@ function traceRivers(elev, rt, Q, S, order, isRiver, lakeId) {
       if (taken[k] >= 0) { into = `river:${taken[k]}`; cells.push(k); break; }
       cells.push(k);
       taken[k] = rivers.length + 1;
-      const r = rt.rcv[k];
+      const r = net.rcv[k];
       if (r < 0) { into = 'edge'; break; }
+      if (r >= n) { into = `lake:${lakeOf[r - n]}`; break; }
       if (lakeId.data[r]) { into = `lake:${lakeId.data[r]}`; cells.push(r); break; }
       if (!isRiver(r)) { into = 'sink'; break; }
       k = r;
@@ -184,4 +188,38 @@ function traceRivers(elev, rt, Q, S, order, isRiver, lakeId) {
     rivers.push({ id: rivers.length + 1, order: order[cells[cells.length - 1]] || 1, into, raw, pts: riverCourse(raw), length: cells.length });
   }
   return rivers;
+}
+
+/**
+ * THE BASIN NETWORK: the flood's receivers, but inside each hollow that holds water the real ground's steepest lower
+ * neighbour in the same hollow, a hollow's floor cells draining to its lake node (index n + i), and the node to the
+ * spill's receiver. Strictly downhill inside, the flood's order outside: no cycle. `up` is every node upstream first
+ * (Kahn's order, ties by index), `dist` the metres to each receiver (0 into a lake node).
+ * @param {{ rcv: Int32Array, dist: Float64Array }} rt @param {Field} elev @param {{ cells: number[], outlet: number }[]} hollows @param {number} cellM
+ */
+export function basinNet(rt, elev, hollows, cellM) {
+  const { w, h: H } = elev, n = w * H, m = n + hollows.length, rcv = new Int32Array(m), dist = new Float64Array(m), home = new Int32Array(n).fill(-1);
+  rcv.set(rt.rcv); dist.set(rt.dist);
+  hollows.forEach((hw, i) => { for (const c of hw.cells) home[c] = i; });
+  hollows.forEach((hw, i) => {
+    for (const c of hw.cells) {
+      const ci = c % w, cj = (c / w) | 0;
+      let best = 0, r = n + i, rd = 0;
+      for (let d = 0; d < 8; d++) {
+        const a = ci + D8X[d], b = cj + D8Y[d];
+        if (a < 0 || b < 0 || a >= w || b >= H) continue;
+        const nk = b * w + a, l = (d & 1 ? Math.SQRT2 : 1) * cellM, s = (elev.data[c] - elev.data[nk]) / l;
+        if (home[nk] === i && s > best) { best = s; r = nk; rd = l; }
+      }
+      rcv[c] = r; dist[c] = rd;
+    }
+    rcv[n + i] = rt.rcv[hw.outlet]; dist[n + i] = rt.dist[hw.outlet];
+  });
+  const indeg = new Int32Array(m), up = new Int32Array(m);
+  for (let k = 0; k < m; k++) if (rcv[k] >= 0) indeg[rcv[k]]++;
+  let head = 0, tail = 0;
+  for (let k = 0; k < m; k++) if (!indeg[k]) up[tail++] = k;
+  while (head < tail) { const k = up[head++], r = rcv[k]; if (r >= 0 && --indeg[r] === 0) up[tail++] = r; }
+  if (tail !== m) throw new Error(`wg2: the basin network has a cycle (${m - tail} nodes)`);
+  return { rcv, dist, up, n };
 }

@@ -24,15 +24,19 @@ export const SLIDE_SHARE = 0.2;
 export const TALUS_SCALE = 0.55;
 /** The most a cell is built up a step, metres - a fan grows, it never dams its own stream in one step. */
 export const LAY_MAX = 0.5;
+/** The share of rain a river from beyond the region carries as water: its discharge is read back as the rain that made
+ *  it, the measure the stream's power is taken in. */
+export const INFLOW_RUNOFF = 0.3;
 
 /**
  * Work a region's land. `elev` in metres (not changed); answers the worked land, the sediment the water laid on each
  * cell (metres, for the soils), what slid onto it from the slope above (`fallen`) and the depth cut from it.
  * @param {import('./field.js').Field} elev @param {import('./field.js').Field} rock @param {import('./field.js').Field} uplift
- * @param {import('./field.js').Field} precip mm a year @param {number} cellM @param {{ steps?: number, k?: number, isSea?: (k: number) => boolean }} [o]
+ * @param {import('./field.js').Field} precip mm a year @param {number} cellM
+ * @param {{ steps?: number, k?: number, isSea?: (k: number) => boolean, inflow?: Float64Array|null }} [o] inflow: m3/s a cell from past the edge
  */
 export function erode(elev, rock, uplift, precip, cellM, o = {}) {
-  const steps = o.steps ?? 80, kScale = o.k ?? 1, isSea = o.isSea ?? (() => false);
+  const steps = o.steps ?? 80, kScale = o.k ?? 1, isSea = o.isSea ?? (() => false), inflow = o.inflow ?? null;
   const { w, h: H } = elev, n = w * H, area = cellM * cellM;
   const h = Float64Array.from(elev.data), deposit = new Float64Array(n), cut = new Float64Array(n), fallen = new Float64Array(n);
   const K = new Float64Array(n), talus = new Float64Array(n), rain = new Float64Array(n);
@@ -40,7 +44,7 @@ export function erode(elev, rock, uplift, precip, cellM, o = {}) {
     const r = ROCKS[rock.data[k]];
     K[k] = K_BASE * kScale * r.k;
     talus[k] = r.talus * TALUS_SCALE;
-    rain[k] = area * (precip.data[k] / 1000);
+    rain[k] = area * (precip.data[k] / 1000) + (inflow ? (inflow[k] * 31557600) / INFLOW_RUNOFF : 0);
   }
   const edge = (k) => { const i = k % w, j = (k / w) | 0; return i === 0 || j === 0 || i === w - 1 || j === H - 1 || isSea(k); };
   const surf = { w, h: H, data: h };

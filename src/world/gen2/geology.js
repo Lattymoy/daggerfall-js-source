@@ -4,7 +4,7 @@
 // runs on across two regions' seam. A range is the canon's spine raised as ridges that run along it (ridged noise
 // stretched along the spine), not as cones; the hills' height follows the rock's hardness; hard flat-bedded rock
 // in a dry land stands as benches and mesas.
-import { Field } from './field.js';
+import { Field, D8X, D8Y } from './field.js';
 import { canonTheatre, canonRelief, canonRange, worldToPicture, segmentD2 } from './canon.js';
 import { nodeGround } from '../landforms.js';
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
@@ -119,10 +119,12 @@ export function geology(spec, canon) {
     rock.data[k] = r;
     const rk = ROCKS[r], prof = provinceProfile(t), L = canon.lift.data[k], base = canon.relief.data[k];
     if (t === 0) { elev.data[k] = Math.min(base, -4); continue; }
-    // a range: ridges along the spine - the noise's own frame turned onto it, five times longer along than across
     const dx = canon.dirX.data[k], dy = canon.dirY.data[k];
-    const u = (x * dx + y * dy) / 26, v = (-x * dy + y * dx) / 5.5;
-    const crest = ridged(seed + 3, u, v, 4);
+    // a range: ridges that run with the spine (stretched 2.5 to 1 along it, the frame warped so they wander and branch)
+    // over isotropic crests for the spurs between them
+    const wu = 1.6 * fbm(seed + 7, x / 22, y / 22, 2), wv = 1.6 * fbm(seed + 8, x / 22, y / 22, 2);
+    const u = (x * dx + y * dy) / 15 + wu, v = (-x * dy + y * dx) / 6 + wv;
+    const crest = 0.65 * ridged(seed + 3, u, v, 4) + 0.35 * ridged(seed + 9, x / 7, y / 7, 3);
     const rangeM = L > 0 ? prof.range * L * (0.45 + 0.55 * crest) * smoothstep(0, 0.35, L) : 0;
     const upland = smoothstep(UPLAND_M * 0.6, UPLAND_M * 1.4, base);
     const amp = prof.rugged * (40 + 110 * upland + 160 * L) * (0.45 + 0.55 * rk.hardness);
@@ -145,7 +147,7 @@ export function geology(spec, canon) {
 
 /** `infill` with the canon's sea and the provinces' dryness. @param {RegionSpec} spec @param {ReturnType<typeof canonGrid>} canon @param {Field} elev */
 export function infillCanon(spec, canon, elev) {
-  infill(elev, regionGrid(spec).cellM, (k) => canon.theatre.data[k] === 0, (k) => provinceProfile(canon.theatre.data[k]).precip < ARID_MM);
+  infill(elev, regionGrid(spec).cellM, (k) => canon.theatre.data[k] === 0, (k) => provinceProfile(canon.theatre.data[k]).precip < ARID_MM, seedOf(spec.seed, 'infill'));
 }
 
 /** The wet lowlands' hollows, laid after the last fill: small closed basins that hold ponds and pools (a province whose
@@ -168,10 +170,29 @@ export const BASIN_KM2 = 60;
 export const ARID_MM = 500;
 /** Fill the hollows of `elev` in place, graded toward the spill so the water finds its way across.
  *  @param {Field} elev @param {number} cellM @param {(k: number) => boolean} isSea @param {(k: number) => boolean} arid */
-export function infill(elev, cellM, isSea, arid) {
-  const rt = route(elev, cellM, isSea), cellKm2 = (cellM * cellM) / 1e6;
+export function infill(elev, cellM, isSea, arid, seed = 0) {
+  const rt = route(elev, cellM, isSea), cellKm2 = (cellM * cellM) / 1e6, w = elev.w;
+  const steps = new Int32Array(elev.data.length).fill(-1);
   for (const hw of hollowsOf(rt, elev)) {
     if (hw.deep >= BASIN_DEPTH && hw.cells.length * cellKm2 >= BASIN_KM2 && arid(hw.outlet)) continue;
-    for (const c of hw.cells) elev.data[c] = rt.filled[c];
+    // the fill falls gently to its spill (FLAT_RISE over its reach) with a grain of its own, so a stream across it finds
+    // its own way and never a straight line; a pit the grain leaves is the drainage's to fill
+    const inside = new Set(hw.cells), q = [hw.outlet];
+    steps[hw.outlet] = 0;
+    for (let c = 0; c < q.length; c++) {
+      const k = q[c], ki = k % w, kj = (k / w) | 0;
+      for (let d = 0; d < 8; d++) {
+        const nk = (kj + D8Y[d]) * w + ki + D8X[d];
+        if (inside.has(nk) && steps[nk] < 0) { steps[nk] = steps[k] + 1; q.push(nk); }
+      }
+    }
+    const far = steps[q[q.length - 1]] || 1, level = rt.filled[hw.outlet];
+    for (const c of hw.cells) {
+      const x = elev.x0 + ((c % w) + 0.5) / elev.res, y = elev.y0 + (((c / w) | 0) + 0.5) / elev.res;
+      elev.data[c] = level + FLAT_RISE * (steps[c] / far) + FLAT_GRAIN * fbm(seed + 11, x / 3, y / 3, 3);
+    }
   }
 }
+/** A filled flat's fall from its far side to its spill, and the grain on it, metres. */
+export const FLAT_RISE = 4;
+export const FLAT_GRAIN = 1.2;

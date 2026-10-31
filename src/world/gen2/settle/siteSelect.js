@@ -6,7 +6,7 @@
 import { distanceTo, prominence } from '../gridOps.js';
 import { WATER } from '../hydrology.js';
 import { clamp } from '../exact.js';
-import { typeOf } from './settlementGen.js';
+import { typeOf, RAYS } from './settlementGen.js';
 import { BLEND_PX } from '../regionSampler.js';
 
 const _fields = new WeakMap();
@@ -37,6 +37,21 @@ export function waterDistM(S, x, y) {
   return Math.max(0, Math.min(best, f.water.get(i, j) * (819.2 / S.header.res)));
 }
 
+/** Is open water within `reach` metres, found as the generator finds its shore - sixteen rays out, a step at a time,
+ *  water or a channel's bank? @param {import('../regionSampler.js').RegionSampler} S @param {number} x @param {number} y @param {number} reach */
+export function waterWithin(S, x, y, reach) {
+  for (let k = 0; k < 48; k += 3) {
+    const [dx, dy] = RAYS[k];
+    for (let s = 6; s <= reach; s += 6) {
+      const px = x + (dx * s) / 819.2, py = y + (dy * s) / 819.2;
+      if (S.waterAt(px, py)) return true;
+      const c = S.channel(px, py);
+      if (c && c.d < c.half + 3) return true;
+    }
+  }
+  return false;
+}
+
 /** What a world point is worth, need by need (0..1 each). @param {import('../regionSampler.js').RegionSampler} S @param {number} x @param {number} y */
 export function siteNeeds(S, x, y) {
   const f = fieldsOf(S), [i, j] = S.fields.elev.cellOf(x, y), e = /** @type {any} */ (S.env(x, y));
@@ -61,7 +76,7 @@ export function siteNeeds(S, x, y) {
 export function siteScore(S, type, x, y) {
   const t = typeOf(type);
   if (!t || S.weight(x, y) < 1 || !S.owns(x - BLEND_PX, y) || S.waterAt(x, y)) return -Infinity;
-  if (t.docks && waterDistM(S, x, y) > t.radius * 0.6) return -Infinity;   // a water town stands on its water
+  if (t.docks && (waterDistM(S, x, y) > t.radius * 0.6 || !waterWithin(S, x, y, t.radius * 0.6))) return -Infinity;   // a water town stands on its water
   const n = siteNeeds(S, x, y);
   let v = 0;
   for (const [k, wgt] of Object.entries(t.suit)) v += wgt * /** @type {any} */ (n)[k];

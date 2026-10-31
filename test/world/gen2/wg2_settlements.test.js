@@ -67,7 +67,10 @@ test('WG2 SITES: each type finds its own ground - the mine by the ore, the fortr
 test('WG2 REGENERATE: one district made again leaves every other district\'s buildings where they stood with their ids; a retired id is never given again (mutants: the kept districts, the id book)', () => {
   const spec = TEST_SETTLEMENTS[2], t = town(spec), mapId = settlementMapId(3);
   const first = mintIds(t.id, mapId, t.buildings);
-  const d = t.buildings.find((b) => b.district?.startsWith('residential')).district;
+  const tally = new Map();
+  for (const b of t.buildings) tally.set(b.district, (tally.get(b.district) ?? 0) + 1);
+  const d = [...tally.keys()].sort((a, b) => tally.get(b) - tally.get(a) || (a < b ? -1 : 1))[0];   // the busiest district
+  assert.ok(tally.size > 1, 'more than one district to keep');
   const kept = { ...t, buildings: first.buildings };
   const again = generateSettlement(S[spec.region], { ...spec, x: t.centre.x, y: t.centre.y, regenerate: [d], keep: kept, seed: spec.seed + 1 });
   const second = mintIds(t.id, mapId, again.buildings, first.book);

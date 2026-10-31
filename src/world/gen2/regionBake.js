@@ -12,6 +12,7 @@ import { resourceSites } from './resources.js';
 import { provinceProfile } from './tables.js';
 import { STAGES } from './stageGraph.js';
 import { canonPrint } from './canon.js';
+import { regionInflow } from './continent.js';
 
 /** The generator's law (the manifest's `generatorVersion` names it). A change that moves any bake's bytes for the same
  *  spec raises it, and the old law is kept beside the new one while a published region was baked by it (WG-5). */
@@ -38,7 +39,8 @@ export function bakeRegion(spec) {
   const geo = geology(spec, canon);
   const isSea = (k) => canon.theatre.data[k] === 0;
   const air0 = climate(spec, canon, geo.elev);
-  const worked = erode(geo.elev, geo.rock, geo.uplift, air0.precip, g.cellM, { steps: spec.erosion?.steps, k: spec.erosion?.k, isSea });
+  const inflow = regionInflow(spec);   // the rivers that enter from beyond the region's edge (continent.js)
+  const worked = erode(geo.elev, geo.rock, geo.uplift, air0.precip, g.cellM, { steps: spec.erosion?.steps, k: spec.erosion?.k, isSea, inflow });
   // the fans and the flats the water laid close small hollows a ridge of sediment wide: filled as before the erosion
   // (a dry land's great basins kept), and the wet lowlands' pools laid after
   infillCanon(spec, canon, worked.elev);
@@ -46,7 +48,7 @@ export function bakeRegion(spec) {
   const air = climate(spec, canon, worked.elev);
   const wet = worked.elev.like();
   for (let k = 0; k < wet.data.length; k++) wet.data[k] = provinceProfile(canon.theatre.data[k]).wet;
-  const hyd = hydrology(spec, worked.elev, air, g.cellM, { isSea, wet });
+  const hyd = hydrology(spec, worked.elev, air, g.cellM, { isSea, wet, inflow });
   const soil = soils(spec, hyd.elev, geo.rock, air, hyd, worked.deposit, g.cellM);
   const bio = biomes(spec, hyd.elev, geo.rock, canon.theatre, air, soil, hyd);
   const elev = bio.elev;

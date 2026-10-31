@@ -5,7 +5,7 @@
 // building standing on another or in the water. Answers the problems as words a designer can act on; none for a sound
 // town.
 import { buildingProblems } from './buildingRecord.js';
-import { rectOf, overlaps, polyDist, PLINTH_M, TERRACE_M } from './settlementGen.js';
+import { rectOf, overlaps, polyDist, spanPoints, PLINTH_M, TERRACE_M } from './settlementGen.js';
 import { PIXEL_M } from '../regionSampler.js';
 
 /** How far a door may stand from a street's edge (m), and how far a plinth may stand over its lowest corner. */
@@ -35,11 +35,11 @@ export function settlementProblems(S, t, o = {}) {
   for (const b of t.buildings) {
     const name = `${b.id ?? b.genKey} (${b.role})`;
     if (o.minted) for (const p of buildingProblems(b)) out.push(`${name}: ${p}`);
-    const c = L(b.at.x, b.at.y), rect = rectOf(c, b.at.dir, b.footprint, -0.05);
+    const c = L(b.at.x, b.at.y), rect = rectOf(c, b.at.dir, b.footprint, -0.05), ground = rectOf(c, b.at.dir, b.footprint, 0);
     if (rects.some((r) => overlaps(r, rect))) out.push(`${name}: stands on another building`);
     rects.push(rect);
-    // its ground: no corner under the floor by more than its plinth may hide, none over it (buried) past a step
-    const hs = rect.corners.map(([x, y]) => S.heightAt(cx + x / PIXEL_M, cy + y / PIXEL_M));
+    // its ground: nowhere under the floor by more than its plinth may hide, nowhere over it (buried) past a step
+    const hs = spanPoints(ground).map(([x, y]) => S.heightAt(cx + x / PIXEL_M, cy + y / PIXEL_M));
     const level = b.at.z, lo = Math.min(...hs), hi = Math.max(...hs), stilts = b.ground?.kind === 'stilts', terrace = b.ground?.kind === 'terrace';
     if (!stilts && !terrace && level - lo > FLOAT_M) out.push(`${name}: floats ${(level - lo).toFixed(1)} m over its ground`);
     if (!stilts && !terrace && hi - level > 0.3) out.push(`${name}: buried ${(hi - level).toFixed(1)} m`);

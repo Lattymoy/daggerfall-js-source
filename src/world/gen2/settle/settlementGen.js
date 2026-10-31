@@ -24,7 +24,7 @@ export const typeOf = (k) => SETTLEMENT_TYPES.find((t) => t.key === k) ?? null;
 
 /** The rays a footprint is cast along: 48 unit vectors, made by turning one by 7.5 degrees (its cosine and sine as
  *  literals: exact, WG-2). */
-const RAYS = (() => {
+export const RAYS = (() => {
   const C = 0.9914448613738104, S = 0.13052619222005157, out = [];
   let x = 1, y = 0;
   for (let k = 0; k < 48; k++) { out.push([x, y]); [x, y] = [x * C - y * S, x * S + y * C]; }
@@ -226,22 +226,21 @@ export function generateSettlement(S, spec) {
         const rect = rectOf(c, dir, [w, d], 1), bare = rectOf(c, dir, [w, d], 0);
         if (!plotOk(rect)) continue;
         if (edgePoints(bare).some(([x, y]) => allRoads().some((r) => polyDist(r.pts, x, y) < r.width / 2 + 0.2))) continue;
-        const stand = standOn(rect, c);
-        if (!stand) continue;
-        made.push({ c, dir, w, d, rect, stand, district: dist, genKey: `${dist.key}:${ri}:${i}:${side}` });
+        if (!standOn(bare)) continue;   // a plot that cannot stand any building
+        made.push({ c, dir, w, d, rect, stand: standOn(bare), district: dist, genKey: `${dist.key}:${ri}:${i}:${side}` });
       }
     });
   });
   /** How a plot stands: on a plinth, terraced, or raised; null where it cannot. */
-  function standOn(rect, c) {
-    const hs = [...rect.corners, c].map(([x, y]) => ground(x, y)), lo = Math.min(...hs), hi = Math.max(...hs);
-    const wet = rect.corners.some(([x, y]) => waterAt(x, y) || wetAt(x, y));
+  function standOn(rect) {
+    const pts = spanPoints(rect), hs = pts.map(([x, y]) => ground(x, y)), lo = Math.min(...hs), hi = Math.max(...hs);
+    const wet = pts.some(([x, y]) => waterAt(x, y) || wetAt(x, y));
     if (overWater && wet) {
       let top = hi;
-      for (const [x, y] of [...rect.corners, c]) { const w = S.waterAt(...W(x, y)); if (w) top = Math.max(top, w.surface); }
+      for (const [x, y] of pts) { const w = S.waterAt(...W(x, y)); if (w) top = Math.max(top, w.surface); }
       return { kind: 'stilts', level: top + STILTS_M, lo };
     }
-    if (rect.corners.some(([x, y]) => waterAt(x, y))) return null;
+    if (pts.some(([x, y]) => waterAt(x, y))) return null;
     if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: hi + 0.2, lo };
     if (hi - lo <= (style.layout === 'terraced' ? TERRACE_M * 1.6 : TERRACE_M)) return { kind: 'terrace', level: (hi + lo) / 2, lo, hi };
     return null;
@@ -278,7 +277,11 @@ export function generateSettlement(S, spec) {
     const prefab = choosePrefab(role, style.key, m.w, m.d, rand01(seed, 22, i)) ?? choosePrefab('house', style.key, m.w, m.d, rand01(seed, 22, i));
     if (!prefab) return;
     const fp = /** @type {[number, number]} */ ([prefab.footprint[0], prefab.footprint[1]]);
-    const level = m.stand.level, front = [m.c[0] + m.dir[0] * fp[1] / 2, m.c[1] + m.dir[1] * fp[1] / 2];
+    // the building stands on its own ground, sampled as the validator samples it (spanPoints)
+    const stand = standOn(rectOf(m.c, m.dir, fp, 0));
+    if (!stand) return;
+    m.stand = stand;
+    const level = stand.level, front = [m.c[0] + m.dir[0] * fp[1] / 2, m.c[1] + m.dir[1] * fp[1] / 2];
     const [x, y] = W(...m.c), [fx, fy] = W(...front);
     buildings.push({
       settlement: spec.id, district: m.district.key, genKey: m.genKey, role: prefab.role === 'house' && role !== 'house' ? role : prefab.role,
@@ -355,6 +358,16 @@ export function rectOf(c, dir, [w, d], pad) {
   const ax = [-dir[1], dir[0]], hw = w / 2 + pad, hd = d / 2 + pad;
   const corners = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([a, b]) => [c[0] + ax[0] * hw * a + dir[0] * hd * b, c[1] + ax[1] * hw * a + dir[1] * hd * b]);
   return { c, axes: [ax, dir], half: [hw, hd], corners };
+}
+/** The points a building's ground is read at: a 5 x 5 lattice over its rectangle, corners and edges included - the
+ *  generator stands it and the validator checks it on the same points. */
+export function spanPoints(r) {
+  const out = [], [a0, a1] = r.axes, [hw, hd] = r.half;
+  for (let j = 0; j <= 4; j++) for (let i = 0; i <= 4; i++) {
+    const u = (i / 2 - 1) * hw, v = (j / 2 - 1) * hd;
+    out.push([r.c[0] + a0[0] * u + a1[0] * v, r.c[1] + a0[1] * u + a1[1] * v]);
+  }
+  return out;
 }
 /** A rectangle's corners, the middles of its sides and its centre. */
 export const edgePoints = (r) => [...r.corners, ...r.corners.map(([x, y], i) => [(x + r.corners[(i + 1) % 4][0]) / 2, (y + r.corners[(i + 1) % 4][1]) / 2]), r.c];
