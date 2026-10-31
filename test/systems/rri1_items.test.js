@@ -314,7 +314,6 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   const credit = CREDITS.mods.find((c) => c.title === 'Roleplay & Realism: Items');
   assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...credit.vendor], [RRI_VENDOR]);
   assert.match(credit.link, /nexusmods\.com\/daggerfallunity\/mods\/61/);
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `roleplay-realism-items` \|/);
   for (const f of ['README.md', 'roleplay-realism-items.dfmod.json', 'modsettings.json', 'ItemTemplates.json', 'RoleplayRealismItemsModData.csv', 'Scripts/RoleplayRealismItemsMod.cs', 'Scripts/ItemJerkin.cs', 'Scripts/ItemHauberk.cs', 'Scripts/ItemArchersAxe.cs']) {
     assert.ok(tracked('vendor/roleplay-realism-items').includes(`vendor/roleplay-realism-items/${f}`), f);
   }

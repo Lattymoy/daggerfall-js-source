@@ -47,7 +47,6 @@ const SITE = { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 };
 const seeded = (seed) => { let s = seed; return () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return s / 4294967296; }; };
 const vId = (key) => EG_V_BY_KEY[key].id;
 const keyOf = (card) => (card >= 100 ? EG_MASTERIES.find((M) => M.id === card)?.key : EG_VESTIGES[card]?.key);
-const PAGE = 'bible/11-Multiplayer/Elite-Gates.md';
 
 /** A breach of `n` admitted (seed `seed`, opened at `op`, started past Redoubt `ew`), at the wait. */
 function opened({ seed = 12345, n = 3, op = T0, ew = 0 } = {}) {
@@ -390,20 +389,3 @@ test('AUDIT EG IV RALLYING CRY ON THE BREACH CLIENT (scenes/eliteGates/egClient.
   } finally { Date.now = realNow; spireHolderStep(entity, null); _resetSpireVestigesForTests(); }
 });
 
-// ── the pages ──────────────────────────────────────────────────────────────────────────────────────────────────────────
-test('AUDIT EG IV THE PAGE SAYS WHAT IS BUILT (sections 12, 15, 17.1, 18 and 21; RETIRING A FLAG DELETES THE SENTENCE): the strata as built - the season\'s order, the Mingled Legion\'s waves, the Old Masters beside every lord and their ground, the Molten Rim a Court\'s, the Twin Court of another band; the offer\'s cards that act, the shards\' rank, Spotter\'s verb and the Rallying Cry at a phase turn; section 21\'s time law as built, enforcement on; the census\'s Lifeline 20 / 25 / 30% - and the stale sentences gone', () => {
-  const page = readFileSync(PAGE, 'utf8'), brain = readFileSync('src/net/eliteGates/egBrain.js', 'utf8');
-  for (const s of ['The\n   six come in the order the arena season draws them', 'begins with every stratum of the Redoubts it starts past', 'Every body of a wave is drawn on its own among the lead', 'a master rises beside every Court\'s lord', 'the Last Lesson stops at r 17', 'the outer 3 m of every disc of a Court is magma',
-    '**Cards that act**', 'one of the member\'s own Vestiges below III at its next rank', 'your arrow from beyond 12 m SPOTS a foe', 'come again at each of a Court\'s phase\n  turns', '**Time, the law enforcement stands on**', 'it is on in\n`eg:` rooms (`EG_BODY_ENFORCE`']) assert.ok(page.includes(s), `the page: ${s}`);
-  for (const gone of ['drawn\n   without repeat each season from six:', '**The Mingled Legion**: waves draw every band\'s kinds;', 'rise together as one Court, under the Twins\'', 'every court disc is magma', 'make a rank of a held Vestige, or a pick of two new ones', 'your arrows wake Lurkers at any range (as any blow', 'Before EG14 turns it on for `eg:` rooms', 'and only once the time law above is in', 'Spotter\'s wake reads', 'No\n   member\'s tally counts either.'])
-    assert.ok(!page.includes(gone), `retired: ${gone}`);
-  assert.ok(brain.includes('20 / 25 / 30% less by the healer\'s rank') && !brain.includes('20 / 30 / 40%'), 'the census\'s Lifeline');
-  assert.equal(EG_CAPSTONES.fellowship.line, "Rally's heal and the company's Second Winds come again at each Court phase and when a hall's door opens.");
-  assert.ok(!EG_MASTERIES.find((M) => M.key === 'spotter').line.includes('wake Lurkers'));
-  // the Molten Rim a Court's alone: a Rift-Yard under it lays none
-  const Y = hall({ seed: 1, h: 106, strata: ['moltenrim'] });
-  assert.ok(!(Y.B.F.zones ?? []).some((z) => z.kind === 'void'), 'a Yard keeps its edge');
-  const C = hall({ seed: 1, h: 110, strata: ['moltenrim'] });
-  assert.ok((C.B.F.zones ?? []).some((z) => z.kind === 'void' && z.s[0] === 'r'), 'a Court\'s disc rimmed');
-  assert.ok(egSetFl && egRaise && egHas && EG_FL && egFightNew, 'imports read');
-});

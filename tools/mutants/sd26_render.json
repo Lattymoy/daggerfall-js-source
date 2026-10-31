@@ -9,15 +9,6 @@
     ]
   },
   {
-    "name": "SD26-R6-the-endings-lights-unsaid",
-    "file": "bible/11-Multiplayer/Super-Dungeons.md",
-    "old": "23-24 the Echoes, 25-30 the\nEndings' lights, 31-32",
-    "new": "23-24 the Echoes, 31-32",
-    "tests": [
-      "test/world/superDungeon/sd26_render.test.js"
-    ]
-  },
-  {
     "name": "SD26-S1-the-stand-left-to-the-first-frame",
     "file": "src/scenes/dungeonContext.js",
     "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n  return api;",

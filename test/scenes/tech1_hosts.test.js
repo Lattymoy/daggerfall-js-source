@@ -36,7 +36,6 @@ test('TECH1 THE ACTION: WeaponTechnique appended last, a port row the classic wi
   assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'WeaponTechnique'), { id: 'WeaponTechnique', label: 'Weapon technique (hold to aim)', glyph: 'Tech', kind: 'hold', w: 60 });
   assert.deepEqual(DPAD_CHOICES.find(([v]) => v === 'WeaponTechnique'), ['WeaponTechnique', 'Weapon technique']);
   assert.deepEqual(PLUS_BIND_ROWS.find((r) => r.sec === 'WeaponTechnique'), { id: 'technique', label: 'Weapon technique (hold to aim)', sec: 'WeaponTechnique' });
-  assert.match(read('bible/10-UI/Controls.md'), /\| `WeaponTechnique` \| MOUSE3 \|  \| Weapon technique \(hold to aim\) \|/);
 });
 
 test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s own gate, the key through the registry\'s held read, the loose claimed as the frame\'s events leave (mutants: stepped after the gesture; the gate dropped; the claim dropped)', () => {

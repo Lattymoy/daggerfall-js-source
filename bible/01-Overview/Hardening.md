@@ -437,7 +437,7 @@ in silence (it has to be written into Home.md to count) and a stub naming
 a page that is not there throws rather than quietly shrinking what the
 gates read. The four index gates and the three negative pins read it now.
 
-`test/tooling/hard5_index.test.js` holds the rest: a ceiling on Home.md's size so
+A gate (since removed) held the rest: a ceiling on Home.md's size so
 it cannot grow back into an everything-page, a check that no section
 exists twice across the index (a relocation that leaves the original
 behind is worse than none - two texts, one edited and one read), the

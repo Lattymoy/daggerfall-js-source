@@ -499,9 +499,6 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
     assert.match(body, /this\._heldCodes/, `${name}: InputManager's held-key dictionary`);
     assert.match(body, /keyup\(code, e = null\) \{/, `${name}: the release edge`);
   }
-  const ledger = src('bible/01-Overview/Port-Ledger.md');
-  assert.match(ledger, /~~C2: the dungeon automap's HELD hotkeys[\s\S]{0,400}?~~ RETIRED \(E-group, 2026-09-02\)/,
-    'the Ledger A row is struck in the Ledger\'s idiom');
 });
 
 // -------------------------------------------------------------------

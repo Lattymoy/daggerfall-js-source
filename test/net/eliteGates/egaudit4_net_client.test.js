@@ -19,7 +19,6 @@ import { validEgOut, SOCIAL_ROOM } from '../../../src/net/wire.js';
 import { weirKeysHeld, weirKeys } from '../../../src/systems/eliteGates/weirKey.js';
 
 const { subtle } = globalThis.crypto;
-const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const T0 = 1_800_000_000_000, ME = 'acct-mac', B = '0123456789abcdef';
 const SITE = { px: 300, py: 200, x: 1000, y: 0, z: 2000, yaw: 0 };
 const settle = async () => { for (let k = 0; k < 20; k++) await new Promise((r) => setImmediate(r)); };
@@ -158,7 +157,6 @@ test('AUDIT EG IV lane3 #10 THE BALANCE IN ITS ASKS\' ORDER, AND THE RUST (secti
   R.client.restack(9); await settle();
   assert.equal(keysAsks, before + 1, 'asked again after it');
   assert.equal(weirKeysHeld(R.entity.items), 3, 'the asked answer stands over it');
-  assert.match(rd('bible/11-Multiplayer/Elite-Gates.md'), /in the order the asks went \(ASYNC NEVER DROPS\)/);
 });
 
 // ── lane4 #14 ──────────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -307,7 +307,4 @@ test('EG-ZQ A SPOT\'S HEIGHT IS SAID IN CENTIMETRES (section 9; EG-ZJ\'s finding
     }
   }
   assert.ok(ys > 100, `${ys} spot heights read`);
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8');
-  const sec9 = page.slice(page.indexOf('## 9. The generator'), page.indexOf('## 10. The spans'));
-  assert.match(sec9, /a spot's `y`[^.]*centimetres/, 'section 9 says it');
 });

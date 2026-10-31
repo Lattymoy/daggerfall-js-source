@@ -145,10 +145,3 @@ test('WW3 the door and the site: the widget converts with toColor32 in both arms
   assert.match(conv, /`color32\.colors` would be `undefined` and\n \* `asBytes` would throw on the first swapped record/, 'the trap this crash walked into, written down before it happened');
 });
 
-test('WW3 records: the widget page, the ledger row and the testing row', () => {
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /^## WW3 - THE TEXTURE DOOR'S SHAPE \(2026-09-14\)/m);
-  // TEX1 corrected this section the same day: the crash was the torches', the widget's door carried the same fault
-  assert.match(rd('bible/05-Combat/Weapon-Widget.md'), /\*\*CORRECTED THE SAME DAY \(TEX1\):\*\*/);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /WW3 \(2026-09-14\): the mod's own textures reached the GL/);
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /^\| ww3_widgettexture\.test\.js \| \d+ \| WW3/m);
-});

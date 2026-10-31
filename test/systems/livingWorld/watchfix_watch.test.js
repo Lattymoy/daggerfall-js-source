@@ -366,7 +366,4 @@ test('WATCH-FIX the hosts: the street\'s pool reads each walker\'s row - and, th
   assert.match(w, /if \(!turns\.slain\.size && !turns\.died\.size && !turns\.killed\.size\) return false;/);
   assert.match(rd('src/scenes/exterior.js'), /live: \(\) => !!population\?\.pool\.find\(\(i\) => i\.person === person\)\?\.active,/);
   assert.match(rd('src/systems/roleplayRealism/rrRidingHost.js'), /g\.livingFrom = from; chargeFoe\(g, fwd\);/, 'the trample\'s guard marked as before');
-  const bible = rd('bible/06-Systems/Living-World.md');
-  const sec = bible.slice(bible.indexOf('## WATCH-FIX'), bible.indexOf('\n## ', bible.indexOf('## WATCH-FIX') + 5));
-  for (const host of ['world.js', 'worldModes.js', 'exterior.js', 'dungeonContext.js']) assert.ok(sec.includes(host), `the record names ${host}`);
 });

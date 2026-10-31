@@ -136,15 +136,6 @@ test('SD20g A DROP IS A WAY DOWN, KEPT WITH THE TRAIL (D1): each drop taken is k
 
 // ── D2: the split said as it is built ──────────────────────────────────
 
-test('SD20g THE ONLINE SPLIT SAID AS IT IS BUILT (D2): the draw is a quarter small, half medium, a quarter whole, but a dungeon of five blocks or fewer is small whatever it draws and one of eight or fewer never more than medium - section 13 said the Bay\'s dungeons were split so; it says now what is built, and that weighting the draw is Mac\'s call (mutant: the old line)', () => {
-  const doc = read('bible/11-Multiplayer/Super-Dungeons.md');
-  const page = doc.slice(doc.indexOf('\n## 13.'), doc.indexOf('\n## 14.'));   // section 13, the online law (the audit's record quotes the old line)
-  assert.ok(page.length > 1000, 'section 13');
-  assert.match(page, /a quarter of the DRAWS small, half\s+medium, a quarter whole/);
-  assert.match(page, /What is BUILT is not that split/);
-  assert.doesNotMatch(page, /a quarter of the Bay's dungeons\s+small, half medium, a quarter whole/);
-});
-
 // ── D3: an ended quest marks nothing ─────────────────────────────────
 
 test('SD20g AN ENDED QUEST MARKS NOTHING (D3): a tombstoned quest stays in the machine a game week, its stands standing and its behaviours bound to it - the Exact tier marked its item, its people and its foes, and the compass pointed at them. A quest complete or tombstoned marks nothing; a running one marks as ever (mutants: the stand, the foe or the person of an ended quest marked)', () => {

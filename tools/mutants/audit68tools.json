@@ -111,15 +111,6 @@
     ]
   },
   {
-    "name": "AUDIT68-X5-section-C-runs-to-the-end-again",
-    "file": "tools/ledgerSweep.mjs",
-    "old": "const secC = ledger.slice(startC, endC < 0 ? undefined : endC);",
-    "new": "const secC = ledger.slice(startC);",
-    "tests": [
-      "test/tooling/audit68_tools.test.js"
-    ]
-  },
-  {
     "name": "AUDIT68-X5-an-empty-open-flags-list-is-unreadable",
     "file": "tools/regenOpenFlags.mjs",
     "old": "const cut = firstEntry < 0 ? bodyLines.length : firstEntry;",

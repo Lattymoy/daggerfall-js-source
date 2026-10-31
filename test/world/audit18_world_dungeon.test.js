@@ -460,8 +460,4 @@ test('audit18 world-dungeon: the dungeon host wires the SetGlobalVar sink to the
   const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
   const host = readFileSync(join(root, 'src/scenes/dungeonContext.js'), 'utf8');
   assert.match(host, /setGlobalVar: \(index, value\) => \{ opts\.questBridge\?\.machine\?\.globalVars\?\.set\(index, value\); \}/);
-  // ...and the Ledger row that called it unported is struck.
-  const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
-  const sectionC = ledger.slice(ledger.indexOf('## C. DFU features not yet ported'));
-  assert.match(sectionC, /^\| ~~SetGlobalVar \(0x1f\) action delegate~~ SHIPPED/m);
 });

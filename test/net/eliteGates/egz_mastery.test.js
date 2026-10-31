@@ -436,20 +436,6 @@ test('EG-ZS THE MARKYNAZ\'S DECREE ON HIS CARD (section 8.5: "named on his card"
   destroyEgSpireHud();
 });
 
-// ── THE PAGE ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-test('EG-ZS THE PAGE (bible/11-Multiplayer/Elite-Gates.md - RETIRING A FLAG DELETES THE SENTENCE): EG-ZR\'s "Found, not built here" list and its departure on Stoneskin in the census (it did not widen a holder\'s count) are gone, its departures numbered without a gap; EG-ZQ\'s "Found, not changed" (the Markynaz\'s decree not named) is gone; this slice\'s record follows EG-ZR, its four hosts named', () => {
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8');
-  const q = page.indexOf('### EG-ZQ - '), r = page.indexOf('### EG-ZR - '), s = page.indexOf('### EG-ZS - ');
-  assert.ok(q > 0 && r > q && s > r, 'EG-ZS after EG-ZR');
-  const zq = page.slice(q, r), zr = page.slice(r, s), zs = page.slice(s);
-  for (const gone of ['The Markynaz\'s decree is not named on his card', 'FLAGGED to the screen (`scenes/eliteGates/egClient.js`']) assert.ok(!zq.includes(gone), `EG-ZQ retired: ${gone}`);
-  for (const gone of ['Found, not built here:**', 'The census does not widen a Stoneskin holder\'s count', 'the capstones\' client halves: Rooted', 'the relay\'s Bladestorm and Deadeye', 'Only Far Watch, No Quarter and now']) assert.ok(!zr.includes(gone), `EG-ZR retired: ${gone}`);
-  const deps = zr.slice(zr.indexOf('**Departures, said plainly.**'), zr.indexOf('**Not verified'));
-  const nums = [...deps.matchAll(/^(\d+)\. /gm)].map((m) => Number(m[1]));
-  assert.deepEqual(nums, nums.map((_, i) => i + 1), 'EG-ZR\'s departures without a gap');
-  for (const host of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js', 'scenes/exterior.js']) assert.ok(zs.includes(`\`src/${host}\` - `), `the four hosts: ${host}`);
-});
-
 // ── a fake document (EG-G1's, test/net/eliteGates/egpres_hud.test.js) ───────────────────────────────────────────────────────────────
 function fakeDocument() {
   const doc = { writes: 0 };

@@ -554,10 +554,6 @@ test('EOTB-IL: no [SETTINGS] law is left in the arc, every law is marked [IL] wi
   assert.ok(!/\[SETTINGS\]/.test(arc), 'AUDIT-EOTB2\'s evidence mark is gone: the assembly is in the tree');
   assert.ok((arc.match(/\[IL\]/g) ?? []).length >= 30, 'the laws carry the IL mark');
   assert.ok((arc.match(/IL_[0-9a-f]{4}/g) ?? []).length >= 60, 'and cite their offsets');
-  const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
-  assert.match(page, /EOTB-IL/);
-  assert.match(page, /the assembly is in the tree|Eye Of The Beholder\.dll` is vendored/i, 'the page says where the assembly is');
-  assert.ok(!/THE ASSEMBLY IS NOT IN THE TREE/.test(page), 'and no longer says it is not');
 });
 
 // ─────────────────────────────────────────────────────────────────

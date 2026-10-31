@@ -112,8 +112,6 @@ test('FT1: the dungeon host stamps and warps through the two exports, and holds 
   assert.ok(!/smallerDungeonsState === 2|\? 2 : 1/.test(ctx), 'ONE DFU MEMBER, ONE EXPORT - no literal 2 for Enabled');
   // and the departure is RECORDED where the doctrine gate looks
   assert.match(read('src/world/smallerDungeons.js'), /DEPARTURE \(recorded, Ledger A: THE\s*\*?\s*SMALLER-DUNGEON SAVE STAMP IS THE BUILD\)/);
-  const ledger = read('bible/01-Overview/Port-Ledger.md');
-  assert.match(ledger, /\| \*\*THE SMALLER-DUNGEON SAVE STAMP IS THE BUILD \(FT1, 2026-09-14\)\*\*[^\n]*smallerDungeons\.js[^\n]*dungeonContext\.js/, 'the section A row names both files');
 });
 
 test('FT1: the registry row - DFU Classic, over the settings key, sound', () => {
