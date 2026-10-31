@@ -722,8 +722,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-light-probe-was-in-todays-tones",
     "file": "tools/grassLightProbe.mjs",
-    "old": "was = grassLit(mean, 0.5, night, lane, 1, GRASS_TONES)",
-    "new": "was = grassLit(mean, 0.5, night, lane)",
+    "old": "      was = grassLit(mean, 0.5, night, lane, 1, GRASS_TONES),",
+    "new": "      was = grassLit(mean, 0.5, night, lane),",
     "tests": [
       "test/render/grasslit2.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-look-probe-default-lane-only",
     "file": "tools/grassLookProbe.mjs",
-    "old": "window.__grassTones?.(x.tones, x.classic)",
-    "new": "window.__grassTones?.(x.tones)",
+    "old": "        if (x.tones !== undefined) window.__grassTones?.(x.tones, x.classic);",
+    "new": "        if (x.tones !== undefined) window.__grassTones?.(x.tones);",
     "tests": [
       "test/render/grasslit2.test.js"
     ]

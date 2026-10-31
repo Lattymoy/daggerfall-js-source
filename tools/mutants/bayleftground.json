@@ -547,8 +547,8 @@
   {
     "name": "BAY-LEFT-GROUND-GROUND-PRINT-past-the-Bay-without-its-sites",
     "file": "tools/groundPrint.mjs",
-    "old": "roads, sites, beyond, climates: null, landform: true }).samples);",
-    "new": "roads, sites, climates: null, landform: true }).samples);",
+    "old": "          beyond,\n          climates: null,",
+    "new": "          climates: null,",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ]

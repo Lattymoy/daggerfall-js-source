@@ -35,55 +35,83 @@ import { chromium } from 'playwright';
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const server = await createServer({ server: { port: 5301, strictPort: true }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 400, height: 300 } });
 await page.goto('http://localhost:5301/play/');
 const out = await page.evaluate(async () => {
-  const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } = await import('/src/world/terrain/terrainSampler.js');
-  const hDim = HEIGHTMAP_DIMENSION;                  // 129
-  const cell = TERRAIN_SIZE / (hDim - 1);            // 6.4
-  const worldH = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // 1923.75 - the game scene's scale (TERRAIN-SCALE1)
+  const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } =
+    await import('/src/world/terrain/terrainSampler.js');
+  const hDim = HEIGHTMAP_DIMENSION; // 129
+  const cell = TERRAIN_SIZE / (hDim - 1); // 6.4
+  const worldH = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE; // 1923.75 - the game scene's scale (TERRAIN-SCALE1)
 
   // A synthetic heightmap with plausible rolling terrain PLUS deliberate
   // saddles, so the bilinear/triangle gap is exercised rather than hoped for.
   const data = new Float32Array(hDim * hDim);
-  const h = (x, z) => 0.5
-    + 0.020 * Math.sin(x * 0.11) * Math.cos(z * 0.09)
-    + 0.008 * Math.sin(x * 0.37 + 1.3) * Math.sin(z * 0.41)
-    + 0.003 * Math.sin((x + z) * 0.9);
+  const h = (x, z) =>
+    0.5 +
+    0.02 * Math.sin(x * 0.11) * Math.cos(z * 0.09) +
+    0.008 * Math.sin(x * 0.37 + 1.3) * Math.sin(z * 0.41) +
+    0.003 * Math.sin((x + z) * 0.9);
   for (let x = 0; x < hDim; x++) for (let z = 0; z < hDim; z++) data[x * hDim + z] = h(x, z);
 
   const S = (x, z) => data[Math.max(0, Math.min(hDim - 1, x)) * hDim + Math.max(0, Math.min(hDim - 1, z))];
   // TODAY'S PLACER: bilinear (scenes/world.js keep())
   const bilinear = (lx, lz) => {
-    const fx = lx / cell, fz = lz / cell;
-    const x0 = Math.min(hDim - 2, Math.floor(fx)), z0 = Math.min(hDim - 2, Math.floor(fz));
-    const ax = fx - x0, az = fz - z0;
-    return ((S(x0, z0) * (1 - ax) + S(x0 + 1, z0) * ax) * (1 - az)
-          + (S(x0, z0 + 1) * (1 - ax) + S(x0 + 1, z0 + 1) * ax) * az) * worldH;
+    const fx = lx / cell,
+      fz = lz / cell;
+    const x0 = Math.min(hDim - 2, Math.floor(fx)),
+      z0 = Math.min(hDim - 2, Math.floor(fz));
+    const ax = fx - x0,
+      az = fz - z0;
+    return (
+      ((S(x0, z0) * (1 - ax) + S(x0 + 1, z0) * ax) * (1 - az) +
+        (S(x0, z0 + 1) * (1 - ax) + S(x0 + 1, z0 + 1) * ax) * az) *
+      worldH
+    );
   };
   // THE RENDERED SURFACE: two triangles a quad, diagonal (x,z)-(x+1,z+1),
   // matching buildTerrainIndices' i0,i2,i3 / i0,i3,i1.
   const triangle = (lx, lz) => {
-    const fx = lx / cell, fz = lz / cell;
-    const x0 = Math.min(hDim - 2, Math.floor(fx)), z0 = Math.min(hDim - 2, Math.floor(fz));
-    const ax = fx - x0, az = fz - z0;
-    const h00 = S(x0, z0), h10 = S(x0 + 1, z0), h01 = S(x0, z0 + 1), h11 = S(x0 + 1, z0 + 1);
-    return (az >= ax ? h00 + az * (h01 - h00) + ax * (h11 - h01)
-                     : h00 + ax * (h10 - h00) + az * (h11 - h10)) * worldH;
+    const fx = lx / cell,
+      fz = lz / cell;
+    const x0 = Math.min(hDim - 2, Math.floor(fx)),
+      z0 = Math.min(hDim - 2, Math.floor(fz));
+    const ax = fx - x0,
+      az = fz - z0;
+    const h00 = S(x0, z0),
+      h10 = S(x0 + 1, z0),
+      h01 = S(x0, z0 + 1),
+      h11 = S(x0 + 1, z0 + 1);
+    return (az >= ax ? h00 + az * (h01 - h00) + ax * (h11 - h01) : h00 + ax * (h10 - h00) + az * (h11 - h10)) * worldH;
   };
 
   // sample points across one terrain pixel
   const pts = [];
   let s = 12345;
-  const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+  const rnd = () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 4294967296;
+  };
   for (let i = 0; i < 20000; i++) pts.push([rnd() * (TERRAIN_SIZE - cell), rnd() * (TERRAIN_SIZE - cell)]);
 
-  let maxGap = 0, sumGap = 0;
-  for (const [x, z] of pts) { const g = Math.abs(bilinear(x, z) - triangle(x, z)); maxGap = Math.max(maxGap, g); sumGap += g; }
+  let maxGap = 0,
+    sumGap = 0;
+  for (const [x, z] of pts) {
+    const g = Math.abs(bilinear(x, z) - triangle(x, z));
+    maxGap = Math.max(maxGap, g);
+    sumGap += g;
+  }
 
   // ---- THE GPU SIDE: can a shader reproduce `triangle` exactly? ----
-  const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
   const gl = canvas.getContext('webgl2');
   if (!gl) return { error: 'no webgl2' };
   if (!gl.getExtension('EXT_color_buffer_float')) return { error: 'no float render target' };
@@ -95,9 +123,13 @@ const out = await page.evaluate(async () => {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
   const N = pts.length;
-  const W = 256, H = Math.ceil(N / W);
+  const W = 256,
+    H = Math.ceil(N / W);
   const ptBuf = new Float32Array(W * H * 2);
-  for (let i = 0; i < N; i++) { ptBuf[i * 2] = pts[i][0]; ptBuf[i * 2 + 1] = pts[i][1]; }
+  for (let i = 0; i < N; i++) {
+    ptBuf[i * 2] = pts[i][0];
+    ptBuf[i * 2 + 1] = pts[i][1];
+  }
   const ptTex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, ptTex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, W, H, 0, gl.RG, gl.FLOAT, ptBuf);
@@ -137,11 +169,18 @@ void main(){
   vec2 l = texelFetch(uPts, p, 0).rg;
   o = vec4(terrainAt(l), 0.0, 0.0, 1.0);
 }`;
-  const mk = (t, src) => { const sh = gl.createShader(t); gl.shaderSource(sh, src); gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; };
+  const mk = (t, src) => {
+    const sh = gl.createShader(t);
+    gl.shaderSource(sh, src);
+    gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+    return sh;
+  };
   const prog = gl.createProgram();
-  gl.attachShader(prog, mk(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, FS));
-  gl.bindAttribLocation(prog, 0, 'aP'); gl.linkProgram(prog);
+  gl.attachShader(prog, mk(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, FS));
+  gl.bindAttribLocation(prog, 0, 'aP');
+  gl.linkProgram(prog);
   if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
 
   const out = gl.createTexture();
@@ -154,16 +193,21 @@ void main(){
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, out, 0);
   if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return { error: 'fb incomplete' };
 
-  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
-  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
   gl.viewport(0, 0, W, H);
   gl.useProgram(prog);
-  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.uniform1i(gl.getUniformLocation(prog, 'uH'), 0);
-  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, ptTex);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, ptTex);
   gl.uniform1i(gl.getUniformLocation(prog, 'uPts'), 1);
   gl.uniform1f(gl.getUniformLocation(prog, 'uCell'), cell);
   gl.uniform1f(gl.getUniformLocation(prog, 'uWorldH'), worldH);
@@ -173,16 +217,24 @@ void main(){
   const px = new Float32Array(W * H);
   gl.readPixels(0, 0, W, H, gl.RED, gl.FLOAT, px);
 
-  let maxErr = 0, sumErr = 0, worst = null;
+  let maxErr = 0,
+    sumErr = 0,
+    worst = null;
   for (let i = 0; i < N; i++) {
     const want = triangle(pts[i][0], pts[i][1]);
     const got = px[i];
     const e = Math.abs(want - got);
-    if (e > maxErr) { maxErr = e; worst = { p: pts[i], want, got }; }
+    if (e > maxErr) {
+      maxErr = e;
+      worst = { p: pts[i], want, got };
+    }
     sumErr += e;
   }
   return {
-    worldH, cell, hDim, n: N,
+    worldH,
+    cell,
+    hDim,
+    n: N,
     bilinearVsTriangle: { max: maxGap, mean: sumGap / N },
     shaderVsCpu: { max: maxErr, mean: sumErr / N, worst },
     glError: gl.getError(),
@@ -191,20 +243,33 @@ void main(){
 await browser.close();
 await server.close();
 
-if (out.error) { console.log('FAIL', out.error); process.exit(1); }
+if (out.error) {
+  console.log('FAIL', out.error);
+  process.exit(1);
+}
 const results = [];
-const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
-const BLADE = 0.5;   // a mid blade at the port's height of 38, in world units
+const check = (name, ok, detail = '') => {
+  results.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
+const BLADE = 0.5; // a mid blade at the port's height of 38, in world units
 
 console.log(`  heightmap ${out.hDim}x${out.hDim}, quad ${out.cell}u, full height ${out.worldH}u, ${out.n} points`);
-console.log(`  bilinear against the drawn mesh: max ${out.bilinearVsTriangle.max.toFixed(2)}u, mean ${out.bilinearVsTriangle.mean.toFixed(3)}u`);
-console.log(`  the shader against surfaceHeightAt: max ${out.shaderVsCpu.max.toExponential(2)}u, mean ${out.shaderVsCpu.mean.toExponential(2)}u`);
+console.log(
+  `  bilinear against the drawn mesh: max ${out.bilinearVsTriangle.max.toFixed(2)}u, mean ${out.bilinearVsTriangle.mean.toFixed(3)}u`,
+);
+console.log(
+  `  the shader against surfaceHeightAt: max ${out.shaderVsCpu.max.toExponential(2)}u, mean ${out.shaderVsCpu.mean.toExponential(2)}u`,
+);
 
 check('no GL error', out.glError === 0, String(out.glError));
 // THE ANSWER. Float32 rounding, and nothing else: a blade is 0.25..0.72
 // world units tall, so an error this size is a thousandth of a blade.
-check('a shader CAN stand a blade on the drawn ground - the height law reproduces exactly',
-  out.shaderVsCpu.max < BLADE / 100, `${out.shaderVsCpu.max.toExponential(2)}u against a blade of ${BLADE}u`);
+check(
+  'a shader CAN stand a blade on the drawn ground - the height law reproduces exactly',
+  out.shaderVsCpu.max < BLADE / 100,
+  `${out.shaderVsCpu.max.toExponential(2)}u against a blade of ${BLADE}u`,
+);
 check('...and it is float rounding rather than a near miss', out.shaderVsCpu.max < 1e-3);
 // THE BUG THAT WAS ALREADY THERE. Bilinear is a different surface from
 // the triangles the terrain is drawn as, and on ground with any saddle
@@ -214,8 +279,11 @@ check('...and it is float rounding rather than a near miss', out.shaderVsCpu.max
 // one. It is NOT a claim about what a player would have seen: the same
 // measurement on real grades is in the pins, and it is a fraction of a
 // blade.
-check('bilinear and the drawn triangles are genuinely different surfaces (on terrain chosen to show it)',
-  out.bilinearVsTriangle.max > BLADE, `up to ${out.bilinearVsTriangle.max.toFixed(2)}u apart at a 311% grade; on real grades it is under 0.08u`);
+check(
+  'bilinear and the drawn triangles are genuinely different surfaces (on terrain chosen to show it)',
+  out.bilinearVsTriangle.max > BLADE,
+  `up to ${out.bilinearVsTriangle.max.toFixed(2)}u apart at a 311% grade; on real grades it is under 0.08u`,
+);
 
 const failed = results.filter((x) => !x).length;
 console.log(`\n${results.length - failed}/${results.length} checks passed`);

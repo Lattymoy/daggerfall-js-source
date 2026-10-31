@@ -65,8 +65,8 @@
   {
     "name": "THUNDERLOCK-ART-the-gold-alpha",
     "file": "tools/gunIcons.mjs",
-    "old": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2];\n    bright.push([t, i]);",
-    "new": "    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2]; out.data[o + 3] = 255;\n    bright.push([t, i]);",
+    "old": "    bright.push([t, i]);",
+    "new": "    out.data[o + 3] = 255;\n    bright.push([t, i]);",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
