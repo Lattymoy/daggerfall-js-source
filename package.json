@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/privateRelay.mjs",
     "preview": "vite preview",
     "test": "node tools/testShards.mjs 1/1",
     "lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ src/ server/src/ server-account/src/ test/ tools/ scripts/ app/ *.config.js",

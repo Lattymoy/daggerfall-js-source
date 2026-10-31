@@ -388,6 +388,7 @@ import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the g
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
 import { registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: Iron Footing on the spans (POTION-CLOCK: the potions' law is the made level's - spireKit.js)
+import { privateServer, privateMinter, privateSubject, startPrivateRun, PRIVATE_REALM_REFUSED } from '../net/privateServer.js';   // A private server the desktop shell hosts or joined
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
 import { accountKetch } from '../net/accountClient.js';   // KETCH: the Ketchmaster's hold - a Tonal Warden's receipt carried to the service
 import { createKetchClient } from './ketch/ketchClient.js';   // KETCH (HOST-SPLIT): the sky-ketch on this screen - the sky over Daggerfall, the anchor-lift, the ship aboard, the hold
@@ -1349,11 +1350,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // never a local slot. A join that fails says why at the door; an online boot with no realm character in it (a stale
   // address, a local slot) is refused online and plays offline. ?realmnew is a character being born online: the online
   // lane for its chargen and no relay until the realm holds it (realmBirth).
+  // The desktop shell hosts or joined a private server - a local character plays
+  // online there, never a realm character (the realm is the main servers', which a private run never reaches)
+  const privateHost = privateServer();
+  if (privateHost) startPrivateRun();
+  if (privateHost && (params.has('realm') || params.has('realmnew'))) { setRealmNotice(globalThis.sessionStorage, PRIVATE_REALM_REFUSED); exitToTitleMenu(); return; }
+  if (privateHost && !params.has('online')) { params.set('online', ''); publishBootParams(params); }
   const realmNew = params.has('online') && params.has('realmnew');
   const realmIoNow = () => realmIo({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const realmBoot = params.has('online') && params.has('realm') && params.has('load') ? await openRealmBoot({ io: realmIoNow(), id: params.get('realm') }) : null;
   if (realmBoot && !realmBoot.ok) { setRealmNotice(globalThis.sessionStorage, realmRefusalText(realmBoot.error)); exitToTitleMenu(); return; }
-  const realmRefused = params.has('online') && !realmBoot && !realmNew;
+  const realmRefused = params.has('online') && !realmBoot && !realmNew && !privateHost;
   if (realmRefused) { params.delete('online'); publishBootParams(params); }
   /** The playing tab's session over the realm character (systems/realmSaves.js): every save of it is the service's
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
@@ -18876,7 +18883,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   // AUDIT ONLINE 3 (the second read) B-F2-1: the minter on the sessions' clock - on Date.now a clock set back held a dead token fresh
   // (every new room's hello refused 'token expired', terminal) or a failed mint's hold for the length of the step
-  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued, now: steadyNow,
+  const identityMinter = privateHost ? privateMinter(privateHost, { fetch: (u, i) => globalThis.fetch(u, i), subject: () => privateSubject(appStorage()), name: () => playerEntity.name })   // The host's own sign-in
+    : accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued, now: steadyNow,
     character: () => (onlineOn ? realmSession?.id ?? null : null) });   // RENOWN1: the character coming online, whose level the token carries (RENOWN-CHAR: its own again). REALM-DOOR: it is the realm character this tab JOINED (online is never without one), which the service signs as the realm's and the relay's door reads - never an id the save carries or characterIdOf mints
   // RENOWN1: WHAT THIS CHARACTER EARNS (RENOWN-CHAR: its own track again) - online only (the tracker is never built offline, and earns only while a session
   // exists). A foe pays when it dies within RENOWN_ASSIST_MS of my own blow, whoever struck last (net/renownTracker.js - the one rule every kill door agrees
@@ -19090,7 +19098,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y), faunaAt: (x, y) => maps.getFaunaBand?.(x, y) ?? null });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
-      url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
+      url: privateHost?.url || params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,   // The private server first
       // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
       // THIS ONE. Two typed sources stood here - a `?name=` in the URL
       // and the `onlineName` pref - and both were the impersonation

@@ -1983,6 +1983,7 @@ ipcMain.on('launcher:act', async (e, msg) => {
     case 'set-backend': setBackendFromLauncher(arg); break;
     case 'restart': restartFromLauncher(); break;
     case 'open': if (Object.hasOwn(LAUNCHER_LINKS, arg)) shell.openExternal(LAUNCHER_LINKS[arg]); break;
+    case 'private-host': case 'private-join': case 'private-stop': await privateAct(action, arg); break;
     default: break;
   }
 });
@@ -2032,6 +2033,63 @@ ipcMain.on('dagger:gpu-trail', (e, trail) => {
   gpuTrail = trailFrom(trail);
   gpuGone.heard(gpuTrail);   // GPU-TRAIL-LOST: the lost sample landed - a GPU entry held for it is written now
 });
+
+// ---- A private server, hosted on this PC or joined -------------------------------------------------------------------
+// The launcher's Private server option (app/lib/launcherState.cjs privateView). Hosting runs the game's own relay in
+// Cloudflare's local runtime with this PC's own sign-in key (app/lib/privateHost.mjs); joining runs a bridge on
+// 127.0.0.1 to a friend's host. Either way the game page is told the address (dagger:private-server) and a local
+// character it loads plays online there - never on the main servers.
+let priv = null;   // { url, stop, timer } while hosting or joined
+const privateHost = () => import(pathToFileURL(path.join(__dirname, 'private', 'host.mjs')).href);
+/** The relay the game being played carries (scripts/privateRelay.mjs writes it into dist/). */
+const privateRelay = () => (gameStore?.active() ? gameStore.resolve('private/relay.mjs') : path.join(DIST, 'private', 'relay.mjs'));
+/** This PC's own IPv4 addresses - the ones a friend can type (a LAN's, a Tailscale's). */
+function lanAddresses() {
+  return Object.values(require('node:os').networkInterfaces()).flat().filter((n) => n && n.family === 'IPv4' && !n.internal).map((n) => n.address);
+}
+const privateTell = (p) => launcherDispatch({ type: 'private', priv: p });
+async function privateStop() {
+  const p = priv;
+  priv = null;
+  if (p) { clearInterval(p.timer); await p.stop().catch(() => {}); }
+}
+async function privateAct(action, arg) {
+  if (action === 'private-stop') { await privateStop(); privateTell({ status: 'off' }); return; }
+  if (priv) return;
+  try {
+    const host = await privateHost();
+    if (action === 'private-host') {
+      const relayScript = privateRelay();
+      if (!relayScript || !fs.existsSync(relayScript)) { privateTell({ status: 'failed', error: 'This version of the game has no private server in it.' }); return; }
+      privateTell({ status: 'starting' });
+      // the runtime's binary cannot run from inside app.asar: electron-builder unpacks it (asarUnpack), and miniflare is told where
+      if (app.isPackaged) process.env.MINIFLARE_WORKERD_PATH ??= require('workerd').replace(`app.asar${path.sep}`, `app.asar.unpacked${path.sep}`);
+      const { Miniflare, supportedCompatibilityDate } = await import('miniflare');
+      const h = await host.startHost({ dir: path.join(app.getPath('userData'), 'Private server'), relayScript, Miniflare, compatibilityDate: supportedCompatibilityDate });
+      const tell = () => privateTell({ status: 'hosting', port: h.port, max: h.max, players: h.players(), addresses: lanAddresses() });
+      priv = { url: h.url, stop: h.stop, timer: setInterval(tell, 5000) };
+      tell();
+    } else {
+      const where = host.parseAddress(arg);
+      if (!where) { privateTell({ status: 'failed', error: 'Type the address your friend gave you, like 192.168.1.20:7777.' }); return; }
+      const address = `${where.host}:${where.port}`;
+      privateTell({ status: 'joining', address });
+      const b = await host.startBridge(where);
+      const info = await host.probe(b.url);
+      if (!info) { await b.stop(); privateTell({ status: 'failed', error: `No private server answered at ${address}. Check the address, and that your friend is hosting.` }); return; }
+      if (info.players >= info.max) { await b.stop(); privateTell({ status: 'failed', error: `${address} is full (${info.max} players).` }); return; }
+      priv = { url: b.url, stop: b.stop, timer: null };
+      privateTell({ status: 'joined', address });
+    }
+  } catch (e) {
+    console.warn('[private] could not start:', e);
+    await privateStop();
+    privateTell({ status: 'failed', error: e?.code === 'EADDRINUSE' ? 'Port 7777 is already in use on this PC. Is another server running?' : `Could not start: ${e?.message ?? e}` });
+  }
+}
+app.on('will-quit', () => { void privateStop(); });
+// the game page asks once, as it boots (app/preload.cjs): the address its online play goes to, or null for the main servers
+ipcMain.on('dagger:private-server', (e) => { e.returnValue = priv ? { url: priv.url } : null; });
 
 // The preload asks for its storage root synchronously at page boot -
 // storage must exist before the first module reads a setting.

@@ -119,3 +119,5 @@ weapon-glow-probe/
 ._*
 Thumbs.db
 desktop.ini
+# the private server bundles (scripts/privateRelay.mjs)
+app/private/

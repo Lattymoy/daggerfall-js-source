@@ -15,7 +15,7 @@ import { historyLines } from './commentRules.mjs';
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const BASELINE = 'tools/commentTagsBaseline.json';
 export const DIRS = Object.freeze(['src', 'server/src', 'server-account/src', 'test', 'tools', 'scripts', 'app']);
-const SKIP = new Set(['node_modules', 'fixtures', 'mutants']);
+const SKIP = new Set(['node_modules', 'fixtures', 'mutants', 'private']);   // app/private: build output (scripts/privateRelay.mjs)
 
 function walk(dir, out = []) {
   if (!existsSync(join(ROOT, dir))) return out;
