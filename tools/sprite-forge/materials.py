@@ -148,7 +148,7 @@ def _palette():
     return {
         'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.9, spec=0.08),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),
-        'cuirass': speckle('cuirass', (0.05, 0.05, 0.055), (0.14, 0.14, 0.15), scale=70.0, at=0.55, rough=0.28, metal=0.85),
+        'cuirass': plain('cuirass', (0.07, 0.07, 0.075), metal=0.85, rough=0.25),
         'mail': chain('mail', (0.015, 0.015, 0.02), (0.30, 0.30, 0.33)),
         'coif': chain('coif', (0.02, 0.02, 0.025), (0.22, 0.22, 0.24), around=14.0, rows=120.0),
         'leather': plain('leather', (0.16, 0.07, 0.025), rough=0.6),

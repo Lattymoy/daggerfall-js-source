@@ -66,8 +66,7 @@ def transform(name, p, S=None):
         from model import TORSO
         zs = [row[0] for row in TORSO]
         out[:, 0] *= np.interp(p[:, 2], zs, S.get('torso_pw', [1.0] * len(zs)))
-        out[:, 1] = cy + (out[:, 1] - cy) * np.interp(p[:, 2], zs, S.get('torso_pd', [1.0] * len(zs)))
-        out[:, 1] = cy + (p[:, 1] - cy) * S['torso_d']
+        out[:, 1] = cy + (p[:, 1] - cy) * S['torso_d'] * np.interp(p[:, 2], zs, S.get('torso_pd', [1.0] * len(zs)))
         return out
     if base.startswith('arm_') or base.startswith('leg_'):
         s = base[-1]

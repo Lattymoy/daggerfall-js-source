@@ -49,6 +49,7 @@ def class_of(mat):
     return CLASS.get(mat.name.split('.')[0], 1) if mat else 1
 
 
+RESTARTS = 1   # searches a frame runs (fit.py --restarts)
 MAX_EDGE = 0.03   # metres: a triangle is split until no edge is longer (under 2 px), so three centres an axis test it
 
 
@@ -307,22 +308,29 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         x[:len(params)] = vector_of(params, init)
     best, place_x = evaluate(x)
     first = best
-    # CMA-ES in units of each parameter's step: it learns which joints move together, where a plain random walk stalls
+    # CMA-ES in units of each parameter's step: it learns which joints move together, where a plain random walk stalls.
+    # Started from the frame's last fit, from its bare keys, and (with --restarts) from wider throws round the last fit,
+    # the best of them kept: a fit that settled in the wrong valley gets a way out.
     import cma
-    es = cma.CMAEvolutionStrategy(np.zeros(len(steps)), 0.6, {
-        'popsize': 12, 'maxfevals': iters * 12, 'verbose': -9, 'seed': int(rng.integers(1, 2 ** 31)),
-        'tolfun': 1e-5})
-    while not es.stop():
-        zs = es.ask()
-        vals = []
-        for z in zs:
-            v, px = evaluate(x + np.asarray(z) * steps)
-            vals.append(-v)
-            if v > best:
-                best, place_x, xbest = v, px, x + np.asarray(z) * steps
-        es.tell(zs, vals)
-    if 'xbest' in locals():
-        x = xbest
+    xbest = x.copy()
+    starts = [(x.copy(), 0.6)]
+    if init:
+        starts.append((np.zeros(len(steps)), 0.8))
+    starts += [(x.copy(), 1.2)] * max(0, RESTARTS - len(starts))
+    for x0, sigma in starts[:max(RESTARTS, 1)]:
+        es = cma.CMAEvolutionStrategy(np.zeros(len(steps)), sigma, {
+            'popsize': 12, 'maxfevals': iters * 12, 'verbose': -9, 'seed': int(rng.integers(1, 2 ** 31)),
+            'tolfun': 1e-5})
+        while not es.stop():
+            zs = es.ask()
+            vals = []
+            for z in zs:
+                v, px = evaluate(x0 + np.asarray(z) * steps)
+                vals.append(-v)
+                if v > best:
+                    best, place_x, xbest = v, px, x0 + np.asarray(z) * steps
+            es.tell(zs, vals)
+    x = xbest
     return adj_of(params, x[:len(params)]), place_x, first, best, ch
 
 
@@ -439,7 +447,10 @@ def main():
     ap.add_argument('--iters', type=int, default=220)
     ap.add_argument('--shape', action='store_true', help='fit the proportions instead of the poses')
     ap.add_argument('--jobs', type=int, default=4)
+    ap.add_argument('--restarts', type=int, default=1, help='searches a frame: its last fit, its keys, wider throws')
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
+    global RESTARTS
+    RESTARTS = args.restarts
     spec = json.load(open(args.spec))
     ref = json.load(open(args.ref))
     out_path = args.spec.replace('.json', '-fit.json')
