@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { owePads, payPads, padsOwedAt, padsOwed, padsOwedFrom, savedPadsOwed, clearPadsOwed } from '../../../src/world/settlement/settlementOwed.js';
+import { owePads, payPads, padsOwedAt, padsOwed, padsOwedFrom, savedPadsOwed, clearPadsOwed, padsOwedBuilt } from '../../../src/world/settlement/settlementOwed.js';
 import { recordFrame, createGroundFrame } from '../../../src/scenes/groundFrameHost.js';
 import { SETTLEMENT_ROWS, settlementPixel } from '../../../src/world/settlement/settlementPlaces.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -92,5 +92,44 @@ test('OWED the wiring (by source): the save carries the debt and hands it back; 
   assert.match(save, /groundFrame: GROUND_FRAME_LAW, padsOwed: padsOwed\(\) \};/);
   assert.match(save, /groundFrame: snap\.groundFrame \?\? null, padsOwed: snap\.padsOwed \?\? \[\] \};/);
   assert.equal(world.match(/restandHeight\([^)]*, extras\)/g)?.length, 3, 'the camps, the save\'s rows and its player');
-  assert.match(build, /if \(host\.rideGround && payPads\(pkey\) && owedTown\?\.moved\) \{\n\s+const origin = host\.state\.pixelTranslation\(px, py\);\n\s+host\.rideGround\(origin, pkey, \(x, z\) => settlementMovedAt\(owedTown, origin, x, z, TERRAIN_SIZE \/ \(HEIGHTMAP_DIMENSION - 1\)\), key !== pkey\);/);
+  assert.match(build, /if \(host\.rideGround && payPads\(pkey\) && !groundWas && owedTown\?\.moved\) \{[^\n]*\n\s+const origin = host\.state\.pixelTranslation\(px, py\);\n\s+host\.rideGround\(origin, pkey, \(x, z\) => settlementMovedAt\(owedTown, origin, x, z, TERRAIN_SIZE \/ \(HEIGHTMAP_DIMENSION - 1\)\), key !== pkey\);/);
+});
+
+test('OWED every load reads its save\'s debt as it restores the save; a pixel built already is paid as its records re-stand, never owed on (mutants: the debt unread at the load, a built pixel owed)', async () => {
+  const { restorePlayer, snapshotPlayer } = await import('../../../src/systems/save/save.js');
+  clearPadsOwed();
+  owePads('9,9');   // the session before the load
+  padsOwedBuilt((k) => k === '4,4');
+  const entity = { name: 'Owed', stats: {}, items: [], spells: [], activeEffects: [], skills: {} };
+  const snap = { ...snapshotPlayer(entity, {}), padsOwed: ['3,3', '4,4'] };
+  restorePlayer({}, snap);
+  assert.deepEqual(padsOwed(), ['3,3'], 'the save\'s debt, the built pixel left to its re-stand');
+  assert.equal(savedPadsOwed('4,4') && savedPadsOwed('3,3'), true, 'its records on both re-stand by the carve');
+  clearPadsOwed();
+});
+
+test('OWED a record written on carved ground owes nothing: an anchor, a deck or a cached pile, stamped with the law by number, never reads the last save\'s debt (mutant: the debt read for every stamp)', () => {
+  const state = { compensation: [0, 0, 0], localFromWorld: (x, z) => [x, z] };
+  const law = recordFrame({ landform: false, liftAt: () => 0, heightAt: () => 100, state, bayAt: () => false, padsMovedAt: () => -3, owesAt: () => true, readOwed: () => {} });
+  assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, PADS_FRAME_LAW), 101, 'an anchor written under the carve law');
+  assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, { groundFrame: PADS_FRAME_LAW, padsOwed: ['0,0'] }), 98, 'the save\'s own record');
+});
+
+test('OWED the carve is read as the ground is drawn: the two triangles of each quad, never a bilinear blend (mutant: the bilinear read)', async () => {
+  const { settlementMovedAt } = await import('../../../src/world/settlement/settlementStand.js');
+  const { surfaceHeightAt } = await import('../../../src/world/terrain/terrainSurface.js');
+  const { MAX_TERRAIN_HEIGHT } = await import('../../../src/world/terrain/terrainSampler.js');
+  const D = HEIGHTMAP_DIMENSION, cell = TERRAIN_SIZE / (D - 1), moved = new Float32Array(D * D);
+  for (let i = 0; i < moved.length; i++) moved[i] = ((i * 7919) % 13) - 6;   // a rough field
+  const ground = Float32Array.from(moved, (v) => v / MAX_TERRAIN_HEIGHT);
+  for (const [x, z] of [[cell * 0.5, cell * 0.5], [cell * 10.3, cell * 4.8], [cell * 60.9, cell * 61.2], [cell * 127.6, cell * 3.1]]) {
+    assert.ok(Math.abs(settlementMovedAt({ moved }, [0, 0, 0], x, z, cell) - surfaceHeightAt(ground, x, z)) < 1e-4, `${x}, ${z}`);
+  }
+});
+
+test('OWED only a pixel\'s first build rides its debt; a rebuild pays it, its own ride carrying what lies there (by source; mutant: a rebuild riding twice)', () => {
+  assert.match(read('scenes/pixelBuild.js'), /if \(host\.rideGround && payPads\(pkey\) && !groundWas && owedTown\?\.moved\) \{/);
+  assert.match(read('world/settlement/settlementOwed.js'), /for \(const key of list\) if \(!builtNow\(key\)\) owed\.add\(key\);/);
+  assert.match(read('scenes/groundFrameHost.js'), /padsOwedBuilt\(\(key\) => built\.has\(key\)\);/);
+  assert.match(read('scenes/shipBoardHost.js'), /\|\| landform \|\| !\(t\.restore\?\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame\)\)\) \{/, 'a deck of an older frame stood again with the row off');
 });

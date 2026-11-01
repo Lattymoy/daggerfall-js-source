@@ -137,8 +137,8 @@
   {
     "name": "RMBC3-pads-move-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const owes = !(frame >= PADS_FRAME_LAW) || !!owesAt?.(x, z);",
-    "new": "const owes = !(frame >= 99) || !!owesAt?.(x, z);",
+    "old": "const owes = !(frame >= PADS_FRAME_LAW) || (!!stamp && !!owesAt?.(x, z));",
+    "new": "const owes = !(frame >= 99) || (!!stamp && !!owesAt?.(x, z));",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "OWED-debt-unread",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const owes = !(frame >= PADS_FRAME_LAW) || !!owesAt?.(x, z);",
+    "old": "const owes = !(frame >= PADS_FRAME_LAW) || (!!stamp && !!owesAt?.(x, z));",
     "new": "const owes = !(frame >= PADS_FRAME_LAW);",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
@@ -265,7 +265,7 @@
   {
     "name": "OWED-build-never-pays",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (host.rideGround && payPads(pkey) && owedTown?.moved) {",
+    "old": "if (host.rideGround && payPads(pkey) && !groundWas && owedTown?.moved) {",
     "new": "if (false) {",
     "tests": [
       "test/world/settlement/rmbc3_owed.test.js"
@@ -297,6 +297,69 @@
     "new": "!landform && extras.groundFrame >= RECORD_GROUND_STAMP.groundFrame ? outer : outer.map",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "OWED-debt-read-for-every-stamp",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "(!!stamp && !!owesAt?.(x, z))",
+    "new": "!!owesAt?.(x, z)",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-debt-unread-at-load",
+    "file": "src/systems/save/save.js",
+    "old": "  padsOwedFrom(extras);   // every load reads its save's debt before a record of it re-stands\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-built-pixel-owed",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "for (const key of list) if (!builtNow(key)) owed.add(key);",
+    "new": "for (const key of list) owed.add(key);",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-built-unwired",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "  padsOwedBuilt((key) => built.has(key));\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-bilinear-read",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "const height = partY >= partX ? at(x0, y0) + partY * (at(x0, y0 + 1) - at(x0, y0)) + partX * (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) : at(x0, y0) + partX * (at(x0 + 1, y0) - at(x0, y0)) + partY * (at(x0 + 1, y0 + 1) - at(x0 + 1, y0));",
+    "new": "const height = (at(x0, y0) * (1 - partX) + at(x0 + 1, y0) * partX) * (1 - partY) + (at(x0, y0 + 1) * (1 - partX) + at(x0 + 1, y0 + 1) * partX) * partY;",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-rebuild-rides-twice",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "payPads(pkey) && !groundWas && owedTown?.moved",
+    "new": "payPads(pkey) && owedTown?.moved",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-deck-old-frame-row-off",
+    "file": "src/scenes/shipBoardHost.js",
+    "old": " || !(t.restore?.groundFrame >= RECORD_GROUND_STAMP.groundFrame))) {",
+    "new": ")) {",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
     ]
   }
 ]

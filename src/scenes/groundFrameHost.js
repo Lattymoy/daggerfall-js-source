@@ -31,7 +31,7 @@ import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { settlementMovedAt } from '../world/settlement/settlementStand.js';   // a settlement's carve, as its build handed it back
 import { settlementOnPixel } from '../world/settlement/settlementPlaces.js';
 import { growthJobAt } from '../world/settlement/townGrowthJob.js';
-import { owePads, payPads, padsOwedFrom, savedPadsOwed, clearPadsOwed } from '../world/settlement/settlementOwed.js';
+import { owePads, payPads, padsOwedFrom, savedPadsOwed, clearPadsOwed, padsOwedBuilt } from '../world/settlement/settlementOwed.js';
 
 /** The map pixel under a scene point of the stream's frame (`state`: its origin and its compensation). */
 export function framePixelAt(state, x, z) {
@@ -106,7 +106,7 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt 
     const frame = stamp ? stamp.groundFrame : stamped;
     const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;
     const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;
-    const owes = !(frame >= PADS_FRAME_LAW) || !!owesAt?.(x, z);
+    const owes = !(frame >= PADS_FRAME_LAW) || (!!stamp && !!owesAt?.(x, z));   // a record written on carved ground (an anchor, a deck, a cached pile) owes nothing
     const pads = padsMovedAt && Number.isFinite(y) && owes ? padsMovedAt(x, z) : 0;   // a settlement's carve
     const town = (yy) => (townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0);
     if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet + pads;
@@ -133,6 +133,7 @@ export function createGroundFrame(host) {
     _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, beyondSites, maps, terrainGen
   } = host;
   clearPadsOwed();   // a new world owes nothing
+  padsOwedBuilt((key) => built.has(key));
   /** ACROSS-EDGE: the towns a pixel's ground meets, over the place its build stands - the frame's and (handed on) the build's */
   const townMeets = createTownMeets({ groundLocationAt: _liftLocationAt, maps, blocks });
   /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js

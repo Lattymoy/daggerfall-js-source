@@ -66,7 +66,7 @@ export function settlementTreeFlats(settlement) {
 
 /**
  * How far a built pixel's settlement carve moved the ground at a scene point, metres - its build's own `moved` field,
- * read between its samples; 0 off the pixel or where none stands.
+ * read between its samples as the ground is drawn; 0 off the pixel or where none stands.
  * @param {any} settlement a built pixel's @param {number[]} origin its translation @param {number} x @param {number} z
  * @param {number} cell a sample's spacing in scene units
  */
@@ -77,6 +77,7 @@ export function settlementMovedAt(settlement, origin, x, z, cell) {
   if (!(cellX >= 0 && cellY >= 0 && cellX <= dim - 1 && cellY <= dim - 1)) return 0;
   const x0 = Math.min(dim - 2, Math.floor(cellX)), y0 = Math.min(dim - 2, Math.floor(cellY)), partX = cellX - x0, partY = cellY - y0;
   const at = (a, b) => field[a * dim + b];
-  const height = (at(x0, y0) * (1 - partX) + at(x0 + 1, y0) * partX) * (1 - partY) + (at(x0, y0 + 1) * (1 - partX) + at(x0 + 1, y0 + 1) * partX) * partY;
+  // the two triangles the ground is drawn and walked as (terrainSurface.js surfaceHeightAt): its diagonal (x, y)-(x+1, y+1)
+  const height = partY >= partX ? at(x0, y0) + partY * (at(x0, y0 + 1) - at(x0, y0)) + partX * (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) : at(x0, y0) + partX * (at(x0 + 1, y0) - at(x0, y0)) + partY * (at(x0 + 1, y0 + 1) - at(x0 + 1, y0));
   return height * STREAMING_TERRAIN_SCALE;
 }

@@ -69,7 +69,7 @@ import { normalTribute } from '../../world/lefayMonument.js';   // LEFAY1: the f
 import { normalPracticeHeld } from '../masterSkills.js';   // AUDIT RPT1026 F1: the practice Master Skills switched off holds aside
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from '../characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
-import { padsOwed } from '../../world/settlement/settlementOwed.js';   // the pixels whose records still owe a settlement's carve
+import { padsOwed, padsOwedFrom } from '../../world/settlement/settlementOwed.js';   // the pixels whose records still owe a settlement's carve
 import { STREAMING_TERRAIN_SCALE, GROUND_FRAME_LAW } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on; BAY-LEFT-GROUND: and its frame's law
 import { reviveForPlay } from '../deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
@@ -1291,7 +1291,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the quest block on the character's clock - an online save taken
   // before TIME3 kept its countdowns on the world's, and they move onto the character's once, by the distance at the
   // save (quest/questStamps.js questBlockOnOwnClock); a TIME3 save and any offline one are there already.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5; BAY-LEFT-GROUND: null - before the frame's law moved
+  const extras = { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null, padsOwed: snap.padsOwed ?? [] };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5; BAY-LEFT-GROUND: null - before the frame's law moved
+  padsOwedFrom(extras);   // every load reads its save's debt before a record of it re-stands
+  return extras;
 }
 
 /** AUDIT LIVED1 F (K3/S4): A SAVE FROM BEFORE LIVED1 CAN HOLD A MARKER AHEAD OF ITS OWN CLOCK. RESTX2's online rest ran

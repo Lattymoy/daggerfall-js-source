@@ -176,10 +176,16 @@ town's outskirts as the kernel lays them, with its roads, camps and tiles.
 
 A record that loads before its pixel is built stands without the move, and its pixel is owed
 (`settlementOwed.js`: a published settlement's pixel, or a town's that grows). The save carries the debt (`padsOwed`, an
-additive field), and a load hands its envelope to every re-stand, so a record the save owed re-stands by the carve
-again, even under law 6. The pixel's first build pays it: `pixelBuild.js` rides every record on the pixel (the piles,
-torches, camps, street foes and the watch, through `rideGround`) by the build's own move. With the Landforms row off,
-a save of an older frame or one that owes a carve is still stood again.
+additive field). Every load reads its save's debt as it restores the save (`save.js` `restorePlayer`); a pixel built
+already is not owed on, its records re-standing by its build's own move. Only that save's own records owe: a load hands
+its envelope to each re-stand as the stamp, while an anchor, a ship's deck or a cached pile, written on carved ground and
+stamped with the law by number, owes nothing.
+
+A pixel's first build pays the debt: `pixelBuild.js` rides every record on the pixel by the build's own move, through
+`rideGround` (the piles, torches, camps and bodies; the living walk on the ground as it is). A rebuild pays without
+riding, its own ride already carrying what lies there. The move is read as the ground is drawn, the two triangles of
+each quad. With the Landforms row off, a save of an older frame or one that owes a carve is still stood again, a ship's
+deck too.
 
 ## Standing in the world
 

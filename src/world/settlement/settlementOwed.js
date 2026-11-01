@@ -11,6 +11,13 @@ const owed = new Set();
 let saved = new Set();
 /** The save whose debt was read last, so the several re-stands of one load read it once. */
 let readFrom = null;
+/** Whether a pixel stands built now (the frame host's): a save's debt there is paid exactly as its records re-stand. */
+let builtNow = (/** @type {string} */ _key) => false;
+
+/** The world's built pixels, for the next save's debt. @param {(key: string) => boolean} isBuilt */
+export function padsOwedBuilt(isBuilt) {
+  builtNow = isBuilt;
+}
 
 /** Owe a pixel's carve: a record on it stood without it. @param {string} key */
 export function owePads(key) {
@@ -43,7 +50,7 @@ export function padsOwedFrom(stamp) {
   const list = Array.isArray(stamp.padsOwed) ? stamp.padsOwed.filter((key) => typeof key === 'string' && /^-?\d+,-?\d+$/.test(key)) : [];
   saved = new Set(list);
   owed.clear();
-  for (const key of list) owed.add(key);
+  for (const key of list) if (!builtNow(key)) owed.add(key);   // built: its records re-stand by its build's own move now
 }
 
 /** Whether the loaded save's records on a pixel were written without its carve. @param {string} key */
@@ -56,4 +63,5 @@ export function clearPadsOwed() {
   owed.clear();
   saved = new Set();
   readFrom = null;
+  builtNow = () => false;
 }

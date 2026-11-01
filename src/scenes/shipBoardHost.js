@@ -48,7 +48,7 @@ export function createShipBoard(host) {
     await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });
     // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
     // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
-    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
+    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform || !(t.restore?.groundFrame >= RECORD_GROUND_STAMP.groundFrame))) {   // LANDFORM1: or with the row's lift to put back on; an older frame's moves with the row off too
       const c = state.compensation[1];
       const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale), t.restore.groundFrame) + c;   // BAY-LEFT-GROUND: by its frame's law
       if (walkMode) player.spawn(localPos[0], y, localPos[2]);

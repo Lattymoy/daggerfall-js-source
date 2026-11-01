@@ -839,8 +839,8 @@
   {
     "name": "AUDIT-LANDFORMS-C1-deck-never-stood-again",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)",
-    "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE)",
+    "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform ||",
+    "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE ||",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",

@@ -1629,7 +1629,7 @@ export function createPixelBuild(host) {
     // a record that loaded before this pixel stood without its settlement's carve (world/settlement/settlementOwed.js): it
     // rides the build's own move now, and the debt is paid
     const owedTown = built.get(pkey)?.settlement;
-    if (host.rideGround && payPads(pkey) && owedTown?.moved) {
+    if (host.rideGround && payPads(pkey) && !groundWas && owedTown?.moved) {   // a rebuild's own ride, above, carries its records
       const origin = host.state.pixelTranslation(px, py);
       host.rideGround(origin, pkey, (x, z) => settlementMovedAt(owedTown, origin, x, z, TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1)), key !== pkey);
     }
