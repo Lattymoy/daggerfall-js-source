@@ -118,15 +118,20 @@ body[data-busy] .gem { animation: gleam 1.6s steps(8) infinite; }
 .actions:empty { display: none; }
 
 /* THE OPTIONS: the player's own doors, beside the news. */
-.side { flex: none; width: 236px; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
-.opt { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.side { flex: none; width: 236px; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #7d7460 transparent; display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.opt { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .opt > .caps { margin: 0; font-size: 13px; }
 .files { margin: 0; width: 100%; min-width: 0; font-size: 14px; color: #a89f88; }
 .files .path { font-size: 14px; }
 /* The Private server option */
+/* The Private server strip, under the patch notes: one row of controls, so it never runs past the panel */
+.private { flex: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 16px 12px; border-top: 2px solid rgba(125,116,96,0.3); }
+.private > .caps { margin: 0; font-size: 13px; }
 #private-note { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
-#private-off { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
+#private-off { display: flex; align-items: center; gap: 8px; width: 100%; }
 #private-off[hidden] { display: none; }
+#private-off .address { flex: 1; min-width: 0; width: auto; }
+#private-off .files { width: auto; flex: none; }
 .address {
   width: 100%; box-sizing: border-box; padding: 5px 8px; font: inherit; font-size: 14px; color: #d8cfae;
   border: 2px solid #7d7460; background: rgba(10,12,17,0.72);

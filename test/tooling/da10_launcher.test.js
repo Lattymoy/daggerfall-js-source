@@ -270,7 +270,7 @@ test('DA10: the page - the news, the card, the options, the bar and PLAY; every 
   for (const id of ['news', 'setup', 'found', 'setup-actions', 'files', 'update-check', 'status', 'detail', 'progress', 'status-actions', 'play', 'version']) {
     assert.match(html, new RegExp(`id="${id}"`), `#${id}`);
   }
-  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['choose-folder', 'open-saves', 'reinstall', 'private-host', 'private-join', 'private-stop', 'restart', 'play']);
+  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['private-host', 'private-join', 'private-stop', 'choose-folder', 'open-saves', 'reinstall', 'restart', 'play']);
   assert.match(html, /<button id="play" class="play" type="button" data-act="play" disabled>Play<\/button>/, 'Play starts held - the first view frees it');
   const js = rd('app/launcher/launcher.js');
   assert.match(js, /\$\('update-check'\)\.addEventListener\('change', \(e\) => bridge\.act\('set-update-check', e\.target\.checked\)\);/);

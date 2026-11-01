@@ -40,6 +40,18 @@
           <ul id="found" class="found" hidden></ul>
           <div id="setup-actions" class="actions"></div>
         </section>
+        <!-- Host a private server on this PC, or join a friend's (app/lib/launcherState.cjs privateView) -->
+        <section id="private" class="private">
+          <h3 class="caps">Private server</h3>
+          <p id="private-note" class="files"></p>
+          <div id="private-off">
+            <button class="plaque small" type="button" data-act="private-host">Host a game</button>
+            <label class="files" for="private-address">Friend's address</label>
+            <input id="private-address" class="address" type="text" maxlength="80" placeholder="192.168.1.20:7777" spellcheck="false" autocomplete="off">
+            <button class="plaque small" type="button" data-act="private-join">Join</button>
+          </div>
+          <button id="private-stop" class="plaque small" type="button" data-act="private-stop" hidden>Stop</button>
+        </section>
       </main>
 
       <aside class="side" aria-label="Options">
@@ -56,18 +68,6 @@
           <h3 class="caps">Updates</h3>
           <label class="check"><input id="update-check" type="checkbox"> Check automatically</label>
           <button class="link" type="button" data-act="reinstall">Reinstall...</button>
-        </section>
-        <!-- Host a private server on this PC, or join a friend's (app/lib/launcherState.cjs privateView) -->
-        <section id="private" class="opt">
-          <h3 class="caps">Private server</h3>
-          <p id="private-note" class="files"></p>
-          <div id="private-off">
-            <button class="plaque small" type="button" data-act="private-host">Host a game</button>
-            <label class="files" for="private-address">Friend's address</label>
-            <input id="private-address" class="address" type="text" maxlength="80" placeholder="192.168.1.20:7777" spellcheck="false" autocomplete="off">
-            <button class="plaque small" type="button" data-act="private-join">Join</button>
-          </div>
-          <button id="private-stop" class="plaque small" type="button" data-act="private-stop" hidden>Stop</button>
         </section>
         <!-- GPU-BACKEND-LAUNCHER: Windows only; the shell shows it (app/lib/launcherState.cjs graphicsView) -->
         <section id="graphics" class="opt" hidden>
