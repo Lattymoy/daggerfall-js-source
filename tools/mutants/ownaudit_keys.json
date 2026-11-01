@@ -1,0 +1,257 @@
+[
+  {
+    "name": "OWNAUDIT-keys-badtack-unwired",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "* peace()) * badTack(b));   // OWN-AUDIT: and the bad tack's share",
+    "new": "* peace()) * 1);   // OWN-AUDIT: and the bad tack's share",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-badtack-switch-inverted",
+    "file": "src/systems/comeSailAway/sailAssist.js",
+    "old": "  if (!on) return 1;",
+    "new": "  if (on) return 1;",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-badtack-ramp-flat",
+    "file": "src/systems/comeSailAway/sailAssist.js",
+    "old": "  return 1 - (1 - keep) * Math.max(0, Math.min(1, t));",
+    "new": "  return 1 - (1 - keep) * Math.max(0, Math.min(1, Math.ceil(t)));",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-gaff-foul-turned",
+    "file": "src/systems/comeSailAway/sailAssist.js",
+    "old": "export const gaffFoul = (deg) => Math.abs(deg) > GAFF_FOUL_DEG;",
+    "new": "export const gaffFoul = (deg) => Math.abs(deg) < GAFF_FOUL_DEG;",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-gaff-raised-aback",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "responsive()) && !gaffAback(b, sail)) {",
+    "new": "responsive())) {",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-gaff-never-settled",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "gaffFoul(num9) !== component.GetBool('Stowed')) stow(component, gaffFoul(num9));",
+    "new": "gaffFoul(num9) !== component.GetBool('Stowed') && false) stow(component, gaffFoul(num9));",
+    "tests": [
+      "test/systems/comeSailAway/ownaudit_csa_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-switch-ignored",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    if (!w.s.throwDrawTrajectory || !cam) return null;",
+    "new": "    if (!cam) return null;",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-kept-after-release",
+    "file": "src/systems/handheldTorches.js",
+    "old": "      w.arc = aimArc();\n    } else w.arc = null;",
+    "new": "      w.arc = aimArc();\n    }",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-landing-dropped",
+    "file": "src/systems/torchArc.js",
+    "old": "    if (last - i < ARC_LOOK.every) i = last; // the landing is always drawn\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-behind-the-eye",
+    "file": "src/systems/torchArc.js",
+    "old": "  if (!(cw > 1e-4)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-letterbox-ignored",
+    "file": "src/systems/torchArc.js",
+    "old": "{ x: x - s / 2 - ox, y: y - s / 2 - oy, w: s, h: s }",
+    "new": "{ x: x - s / 2, y: y - s / 2 - oy, w: s, h: s }",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-arc-rig-unwired",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      if (handheldOn() && !paralyzed && !sheetWindowUp()) handheld.drawThrowArc(renderer);",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-tint-ignored",
+    "file": "src/systems/handheldTorches.js",
+    "old": "(w.s.tintSprite && tint) || undefined",
+    "new": "tint ?? undefined",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-foe-light-always-casts",
+    "file": "src/scenes/droppedTorches.js",
+    "old": "    const shadowless = !s().fireLightShadows;",
+    "new": "    const shadowless = false;",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-mask-forgets-shadowless",
+    "file": "src/scenes/magicCandle.js",
+    "old": "    else if (l.shadowless) carried[i] = CARRIED_SHADOWLESS;\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-glare-skips-shadowless",
+    "file": "src/render/airPass.js",
+    "old": "if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue;",
+    "new": "if (f.carried && f.carried[i]) continue;",
+    "tests": [
+      "test/systems/ownaudit_ht_keys.test.js",
+      "test/render/mact_bugs.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-offset-unscaled",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    const x = xml.x / xml.scale * cfg.offsetScale * (shown.mirror ? -1 : 1);",
+    "new": "    const x = xml.x / xml.scale * (shown.mirror ? -1 : 1);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-offset-fine-dropped",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1) + (s['Animation.FineGlobalOffsetScale'] ?? 0),",
+    "new": "    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1),",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-grass-never-held",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    st.grassOff = !st.settings.enableRealGrass;",
+    "new": "    st.grassOff = false;",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-grass-never-given-back",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    st.grassOff = false;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-grass-host-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (labGrass && !tvf && !travelOptions?.grassHidden) {",
+    "new": "if (labGrass && !tvf) {",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-sites-unwired",
+    "file": "src/scenes/snowGround.js",
+    "old": "    footprints: (gx, gz, radius) => siteFootprintsIn((x, y) => snowGround.pixelOn(x, y), gx, gz, radius),",
+    "new": "    footprints: () => [],",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-sites-half-wide",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "(s.xMax - s.xMin) / 16, (s.yMax - s.yMin) / 16)",
+    "new": "(s.xMax - s.xMin) / 32, (s.yMax - s.yMin) / 16)",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-sites-host-empty",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    footprints: (gx, gz, radius) => ground.footprints?.(gx, gz, radius) ?? [],",
+    "new": "    footprints: () => [],",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-heading-offset-lost",
+    "file": "src/systems/windfall.js",
+    "old": "    windDirectionDegrees: f32(WINDFALL_HEADING_OFFSET),",
+    "new": "    windDirectionDegrees: 0,",
+    "tests": [
+      "test/systems/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-retired-kept",
+    "file": "src/systems/modSettings.js",
+    "old": "  Object.freeze({ vendor: 'windfall', key: 'General.WindDirectionDegrees' }),\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js",
+      "test/systems/windfall1_model.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-tile-action-gone",
+    "file": "src/systems/inputActions.js",
+    "old": "  'eye-of-the-beholder': Object.freeze(['TogglePerspective']),\n",
+    "new": "",
+    "tests": [
+      "test/systems/ownaudit_keys.test.js",
+      "test/systems/uxb1f_featurekeys.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-keys-tile-rows-mod-only",
+    "file": "src/systems/controlsConfig.js",
+    "old": "...(MOD_TILE_ACTIONS[vendor] ?? [])];",
+    "new": "];",
+    "tests": [
+      "test/systems/uxb1f_featurekeys.test.js"
+    ]
+  }
+]

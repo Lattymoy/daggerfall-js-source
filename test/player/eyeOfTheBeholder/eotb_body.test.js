@@ -70,7 +70,7 @@ test('EOTB5: the sprite is sized in METRES PER PIXEL, and the saddle shares its 
   assert.equal(spriteSize(53, 110, {}, 2).h, 110 / 2 * 0.019);
 });
 
-test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples over 288 records, and GlobalOffsetScale never touches them', () => {
+test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples over 288 records - OWN-AUDIT: and the body scales them by GlobalOffsetScale (the placement pin below)', () => {
   const info = JSON.parse(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSpriteInfo.json'), 'utf8'));   // OWN-WORK4: moved beside its reader
   assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 0), { scale: 1, x: 0, y: 0 }, 'a record with no XML is the default');
   assert.deepEqual(spriteOffset(ARCHIVE_FOOT, 18), { scale: 1, x: -0.2, y: 0 }, 'ReadyMeleeBackwardLeft (record 18) sits a fifth of a metre to the left');
@@ -78,8 +78,8 @@ test('EOTB-IL: the per-sprite offsets are the XML’s, in metres, six triples ov
   assert.equal(Object.keys(info.offsets).length, 288);
   const triples = new Set(Object.values(info.offsets).map((o) => `${o.scale},${o.x},${o.y}`));
   assert.equal(triples.size, 6);
-  // the dial the pane still shows is inert in the assembly: get_scaleOffset has no caller
-  assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSprite.js'), 'utf8')), 'no scaleOffset in the port either');
+  // get_scaleOffset has no caller in the assembly; OWN-AUDIT (2026-11-01) made the dial ours, in the body's place, not here
+  assert.ok(!/(function|const|let)\s+scaleOffset\b/.test(readFileSync(join(root, 'src/player/eyeOfTheBeholder/eotbSprite.js'), 'utf8')), 'the record\'s offset is the XML\'s, unscaled');
 });
 
 test('EOTB-IL: bodyState reads the motion bag the way LoopIdleBillboard reads PlayerMotor', () => {
@@ -413,6 +413,14 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   await new Promise((res) => setTimeout(res, 2));
   armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
   assert.equal(Number(armed.state().placed[0].toFixed(6)), 0.2, 'and the offset negated for the mirrored state');
+  // OWN-AUDIT (2026-11-01): Animation.GlobalOffsetScale, FineGlobalOffsetScale added, scales the shift - 2.5 x -0.2
+  setModSetting(MOD, 'Animation.GlobalOffsetScale', 2);
+  setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0.5);
+  t.after(() => { setModSetting(MOD, 'Animation.GlobalOffsetScale', 1); setModSetting(MOD, 'Animation.FineGlobalOffsetScale', 0); });
+  armed.reload();
+  armed.draw(null, { eye: [1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+  assert.equal(Number(armed.state().placed[0].toFixed(6)), 0.5, 'the mirrored shift, two and a half times the art\'s');
+  assert.equal(Number(armed.state().placed[1].toFixed(6)), 0, 'the feet still on the ground (the XML\'s Y is nought)');
 });
 
 test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is not None, a quarter metre behind, the front record, mirrored when Visible', async () => {

@@ -30,6 +30,14 @@ and at the mod's volumes they sit by Daggerfall's own wind (a full gust at 0.44 
 `audio/synth/dsp.js` `loudnessOf`, DAGGER.SND's wind -24 to -29). The gust's low body reached down to 0 Hz and left a
 DC offset of up to 0.3% of full scale; a 40 Hz high-pass takes it out. Pins: `ownwork4_windfall.test.js`.
 
+**OWN-AUDIT (2026-11-01).** `General.WindDirectionDegrees` is retired. The mod adds it to a heading it rolls each day
+(HashUnit x 360), so it never chose a direction a player could see, and here the outdoors' one wind (`systems/wind/`)
+sets the heading the trees, the rain and the clouds share. A second heading for the trees alone would split them. The
+shipped 35 stands in the daily heading of a frame with no wind handed (`windfall.js` `WINDFALL_HEADING_OFFSET`), so the
+reference trace holds, and a saved value is let go on load (`modSettings.js` RETIRED_KEYS). A prevailing wind for the
+whole outdoors is the live form, and its own slice: it moves every wind consumer's pins. Pins:
+`test/systems/windfall1_model.test.js`; mutants `tools/mutants/ownaudit_keys.json`.
+
 ## What the mod is
 
 One `.dfmod` bundle: an assembly (`Windfall.dll`, 54,272 bytes - eight types),
@@ -175,8 +183,8 @@ record's tree and takes the stock row.
 - **ONE WIND, ONE WAY.** The heading the trees lean and the leaves blow is the
   outdoors' own wind's (`systems/wind/windDrive.js` `dir` - the wisps', the rain's,
   the clouds'), Windfall's slow wander (+-10 degrees) and its gusts' swing turned
-  about it. The mod's daily heading (HashUnit x 360 + WindDirectionDegrees)
-  stands only where no wind is handed; the setting says so (INERT here).
+  about it. The mod's daily heading (HashUnit x 360 + its shipped 35 degrees)
+  stands only where no wind is handed; its key is retired (OWN-AUDIT, above).
 - **THE SOUND BESIDE THE BED.** The port's steady wind bed (WIND3 /
   FIELD-WIND1, Enhanced sounds) and the mod's intermittent clips are two
   layers, as a constant air and its events are; the mod's sound has its own

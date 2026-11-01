@@ -24,6 +24,14 @@ default (MO1); the four presentation modules (Sprite, Bob, Inertia,
 Step) ship OFF as the mod ships them. Pins: 19 in
 `test/systems/ht1_handheldtorches.test.js`.
 
+**OWN-AUDIT (2026-11-01).** Three keys the pane called inert are live. `Throwing.ShowTrajectory`: while a throw winds
+up, the flight's own arc (`throwArcPoints`, without the throw's random spread) is drawn as dots through the last frame's
+camera, the landing marked larger (`systems/torchArc.js`; the rig draws it in either lane and view, and the switch is on
+the tile). `Throwing.EmissionShadows`: off, as the mod ships it, a burning foe's light says `shadowless`, and the composer
+marks it 2 in the carried mask (`render/lightId.js` `CARRIED_SHADOWLESS`): no shadow map, no contact march, its glare
+kept. Before this it cast a shadow whatever the key said. `Presentation.Tint`: on, the hand takes the room's light as
+the weapon does; off, its own colours. Pins: `ownaudit_ht_keys.test.js`; mutants `tools/mutants/ownaudit_keys.json`.
+
 **OWN-WORK4 (2026-10-31, the owner).** The owner: "A proper 1 to 1 recreation for everything." `vendor/handheld-torches/`
 is retired (`01-Overview/Own-Work.md` holds its row). The seventeen pictures the release drew are ours, recipes in
 `systems/handheldTorchesArt.js` for our painter (`art/ownPainter.js`): the hand with a torch (90 x 205) and with a
@@ -162,8 +170,9 @@ transform keeps what was last written; `dispose` clears it). Bob,
 Inertia and Step are Weapon Widget's laws restated where the IL
 restates them, over the same modsettings tables (`BOB_SHAPE`,
 `STEP_CONDITION` - one home, `combat/weapon/weaponWidget.js`); the bob's
-sideways term is signed by the hand. Drawn white: `FPSWeapon.Tint` is
-First-Person Lighting's channel and the port has no such mod.
+sideways term is signed by the hand. `Presentation.Tint` decides the
+hand's light: on, the room's (the rig's MAC-I tint, as the weapon takes
+it); off, its own colours (OWN-AUDIT, below).
 
 ## The dropped lights, the thrown torch, the burning foe (droppedTorches.js)
 
@@ -259,27 +268,18 @@ the fire takes on every hit that lands. Kept.
   `onToggleOffset` (isInThirdPerson stays the rig's word); Bloodfall's
   GUID gating the foe light; Custom Tooltips' `RegisterCustomTooltip`
   naming the dropped torches (the port's own plaque names them);
-  First-Person Lighting's `FPSWeapon.Tint` (drawn white).
+  First-Person Lighting's `FPSWeapon.Tint` (the port's own first-person
+  light stands in, `Presentation.Tint` its switch).
 - **The mod's `hasFreeHand` / `getFreeHand` MessageReceiver** - no mod
   asks.
 - **`Light.intensity`'s flicker** on a dropped torch (`1.25 + sin(2t) x
   0.1`): the port's point lights have range, no intensity
   (`playerTorch.js` records the same for the player torch); the range
   law by the time left IS kept.
-- **`EmissionShadows`**: the renderer's point lights cast none; the key
-  is on the pane and inert, its description says so.
 - **The `Throwing.Chance` roll**: not the port's omission - DFU's
   effect declares no chance (above).
 - **The `ThrowLightSourceAction` lit arm** is unreachable from the key
   (above) - kept as the mod has it, not "fixed".
-- **The throw's ARC** (`DrawTrajectory`, 0x1bec). The mod feeds its 300
-  integration steps to a `LineRenderer`; this renderer has no
-  world-space line - `drawMeshWire` wants a mesh's own edge buffer, and
-  the only other `gl.LINES` is the 2D world map's - so there is nothing
-  to draw it with. The law is kept whole and pinned as the exported
-  `throwArcPoints` (the arc must match the flight the pool integrates),
-  it is NOT run per frame, and `Throwing.ShowTrajectory` says on the
-  pane that it is DFU-only (AUDIT 66 F9).
 - **`PlayerTorchLightScale` on a dropped light's range** (0x1bb3): this
   port holds that setting inert for a radius by its own decision
   (`playerTorch.js` - "mapping a brightness slider onto a radius would

@@ -31,6 +31,15 @@ surface stands 1 cm over its bed (`SNOW_SURFACE_OFFSET`), and the polygon offset
 twice, the second read turned and at 1 / phi^2 of the scale, so a field never shows the 4 m tile. The model and
 the runtime (`systems/snowfall.js`, `systems/snowfallRuntime.js`) are still the port of the assembly.
 
+**OWN-AUDIT (2026-11-01).** The three Location Loader keys said this game has no Location Loader, and the snow's cap
+on authored footprints never applied. The game has one: World of Daggerfall's (`wodLocationLoader.js`), which levels a
+camp, a ruin or a rock field in the wilds. Each built pixel's site (`pixelBuild.js` `wodSite`) is now a footprint in
+global metres (`scenes/snowfallHost.js` `siteFootprintsIn`, handed by `scenes/snowGround.js`), and the mod's own cap
+reads it: the snow on a site lies no deeper than `LocationLoaderMaximumDepth` and deepens over
+`LocationLoaderBoundaryFeather` past its edge; `LocationLoaderIntegration` off asks none. Every pixel of the world's grid
+is asked; past the Bay World of Daggerfall stands no site, so none is found there. `snow_status` names the loader. Pins:
+`test/systems/ownaudit_keys.test.js`; mutants `tools/mutants/ownaudit_keys.json`.
+
 ## The winter ground
 
 The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and
@@ -191,9 +200,9 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
 - **GLOBAL METRES ARE THE PORT'S OWN.** The mod reckons a global point off
   PlayerGPS's whole-unit WorldX/WorldZ and the transforms' difference; the
   port's are exact (the stream's own origin and compensation).
-- **LOCATION LOADER IS NOT THE PORT'S.** No authored footprint stands, so the
-  loader's cap never applies (World of Daggerfall's sites keep their own
-  ground).
+- **LOCATION LOADER IS WORLD OF DAGGERFALL'S.** The port's loader is World of
+  Daggerfall's (`world/worldOfDaggerfall/wodLocationLoader.js`), so its levelled
+  sites are the authored footprints (OWN-AUDIT, above).
 - **LIT BY THE GROUND'S PROGRAM** (above). It stands over the ground by our
   1 cm surface offset and our polygon offset of -0.5, -1 (OWN-WORK4 AUDIT; the
   mod's were 8 mm and -0.25, -0.25)

@@ -39,6 +39,15 @@ fronts half a spacing below the first's, so the surf jumped back and forth four 
 same fronts, and only the crests' teeth trade places, so the foam churns as the frames turn (`csaPictures.js`
 `wavePaint`). Pinned in `csa_waves.test.js`; mutants `tools/mutants/ownaudit_waves.json` (2).
 
+**OWN-AUDIT (2026-11-01), the four inert keys.** The mod shipped three keys it never read, and they are ours now
+(`comeSailAway/sailAssist.js`, read by the runtime). `Handling.BadTack`: under either helm, her way under sail shrinks
+past a beam reach, in a line to `BadTackMultiplier` of it close-hauled (135 degrees off her run) and beyond; a gale lays
+her on her quarter and takes none. It ships off and is on the tile. `SailingAssist.AutoStowGaffSails`: under the classic
+helm a gaff sail the wind would lay aback (past 150 degrees, where GetSailPower's gaff curve turns back) is not raised,
+is stowed while the wind stays foul and is set again when it frees. `Compatibility.AnimatedWaterVertexWaves` named a mod
+the game has not got and is retired (`modSettings.js` RETIRED_KEYS). Pins: `ownaudit_csa_keys.test.js`; mutants
+`tools/mutants/ownaudit_keys.json`.
+
 "Adds a usable boat and sailing mechanics": a boat bought as its parts
 (item 1320) or its deed (1321), put in the water near a port, and sailed -
 under oars, or under sails the wind fills and the player trims - with
@@ -199,13 +208,13 @@ port's own `Enabled` in front, on. The four unnamed spacer sections
 (PortLocationSearchRange and five of Map's) and they are the pane's; the
 port wrote the rest, each from what LoadSettings does with the key.
 
-- **Three keys ship and do nothing** - `Handling.BadTack`,
+- **Three keys the mod ships and never reads** - `Handling.BadTack`,
   `Handling.BadTackMultiplier`, `SailingAssist.AutoStowGaffSails`.
   LoadSettings reads none of them, and no method can: the assembly's
   string heap (#US - every literal a method names is an `ldstr` of one of
   its entries) holds every other key's name and not these three
   (`tools/lib/clrUserStrings.mjs`, pinned in `test/systems/csa_registration.test.js`).
-  They are declared as shipped, so a player's file keeps them.
+  They are ours since OWN-AUDIT (2026-11-01, above).
 - **How LoadSettings reads the numbers**, which the slices restate:
   `Waves.Length` is halved into the waves' dither end, `Waves.Fade` is a
   fraction of that length (the dither start), `Waves.Speed` is read in
@@ -2014,8 +2023,8 @@ Daggerfall, the locations mod), and Animated Water. Both lookups are
 null in code (`WOD_TERRAIN`, `ANIMATED_WATER`), so every arm on them takes
 its null branch: the water level 34 (100 is the terrain mod's), the mod's
 own wave frames, current, rudder particles and bob, Animated Water's
-getWaveHeights never sent. Compatibility/AnimatedWaterVertexWaves stays in
-the pane as the mod ships it and changes nothing; its description says so.
+getWaveHeights never sent. OWN-AUDIT (2026-11-01) retired
+Compatibility/AnimatedWaterVertexWaves: it named Animated Water, so it could change nothing here.
 Iliac Puddle No More is in the port, asked of the host
 (`iliacPuddleNoMore`), and its arms were checked and stand: the placement
 ray's hit on its DeepWaters slab (FIELD-CSA1: a hit on the carved floor

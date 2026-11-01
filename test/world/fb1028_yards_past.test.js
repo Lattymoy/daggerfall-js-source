@@ -1,7 +1,7 @@
 // FB1028 YARDS Y2 (the owner: every yard where #1184 stood it; bible/03-World/Town-Shapes.md FB1028): past the Bay the
 // yards read the town ground and the ring as #1184 drew them. Its own file: the sweep installs its own data (no colosseum
 // stood), as 2036a509e's cells were measured, and test/world/fb1028_walls.test.js installs the game's. OWN-WORK3: on
-// Daggerfall's own blocks the two move no yard past the Bay, so Y2's mutants die in that file (Town-Shapes section 16).
+// Daggerfall's own blocks the two move no yard past the Bay, so the ring is read off the yards' paths themselves.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -15,9 +15,9 @@ const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD
 const D = 128;
 const siteStr = (q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`;
 
-test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring as #1184 drew them - nine walled templates\' every yard on the cells 2036a509e stands them on Daggerfall\'s own blocks', { skip: skipReal, timeout: 1_800_000 }, async () => {
+test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring as #1184 drew them - nine walled templates\' every yard on the cells 2036a509e stands them on Daggerfall\'s own blocks, today\'s ring off their paths (mutant: today\'s ring on their ground)', { skip: skipReal, timeout: 1_800_000 }, async () => {
   const S = await import('../../tools/townBoardsSweep.mjs');
-  const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
+  const { setLocationTiles, townRoadRing } = await import('../../src/world/terrain/terrainTiles.js');
   const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
   const { layoutLocation } = await import('../../src/world/locationLayout.js');
   const { longitudeLatitudeToMapPixel } = await import('../../src/formats/mapsFile.js');
@@ -46,6 +46,11 @@ test('FB1028 YARDS Y2 with ARENA2: past the Bay the yards on the ground and ring
       const g = ys.townGroundOf(layoutLocation(loc, sw.maps, sw.blocks, { enhanced: true, windmills: true }), {}, townWalkShut(loc, t.yardGround, t.yardPaths, true), { plan, fixed: null });
       const yards = [...ys.yardSitesOn(g), ...ys.craftYardSitesOn(g)].map(siteStr);
       for (const y of want.split('|')) assert.ok(yards.includes(y), `city-state #${j}: ${y} (${yards.join(', ')})`);
+      // and today's ring off the yards' ground, as the host reads their paths (#1184 painted no ring there)
+      const ring = townRoadRing(t.townGround), paths = t.yardPaths ?? t.paths;
+      let on = 0, kept = 0;
+      for (let i = 0; i < ring.length; i++) if (ring[i] && t.yardGround[i]) { on++; if (paths[i]) kept++; }
+      assert.ok(on > 0 && kept === 0, `city-state #${j}: ${kept} of the ring's ${on} tiles on the yards' ground in their paths`);
     }
   } finally { setTownWallPaths(null); }
 });

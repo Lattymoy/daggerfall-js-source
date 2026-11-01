@@ -109,7 +109,7 @@ test('LIGHT-NEAR1: by source - the two constants are gone, the shader\'s contact
   assert.match(sp, /const casters = reserveSelfCasters\(pickShadowCasters\(f\.pointLights, f\.eye, SHADOW_POINT_CASTERS, f\.carried, this\._heldCasters, this\._heldCasterN\),/);   // DISC6: and last frame's casters (the keep margin); AUDIT PRE-MERGE 0929 E3: the card's two lamps reserved among them - no distance clause
   assert.doesNotMatch(sp, /d < minDist/);
   assert.doesNotMatch(air, /Math\.hypot\(L\[i \* 4\] - eye\[0\]/, 'no glare skip by distance to the eye');
-  assert.match(air, /if \(f\.carried && f\.carried\[i\]\) continue; \/\/ MAC-T1/);
+  assert.match(air, /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue; \/\/ OWN-AUDIT: a shadowless light keeps its glare\. MAC-T1/);   // OWN-AUDIT: the hand's byte alone
 });
 
 test('LIGHT-NEAR1: the hosts - every host that composes a player light does it through withPlayerLights (the mask is the whole of the hand\'s exclusion now), and the standalone interior scene, which has no player light, is the one bare setPointLights', () => {

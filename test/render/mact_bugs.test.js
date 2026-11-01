@@ -232,7 +232,7 @@ test('MAC-T1 (d): the caster pick skips a carried light in any camera; by source
   assert.equal(pickShadowCaster(lights, eye, new Uint8Array([1, 0, 0])), 2);
   assert.match(rd('src/systems/playerTorch.js'), /range: st\.range,\n(?:\s*\/\/[^\n]*\n)*\s*carried: true,\n\s*\};/, 'the torch record');
   assert.match(rd('src/scenes/magicCandle.js'), /range: CANDLE\.range, carried: true \}/, 'the candle record');
-  assert.match(rd('src/render/airPass.js'), /if \(f\.carried && f\.carried\[i\]\) continue;/, 'the glare');
+  assert.match(rd('src/render/airPass.js'), /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue;/, 'the glare - the hand\'s byte alone (OWN-AUDIT: a shadowless light keeps its glare)');
   assert.match(rd('src/render/shadowPass.js'), /if \(carried && carried\[i\]\) continue;/, 'the caster pick');
   assert.match(rd('src/render/shadowPass.js'), /if \(f\.carried\[i\]\) this\.casterOf\[i\] = -2;/, 'the table');
   for (const fs of [EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS]) assert.match(fs, /\(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7/, 'the march reads the table');

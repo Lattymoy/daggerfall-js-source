@@ -277,9 +277,9 @@ must be assigned there, never re-declared. Mutants
    `TravelOptionsMapWindow.checkLocationDiscovered`'s own arm) - a mod
    the port does not have. Its discovery set, its "reveal ports" arm
    and the popup's `hasVisitedLocation` gate are not ported.
-2. **Real Grass** (`:1227`, `:1258`) - likewise: a
-   `SendModMessage("Real Grass", "toggle")` pair with nothing to send
-   to. The setting is carried and reads as a no-op.
+2. **Real Grass** (`:1227`, `:1258`) - a
+   `SendModMessage("Real Grass", "toggle")` pair, pointed at our own
+   grass since OWN-AUDIT (2026-11-01, below).
 3. **`SDFFontRendering`** (`:1256`, `TravelOptionsPopUp.cs:126-133`) -
    DFU picks between two help texts and two travel-time formats by
    which font renderer is on. The port's text is neither of DFU's two,
@@ -1532,6 +1532,16 @@ reads, and the section about a road past the Bay asks 800 and lights 252.
 Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (8 here, and the
 junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
 content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
+
+## OWN-AUDIT - the grass on a journey (2026-11-01)
+
+**OWN-AUDIT (2026-11-01).** `GeneralOptions.AllowRealGrass` named Real Grass, a mod the game has not got, and did
+nothing. It is ours now: the mod turned Real Grass off for a sped-up journey and on again at its end, and the same pair
+holds back our own grass field (`travelOptions.js` `grassHidden`, asked by `world.js` where it draws the field). With
+the switch off, as it ships, a sped-up journey draws no grass and spends nothing keeping a field up at sixty times speed;
+on, the grass stays. The journey's end always gives it back, even if the switch moved on the way, where the mod's end
+asked the switch again. Grass grows in every province, so it holds everywhere. Pins: `test/systems/ownaudit_keys.test.js`;
+mutants `tools/mutants/ownaudit_keys.json`.
 
 ## OWN-WORK4 - our own pictures (2026-10-31)
 

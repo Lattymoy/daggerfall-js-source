@@ -765,6 +765,12 @@ Every gate is on its road. The 150 gates of the packs-off Bay and the 41 past it
 three lengths of their road's crossing, or were slid apart (two gates a length of wall apart at the least); the kernel
 still lays each one's road in from its opening to the town's nearest paving, where one lies within the reach.
 
+**OWN-WORK3** (2026-10-31). The town packs are retired, so no room stands Beautiful Cities' rings: every Bay city is
+walled on its outline, online as off, and the tables' first rows are history. The pin's Bay half now measures the Bay as
+it stands, on the Bay's own network through the host's reader (`townWallPathsReader`): every fourth walled city its first
+half does not read, since a wall is registered once a city. Of their 67 cities' 151 gates, 61 were on the road before the
+kernel laid theirs, and all 151 are now.
+
 - **The hosts**: none grows - `scenes/pixelBuild.js` hands the gates in one statement beside the rect it makes; the kernel
   calls the road once.
 - FB1028 (section 16): the slide left each road's arm running on into the wall; on a Bay wall's ground the arms are taken
@@ -789,6 +795,12 @@ shows some of each, and the mix moves as the eye moves.
 MAPS.BSA's own rows, one road from the east (the roads' worker's regions over its pixel). It has one gate, at (624.0,
 355.2) of its carrier, facing east, on a straight run. The tower north of the gate turns 0.0004 degrees. The gate's and the
 next length's faces lie in that tower's side planes: 154 m2, and 77 m2 of it on the side a player meets at the gate.
+
+**Riften since OWN-WORK3** (2026-10-31). The town packs are retired, so Gothbrone Hall's blocks are Daggerfall's own, not
+Beautiful Cities' edit of them, and the line round their houses stands about 6 m further east. The gate is at (630.2,
+355.2), facing east and turned 1 degree, and the line turns 1 and 13 degrees at its two towers: whole, 4.4 and 2.1 m2 of
+the gate's faces lie in their sides' planes. The run south of the gate is straight, and at its tower (630.4, 291.1) the
+two lengths' faces lie in the tower's, 154.6 m2. Cut, none at any of them, nor on the whole wall. The pin moved with it.
 
 **Measured first** (the freeware; faces of two pieces that face one way, over each other within 1 mm, outside the towers'
 bodies): the Bay's 410 walled cities (TS7, the packs off, Basic Roads' roads), 603,355 m2, every city; the 407 city

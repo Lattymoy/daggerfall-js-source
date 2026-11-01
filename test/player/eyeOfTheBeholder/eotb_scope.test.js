@@ -84,7 +84,7 @@ const IL = {
   'PlayerBillboard::UpdateOrientation': { port: 'updateOrientation', mod: 'eotbBody.js' },   // EOTB-IL: the 0.1 s throttle and the torch modes; orientationFor (eotbBillboard.js) is its angle (IL_4779-IL_47a3)
   'PlayerBillboard::get_frameTime': { port: 'frameTime', mod: 'eotbBillboard.js' },
   'PlayerBillboard::get_sizeMod': { port: 'sizeMod', mod: 'eotbSprite.js' },
-  'PlayerBillboard::get_scaleOffset': { port: null, why: 'no twin: DEAD IN THE ASSEMBLY. The getter has no caller anywhere in the IL - Animation.GlobalOffsetScale is read into a field nothing consumes - so the port declares the dial INERT and multiplies by nothing.' },
+  'PlayerBillboard::get_scaleOffset': { port: null, why: 'no twin: DEAD IN THE ASSEMBLY. The getter has no caller anywhere in the IL - Animation.GlobalOffsetScale is read into a field nothing consumes. OWN-AUDIT (2026-11-01) gave the dial our own meaning in the body (eotbBody.js place scales the XML shift by it), no twin of the getter.' },
   'PlayerBillboard::PlayFootstep': { port: 'playFootstep', mod: 'eotbBody.js' },   // EOTB-IL: the clip PlayerFootsteps would pick, at FootstepVolumeScale * (FP ? 1 : 2) (IL_55e8-IL_5928)
   'PlayerBillboard::EnableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: Initialize's SyncFootsteps fork (IL_3c78-IL_3c80) - off, the vanilla stride keeps its clips
   'PlayerBillboard::DisableVanillaFootsteps': { port: 'initialize', mod: 'eotbBody.js' },   // EOTB-IL: every clip index to -1 (IL_54f8-IL_554c); `vanillaDisabled` is what `footstep().owns` answers

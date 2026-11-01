@@ -88,9 +88,9 @@ replaces (`AssignMeshAndMaterial`, `MakeBillboardMaterial`);
 (the attack-from-body ray, moot because the port's swing and
 activation already start at the player's own head, which the view
 never moves); `MessageReceiver` (DFU's mod bus); and `get_scaleOffset`,
-which is **dead in the assembly** - no caller anywhere in the IL, so
-`Animation.GlobalOffsetScale` is declared INERT on the pane rather than
-invented a meaning.
+which is **dead in the assembly** - no caller anywhere in the IL. Since
+OWN-AUDIT (2026-11-01) `Animation.GlobalOffsetScale` has our own meaning
+in the body instead (below).
 
 The ledger is checked against the dump itself: every row must be an
 authored method in it and no authored method may be missing, a row
@@ -220,11 +220,10 @@ Three, each marked where it lands in `src/systems/modSettings.js`.
 1. **`CameraScrolling.ScrollableZOffset` ships OFF; the port ships it
    ON.** MODS-ON, and Mac's own ask. It is the arm the whole view seam
    is built on.
-2. **`Camera.TogglePerspective` = `KeypadEnter` is inert here.** Mac:
+2. **`Camera.TogglePerspective` = `KeypadEnter` is the game's action.** Mac:
    *"instead of numpad being used to change views, I want it scrollable
-   like how we handle morrowind."* The key is still listed, because the
-   pane is a record of what the mod ships and a key quietly deleted is
-   a key nobody can ask about.
+   like how we handle morrowind."* OWN-AUDIT (2026-11-01) retired the
+   mod's key: the action below is its job, shown on the mod's tile.
    **VIEW-TOGGLE (2026-09-28, Mac: "Also add a force first person/third
    person toggle")** gives the idea back as the PORT's own action beside
    the wheel, not the mod's key: `TogglePerspective` (Controls >
@@ -236,7 +235,7 @@ Three, each marked where it lands in `src/systems/modSettings.js`.
    own ToggleOffset both ways; the Morrowind lane out by the restore
    door and in by `mwIntoHead`; refused in the Morrowind saddle
    (RIDE-POV), while the travel view holds the body, and where no body
-   can show. The mod's `KeypadEnter` stays inert (Numpad Enter is Come
+   can show. The mod's `KeypadEnter` is not carried (Numpad Enter is Come
    Sail Away's time-scale reset). `test/player/viewtoggle.test.js`,
    `tools/mutants/viewtoggle.json`.
 3. **`Camera.SwitchShoulder` ships `Tab`; the port binds `B`.** HT4's
@@ -244,11 +243,9 @@ Three, each marked where it lands in `src/systems/modSettings.js`.
    Unity and spent here - PX15 gave it to the port's own pixel dial.
 
 The mod also ships `CameraScrolling.ScrollableZOffsetAxis` =
-`"Mouse ScrollWheel"`. That is a Unity input **axis**, not a KeyCode,
-and the two are different kinds wearing the same JSON type. The port
-declares the kind (`axis: true`), and HT4's spent-key gate reads the
-declaration instead of guessing from the value - it had been resolving
-the string as a binding, which it is not and never could be.
+`"Mouse ScrollWheel"`. That is a Unity input **axis**, not a KeyCode, and
+a browser has none: the wheel is the page's own. OWN-AUDIT (2026-11-01)
+retired it.
 
 ## The camera (EOTB2), as the IL has it
 
@@ -844,8 +841,8 @@ The list is long because the arc had guessed at most of it:
   smoothing across the floating origin. **The transitions** are
   registered on the dungeon's doors as well as the building's.
 - **The two keys** fire on the RELEASE edge (`GetKeyUp`).
-- **`GlobalOffsetScale` is inert** in the mod itself: `get_scaleOffset`
-  has no caller. The pane says so.
+- **`GlobalOffsetScale` is dead** in the mod itself: `get_scaleOffset`
+  has no caller. Ours scales the XML's shift (OWN-AUDIT, 2026-11-01).
 - **The cart** (`ShowCart`): model 41239 through the host's own mesh
   pipeline, shown ten metres behind the body on the first frame and
   settling 2.49 m off; it follows past 2.5 m, keeps its LAST offset
@@ -1224,8 +1221,8 @@ stroke its `an` names, which is the same count, so both screens draw the same ha
 
 **What it retires.** The ping-pong: `usesPingPong`, `pingPongFrames`, `pingPongTickFrames` and the ping-pong count
 are deleted, and `PlayAnimationPingPongCoroutine` moves to the no-twin rows of `test/player/eyeOfTheBeholder/eotb_scope.test.js` (forty-six
-ported, fifteen with no twin). `Graphics.PingPongOffset` is inert, and `Graphics.AttackStrings`' PingPong plays as None
-and Mixed as Mirror - both say so on the pane. Mirror is untouched: the stance still mirrors after a swing. A
+ported, fifteen with no twin). `Graphics.PingPongOffset` is retired (OWN-AUDIT, 2026-11-01), and `Graphics.AttackStrings`' PingPong plays as None
+and Mixed as Mirror - its description says so. Mirror is untouched: the stance still mirrors after a swing. A
 DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 
 **Pins.** `test/player/eyeOfTheBeholder/eotb_billboard.test.js` (the halves, the parity, an odd clip, the tick), `test/player/eyeOfTheBeholder/eotb_audit2.test.js`

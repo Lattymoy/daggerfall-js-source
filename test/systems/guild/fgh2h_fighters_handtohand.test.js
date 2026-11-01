@@ -56,7 +56,7 @@ test('FGH2H-R: R&R\'s fightersTeachHandToHand is retired - off the pane, its lis
   assert.equal(MOD_SETTINGS[V].keys[R], undefined, 'no switch on the pane');
   assert.throws(() => modSetting(V, R), /not a declared switch/, 'nothing may read it');
   assert.equal(rr.rrFightersGuildSkills, undefined, 'FightersGuildRR\'s lists are gone');
-  assert.deepEqual(RETIRED_KEYS.map((r) => `${r.vendor}/${r.key}`), [`${V}/${R}`]);
+  assert.deepEqual(RETIRED_KEYS.filter((r) => r.vendor === V).map((r) => `${r.vendor}/${r.key}`), [`${V}/${R}`], 'the mod\'s one (OWN-AUDIT retired others\' - ownaudit_keys.test.js)');
   const prevLs = globalThis.localStorage;
   try {
     const store = new Map();
