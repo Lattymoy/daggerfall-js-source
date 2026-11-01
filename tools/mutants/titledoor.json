@@ -1,5 +1,5 @@
 [
- {"name": "TITLEDOOR-band-at-the-centre", "file": "src/ui/intro/introScreen.js", "old": "--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .42)", "new": "--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .2)", "tests": ["test/ui/titledoor.test.js"]},
+ {"name": "TITLEDOOR-band-at-the-centre", "file": "src/ui/intro/introScreen.js", "old": "--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .29)", "new": "--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .2)", "tests": ["test/ui/titledoor.test.js"]},
  {"name": "TITLEDOOR-film-over-the-menu", "file": "src/ui/intro/introScreen.js", "old": "#intro.intro-landed{z-index:11}", "new": "#intro.intro-landed{z-index:13}", "tests": ["test/ui/titledoor.test.js"]},
  {"name": "TITLEDOOR-host-ground-wins", "file": "src/ui/enhanced/enhancedStyle.js", "old": "#enhanced-menu[data-over-title] { background: transparent !important; }", "new": "#enhanced-menu[data-over-title] { background: transparent; }", "tests": ["test/ui/titledoor.test.js"]},
  {"name": "TITLEDOOR-sky-under-the-title", "file": "src/ui/enhanced/enhancedMenu.js", "old": "  if (!paused && !title) {", "new": "  if (!paused) {", "tests": ["test/ui/titledoor.test.js"]},

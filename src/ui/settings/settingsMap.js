@@ -99,7 +99,7 @@ export const CATEGORIES = Object.freeze([
       'Video/RetroModeAspectCorrection',
       'Video/PalettizationLUTShift',
     ]),
-    sec('shadows', "Daggerfall Unity's shadows", [
+    sec('shadows', 'Light shadows', [
       'Video/DungeonLightShadows',
       'Video/InteriorLightShadows',
       'Video/ExteriorLightShadows',
@@ -435,7 +435,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab('mods', 'Mods & files', [
     sec('files', 'Your files', ['card:morrowind', 'card:packs']),
-    sec('dfu', "Daggerfall Unity's mod system", [
+    sec('dfu', 'Mod loading and folders', [
       'Enhancements/LypyL_ModSystem',
       'Enhancements/AssetInjection',
       'Enhancements/CompressModdedTextures',

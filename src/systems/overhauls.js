@@ -188,11 +188,11 @@ export const OVERHAUL_PANELS = Object.freeze([
         blocked: classicBlocked,
       }),
       textureOption('vanilla-enhanced', 'Vanilla Enhanced', {
-        // OWN-WORK4: the shipped pack is our own work; a copy of carademono's the player attaches over it is hers
+        // OWN-WORK4: the shipped pack is our own work; a copy the player attaches over it is theirs
         by: () => {
           const b = veBase();
           if (!b || b.shipped) return OUR_NAME;
-          return b.version ? `carademono, version ${b.version}` : 'carademono';
+          return b.version ? `Attached, version ${b.version}` : 'Attached';   // CREDITS-OUT: no author
         },
         blurb:
           'The original game\u2019s own textures, remastered and sharper: the ground, trees, rocks, city walls and dungeons.',
@@ -237,7 +237,7 @@ export const OVERHAUL_PANELS = Object.freeze([
           'A modern interface built for mouse and keyboard, controller or phone. You can adjust some settings and the controller bindings.',
       }),
       uiOption(G.id, G.title, 'classic', G.id, {
-        by: `${G.author}, version ${G.version}`,
+        by: `Version ${G.version}`,   // CREDITS-OUT: no author
         blurb:
           'The classic interface with improvements: 3 times the detail, a new font, a spellbook for all your spells, and parchment and wood in place of the original stone.',
       }),
@@ -247,7 +247,7 @@ export const OVERHAUL_PANELS = Object.freeze([
       uiOption('dfo-grimoire', 'DFO Grimoire', 'enhanced', UI_PACK_NONE, {
         dress: 'grimoire',
         vendor: G.vendor,
-        by: `DFO Online, in ${G.author}'s GrimoireUI ${G.version}`,
+        by: `DFO Online, in GrimoireUI ${G.version}`,
         blurb:
           'GrimoireUI\u2019s parchment, wood and red-and-gold buttons on every window, with everything Enhanced Plus has: the hotbar, camps and tents, resting, the maps, trading and every online panel. Your vitals show as glass vials.',
       }),

@@ -53,8 +53,8 @@ const PUBLIC_ALLOWLIST = new Map([
   // marks and score are the identical U65 assets, not ARENA2-derived data.
   // Credit marks identify their respective projects; no new rights claimed.
   // INTRO-REVERT (2026-10-25, the owner): the recording is back with its row.
-  ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
-  ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
+  // CREDITS-OUT (2026-11-01, the owner: "No more credits along with removing their logos from the intro"): the two
+  // credit marks are DELETED, and their rows with them.
   ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
   ['src/assets/branding/dfo-online.png', 'BR6: Mac\'s supplied DFO Online dragon logo, 2026-10-26 (BR5\'s mark before it), his own file with alpha, cut to its painted bounds and scaled to 1232 x 1034 at his word; no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup

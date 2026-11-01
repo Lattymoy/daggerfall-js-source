@@ -1262,7 +1262,7 @@ export const MOD_SETTINGS = Object.freeze({
             'mods.pcaao.Enabled.description',
             'Armour reduces the damage you take instead of your chance to be hit, your skills decide whether you ' +
               'hit, shields block according to their material, and critical hits multiply ' +
-              'damage. Off uses Daggerfall Unity’s combat.',
+              'damage. Off uses the classic combat.',
           );
         },
       }),
@@ -1351,8 +1351,8 @@ export const MOD_SETTINGS = Object.freeze({
           return t(
             'mods.unleveledLoot.Enabled.description',
             'Loot and shop stock no longer scale with your level. What materials drop depends on your luck, the ' +
-              'shop’s quality and the type of dungeon, and the gold you find follows your luck. Off uses Daggerfall ' +
-              'Unity’s rolls.',
+              'shop’s quality and the type of dungeon, and the gold you find follows your luck. Off uses the classic ' +
+              'rolls.',
           );
         },
       }),

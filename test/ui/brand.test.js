@@ -77,8 +77,8 @@ test('BR1: every surface the player reads carries the one name', () => {
   // over a tracked sub-line - after BR2's one day as an uploaded logo.
   // AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's
   // logo again, the game's own file, named by its alt.
-  // BR6 (Mac, 2026-10-26): the dragon mark, at its own 1232 x 1034.
-  assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="1232" height="1034" /></h1>`), 'the wordmark');
+  // BR6 (Mac, 2026-10-26): the dragon mark, at its own 1232 x 1034. BR7 (Mac, 2026-11-01): the wordmark, 1232 x 699.
+  assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="1232" height="699" /></h1>`), 'the wordmark');
   assert.equal((landing.match(/<img\s/g) ?? []).length, 1, 'and it is the one image on the page');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
   // sweep can ever see it whole: the front door rendered DAGGERFALL over
@@ -340,7 +340,7 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   assert.equal(split, '', `a wordmark still spells the old name across two elements:\n${split}`);
   assert.match(read('src/ui/enhanced/enhancedChargen.js'), new RegExp(`brand\\.append\\(el\\('div', 'sub', '${NAME}'\\)\\);`), 'the new character\'s masthead');
   // AUDIT BR5: the launcher wears the logo too, the game's own file, named by its alt
-  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="1034"></h1>`), 'and the desktop launcher\'s');
+  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="699"></h1>`), 'and the desktop launcher\'s');
   assert.match(read('src/ui/screenshot.js'), /return `dfo-\$\{d\.getFullYear\(\)\}/, 'a screenshot is named for the product');
   assert.match(read('src/ui/shotsPane.js'), /a\.download = `dfo-shot-\$\{s\.id\}\.jpg`;/, 'and so is a saved loading shot');
   assert.match(read('server-account/src/patreon.js'), new RegExp(`<title>\\$\\{esc\\(heading\\)\\} - ${NAME}</title>`), 'and the Patreon link\'s page');
@@ -488,17 +488,18 @@ test('LOGO-CENTRE: the mark stands on its letters\' centre, not its box\'s - mea
   const { readPng } = await import('../../tools/pngIO.mjs');
   const { BRAND_LOGO_OPTICAL_SHIFT } = await import('../../src/ui/brandMark.js');
   const { width, height, data } = readPng(readFileSync(join(root, 'src/assets/branding/dfo-online.png')));
-  let left = width, right = 0;
-  for (let y = Math.round(height * 0.4); y < Math.round(height * 0.5); y++) {
+  // PIN MOVED (BR7, Mac 2026-11-01): the wordmark has no wing or tail - the letters are the mark, and the centre the
+  // eye takes is its paint's weight, every pixel by its alpha
+  let sumX = 0, sumA = 0;
+  for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-      if (a > 200 && r > 200 && g < 110 && b < 80) left = Math.min(left, x);
-      if (a > 128) right = Math.max(right, x);
+      const alpha = data[(y * width + x) * 4 + 3];
+      sumX += x * alpha; sumA += alpha;
     }
   }
-  const shift = ((left + right) / 2 - width / 2) / width;
-  assert.ok(Math.abs(shift - BRAND_LOGO_OPTICAL_SHIFT) < 0.005, `the letters (x ${left} to ${right} of ${width}) centre ${(shift * 100).toFixed(2)}% right of the file's centre; brandMark.js says ${BRAND_LOGO_OPTICAL_SHIFT * 100}%`);
-  const back = `translateX(-${BRAND_LOGO_OPTICAL_SHIFT * 100}%)`;
+  const shift = (sumX / sumA - width / 2) / width;
+  assert.ok(Math.abs(shift - BRAND_LOGO_OPTICAL_SHIFT) < 0.005, `the paint weighs ${(shift * 100).toFixed(2)}% right of the file's centre; brandMark.js says ${BRAND_LOGO_OPTICAL_SHIFT * 100}%`);
+  const back = `translateX(${-BRAND_LOGO_OPTICAL_SHIFT * 100}%)`;   // BR7: 0, the wordmark's own centre
   const intro = read('src/ui/intro/introScreen.js'), style = read('src/ui/enhanced/enhancedStyle.js');
   assert.ok(intro.match(/\.intro-title \.brand-logo\{[^}]*\}/)[0].includes(`transform:${back}`), 'the film\'s title');
   assert.ok(style.match(/\n\.brand-logo \{[^}]*\}/)[0].includes(`transform: ${back};`), 'the door and the masthead');

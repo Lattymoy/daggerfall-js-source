@@ -26,7 +26,7 @@
 // the Arena District; on bar 8 the long ascent - the city to Cyrodiil to the whole of Tamriel; the map's words on bar 14;
 // and the mark lands on bar 16 (49.344 s), the third phrase's downbeat. A narrator's five lines run under it, the way
 // Oblivion's opening speaks over its Imperial City - the words the port's own.
-import { t } from '../../systems/textManager.js';   // L10N4: the credits' captions in the player's language
+import { t } from '../../systems/textManager.js';   // L10N4: the narrator's words in the player's language
 import { tamrielCentre, tamrielSpan } from './introTamriel.js';
 
 /** The recording's landmarks (decoded sample / 12000 Hz - tools/introAudioCheck.mjs measures each). */
@@ -55,18 +55,11 @@ const between = (t, a, b) => introEase((t - a) / (b - a));
 const lerp = (a, b, k) => a + (b - a) * k;
 const rad = (d) => (d * Math.PI) / 180;
 
-// L10N4: each caption is read when the film draws it, in the player's language (a getter - the table is built at load)
-export const INTRO_CREDITS = Object.freeze([
-  Object.freeze({ key: 'interkarma', get caption() { return t('menu.intro.creditInterkarma', 'Built on the work of'); }, start: 1.25, up: 2.25, out: 4.55, end: 5.3 }),
-  Object.freeze({ key: 'nexus', get caption() { return t('menu.intro.creditNexus', 'With the modding community of'); }, start: 5.65, up: 6.6, out: 8.5, end: 9.3 }),
-]);
-
-export function introCreditOpacity(credit, time) {
-  return between(time, credit.start, credit.up) * (1 - between(time, credit.out, credit.end));
-}
+// CREDITS-OUT (2026-11-01, the owner: "Remove all mentions of DFU, Interkarma and the nexus community. No more credits
+// along with removing their logos from the intro."): the two logo cards and their cues are gone; every beat holds.
 
 /** INTRO4: THE NARRATOR - five lines over the flight, each up while its shot holds and gone before the next cut, none
- *  over a credit or the mark. The words are the port's own (3E 405: Uriel Septim VII on the throne, Lysandus dead at
+ *  over the mark. The words are the port's own (3E 405: Uriel Septim VII on the throne, Lysandus dead at
  *  Cryngaine Field, the Numidium sunk in the Bay), in the player's language. */
 export const INTRO_NARRATION = Object.freeze([
   Object.freeze({ key: 'narration1', get text() { return t('menu.intro.narration1', 'Four hundred and five years since Tiber Septim forged the Empire, Tamriel endures.'); }, start: 12.25, up: 12.95, out: 17.65, end: 18.4 }),
@@ -280,7 +273,6 @@ export function introFrameAt(time, reducedMotion = false) {
     labels: reducedMotion ? 1 : between(tt, MAP_TIME, MAP_TIME + 1.6),
     borders: reducedMotion ? 1 : between(tt, MAP_TIME - 0.6, MAP_TIME + 1.4),
     title: introTitleAt(tt, reducedMotion),
-    credits: INTRO_CREDITS.map((credit) => ({ ...credit, opacity: introCreditOpacity(credit, tt) })),
     narration: INTRO_NARRATION.map((line) => ({ key: line.key, opacity: introNarrationOpacity(line, tt) })),
     ready: tt >= TITLE_READY_TIME,
     prompt: between(tt, TITLE_READY_TIME, TITLE_READY_TIME + 0.65),

@@ -116,7 +116,7 @@
        2026-10-26): drawn 10% of its width left, so its letters stand on
        the centre line and the dragon hangs left of them (brandMark.js). */
     .wordmark { font-family: 'Jacquard 12', var(--brand); font-size: clamp(64px, 12vw, 112px); line-height: 1; }
-    .wordmark img { display: block; width: min(234px, 46.7vw); height: auto; margin: 0 auto; transform: translateX(-10%); }
+    .wordmark img { display: block; width: min(346px, 69.1vw); height: auto; margin: 0 auto; transform: translateX(0%); }   /* BR7: the wordmark at the dragon mark's height */
     .dek { max-width: 46ch; margin: 0 auto 24px; }
     .gate { max-width: 54ch; margin: 0 auto 26px; color: #a89f88; font-size: 15px; }
     .gate b { color: #d8cfae; font-weight: 400; }
@@ -243,7 +243,7 @@
       <a class="ask" href="https://www.patreon.com/c/dfenhanced" rel="noopener"><i class="supmark supmark-patreon" aria-hidden="true"></i><span><span class="askverb">Support on </span>Patreon</span></a>
       <a class="ask" href="https://ko-fi.com/daggerfallonline" rel="noopener"><i class="supmark supmark-kofi" aria-hidden="true"></i><span><span class="askverb">Support on </span>Ko-fi</span></a>
     </nav>
-    <h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="1034" /></h1>
+    <h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="699" /></h1>
     <div class="rule"><i class="gem"></i></div>
     <p class="dek">An open-source rebuild of a classic 1996 RPG that runs in a browser. Same rules, new renderer, nothing to install.</p>
     <p class="gate">You need <b>your own copy</b> of The Elder Scrolls II: Daggerfall, free since 2009. Your game files stay on your device. An account is optional - you only need one to play online or back up your saves.</p>
@@ -256,7 +256,7 @@
       <a href="#what">What it is</a>
       <a href="#how">How to play</a>
       <a href="#inside">What's in it</a>
-      <a href="#credits">Credits</a>
+      <a href="#legal">Legal</a>
     </nav>
     <div class="foot">
       <span class="l">
@@ -274,8 +274,8 @@
       <div class="rule"><i class="gem"></i></div>
       <div class="cols">
         <div>
-          <h3>Built on Daggerfall Unity</h3>
-          <p>Started as a line-by-line translation of Daggerfall Unity's C#. Now its own game, with Daggerfall Unity as the reference.</p>
+          <h3>Its own game</h3>
+          <p>Daggerfall's world and rules, read from your own copy of the original, grown into a game of its own.</p>
         </div>
         <div>
           <h3>Rebuilt</h3>
@@ -283,7 +283,7 @@
         </div>
         <div>
           <h3>In progress</h3>
-          <p>Not finished. You cannot import classic or Daggerfall Unity saves yet, and there is no mod support. The <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">ledger</a> tracks the rest.</p>
+          <p>Not finished. You cannot import classic saves yet, and there is no mod support. The <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Port-Ledger.md">ledger</a> tracks the rest.</p>
         </div>
       </div>
     </section>
@@ -313,7 +313,7 @@
       </ol>
       <dl class="qa">
         <div><dt>Controls</dt>
-          <dd>Daggerfall Unity's defaults. WASD and mouse, F6 for the pack, F9 and F11 to quick save and load, Esc for the rest. Rebind anything in Settings.</dd></div>
+          <dd>WASD and mouse, F6 for the pack, F9 and F11 to quick save and load, Esc for the rest. Rebind anything in Settings.</dd></div>
 
         <div><dt>Browsers</dt>
           <dd>Any current one with WebGL2: Chrome, Edge, Firefox or Safari.</dd></div>
@@ -348,21 +348,15 @@
       </dl>
     </section>
 
-    <section id="credits" aria-labelledby="credits-h">
-      <h2 id="credits-h">Credits</h2>
+    <section id="legal" aria-labelledby="legal-h">
+      <h2 id="legal-h">Legal</h2>
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
-        <div><dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-          <dd>Interkarma and contributors, MIT licence. DFO Online is a separate project translated from its C#. Without it there would be nothing to build on.</dd></div>
-
         <div><dt>The Elder Scrolls II: Daggerfall</dt>
           <dd>Bethesda Softworks, 1996. A fan project, not affiliated with or endorsed by Bethesda or ZeniMax. The Elder Scrolls and Daggerfall are trademarks of ZeniMax Media Inc.</dd></div>
 
-        <div><dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
-          <dd>The format documentation the readers were checked against.</dd></div>
-
-        <div><dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-          <dd>Built DFO Online. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts.</span></dd></div>
+        <div><dt>Licence</dt>
+          <dd>Open source under the MIT licence. The source and its docs are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.</dd></div>
       </dl>
     </section>
 

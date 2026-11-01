@@ -410,16 +410,6 @@ select, input, textarea { font: inherit; }
    THE ANTI-LIE LAW, borrowed from the char sheet's withheld
    logbook: a thing that does not work yet is shown and says why.
    It is never shown working, and never quietly absent. */
-/* CR1: the credits card - a modder's name beside the work, on the screen. */
-.credits-head { color: var(--brass); font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase; font-weight: 400; margin: 18px 0 8px; }
-.credit { border-top: 1px solid var(--iron); padding: 12px 0 10px; }
-.credit-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.credit-name { font-family: var(--display); font-size: 19px; }
-.credit-by { color: var(--brass); font-size: 13px; }
-.credit-what { margin: 6px 0 0; font-size: 13px; line-height: 1.5; }
-.credit-terms { margin: 6px 0 0; color: var(--dim); font-size: 12px; }
-.credit-link { display: inline-block; margin-top: 6px; color: var(--brass); font-size: 12px; letter-spacing: 0.04em; text-decoration: none; border-bottom: 1px solid var(--iron); }
-.credit-link:hover, .credit-link:focus-visible { border-bottom-color: var(--brass); }
 .empty { border: 1px dashed var(--iron); padding: 26px 22px; margin-bottom: 16px; }
 .empty h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 8px; color: var(--dim); }
 .empty p { color: var(--dim); margin: 0 0 10px; max-width: 58ch; font-size: 14px; }
@@ -2424,29 +2414,21 @@ ${badgeCss()}
 /* INTRO2: one supplied wordmark, at its natural aspect ratio. BR4: it
    carries its own alpha, so it draws with no blend mode - screen would
    erase its black outlines and the ONLINE lettering. */
-/* BR5: the DFO mark is 526 x 322 (1.63:1) and painted to its edges, where
-   BR4's was 2.48:1 with its last 81 of 850 rows empty. Each box keeps the
-   HEIGHT it had, so nothing above or below it moves: the door's old mark
-   stood 540 x 769/2112 tall, and the same height at the new ratio is
-   540 x 769/2112 x 526/322 = 321px wide (84vw -> 50vw; the short landscape
-   screen's 394px -> 234, 56vw -> 33.3vw).
-   BR6: the dragon mark is 1232 x 1034 (1.19:1), painted to its edges too;
-   the same heights at its ratio are 540 x 769/2112 x 1232/1034 = 234px
-   (36.4vw), and the short landscape screen's 171px (24.3vw). */
-.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw); line-height: 0; flex-shrink: 0; }
+/* BR5: each box keeps the HEIGHT the door's old mark stood (540 x 769/2112),
+   so nothing above or below it moves when a logo of another ratio comes in.
+   BR7: the wordmark is 1232 x 699 (1.76:1): 540 x 769/2112 x 1232/699 = 347px
+   (53.9vw), and the short landscape screen's 253px (35.9vw). */
+.px-wordmark:has(.brand-logo) { width: min(347px, 53.9vw); line-height: 0; flex-shrink: 0; }
 .brand-logo { display: block; width: 100%; height: auto; object-fit: contain;
-  image-rendering: auto; transform: translateX(-10%); }   /* LOGO-CENTRE: the letters on the centre line (brandMark.js) */
-/* BR5: the masthead's mark spent 769/2112 of the column's width in height
-   (BR4's file less its empty rows); the DFO mark spends the same height at
-   769/2112 x 526/322 = 59.5% of the width, centred. No margin pulls
-   anything up any more - the file has no empty rows. BR6: the dragon
-   mark's 1.19:1 spends that height at 769/2112 x 1232/1034 = 43.4%. */
-.brand-home .brand-logo { width: 43.4%; margin: 0 auto; }
+  image-rendering: auto; transform: translateX(0%); }   /* LOGO-CENTRE: the letters on the centre line (brandMark.js) */
+/* BR5: the masthead's mark spends 769/2112 of the column's width in height;
+   BR7's wordmark spends it at 769/2112 x 1232/699 = 64.2%, centred. */
+.brand-home .brand-logo { width: 64.2%; margin: 0 auto; }
 .brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
 .shell .brand h1:has(.brand-logo) { line-height: 0; }
 @media (max-height: 560px) and (min-width: 600px) {
-  .px-wordmark:has(.brand-logo) { width: min(171px, 24.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5 and BR6: BR4's 394px, at the same height */
+  .px-wordmark:has(.brand-logo) { width: min(253px, 35.9vw); }   /* BR4: INTRO2's 430px, at the same height; BR5 to BR7: BR4's 394px, at the same height */
 }
 .px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
@@ -3172,11 +3154,6 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
 .shell .card h3, .shell .dcard h3, .shell .empty h3,
 .px-win .card h3, .px-win .dcard h3, .px-win .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-/* CR1: the credited work's title wears the pixel face like every other
-   heading in this shell - the serif is the old skin's, and it was the
-   one serif line on the screen. */
-.shell .credit-name { font-family: inherit; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }

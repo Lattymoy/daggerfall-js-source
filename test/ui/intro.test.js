@@ -21,8 +21,9 @@ test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; 
   // its paint covers - every pixel inside his, unchanged, and none outside
   // with any alpha. BR6 (2026-10-26): his dragon mark - its 2000 x 1434
   // file cut to the 1680 x 1410 its paint covers, then scaled to 1232 x 1034
-  // at his word (the same 56:47; 785 KB where the cut was 1.28 MB).
-  assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), 'bf7a6bca77b6f29f31738a85545cd7fb51c3e91dce4df985a93c7874804b57a7');
+  // at his word (the same 56:47; 785 KB where the cut was 1.28 MB). BR7 (2026-11-01): his wordmark - its 1678 x 937
+  // file cut to the 1635 x 928 its paint covers, then scaled to 1232 x 699 as BR6 was (822 KB).
+  assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), '14ef7beef2912014c3a12cdf6fa64f867fd6aeab4ec5345e209434704be5c654');
   const track = read('src/assets/intro/theme.mp3');
   assert.equal(createHash('sha256').update(track).digest('hex'), 'c8eb0eccf3265244c0f4424d26efee835d40cccf4e11a66744ec4b284d8392e3');
 

@@ -21,8 +21,8 @@
   {
     "name": "BR4-door-logo-screen-blend",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; transform: translateX(-10%); }",
-    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; transform: translateX(-10%); }",
+    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; transform: translateX(0%); }",
+    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; transform: translateX(0%); }",
     "tests": [
       "test/ui/brand.test.js"
     ]
@@ -59,7 +59,7 @@
   {
     "name": "BR4-logo-dimensions-stale",
     "file": "src/ui/brandMark.js",
-    "old": "  image.height = 1034;",
+    "old": "  image.height = 699;",
     "new": "  image.height = 322;",
     "tests": [
       "test/ui/intro.test.js"

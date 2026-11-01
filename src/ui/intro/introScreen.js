@@ -8,7 +8,7 @@
 import { IntroTheme, MENU_THEME_GAIN } from '../../systems/introTheme.js';
 import { brandMark } from '../brandMark.js';
 import { createIntroLandscape } from './introLandscape.js';
-import { introFrameAt, INTRO_CREDITS, INTRO_NARRATION, TITLE_READY_TIME, MENU_FADE_SECONDS } from './introCue.js';
+import { introFrameAt, INTRO_NARRATION, TITLE_READY_TIME, MENU_FADE_SECONDS } from './introCue.js';
 import { INTRO_MAP_LABELS, pictureToFilm } from './introTamriel.js';   // INTRO4: the continent's words, where they sit
 import { holdTitle } from './titleHeld.js';   // TITLE-DOOR: the page's mark the menu reads
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from '../pixelifyFive.js';   // FONT3: the film's words in the enhanced face
@@ -21,11 +21,6 @@ export const CITY_WAIT_MS = 20000;
 export const TITLE_HELD_TIME = TITLE_READY_TIME + 1;
 /** TITLE-DOOR: how long the menu takes to come up over the landed title (the retired Tap to continue's own fade). */
 export const DOORS_FADE_MS = 650;
-
-export const INTRO_CREDIT_URLS = Object.freeze({
-  interkarma: new URL('../../assets/intro/interkarma.webp', import.meta.url).href,
-  nexus: new URL('../../assets/intro/nexus.webp', import.meta.url).href,
-});
 
 // FONT3 (2026-10-02, Mac: "we need to ensure everything recieves our enhanced font"): the film's words - the credits,
 // Begin, Continue, the footer - were Georgia and the system face, the front door's last words outside the skin's. They
@@ -41,13 +36,9 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-cloud{background:#d5d8d4;opacity:0}.intro-shade{background:#030609;opacity:.2}
 .intro-vignette{background:radial-gradient(ellipse at 50% 48%,transparent 28%,rgba(1,3,5,.35) 70%,rgba(1,3,5,.88) 100%)}
 .intro-letterbox{position:absolute;inset:0;pointer-events:none;border-top:5.5dvh solid #040608;border-bottom:5.5dvh solid #040608}
-.intro-credit{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;opacity:0;pointer-events:none;text-align:center}
-.intro-credit p{margin:0;font-size:clamp(11px,1.15vw,15px);text-transform:uppercase;letter-spacing:.26em;text-shadow:0 2px 12px #000}
-.intro-credit img{display:block;max-width:62vw;max-height:29dvh;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 3px 14px #0008)}
-.intro-credit[data-credit=nexus] img{max-width:45vw;max-height:17dvh}
-/* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1; BR6: x 1232/1034 for the dragon mark's 1.19:1 */
-.intro-title{position:absolute;left:50%;top:48%;width:min(41.2vw,595px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
-.intro-title .brand-logo{display:block;width:100%;height:auto;transform:translateX(-10%)}
+/* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1; BR6: x 1232/1034 for the dragon mark's 1.19:1; BR7: x 1232/699 for the wordmark's 1.76:1 */
+.intro-title{position:absolute;left:50%;top:48%;width:min(61vw,880px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
+.intro-title .brand-logo{display:block;width:100%;height:auto;transform:translateX(0%)}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
 /* INTRO4: the narrator's line, low in the frame over a soft dark of its own; the map's words over the continent */
@@ -69,12 +60,12 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-status{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .intro-skip{position:absolute;right:max(20px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));z-index:3;min-height:44px;padding:10px 16px;background:#04060899;border:1px solid #b1a17a42;font-size:11px!important;letter-spacing:.15em;text-transform:uppercase}
 .intro-footer{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:20px;right:20px;text-align:center;font-size:11px;line-height:1.5;letter-spacing:.18em;text-transform:uppercase;color:#898a82;pointer-events:none}
-@media(max-width:600px){.intro-narration{bottom:18dvh;padding:10px 12px}.intro-narration p{font-size:12px;letter-spacing:.03em}.intro-label[data-kind=sea]{display:none}.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:11px;letter-spacing:.18em}.intro-title{width:68.6vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
-@media(max-height:450px){.intro-title{width:min(35.5vw,480px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
+@media(max-width:600px){.intro-narration{bottom:18dvh;padding:10px 12px}.intro-narration p{font-size:12px;letter-spacing:.03em}.intro-label[data-kind=sea]{display:none}.intro-title{width:90vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
+@media(max-height:450px){.intro-title{width:min(52.5vw,709px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
 /* TITLE-DOOR: the landed title steps under the menu (#enhanced-menu stands at 12) and rises a little to make room for
    the doors under it. The doors' band starts at --intro-doors-top (ui/uiCalmStyle.js TITLE_DOOR_CSS reads it): the
-   mark's centre plus half its height - .42 of its width, the 1034 / 1232 file's half, rounded up */
-:root{--intro-title-y:41dvh;--intro-title-w:min(37vw,535px,64dvh);--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .42)}
+   mark's centre plus half its height - .29 of its width, the 699 / 1232 file's half, rounded up (BR7) */
+:root{--intro-title-y:41dvh;--intro-title-w:min(37vw,535px,64dvh);--intro-doors-top:calc(var(--intro-title-y) + var(--intro-title-w) * .29)}
 #intro.intro-landed{z-index:11}
 #intro.intro-landed .intro-title{top:var(--intro-title-y);width:var(--intro-title-w);transition:top .6s ease-out,width .6s ease-out}
 #intro.intro-landed .intro-footer{top:max(74px,calc(env(safe-area-inset-top) + 62px));bottom:auto}
@@ -128,15 +119,6 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   });
   film.append(canvas, map, cloud, shade, make(doc, 'div', 'intro-vignette'), make(doc, 'div', 'intro-letterbox'));
   const images = [];
-  const credits = new Map();
-  for (const entry of INTRO_CREDITS) {
-    const credit = make(doc, 'div', 'intro-credit'); credit.dataset.credit = entry.key;
-    credit.setAttribute('aria-hidden', 'true');
-    const image = make(doc, 'img'); image.src = INTRO_CREDIT_URLS[entry.key];
-    image.alt = entry.key === 'interkarma' ? 'Interkarma — Daggerfall Unity' : 'Nexus Mods';   // L10N4: names, as their own logos say them
-    credit.append(make(doc, 'p', null, entry.caption), image);
-    credits.set(entry.key, credit); images.push(decodedImage(image)); film.append(credit);
-  }
   const title = make(doc, 'div', 'intro-title');
   const logo = brandMark(doc); title.append(logo);
   images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'DFO Online')); }));
@@ -165,7 +147,7 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   host.append(film, gate, skip, footer); doc.body.append(host);
   // Shared by the setup path and by a tap that beats it: a gesture given
   // during 'preparing' must still open on decoded artwork, never on the
-  // blank frames a half-decoded credit would show at 1.25 s.
+  // blank frames a half-decoded mark would show.
   const decoded = Promise.all(images).catch(() => {});
 
   let landscape = null, phase = 'preparing', over = false, broken = false, frameId = null;
@@ -336,7 +318,6 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       canvas.style.transform = `translateY(${(st.title.impact * 6).toFixed(2)}px) scale(${(1 + st.title.impact * 0.012).toFixed(5)})`;
       cloud.style.opacity = String(reduced ? 0 : st.cloud * 0.88);
       shade.style.opacity = String(st.shade);
-      for (const credit of st.credits) credits.get(credit.key).style.opacity = String(credit.opacity);
       const line = st.narration.reduce((best, n) => (n.opacity > (best?.opacity ?? 0) ? n : best), null);
       if (line && line.key !== narrationKey) { narrationKey = line.key; narrationLine.textContent = INTRO_NARRATION.find((n) => n.key === line.key).text; }
       narration.style.opacity = String(line?.opacity ?? 0);

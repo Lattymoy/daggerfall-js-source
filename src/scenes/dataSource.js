@@ -1150,9 +1150,9 @@ export async function pickTranslationPack(code, languageName = code) {
   let used = 0;
   return pickAssetFolder({
     title: `A translation for ${languageName}`,
-    blurb: `<p>Pick a <b>Daggerfall Unity translation</b>: its folder, or the .zip it came in. Its text replaces
+    blurb: `<p>Pick a <b>translation pack</b>: its folder, or the .zip it came in. Its text replaces
       the machine translation wherever it can. Nothing is uploaded. It is stored in this browser.</p>
-      <p style="color:#999">As in Daggerfall Unity, the string tables, quests and books are read from <b>Text</b>,
+      <p style="color:#999">The string tables, quests and books are read from <b>Text</b>,
       and the fonts from <b>Fonts</b>.</p>`,
     store: async (files) => {
       const record = await installTranslationPack(code, packEntriesFromFiles(files));
@@ -1170,7 +1170,7 @@ export async function pickMusicFolder() {
     blurb: `<p>Pick a folder of audio to play instead of the original game's
       built-in songs. Nothing is uploaded. It is stored in this
       browser.</p>
-      <p style="color:#999">A <b>Daggerfall Unity music pack works
+      <p style="color:#999">A <b>music pack works
       as it is</b>: its <b>song_*.ogg</b> files already have the names
       the game looks for.</p>`,
     store: storeMusicFiles,
@@ -1185,7 +1185,7 @@ export async function pickSoundFolder() {
     blurb: `<p>Pick a folder of WAVs to play instead of the original game's
       built-in sounds. Nothing is uploaded. It is stored in this
       browser.</p>
-      <p style="color:#999">A <b>Daggerfall Unity sound mod works
+      <p style="color:#999">A <b>sound mod works
       as it is</b>: pick its <b>StreamingAssets/Sound</b> folder. Supported
       so far: <b>AmbientCrickets.wav</b> (the night crickets) and
       <b>AmbientDistantHowl.wav</b> (the distant howl).</p>`,
@@ -1284,8 +1284,7 @@ export async function pickLightingModFiles() {
   return pickAssetFolder({
     title: 'Attach lighting mod',
     blurb: `<p>Pick the <b>Improved Interior Lighting</b> <b>.dfmod</b> file.
-      It is in the <b>Mods</b> folder of its download (the original by
-      ShortBeard, or the fixed version by BlazeBlue32). Nothing is uploaded.
+      It is in the <b>Mods</b> folder of its download. Nothing is uploaded.
       It is stored in this browser.</p>
       <p style="color:#999">Then choose how it lights in ${optionPath('feat:modded-lighting').replaceAll(' \u203a ', ' &rarr; ')}
       &rarr; Modded lighting: On, or With shadows.</p>`,   // ORG2: where the map puts it
@@ -1311,7 +1310,7 @@ export async function pickLightingModFiles() {
 export async function pickDfmodFiles() {
   return pickAssetFolder({
     title: 'Add texture mods',
-    blurb: `<p>Pick one or more Daggerfall Unity <b>.dfmod</b> files: texture
+    blurb: `<p>Pick one or more <b>.dfmod</b> texture packs:
       mods like <b>DREAM</b> (sprites, NPCs, monsters, paperdoll, portraits,
       backgrounds and world textures). Nothing is uploaded. They are stored
       in this browser.</p>
@@ -1356,7 +1355,7 @@ export async function pickTextureFolder() {
     blurb: `<p>Pick a folder of PNGs to draw instead of the original game's
       built-in textures. Nothing is uploaded. It is stored in this
       browser.</p>
-      <p style="color:#999">A <b>Daggerfall Unity texture pack works
+      <p style="color:#999">A <b>texture pack works
       as it is</b>: its <b>003_5-0.png</b> files already have the names
       the game looks for. Anything you leave out keeps the classic art.</p>
       <p style="color:#999"><b>Seasons of the Iliac Bay</b> works here

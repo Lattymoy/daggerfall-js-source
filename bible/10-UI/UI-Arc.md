@@ -13,6 +13,16 @@ policies one by one.
 
 
 
+## BR7 WORDMARK (2026-11-01, Mac's call)
+
+Mac: "We need to also replace the website and ingame logo with this" - red D, F and O in gold edges over a parchment
+scroll reading Online. Only the file and its boxes change, as at BR6. His 1678 x 937 PNG is cut to the 1635 x 928
+its paint covers and scaled to 1232 x 699 (Lanczos over premultiplied alpha; 822,518 bytes). The boxes keep their
+height: the door `min(347px, 53.9vw)`, a short landscape screen `min(253px, 35.9vw)`, the masthead `64.2%`, the
+film `min(61vw, 880px)` and `min(52.5vw, 709px)`, the landing page `min(346px, 69.1vw)`; a phone's film box is
+held to `90vw`. LOGO-CENTRE's shift is 0: the wordmark has no wing, and its paint weighs on the file's centre
+(0.02% off), which `test/ui/brand.test.js` now measures. The doors' band starts at .29 of the landed width.
+
 ## BR6 DRAGON MARK (2026-10-26, Mac's call)
 
 Mac: "Integrate this logo on the main website, intro and main menu ingame to

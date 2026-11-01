@@ -117,7 +117,7 @@ export async function installPack(code, entries, { name = null } = {}) {
   const list = [...(entries ?? [])];
   const { files, counts } = packContents(list.map((e) => e.path));
   if (!isTranslationPack(counts))
-    throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');
+    throw new Error('no string table, quest or book in it - is this a translation pack?');
   const byPath = new Map(list.map((e) => [e.path, e]));
   const loaded = [];
   for (const f of files) {

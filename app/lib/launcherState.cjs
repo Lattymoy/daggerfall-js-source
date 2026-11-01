@@ -93,7 +93,7 @@ const DOWNLOAD_STALL_MS = 45000;
 
 /** Where a found ARENA2 came from, in the player's words. */
 const SOURCE_LABEL = Object.freeze({
-  dfu: 'from Daggerfall Unity',
+  dfu: 'from another install',   // CREDITS-OUT: found through another game's settings, not named
   steam: 'Steam',
   gog: 'GOG',
   folder: 'on this computer',

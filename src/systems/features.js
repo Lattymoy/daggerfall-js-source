@@ -54,11 +54,11 @@ export const KINDS = Object.freeze({
   }),
   mod: Object.freeze({
     get label() { return t('features.kind.mod', 'Mod Authored'); },
-    get blurb() { return t('features.kind.mod.blurb', 'Mods by other authors, credited by name.'); },
+    get blurb() { return t('features.kind.mod.blurb', 'Features that began as mods.'); },   // CREDITS-OUT: no author is named
   }),
   classic: Object.freeze({
-    get label() { return t('features.kind.classic', 'DFU Classic'); },
-    get blurb() { return t('features.kind.classic.blurb', 'Daggerfall Unity’s own optional features.'); },
+    get label() { return t('features.kind.classic', 'Classic Option'); },
+    get blurb() { return t('features.kind.classic.blurb', 'Optional changes to the classic rules.'); },
   }),
 });
 export const KIND_ORDER = Object.freeze(['enhanced', 'mod', 'classic']);
@@ -131,7 +131,7 @@ export const eventKindPref = (/** @type {string} */ kind) => `eventBoard-${kind}
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
 
 /** FT9 (2026-09-14): A VENDORED MOD'S ROW - its own switch, its own
- *  title with the creator's name in it (Mac, 2026-09-08), its own
+ *  title (CREDITS-OUT, 2026-11-01: the mod's name alone, no author), its own
  *  description as the note. One source: modSettings.js, where the mod's
  *  modsettings ship - so FT15's trim of a mod's note is a trim of the
  *  description itself, and there is still no second copy. The mod's
@@ -143,7 +143,7 @@ const modFeature = (vendor, effect, group) => {
   return Object.freeze({
     id: `mod-${vendor.toLowerCase()}`,
     group,
-    get title() { return t('features.mod.title', '{title} by {author}', { title: mod.title, author: mod.author }); },
+    get title() { return t('features.mod.title', '{title}', { title: mod.title }); },
     get note() { return mod.keys.Enabled.description; },   // L10N4: read as it is read, so the description is in whatever language modSettings answers
     get effect() { return effect(); },   // L10N4: a function - each call site's t()
     kinds: Object.freeze(['mod']),
@@ -495,8 +495,7 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.enhancedEnvironments.title', 'Enhanced environments'); },
     get note() { return t('features.enhancedEnvironments.note', 'A living sky with the sun, both moons and stars, clouds that build with the weather and cast '
       + 'shadows, falling rain and snow, and grass that bends in the wind. Off brings back the classic '
-      + 'painted sky and weather. The third choice is our own Dynamic Skies, after BadLuckBurt and '
-      + 'carademono\u2019s mod; its settings open on this tile.'); },
+      + 'painted sky and weather. The third choice is our own Dynamic Skies; its settings open on this tile.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced', 'mod']),
     // EE1: the outdoors as ONE switch (the sky, the ground's surfaces, the
@@ -1165,7 +1164,7 @@ export const FEATURES = Object.freeze([
   Object.freeze({
     id: 'mod-windmills-kamer',
     group: 'world',
-    get title() { return t('features.mod.title', '{title} by {author}', { title: 'Windmills of Daggerfall', author: 'Kamer' }); },
+    get title() { return t('features.mod.title', '{title}', { title: 'Windmills of Daggerfall' }); },
     get note() { return t('features.mod.windmillsKamer.note', 'Windmills with turning sails on seven farms, with machinery inside and a look for every climate and '
       + 'season. Off leaves the farms as they were.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
@@ -1179,9 +1178,7 @@ export const FEATURES = Object.freeze([
   Object.freeze({
     id: 'mod-kings-gambit',
     group: 'world',
-    // the mod's own name and its author, as every mod row carries them (AUDIT SURV E) - the bundle names none, so the
-    // credits' own unnamed form (ui/credits.js), as Oblivion Remaster Like Leveling's row names its source
-    get title() { return t('features.mod.title', '{title} by {author}', { title: 'The King\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }); },
+    get title() { return t('features.mod.title', '{title}', { title: 'The King\u2019s Gambit' }); },   // CREDITS-OUT: the mod's name alone
     get note() { return t('features.mod.kingsGambit.note', 'A game of armies and kings at a tavern\'s card table, against a regular or another player, for gold or for fun. Off, the tables offer only Hold\'em and Iliac Hand.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['mod']),
@@ -1485,7 +1482,7 @@ export const FEATURES = Object.freeze([
     group: 'combat',
     get title() { return t('features.enemyInfighting.title', 'Enemies Fight Each Other'); },
     get note() { return t('features.enemyInfighting.note', 'Monsters attack anything they aren’t allied with, not just you: a bear fights a spider, a Daedra '
-      + 'fights a knight. On by default in Daggerfall Unity.'); },
+      + 'fights a knight.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/EnemyInfighting' }),
@@ -1495,7 +1492,7 @@ export const FEATURES = Object.freeze([
     group: 'world',
     get title() { return t('features.variedDungeonMonsters.title', 'Varied Dungeon Monsters'); },
     get note() { return t('features.variedDungeonMonsters.note', 'Random monsters are picked from the dungeon’s full list around your level, so a dungeon has more '
-      + 'variety instead of the same few. Off by default in Daggerfall Unity.'); },
+      + 'variety instead of the same few.'); },
     get effect() { return t('features.effect.nextDungeon', 'Takes effect on the next dungeon you enter.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/AlternateRandomEnemySelection' }),
@@ -1505,7 +1502,7 @@ export const FEATURES = Object.freeze([
     group: 'loot',
     get title() { return t('features.torchesFromItems.title', 'Torches Light Your Way'); },
     get note() { return t('features.torchesFromItems.note', 'Your light in dungeons comes from a torch, lantern or candle you carry, and it burns down, instead '
-      + 'of a light you always have. Off by default in Daggerfall Unity.'); },
+      + 'of a light you always have.'); },
     get effect() { return t('features.torchesFromItems.effect', 'Takes effect at once; new characters and shop stock follow it.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/PlayerTorchFromItems' }),
@@ -1520,7 +1517,7 @@ export const FEATURES = Object.freeze([
     group: 'sound',   // FT18: was combat
     get title() { return t('features.combatVoices.title', 'Combat Voices'); },
     get note() { return t('features.combatVoices.note', 'You and your enemies grunt when swinging and cry out when hit. The sounds are in the original game but '
-      + 'go unused. On by default in Daggerfall Unity.'); },
+      + 'go unused.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/CombatVoices' }),
@@ -1541,8 +1538,7 @@ export const FEATURES = Object.freeze([
     id: 'near-death-warning',
     group: 'interface',   // FT18: was combat
     get title() { return t('features.nearDeathWarning.title', 'Near Death Warning'); },
-    get note() { return t('features.nearDeathWarning.note', 'The screen pulses as your health gets low: slowly below 40%, fast below 20%. On by default in '
-      + 'Daggerfall Unity.'); },
+    get note() { return t('features.nearDeathWarning.note', 'The screen pulses as your health gets low: slowly below 40%, fast below 20%.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/NearDeathWarning' }),
@@ -1552,7 +1548,7 @@ export const FEATURES = Object.freeze([
     group: 'combat',
     get title() { return t('features.bowsLeftHand.title', 'Bows In Left Hand'); },
     get note() { return t('features.bowsLeftHand.note', 'Bows go in your left hand only, so you can keep a one-handed weapon in your right and switch between '
-      + 'them. Off by default in Daggerfall Unity.'); },
+      + 'them.'); },
     get effect() { return t('features.bowsLeftHand.effect', 'Takes effect on the next weapon you equip.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/BowLeftHandWithSwitching' }),
@@ -1561,8 +1557,7 @@ export const FEATURES = Object.freeze([
     id: 'choose-guild-jobs',
     group: 'interface',   // FT18: was world
     get title() { return t('features.chooseGuildJobs.title', 'Choose Guild Jobs'); },
-    get note() { return t('features.chooseGuildJobs.note', 'Guilds show you a list of the jobs you can take instead of giving you one at random. Off by default '
-      + 'in Daggerfall Unity.'); },
+    get note() { return t('features.chooseGuildJobs.note', 'Guilds show you a list of the jobs you can take instead of giving you one at random.'); },
     get effect() { return t('features.chooseGuildJobs.effect', 'Takes effect the next time a guild offers you work.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Enhancements/GuildQuestListBox' }),
@@ -1573,7 +1568,7 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.dungeonWallStyle.title', 'Dungeon Wall Style'); },
     get note() { return t('features.dungeonWallStyle.note', 'Which textures dungeon walls use: Classic, the region’s climate (Climate) or random (Random).'
       + ' Climate and Random keep main-story dungeons classic; Climate Only and Random Only '
-      + 'change them too. Classic by default in Daggerfall Unity.'); },
+      + 'change them too.'); },
     get effect() { return t('features.effect.nextDungeon', 'Takes effect on the next dungeon you enter.'); },
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Video/RandomDungeonTextures', classic: 0 }),   // FT18: Classic, what All off sets - a choice with no Off
@@ -1846,9 +1841,9 @@ export const FEATURES = Object.freeze([
     }),
   }),
   Object.freeze({
-    id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
+    id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the mod's key through it
     group: 'character',
-    get title() { return t('features.mod.title', '{title} by {author}', { title: 'Climates & Calories', author: 'Ralzar' }); },   // AUDIT SURV E: the author's name, as every mod row carries it
+    get title() { return t('features.mod.title', '{title}', { title: 'Climates & Calories' }); },   // CREDITS-OUT: the mod's name alone
     get note() { return t('features.mod.climatesCalories.note', 'Hunger, thirst, sleep and the weather come into play: eat, drink, dress for the climate and rest by a '
       + 'campfire or in a bed. On Boons neglect costs nothing, and staying fed, watered and rested in a bed or by '
       + 'a fire gives bonuses; on Casual, unmet needs only drain some stamina (never more than half) and it '
@@ -2080,14 +2075,14 @@ export function checkFeatures(list) {
 }
 
 /** FT18 (Mac: "Add search bar to mods/enhancements in the ingame pause menu"): the words a row is found by - its
- *  title, its note, its labels and group, its parts, and a mod's vendor and author - folded to lower case with the
+ *  title, its note, its labels and group, its parts, and a mod's vendor - folded to lower case with the
  *  accents and curly quotes a player will not type taken out. */
 const fold = (t) => String(t ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[\u2018\u2019]/g, "'").toLowerCase();
 export function featureSearchText(f) {
   const c = f?.control ?? {};
   const mod = c.store === 'mods' ? MOD_SETTINGS[c.vendor] : null;
   return fold([f?.title, f?.note, GROUPS[f?.group]?.label, ...(f?.kinds ?? []).map((k) => KINDS[k]?.label),
-    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, mod?.author, c.vendor].filter(Boolean).join(' \n '));
+    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, c.vendor].filter(Boolean).join(' \n '));
 }
 /** Does a row answer this query? Every word must be found (in any order); an empty query finds everything. */
 export function matchesFeatureQuery(f, query) {

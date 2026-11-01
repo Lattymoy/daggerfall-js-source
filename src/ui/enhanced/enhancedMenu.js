@@ -212,7 +212,6 @@ import { MOD_SETTINGS, modSetting, setModSetting, onlineModSetting, isIntKey, is
 import { keyCodeForDomCode, KEYCODE_NONE } from '../../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting, onlineForcedSetting, onlineWholeModKey, ONLINE_ROOM_MOD_KEYS } from '../../systems/online/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { onlineSyncPlan, applyOnlineSync, lastOnlineSync, undoOnlineSync } from '../../systems/online/onlineSync.js';   // UXB1-E: the room's rules, copied home
-import { CREDITS, translationCredits } from '../credits.js';   // CR1: who made what the port carries
 import { SUPPORT_ASKS } from '../supportAsks.js';   // SUPPORT1: the project's asks - the website's corner and this door's
 import { t, tIn, currentLocale, localeInfo, localeTable, availableLocales, BASE_LOCALE, localizedText, formatText } from '../../systems/textManager.js';   // L10N1b: the port's own strings, the language row and the first-run offer; L10N3d: DFU's Internal_Strings
 import { localeForBrowser, catalogLocale } from '../../systems/localeCatalog.js';   // L10N1b
@@ -1285,7 +1284,7 @@ function profileMark() {
  *  door - the one corner it had free. An icon a platform, its mark drawn by ui/supportAsks.js exactly as the website's
  *  corner draws it, its name on the pointer's tooltip and in what a screen reader says. Each is a LINK out of the game,
  *  never a press the door acts on: a new tab on the web, the system browser from the desktop app (app/main.cjs hands
- *  http(s) there), as the credits' links and TERMS1's documents open. */
+ *  http(s) there), as TERMS1's documents open. */
 function supportMarks() {
   const nav = el('nav', 'px-support');
   nav.setAttribute('aria-label', 'Support');
@@ -1902,7 +1901,7 @@ let pickedFeature = null;   // ORG2: the Features row the help pane reads (picke
 let optScrollTo = null;     // ORG2: a row to bring into view after the next paint (the mods' list sends you to one)
 
 /** ORG2: the filters over the rows - what you changed, then the Features home's three kinds. */
-const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enhanced', 'Enhanced'], ['mod', 'Mods'], ['classic', 'Daggerfall Unity']]);
+const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enhanced', 'Enhanced'], ['mod', 'Mods'], ['classic', 'Classic options']]);
 
 /** ORG2: the port's own rows, built once a paint and found by the id each carries (`dataset.opt`). A row its builder
  *  does not draw here - the touch knobs off a touch device, the HUD's layout on the classic skin, the start video at
@@ -2770,7 +2769,7 @@ function translationPackRow() {
   main.append(el('div', 'row-name', t('settings.pack.name', 'Translation pack')));
   main.append(el('div', 'row-note', pack
     ? t('settings.pack.installed', '{name}: {tables, plural, one {# table} other {# tables}}, {quests, plural, one {# quest} other {# quests}}, {books, plural, one {# book} other {# books}}. Its text replaces the machine translation.', { name: pack.name, tables: pack.counts?.table ?? 0, quests: pack.counts?.quest ?? 0, books: pack.counts?.book ?? 0 })
-    : t('settings.pack.none', 'Install a Daggerfall Unity translation into {language} from your own files. Nothing is uploaded.', { language: info.name })));
+    : t('settings.pack.none', 'Install a translation into {language} from your own files. Nothing is uploaded.', { language: info.name })));
   row.append(main);
   const ctl = el('div', 'ctl');
   const install = el('button', 'act', pack ? t('settings.pack.replace', 'Replace…') : t('settings.pack.install', 'Install…'));
@@ -3521,7 +3520,7 @@ function packsCard() {
   const seen = new Map();
   for (const m of mods) { const k = sameTitle(m.title); seen.set(k, (seen.get(k) ?? 0) + 1); }
   if ([...seen.values()].some((n) => n > 1)) c.append(el('p', 'meta', t('menu.packs.twoVersions', 'Two versions of the same mod are attached (for example DREAM and DREAM 90s). Only one shows for each texture, but both use memory. Remove one.')));
-  c.append(el('p', 'meta', t('menu.packs.dfmodsBlurb', 'Daggerfall Unity texture mods, such as DREAM. Pick one or more .dfmod files. Mod scripts don\u2019t run. Vanilla Enhanced comes with the game, and a copy you attach is used instead of the built-in one.')));
+  c.append(el('p', 'meta', t('menu.packs.dfmodsBlurb', 'Pick one or more .dfmod texture packs, such as DREAM. Mod scripts don\u2019t run. Vanilla Enhanced comes with the game, and a copy you attach is used instead of the built-in one.')));
   // VE1: listed in load order - a mod loads after the mods it depends on, and where two carry the same texture the one
   // loaded later is drawn (DFU's ModManager)
   if (mods.length > 1) c.append(el('p', 'meta', t('menu.packs.loadOrder', 'In load order: where two mods carry the same texture, the later one is drawn. A mod always loads after the mods it is built on.')));
@@ -4337,9 +4336,8 @@ function overhaulPanel(p) {
   // the look is worn (the PLUS rows' shape); each takes effect when the world next loads, and is kept for the next wear
   const addons = o === cur ? o.addons?.() ?? [] : [];
   for (const m of addons) {
-    // ALIKR1/SNOWFALL1: the environment packs ride the look as its add-ons do (built on its Base) - each named with its
-    // own author where the archive names one, so Snowfall does not read as carademono's
-    const label = /^Vanilla Enhanced - /.test(m.title) ? String(m.title).replace(/^Vanilla Enhanced - /, '') : m.author ? t('menu.ovh.addonBy', '{title} by {author}', { title: m.title, author: m.author }) : m.title;
+    // ALIKR1/SNOWFALL1: the environment packs ride the look as its add-ons do (built on its Base), each by its title
+    const label = /^Vanilla Enhanced - /.test(m.title) ? String(m.title).replace(/^Vanilla Enhanced - /, '') : m.title;   // CREDITS-OUT: no author
     const row = el('div', 'look-colours');
     row.setAttribute('role', 'group');
     row.setAttribute('aria-label', label);
@@ -4486,45 +4484,7 @@ function paneAbout(body) {
     [t('menu.about.settings', 'Settings'), t('menu.about.keys', '{n, plural, other {# keys}}', { n: Object.values(DEFAULTS).reduce((n, s2) => n + Object.keys(s2).length, 0) })],
   ]));
   body.append(c);
-  body.append(creditsCard());
   body.append(empty(t('menu.about.exit', 'Exit'), t('menu.about.exitNote', 'A browser tab can\u2019t close itself. Close the tab yourself. Your quicksave is kept.')));
-}
-
-// CR1: THE CREDITS (Mac, 2026-08-30). Rendered from ui/credits.js, the
-// one table every vendored work has a row in; this function knows the
-// shape and nothing about the works. Mods are the point - a modder's
-// name on the screen the player sees, not only in a README - so they
-// take their own heading, with the terms the work is carried under.
-function creditsCard() {
-  const c = el('div', 'card credits');
-  c.append(el('h3', null, t('menu.credits.title', 'Credits')));
-  c.append(el('p', 'meta', t('menu.credits.blurb', 'What this game is built on, and the mods included with their authors\' permission.')));
-  const group = (heading, rows) => {
-    c.append(el('h4', 'credits-head', heading));
-    for (const r of rows) {
-      const row = el('div', 'credit');
-      const title = el('div', 'credit-title');
-      title.append(el('span', 'credit-name', r.version ? `${r.title} ${r.version}` : r.title));
-      title.append(el('span', 'credit-by', t('menu.credits.by', 'by {author}', { author: r.author })));
-      row.append(title);
-      row.append(el('p', 'credit-what', r.what));
-      const foot = [];
-      if (r.terms) foot.push(r.terms);
-      if (r.contact) foot.push(t('menu.credits.contact', 'Contact: {contact}.', { contact: r.contact }));
-      if (foot.length) row.append(el('p', 'credit-terms', foot.join(' ')));
-      if (r.link) {
-        const a = el('a', 'credit-link', r.link.replace(/^https?:\/\//, ''));
-        a.href = r.link; a.target = '_blank'; a.rel = 'noopener';
-        row.append(a);
-      }
-      c.append(row);
-    }
-  };
-  group(t('menu.credits.builtOn', 'Built on'), CREDITS.builtOn);
-  group(t('menu.credits.mods', 'Mods'), CREDITS.mods);
-  const languages = translationCredits();   // L10N6: whose words each language's are, a bundled pack's terms
-  if (languages.length) group(t('menu.credits.translations', 'Translations'), languages);
-  return c;
 }
 
 // ── SHELL ────────────────────────────────────────────────────────

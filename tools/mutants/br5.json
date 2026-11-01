@@ -94,7 +94,7 @@
   {
     "name": "BR5-door-width-at-the-old-ratio",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw);",
+    "old": ".px-wordmark:has(.brand-logo) { width: min(347px, 53.9vw);",
     "new": ".px-wordmark:has(.brand-logo) { width: min(321px, 50vw);",
     "tests": [
       "test/ui/brand.test.js"
@@ -104,7 +104,7 @@
   {
     "name": "BR5-short-screen-width-at-the-old-ratio",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".px-wordmark:has(.brand-logo) { width: min(171px, 24.3vw); }",
+    "old": ".px-wordmark:has(.brand-logo) { width: min(253px, 35.9vw); }",
     "new": ".px-wordmark:has(.brand-logo) { width: min(234px, 33.3vw); }",
     "tests": [
       "test/ui/brand.test.js"
@@ -114,7 +114,7 @@
   {
     "name": "BR5-masthead-full-width",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".brand-home .brand-logo { width: 43.4%; margin: 0 auto; }",
+    "old": ".brand-home .brand-logo { width: 64.2%; margin: 0 auto; }",
     "new": ".brand-home .brand-logo { width: 100%; margin: 0 auto; }",
     "tests": [
       "test/ui/brand.test.js"
@@ -124,8 +124,8 @@
   {
     "name": "BR5-empty-rows-pulled-again",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".brand-home .brand-logo { width: 43.4%; margin: 0 auto; }",
-    "new": ".brand-home .brand-logo { width: 43.4%; margin: 0 auto; }\n.px-wordmark .brand-logo, .brand-home .brand-logo { margin-bottom: calc(-100% * 81 / 2112); }",
+    "old": ".brand-home .brand-logo { width: 64.2%; margin: 0 auto; }",
+    "new": ".brand-home .brand-logo { width: 64.2%; margin: 0 auto; }\n.px-wordmark .brand-logo, .brand-home .brand-logo { margin-bottom: calc(-100% * 81 / 2112); }",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -134,7 +134,7 @@
   {
     "name": "BR5-film-box-at-the-old-ratio",
     "file": "src/ui/intro/introScreen.js",
-    "old": "width:min(41.2vw,595px);",
+    "old": "width:min(61vw,880px);",
     "new": "width:min(56.5vw,815px);",
     "tests": [
       "test/ui/brand.test.js"
@@ -144,7 +144,7 @@
   {
     "name": "BR5-film-short-box-at-the-old-ratio",
     "file": "src/ui/intro/introScreen.js",
-    "old": ".intro-title{width:min(35.5vw,480px)}",
+    "old": ".intro-title{width:min(52.5vw,709px)}",
     "new": ".intro-title{width:min(48.7vw,657px)}",
     "tests": [
       "test/ui/brand.test.js"
