@@ -25,15 +25,15 @@ import shape  # noqa: E402
 import stage  # noqa: E402
 
 CLASS = {'skin': 2, 'boot': 3, 'cloth': 4, 'haft': 5, 'blade': 5, 'edge': 5, 'wood': 5, 'string': 5}   # else 1
-WEIGHTS = {'sil': 0.5, 2: 0.2, 3: 0.2, 4: 0.1, 'axe': 0.25}
+WEIGHTS = {'sil': 0.6, 2: 0.2, 3: 0.2, 4: 0.1, 'axe': 0.25}
 
 # what a frame may adjust, by animation: (key, joint, axis, step)
 BODY = [('turn', None, 0, 8.0)] + [('rot', j, a, st) for j, a, st in [
     ('pelvis', 0, 5), ('pelvis', 1, 5), ('pelvis', 2, 6), ('spine', 0, 5), ('spine', 2, 6), ('chest', 0, 5),
     ('chest', 2, 6), ('neck', 0, 5), ('head', 0, 6), ('head', 2, 8),
     ('clav_L', 1, 4), ('clav_L', 2, 4), ('clav_R', 1, 4), ('clav_R', 2, 4),
-    ('thigh_L', 0, 8), ('thigh_L', 1, 5), ('thigh_L', 2, 8), ('shin_L', 0, 8), ('foot_L', 0, 8),
-    ('thigh_R', 0, 8), ('thigh_R', 1, 5), ('thigh_R', 2, 8), ('shin_R', 0, 8), ('foot_R', 0, 8)]]
+    ('thigh_L', 0, 8), ('thigh_L', 1, 5), ('thigh_L', 2, 8), ('shin_L', 0, 8), ('foot_L', 0, 8), ('foot_L', 2, 10),
+    ('thigh_R', 0, 8), ('thigh_R', 1, 5), ('thigh_R', 2, 8), ('shin_R', 0, 8), ('foot_R', 0, 8), ('foot_R', 2, 10)]]
 LEFT_ARM = [('rot', 'uarm_L', 0, 10), ('rot', 'uarm_L', 1, 8), ('rot', 'uarm_L', 2, 8), ('rot', 'farm_L', 0, 10)]
 GRIP = [('grip', None, a, 0.04) for a in range(3)] + [('haft', None, a, 0.2) for a in range(3)]
 SWING = [('fist', None, a, 0.04) for a in range(2)] + [('head', None, a, 0.06) for a in range(2)]
@@ -302,16 +302,22 @@ def fit_frame(cloud, rec, frame, ref, start_place, dx_free, iters, rng, init=Non
         x[:len(params)] = vector_of(params, init)
     best, place_x = evaluate(x)
     first = best
-    sigma = steps.copy()
-    for _ in range(iters):
-        cands = x + rng.normal(size=(8, len(steps))) * sigma
-        results = [evaluate(c) for c in cands]
-        k = int(np.argmax([r[0] for r in results]))
-        if results[k][0] > best:
-            x, (best, place_x) = cands[k], results[k]
-            sigma = np.minimum(sigma * 1.15, steps * 2)
-        else:
-            sigma = np.maximum(sigma * 0.88, steps * 0.03)
+    # CMA-ES in units of each parameter's step: it learns which joints move together, where a plain random walk stalls
+    import cma
+    es = cma.CMAEvolutionStrategy(np.zeros(len(steps)), 0.6, {
+        'popsize': 12, 'maxfevals': iters * 12, 'verbose': -9, 'seed': int(rng.integers(1, 2 ** 31)),
+        'tolfun': 1e-5})
+    while not es.stop():
+        zs = es.ask()
+        vals = []
+        for z in zs:
+            v, px = evaluate(x + np.asarray(z) * steps)
+            vals.append(-v)
+            if v > best:
+                best, place_x, xbest = v, px, x + np.asarray(z) * steps
+        es.tell(zs, vals)
+    if 'xbest' in locals():
+        x = xbest
     return adj_of(params, x[:len(params)]), place_x, first, best, ch
 
 
