@@ -98,7 +98,7 @@ function swapScript(plan, { pid, relaunch, args = [] }) {
 }
 
 /**
- * UPDATE-SWAP-HIDDEN: the Windows script's starter, run by wscript. A detached cmd.exe gets no console, so every tool
+ * The Windows script's starter, run by wscript. A detached cmd.exe gets no console, so every tool
  * its script ran (tasklist, find, timeout) opened a console window of its own; Run with window style 0 gives cmd one
  * hidden console that they all share. The starter deletes itself once cmd is going.
  * @param {string} script the .cmd file's path (a Windows path holds no double quote)

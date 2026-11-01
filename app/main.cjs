@@ -818,7 +818,7 @@ const SWAP_DIR = () => path.join(app.getPath('userData'), 'Update');
 /** The swap in flight - { version } - one at a time; and the versions a swap failed on, told by hand instead. */
 let swapJob = null;
 const swapFailedOn = new Set();
-/** UPDATE-SWAP-HIDDEN: a staged portable exe still beside this one at launch means the last swap could not move it in
+/** A staged portable exe still beside this one at launch means the last swap could not move it in
  *  and this is the old copy started again. It does not swap this run (the update is the player's to download), so a
  *  swap that cannot finish never restarts the app over and over. */
 const swapLeftover = (() => {
@@ -914,7 +914,7 @@ app.on('will-quit', () => {
     const script = path.join(os.tmpdir(), `dfo-swap-${process.pid}.${win ? 'cmd' : 'sh'}`);
     fs.writeFileSync(script, swapScript(plan, { pid: process.pid, relaunch: swapRelaunch, args: swapRelaunch ? [PLAY_SWITCH] : [] }), { mode: 0o700 });
     let child;
-    if (win) {   // UPDATE-SWAP-HIDDEN: wscript starts cmd in one hidden console (lib/selfSwap.cjs swapStarterVbs)
+    if (win) {   // wscript starts cmd in one hidden console (lib/selfSwap.cjs swapStarterVbs)
       const starter = script.replace(/\.cmd$/, '.vbs');
       fs.writeFileSync(starter, swapStarterVbs(script));
       const wscript = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'wscript.exe');
