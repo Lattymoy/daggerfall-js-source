@@ -212,7 +212,7 @@ test('VC6c: a sun behind a bank throws no shafts - the gate is the cloud shadow 
   assert.match(air, /setCloudShadow\(deck\) \{\n\s*this\.cloudShadow = deck \?\? null;\n\s*\}/);
   assert.match(air, /const deck = this\.cloudShadow;/, 'the shafts read what the resolve set');
   const r = read('src/render/renderer.js');
-  assert.match(r, /this\._air\.setCloudShadow\(this\._cloudShadow \?\? this\._deckOwed\);[^\n]*\n\s*this\._air\.setWet\?\.\(this\._wet\);[^\n]*\n\s*this\._air\.setWetRoad\?\.\([\s\S]*?\);\n\s*this\._air\.composite\(\);/, 'set at the resolve, immediately before the images are drawn');   // PIN MOVED (WET1): puddle proxy deck between the cloud deck and the composite
+  assert.match(r, /this\._air\.setCloudShadow\(this\._cloudShadow \?\? this\._deckOwed\);[^\n]*\n\s*this\._air\.setWet\?\.\(this\._wet\);[^\n]*\n\s*this\._air\.setWetRoad\?\.\([\s\S]*?\);\n\s*this\._air\.composite\(\);/, 'set at the resolve, immediately before the images are drawn');   // puddle proxy deck between the cloud deck and the composite
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = read(h);
     assert.ok(src.indexOf('renderer.beginFrame(') < src.indexOf('renderer.setCloudShadow('), `${h}: the host sets the deck AFTER beginFrame - which is the whole reason the resolve is where it must be read`);
@@ -283,7 +283,7 @@ test('VC6d: the frame\'s spans TILE it - every mark hands the clock straight to 
   // between them, which is the only reason the total in the line is true.
   assert.match(r, /this\._perf\.begin\(\); this\._perf\.mark\('shadow'\);/);
   assert.match(r, /this\._perf\?\.mark\('world'\);[^\n]*\n\s*sp\.discard\(\);/, 'the passes end where the world\'s draws begin');
-  assert.match(r, /this\._perf\?\.mark\('air'\);[\s\S]*?this\._air\.composite\(\);/, 'the air\'s span opens before its images are drawn (VC6c\'s deck is set between the two)');   // PIN MOVED (WET1): setWet / setWetRoad between the mark and the composite
+  assert.match(r, /this\._perf\?\.mark\('air'\);[\s\S]*?this\._air\.composite\(\);/, 'the air\'s span opens before its images are drawn (VC6c\'s deck is set between the two)');   // setWet / setWetRoad between the mark and the composite
   assert.match(r, /this\._perf\.end\(\);\s*\n\s*this\._perf\.stop\(\);/, 'and the last span closes with the frame');
   assert.match(shared, /meter\?\.mark\('sky'\);/); assert.match(shared, /meter\?\.mark\('world'\);/);
   assert.equal((shared.match(/meter\?\.mark\(/g) || []).length, 2, 'the sky takes its span and hands the frame back - it does not keep it');

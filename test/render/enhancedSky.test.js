@@ -564,19 +564,19 @@ test('AUDIT 58 (f3/render): the classic lane builds 1000 particles and no lab pr
 test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, and the wind law is the lab\u2019s', async () => {
   const { LAB_WX_VS, LAB_WX_FS, LAB_BOX, LAB_COUNTS, LAB_FALL } = await import('../../src/render/precipitation.js');
   const lab = read('grass-proto.html').replace(/\r\n/g, '\n');
-  // FS is the lab's byte for byte; VS carries WET1c shelter on the lab wrap
+  // FS is the lab's byte for byte; VS carries shelter on the lab wrap
   const vsStart = lab.indexOf('layout(location=0) in vec2 aCorner;\nlayout(location=1) in vec4 aSeed;      // x,y,z in the box + phase');
   const vsEnd = lab.indexOf('}`, HEAD + `', vsStart) + 1;
   const fsStart = lab.indexOf('in float vT; in float vSeed;\nuniform float uKind;', vsEnd);
   const fsEnd = lab.indexOf('}`);', fsStart) + 1;
   assert.ok(vsStart > 0 && fsStart > 0, 'the lab page still carries its weather shaders');
-  // WET1c: shelter uniforms + loop sit in the lab VS; wrap and seeds stay the lab's
+  // shelter uniforms + loop sit in the lab VS; wrap and seeds stay the lab's
   assert.match(LAB_WX_VS, /uniform int uShelterN;/);
   assert.match(LAB_WX_VS, /uniform vec4 uShelterXZ\[/);
   assert.match(LAB_WX_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/);
   assert.match(LAB_WX_VS, /layout\(location=0\) in vec2 aCorner;/);
   assert.match(LAB_WX_VS, /layout\(location=1\) in vec4 aSeed;/);
-  // WET1b: rain alpha/colour dialled down from the lab's needle; snow flake unchanged
+  // rain alpha/colour dialled down from the lab's needle; snow flake unchanged
   assert.match(LAB_WX_FS, /float a = smoothstep\(0\.0,0\.35,vT\) \* 0\.22;/);
   assert.match(LAB_WX_FS, /o = vec4\(vec3\(0\.68,0\.74,0\.82\), a\);/);
   assert.match(LAB_WX_FS, /o = vec4\(vec3\(0\.94,0\.96,1\.0\), 0\.72\);/, 'snow flake is the lab\'s');
