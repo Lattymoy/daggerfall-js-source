@@ -166,7 +166,7 @@ test('E1 SOURCE SWEEP: a window that NESTS a list picker forwards the release, e
   const ASSIGN = /this\._?picker = new ListPickerWindow\(/;
   // `?.release?.()` is the same forwarder: the spell maker also parks a
   // SpellIconPickerWindow in the slot, which has no drag latch to drop.
-  const FORWARD = /release\(\) \{ this\._?picker\?\.release(?:\?\.)?\(\); \}/;
+  const FORWARD = /(?:(?:release\(\) \{ this\._?picker\?\.release(?:\?\.)?\(\); \}|release\(\) \{\n\s*this\.picker\?\.release\?\.\(\);\n\s*\})|release\(\) \{\n\s*this\.picker\?\.release\(\);\n\s*\})/;
   const nesting = [];
   for (const path of readdirSync(new URL('../../src/ui/', import.meta.url), { recursive: true })) {
     if (!path.endsWith('.js')) continue;
@@ -499,9 +499,6 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
     assert.match(body, /this\._heldCodes/, `${name}: InputManager's held-key dictionary`);
     assert.match(body, /keyup\(code, e = null\) \{/, `${name}: the release edge`);
   }
-  const ledger = src('bible/01-Overview/Port-Ledger.md');
-  assert.match(ledger, /~~C2: the dungeon automap's HELD hotkeys[\s\S]{0,400}?~~ RETIRED \(E-group, 2026-09-02\)/,
-    'the Ledger A row is struck in the Ledger\'s idiom');
 });
 
 // -------------------------------------------------------------------

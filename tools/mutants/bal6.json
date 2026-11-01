@@ -2,8 +2,8 @@
   {
     "name": "BAL6-the-advantages-in-both-forms",
     "file": "src/systems/lycanthropy.js",
-    "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS)",
-    "new": "  for (const stat of LYCANTHROPE_STATS)",
+    "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS) entry.statMods[stat] = LYCANTHROPE_STAT_MOD;",
+    "new": "  for (const stat of LYCANTHROPE_STATS) entry.statMods[stat] = LYCANTHROPE_STAT_MOD;",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "BAL6-the-change-writes-no-advantages",
     "file": "src/systems/lycanthropy.js",
-    "old": "  lycanthropeAdvantages(entry);   // BAL6: the form's own advantages from the change's instant, not the next round's",
+    "old": "  lycanthropeAdvantages(entry); // BAL6: the form's own advantages from the change's instant, not the next round's",
     "new": "  // the change writes nothing",
     "tests": [
       "test/systems/bal6_curses.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "BAL6-the-round-writes-no-advantages",
     "file": "src/systems/lycanthropy.js",
-    "old": "  // maps. BAL6: the beast's alone, so after the moon's change above.\n  lycanthropeAdvantages(entry);",
-    "new": "  // maps. BAL6: the beast's alone, so after the moon's change above.",
+    "old": "  lycanthropeAdvantages(entry);\n",
+    "new": "",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "BAL6-the-heal-on-the-cast-stamp",
     "file": "src/systems/lycanthropy.js",
     "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
-    "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
+    "new": "export const morphHeals = (entry, nowMinutes = 0) =>\n  nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BAL6-CLAWS-the-overhaul-claws-as-silver",
     "file": "src/combat/pcaao.js",
-    "old": "    skillID = SKILLS.HandToHand;\n",
-    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) matReqDamMulti = F(0.4);\n",
+    "old": "    skillID = SKILLS.HandToHand;\n  }",
+    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) matReqDamMulti = F(0.4);\n  }",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BAL6-CLAWS-the-overhaul-hard-rule-refuses-the-claws",
     "file": "src/combat/pcaao.js",
-    "old": "    skillID = SKILLS.HandToHand;\n",
-    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && !modules.softMaterialRequirements && (target.minMetalToHit ?? -1) > 2) {\n      if (isPlayer(attacker)) say?.(MATERIAL_INEFFECTIVE_TEXT);\n      if (notes) notes.ineffective = true;\n      return 0;\n    }\n",
+    "old": "    skillID = SKILLS.HandToHand;\n  }",
+    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && !modules.softMaterialRequirements && (target.minMetalToHit ?? -1) > 2) {\n      if (isPlayer(attacker)) say?.(MATERIAL_INEFFECTIVE_TEXT);\n      if (notes) notes.ineffective = true;\n      return 0;\n    }\n  }",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BAL6-GAUNTLETS-leather-and-chain-a-metal",
     "file": "src/systems/armorMaterials.js",
-    "old": "(isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null)",
-    "new": "(m <= ARMOR_MATERIAL.Daedric ? m & 0xFF : null)",
+    "old": "export const plateMetal = (m) => (isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null);",
+    "new": "export const plateMetal = (m) => (m <= ARMOR_MATERIAL.Daedric ? m & 0xff : null);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BAL6-GAUNTLETS-a-metal-past-daedric",
     "file": "src/systems/armorMaterials.js",
-    "old": "isPlate(m) && m <= ARMOR_MATERIAL.Daedric ?",
-    "new": "isPlate(m) ?",
+    "old": "export const plateMetal = (m) => (isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null);",
+    "new": "export const plateMetal = (m) => (isPlate(m) ? m - ARMOR_MATERIAL.Iron : null);",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BAL6-GAUNTLETS-the-overhaul-without",
     "file": "src/combat/pcaao.js",
-    "old": "    damage += clawMetalDamage(attacker);\n",
-    "new": "",
+    "old": "    damage += clawMetalDamage(attacker);\n  } else {",
+    "new": "  } else {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BAL6-GAUNTLETS-the-overhaul-metal-as-to-hit",
     "file": "src/combat/pcaao.js",
-    "old": "    unarmedAttack = true;\n",
-    "new": "    unarmedAttack = true;\n    chanceToHitMod += clawMetalDamage(attacker) * 2;\n",
+    "old": "    if (isPlayer(attacker) || isClassEnemy(AIAttacker)) {",
+    "new": "    chanceToHitMod += clawMetalDamage(attacker) * 2;\n    if (isPlayer(attacker) || isClassEnemy(AIAttacker)) {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "BAL6-GAUNTLETS-the-card-without",
     "file": "src/combat/combatStats.js",
-    "old": "    matMod = clawMetalDamage(entity);   // BAL6-GAUNTLETS: both cores add it where a weapon's material stands\n",
-    "new": "",
+    "old": "    matMod = clawMetalDamage(entity); // BAL6-GAUNTLETS: both cores add it where a weapon's material stands\n  } else {",
+    "new": "  } else {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "BAL6-GAUNTLETS-the-plate-offset-off-by-one",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "conditionMultipliersByMaterial[plateMetal(mat)]",
-    "new": "conditionMultipliersByMaterial[plateMetal(mat) + 1]",
+    "old": "      max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat)] ?? 4)) / 4); // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)",
+    "new": "      max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat) + 1] ?? 4)) / 4); // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)",
     "tests": [
       "test/systems/audit23_systems.test.js"
     ]

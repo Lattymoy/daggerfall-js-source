@@ -2,8 +2,8 @@
   {
     "name": "ROLL-UNHEARD-start-ignored",
     "file": "src/net/npcRollTracker.js",
-    "old": "unheard ? unheard.start : ",
-    "new": "false ? unheard.start : ",
+    "old": "        : unheard",
+    "new": "        : false",
     "tests": [
       "test/net/rollUnheard.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROLL-UNHEARD-claimed-under-a-fresh-id",
     "file": "src/net/npcRollTracker.js",
-    "old": "    if (Object.keys(saved).length) pending = { rid:",
-    "new": "    if (false) pending = { rid:",
+    "old": "    if (Object.keys(saved).length)\n      pending = { rid: /** @type {{ rid: string }} */ (unheard).rid, deltas: saved, members: members() };",
+    "new": "    if (false) pending = { rid: /** @type {{ rid: string }} */ (unheard).rid, deltas: saved, members: members() };",
     "tests": [
       "test/net/rollUnheard.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROLL-UNHEARD-never-marked",
     "file": "src/net/npcRollTracker.js",
-    "old": "      if (!base) keepUnheard();\n",
-    "new": "",
+    "old": "      if (!base) keepUnheard();\n      busy = true;",
+    "new": "      busy = true;",
     "tests": [
       "test/net/rollUnheard.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ROLL-UNHEARD-earlier-start-replaced",
     "file": "src/net/npcRollTracker.js",
-    "old": "    if (k?.unheard) return;\n",
-    "new": "",
+    "old": "    if (k?.unheard) return;\n    keep({ ...k, unheard: { start: /** @type {Record<number, number>} */ (values0), rid: rid() } });",
+    "new": "    keep({ ...k, unheard: { start: /** @type {Record<number, number>} */ (values0), rid: rid() } });",
     "tests": [
       "test/net/rollUnheard.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROLL-STOP-never-said",
     "file": "src/net/npcRollTracker.js",
-    "old": "  if (text) say(text);\n",
-    "new": "",
+    "old": "  if (text) say(text);\n  console.warn('[roll] the Roll stopped:', error);",
+    "new": "  console.warn('[roll] the Roll stopped:', error);",
     "tests": [
       "test/net/rollUnheard.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEAT-SAVES-first-checkpoint-never-waits",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      else if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
-    "new": "      else checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "old": "      } else if (stands()) checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
+    "new": "      } else checkpointWhenDue(nowMs, lastAt(), session, checkpoint);",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEAT-SAVES-seat-loss-before-the-world-stands",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      if (!stands()) return;   // the first standing frame's checkpoint is due at once, and hears the lease then\n",
-    "new": "",
+    "old": "      if (!stands()) return; // the first standing frame's checkpoint is due at once, and hears the lease then\n      if (!session || session.lost) return;",
+    "new": "      if (!session || session.lost) return;",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SAVES-SAID-put-out-not-waited",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "    if (session.busy && !failing) return;",
-    "new": "",
+    "old": "    if (session.busy && !failing) return; // a put is out: its answer decides",
+    "new": "    // a put is out: its answer decides",
     "tests": [
       "test/systems/online/realmUnsavedNotice.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SAVES-SAID-frame-never-asks",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      unsaved?.tick();\n",
-    "new": "",
+    "old": "      unsaved?.tick();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "STRANDED-way-back-keeps-the-copy",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "  forgetStranded(storage, id);\n  const written",
-    "new": "  const written",
+    "old": "  forgetStranded(storage, id);\n  const written = saveSlot(offline.name || name, REALM_COPY_SAVE_NAME, offline, { storage });",
+    "new": "  const written = saveSlot(offline.name || name, REALM_COPY_SAVE_NAME, offline, { storage });",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "STRANDED-way-back-same-id",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "  offline.characterId = mintCharacterId();\n",
-    "new": "",
+    "old": "  offline.characterId = mintCharacterId();\n  const strandedText = storage.getItem(strandedTextKey(id));",
+    "new": "  const strandedText = storage.getItem(strandedTextKey(id));",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "STRANDED-way-back-no-room-loses-it",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "    storage.setItem(strandedTextKey(id), strandedText);",
-    "new": "",
+    "old": "    storage.setItem(strandedTextKey(id), strandedText);\n    storage.setItem(strandedRecordKey(id), strandedRecord);",
+    "new": "    storage.setItem(strandedRecordKey(id), strandedRecord);",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "STRANDED-notice-press-copies-at-once",
     "file": "src/ui/enhanced/strandedNotice.js",
-    "old": "onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) }",
-    "new": "onClick: () => recover() }",
+    "old": "    actions: [\n      { label, disabled: busy, onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) },\n    ],",
+    "new": "    actions: [{ label, disabled: busy, onClick: () => recover() }],",
     "tests": [
       "test/ui/enhanced/strandedNotice.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "STRANDED-notice-never-busy",
     "file": "src/ui/enhanced/strandedNotice.js",
-    "old": "disabled: busy,",
-    "new": "disabled: false,",
+    "old": "      { label, disabled: busy, onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) },",
+    "new": "      { label, disabled: false, onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) },",
     "tests": [
       "test/ui/enhanced/strandedNotice.test.js"
     ]

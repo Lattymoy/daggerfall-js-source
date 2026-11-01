@@ -20,7 +20,8 @@ await page.waitForTimeout(4000);
 const result = await page.evaluate(async () => {
   const { Renderer } = await import('/src/render/renderer.js');
   const canvas = document.createElement('canvas');
-  canvas.width = 64; canvas.height = 64;
+  canvas.width = 64;
+  canvas.height = 64;
   const r = new Renderer(canvas);
   const gl = r.gl;
   gl.viewport(0, 0, 64, 64);

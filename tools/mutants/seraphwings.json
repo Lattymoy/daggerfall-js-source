@@ -299,8 +299,8 @@
   {
     "name": "SERAPHWINGS-the-grant-dropped",
     "file": "server-account/src/titles.js",
-    "old": "  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n",
-    "new": "",
+    "old": "  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js",
+    "new": "  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SERAPHWINGS-the-vocabulary-without-the-wings",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
-    "new": "'shadowcloak', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "old": "  'seraphwings',\n  'resonance',",
+    "new": "  'resonance',",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -327,8 +327,8 @@
   {
     "name": "SERAPHWINGS-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  seraphwings: 'Seraph Wings',",
-    "new": "  seraphwings: 'seraphwings',",
+    "old": "  seraphwings: 'Seraph Wings', // SERAPH-WINGS: wings of flowing golden light, the developers' own",
+    "new": "  seraphwings: 'seraphwings', // SERAPH-WINGS: wings of flowing golden light, the developers' own",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "SERAPHWINGS-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
-    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "old": "  seraphwings: 'founder',",
+    "new": "  seraphwings: 'developer',",
     "tests": [
       "test/net/seraphwings.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "SERAPHWINGS-the-view-forgets-the-figure",
     "file": "src/player/mwView.js",
-    "old": "spriteFigure = drawn ? eotbFigure() : null;",
-    "new": "spriteFigure = null;",
+    "old": "    spriteFigure = drawn ? eotbFigure() : null;",
+    "new": "    spriteFigure = null;",
     "tests": [
       "test/net/seraphwings.test.js"
     ]

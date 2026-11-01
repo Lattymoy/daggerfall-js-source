@@ -52,7 +52,7 @@ test('AUDIT 68 X2-release-tag-commit: a new release tag is cut at the built comm
   }
 });
 
-/** The dev server's arena2 middleware over a fake ARENA2 folder - its two mounts. */
+/** The dev server's arena2 middleware over a fake ARENA2 folder - its three mounts. */
 async function devMounts(fake) {
   process.env.ARENA2_PATH = fake;
   const viteConfig = (await import(`../../vite.config.js?audit68=${Date.now()}`)).default;
@@ -100,7 +100,7 @@ test('AUDIT 68 X2 (books): the BOOKS fallback finds DFU\'s own lowercase `books`
   writeFileSync(join(fake, 'books', 'bok00002.txt'), 'a lowercase book');
   try {
     const mounts = await devMounts(fake);
-    assert.equal(mounts.length, 2, 'both doors');
+    assert.equal(mounts.length, 3, 'root, /play, and /2d-playground doors');
     for (const [mount, fn] of mounts) {
       assert.deepEqual(await serve(fn, '/BOK00002.TXT'), { status: 200, body: 'a lowercase book' }, `${mount}: the books folder and its file, whatever their case`);
       assert.deepEqual(await serve(fn, '/BOK00003.TXT'), { status: 404, body: 'not found' }, `${mount}: a book not there is still a 404`);

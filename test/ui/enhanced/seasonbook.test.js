@@ -401,7 +401,7 @@ test('AUDIT SEASON-BOOK P8/W1: the time left as the hourglass counts it, its day
   try { assert.equal(one(one(view.root, 'sb-realm'), 'sb-count').textContent, '4:07'); } finally { view.stop(); }
   const ms = Date.UTC(2026, 10, 23, 0, 0);
   assert.equal(seasonWhenText(ms), new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ms));
-  assert.match(read('src/ui/enhanced/enhancedSeason.js'), /new Intl\.DateTimeFormat\(loc, \{ weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' \}\)/);
+  assert.match(read('src/ui/enhanced/enhancedSeason.js'), /new Intl\.DateTimeFormat\(loc, \{\n\s*weekday: 'short',\n\s*day: 'numeric',\n\s*month: 'short',\n\s*hour: '2-digit',\n\s*minute: '2-digit',\n\s*hourCycle: 'h23',\n\s*\}\)/);
   assert.match(read('src/ui/enhanced/enhancedSeason.js'), /const loc = intlLocale\(\);/, 'the player\'s language, the text core\'s');
 });
 

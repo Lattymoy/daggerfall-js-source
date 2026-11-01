@@ -33,7 +33,8 @@ const STROKES = Object.freeze({
 /** The letters of `word` centred on (cx, cy), `h` tall, as one stroked path. */
 function lettering(word, cx, cy, h, color, sw) {
   const s = h / 10;
-  const adv = 6 * s, gap = 2.4 * s;
+  const adv = 6 * s,
+    gap = 2.4 * s;
   const w = word.length * adv + (word.length - 1) * gap;
   let x0 = cx - w / 2;
   const y0 = cy - h / 2;
@@ -42,11 +43,16 @@ function lettering(word, cx, cy, h, color, sw) {
     const p = STROKES[ch];
     if (p) {
       d += p.replace(/([MLHVQ])([^MLHVQ]*)/g, (_, cmd, args) => {
-        const n = args.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+        const n = args
+          .trim()
+          .split(/[\s,]+/)
+          .filter(Boolean)
+          .map(Number);
         if (cmd === 'H') return `H${(x0 + n[0] * s).toFixed(2)} `;
         if (cmd === 'V') return `V${(y0 + n[0] * s).toFixed(2)} `;
         const out = [];
-        for (let i = 0; i < n.length; i += 2) out.push(`${(x0 + n[i] * s).toFixed(2)} ${(y0 + n[i + 1] * s).toFixed(2)}`);
+        for (let i = 0; i < n.length; i += 2)
+          out.push(`${(x0 + n[i] * s).toFixed(2)} ${(y0 + n[i + 1] * s).toFixed(2)}`);
         return `${cmd}${out.join(' ')} `;
       });
     }
@@ -57,23 +63,27 @@ function lettering(word, cx, cy, h, color, sw) {
 
 // ── the palette ────────────────────────────────────────────────────
 const BONE = '#ece3c8';
-const RIM = '#b08a4a';        // brass
+const RIM = '#b08a4a'; // brass
 const RIM_LO = '#5c4526';
 const FACE_XBOX = Object.freeze({ A: '#7ad05a', B: '#f0604a', X: '#56a2f0', Y: '#f4cf48' });
 const FACE_PS = Object.freeze({ cross: '#8fb8f4', circle: '#f07a7a', square: '#ee9ad8', triangle: '#62d6ae' });
 
-const DEFS = `<defs><radialGradient id="g" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#3a352c"/><stop offset="1" stop-color="#0f0e0b"/></radialGradient>`
-  + `<linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a352c"/><stop offset="1" stop-color="#12100d"/></linearGradient></defs>`;
+const DEFS =
+  `<defs><radialGradient id="g" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#3a352c"/><stop offset="1" stop-color="#0f0e0b"/></radialGradient>` +
+  `<linearGradient id="p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a352c"/><stop offset="1" stop-color="#12100d"/></linearGradient></defs>`;
 
-const round = (inner, ring = RIM) => `<circle cx="16" cy="16" r="14.2" fill="#000" opacity="0.45"/>`
-  + `<circle cx="16" cy="15.4" r="13.4" fill="url(#g)" stroke="${ring}" stroke-width="1.8"/>`
-  + `<path d="M6.5 11 A10.5 10.5 0 0 1 25.5 11" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="1.4"/>${inner}`;
+const round = (inner, ring = RIM) =>
+  `<circle cx="16" cy="16" r="14.2" fill="#000" opacity="0.45"/>` +
+  `<circle cx="16" cy="15.4" r="13.4" fill="url(#g)" stroke="${ring}" stroke-width="1.8"/>` +
+  `<path d="M6.5 11 A10.5 10.5 0 0 1 25.5 11" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="1.4"/>${inner}`;
 
-const pill = (inner) => `<rect x="1.5" y="8.6" width="29" height="16" rx="6" fill="#000" opacity="0.45"/>`
-  + `<rect x="1.5" y="7.4" width="29" height="16" rx="6" fill="url(#p)" stroke="${RIM}" stroke-width="1.6"/>${inner}`;
+const pill = (inner) =>
+  `<rect x="1.5" y="8.6" width="29" height="16" rx="6" fill="#000" opacity="0.45"/>` +
+  `<rect x="1.5" y="7.4" width="29" height="16" rx="6" fill="url(#p)" stroke="${RIM}" stroke-width="1.6"/>${inner}`;
 
-const trigger = (inner) => `<path d="M5 28 V13 Q5 4 16 4 Q27 4 27 13 V28 Z" fill="#000" opacity="0.45" transform="translate(0 1)"/>`
-  + `<path d="M5 27.5 V13 Q5 4 16 4 Q27 4 27 13 V27.5 Z" fill="url(#p)" stroke="${RIM}" stroke-width="1.6" stroke-linejoin="round"/>${inner}`;
+const trigger = (inner) =>
+  `<path d="M5 28 V13 Q5 4 16 4 Q27 4 27 13 V28 Z" fill="#000" opacity="0.45" transform="translate(0 1)"/>` +
+  `<path d="M5 27.5 V13 Q5 4 16 4 Q27 4 27 13 V27.5 Z" fill="url(#p)" stroke="${RIM}" stroke-width="1.6" stroke-linejoin="round"/>${inner}`;
 
 function faceXbox(letter) {
   return round(lettering(letter, 16, 15.6, 11, FACE_XBOX[letter], 2.3), FACE_XBOX[letter]);
@@ -90,19 +100,25 @@ function facePs(sign) {
   return round(mark, c);
 }
 function dpad(dir) {
-  const arms = { up: 'M13 4 H19 V12 L16 15 L13 12 Z', down: 'M13 28 H19 V20 L16 17 L13 20 Z',
-    left: 'M4 13 V19 H12 L15 16 L12 13 Z', right: 'M28 13 V19 H20 L17 16 L20 13 Z' };
+  const arms = {
+    up: 'M13 4 H19 V12 L16 15 L13 12 Z',
+    down: 'M13 28 H19 V20 L16 17 L13 20 Z',
+    left: 'M4 13 V19 H12 L15 16 L12 13 Z',
+    right: 'M28 13 V19 H20 L17 16 L20 13 Z',
+  };
   const body = `<path d="M12.5 3.5 H19.5 V12.5 H28.5 V19.5 H19.5 V28.5 H12.5 V19.5 H3.5 V12.5 H12.5 Z" fill="url(#p)" stroke="${RIM}" stroke-width="1.5" stroke-linejoin="round"/>`;
   const lit = dir && arms[dir] ? `<path d="${arms[dir]}" fill="${BONE}"/>` : '';
   return `<path d="M12.5 4.5 H19.5 V13.5 H28.5 V20.5 H19.5 V29.5 H12.5 V20.5 H3.5 V13.5 H12.5 Z" fill="#000" opacity="0.45"/>${body}${lit}`;
 }
 function stick(label, click = false) {
-  const core = click
-    ? `<circle cx="16" cy="15.4" r="7.2" fill="${RIM}" opacity="0.35"/>`
-    : '';
-  const arrows = click ? '' : `<path d="M16 3.6 l-2 2.4 h4 z M16 27.2 l-2 -2.4 h4 z M4.2 15.4 l2.4 -2 v4 z M27.8 15.4 l-2.4 -2 v4 z" fill="${BONE}" opacity="0.8"/>`;
-  return round(`<circle cx="16" cy="15.4" r="8.4" fill="none" stroke="${RIM_LO}" stroke-width="1.4"/>${core}${arrows}`
-    + lettering(label, 16, 15.6, label.length > 1 ? 7 : 8, BONE, 1.8));
+  const core = click ? `<circle cx="16" cy="15.4" r="7.2" fill="${RIM}" opacity="0.35"/>` : '';
+  const arrows = click
+    ? ''
+    : `<path d="M16 3.6 l-2 2.4 h4 z M16 27.2 l-2 -2.4 h4 z M4.2 15.4 l2.4 -2 v4 z M27.8 15.4 l-2.4 -2 v4 z" fill="${BONE}" opacity="0.8"/>`;
+  return round(
+    `<circle cx="16" cy="15.4" r="8.4" fill="none" stroke="${RIM_LO}" stroke-width="1.4"/>${core}${arrows}` +
+      lettering(label, 16, 15.6, label.length > 1 ? 7 : 8, BONE, 1.8),
+  );
 }
 const VIEW_MARK = `<rect x="10" y="11" width="8" height="6" rx="1" fill="none" stroke="${BONE}" stroke-width="1.6"/><rect x="14" y="14.4" width="8" height="6" rx="1" fill="url(#p)" stroke="${BONE}" stroke-width="1.6"/>`;
 const MENU_MARK = `<path d="M10.5 12 H21.5 M10.5 15.4 H21.5 M10.5 18.8 H21.5" stroke="${BONE}" stroke-width="1.8" stroke-linecap="round"/>`;
@@ -175,16 +191,30 @@ export function hdGlyphSvg(family, code, { size = 24 } = {}) {
 export function hdGlyphName(family, code) {
   const ps = family === 'ps';
   const names = {
-    JoystickButton0: ps ? 'Cross' : 'A', JoystickButton1: ps ? 'Circle' : 'B', JoystickButton2: ps ? 'Square' : 'X',
-    JoystickButton3: ps ? 'Triangle' : 'Y', JoystickButton4: ps ? 'L1' : 'LB', JoystickButton5: ps ? 'R1' : 'RB',
-    JoystickButton6: ps ? 'Create' : 'View', JoystickButton7: ps ? 'Options' : 'Menu',
-    JoystickButton8: ps ? 'L3' : 'Left stick click', JoystickButton9: ps ? 'R3' : 'Right stick click',
-    JoystickAxis9Button0: ps ? 'L2' : 'LT', JoystickAxis10Button0: ps ? 'R2' : 'RT',
-    JoystickAxis7Button0: 'D-pad up', JoystickAxis7Button1: 'D-pad down', JoystickAxis6Button1: 'D-pad left', JoystickAxis6Button0: 'D-pad right',
-    Dpad: 'D-pad', StickL: 'Left stick', StickR: 'Right stick',
+    JoystickButton0: ps ? 'Cross' : 'A',
+    JoystickButton1: ps ? 'Circle' : 'B',
+    JoystickButton2: ps ? 'Square' : 'X',
+    JoystickButton3: ps ? 'Triangle' : 'Y',
+    JoystickButton4: ps ? 'L1' : 'LB',
+    JoystickButton5: ps ? 'R1' : 'RB',
+    JoystickButton6: ps ? 'Create' : 'View',
+    JoystickButton7: ps ? 'Options' : 'Menu',
+    JoystickButton8: ps ? 'L3' : 'Left stick click',
+    JoystickButton9: ps ? 'R3' : 'Right stick click',
+    JoystickAxis9Button0: ps ? 'L2' : 'LT',
+    JoystickAxis10Button0: ps ? 'R2' : 'RT',
+    JoystickAxis7Button0: 'D-pad up',
+    JoystickAxis7Button1: 'D-pad down',
+    JoystickAxis6Button1: 'D-pad left',
+    JoystickAxis6Button0: 'D-pad right',
+    Dpad: 'D-pad',
+    StickL: 'Left stick',
+    StickR: 'Right stick',
   };
   return names[code] ?? String(code ?? '');
 }
 
 /** Test seam. */
-export function _clearHdGlyphCache() { _cache.clear(); }
+export function _clearHdGlyphCache() {
+  _cache.clear();
+}

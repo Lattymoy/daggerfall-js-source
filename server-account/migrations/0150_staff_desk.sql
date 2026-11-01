@@ -1,4 +1,4 @@
--- STAFF-PANEL3-DESK (2026-10-22, mob: the features picked at 04:13Z and 06:28Z; design doc "DFO Staff Panel: design"): THE
+-- STAFF-PANEL3-DESK (2026-10-22: the features picked at 04:13Z and 06:28Z; design doc "DFO Staff Panel: design"): THE
 -- PANEL'S DESK - staff notes on a player, each staff member's own watchlist, and each staff member's own settings
 -- (server-account/src/staffDesk.js).
 --
@@ -7,17 +7,17 @@
 -- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
 -- them.
 --
--- staff_notes    A SHORT SHARED HISTORY ON ONE PLAYER (mob, 06:28Z: Moderators too): "warned in person 21 Oct", newest
+-- staff_notes    A SHORT SHARED HISTORY ON ONE PLAYER (Moderators too): "warned in person 21 Oct", newest
 --                first, written by any staff member and read by all. `author_name` the staff member's name as it stood
 --                when they wrote it - no key on `author`, so a staff account gone keeps its notes. RETENTION: the newest
 --                STAFF_NOTES_KEEP a player (the insert trims past it in the same batch), and the account's own go with it
 --                (CASCADE). `id` is the rowid - no AUTOINCREMENT, whose sequence table the schema does not carry (0013's).
--- staff_watch    A STAFF MEMBER'S OWN WATCHLIST (mob, 04:13Z; 06:28Z: "their own"): at most STAFF_WATCH_MAX rows a
+-- staff_watch    A STAFF MEMBER'S OWN WATCHLIST: at most STAFF_WATCH_MAX rows a
 --                member, bounded inside the insert. Nothing writes here but the panel's own add and remove, and the
 --                watch's events are read from what the service already records (logins, trades, sales, findings,
 --                reports) - only from the open panel, never from a login, a trade or a checkpoint (design doc, Server
 --                load). Either account gone takes the row.
--- staff_settings YOUR SETTINGS (mob, 03:24Z: "saved every time"): one JSON document a staff member, bounded and its keys
+-- staff_settings YOUR SETTINGS: one JSON document a staff member, bounded and its keys
 --                checked by staffDesk.js before it is written. Shared limits Admins set are kept elsewhere.
 --
 -- Two indexes for the panel's reads of mod_cases, which no route read this way before: a watched account's cases (its

@@ -76,7 +76,7 @@
 //   GROUP BY route, status ORDER BY n DESC
 // ═══════════════════════════════════════════════════════════════════
 
-import { ROUTES, savePathOf, realmPathOf, DB_ROOT, noteD1Wait, SLOW_SHED_TRIP_CAP_MS } from './service.js';   // SLOW-SHED: a request's D1 wait heard by the isolate's shed
+import { ROUTES, savePathOf, realmPathOf, DB_ROOT, noteD1Wait, SLOW_SHED_TRIP_CAP_MS } from './service.js'; // SLOW-SHED: a request's D1 wait heard by the isolate's shed
 import { HEARTBEAT_PARTS } from './heartbeat.js';
 
 /** The route as a TEMPLATE: a served path as it stands, a save slot or a realm character's save by its shape - never
@@ -90,12 +90,19 @@ export function routeLabel(/** @type {string} */ path) {
 }
 
 /** SCALE4f: a tally's field moved by `v` - a tally a caller made with `n` alone grows the rest as they come. */
-const add = (/** @type {any} */ tally, /** @type {string} */ key, /** @type {number} */ v) => { if (Number.isFinite(v)) tally[key] = (tally[key] ?? 0) + v; };
+const add = (/** @type {any} */ tally, /** @type {string} */ key, /** @type {number} */ v) => {
+  if (Number.isFinite(v)) tally[key] = (tally[key] ?? 0) + v;
+};
 
 /** SCALE4h: the table a statement writes - `INSERT [OR ...] INTO t`, `REPLACE INTO t`, `UPDATE [OR ...] t`, `DELETE
  *  FROM t` - or null for a read. */
 export const tableOf = (/** @type {unknown} */ sql) => {
-  const m = typeof sql === 'string' ? /^\s*(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO|UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+["`]?(\w+)/i.exec(sql) : null;
+  const m =
+    typeof sql === 'string'
+      ? /^\s*(?:INSERT(?:\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO|UPDATE(?:\s+OR\s+\w+)?|DELETE\s+FROM)\s+["`]?(\w+)/i.exec(
+          sql,
+        )
+      : null;
   return m ? m[1].toLowerCase() : null;
 };
 
@@ -112,12 +119,19 @@ function noteMeta(/** @type {any} */ result, /** @type {any} */ tally, /** @type
   add(tally, 'rw', m.rows_written);
   if (m.served_by_primary === false) add(tally, 'replica', 1);
   const t = Number.isFinite(m.rows_written) && m.rows_written > 0 ? tableOf(sql) : null;
-  if (t) { const by = tally.tables ??= {}; by[t] = (by[t] ?? 0) + m.rows_written; }
+  if (t) {
+    const by = (tally.tables ??= {});
+    by[t] = (by[t] ?? 0) + m.rows_written;
+  }
 }
 
 /** SCALE4h: the point's blob of every table written - "table:rows", most first, at most eight. */
-export const tablesBlob = (/** @type {Record<string, number>|undefined} */ by) => Object.entries(by ?? {})
-  .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8).map(([t, n]) => `${t}:${n}`).join(' ');
+export const tablesBlob = (/** @type {Record<string, number>|undefined} */ by) =>
+  Object.entries(by ?? {})
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+    .slice(0, 8)
+    .map(([t, n]) => `${t}:${n}`)
+    .join(' ');
 
 /** SCALE4f: the real statement behind a timed one - D1's batch is handed its own. */
 const REAL = new WeakMap();
@@ -147,9 +161,11 @@ function timedStatement(/** @type {any} */ stmt, /** @type {any} */ tally, /** @
               return r?.results?.[0] ?? null;
             }
             const r = await v.apply(target, args);
-            if (key === 'all' || key === 'run') noteMeta(r, tally, sql);   // rows (`raw`), or a column (`first('c')`), carry no meta
+            if (key === 'all' || key === 'run') noteMeta(r, tally, sql); // rows (`raw`), or a column (`first('c')`), carry no meta
             return r;
-          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip
+          } finally {
+            tripDone(tally, Date.now() - started);
+          } // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip
         };
       }
       return v.bind(target);
@@ -179,22 +195,35 @@ export function countedDb(/** @type {any} */ db, /** @type {{ n: number }} */ ta
   return new Proxy(db, {
     get(target, key) {
       if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;
-      if (key === 'prepare') return (/** @type {any[]} */ ...args) => { tally.n += 1; return timedStatement(target.prepare(...args), tally, args[0]); };
+      if (key === 'prepare')
+        return (/** @type {any[]} */ ...args) => {
+          tally.n += 1;
+          return timedStatement(target.prepare(...args), tally, args[0]);
+        };
       if (key === 'batch') {
         const batch = Reflect.get(target, key);
         if (typeof batch !== 'function') return batch;
         return async (/** @type {any[]} */ list, /** @type {any[]} */ ...rest) => {
           const started = Date.now();
           try {
-            const rs = await batch.call(target, Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list, ...rest);
-            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));
+            const rs = await batch.call(
+              target,
+              Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list,
+              ...rest,
+            );
+            if (Array.isArray(rs))
+              rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));
             return rs;
-          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries
+          } finally {
+            tripDone(tally, Date.now() - started);
+          } // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries
         };
       }
       if (key === 'withSession') {
         const open = Reflect.get(target, key);
-        return typeof open === 'function' ? (/** @type {any[]} */ ...args) => countedDb(open.apply(target, args), tally) : open;
+        return typeof open === 'function'
+          ? (/** @type {any[]} */ ...args) => countedDb(open.apply(target, args), tally)
+          : open;
       }
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;
@@ -222,22 +251,41 @@ async function refusalOf(/** @type {Response} */ res) {
 export async function measured(request, env, serve, exec = null) {
   const sink = env?.METRICS;
   const said = { parts: '' };
-  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said, exec);   // AUDIT SAFE DISCORD-4: the Worker's ExecutionContext, for what follows an answer
+  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said, exec); // AUDIT SAFE DISCORD-4: the Worker's ExecutionContext, for what follows an answer
   const started = Date.now();
-  const tally = { n: 0, ms: 0, trips: 0, capped: 0, rr: 0, rw: 0, replica: 0, tables: /** @type {Record<string, number>} */ ({}) };
+  const tally = {
+    n: 0,
+    ms: 0,
+    trips: 0,
+    capped: 0,
+    rr: 0,
+    rw: 0,
+    replica: 0,
+    tables: /** @type {Record<string, number>} */ ({}),
+  };
   const counted = env.DB ? { ...env, DB: countedDb(env.DB, tally) } : env;
   const res = await serve(request, counted, said, exec);
-  noteD1Wait(tally.capped, tally.trips, Date.now());   // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time
-  const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read
+  noteD1Wait(tally.capped, tally.trips, Date.now()); // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time
+  const parts = typeof said.parts === 'string' ? said.parts : ''; // AUDIT SCALE II A-3: the service's own word on the body it read
   try {
     const route = routeLabel(new URL(request.url).pathname);
     sink.writeDataPoint({
       indexes: [route],
-      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts],   // SCALE4h: the tables written, a heartbeat's parts
-      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica,   // SCALE4f: rows written, D1's wait, rows read, a replica's statements
-        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0)],   // SCALE4h: the hot rows, by table
+      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts], // SCALE4h: the tables written, a heartbeat's parts
+      doubles: [
+        Date.now() - started,
+        res.status,
+        tally.n,
+        tally.rw,
+        tally.ms,
+        tally.rr,
+        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements
+        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),
+      ], // SCALE4h: the hot rows, by table
     });
-  } catch { /* a metric never costs a request */ }
+  } catch {
+    /* a metric never costs a request */
+  }
   return res;
 }
 

@@ -17,7 +17,7 @@
 // has (twenty-odd sites across the towns, roads, dives and caravans); this seam is the one place the relations are made
 // (THE ONE CONSTRUCTION SEAM), and it counts every regard in the character's own day instead.
 import { createRelations, regardStanding, EASE_PER_DAY } from './relations.js';
-import { skyMinutes } from '../worldTick.js';   // AUDIT FB1021d RO-3: the sky, read once at an old record's load
+import { skyMinutes } from '../worldTick.js'; // AUDIT FB1021d RO-3: the sky, read once at an old record's load
 
 /** A regard's day starts at 04:00, as the living day does (livingTown.js dayOf). */
 export const REGARD_DAY_START_MIN = 240;
@@ -36,20 +36,30 @@ export const FRIENDS_SAID_MAX = 6;
  * came back -75 (hostile, LW7: an armed one draws) the day the update landed.
  * @param {Record<string, any>} people @param {number} day - today, the own clock's @param {number} skyDay - the sky's day
  */
-const rebased = (people, day, skyDay) => Object.fromEntries(Object.entries(people).map(([id, e]) => {
-  if (!e || typeof e !== 'object') return [id, e];
-  const r = Number(e.r), seen = Number(e.seen);
-  const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;
-  return [id, { r: eased, met: day, seen: day, talked: -1 }];
-}));
+const rebased = (people, day, skyDay) =>
+  Object.fromEntries(
+    Object.entries(people).map(([id, e]) => {
+      if (!e || typeof e !== 'object') return [id, e];
+      const r = Number(e.r),
+        seen = Number(e.seen);
+      const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;
+      return [id, { r: eased, met: day, seen: day, talked: -1 }];
+    }),
+  );
 
 /** Whether a record is the sky's: a REGARD-OWN record is marked; one from before is not, and is sky-stamped online -
  *  and offline when a stamp stands ahead of today (AUDIT FB1021d RO-5: an online save copied offline keeps its sky days,
  *  some 1,100 against an own day of 530, and no regard there eased until touched). @param {any} record
  *  @param {number} day @param {boolean} online */
-const skyStampedIs = (record, day, online) => !!record && typeof record === 'object' && record.v === 1 && record.clock !== REGARD_CLOCK
-  && !!record.people && typeof record.people === 'object'
-  && (online || Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));
+const skyStampedIs = (record, day, online) =>
+  !!record &&
+  typeof record === 'object' &&
+  record.v === 1 &&
+  record.clock !== REGARD_CLOCK &&
+  !!record.people &&
+  typeof record.people === 'object' &&
+  (online ||
+    Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));
 
 /**
  * One character's regards (relations.js createRelations), counted in their own days. A record from before REGARD-OWN (no
@@ -63,7 +73,9 @@ const skyStampedIs = (record, day, online) => !!record && typeof record === 'obj
 export function characterRelations(record, own, online = false, sky = () => skyMinutes()) {
   const today = () => regardDayOf(own());
   const day = today();
-  const rel = createRelations(skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, regardDayOf(sky())) } : record);
+  const rel = createRelations(
+    skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, regardDayOf(sky())) } : record,
+  );
   /** AUDIT FB1021d RO-4: the friends made since the last read - a word, a tone, a deed (each a `note`), not a regard
    *  handed down (`inherit`: a family's friends, met as such) - said by townTalk once the HUD is clear. */
   /** @type {string[]} */

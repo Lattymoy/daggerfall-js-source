@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SHIPS-A2-turned-straight-back",
     "file": "src/systems/seaHelm.js",
-    "old": "  else if (blocked) course = foldDeg(q.heading);\n",
-    "new": "",
+    "old": "  if (avoiding)\n    course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand\n  else if (blocked) course = foldDeg(q.heading);",
+    "new": "  if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-SHIPS-A4-the-calm-under-sail-free",
     "file": "src/systems/seaHelm.js",
-    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
-    "new": "windLen >= H.calm",
+    "old": "  const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;",
+    "new": "  const sailable = q.hasSails && windLen >= H.calm && !rowingIn && !avoiding && !crewRows;",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-SHIPS-A5-a-table-entry-off",
     "file": "src/systems/helmWay.js",
-    "old": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),",
-    "new": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 1.643]),",
+    "old": "  1: Object.freeze([1.065, 1.159, 2.071, 1.19, 1.233, 1.212, 2.131]), // the Large Boat's seven rigs",
+    "new": "  1: Object.freeze([1.065, 1.159, 2.071, 1.19, 1.233, 1.212, 1.643]), // the Large Boat's seven rigs",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDIT-SHIPS-A7-the-ease-fixed",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const snap = peerSnapM([ledWay, 0, 0]);",
-    "new": "const snap = CSA_PEER_SNAP_M;",
+    "old": "    const snap = peerSnapM([ledWay, 0, 0]); // AUDIT SHIPS A7: by her way",
+    "new": "    const snap = CSA_PEER_SNAP_M; // AUDIT SHIPS A7: by her way",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT-SHIPS-A7-a-passenger-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "> peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2) continue;",
-    "new": "> CSA_PEER_SNAP_M * CSA_PEER_SNAP_M) continue;",
+    "old": "          dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) >\n            peerSnapM([Math.max(Math.hypot(...sceneWay(l.boats[i], l.toScene)), had[j].ledWay ?? 0), 0, 0]) ** 2",
+    "new": "          dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) > CSA_PEER_SNAP_M * CSA_PEER_SNAP_M",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

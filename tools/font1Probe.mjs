@@ -57,13 +57,15 @@ async function inlineFonts() {
   const css = await (await fetch(ENHANCED_FONTS_URL, { headers: { 'user-agent': UA } })).text();
   const out = [];
   for (const block of css.split('@font-face').slice(1)) {
-    if (!/U\+0000-00FF/.test(block)) continue;            // the latin subset alone - these panels draw latin
+    if (!/U\+0000-00FF/.test(block)) continue; // the latin subset alone - these panels draw latin
     const fam = /font-family: '([^']+)'/.exec(block)?.[1];
     const weight = /font-weight: ([\d ]+)/.exec(block)?.[1] ?? '400';
     const url = /url\((https[^)]+)\)/.exec(block)?.[1];
     if (!fam || !url) continue;
     const bytes = Buffer.from(await (await fetch(url, { headers: { 'user-agent': UA } })).arrayBuffer());
-    out.push(`@font-face { font-family: '${fam}'; font-weight: ${weight}; src: url(data:font/woff2;base64,${bytes.toString('base64')}) format('woff2'); }`);
+    out.push(
+      `@font-face { font-family: '${fam}'; font-weight: ${weight}; src: url(data:font/woff2;base64,${bytes.toString('base64')}) format('woff2'); }`,
+    );
   }
   return out.join('\n');
 }
@@ -71,8 +73,12 @@ async function inlineFonts() {
 /** 1. The ratio, on strings these surfaces draw. */
 const MEASURE_RATIO = () => {
   const samples = [
-    [10, 'already in a party'], [11, 'last seen 5 days ago'], [12, 'ONLINE PLAYERS'],
-    [13, 'Mac the Wanderer'], [14, 'Your Long Blade skill has improved.'], [15, 'Invite to party'],
+    [10, 'already in a party'],
+    [11, 'last seen 5 days ago'],
+    [12, 'ONLINE PLAYERS'],
+    [13, 'Mac the Wanderer'],
+    [14, 'Your Long Blade skill has improved.'],
+    [15, 'Invite to party'],
   ];
   const w = (fam, size, text) => {
     const s = document.createElement('span');
@@ -93,7 +99,12 @@ const MEASURE_RATIO = () => {
 /** 2 + 3. The four online surfaces, built as their modules build them. */
 const MEASURE_SURFACES = (touch) => {
   document.body.innerHTML = '';
-  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const el = (t, c, x) => {
+    const e = document.createElement(t);
+    if (c) e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
   // NAME_MAX (net/wire.js) is 24 - the longest name the hub will ever
   // hand these rows, and so the one that decides whether a column
   // clips. The probe draws it rather than a comfortable one.
@@ -104,8 +115,12 @@ const MEASURE_SURFACES = (touch) => {
   const peek = el('div', 'dfchat-peek');
   for (let i = 0; i < 3; i++) {
     const line = el('div', 'dfchat-line');
-    line.append(el('span', 'dfchat-time', '12:34'), el('span', 'dfchat-name', NAME),
-      el('span', 'dfchat-tag', '#ab12'), el('span', 'dfchat-text', 'the road to Daggerfall is 5 days from here'));
+    line.append(
+      el('span', 'dfchat-time', '12:34'),
+      el('span', 'dfchat-name', NAME),
+      el('span', 'dfchat-tag', '#ab12'),
+      el('span', 'dfchat-text', 'the road to Daggerfall is 5 days from here'),
+    );
     peek.append(line);
   }
   const box = el('div', 'dfchat-box');
@@ -159,7 +174,7 @@ const MEASURE_SURFACES = (touch) => {
   phead.append(el('span', 'dfparty-name', NAME), el('span', 'dfparty-lead', '★'));
   const vital = el('div', 'dfparty-vital health');
   vital.append(el('div', 'dfparty-track'), el('span', 'dfparty-num', '100 / 100'));
-  pbody.append(phead, el('div', 'dfparty-where', 'Daggerfall, Privateer\'s Hold'), vital);
+  pbody.append(phead, el('div', 'dfparty-where', "Daggerfall, Privateer's Hold"), vital);
   card.append(el('div', 'dfparty-face'), pbody);
   party.append(el('div', 'dfparty-title', 'Party'), card);
   document.body.append(party);
@@ -190,11 +205,17 @@ const MEASURE_SURFACES = (touch) => {
     }
   }
   // AUDIT SOC C8's targets, on the touch skin.
-  const targets = ['dfchat-social', 'dfchat-rowbtn', 'dfsocial-tab', 'dfsocial-close', 'dfsocial-btn', 'dfpeer-btn']
-    .map((cls) => {
-      const n = document.querySelector('.' + cls.replace(/ /g, '.'));
-      return n ? { cls, h: +n.getBoundingClientRect().height.toFixed(1) } : { cls, h: null };
-    });
+  const targets = [
+    'dfchat-social',
+    'dfchat-rowbtn',
+    'dfsocial-tab',
+    'dfsocial-close',
+    'dfsocial-btn',
+    'dfpeer-btn',
+  ].map((cls) => {
+    const n = document.querySelector('.' + cls.replace(/ /g, '.'));
+    return n ? { cls, h: +n.getBoundingClientRect().height.toFixed(1) } : { cls, h: null };
+  });
   // What the ellipsising columns have room to SAY. The party card's
   // name is the one that clips (the roster's wraps), so the question it
   // answers is HOW MANY CHARACTERS fit whole - measured by shortening
@@ -204,7 +225,7 @@ const MEASURE_SURFACES = (touch) => {
   const nameNode = document.querySelector('.dfparty-name');
   let fits = 0;
   for (let n = 1; n <= NAME.length; n++) {
-    nameNode.textContent = NAME.slice(0, n);   // a real name's own letters, not the widest glyph repeated
+    nameNode.textContent = NAME.slice(0, n); // a real name's own letters, not the widest glyph repeated
     if (nameNode.scrollWidth <= nameNode.clientWidth + 1) fits = n;
   }
   nameNode.textContent = NAME;
@@ -212,7 +233,11 @@ const MEASURE_SURFACES = (touch) => {
     nameBox: +nameNode.clientWidth.toFixed(1),
     longest: +nameNode.scrollWidth.toFixed(1),
     fits,
-    vitals: (() => { const n = document.querySelector('.dfparty-num'); n.textContent = '1000 / 1000'; return { box: +n.clientWidth.toFixed(1), content: +n.scrollWidth.toFixed(1) }; })(),
+    vitals: (() => {
+      const n = document.querySelector('.dfparty-num');
+      n.textContent = '1000 / 1000';
+      return { box: +n.clientWidth.toFixed(1), content: +n.scrollWidth.toFixed(1) };
+    })(),
   };
   return { spills, targets, clipped };
 };
@@ -220,7 +245,12 @@ const MEASURE_SURFACES = (touch) => {
 /** 4. The popup column against the HUD furniture above it. */
 const MEASURE_HUDTEXT = () => {
   document.body.innerHTML = '';
-  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const el = (t, c, x) => {
+    const e = document.createElement(t);
+    if (c) e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
   const hud = el('div', 'hud');
   const top = el('div', 'hud-top');
   const compass = el('div', 'hud-compass');
@@ -236,12 +266,20 @@ const MEASURE_HUDTEXT = () => {
   // AUDIT FONT F1's claim, kept), and a modal box's panel beside them.
   // The probe builds what two live models and one box really produce.
   const stack = el('div', 'notice-stack');
-  const toast = (t) => { const n = el('div', 'notice notice-toast notice-in'); const b = el('div', 'notice-body'); b.append(el('div', 'notice-row', t)); n.append(b); return n; };
+  const toast = (t) => {
+    const n = el('div', 'notice notice-toast notice-in');
+    const b = el('div', 'notice-body');
+    b.append(el('div', 'notice-row', t));
+    n.append(b);
+    return n;
+  };
   const rows = ['Your Long Blade skill has improved.', 'You found 25 gold pieces.'];
   const first = toast(rows[0]);
   const second = toast('The wind carries the smell of the sea.');
   const box = el('div', 'notice notice-in');
-  const boxBody = el('div', 'notice-body'); boxBody.append(el('div', 'notice-row', 'The door is locked.')); box.append(boxBody, el('div', 'notice-hint', 'click or press a key'));
+  const boxBody = el('div', 'notice-body');
+  boxBody.append(el('div', 'notice-row', 'The door is locked.'));
+  box.append(boxBody, el('div', 'notice-hint', 'click or press a key'));
   stack.append(first, second, box);
   document.body.append(stack);
   const firstBox = first.getBoundingClientRect();
@@ -249,10 +287,16 @@ const MEASURE_HUDTEXT = () => {
   const stackBox = stack.getBoundingClientRect();
   // AUDIT FONT F8's claim, kept: a TEXT.RSC-length line is drawn whole, not cut.
   const longRow = first.querySelector('.notice-row');
-  const LONG = 'You have been given a letter of introduction to the Knights of the Dragon, and are expected at their hall in Daggerfall before the 15th of Hearthfire.';
+  const LONG =
+    'You have been given a letter of introduction to the Knights of the Dragon, and are expected at their hall in Daggerfall before the 15th of Hearthfire.';
   const shortH = +longRow.getBoundingClientRect().height.toFixed(1);
   longRow.textContent = LONG;
-  const longBox = { content: +longRow.scrollWidth.toFixed(1), box: +longRow.clientWidth.toFixed(1), h: +longRow.getBoundingClientRect().height.toFixed(1), shortH };
+  const longBox = {
+    content: +longRow.scrollWidth.toFixed(1),
+    box: +longRow.clientWidth.toFixed(1),
+    h: +longRow.getBoundingClientRect().height.toFixed(1),
+    shortH,
+  };
   longRow.textContent = rows[0];
   // ...and the OTHER text surface: the mid-screen label, at DFU's own
   // 146-of-200 height, against the bottom block it must not sit on.
@@ -263,7 +307,7 @@ const MEASURE_HUDTEXT = () => {
     v.append(el('div', 'hud-track'));
     bars.append(v);
   }
-  bottom.append(bars);   // UI3: the column ends at the vitals (and the Renown row online) - the effects are the status widget's
+  bottom.append(bars); // UI3: the column ends at the vitals (and the Renown row online) - the effects are the status widget's
   hud.append(bottom);
   const mid = el('div', 'hudmid', 'Interaction is now in talk mode.');
   document.body.append(mid);
@@ -294,7 +338,10 @@ const MEASURE_HUDTEXT = () => {
   };
 };
 
-const faces = await inlineFonts().catch((e) => { console.error(`the fonts did not load: ${e.message}`); return null; });
+const faces = await inlineFonts().catch((e) => {
+  console.error(`the fonts did not load: ${e.message}`);
+  return null;
+});
 if (!faces || !/Pixelify Sans/.test(faces)) {
   console.error('FAILED: no Pixelify Sans to measure - this probe needs the network (ENHANCED_FONTS_URL).');
   process.exit(1);
@@ -315,10 +362,14 @@ await page.evaluate(async () => {
 const fails = [];
 console.log('1. THE RATIO - the pixel face against the launcher face, at one size');
 const ratios = await page.evaluate(MEASURE_RATIO);
-for (const r of ratios) console.log(`   ${String(r.size).padStart(2)}px  ${String(r.pixel).padStart(6)} vs ${String(r.barlow).padStart(6)}  x${r.ratio}   ${r.text}`);
+for (const r of ratios)
+  console.log(
+    `   ${String(r.size).padStart(2)}px  ${String(r.pixel).padStart(6)} vs ${String(r.barlow).padStart(6)}  x${r.ratio}   ${r.text}`,
+  );
 const mean = ratios.reduce((a, r) => a + r.ratio, 0) / ratios.length;
 console.log(`   mean x${mean.toFixed(3)}`);
-if (!(mean > 1.05)) fails.push(`the two faces measure the same (x${mean.toFixed(3)}) - the page is drawing a fallback, not Pixelify`);
+if (!(mean > 1.05))
+  fails.push(`the two faces measure the same (x${mean.toFixed(3)}) - the page is drawing a fallback, not Pixelify`);
 
 for (const touch of [false, true]) {
   console.log(`\n2. THE FOUR SURFACES (${touch ? 'touch' : 'desktop'} skin) - nothing wider than its box`);
@@ -326,11 +377,17 @@ for (const touch of [false, true]) {
   for (const s of spills) console.log(`   SPILL ${s.cls}: ${s.content}px of text in a ${s.box}px box`);
   if (!spills.length) console.log('   (none)');
   for (const s of spills) fails.push(`${s.cls} spills: ${s.content}px of text in a ${s.box}px box`);
-  console.log(`   the party card's name box is ${clipped.nameBox}px: ${clipped.fits} of a name's characters fit whole,`
-    + ` and the longest name the hub allows (NAME_MAX 24) measures ${clipped.longest}px`);
-  console.log(`   its vitals column holds "1000 / 1000" in ${clipped.vitals.content}px of a ${clipped.vitals.box}px box`);
-  if (clipped.fits < 16) fails.push(`only ${clipped.fits} characters of a party member's name fit the card - the face is too big for it`);
-  if (clipped.vitals.content > clipped.vitals.box + 1) fails.push(`the party vitals column cuts "1000 / 1000" (${clipped.vitals.content}px in ${clipped.vitals.box}px)`);
+  console.log(
+    `   the party card's name box is ${clipped.nameBox}px: ${clipped.fits} of a name's characters fit whole,` +
+      ` and the longest name the hub allows (NAME_MAX 24) measures ${clipped.longest}px`,
+  );
+  console.log(
+    `   its vitals column holds "1000 / 1000" in ${clipped.vitals.content}px of a ${clipped.vitals.box}px box`,
+  );
+  if (clipped.fits < 16)
+    fails.push(`only ${clipped.fits} characters of a party member's name fit the card - the face is too big for it`);
+  if (clipped.vitals.content > clipped.vitals.box + 1)
+    fails.push(`the party vitals column cuts "1000 / 1000" (${clipped.vitals.content}px in ${clipped.vitals.box}px)`);
   if (touch) {
     console.log('3. THE FINGER (AUDIT SOC C8): every target at least 44px tall');
     for (const t of targets) {
@@ -341,44 +398,93 @@ for (const touch of [false, true]) {
   }
 }
 
-console.log('\n4. THE HUD\'S TEXT SURFACES - the mid-screen label on its line, PopupText\'s rows as toasts at the right edge (ENH-NOTICE3)');
+console.log(
+  "\n4. THE HUD'S TEXT SURFACES - the mid-screen label on its line, PopupText's rows as toasts at the right edge (ENH-NOTICE3)",
+);
 const h = await page.evaluate(MEASURE_HUDTEXT);
-console.log(`   the mid-screen label (DFU's y=146 of 200) stands ${h.midTop}-${h.midBottom}px, under the reticle's ${h.reticleBottom}px and over the bars at ${h.barsTop}px`);
-console.log(`   ...where the sheet's 73% fallback alone would have put it at ${h.midFallbackTop}px (AUDIT FONT F11: the two agree at 16:10 and nowhere else)`);
-if (h.midTop < h.reticleBottom) fails.push(`the mid-screen label starts at ${h.midTop}px, on top of the reticle (${h.reticleBottom}px)`);
-if (h.midBottom > h.barsTop) fails.push(`the mid-screen label ends at ${h.midBottom}px, inside the bars at ${h.barsTop}px`);
-console.log(`   the notice stack ends at the right edge (${h.stackRight}px of ${h.viewportW}) and stands ${h.stackTop}-${h.stackBottom}px, under the HUD's top block (${h.topBlockBottom}px)`);
-if (Math.abs(h.stackRight - h.viewportW) > 0.5) fails.push(`the notice stack's right edge is ${h.stackRight}px, not the viewport's ${h.viewportW}px`);
-if (h.stackTop < h.topBlockBottom) fails.push(`the notice stack starts at ${h.stackTop}px, inside the HUD's top block, which ends at ${h.topBlockBottom}px`);
-console.log(`   the second model's toast starts at ${h.secondTop}px, under the first's ${h.firstBottom}px (AUDIT FONT F1's claim: two models stack, never overwrite); a toast carries a hint: ${h.toastHint}`);
-if (h.secondTop < h.firstBottom - 0.5) fails.push(`the second model's toast starts at ${h.secondTop}px, over the first, which ends at ${h.firstBottom}px`);
+console.log(
+  `   the mid-screen label (DFU's y=146 of 200) stands ${h.midTop}-${h.midBottom}px, under the reticle's ${h.reticleBottom}px and over the bars at ${h.barsTop}px`,
+);
+console.log(
+  `   ...where the sheet's 73% fallback alone would have put it at ${h.midFallbackTop}px (AUDIT FONT F11: the two agree at 16:10 and nowhere else)`,
+);
+if (h.midTop < h.reticleBottom)
+  fails.push(`the mid-screen label starts at ${h.midTop}px, on top of the reticle (${h.reticleBottom}px)`);
+if (h.midBottom > h.barsTop)
+  fails.push(`the mid-screen label ends at ${h.midBottom}px, inside the bars at ${h.barsTop}px`);
+console.log(
+  `   the notice stack ends at the right edge (${h.stackRight}px of ${h.viewportW}) and stands ${h.stackTop}-${h.stackBottom}px, under the HUD's top block (${h.topBlockBottom}px)`,
+);
+if (Math.abs(h.stackRight - h.viewportW) > 0.5)
+  fails.push(`the notice stack's right edge is ${h.stackRight}px, not the viewport's ${h.viewportW}px`);
+if (h.stackTop < h.topBlockBottom)
+  fails.push(
+    `the notice stack starts at ${h.stackTop}px, inside the HUD's top block, which ends at ${h.topBlockBottom}px`,
+  );
+console.log(
+  `   the second model's toast starts at ${h.secondTop}px, under the first's ${h.firstBottom}px (AUDIT FONT F1's claim: two models stack, never overwrite); a toast carries a hint: ${h.toastHint}`,
+);
+if (h.secondTop < h.firstBottom - 0.5)
+  fails.push(`the second model's toast starts at ${h.secondTop}px, over the first, which ends at ${h.firstBottom}px`);
 if (h.toastHint) fails.push('a toast carries the "click or press a key" hint - nothing dismisses a toast');
-console.log(`   a ${h.longRow.content}px line wraps into a ${h.longRow.box}px box ${h.longRow.h}px tall (one line is ${h.longRow.shortH}px; AUDIT FONT F8's claim)`);
-if (h.longRow.content > h.longRow.box + 1) fails.push(`a TEXT.RSC-length line is ${h.longRow.content}px in a ${h.longRow.box}px box - it is being cut, not wrapped`);
-if (h.longRow.h <= h.longRow.shortH + 0.5) fails.push('a long line did not wrap to a second row - the toast is still one line high');
+console.log(
+  `   a ${h.longRow.content}px line wraps into a ${h.longRow.box}px box ${h.longRow.h}px tall (one line is ${h.longRow.shortH}px; AUDIT FONT F8's claim)`,
+);
+if (h.longRow.content > h.longRow.box + 1)
+  fails.push(
+    `a TEXT.RSC-length line is ${h.longRow.content}px in a ${h.longRow.box}px box - it is being cut, not wrapped`,
+  );
+if (h.longRow.h <= h.longRow.shortH + 0.5)
+  fails.push('a long line did not wrap to a second row - the toast is still one line high');
 
 // AUDIT ENH-NOTICE3 (second pass, A1): a SHORT viewport under eight
 // toasts and a box - the stack must clip what will not fit, never
 // spill it off the screen (1280x520 spilled the eighth toast by 12px).
 await page.setViewportSize({ width: 1280, height: 520 });
 const short = await page.evaluate(() => {
-  const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+  const el = (t, c, x) => {
+    const e = document.createElement(t);
+    if (c) e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
   const stack = el('div', 'notice-stack');
-  const box = el('div', 'notice notice-in'); const bb = el('div', 'notice-body');
+  const box = el('div', 'notice notice-in');
+  const bb = el('div', 'notice-body');
   for (const t of ['The door is locked.', 'You have no key.', 'A third line.']) bb.append(el('div', 'notice-row', t));
-  box.append(bb, el('div', 'notice-hint', 'click or press a key')); stack.append(box);
-  for (let i = 0; i < 8; i++) { const n = el('div', 'notice notice-toast notice-in'); const b = el('div', 'notice-body'); b.append(el('div', 'notice-row', `Your Long Blade skill has improved ${i}.`)); n.append(b); stack.append(n); }
+  box.append(bb, el('div', 'notice-hint', 'click or press a key'));
+  stack.append(box);
+  for (let i = 0; i < 8; i++) {
+    const n = el('div', 'notice notice-toast notice-in');
+    const b = el('div', 'notice-body');
+    b.append(el('div', 'notice-row', `Your Long Blade skill has improved ${i}.`));
+    n.append(b);
+    stack.append(n);
+  }
   document.body.append(stack);
   const r = stack.getBoundingClientRect();
   const last = stack.lastElementChild.getBoundingClientRect();
-  const out = { overflow: getComputedStyle(stack).overflow, stackBottom: +r.bottom.toFixed(1), lastBottom: +last.bottom.toFixed(1), innerHeight: window.innerHeight, toastRow: getComputedStyle(stack.lastElementChild.querySelector('.notice-row')).fontSize, boxRow: getComputedStyle(box.querySelector('.notice-row')).fontSize };
+  const out = {
+    overflow: getComputedStyle(stack).overflow,
+    stackBottom: +r.bottom.toFixed(1),
+    lastBottom: +last.bottom.toFixed(1),
+    innerHeight: window.innerHeight,
+    toastRow: getComputedStyle(stack.lastElementChild.querySelector('.notice-row')).fontSize,
+    boxRow: getComputedStyle(box.querySelector('.notice-row')).fontSize,
+  };
   stack.remove();
   return out;
 });
-console.log(`   1280x520: the stack ends at ${short.stackBottom}px of ${short.innerHeight} with overflow ${short.overflow}; its last toast's box ends at ${short.lastBottom}px; a toast row is ${short.toastRow}, a box row ${short.boxRow}`);
+console.log(
+  `   1280x520: the stack ends at ${short.stackBottom}px of ${short.innerHeight} with overflow ${short.overflow}; its last toast's box ends at ${short.lastBottom}px; a toast row is ${short.toastRow}, a box row ${short.boxRow}`,
+);
 if (short.overflow !== 'hidden') fails.push('the notice stack does not clip: what will not fit spills off the screen');
-if (short.stackBottom > short.innerHeight + 0.5) fails.push(`the notice stack itself runs past the viewport (${short.stackBottom} > ${short.innerHeight})`);
-if (short.toastRow !== short.boxRow) fails.push(`on a short viewport a toast row is ${short.toastRow} while a box row is ${short.boxRow} - the media block does not reach the toast`);
+if (short.stackBottom > short.innerHeight + 0.5)
+  fails.push(`the notice stack itself runs past the viewport (${short.stackBottom} > ${short.innerHeight})`);
+if (short.toastRow !== short.boxRow)
+  fails.push(
+    `on a short viewport a toast row is ${short.toastRow} while a box row is ${short.boxRow} - the media block does not reach the toast`,
+  );
 
 await browser.close();
 if (fails.length) {
@@ -387,4 +493,4 @@ if (fails.length) {
   process.exit(1);
 }
 console.log('\nPASS: the enhanced face is what these surfaces are set in, nothing spills, the finger keeps its 44px,');
-console.log('the label stands on its line and PopupText\'s rows stand as toasts at the right edge.');
+console.log("the label stands on its line and PopupText's rows stand as toasts at the right edge.");

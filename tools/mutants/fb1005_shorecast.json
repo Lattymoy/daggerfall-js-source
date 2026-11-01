@@ -51,7 +51,7 @@
   },
   {
     "name": "SHORECAST-host-draw-threshold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "return c == null ? null : c >= SWIM_COVERAGE; },",
     "new": "return c == null ? null : c > 0; },",
     "tests": [
@@ -72,8 +72,8 @@
   {
     "name": "SHORECAST-wound-exempt",
     "file": "src/scenes/fishHost.js",
-    "old": " && live.act.state.phase !== 'wind';",
-    "new": ";",
+    "old": "      const acting = !!live && !live.act.state.done && !live.act.state.cancelled && live.act.state.phase !== 'wind';",
+    "new": "      const acting = !!live && !live.act.state.done && !live.act.state.cancelled;",
     "tests": [
       "test/scenes/fb1005_shorecast.test.js"
     ],

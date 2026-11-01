@@ -93,7 +93,8 @@ export function dxtDecode(src, width, height, dxt5) {
   const bw = (width + 3) >>> 2;
   const bh = (height + 3) >>> 2;
   const blockBytes = dxt5 ? 16 : 8;
-  if (src.length < bw * bh * blockBytes) throw new Error(`dxt: ${src.length} bytes for ${bw}x${bh} blocks of ${blockBytes}`);
+  if (src.length < bw * bh * blockBytes)
+    throw new Error(`dxt: ${src.length} bytes for ${bw}x${bh} blocks of ${blockBytes}`);
   let off = 0;
   for (let by = 0; by < bh; by++) {
     for (let bx = 0; bx < bw; bx++) {

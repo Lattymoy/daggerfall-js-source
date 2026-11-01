@@ -122,8 +122,8 @@
   {
     "name": "WATCH-PROTECTS-blow-twice",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      if (q.entity.health <= 0) return 0;\n",
-    "new": "",
+    "old": "      if (q.entity.health <= 0) return 0;\n      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
+    "new": "      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "WATCH-PROTECTS-body-lives",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      q.entity.health = 0;   // the target machine lets go",
-    "new": "      void 0;   // the target machine lets go",
+    "old": "      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
+    "new": "      void 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "WATCH-PROTECTS-unheard",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      struck(q, striker);\n",
-    "new": "",
+    "old": "      struck(q, striker);\n      return 1;",
+    "new": "      return 1;",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "WATCH-PROTECTS-threat",
     "file": "src/systems/town/townWatch.js",
-    "old": "    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;",
-    "new": "    ) return false;",
+    "old": "    !(t?.companion != null && !t.dead) && // AUDIT CC-B6: a monster fighting a companion is still the fight\n    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
+    "new": "    !(t?.companion != null && !t.dead) // AUDIT CC-B6: a monster fighting a companion is still the fight",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "WATCH-PROTECTS-threat-dead",
     "file": "src/systems/town/townWatch.js",
-    "old": "!(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
-    "new": "!(t?.civilian === true)",
+    "old": "    !(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
+    "new": "    !(t?.civilian === true)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "WATCH-PROTECTS-walker-pace",
     "file": "src/characters/residentWalker.js",
-    "old": "PERSON_MOVE_FPS * this.pace;",
-    "new": "PERSON_MOVE_FPS;",
+    "old": "    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS * this.pace;",
+    "new": "    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS;",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "WATCH-PROTECTS-host-dangers",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          dangers: () => host.livingDangers(px, py, locOrigin),",
-    "new": "          dangers: () => null,",
+    "old": "          dangers: () => host.livingDangers(px, py, locOrigin),   // WATCH-PROTECTS: the monsters its people run from",
+    "new": "          dangers: () => null,   // WATCH-PROTECTS: the monsters its people run from",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

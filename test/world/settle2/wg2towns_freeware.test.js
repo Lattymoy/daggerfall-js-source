@@ -1,4 +1,4 @@
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): a World 2.0 town's doors entered against the
+// A World 2.0 town's doors entered against the
 // freeware (the player's own BLOCKS.BSA and ARCH3D, ARENA2_PATH - tools/fetch-data.sh): each kind of building's block read
 // through the world-data door as the build reads it, its subrecord's interior made from Daggerfall's kit with the cast of a
 // donor of its role's pool, laid by the interior's own layout - its street door where the exterior's is, its keeper in.

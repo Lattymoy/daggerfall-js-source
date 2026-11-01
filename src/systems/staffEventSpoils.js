@@ -1,6 +1,5 @@
 // @ts-check
-// STAFF-EVENT THE REWARD (2026-10-24, mob: "what should we do for the mini bosses drop for loot?", "something like dagons
-// leaderboard", "but not his ghear", "build that base", "but we will tweak the drop table"): A STAFF EVENT'S SPOILS -
+// STAFF-EVENT THE REWARD (2026-10-24): A STAFF EVENT'S SPOILS -
 // what one fighter's part in an event pays when its mini boss first falls, rolled from the relay's receipt. Design:
 // bible/11-Multiplayer/Staff-Events.md section 9.
 //
@@ -9,7 +8,7 @@
 // a seed (`c`) and the earner's rank on the board (`r`), and everything here is rolled on `seededRng(c)`. NONE OF DAGON'S
 // OWN: no Sigil Stone, no Regalia, no Dragonfire Oath, nothing gilded.
 //
-// THE DROP TABLE IS STAFF_SPOILS_TABLE, the one place to tweak it (mob: "we will tweak the drop table").
+// THE DROP TABLE IS STAFF_SPOILS_TABLE, the one place to tweak it.
 //
 // GIVEN ONCE A RECEIPT, straight into the pack, through the spoils pool a town's thanks use (scenes/spoilsPool.js under
 // RAID_SPOILS_KEYS, keyed `sev:<id>` - never a raid's `raid:<key>`): the relay hands the same receipt again after a
@@ -54,7 +53,7 @@ function piece(lv, tier, rolls) {
   const item = spoilsBase(lv, rolls);
   applyRarity(item, tier, rolls);
   item.isIdentified = true;
-  return { item, tier: item.rarity ?? tier };   // a Legendary with no record for its kind falls to Rare: read back off the item
+  return { item, tier: item.rarity ?? tier }; // a Legendary with no record for its kind falls to Rare: read back off the item
 }
 
 /**
@@ -69,16 +68,26 @@ export function rollStaffSpoils(seed, level, rank) {
   const gold = Math.round(T.goldPerLevel * lv * (0.8 + 0.4 * rolls()));
   const pieces = T.everyone.map((least) => piece(lv, atLeast(rolls, least), rolls));
   if (rank >= 1) for (const least of T.top) pieces.push(piece(lv, atLeast(rolls, least), rolls));
-  if (rank === 1) pieces.push(piece(lv, rolls() < T.first.legendary ? 'legendary' : atLeast(rolls, T.first.least), rolls));
-  lastPass(pieces.map((p) => p.item), rolls);   // LOOT2: the ladder's last pass, after every piece
-  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - LAST of all
+  if (rank === 1)
+    pieces.push(piece(lv, rolls() < T.first.legendary ? 'legendary' : atLeast(rolls, T.first.least), rolls));
+  lastPass(
+    pieces.map((p) => p.item),
+    rolls,
+  ); // LOOT2: the ladder's last pass, after every piece
+  techniquePass(
+    pieces.map((p) => p.item),
+    rolls,
+  ); // TECH1: a weapon's technique - LAST of all
   return { gold, pieces };
 }
 
 /** The spoils as the spoils pool hands them over (scenes/spoilsPool.js's pieces): each item, then the gold. Pure. */
 export function staffSpoilsList(/** @type {number} */ seed, /** @type {number} */ level, /** @type {number} */ rank) {
   const s = rollStaffSpoils(seed, level, rank);
-  return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'gold', gold: s.gold, tier: 'common' }];
+  return [
+    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    { kind: 'gold', gold: s.gold, tier: 'common' },
+  ];
 }
 
 /**
@@ -89,6 +98,12 @@ export function staffSpoilsList(/** @type {number} */ seed, /** @type {number} *
  */
 export function grantStaffSpoils(pool, lock, c, level) {
   const lv = Math.max(1, Math.floor(Number(level) || 1));
-  return lock(() => pool.grant({ day: staffSpoilsDay(c.v), acct: c.s, roll: () => staffSpoilsList(c.c, lv, c.r), text: STAFF_SPOILS_TEXT.granted() }))
-    .catch((e) => console.warn('[sev] spoils', e?.message ?? e));
+  return lock(() =>
+    pool.grant({
+      day: staffSpoilsDay(c.v),
+      acct: c.s,
+      roll: () => staffSpoilsList(c.c, lv, c.r),
+      text: STAFF_SPOILS_TEXT.granted(),
+    }),
+  ).catch((e) => console.warn('[sev] spoils', e?.message ?? e));
 }

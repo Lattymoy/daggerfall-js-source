@@ -9,6 +9,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { AURA_NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
+import { AURA_PIXEL_GLSL } from './auraPixel.js';   // the levels the auras are cut to
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryKitPieces } from '../net/armoryLaw.js';
 import { POSE_AT, poseWorld, ARM_BAND } from './armoryPose.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
@@ -47,8 +48,7 @@ export const ARMORY_HEAD = Object.freeze({
 /** Every rate whole over AURA_CLOCK_PERIOD. Pure. */
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
-/** WOLF-KIT (2026-10-30, mob: "the feet chest and arm and hand cosmetic ... on werewolf form", "like the weapon glow on
- *  claws"): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
+/** WOLF-KIT (2026-10-30): the slots still worn turned beast - the chest, the arms to the wrist and the legs, fitted to the wolf
  *  (armoryPose.js ARMORY_BEAST_FIT). The head's crown and halo stay off the wolf's muzzle, and its weapon piece is the
  *  claws' own glow already (systems/weaponGlow.js fistGlow). */
 export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);
@@ -163,7 +163,7 @@ uniform mat4 uVP;
 uniform vec3 uCamPos, uCamRight, uCamUp;
 uniform float uLift;
 uniform vec4 uTrail[${ARMORY_TRAIL}];
-out vec2 vP;
+out vec2 vArm;   // the surface's point; the fragment hands it on as vP
 out vec3 vWorld;
 out vec4 vS;
 ${SHARED}${CARDS_GLSL}
@@ -177,11 +177,11 @@ void main() {
     float a = aP.x * TAU;
     vec3 nrm = n1 * cos(a) + n2 * sin(a);
     p = uA + ax * aP.y + nrm * mix(uR.x, uR.y, aP.y);
-    vP = aP;
+    vArm = aP;
     vS = vec4(dot(nrm, normalize(uCamPos - p)), L, 0.0, 0.0);
   } else {
     float k = floor(aP.x * 0.5); vec2 c = vec2(aP.x - 2.0 * k, aP.y) * 2.0 - 1.0;
-    vP = c;
+    vArm = c;
     if (uMesh == ${DECAL}) {   // a decal facing uN, its up uU, a half-width uSize
       vec3 right = normalize(cross(uU, uN)), up = normalize(cross(uN, right));
       p = uA + (right * c.x + up * c.y) * uSize;
@@ -405,7 +405,8 @@ vec3 crystalLight() {
 }
 `;
 
-export const ARMORY_FS = `${HEAD}in vec2 vP;
+export const ARMORY_FS = `${HEAD}in vec2 vArm;
+vec2 vP;   // the point every look answers (main sets it)
 in vec3 vWorld;
 in vec4 vS;
 uniform float uKindle;
@@ -416,8 +417,10 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform float uPixel;   // 1 the light cut to the auras' levels - the pass sets it; 0 as drawn
+uniform vec4 uClip;     // a sprite's arm piece kept where uClip.xyz . p + uClip.w >= 0 (armClip) - 0 keeps all
 out vec4 o;
-${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${SHARED}${LOOKS_GLSL}
+${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${AURA_PIXEL_GLSL}${SHARED}${LOOKS_GLSL}
 /** GUILD-SHOP: the Insignia Armlet - a gilt band with the guild's field enamelled between its rims and its ink run round
  *  the middle, the crest (the arms on a gilt shield, uArms) on the band's outer face, and a soft glow of the ink behind
  *  it. Colour over what is behind (alpha), the glow alone added (alpha 0). */
@@ -445,7 +448,7 @@ vec4 insigniaLight() {
   float seen = smoothstep(0.0, 0.25, uFace);   // AUDIT GUILD-SHOP R7: from behind the arm, none of it
   return vec4(t.rgb * (0.7 + 0.3 * uFace) + t.a * sheen * vec3(1.0, 0.95, 0.8), t.a) * seen;
 }
-void main() {
+void armoryLook() {
   vec3 c;
   if (uPiece == ${ARMLET}) {   // GUILD-SHOP
     vec4 a = insigniaLight();
@@ -464,6 +467,15 @@ void main() {
   else c = vec3(0.0);   // the weapon's pieces are the weapon glow's (systems/weaponGlow.js law 7), never drawn here
   o = vec4(max(c, vec3(0.0)) * uKindle * fogFactorAt(vWorld), 1.0);
 }
+// the armlet covers (its crest's colour kept, its cover cut); every other piece adds light
+void main() {
+  if (dot(uClip.xyz, vWorld) + uClip.w < 0.0) discard;   // past the painted arm's inner edge
+  vP = vArm;
+  armoryLook();
+  // a piece is a hand's breadth of fine work (links, veins, facets) - snapped even to half a flat's pixel its detail was
+  // noise at the body's own distance, so it takes the levels alone, dithered on the screen's
+  if (uPixel > 0.5) { auraCell = floor(gl_FragCoord.xy); o = auraPixel(o, uPiece == ${ARMLET}); }
+}
 `;
 
 const _programs = new Map();
@@ -481,7 +493,7 @@ export function armoryPrograms(piece) {
 export const ARMORY_BODY_PIECES = Object.freeze(ARMORY_PIECES.filter((p) => p.slot !== 'weapon').map((p) => p.key));
 /** Every body piece's program - what the boot's idle starts (render/playPrograms.js). */
 export const ARMORY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(ARMORY_BODY_PIECES.flatMap((k) => armoryPrograms(ARMORY_PIECES.findIndex((p) => p.key === k)))));
-const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror']);   // GUILD-SHOP: the armlet's crest and colours
+const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror', 'uPixel', 'uClip']);   // GUILD-SHOP: the armlet's crest and colours
 
 /** A tube's grid: `round` steps round by `along` along, two triangles a cell, as (round, along) pairs. Pure. */
 export function armoryTubeGrid(round = ARMORY_ROUND, along = ARMORY_ALONG) {
@@ -545,8 +557,34 @@ export function armSide(pose, fwd, chest, eye, arm = 'left') {
   if (pose.armsTurned) return own;
   return (ahead > 0) === (arm === 'left') ? 'R' : 'L';
 }
+/** THE SIDE A PIECE IS WORN ON, or null - armSide's, and on a card none on an arm never read clear
+ *  of the body (no band) while the eye stands to the body's other side: that arm is the one the picture hides behind the
+ *  torso, and its trace runs on the torso's edge. Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
+ *  @param {ArrayLike<number>} eye @param {'left'|'right'} [arm] */
+export function armWornSide(pose, fwd, chest, eye, arm = 'left') {
+  const side = armSide(pose, fwd, chest, eye, arm);
+  if (!side || !pose?.card || pose.armsTurned || pose.bands?.[side]) return side;
+  const toEyeX = eye[0] - chest[0], toEyeZ = eye[2] - chest[2], reach = Math.hypot(toEyeX, toEyeZ) || 1;
+  return (arm === 'left' ? 1 : -1) * (toEyeX * fwd[2] - toEyeZ * fwd[0]) / reach > ARM_HIDDEN_SIN ? null : side;
+}
 /** The Insignia Armlet's arm, the wearer's left. Pure. */
 export const armletSide = (/** @type {any} */ pose, /** @type {number[]} */ fwd, /** @type {number[]} */ chest, /** @type {ArrayLike<number>} */ eye) => armSide(pose, fwd, chest, eye, 'left');
+/** A SPRITE'S ARM PIECE STOPS AT ITS ARM'S INNER EDGE. A piece lies on the card's near side, so where an arm passes
+ *  behind the painted torso the card hides nothing. Its draws keep the arm's side of the line its inner edge runs along -
+ *  `half` in from `shoulder`..`elbow` toward the chest on the card - seen from the eye: [n, d], kept where n.p + d >= 0, or null
+ *  with the eye on that line. Along the arm, so a slanting arm's own outline stays; off the chest on the card, since the
+ *  chest lifted before it shifts across at a three-quarter. Pure. @param {number[]} shoulder @param {number[]} elbow
+ *  @param {number} half @param {number[]} chest @param {ArrayLike<number>} right @param {ArrayLike<number>} eye */
+export function armClip(shoulder, elbow, half, chest, right, eye) {
+  const mid = mix(shoulder, elbow, 0.5), way = Math.sign((chest[0] - mid[0]) * right[0] + (chest[2] - mid[2]) * right[2]) || 1;
+  const edge = [shoulder[0] + right[0] * way * half, shoulder[1], shoulder[2] + right[2] * way * half], down = sub(elbow, shoulder), toEdge = sub(edge, /** @type {any} */ (eye));
+  let n = [down[1] * toEdge[2] - down[2] * toEdge[1], down[2] * toEdge[0] - down[0] * toEdge[2], down[0] * toEdge[1] - down[1] * toEdge[0]];
+  const len = Math.hypot(n[0], n[1], n[2]);
+  if (!(len > 1e-9)) return null;
+  const toMid = sub(mid, /** @type {any} */ (eye)), side = n[0] * toMid[0] + n[1] * toMid[1] + n[2] * toMid[2] >= 0 ? 1 / len : -1 / len;
+  n = n.map((axis) => axis * side);
+  return [n[0], n[1], n[2], -(n[0] * eye[0] + n[1] * eye[1] + n[2] * eye[2])];
+}
 /** ARMORY-MIRROR: half an eighth of a turn's sine - past it, off the line straight behind, the picture is a three-quarter
  *  back view's (eotbBillboard.js RECORD_OFFSETS 3). */
 export const ARM_HIDDEN_SIN = Math.sin(Math.PI / 8);
@@ -562,7 +600,8 @@ export function armoryDraws(key, w, eye, near, right = null) {
   const pose = w.pose, s = pose.scale > 0 ? pose.scale : 1, at = w.at, yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
   const pt = (/** @type {string} */ n) => /** @type {number[]} */ (poseWorld(pose, n, at, yaw, [0, 0, 0], 0, pose.card ? right : null));
   const fwd = [Math.sin(yaw), 0, Math.cos(yaw)];
-  const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + 0.35)); };
+  const floor = pose.card ? 0 : 0.35;   // on a card a decal seen edge on is gone - its picture has no face there
+  const facing = (/** @type {number[]} */ p, /** @type {number[]} */ n) => { const e = unit(sub(/** @type {any} */ (eye), p)); return Math.max(0, Math.min(1, (n[0] * e[0] + n[1] * e[1] + n[2] * e[2]) * 1.6 + floor)); };
   const out = [];
   const tube = (part, A, B, r0, r1, N = fwd, spike = false) => out.push({ mesh: TUBE, part, A, B, N, U: UP, r: [r0 * s, r1 * s], size: 0, count: 0, face: 1, gain: 1, ...(spike ? { spike: true } : {}) });
   // embers and motes only near; a glow or the Origin's spark (`always`) at any distance the piece is drawn
@@ -578,7 +617,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
    *  painted width over a piece `r0` round; a side view's onto the arm at the body's back edge, along the eye's line.
    *  `along(t)` its point `t` of the way from the shoulder to the elbow. */
   const upperArm = (/** @type {'left'|'right'} */ arm, /** @type {number} */ r0) => {
-    const side = armSide(pose, fwd, pt('chest'), eye, arm);
+    const side = armWornSide(pose, fwd, pt('chest'), eye, arm);   // a far arm never read clear wears none
     if (!side) return null;
     const sh0 = pt(`sh${side}`), el0 = pt(`el${side}`);
     let sh = sh0, el = el0, mid = null, onArm = (/** @type {number[]} */ p) => p;
@@ -593,8 +632,11 @@ export function armoryDraws(key, w, eye, near, right = null) {
       sh = onArm(sh0); el = onArm(el0);
     }
     const along = (/** @type {number} */ t) => (flank && !band ? onArm(mix(sh0, el0, t)) : mix(sh, el, t));
-    return { side, sh, el, mid, along, k: band ? band.w / (2 * r0 * s) : 1 };
+    const k = band ? band.w / (2 * r0 * s) : 1, chestOn = add(pt('chest'), fwd, -pose.pts[POSE_AT.chest + 2]);   // the chest on the card
+    return { side, sh, el, mid, along, k, clip: pose.card && right ? armClip(sh, el, k * r0 * s, chestOn, right, eye) : null };
   };
+  /** An arm's draws pushed since `from` take its clip (upperArm's) - none over the body. */
+  const clipped = (/** @type {number} */ from, /** @type {number[]|null} */ clip) => { if (clip) for (let i = from; i < out.length; i++) out[i].clip = clip; };
   if (key === 'burningcrown') {
     const C = ARMORY_HEAD.burningcrown, brow = add(head, up, C.brow * s), r = C.r * s, top = add(brow, up, C.band * s);
     tube(0, brow, top, C.r, 0.133);
@@ -606,14 +648,27 @@ export function armoryDraws(key, w, eye, near, right = null) {
     cards(1, 1, add(c, fwd, r), c, axis, [r, 0], 0.075 * s, 1, 1, true);
     cards(2, 8, c, c, axis, [r, 0]);
   } else if (key === 'emberheart' || key === 'eternalsigil') {
-    const chest = pt('chest'), f = facing(chest, fwd);
+    // on a card a depth along the facing is laid on the eye's line through the picture's chest, so it never slides across
+    // the picture as the eye goes round (laid along the facing, it slid 13 to 23 px off at a three-quarter)
+    const chestZ = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const painted = add(pt('chest'), fwd, -chestZ), e = unit(sub(/** @type {any} */ (eye), painted)); return add(painted, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
+    const chest = pose.card ? onCard(chestZ) : pt('chest'), f = facing(chest, fwd);
+    // from behind, the run at the chest's rows takes in the near arm hanging over the back - the Sigil's
+    // back stands mid-way between the far edge and that arm's inner edge, never on the arm
+    const backOnCard = (/** @type {number[]} */ point) => {
+      const span = pose.chestSpan, worn = /** @type {const} */ (['left', 'right']).map((a) => armWornSide(pose, fwd, pt('chest'), eye, a)).filter(Boolean);
+      if (!span || !right || worn.length !== 1) return point;
+      const wornOn = worn[0], chestDx = pose.dx[POSE_AT.chest / 3], b = pose.bands?.[wornOn], arm = b ? b.dx : (pose.dx[POSE_AT[`sh${wornOn}`] / 3] + pose.dx[POSE_AT[`el${wornOn}`] / 3]) / 2;
+      const half = b ? b.w / 2 : 0.06 * s, way = Math.sign(chestDx - arm) || 1, inner = Math.max(span[0], Math.min(span[1], arm + way * half));
+      const shift = ((way > 0 ? span[1] : span[0]) + inner) / 2 - chestDx;
+      return add(point, right, shift);
+    };
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = add(chest, fwd, -(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
+    else { const back = pose.card ? backOnCard(onCard(chestZ - 0.24 * s)) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
-      const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064);
+      const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064), from = out.length;
       if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
       const a = pose.arm > 0 ? pose.arm : 1;   // WOLF-KIT: the wolf's arms wider
       const { sh, el } = u, k = u.k * a, wa = pt(`wa${u.side}`);
@@ -628,6 +683,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
         cards(1, 8, add(mid, d, 0.03 * k * s), add(mid, d, -0.03 * k * s), d, [0.07 * k * s, 0], 0, 1, speed);
         if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056 * a, 0.06 * a); }
       }
+      clipped(from, u.clip);
     }
   } else if (key === 'cinderstride' || key === 'eternalgreaves') {
     for (const side of ['L', 'R']) {
@@ -641,7 +697,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
     // THANKS-POST: the spurs on both arms - out from the body's side, turned round the arm and leaning toward the hand
     const chest = pt('chest');
     for (const arm of /** @type {const} */ (['left', 'right'])) {
-      const u = upperArm(arm, ARMORY_SPUR_ROOT);
+      const u = upperArm(arm, ARMORY_SPUR_ROOT), from = out.length;
       if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
       const { sh, el } = u, wa = pt(`wa${u.side}`), lat = sub(sh, chest);
       ARMORY_SPURS.forEach((p, k) => {
@@ -653,6 +709,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
         const root = add(on, dir, ARMORY_SPUR_ROOT * (upper ? u.k : 1) * s);   // on the painted arm's skin
         tube(k, root, add(root, dir, p.len * s), p.r, 0.0015, fwd, true);
       });
+      clipped(from, u.clip);
     }
   } else if (key === 'insigniaarmlet') {
     // GUILD-SHOP (the owner: "shows your guild insigia in a detailed format on one of the upper arms. Just one side"): the
@@ -670,6 +727,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
     const on = add(mid, N, A.r * k * s), f = facing(on, N);
     out.push({ mesh: DECAL, part: 2, A: add(on, N, (A.off / 2) * s), B: on, N, U: up, r: [0, 0], size: A.halo * k * s, count: 0, face: f, gain: 1 });
     out.push({ mesh: DECAL, part: 1, A: add(on, N, A.off * s), B: on, N, U: up, r: [0, 0], size: A.size * k * s, count: 0, face: f, gain: 1 });
+    clipped(0, u.clip);
   }   // the weapon's pieces are drawn on the weapon itself, by the weapon glow (systems/weaponGlow.js law 7)
   return out;
 }
@@ -679,6 +737,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
 const NO_HAZE = new Float32Array(8);
+const NO_CLIP = new Float32Array(4);   // keeps every fragment
 function mat4Multiply(/** @type {Float32Array} */ out, /** @type {ArrayLike<number>} */ a, /** @type {ArrayLike<number>} */ b) {
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
     out[j * 4 + i] = a[i] * b[j * 4] + a[4 + i] * b[j * 4 + 1] + a[8 + i] * b[j * 4 + 2] + a[12 + i] * b[j * 4 + 3];
@@ -799,6 +858,8 @@ export class ArmoryRenderer {
     this._trail = new Float32Array(ARMORY_TRAIL * 4);
     /** the pieces the last draw drew, for the stats and the tests */
     this.drawn = 0;
+    /** false draws every piece as it was, its light uncut (the probes read the designs so) - the game never sets it */
+    this.pixel = true;
   }
 
   /** A piece's program, built at its door once the driver says it is compiled (the auras' law) - null while it compiles,
@@ -867,6 +928,7 @@ export class ArmoryRenderer {
             gl.uniform1i(U.uMesh, d.mesh); gl.uniform1i(U.uPart, d.part);
             gl.uniform3fv(U.uA, d.A); gl.uniform3fv(U.uB, d.B); gl.uniform3fv(U.uN, d.N); gl.uniform3fv(U.uU, d.U);
             gl.uniform2fv(U.uR, d.r); gl.uniform1f(U.uSize, d.size); gl.uniform1f(U.uFace, d.face); gl.uniform1f(U.uGain, d.gain);
+            if (U.uClip) gl.uniform4fv(U.uClip, d.clip ?? NO_CLIP);
             if (key === 'insigniaarmlet') gl.uniform1f(U.uLift, ((w.pose.card ? ARMORY_LIFT_M : 0) + (d.mesh === DECAL ? ARMORY_ARMLET.lift : 0)) * (w.pose.scale > 0 ? w.pose.scale : 1));   // GUILD-SHOP
             if (d.mesh === TUBE) { gl.bindVertexArray(d.spike ? this.spikeVao : this.tubeVao); gl.drawArrays(gl.TRIANGLES, 0, (d.spike ? ARMORY_SPIKE_ROUND : ARMORY_ROUND * ARMORY_ALONG) * 6); }
             else { gl.bindVertexArray(this.cardVao); gl.drawArrays(gl.TRIANGLES, 0, (d.mesh === DECAL ? 1 : Math.min(d.count, ARMORY_CARDS)) * 6); }
@@ -938,6 +1000,7 @@ export class ArmoryRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);
+    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);   // the pieces' light cut to the auras' levels
   }
 
   /** The wearer's footfall embers as the shader reads them: [x, y, z, age 0..1], -1 for none or burned out. */

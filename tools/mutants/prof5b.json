@@ -2,8 +2,8 @@
   {
     "name": "PROF5b-law-raise-nought",
     "file": "src/net/marketLaw.js",
-    "old": "high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
-    "new": "high + Math.max(0, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
+    "old": "  high == null ? opening : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100));",
+    "new": "  high == null ? opening : high + Math.max(0, Math.ceil((high * AUCTION_RAISE_PCT) / 100));",
     "tests": [
       "test/net/prof5b_law.test.js"
     ],
@@ -13,8 +13,8 @@
   {
     "name": "PROF5b-law-raise-floored",
     "file": "src/net/marketLaw.js",
-    "old": "high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
-    "new": "high + Math.max(1, Math.floor((high * AUCTION_RAISE_PCT) / 100)))",
+    "old": "  high == null ? opening : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100));",
+    "new": "  high == null ? opening : high + Math.max(1, Math.floor((high * AUCTION_RAISE_PCT) / 100));",
     "tests": [
       "test/net/prof5b_law.test.js"
     ]
@@ -22,8 +22,8 @@
   {
     "name": "PROF5b-law-opening-ignored",
     "file": "src/net/marketLaw.js",
-    "old": "export const auctionNext = (high, opening) => (high == null ? opening :",
-    "new": "export const auctionNext = (high, opening) => (high == null ? 1 :",
+    "old": "  high == null ? opening : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100));",
+    "new": "  high == null ? 1 : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100));",
     "tests": [
       "test/net/prof5b_law.test.js",
       "test/net/prof5b_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "PROF5b-law-late-inclusive",
     "file": "src/net/marketLaw.js",
-    "old": "(endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
-    "new": "(endsAt - atS <= AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
+    "old": "export const auctionEnd = (endsAt, atS) => (endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt);",
+    "new": "export const auctionEnd = (endsAt, atS) => (endsAt - atS <= AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt);",
     "tests": [
       "test/net/prof5b_law.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "PROF5b-law-late-adds-nothing",
     "file": "src/net/marketLaw.js",
-    "old": "(endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
-    "new": "(endsAt)",
+    "old": "export const auctionEnd = (endsAt, atS) => (endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt);",
+    "new": "export const auctionEnd = (endsAt, atS) => endsAt;",
     "tests": [
       "test/net/prof5b_law.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "PROF5b-law-any-quality",
     "file": "src/net/marketLaw.js",
-    "old": "export const auctionable = (recipeId, quality) => quality === MASTERWORK && pieceListable(recipeId) &&",
-    "new": "export const auctionable = (recipeId, quality) => pieceListable(recipeId) &&",
+    "old": "  quality === MASTERWORK && pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));",
+    "new": "  pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));",
     "tests": [
       "test/net/prof5b_law.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "PROF5b-book-auction-as-listing",
     "file": "src/net/marketBook.js",
-    "old": "(l.route === 'auction' ? door.auction(l.body) : door.list(l.body))",
-    "new": "door.list(l.body)",
+    "old": "            const r = heard(await ask(() => (l.route === 'auction' ? door.auction(l.body) : door.list(l.body)))); // PROF5b: an auction's own route",
+    "new": "            const r = heard(await ask(() => door.list(l.body))); // PROF5b: an auction's own route",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "PROF5b-book-overtaken-cached",
     "file": "src/net/marketBook.js",
-    "old": "'market-price-moved', 'auction-low', 'auction-leading',",
-    "new": "'market-price-moved', 'auction-leading',",
+    "old": "  'auction-low',\n  'auction-leading',",
+    "new": "  'auction-leading',",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "PROF5b-book-held-unheard",
     "file": "src/net/marketBook.js",
-    "old": "    if (Number.isSafeInteger(d.held)) state.held = d.held;\n",
-    "new": "",
+    "old": "    if (Number.isSafeInteger(d.held)) state.held = d.held;\n    if (Number.isSafeInteger(d.goldHeld)) state.goldHeld = d.goldHeld; // GOLD-MARKET",
+    "new": "    if (Number.isSafeInteger(d.goldHeld)) state.goldHeld = d.goldHeld; // GOLD-MARKET",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "PROF5b-book-bid-new-id",
     "file": "src/net/marketBook.js",
-    "old": "door.bid({ character: character(), ...req, rid: idFor(k) })",
-    "new": "door.bid({ character: character(), ...req, rid: mintMarketRid() })",
+    "old": "        const r = answered(heard(await ask(() => door.bid({ character: character(), ...req, rid: idFor(k) }))));",
+    "new": "        const r = answered(heard(await ask(() => door.bid({ character: character(), ...req, rid: mintMarketRid() }))));",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "PROF5b-tab-any-piece-auctioned",
     "file": "src/ui/marketTab.js",
-    "old": "const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);",
-    "new": "const all = m.pieces();",
+    "old": "      const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);",
+    "new": "      const all = m.pieces();",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "PROF5b-tab-bid-redraws",
     "file": "src/ui/marketTab.js",
-    "old": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); refresh(); };",
-    "new": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); ui.rerender(); };",
+    "old": "        st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX);\n        refresh();",
+    "new": "        st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX);\n        ui.rerender();",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "PROF5b-tab-leader-bids",
     "file": "src/ui/marketTab.js",
-    "old": "    if (a.leading) {\n      bar.append(el('span', 'market-ask', `Your bid of",
-    "new": "    if (false) {\n      bar.append(el('span', 'market-ask', `Your bid of",
+    "old": "    if (a.leading) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "PROF5b-tab-held-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "${held > 0 ? ` (${marksText(held)} held in bids)` : ''}",
-    "new": "",
+    "old": "      `Your silver: ${balance() == null ? '-' : marksText(balance())}${held > 0 ? ` (${marksText(held)} held in bids)` : ''}${gold}${st.stale ? ' - the market may be out of date' : ''}`,",
+    "new": "      `Your silver: ${balance() == null ? '-' : marksText(balance())}${gold}${st.stale ? ' - the market may be out of date' : ''}`,",
     "tests": [
       "test/net/prof5b_client.test.js"
     ]

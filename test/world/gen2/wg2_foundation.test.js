@@ -1,4 +1,4 @@
-// WG2 PHASE 1 (bible/03-World/World-2-Arc.md, bible/03-World/World-2-Canon.md): THE FOUNDATION - the exact kit every
+// WG2 PHASE 1: THE FOUNDATION - the exact kit every
 // gameplay field is built from, the designers' tables, the world manifest bound to the online ground law, and the stages'
 // invalidation (a change goes stale downstream over its own reach, never the whole world). Pins mutation-checked
 // (tools/mutants/wg2.json).

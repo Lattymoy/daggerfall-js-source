@@ -8,11 +8,11 @@
 // separate table here: the words and the numbers are two facts, and
 // only the numbers are arithmetic.
 import { HOLIDAYS, getHolidayId } from './holidays.js';
-import { calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a room and a meal cost half
+import { calculateTradePrice, essentialPrice } from './shopStock.js'; // ESSENTIALS-HALF: online, a room and a meal cost half
 import { dayOfYear } from './gameDate.js';
-import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js';   // P1: the rented room's own scene
-import { localizedText, localizedStrings } from './textManager.js';   // L10N3d: the tavern's words
-import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a room keeps the layout its inn was rented in
+import { interiorSceneName, addPermanentScene, removePermanentScene } from './sceneCache.js'; // P1: the rented room's own scene
+import { localizedText, localizedStrings } from './textManager.js'; // L10N3d: the tavern's words
+import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js'; // WD3: a room keeps the layout its inn was rented in
 
 /** The TEXT.RSC records the window speaks (:37-41). */
 export const TOO_MANY_DAYS_ID = 16;
@@ -39,18 +39,34 @@ export const youAreNotHungryText = () => localizedText('youAreNotHungry', YOU_AR
 /** tavernMenu (:43-49) and tavernFoodAndDrinkPrices (:50), in DFU's
  *  order - the price table is INDEXED by the picked row, so the two
  *  must stay aligned. */
-const ALE = 'Ale (1 gold)', BEER = 'Beer (1 gold)', MEAD = 'Mead (2 gold)', WINE = 'Wine (3 gold)',
-  BREAD = 'Bread (1 gold)', BROTH = 'Broth (1 gold)', CHEESE = 'Cheese (2 gold)', FOWL = 'Fowl (3 gold)',
-  GRUEL = 'Gruel (2 gold)', PIE = 'Pie (2 gold)', STEW = 'Stew (3 gold)';
+const ALE = 'Ale (1 gold)',
+  BEER = 'Beer (1 gold)',
+  MEAD = 'Mead (2 gold)',
+  WINE = 'Wine (3 gold)',
+  BREAD = 'Bread (1 gold)',
+  BROTH = 'Broth (1 gold)',
+  CHEESE = 'Cheese (2 gold)',
+  FOWL = 'Fowl (3 gold)',
+  GRUEL = 'Gruel (2 gold)',
+  PIE = 'Pie (2 gold)',
+  STEW = 'Stew (3 gold)';
 export const TAVERN_MENU = Object.freeze([ALE, BEER, MEAD, WINE, BREAD, BROTH, CHEESE, FOWL, GRUEL, PIE, STEW]);
 export const TAVERN_PRICES = Object.freeze([1, 1, 2, 3, 1, 1, 2, 3, 2, 2, 3]);
 /** L10N3d: DFU fills tavernMenu with GetLocalizedText(key), a line a
  *  key; the menu as the player reads it, in their language, each line
  *  in TAVERN_MENU's place. */
 const TAVERN_MENU_LINES = localizedStrings({
-  tavernAle: ALE, tavernBeer: BEER, tavernMead: MEAD, tavernWine: WINE,
-  tavernBread: BREAD, tavernBroth: BROTH, tavernCheese: CHEESE, tavernFowl: FOWL,
-  tavernGruel: GRUEL, tavernPie: PIE, tavernStew: STEW,
+  tavernAle: ALE,
+  tavernBeer: BEER,
+  tavernMead: MEAD,
+  tavernWine: WINE,
+  tavernBread: BREAD,
+  tavernBroth: BROTH,
+  tavernCheese: CHEESE,
+  tavernFowl: FOWL,
+  tavernGruel: GRUEL,
+  tavernPie: PIE,
+  tavernStew: STEW,
 });
 export const tavernMenuLines = () => Object.values(TAVERN_MENU_LINES);
 
@@ -58,8 +74,8 @@ export const tavernMenuLines = () => Object.values(TAVERN_MENU_LINES);
  *  costs online (eatOrDrink's own essentialPrice). L10N3d: the lines are the language's (tavernMenuLines), so the
  *  price is the last number before the line's closing bracket, whatever the language calls a gold piece. */
 export const tavernMenuPrice = (index, { online } = {}) => essentialPrice(TAVERN_PRICES[index], { online });
-export const tavernMenuLabels = ({ online } = {}) => tavernMenuLines().map((text, i) =>
-  text.replace(/\d+(?=\D*\)\s*$)/, String(tavernMenuPrice(i, { online }))));
+export const tavernMenuLabels = ({ online } = {}) =>
+  tavernMenuLines().map((text, i) => text.replace(/\d+(?=\D*\)\s*$)/, String(tavernMenuPrice(i, { online }))));
 
 /** The rental ceiling (:188) - days ALREADY rented count toward it. */
 export const MAX_RENTAL_DAYS = 350;
@@ -77,9 +93,10 @@ export const EAT_INTERVAL_MINUTES = 240;
  *  from inside the formula, which a pure function cannot do. */
 export function calculateRoomCost(daysToRent, date) {
   const doy = date?.dayOfYear ?? dayOfYear(date);
-  const cost = (doy <= HEARTS_DAY && doy + daysToRent > HEARTS_DAY)
-    ? ROOM_COST_PER_DAY * (daysToRent - 1)
-    : ROOM_COST_PER_DAY * daysToRent;
+  const cost =
+    doy <= HEARTS_DAY && doy + daysToRent > HEARTS_DAY
+      ? ROOM_COST_PER_DAY * (daysToRent - 1)
+      : ROOM_COST_PER_DAY * daysToRent;
   return { cost, freeForHeartsDay: cost === 0 };
 }
 
@@ -90,15 +107,14 @@ export function calculateRoomCost(daysToRent, date) {
  *  calculateCost (the item-shop formula) and would have charged every
  *  character the same. */
 export const roomPrice = (daysToRent, date, quality, skills, { online } = {}) =>
-  essentialPrice(calculateTradePrice(calculateRoomCost(daysToRent, date).cost, quality, skills, false), { online });   // ESSENTIALS-HALF
+  essentialPrice(calculateTradePrice(calculateRoomCost(daysToRent, date).cost, quality, skills, false), { online }); // ESSENTIALS-HALF
 
 /** PlayerEntity.GetRemainingHours (:268-275) - the `%dwr` macro's
  *  source, and the sweep's own test. A null room answers -1, which is
  *  DFU's own "no room" sentinel rather than 0. The CEILING is load
  *  bearing: a room with one minute left still reads as ONE hour, so
  *  the sweep below keeps it. */
-export const roomRemainingHours = (room, nowMinutes) =>
-  (room ? Math.ceil((room.expiryMinutes - nowMinutes) / 60) : -1);
+export const roomRemainingHours = (room, nowMinutes) => (room ? Math.ceil((room.expiryMinutes - nowMinutes) / 60) : -1);
 
 /** RemoveExpiredRentedRooms (:257-266) - the sweep that runs before
  *  every rental so an expired room does not read as a renewal. DFU
@@ -120,11 +136,12 @@ export function removeExpiredRooms(rooms, nowMinutes, sceneCache = null) {
 
 /** GetRentedRoom (:158): this inn's room, by map AND building. */
 export const findRentedRoom = (rooms, mapId, buildingKey, inn = true) =>
-  rooms.find((r) => r.mapId === mapId && r.buildingKey === buildingKey && recordStands(r))
+  rooms.find((r) => r.mapId === mapId && r.buildingKey === buildingKey && recordStands(r)) ??
   // WD3 (AUDIT WD3 S5): a room rented in another layout of this town - its inn's key names another building now - is
   // honoured at an INN of the town (`inn`: the building asking is one), never lost and never a stranger's bed by the
   // key alone
-  ?? (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ?? null;
+  (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ??
+  null;
 
 /** The days a live rental still has to run (:180-185), floored at 0 -
  *  DFU clamps a negative rather than letting an expired room CREDIT
@@ -144,7 +161,10 @@ export function daysAlreadyRented(room, nowMinutes) {
  *  The ORDER is DFU's and is load-bearing: the ceiling is tested
  *  BEFORE the knightly exemption, so even a free room cannot be
  *  booked past 350 days. */
-export function rentalDecision(input, { room = null, nowMinutes = 0, date, quality = 0, free = false, skills = undefined, online = undefined } = {}) {
+export function rentalDecision(
+  input,
+  { room = null, nowMinutes = 0, date, quality = 0, free = false, skills = undefined, online = undefined } = {},
+) {
   const days = Number.parseInt(input, 10);
   if (!Number.isFinite(days) || days < 1) return { kind: 'ignore' };
   if (days + daysAlreadyRented(room, nowMinutes) > MAX_RENTAL_DAYS) return { kind: 'tooMany', days };
@@ -163,7 +183,10 @@ export function rentalDecision(input, { room = null, nowMinutes = 0, date, quali
  *  bed marker; a renewal only EXTENDS the expiry. The bed index is
  *  stored rather than a position because "building positions are not
  *  stable" (DFU's own comment). */
-export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, name, bedCount = 1, rolls = Math.random, sceneCache = null }) {
+export function rentRoom(
+  rooms,
+  { room, days, nowMinutes, mapId, buildingKey, name, bedCount = 1, rolls = Math.random, sceneCache = null },
+) {
   // AddPermanentScene (:246) - a rented room's interior is held across
   // the world moving on, so the things left in it are still there when
   // the tenant comes back. P1 built the set; this names the scene.
@@ -175,7 +198,7 @@ export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, na
   // Offline nothing reads the count: DFU's rest window counts the hours down, as it always has.
   if (room) {
     room.expiryMinutes += 24 * 60 * days;
-    if (Number.isFinite(room.nights)) room.nights += days;   // an old save's room (no count) reads its nights off its hours at its next night
+    if (Number.isFinite(room.nights)) room.nights += days; // an old save's room (no count) reads its nights off its hours at its next night
     return room;
   }
   const fresh = {
@@ -186,14 +209,13 @@ export function rentRoom(rooms, { room, days, nowMinutes, mapId, buildingKey, na
     expiryMinutes: nowMinutes + 24 * 60 * days,
     nights: days,
   };
-  stampLayout(fresh, layoutStampOfMapId(mapId));   // WD3: the inn's town's layout (systems/layoutPins.js)
+  stampLayout(fresh, layoutStampOfMapId(mapId)); // WD3: the inn's town's layout (systems/layoutPins.js)
   rooms.push(fresh);
   return fresh;
 }
 
 /** DoFoodAndDrink's gate (:287): four game hours since the last meal. */
-export const canEat = (lastAteMinutes, nowMinutes) =>
-  (nowMinutes - (lastAteMinutes ?? 0)) >= EAT_INTERVAL_MINUTES;
+export const canEat = (lastAteMinutes, nowMinutes) => nowMinutes - (lastAteMinutes ?? 0) >= EAT_INTERVAL_MINUTES;
 
 /** FoodAndDrink_OnItemPicked (:305-334). The two HOLIDAY arms are the
  *  whole reason this is a function, and DFU's own comment flags that

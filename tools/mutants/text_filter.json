@@ -11,8 +11,8 @@
   {
     "name": "TEXT-F1-the-spelled-let-pass",
     "file": "src/net/nameFilter.js",
-    "old": "    if (!single(k)) { k++; continue; }",
-    "new": "    { k++; continue; }",
+    "old": "    if (!single(k)) {",
+    "new": "    {",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TEXT-F1-a-mark-starred-with-its-word",
     "file": "src/net/nameFilter.js",
-    "old": "    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;\n",
-    "new": "",
+    "old": "    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;\n    let word = from < to ? wordCaught(cps.slice(from, to).join('')) : null;",
+    "new": "    let word = from < to ? wordCaught(cps.slice(from, to).join('')) : null;",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TEXT-F1-the-anywhere-words-read-alone",
     "file": "src/net/nameFilter.js",
-    "old": "  const any = anywhereIn(flat);\n  if (any) return any.word;\n",
-    "new": "",
+    "old": "  const any = anywhereIn(flat);\n  if (any) return any.word;\n  const stretched = collapseRuns(flat);",
+    "new": "  const stretched = collapseRuns(flat);",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TEXT-F1-the-server-words-read",
     "file": "src/net/nameFilter.js",
-    "old": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);",
-    "new": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }, { kind: 'impersonation', words: IMPERSONATION }]);",
+    "old": "  { kind: 'crude', words: CRUDE },\n]);",
+    "new": "  { kind: 'crude', words: CRUDE },\n  { kind: 'impersonation', words: IMPERSONATION },\n]);",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TEXT-F1-a-number-read",
     "file": "src/net/nameFilter.js",
-    "old": "  if (/^\\p{N}+$/u.test(word)) return null;\n",
-    "new": "",
+    "old": "  if (/^\\p{N}+$/u.test(word)) return null;\n  const flat = normaliseName(word);",
+    "new": "  const flat = normaliseName(word);",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TEXT-F1-a-name-read-for-the-anywhere-words-no-more",
     "file": "src/net/nameFilter.js",
-    "old": "  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as \"${any.word}\". Please pick another.` };\n",
-    "new": "",
+    "old": "  if (any)\n    return {\n      ok: false,\n      kind: any.kind,\n      word: any.word,\n      reason: `That name reads as \"${any.word}\". Please pick another.`,\n    };\n  for (const { kind, words } of LISTS) {",
+    "new": "  for (const { kind, words } of LISTS) {",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TEXT-F1-the-guild-board-read-raw",
     "file": "server-account/src/guildBoard.js",
-    "old": "subject: maskText(n.subject), body: maskText(n.body),",
-    "new": "subject: n.subject, body: n.body,",
+    "old": "  subject: maskText(n.subject),\n  body: maskText(n.body),",
+    "new": "  subject: n.subject,\n  body: n.body,",
     "tests": [
       "test/net/text_filter.test.js"
     ]

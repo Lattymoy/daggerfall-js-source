@@ -56,8 +56,8 @@
   {
     "name": "TS10-host-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "townWalkShut(dfLocation, townGround, paths)",
-    "new": "townWalkShut(dfLocation, townGround)",
+    "old": "    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;",
+    "new": "    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround), dfLocation) : null;",
     "tests": [
       "test/world/townpaths.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "F3-the-key-dropped",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  Object.defineProperty(both, 'key', { get: () => `${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}` });\n",
-    "new": "",
+    "old": "  Object.defineProperty(both, 'key', {\n    get: () => `${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}`,\n  });\n  return both;",
+    "new": "  return both;",
     "tests": [
       "test/world/townpaths.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "F3-the-town's-key-unread",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "`${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}`",
-    "new": "`shut|${townFabricOf(dfLocation) ? 'fabric' : ''}`",
+    "old": "  Object.defineProperty(both, 'key', {\n    get: () => `${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}`,\n  });",
+    "new": "  Object.defineProperty(both, 'key', { get: () => `shut|${townFabricOf(dfLocation) ? 'fabric' : ''}` });",
     "tests": [
       "test/world/townpaths.test.js"
     ]

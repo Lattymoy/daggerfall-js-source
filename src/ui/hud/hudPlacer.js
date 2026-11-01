@@ -8,10 +8,16 @@
 let placer = null;
 
 /** hudLayout's: the sweep that marks and places every piece on the page. */
-export function seatHudPlacer(fn) { placer = typeof fn === 'function' ? fn : null; }
+export function seatHudPlacer(fn) {
+  placer = typeof fn === 'function' ? fn : null;
+}
 
 /** A piece was just appended: put it where the player moved it, now. Never throws into its builder. */
 export function placeHudPieces(doc) {
   if (!placer) return;
-  try { placer(doc); } catch { /* the sheet's own place */ }
+  try {
+    placer(doc);
+  } catch {
+    /* the sheet's own place */
+  }
 }

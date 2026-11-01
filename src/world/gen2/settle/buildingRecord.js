@@ -1,4 +1,4 @@
-// WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Buildings"): THE BUILDING, independent of any RMB block - an
+// WG2 SETTLEMENT 2.0 ("Buildings"): THE BUILDING, independent of any RMB block - an
 // identity that outlives regeneration, a place in the world, a ground, doors, a role and the services the game reads
 // from it (an inn, a shop, a temple...), who may enter, and an interior to reach. A legacy building is the same record
 // with its old key kept beside its id (rmbAdapter.js): `rmb:<mapId>:<key>@<layout>` - the layout stamp, because a

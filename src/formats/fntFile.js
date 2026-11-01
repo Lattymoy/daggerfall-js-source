@@ -12,8 +12,8 @@
 export const FNT_GLYPH_COUNT = 240;
 export const FNT_GLYPH_BYTES = 32;
 export const FNT_GLYPH_DIM = 16;
-export const FNT_ASCII_START = 33;   // DaggerfallFont defaultAsciiStart
-export const FNT_GLYPH_SPACING = 1;  // classicGlyphSpacing
+export const FNT_ASCII_START = 33; // DaggerfallFont defaultAsciiStart
+export const FNT_GLYPH_SPACING = 1; // classicGlyphSpacing
 
 export class FntFile {
   load(bytes) {
@@ -45,8 +45,8 @@ export class FntFile {
       }
     };
     for (let y = 0; y < FNT_GLYPH_DIM; y++) {
-      expand(g.data[y * 2 + 1], y, 0);   // LEFT half from the odd byte
-      expand(g.data[y * 2], y, 8);       // RIGHT half from the even byte
+      expand(g.data[y * 2 + 1], y, 0); // LEFT half from the odd byte
+      expand(g.data[y * 2], y, 8); // RIGHT half from the even byte
     }
     return out;
   }

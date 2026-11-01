@@ -117,8 +117,8 @@
   {
     "name": "HOME1-party-matched-on-nothing",
     "file": "src/net/homeLaw.js",
-    "old": ".some((n) => sameName(n, home.owner))",
-    "new": ".some(() => true)",
+    "old": "  if (home.entry === 'party') return (partyNames ?? []).some((n) => sameName(n, home.owner));",
+    "new": "  if (home.entry === 'party') return (partyNames ?? []).some(() => true);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "HOME1-price-bound-off-by-one",
     "file": "src/net/homeLaw.js",
-    "old": "v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
-    "new": "v >= HOME_PRICE_MIN && v < HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "old": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "new": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v < HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "HOME1-a-faction-house-for-sale",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (t === BUILDING_TYPES.House2 && (bd.factionId ?? 0) !== 0) return false;\n",
-    "new": "",
+    "old": "  if (t === BUILDING_TYPES.House2 && (bd.factionId ?? 0) !== 0) return false;\n  return (",
+    "new": "  return (",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "HOME1-quest-building-for-sale",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "bd.hasInterior !== false;",
+    "old": "  bd.hasInterior !== false &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  bd.hasInterior !== false;",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HOME1-one-scene-for-both",
     "file": "src/net/homeScene.js",
-    "old": "`OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
-    "new": "`DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
+    "old": "  `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
+    "new": "  `DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "HOME1-refund-whole",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "* DEED_SELL_MULT);",
-    "new": "* 1);",
+    "old": "export const homeRefund = (price) =>\n  Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * DEED_SELL_MULT);",
+    "new": "export const homeRefund = (price) => Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * 1);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "HOME1-public-shut",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
-    "new": "if (questSite) return 'enter';",
+    "old": "  if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
+    "new": "  if (questSite) return 'enter';",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "HOME1-quest-rung-lost",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
-    "new": "if (homeMayEnter(home, { partyNames })) return 'enter';",
+    "old": "  if (homeMayEnter(home, { partyNames }) || questSite) return 'enter';",
+    "new": "  if (homeMayEnter(home, { partyNames })) return 'enter';",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "HOME1-two-asks-in-flight",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const flying = asking.get(id);\n    // FB1001 (LOOK-STALE, HOMES-FORCE): a forced ask is asked AFTER the flight it finds - never answered by it (ASYNC\n    // NEVER DROPS): that flight set out before whatever forced this one (a look painted, a room rented), and its answer\n    // does not hold it. The one exception is a forced flight that set out after my last write: its answer is the one asked\n    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);\n",
-    "new": "",
+    "old": "    const flying = asking.get(id);\n    // FB1001 (LOOK-STALE, HOMES-FORCE): a forced ask is asked AFTER the flight it finds - never answered by it (ASYNC\n    // NEVER DROPS): that flight set out before whatever forced this one (a look painted, a room rented), and its answer\n    // does not hold it. The one exception is a forced flight that set out after my last write: its answer is the one asked\n    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);\n    const f = failed.get(id);",
+    "new": "    const f = failed.get(id);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "HOME1-the-time-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (!force && had && now() - had.at < ttlMs) return Promise.resolve(true);",
-    "new": "if (!force && had) return Promise.resolve(true);",
+    "old": "    if (!force && had && now() - had.at < ttlMs) return Promise.resolve(true);",
+    "new": "    if (!force && had) return Promise.resolve(true);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "HOME1-a-failure-forgets-the-town",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (!Array.isArray(list)) return fail(id);",
-    "new": "if (!Array.isArray(list)) { fail(id); towns.delete(id); return false; }",
+    "old": "          if (!Array.isArray(list)) return fail(id);",
+    "new": "          if (!Array.isArray(list)) {\n            fail(id);\n            towns.delete(id);\n            return false;\n          }",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -264,8 +264,8 @@
   {
     "name": "HOME1-no-wait-after-a-failure",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!force && f && now() - f.at < homeRetryMs(f.n)) return Promise.resolve(!!had);\n",
-    "new": "",
+    "old": "    if (!force && f && now() - f.at < homeRetryMs(f.n)) return Promise.resolve(!!had);\n    const gen = writesTo(id);",
+    "new": "    const gen = writesTo(id);",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -274,8 +274,8 @@
   {
     "name": "HOME1-the-claims-character",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}) });",
-    "new": "const r = await api.claim({ mapId: id, buildingKey, region, character: null, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}) });",
+    "old": "      region,\n      character: me,",
+    "new": "      region,\n      character: null,",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "HOME1-no-read-back",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      version++;\n    }\n    ensure(id, { force: true });\n",
-    "new": "      version++;\n    }\n",
+    "old": "    ensure(id, { force: true });\n  }",
+    "new": "  }",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "HOME1-a-door-waits-on-a-slow-town",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "return Promise.race([ensure(id), late]).finally(() => clearTimeout(timer));",
-    "new": "return ensure(id).finally(() => clearTimeout(timer));",
+    "old": "    return Promise.race([ensure(id), late]).finally(() => clearTimeout(timer));",
+    "new": "    return ensure(id).finally(() => clearTimeout(timer));",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "HOME1-the-second-ask-gone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!afford(price)) {\n      await homes.release(mapId, buildingKey);\n      return { ok: false, error: 'gold' };\n    }\n",
-    "new": "",
+    "old": "    if (!afford(price)) {\n      await homes.release(mapId, buildingKey);\n      return { ok: false, error: 'gold' };\n    }\n    pay(price);",
+    "new": "    pay(price);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "HOME1-a-refusal-paid-for",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });\n    if (!r.ok) return r;\n",
-    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });\n",
+    "old": "    if (!r.ok) return r;\n    if (!afford(price)) {",
+    "new": "    if (!afford(price)) {",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -330,8 +330,8 @@
   {
     "name": "HOME1-credited-before-the-service-agrees",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (!r.ok) return r;\n  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n",
-    "new": "  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0;   // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n  if (!r.ok) return r;\n",
+    "old": "  if (!r.ok) return r;\n  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0; // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);",
+    "new": "  const refund = homeRefund(r.price);\n  const decorBack = r.decorBack ?? 0; // DECOR1e: its placed pieces' half, as the service summed it\n  credit(refund + decorBack);\n  if (!r.ok) return r;",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "HOME1-the-bag-forgets-home",
     "file": "src/world/interior/interiorShared.js",
-    "old": "owned: !!owned, home: !!home,",
-    "new": "owned: !!owned, home: false,",
+    "old": "    home: !!home,",
+    "new": "    home: false,",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -350,8 +350,8 @@
   {
     "name": "HOME1-a-homes-memory-names-its-cupboards",
     "file": "src/world/interior/interiorShared.js",
-    "old": "loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }),",
-    "new": "loot: interiorLootRecords(ctx, [...seen], tooBig, { room }),",
+    "old": "      loot: home ? [] : interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
+    "new": "      loot: interiorLootRecords(ctx, [...seen], tooBig, { room }), // HOME1: a home's cupboards are its owner's alone",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -362,8 +362,8 @@
     "name": "HOME1-a-peers-word-lands-on-the-chest",
     "file": "src/world/interior/interiorShared.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the memory's landing hands on `carried`",
-    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
-    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "new": "  applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -373,8 +373,8 @@
   {
     "name": "HOME1-a-refused-act-names-a-cupboard",
     "file": "src/world/interior/interiorShared.js",
-    "old": "const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room });",
-    "new": "const l = interiorLootRecords(ctx, keys, tooBig, { room });",
+    "old": "  const l = home ? [] : interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
+    "new": "  const l = interiorLootRecords(ctx, keys, tooBig, { room }); // HOME1; OUTDOOR-LOOT: a cupboard's CURRENT word is the module's - a refused word is re-read from it",
     "tests": [
       "test/server/home1.test.js",
       "test/systems/loot/auditworld6a.test.js",
@@ -471,8 +471,8 @@
   {
     "name": "HOME1-the-bank-sells-online",
     "file": "src/ui/bankWindow.js",
-    "old": "      if (online) { this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; return; }\n",
-    "new": "",
+    "old": "      if (online) {\n        this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };\n        return;\n      }\n      const d = buyHouseDecision({",
+    "new": "      const d = buyHouseDecision({",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "HOME1-the-model-unread-at-the-door",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior",
-    "new": ", hasInterior",
+    "old": "    modelIdNum: model?.modelIdNum ?? null,\n    hasInterior: hasInteriorModels(sub),",
+    "new": "    hasInterior: hasInteriorModels(sub),",
     "tests": [
       "test/server/home1.test.js"
     ]

@@ -32,6 +32,8 @@ node_modules
 app/release/
 # DA13: the bundled game's index, written by the release workflow before electron-builder packs it.
 app/game-seed.json
+app/launcher/menuPad.js
+app/launcher/dfo-online.png
 
 # tools/parity: reproducible from prepare.sh / run.sh. cs/api holds DFU's
 # own sources (kept EXTERNAL per Port-Doctrine); out/ reaches ~2.4GB.
@@ -119,3 +121,5 @@ weapon-glow-probe/
 ._*
 Thumbs.db
 desktop.ini
+# the private server bundles (scripts/privateRelay.mjs)
+app/private/

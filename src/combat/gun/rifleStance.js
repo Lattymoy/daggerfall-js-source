@@ -28,12 +28,22 @@ const scale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
-const norm = (a) => { const l = len(a); return l > 1e-12 ? [a[0] / l, a[1] / l, a[2] / l] : [0, 0, 0]; };
+const norm = (a) => {
+  const l = len(a);
+  return l > 1e-12 ? [a[0] / l, a[1] / l, a[2] / l] : [0, 0, 0];
+};
 const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-const apply = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
+const apply = (m, v) => [
+  m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+  m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+  m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
+];
 const transpose = (m) => [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]];
 /** A rig matrix's turn, its uniform scale divided out. */
-const turnOf = (a) => { const s = Math.hypot(a[0], a[3], a[6]) || 1; return Array.from(a, (v) => v / s); };
+const turnOf = (a) => {
+  const s = Math.hypot(a[0], a[3], a[6]) || 1;
+  return Array.from(a, (v) => v / s);
+};
 /** The rotation whose columns are `x`, `y`, `z` (row-major, column vectors - the rig's own). */
 const fromColumns = (x, y, z) => [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]];
 const RAD = Math.PI / 180;
@@ -56,12 +66,40 @@ const RAD = Math.PI / 180;
  */
 export const RIFLE_STANCES = Object.freeze({
   third: Object.freeze({
-    low: Object.freeze({ grip: Object.freeze([-0.11, 0.27, -0.43]), pitch: 30, yaw: 30, cant: 10, poleR: Object.freeze([0.35, -1, -0.35]), poleL: Object.freeze([-0.5, -0.4, -1]) }),
-    aim: Object.freeze({ grip: Object.freeze([-0.24, 0.42, 0.12]), pitch: 0, yaw: 0, cant: 0, poleR: Object.freeze([0.7, -0.2, -0.8]), poleL: Object.freeze([-0.3, 0, -1]) }),
+    low: Object.freeze({
+      grip: Object.freeze([-0.11, 0.27, -0.43]),
+      pitch: 30,
+      yaw: 30,
+      cant: 10,
+      poleR: Object.freeze([0.35, -1, -0.35]),
+      poleL: Object.freeze([-0.5, -0.4, -1]),
+    }),
+    aim: Object.freeze({
+      grip: Object.freeze([-0.24, 0.42, 0.12]),
+      pitch: 0,
+      yaw: 0,
+      cant: 0,
+      poleR: Object.freeze([0.7, -0.2, -0.8]),
+      poleL: Object.freeze([-0.3, 0, -1]),
+    }),
   }),
   first: Object.freeze({
-    low: Object.freeze({ grip: Object.freeze([0.25, 0.40, -0.34]), pitch: 12, yaw: 25, cant: 8, poleR: Object.freeze([0.6, -0.6, -1]), poleL: Object.freeze([-0.5, -0.2, -1]) }),
-    aim: Object.freeze({ grip: Object.freeze([0.13, 0.40, -0.28]), pitch: 4, yaw: 0, cant: 0, poleR: Object.freeze([0.7, -0.2, -0.8]), poleL: Object.freeze([-0.3, 0, -1]) }),
+    low: Object.freeze({
+      grip: Object.freeze([0.25, 0.4, -0.34]),
+      pitch: 12,
+      yaw: 25,
+      cant: 8,
+      poleR: Object.freeze([0.6, -0.6, -1]),
+      poleL: Object.freeze([-0.5, -0.2, -1]),
+    }),
+    aim: Object.freeze({
+      grip: Object.freeze([0.13, 0.4, -0.28]),
+      pitch: 4,
+      yaw: 0,
+      cant: 0,
+      poleR: Object.freeze([0.7, -0.2, -0.8]),
+      poleL: Object.freeze([-0.3, 0, -1]),
+    }),
   }),
 });
 
@@ -99,18 +137,28 @@ export function rifleStanceStep(state, { wanted = false, shooting = false, comba
   return { w: w < 1e-3 && !wanted ? 0 : w, ready, since, free: f };
 }
 
-const pos = (mats, ref) => (ref == null ? null : mats.get(ref)?.t ?? null);
+const pos = (mats, ref) => (ref == null ? null : (mats.get(ref)?.t ?? null));
 /** A hand's palm: the wrist to its fingers' first joints (their middle) - else a tenth of the arm. */
 function palmLength(mats, limb) {
   const w = pos(mats, limb.hand);
   const bases = limb.fingers.map((ch) => pos(mats, ch[0])).filter(Boolean);
   if (!w || !bases.length) return 0;
-  return len(sub(scale(bases.reduce((s, p) => add(s, p), [0, 0, 0]), 1 / bases.length), w));
+  return len(
+    sub(
+      scale(
+        bases.reduce((s, p) => add(s, p), [0, 0, 0]),
+        1 / bases.length,
+      ),
+      w,
+    ),
+  );
 }
 
 /** The body's frame and the stance's anchor, read off the posed skeleton - or null. */
 function bodyFrame(mats, bones, view, eyeRef) {
-  const sR = pos(mats, bones.R.upper), eR = pos(mats, bones.R.fore), wR = pos(mats, bones.R.hand);
+  const sR = pos(mats, bones.R.upper),
+    eR = pos(mats, bones.R.fore),
+    wR = pos(mats, bones.R.hand);
   if (!sR || !eR || !wR) return null;
   const arm = len(sub(eR, sR)) + len(sub(wR, eR));
   if (!(arm > 1e-6)) return null;
@@ -122,7 +170,8 @@ function bodyFrame(mats, bones, view, eyeRef) {
   const sL = pos(mats, bones.L.upper);
   if (!sL) return null;
   const right = norm(sub(sR, sL));
-  const low = pos(mats, bones.spine[0]), high = pos(mats, bones.neck);
+  const low = pos(mats, bones.spine[0]),
+    high = pos(mats, bones.neck);
   let up = low && high ? norm(sub(high, low)) : [0, 0, 1];
   up = norm(sub(up, scale(right, dot(up, right))));
   if (!(len(up) > 0.5)) up = [0, 0, 1];
@@ -132,10 +181,17 @@ function bodyFrame(mats, bones, view, eyeRef) {
 /** A stance's grip and frame in the rig: `{ grip, barrel, top }`. */
 function stanceFrame(f, st) {
   const at = (v) => add(add(scale(f.right, v[0] * f.arm), scale(f.fwd, v[1] * f.arm)), scale(f.up, v[2] * f.arm));
-  const p = st.pitch * RAD, y = st.yaw * RAD, c = st.cant * RAD;
-  const barrel = norm(add(add(scale(f.fwd, Math.cos(p) * Math.cos(y)), scale(f.right, -Math.cos(p) * Math.sin(y))), scale(f.up, -Math.sin(p))));
+  const p = st.pitch * RAD,
+    y = st.yaw * RAD,
+    c = st.cant * RAD;
+  const barrel = norm(
+    add(
+      add(scale(f.fwd, Math.cos(p) * Math.cos(y)), scale(f.right, -Math.cos(p) * Math.sin(y))),
+      scale(f.up, -Math.sin(p)),
+    ),
+  );
   const level = norm(sub(f.up, scale(barrel, dot(f.up, barrel))));
-  const side = cross(barrel, level);   // the gun's right
+  const side = cross(barrel, level); // the gun's right
   const top = norm(add(scale(level, Math.cos(c)), scale(side, Math.sin(c))));
   return { grip: add(f.anchor, at(st.grip)), barrel, top };
 }
@@ -148,27 +204,37 @@ function stanceFrame(f, st) {
  * the gun's own on the bone (`{ a, t }`, the part's preTransform - identity when null); `view` 'third' or 'first'
  * (`eyeRef` the eye's node). Null where the body has no arms, no Weapon Bone or no eye. Pure.
  */
-export function rifleStanceRequest(skeleton, mats, { w = 1, ready = 0, view = 'third', eyeRef = null, attitude = null } = {}) {
+export function rifleStanceRequest(
+  skeleton,
+  mats,
+  { w = 1, ready = 0, view = 'third', eyeRef = null, attitude = null } = {},
+) {
   if (!(w > 0)) return null;
   const bones = climbBones(skeleton);
   const wb = skeleton?.byName?.get('weapon bone');
   if (!bones || wb == null || !mats.get(wb)) return null;
   const f = bodyFrame(mats, bones, view, eyeRef);
   const hand = mats.get(bones.R.hand);
-  const fr = handFrame(mats, bones.R, 'R'), frL = handFrame(mats, bones.L, 'L');
+  const fr = handFrame(mats, bones.R, 'R'),
+    frL = handFrame(mats, bones.L, 'L');
   if (!f || !hand || !fr || !fr.palm || !frL) return null;
   const stances = RIFLE_STANCES[view === 'first' ? 'first' : 'third'];
-  const lo = stanceFrame(f, stances.low), hi = stanceFrame(f, stances.aim);
+  const lo = stanceFrame(f, stances.low),
+    hi = stanceFrame(f, stances.aim);
   const k = Math.min(1, Math.max(0, ready));
-  const grip = lerp3(lo.grip, hi.grip, k), barrel = norm(lerp3(lo.barrel, hi.barrel, k));
+  const grip = lerp3(lo.grip, hi.grip, k),
+    barrel = norm(lerp3(lo.barrel, hi.barrel, k));
   const top = norm(sub(norm(lerp3(lo.top, hi.top, k)), scale(barrel, dot(norm(lerp3(lo.top, hi.top, k)), barrel))));
-  const G = fromColumns(cross(barrel, top), barrel, top);   // the gun mesh's frame in the rig: x right, y barrel, z top
+  const G = fromColumns(cross(barrel, top), barrel, top); // the gun mesh's frame in the rig: x right, y barrel, z top
   // the Weapon Bone that stands the gun there (the mesh is attitude . v on it), and the hand that holds that bone
-  const A = attitude?.a ?? [1, 0, 0, 0, 1, 0, 0, 0, 1], At = attitude?.t ?? [0, 0, 0];
+  const A = attitude?.a ?? [1, 0, 0, 0, 1, 0, 0, 0, 1],
+    At = attitude?.t ?? [0, 0, 0];
   const Rwb = mat33Mul(G, transpose(turnOf(A)));
   const pWb = sub(grip, apply(Rwb, At));
-  const Rh = turnOf(hand.a), Rb = turnOf(mats.get(wb).a);
-  const relR = mat33Mul(transpose(Rh), Rb), relT = apply(transpose(Rh), sub(mats.get(wb).t, hand.t));
+  const Rh = turnOf(hand.a),
+    Rb = turnOf(mats.get(wb).a);
+  const relR = mat33Mul(transpose(Rh), Rb),
+    relT = apply(transpose(Rh), sub(mats.get(wb).t, hand.t));
   const RhWant = mat33Mul(Rwb, transpose(relR));
   const wrist = sub(pWb, apply(RhWant, relT));
   const inHand = (v) => apply(RhWant, apply(transpose(Rh), v));
@@ -177,12 +243,29 @@ export function rifleStanceRequest(skeleton, mats, { w = 1, ready = 0, view = 't
   const fingersL = norm(add(apply(G, [1, 0, 0]), scale(barrel, 0.25)));
   // the wrist behind the palm's middle by half the palm (wrist to knuckles, read off the hand), under the palm's skin
   const wristL = sub(sub(forend, scale(top, f.arm * 0.04)), scale(fingersL, palmLength(mats, bones.L) * 0.6));
-  const pole = (a, b) => { const v = lerp3(a, b, k); return norm(add(add(scale(f.right, v[0]), scale(f.fwd, v[1])), scale(f.up, v[2]))); };
+  const pole = (a, b) => {
+    const v = lerp3(a, b, k);
+    return norm(add(add(scale(f.right, v[0]), scale(f.fwd, v[1])), scale(f.up, v[2])));
+  };
   return {
     w,
     hands: {
-      R: { at: wrist, fingers: norm(inHand(fr.fingers)), palm: norm(inHand(fr.palm)), pole: pole(stances.low.poleR, stances.aim.poleR), curl: RIFLE_HOLD.curlR, shrug: 0 },
-      L: { at: wristL, fingers: fingersL, palm: top, pole: pole(stances.low.poleL, stances.aim.poleL), curl: RIFLE_HOLD.curlL, shrug: 0 },
+      R: {
+        at: wrist,
+        fingers: norm(inHand(fr.fingers)),
+        palm: norm(inHand(fr.palm)),
+        pole: pole(stances.low.poleR, stances.aim.poleR),
+        curl: RIFLE_HOLD.curlR,
+        shrug: 0,
+      },
+      L: {
+        at: wristL,
+        fingers: fingersL,
+        palm: top,
+        pole: pole(stances.low.poleL, stances.aim.poleL),
+        curl: RIFLE_HOLD.curlL,
+        shrug: 0,
+      },
     },
   };
 }

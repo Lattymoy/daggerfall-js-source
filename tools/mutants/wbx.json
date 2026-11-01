@@ -11,8 +11,8 @@
   {
     "name": "WBX1-the-gate-on-sixteen-bits",
     "file": "src/world/gate/gateModel.js",
-    "old": "  const indices = new Uint32Array(count);",
-    "new": "  const indices = new Uint16Array(count);",
+    "old": "  const indices = new Uint32Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
+    "new": "  const indices = new Uint16Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "WBX4-the-base-dropped",
     "file": "src/net/gate/gateStrike.js",
-    "old": "Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base))",
-    "new": "Math.round(pct * Math.max(1, maxHealth))",
+    "old": "export const strikeDamage = (pct, maxHealth, base = 0) =>\n  Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));",
+    "new": "export const strikeDamage = (pct, maxHealth, base = 0) => Math.max(1, Math.round(pct * Math.max(1, maxHealth)));",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/net/gate/wb4_gate_boss.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "WBX4-the-chevron-behind-him",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "      const fx = Math.sin(sh.yaw), fz = Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;",
-    "new": "      const fx = -Math.sin(sh.yaw), fz = -Math.cos(sh.yaw), along = rx * fx + rz * fz, side = rx * fz - rz * fx;",
+    "old": "      const fx = Math.sin(sh.yaw),\n        fz = Math.cos(sh.yaw),",
+    "new": "      const fx = -Math.sin(sh.yaw),\n        fz = -Math.cos(sh.yaw),",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -94,7 +94,7 @@
   {
     "name": "WBX5-the-nova-at-the-roar",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  2: Object.freeze([Object.freeze({ a: 'cross', court: 1 }), Object.freeze({ wait: 'arrive' }), Object.freeze({ a: 'nova' })]),",
+    "old": "  2: Object.freeze([\n    Object.freeze({ a: 'cross', court: 1 }),\n    Object.freeze({ wait: 'arrive' }),\n    Object.freeze({ a: 'nova' }),\n  ]),",
     "new": "  2: Object.freeze([Object.freeze({ a: 'nova' })]),",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
@@ -104,8 +104,8 @@
   {
     "name": "WBX5-the-spokes-in-phase-two",
     "file": "src/net/gate/gateBrain.js",
-    "old": "pct: 0.52, base: 14, el: 'fire', aim: 'self', phase: 3, range: 40, w: 2, minGap: 0 }),",
-    "new": "pct: 0.52, base: 14, el: 'fire', aim: 'self', phase: 2, range: 40, w: 2, minGap: 0 }),",
+    "old": "    el: 'fire',\n    aim: 'self',\n    phase: 3,\n    range: 40,",
+    "new": "    el: 'fire',\n    aim: 'self',\n    phase: 2,\n    range: 40,",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/net/gate/wb3_gate_room.test.js"
@@ -141,8 +141,8 @@
   {
     "name": "WBX5-the-leap-drawn-at-its-landing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];\n}",
-    "new": "  return [e[0], e[1]];\n}",
+    "old": "  return [atk.x + (e[0] - atk.x) * k, atk.z + (e[1] - atk.z) * k];",
+    "new": "  return [e[0], e[1]];",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "WBX6-the-switch-ignored",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!_on || !(n > 0)) return n;\n  const onPlayer",
-    "new": "  if (true || !_on || !(n > 0)) return n;\n  const onPlayer",
+    "old": "  if (!_on || !(n > 0)) return n;",
+    "new": "  if (true || !_on || !(n > 0)) return n;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "WBX6-the-stand-in-unflagged",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  e.spareGear = true;",
-    "new": "  e.spareGear = false;",
+    "old": "  e.spareGear = true; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
+    "new": "  e.spareGear = false; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

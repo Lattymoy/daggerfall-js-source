@@ -15,7 +15,11 @@ import { PIXEL_UNITS, POSE_HZ_MAX } from '../src/net/wire.js';
 
 const CROWDS = (process.env.N || '50,100,200').split(',').map(Number);
 const POSES = Number(process.env.POSES || 3000);
-const quiet = () => { console.info = () => {}; console.warn = () => {}; console.log = (...a) => out.push(a.join(' ')); };
+const quiet = () => {
+  console.info = () => {};
+  console.warn = () => {};
+  console.log = (...a) => out.push(a.join(' '));
+};
 const out = [];
 const print = (...a) => process.stdout.write(`${a.join(' ')}\n`);
 
@@ -24,24 +28,38 @@ async function crowd(n) {
   let clock = realNow();
   Date.now = () => clock;
   try {
-    const px = 13 * 16 + 8, py = 13 * 16 + 8;
+    const px = 13 * 16 + 8,
+      py = 13 * 16 + 8;
     const key = `world:${Math.floor(px / 16)},${Math.floor(py / 16)}`;
     const R = fakeRoom(key, { now: () => clock });
-    const at = (i, t) => ({ x: (px + 0.5) * PIXEL_UNITS + Math.cos(i + t) * 900, y: 0, z: (499 - py + 0.5) * PIXEL_UNITS + Math.sin(i + t) * 900, yaw: (i + t) % 3, pitch: 0, mv: 1 });
+    const at = (i, t) => ({
+      x: (px + 0.5) * PIXEL_UNITS + Math.cos(i + t) * 900,
+      y: 0,
+      z: (499 - py + 0.5) * PIXEL_UNITS + Math.sin(i + t) * 900,
+      yaw: (i + t) % 3,
+      pitch: 0,
+      mv: 1,
+    });
     const socks = [];
     for (let i = 0; i < n; i++) {
       const ws = R.connect();
-      clock += 200;   // past the room's hello gate
+      clock += 200; // past the room's hello gate
       await R.hello(ws, `peer-${String(i).padStart(4, '0')}`, at(i, 0));
       if (ws.closed) throw new Error(`bench: hello ${i} refused (${JSON.stringify(ws.closed)})`);
       socks.push(ws);
     }
     let sent = 0;
-    for (const ws of socks) ws.send = () => { sent++; };   // counting, parsing nothing
+    for (const ws of socks)
+      ws.send = () => {
+        sent++;
+      }; // counting, parsing nothing
     const frames = socks.map((_, i) => (t) => JSON.stringify({ t: 'pose', p: at(i, t) }));
     // a round: every socket says one moving pose, the clock a socket's gate interval on
-    const round = async (t) => { for (let i = 0; i < n; i++) await R.room.webSocketMessage(socks[i], frames[i](t)); clock += Math.ceil(1000 / POSE_HZ_MAX) + 1; };
-    for (let t = 1; t <= 3; t++) await round(t);   // warm
+    const round = async (t) => {
+      for (let i = 0; i < n; i++) await R.room.webSocketMessage(socks[i], frames[i](t));
+      clock += Math.ceil(1000 / POSE_HZ_MAX) + 1;
+    };
+    for (let t = 1; t <= 3; t++) await round(t); // warm
     sent = 0;
     const rounds = Math.max(1, Math.round(POSES / n));
     const t0 = performance.now();
@@ -49,7 +67,9 @@ async function crowd(n) {
     const ms = performance.now() - t0;
     const poses = rounds * n;
     return { n, us: (ms * 1000) / poses, sends: sent / poses, poses };
-  } finally { Date.now = realNow; }
+  } finally {
+    Date.now = realNow;
+  }
 }
 
 const keep = { info: console.info, warn: console.warn, log: console.log };
@@ -58,6 +78,10 @@ try {
   print('crowd   us a moving pose   frames sent a pose   (poses timed)');
   for (const n of CROWDS) {
     const r = await crowd(n);
-    print(`${String(r.n).padStart(5)}   ${r.us.toFixed(1).padStart(16)}   ${r.sends.toFixed(1).padStart(18)}   (${r.poses})`);
+    print(
+      `${String(r.n).padStart(5)}   ${r.us.toFixed(1).padStart(16)}   ${r.sends.toFixed(1).padStart(18)}   (${r.poses})`,
+    );
   }
-} finally { Object.assign(console, keep); }
+} finally {
+  Object.assign(console, keep);
+}

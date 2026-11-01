@@ -99,14 +99,17 @@ test('DA6: the wiring pins - one API, two gates, and probes never touch the netw
   const apis = [...main.matchAll(/'(https:\/\/api\.github\.com\/[^']*)'/g)].map((m) => m[1]).sort();
   assert.deepEqual(apis, [
     'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/latest',
+    'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases/tags/',
     'https://api.github.com/repos/Lattymoy/daggerfall-js-source/releases?per_page=20',
   ], 'and nothing else');
+  // the private server's pinned release, read by its tag (hostingGame) - still the repo's own releases
+  assert.equal((main.match(/net\.fetch\(RELEASES_TAG_API \+ HOSTING_PIN,/g) ?? []).length, 1);
   assert.equal((main.match(/net\.fetch\(RELEASES_LATEST_API/g) ?? []).length, 1);
   assert.equal((main.match(/net\.fetch\(RELEASES_LIST_API/g) ?? []).length, 1);
   const fetches = [...main.matchAll(/net\.fetch\(([^,]+),/g)].map((m) => m[1].trim()).sort();
   // PIN MOVED: DA13 - and the game's own channel: a release's game manifest and ranges of its pack, through ONE door
   // that takes nothing but this repository's own release downloads (gameFetch's `url`)
-  assert.deepEqual(fetches, ['RELEASES_LATEST_API', 'RELEASES_LIST_API', 'pathToFileURL(p).toString()', 'url'], 'every fetch the shell makes is one of those, or a file on disk');
+  assert.deepEqual(fetches, ['RELEASES_LATEST_API', 'RELEASES_LIST_API', 'RELEASES_TAG_API + HOSTING_PIN', 'pathToFileURL(p).toString()', 'url'], 'every fetch the shell makes is one of those, or a file on disk');
   const door = main.slice(main.indexOf('function gameFetch(url, init) {'), main.indexOf('async function fetchPackRange('));
   assert.match(door, /if \(typeof url !== 'string' \|\| !url\.startsWith\(`\$\{RELEASES_URL\}\/download\/`\)\) return Promise\.reject\(/, 'the release\'s own download links, and nothing else');
   assert.match(door, /return net\.fetch\(url, init\);/);

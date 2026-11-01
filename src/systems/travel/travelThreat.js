@@ -23,7 +23,7 @@
 // scene's axes (a heading's forward is (sin yaw, cos yaw), as the drive's own yaw).
 // ═══════════════════════════════════════════════════════════════════
 
-import { paceNow } from './travelPace.js';   // PACE-DIALS: the near-enemies pace is the player's dial
+import { paceNow } from './travelPace.js'; // PACE-DIALS: the near-enemies pace is the player's dial
 
 /** Real seconds of warning the traveller always has before an enemy's reach. OW6-LATE (2026-09-29, the player: "when you
  *  go near enemies it slows you down waaaay to early - its good that it does it but still"): 2, was 5 - the hold begins
@@ -46,12 +46,12 @@ export const THREAT_WARN_S = 0.6;
 export function metresToReach(dx, dz, reach, heading) {
   const d = Math.hypot(dx, dz);
   if (!heading) return Math.max(0, d - reach);
-  const along = dx * heading.x + dz * heading.z;   // how far ahead the enemy is along the way
-  if (d <= reach) return along >= 0 ? 0 : Infinity;   // inside: held while the way goes deeper, free as it leads out
+  const along = dx * heading.x + dz * heading.z; // how far ahead the enemy is along the way
+  if (d <= reach) return along >= 0 ? 0 : Infinity; // inside: held while the way goes deeper, free as it leads out
   const disc = along * along - (d * d - reach * reach);
-  if (disc < 0) return Infinity;   // the way passes it by
+  if (disc < 0) return Infinity; // the way passes it by
   const enter = along - Math.sqrt(disc);
-  return enter >= 0 ? enter : Infinity;   // both crossings behind: it is behind the traveller
+  return enter >= 0 ? enter : Infinity; // both crossings behind: it is behind the traveller
 }
 
 /** Down to the old spinner's own ladder - 1, 2, 3, 4, 5, then fives - never under walking pace. */
@@ -88,7 +88,9 @@ export const foeRate = (foes, want) => (foes?.held ? Math.min(1, want) : foePace
  *   asks for less; `held` whether the traveller stands inside a threat's hold
  */
 export function threatCap({ threats, heading = null, speedMps, warnS = THREAT_WARN_S }) {
-  let best = Infinity, near = null, rate = 0;
+  let best = Infinity,
+    near = null,
+    rate = 0;
   const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);
   if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };
   for (const t of threats ?? []) {
@@ -97,7 +99,11 @@ export function threatCap({ threats, heading = null, speedMps, warnS = THREAT_WA
     // the time it takes at x1, against the warning: the lowest ratio is the enemy that asks the most of the clock
     if (!Number.isFinite(m)) continue;
     const r = m / (warnS * closing);
-    if (near === null || r < rate) { rate = r; best = m; near = t; }
+    if (near === null || r < rate) {
+      rate = r;
+      best = m;
+      near = t;
+    }
   }
   if (near === null) return { cap: Infinity, threat: null, metres: Infinity, held };
   return { cap: threatStep(rate), threat: near, metres: best, held };

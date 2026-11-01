@@ -11,8 +11,8 @@
   {
     "name": "LANDFORM7-keep-whole",
     "file": "src/world/landforms.js",
-    "old": "ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
-    "new": "ease: Object.freeze({ road: 40, track: 28, keep: 0.6 }),",
+    "old": "  ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
+    "new": "  ease: Object.freeze({ road: 40, track: 28, keep: 0.6 }),",
     "tests": [
       "test/world/terrain/landform7.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "LANDFORM7-road-narrow",
     "file": "src/world/landforms.js",
-    "old": "ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
-    "new": "ease: Object.freeze({ road: 20, track: 28, keep: 0.35 }),",
+    "old": "  ease: Object.freeze({ road: 40, track: 28, keep: 0.35 }),",
+    "new": "  ease: Object.freeze({ road: 20, track: 28, keep: 0.35 }),",
     "tests": [
       "test/world/terrain/landform7.test.js",
       "test/world/terrain/auditlandforms.test.js"

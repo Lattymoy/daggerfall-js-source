@@ -59,8 +59,12 @@ export const REVEALING_GUILDS = Object.freeze([GUILDS.ThievesGuild, GUILDS.DarkB
  */
 export function revealingMemberships(entity) {
   const out = { ...activeMemberships(entity) };
-  for (const book of [membershipsFor(entity?.guildMemberships, false), membershipsFor(entity?.guildMemberships, true)]) {
-    for (const g of REVEALING_GUILDS) if (!hasJoined(out, g) && hasJoined(book, g)) out[g.guildGroup] = book[g.guildGroup];
+  for (const book of [
+    membershipsFor(entity?.guildMemberships, false),
+    membershipsFor(entity?.guildMemberships, true),
+  ]) {
+    for (const g of REVEALING_GUILDS)
+      if (!hasJoined(out, g) && hasJoined(book, g)) out[g.guildGroup] = book[g.guildGroup];
   }
   return out;
 }
@@ -75,9 +79,12 @@ export function revealingMemberships(entity) {
  * @param factionName (id) => FACTION.TXT's name, GetAffiliation's read
  * @returns how many records the reveal wrote
  */
-export function revealGuildHallsOnMap(memberships, locationId, buildings, {
-  factionName = null, discover = discoverBuilding,
-} = {}) {
+export function revealGuildHallsOnMap(
+  memberships,
+  locationId,
+  buildings,
+  { factionName = null, discover = discoverBuilding } = {},
+) {
   if (!memberships || locationId == null || !buildings?.length) return 0;
   let written = 0;
   for (const guild of REVEALING_GUILDS) {
@@ -85,7 +92,7 @@ export function revealGuildHallsOnMap(memberships, locationId, buildings, {
     // subscribes in Join and unsubscribes in Leave, so a non-member's
     // handlers never run.
     if (!hasJoined(memberships, guild)) continue;
-    const name = factionName?.(guild.factionId) || 'unknown-guild';   // Guild.cs:170-176
+    const name = factionName?.(guild.factionId) || 'unknown-guild'; // Guild.cs:170-176
     for (const b of buildings) {
       if (b?.factionId !== guild.factionId) continue;
       if (discover(locationId, b, name)) written++;

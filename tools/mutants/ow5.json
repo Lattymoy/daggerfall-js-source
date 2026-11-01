@@ -54,8 +54,8 @@
   {
     "name": "OW5-V1-late-lock-kept",
     "file": "src/player/pointerLock.js",
-    "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
-    "new": "",
+    "old": "    document.addEventListener(\n      'pointerlockchange',\n      () => {\n        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();\n      },\n      false,\n    );\n    _errBound = true;",
+    "new": "    _errBound = true;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
@@ -104,7 +104,7 @@
   {
     "name": "OW5-S3-moored-always",
     "file": "src/systems/travel/seaAsk.js",
-    "old": "  if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;\n  return replan();",
+    "old": "  if (means.how !== 'moored' || plan.kinds.includes('sea')) return null;\n  return replan();",
     "new": "  return null;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
@@ -124,8 +124,8 @@
   {
     "name": "OW5-J3-rung-capped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;",
-    "new": "const cap = maxExpansions;",
+    "old": "    const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;",
+    "new": "    const cap = maxExpansions;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "OW5-G1-words",
     "file": "src/ui/enhanced/enhancedTravelControl.js",
-    "old": "get ground() { return t('travel.held.ground', 'until the Overworld rises'); },",
-    "new": "get ground() { return t('travel.held.load', 'while the land loads'); },",
+    "old": "    return t('travel.held.ground', 'until the Overworld rises');",
+    "new": "    return t('travel.held.load', 'while the land loads');",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
       "test/systems/travel/ow6_slowdown.test.js"
@@ -238,8 +238,8 @@
   {
     "name": "OW5-P4-future-stamp",
     "file": "src/systems/party/partyWalk.js",
-    "old": " && /** @type {number} */ (s) <= latest) return true;",
-    "new": ") return true;",
+    "old": "  for (const s of stops ?? [])\n    if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;",
+    "new": "  for (const s of stops ?? []) if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go) return true;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "OW5-P5-capital-spot",
     "file": "src/scenes/travelView.js",
-    "old": "  theSpot: 'the marked spot',",
-    "new": "  theSpot: 'The marked spot',",
+    "old": "  theSpot: 'the marked spot', // AUDIT OW5 P5: inside a sentence (\"L leads the party to the marked spot.\")",
+    "new": "  theSpot: 'The marked spot', // AUDIT OW5 P5: inside a sentence (\"L leads the party to the marked spot.\")",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -298,8 +298,8 @@
   {
     "name": "OW5-V3-row-undone",
     "file": "src/player/mwView.js",
-    "old": "  if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;\n",
-    "new": "",
+    "old": "  if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;\n  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
+    "new": "  if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false; // AUDIT CAPTAIN'S SEA S8: the glass's hold the same",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],

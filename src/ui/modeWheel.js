@@ -53,13 +53,14 @@ export function spokeOf(dx, dy, deadZone = MODE_WHEEL_DEAD_ZONE) {
  */
 export function createModeWheel(doc = globalThis.document ?? null) {
   let open = false;
-  let code = null;   // the key that opened it - its release is the choice
-  let pick = null;   // the opening host's ChangeInteractionMode
-  let x = 0, y = 0;
+  let code = null; // the key that opened it - its release is the choice
+  let pick = null; // the opening host's ChangeInteractionMode
+  let x = 0,
+    y = 0;
   let spoke = null;
   let root = null;
   let listening = false;
-  const swallowUp = new Set();   // the buttons whose press confirmed a choice - their release is the wheel's too
+  const swallowUp = new Set(); // the buttons whose press confirmed a choice - their release is the wheel's too
   const cells = new Map();
 
   function build() {
@@ -68,19 +69,36 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     root.className = 'mode-wheel';
     root.setAttribute('aria-hidden', 'true');
     Object.assign(root.style, {
-      position: 'fixed', left: '50%', top: '50%', width: '200px', height: '200px', margin: '-100px 0 0 -100px',
-      borderRadius: '50%', pointerEvents: 'none', zIndex: '40', display: 'none',
+      position: 'fixed',
+      left: '50%',
+      top: '50%',
+      width: '200px',
+      height: '200px',
+      margin: '-100px 0 0 -100px',
+      borderRadius: '50%',
+      pointerEvents: 'none',
+      zIndex: '40',
+      display: 'none',
       background: 'radial-gradient(circle, rgba(14,16,19,0.15) 0 22%, rgba(14,16,19,0.72) 23% 100%)',
-      border: '1px solid var(--iron, #2b323b)', boxShadow: '0 0 24px rgba(0,0,0,0.5)',
-      font: '600 15px var(--data, system-ui, sans-serif)', letterSpacing: '0.08em', textTransform: 'uppercase',
+      border: '1px solid var(--iron, #2b323b)',
+      boxShadow: '0 0 24px rgba(0,0,0,0.5)',
+      font: '600 15px var(--data, system-ui, sans-serif)',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
     });
     const at = { dialogue: [50, 16], grab: [84, 50], steal: [50, 84], info: [16, 50] };
     for (const [mode, label] of MODE_WHEEL_SPOKES) {
       const c = doc.createElement('div');
       c.textContent = label;
       Object.assign(c.style, {
-        position: 'absolute', left: `${at[mode][0]}%`, top: `${at[mode][1]}%`, transform: 'translate(-50%, -50%)',
-        padding: '4px 8px', borderRadius: '3px', color: 'var(--dim, #9a9486)', whiteSpace: 'nowrap',
+        position: 'absolute',
+        left: `${at[mode][0]}%`,
+        top: `${at[mode][1]}%`,
+        transform: 'translate(-50%, -50%)',
+        padding: '4px 8px',
+        borderRadius: '3px',
+        color: 'var(--dim, #9a9486)',
+        whiteSpace: 'nowrap',
       });
       root.append(c);
       cells.set(mode, c);
@@ -94,21 +112,35 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     listening = true;
     // the key's release reaches here whoever else hears it, and a lost focus (alt-tab - Alt is the default key)
     // closes the wheel WITHOUT choosing, so a key whose keyup the page never saw does not leave it standing
-    win.addEventListener('keyup', (e) => { release(e); });
+    win.addEventListener('keyup', (e) => {
+      release(e);
+    });
     win.addEventListener('blur', () => close(false));
-    win.addEventListener('mousemove', (e) => { look(e.movementX, e.movementY); });
+    win.addEventListener('mousemove', (e) => {
+      look(e.movementX, e.movementY);
+    });
     // AUDIT: a click while it is open CONFIRMS, and is the wheel's - caught in the capture phase, ahead of every host's
     // own window listener, so it is never also an activation or a swing in the mode being left; its release goes too
-    win.addEventListener('mousedown', (e) => {
-      if (!open) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-      swallowUp.add(e.button);
-      close(true);
-    }, true);
-    win.addEventListener('mouseup', (e) => {
-      if (!swallowUp.delete(e.button)) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-    }, true);
+    win.addEventListener(
+      'mousedown',
+      (e) => {
+        if (!open) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        swallowUp.add(e.button);
+        close(true);
+      },
+      true,
+    );
+    win.addEventListener(
+      'mouseup',
+      (e) => {
+        if (!swallowUp.delete(e.button)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      },
+      true,
+    );
   }
 
   function paint() {
@@ -127,8 +159,11 @@ export function createModeWheel(doc = globalThis.document ?? null) {
   function close(choose) {
     if (!open) return;
     open = false;
-    const chosen = spoke, to = pick;
-    code = null; pick = null; spoke = null;
+    const chosen = spoke,
+      to = pick;
+    code = null;
+    pick = null;
+    spoke = null;
     paint();
     if (choose && chosen && to) to(chosen);
   }
@@ -140,7 +175,9 @@ export function createModeWheel(doc = globalThis.document ?? null) {
     open = true;
     code = e?.code ?? null;
     pick = onPick;
-    x = 0; y = 0; spoke = null;
+    x = 0;
+    y = 0;
+    spoke = null;
     listen();
     build();
     paint();
@@ -158,16 +195,25 @@ export function createModeWheel(doc = globalThis.document ?? null) {
    *  dropped (AUDIT: a mistaken flick is undone by bringing the mouse back, not only by alt-tabbing). */
   function look(dx, dy) {
     if (!open) return false;
-    x += dx || 0; y += dy || 0;
+    x += dx || 0;
+    y += dy || 0;
     const r = Math.hypot(x, y);
-    if (r > MODE_WHEEL_MAX_ARM) { x *= MODE_WHEEL_MAX_ARM / r; y *= MODE_WHEEL_MAX_ARM / r; }
+    if (r > MODE_WHEEL_MAX_ARM) {
+      x *= MODE_WHEEL_MAX_ARM / r;
+      y *= MODE_WHEEL_MAX_ARM / r;
+    }
     const s = spokeOf(x, y);
-    if (s !== spoke) { spoke = s; paint(); }
+    if (s !== spoke) {
+      spoke = s;
+      paint();
+    }
     return true;
   }
 
   return {
-    press, release, look,
+    press,
+    release,
+    look,
     cancel: () => close(false),
     isOpen: () => open,
     spoke: () => spoke,

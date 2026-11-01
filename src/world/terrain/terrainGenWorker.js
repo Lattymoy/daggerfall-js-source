@@ -16,7 +16,7 @@
 import { packNature, natureBuffers } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { WoodsFile } from '../../formats/woodsFile.js';
 import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
-import { gen2Install } from '../gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
+import { gen2Install } from '../gen2/gen2Ground.js';   // The published regions
 import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
@@ -78,7 +78,7 @@ function handle(m) {
     // BAY-LEFT-GROUND: the sites past the Bay - made again whenever the places past the Bay move; every job after it reads it
     if (m.t === 'landform-beyond') { beyond = m.beyond ?? null; return; }
     // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
-    if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); gen2Install(m.wg2 ?? [], m.fit ?? null); dropGroundCache(); return; }   // WG2: the published regions with them
+    if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); gen2Install(m.wg2 ?? [], m.fit ?? null); dropGroundCache(); return; }   // The published regions with them
     // MAP-WATERS: the held map's rivers and lakes - the law this worker compiles for its carve anyway, packed and moved
     if (m.t === 'waters') { const { ink, transfer } = lawWatersInk(); globalThis.postMessage({ t: 'watersInk', ink }, transfer); return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
@@ -148,7 +148,7 @@ function handle(m) {
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
     if (out.landProps?.length) transfer.push(out.landProps.buffer);   // TESA-LANDS: the landmarks (a Fens pixel's 5,000 reeds)
-    transfer.push(...bedBuffers(out.bed));   // AUDIT WATER-NEXT P1: the bed, carved here; WATER-LEVEL: and its sheet
+    transfer.push(...bedBuffers(out.bed));   // The bed, carved here; WATER-LEVEL: and its sheet
     out.nature = packNature(out.nature);   // AUDIT BANTHA1 PERF-2: by column, its buffers transferred - never a clone of 12,000 objects
     transfer.push(...natureBuffers(out.nature));
     globalThis.postMessage({ t: 'done', ...out }, transfer);
@@ -236,7 +236,7 @@ function answerGrid(m) {
     // worker's own network - the one its jobs paint
     const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });
     const transfer = [positions.buffer, normals.buffer];
-    transfer.push(...bedBuffers(bed));   // AUDIT WATER-NEXT P1: and its bed; WATER-LEVEL: and its sheet
+    transfer.push(...bedBuffers(bed));   // And its bed; WATER-LEVEL: and its sheet
     globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });

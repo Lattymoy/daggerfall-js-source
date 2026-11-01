@@ -370,7 +370,7 @@ export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerra
  * @returns {?{ padded: Uint8Array, stamp: Uint8Array, fields: ?Uint8Array, PW: number, PH: number, walled: boolean, x0: number, y0: number, clear: number }}
  */
 export function locationOutlineBasis(dfLocation, rmbOf, tilePos = getLocationTerrainTileOrigin(dfLocation)) {
-  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;   // WG2-TOWNS: a World 2.0 town stands whole on its own ground
+  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;   // A World 2.0 town stands whole on its own ground
   const { width, height } = dfLocation.exterior.exteriorData;
   const T = RMB_TILES_PER_BLOCK, W = width * T, H = height * T;
   const blockAt = [];

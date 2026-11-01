@@ -928,7 +928,7 @@ export class RemotePlayers {
       this._syncRidingSound(peer, toScene, dt, eye, poseAgeMs);
       // AUDIT (the pre-merge audit, I-G): a peer the classic lane stands NOWHERE (INVIS-NET) is still heard - DFU turns a
       // concealed entity's renderer off, not its sounds - but has no sprite, no doll and no name here
-      // PVP-SEEN (the owner: "show no name in hidden", "always health bar for pvp zone"): `'bar'` keeps its tag, nameless
+      // PVP-SEEN: `'bar'` keeps its tag, nameless
       const hid = hidden(peer.id);
       if (hid) { if (hid === 'bar') this._shown.push({ peer, height: bodyHeight(peer.id) || PEER_HEIGHT, hid: true }); continue; }
       // INVIS-LOOK (2026-09-27): a CONCEALED peer (the host hands ECV1's visual) is drawn translucent, as a concealed foe

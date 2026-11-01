@@ -31,7 +31,12 @@
 // unchanged.
 import { getBool, getFloat } from './settings/settings.js';
 
-export const AXIS_ACTIONS = Object.freeze(['MovementHorizontal', 'MovementVertical', 'CameraHorizontal', 'CameraVertical']);
+export const AXIS_ACTIONS = Object.freeze([
+  'MovementHorizontal',
+  'MovementVertical',
+  'CameraHorizontal',
+  'CameraVertical',
+]);
 export const JOYSTICK_UI_ACTIONS = Object.freeze(['LeftClick', 'RightClick', 'MiddleClick', 'Back']);
 /** "there are only 16 recognized axes" (:32). */
 export const NUM_AXES = 16;
@@ -39,11 +44,17 @@ export const NUM_AXES = 16;
 export const AXIS_KEY_BASE = 5000;
 /** ResetDefaults :1034-1037. */
 export const DEFAULT_AXIS_BINDINGS = Object.freeze([
-  ['Axis1', 'MovementHorizontal'], ['Axis2', 'MovementVertical'], ['Axis4', 'CameraHorizontal'], ['Axis5', 'CameraVertical'],
+  ['Axis1', 'MovementHorizontal'],
+  ['Axis2', 'MovementVertical'],
+  ['Axis4', 'CameraHorizontal'],
+  ['Axis5', 'CameraVertical'],
 ]);
 /** ResetDefaults :1039-1042. */
 export const DEFAULT_JOYSTICK_UI = Object.freeze([
-  ['JoystickButton0', 'LeftClick'], ['JoystickButton3', 'RightClick'], ['JoystickButton2', 'MiddleClick'], ['JoystickButton1', 'Back'],
+  ['JoystickButton0', 'LeftClick'],
+  ['JoystickButton3', 'RightClick'],
+  ['JoystickButton2', 'MiddleClick'],
+  ['JoystickButton1', 'Back'],
 ]);
 /** The asset's per-axis dead zone (InputManager.asset `dead: 0.19` on
  *  every joystick axis): a reading inside it is 0 before DFU ever sees
@@ -82,7 +93,11 @@ export function parseAxisKeyName(s) {
 }
 export const isAxisKeyName = (s) => parseAxisKeyName(s) !== null;
 /** The axis number 1..16 of an axis name "AxisN", or 0. */
-export const axisNumber = (axis) => { const m = /^Axis(\d{1,2})$/.exec(axis ?? ''); const n = m ? Number(m[1]) : 0; return n >= 1 && n <= NUM_AXES ? n : 0; };
+export const axisNumber = (axis) => {
+  const m = /^Axis(\d{1,2})$/.exec(axis ?? '');
+  const n = m ? Number(m[1]) : 0;
+  return n >= 1 && n <= NUM_AXES ? n : 0;
+};
 /** GetAxisKey (:1655-1664): the even key is `axis > 0`, the odd `axis < 0`. */
 export function axisKeyDown(axes, key) {
   if (!(key >= AXIS_KEY_BASE)) return false;
@@ -106,7 +121,10 @@ export const unityDead = (v) => (Math.abs(v) < UNITY_AXIS_DEAD ? 0 : v);
  */
 export function unityAxes(pad, out = new Float32Array(NUM_AXES + 1)) {
   const ax = (i) => Number(pad?.axes?.[i]) || 0;
-  const bv = (i) => { const b = pad?.buttons?.[i]; return b == null ? 0 : (Number(b.value) || (b.pressed ? 1 : 0)); };
+  const bv = (i) => {
+    const b = pad?.buttons?.[i];
+    return b == null ? 0 : Number(b.value) || (b.pressed ? 1 : 0);
+  };
   out.fill(0);
   out[1] = unityDead(ax(0));
   out[2] = unityDead(-ax(1));
@@ -141,7 +159,11 @@ export function unityButtons(pad, out = new Set()) {
  * MoveBackwards clearing the autorun latch - the diagonal is FULL on
  * both axes, not a unit vector.
  */
-export function movementAxes(h, v, { deadzone = 0.1, threshold = 0.9, maximize = false, invertH = false, invertV = false } = {}) {
+export function movementAxes(
+  h,
+  v,
+  { deadzone = 0.1, threshold = 0.9, maximize = false, invertH = false, invertV = false } = {},
+) {
   if (h === 0 && v === 0) return null;
   if (invertH) h = -h;
   if (invertV) v = -v;
@@ -150,9 +172,22 @@ export function movementAxes(h, v, { deadzone = 0.1, threshold = 0.9, maximize =
   let dist = jd / threshold;
   if (maximize || dist > 1) dist = 1;
   const actions = [];
-  let x = 0, y = 0;
-  if (h > 0) { actions.push('MoveRight'); x = dist; } else if (h < 0) { actions.push('MoveLeft'); x = -dist; }
-  if (v > 0) { actions.push('MoveForwards'); y = dist; } else if (v < 0) { actions.push('MoveBackwards'); y = -dist; }
+  let x = 0,
+    y = 0;
+  if (h > 0) {
+    actions.push('MoveRight');
+    x = dist;
+  } else if (h < 0) {
+    actions.push('MoveLeft');
+    x = -dist;
+  }
+  if (v > 0) {
+    actions.push('MoveForwards');
+    y = dist;
+  } else if (v < 0) {
+    actions.push('MoveBackwards');
+    y = -dist;
+  }
   return { x, y, actions, clearsAutorun: v < 0 };
 }
 
@@ -162,8 +197,12 @@ export function movementAxes(h, v, { deadzone = 0.1, threshold = 0.9, maximize =
  * inverted by its own AxisActions flag.
  */
 export function cameraAxes(h, v, { deadzone = 0.1, invertH = false, invertV = false } = {}) {
-  let x = 0, y = 0;
-  if (Math.hypot(h, v) > deadzone) { x = h; y = v; }
+  let x = 0,
+    y = 0;
+  if (Math.hypot(h, v) > deadzone) {
+    x = h;
+    y = v;
+  }
   if (invertH) x = -x;
   if (invertV) y = -y;
   return { x, y };
@@ -199,7 +238,7 @@ export function uiScrollMovement(h, v, { deadzone = 0.1, invertH = false, invert
 export function controllerSettings() {
   return {
     enabled: getBool('Controls', 'EnableController'),
-    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9),   // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves
+    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9), // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves
     threshold: getFloat('Controls', 'JoystickMovementThreshold', 0.05, 1),
     lookSensitivity: getFloat('Controls', 'JoystickLookSensitivity', 0.1, 4),
     cursorSensitivity: getFloat('Controls', 'JoystickCursorSensitivity', 0.1, 4),

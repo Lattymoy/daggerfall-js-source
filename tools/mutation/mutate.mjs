@@ -12,24 +12,35 @@ import { spawnSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 const COV = JSON.parse(fs.readFileSync(path.join(ROOT, '.mutaudit/cov.json'), 'utf8'));
-const ALLTESTS = fs.readdirSync(path.join(ROOT, 'test'), { recursive: true }).filter(f => f.endsWith('.test.js')).sort();
+const ALLTESTS = fs
+  .readdirSync(path.join(ROOT, 'test'), { recursive: true })
+  .filter((f) => f.endsWith('.test.js'))
+  .sort();
 
 const argv = process.argv.slice(2);
-function arg(name, def) { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : def; }
+function arg(name, def) {
+  const i = argv.indexOf('--' + name);
+  return i >= 0 ? argv[i + 1] : def;
+}
 const flag = (name) => argv.includes('--' + name);
 
 const filesSel = (arg('files', '') || '').split(',').filter(Boolean);
 const opsSel = new Set((arg('ops', '') || '').split(',').filter(Boolean));
 // --lines A-B[,C-D,...]: restrict mutation sites to line ranges (slice
 // campaigns sweep only the lines the slice touched).
-const linesSel = (arg('lines', '') || '').split(',').filter(Boolean)
+const linesSel = (arg('lines', '') || '')
+  .split(',')
+  .filter(Boolean)
   .map((r) => r.split('-').map(Number));
 const inLines = (line) => !linesSel.length || linesSel.some(([a, b]) => line >= a && line <= (b ?? a));
 const perFile = Number(arg('per-file', '40'));
 const OUTLOG = path.join(ROOT, '.mutaudit', arg('out', 'log.jsonl'));
-const MAXSUBSET = Number(arg("max-subset", "126"));
+const MAXSUBSET = Number(arg('max-subset', '126'));
 let seed = Number(arg('seed', '12345'));
-function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+function rnd() {
+  seed = (seed * 1664525 + 1013904223) >>> 0;
+  return seed / 4294967296;
+}
 
 /* ------------------------------------------------------------------ masking */
 // Returns array `mask` where mask[i] is true when index i is *code* (not string /
@@ -37,39 +48,88 @@ function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 42949
 function maskCode(s) {
   const m = new Uint8Array(s.length).fill(1);
   let i = 0;
-  const prevSignificant = (k) => { let j = k - 1; while (j >= 0 && /\s/.test(s[j])) j--; return j >= 0 ? s[j] : ''; };
+  const prevSignificant = (k) => {
+    let j = k - 1;
+    while (j >= 0 && /\s/.test(s[j])) j--;
+    return j >= 0 ? s[j] : '';
+  };
   while (i < s.length) {
     const c = s[i];
-    if (c === '/' && s[i + 1] === '/') { const e = s.indexOf('\n', i); const end = e < 0 ? s.length : e; m.fill(0, i, end); i = end; continue; }
-    if (c === '/' && s[i + 1] === '*') { const e = s.indexOf('*/', i + 2); const end = e < 0 ? s.length : e + 2; m.fill(0, i, end); i = end; continue; }
+    if (c === '/' && s[i + 1] === '/') {
+      const e = s.indexOf('\n', i);
+      const end = e < 0 ? s.length : e;
+      m.fill(0, i, end);
+      i = end;
+      continue;
+    }
+    if (c === '/' && s[i + 1] === '*') {
+      const e = s.indexOf('*/', i + 2);
+      const end = e < 0 ? s.length : e + 2;
+      m.fill(0, i, end);
+      i = end;
+      continue;
+    }
     if (c === '"' || c === "'") {
-      let j = i + 1; while (j < s.length && s[j] !== c) { if (s[j] === '\\') j++; j++; }
-      m.fill(0, i, Math.min(j + 1, s.length)); i = j + 1; continue;
+      let j = i + 1;
+      while (j < s.length && s[j] !== c) {
+        if (s[j] === '\\') j++;
+        j++;
+      }
+      m.fill(0, i, Math.min(j + 1, s.length));
+      i = j + 1;
+      continue;
     }
     if (c === '`') {
-      let j = i + 1; let depth = 0;
+      let j = i + 1;
+      let depth = 0;
       while (j < s.length) {
-        if (s[j] === '\\') { j += 2; continue; }
-        if (s[j] === '$' && s[j + 1] === '{') { depth++; j += 2; continue; }
-        if (s[j] === '}' && depth > 0) { depth--; j++; continue; }
+        if (s[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (s[j] === '$' && s[j + 1] === '{') {
+          depth++;
+          j += 2;
+          continue;
+        }
+        if (s[j] === '}' && depth > 0) {
+          depth--;
+          j++;
+          continue;
+        }
         if (s[j] === '`' && depth === 0) break;
         j++;
       }
-      m.fill(0, i, Math.min(j + 1, s.length)); i = j + 1; continue;
+      m.fill(0, i, Math.min(j + 1, s.length));
+      i = j + 1;
+      continue;
     }
     if (c === '/') {
       const p = prevSignificant(i);
       if (p === '' || '=(,:[!&|?{;+*%~^'.includes(p) || /\n/.test(s.slice(0, i).slice(-1))) {
         // possible regex literal
-        let j = i + 1, cls = false, ok = false;
+        let j = i + 1,
+          cls = false,
+          ok = false;
         while (j < s.length && s[j] !== '\n') {
-          if (s[j] === '\\') { j += 2; continue; }
+          if (s[j] === '\\') {
+            j += 2;
+            continue;
+          }
           if (s[j] === '[') cls = true;
           else if (s[j] === ']') cls = false;
-          else if (s[j] === '/' && !cls) { ok = true; break; }
+          else if (s[j] === '/' && !cls) {
+            ok = true;
+            break;
+          }
           j++;
         }
-        if (ok) { while (j + 1 < s.length && /[a-z]/.test(s[j + 1])) j++; m.fill(0, i, Math.min(j + 1, s.length)); i = j + 1; continue; }
+        if (ok) {
+          while (j + 1 < s.length && /[a-z]/.test(s[j + 1])) j++;
+          m.fill(0, i, Math.min(j + 1, s.length));
+          i = j + 1;
+          continue;
+        }
       }
     }
     i++;
@@ -79,23 +139,49 @@ function maskCode(s) {
 
 /* ---------------------------------------------------------------- operators */
 const PAIR_OPS = [
-  ['REL', '<=', '<'], ['REL', '>=', '>'], ['REL', '===', '!=='], ['REL', '!==', '==='],
-  ['LOGIC', '&&', '||'], ['LOGIC', '||', '&&'],
-  ['SHIFT', '>>>', '>>'], ['SHIFT', '>>', '>>>'],
+  ['REL', '<=', '<'],
+  ['REL', '>=', '>'],
+  ['REL', '===', '!=='],
+  ['REL', '!==', '==='],
+  ['LOGIC', '&&', '||'],
+  ['LOGIC', '||', '&&'],
+  ['SHIFT', '>>>', '>>'],
+  ['SHIFT', '>>', '>>>'],
 ];
 const IDENT_OPS = [
-  ['MATH', 'Math.floor', 'Math.round'], ['MATH', 'Math.trunc', 'Math.round'],
-  ['MATH', 'Math.round', 'Math.trunc'], ['MATH', 'Math.ceil', 'Math.floor'],
-  ['MATHSIGN', 'Math.floor', 'Math.trunc'], ['MATHSIGN', 'Math.trunc', 'Math.floor'],
-  ['CLAMP', 'Math.max', 'Math.min'], ['CLAMP', 'Math.min', 'Math.max'],
-  ['BOOL', 'true', 'false'], ['BOOL', 'false', 'true'],
+  ['MATH', 'Math.floor', 'Math.round'],
+  ['MATH', 'Math.trunc', 'Math.round'],
+  ['MATH', 'Math.round', 'Math.trunc'],
+  ['MATH', 'Math.ceil', 'Math.floor'],
+  ['MATHSIGN', 'Math.floor', 'Math.trunc'],
+  ['MATHSIGN', 'Math.trunc', 'Math.floor'],
+  ['CLAMP', 'Math.max', 'Math.min'],
+  ['CLAMP', 'Math.min', 'Math.max'],
+  ['BOOL', 'true', 'false'],
+  ['BOOL', 'false', 'true'],
 ];
 
 function sites(text, rel) {
   const m = maskCode(text);
   const out = [];
-  const lineOf = (() => { const ls = [0]; for (let i = 0; i < text.length; i++) if (text[i] === '\n') ls.push(i + 1); return (o) => { let lo = 0, hi = ls.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ls[mid] <= o) lo = mid; else hi = mid - 1; } return lo + 1; }; })();
-  const codeAt = (i, n) => { for (let k = i; k < i + n; k++) if (!m[k]) return false; return true; };
+  const lineOf = (() => {
+    const ls = [0];
+    for (let i = 0; i < text.length; i++) if (text[i] === '\n') ls.push(i + 1);
+    return (o) => {
+      let lo = 0,
+        hi = ls.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (ls[mid] <= o) lo = mid;
+        else hi = mid - 1;
+      }
+      return lo + 1;
+    };
+  })();
+  const codeAt = (i, n) => {
+    for (let k = i; k < i + n; k++) if (!m[k]) return false;
+    return true;
+  };
 
   // ordered scan so longer ops win (>>> before >>, <= before <, === before ==)
   for (let i = 0; i < text.length; i++) {
@@ -105,15 +191,20 @@ function sites(text, rel) {
       if (text.startsWith(from, i) && codeAt(i, from.length)) {
         // avoid matching inside a longer operator
         if (from === '>>' && text.startsWith('>>>', i)) continue;
-        if (from === '<=' || from === '>=') { /* ok */ }
+        if (from === '<=' || from === '>=') {
+          /* ok */
+        }
         out.push({ op, start: i, end: i + from.length, from, to, line: lineOf(i) });
-        i += from.length - 1; matched = true; break;
+        i += from.length - 1;
+        matched = true;
+        break;
       }
     }
     if (matched) continue;
     // bare < and > (not part of <=, >=, <<, >>, =>, </)
     if ((text[i] === '<' || text[i] === '>') && m[i]) {
-      const n = text[i + 1], p = text[i - 1];
+      const n = text[i + 1],
+        p = text[i - 1];
       if (n !== '=' && n !== text[i] && p !== '=' && p !== '<' && p !== '>' && p !== '!') {
         out.push({ op: 'REL', start: i, end: i + 1, from: text[i], to: text[i] + '=', line: lineOf(i) });
       }
@@ -122,7 +213,8 @@ function sites(text, rel) {
     // identifier-ish ops
     for (const [op, from, to] of IDENT_OPS) {
       if (text.startsWith(from, i) && codeAt(i, from.length)) {
-        const p = text[i - 1] || ' ', n = text[i + from.length] || ' ';
+        const p = text[i - 1] || ' ',
+          n = text[i + from.length] || ' ';
         if (/[A-Za-z0-9_$.]/.test(p)) break;
         if (/[A-Za-z0-9_$]/.test(n)) break;
         out.push({ op, start: i, end: i + from.length, from, to, line: lineOf(i) });
@@ -161,15 +253,18 @@ function sites(text, rel) {
 /* ------------------------------------------------------------------- runner */
 function testsForLine(rel, line) {
   const f = COV[rel];
-  if (!f) return null;                       // file never loaded by any test
+  if (!f) return null; // file never loaded by any test
   const t = f[String(line)];
-  return t ? [...new Set(t)] : [];           // [] === line never executed
+  return t ? [...new Set(t)] : []; // [] === line never executed
 }
 
 function runTests(list) {
-  const argsList = list.length ? list.map(t => path.join('test', t)) : [];
+  const argsList = list.length ? list.map((t) => path.join('test', t)) : [];
   const r = spawnSync(process.execPath, ['--test', ...argsList], {
-    cwd: ROOT, encoding: 'utf8', timeout: 300000, maxBuffer: 1 << 28,   // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 300000,
+    maxBuffer: 1 << 28, // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
     env: { ...process.env, ARENA2_PATH: process.env.ARENA2_PATH },
   });
   if (r.error && r.error.code === 'ETIMEDOUT') return { status: 'TIMEOUT' };
@@ -183,42 +278,73 @@ const allSrc = [];
 (function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
     const p = path.join(d, e.name);
-    if (e.isDirectory()) walk(p); else if (e.name.endsWith('.js')) allSrc.push(path.relative(ROOT, p));
+    if (e.isDirectory()) walk(p);
+    else if (e.name.endsWith('.js')) allSrc.push(path.relative(ROOT, p));
   }
 })(path.join(ROOT, 'src'));
 
-const targets = allSrc.filter(f => !filesSel.length || filesSel.some(s => f.includes(s))).sort();
-const log = { write: (s) => fs.appendFileSync(OUTLOG, s), end: () => {} };  // sync: spawnSync starves the event loop
-let nRun = 0, nCaught = 0, nSurv = 0, nDead = 0, nSkip = 0, nErr = 0;
+const targets = allSrc.filter((f) => !filesSel.length || filesSel.some((s) => f.includes(s))).sort();
+const log = { write: (s) => fs.appendFileSync(OUTLOG, s), end: () => {} }; // sync: spawnSync starves the event loop
+let nRun = 0,
+  nCaught = 0,
+  nSurv = 0,
+  nDead = 0,
+  nSkip = 0,
+  nErr = 0;
 
 for (const rel of targets) {
   const abs = path.join(ROOT, rel);
   const orig = fs.readFileSync(abs, 'utf8');
-  let cand = sites(orig, rel).filter(s => (!opsSel.size || opsSel.has(s.op)) && inLines(s.line));
+  let cand = sites(orig, rel).filter((s) => (!opsSel.size || opsSel.has(s.op)) && inLines(s.line));
   // prefer covered lines, then sample
-  const covered = [], uncovered = [];
+  const covered = [],
+    uncovered = [];
   for (const s of cand) {
     const t = testsForLine(rel, s.line);
-    if (t === null || t.length === 0) uncovered.push(s); else { s.tests = t; covered.push(s); }
+    if (t === null || t.length === 0) uncovered.push(s);
+    else {
+      s.tests = t;
+      covered.push(s);
+    }
   }
   // report uncovered-by-construction sites without running
   for (const s of uncovered) {
     nDead++;
-    log.write(JSON.stringify({ file: rel, line: s.line, op: s.op, from: s.from, to: s.to, verdict: 'NO_TEST_EXECUTES_LINE', tests: 0 }) + '\n');
+    log.write(
+      JSON.stringify({
+        file: rel,
+        line: s.line,
+        op: s.op,
+        from: s.from,
+        to: s.to,
+        verdict: 'NO_TEST_EXECUTES_LINE',
+        tests: 0,
+      }) + '\n',
+    );
   }
   // sample covered sites
   const pick = [];
   const pool = covered.slice();
   const budget = Math.min(perFile, pool.length);
-  for (let k = 0; k < budget; k++) { const j = Math.floor(rnd() * pool.length); pick.push(pool.splice(j, 1)[0]); }
+  for (let k = 0; k < budget; k++) {
+    const j = Math.floor(rnd() * pool.length);
+    pick.push(pool.splice(j, 1)[0]);
+  }
   pick.sort((a, b) => a.start - b.start);
 
   for (const s of pick) {
     const mutated = orig.slice(0, s.start) + s.to + orig.slice(s.end);
-    if (mutated === orig) { nSkip++; continue; }
+    if (mutated === orig) {
+      nSkip++;
+      continue;
+    }
     fs.writeFileSync(abs, mutated);
     const chk = spawnSync(process.execPath, ['--check', abs], { encoding: 'utf8' });
-    if (chk.status !== 0) { fs.writeFileSync(abs, orig); nSkip++; continue; }
+    if (chk.status !== 0) {
+      fs.writeFileSync(abs, orig);
+      nSkip++;
+      continue;
+    }
     const subset = s.tests.length && s.tests.length <= MAXSUBSET && !flag('full') ? s.tests : ALLTESTS;
     let res = runTests(subset);
     let escalated = false;
@@ -230,17 +356,52 @@ for (const rel of targets) {
     }
     fs.writeFileSync(abs, orig);
     nRun++;
-    const verdict = res.status === 'PASS' ? 'SURVIVED' : res.status === 'TIMEOUT' ? 'TIMEOUT' : res.status === 'ERROR' ? 'HARNESS_ERROR' : 'CAUGHT';
-    if (verdict === 'SURVIVED') nSurv++; else if (verdict === 'HARNESS_ERROR') nErr++; else nCaught++;
-    log.write(JSON.stringify({
-      file: rel, line: s.line, op: s.op, from: s.from, to: s.to,
-      verdict, escalated, tests: subset.length, subset: subset.length <= 12 ? subset : undefined,
-      snippet: orig.slice(orig.lastIndexOf('\n', s.start) + 1, orig.indexOf('\n', s.end) < 0 ? undefined : orig.indexOf('\n', s.end)).trim().slice(0, 160),
-    }) + '\n');
-    process.stderr.write(`${verdict === 'SURVIVED' ? 'SURV ' : 'caught'} ${rel}:${s.line} ${s.op} ${s.from}->${s.to} (${subset.length} tests)\n`);
+    const verdict =
+      res.status === 'PASS'
+        ? 'SURVIVED'
+        : res.status === 'TIMEOUT'
+          ? 'TIMEOUT'
+          : res.status === 'ERROR'
+            ? 'HARNESS_ERROR'
+            : 'CAUGHT';
+    if (verdict === 'SURVIVED') nSurv++;
+    else if (verdict === 'HARNESS_ERROR') nErr++;
+    else nCaught++;
+    log.write(
+      JSON.stringify({
+        file: rel,
+        line: s.line,
+        op: s.op,
+        from: s.from,
+        to: s.to,
+        verdict,
+        escalated,
+        tests: subset.length,
+        subset: subset.length <= 12 ? subset : undefined,
+        snippet: orig
+          .slice(
+            orig.lastIndexOf('\n', s.start) + 1,
+            orig.indexOf('\n', s.end) < 0 ? undefined : orig.indexOf('\n', s.end),
+          )
+          .trim()
+          .slice(0, 160),
+      }) + '\n',
+    );
+    process.stderr.write(
+      `${verdict === 'SURVIVED' ? 'SURV ' : 'caught'} ${rel}:${s.line} ${s.op} ${s.from}->${s.to} (${subset.length} tests)\n`,
+    );
   }
   // safety: ensure clean
   fs.writeFileSync(abs, orig);
 }
 log.end();
-console.log(JSON.stringify({ run: nRun, caught: nCaught, survived: nSurv, harnessErrors: nErr, noTestExecutesLine: nDead, skippedInvalid: nSkip }));
+console.log(
+  JSON.stringify({
+    run: nRun,
+    caught: nCaught,
+    survived: nSurv,
+    harnessErrors: nErr,
+    noTestExecutesLine: nDead,
+    skippedInvalid: nSkip,
+  }),
+);

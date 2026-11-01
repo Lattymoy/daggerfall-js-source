@@ -38,8 +38,8 @@
   {
     "name": "DISC8D-no-keyup-close",
     "file": "src/ui/useMagicItemWindow.js",
-    "old": "    isCloseWindowDeferred = false;\n    win.done = true;   // CloseWindow",
-    "new": "    isCloseWindowDeferred = false;",
+    "old": "    win.done = true; // CloseWindow\n    onClose?.();",
+    "new": "    onClose?.();",
     "tests": [
       "test/systems/disc8.test.js"
     ]

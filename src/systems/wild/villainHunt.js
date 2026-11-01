@@ -12,11 +12,24 @@ import { liveStat } from '../statMods.js';
 export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });
 
 /** A villain's attack skills: any weapon, Hand-to-Hand, Archery or Destruction - the best is the guard's weapon skill. */
-export const HUNT_ATTACK_SKILLS = Object.freeze([SKILLS.ShortBlade, SKILLS.LongBlade, SKILLS.Axe, SKILLS.BluntWeapon,
-  SKILLS.HandToHand, SKILLS.Archery, SKILLS.Destruction]);
+export const HUNT_ATTACK_SKILLS = Object.freeze([
+  SKILLS.ShortBlade,
+  SKILLS.LongBlade,
+  SKILLS.Axe,
+  SKILLS.BluntWeapon,
+  SKILLS.HandToHand,
+  SKILLS.Archery,
+  SKILLS.Destruction,
+]);
 /** The skills a guard's own weapon reads (its kit is its own, so every one of them). */
-export const HUNT_WEAPON_SKILLS = Object.freeze([SKILLS.ShortBlade, SKILLS.LongBlade, SKILLS.Axe, SKILLS.BluntWeapon,
-  SKILLS.HandToHand, SKILLS.Archery]);
+export const HUNT_WEAPON_SKILLS = Object.freeze([
+  SKILLS.ShortBlade,
+  SKILLS.LongBlade,
+  SKILLS.Axe,
+  SKILLS.BluntWeapon,
+  SKILLS.HandToHand,
+  SKILLS.Archery,
+]);
 /** A villain's defensive skills. A guard casts nothing, so its one defence a skill moves is Dodging. */
 export const HUNT_DEFENCE_SKILLS = Object.freeze([SKILLS.Dodging, SKILLS.Restoration, SKILLS.Alteration]);
 /** DFU has no Block skill: a shield's block reads these six attributes (pcaao.js ShieldBlockChanceCalculation). */
@@ -63,16 +76,17 @@ export function mirrorOnto(entity, mirror) {
 }
 
 /** What a hit leaves of itself on `entity`: a hunter keeps VILLAIN_HUNT.taken of it, at least 1 of a hit that lands. */
-export const hunterTaken = (/** @type {any} */ entity, /** @type {number} */ damage) => (
-  entity?.villainHunter && damage > 0 ? Math.max(1, Math.round(damage * VILLAIN_HUNT.taken)) : damage);
+export const hunterTaken = (/** @type {any} */ entity, /** @type {number} */ damage) =>
+  entity?.villainHunter && damage > 0 ? Math.max(1, Math.round(damage * VILLAIN_HUNT.taken)) : damage;
 
 /** Is the villain hunted here: red on its meter, in a settlement's streets of the open zone, outdoors and alive. */
-export const villainHunted = (/** @type {{ meterRed: boolean, zone: boolean, outdoors: boolean, settled: boolean, alive: boolean }} */ o) => (
-  !!(o.meterRed && o.zone && o.outdoors && o.settled && o.alive));
+export const villainHunted = (
+  /** @type {{ meterRed: boolean, zone: boolean, outdoors: boolean, settled: boolean, alive: boolean }} */ o,
+) => !!(o.meterRed && o.zone && o.outdoors && o.settled && o.alive);
 
 /** ZONE-SAFE with the villain's exception: is a point at peace - in a settlement's streets, and not a red villain's. */
 export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled && !red;
 
-/** PVP-SAFE-HIT (the owner: "Let them hit them jit ge that back in safezone"): may I strike from where I stand - out of a
+/** PVP-SAFE-HIT: may I strike from where I stand - out of a
  *  settlement's safe streets (`streets`, zoneSafe's word), anyone fair; in them, a red villain alone. */
 export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets || !!red;

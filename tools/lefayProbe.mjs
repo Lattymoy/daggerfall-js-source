@@ -18,7 +18,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildLefayModel, flowerPlace, FLOWER_RINGS, PLAQUE, PEDESTAL } from '/src/world/lefayMonument.js';
@@ -98,10 +102,25 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -109,25 +128,62 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
-  await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 }).catch((e) => { throw new Error(`${e.message}: ${errs.join('; ')}`); });
-  const shot = async (name) => { if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${name}.png`) }); };
+  await page
+    .waitForFunction(() => window.ready === true, null, { timeout: 20000 })
+    .catch((e) => {
+      throw new Error(`${e.message}: ${errs.join('; ')}`);
+    });
+  const shot = async (name) => {
+    if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${name}.png`) });
+  };
   const SKY = [158, 184, 219];
   const near = (a, b, t = 12) => a.every((v, i) => Math.abs(v - b[i]) <= t);
   // from the east, a few paces off: every part of it drawn from outside with the back faces culled
-  const front = await page.evaluate(() => window.draw({ eye: [9, 1.7, 0], centre: [0, 2.6, 0],
-    at: [[0.73, 1.45, 0.3], [0.4, 4.2, 0], [0.12, 6.6, 0], [2.5, 0.15, 0], [1.9, 0.45, 0], [1.4, 0.75, 0.2], [-3, 5, 3]] }));   // the plaque under its lines, clear of the letters
+  const front = await page.evaluate(() =>
+    window.draw({
+      eye: [9, 1.7, 0],
+      centre: [0, 2.6, 0],
+      at: [
+        [0.73, 1.45, 0.3],
+        [0.4, 4.2, 0],
+        [0.12, 6.6, 0],
+        [2.5, 0.15, 0],
+        [1.9, 0.45, 0],
+        [1.4, 0.75, 0.2],
+        [-3, 5, 3],
+      ],
+    }),
+  ); // the plaque under its lines, clear of the letters
   await shot('front');
   check('no GL error drawing it', front.error === 0, `error ${front.error}`);
   const [plaque, obelisk, gilt, step0, step1, step2, over] = front.at;
   check('the plaque drawn, bronze', plaque[0] > plaque[2] + 20 && plaque[0] < 220, JSON.stringify(plaque));
-  check('the obelisk drawn, pale marble', obelisk.every((c) => c > 110) && Math.abs(obelisk[0] - obelisk[2]) < 40, JSON.stringify(obelisk));
+  check(
+    'the obelisk drawn, pale marble',
+    obelisk.every((c) => c > 110) && Math.abs(obelisk[0] - obelisk[2]) < 40,
+    JSON.stringify(obelisk),
+  );
   check('its point drawn, gilt', gilt[0] > gilt[2] + 40, JSON.stringify(gilt));
-  for (const [n, c] of [['lowest', step0], ['middle', step1], ['top', step2]]) check(`the ${n} step drawn, granite (not culled away to the sky or the ground)`, !near(c, SKY) && Math.abs(c[0] - c[2]) < 30 && c[0] > 30, JSON.stringify(c));
+  for (const [n, c] of [
+    ['lowest', step0],
+    ['middle', step1],
+    ['top', step2],
+  ])
+    check(
+      `the ${n} step drawn, granite (not culled away to the sky or the ground)`,
+      !near(c, SKY) && Math.abs(c[0] - c[2]) < 30 && c[0] > 30,
+      JSON.stringify(c),
+    );
   check('the sky beside its point', near(over, SKY), JSON.stringify(over));
   // from the other three sides: the plaque there too
-  for (const [n, eye, p] of [['north', [0, 1.7, 9], [-0.3, 1.45, 0.73]], ['west', [-9, 1.7, 0], [-0.73, 1.45, -0.3]], ['south', [0, 1.7, -9], [0.3, 1.45, -0.73]]]) {
+  for (const [n, eye, p] of [
+    ['north', [0, 1.7, 9], [-0.3, 1.45, 0.73]],
+    ['west', [-9, 1.7, 0], [-0.73, 1.45, -0.3]],
+    ['south', [0, 1.7, -9], [0.3, 1.45, -0.73]],
+  ]) {
     const r = await page.evaluate(({ eye, p }) => window.draw({ eye, centre: [0, 2.6, 0], at: [p] }), { eye, p });
     check(`the ${n} face's plaque drawn`, r.at[0][0] > r.at[0][2] + 20, JSON.stringify(r.at[0]));
   }
@@ -135,12 +191,25 @@ try {
   for (let k = 0; k < 4; k++) {
     const read = await page.evaluate((k) => window.readPlaque(k), k);
     if (k === 0) await shot('plaque');
-    check(`face ${k}: the inscription reads the right way round`, read.drawn > 0.6 && read.drawn > read.mirrored + 0.3 && read.drawn > read.flipped + 0.3,
-      `as drawn ${read.drawn.toFixed(2)}, mirrored ${read.mirrored.toFixed(2)}, upside down ${read.flipped.toFixed(2)}`);
+    check(
+      `face ${k}: the inscription reads the right way round`,
+      read.drawn > 0.6 && read.drawn > read.mirrored + 0.3 && read.drawn > read.flipped + 0.3,
+      `as drawn ${read.drawn.toFixed(2)}, mirrored ${read.mirrored.toFixed(2)}, upside down ${read.flipped.toFixed(2)}`,
+    );
   }
   // AUDIT LEFAY1 A2: the cornice's underside, from the ground under its overhang - stone, never the sky through it
-  const under = await page.evaluate(() => window.draw({ eye: [3, 1.7, 0], centre: [0.78, 2.45, 0], at: [[0.78, 2.449, 0], [0.78, 2.449, 0.3]] }));
-  for (const c of under.at) check('the cornice\'s underside drawn, marble', !near(c, SKY) && c[0] > 60, JSON.stringify(c));
+  const under = await page.evaluate(() =>
+    window.draw({
+      eye: [3, 1.7, 0],
+      centre: [0.78, 2.45, 0],
+      at: [
+        [0.78, 2.449, 0],
+        [0.78, 2.449, 0.3],
+      ],
+    }),
+  );
+  for (const c of under.at)
+    check("the cornice's underside drawn, marble", !near(c, SKY) && c[0] > 60, JSON.stringify(c));
   if (shotsAt) {
     await page.evaluate(() => window.draw({ eye: [7, 3.2, 6], centre: [0, 2.4, 0] }));
     await shot('quarter');

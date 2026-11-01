@@ -188,7 +188,7 @@ import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateI
 import {
   missileArchive, MISSILE_SPEED, ARROW_FLIGHT_SPEED, missileReach,   // ROAD-H tail: the reach along the normalised direction; BAL-ARCHERY: a shaft's speed
   MISSILE_LIFESPAN_S, sweepFrom,   // AUDIT WALL-SHAFT W1
-  missileHitsFoe, missileHitsCapsule, playerShotOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
+  missileHitsFoe, missileHitsCapsule, playerShotOrigin, PLAYER_BODY_RADIUS, dungeonMissileBodies,   // TRUNK-FOES: the bodies a flight strikes (AUDIT FB1031 F2: each missile its own)   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, attemptSoulTrap, peerSoulTrapOf, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
 import { preloadTradeArt } from '../ui/native/nativeTrade.js';   // DR1: X7's Identify window - the SPELL's, castable underground
@@ -4501,7 +4501,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return _arenaSpellQ;
   };
   /** A blow's number on my opponent, out to the referee (ARENA4b: with its sequence); answers whether it went. */
-  const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }));   // OPEN-HAND: what a follow-up owed a player is dropped - BAL8, the referee's blow alone
+  const landOnRival = (rb, damage, kind) => { takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind, w: playerWeapon.strikingWeapon?.templateIndex ?? -1, m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }); };   // OPEN-HAND: what a follow-up owed a player is dropped - BAL8, the referee's blow alone
   /** A swing of mine that met my opponent: the parry's ring for none, else the hit's sound and blood at them and the
    *  number out (their own screen bleeds as the relay's health falls). */
   function swingOnRival(rb, damage, lookDir) {
@@ -4804,7 +4804,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)   // WALL-SHAFT: a player's shaft is swept, so a foe before a wall is met first
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(m, foes, playerFeet, playerHeight, m.fromPlayer ? [gateBossBody(), arenaRivalBody(), ...gateCrystalBodies(), ...gateHostBodies()] : null));   // AUDIT FB1031 II K4: and the relay's bodies my shaft strikes   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)   // WALL-SHAFT: a player's shaft is swept, so a foe before a wall is met first   // TRUNK-FOES: never short of a body in cover
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:

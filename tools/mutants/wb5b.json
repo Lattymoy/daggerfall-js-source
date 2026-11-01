@@ -40,7 +40,7 @@
     "name": "WB5b-the-route-open",
     "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/gate/claim']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n  '/v1/gate/claim',\n]);",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "WB5b-the-key-read-per-request",
     "file": "server-account/src/signing.js",
-    "old": "  if (_gateKey !== undefined) return _gateKey;\n",
-    "new": "",
+    "old": "  if (_gateKey !== undefined) return _gateKey;\n  const raw = String(env.GATE_PUBLIC_KEY ?? '');",
+    "new": "  const raw = String(env.GATE_PUBLIC_KEY ?? '');",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "WB5b-the-guest-line-every-time",
     "file": "src/net/gate/gateClaims.js",
-    "old": " && !guestSaid.has(r)",
-    "new": "",
+    "old": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest') {",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "WB5b-the-unsigned-kept",
     "file": "src/net/gate/gateClaims.js",
-    "old": "c && c.signed && (t == null || c.e > t)",
-    "new": "c && (t == null || c.e > t)",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "WB5b-an-offer-every-frame",
     "file": "src/net/gate/gateClaims.js",
-    "old": "      const t = nowMs(), due = t - lastAt >= GATE_CLAIM_RETRY_MS;",
-    "new": "      const t = nowMs(), due = true;",
+    "old": "        due = t - lastAt >= GATE_CLAIM_RETRY_MS;",
+    "new": "        due = true;",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "WB5b-the-mid-offer-receipt-left",
     "file": "src/net/gate/gateClaims.js",
-    "old": "    if (again) { again = false; void flush(); }\n",
-    "new": "",
+    "old": "    if (again) {\n      again = false;\n      void flush();\n    }\n    return recorded;",
+    "new": "    return recorded;",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "WB5b-two-a-day",
     "file": "src/net/gate/gateClaims.js",
-    "old": "k === r || (o?.d === c.d && o?.s === c.s)",
-    "new": "k === r",
+    "old": "          return k === r || (o?.d === c.d && o?.s === c.s);",
+    "new": "          return k === r;",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "WB5b-unbounded",
     "file": "src/net/gate/gateClaims.js",
-    "old": "keep([...list, r].slice(-GATE_CLAIMS_MAX));",
-    "new": "keep([...list, r]);",
+    "old": "        keep([...list, r].slice(-GATE_CLAIMS_MAX)); // one a day AND account",
+    "new": "        keep([...list, r]); // one a day AND account",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "WB5b-the-count-unsaid",
     "file": "src/net/gate/gateClaims.js",
-    "old": "          if (n != null) { onClosed(n); say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n)); }",
-    "new": "          if (n != null) { onClosed(n); }",
+    "old": "            say(answer.data.rite === true ? GATE_CLAIM_TEXT.rite : GATE_CLAIM_TEXT.recorded(n));\n          } // WB12d: the rite alone closed no breach",
+    "new": "          } // WB12d: the rite alone closed no breach",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "WB5b-the-hook-never-called",
     "file": "src/net/gate/gateLink.js",
-    "old": "if (c) { receipts.set(c.d, g.r); onReceipt(g.r); }",
-    "new": "if (c) { receipts.set(c.d, g.r); }",
+    "old": "          onReceipt(g.r);\n        }",
+    "new": "        }",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "WB5b-a-strangers-nought-said",
     "file": "src/ui/profileWindow.js",
-    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null;",
-    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Breaches closed: ${n}` : null;",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null; // WB12a",
+    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Breaches closed: ${n}` : null; // WB12a",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "WB5b-the-gates-dropped-off-the-record",
     "file": "src/net/duel/duelRecord.js",
-    "old": "{ wins: d.wins, losses: d.losses, ...gates, ...more } : null;",
-    "new": "{ wins: d.wins, losses: d.losses, ...more } : null;",
+    "old": "              ? { wins: d.wins, losses: d.losses, ...gates, ...more }",
+    "new": "              ? { wins: d.wins, losses: d.losses, ...more }",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]

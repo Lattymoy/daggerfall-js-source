@@ -2,8 +2,8 @@
   {
     "name": "SET1-a-set-out-of-the-records-order",
     "file": "src/systems/sigil/sigil.js",
-    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);",
-    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale', 'numidium', 'panoply', 'wyrd', 'starspun', 'eltheric']);",
+    "old": "  'malacath',\n  'dagon',",
+    "new": "  'dagon',\n  'malacath',",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SET1-a-tier-at-the-wrong-count",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "      tier(4, 'waters', 'Waters of Oblivion'",
-    "new": "      tier(3, 'waters', 'Waters of Oblivion'",
+    "old": "      tier(\n        4,\n        'waters',",
+    "new": "      tier(\n        3,\n        'waters',",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "SET1-any-set-taken",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  if (hasSet && !SIGIL_SET_IDS.includes(s.set)) return false;\n",
-    "new": "",
+    "old": "  if (hasSet && !SIGIL_SET_IDS.includes(s.set)) return false;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SET1-the-blow-read-off-a-set-piece",
     "file": "src/systems/sigil/sigil.js",
-    "old": "  if (!sigilHasBlow(sigil)) return 0;\n",
-    "new": "",
+    "old": "  if (!sigilHasBlow(sigil)) return 0;\n  const st = sigilStageIn(sigil, renown);",
+    "new": "  const st = sigilStageIn(sigil, renown);",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "SET1-two-weapons-of-a-set-counted-twice",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "    if (!id || weaponOf.has(id)) continue;   // one weapon a set",
+    "old": "    if (!id || weaponOf.has(id)) continue; // one weapon a set",
     "new": "    if (!id) continue;",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "SET1-the-highest-pieces-rank",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x < lowXp) { lowXp = x; low = p; } }",
-    "new": "  lowXp = -Infinity; for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x > lowXp) { lowXp = x; low = p; } }",
+    "old": "  for (const p of pieces) {\n    const x = Number(p.sigil?.xp) || 0;\n    if (x < lowXp) {",
+    "new": "  lowXp = -Infinity;\n  for (const p of pieces) {\n    const x = Number(p.sigil?.xp) || 0;\n    if (x > lowXp) {",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "SET1-a-tier-awake-below-its-count",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "awake: stage >= 0 && count >= t.at,",
-    "new": "awake: stage >= 0 && count >= t.at - 2,",
+    "old": "        awake: stage >= 0 && count >= t.at,",
+    "new": "        awake: stage >= 0 && count >= t.at - 2,",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SET1-ammunition-taken",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return isAmmunition(item) ? null : 'weapon';",
-    "new": "return 'weapon';",
+    "old": "  if (item.group === 'Weapons') return isAmmunition(item) ? null : 'weapon';",
+    "new": "  if (item.group === 'Weapons') return 'weapon';",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SET1-the-first-of-the-lowest-stage-named",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  for (const p of pieces) { const x = Number(p.sigil?.xp) || 0; if (x < lowXp) { lowXp = x; low = p; } }",
-    "new": "  for (const p of pieces) { const x = sigilRank(p.sigil); if (x < lowXp) { lowXp = x; low = p; } }",
+    "old": "    const x = Number(p.sigil?.xp) || 0;",
+    "new": "    const x = sigilRank(p.sigil);",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SET1-the-words-built-for-a-numbers-only-read",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "text: text ? t.text(values) : '',",
-    "new": "text: t.text(values),",
+    "old": "        text: text ? t.text(values) : '',",
+    "new": "        text: t.text(values),",
     "tests": [
       "test/systems/sigil/set1_law.test.js"
     ]

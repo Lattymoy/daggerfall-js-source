@@ -29,7 +29,7 @@
   {
     "name": "BUILD-LEFTOVERS-UPDATE-dropped-from-the-stamp",
     "file": "scripts/buildTag.mjs",
-    "old": "export const tagSource = (sha, update) => `export const BUILD_TAG = '${sha}';\\nexport const UPDATE = ${update ? `'${update}'` : 'null'};\\n`;",
+    "old": "export const tagSource = (sha, update) =>\n  `export const BUILD_TAG = '${sha}';\\nexport const UPDATE = ${update ? `'${update}'` : 'null'};\\n`;",
     "new": "export const tagSource = (sha, update) => `export const BUILD_TAG = '${sha}';\\n`;",
     "tests": [
       "test/tooling/rel8_updates.test.js"

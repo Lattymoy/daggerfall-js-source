@@ -1,4 +1,4 @@
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22, chief, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen) - THE RELAY'S AND THE GAME'S HALVES: the order of its own kind ('smsg'), the hub's
 // nudge to one account's own sockets and its count back through the door (server/src/staffMessage.js), the hello's `sm`
 // (a build that shows the box), the session's frame arm, the box (ui/staffMessageBox.js) and the game's half
@@ -308,13 +308,13 @@ async function panelOverRelay() {
   const ts = nowS();
   const sig = Buffer.from(new Uint8Array(await subtle.sign({ name: 'Ed25519' }, owner.privateKey, new TextEncoder().encode(staffWords('login', 'sirmcmobdon', ts))))).toString('base64url');
   const staff = async (path, body, token) => (await s.fetch(`https://accounts.invalid${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.9', ...(token ? { [STAFF_SESSION_HEADER]: token } : {}) }, body: JSON.stringify(body) })).json();
-  const mob = await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: 'a good long one', pub, ts, sig });
-  assert.ok(mob.session, JSON.stringify(mob));
-  return { s, hub, staff, mob, restore: () => { globalThis.fetch = real; } };
+  const chief = await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: 'a good long one', pub, ts, sig });
+  assert.ok(chief.session, JSON.stringify(chief));
+  return { s, hub, staff, chief, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL5-MESSAGE END TO END, offline: the panel sends Troll a message by id -> stored, the real relay\'s hub nudges Troll\'s hub link -> the game reads it with its own session and shows the box -> OK -> the panel reads "they pressed OK"; an old build of Troll\'s reads "old game, not shown"', () => quiet(async () => {
-  const { s, hub, staff, mob, restore } = await panelOverRelay();
+  const { s, hub, staff, chief, restore } = await panelOverRelay();
   try {
     const troll = await s.registered('Troll');
     const { FakeWS, sockets } = fakeSocketClass();
@@ -326,13 +326,13 @@ test('STAFF-PANEL5-MESSAGE END TO END, offline: the panel sends Troll a message 
     const lines = [];
     const game = createStaffMessages({ push: (tab, l) => lines.push([tab, l.text]), setShown: () => true }, { fetch: s.fetch, storage: sessionStorageOf(SESSION_KEY, troll), show: (m) => shown.push(m) });
     link.onStaffMessage = game.heard;   // as scenes/world.js hangs it on the hub link
-    const sent = await staff('/v1/staff/message', { target: troll.id, text: 'Hello from staff.' }, mob.session);
+    const sent = await staff('/v1/staff/message', { target: troll.id, text: 'Hello from staff.' }, chief.session);
     assert.equal(sent.message.state, 'delivered', JSON.stringify(sent));
     for (const f of room.sent.splice(0)) sockets[0].receive(f);
     await until(() => shown.length > 0);
     assert.deepEqual(shown.map((m) => [m.from, m.text]), [['SirMcMobdon', 'Hello from staff.']]);
     assert.deepEqual(lines, [['staff', 'Message from staff (SirMcMobdon): Hello from staff.']]);
-    const read = async () => (await staff('/v1/staff/messages', { target: troll.id }, mob.session)).messages[0];
+    const read = async () => (await staff('/v1/staff/messages', { target: troll.id }, chief.session)).messages[0];
     assert.equal((await read()).label, 'Delivered');
     shown[0].onOk();
     await until(async () => (await read()).state === 'ok', 50);
@@ -341,7 +341,7 @@ test('STAFF-PANEL5-MESSAGE END TO END, offline: the panel sends Troll a message 
     const sylvia = await s.registered('Sylvia');
     const oldRoom = hub.connect(); await hub.hello(oldRoom, 'sylv-0003', null, { tokenSub: sylvia.id });   // a build whose hello says no `sm`
     s.env.DB._raw.prepare('UPDATE staff_messages SET at = at - 10').run();
-    const again = await staff('/v1/staff/message', { target: sylvia.id, text: 'Can you see this?' }, mob.session);
+    const again = await staff('/v1/staff/message', { target: sylvia.id, text: 'Can you see this?' }, chief.session);
     assert.deepEqual([again.message.state, again.message.label], ['old-game', 'old game, not shown']);
     assert.deepEqual(ofType(oldRoom, 'smsg'), []);
   } finally { restore(); }

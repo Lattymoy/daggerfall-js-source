@@ -60,22 +60,22 @@
   {
     "name": "AUDIT32-S3-second-find-all-or-nothing",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN ?18 END",
-    "new": "CASE WHEN ${storedExtra} + ?22 <= ?11 THEN ?18 END",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN ?18 END",
+    "new": "CASE WHEN ${storedExtra} + ?22 <= ?26 THEN ?18 END",
     "tests": [
       "test/net/audit32_service.test.js"
     ],
-    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now."
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
   },
   {
     "name": "AUDIT32-S3-second-find-uncut",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN MIN(?22, ?26 - ${storedExtra}) ELSE 1 END",
     "new": "?22",
     "tests": [
       "test/net/audit32_service.test.js"
     ],
-    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now."
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
   },
   {
     "name": "AUDIT32-S4-foe-after-the-hour",
@@ -99,8 +99,8 @@
   {
     "name": "AUDIT32-L1-far-never-moves",
     "file": "src/systems/traceAct.js",
-    "old": "      st.far = hi;\n",
-    "new": "",
+    "old": "      st.far = hi;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "AUDIT32-L1-clock-at-the-press",
     "file": "src/systems/traceAct.js",
-    "old": "st.tracing = true; st.t0 = null; st.far = aim.yaw;",
-    "new": "st.tracing = true; st.t0 = st.t; st.far = aim.yaw;",
+    "old": "          st.t0 = null;",
+    "new": "          st.t0 = st.t;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "AUDIT32-L5-any-bearing",
     "file": "src/systems/traceAct.js",
-    "old": "const aim = given && Number.isFinite(given.yaw) && Number.isFinite(given.pitch) ? given : null;",
-    "new": "const aim = given;",
+    "old": "      const aim = given && Number.isFinite(given.yaw) && Number.isFinite(given.pitch) ? given : null;",
+    "new": "      const aim = given;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "AUDIT32-L5-chord-past-the-line",
     "file": "src/systems/traceAct.js",
-    "old": "const hi = Math.min(b.yaw, endYaw);",
-    "new": "const hi = b.yaw;",
+    "old": "    const hi = Math.min(b.yaw, endYaw);",
+    "new": "    const hi = b.yaw;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "AUDIT32-L3-shirts-undyed",
     "file": "src/net/recipeLaw.js",
-    "old": "group: garmentGroup(t), cloth: c.key, dyes: true,",
-    "new": "group: garmentGroup(t), cloth: c.key, dyes: ![178, 179, 214, 215].includes(/** @type {number} */ (t)),",
+    "old": "        dyes: true,",
+    "new": "        dyes: ![178, 179, 214, 215].includes(/** @type {number} */ (t)),",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -288,8 +288,8 @@
   },
   {
     "name": "AUDIT32-H10-under-the-travel-view",
-    "file": "src/scenes/world.js",
-    "old": " && !modes?.transitioning && !travelView?.active,   // AUDIT 32 H10",
+    "file": "src/scenes/professionsHost.js",
+    "old": " && !host.modes?.transitioning && !host.travelView?.active,   // AUDIT 32 H10",
     "new": ",   // AUDIT 32 H10",
     "tests": [
       "test/scenes/audit32_client.test.js"
@@ -333,7 +333,7 @@
   },
   {
     "name": "AUDIT32-B4-anvil-busy-everywhere",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "new": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "tests": [
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT32-P1-stitch-at-the-frame",
     "file": "src/systems/stitchAct.js",
-    "old": "const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "const at = st.t;",
+    "old": "      const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const at = st.t;",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT32-P1-strike-at-the-frame",
     "file": "src/systems/heatAct.js",
-    "old": "const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "const at = st.t;",
+    "old": "      const at = st.t + Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const at = st.t;",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT32-P11-no-line",
     "file": "src/ui/professions/profReticle.js",
-    "old": "const guide = k.svg('polyline', { class: 'trace-guide', points: '' }, art);",
-    "new": "const guide = k.svg('path', { class: 'trace-guide', points: '' }, art);",
+    "old": "  const guide = k.svg('polyline', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
+    "new": "  const guide = k.svg('path', { class: 'trace-guide', points: '' }, art); // the scored line: the face's first polyline",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT32-P11-first-unmarked",
     "file": "src/ui/professions/profReticle.js",
-    "old": ": i === 0 ? 'prof-point first' : 'prof-point');",
-    "new": ": 'prof-point');",
+    "old": "        setClass(\n          n,\n          st.tracing && i <= st.reached\n            ? `prof-glint${ctx.reduced ? ' still' : ''}`\n            : i === 0\n              ? 'prof-point first'\n              : 'prof-point',\n        );",
+    "new": "        setClass(n, st.tracing && i <= st.reached ? `prof-glint${ctx.reduced ? ' still' : ''}` : 'prof-point');",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "AUDIT32-P11-degrees-unequal",
     "file": "src/ui/professions/profReticle.js",
-    "old": "return [focal * Math.tan(Math.max(-lim, Math.min(lim, dy))),",
-    "new": "return [focal * 0.6 * Math.tan(Math.max(-lim, Math.min(lim, dy))),",
+    "old": "  return [focal * Math.tan(Math.max(-lim, Math.min(lim, dy))), -focal * Math.tan(Math.max(-lim, Math.min(lim, dp)))];",
+    "new": "  return [\n    focal * 0.6 * Math.tan(Math.max(-lim, Math.min(lim, dy))),\n    -focal * Math.tan(Math.max(-lim, Math.min(lim, dp))),\n  ];",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT32-P10-slip-unsaid",
     "file": "src/ui/professions/profReticle.js",
-    "old": " : s.slips > 0 ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key }) : t('prof.reticle.trace.hold',",
-    "new": " : t('prof.reticle.trace.hold',",
+    "old": "          : s.slips > 0\n            ? t('prof.reticle.trace.again', 'let go. Hold {key} on the first point again', { key })\n            : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
+    "new": "          : t('prof.reticle.trace.hold', 'hold {key} on the first point', { key });",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT32-P3-focus-given-back-never",
     "file": "src/ui/domRepaint.js",
-    "old": "  if (kept) giveFocus(host, kept);\n",
-    "new": "",
+    "old": "  if (kept) giveFocus(host, kept);\n  if (!saved.length || !host) return;",
+    "new": "  if (!saved.length || !host) return;",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT32-P3-words-unread",
     "file": "src/ui/domRepaint.js",
-    "old": "  if (k.words != null && (!n || n.textContent !== k.words)) n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;\n",
-    "new": "",
+    "old": "    if (k.words != null && (!n || n.textContent !== k.words))\n      n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "AUDIT32-S1-law-any-counter-input",
     "file": "src/net/recipeLaw.js",
-    "old": "r.inputs.every((i) => COUNTER_ONLY.includes(i.key))",
-    "new": "r.inputs.some((i) => COUNTER_ONLY.includes(i.key))",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.some((i) => COUNTER_ONLY.includes(i.key));",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "AUDIT32-S1-law-empty-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every(",
-    "new": "export const counterMade = (r) => !!r && r.inputs.every(",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
+    "new": "export const counterMade = (r) => !!r && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/clothgems_law.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "AUDIT32-S1-law-null-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
-    "new": "export const firstCraftPays = (r, own = false) => (",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !counterMade(r) || own === true;",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/clothgems_law.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "AUDIT32-S1-law-pays-all",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
-    "new": "export const firstCraftPays = (r, own = false) => !!r || (",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (!counterMade(r) || own === true);",
+    "new": "export const firstCraftPays = (r, own = false) => !!r || !counterMade(r) || own === true;",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js",
@@ -637,8 +637,8 @@
   {
     "name": "AUDIT32-S1-wool-not-counter-only",
     "file": "src/net/professionLaw.js",
-    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);",
-    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, ...REAGENTS.map((r) => r.key)]);",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js"
@@ -648,8 +648,8 @@
   {
     "name": "AUDIT32-S1-cured-leather-counter-only",
     "file": "src/net/professionLaw.js",
-    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);",
-    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, CURED_LEATHER.key, ...REAGENTS.map((r) => r.key)]);",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, CURED_LEATHER.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
     "tests": [
       "test/net/audit32_law.test.js",
       "test/net/audit32_service.test.js"

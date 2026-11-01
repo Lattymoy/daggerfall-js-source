@@ -1,5 +1,5 @@
 // VAMP-HOOD (2026-09-29, Discord #suggestions "PLEASE allow vampires...", Starempire42: "adds the ability to travel
-// during the day if you a wearing a cloak or robe with a hood up"; Sir McMobdon: "nice, good idea"; sent in by Mac): THE PORT'S DEPARTURE from
+// during the day if you a wearing a cloak or robe with a hood up"; sent in by Mac): THE PORT'S DEPARTURE from
 // VampirismEffect.CheckFastTravel (:195-208) and DaggerfallTravelPopUp's arrival clamp (:350-357). Every rule the
 // curse's SunDamage flag still keys asks vampirism.js racialSunAverse - the flag, UNLESS the wearer's hood is up, which
 // is survival/temperature.js cloakState: the one hood law, the felt temperature's own. Online this is the whole

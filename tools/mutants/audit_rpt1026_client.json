@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-RPT1026-K1-visit-ignored",
     "file": "src/systems/eliteGates/weirKey.js",
-    "old": "  foldLyingWeirKeys((e) => e.at !== here);   // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it\n",
-    "new": "",
+    "old": "  foldLyingWeirKeys((e) => e.at !== here); // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it\n  for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);",
+    "new": "  for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);",
     "tests": [
       "test/scenes/audit_rpt1026_client.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-RPT1026-K1-place-no-visit",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "visit: modes.dungeonCtx ?? modes.dungeonLocation } : null);",
-    "new": "visit: true } : null);",
+    "old": "  mode === 'dungeon' && modes?.dungeonLocation\n    ? { tier: dungeonTier(modes.dungeonLocation), visit: modes.dungeonCtx ?? modes.dungeonLocation }\n    : null;",
+    "new": "  mode === 'dungeon' && modes?.dungeonLocation ? { tier: dungeonTier(modes.dungeonLocation), visit: true } : null;",
     "tests": [
       "test/scenes/audit_rpt1026_client.test.js"
     ],

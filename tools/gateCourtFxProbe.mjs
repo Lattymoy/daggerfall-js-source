@@ -18,7 +18,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildCourtModel, courtToDungeon } from '/src/world/gate/gateArena.js';
@@ -87,10 +91,25 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -98,7 +117,8 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 });
   const p = await page.evaluate(() => window.probe);
@@ -108,21 +128,45 @@ try {
   const lum = (c) => c[0] + c[1] + c[2];
   const stand = await page.evaluate(() => window.crystal(-1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'crystal.png') });
-  check('no GL error drawing a crystal, its pool and its beam', stand.error === 0 && stand.drawn === 1 && stand.glowed === 2, `error ${stand.error}, drawn ${stand.drawn}, glowed ${stand.glowed}`);
-  check('it stands up out of the floor in its crimson', stand.body[0] > 90 && stand.body[0] > stand.body[1] * 1.6, JSON.stringify(stand.body));
+  check(
+    'no GL error drawing a crystal, its pool and its beam',
+    stand.error === 0 && stand.drawn === 1 && stand.glowed === 2,
+    `error ${stand.error}, drawn ${stand.drawn}, glowed ${stand.glowed}`,
+  );
+  check(
+    'it stands up out of the floor in its crimson',
+    stand.body[0] > 90 && stand.body[0] > stand.body[1] * 1.6,
+    JSON.stringify(stand.body),
+  );
   const gone = await page.evaluate(() => window.crystal(5));
-  check('long broken, it is gone to the floor', lum(gone.body) < lum(stand.body) / 2 && gone.glowed === 0, `${JSON.stringify(gone.body)} vs ${JSON.stringify(stand.body)}`);
+  check(
+    'long broken, it is gone to the floor',
+    lum(gone.body) < lum(stand.body) / 2 && gone.glowed === 0,
+    `${JSON.stringify(gone.body)} vs ${JSON.stringify(stand.body)}`,
+  );
   const land = await page.evaluate(() => window.burst(0.12));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'burst.png') });
-  check('no GL error drawing a landing\'s sparks', land.error === 0 && land.bursts === 1, `error ${land.error}, bursts ${land.bursts}`);
+  check(
+    "no GL error drawing a landing's sparks",
+    land.error === 0 && land.bursts === 1,
+    `error ${land.error}, bursts ${land.bursts}`,
+  );
   const lit = land.after.reduce((s, c) => s + lum(c), 0) - land.before.reduce((s, c) => s + lum(c), 0);
   check('the sparks light the stone about the landing', lit > 60, `${lit} added over ${JSON.stringify(land.before)}`);
   const spent = await page.evaluate(() => window.burst(5));
   check('spent, a burst draws nothing', spent.bursts === 0);
-  const fall = await page.evaluate(() => window.meteor(10000 - 60));   // the last of its fall, over the court in view
+  const fall = await page.evaluate(() => window.meteor(10000 - 60)); // the last of its fall, over the court in view
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'meteor.png') });
-  check('no GL error drawing the meteor', fall.error === 0 && fall.meteors === 1, `error ${fall.error}, meteors ${fall.meteors}`);
-  check('its stone burns bright where it is falling', !!fall.head && fall.head[0] > 200 && lum(fall.head) > lum(fall.before) + 150, `${JSON.stringify(fall.head)} over ${JSON.stringify(fall.before)}`);
+  check(
+    'no GL error drawing the meteor',
+    fall.error === 0 && fall.meteors === 1,
+    `error ${fall.error}, meteors ${fall.meteors}`,
+  );
+  check(
+    'its stone burns bright where it is falling',
+    !!fall.head && fall.head[0] > 200 && lum(fall.head) > lum(fall.before) + 150,
+    `${JSON.stringify(fall.head)} over ${JSON.stringify(fall.before)}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

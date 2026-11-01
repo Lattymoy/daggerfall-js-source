@@ -1,21 +1,175 @@
 [
-  {"name": "PVP-SAFE-HIT-struck-streets-unread", "file": "src/net/wild/wildRef.js", "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';\n", "new": "", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-striker-streets-unread", "file": "src/net/wild/wildRef.js", "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';\n", "new": "", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-villain-exception-dropped", "file": "src/net/wild/wildRef.js", "old": "if (a.streets && !isVillain(a.vi) && !isVillain(t.vi))", "new": "if (a.streets && !isVillain(a.vi))", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-villain-word-shields", "file": "src/net/wild/wildRef.js", "old": "if (t.streets && !isVillain(t.vi))", "new": "if (t.streets)", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-word-kept-off-zone", "file": "src/net/wild/wildRef.js", "old": "x.streets = !!z && !!sf;", "new": "x.streets = !!sf;", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-bar-unread-at-blow", "file": "src/net/wild/wildRef.js", "old": "  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };\n", "new": "", "tests": ["test/systems/wild/pvpsafehit.test.js", "test/net/int9_wild_ref.test.js"]},
-  {"name": "PVP-SAFE-HIT-sea-bar-dropped", "file": "src/net/sea/seaRef.js", "old": "  if (wildStreetsBar(a, x)) return no('streets');", "new": "", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-relay-sf-dropped", "file": "server/src/index.js", "old": "m.data.ed === 1, m.data.sf === 1); return; }", "new": "m.data.ed === 1); return; }", "tests": ["test/net/int9_wild_ref.test.js"]},
-  {"name": "PVP-SAFE-HIT-relay-sf-unpassed", "file": "server/src/index.js", "old": "vl: a.vl ?? 0, sf }, z === 1", "new": "vl: a.vl ?? 0 }, z === 1", "tests": ["test/net/int9_wild_ref.test.js"]},
-  {"name": "PVP-SAFE-HIT-wire-sf-dropped", "file": "src/net/wire.js", "old": "...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {})", "new": "...{}", "tests": ["test/systems/wild/pvpsafehit.test.js", "test/net/int9_wild_ref.test.js"]},
-  {"name": "PVP-SAFE-HIT-wire-sf-on-word-0", "file": "src/net/wire.js", "old": "...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {})", "new": "...(d.sf === 1 ? { sf: 1 } : {})", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-gate-one-early", "file": "src/net/wire.js", "old": "export const WILD_STREETS_RELAY_MIN = 283;", "new": "export const WILD_STREETS_RELAY_MIN = 282;", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-client-gate-unread", "file": "src/net/online.js", "old": "z = sf && !this.wildStreetsOk ? 0 : zone;", "new": "z = zone;", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-client-change-unsaid", "file": "src/net/online.js", "old": "if (v === this._wildZone && streets === this._wildStreets && ", "new": "if (v === this._wildZone && ", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-wildfair-streets-unread", "file": "src/scenes/world.js", "old": " && streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');", "new": ";", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-streets-strike-red-unread", "file": "src/systems/wild/villainHunt.js", "old": "=> !streets || !!red;", "new": "=> !streets;", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-word-0-in-streets", "file": "src/scenes/world.js", "old": "online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, ", "new": "online?.setWildZone?.(wildCan() ? 1 : 0, ", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-watch-called-from-streets", "file": "src/scenes/world.js", "old": "    if (!inTown || !wildHere() || zoneSafe()) return;", "new": "    if (!inTown || !wildHere()) return;", "tests": ["test/systems/wild/pvpsafehit.test.js"]},
-  {"name": "PVP-SAFE-HIT-old-line-back", "file": "src/systems/wild/zoneSafe.js", "old": "Other players cannot attack you here. You can attack a villain.'", "new": "Other players cannot attack you here, and you cannot attack them.'", "tests": ["test/systems/wild/pvpsafehit.test.js"]}
+  {
+    "name": "PVP-SAFE-HIT-struck-streets-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';\n  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-striker-streets-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';\n  return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-villain-exception-dropped",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (a.streets && !isVillain(a.vi)) return 'streets';",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-villain-word-shields",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (t.streets && !isVillain(t.vi)) return 'streets';",
+    "new": "  if (t.streets) return 'streets';",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-word-kept-off-zone",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  x.streets = !!z && !!sf; // PVP-SAFE-HIT: wildStreetsBar reads it",
+    "new": "  x.streets = !!sf; // PVP-SAFE-HIT: wildStreetsBar reads it",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-bar-unread-at-blow",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };\n  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "new": "  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' }; // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-sea-bar-dropped",
+    "file": "src/net/sea/seaRef.js",
+    "old": "  if (wildStreetsBar(a, x)) return no('streets'); // PVP-SAFE-HIT: a harbour's safe streets, as a blow's",
+    "new": "  // PVP-SAFE-HIT: a harbour's safe streets, as a blow's",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-relay-sf-dropped",
+    "file": "server/src/index.js",
+    "old": "m.data.ed === 1, m.data.sf === 1); return; }",
+    "new": "m.data.ed === 1); return; }",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-relay-sf-unpassed",
+    "file": "server/src/index.js",
+    "old": "vl: a.vl ?? 0, sf }, z === 1",
+    "new": "vl: a.vl ?? 0 }, z === 1",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-wire-sf-dropped",
+    "file": "src/net/wire.js",
+    "old": "...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-wire-sf-on-word-0",
+    "file": "src/net/wire.js",
+    "old": "...(d.z === 1 && d.sf === 1 ? { sf: 1 } : {})",
+    "new": "...(d.sf === 1 ? { sf: 1 } : {})",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-gate-one-early",
+    "file": "src/net/wire.js",
+    "old": "export const WILD_STREETS_RELAY_MIN = 283;",
+    "new": "export const WILD_STREETS_RELAY_MIN = 282;",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-client-gate-unread",
+    "file": "src/net/online.js",
+    "old": "z = sf && !this.wildStreetsOk ? 0 : zone;",
+    "new": "z = zone;",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-client-change-unsaid",
+    "file": "src/net/online.js",
+    "old": "if (v === this._wildZone && streets === this._wildStreets && ",
+    "new": "if (v === this._wildZone && ",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-wildfair-streets-unread",
+    "file": "src/scenes/world.js",
+    "old": " && streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');",
+    "new": ";",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-streets-strike-red-unread",
+    "file": "src/systems/wild/villainHunt.js",
+    "old": "export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets || !!red;",
+    "new": "export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets;",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-word-0-in-streets",
+    "file": "src/scenes/world.js",
+    "old": "online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, ",
+    "new": "online?.setWildZone?.(wildCan() ? 1 : 0, ",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-watch-called-from-streets",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inTown || !wildHere() || zoneSafe()) return;",
+    "new": "    if (!inTown || !wildHere()) return;",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SAFE-HIT-old-line-back",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "Other players cannot attack you here. You can attack a villain.'",
+    "new": "Other players cannot attack you here, and you cannot attack them.'",
+    "tests": [
+      "test/systems/wild/pvpsafehit.test.js"
+    ]
+  }
 ]

@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen): THE GAME'S HALF - the hub's nudge in, the words read, the box shown, the OK said.
 //
 // The hub's `{t:'smsg', mi}` (net/online.js `onStaffMessage`) says only that a message waits; it is made from the account
@@ -33,63 +33,113 @@ export const STAFF_ASK_GAP_MS = 5000;
 export const STAFF_MESSAGES_KEPT = 20;
 
 /** The Staff tab's line for a message. @param {{ from: string, text: string }} m */
-export const staffMessageLine = (m) => t('net.staffMsg.chat', 'Message from staff ({name}): {text}', { name: m.from, text: m.text });
+export const staffMessageLine = (m) =>
+  t('net.staffMsg.chat', 'Message from staff ({name}): {text}', { name: m.from, text: m.text });
 
 /**
  * @param {{ push: (tabId: string, fields: any) => unknown, setShown: (tabId: string, shown: boolean) => unknown }|null} log the host's chat log (net/chat.js ChatLog), or null
  * @param {{ fetch?: (u: string, i: any) => Promise<any>, storage?: any, show?: typeof showStaffMessageBox, now?: () => number,
  *   wait?: (fn: () => void, ms: number) => unknown }} [io]
  */
-export function createStaffMessages(log, { fetch = (u, i) => globalThis.fetch(u, i), storage = appStorage(), show = showStaffMessageBox, now = () => Date.now(), wait = (fn, ms) => setTimeout(fn, ms) } = {}) {
-  const session = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+export function createStaffMessages(
+  log,
+  {
+    fetch = (u, i) => globalThis.fetch(u, i),
+    storage = appStorage(),
+    show = showStaffMessageBox,
+    now = () => Date.now(),
+    wait = (fn, ms) => setTimeout(fn, ms),
+  } = {},
+) {
+  const session = () => {
+    const s = storedSession(storage);
+    return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null;
+  };
   /** @type {Set<string>} */
   const seen = new Set();
   /** @type {Array<{ id: string, from: string, text: string, at: number }>} */
   const kept = [];
   /** @type {typeof kept} */
   const queue = [];
-  let up = false, asking = false, again = false, timer = false, more = false, askedAt = -Infinity;
+  let up = false,
+    asking = false,
+    again = false,
+    timer = false,
+    more = false,
+    askedAt = -Infinity;
 
   const next = () => {
     if (up || !queue.length) return;
     const m = /** @type {typeof kept[number]} */ (queue.shift());
     up = true;
-    show({ from: m.from, text: m.text, onOk: () => {
-      up = false;
-      const io = session();
-      const said = io ? call(io, '/v1/safety/staff-message-ok', { id: m.id }) : null;   // never throws (accountClient's law)
-      next();
-      void Promise.resolve(said).then(() => { if (!up && more) void ask(); });   // the last box OK'd and its OK in: the ones past the answer's bound
-    } });
+    show({
+      from: m.from,
+      text: m.text,
+      onOk: () => {
+        up = false;
+        const io = session();
+        const said = io ? call(io, '/v1/safety/staff-message-ok', { id: m.id }) : null; // never throws (accountClient's law)
+        next();
+        void Promise.resolve(said).then(() => {
+          if (!up && more) void ask();
+        }); // the last box OK'd and its OK in: the ones past the answer's bound
+      },
+    });
   };
 
   async function ask() {
-    if (asking) { again = true; return; }   // a nudge while the service is asked: asked once more after it
+    if (asking) {
+      again = true;
+      return;
+    } // a nudge while the service is asked: asked once more after it
     const gap = askedAt + STAFF_ASK_GAP_MS - now();
-    if (gap > 0) { if (!timer) { timer = true; wait(() => { timer = false; void ask(); }, gap); } return; }
+    if (gap > 0) {
+      if (!timer) {
+        timer = true;
+        wait(() => {
+          timer = false;
+          void ask();
+        }, gap);
+      }
+      return;
+    }
     const io = session();
     if (!io) return;
-    asking = true; askedAt = now();
+    asking = true;
+    askedAt = now();
     try {
       const r = await call(io, '/v1/safety/staff-messages', {});
       more = r.ok && r.data?.more === true;
-      for (const m of r.ok && Array.isArray(r.data?.messages) ? r.data.messages : []) {   // `call` answers { ok, data } and never throws
+      for (const m of r.ok && Array.isArray(r.data?.messages) ? r.data.messages : []) {
+        // `call` answers { ok, data } and never throws
         if (typeof m?.id !== 'string' || seen.has(m.id) || typeof m.text !== 'string' || !m.text) continue;
         seen.add(m.id);
-        const one = { id: m.id, from: typeof m.from === 'string' ? m.from : '', text: m.text, at: Number.isSafeInteger(m.at) ? m.at * 1000 : now() };
+        const one = {
+          id: m.id,
+          from: typeof m.from === 'string' ? m.from : '',
+          text: m.text,
+          at: Number.isSafeInteger(m.at) ? m.at * 1000 : now(),
+        };
         kept.push(one);
         if (kept.length > STAFF_MESSAGES_KEPT) kept.shift();
-        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log);   // on the bar, to be read again
+        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log); // on the bar, to be read again
         queue.push(one);
       }
-    } finally { asking = false; }
+    } finally {
+      asking = false;
+    }
     next();
-    if (again) { again = false; void ask(); }
+    if (again) {
+      again = false;
+      void ask();
+    }
   }
 
   return {
     /** The hub's nudge: a message waits (its id - the words are the service's). */
-    heard: (/** @type {string} */ mi) => { if (typeof mi === 'string' && !seen.has(mi)) void ask(); },
+    heard: (/** @type {string} */ mi) => {
+      if (typeof mi === 'string' && !seen.has(mi)) void ask();
+    },
     /** The messages this game has shown, oldest first. */
     list: () => kept.map((m) => ({ ...m })),
   };

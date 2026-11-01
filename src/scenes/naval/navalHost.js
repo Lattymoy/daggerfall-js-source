@@ -17,7 +17,7 @@
 //   csa() -> runtime | null      Come Sail Away's runtime (isSailing(), state.CurrentBoat, state.velocityCurrent,
 //                                state.windVectorCurrent, StopSailing()) - null with the mod off
 //   seaY() -> number             the sea's height in the scene
-//   isWater(x, z, hull) -> bool  open water deep enough for a hull there
+// isWater(x, z, hull) -> bool open water deep enough for a hull there (null: ground not yet built)
 //   feet() -> [x, y, z]          the player's feet
 //   look() -> { origin, dir }    the view's eye and its forward (the first-person eye, or Eye of the Beholder's)
 //   level() -> number            the player's level
@@ -73,7 +73,7 @@ import { flatHull, hullOverlap, hullBuild, firstBuildOf, batteryOf, batteriesOf,
 import { shipNameBank } from '../../systems/naval/shipNameBank.js';   // WW3: the waters' people, past the Bay a province's
 import { folkKeyOf, folkOfArea, folkOfRegion } from '../../characters/provinceFolk.js';   // AUDIT PROVINCE-FOLK A3: a crew's people
 import { BAY_AREA_COUNT } from '../../world/worldWide/worldGrid.js';
-import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
+import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, courseVia, waterOf, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
@@ -2413,7 +2413,7 @@ export function createNavalHost(deps) {
     if (r?.kind === 'depart') { s.course = null; return; }
     const p = pursue(l.way, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);
     const end = l.way[l.way.length - 1];
-    if (p.left > LINER_PORT_M) { s.errand = null; s.course = [p.x, p.z]; return; }   // her way's own remainder: a leg come back by its end across a headland is no arrival
+    if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }   // by the water's way where her lane's leg is not // her way's own remainder: a leg come back by its end across a headland is no arrival
     // at her port: into a berth of it, else lying off it on her ring
     s.course = null;
     const berth = h?.harbour && s.hull !== HULL.LargeGalley ? openBerth(h) : -1;
@@ -2492,7 +2492,7 @@ export function createNavalHost(deps) {
       if (e.owner || !e.raider || e.raider.spent) continue;
       const r = list.find((x) => x.id === e.raider.id);
       e.ship.sight = sight;
-      e.ship.course = r?.ahead ? [r.ahead[0], r.ahead[2]] : null;   // its life over, it sails on for a waypoint of its own
+      e.ship.course = r?.ahead ? courseVia(gridOf(e.ship.hull), e.ship, [r.ahead[0], r.ahead[2]]) : null;   // its life over, it sails on for a waypoint of its own; by the water's way
     }
   }
   const raiderEntry = (raiderId) => [...sea.values()].find((e) => !e.owner && e.raider?.id === raiderId) ?? null;
@@ -4324,7 +4324,7 @@ export function createNavalHost(deps) {
   const holdOf = (cls, seed, generate) => (cls.fisher ? fishers.catchOf(cls, seed) : drawHold(cls, seed, generate));
   // PASSAGE-QUAY (scenes/naval/passageQuay.js): a booked ship brought in to a free berth of her port's harbour, laid by the
   // warp seam below as QUAYS' docking lays a ship of mine
-  const quay = createPassageQuay({ harbours, isWater: (x, z, hull) => deps.isWater(x, z, hull), dockFree, putOff, boatPose, enabled: () => enabled, yawOf: yawOfRot,   // AUDIT HORIZONTAL C3: her way planned and laid over the water itself
+  const quay = createPassageQuay({ harbours, isWater: waterOf(() => deps.isWater), dockFree, putOff, boatPose, enabled: () => enabled, yawOf: yawOfRot,   // AUDIT HORIZONTAL C3: her way planned and laid over the water itself
     ahead: (p, dx, dz, far) => seaHulls.ahead(p, dx, dz, far), now: () => clock });   // AUDIT HORIZONTAL C10: and whether the hull is under way
   let dockPortsAt = -Infinity;
   /** The Fleet's word of where each boat of mine lies made fast (`deps.dockedPort(boat, name | null)`), once a second -
@@ -4344,7 +4344,7 @@ export function createNavalHost(deps) {
   /** A hull's water grid, made once for the scene as it stands. */
   function gridOf(hull) {
     let g = grids.get(hull);
-    if (!g) { g = createWaterGrid({ isWater: (x, z, h) => deps.isWater(x, z, h), hull }); grids.set(hull, g); }
+    if (!g) { g = createWaterGrid({ isWater: waterOf(() => deps.isWater), hull }); grids.set(hull, g); }   // the host's reader, its tiles with it
     return g;
   }
   /** The errands' door for the captains (navalAI.js stepCaptain's `world.life`). */
@@ -4354,7 +4354,7 @@ export function createNavalHost(deps) {
   function errandHere(ship) {
     if (ship.cls.fisher) return fishers.errandOf(ship);   // FISH-BOATS: her day's own errand, off her seed and her harbour
     const hs = knownHarbours();
-    return hs.length ? errandFor({ seed: ship.seed, faction: ship.cls.faction, hull: ship.hull, pos: ship.pos, speed: ship.speed, clock: ship.clock, harbours: hs, clear: gridOf(ship.hull).clear }) : null;
+    return hs.length ? errandFor({ seed: ship.seed, faction: ship.cls.faction, hull: ship.hull, pos: ship.pos, speed: ship.speed, clock: ship.clock, harbours: hs, grid: gridOf(ship.hull) }) : null;
   }
   /** The port near the player: its harbour found once, its moored ships stood while its mouth is near - ashore too;
    *  the stander's alone to launch, as every ship is - and gone past HARBOUR_LEAVE, to be stood again the same on the

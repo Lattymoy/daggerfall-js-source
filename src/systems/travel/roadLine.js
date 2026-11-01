@@ -49,15 +49,17 @@ export const stepBit = (a, b) => BIT_OF.get(`${b.x - a.x},${b.y - a.y}`) ?? 0;
  * @returns {Array<[number, number]>|null}
  */
 export function curveThrough(bits, inBit, outBit) {
-  const a = EXIT.get(inBit), b = EXIT.get(outBit);
+  const a = EXIT.get(inBit),
+    b = EXIT.get(outBit);
   if (!a || !b || inBit === outBit) return null;
   for (const q of curvesOf(bits).curves) {
-    if (q[2] !== MID || q[3] !== MID) continue;   // an end's straight run in to the middle
+    if (q[2] !== MID || q[3] !== MID) continue; // an end's straight run in to the middle
     const fwd = q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1];
     const back = q[0] === b[0] && q[1] === b[1] && q[4] === a[0] && q[5] === a[1];
     if (!fwd && !back) continue;
-    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null;   // straight through: the lane's own line
-    const p = curvePolyline(q), pts = [];
+    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null; // straight through: the lane's own line
+    const p = curvePolyline(q),
+      pts = [];
     for (let s = 0; s <= CURVE_STEPS; s++) pts.push(/** @type {[number, number]} */ ([p[2 * s], p[2 * s + 1]]));
     return fwd ? pts : pts.reverse();
   }
@@ -66,7 +68,11 @@ export function curveThrough(bits, inBit, outBit) {
 
 /** A point of pixel (px, py)'s tile frame in native units ({x east, z north}: the pixel's south-west corner its origin -
  *  travelPaths.js mapPixelWorldOrigin - and its tile row 0 the south edge, roadPainter.js). */
-export const nativeOfTile = (px, py, tx, ty) => /** @type {[number, number]} */ ([px * MP_WORLD_UNITS + tx * TILE_UNITS, (MAP_H - 1 - py) * MP_WORLD_UNITS + ty * TILE_UNITS]);
+export const nativeOfTile = (px, py, tx, ty) =>
+  /** @type {[number, number]} */ ([
+    px * MP_WORLD_UNITS + tx * TILE_UNITS,
+    (MAP_H - 1 - py) * MP_WORLD_UNITS + ty * TILE_UNITS,
+  ]);
 
 /**
  * THE CURVE A ROUTE WALKS THROUGH ITS PIXEL `i` (not its first or last), native: the painted curve between the edges it
@@ -78,11 +84,13 @@ export const nativeOfTile = (px, py, tx, ty) => /** @type {[number, number]} */ 
  */
 export function routeCurveAt(pixels, kinds, i, { byteAt = arenaRoadByte, past = (x, y) => !inBay(x, y) } = {}) {
   if (i <= 0 || i >= pixels.length - 1) return null;
-  const a = kinds[i - 1], b = kinds[i];
+  const a = kinds[i - 1],
+    b = kinds[i];
   if (!PAINTED.includes(a) || !PAINTED.includes(b)) return null;
   const p = pixels[i];
   if (!past(p.x, p.y)) return null;
-  const inBit = stepBit(p, pixels[i - 1]), outBit = stepBit(p, pixels[i + 1]);
+  const inBit = stepBit(p, pixels[i - 1]),
+    outBit = stepBit(p, pixels[i + 1]);
   // ROAD-SMOOTH: the curve either kind paints through the two edges - the step in's kind first, then the other's: a route
   // that steps off a road onto a track (or back) where one is painted through both walks it, not the middle off both
   for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road'])) {
@@ -104,14 +112,22 @@ export function routeCurveAt(pixels, kinds, i, { byteAt = arenaRoadByte, past = 
  */
 export function roadLineLegs(legs, ix, pixels, kinds, o = {}) {
   const half = CURVE_STEPS / 2;
-  let behind = null;   // the second half of the curve the leg before ended on - from its apex
+  let behind = null; // the second half of the curve the leg before ended on - from its apex
   for (let k = 0; k < legs.length; k++) {
-    const leg = legs[k], i = ix[k];
+    const leg = legs[k],
+      i = ix[k];
     const plain = i >= 0 && !leg.at && !leg.ring && (leg.kind === 'road' || leg.kind === 'track');
-    if (!plain) { behind = null; continue; }
+    if (!plain) {
+      behind = null;
+      continue;
+    }
     const curve = routeCurveAt(pixels, kinds, i, o);
     if (behind || curve) {
-      const p = pixels[i], line = [...(behind ? behind.slice(1) : []), ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])];
+      const p = pixels[i],
+        line = [
+          ...(behind ? behind.slice(1) : []),
+          ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)]),
+        ];
       leg.line = line.filter((q, j) => j === 0 || q[0] !== line[j - 1][0] || q[1] !== line[j - 1][1]);
     }
     behind = curve ? curve.slice(half) : null;
@@ -129,9 +145,15 @@ export function legEnd(leg, mid) {
 export function nearestOnLine(pts, me) {
   let best = { x: pts[0][0], z: pts[0][1], seg: 0, d: Infinity };
   for (let s = 0; s + 1 < pts.length; s++) {
-    const [ax, az] = pts[s], [bx, bz] = pts[s + 1], dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz;
+    const [ax, az] = pts[s],
+      [bx, bz] = pts[s + 1],
+      dx = bx - ax,
+      dz = bz - az,
+      L = dx * dx + dz * dz;
     const t = L > 0 ? Math.max(0, Math.min(1, ((me.x - ax) * dx + (me.z - az) * dz) / L)) : 0;
-    const x = ax + dx * t, z = az + dz * t, d = Math.hypot(me.x - x, me.z - z);
+    const x = ax + dx * t,
+      z = az + dz * t,
+      d = Math.hypot(me.x - x, me.z - z);
     if (d < best.d) best = { x, z, seg: s, d };
   }
   return best;
@@ -148,7 +170,10 @@ export function lineUpTo(pts, me) {
 export function drawRouteRuns(natives, start, draw, out) {
   for (let i = start + 1; i < natives.length; i++) {
     let a = natives[i - 1];
-    for (const q of [...(natives[i].via ?? []), natives[i]]) { draw(a[0], a[1], q[0], q[1], out); a = q; }
+    for (const q of [...(natives[i].via ?? []), natives[i]]) {
+      draw(a[0], a[1], q[0], q[1], out);
+      a = q;
+    }
   }
   return out;
 }
@@ -158,6 +183,9 @@ export function drawRouteRuns(natives, start, draw, out) {
  *  or a rejoin come first, `seg` 0) to its end. */
 export function drawOwnRun(at, native, seg, draw, out) {
   let a = [at.x, at.z];
-  for (const q of [...(native.via ?? []).slice(Math.max(0, seg | 0)), native]) { draw(a[0], a[1], q[0], q[1], out); a = q; }
+  for (const q of [...(native.via ?? []).slice(Math.max(0, seg | 0)), native]) {
+    draw(a[0], a[1], q[0], q[1], out);
+    a = q;
+  }
   return out;
 }

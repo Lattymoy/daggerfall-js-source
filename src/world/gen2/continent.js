@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE CONTINENT'S DRAINAGE (bible/03-World/World-2-Canon.md, "Water"): the whole of Tamriel at the relief's own grain
+// WG2 THE CONTINENT'S DRAINAGE ("Water"): the whole of Tamriel at the relief's own grain
 // (two cells a picture unit, some 6 km), its rain run to the sea - so a region knows the rivers that enter it from beyond
 // its edge (`regionInflow`), and an edit knows how far downstream its water can reach (`downstreamOf`, the stages' basin).
 // Made once from the canon alone (the authored land and ranges, the owner's relief, the profiles), exact arithmetic.

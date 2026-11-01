@@ -43,18 +43,18 @@
 // file does to a line is CUT it: a bubble is a glance, not a letter.
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
-import { skullSrc, skullGlow } from './pvpSkull.js';   // PVP-SKULL
-import { nameConeTarget, nameConeStep } from './nameCone.js';   // PVP-CONE
-import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
+import { skullSrc, skullGlow } from './pvpSkull.js'; // PVP-SKULL
+import { nameConeTarget, nameConeStep } from './nameCone.js'; // PVP-CONE
+import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js'; // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
-import { setTitleFlame } from './titleFlame.js';   // SHOP: a flame title's plate
-import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
-import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
-import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
-import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
-import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../net/heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon, under the name; HERALDRY-SHOWN: the tag's frame
-import { heraldrySwatchSrc } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): the guild's shield, in its tag's frame
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js'; // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { setTitleFlame } from './titleFlame.js'; // SHOP: a flame title's plate
+import { graphemesOf } from '../systems/graphemes.js'; // EMOTE1's characters, which JOURNAL1's notebook break reads too
+import { renownText } from '../net/renown.js'; // RENOWN1: Renown, left of the name
+import { guildTagText } from '../net/guild/guildLaw.js'; // GUILD1c: the guild's tag, right of the name
+import { houseLine } from '../net/houseLaw.js'; // LEGACY7: the house, under the name
+import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../net/heraldryLaw.js'; // SEASON1 part two: a Season's banner ribbon, under the name; HERALDRY-SHOWN: the tag's frame
+import { heraldrySwatchSrc } from './heraldrySwatch.js'; // HERALDRY-SHOWN (Seats-Arc 8.1): the guild's shield, in its tag's frame
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -107,7 +107,10 @@ export function graphemeCut(s, max) {
   const text = String(s ?? '');
   if (text.length <= max) return text;
   let out = '';
-  for (const g of graphemesOf(text)) { if (out.length + g.length > max) break; out += g; }
+  for (const g of graphemesOf(text)) {
+    if (out.length + g.length > max) break;
+    out += g;
+  }
   return out;
 }
 
@@ -124,7 +127,7 @@ export function bubbleSaid(text) {
  *  never a roll (DICE1) or an action (EMOTE1): what stands over a head is what the character SAID. */
 export function bubbleLineOk(line) {
   if (!line || typeof line !== 'object') return false;
-  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;   // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said
+  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said
   return typeof line.id === 'string' && !!line.id && typeof line.text === 'string' && !!line.text;
 }
 
@@ -278,11 +281,12 @@ export function injectNameStyle(doc = document) {
  *   - `covered` is the host's word for a window over the HUD;
  *   - `colorOf(id)` is net/social.js colorOf - an RGBA array for my party, null for everyone else.
  */
-export function createNameLayer({ doc = document, now = () => Date.now(), armsOf = null } = {}) {   // HERALDRY-SHOWN: `armsOf(tag)`, a guild's heraldry by its tag
+export function createNameLayer({ doc = document, now = () => Date.now(), armsOf = null } = {}) {
+  // HERALDRY-SHOWN: `armsOf(tag)`, a guild's heraldry by its tag
   injectNameStyle(doc);
   const root = doc.createElement('div');
   root.className = 'dfnames';
-  root.setAttribute('aria-hidden', 'true');   // the names are a reading of the world, not a control: the reader has the chat's roster
+  root.setAttribute('aria-hidden', 'true'); // the names are a reading of the world, not a control: the reader has the chat's roster
   doc.body.append(root);
   root.style.display = 'none';
 
@@ -291,16 +295,25 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   const tags = new Map();
   /** peer id -> { text, at }. Insertion-ordered and capped at BUBBLE_MAX: one bubble a peer, the oldest out. */
   const bubbles = new Map();
-  let seq = 0;        // the last ChatLog line this layer has read
+  let seq = 0; // the last ChatLog line this layer has read
   let lastLog = null; // AUDIT NAME1 F8: and WHOSE - the watermark belongs to one log, not to the layer
-  let visible = 0;    // how many bubbles the last render actually drew
+  let visible = 0; // how many bubbles the last render actually drew
   let shownRoot = false;
   let alive = true;
 
-  const setText = (n, t) => { if (n.textContent !== t) n.textContent = t; };
-  const setCls = (n, c) => { if (n.className !== c) n.className = c; };
+  const setText = (n, t) => {
+    if (n.textContent !== t) n.textContent = t;
+  };
+  const setCls = (n, c) => {
+    if (n.className !== c) n.className = c;
+  };
   /** PERF-NAMES1: one tag's value, written when it differs from what THIS LAYER last wrote there (`tag[slot]`). */
-  const put = (tag, slot, v, write) => { if (tag[slot] !== v) { tag[slot] = v; write(v); } };
+  const put = (tag, slot, v, write) => {
+    if (tag[slot] !== v) {
+      tag[slot] = v;
+      write(v);
+    }
+  };
   /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
   const paintBar = (tag, b) => {
     setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');
@@ -308,7 +321,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
     tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;
   };
-  const live = new Set();   // PERF-NAMES1: the frame's ids, one set refilled
+  const live = new Set(); // PERF-NAMES1: the frame's ids, one set refilled
 
   const makeTag = () => {
     const node = doc.createElement('div');
@@ -340,9 +353,9 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     // LEGACY7: the house, a line under the name row ("☠ Ysolde II of House Hlaalu" - net/houseLaw.js houseLine)
     const house = doc.createElement('div');
     house.className = 'dfname-house';
-    const skull = doc.createElement('div');   // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
+    const skull = doc.createElement('div'); // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
     skull.className = 'dfname-skull off';
-    const bar = doc.createElement('div');   // PVP-BAR: under the skull, above the name - its Shield strip and its health
+    const bar = doc.createElement('div'); // PVP-BAR: under the skull, above the name - its Shield strip and its health
     bar.className = 'dfname-bar off';
     const barS = doc.createElement('div');
     barS.className = 'dfname-bar-s';
@@ -351,10 +364,45 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     bar.append(barS, barH);
     node.append(bubble, skull, bar, title, tag, house, ribbon);
     root.append(node);
-    return { node, bubble, skull, skullOf: '', bar, barS, barH, barOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
+    return {
+      node,
+      bubble,
+      skull,
+      skullOf: '',
+      bar,
+      barS,
+      barH,
+      barOf: '',
+      title,
+      tag,
+      lv,
+      name,
+      guild,
+      glyphs,
+      house,
+      ribbon,
+      worn: null,
+      titled: null,
+      inked: undefined,
+      banded: '',
+      armed: '',
       // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
       // `textContent` asks the browser to serialise the value back, a cost a frame for every label
-      at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null, cone: NaN, coneAt: NaN, coneAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
+      at: null,
+      size: null,
+      lvOf: undefined,
+      gtOf: undefined,
+      houseOf: undefined,
+      said: null,
+      nameText: null,
+      titleText: null,
+      bubbleOn: null,
+      bubbleText: null,
+      bubbleAlpha: null,
+      cone: NaN,
+      coneAt: NaN,
+      coneAlpha: null,
+    }; // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -370,8 +418,8 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     tag.worn = key;
     tag.glyphs.textContent = '';
     for (const g of badges) {
-      const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6);   // INSPECT1: the one drawing (ui/playerBadge.js), at this face's stroke
-      if (!svg) return;   // a document that cannot make one draws none, rather than throwing under a name
+      const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6); // INSPECT1: the one drawing (ui/playerBadge.js), at this face's stroke
+      if (!svg) return; // a document that cannot make one draws none, rather than throwing under a name
       tag.glyphs.append(svg);
     }
   };
@@ -379,8 +427,8 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   /** A line over a peer's head. The newest REPLACES the one before it (delete then set, so the entry is also the
    *  newest in the store's order), and a fifth peer pushes the oldest out. */
   const say = (id, text, at = now()) => {
-    const body = bubbleSaid(text);   // AUDIT NAME1 F10: whitespace is not a remark
-    if (!id || !body || !Number.isFinite(at)) return false;   // AUDIT NAME1 F11: a stamp that is not a number is not a time
+    const body = bubbleSaid(text); // AUDIT NAME1 F10: whitespace is not a remark
+    if (!id || !body || !Number.isFinite(at)) return false; // AUDIT NAME1 F11: a stamp that is not a number is not a time
     bubbles.delete(id);
     bubbles.set(id, { text: body, at });
     while (bubbles.size > BUBBLE_MAX) bubbles.delete(bubbles.keys().next().value);
@@ -393,7 +441,10 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     // AUDIT NAME1 F8: THE WATERMARK IS THE LOG'S. A ChatLog counts its own lines from 1, so a REPLACED log (a
     // rejoin that builds a new one, a host that swaps it) arrives with line 1 under a watermark of 40 and every
     // line below it is mute for the rest of the session. Keyed to the log's identity, a new log starts a new count.
-    if (log !== lastLog) { lastLog = log; seq = 0; }
+    if (log !== lastLog) {
+      lastLog = log;
+      seq = 0;
+    }
     // CHAT-CHAN: EVERY TAB, IN THE ORDER THE LINES WERE HEARD - the log's one count runs across its tabs, so the newer
     // lines of each are its tail, read back to the watermark (a line kept on every tab is one line: a Set)
     const fresh = new Set();
@@ -419,7 +470,9 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     tagFor: (id) => tags.get(id) ?? null,
     bubbleCount: () => visible,
     /** HERALDRY-SHOWN: where a guild's heraldry is found by its tag (the host's seats' list and own guild), or null. */
-    setArmsOf: (fn) => { armsOf = typeof fn === 'function' ? fn : null; },
+    setArmsOf: (fn) => {
+      armsOf = typeof fn === 'function' ? fn : null;
+    },
     /** How many lines the STORE holds - the bound itself (BUBBLE_MAX), which `bubbleCount` cannot show because it
      *  counts what a frame DREW. A line past its window is dropped from here as well as from the screen. */
     storedCount: () => bubbles.size,
@@ -437,16 +490,26 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
       const t = now();
       for (const [id, b] of [...bubbles]) if (t - b.at >= BUBBLE_MS) bubbles.delete(id);
       const want = !covered && points.length > 0;
-      if (want !== shownRoot) { shownRoot = want; root.style.display = want ? '' : 'none'; }
+      if (want !== shownRoot) {
+        shownRoot = want;
+        root.style.display = want ? '' : 'none';
+      }
       // PERF-LEAK1 (2026-10-10): NOBODY TO LABEL, NO LABELS KEPT. The sweep below ran only on a frame that drew names, so
       // the crowd's last frame left every one of its tags in the page, hidden - ten elements a name until the next
       // person came into view (PERF-ON4's "240 DOM nodes more after sixty peers left", the peer lab's churn: 8 to 15
       // names a wave). A frame with no point lets them go; a frame merely COVERED (a window over the HUD) keeps them,
       // so the names under a window are moved again, never rebuilt, when it closes.
-      if (!want) { visible = 0; if (!covered && tags.size) { for (const tag of tags.values()) tag.node.remove?.(); tags.clear(); } return 0; }
+      if (!want) {
+        visible = 0;
+        if (!covered && tags.size) {
+          for (const tag of tags.values()) tag.node.remove?.();
+          tags.clear();
+        }
+        return 0;
+      }
       live.clear();
       visible = 0;
-      const vp = nameViewportScale(viewport);   // AUDIT NAME1 F3: the frame's own height, against the reference
+      const vp = nameViewportScale(viewport); // AUDIT NAME1 F3: the frame's own height, against the reference
       for (const p of points) {
         if (!p || typeof p.id !== 'string') continue;
         // AUDIT NAME1 F11: a point that is not a number is not a place. `translate(NaNpx, ...)` is a declaration the
@@ -457,36 +520,64 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
         live.add(p.id);
         let tag = tags.get(p.id);
-        if (!tag) { tag = makeTag(); tags.set(p.id, tag); }
+        if (!tag) {
+          tag = makeTag();
+          tags.set(p.id, tag);
+        }
         setCls(tag.node, 'dfname');
         // NAME_GAP_PX is taken HERE and not inside namePoints because it is a screen-pixel clearance and the point
         // is a projected head: the anchor stays the head for anything else that wants it, and the label's bottom
         // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -
         // the same whole pixels `left`/`top` held, and no layout for a label that only moved.
-        put(tag, 'at', `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`, (v) => { tag.node.style.transform = v; });
+        put(
+          tag,
+          'at',
+          `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`,
+          (v) => {
+            tag.node.style.transform = v;
+          },
+        );
         // PVP-CONE (ui/nameCone.js): the whole tag - skull, bars and bubble with it - near the crosshair, eased; a new tag starts where it stands
-        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt); tag.coneAt = t;
-        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => { tag.node.style.opacity = v === '1.00' ? '' : v; tag.node.style.visibility = v === '0.00' ? 'hidden' : ''; });
-        put(tag, 'size', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`, (v) => { tag.node.style.fontSize = v; });
+        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt);
+        tag.coneAt = t;
+        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => {
+          tag.node.style.opacity = v === '1.00' ? '' : v;
+          tag.node.style.visibility = v === '0.00' ? 'hidden' : '';
+        });
+        put(tag, 'size', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`, (v) => {
+          tag.node.style.fontSize = v;
+        });
         // PERF-NAMES1: the words are worked out when the stamp they come from changes, not every frame
-        if (tag.lvOf !== p.lv) { tag.lvOf = p.lv; setText(tag.lv, renownText(p.lv) ?? ''); }   // RENOWN1: "12" in its box, or nothing
+        if (tag.lvOf !== p.lv) {
+          tag.lvOf = p.lv;
+          setText(tag.lv, renownText(p.lv) ?? '');
+        } // RENOWN1: "12" in its box, or nothing
         put(tag, 'nameText', p.name ?? '', (v) => setText(tag.name, v));
-        if (tag.gtOf !== p.gt) { tag.gtOf = p.gt; setText(tag.guild, guildTagText(p.gt) ?? ''); }   // GUILD1c: "<HND>", or nothing
-        if (tag.houseOf !== p.house) { tag.houseOf = p.house; setText(tag.house, houseLine(p.house) ?? ''); }   // LEGACY7: "☠ Ysolde II of House Hlaalu", or nothing
+        if (tag.gtOf !== p.gt) {
+          tag.gtOf = p.gt;
+          setText(tag.guild, guildTagText(p.gt) ?? '');
+        } // GUILD1c: "<HND>", or nothing
+        if (tag.houseOf !== p.house) {
+          tag.houseOf = p.house;
+          setText(tag.house, houseLine(p.house) ?? '');
+        } // LEGACY7: "☠ Ysolde II of House Hlaalu", or nothing
         // HERALDRY-SHOWN (Seats-Arc 8.1): the tag framed in its guild's heraldry where the client knows it - written when
         // it CHANGES, as the ribbon is
         const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;
-        const armed = arms ? heraldryKey(arms) : '';   // AUDIT GUILD2 G12: the whole arms, never GUILD1d's three alone
+        const armed = arms ? heraldryKey(arms) : ''; // AUDIT GUILD2 G12: the whole arms, never GUILD1d's three alone
         if (tag.armed !== armed) {
           tag.armed = armed;
           setCls(tag.guild, arms ? 'dfname-guild armed' : 'dfname-guild');
-          tag.guild.style.borderColor = arms ? heraldryColourOf(arms.border)?.hex ?? '' : '';
+          tag.guild.style.borderColor = arms ? (heraldryColourOf(arms.border)?.hex ?? '') : '';
           tag.guild.style.backgroundImage = arms ? `url("${heraldrySwatchSrc(arms)}")` : '';
         }
         // AUDIT A10 (SHADOW-FANG's audit, the title's own bug on the name): a browser reads a hex colour back as rgb(),
         // so the diffing door rewrote a party mate's green every frame - written when it CHANGES, as the title is
         const ink = cssRgba(colorOf?.(p.id)) ?? '';
-        if (tag.inked !== ink) { tag.inked = ink; tag.name.style.color = ink; }
+        if (tag.inked !== ink) {
+          tag.inked = ink;
+          tag.name.style.color = ink;
+        }
         // SEASON1 part two (Seats-Arc 9.1): a Season's banner ribbon under the name, in its guild's two colours - written
         // when it CHANGES, as the name's ink is
         const band = ribbonColours(p.rb);
@@ -513,11 +604,15 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
           tag.titled = titleKey;
           const paint = titlePaint(badge);
           for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
-          setTitleFlame(tag.title, badge?.flame ? badge.key : null);   // SHOP: Genesis on its fire, written with its paint
+          setTitleFlame(tag.title, badge?.flame ? badge.key : null); // SHOP: Genesis on its fire, written with its paint
         }
-        put(tag, 'skullOf', p.skull ?? '', (k) => { setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off'); tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : ''; tag.skull.style.filter = skullGlow(k); });   // PVP-SKULL
-        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar));   // PVP-BAR
-        if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p);   // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
+        put(tag, 'skullOf', p.skull ?? '', (k) => {
+          setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off');
+          tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : '';
+          tag.skull.style.filter = skullGlow(k);
+        }); // PVP-SKULL
+        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar)); // PVP-BAR
+        if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p); // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a
         // relay stamp from the future taken as `at` - is alpha 0, and an invisible box was still being counted by
@@ -525,12 +620,18 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         const alpha = b ? bubbleAlpha(t - b.at) : 0;
         if (alpha > 0) {
           put(tag, 'bubbleText', b.text, (v) => setText(tag.bubble, v));
-          put(tag, 'bubbleAlpha', alpha.toFixed(2), (v) => { tag.bubble.style.opacity = v; });
+          put(tag, 'bubbleAlpha', alpha.toFixed(2), (v) => {
+            tag.bubble.style.opacity = v;
+          });
           put(tag, 'bubbleOn', true, () => setCls(tag.bubble, 'dfname-bubble'));
           visible++;
         } else put(tag, 'bubbleOn', false, () => setCls(tag.bubble, 'dfname-bubble off'));
       }
-      for (const [id, tag] of tags) { if (live.has(id)) continue; tag.node.remove?.(); tags.delete(id); }
+      for (const [id, tag] of tags) {
+        if (live.has(id)) continue;
+        tag.node.remove?.();
+        tags.delete(id);
+      }
       return visible;
     },
     destroy() {

@@ -297,5 +297,5 @@ test('RVN6 the page: from rank 2 who rides with it, counted, and its band\'s nam
   assert.equal(pluralKind('Harpy', 2), 'two Harpies');
   assert.equal(pluralKind('Slaughterfish', 2), 'two Slaughterfish');
   assert.equal(pluralKind('Werewolf', 1), 'a Werewolf');
-  assert.match(read('src/ui/revenant/revenantPage.js'), /const band = fallen \? '' : bandWords\(r, kindName\);   \/\/ RVN6\n\s*if \(band\) text\.append\(el\('span', 'rvn-will', band\)\);/);
+  assert.match(read('src/ui/revenant/revenantPage.js'), /const band = fallen \? '' : bandWords\(r, kindName\); \/\/ RVN6\n\s*if \(band\) text\.append\(el\('span', 'rvn-will', band\)\);/);
 });

@@ -29,13 +29,13 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up (staffpanel2.test.js's stand): mob (an Admin and owner) and Asynian (a Moderator)
+/** The Worker with the panel set up (staffpanel2.test.js's stand): chief (an Admin and owner) and Asynian (a Moderator)
  *  signed in, and Troll, a player. */
 async function stand() {
   _resetKeyForTests();
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
   });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
@@ -46,8 +46,8 @@ async function stand() {
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
   const troll = await s.registered('Troll');
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
   const idOf = (h) => raw.prepare('SELECT id FROM players WHERE handle = ?').get(h).id;
@@ -57,7 +57,7 @@ async function stand() {
     assert.ok(v.ok, v.why);
     return v.claims;
   };
-  return { ...s, raw, staff, mob, asy, troll, idOf, rows, claims };
+  return { ...s, raw, staff, chief, asy, troll, idOf, rows, claims };
 }
 
 test('STAFF-PANEL5-FOLLOW: the follow door is listed among the staff panel\'s, and none opens without a staff session', async () => {
@@ -72,7 +72,7 @@ test('STAFF-PANEL5-FOLLOW: the follow door is listed among the staff panel\'s, a
 
 test('STAFF-PANEL5-FOLLOW: an Admin\'s follow token - hidden, naming its target, on a subject of its session\'s own and never the staff member\'s; written down once a minute', async () => {
   const s = await stand();
-  const r = await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.mob.session);
+  const r = await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.chief.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.sub, s.troll.id);
   assert.equal(r.body.name, 'Troll');
@@ -87,7 +87,7 @@ test('STAFF-PANEL5-FOLLOW: an Admin\'s follow token - hidden, naming its target,
   assert.equal(c.g, undefined, 'no glyph, no title: the socket says nothing of who watches');
   assert.equal(c.t, undefined);
   // the same session's next token: the same subject, and still one audit row inside the minute
-  const again = await s.staff('/v1/staff/follow', { sub: s.troll.id, room: 'world:12,40' }, s.mob.session);
+  const again = await s.staff('/v1/staff/follow', { sub: s.troll.id, room: 'world:12,40' }, s.chief.session);
   assert.equal(again.status, 200);
   assert.equal((await s.claims(again.body.token)).s, c.s);
   const rows = s.rows('follow');
@@ -96,18 +96,18 @@ test('STAFF-PANEL5-FOLLOW: an Admin\'s follow token - hidden, naming its target,
   // a minute on (the log is append-only: the clock moves instead), another row
   const real = Date.now;
   Date.now = () => real() + (FOLLOW_AUDIT_S + 1) * 1000;
-  try { assert.equal((await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.mob.session)).status, 200); } finally { Date.now = real; }
+  try { assert.equal((await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.chief.session)).status, 200); } finally { Date.now = real; }
   assert.equal(s.rows('follow').length, 2);
 });
 
-test('STAFF-PANEL5-FOLLOW: a Moderator follows any player too (mob, 07:04Z), on a subject of their own session', async () => {
+test('STAFF-PANEL5-FOLLOW: a Moderator follows any player too (chief, 07:04Z), on a subject of their own session', async () => {
   const s = await stand();
   const r = await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.asy.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   const c = await s.claims(r.body.token);
   assert.deepEqual([c.hd, c.fo], [1, s.troll.id]);
-  const mob = await s.claims((await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.mob.session)).body.token);
-  assert.notEqual(c.s, mob.s, 'two sessions, two subjects');
+  const chief = await s.claims((await s.staff('/v1/staff/follow', { sub: s.troll.id }, s.chief.session)).body.token);
+  assert.notEqual(c.s, chief.s, 'two sessions, two subjects');
   assert.deepEqual(s.rows('follow').map((x) => x.role).sort(), ['admin', 'moderator']);
 });
 
@@ -128,7 +128,7 @@ test('STAFF-PANEL5-FOLLOW: entering someone\'s home is written down by its room,
 
 test('STAFF-PANEL5-FOLLOW: refusals - no account, a room out of its alphabet, oneself, nobody, and a service with no key', async () => {
   const s = await stand();
-  const f = (body, token = s.mob.session) => s.staff('/v1/staff/follow', body, token);
+  const f = (body, token = s.chief.session) => s.staff('/v1/staff/follow', body, token);
   assert.deepEqual(await f({}), { status: 400, body: { error: 'body' } });
   assert.deepEqual(await f({ sub: 'x' }), { status: 400, body: { error: 'body' } });
   assert.deepEqual(await f({ sub: s.troll.id, room: 'bad room' }), { status: 400, body: { error: 'body' } });

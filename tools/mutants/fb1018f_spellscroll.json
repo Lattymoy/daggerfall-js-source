@@ -62,8 +62,8 @@
   {
     "name": "SPELL-SCROLL-section-unnamed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  body.setAttribute('data-scroll-key', section);",
-    "new": "  void 0;",
+    "old": "  body.setAttribute('data-scroll-key', section); // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top",
+    "new": "  void 0; // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top",
     "tests": [
       "test/ui/enhanced/fb1018f_spellscroll.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SPELL-SCROLL-key-out-of-the-path",
     "file": "src/ui/domRepaint.js",
-    "old": "${key != null ? `#${key}` : ''}",
-    "new": "",
+    "old": "    parts.push(`${n.tagName}.${n.className || ''}${key != null ? `#${key}` : ''}:${i}`);",
+    "new": "    parts.push(`${n.tagName}.${n.className || ''}:${i}`);",
     "tests": [
       "test/ui/enhanced/fb1018f_spellscroll.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SPELL-SCROLL-tree-mapped",
     "file": "src/ui/domRepaint.js",
-    "old": "    const el = findPath(host, path);",
-    "new": "    const el = new Map([...host.querySelectorAll('*')].map((x) => [pathOf(host, x).path, x])).get(path.path) ?? null;",
+    "old": "    const el = findPath(host, path); // AUDIT FB1018f L2-4: the one element that can be it, never the whole tree mapped",
+    "new": "    const el = new Map([...host.querySelectorAll('*')].map((x) => [pathOf(host, x).path, x])).get(path.path) ?? null; // AUDIT FB1018f L2-4: the one element that can be it, never the whole tree mapped",
     "tests": [
       "test/ui/enhanced/fb1018f_spellscroll.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SPELL-SCROLL-tree-searched-in-order",
     "file": "src/ui/domRepaint.js",
-    "old": "    const el = findPath(host, path);",
-    "new": "    const el = [...host.querySelectorAll('*')].find((x) => pathOf(host, x).path === path.path) ?? null;",
+    "old": "    const el = findPath(host, path); // AUDIT FB1018f L2-4: the one element that can be it, never the whole tree mapped",
+    "new": "    const el = [...host.querySelectorAll('*')].find((x) => pathOf(host, x).path === path.path) ?? null; // AUDIT FB1018f L2-4: the one element that can be it, never the whole tree mapped",
     "tests": [
       "test/ui/enhanced/fb1018f_spellscroll.test.js"
     ],

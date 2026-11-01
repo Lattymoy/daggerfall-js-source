@@ -35,11 +35,28 @@ import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE, presentNpcInfoText } from '../player/activate.js';
 import { trs } from '../world/mat4.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
-import { riteLocalOf, riteWindow, cageStands, RITE_GRACE_MS } from '../net/gate/gateRite.js';   // BROKER-CAGE: the faithful's circle, and her hours
+import { riteLocalOf, riteWindow, cageStands, RITE_GRACE_MS } from '../net/gate/gateRite.js'; // BROKER-CAGE: the faithful's circle, and her hours
 import { gateSpotLocal } from '../net/gate/gateLaw.js';
 import {
-  buildCageModel, buildCageDoor, cageHinge, CAGE_WALLS, CAGE_DOOR_WALL, CAGE_W, CAGE_D, CAGE_H, CAGE_CAP, CAGE_FOOT, CAGE_FOOT_UNDER, CAGE_POST,
-  CAGE_SILL, CAGE_SILL_OVER, CAGE_SILL_MAX, CAGE_LEAF_W, CAGE_WALL_OUT, CAGE_DOOR_OPEN, CAGE_DOOR_MS,
+  buildCageModel,
+  buildCageDoor,
+  cageHinge,
+  CAGE_WALLS,
+  CAGE_DOOR_WALL,
+  CAGE_W,
+  CAGE_D,
+  CAGE_H,
+  CAGE_CAP,
+  CAGE_FOOT,
+  CAGE_FOOT_UNDER,
+  CAGE_POST,
+  CAGE_SILL,
+  CAGE_SILL_OVER,
+  CAGE_SILL_MAX,
+  CAGE_LEAF_W,
+  CAGE_WALL_OUT,
+  CAGE_DOOR_OPEN,
+  CAGE_DOOR_MS,
 } from '../world/cageModel.js';
 import { gateArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';
 
@@ -60,11 +77,13 @@ export const BROKER_TURN_RATE = 2.4;
  *  press on her cage while the rite holds and after it, her door opening, and midnight taking her away mid-sale. */
 export const BROKER_TEXT = Object.freeze({
   name: 'Sigil Broker',
-  trade: 'Trades in Deadlands Embers',   // WB12a
-  caged: 'Caged by Dagon\'s Faithful',
-  get info() { return presentNpcInfoText('the Sigil Broker'); },   // L10N3d: DFU's youSee row, read as it is said
-  steal: 'The Broker\'s eyes never leave her embers.',
-  held: 'Kill all of Dagon\'s Faithful to free her.',
+  trade: 'Trades in Deadlands Embers', // WB12a
+  caged: "Caged by Dagon's Faithful",
+  get info() {
+    return presentNpcInfoText('the Sigil Broker');
+  }, // L10N3d: DFU's youSee row, read as it is said
+  steal: "The Broker's eyes never leave her embers.",
+  held: "Kill all of Dagon's Faithful to free her.",
   lost: 'She stays caged tonight.',
   freed: 'The Sigil Broker is free.',
   gone: 'The Sigil Broker leaves for the night.',
@@ -97,19 +116,51 @@ export const BROKER_BUCKET = 'set7:broker';
 export const BROKER_BODY_R = 0.3;
 export const BROKER_BODY_H = 1.9;
 /** The post's eight corners and twelve triangles, about her feet. */
-export const BROKER_POST = Object.freeze((() => {
-  const r = BROKER_BODY_R, h = BROKER_BODY_H;
-  const positions = new Float32Array([-r, 0, -r, r, 0, -r, r, 0, r, -r, 0, r, -r, h, -r, r, h, -r, r, h, r, -r, h, r]);
-  const indices = new Uint16Array([0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7]);
-  return { positions, indices };
-})());
+export const BROKER_POST = Object.freeze(
+  (() => {
+    const r = BROKER_BODY_R,
+      h = BROKER_BODY_H;
+    const positions = new Float32Array([
+      -r,
+      0,
+      -r,
+      r,
+      0,
+      -r,
+      r,
+      0,
+      r,
+      -r,
+      0,
+      r,
+      -r,
+      h,
+      -r,
+      r,
+      h,
+      -r,
+      r,
+      h,
+      r,
+      -r,
+      h,
+      r,
+    ]);
+    const indices = new Uint16Array([
+      0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
+    ]);
+    return { positions, indices };
+  })(),
+);
 
 /** BROKER-CAGE: her cage's spot in the gate pixel's frame ([east, north] metres from its south-west corner - the
  *  circle's, net/gate/gateRite.js riteLocalOf) and the circle's bearing to its gate (scenes/riteHost.js enter's) - the day's
  *  alone. Pure. */
 export function cageSpotLocal(day) {
-  const [e, n] = riteLocalOf(day), [gx, gz] = gateSpotLocal(day);
-  const facing = Math.atan2(gx - e, gz - n), a = facing + CAGE_TURN;
+  const [e, n] = riteLocalOf(day),
+    [gx, gz] = gateSpotLocal(day);
+  const facing = Math.atan2(gx - e, gz - n),
+    a = facing + CAGE_TURN;
   return { x: e + Math.sin(a) * CAGE_R, z: n + Math.cos(a) * CAGE_R, facing };
 }
 
@@ -124,8 +175,11 @@ export function cageSpotLocal(day) {
  */
 export function brokerPlace(site, nowMs, pixelTranslation, heightAt) {
   if (!site || !Number.isSafeInteger(site.day) || !cageStands(site.day, nowMs)) return null;
-  const sp = cageSpotLocal(site.day), t = pixelTranslation(site.px, site.py);
-  const x = t[0] + sp.x, z = t[2] + sp.z, h = heightAt(x, z);
+  const sp = cageSpotLocal(site.day),
+    t = pixelTranslation(site.px, site.py);
+  const x = t[0] + sp.x,
+    z = t[2] + sp.z,
+    h = heightAt(x, z);
   return Number.isFinite(h) ? { day: site.day, px: site.px, py: site.py, feet: [x, h, z], rest: sp.facing } : null;
 }
 
@@ -133,9 +187,19 @@ export function brokerPlace(site, nowMs, pixelTranslation, heightAt) {
  *  capsule inside its walls' reach, the heights overlapping (AUDIT SET W1's law, her post's)? Pure. */
 export function cageTraps(at, rest, f) {
   if (!at || !f) return false;
-  const c = Math.cos(rest), s = Math.sin(rest), dx = f[0] - at[0], dz = f[2] - at[2];
-  const lx = c * dx - s * dz, lz = s * dx + c * dz, reach = CAGE_WALL_OUT + CAPSULE_RADIUS;
-  return Math.abs(lx) < CAGE_W / 2 + reach && Math.abs(lz) < CAGE_D / 2 + reach && f[1] < at[1] + CAGE_H && f[1] + CAPSULE_HEIGHT > at[1] - CAGE_FOOT;
+  const c = Math.cos(rest),
+    s = Math.sin(rest),
+    dx = f[0] - at[0],
+    dz = f[2] - at[2];
+  const lx = c * dx - s * dz,
+    lz = s * dx + c * dz,
+    reach = CAGE_WALL_OUT + CAPSULE_RADIUS;
+  return (
+    Math.abs(lx) < CAGE_W / 2 + reach &&
+    Math.abs(lz) < CAGE_D / 2 + reach &&
+    f[1] < at[1] + CAGE_H &&
+    f[1] + CAPSULE_HEIGHT > at[1] - CAGE_FOOT
+  );
 }
 
 /** AUDIT SET W1 (2026-09-27): would her post, stood at feet `at`, rise around a body whose feet are at `f` (the motor's
@@ -145,13 +209,19 @@ export function cageTraps(at, rest, f) {
 export function postTraps(at, f) {
   if (!at || !f) return false;
   const reach = BROKER_BODY_R + CAPSULE_RADIUS;
-  return Math.abs(f[0] - at[0]) < reach && Math.abs(f[2] - at[2]) < reach && f[1] < at[1] + BROKER_BODY_H && f[1] + CAPSULE_HEIGHT > at[1];
+  return (
+    Math.abs(f[0] - at[0]) < reach &&
+    Math.abs(f[2] - at[2]) < reach &&
+    f[1] < at[1] + BROKER_BODY_H &&
+    f[1] + CAPSULE_HEIGHT > at[1]
+  );
 }
 
 /** The yaw she turns toward this frame: to feet within BROKER_NOTICE_M, else her rest (out of the gate). Pure. */
 export function brokerFacing(at, rest, feet) {
   if (!feet) return rest;
-  const dx = feet[0] - at[0], dz = feet[2] - at[2];
+  const dx = feet[0] - at[0],
+    dz = feet[2] - at[2];
   const d = Math.hypot(dx, dz);
   return d > 1e-6 && d <= BROKER_NOTICE_M ? Math.atan2(dx, dz) : rest;
 }
@@ -179,30 +249,63 @@ export function turnToward(yaw, want, dt, rate = BROKER_TURN_RATE) {
  *   the host's: shut a window open on her, and say whether one was
  */
 export function createSigilBroker({
-  renderer = null, getTexture = null, uploadRecordFrame = null, site, pixelTranslation, heightAt, now = () => Date.now(), freed = () => false, freedAt = () => NaN,
-  feet = () => null, cam = () => null, say = () => {}, open = () => {}, gone = () => false, collider = () => null,
+  renderer = null,
+  getTexture = null,
+  uploadRecordFrame = null,
+  site,
+  pixelTranslation,
+  heightAt,
+  now = () => Date.now(),
+  freed = () => false,
+  freedAt = () => NaN,
+  feet = () => null,
+  cam = () => null,
+  say = () => {},
+  open = () => {},
+  gone = () => false,
+  collider = () => null,
 }) {
   /** Where she stands this frame, or null: AUDIT SET W5, a new record only when she moves (a recentre, her pixel built,
    *  a new day), never one every frame - and her cage's spot, made once a day; AUDIT BROKER-CAGE C7: the ground under
    *  her, read when the land moves under her and every BROKER_GROUND_EVERY frames, never every frame. */
-  let at = null, spot = null, spotDay = null;
+  let at = null,
+    spot = null,
+    spotDay = null;
   const T3 = [0, 0, 0];
-  let groundY = NaN, groundAt = [NaN, NaN, NaN, NaN], frameN = 0;
+  let groundY = NaN,
+    groundAt = [NaN, NaN, NaN, NaN],
+    frameN = 0;
   /** Where her post stands in the collider (her feet when it was stood), or null. */
   let postAt = null;
   /** BROKER-CAGE: her cage - whether its door is open for her day, when it began to swing (-Infinity: open when first
    *  seen), when she was first seen shut; its walls in the collider ([x, y, z, rest] when stood) and its door's slab; the
    *  meshes, made once, and their matrices, made when she moves or the door swings. */
-  let doorOpen = false, openedAt = -Infinity, shutSince = null, cageDay = null;
-  let cageAt = null, cageMat = null, doorUp = false;
-  let cageMesh = null, doorMesh = null, meshTried = false, artUp = false;
+  let doorOpen = false,
+    openedAt = -Infinity,
+    shutSince = null,
+    cageDay = null;
+  let cageAt = null,
+    cageMat = null,
+    doorUp = false;
+  let cageMesh = null,
+    doorMesh = null,
+    meshTried = false,
+    artUp = false;
   /** AUDIT BROKER-CAGE G6: the ground under her cage - how deep its bars go and how high its door's sill stands - read
    *  when she moves, and the meshes made again when either moves (shapeOf). */
-  let shapeAt = null, foot = CAGE_FOOT, sill = CAGE_SILL, meshFoot = NaN, meshSill = NaN;
-  let drawnAt = null, drawMat = null, doorAngle = NaN, doorMat = null;
+  let shapeAt = null,
+    foot = CAGE_FOOT,
+    sill = CAGE_SILL,
+    meshFoot = NaN,
+    meshSill = NaN;
+  let drawnAt = null,
+    drawMat = null,
+    doorAngle = NaN,
+    doorMat = null;
   let yaw = null;
   /** Her sprite: loading, loaded, or failed (a failed load leaves her unseen - her box and her window stay). */
-  let body = null, loading = null;
+  let body = null,
+    loading = null;
   let batch = null;
   /** AUDIT WBX W6's lesson: the box made when she moves, not every frame the eye asks - compared by number (AUDIT SET
    *  W5: a key string built on every ask was the allocation the lesson was about). */
@@ -215,7 +318,11 @@ export function createSigilBroker({
   const keysOf = (archive, record, frame) => {
     const k = record * 256 + frame;
     let e = frameKeys.get(k);
-    if (!e) { const rkey = `${record}#${frame}`; e = { rkey, texKey: `${archive}_${rkey}` }; frameKeys.set(k, e); }
+    if (!e) {
+      const rkey = `${record}#${frame}`;
+      e = { rkey, texKey: `${archive}_${rkey}` };
+      frameKeys.set(k, e);
+    }
     return e;
   };
 
@@ -223,16 +330,28 @@ export function createSigilBroker({
    *  cached all the same (the pipeline keeps what `load` left - a header and no records), and reading a frame count
    *  off it throws: she is unseen, never a throw in the frame. */
   const readable = (tex) => {
-    try { return !!tex && IDLE_ANIMS.every((a) => tex.getFrameCount(a.record) > 0); } catch { return false; }
+    try {
+      return !!tex && IDLE_ANIMS.every((a) => tex.getFrameCount(a.record) > 0);
+    } catch {
+      return false;
+    }
   };
   function loadBody() {
     if (body || loading || !getTexture || !uploadRecordFrame || !renderer?.createBillboardBatch) return;
     const archive = ENEMY_BASICS[BROKER_MOBILE]?.maleTexture;
     if (!archive) return;
-    loading = Promise.resolve().then(() => getTexture(archive)).then((tex) => {
-      body = readable(tex) ? { tex, archive } : { failed: true };
-      if (body.failed) console.warn(`[broker] her sprite (archive ${archive}) would not load`);
-    }, (e) => { body = { failed: true }; console.warn('[broker] her sprite', e?.message ?? e); });
+    loading = Promise.resolve()
+      .then(() => getTexture(archive))
+      .then(
+        (tex) => {
+          body = readable(tex) ? { tex, archive } : { failed: true };
+          if (body.failed) console.warn(`[broker] her sprite (archive ${archive}) would not load`);
+        },
+        (e) => {
+          body = { failed: true };
+          console.warn('[broker] her sprite', e?.message ?? e);
+        },
+      );
   }
   /** Her frame: the idle record her yaw and the eye choose, uploaded when first seen, her billboard sized to it. */
   function drawBody() {
@@ -244,16 +363,19 @@ export function createSigilBroker({
     const fr = bossFrame(act, yaw ?? at.rest, at.feet, eye, (rec) => body.tex.getFrameCount?.(rec) ?? 1);
     const { rkey, texKey } = keysOf(body.archive, fr.record, fr.frame);
     if (!renderer.textures?.has?.(texKey)) uploadRecordFrame(body.archive, fr.record, fr.frame);
-    const sz = mobileBillboardSize(body.tex, fr.record);   // a shared, cached object: read, never written
+    const sz = mobileBillboardSize(body.tex, fr.record); // a shared, cached object: read, never written
     if (!batch) {
       batch = renderer.createBillboardBatch(body.archive, rkey, { w: sz.w, h: sz.h }, [[0, 0, 0]]);
       batch.origin = [0, 0, 0];
-      batch.size = { w: sz.w, h: sz.h };   // hers alone, written in place (the renderer reads it by value, per draw)
+      batch.size = { w: sz.w, h: sz.h }; // hers alone, written in place (the renderer reads it by value, per draw)
     }
     batch.record = rkey;
-    batch.size.w = fr.flip ? -sz.w : sz.w; batch.size.h = sz.h;
+    batch.size.w = fr.flip ? -sz.w : sz.w;
+    batch.size.h = sz.h;
     if (batch.bounds) batch.bounds[3] = Math.hypot(sz.w, sz.h) * 0.5;
-    batch.origin[0] = at.feet[0]; batch.origin[1] = at.feet[1]; batch.origin[2] = at.feet[2];   // a walker stands on her feet
+    batch.origin[0] = at.feet[0];
+    batch.origin[1] = at.feet[1];
+    batch.origin[2] = at.feet[2]; // a walker stands on her feet
     return true;
   }
   /** Her post where she stands, restood when she moves (a floating-origin recentre moves the land) and taken down when
@@ -263,8 +385,11 @@ export function createSigilBroker({
     const col = collider();
     if (!col?.addMesh) return;
     const f = at?.feet ?? null;
-    if (postAt && f && postAt[0] === f[0] && postAt[1] === f[1] && postAt[2] === f[2]) return;   // standing where she stands
-    if (postAt) { col.removeBucket?.(BROKER_BUCKET); postAt = null; }
+    if (postAt && f && postAt[0] === f[0] && postAt[1] === f[1] && postAt[2] === f[2]) return; // standing where she stands
+    if (postAt) {
+      col.removeBucket?.(BROKER_BUCKET);
+      postAt = null;
+    }
     if (!f || postTraps(f, feet())) return;
     col.addMesh(BROKER_BUCKET, BROKER_POST.positions, BROKER_POST.indices, trs(f[0], f[1], f[2], 0, 0, 0));
     postAt = [f[0], f[1], f[2]];
@@ -276,23 +401,42 @@ export function createSigilBroker({
     if (!col?.addMesh) return;
     const f = at?.feet ?? null;
     if (!(cageAt && f && cageAt[0] === f[0] && cageAt[1] === f[1] && cageAt[2] === f[2] && cageAt[3] === at.rest)) {
-      if (cageAt) { col.removeBucket?.(BROKER_CAGE_BUCKET); cageAt = null; }
-      if (doorUp) { col.removeBucket?.(BROKER_DOOR_BUCKET); doorUp = false; }
+      if (cageAt) {
+        col.removeBucket?.(BROKER_CAGE_BUCKET);
+        cageAt = null;
+      }
+      if (doorUp) {
+        col.removeBucket?.(BROKER_DOOR_BUCKET);
+        doorUp = false;
+      }
       if (!f || cageTraps(f, at.rest, feet())) return;
       cageMat = trs(f[0], f[1], f[2], 0, (at.rest * 180) / Math.PI, 0);
       col.addMesh(BROKER_CAGE_BUCKET, CAGE_WALLS.positions, CAGE_WALLS.indices, cageMat);
       cageAt = [f[0], f[1], f[2], at.rest];
     }
-    if (!doorOpen && !doorUp) { col.addMesh(BROKER_DOOR_BUCKET, CAGE_DOOR_WALL.positions, CAGE_DOOR_WALL.indices, cageMat); doorUp = true; }
-    else if (doorOpen && doorUp) { col.removeBucket?.(BROKER_DOOR_BUCKET); doorUp = false; }
+    if (!doorOpen && !doorUp) {
+      col.addMesh(BROKER_DOOR_BUCKET, CAGE_DOOR_WALL.positions, CAGE_DOOR_WALL.indices, cageMat);
+      doorUp = true;
+    } else if (doorOpen && doorUp) {
+      col.removeBucket?.(BROKER_DOOR_BUCKET);
+      doorUp = false;
+    }
   }
   /** BROKER-CAGE: her cage this frame - a new day's shut; open once every one of the faithful fell, swinging from the
    *  frame it was seen to (open already when first seen, or freed within BROKER_SHUT_SEEN_MS of first seen - a page
    *  opened before the hub's word came), and said to a player near her who saw it shut. */
   function tendCage(t) {
-    if (cageDay !== at.day) { cageDay = at.day; doorOpen = false; openedAt = -Infinity; shutSince = null; }
+    if (cageDay !== at.day) {
+      cageDay = at.day;
+      doorOpen = false;
+      openedAt = -Infinity;
+      shutSince = null;
+    }
     if (doorOpen) return;
-    if (!freed(at.day, at.px, at.py)) { shutSince ??= t; return; }
+    if (!freed(at.day, at.px, at.py)) {
+      shutSince ??= t;
+      return;
+    }
     doorOpen = true;
     // AUDIT BROKER-CAGE C8: seen shut long enough - and shut when it opened: the hub's word of a cage opened before this
     // page first saw it (a hello's word late behind the omen's own fallback) neither swings nor speaks
@@ -305,7 +449,7 @@ export function createSigilBroker({
   /** The door's swing now, radians about its hinge: shut 0, open CAGE_DOOR_OPEN, eased between over CAGE_DOOR_MS. */
   function swing(t) {
     if (!doorOpen) return 0;
-    if (t < openedAt) openedAt = -Infinity;   // AUDIT BROKER-CAGE C11: the shared clock stepped back mid-swing - open, never drawn shut
+    if (t < openedAt) openedAt = -Infinity; // AUDIT BROKER-CAGE C11: the shared clock stepped back mid-swing - open, never drawn shut
     const k = Math.min(1, (t - openedAt) / CAGE_DOOR_MS);
     return k > 0 ? CAGE_DOOR_OPEN * k * k * (3 - 2 * k) : 0;
   }
@@ -314,14 +458,26 @@ export function createSigilBroker({
   function ensureCageMesh() {
     if (!renderer?.createMesh) return;
     if (meshTried && foot === meshFoot && sill === meshSill) return;
-    meshTried = true; meshFoot = foot; meshSill = sill;
+    meshTried = true;
+    meshFoot = foot;
+    meshSill = sill;
     try {
-      if (!artUp) { for (const [rec, art] of gateArt()) { renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); } artUp = true; }
-      const nextCage = renderer.createMesh(buildCageModel({ foot })), nextDoor = renderer.createMesh(buildCageDoor({ sill }));
+      if (!artUp) {
+        for (const [rec, art] of gateArt()) {
+          renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo);
+          renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true });
+        }
+        artUp = true;
+      }
+      const nextCage = renderer.createMesh(buildCageModel({ foot })),
+        nextDoor = renderer.createMesh(buildCageDoor({ sill }));
       if (cageMesh) renderer.destroyMesh?.(cageMesh);
       if (doorMesh) renderer.destroyMesh?.(doorMesh);
-      cageMesh = nextCage; doorMesh = nextDoor;
-    } catch (e) { console.warn('[broker] her cage would not build', e?.message ?? e); }
+      cageMesh = nextCage;
+      doorMesh = nextDoor;
+    } catch (e) {
+      console.warn('[broker] her cage would not build', e?.message ?? e);
+    }
   }
   /** AUDIT BROKER-CAGE G6: THE GROUND UNDER HER CAGE, read when she moves - its bars down to the lowest ground at its
    *  corners and CAGE_FOOT_UNDER beyond (never less than CAGE_FOOT), its door's sill over the highest ground its leaf
@@ -330,15 +486,24 @@ export function createSigilBroker({
   function shapeOf() {
     if (shapeAt === at) return;
     shapeAt = at;
-    const c = Math.cos(at.rest), s = Math.sin(at.rest), f = at.feet;
-    const rise = (lx, lz) => { const h = heightAt(f[0] + c * lx + s * lz, f[2] - s * lx + c * lz); return Number.isFinite(h) ? h - f[1] : 0; };
-    const hx = CAGE_W / 2 + CAGE_POST / 2, hz = CAGE_D / 2 + CAGE_POST / 2;
+    const c = Math.cos(at.rest),
+      s = Math.sin(at.rest),
+      f = at.feet;
+    const rise = (lx, lz) => {
+      const h = heightAt(f[0] + c * lx + s * lz, f[2] - s * lx + c * lz);
+      return Number.isFinite(h) ? h - f[1] : 0;
+    };
+    const hx = CAGE_W / 2 + CAGE_POST / 2,
+      hz = CAGE_D / 2 + CAGE_POST / 2;
     const low = Math.min(rise(-hx, -hz), rise(hx, -hz), rise(hx, hz), rise(-hx, hz));
     const [jx, jz] = cageHinge();
     let high = -Infinity;
     for (let i = 0; i <= 4; i++) {
-      const a = (CAGE_DOOR_OPEN * i) / 4, ca = Math.cos(a), sa = Math.sin(a);
-      for (const u of [CAGE_LEAF_W / 3, (2 * CAGE_LEAF_W) / 3, CAGE_LEAF_W]) high = Math.max(high, rise(jx + ca * u, jz - sa * u));
+      const a = (CAGE_DOOR_OPEN * i) / 4,
+        ca = Math.cos(a),
+        sa = Math.sin(a);
+      for (const u of [CAGE_LEAF_W / 3, (2 * CAGE_LEAF_W) / 3, CAGE_LEAF_W])
+        high = Math.max(high, rise(jx + ca * u, jz - sa * u));
     }
     foot = Math.round(Math.max(CAGE_FOOT, CAGE_FOOT_UNDER - low) * 100) / 100;
     sill = Math.round(Math.min(CAGE_SILL_MAX, Math.max(CAGE_SILL, high + CAGE_SILL_OVER)) * 100) / 100;
@@ -346,14 +511,24 @@ export function createSigilBroker({
   /** The cage's matrix where she stands, and the door's about its hinge - made when she moves or the door swings. */
   function cageMatrices(t) {
     if (drawnAt !== at) {
-      drawnAt = at; doorAngle = NaN;
+      drawnAt = at;
+      doorAngle = NaN;
       drawMat = trs(at.feet[0], at.feet[1], at.feet[2], 0, (at.rest * 180) / Math.PI, 0);
     }
     const a = swing(t);
     if (a !== doorAngle) {
       doorAngle = a;
-      const [hx, hz] = cageHinge(), c = Math.cos(at.rest), s = Math.sin(at.rest);
-      doorMat = trs(at.feet[0] + c * hx + s * hz, at.feet[1], at.feet[2] - s * hx + c * hz, 0, ((at.rest + a) * 180) / Math.PI, 0);
+      const [hx, hz] = cageHinge(),
+        c = Math.cos(at.rest),
+        s = Math.sin(at.rest);
+      doorMat = trs(
+        at.feet[0] + c * hx + s * hz,
+        at.feet[1],
+        at.feet[2] - s * hx + c * hz,
+        0,
+        ((at.rest + a) * 180) / Math.PI,
+        0,
+      );
     }
   }
   const keyOf = () => (at ? `broker:${at.day}` : null);
@@ -364,20 +539,45 @@ export function createSigilBroker({
      *  the window shut. AUDIT SET W3: only then - her pixel rebuilt under her (a season's turn, a late World of
      *  Daggerfall sweep) answers no ground for a frame or two, and that is no reason to shut a sale. */
     frame(dt = 0) {
-      const was = at, t = now();
+      const was = at,
+        t = now();
       frameN++;
       const s = site?.() ?? null;
       const due = !!s && Number.isSafeInteger(s.day) && cageStands(s.day, t);
       if (!due) at = null;
       else {
-        if (spotDay !== s.day) { spot = cageSpotLocal(s.day); spotDay = s.day; }
-        const tr = pixelTranslation(s.px, s.py, T3), x = tr[0] + spot.x, z = tr[2] + spot.z;
-        if (x !== groundAt[0] || z !== groundAt[1] || s.day !== groundAt[2] || !Number.isFinite(groundY) || frameN - groundAt[3] >= BROKER_GROUND_EVERY) {
-          groundY = heightAt(x, z); groundAt[0] = x; groundAt[1] = z; groundAt[2] = s.day; groundAt[3] = frameN;
+        if (spotDay !== s.day) {
+          spot = cageSpotLocal(s.day);
+          spotDay = s.day;
+        }
+        const tr = pixelTranslation(s.px, s.py, T3),
+          x = tr[0] + spot.x,
+          z = tr[2] + spot.z;
+        if (
+          x !== groundAt[0] ||
+          z !== groundAt[1] ||
+          s.day !== groundAt[2] ||
+          !Number.isFinite(groundY) ||
+          frameN - groundAt[3] >= BROKER_GROUND_EVERY
+        ) {
+          groundY = heightAt(x, z);
+          groundAt[0] = x;
+          groundAt[1] = z;
+          groundAt[2] = s.day;
+          groundAt[3] = frameN;
         }
         const h = groundY;
         if (!Number.isFinite(h)) at = null;
-        else if (!at || at.day !== s.day || at.px !== s.px || at.py !== s.py || at.feet[0] !== x || at.feet[1] !== h || at.feet[2] !== z || at.rest !== spot.facing) {
+        else if (
+          !at ||
+          at.day !== s.day ||
+          at.px !== s.px ||
+          at.py !== s.py ||
+          at.feet[0] !== x ||
+          at.feet[1] !== h ||
+          at.feet[2] !== z ||
+          at.rest !== spot.facing
+        ) {
           at = { day: s.day, px: s.px, py: s.py, feet: [x, h, z], rest: spot.facing };
         }
       }
@@ -387,7 +587,10 @@ export function createSigilBroker({
       // midnight took her - or (AUDIT BROKER-CAGE C12) a page asleep across it woke on the next day's cage: a window open
       // on yesterday's Broker is shut all the same
       if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);
-      if (!at) { yaw = null; return null; }
+      if (!at) {
+        yaw = null;
+        return null;
+      }
       shapeOf();
       loadBody();
       ensureCageMesh();
@@ -406,7 +609,10 @@ export function createSigilBroker({
     draw(r = renderer) {
       if (!at || !cageMesh || !drawMat || !r?.drawMesh) return 0;
       r.drawMesh(cageMesh, drawMat, null);
-      if (doorMesh && doorMat) { r.drawMesh(doorMesh, doorMat, null); return 2; }
+      if (doorMesh && doorMat) {
+        r.drawMesh(doorMesh, doorMat, null);
+        return 2;
+      }
       return 1;
     },
     /** The eye's box - BROKER-CAGE: her cage's own, turned with it (BROKER_BOX_HX), its axis-aligned bounds beside it
@@ -415,27 +621,51 @@ export function createSigilBroker({
     targets() {
       if (!at) return NONE;
       const f = at.feet;
-      if (!box || boxAt[0] !== f[0] || boxAt[1] !== f[1] || boxAt[2] !== f[2] || boxAt[3] !== at.day || boxAt[4] !== at.rest) {
-        boxAt[0] = f[0]; boxAt[1] = f[1]; boxAt[2] = f[2]; boxAt[3] = at.day; boxAt[4] = at.rest;
-        const c = Math.abs(Math.cos(at.rest)), sn = Math.abs(Math.sin(at.rest));
-        const hw = BROKER_BOX_HX * c + BROKER_BOX_HZ * sn, hd = BROKER_BOX_HX * sn + BROKER_BOX_HZ * c;
-        box = [{
-          key: `broker:${at.day}`, aabb: { min: [f[0] - hw, f[1], f[2] - hd], max: [f[0] + hw, f[1] + BROKER_BOX_H, f[2] + hd] },
-          obb: { m: trs(f[0], f[1], f[2], 0, (at.rest * 180) / Math.PI, 0), box: [-BROKER_BOX_HX, 0, -BROKER_BOX_HZ, BROKER_BOX_HX, BROKER_BOX_H, BROKER_BOX_HZ] },
-          distance: RAY_DISTANCE, reach: BROKER_REACH, noSurface: false,
-        }];
+      if (
+        !box ||
+        boxAt[0] !== f[0] ||
+        boxAt[1] !== f[1] ||
+        boxAt[2] !== f[2] ||
+        boxAt[3] !== at.day ||
+        boxAt[4] !== at.rest
+      ) {
+        boxAt[0] = f[0];
+        boxAt[1] = f[1];
+        boxAt[2] = f[2];
+        boxAt[3] = at.day;
+        boxAt[4] = at.rest;
+        const c = Math.abs(Math.cos(at.rest)),
+          sn = Math.abs(Math.sin(at.rest));
+        const hw = BROKER_BOX_HX * c + BROKER_BOX_HZ * sn,
+          hd = BROKER_BOX_HX * sn + BROKER_BOX_HZ * c;
+        box = [
+          {
+            key: `broker:${at.day}`,
+            aabb: { min: [f[0] - hw, f[1], f[2] - hd], max: [f[0] + hw, f[1] + BROKER_BOX_H, f[2] + hd] },
+            obb: {
+              m: trs(f[0], f[1], f[2], 0, (at.rest * 180) / Math.PI, 0),
+              box: [-BROKER_BOX_HX, 0, -BROKER_BOX_HZ, BROKER_BOX_HX, BROKER_BOX_H, BROKER_BOX_HZ],
+            },
+            distance: RAY_DISTANCE,
+            reach: BROKER_REACH,
+            noSurface: false,
+          },
+        ];
       }
       return box;
     },
     /** WORLD-HOVER: her name, and what she deals in - BROKER-CAGE: or who holds her. */
-    hoverName(key) { return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null; },
+    hoverName(key) {
+      return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null;
+    },
     /** A press on her: Info names her, Steal is watched, anything else opens her window - BROKER-CAGE: once she is free;
      *  caged, it says what frees her, or after the opening that she stays caged tonight. */
     activate(key, mode = 'grab') {
       if (!ours(key)) return false;
       if (mode === 'info') say(BROKER_TEXT.info);
       else if (mode === 'steal') say(BROKER_TEXT.steal);
-      else if (!doorOpen) say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost);   // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening
+      else if (!doorOpen)
+        say(now() < riteWindow(at.day).to + RITE_GRACE_MS ? BROKER_TEXT.held : BROKER_TEXT.lost); // AUDIT BROKER-CAGE C13: the relay hears the last fall RITE_GRACE_MS past the opening
       else open();
       return true;
     },
@@ -444,14 +674,32 @@ export function createSigilBroker({
     /** BROKER-CAGE: whether she stands caged now. */
     caged: () => !!at && !doorOpen,
     /** For the tests and the probes. */
-    state: () => ({ at, yaw, body: body ? (body.tex ? 'loaded' : 'failed') : (loading ? 'loading' : null), batch: !!batch, post: postAt !== null, caged: !!at && !doorOpen, door: doorOpen ? swing(now()) : 0, cage: cageAt !== null, doorUp, mesh: !!cageMesh, foot, sill, matrices: { cage: drawMat, door: doorMat } }),
+    state: () => ({
+      at,
+      yaw,
+      body: body ? (body.tex ? 'loaded' : 'failed') : loading ? 'loading' : null,
+      batch: !!batch,
+      post: postAt !== null,
+      caged: !!at && !doorOpen,
+      door: doorOpen ? swing(now()) : 0,
+      cage: cageAt !== null,
+      doorUp,
+      mesh: !!cageMesh,
+      foot,
+      sill,
+      matrices: { cage: drawMat, door: doorMat },
+    }),
     /** A transition takes her post and her cage down: she is stood again by the next frame that finds her. */
     destroyAll() {
       const col = collider();
       col?.removeBucket?.(BROKER_BUCKET);
       col?.removeBucket?.(BROKER_CAGE_BUCKET);
       col?.removeBucket?.(BROKER_DOOR_BUCKET);
-      postAt = null; cageAt = null; doorUp = false; at = null; yaw = null;
+      postAt = null;
+      cageAt = null;
+      doorUp = false;
+      at = null;
+      yaw = null;
     },
   };
 }

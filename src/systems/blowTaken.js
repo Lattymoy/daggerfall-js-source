@@ -16,14 +16,22 @@ const _mods = new Map();
 
 /** Register a multiplier on what a blow's TARGET takes, by name: `fn(attacker, target, weapon, info) -> multiplier`
  *  (1 for none). Re-registering a name replaces it; `null` removes it. */
-export function registerBlowTakenMod(name, fn) { if (typeof fn === 'function') _mods.set(name, fn); else _mods.delete(name); }
+export function registerBlowTakenMod(name, fn) {
+  if (typeof fn === 'function') _mods.set(name, fn);
+  else _mods.delete(name);
+}
 
 /** The product of every registered multiplier for this blow (1 with none; a multiplier that throws, or answers no
  *  positive number, counts 1 - a state is not the blow's problem). */
 export function blowTakenScale(attacker, target, weapon = null, info = {}) {
   let k = 1;
   for (const fn of _mods.values()) {
-    try { const m = fn(attacker, target, weapon, info ?? {}); if (Number.isFinite(m) && m > 0) k *= m; } catch { /* a state is not the blow's problem */ }
+    try {
+      const m = fn(attacker, target, weapon, info ?? {});
+      if (Number.isFinite(m) && m > 0) k *= m;
+    } catch {
+      /* a state is not the blow's problem */
+    }
   }
   return k;
 }

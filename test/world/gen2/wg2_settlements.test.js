@@ -1,4 +1,4 @@
-// WG2 PHASE 3 EXIT (bible/03-World/World-2-Arc.md): SETTLEMENTS WITHOUT RMB - the five prototype towns the
+// WG2 PHASE 3 EXIT: SETTLEMENTS WITHOUT RMB - the five prototype towns the
 // specification names, each made from its region's ground: every building a whole record with a door on a street, none
 // floating or buried, every street joined to the plaza, the type's services standing, a water town's dock; the
 // culture changes the geometry (stilts and boardwalks in Black Marsh, terraces and walls in the Dragontails); one

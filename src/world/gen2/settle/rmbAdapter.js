@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Legacy buildings"): THE RMB ADAPTER - a Daggerfall town's
+// WG2 SETTLEMENT 2.0 ("Legacy buildings"): THE RMB ADAPTER - a Daggerfall town's
 // buildings read as building records, their keys kept. A town's buildings come from its blocks' records
 // (world/buildingSummaries.js); each becomes a record whose id is its map id, its key and its layout's stamp
 // (systems/layoutPins.js - a pack's layout gives a key to another building, so the stamp is part of the name). Nothing is

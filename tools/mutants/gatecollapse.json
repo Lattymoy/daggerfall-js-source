@@ -32,8 +32,8 @@
   {
     "name": "GATE-COLLAPSE-the-seal-line-at-the-seal's-time",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));",
-    "new": "sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) }));",
+    "old": "          sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) })); // GATE-COLLAPSE: and when it goes",
+    "new": "          sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) })); // GATE-COLLAPSE: and when it goes",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "GATE-COLLAPSE-the-map-forgets-it-sealed",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "`Dagon's Breach - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`",
-    "new": "`Dagon's Breach - ${countdownWords(cd)}`",
+    "old": "      const label = cd\n        ? `Dagon's Breach - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`\n        : \"Dagon's Breach\"; // GATE-COLLAPSE: the sealed hours count down too",
+    "new": "      const label = cd ? `Dagon's Breach - ${countdownWords(cd)}` : \"Dagon's Breach\"; // GATE-COLLAPSE: the sealed hours count down too",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"

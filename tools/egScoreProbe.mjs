@@ -22,7 +22,11 @@ const arg = (k) => (process.argv.includes(k) ? process.argv[process.argv.indexOf
 const wavAt = arg('--wav');
 const SECONDS = Number(arg('--seconds') ?? 24);
 const BAND = Math.max(0, Math.min(3, Number(arg('--band') ?? 0) | 0));
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 const KEYS = ['hall', 'yard', 'set', 'lord1', 'lord2', 'lord3', 'valk', 'redoubt', 'count', 'end'];
 
 const PAGE = `<!doctype html><html><body><script type=module>
@@ -83,18 +87,43 @@ window.ready = true;
 function wav(pcmB64, rate) {
   const data = Buffer.from(pcmB64, 'base64');
   const h = Buffer.alloc(44);
-  h.write('RIFF', 0); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(rate, 24); h.writeUInt32LE(rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
-  h.write('data', 36); h.writeUInt32LE(data.length, 40);
+  h.write('RIFF', 0);
+  h.writeUInt32LE(36 + data.length, 4);
+  h.write('WAVE', 8);
+  h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20);
+  h.writeUInt16LE(2, 22);
+  h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 4, 28);
+  h.writeUInt16LE(4, 32);
+  h.writeUInt16LE(16, 34);
+  h.write('data', 36);
+  h.writeUInt32LE(data.length, 40);
   return Buffer.concat([h, data]);
 }
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -102,7 +131,8 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
@@ -111,19 +141,54 @@ try {
     r[key] = await page.evaluate(([k, s]) => window.render(k, s), [key, SECONDS]);
     const loud = r[key].rms.slice(1, Math.min(12, r[key].rms.length));
     r[key].meanDb = db(loud.reduce((a, b) => a + b, 0) / Math.max(1, loud.length));
-    console.log(`     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS`);
+    console.log(
+      `     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS`,
+    );
     if (wavAt) writeFileSync(join(wavAt, `spire-${BAND}-${key}.wav`), wav(r[key].pcm, r[key].rate));
   }
-  for (const key of KEYS) check(`${key}: it plays - every second of it sounding, no NaN`, r[key].nan === 0 && r[key].rms.slice(0, Math.min(5, r[key].rms.length)).every((x) => x > 1e-4), r[key].rms.slice(0, 8).map((x) => db(x).toFixed(0)).join(' '));
-  for (const key of KEYS) check(`${key}: under its ceiling of ${r[key].ceiling} dBFS at the highest MusicVolume`, db(r[key].peak) + 6.02 <= r[key].ceiling + 0.05, `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`);
-  check('the war grows by phase, the count and the Valkynaz over it', r.lord2.meanDb > r.lord1.meanDb - 0.3 && r.lord3.meanDb > r.lord2.meanDb - 0.3 && r.count.meanDb > r.lord2.meanDb - 0.3 && r.valk.meanDb > r.lord2.meanDb - 0.3, `${r.lord1.meanDb.toFixed(1)} / ${r.lord2.meanDb.toFixed(1)} / ${r.lord3.meanDb.toFixed(1)}; count ${r.count.meanDb.toFixed(1)}, valk ${r.valk.meanDb.toFixed(1)} dBFS`);
-  check('the halls and the hymn under the fights', Math.max(r.hall.meanDb, r.redoubt.meanDb) < r.lord1.meanDb, `hall ${r.hall.meanDb.toFixed(1)}, hymn ${r.redoubt.meanDb.toFixed(1)} vs ${r.lord1.meanDb.toFixed(1)} dBFS`);
+  for (const key of KEYS)
+    check(
+      `${key}: it plays - every second of it sounding, no NaN`,
+      r[key].nan === 0 && r[key].rms.slice(0, Math.min(5, r[key].rms.length)).every((x) => x > 1e-4),
+      r[key].rms
+        .slice(0, 8)
+        .map((x) => db(x).toFixed(0))
+        .join(' '),
+    );
+  for (const key of KEYS)
+    check(
+      `${key}: under its ceiling of ${r[key].ceiling} dBFS at the highest MusicVolume`,
+      db(r[key].peak) + 6.02 <= r[key].ceiling + 0.05,
+      `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`,
+    );
+  check(
+    'the war grows by phase, the count and the Valkynaz over it',
+    r.lord2.meanDb > r.lord1.meanDb - 0.3 &&
+      r.lord3.meanDb > r.lord2.meanDb - 0.3 &&
+      r.count.meanDb > r.lord2.meanDb - 0.3 &&
+      r.valk.meanDb > r.lord2.meanDb - 0.3,
+    `${r.lord1.meanDb.toFixed(1)} / ${r.lord2.meanDb.toFixed(1)} / ${r.lord3.meanDb.toFixed(1)}; count ${r.count.meanDb.toFixed(1)}, valk ${r.valk.meanDb.toFixed(1)} dBFS`,
+  );
+  check(
+    'the halls and the hymn under the fights',
+    Math.max(r.hall.meanDb, r.redoubt.meanDb) < r.lord1.meanDb,
+    `hall ${r.hall.meanDb.toFixed(1)}, hymn ${r.redoubt.meanDb.toFixed(1)} vs ${r.lord1.meanDb.toFixed(1)} dBFS`,
+  );
   const endS = await page.evaluate(() => window.endS);
   const e = await page.evaluate(([k, s]) => window.render(k, s), ['end', Math.ceil(endS) + 1]);
-  const top = Math.max(...e.rms.slice(0, 8)), tail = e.rms.slice(Math.floor(endS) - 4, Math.floor(endS));
-  check('the end decays inside the time the law gives it', tail.length > 2 && tail.every((x) => x < top * 0.1), `top ${db(top).toFixed(1)}, its last seconds ${tail.map((x) => db(x).toFixed(0)).join(' ')} dBFS`);
+  const top = Math.max(...e.rms.slice(0, 8)),
+    tail = e.rms.slice(Math.floor(endS) - 4, Math.floor(endS));
+  check(
+    'the end decays inside the time the law gives it',
+    tail.length > 2 && tail.every((x) => x < top * 0.1),
+    `top ${db(top).toFixed(1)}, its last seconds ${tail.map((x) => db(x).toFixed(0)).join(' ')} dBFS`,
+  );
   const all = await page.evaluate(() => window.all());
-  check('one player through every song, a duck under a Court: every song pressed, nothing thrown, no NaN', all.error === null && all.bad === 0 && all.routes.every((q) => q === 'pressed'), `${all.error ?? ''} ${all.routes.join()} bad ${all.bad}`);
+  check(
+    'one player through every song, a duck under a Court: every song pressed, nothing thrown, no NaN',
+    all.error === null && all.bad === 0 && all.routes.every((q) => q === 'pressed'),
+    `${all.error ?? ''} ${all.routes.join()} bad ${all.bad}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

@@ -6,7 +6,7 @@
 import { PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from '../ui/pixelifyFive.js';
 
 const eliteInk = (now) => {
-  const k = 0.775 + 0.225 * Math.sin(now / 1000 * 3.2);
+  const k = 0.775 + 0.225 * Math.sin((now / 1000) * 3.2);
   const c = (v) => Math.round(Math.min(1, v * 2 * k) * 255);
   return `rgb(${c(0.35)}, ${c(0.75)}, ${c(1)})`;
 };
@@ -44,14 +44,16 @@ export function createPingLabels() {
           node.style.cssText = `position:absolute;width:16px;height:16px;transform:translate(-50%,-50%);${PIXEL_FONT_CSS}text-align:center;color:#d8cfae;text-shadow:${PIXEL_TEXT_SHADOW};`;
           const author = document.createElement('div');
           author.dataset.role = 'author';
-          author.style.cssText = 'position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);white-space:nowrap;font-size:12px;line-height:1;';
+          author.style.cssText =
+            'position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);white-space:nowrap;font-size:12px;line-height:1;';
           const pin = document.createElement('div');
           pin.dataset.role = 'pin';
           pin.style.cssText = 'width:16px;height:16px;filter:drop-shadow(2px 2px 0 rgba(0,0,0,0.85));';
           pin.innerHTML = PIN;
           const under = document.createElement('div');
           under.dataset.role = 'under';
-          under.style.cssText = 'position:absolute;left:50%;top:calc(100% + 2px);transform:translateX(-50%);white-space:nowrap;font-size:12px;line-height:1.15;';
+          under.style.cssText =
+            'position:absolute;left:50%;top:calc(100% + 2px);transform:translateX(-50%);white-space:nowrap;font-size:12px;line-height:1.15;';
           node.append(author, pin, under);
           root.appendChild(node);
           nodes.set(r.id, node);
@@ -83,8 +85,15 @@ export function createPingLabels() {
         node.style.top = `${r.y}px`;
         node.style.opacity = String(Math.max(0, Math.min(1, r.alpha)));
       }
-      for (const [id, node] of nodes) if (!live.has(id)) { node.remove(); nodes.delete(id); }
+      for (const [id, node] of nodes)
+        if (!live.has(id)) {
+          node.remove();
+          nodes.delete(id);
+        }
     },
-    dispose() { root.remove(); nodes.clear(); },
+    dispose() {
+      root.remove();
+      nodes.clear();
+    },
   };
 }

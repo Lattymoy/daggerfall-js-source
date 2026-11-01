@@ -2,8 +2,8 @@
   {
     "name": "FLOW2-a-type0-between-unread",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "    if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;\n",
-    "new": "",
+    "old": "    if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;\n    prev = i;",
+    "new": "    prev = i;",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FLOW2-the-last-own-taken-for-between",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "if (t0[mid] <= a) lo = mid + 1; else hi = mid;",
-    "new": "if (t0[mid] < a) lo = mid + 1; else hi = mid;",
+    "old": "    if (t0[mid] <= a) lo = mid + 1;",
+    "new": "    if (t0[mid] < a) lo = mid + 1;",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FLOW2-the-right-edge-aliased",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "x < PIX_W && y < PIX_H",
-    "new": "x <= PIX_W && y < PIX_H",
+    "old": "  Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < PIX_W && y < PIX_H ? y * PIX_W + x : -1;",
+    "new": "  Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x <= PIX_W && y < PIX_H ? y * PIX_W + x : -1;",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "FLOW2-the-first-draw-unadvanced",
     "file": "src/systems/wind/wind.js",
-    "old": "export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6D2B79F5) >>> 0);",
+    "old": "export const seededFirst = (seed) => mulberryDraw(((seed >>> 0) + 0x6d2b79f5) >>> 0);",
     "new": "export const seededFirst = (seed) => mulberryDraw(seed >>> 0);",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"

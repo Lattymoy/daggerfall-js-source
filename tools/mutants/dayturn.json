@@ -2,8 +2,8 @@
   {
     "name": "DT-moment-chosen-again",
     "file": "src/net/dayTurn.js",
-    "old": "  if (pageTurnMs == null) pageTurnMs = ",
-    "new": "  pageTurnMs = ",
+    "old": "  if (pageTurnMs == null)\n    pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;",
+    "new": "  pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DT-span-unbounded",
     "file": "src/net/dayTurn.js",
-    "old": " * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;",
-    "new": " * DAY_TURN_SPREAD_MS);",
+    "old": "  if (pageTurnMs == null)\n    pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS) % DAY_TURN_SPREAD_MS;",
+    "new": "  if (pageTurnMs == null) pageTurnMs = Math.floor(Math.max(0, Math.min(1, Number(rand()) || 0)) * DAY_TURN_SPREAD_MS);",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DT-turn-backwards",
     "file": "src/net/dayTurn.js",
-    "old": "Math.floor((ms - turnMs) / DAY_MS);",
-    "new": "Math.floor((ms + turnMs) / DAY_MS);",
+    "old": "export const turnedDayOf = (ms, turnMs = 0) => Math.floor((ms - turnMs) / DAY_MS);",
+    "new": "export const turnedDayOf = (ms, turnMs = 0) => Math.floor((ms + turnMs) / DAY_MS);",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DT-hall-unturned",
     "file": "src/net/npcHallBook.js",
-    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs);",
-    "new": "  const dayNow = () => turnedDayOf(nowMs());",
+    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs); // DAY-TURN: once a day, the day turned at this page's moment",
+    "new": "  const dayNow = () => turnedDayOf(nowMs()); // DAY-TURN: once a day, the day turned at this page's moment",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DT-town-unturned",
     "file": "src/net/townEconBook.js",
-    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs);",
-    "new": "  const dayNow = () => turnedDayOf(nowMs());",
+    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs); // DAY-TURN: once a day, the day turned at this page's moment",
+    "new": "  const dayNow = () => turnedDayOf(nowMs()); // DAY-TURN: once a day, the day turned at this page's moment",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DT-seat-unturned",
     "file": "src/net/townSeatBook.js",
-    "old": "Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S);",
-    "new": "Math.floor(nowMs() / 1000 / SEAT_REPORT_EVERY_S);",
+    "old": "  const dayNow = () => Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S); // DAY-TURN: the report's day turned at this page's moment",
+    "new": "  const dayNow = () => Math.floor(nowMs() / 1000 / SEAT_REPORT_EVERY_S); // DAY-TURN: the report's day turned at this page's moment",
     "tests": [
       "test/net/dayturn.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DT-host-town-unwired",
     "file": "src/scenes/townEconHost.js",
-    "old": ", turnMs: dayTurnMs() }) : null;",
-    "new": " }) : null;",
+    "old": "        turnMs: dayTurnMs(),\n      })",
+    "new": "      })",
     "tests": [
       "test/net/dayturn.test.js"
     ]

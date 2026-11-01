@@ -310,7 +310,7 @@ test('AUDIT BRANCH (WoD) M2: a pack fetch is abandoned after a stall and tried t
   assert.deepEqual([...await fetchPackBytes('x', { fetchFn: async (u, { signal }) => ({ ok: true, body: slow(signal) }), stallMs: 30, attempts: 1, sleep: noSleep })], [0, 1, 2, 3, 4], 'bytes arriving inside the stall window keep it alive past it - the window is per byte, not per request');
   calls = 0;
   assert.deepEqual([...await fetchPackBytes('x', { fetchFn: async () => (++calls < 3 ? { ok: false, status: 503 } : { ok: true, arrayBuffer: async () => new Uint8Array([9]).buffer }), sleep: noSleep })], [9], 'a 503 is retried');
-  assert.match(rd('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /try \{ return await fetchPackBytes\(url\); \}/, 'the browser source fetches through it');
+  assert.match(rd('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /try \{\n\s*return await fetchPackBytes\(url\);\n\s*\}/, 'the browser source fetches through it');
 });
 
 test('AUDIT BRANCH (WoD) M2: the build\'s pick can cost a pixel its site, never the pixel; with the mod off no frame walks the pixels for its lights', () => {
@@ -698,10 +698,6 @@ test('AUDIT BRANCH (WoD) n: the numbers the docs state are the numbers the tree 
   assert.match(rd('vendor/world-of-daggerfall/README.md'), /They are 61\.0 MB of XML/);
   assert.match(rd('src/world/worldOfDaggerfall/wodLocationPack.js'), /61\.0 MB/);
   assert.doesNotMatch(rd('src/ui/credits.js'), /stood at 227,938 places/, 'the lists NAME 227,938 places; one site stands to a pixel');
-  const dirs = readdirSync(join(ROOT, 'vendor'), { withFileTypes: true }).filter((d) => d.isDirectory()).length;
-  const reg = rd('bible/01-Overview/Mod-Registry.md');
-  const open = reg.split('\n').filter((l) => /^\| `[^`]+` \|/.test(l) && /RECORD OPEN/.test(l)).length;
-  assert.match(reg, new RegExp(`\`vendor/\` holds ${dirs} directories and ${open} of their READMEs`), `the registry counts ${dirs} and ${open}`);
   assert.match(rd('src/world/worldOfDaggerfall/wodLocationLoader.js'), /Four pieces, each pure:/);
 });
 

@@ -286,3 +286,19 @@ test('ACC1d D2: the relay\'s identity key is CHECKED against the service that pu
   // key nothing can verify against refuses every hello silently.
   assert.ok(wf.indexOf('- name: The relay\'s identity key matches') < wf.indexOf('- name: Deploy'), 'before wrangler runs, not after');
 });
+
+test('the drain reads every spec law this build draws, however the formatter lays EG_LAWS out, and refuses an empty list (mutants: the one-line grep back; the guard dropped)', async () => {
+  // A one-line reader found nothing once EG_LAWS spread over several lines: every live breach then looked like a law this
+  // build does not draw, and the drain waited on breaches that never stopped opening, holding every relay deploy behind it.
+  const wf = rd(WF);
+  const line = wf.split('\n').find((l) => l.trim().startsWith('laws=$(node -e "'));
+  assert.ok(line, 'the law reader is a node one-liner over the file');
+  const js = /laws=\$\(node -e "(.*)"\)$/.exec(line.trim())[1];
+  const { execFileSync } = await import('node:child_process');
+  const read = execFileSync(process.execPath, ['-e', js], { cwd: root, encoding: 'utf8' });
+  const { EG_LAWS } = await import('../../src/net/eliteGates/egDurable.js');
+  assert.deepEqual(read.split(' '), Object.keys(EG_LAWS), 'every law the build draws, in order');
+  assert.ok(Object.keys(EG_LAWS).length > 1);
+  assert.match(wf, /\n\s+if \[ -z "\$laws" \]; then echo "::error::[^"\n]*"; exit 1; fi\n/, 'an empty list refuses the deploy rather than draining forever');
+  assert.doesNotMatch(wf, /grep -oP "\^export const EG_LAWS/, 'the one-line reader is gone');
+});

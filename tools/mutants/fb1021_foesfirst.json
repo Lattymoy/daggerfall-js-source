@@ -273,8 +273,8 @@
   {
     "name": "METRICS-blob-dropped",
     "file": "server/src/relayScale.js",
-    "old": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held)",
-    "new": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.held)",
+    "old": "            String(c.fulls),\n            String(c.held),",
+    "new": "            String(c.held),",
     "tests": [
       "test/net/fb1021_foesfirst.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "METRICS-blobs-order",
     "file": "server/src/relayScale.js",
-    "old": "blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held)",
-    "new": "blobs: [kind, String(version), String(c.fullDrops), String(c.hitDrops), String(c.fulls), String(c.held)",
+    "old": "            String(c.hitDrops),\n            String(c.fullDrops),",
+    "new": "            String(c.fullDrops),\n            String(c.hitDrops),",
     "tests": [
       "test/net/fb1021_foesfirst.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "METRICS-counts-unreset",
     "file": "server/src/relayScale.js",
-    "old": "batches: 0, hitDrops: 0, fullDrops: 0, fulls: 0, held: 0,",
-    "new": "batches: 0, held: 0,",
+    "old": "      hitDrops: 0,\n      fullDrops: 0,\n      fulls: 0,\n      held: 0,",
+    "new": "      held: 0,",
     "tests": [
       "test/net/fb1021_foesfirst.test.js"
     ],

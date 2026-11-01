@@ -2,8 +2,8 @@
   {
     "name": "ACT-H1-mate-not-last",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.role === FIRST_MATE ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [0, h.role !== 'Deckhand' ? 1 : 0, h.hall ? 1 : 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACT-H1-posts-as-plain",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.role !== 'Deckhand' ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, 0, h.hall ? 1 : 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "ACT-H1-recruit-as-own",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "h.hall ? 1 : 0,",
-    "new": "0,",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, h.role !== 'Deckhand' ? 1 : 0, 0, serviceOf(h), -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "ACT-H1-service-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "serviceOf(h), -i];",
-    "new": "0, -i];",
+    "old": "  const worth = (h, i) => [\n    h.role === FIRST_MATE ? 1 : 0,\n    h.role !== 'Deckhand' ? 1 : 0,\n    h.hall ? 1 : 0,\n    serviceOf(h),\n    -i,\n  ];",
+    "new": "  const worth = (h, i) => [h.role === FIRST_MATE ? 1 : 0, h.role !== 'Deckhand' ? 1 : 0, h.hall ? 1 : 0, 0, -i];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "ACT-H1-first-joined-first",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "serviceOf(h), -i];",
-    "new": "serviceOf(h), i];",
+    "old": "    -i,",
+    "new": "    i,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ACT-H1-shore-party-signed-off",
     "file": "src/systems/naval/crewTrade.js",
-    "old": ".filter(({ h }) => !away?.has?.(h.name))",
-    "new": "",
+    "old": "    .filter(({ h }) => !away?.has?.(h.name))\n    .sort((a, b) => before(a.w, b.w))",
+    "new": "    .sort((a, b) => before(a.w, b.w))",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "ACT-H1-tail-first",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "const going = signOffOrder(st.crew.hands, away())",
-    "new": "const going = [...st.crew.hands].reverse()",
+    "old": "      const going = signOffOrder(st.crew.hands, away()).slice(\n        0,\n        Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)),\n      );",
+    "new": "      const going = [...st.crew.hands]\n        .reverse()\n        .slice(0, Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)));",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "ACT-H1-paid-off-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "off.left.length ? CREW_TRADE_TEXT.paidOff(handsNamed(off.left)) : ''",
-    "new": "''",
+    "old": "    return {\n      ok: true,\n      text: [\n        CREW_TRADE_TEXT.sold(gone, gone * r.buy),\n        off.left.length ? CREW_TRADE_TEXT.paidOff(handsNamed(off.left)) : '',\n      ]\n        .filter(Boolean)\n        .join(' '),\n    }; // AUDIT CREW-TRADE H1: who left her",
+    "new": "    return { ok: true, text: [CREW_TRADE_TEXT.sold(gone, gone * r.buy), ''].filter(Boolean).join(' ') }; // AUDIT CREW-TRADE H1: who left her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "ACT-H2-hall-words",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "CREW_TRADE_TEXT.ashore(party.at(-1).name)",
-    "new": "`${party.at(-1).name} is ashore with you. Send them back aboard first.`",
+    "old": "          ? CREW_TRADE_TEXT.ashore(party.at(-1).name)",
+    "new": "          ? `${party.at(-1).name} is ashore with you. Send them back aboard first.`",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "ACT-H3-joined-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "on.joined.length ? CREW_TRADE_TEXT.signedOn(handsNamed(on.joined)) : ''",
-    "new": "''",
+    "old": "    return {\n      ok: true,\n      text: [\n        CREW_TRADE_TEXT.bought(got, got * r.sell),\n        on.joined.length ? CREW_TRADE_TEXT.signedOn(handsNamed(on.joined)) : '',\n      ]\n        .filter(Boolean)\n        .join(' '),\n    }; // AUDIT CREW-TRADE H3: who joined her",
+    "new": "    return { ok: true, text: [CREW_TRADE_TEXT.bought(got, got * r.sell), ''].filter(Boolean).join(' ') }; // AUDIT CREW-TRADE H3: who joined her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "ACT-H3-joined-none",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "joined: named().filter((h) => !before.has(h.name))",
-    "new": "joined: []",
+    "old": "      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
+    "new": "      return { n: d.crew - was, joined: [] };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "ACT-E1-charter-unread",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "charter: !!charterRecord(boat?.charter),",
-    "new": "charter: false,",
+    "old": "      charter: !!charterRecord(boat?.charter),",
+    "new": "      charter: false,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "ACT-E1-charter-row-listed",
     "file": "src/scenes/harbourOffice.js",
-    "old": "if (hands?.crewed && !hands.charter) rows.unshift(",
-    "new": "if (hands?.crewed) rows.unshift(",
+    "old": "    if (hands?.crewed && !hands.charter)",
+    "new": "    if (hands?.crewed)",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "ACT-E1-fight-before-charter",
     "file": "src/scenes/harbourOffice.js",
-    "old": "s.charter ? CREW_TRADE_TEXT.charter : s.fighting ? CREW_TRADE_TEXT.fighting : null",
-    "new": "s.fighting ? CREW_TRADE_TEXT.fighting : s.charter ? CREW_TRADE_TEXT.charter : null",
+    "old": "      : s.charter\n        ? CREW_TRADE_TEXT.charter\n        : s.fighting\n          ? CREW_TRADE_TEXT.fighting",
+    "new": "      : s.fighting\n        ? CREW_TRADE_TEXT.fighting\n        : s.charter\n          ? CREW_TRADE_TEXT.charter",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "ACT-O1-why-unshown",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "r.spare <= 0 && r.buys > 0 ? r.why : ''",
-    "new": "''",
+    "old": "        ? [aboard, r.spare <= 0 && r.buys > 0 ? r.why : ''].filter(Boolean).join(' - ')",
+    "new": "        ? [aboard, ''].filter(Boolean).join(' - ')",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "ACT-O1-why-uncarried",
     "file": "src/scenes/harbourOffice.js",
-    "old": "spare: hands.spare, why: hands.why });",
-    "new": "spare: hands.spare });",
+    "old": "        why: hands.why,\n      }); // AUDIT CREW-TRADE E1: never a booked passage's; O1: why none may leave her",
+    "new": "      }); // AUDIT CREW-TRADE E1: never a booked passage's; O1: why none may leave her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "ACT-O2-gold-a-string",
     "file": "src/scenes/harbourOffice.js",
-    "old": "CREW_TRADE_TEXT.sold(gone, gone * r.buy)",
-    "new": "CREW_TRADE_TEXT.sold(gone, gold(gone * r.buy))",
+    "old": "        CREW_TRADE_TEXT.sold(gone, gone * r.buy),",
+    "new": "        CREW_TRADE_TEXT.sold(gone, gold(gone * r.buy)),",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "ACT-O3-title-english",
     "file": "src/scenes/harbourOffice.js",
-    "old": "name: CREW_TRADE_TEXT.title, ",
-    "new": "",
+    "old": "        name: CREW_TRADE_TEXT.title,\n        have: hands.crew,",
+    "new": "        have: hands.crew,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "ACT-O3-prices-english",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "words: crew ? crewWords(r) :",
-    "new": "words: false ? crewWords(r) :",
+    "old": "      words: crew",
+    "new": "      words: false",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "ACT-O3-last-man-english",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "get lastMan() { return t('sea.crew.lastMan', 'That\\'s your last crew member. The ship would have nobody aboard.'); },",
-    "new": "lastMan: 'That\\'s your last crew member. The ship would have nobody aboard.',",
+    "old": "  get lastMan() {\n    return t('sea.crew.lastMan', \"That's your last crew member. The ship would have nobody aboard.\");\n  },",
+    "new": "  lastMan: \"That's your last crew member. The ship would have nobody aboard.\",",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "ACT-R2-sell-all-on-crew",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "if (r.id === CREW.id) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
-    "new": "if (false) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
+    "old": "      if (r.id === CREW.id) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
+    "new": "      if (false) mk('Sell 10', r.canSell, () => press(x.sell(r.id, 10)));",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "ACT-R3-purse-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": " && (Number(x.gold) || 0) >= r.sell :",
-    "new": " :",
+    "old": "      canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
+    "new": "      canBuy: crew ? r.sells > 0 && r.room > 0 : r.sells > 0 && x.weight != null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "ACT-R4-neither-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price') };",
-    "new": "neither: '' };",
+    "old": "    neither: t('sea.crew.standNeither', 'Sailors to be had here: the usual price'),",
+    "new": "    neither: '',",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "ACT-P1-buy-text-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "CREW_TRADE_TEXT.bought(got, got * r.sell)",
-    "new": "CREW_TRADE_TEXT.bought(k, k * r.sell)",
+    "old": "        CREW_TRADE_TEXT.bought(got, got * r.sell),",
+    "new": "        CREW_TRADE_TEXT.bought(k, k * r.sell),",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "ACT-P1-sell-credit-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.credit?.(gone * r.buy);\n    L.deal(port.key, day, CREW.id, gone, 'sold');",
-    "new": "    deps.credit?.(Math.min(asked(n), r.buys) * r.buy);\n    L.deal(port.key, day, CREW.id, gone, 'sold');",
+    "old": "    deps.credit?.(gone * r.buy);",
+    "new": "    deps.credit?.(Math.min(asked(n), r.buys) * r.buy);",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "ACT-P1-sell-ledger-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "L.deal(port.key, day, CREW.id, gone, 'sold');",
-    "new": "L.deal(port.key, day, CREW.id, Math.min(asked(n), r.buys), 'sold');",
+    "old": "    L.deal(port.key, day, CREW.id, gone, 'sold');",
+    "new": "    L.deal(port.key, day, CREW.id, Math.min(asked(n), r.buys), 'sold');",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "ACT-P1-sell-traded-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "L.note('traded', gone * r.buy);",
-    "new": "L.note('traded', Math.min(asked(n), r.buys) * r.buy);",
+    "old": "    L.note('traded', gone * r.buy);",
+    "new": "    L.note('traded', Math.min(asked(n), r.buys) * r.buy);",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "ACT-P4-row-stars-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "exchangeOf(port, day, dealt, edge, town, true)[0];",
-    "new": "exchangeOf(port, day, dealt, 0, town, true)[0];",
+    "old": "  const r = exchangeOf(port, day, dealt, edge, town, true)[0];",
+    "new": "  const r = exchangeOf(port, day, dealt, 0, town, true)[0];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "ACT-P4-row-town-unread",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "exchangeOf(port, day, dealt, edge, town, true)[0];",
-    "new": "exchangeOf(port, day, dealt, edge, null, true)[0];",
+    "old": "  const r = exchangeOf(port, day, dealt, edge, town, true)[0];",
+    "new": "  const r = exchangeOf(port, day, dealt, edge, null, true)[0];",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -322,8 +322,8 @@
   {
     "name": "ACT-P4-office-stars-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "edge: L.stats?.().trade, town: townAt(port), discount: perksHere().yard",
-    "new": "edge: 0, town: townAt(port), discount: perksHere().yard",
+    "old": "    crewRowOf(port, day, {\n      dealt: L.dealtAt(port.key, day),\n      edge: L.stats?.().trade,\n      town: townAt(port),\n      discount: perksHere().yard,\n    });",
+    "new": "    crewRowOf(port, day, { dealt: L.dealtAt(port.key, day), edge: 0, town: townAt(port), discount: perksHere().yard });",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "ACT-P4-office-town-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "edge: L.stats?.().trade, town: townAt(port), discount: perksHere().yard",
-    "new": "edge: L.stats?.().trade, town: null, discount: perksHere().yard",
+    "old": "      town: townAt(port),",
+    "new": "      town: null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "ACT-P5-buy-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.deal(port.key, day, CREW.id, got, 'bought');",
+    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.deal(port.key, day, CREW.id, got, 'bought'); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "ACT-P5-sell-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', gone * r.buy);\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.note('traded', gone * r.buy);",
+    "old": "    L.note('traded', gone * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.note('traded', gone * r.buy); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "ACT-P6-on-unsynced",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "      st.lastCrew = d.crew;\n      sync(boat);\n      return { n: d.crew - was,",
-    "new": "      st.lastCrew = d.crew;\n      return { n: d.crew - was,",
+    "old": "      sync(boat);\n      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
+    "new": "      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "ACT-P8-muster-a-repair",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "d.muster(was + Math.max(0, Math.floor(Number(k) || 0)));",
-    "new": "d.repair({ hull: 0, sail: 0, crew: Math.max(0, Math.floor(Number(k) || 0)) });",
+    "old": "      d.muster(was + Math.max(0, Math.floor(Number(k) || 0)));",
+    "new": "      d.repair({ hull: 0, sail: 0, crew: Math.max(0, Math.floor(Number(k) || 0)) });",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "ACT-P9-buy-stock-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canBuy: crew ? r.sells > 0 && r.room > 0",
-    "new": "canBuy: crew ? r.room > 0",
+    "old": "      canBuy: crew ? r.sells > 0 && r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
+    "new": "      canBuy: crew ? r.room > 0 && (Number(x.gold) || 0) >= r.sell : r.sells > 0 && x.weight != null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "ACT-P9-sell-stock-unread",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "canSell: crew ? r.spare > 0 && r.buys > 0 :",
-    "new": "canSell: crew ? r.spare > 0 :",
+    "old": "      canSell: crew ? r.spare > 0 && r.buys > 0 : r.have > 0 && r.buys > 0,",
+    "new": "      canSell: crew ? r.spare > 0 : r.have > 0 && r.buys > 0,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "ACT-P10-isle-by-key",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "  if (port?.ether) return 'wants';\n  const r = mulberry32(hashKey(`${port?.key ?? ''}:crew`) >>> 0);",
-    "new": "  if (port?.ether && port?.key === '700,40') return 'wants';\n  const r = mulberry32(hashKey(`${port?.key ?? ''}:crew`) >>> 0);",
+    "old": "  if (port?.ether) return 'wants';",
+    "new": "  if (port?.ether && port?.key === '700,40') return 'wants';",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "ACT-P11-last-man-said-ashore",
     "file": "src/systems/naval/crewTrade.js",
-    "old": "now > CREW_LEAST && party.length ? CREW_TRADE_TEXT.ashore",
-    "new": "party.length ? CREW_TRADE_TEXT.ashore",
+    "old": "  return {\n    n,\n    why:\n      n > 0\n        ? null\n        : now > CREW_LEAST && party.length\n          ? CREW_TRADE_TEXT.ashore(party.at(-1).name)\n          : CREW_TRADE_TEXT.lastMan,\n  };",
+    "new": "  return { n, why: n > 0 ? null : party.length ? CREW_TRADE_TEXT.ashore(party.at(-1).name) : CREW_TRADE_TEXT.lastMan };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"

@@ -97,8 +97,8 @@
   {
     "name": "CAP-OFF-timers-the-old-limits",
     "file": "src/systems/eventTimers.js",
-    "old": "Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs",
-    "new": "Gathering, hides, hauls, silver and Court writs",
+    "old": "    `Gathering nodes come back. Daily limits reset for rare hides, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`,",
+    "new": "    `Gathering, hides, hauls, silver and Court writs${src?.seatsOpen ? ', and the Watch' : ''}`,",
     "tests": [
       "test/net/cap_off.test.js"
     ]

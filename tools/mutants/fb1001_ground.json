@@ -92,8 +92,8 @@
   {
     "name": "STORES-ROOM-the-patch-reads-held",
     "file": "src/scenes/herbHost.js",
-    "old": "storesFull: (key) => storesFullIn(book, key),",
-    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "old": "      storesFull: (key) => storesFullIn(book, key),",
+    "new": "      storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
     "tests": [
       "test/net/fb1001_ground.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STORES-ROOM-the-net-reads-held",
     "file": "src/scenes/fishHost.js",
-    "old": "storesFull: storesFullIn(book, FISH_KEY)",
-    "new": "storesFull: book.held(FISH_KEY) >= (book.state.caps?.stores ?? 5000)",
+    "old": "        storesFull: storesFullIn(book, FISH_KEY) /* STORES-ROOM: every origin, as the service counts */,",
+    "new": "        storesFull:\n          book.held(FISH_KEY) >=\n          (book.state.caps?.stores ?? 5000) /* STORES-ROOM: every origin, as the service counts */,",
     "tests": [
       "test/net/fb1001_ground.test.js"
     ]

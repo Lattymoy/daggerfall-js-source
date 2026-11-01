@@ -15,10 +15,10 @@
 
 import { drawText, measureText } from './text.js';
 import { nativeMetrics } from './native/nativePanel.js';
-import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
-import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
-import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
-import { catchBoxClicks, releaseBoxClicks } from './boxClickCatcher.js';   // BOX-ON-TOP: over an enhanced window the box takes the click
+import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js'; // U11
+import { InputMessageBoxWindow } from './inputMessageBox.js'; // CM3: the one DaggerfallInputMessageBox
+import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE1: the enhanced skin's panel
+import { catchBoxClicks, releaseBoxClicks } from './boxClickCatcher.js'; // BOX-ON-TOP: over an enhanced window the box takes the click
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -36,10 +36,12 @@ const flatten = (l) => {
 };
 
 function drawPanel(renderer, canvas, font, s, lines, extra = null) {
-  const w = Math.max(...lines.map((l) => measureText(font.fnt, l)), extra ? measureText(font.fnt, extra) : 0) * s + 24 * s;
+  const w =
+    Math.max(...lines.map((l) => measureText(font.fnt, l)), extra ? measureText(font.fnt, extra) : 0) * s + 24 * s;
   const lineH = 12 * s;
   const h = (lines.length + (extra ? 2 : 0)) * lineH + 20 * s;
-  const x = (canvas.width - w) / 2, y = (canvas.height - h) / 2;
+  const x = (canvas.width - w) / 2,
+    y = (canvas.height - h) / 2;
   renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
   let ty = y + 12 * s;
   for (const l of lines) {
@@ -86,7 +88,16 @@ export class ActionTextBox {
   /** SEARCH1: `onClose` runs ONCE when the box is dismissed - deferred past the dismissal, so the host has emptied its
    *  slot before the callback acts (THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD): a searched grave's foe stands, or
    *  its find opens, only when the player has clicked the box away. A replaced (disposed) box runs nothing. */
-  constructor(lines, { highlightColor = undefined, previousWindow = true, pauseWhileOpen = true, noticeHint = undefined, onClose = null } = {}) {
+  constructor(
+    lines,
+    {
+      highlightColor = undefined,
+      previousWindow = true,
+      pauseWhileOpen = true,
+      noticeHint = undefined,
+      onClose = null,
+    } = {},
+  ) {
     this.onClose = typeof onClose === 'function' ? onClose : null;
     this.lines = lines;
     this.highlightColor = highlightColor;
@@ -104,26 +115,43 @@ export class ActionTextBox {
    *  so a box swapped for a window slid out NOTICE_WATCHDOG_MS late,
    *  over the window that replaced it. Same release `input` runs, and
    *  a no-op on the classic skin. */
-  dispose() { this.onClose = null; noticeRelease(this); releaseBoxClicks(this); }
+  dispose() {
+    this.onClose = null;
+    noticeRelease(this);
+    releaseBoxClicks(this);
+  }
 
   /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
    *  box shows the next box's rows in its place, and only the LAST
    *  dismissal closes. DisplayStatusInfo chains the record-22 status
    *  text into the health box this way (DaggerfallUI.cs:1623-1626).
    *  Answers `this` so a chain reads as one expression. */
-  addNext(lines) { this._next.push(lines); return this; }
+  addNext(lines) {
+    this._next.push(lines);
+    return this;
+  }
 
   input() {
-    if (this._next.length) { this.lines = this._next.shift(); return; }
+    if (this._next.length) {
+      this.lines = this._next.shift();
+      return;
+    }
     this.done = true;
     // ENH-NOTICE1: the panel leaves with the box. A no-op on the
     // classic skin (no panel was ever keyed to this box).
     noticeRelease(this);
-    releaseBoxClicks(this);   // BOX-ON-TOP: ...and so does the layer that took its clicks
+    releaseBoxClicks(this); // BOX-ON-TOP: ...and so does the layer that took its clicks
     // SEARCH1: the close's one callback, once, after this dismissal has returned to its host
     const cb = this.onClose;
     this.onClose = null;
-    if (cb) Promise.resolve().then(() => { try { cb(); } catch (e) { console.warn('[actionText] onClose threw', e); } });
+    if (cb)
+      Promise.resolve().then(() => {
+        try {
+          cb();
+        } catch (e) {
+          console.warn('[actionText] onClose threw', e);
+        }
+      });
   }
 
   /** ClickAnywhereToClose is CLICK anywhere first (DaggerfallMessageBox
@@ -131,10 +159,13 @@ export class ActionTextBox {
    *  it). The box was key-only, which the char sheet's level-up
    *  refusal made visible: a mouse-driven player clicked a box that
    *  would not go away. Same dismissal as a key, chain and all. */
-  click() { this.input(); return true; }
+  click() {
+    this.input();
+    return true;
+  }
 
   draw(renderer, canvas, font, s) {
-    catchBoxClicks(this);   // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks
+    catchBoxClicks(this); // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks
     // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in
     // panel (ui/enhanced/enhancedNotice.js) and nothing is painted here. The
     // box is still the box - modal, chained, click-anywhere.

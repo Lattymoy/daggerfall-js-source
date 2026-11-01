@@ -65,8 +65,8 @@
   {
     "name": "LEGACY1-D3-generation-flat",
     "file": "src/systems/legacy/family.js",
-    "old": "  p.gen = (parent?.gen ?? 0) + 1;",
-    "new": "  p.gen = (parent?.gen ?? 0);",
+    "old": "  p.gen = (parent?.gen ?? 0) + 1; // D3/D5: generation is the parent's plus one, in one place",
+    "new": "  p.gen = parent?.gen ?? 0; // D3/D5: generation is the parent's plus one, in one place",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LEGACY1-B13-death-unwritten",
     "file": "src/systems/legacy/family.js",
-    "old": "  if (!p || p.died) return p;\n  p.died =",
-    "new": "  if (p) return p;\n  p.died =",
+    "old": "  if (!p || p.died) return p;",
+    "new": "  if (p) return p;",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY1-D4-counter-behind",
     "file": "src/systems/legacy/family.js",
-    "old": "nextId: Math.max(maxId + 1, rec.nextId | 0),",
-    "new": "nextId: Math.max(1, rec.nextId | 0),",
+    "old": "    nextId: Math.max(maxId + 1, rec.nextId | 0), // D4: ids from the record's own counter, never a constant",
+    "new": "    nextId: Math.max(1, rec.nextId | 0), // D4: ids from the record's own counter, never a constant",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LEGACY1-stale-copy-wins",
     "file": "src/systems/legacy/store.js",
-    "old": "      mergeFacts(family, was);\n",
-    "new": "",
+    "old": "      mergeFacts(family, was);\n      family.rev = Math.max(was.rev, family.rev) + 1;",
+    "new": "      family.rev = Math.max(was.rev, family.rev) + 1;",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "LEGACY3-U5-tree-flat",
     "file": "src/systems/legacy/tree.js",
-    "old": "{ placed.set(q.id, { x: at, y: p.gen }); nodes.push({ id: q.id, x: at, y: p.gen }); at += 1; }",
-    "new": "{ placed.set(q.id, { x: at, y: 0 }); nodes.push({ id: q.id, x: at, y: 0 }); at += 1; }",
+    "old": "      placed.set(q.id, { x: at, y: p.gen });\n      nodes.push({ id: q.id, x: at, y: p.gen });",
+    "new": "      placed.set(q.id, { x: at, y: 0 });\n      nodes.push({ id: q.id, x: at, y: 0 });",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "LEGACY4-heirloom-found-again",
     "file": "src/systems/legacy/heirloom.js",
-    "old": "  if (handed) return handed;\n",
-    "new": "",
+    "old": "  if (handed) return handed;\n  let best = null;",
+    "new": "  let best = null;",
     "tests": [
       "test/systems/legacy/legacy4_heirloom.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "LEGACY4-heirloom-from-the-bag",
     "file": "src/systems/legacy/heirloom.js",
-    "old": "  return !!it && it.equipSlot != null && HEIR_GROUPS.has(it.group)",
-    "new": "  return !!it && HEIR_GROUPS.has(it.group)",
+    "old": "    it.equipSlot != null &&\n    HEIR_GROUPS.has(it.group) &&",
+    "new": "    HEIR_GROUPS.has(it.group) &&",
     "tests": [
       "test/systems/legacy/legacy4_heirloom.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "LEGACY4-blessings-without-end",
     "file": "src/systems/legacy/heirloom.js",
-    "old": "mods.skills[k] = Math.min(BLESSING_SKILL_MAX, (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)));",
-    "new": "mods.skills[k] = (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0));",
+    "old": "      mods.skills[k] = Math.min(\n        BLESSING_SKILL_MAX,\n        (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)),\n      );",
+    "new": "      mods.skills[k] = (mods.skills[k] ?? 0) + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0));",
     "tests": [
       "test/systems/legacy/legacy4_heirloom.test.js"
     ]

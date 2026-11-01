@@ -49,26 +49,30 @@ import { isEnhanced } from './uiSkin.js';
 import { getPref } from './uiPrefs.js';
 import { concealmentFlags, isMagicallyConcealed } from './effects.js';
 import {
-  BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA,
-} from './concealDraw.js';   // ECV1: the numbers, in a leaf the renderer can reach
-import { pageParam } from './pageQuery.js';   // PERF-URL: the page's query, parsed once a search
-import { crowdKinHidden } from '../net/gate/gateCrowd.js';   // RPT1026-EVENTS CROWD-KIN: a player the crowd's count leaves undrawn, their own foes with them
+  BLEND_ALPHA,
+  BLEND_SHIMMER,
+  BLEND_HZ,
+  SHADE_ALPHA,
+  SHADE_DARK,
+  REVEAL_SECONDS,
+  REVEAL_ALPHA,
+} from './concealDraw.js'; // ECV1: the numbers, in a leaf the renderer can reach
+import { pageParam } from './pageQuery.js'; // PERF-URL: the page's query, parsed once a search
+import { crowdKinHidden } from '../net/gate/gateCrowd.js'; // RPT1026-EVENTS CROWD-KIN: a player the crowd's count leaves undrawn, their own foes with them
 
 /** The seven draw constants. AUDIT 65 PN-3: they are STORED in the leaf
  *  systems/concealDraw.js, because render/renderer.js interpolates
  *  SHADE_DARK into its billboard shader and must not drag this module's
  *  effects/inventory/paperdoll graph in behind it. This module is still
  *  their one public home - every reader imports them from here. */
-export {
-  BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA,
-};
+export { BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA };
 /** The billboard shader's mode codes (uConceal.x). */
 export const CONCEAL_MODE = Object.freeze({ blend: 1, shade: 2, reveal: 3 });
 
 /** The switch: the enhanced skin, the pref, and no kill switch on the
  *  URL. Injectable for tests. */
 export function combatVisualsOn(search = globalThis.location?.search ?? '', pref = getPref('enhancedCombatVisuals')) {
-  if (pageParam('combatvisuals', search) === 'off') return false;   // PERF-URL
+  if (pageParam('combatvisuals', search) === 'off') return false; // PERF-URL
   return isEnhanced(search) && !!pref;
 }
 
@@ -96,7 +100,12 @@ export function concealVisual(flags, { t, hitAt = -Infinity, phase = 0 }) {
   }
   if (invisible) return null;
   if (blending) {
-    return { mode: CONCEAL_MODE.blend, alpha: BLEND_ALPHA + BLEND_SHIMMER * Math.sin(2 * Math.PI * BLEND_HZ * t + phase), t: tz, phase };
+    return {
+      mode: CONCEAL_MODE.blend,
+      alpha: BLEND_ALPHA + BLEND_SHIMMER * Math.sin(2 * Math.PI * BLEND_HZ * t + phase),
+      t: tz,
+      phase,
+    };
   }
   return { mode: CONCEAL_MODE.shade, alpha: SHADE_ALPHA, t: tz, phase };
 }
@@ -115,10 +124,14 @@ export function concealVisual(flags, { t, hitAt = -Infinity, phase = 0 }) {
  * @returns {{kind: 'plain'} | {kind: 'hidden'} | {kind: 'conceal', visual: object}}
  */
 export function foeDraw(foe, on, t) {
-  if (crowdKinHidden(foe)) return HIDDEN;   // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them
+  if (crowdKinHidden(foe)) return HIDDEN; // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them
   if (!isMagicallyConcealed(foe.entity)) return PLAIN;
-  if (!on) return HIDDEN;   // A5, verbatim: EntityConcealmentBehaviour disables the renderer
-  const visual = concealVisual(concealmentFlags(foe.entity), { t, hitAt: foe._ecvHit ?? -Infinity, phase: foePhase(foe) });
+  if (!on) return HIDDEN; // A5, verbatim: EntityConcealmentBehaviour disables the renderer
+  const visual = concealVisual(concealmentFlags(foe.entity), {
+    t,
+    hitAt: foe._ecvHit ?? -Infinity,
+    phase: foePhase(foe),
+  });
   return visual ? { kind: 'conceal', visual } : HIDDEN;
 }
 const PLAIN = Object.freeze({ kind: 'plain' });
@@ -166,8 +179,11 @@ export function foePhase(foe) {
 export function peerDraw(bits, on, t, id) {
   const b = bits & 7;
   if (!b) return PLAIN;
-  if (!on || b === 7) return HIDDEN;   // STAFF-PILOT (systems/staffBossPilot.js PILOT_CONCEAL): all three at once - a staff member inside its event's boss, drawn nowhere
-  return { kind: 'conceal', visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }) };
+  if (!on || b === 7) return HIDDEN; // STAFF-PILOT (systems/staffBossPilot.js PILOT_CONCEAL): all three at once - a staff member inside its event's boss, drawn nowhere
+  return {
+    kind: 'conceal',
+    visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }),
+  };
 }
 
 /** INVIS-LOOK: a peer's shimmer phase - its id hashed onto the golden

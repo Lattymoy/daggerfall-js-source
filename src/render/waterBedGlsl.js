@@ -44,7 +44,7 @@ vec2 bedCover(uint data, vec2 f, vec2 p, vec3 tl, vec2 gx, vec2 gy, float snowC,
     if (snowC > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(tl.xy, tl.z + float(uSnowArr.x)), gx, gy).a, snowC);
     return vec2(smoothstep(0.3, 0.7, pa), 0.0);
   }
-  // WATER-SHORE: with the water's fields the bed's line is the water's own, smoothed (render/groundEdgeGlsl.js shoreWet) -
+  // With the water's fields the bed's line is the water's own, smoothed (render/groundEdgeGlsl.js shoreWet) -
   // never a tile's edge; a whole water tile's art is silt whole, as it was
   float c = uShoreOn == 1 && m != 15u ? shoreWet(p) : mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
   float k = smoothstep(0.3, 0.7, c - (blended ? geWander(p) : 0.0));

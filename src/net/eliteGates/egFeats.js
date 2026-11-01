@@ -36,34 +36,86 @@ export const egCaughtBy = (F, nm) => F?.cg?.[nm] ?? [];
  * @type {Readonly<Record<string, Readonly<{ name: string, what: string, test: (said: Record<string, number>, F: any, ctx: { covenant?: number, now: number }) => boolean }>>>}
  */
 export const EG_FEAT_SIGNS = Object.freeze({
-  hound: Object.freeze({ name: 'Unsinged', what: 'Grath felled with no member caught by a burning bridge', test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length }),
-  spellmaster: Object.freeze({ name: 'Perfect Marks', what: 'every Examination passed, none failed', test: (s) => (s.passed ?? 0) >= 1 && !(s.failed > 0) }),
-  armsmaster: Object.freeze({ name: 'Every Challenge Met', what: 'two Challenges met', test: (s) => (s.challengewon ?? 0) >= 2 }),
-  ilthys: Object.freeze({ name: 'No Ground Conceded', what: 'three of her banners broken', test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3 }),
-  cairnkeeper: Object.freeze({ name: 'The Tithe Paid', what: 'the Keeper laid bare twice', test: (s) => (s.bare ?? 0) >= 2 }),
-  twins: Object.freeze({ name: 'Together', what: 'the Twin Lords falling within 3 s of each other', test: (s, F) => egTwinsTogether(F) }),
-  morvayn: Object.freeze({ name: 'Unchained', what: 'two soul-chainings endured', test: (s) => (s.chaining ?? 0) >= 2 }),
-  dusk: Object.freeze({ name: 'Wings Clipped', what: 'the Mother of Dusk dragged down twice', test: (s) => (s.grounded ?? 0) >= 2 }),
-  stalker: Object.freeze({ name: 'Blood Unbound', what: 'two Blood Tethers broken', test: (s) => (s.tetherbroken ?? 0) >= 2 }),
-  seyth: Object.freeze({ name: 'Through the Long Night', what: 'two Eclipses endured', test: (s) => (s.eclipse ?? 0) >= 2 }),
-  colossus: Object.freeze({ name: 'Hearts Stilled', what: 'into its Breakdown with no heart relit', test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0) }),
+  hound: Object.freeze({
+    name: 'Unsinged',
+    what: 'Grath felled with no member caught by a burning bridge',
+    test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length,
+  }),
+  spellmaster: Object.freeze({
+    name: 'Perfect Marks',
+    what: 'every Examination passed, none failed',
+    test: (s) => (s.passed ?? 0) >= 1 && !(s.failed > 0),
+  }),
+  armsmaster: Object.freeze({
+    name: 'Every Challenge Met',
+    what: 'two Challenges met',
+    test: (s) => (s.challengewon ?? 0) >= 2,
+  }),
+  ilthys: Object.freeze({
+    name: 'No Ground Conceded',
+    what: 'three of her banners broken',
+    test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3,
+  }),
+  cairnkeeper: Object.freeze({
+    name: 'The Tithe Paid',
+    what: 'the Keeper laid bare twice',
+    test: (s) => (s.bare ?? 0) >= 2,
+  }),
+  twins: Object.freeze({
+    name: 'Together',
+    what: 'the Twin Lords falling within 3 s of each other',
+    test: (s, F) => egTwinsTogether(F),
+  }),
+  morvayn: Object.freeze({
+    name: 'Unchained',
+    what: 'two soul-chainings endured',
+    test: (s) => (s.chaining ?? 0) >= 2,
+  }),
+  dusk: Object.freeze({
+    name: 'Wings Clipped',
+    what: 'the Mother of Dusk dragged down twice',
+    test: (s) => (s.grounded ?? 0) >= 2,
+  }),
+  stalker: Object.freeze({
+    name: 'Blood Unbound',
+    what: 'two Blood Tethers broken',
+    test: (s) => (s.tetherbroken ?? 0) >= 2,
+  }),
+  seyth: Object.freeze({
+    name: 'Through the Long Night',
+    what: 'two Eclipses endured',
+    test: (s) => (s.eclipse ?? 0) >= 2,
+  }),
+  colossus: Object.freeze({
+    name: 'Hearts Stilled',
+    what: 'into its Breakdown with no heart relit',
+    test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0),
+  }),
   wyrm: Object.freeze({ name: 'Brought to Earth', what: 'the Wyrm landed twice', test: (s) => (s.landed ?? 0) >= 2 }),
-  garoth: Object.freeze({ name: 'Before the Covenant', what: 'Garoth felled before the Covenant pressed', test: (s, F, ctx) => !ctx.covenant }),
+  garoth: Object.freeze({
+    name: 'Before the Covenant',
+    what: 'Garoth felled before the Covenant pressed',
+    test: (s, F, ctx) => !ctx.covenant,
+  }),
 });
 /** AUDIT EG V (lane1 #6; section 19, the Twin Lords' "Together"): did both twins fall, each at its own last fall's instant (a lord
  *  body's `fellAt`, net/eliteGates/egLords.js egLordHit - set again at each fall), within EG_FEAT_TWINS_MS of each other - whatever lord of
  *  the fight outlived them? A lord body is known by its `key` (net/eliteGates/egLords.js stand). Pure. */
 export function egTwinsTogether(F) {
   const T = (F?.bodies ?? []).filter((b) => b.key === 'twins');
-  return T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS;
+  return (
+    T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS
+  );
 }
 /** The feats' common names (bits 0 and 1). */
 export const EG_FEAT_UNBROKEN = 'Unbroken';
 export const EG_FEAT_SWIFT = 'Swift';
 /** The bands' lords (section 13.3), whose feats, all held, are the band's Master. */
 export const EG_FEAT_BANDS = Object.freeze([
-  Object.freeze(['hound', 'spellmaster', 'armsmaster', 'ilthys']), Object.freeze(['cairnkeeper', 'twins', 'morvayn']),
-  Object.freeze(['dusk', 'stalker', 'seyth']), Object.freeze(['colossus', 'wyrm', 'garoth']),
+  Object.freeze(['hound', 'spellmaster', 'armsmaster', 'ilthys']),
+  Object.freeze(['cairnkeeper', 'twins', 'morvayn']),
+  Object.freeze(['dusk', 'stalker', 'seyth']),
+  Object.freeze(['colossus', 'wyrm', 'garoth']),
 ]);
 /** All three of a lord's feats. */
 export const EG_FEATS_ALL = 0b111;
@@ -89,4 +141,5 @@ export function egFeatName(lord, k) {
   return EG_FEAT_SIGNS[lord]?.name ?? '';
 }
 /** Does `held` (lord key to its bits) hold every feat of band `b`'s lords? */
-export const egBandMastered = (held, b) => (EG_FEAT_BANDS[b] ?? []).every((k) => ((held?.[k] ?? 0) & EG_FEATS_ALL) === EG_FEATS_ALL);
+export const egBandMastered = (held, b) =>
+  (EG_FEAT_BANDS[b] ?? []).every((k) => ((held?.[k] ?? 0) & EG_FEATS_ALL) === EG_FEATS_ALL);

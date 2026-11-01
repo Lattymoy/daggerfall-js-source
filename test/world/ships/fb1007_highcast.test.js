@@ -21,6 +21,7 @@ import { WATER_LEVEL } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { MEASURED as CARRACK } from '../../../src/world/ships/carrackModel.js';
 import { MEASURED as GALLEON } from '../../../src/world/ships/galleonModel.js';
 import { MEASURED as LARGE_BOAT } from '../../../src/world/ships/largeBoatModel.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const NET = { items: [{ templateIndex: 1603, currentCondition: 50 }] };
@@ -101,7 +102,7 @@ test('HIGH-CAST: a cast already thrown is not lost when the look rises off the w
 });
 
 test('HIGH-CAST: the world host answers the surface under the cast - the ground the water lies on, or the sea\'s top over a carved seabed (by source: the host is not importable)', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /waterY: \(pos\) => \{ const g = heightAt\(pos\[0\], pos\[2\]\); return Number\.isFinite\(g\) \? Math\.max\(g, \(deepWaters\?\.oceanLocalY \?\? SCALED_OCEAN_ELEVATION \* STREAMING_TERRAIN_SCALE\) \+ state\.pixelTranslation\(state\.current\.x, state\.current\.y, _fishSeaT\)\[1\]\) : null; \},/);
   assert.match(src('src/scenes/fishHost.js'), /if \(!acting && host\.waterY && castOverWater\(castAt\(host\.eye\(\)\), host\.waterY\(castAt\(host\.eye\(\)\)\)\)\) return \[\];/);
 });

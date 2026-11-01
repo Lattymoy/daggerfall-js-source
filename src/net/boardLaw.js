@@ -57,7 +57,10 @@ export const BOARD_CACHE_MS = 60_000;
 export const NOTE_BUTTONS = Object.freeze(['party', 'guild', 'duel', 'commission']);
 /** The words each button wears. */
 export const NOTE_BUTTON_LABEL = Object.freeze({
-  party: 'Ask to join the party', guild: 'Ask to join the guild', duel: 'Challenge to a duel', commission: 'Commission a piece',
+  party: 'Ask to join the party',
+  guild: 'Ask to join the guild',
+  duel: 'Challenge to a duel',
+  commission: 'Commission a piece',
 });
 
 /** The switch the service's config holds (BOARD_OPEN): off, dev (the developers alone), on. */
@@ -94,7 +97,8 @@ export function noteWords({ subject, body, days, button } = {}) {
 export function noticeWords({ subject, body, days } = {}) {
   const words = letterWords({ subject, body });
   if ('error' in words) return words;
-  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 1 || /** @type {number} */ (days) > NOTICE_DAYS_MAX) return { error: 'bad-notice-days' };
+  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 1 || /** @type {number} */ (days) > NOTICE_DAYS_MAX)
+    return { error: 'bad-notice-days' };
   return { ...words, days: /** @type {number} */ (days) };
 }
 

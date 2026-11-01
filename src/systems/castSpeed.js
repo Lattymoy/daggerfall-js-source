@@ -22,7 +22,10 @@ export const CAST_RATE_MAX = 2;
 const _mods = new Map();
 /** Named modifiers, `fn(entity) -> percent`, each added onto the rate (lootPowers' castSpeed line). A non-function
  *  removes the name. */
-export function registerCastSpeedMod(name, fn) { if (typeof fn === 'function') _mods.set(name, fn); else _mods.delete(name); }
+export function registerCastSpeedMod(name, fn) {
+  if (typeof fn === 'function') _mods.set(name, fn);
+  else _mods.delete(name);
+}
 
 /** Speed's share alone: 1 at the pivot, the attribute clamped to its own range first. */
 export function speedCastRate(speed) {
@@ -42,4 +45,5 @@ export function castRate(entity) {
 }
 
 /** A rate a caller handed in, made safe: a finite positive number inside the clamp, else 1. */
-export const validCastRate = (rate) => (Number.isFinite(rate) && rate > 0 ? Math.min(CAST_RATE_MAX, Math.max(CAST_RATE_MIN, rate)) : 1);
+export const validCastRate = (rate) =>
+  Number.isFinite(rate) && rate > 0 ? Math.min(CAST_RATE_MAX, Math.max(CAST_RATE_MIN, rate)) : 1;

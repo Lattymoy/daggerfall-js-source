@@ -11,8 +11,8 @@
   {
     "name": "RF-the-straight-band-a-curve",
     "file": "src/systems/travel/roadLine.js",
-    "old": "    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null;   // straight through: the lane's own line\n",
-    "new": "",
+    "old": "    if (q[0] + q[4] === 2 * MID && q[1] + q[5] === 2 * MID) return null; // straight through: the lane's own line\n    const p = curvePolyline(q),",
+    "new": "    const p = curvePolyline(q),",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RF-an-end-s-run-a-curve",
     "file": "src/systems/travel/roadLine.js",
-    "old": "    if (q[2] !== MID || q[3] !== MID) continue;   // an end's straight run in to the middle\n",
-    "new": "",
+    "old": "    if (q[2] !== MID || q[3] !== MID) continue; // an end's straight run in to the middle\n    const fwd = q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1];",
+    "new": "    const fwd = q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "RF-the-bay-curved",
     "file": "src/systems/travel/roadLine.js",
-    "old": "  if (!past(p.x, p.y)) return null;\n",
-    "new": "",
+    "old": "  if (!past(p.x, p.y)) return null;\n  const inBit = stepBit(p, pixels[i - 1]),",
+    "new": "  const inBit = stepBit(p, pixels[i - 1]),",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "RF-the-second-half-dropped",
     "file": "src/systems/travel/roadLine.js",
-    "old": "line = [...(behind ? behind.slice(1) : []), ...",
-    "new": "line = [...[], ...",
+    "old": "        line = [\n          ...(behind ? behind.slice(1) : []),\n          ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)]),\n        ];",
+    "new": "        line = [...[], ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "RF-the-apex-not-the-end",
     "file": "src/systems/travel/roadLine.js",
-    "old": "...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)])",
-    "new": "...[nativeOfTile(p.x, p.y, MID, MID)]",
+    "old": "        line = [\n          ...(behind ? behind.slice(1) : []),\n          ...(curve ? curve.slice(0, half + 1) : [nativeOfTile(p.x, p.y, MID, MID)]),\n        ];",
+    "new": "        line = [...(behind ? behind.slice(1) : []), ...[nativeOfTile(p.x, p.y, MID, MID)]];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "RF-the-floods-never-meet",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (other.seen.has(k)) joined = true;\n",
-    "new": "",
+    "old": "      if (other.seen.has(k)) joined = true;\n      s.seen.add(k);",
+    "new": "      s.seen.add(k);",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -168,7 +168,7 @@
   {
     "name": "RF-the-piece-cap-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (a.seen.size >= ROAD_PIECE_CAP && b.seen.size >= ROAD_PIECE_CAP) break;   // both the land's network",
+    "old": "    if (a.seen.size >= ROAD_PIECE_CAP && b.seen.size >= ROAD_PIECE_CAP) break; // both the land's network",
     "new": "    if (true) break;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "RF-the-gap-s-crossing-unkept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      for (let k = found; k !== -1; k = g.parent.get(k)) bridges.add(k);\n",
-    "new": "",
+    "old": "      for (let k = found; k !== -1; k = g.parent.get(k)) bridges.add(k);\n      if ((dry === a ? b : a).seen.has(found)) joined = true;",
+    "new": "      if ((dry === a ? b : a).seen.has(found)) joined = true;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "RF-the-crossing-s-steps-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "\n  || (ends.bridges.has(beyondKey(ax, ay)) && ends.bridges.has(beyondKey(bx, by)));",
-    "new": ";",
+    "old": "  Math.max(Math.abs(ax - to.x), Math.abs(ay - to.y), Math.abs(bx - to.x), Math.abs(by - to.y)) <= ends.t ||\n  (ends.bridges.has(beyondKey(ax, ay)) && ends.bridges.has(beyondKey(bx, by)));",
+    "new": "  Math.max(Math.abs(ax - to.x), Math.abs(ay - to.y), Math.abs(bx - to.x), Math.abs(by - to.y)) <= ends.t;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "RF-the-ladder-s-open-ground-everywhere",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;",
-    "new": "        if (kind < 0) continue;",
+    "old": "        if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue; // ROAD-FOLLOW: by the roads, the open ground on an end's own leg alone",
+    "new": "        if (kind < 0) continue; // ROAD-FOLLOW: by the roads, the open ground on an end's own leg alone",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "RF-no-cost-law-where-no-road-joins",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });\n",
-    "new": "",
+    "old": "  if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });\n  // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country",
+    "new": "  // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "RF-the-cost-law-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const ends = (roads || tracks) && !opts.costLaw ? yield* roadEndsSteps(",
-    "new": "  const ends = (roads || tracks) && false ? yield* roadEndsSteps(",
+    "old": "    (roads || tracks) && !opts.costLaw",
+    "new": "    (roads || tracks) && false",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "RF-a-waiting-town-plans-its-streets",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;\n",
-    "new": "",
+    "old": "  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;\n  const ed = dfLocation.exterior.exteriorData,",
+    "new": "  const ed = dfLocation.exterior.exteriorData,",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "RF-the-walls-handed-no-reader",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "setTownWallPaths(terrainGen ? townWallPathsReader(",
-    "new": "void (terrainGen ? townWallPathsReader(",
+    "old": "  setTownWallPaths(terrainGen ? townWallPathsReader({ bay: () => terrainGen.roads(), landedIn: _tamrielRoads ? (x0, y0, x1, y1) => _tamrielRoads.landedIn(x0, y0, x1, y1) : null }) : null);",
+    "new": "  void (terrainGen ? townWallPathsReader({ bay: () => terrainGen.roads(), landedIn: _tamrielRoads ? (x0, y0, x1, y1) => _tamrielRoads.landedIn(x0, y0, x1, y1) : null }) : null);",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "RF-the-arrival-at-the-slice-s-corner",
     "file": "src/world/capitalApproaches.js",
-    "old": "mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;",
-    "new": "mid = (8 * s - cap.anchor[F.lateral]) * BLOCK_M;",
+    "old": "    mid = (8 * s + 4 - cap.anchor[F.lateral]) * BLOCK_M;",
+    "new": "    mid = (8 * s - cap.anchor[F.lateral]) * BLOCK_M;",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "RF-the-run-in-short-of-the-gate",
     "file": "src/world/capitalApproaches.js",
-    "old": "[ug - H, vs - H, ug + H, vg]",
-    "new": "[ug - H, vs - H, ug + H, vs + H]",
+    "old": "        [ug - H, vs - H, ug + H, vg],",
+    "new": "        [ug - H, vs - H, ug + H, vs + H],",
     "tests": [
       "test/world/road_gates.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "RF-the-south-side-s-frame",
     "file": "src/world/capitalApproaches.js",
-    "old": "  S: Object.freeze({ uv: (x, z, e) => [x, e - z],",
-    "new": "  S: Object.freeze({ uv: (x, z, e) => [x, z - e],",
+    "old": "  S: Object.freeze({ uv: (x, z, e) => [x, e - z], lateral: 0, edge: (cap, D) => (8 * D.h - cap.anchor[1]) * BLOCK_M }),",
+    "new": "  S: Object.freeze({ uv: (x, z, e) => [x, z - e], lateral: 0, edge: (cap, D) => (8 * D.h - cap.anchor[1]) * BLOCK_M }),",
     "tests": [
       "test/world/road_gates.test.js"
     ]

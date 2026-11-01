@@ -19,7 +19,7 @@ import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // OW-BEYOND-KNOWN: the kinds the Bay's rows bake found
 import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: a province's region
-import { BAY_PIXEL_IDS } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
+import { BAY_PIXEL_IDS, isMadePlaceId } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
 
 /**
  * BAY-LEFT-MAPS (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
@@ -311,6 +311,14 @@ export function discoverLocation(mapId, info = {}) {
   _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
   _locationsGen += 1;
   return true;
+}
+
+/** FIND-FOUND: the places the port made (isMadePlaceId) that the player has found by name - each its whole map id, its
+ *  region and its name as the store keeps them. An Arena place keeps no name here (AUDIT-TESA A1-2) and is not listed. */
+export function foundMadePlaces() {
+  const out = [];
+  for (const [key, v] of _locations) if (isMadePlaceId(key) && v.locationName) out.push({ mapId: key, regionName: v.regionName, locationName: v.locationName });
+  return out;
 }
 
 /** HasDiscoveredLocation (:875-882). */

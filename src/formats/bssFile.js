@@ -140,7 +140,8 @@ export class BssFile extends BaseImageFile {
     let pos = BSS_HEADER_BYTES;
     for (let i = 0; i < frameCount; i++) {
       this.frames.push({
-        width, height,
+        width,
+        height,
         data: this._bytes.subarray(pos, Math.min(pos + stride, end)),
         palette: this.palette,
       });

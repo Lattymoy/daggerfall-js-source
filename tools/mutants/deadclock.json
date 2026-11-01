@@ -2,8 +2,8 @@
   {
     "name": "DEADCLOCK-a-clock-with-no-task-counts",
     "file": "src/systems/quest/clock.js",
-    "old": "  if (!task) return false;\n  if (task.actions.some(",
-    "new": "  if (!task) return true;\n  if (task.actions.some(",
+    "old": "  if (!task) return false;",
+    "new": "  if (!task) return true;",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DEADCLOCK-a-condition-an-act",
     "file": "src/systems/quest/clock.js",
-    "old": "task.actions.some((a) => !a.isTriggerCondition) ||",
-    "new": "task.actions.length > 0 ||",
+    "old": "  if (task.actions.some((a) => !a.isTriggerCondition) || task.pendingActionLines?.length) return true;",
+    "new": "  if (task.actions.length > 0 || task.pendingActionLines?.length) return true;",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DEADCLOCK-the-unread-action-unread",
     "file": "src/systems/quest/clock.js",
-    "old": " || task.pendingActionLines?.length) return true;",
-    "new": ") return true;",
+    "old": "  if (task.actions.some((a) => !a.isTriggerCondition) || task.pendingActionLines?.length) return true;",
+    "new": "  if (task.actions.some((a) => !a.isTriggerCondition)) return true;",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DEADCLOCK-until-unread",
     "file": "src/systems/quest/clock.js",
-    "old": "    if (t.targetSymbol?.name === name) return true;   // until _x_ performed\n",
-    "new": "",
+    "old": "    if (t.targetSymbol?.name === name) return true; // until _x_ performed\n    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
+    "new": "    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DEADCLOCK-when-unread",
     "file": "src/systems/quest/clock.js",
-    "old": "    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true;",
-    "new": "",
+    "old": "    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
+    "new": "    // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DEADCLOCK-when-spelt-raw",
     "file": "src/systems/quest/clock.js",
-    "old": "a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)",
-    "new": "a.evaluations?.some((e) => e.task === name)",
+    "old": "    for (const a of t.actions) if (a.evaluations?.some((e) => new QuestSymbol(e.task).name === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
+    "new": "    for (const a of t.actions) if (a.evaluations?.some((e) => e.task === name)) return true; // when _x_ / and _x_ / or not _x_ (the script's spelling, `_x_`)",
     "tests": [
       "test/systems/quest/deadclock.test.js"
     ]

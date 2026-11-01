@@ -17,7 +17,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { NodeGlowRenderer, NODE_GLOW_PERIOD, NODE_GLOW_PULL, createNodeGlowPass } from '/src/render/nodeGlow.js';
@@ -90,10 +94,25 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -101,7 +120,8 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 });
   const p = await page.evaluate(() => window.probe);
@@ -111,36 +131,73 @@ try {
   const eye = [0, 1.1, 5];
   // on each node's card (stood NODE_GLOW_PULL toward the eye): low on the herb (over its own picture), its crown's top,
   // its sides; the school's middle; and the bare floor between them
-  const toward = (x) => { const d = Math.hypot(eye[0] - x, eye[2]); return [x + ((eye[0] - x) / d) * p.pull, (eye[2] / d) * p.pull]; };
-  const [hx, hz] = toward(-1.5), [sx, sz] = toward(1.5);
-  const pts = [[hx, 0.3, hz], [hx, 1.29, hz], [hx - 1.08, 0.3, hz], [sx, 0.2, sz], [0, 0.02, 3.2]];
+  const toward = (x) => {
+    const d = Math.hypot(eye[0] - x, eye[2]);
+    return [x + ((eye[0] - x) / d) * p.pull, (eye[2] / d) * p.pull];
+  };
+  const [hx, hz] = toward(-1.5),
+    [sx, sz] = toward(1.5);
+  const pts = [
+    [hx, 0.3, hz],
+    [hx, 1.29, hz],
+    [hx - 1.08, 0.3, hz],
+    [sx, 0.2, sz],
+    [0, 0.02, 3.2],
+  ];
   const bare = await page.evaluate(([e, q]) => window.draw(e, 7.25, 1, q, { glow: false }), [eye, pts]);
   const lit = await page.evaluate(([e, q]) => window.draw(e, 7.25, 1, q), [eye, pts]);
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'node_glow.png') });
   check('no GL error drawing it', lit.error === 0 && lit.drawn === 2, `error ${lit.error}, drawn ${lit.drawn}`);
   const add = lit.px.map((c, i) => [c[0] - bare.px[i][0], c[1] - bare.px[i][1], c[2] - bare.px[i][2]]);
-  check('light low on the herb, over its own picture', lum(add[0]) > 40, `added ${JSON.stringify(add[0])} over ${JSON.stringify(bare.px[0])}`);
+  check(
+    'light low on the herb, over its own picture',
+    lum(add[0]) > 40,
+    `added ${JSON.stringify(add[0])} over ${JSON.stringify(bare.px[0])}`,
+  );
   check('slight - never a beacon', Math.max(...add[0]) < 140, JSON.stringify(add[0]));
-  check('in Herbalism\'s orchid: red and blue over green', add[0][0] > add[0][1] && add[0][2] > add[0][1], JSON.stringify(add[0]));
-  check('next to nothing at its crown and its sides', lum(add[1]) < 12 && lum(add[2]) < 12, `${JSON.stringify(add[1])} ${JSON.stringify(add[2])}`);
-  check('the school in Fishing\'s blue', lum(add[3]) > 25 && add[3][2] > add[3][0], JSON.stringify(add[3]));
+  check(
+    "in Herbalism's orchid: red and blue over green",
+    add[0][0] > add[0][1] && add[0][2] > add[0][1],
+    JSON.stringify(add[0]),
+  );
+  check(
+    'next to nothing at its crown and its sides',
+    lum(add[1]) < 12 && lum(add[2]) < 12,
+    `${JSON.stringify(add[1])} ${JSON.stringify(add[2])}`,
+  );
+  check("the school in Fishing's blue", lum(add[3]) > 25 && add[3][2] > add[3][0], JSON.stringify(add[3]));
   check('the floor between them untouched', lum(add[4]) < 6, JSON.stringify(add[4]));
   // a wall in front hides the school's glow (depth-tested); the herb's stays
   const walled = await page.evaluate(([e, q]) => window.draw(e, 7.25, 1, q, { walled: true }), [eye, pts]);
-  const wallBare = await page.evaluate(([e, q]) => window.draw(e, 7.25, 1, q, { walled: true, glow: false }), [eye, pts]);
-  check('a wall in front hides it', Math.abs(lum(walled.px[3]) - lum(wallBare.px[3])) < 6 && lum(walled.px[0]) - lum(wallBare.px[0]) > 40, `behind the wall ${JSON.stringify(walled.px[3])} vs ${JSON.stringify(wallBare.px[3])}`);
+  const wallBare = await page.evaluate(
+    ([e, q]) => window.draw(e, 7.25, 1, q, { walled: true, glow: false }),
+    [eye, pts],
+  );
+  check(
+    'a wall in front hides it',
+    Math.abs(lum(walled.px[3]) - lum(wallBare.px[3])) < 6 && lum(walled.px[0]) - lum(wallBare.px[0]) > 40,
+    `behind the wall ${JSON.stringify(walled.px[3])} vs ${JSON.stringify(wallBare.px[3])}`,
+  );
   // the clock's wrap: a breath before it and a breath after, the same light
   const before = await page.evaluate(([e, q, t]) => window.draw(e, t, 1, q), [eye, pts, p.period - 1 / 240]);
   const after = await page.evaluate(([e, q, t]) => window.draw(e, t, 1, q), [eye, pts, 1 / 240]);
   const jump = before.px.map((c, i) => Math.abs(lum(c) - lum(after.px[i])));
   check('no jump where the clock wraps', Math.max(...jump) <= 12, jump.join(' '));
   const cold = await page.evaluate(([e, q]) => window.draw(e, 7.25, 0, q), [eye, pts]);
-  check('unkindled, nothing glows', cold.px.every((c, i) => Math.abs(lum(c) - lum(bare.px[i])) < 3), JSON.stringify(cold.px));
+  check(
+    'unkindled, nothing glows',
+    cold.px.every((c, i) => Math.abs(lum(c) - lum(bare.px[i])) < 3),
+    JSON.stringify(cold.px),
+  );
   // AUDIT NODE-MARKS (the independent pass): the world host's own path, with the renderer's own typed camera - the pass
   // picked nothing for a Float32Array eye, so the glow was never built and never lit in the game
   const through = await page.evaluate(([e, q]) => window.throughPass(e, 5, q), [eye, [pts[0]]]);
   const throughBare = await page.evaluate(([e, q]) => window.draw(e, 7.25, 1, q, { glow: false }), [eye, [pts[0]]]);
-  check('through the world host\'s pass, with a Float32Array camera, the herb is lit', through.lit === 1 && through.error === 0 && lum(through.px[0]) - lum(throughBare.px[0]) > 40, `lit ${through.lit}, foreign ${through.foreign}, ${JSON.stringify(through.px[0])} over ${JSON.stringify(throughBare.px[0])}`);
+  check(
+    "through the world host's pass, with a Float32Array camera, the herb is lit",
+    through.lit === 1 && through.error === 0 && lum(through.px[0]) - lum(throughBare.px[0]) > 40,
+    `lit ${through.lit}, foreign ${through.foreign}, ${JSON.stringify(through.px[0])} over ${JSON.stringify(throughBare.px[0])}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

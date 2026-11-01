@@ -146,8 +146,8 @@
   {
     "name": "WERE-FRIGHT-wereboar-barks-as-wolf",
     "file": "src/systems/lycanthropy.js",
-    "old": "entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark",
-    "new": "SOUND.EnemyWerewolfBark",
+    "old": "  return entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark;",
+    "new": "  return SOUND.EnemyWerewolfBark;",
     "tests": [
       "test/systems/werefright.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WERE-FRIGHT-no-clamp",
     "file": "src/systems/lycanthropy.js",
-    "old": "return Math.min(FRIGHTEN_MAX_CHANCE, Math.max(FRIGHTEN_MIN_CHANCE, FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g)));",
-    "new": "return FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g);",
+    "old": "  return Math.min(\n    FRIGHTEN_MAX_CHANCE,\n    Math.max(FRIGHTEN_MIN_CHANCE, FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g)),\n  );",
+    "new": "  return FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g);",
     "tests": [
       "test/systems/werefright.test.js"
     ]

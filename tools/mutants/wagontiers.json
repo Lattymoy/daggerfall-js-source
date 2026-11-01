@@ -20,8 +20,8 @@
   {
     "name": "WAGON-TIERS-boons-wear-slows",
     "file": "src/systems/upkeep/upkeepTiers.js",
-    "old": "    wearSlows: false,    // a Rickety or Failing wagon",
-    "new": "    wearSlows: true,    // a Rickety or Failing wagon",
+    "old": "    wearSlows: false, // a Rickety or Failing wagon rolls at its state's pace (WAGON_STATES), under DFU's",
+    "new": "    wearSlows: true, // a Rickety or Failing wagon rolls at its state's pace (WAGON_STATES), under DFU's",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WAGON-TIERS-boons-wear-prices",
     "file": "src/systems/upkeep/upkeepTiers.js",
-    "old": "    wearPrices: false,   // a counter prices",
-    "new": "    wearPrices: true,   // a counter prices",
+    "old": "    wearPrices: false, // a counter prices a wagon by its condition, under a whole one's",
+    "new": "    wearPrices: true, // a counter prices a wagon by its condition, under a whole one's",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WAGON-TIERS-the-paces-rules-dropped",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "if (wcare && w) k *= wagonPace(w, wcare);",
-    "new": "if (wcare && w) k *= wagonPace(w);",
+    "old": "      if (wcare && w) k *= wagonPace(w, wcare); // WAGON-MEND: a failing wagon's the slowest - and every wagon rolls; WAGON-TIERS: on Hard",
+    "new": "      if (wcare && w) k *= wagonPace(w); // WAGON-MEND: a failing wagon's the slowest - and every wagon rolls; WAGON-TIERS: on Hard",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAGON-TIERS-the-laws-floor",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound'",
-    "new": "return s.pace * (s.key === 'sound'",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return s.pace * (s.key === 'sound' ? rules.soundPace : 1);",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WAGON-TIERS-the-sales-tier-unread",
     "file": "src/systems/tradeModes.js",
-    "old": "if (wagonSoldWhole(item, wagonUpkeepRules())) return 100;",
-    "new": "if (wagonSoldWhole(item)) return 100;",
+    "old": "  if (wagonSoldWhole(item, wagonUpkeepRules())) return 100;",
+    "new": "  if (wagonSoldWhole(item)) return 100;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGON-TIERS-the-sales-law",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "isWagonItem(item) && !rules?.wearPrices;",
-    "new": "isWagonItem(item) && !rules;",
+    "old": "export const wagonSoldWhole = (item, rules = WAGON_UPKEEP_HARD) => isWagonItem(item) && !rules?.wearPrices;",
+    "new": "export const wagonSoldWhole = (item, rules = WAGON_UPKEEP_HARD) => isWagonItem(item) && !rules;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WAGON-TIERS-off-still-wearing",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "    const wcare = wagonUpkeep();   // WAGON-TIERS: Boons and Hard wear it alike (the same world); Off never\n    if (wcare) {",
-    "new": "    const wcare = wagonUpkeep();   // WAGON-TIERS: Boons and Hard wear it alike (the same world); Off never\n    if (true) {",
+    "old": "    if (wcare) {",
+    "new": "    if (true) {",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WAGON-TIERS-the-kit-used-off",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "  }, { usable: () => !!wagonUpkeep() }));",
-    "new": "  }, { usable: () => true }));",
+    "old": "      { usable: () => !!wagonUpkeep() },",
+    "new": "      { usable: () => true },",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WAGON-TIERS-the-old-on-read-as-the-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "_prefs.wagonUpkeep = p.wagonUpkeep === WAGON_UPKEEP_OLD_ON ? WAGON_UPKEEP_OLD_ON_TIER : PREF_DEFAULTS.wagonUpkeep;",
-    "new": "_prefs.wagonUpkeep = PREF_DEFAULTS.wagonUpkeep;",
+    "old": "          _prefs.wagonUpkeep =\n            p.wagonUpkeep === WAGON_UPKEEP_OLD_ON ? WAGON_UPKEEP_OLD_ON_TIER : PREF_DEFAULTS.wagonUpkeep;",
+    "new": "          _prefs.wagonUpkeep = PREF_DEFAULTS.wagonUpkeep;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WAGON-TIERS-junk-kept",
     "file": "src/systems/uiPrefs.js",
-    "old": "if (p.wagonUpkeep !== undefined && !isStoredWagonUpkeep(p.wagonUpkeep))",
-    "new": "if (false)",
+    "old": "        if (p.wagonUpkeep !== undefined && !isStoredWagonUpkeep(p.wagonUpkeep))",
+    "new": "        if (false)",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WAGON-TIERS-the-chip-red-on-boons",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "return w.wearSlows === false && tone === 'low' ? 'warn' : tone; };",
-    "new": "return tone; };",
+    "old": "  return w.wearSlows === false && tone === 'low' ? 'warn' : tone;",
+    "new": "  return tone;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WAGON-TIERS-the-bar-red-on-boons",
     "file": "src/ui/holdingsPages.js",
-    "old": "(w.wearSlows === false && w.stateKey === 'failing' ? WAGON_METER_TONE.rickety : WAGON_METER_TONE[w.stateKey] ?? 'verdigris')",
-    "new": "(WAGON_METER_TONE[w.stateKey] ?? 'verdigris')",
+    "old": "export const wagonMeterTone = (w) =>\n  w.wearSlows === false && w.stateKey === 'failing'\n    ? WAGON_METER_TONE.rickety\n    : (WAGON_METER_TONE[w.stateKey] ?? 'verdigris');",
+    "new": "export const wagonMeterTone = (w) => WAGON_METER_TONE[w.stateKey] ?? 'verdigris';",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WAGON-TIERS-boons-in-hards-words",
     "file": "src/ui/holdingsPages.js",
-    "old": "const advice = w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey) ? WAGON_ADVICE_BOONS[w.stateKey]",
-    "new": "const advice = false ? WAGON_ADVICE_BOONS[w.stateKey]",
+    "old": "  const advice =\n    w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey)\n      ? WAGON_ADVICE_BOONS[w.stateKey] // WAGON-TIERS: Boons says no slowness, and the boon\n      : w.stateKey === 'failing'\n        ? 'Failing. Its team pulls it at its slowest.'\n        : w.stateKey === 'rickety'\n          ? 'Rickety. Its team pulls it more slowly.'\n          : w.stateKey === 'worn'\n            ? 'Worn. A Wagon Yard can repair it.'\n            : 'Sound.';",
+    "new": "  const advice = false\n    ? WAGON_ADVICE_BOONS[w.stateKey] // WAGON-TIERS: Boons says no slowness, and the boon\n    : w.stateKey === 'failing'\n      ? 'Failing. Its team pulls it at its slowest.'\n      : w.stateKey === 'rickety'\n        ? 'Rickety. Its team pulls it more slowly.'\n        : w.stateKey === 'worn'\n          ? 'Worn. A Wagon Yard can repair it.'\n          : 'Sound.';",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WAGON-TIERS-the-step-down-in-hards-words",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "const name = wagonWord(item), slows = !!wcare?.wearSlows;",
-    "new": "const name = wagonWord(item), slows = true;",
+    "old": "      slows = !!wcare?.wearSlows;",
+    "new": "      slows = true;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WAGON-TIERS-the-cards-tier-unread",
     "file": "src/systems/upkeep/upkeepRuntime.js",
-    "old": "      tier: wcare?.id ?? null, wearSlows: !!wcare?.wearSlows,",
-    "new": "      tier: null, wearSlows: true,",
+    "old": "      tier: wcare?.id ?? null,\n      wearSlows: !!wcare?.wearSlows,",
+    "new": "      tier: null,\n      wearSlows: true,",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WAGON-TIERS-the-boon-not-boons",
     "file": "src/systems/upkeep/upkeepTiers.js",
-    "old": "    soundPace: WAGON_SOUND_BOON,   // a Sound wagon's pace",
-    "new": "    soundPace: 1,   // a Sound wagon's pace",
+    "old": "    soundPace: WAGON_SOUND_BOON, // a Sound wagon's pace, times its state's",
+    "new": "    soundPace: 1, // a Sound wagon's pace, times its state's",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WAGON-TIERS-hard-earns-the-boon",
     "file": "src/systems/upkeep/upkeepTiers.js",
-    "old": "    wearPrices: true,\n    soundPace: 1,\n",
-    "new": "    wearPrices: true,\n    soundPace: WAGON_SOUND_BOON,\n",
+    "old": "    soundPace: 1,",
+    "new": "    soundPace: WAGON_SOUND_BOON,",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WAGON-TIERS-the-boon-unread",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
-    "new": "return (rules.wearSlows ? s.pace : 1);",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return rules.wearSlows ? s.pace : 1;",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WAGON-TIERS-a-worn-wagon-earns",
     "file": "src/systems/wagon/wagonUpkeep.js",
-    "old": "(s.key === 'sound' ? rules.soundPace : 1)",
-    "new": "(s.key !== 'failing' ? rules.soundPace : 1)",
+    "old": "  return (rules.wearSlows ? s.pace : 1) * (s.key === 'sound' ? rules.soundPace : 1);",
+    "new": "  return (rules.wearSlows ? s.pace : 1) * (s.key !== 'failing' ? rules.soundPace : 1);",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WAGON-TIERS-the-boon-unsaid",
     "file": "src/ui/holdingsPages.js",
-    "old": "  get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },",
-    "new": "",
+    "old": "  get sound() {\n    return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.');\n  }, // Mac: \"Sound wagon rolls faster\"",
+    "new": "  // Mac: \"Sound wagon rolls faster\"",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WAGON-TIERS-the-note-on-boons",
     "file": "src/ui/enhanced/enhancedSaddle.js",
-    "old": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing') && w.wearSlows !== false) return 'wagon';",
-    "new": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing')) return 'wagon';",
+    "old": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing') && w.wearSlows !== false) return 'wagon'; // WAGON-TIERS: on Boons its wear takes nothing",
+    "new": "  if (w && (w.stateKey === 'rickety' || w.stateKey === 'failing')) return 'wagon'; // WAGON-TIERS: on Boons its wear takes nothing",
     "tests": [
       "test/systems/wagontiers.test.js"
     ]

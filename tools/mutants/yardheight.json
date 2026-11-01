@@ -2,7 +2,7 @@
   {
     "name": "YARD-HEIGHT-bound",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_YARD_HIGH = 4;",
+    "old": "export const DECOR_YARD_HIGH = 8;",
     "new": "export const DECOR_YARD_HIGH = 48;",
     "tests": [
       "test/net/yardheight.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "YARD-HEIGHT-comparison",
     "file": "src/net/decorLaw.js",
-    "old": "Number(pl.pos[1]) <= DECOR_YARD_HIGH;",
-    "new": "Number(pl.pos[1]) < DECOR_YARD_HIGH;",
+    "old": "export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) <= DECOR_YARD_HIGH;",
+    "new": "export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) < DECOR_YARD_HIGH;",
     "tests": [
       "test/net/yardheight.test.js"
     ],

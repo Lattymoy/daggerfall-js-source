@@ -2,8 +2,8 @@
   {
     "name": "LW-FIX5-keepsake-census",
     "file": "src/systems/livingWorld/keepsake.js",
-    "old": "    && (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home",
-    "new": "    && it.livingKeepsake.home === home",
+    "old": "        (it.livingKeepsake.home ?? homeOf?.(it.livingKeepsake.id) ?? null) === home &&",
+    "new": "        it.livingKeepsake.home === home &&",
     "tests": [
       "test/systems/livingWorld/lwfix5_deep.test.js",
       "test/systems/livingWorld/lwfix2_watch.test.js",
@@ -134,8 +134,8 @@
   {
     "name": "LW-FIX5-watch-dead-found",
     "file": "src/scenes/livingWorld/livingWatch.js",
-    "old": "    g.livingFollowed = true;   // followed once, whatever its end - a body lying in the list is never a second deed",
-    "new": "    void 0;   // followed once, whatever its end - a body lying in the list is never a second deed",
+    "old": "    g.livingFollowed = true; // followed once, whatever its end - a body lying in the list is never a second deed",
+    "new": "    void 0; // followed once, whatever its end - a body lying in the list is never a second deed",
     "tests": [
       "test/systems/livingWorld/lwfix5_deep.test.js",
       "test/systems/livingWorld/lwfix2_watch.test.js",

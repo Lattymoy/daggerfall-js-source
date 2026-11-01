@@ -1,4 +1,4 @@
-// WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Settlements"): A TOWN MADE FROM ITS GROUND, in the stages the
+// WG2 SETTLEMENT 2.0 ("Settlements"): A TOWN MADE FROM ITS GROUND, in the stages the
 // specification names - A the site and its footprint, B its entrances, plaza and main roads, C its districts, D its
 // streets, E its plots, F its buildings, G the wells, markets, walls, docks, fields and gardens - each reading the
 // land through a region's sampler (regionSampler.js). The culture's style (data/styles.json) changes the geometry, not

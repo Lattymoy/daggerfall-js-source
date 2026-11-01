@@ -110,8 +110,8 @@
   {
     "name": "AC6-C3-game-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if ((gameNo !== undefined && gameNo !== t.gameNo) || (turn",
-    "new": "  if ((false) || (turn",
+    "old": "  if ((gameNo !== undefined && gameNo !== t.gameNo) || (turn !== undefined && turn !== t.game.turn)) return 'stale';",
+    "new": "  if (false || (turn !== undefined && turn !== t.game.turn)) return 'stale';",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AC6-C3-wire-turn-optional",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (!gameNoOk(m.gameNo) || !Number.isInteger(m.turn) || m.turn < 1 || m.turn > ILIAC_TURNS) return null;\n",
-    "new": "",
+    "old": "    if (!gameNoOk(m.gameNo) || !Number.isInteger(m.turn) || m.turn < 1 || m.turn > ILIAC_TURNS) return null;\n    return playsOk(m.plays)",
+    "new": "    return playsOk(m.plays)",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AC6-D2-vouch-keeps-no-expiry",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  s.vouchE = orderE;\n",
-    "new": "",
+    "old": "  s.vouchE = orderE;\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AC6-D2-no-ask-as-the-table-fills",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (ranked) events.push(vouchAsked(now));",
-    "new": "",
+    "old": "    if (ranked) events.push(vouchAsked(now));\n  }",
+    "new": "  }",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "AC6-D2-no-ask-with-the-end",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now));   // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap",
+    "old": "    if (t.seats.every((s) => s?.sub)) events.push(vouchAsked(now)); // AUDIT CARDS-6 C5/D2: the next ranked game's orders, in the gap",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "AC6-C5-vouch-any-account",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!s.sub || s.sub !== sub) return 'deck refused';",
-    "new": "  if (!s.sub) return 'deck refused';",
+    "old": "  if (!s.sub || s.sub !== sub) return 'deck refused'; // a friendly seat stays one; an order is its own account's",
+    "new": "  if (!s.sub) return 'deck refused'; // a friendly seat stays one; an order is its own account's",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AC6-C5-client-never-answers-the-ask",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    if (asked && g.rankedSeat && g.seated && !g.vouching) revouch();   // AUDIT CARDS-6 C5/D2: the relay asked - answered",
-    "new": "",
+    "old": "    if (asked && g.rankedSeat && g.seated && !g.vouching) revouch(); // AUDIT CARDS-6 C5/D2: the relay asked - answered\n  }",
+    "new": "  }",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AC6-C5-client-vouch-unsaid",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "if (r?.ok && r.order) { d.online.send({ op: 'vouch', table: d.online.table, order: r.order }); return; }",
-    "new": "if (r?.ok && r.order) return;",
+    "old": "        if (r?.ok && r.order) {\n          d.online.send({ op: 'vouch', table: d.online.table, order: r.order });\n          return;\n        }",
+    "new": "        if (r?.ok && r.order) return;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AC6-C5-client-asks-for-ever",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      g.rankedSeat = false;\n      g.why = `${r?.why",
-    "new": "      g.why = `${r?.why",
+    "old": "        g.rankedSeat = false;\n        g.why = `${r?.why ?? 'The realm could not confirm that deck.'} You play friendly games at this table from now on.`;",
+    "new": "        g.why = `${r?.why ?? 'The realm could not confirm that deck.'} You play friendly games at this table from now on.`;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "AC6-C6-idle-never-stood",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    for (const s of [...t.seats]) if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));",
+    "old": "    for (const s of [...t.seats])\n      if (s && s.idle >= ILIAC_IDLE_TURNS) msgs.push(...iliacStand(t, { id: s.id, now, idle: true }));",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "AC6-C6-idle-ranked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "((left >= 0 && why !== 'idle') || t.game.spoke.every(Boolean))",
-    "new": "(left >= 0 || t.game.spoke.every(Boolean))",
+    "old": "  const counts = t.ranked && !!t.id && !voided && ((left >= 0 && why !== 'idle') || t.game.spoke.every(Boolean));",
+    "new": "  const counts = t.ranked && !!t.id && !voided && (left >= 0 || t.game.spoke.every(Boolean));",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AC6-C6-idle-never-resets",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  t.seats[p].idle = 0;\n",
-    "new": "",
+    "old": "  t.seats[p].idle = 0;\n  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
+    "new": "  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "AC6-C6-spoke-never-said",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  t.game.spoke[p] = true;   // AUDIT CARDS-6 C6: he is at the table",
+    "old": "  t.game.spoke[p] = true; // AUDIT CARDS-6 C6: he is at the table",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "AC6-C6-passes-uncounted",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "t.seats[p].idle = (t.seats[p].idle ?? 0) + 1; ",
-    "new": "",
+    "old": "        t.seats[p].idle = (t.seats[p].idle ?? 0) + 1;\n        passed.push({ t: 'commit', seat: p, timeout: true, at: now });",
+    "new": "        passed.push({ t: 'commit', seat: p, timeout: true, at: now });",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AC6-C7-back-for-any-account",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "s?.away && s.away.id === id && s.sub === sub",
-    "new": "s?.away && s.away.id === id",
+    "old": "  const p = t.seats.findIndex((s) => s?.away && s.away.id === id && s.sub === sub);",
+    "new": "  const p = t.seats.findIndex((s) => s?.away && s.away.id === id);",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AC6-C7-dealt-to-a-kept-seat",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!t.seats.every((s) => s && !s.away)) return [];",
-    "new": "  if (!t.seats.every(Boolean)) return [];",
+    "old": "  if (!t.seats.every((s) => s && !s.away)) return []; // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone",
+    "new": "  if (!t.seats.every(Boolean)) return []; // AUDIT CARDS-6 C7: never a game dealt to a seat whose player is gone",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -434,7 +434,7 @@
   {
     "name": "AC6-C8-client-commit-unmarked",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": "      for (const e of f.events) { const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null; if (pl) pl.committed = true; }",
+    "old": "      for (const e of f.events) {\n        const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null;\n        if (pl) pl.committed = true;\n      }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -452,8 +452,8 @@
   {
     "name": "AC6-C9-last-board-dropped",
     "file": "src/net/iliac/iliacTable.js",
-    "old": ", view: iliacView(t.game, -1) };",
-    "new": " };",
+    "old": "  t.last = {\n    gameNo: t.gameNo,\n    winner,\n    how,\n    result: r,\n    names: end.names,\n    ...(counts ? { ranked: true } : {}),\n    view: iliacView(t.game, -1),\n  };",
+    "new": "  t.last = { gameNo: t.gameNo, winner, how, result: r, names: end.names, ...(counts ? { ranked: true } : {}) };",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AC6-C9-watcher-forgets-the-last",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": ": this.state.game ?? this.state.last?.view ?? null;",
-    "new": ": this.state.game;",
+    "old": "      this.seat() >= 0\n        ? this.mine?.gameNo === this.state.gameNo\n          ? this.mine.view\n          : this.state.game\n        : (this.state.game ?? this.state.last?.view ?? null);",
+    "new": "      this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) : this.state.game;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js",
       "test/net/iliac/cards10_relay.test.js",
@@ -472,8 +472,8 @@
   {
     "name": "AC6-C10-deal-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    case 'game': return Number.isInteger(e.gameNo) &&",
-    "new": "    case 'game': return true || Number.isInteger(e.gameNo) &&",
+    "old": "        Number.isInteger(e.gameNo) &&\n        Array.isArray(e.holdings) &&\n        e.holdings.length === ILIAC_HOLDINGS &&\n        e.holdings.every(cardIdOk)",
+    "new": "        true ||\n        (Number.isInteger(e.gameNo) &&\n          Array.isArray(e.holdings) &&\n          e.holdings.length === ILIAC_HOLDINGS &&\n          e.holdings.every(cardIdOk))",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "AC6-C10-end-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "    case 'end': return seatOr(e.winner, null) && typeof e.how === 'string';",
-    "new": "    case 'end': return true;",
+    "old": "      return seatOr(e.winner, null) && typeof e.how === 'string';",
+    "new": "      return true;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "AC6-C10-last-unchecked",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (s.last != null && !(typeof s.last === 'object'",
-    "new": "  if (false && !(typeof s.last === 'object'",
+    "old": "    s.last != null &&",
+    "new": "    false &&",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "AC6-C10-inherited-word",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "(Object.hasOwn(book, k) ? book[k] : null);",
-    "new": "(book[k] ?? null);",
+    "old": "const wordOf = (/** @type {any} */ book, /** @type {string} */ k) => (Object.hasOwn(book, k) ? book[k] : null);",
+    "new": "const wordOf = (/** @type {any} */ book, /** @type {string} */ k) => book[k] ?? null;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -508,7 +508,7 @@
   {
     "name": "AC6-E3-no-latch",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (g.latch && g.latch.gameNo === at.gameNo && g.latch.turn === at.turn) { paint(); return; }",
+    "old": "      if (g.latch && g.latch.gameNo === at.gameNo && g.latch.turn === at.turn) {\n        paint();\n        return;\n      }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -517,8 +517,8 @@
   {
     "name": "AC6-E3-latch-never-set",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "{ g.latch = at; g.log.push(",
-    "new": "{ g.log.push(",
+    "old": "        g.latch = at;\n        g.log.push(",
+    "new": "        g.log.push(",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -526,7 +526,7 @@
   {
     "name": "AC6-E3-latch-never-freed",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    if (f.mine || typeof f.error === 'string') g.latch = null;   // AUDIT CARDS-6 E3: the commit in flight answered",
+    "old": "    if (f.mine || typeof f.error === 'string') g.latch = null; // AUDIT CARDS-6 E3: the commit in flight answered",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -535,8 +535,8 @@
   {
     "name": "AC6-E3-button-pressable",
     "file": "src/ui/iliacTableHud.js",
-    "old": "enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null",
-    "new": "enabled: !committed && stagedRefusal(view, staged) === null",
+    "old": "      enabled: !committed && !online?.committing && stagedRefusal(view, staged) === null,",
+    "new": "      enabled: !committed && stagedRefusal(view, staged) === null,",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -544,7 +544,7 @@
   {
     "name": "AC6-E4-setup-not-frozen",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (g.busy && id !== 'board') { paint(); return; }",
+    "old": "      if (g.busy && id !== 'board') {\n        paint();\n        return;\n      }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -553,7 +553,7 @@
   {
     "name": "AC6-E4-sit-from-anywhere",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (g.closed || !online() || g.phase !== 'setup') return;   // AUDIT CARDS-6 E4: the panel left the room's setup meanwhile - no sit",
+    "old": "      if (g.closed || !online() || g.phase !== 'setup') return; // AUDIT CARDS-6 E4: the panel left the room's setup meanwhile - no sit",
     "new": "      if (g.closed) return;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -562,8 +562,8 @@
   {
     "name": "AC6-E4-regulars-lit-mid-vouch",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "regularsOk: mySeat() < 0 && !g.sat && !g.busy && d.regulars.length > 0",
-    "new": "regularsOk: mySeat() < 0 && !g.sat && d.regulars.length > 0",
+    "old": "      regularsOk: mySeat() < 0 && !g.sat && !g.busy && d.regulars.length > 0, // AUDIT CARDS-6 E4",
+    "new": "      regularsOk: mySeat() < 0 && !g.sat && d.regulars.length > 0, // AUDIT CARDS-6 E4",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "AC6-E5-no-look-on-a-welcome",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "        g.welcomes = w;\n        d.online.send({ op: 'look', table: d.online.table });\n",
-    "new": "        g.welcomes = w;\n",
+    "old": "        d.online.send({ op: 'look', table: d.online.table });\n      }",
+    "new": "      }",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -598,7 +598,7 @@
   {
     "name": "AC6-E5-lost-sit-unsaid",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) { g.sat = false; g.why = 'Your seat did not register. Sit down again.'; }",
+    "old": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) {\n      g.sat = false;\n      g.why = 'Your seat did not register. Sit down again.';\n    }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -607,8 +607,8 @@
   {
     "name": "AC6-E5-any-sit-lost",
     "file": "src/scenes/iliacTableGame.js",
-    "old": " && g.sitWelcome < g.welcomes) { g.sat = false;",
-    "new": ") { g.sat = false;",
+    "old": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) {",
+    "new": "    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0) {",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "AC6-E9-why-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "actions, message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' ')",
-    "new": "actions, message: online?.error ? `${message} (${online.error})` : message",
+    "old": "    message: [online?.error ? `${message} (${online.error})` : message, why].filter(Boolean).join(' '),",
+    "new": "    message: online?.error ? `${message} (${online.error})` : message,",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -625,7 +625,7 @@
   {
     "name": "AC6-E10-deals-for-nobody",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  const next = !online ? '' : online.full ? 'The next game starts in a moment.' : 'Waiting for another player to sit down.';",
+    "old": "  const next = !online\n    ? ''\n    : online.full\n      ? 'The next game starts in a moment.'\n      : 'Waiting for another player to sit down.';",
     "new": "  const next = online ? 'The next game starts in a moment.' : '';",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -645,8 +645,8 @@
   {
     "name": "AC6-E10-setup-says-no-end",
     "file": "src/ui/iliacTableHud.js",
-    "old": ": online ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ')",
-    "new": ": online ? 'Sit down and wait for another player.'",
+    "old": "                  ? [online.lastLine, 'Sit down and wait for another player.'].filter(Boolean).join(' ')",
+    "new": "                  ? 'Sit down and wait for another player.'",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "AC6-E11-ghost-seat",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (d.online && (mySeat() >= 0 || g.sat)) d.online.send(",
-    "new": "      if (d.online && mySeat() >= 0) d.online.send(",
+    "old": "      if (d.online && (mySeat() >= 0 || g.sat))",
+    "new": "      if (d.online && mySeat() >= 0)",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "AC6-E13-client-names-no-game",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "table: d.online.table, gameNo: g.remote.state?.gameNo ?? 0 });",
-    "new": "table: d.online.table });",
+    "old": "      if (d.online && (mySeat() >= 0 || g.sat))\n        d.online.send({ op: 'stand', table: d.online.table, gameNo: g.remote.state?.gameNo ?? 0 });",
+    "new": "      if (d.online && (mySeat() >= 0 || g.sat)) d.online.send({ op: 'stand', table: d.online.table });",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -708,8 +708,8 @@
   {
     "name": "AC6-E13-wire-drops-the-game",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "{ op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }",
-    "new": "{ op: 'stand', table: m.table }",
+    "old": "  if (m.op === 'stand')\n    return m.gameNo === undefined || gameNoOk(m.gameNo)\n      ? { op: 'stand', table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }\n      : null;",
+    "new": "  if (m.op === 'stand') return m.gameNo === undefined || gameNoOk(m.gameNo) ? { op: 'stand', table: m.table } : null;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -717,8 +717,8 @@
   {
     "name": "AC6-E19-seating-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    : online?.seating ? 'Sitting down at the table...'",
-    "new": "    : false ? 'Sitting down at the table...'",
+    "old": "        online?.seating",
+    "new": "        false",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "AC6-E19-full-unsaid",
     "file": "src/ui/iliacTableHud.js",
-    "old": "      : online && !view ? 'Both seats are taken. The game starts in a moment.'",
-    "new": "      : false ? 'Both seats are taken. The game starts in a moment.'",
+    "old": "          : online && !view",
+    "new": "          : false",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
     ]

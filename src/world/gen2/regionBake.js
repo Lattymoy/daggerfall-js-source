@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE BAKE (bible/03-World/World-2-Canon.md, "The bake"): a region made whole, stage by stage in stageGraph.js's
+// WG2 THE BAKE ("The bake"): a region made whole, stage by stage in stageGraph.js's
 // order - canon, geology, climate, erosion, hydrology, soil, biome, resources - each reading only what the stages before
 // it made. Offline: tools/wg2Bake.mjs runs it and the bake ships (WG-4); a client only reads a bake (regionSampler.js).
 import { canonGrid, geology, regionGrid, byteMetres, infillCanon, wetHollows } from './geology.js';

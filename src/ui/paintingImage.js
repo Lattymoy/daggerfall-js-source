@@ -30,7 +30,7 @@ let _deps = null;
 /** { renderer, fetchBytes, palette } - the inventory art preload's own
  *  deps object, registered on the way through. */
 export function setPaintingArtDeps(deps) {
-  _deps = (deps?.renderer && deps?.fetchBytes && deps?.palette) ? deps : null;
+  _deps = deps?.renderer && deps?.fetchBytes && deps?.palette ? deps : null;
 }
 export const paintingArtReady = () => !!_deps;
 
@@ -38,7 +38,11 @@ export const paintingArtReady = () => !!_deps;
  *  is not present at all has never been asked for. */
 const _cache = new Map();
 const _pending = new Set();
-export function _resetPaintingImagesForTests() { _cache.clear(); _pending.clear(); _deps = null; }
+export function _resetPaintingImagesForTests() {
+  _cache.clear();
+  _pending.clear();
+  _deps = null;
+}
 
 const keyOf = (info) => `${info?.filename ?? ''}:${info?.fileIdx ?? 0}`;
 
@@ -60,12 +64,15 @@ export function paintingImage(info) {
       const bmp = cif.getDFBitmap(info.fileIdx, 0);
       _cache.set(key, {
         tex: _deps.renderer.uploadTexture('img', `paint:${key}`, bitmapToColor32(bmp, _deps.palette)),
-        w: bmp.width, h: bmp.height,
+        w: bmp.width,
+        h: bmp.height,
       });
     } catch (e) {
       console.warn(`[painting] ${info.filename} record ${info.fileIdx} unavailable:`, e?.message ?? e);
-      _cache.set(key, null);   // asked and answered - never retried
-    } finally { _pending.delete(key); }
+      _cache.set(key, null); // asked and answered - never retried
+    } finally {
+      _pending.delete(key);
+    }
   })();
   return null;
 }

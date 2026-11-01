@@ -46,8 +46,8 @@
   {
     "name": "LOOT-SCROLL-e-the-take-bounded-by-the-window",
     "file": "src/systems/quickLoot.js",
-    "old": "  return hoverItemAt(items, _sel.row, Infinity);",
-    "new": "  return hoverItemAt(items, _sel.row);",
+    "old": "  return hoverItemAt(items, _sel.row, Infinity); // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX",
+    "new": "  return hoverItemAt(items, _sel.row); // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX",
     "tests": [
       "test/systems/fb1011g_lootscroll.test.js",
       "test/systems/worldhover.test.js",

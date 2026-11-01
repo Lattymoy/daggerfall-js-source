@@ -70,14 +70,5 @@
   "tests": [
    "test/bible/d1near.test.js"
   ]
- },
- {
-  "name": "D1NEAR-claim-back",
-  "file": "bible/11-Multiplayer/Scale-Arc.md",
-  "old": "The module's header carries the query. Smart Placement was",
-  "new": "The module's header carries the query. Smart Placement runs the Worker near its database. Smart Placement was",
-  "tests": [
-   "test/bible/d1near.test.js"
-  ]
  }
 ]

@@ -41,21 +41,21 @@
 
 import { MAP_SHEETS, sheetsFor, openOn } from '../../systems/map/mapTabs.js';
 import { PEN, HALO_PEN, NAME_FACE } from '../ink/inkMap.js';
-import { t } from '../../systems/textManager.js';   // AUDIT TAMRIEL-WIDE D3: the tabs in the player's language
+import { t } from '../../systems/textManager.js'; // AUDIT TAMRIEL-WIDE D3: the tabs in the player's language
 
 /** The strip's geometry, in paper pixels at `refPaper` wide, scaled
  *  from there so the tabs keep their size against the sheet rather than
  *  against the screen. */
 export const STRIP = Object.freeze({
-  refPaper: 520,   // the paper width these numbers were chosen at
+  refPaper: 520, // the paper width these numbers were chosen at
   scaleMin: 0.72,
-  scaleMax: 1.45,  // PLUS-MAP (Mac: "the word dungeon seems small"): the sheet's name reads as its title
-  font: 19,        // the hand face's size
-  padX: 12,        // from the paper's left edge
-  padY: 8,         // from the paper's top edge
-  gap: 20,         // between one tab's ink and the next
-  grab: 6,         // how far past the ink a pointer still hits a tab
-  rule: 1.4,       // the live tab's underline
+  scaleMax: 1.45, // PLUS-MAP (Mac: "the word dungeon seems small"): the sheet's name reads as its title
+  font: 19, // the hand face's size
+  padX: 12, // from the paper's left edge
+  padY: 8, // from the paper's top edge
+  gap: 20, // between one tab's ink and the next
+  grab: 6, // how far past the ink a pointer still hits a tab
+  rule: 1.4, // the live tab's underline
 });
 
 /** What each sheet is CALLED on the strip. A table rather than a field
@@ -65,7 +65,8 @@ export const STRIP = Object.freeze({
  *  TAMRIEL-WIDE D3: the world sheet is Tamriel's where it shows the
  *  continent (`continent`), the Bay's where it stops at the Bay's edge. */
 export function sheetTitle(sheet, context, continent = false) {
-  if (sheet === 'automap') return context === 'building' ? t('map.sheet.interior', 'Interior') : t('map.sheet.dungeon', 'Dungeon');
+  if (sheet === 'automap')
+    return context === 'building' ? t('map.sheet.interior', 'Interior') : t('map.sheet.dungeon', 'Dungeon');
   if (sheet === 'town') return t('map.sheet.town', 'Town');
   return continent ? t('map.sheet.tamriel', 'Tamriel') : t('map.sheet.bay', 'The Bay');
 }
@@ -143,7 +144,8 @@ export function stripLayout(slot, { paperW = STRIP.refPaper, measure = null, con
  * @returns {number} the index of the box hit, or -1
  */
 export function grabHit(boxes, px, py, g) {
-  let best = -1, bestD = Infinity;
+  let best = -1,
+    bestD = Infinity;
   for (let i = 0; i < (boxes?.length ?? 0); i++) {
     const b = boxes[i];
     if (px < b.x - g || px > b.x + b.w + g || py < b.y - g || py > b.y + b.h + g) continue;
@@ -152,7 +154,10 @@ export function grabHit(boxes, px, py, g) {
     const dx = Math.max(b.x - px, 0, px - (b.x + b.w));
     const dy = Math.max(b.y - py, 0, py - (b.y + b.h));
     const d = dx * dx + dy * dy;
-    if (d < bestD) { bestD = d; best = i; }
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
   }
   return best;
 }
@@ -230,15 +235,23 @@ export function createSheetSlot({ context = 'wilderness', wanted = null, has = n
   return {
     context,
     /** The sheets this place offers, in strip order. */
-    get ids() { return ids; },
-    get live() { return live; },
+    get ids() {
+      return ids;
+    },
+    get live() {
+      return live;
+    },
     /** Is more than one sheet reachable from here? The strip is drawn
      *  either way (it names the sheet); this is what says whether the
      *  toggle KEY does anything. */
-    get toggles() { return ids.length > 1; },
+    get toggles() {
+      return ids.length > 1;
+    },
     /** Nothing this place offers can be inked by this window. The host
      *  asks BEFORE it opens the map: a blank sheet is a bug report. */
-    get empty() { return ids.length === 0; },
+    get empty() {
+      return ids.length === 0;
+    },
 
     /**
      * Put a sheet up. Refused - and the live sheet left alone - where
@@ -270,9 +283,15 @@ export function createSheetSlot({ context = 'wilderness', wanted = null, has = n
     /** What this sheet was last looking at, or null for "at rest" - the
      *  window's own first-layout answer, which is the whole plan fitted
      *  to the paper. */
-    viewOf(sheet) { return views.get(sheet) ?? null; },
-    remember(sheet, view) { if (view) views.set(sheet, { ...view }); },
-    forget(sheet) { views.delete(sheet); },
+    viewOf(sheet) {
+      return views.get(sheet) ?? null;
+    },
+    remember(sheet, view) {
+      if (view) views.set(sheet, { ...view });
+    },
+    forget(sheet) {
+      views.delete(sheet);
+    },
   };
 }
 
@@ -305,21 +324,21 @@ export { MAP_SHEETS };
 // back on a tab switch, so the window itself never learns which sheet
 // wants what.
 export const SHEET_MEMBERS = Object.freeze([
-  'id',            // one of MAP_SHEETS
-  'size',          // () => {width, height} - the sheet's own coordinate space
-  'ensure',        // () => model|null - build/refresh; null inks nothing
-  'staticKey',     // () => string - what makes the kept ink layer stale
-  'paintStatic',   // (ctx, env) => void - the ink that only the view moves
-  'paintOverlay',  // (ctx, env) => void - what breathes, per frame
-  'pickAt',        // (px, py) => void - a click on the paper
-  'hoverLabel',    // (px, py) => {label, cursor}|null - the WINDOW writes it
-  'mark',          // (px, py) => void - the middle button
-  'key',           // (code, e) => boolean - the sheet's own keys; true when it took the press
-  'tick',          // (dt) => void - the sheet's own clock
-  'mount',         // () => void - claim the shared chrome
-  'unmount',       // () => void - give it back
-  'homeView',      // (limits) => view|null - where this sheet rests; null = fit
-  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)
+  'id', // one of MAP_SHEETS
+  'size', // () => {width, height} - the sheet's own coordinate space
+  'ensure', // () => model|null - build/refresh; null inks nothing
+  'staticKey', // () => string - what makes the kept ink layer stale
+  'paintStatic', // (ctx, env) => void - the ink that only the view moves
+  'paintOverlay', // (ctx, env) => void - what breathes, per frame
+  'pickAt', // (px, py) => void - a click on the paper
+  'hoverLabel', // (px, py) => {label, cursor}|null - the WINDOW writes it
+  'mark', // (px, py) => void - the middle button
+  'key', // (code, e) => boolean - the sheet's own keys; true when it took the press
+  'tick', // (dt) => void - the sheet's own clock
+  'mount', // () => void - claim the shared chrome
+  'unmount', // () => void - give it back
+  'homeView', // (limits) => view|null - where this sheet rests; null = fit
+  'context', // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)
 ]);
 
 /** Does this object answer the whole contract? Used by the window's own

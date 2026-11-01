@@ -1,14 +1,119 @@
 [
-  {"name": "FOE-KEEPS-share-half", "file": "src/systems/wild/wildDropLaw.js", "old": "export const WILD_GOLD_DIVISOR = 10;", "new": "export const WILD_GOLD_DIVISOR = 2;", "tests": ["test/systems/wild/foekeeps.test.js", "test/net/int9_wild_ref.test.js"]},
-  {"name": "FOE-KEEPS-loss-half", "file": "src/systems/wild/wildDropLaw.js", "old": "export const WILD_GOLD_LOSS = 1 / WILD_GOLD_DIVISOR;", "new": "export const WILD_GOLD_LOSS = 0.5;", "note": "Re-aimed by content (AUDIT FOE-KEEPS P3): the fraction read off the divisor", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-spellbook-loseable", "file": "src/systems/wild/wildDropLaw.js", "old": " || item.templateIndex === TEMPLATES.Spellbook) return false;", "new": ") return false;", "equivalent": true, "why": "belt-and-braces: the spellbook's template stands in net/decorLaw.js DECOR_OWN_KEPT_BACK too, which the same line reads - the zone's own word for it kept beside the decor law's", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-service-foe-taken", "file": "server-account/src/wild.js", "old": "  if (body?.receipt === undefined) return { error: 'foe' };\n", "new": "", "tests": ["test/net/int9_wild_ref.test.js", "test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-service-refused-before-the-fall-taken", "file": "server-account/src/wild.js", "old": "  r ??= await foeFallId(ctx.subtle, charId, body.n);\n", "new": "  if (body?.receipt === undefined) return { error: 'foe' };\n  r ??= await foeFallId(ctx.subtle, charId, body.n);\n", "tests": ["test/net/int9_wild_ref.test.js"]},
-  {"name": "FOE-KEEPS-host-foe-drop-asked", "file": "src/scenes/world.js", "old": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n    return true;", "new": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n    if (!fell) wildTakeDrop(null, online.room);\n    return true;", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-host-tenth-skipped-at-any-zone-death", "file": "src/scenes/world.js", "old": "    const goldLost = wildKilled || madeRuleHere('deathPenalty') === 'none'", "new": "    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none'", "tests": ["test/systems/wild/foekeeps.test.js", "test/systems/deathpenalty.test.js"]},
-  {"name": "FOE-KEEPS-host-drop-without-receipt", "file": "src/scenes/wildDropHost.js", "old": "    if (!key || !realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;", "new": "    if (!realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-kept-unsaid", "file": "src/systems/wild/wildZone.js", "old": "WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept();", "new": "WILD_TEXT.deathPvp(d.killer)) : '';", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-kept-said-at-a-kill", "file": "src/systems/wild/wildZone.js", "old": "  return [head, WILD_TEXT.deathDrop(d.dropped),", "new": "  return [WILD_TEXT.deathKept(), head, WILD_TEXT.deathDrop(d.dropped),", "note": "Re-aimed by content (AUDIT FOE-KEEPS H1): a kill is its name or the referee's word", "tests": ["test/systems/wild/foekeeps.test.js"]},
-  {"name": "FOE-KEEPS-mountains-enter-any-death", "file": "src/systems/wild/wildZone.js", "old": "an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },", "new": "an open PvP zone. Foes here are four times as strong, and you can lose what you carry.', { zone: WILD_NAME }); },", "tests": ["test/systems/wild/foekeeps.test.js"], "note": "Re-aimed by content (PVP-WORDS): a player's kill takes one roll"},
-  {"name": "FOE-KEEPS-sea-chip-any-death", "file": "src/systems/wild/etherWild.js", "old": "twice in the Abyss). A player\\'s kill may cost uninsured gear or gold.'", "new": "twice in the Abyss). If you die, you lose uninsured gear or gold.'", "tests": ["test/systems/wild/foekeeps.test.js"], "note": "Re-aimed by content (PVP-WORDS): a player's kill takes one roll"}
+  {
+    "name": "FOE-KEEPS-share-half",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "export const WILD_GOLD_DIVISOR = 10;",
+    "new": "export const WILD_GOLD_DIVISOR = 2;",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-loss-half",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "export const WILD_GOLD_LOSS = 1 / WILD_GOLD_DIVISOR;",
+    "new": "export const WILD_GOLD_LOSS = 0.5;",
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS P3): the fraction read off the divisor",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-spellbook-loseable",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  if (\n    WILD_NEVER_GROUPS.has(item.group) ||\n    DECOR_OWN_KEPT_BACK.has(item.templateIndex) ||\n    item.templateIndex === TEMPLATES.Spellbook\n  )\n    return false;",
+    "new": "  if (WILD_NEVER_GROUPS.has(item.group) || DECOR_OWN_KEPT_BACK.has(item.templateIndex)) return false;",
+    "equivalent": true,
+    "why": "belt-and-braces: the spellbook's template stands in net/decorLaw.js DECOR_OWN_KEPT_BACK too, which the same line reads - the zone's own word for it kept beside the decor law's",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-service-foe-taken",
+    "file": "server-account/src/wild.js",
+    "old": "  if (body?.receipt === undefined) return { error: 'foe' };\n  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched. AUDIT",
+    "new": "  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched. AUDIT",
+    "tests": [
+      "test/net/int9_wild_ref.test.js",
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-service-refused-before-the-fall-taken",
+    "file": "server-account/src/wild.js",
+    "old": "  r ??= await foeFallId(ctx.subtle, charId, body.n);",
+    "new": "  if (body?.receipt === undefined) return { error: 'foe' };\n  r ??= await foeFallId(ctx.subtle, charId, body.n);",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-host-foe-drop-asked",
+    "file": "src/scenes/world.js",
+    "old": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n    return true;",
+    "new": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n    if (!fell) wildTakeDrop(null, online.room);\n    return true;",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-host-tenth-skipped-at-any-zone-death",
+    "file": "src/scenes/world.js",
+    "old": "    const goldLost = wildKilled || madeRuleHere('deathPenalty') === 'none'",
+    "new": "    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none'",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js",
+      "test/systems/deathpenalty.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-host-drop-without-receipt",
+    "file": "src/scenes/wildDropHost.js",
+    "old": "    if (!key || !realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;",
+    "new": "    if (!realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-kept-unsaid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "      : WILD_TEXT.deathKept();",
+    "new": "      : '';",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-kept-said-at-a-kill",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "    head,",
+    "new": "    WILD_TEXT.deathKept(),\n    head,",
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS H1): a kill is its name or the referee's word",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ]
+  },
+  {
+    "name": "FOE-KEEPS-mountains-enter-any-death",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "      'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.',",
+    "new": "      'You enter {zone}, an open PvP zone. Foes here are four times as strong, and you can lose what you carry.',",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ],
+    "note": "Re-aimed by content (PVP-WORDS): a player's kill takes one roll"
+  },
+  {
+    "name": "FOE-KEEPS-sea-chip-any-death",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "      \"The {word} Ocean past Veilhaven's peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). A player's kill may cost uninsured gear or gold.\",",
+    "new": "      \"The {word} Ocean past Veilhaven's peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). If you die, you lose uninsured gear or gold.\",",
+    "tests": [
+      "test/systems/wild/foekeeps.test.js"
+    ],
+    "note": "Re-aimed by content (PVP-WORDS): a player's kill takes one roll"
+  }
 ]

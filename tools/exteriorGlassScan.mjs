@@ -19,7 +19,15 @@ import { exteriorWindowMask, exteriorGlassIndices } from '../src/world/exteriorG
 const CLIMBING = [9, 10, 12, 13, 14, 15, 26, 27, 35, 36, 38, 39, 42, 43, 58, 59, 61, 62, 64, 65];
 const FIXED = [75, 76, 77, 79, 80, 82, 83];
 /** DFU's named exceptions (ClimateSwaps.IsExteriorWindow's first arm). */
-const NAMED = [[36, 2], [151, 3], [154, 3], [351, 3], [171, 2], [172, 3], [173, 3]];
+const NAMED = [
+  [36, 2],
+  [151, 3],
+  [154, 3],
+  [351, 3],
+  [171, 2],
+  [172, 3],
+  [173, 3],
+];
 
 /** The archives a building's window can be read from. */
 export function windowArchives() {
@@ -67,6 +75,9 @@ if (isMain(import.meta.url)) {
     process.exit(2);
   }
   const rows = scanWindows(dir);
-  for (const r of rows) console.log(`TEXTURE.${String(r.archive).padStart(3, '0')} #${r.record}  0xff ${String(r.ff).padStart(5)}  glass ${String(r.glass).padStart(5)}${r.named ? '  (its own colour)' : ''}${r.glass ? '' : '  NONE'}`);
+  for (const r of rows)
+    console.log(
+      `TEXTURE.${String(r.archive).padStart(3, '0')} #${r.record}  0xff ${String(r.ff).padStart(5)}  glass ${String(r.glass).padStart(5)}${r.named ? '  (its own colour)' : ''}${r.glass ? '' : '  NONE'}`,
+    );
   console.log(`${rows.filter((r) => r.glass).length} of ${rows.length} window record(s) have glass`);
 }

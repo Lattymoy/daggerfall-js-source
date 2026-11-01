@@ -22,7 +22,7 @@
   {
     "name": "REGARD-OWN-rebase-dropped",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "  const rel = createRelations(skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, regardDayOf(sky())) } : record);",
+    "old": "  const rel = createRelations(\n    skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, regardDayOf(sky())) } : record,\n  );",
     "new": "  const rel = createRelations(record);",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "REGARD-OWN-every-save-rebased",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "record.clock !== REGARD_CLOCK",
-    "new": "true",
+    "old": "  record.clock !== REGARD_CLOCK &&",
+    "new": "  true &&",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "FRIEND-WORD-court-never",
     "file": "src/systems/livingWorld/friendWord.js",
-    "old": "  return court ? t(",
-    "new": "  return false ? t(",
+    "old": "  return court",
+    "new": "  return false",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "REGARD-OWN-offline-rebased",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "  && (online || Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));",
-    "new": "  && (online || true);",
+    "old": "  (online ||\n    Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));",
+    "new": "  (online || true);",
     "why": "offline the one clock's days rebased - a quarrel's ease forgotten",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "REGARD-OWN-offline-copy-unrebased",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "  && (online || Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));",
-    "new": "  && online;",
+    "old": "  (online ||\n    Object.values(record.people).some((e) => Number(e?.seen) > day || Number(e?.met) > day || Number(e?.talked) > day));",
+    "new": "  online;",
     "why": "AUDIT FB1021d RO-5: an online save copied offline keeps sky stamps ahead of today, every regard frozen",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "REGARD-OWN-grudge-restored-whole",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "  const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
-    "new": "  const eased = r;",
+    "old": "      const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
+    "new": "      const eased = r;",
     "why": "AUDIT FB1021d RO-3: a slain one's kin, eased to an enemy on the old sky, back hostile the day the update lands",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "REGARD-OWN-friendship-eased",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "  const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
-    "new": "  const eased = Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
+    "old": "      const eased = r < 0 && Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
+    "new": "      const eased = Number.isFinite(seen) ? Math.min(0, r + Math.max(0, skyDay - seen) * EASE_PER_DAY) : r;",
     "why": "the reported loss kept: a friendship eased by the sky's days",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "REGARD-OWN-rebase-sky-unread",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": "rebased(record.people, day, regardDayOf(sky()))",
-    "new": "rebased(record.people, day, day)",
+    "old": "    skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, regardDayOf(sky())) } : record,",
+    "new": "    skyStampedIs(record, day, online) ? { ...record, people: rebased(record.people, day, day) } : record,",
     "why": "AUDIT FB1021d RO-3: the grudge eased by the own day, behind every sky stamp - never eased",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -183,7 +183,7 @@
     "name": "FRIEND-WORD-deeds-uncounted",
     "file": "src/systems/livingWorld/regardClock.js",
     "old": "      if (!was && isFriend(id) && !made.includes(id) && made.length < FRIENDS_SAID_MAX) made.push(id);",
-    "new": "      if ((kind === 'talk' || kind === 'polite') && !was && isFriend(id) && !made.includes(id) && made.length < FRIENDS_SAID_MAX) made.push(id);",
+    "new": "      if (\n        (kind === 'talk' || kind === 'polite') &&\n        !was &&\n        isFriend(id) &&\n        !made.includes(id) &&\n        made.length < FRIENDS_SAID_MAX\n      )\n        made.push(id);",
     "why": "AUDIT FB1021d RO-4: a friend made by a deed never said",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -193,7 +193,7 @@
     "name": "FRIEND-WORD-inherit-counted",
     "file": "src/systems/livingWorld/regardClock.js",
     "old": "    inherit: (id, amount, _day) => rel.inherit(id, amount, today()),",
-    "new": "    inherit: (id, amount, _day) => { const r = rel.inherit(id, amount, today()); if (isFriend(id)) made.push(id); return r; },",
+    "new": "    inherit: (id, amount, _day) => {\n      const r = rel.inherit(id, amount, today());\n      if (isFriend(id)) made.push(id);\n      return r;\n    },",
     "why": "a family's friends said as made at a birth",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "FRIEND-WORD-crowd-uncapped",
     "file": "src/systems/livingWorld/regardClock.js",
-    "old": " && made.length < FRIENDS_SAID_MAX) made.push(id);",
-    "new": ") made.push(id);",
+    "old": "      if (!was && isFriend(id) && !made.includes(id) && made.length < FRIENDS_SAID_MAX) made.push(id);",
+    "new": "      if (!was && isFriend(id) && !made.includes(id)) made.push(id);",
     "why": "one deed's crowd said whole",
     "tests": [
       "test/systems/livingWorld/fb1021d_regardown.test.js"

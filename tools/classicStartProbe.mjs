@@ -25,7 +25,10 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 
 let fails = 0;
-const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) fails++; };
+const check = (ok, label) => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`);
+  if (!ok) fails++;
+};
 
 // ?world+?shot reaches the world host WITH the probe surface; ?classic is
 // the new start path; ?class=1 is the headless chargen skip.
@@ -41,7 +44,10 @@ while (Date.now() < until) {
 check(mode === 'dungeon', `the classic start begins INSIDE the dungeon (mode: ${mode})`);
 
 const dungeon = await page.evaluate(() => (window.__dungeon ? JSON.parse(window.__dungeon()) : null));
-check(!!dungeon && dungeon.exits.length > 0, `the start location's dungeon has ${dungeon?.exits?.length ?? 0} exit door(s)`);
+check(
+  !!dungeon && dungeon.exits.length > 0,
+  `the start location's dungeon has ${dungeon?.exits?.length ?? 0} exit door(s)`,
+);
 
 if (dungeon?.exits?.length) {
   // Stand where a player who walked to the door would stand: on the
@@ -70,9 +76,18 @@ if (dungeon?.exits?.length) {
   // first), then read the player against the terrain under the feet.
   await page.waitForTimeout(4000);
   const st = JSON.parse(await page.evaluate(() => window.__standing()));
-  check(st.spawned === true, `the player has SPAWNED (the boot gate fired, or the dungeon start counted) - ${JSON.stringify(st)}`);
-  check(st.built === true && Number.isFinite(st.ground), `the pixel under the player is BUILT with terrain under the feet - ${JSON.stringify(st)}`);
-  check(Number.isFinite(st.ground) && st.y >= st.ground - 1 && st.y <= st.ground + 6, `the player stands ON that terrain, not ${st.y - st.ground} above it - ${JSON.stringify(st)}`);
+  check(
+    st.spawned === true,
+    `the player has SPAWNED (the boot gate fired, or the dungeon start counted) - ${JSON.stringify(st)}`,
+  );
+  check(
+    st.built === true && Number.isFinite(st.ground),
+    `the pixel under the player is BUILT with terrain under the feet - ${JSON.stringify(st)}`,
+  );
+  check(
+    Number.isFinite(st.ground) && st.y >= st.ground - 1 && st.y <= st.ground + 6,
+    `the player stands ON that terrain, not ${st.y - st.ground} above it - ${JSON.stringify(st)}`,
+  );
 }
 
 const real = errors.filter((e) => !/CURSOR\.IMG|Failed to load resource/.test(e));

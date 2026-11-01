@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE SEAM (bible/03-World/World-2-Canon.md, "The seam"; WG-6): the published regions' ground, asked by the
+// WG2 THE SEAM ("The seam"; WG-6): the published regions' ground, asked by the
 // world's own readers before their own law - tamrielGround.js's byte and climate, landforms.js's shaper, terrainGen.js's
 // water paint. Every thread installs the same bakes (the 'tamriel' message carries them to the workers), so a pixel
 // built anywhere is one ground. With none installed every answer is undefined and the world is as it was.

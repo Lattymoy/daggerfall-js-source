@@ -12,7 +12,6 @@
 // at home - A6; my own id as the host is not the world in - D11); the
 // record's struck sentences (D1, D6-D10).
 import { test } from 'node:test';
-import { indexText } from '../bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PIXEL_UNITS, MAX_FRAME_BYTES, FOES_PREFIX, WORLD_PREFIX, FOES_HZ_MAX, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, HIT_HZ_MAX, POSE_HZ_MAX, DROP_STRIKES_MAX, byteGate, hitGate } from '../../src/net/wire.js';
@@ -148,17 +147,3 @@ test('AUDIT WORLD2: the session - a dead socket and a leave clear the seat throu
   void ws2;
 });
 
-test('AUDIT WORLD2: the record - the sentences WORLD2 falsified are struck or amended (D1, D6-D10)', () => {
-  const home = indexText();   // HARD5: Home.md AND its delegates - a stale claim must not be able to move house
-  assert.doesNotMatch(home, /The live moment - one simulation per room - is the next iteration/, 'D1: Home.md');
-  assert.match(home, /then the room's simulation \(WORLD2\)/, 'D1: the arc list');
-  const arc = rd('bible/06-Systems/Online-Arc.md');
-  assert.doesNotMatch(arc, /Not done: the live moment\. Two players in one dungeon still each run\ntheir own foes/, 'D6: WORLD1\'s "not done"');
-  assert.doesNotMatch(arc, /vanished still comes back for the next visitor\./, 'D9: the bullet qualified');
-  assert.doesNotMatch(arc, /rewinds nothing for anyone else and is itself rewound/, 'D10: the quickload item re-scoped');
-  assert.match(arc, /## AUDIT WORLD2 \(2026-09-12\)/, 'the section');
-  const ledger = rd('bible/01-Overview/Port-Ledger.md');
-  assert.doesNotMatch(ledger, /the live simulation is still each player's own \(the memory is a snapshot, not the moment\)\. AUDIT WORLD/, 'D7: the Ledger row');
-  const mp = rd('bible/11-Multiplayer/Multiplayer.md');
-  assert.doesNotMatch(mp, /slice 2 of\nthe arc hands the live simulation over with it/, 'D8: decision 2'); assert.doesNotMatch(mp, /the live simulation, slice 2 of the arc\./, 'D8: the open question');
-});

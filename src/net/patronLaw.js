@@ -25,13 +25,17 @@
 // Pure: no clock, no network, no DOM.
 // ═══════════════════════════════════════════════════════════════════
 
-import { foundSalePercentage } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L1-4: the condition a counter's sale reads
-import { conditionCostBase } from '../systems/roleplayRealismItems/rriRealism.js';   // AUDIT MEND-THIRD L1-4: and the mod's price for it
+import { foundSalePercentage } from '../systems/item/foundMark.js'; // AUDIT MEND-THIRD L1-4: the condition a counter's sale reads
+import { conditionCostBase } from '../systems/roleplayRealismItems/rriRealism.js'; // AUDIT MEND-THIRD L1-4: and the mod's price for it
 
 /** A patron pays at most this share of a piece's worth. */
 export const PATRON_PAY_SHARE = 0.6;
 /** The hour's chance by the price over the cap (r): at or under each bound, its odds. */
-export const PATRON_ODDS = Object.freeze([Object.freeze([0.5, 0.25]), Object.freeze([0.75, 0.12]), Object.freeze([1, 0.05])]);
+export const PATRON_ODDS = Object.freeze([
+  Object.freeze([0.5, 0.25]),
+  Object.freeze([0.75, 0.12]),
+  Object.freeze([1, 0.05]),
+]);
 /** A town's traders sell at most this many pieces an hour to its patrons. */
 export const PATRON_TOWN_HOUR = 4;
 /** A seller sells at most this many pieces an hour to patrons, and this much gold a real day. */
@@ -50,8 +54,15 @@ export const patronMark = (map, seed) => `patron:${map >>> 0}:${seed >>> 0}`;
 /** FNV-1a over a short string, the two ends' one hash. @param {string} s */
 function fnv(s) {
   let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
   return h >>> 0;
 }
 /** The hour's draw for a listing, in [0, 1) - with the service's SECRET (`salt`, market.js patronSalt). AUDIT LW-II P10:
@@ -95,8 +106,14 @@ export const COUNTER_VALUE_MARK = 'counterValue';
  *  piece only to be rid of it (landSold) - a hired trader was the fence they are not, paying three fifths of the piece's
  *  worth in the service's gold for a shut shop's shelf emptied by night. A player may still buy it from the trader; the
  *  mark rides to them. @param {any} item */
-export const patronTakes = (item) => !!item && typeof item === 'object' && !item.questItem && !item.livingKeepsake && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE
-  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;
+export const patronTakes = (item) =>
+  !!item &&
+  typeof item === 'object' &&
+  !item.questItem &&
+  !item.livingKeepsake &&
+  item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE &&
+  item[PATRON_COUNTER_MARK] !== true &&
+  item.stolen !== true;
 
 /** AUDIT LW-II-2 S1: a record's own price - its `value` times its stack (tradeModes.js buyItemPrice's), 0 for no honest
  *  number. @param {any} item */
@@ -164,7 +181,7 @@ export function patronCands(listings, hour, salt = '') {
   for (const l of listings) {
     if (l.takes === false || !(l.price >= 1)) continue;
     const draw = patronDraw(l.id, hour, salt);
-    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue;   // over the cap (or no cap at all) the odds are none
+    if (draw >= patronOdds(l.price / patronCap(l.worth))) continue; // over the cap (or no cap at all) the odds are none
     cands.push({ l, draw });
   }
   cands.sort((a, b) => a.draw - b.draw || (a.l.id < b.l.id ? -1 : 1));
@@ -180,15 +197,27 @@ export function patronCands(listings, hour, salt = '') {
  * @param {{ id: string, seller: string, price: number, worth: number, takes?: boolean }[]} listings @param {number} hour
  * @param {{ sold?: number, sellerHour?: Map<string, number>, sellerDay?: Map<string, number>, salt?: string }} [o]
  */
-export function patronHour(listings, hour, { sold = 0, sellerHour = new Map(), sellerDay = new Map(), salt = '' } = {}) {
+export function patronHour(
+  listings,
+  hour,
+  { sold = 0, sellerHour = new Map(), sellerDay = new Map(), salt = '' } = {},
+) {
   const out = [];
-  const hourN = new Map(sellerHour), dayG = new Map(sellerDay);
+  const hourN = new Map(sellerHour),
+    dayG = new Map(sellerDay);
   let n = sold;
   for (const { l } of patronCands(listings, hour, salt)) {
     if (n >= PATRON_TOWN_HOUR) break;
     if ((hourN.get(l.seller) ?? 0) >= PATRON_SELLER_HOUR) continue;
     if ((dayG.get(l.seller) ?? 0) + l.price > PATRON_SELLER_DAY_GOLD) continue;
-    out.push({ id: l.id, seller: l.seller, price: l.price, hour, minute: patronMinute(l.id, hour), seed: patronSeed(l.id, hour) });
+    out.push({
+      id: l.id,
+      seller: l.seller,
+      price: l.price,
+      hour,
+      minute: patronMinute(l.id, hour),
+      seed: patronSeed(l.id, hour),
+    });
     hourN.set(l.seller, (hourN.get(l.seller) ?? 0) + 1);
     dayG.set(l.seller, (dayG.get(l.seller) ?? 0) + l.price);
     n++;

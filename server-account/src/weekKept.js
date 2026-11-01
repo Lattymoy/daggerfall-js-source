@@ -15,7 +15,7 @@ import { DB_ROOT } from './service.js';
 
 /** @type {WeakMap<object, Map<string, number>>} */
 let kept = new WeakMap();
-const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
+const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);
 
 /** Whether this isolate has read `name`'s Turnings settled for `week` (the week it is now, as its settler reckons it). */
 export function weekSettled(/** @type {any} */ db, /** @type {string} */ name, /** @type {number} */ week) {
@@ -31,4 +31,6 @@ export function keepWeekSettled(/** @type {any} */ db, /** @type {string} */ nam
   m.set(name, week);
 }
 /** A stood service is a fresh isolate, and a pin that rewrites a week's rows by hand asks as one: nothing kept. */
-export function _resetWeeksKept() { kept = new WeakMap(); }
+export function _resetWeeksKept() {
+  kept = new WeakMap();
+}

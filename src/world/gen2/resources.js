@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 RESOURCES (bible/03-World/World-2-Canon.md, "Resources"): the land's goods read off its environment - ore where
+// WG2 RESOURCES ("Resources"): the land's goods read off its environment - ore where
 // a terrane's rock carries it, at the outcrop; timber where the forest stands thick; fish in the larger rivers and the
 // lakes; farmland where the soil is deep, wet and level; game where the woods meet open ground; salt on a dry lake's
 // floor. Each site's id is its world pixel's key, its kind and its good, so it is the same site in every session. The

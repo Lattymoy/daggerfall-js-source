@@ -1,14 +1,14 @@
-// WATER-LEVEL (bible/07-Rendering/Water-Arc.md WATER-LEVEL): THE WATER'S LEVEL, PHOTOGRAPHED IN THE REAL GAME - THE
+// THE WATER'S LEVEL, PHOTOGRAPHED IN THE REAL GAME - THE
 // REVERT's lesson ("a look change wants a shot from the real game before it lands, not a probe number"). Boots the
 // streaming world headless on SwiftShader with the player's ARENA2 (tools/waterLookProbe.mjs's way), Basic Roads' rivers
 // on, and photographs the water each body law draws: Daggerfall's moat and the Bay river beside it, Sentinel's palace
 // pool and harbour, a river and a lake of Cyrodiil, and a lake of World 2.0's hammerfell-test. Each scene finds its own
 // water in the built pixels, so the same run shoots the same places before and after a change.
 //
-//   ARENA2_PATH=... node tools/waterLevelProbe.mjs /tmp/waterlevel/before [scene ...]
+//  ARENA2_PATH=... node tools/waterLevelProbe.mjs /tmp/waterlevel/before [scene ...]
 //
 // Scenes: daggerfall, sentinel, harbour, cyrodiil, cyrodiillake, wg2 (all by default); each body's shore also close and
-// low (WATER-SHORE). Renders of game data are game data (Port-Doctrine):
+// low. Renders of game data are game data (Port-Doctrine):
 // write them outside the tree. Fails on a page error or a shader that would not build.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -47,7 +47,7 @@ const HELPERS = `(() => {
     /** the tile of a body nearest a point, raised to the ground there */
     nearest(body, x, z) { return body.tiles.reduce((a, t) => (Math.hypot(t.x - x, t.z - z) < Math.hypot(a.x - x, a.z - z) ? t : a)); },
     here() { const r = window.__renderer; return r?.camera?.pos ?? null; },
-    /** WATER-SHORE: a close, low look at a shore - the body's edge tile nearest its middle (a neighbour not water, inside
+    /** A close, low look at a shore - the body's edge tile nearest its middle (a neighbour not water, inside
      *  the body's own box, so never a pixel's seam), from over the water \`d\` back and \`h\` up; \`y\` the water's height */
     low(body, d, h, y) {
       const ij = body.tiles.map((t) => [Math.round(t.x / 6.4), Math.round(t.z / 6.4)]), at = new Set(ij.map((p) => p[0] + ',' + p[1]));

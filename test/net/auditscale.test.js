@@ -244,7 +244,7 @@ test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute a
   // its page short (safetyClock.js safetySweep) - twenty-eight. PIN MOVED (AUDIT SAFE DOC-1, DOC-12): and a resolved
   // case's lines, notes and reviewer's reason swept apart - the case marked first, its card redrawn without them - thirty
   // PIN MOVED (INT17, Integrity-Arc section 7): the progression claims' hours swept past the wealth's keeping - thirty-one
-  // PIN MOVED (STAFF-PANEL1, mob 2026-10-22 12:12Z: "only keep for one month"): the staff audit log's rows past its month
+  // PIN MOVED (STAFF-PANEL1): the staff audit log's rows past its month
   // swept - one statement, its page short (cron.js staff-audit) - thirty-five
   // PIN MOVED (CRAFT-WRITS, Professions-Arc.md section 49): an unfilled crafting writ swept the day after its own - one
   // statement, its page short - thirty-six with STAFF-PANEL1's (renumbered at the merge), and the sea's five (AUDIT SEA VENTURES B5) - forty-one
@@ -256,8 +256,8 @@ test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute a
   // days (two) - each page short: fifty
   // PIN MOVED (STAFF-EVENT): a staff event past its 30 days (one, its page short): fifty-one
   // PIN MOVED (CREW-SIGNED, SEA-OPEN): a crew hall's signing past its day (one, its page short; cron.js crew-signs): fifty-two
-  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['craft-writs', 1], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['sea', 5], ['crew-signs', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 6], ['staff-audit', 1], ['staff-evidence', 1], ['census-day', 0], ['census-backfill', 0], ['staff-messages', 1], ['staff-events', 1], ['staff-feeds', 4], ['reactions', 1], ['staff-chat', 2]]);
-  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 52);   // PIN MOVED (CREW-SIGNED: the crew hall's day swept)   // PIN MOVED (STAFF-EVENT: the staff events sweep)   // PIN MOVED (STAFF-PANEL5: Message on screen, the feeds, the staff chat; STAFF-PANEL3-REALM: a staff removal past its 30 days; AUDIT SEA VENTURES B5: the sea's five sweeps - a kill past the Wanted window, a wreck past its hour, a bounty claimed, a sum paid and a prize ended past their keeping, seaBounty.js seaSweeps; YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
+  assert.deepEqual(hour.map((j) => [j.name, j.statements]), [['board', 2], ['guild-board', 1], ['harvests', 2], ['craft-writs', 1], ['market-history', 10], ['town-econ', 3], ['rate-limits', 1], ['sessions', 1], ['guild-invites', 1], ['realm-findings', 1], ['realm-wealth-hours', 1], ['progress-hours', 1], ['wild-falls', 1], ['wild-escrow', 1], ['sea', 5], ['crew-signs', 1], ['patrons', 1], ['eg-stakes', 1], ['safety-sweep', 7], ['staff-audit', 1], ['staff-evidence', 1], ['census-day', 0], ['census-backfill', 0], ['staff-messages', 1], ['staff-events', 1], ['staff-feeds', 4], ['reactions', 1], ['staff-chat', 2]]);
+  assert.equal(minute.reduce((n, j) => n + j.statements, 0) + hour.reduce((n, j) => n + j.statements, 0), 11 + 53);   // PIN MOVED (CREW-SIGNED: the crew hall's day swept)   // PIN MOVED (STAFF-EVENT: the staff events sweep)   // PIN MOVED (STAFF-PANEL5: Message on screen, the feeds, the staff chat; STAFF-PANEL3-REALM: a staff removal past its 30 days; AUDIT SEA VENTURES B5: the sea's five sweeps - a kill past the Wanted window, a wreck past its hour, a bounty claimed, a sum paid and a prize ended past their keeping, seaBounty.js seaSweeps; YARD-SNAP: the minute's stale yards; AUDIT LW-II-2 S3; SEAT-FACTS; EG-ZM; KG6; PVP-ESCROW; REZ-BLOODLINE AUDIT R1; SAFE; INT17: the progression claims' hours swept as the wealth's are; TOWN-ECON TE2: a town's days, acts and seen ticks)
   // behind `dev` the Motherlodes are a developer's: never picked by the clock
   const dev = await standService({ PROFESSIONS_OPEN: 'dev' });
   _resetCronForTests();
@@ -789,11 +789,11 @@ test('AUDIT SCALE D12: the harness\'s counters - every frame and byte in and out
 
 test('AUDIT SCALE C11 C13: an interrupted run takes its state, and the private half leaves the disk once the service is up; the account entry answers as workerd\'s binding does - a column the row has not thrown, raw() counted once, each point stamped with its moment', async () => {
   const h = src('tools/loadHarness.mjs');
-  assert.match(h, /const onSignal = \(\) => \{\s*for \(const f of fleets\) f\.stop\?\.\(\);\s*stopAll\(\);\s*if \(!o\.keep\) \{ try \{ rmSync\(state, \{ recursive: true, force: true \}\); \} catch \{[^}]*\} \}\s*process\.exit\(130\);/);
-  assert.match(h, /if \(!\(await healthy\(accountPort, '\/v1\/health', 180\)\)\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*rmSync\(acctEnv, \{ force: true \}\);/);
+  assert.match(h, /const onSignal = \(\) => \{\n\s*for \(const f of fleets\) f\.stop\?\.\(\);\n\s*stopAll\(\);\n\s*if \(!o\.keep\) \{\n\s*try \{\n\s*rmSync\(state, \{ recursive: true, force: true \}\);\n\s*\} catch \{\n\s*\/\* gone \*\/\n\s*\}\n\s*\}\n\s*process\.exit\(130\);/);
+  assert.match(h, /if \(!\(await healthy\(accountPort, '\/v1\/health', 180\)\)\)\n\s*throw new Error\(`the account service never answered:\\n\$\{svc\.account\.log\.slice\(-2000\)\}`\);\n\s*\/\/ AUDIT SCALE C11: the private half read and the service up - it leaves the disk now, not at the run's end \(the storm\n\s*\/\/ restarts only the relay, whose file keeps the identity's public half and the gate's signing half for it, in the\n\s*\/\/ run's own state directory, which the run removes\)\n\s*rmSync\(acctEnv, \{ force: true \}\);/);
   const e = src('tools/loadAccountEntry.mjs');
   assert.match(e, /if \(!\(col in row\)\) throw new Error\(`D1_COLUMN_NOTFOUND/);
-  assert.match(e, /if \(key === 'raw'\) return async \([^)]*\) => \{ const r = await target\.raw\(opts\); note\(sql, null\); return r; \};/);
+  assert.match(e, /if \(key === 'raw'\)\n\s*return async \(\/\*\* @type \{any\} \*\/ opts\) => \{\n\s*const r = await target\.raw\(opts\);\n\s*note\(sql, null\);\n\s*return r;\n\s*\};/);
   assert.match(e, /points\.push\(\{ \.\.\.p, t: Date\.now\(\) \}\)/);
 });
 

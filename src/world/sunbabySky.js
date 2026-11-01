@@ -47,8 +47,8 @@
 // until it has loaded, or if it never does.
 // ═══════════════════════════════════════════════════════════════════
 
-import { seededRng } from '../systems/wind/wind.js';   // SUNBABY2: the fireballs' draws (the dread's)
-import { slotHash } from './dreadSky.js';   // SUNBABY2: one slot hash for the shared clock's schedules
+import { seededRng } from '../systems/wind/wind.js'; // SUNBABY2: the fireballs' draws (the dread's)
+import { slotHash } from './dreadSky.js'; // SUNBABY2: one slot hash for the shared clock's schedules
 
 /** The live event this file draws (net/wire.js LIVE_EVENTS). */
 export const SUNBABY_EVENT = 'sunbaby';
@@ -60,15 +60,15 @@ export const SUNBABY_WEATHER = 'sunny';
 // ── The sky's colours (display space, 0..1) ────────────────────────
 /** The nursery-blue dome: overhead, and at the horizon. */
 export const SUNBABY_ZENITH = Object.freeze([0.18, 0.52, 0.93]);
-export const SUNBABY_HORIZON = Object.freeze([0.70, 0.88, 1.0]);
+export const SUNBABY_HORIZON = Object.freeze([0.7, 0.88, 1.0]);
 /** The flowers' petals - pink, butter yellow, white, lilac, poppy red, sky blue. */
 export const SUNBABY_PETALS = Object.freeze([
   Object.freeze([1.0, 0.56, 0.74]),
-  Object.freeze([1.0, 0.90, 0.36]),
+  Object.freeze([1.0, 0.9, 0.36]),
   Object.freeze([1.0, 0.98, 0.95]),
-  Object.freeze([0.78, 0.60, 1.0]),
+  Object.freeze([0.78, 0.6, 1.0]),
   Object.freeze([1.0, 0.36, 0.34]),
-  Object.freeze([0.55, 0.80, 1.0]),
+  Object.freeze([0.55, 0.8, 1.0]),
 ]);
 /** A flower's heart. */
 export const SUNBABY_HEART = Object.freeze([1.0, 0.72, 0.16]);
@@ -84,13 +84,13 @@ export const SUNBABY_SUN_SET_DEG = -24;
 /** The sun's bearing, radians from +x (map east, where the port's own sun rises) toward +z. */
 export const SUNBABY_SUN_BEARING = 0.4;
 /** The face: skin, its rim of gold, the rays' gold, the blush, the laughing mouth and its tongue, the eyes' brown. */
-export const SUNBABY_SKIN = Object.freeze([1.0, 0.84, 0.70]);
-export const SUNBABY_RIM = Object.freeze([1.0, 0.80, 0.18]);
-export const SUNBABY_RAY = Object.freeze([1.0, 0.86, 0.30]);
+export const SUNBABY_SKIN = Object.freeze([1.0, 0.84, 0.7]);
+export const SUNBABY_RIM = Object.freeze([1.0, 0.8, 0.18]);
+export const SUNBABY_RAY = Object.freeze([1.0, 0.86, 0.3]);
 export const SUNBABY_BLUSH = Object.freeze([1.0, 0.52, 0.58]);
 export const SUNBABY_MOUTH = Object.freeze([0.55, 0.12, 0.14]);
 export const SUNBABY_TONGUE = Object.freeze([1.0, 0.45, 0.52]);
-export const SUNBABY_EYE = Object.freeze([0.30, 0.16, 0.10]);
+export const SUNBABY_EYE = Object.freeze([0.3, 0.16, 0.1]);
 
 // ── The land under it ──────────────────────────────────────────────
 /** The ambient light the land is lifted toward at full weight - noon's (worldClock EXTERIOR_NOON_AMBIENT), warmed. */
@@ -119,7 +119,7 @@ export const SUNBABY_FACE_LINES = Object.freeze({
 // ── SUNBABY2: the wrath ────────────────────────────────────────────
 /** The burning dome: overhead, and at the horizon. */
 export const SUNBABY_WRATH_ZENITH = Object.freeze([0.22, 0.02, 0.03]);
-export const SUNBABY_WRATH_HORIZON = Object.freeze([0.92, 0.32, 0.10]);
+export const SUNBABY_WRATH_HORIZON = Object.freeze([0.92, 0.32, 0.1]);
 /** The flowers in the wrath: charred, and burning. */
 export const SUNBABY_EMBERS = Object.freeze([Object.freeze([0.18, 0.03, 0.02]), Object.freeze([1.0, 0.42, 0.06])]);
 export const SUNBABY_WRATH_HEART = Object.freeze([1.0, 0.86, 0.32]);
@@ -134,14 +134,14 @@ export const SUNBABY_WRATH_FIRE = Object.freeze([1.0, 0.48, 0.08]);
 export const SUNBABY_WRATH_TOOTH = Object.freeze([1.0, 0.95, 0.82]);
 export const SUNBABY_WRATH_HORN = Object.freeze([0.32, 0.05, 0.04]);
 /** The land's light under the wrath, a channel at a time (its ambient times this at full wrath). */
-export const SUNBABY_WRATH_TINT = Object.freeze([1.0, 0.52, 0.40]);
+export const SUNBABY_WRATH_TINT = Object.freeze([1.0, 0.52, 0.4]);
 
 // ── SUNBABY2: Todd ─────────────────────────────────────────────────
 /** Todd's cartoon face: skin, hair (and brows), eyes, lips, teeth - SUNBABY3: drawn only until his photograph has loaded. */
 export const SUNBABY_TODD_SKIN = Object.freeze([0.96, 0.78, 0.64]);
 export const SUNBABY_TODD_HAIR = Object.freeze([0.25, 0.17, 0.11]);
 export const SUNBABY_TODD_IRIS = Object.freeze([0.35, 0.24, 0.16]);
-export const SUNBABY_TODD_LIP = Object.freeze([0.70, 0.36, 0.34]);
+export const SUNBABY_TODD_LIP = Object.freeze([0.7, 0.36, 0.34]);
 export const SUNBABY_TODD_TOOTH = Object.freeze([0.98, 0.97, 0.93]);
 /** How many times finer each way the flower grid is under Todd - its square is sixteen times the detail. */
 export const SUNBABY_TODD_DETAIL = 4;
@@ -178,8 +178,10 @@ const mix3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a
  * - what the weather follows, at once, while the sky fades.
  */
 export function createSunbaby() {
-  let target = 0, weight = 0;
-  let at = NaN, seen = null;   // SUNBABY2: the stage's moment (the phases' clock - kept through the end's fade), the face last framed
+  let target = 0,
+    weight = 0;
+  let at = NaN,
+    seen = null; // SUNBABY2: the stage's moment (the phases' clock - kept through the end's fade), the face last framed
   return {
     set(ev, { live = false } = {}) {
       target = ev?.kind === SUNBABY_EVENT ? 1 : 0;
@@ -201,8 +203,12 @@ export function createSunbaby() {
       weight = weight < target ? Math.min(target, weight + step) : Math.max(target, weight - step);
       return weight;
     },
-    get weight() { return weight; },
-    get on() { return target === 1; },
+    get weight() {
+      return weight;
+    },
+    get on() {
+      return target === 1;
+    },
   };
 }
 
@@ -218,11 +224,13 @@ export function sunbabyPhase(sinceS) {
   const n = SUNBABY_PHASES.length;
   const since = Number.isFinite(sinceS) && sinceS > 0 ? sinceS : 0;
   const t = since % SUNBABY_CYCLE_S;
-  let start = 0, index = 0;
+  let start = 0,
+    index = 0;
   while (index < n - 1 && t >= start + SUNBABY_PHASES[index].s) start += SUNBABY_PHASES[index++].s;
   const face = SUNBABY_PHASES[index].face;
   const from = index === 0 && since < SUNBABY_CYCLE_S ? face : SUNBABY_PHASES[(index + n - 1) % n].face;
-  const x = clamp01((t - start) / SUNBABY_MORPH_S), k = x * x * (3 - 2 * x);
+  const x = clamp01((t - start) / SUNBABY_MORPH_S),
+    k = x * x * (3 - 2 * x);
   const w = (f) => (from === f ? 1 - k : 0) + (face === f ? k : 0);
   return { index, face, evil: w('evil'), todd: w('todd'), fire: face === 'evil' && k === 1 };
 }
@@ -248,8 +256,17 @@ export function sunbabyFireballs(fromMs, toMs) {
     const atMs = (slot + r()) * SUNBABY_FIRE_SLOT_MS;
     if (atMs <= fromMs || atMs > toMs) continue;
     const near = r() < SUNBABY_FIRE_NEAR_SHARE;
-    const distance = near ? SUNBABY_FIRE_NEAR_M + (SUNBABY_FIRE_SPLIT_M - SUNBABY_FIRE_NEAR_M) * r() : SUNBABY_FIRE_SPLIT_M + (SUNBABY_FIRE_FAR_M - SUNBABY_FIRE_SPLIT_M) * r();
-    out.push({ atMs, seed, bearing: r() * 2 * Math.PI, distance, az: SUNBABY_SUN_BEARING + (r() - 0.5) * 2 * SUNBABY_FIRE_SPREAD, elev: (e0 + (e1 - e0) * r()) * Math.PI / 180 });
+    const distance = near
+      ? SUNBABY_FIRE_NEAR_M + (SUNBABY_FIRE_SPLIT_M - SUNBABY_FIRE_NEAR_M) * r()
+      : SUNBABY_FIRE_SPLIT_M + (SUNBABY_FIRE_FAR_M - SUNBABY_FIRE_SPLIT_M) * r();
+    out.push({
+      atMs,
+      seed,
+      bearing: r() * 2 * Math.PI,
+      distance,
+      az: SUNBABY_SUN_BEARING + (r() - 0.5) * 2 * SUNBABY_FIRE_SPREAD,
+      elev: ((e0 + (e1 - e0) * r()) * Math.PI) / 180,
+    });
   }
   return out;
 }
@@ -260,9 +277,12 @@ export function sunbabyFireballs(fromMs, toMs) {
  *  @param {{seed: number, bearing: number, distance: number, az: number, elev: number}} s
  *  @param {number[]} eye @param {((x: number, z: number) => number) | null} [ground] */
 export function sunbabyFireball(s, eye, ground = null) {
-  const x = eye[0] + Math.sin(s.bearing) * s.distance, z = eye[2] + Math.cos(s.bearing) * s.distance;
-  const g = ground ? ground(x, z) : NaN, y = Number.isFinite(g) ? g : eye[1];
-  const c = Math.cos(s.elev), F = SUNBABY_FIRE_FALL_M;
+  const x = eye[0] + Math.sin(s.bearing) * s.distance,
+    z = eye[2] + Math.cos(s.bearing) * s.distance;
+  const g = ground ? ground(x, z) : NaN,
+    y = Number.isFinite(g) ? g : eye[1];
+  const c = Math.cos(s.elev),
+    F = SUNBABY_FIRE_FALL_M;
   const up = [c * Math.cos(s.az), Math.sin(s.elev), c * Math.sin(s.az)];
   return { from: [x + up[0] * F, y + up[1] * F, z + up[2] * F], to: [x, y, z], seed: s.seed };
 }
@@ -279,34 +299,44 @@ export function createSunbabyRain() {
     /** @param {{sharedMs: number, eye: number[], fire: boolean, ground?: ((x: number, z: number) => number) | null}} o */
     tick({ sharedMs, eye, fire, ground = null }) {
       const out = [];
-      if (lastMs !== null && sharedMs < lastMs) lastMs = null;   // the clock went back (a new offset): start again from now
-      if (lastMs !== null && fire) for (const s of sunbabyFireballs(lastMs, sharedMs)) out.push(sunbabyFireball(s, eye, ground));
+      if (lastMs !== null && sharedMs < lastMs) lastMs = null; // the clock went back (a new offset): start again from now
+      if (lastMs !== null && fire)
+        for (const s of sunbabyFireballs(lastMs, sharedMs)) out.push(sunbabyFireball(s, eye, ground));
       lastMs = sharedMs;
       return out;
     },
-    reset() { lastMs = null; },
+    reset() {
+      lastMs = null;
+    },
   };
 }
 
 /** Where the sun baby stands at weight `w`: a unit direction ([x, y, z], y up), risen to SUNBABY_SUN_ELEV_DEG at 1 and
  *  waiting at SUNBABY_SUN_SET_DEG at 0, eased so it slows as it climbs. Pure. */
 export function sunbabySunDir(w) {
-  const k = clamp01(w), e = 1 - (1 - k) ** 3;
-  const elev = (SUNBABY_SUN_SET_DEG + (SUNBABY_SUN_ELEV_DEG - SUNBABY_SUN_SET_DEG) * e) * Math.PI / 180;
+  const k = clamp01(w),
+    e = 1 - (1 - k) ** 3;
+  const elev = ((SUNBABY_SUN_SET_DEG + (SUNBABY_SUN_ELEV_DEG - SUNBABY_SUN_SET_DEG) * e) * Math.PI) / 180;
   const c = Math.cos(elev);
   return [c * Math.cos(SUNBABY_SUN_BEARING), Math.sin(elev), c * Math.sin(SUNBABY_SUN_BEARING)];
 }
 
 /** The land's haze under the event: the fog colour `rgb` toward the flower sky's horizon by `w` - SUNBABY2: the burning
  *  horizon's by `evil`. A new array. Pure. */
-export const sunbabyHaze = (rgb, w, evil = 0) => mix3(rgb, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, clamp01(evil)), clamp01(w));
+export const sunbabyHaze = (rgb, w, evil = 0) =>
+  mix3(rgb, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, clamp01(evil)), clamp01(w));
 
 /** The land's ambient under the event: `rgb` lifted toward SUNBABY_AMBIENT by `w` (never darkened - a brighter
  *  ambient is kept) - SUNBABY2: and reddened toward SUNBABY_WRATH_TINT by `evil`. A fresh Float32Array, as the renderer
  *  takes a light. Pure. */
 export function sunbabyLight(rgb, w, evil = 0) {
-  const k = clamp01(w), e = clamp01(evil) * k;
-  return new Float32Array([0, 1, 2].map((i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e)));
+  const k = clamp01(w),
+    e = clamp01(evil) * k;
+  return new Float32Array(
+    [0, 1, 2].map(
+      (i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e),
+    ),
+  );
 }
 
 /** SUNBABY2: the sun's key light under the wrath - `rgb` reddened toward SUNBABY_WRATH_TINT by `w` x `evil`; a fresh
@@ -318,9 +348,13 @@ export function sunbabyKey(rgb, w, evil = 0) {
 
 /** The sky the water mirrors under the event ({zenith, horizon}), toward the flower sky's own by `w` - SUNBABY2: the
  *  burning sky's by `evil`. Pure. */
-export const sunbabyWaterSky = (ws, w, evil = 0) => (clamp01(w) > 0 && ws
-  ? { zenith: mix3(ws.zenith, mix3(SUNBABY_ZENITH, SUNBABY_WRATH_ZENITH, clamp01(evil)), clamp01(w)), horizon: mix3(ws.horizon, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, clamp01(evil)), clamp01(w)) }
-  : ws);
+export const sunbabyWaterSky = (ws, w, evil = 0) =>
+  clamp01(w) > 0 && ws
+    ? {
+        zenith: mix3(ws.zenith, mix3(SUNBABY_ZENITH, SUNBABY_WRATH_ZENITH, clamp01(evil)), clamp01(w)),
+        horizon: mix3(ws.horizon, mix3(SUNBABY_HORIZON, SUNBABY_WRATH_HORIZON, clamp01(evil)), clamp01(w)),
+      }
+    : ws;
 
 // ── The GLSL ──────────────────────────────────────────────────────
 const f = (v) => v.toFixed(4);

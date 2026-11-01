@@ -54,12 +54,21 @@ export const FORAGING_WAIT_HELD_MAX = 16;
 export function saneWait(r) {
   if (!r || typeof r !== 'object') return null;
   const seconds = Number.isFinite(r.seconds) && r.seconds > 0 ? Math.min(FORAGING_WAIT_MAX_SECONDS, r.seconds) : 0;
-  const held = (Array.isArray(r.held) ? r.held : []).filter((k) => k && typeof k === 'object' && !Array.isArray(k)).slice(0, FORAGING_WAIT_HELD_MAX);
+  const held = (Array.isArray(r.held) ? r.held : [])
+    .filter((k) => k && typeof k === 'object' && !Array.isArray(k))
+    .slice(0, FORAGING_WAIT_HELD_MAX);
   if (seconds <= 0 && !held.length) return null;
   return { seconds, label: typeof r.label === 'string' ? r.label.slice(0, 60) : null, held };
 }
 
-export function createForagingWait({ entity, showOverlay = null, overlayActive = () => false, enemiesNear = () => false, online = () => true, revive = null } = {}) {
+export function createForagingWait({
+  entity,
+  showOverlay = null,
+  overlayActive = () => false,
+  enemiesNear = () => false,
+  online = () => true,
+  revive = null,
+} = {}) {
   let _win = null;
   /** the boxes held behind the wait: { fn, keep } - `keep` the save's copy of it, when it has one */
   let _held = [];
@@ -68,7 +77,11 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
   /** counts the loads: a page opened before one never writes over the record it brought */
   let _gen = 0;
 
-  const own = (r) => { if (entity) entity.foragingWait = r; _ours = r; return r; };
+  const own = (r) => {
+    if (entity) entity.foragingWait = r;
+    _ours = r;
+    return r;
+  };
   /** The record - a loaded one made safe ONCE and its boxes taken up (AUDIT 28 F1: a live wait is never re-cut). */
   const record = () => {
     if (!entity) return null;
@@ -87,7 +100,10 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
   const write = (seconds) => {
     const r = record();
     const held = _held.map((h) => h.keep).filter(Boolean);
-    if (seconds <= 0 && !held.length) { own(null); return null; }
+    if (seconds <= 0 && !held.length) {
+      own(null);
+      return null;
+    }
     return own({ seconds: Math.max(0, seconds), label: r?.label ?? null, held });
   };
 
@@ -106,9 +122,15 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
       for (let n = _held.length; n > 0 && _held.length && !pending() && !_win && !overlayActive(); n--) {
         const { fn } = _held.shift();
         write(0);
-        try { fn(); } catch (e) { console.warn('[foragingWait] a held box threw', e); }
+        try {
+          fn();
+        } catch (e) {
+          console.warn('[foragingWait] a held box threw', e);
+        }
       }
-    } finally { _releasing = false; }
+    } finally {
+      _releasing = false;
+    }
   }
 
   /** The quest's `raise time by`, online: `gameSeconds` of the clock as a wait of real seconds, joined to any standing. */
@@ -118,7 +140,7 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
     const r = record();
     if (r && r.seconds > 0) {
       _win?.extend(real);
-      r.seconds += real;   // the sum, uncut
+      r.seconds += real; // the sum, uncut
     } else {
       own({ seconds: real, label: label ?? null, held: r?.held ?? [] });
     }
@@ -129,10 +151,12 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
     const r = record();
     const gen = _gen;
     _win = new WaitWindow({
-      busy: waitLine(r.label), seconds: r.seconds, interruptWhen: () => !!enemiesNear(),
+      busy: waitLine(r.label),
+      seconds: r.seconds,
+      interruptWhen: () => !!enemiesNear(),
       onClosed: () => {
         _win = null;
-        if (gen === _gen) write(0);   // done, or forgiven: a foe near, or the slot taken - the held boxes wait for the slot (tick)
+        if (gen === _gen) write(0); // done, or forgiven: a foe near, or the slot taken - the held boxes wait for the slot (tick)
       },
     });
     showOverlay?.(_win);
@@ -159,7 +183,8 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
   }
 
   return {
-    add, tick,
+    add,
+    tick,
     /** Whether a quest box must wait: a wait stands, or is pending behind the slot, or boxes wait their turn - never the
      *  box the release is showing (CHOP-WAIT). */
     holds: () => !_releasing && (pending() || !!_win || _held.length > 0),
@@ -170,6 +195,8 @@ export function createForagingWait({ entity, showOverlay = null, overlayActive =
       _held.push({ fn, keep: keep && typeof keep === 'object' ? keep : null });
       write(record()?.seconds ?? 0);
     },
-    get window() { return _win; },
+    get window() {
+      return _win;
+    },
   };
 }

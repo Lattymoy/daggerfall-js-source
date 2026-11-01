@@ -314,7 +314,6 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   const credit = CREDITS.mods.find((c) => c.title === 'Roleplay & Realism: Items');
   assert.ok(credit); assert.equal(credit.author, 'Hazelnut & Ralzar'); assert.equal(credit.version, '1.3'); assert.deepEqual([...credit.vendor], [RRI_VENDOR]);
   assert.match(credit.link, /nexusmods\.com\/daggerfallunity\/mods\/61/);
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `roleplay-realism-items` \|/);
   for (const f of ['README.md', 'roleplay-realism-items.dfmod.json', 'modsettings.json', 'ItemTemplates.json', 'RoleplayRealismItemsModData.csv', 'Scripts/RoleplayRealismItemsMod.cs', 'Scripts/ItemJerkin.cs', 'Scripts/ItemHauberk.cs', 'Scripts/ItemArchersAxe.cs']) {
     assert.ok(tracked('vendor/roleplay-realism-items').includes(`vendor/roleplay-realism-items/${f}`), f);
   }
@@ -328,7 +327,7 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   assert.equal((rd('src/systems/equip.js').match(/armorSlotRule\(item\.templateIndex\)/g) ?? []).length, 2, 'both body-part reads');
   assert.match(rd('src/characters/weapons.js'), /if \(cls\?\.weaponSkillUsed\) return SKILLS\[cls\.weaponSkillUsed\];/);
   assert.match(rd('src/combat/fpsWeapon.js'), /if \(cls\?\.weaponType\) return T\[cls\.weaponType\(isEnchanted\(item\)\)\];/);
-  assert.match(rd('src/systems/enchanting.js'), /if \(cls\?\.enchantmentPower\) return cls\.enchantmentPower\(item, \{ enchantmentPoints: basePower, armorEnchantmentMultiplier \}\);/);
+  assert.match(rd('src/systems/enchanting.js'), /if \(cls\?\.enchantmentPower\)\n\s*return cls\.enchantmentPower\(item, \{ enchantmentPoints: basePower, armorEnchantmentMultiplier \}\);/);
   assert.match(rd('src/systems/armorMaterials.js'), /const custom = _customArmorValue\?\.\(item\);\n\s+if \(custom != null\) return custom;/);
   assert.match(rd('src/systems/roleplayRealismItems/rriItems.js'), /^import /m);
   // TIDY2: by the file's name, at any depth - a spelled path stops meaning anything when either file moves

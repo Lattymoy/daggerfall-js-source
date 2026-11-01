@@ -65,8 +65,8 @@
   {
     "name": "RVN5-bank-noun-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "'Bonebreaker', 'Mountainfall']",
-    "new": "'Bonebreaker']",
+    "old": "  slam: Object.freeze(['Skullsplitter', 'Gravefall', 'Anvil', 'Hammerfall', 'Bonebreaker', 'Mountainfall']),",
+    "new": "  slam: Object.freeze(['Skullsplitter', 'Gravefall', 'Anvil', 'Hammerfall', 'Bonebreaker']),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN5-pyre-nouns-swapped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "['Pyre', 'Rimefall', 'Blight', 'Stormcall', 'Unmaking']",
-    "new": "['Pyre', 'Rimefall', 'Stormcall', 'Blight', 'Unmaking']",
+    "old": "export const PYRE_NOUNS = Object.freeze(['Pyre', 'Rimefall', 'Blight', 'Stormcall', 'Unmaking']); // fire, frost, poison, shock, magic",
+    "new": "export const PYRE_NOUNS = Object.freeze(['Pyre', 'Rimefall', 'Stormcall', 'Blight', 'Unmaking']); // fire, frost, poison, shock, magic",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN5-imp-not-fire",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.FireAtronach, 0], [M.Imp, 0],",
-    "new": "[M.FireAtronach, 0],",
+    "old": "  [M.Imp, 0],\n  [M.IceAtronach, 1],",
+    "new": "  [M.IceAtronach, 1],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN5-lich-not-frost",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.IceAtronach, 1], [M.Lich, 1], [M.AncientLich, 1],",
-    "new": "[M.IceAtronach, 1], [M.AncientLich, 1],",
+    "old": "  [M.Lich, 1],\n  [M.AncientLich, 1],",
+    "new": "  [M.AncientLich, 1],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN5-rat-not-poison",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.Rat, 2], [M.GiantBat, 2],",
-    "new": "[M.GiantBat, 2],",
+    "old": "  [M.Rat, 2],\n  [M.GiantBat, 2],",
+    "new": "  [M.GiantBat, 2],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN5-harpy-not-shock",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  [M.Harpy, 3],\n",
-    "new": "",
+    "old": "  [M.Harpy, 3],\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN5-default-fire",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "PYRE_ELEMENT.get(mobileType) ?? 4;",
-    "new": "PYRE_ELEMENT.get(mobileType) ?? 0;",
+    "old": "export const pyreElement = (mobileType) => PYRE_ELEMENT.get(mobileType) ?? 4;",
+    "new": "export const pyreElement = (mobileType) => PYRE_ELEMENT.get(mobileType) ?? 0;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN5-draw-off-id",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "idStream(r.id, 'signame')",
-    "new": "idStream('rvn5', 'signame')",
+    "old": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * bank.length))];",
+    "new": "  return bank[Math.min(bank.length - 1, Math.floor(idStream('rvn5', 'signame')() * bank.length))];",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RVN5-last-noun-unreachable",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Math.floor(idStream(r.id, 'signame')() * bank.length)",
-    "new": "Math.floor(idStream(r.id, 'signame')() * (bank.length - 1))",
+    "old": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * bank.length))];",
+    "new": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * (bank.length - 1)))];",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN5-no-possessive",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return r.given ? `${possessive(r.given)} ${noun}` : noun;",
-    "new": "return r.given ? `${r.given} ${noun}` : noun;",
+    "old": "  return r.given ? `${possessive(r.given)} ${noun}` : noun; // a record has its given name; none, the noun alone",
+    "new": "  return r.given ? `${r.given} ${noun}` : noun; // a record has its given name; none, the noun alone",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN5-stamp-rank-floor",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
-    "new": "if (!r || (r.rank | 0) < 1 || !isSignature(r.sig)) return null;",
+    "old": "  if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
+    "new": "  if (!r || (r.rank | 0) < 1 || !isSignature(r.sig)) return null;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN5-stamp-any-shape",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
-    "new": "if (!r || (r.rank | 0) < SIG_RANK || !r.sig) return null;",
+    "old": "  if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
+    "new": "  if (!r || (r.rank | 0) < SIG_RANK || !r.sig) return null;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RVN5-stamp-iron-off-by-one",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "iron: (r.rank | 0) >= SIG.IRON_RANK,",
-    "new": "iron: (r.rank | 0) > SIG.IRON_RANK,",
+    "old": "    iron: (r.rank | 0) >= SIG.IRON_RANK,",
+    "new": "    iron: (r.rank | 0) > SIG.IRON_RANK,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RVN5-stamp-unfrozen",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return Object.freeze({ kind: r.sig, iron:",
-    "new": "  return ({ kind: r.sig, iron:",
+    "old": "  return Object.freeze({\n    kind: r.sig,\n    iron: (r.rank | 0) >= SIG.IRON_RANK,\n    mult: SIG.MULT,\n    cooldown: SIG.COOLDOWN,\n    color: SIG.COLOR,\n    windPitch: SIG.WIND_PITCH,\n    name: signatureName(r),\n    noun: signatureNoun(r),\n    element: pyreElement(r.mobileType),\n  });",
+    "new": "  return {\n    kind: r.sig,\n    iron: (r.rank | 0) >= SIG.IRON_RANK,\n    mult: SIG.MULT,\n    cooldown: SIG.COOLDOWN,\n    color: SIG.COLOR,\n    windPitch: SIG.WIND_PITCH,\n    name: signatureName(r),\n    noun: signatureNoun(r),\n    element: pyreElement(r.mobileType),\n  };",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN5-stamp-name-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "windPitch: SIG.WIND_PITCH, name: signatureName(r), noun: signatureNoun(r), element:",
-    "new": "windPitch: SIG.WIND_PITCH, name: null, noun: signatureNoun(r), element:",
+    "old": "    name: signatureName(r),",
+    "new": "    name: null,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN5-stamp-noun-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "name: signatureName(r), noun: signatureNoun(r), element:",
-    "new": "name: signatureName(r), noun: null, element:",
+    "old": "    noun: signatureNoun(r),",
+    "new": "    noun: null,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN5-spell-caster-only",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "element: Number.isInteger(element) ? element : 4, rangeType: 2, icon: 0,",
-    "new": "element: Number.isInteger(element) ? element : 4, rangeType: 0, icon: 0,",
+    "old": "    rangeType: 2,",
+    "new": "    rangeType: 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RVN5-spell-continuous",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "effects: [e(4, 0, {",
-    "new": "effects: [e(1, 0, {",
+    "old": "      e(4, 0, {",
+    "new": "      e(1, 0, {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RVN5-spell-element-default",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "element: Number.isInteger(element) ? element : 4, rangeType",
-    "new": "element: Number.isInteger(element) ? element : 0, rangeType",
+    "old": "    element: Number.isInteger(element) ? element : 4,",
+    "new": "    element: Number.isInteger(element) ? element : 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RVN5-pyre-windup-moved",
     "file": "src/ai/blowShapes.js",
-    "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
-    "new": "pyre: Object.freeze({ windup: 1.0, r: 2.2, mult: 1, range: 12 }),",
+    "old": "  pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
+    "new": "  pyre: Object.freeze({ windup: 1.0, r: 2.2, mult: 1, range: 12 }),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RVN5-pyre-r-moved",
     "file": "src/ai/blowShapes.js",
-    "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
-    "new": "pyre: Object.freeze({ windup: 1.2, r: 1.8, mult: 1, range: 12 }),",
+    "old": "  pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
+    "new": "  pyre: Object.freeze({ windup: 1.2, r: 1.8, mult: 1, range: 12 }),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RVN5-pyre-range-moved",
     "file": "src/ai/blowShapes.js",
-    "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
-    "new": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 9 }),",
+    "old": "  pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
+    "new": "  pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 9 }),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RVN5-verdict-at-its-feet",
     "file": "src/ai/blowShapes.js",
-    "old": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;",
-    "new": "if (b.kind === 'pyre') return Math.hypot(along, across) <= BLOW.pyre.r;",
+    "old": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r; // RVN5: a disc at its target's feet",
+    "new": "  if (b.kind === 'pyre') return Math.hypot(along, across) <= BLOW.pyre.r; // RVN5: a disc at its target's feet",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "RVN5-verdict-leap-radius",
     "file": "src/ai/blowShapes.js",
-    "old": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;",
-    "new": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r;",
+    "old": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r; // RVN5: a disc at its target's feet",
+    "new": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r; // RVN5: a disc at its target's feet",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "RVN5-verdict-none",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;   // RVN5: a disc at its target's feet\n",
-    "new": "",
+    "old": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r; // RVN5: a disc at its target's feet\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "RVN5-shader-branch-lunge",
     "file": "src/render/foeTelegraph.js",
-    "old": "aimed: 0, pyre: 2 });",
-    "new": "aimed: 0, pyre: 0 });",
+    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
+    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 0 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "RVN5-reach-none",
     "file": "src/render/foeTelegraph.js",
-    "old": "aimed: 0, pyre: BLOW.pyre.range + BLOW.pyre.r });",
-    "new": "aimed: 0, pyre: 0 });",
+    "old": "  pyre: BLOW.pyre.range + BLOW.pyre.r,",
+    "new": "  pyre: 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "RVN5-quad-unplaced",
     "file": "src/render/foeTelegraph.js",
-    "old": "(kind === 'leap' || kind === 'aimed' || kind === 'pyre') ? ahead",
-    "new": "(kind === 'leap' || kind === 'aimed') ? ahead",
+    "old": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre')",
+    "new": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed')",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "RVN5-quad-leap-radius",
     "file": "src/render/foeTelegraph.js",
-    "old": "kind === 'pyre' ? BLOW.pyre.r : 0)",
-    "new": "kind === 'pyre' ? BLOW.leap.r : 0)",
+    "old": "    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0)",
+    "new": "    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.leap.r : 0)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "RVN5-field-leap-radius",
     "file": "src/render/foeTelegraph.js",
-    "old": "    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);",
-    "new": "    const r = BLOW.leap.r, d = Math.hypot(across, along - ahead);",
+    "old": "    const r = BLOW[kind].r,",
+    "new": "    const r = BLOW.leap.r,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "RVN5-shader-pyre-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
-    "new": "      else if (b.kind === 'leap') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
+    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre')",
+    "new": "      else if (b.kind === 'leap')",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "RVN5-melee-signature-unpicked",
     "file": "src/ai/tactics.js",
-    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
-    "new": "    if (false && sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
+    "old": "      sig &&",
+    "new": "      false &&\n      sig &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "RVN5-melee-cooldown-ungated",
     "file": "src/ai/tactics.js",
-    "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
-    "new": "    if (sig && !windupNear(tf, now, ai)",
+    "old": "      now >= (s.sigReady ?? 0) &&\n      !windupNear(tf, now, ai) &&",
+    "new": "      !windupNear(tf, now, ai) &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "RVN5-melee-unrolled",
     "file": "src/ai/tactics.js",
-    "old": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
-    "new": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz)) {",
+    "old": "      signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) &&\n      Math.random() < BLOW_CHANCE",
+    "new": "      signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "RVN5-shooter-unwired",
     "file": "src/ai/tactics.js",
-    "old": "    if (has && sig?.kind === 'pyre' && _me",
-    "new": "    if (false && has && sig?.kind === 'pyre' && _me",
+    "old": "    if (\n      has &&",
+    "new": "    if (\n      false &&\n      has &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "RVN5-shooter-tokenless",
     "file": "src/ai/tactics.js",
-    "old": "    if (has && sig?.kind === 'pyre' && _me",
-    "new": "    if (sig?.kind === 'pyre' && _me",
+    "old": "      has &&\n      sig?.kind === 'pyre' &&",
+    "new": "      sig?.kind === 'pyre' &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "RVN5-shooter-cooldown-ungated",
     "file": "src/ai/tactics.js",
-    "old": "now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai)",
-    "new": "now >= (s.blowReady ?? 0) && !windupNear(_me.feet, now, ai)",
+    "old": "      now >= (s.sigReady ?? 0) &&\n      !windupNear(_me.feet, now, ai) &&",
+    "new": "      !windupNear(_me.feet, now, ai) &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "RVN5-iron-unread",
     "file": "src/ai/tactics.js",
-    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(",
-    "new": "  const guard = blowGuard(",
+    "old": "  const guard = sig?.iron ? 'iron' : blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
+    "new": "  const guard = blowGuard(shape, ENEMY_BASICS[ent.mobileType]?.weight ?? 0, ent); // Iron or poise (the kind's own weight - no class throws an iron shape); RVN5: a signature iron from rank 3",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "RVN5-ember-unread",
     "file": "src/ai/tactics.js",
-    "old": "now, sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
-    "new": "now, guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
+    "old": "    makeBlow(\n      shape,\n      ai.feet,\n      Math.atan2(dx, dz),\n      now,\n      sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR,\n      guard,\n      windup,\n    ),",
+    "new": "    makeBlow(shape, ai.feet, Math.atan2(dx, dz), now, guard === 'iron' ? IRON_COLOR : BLOW_COLOR, guard, windup),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "RVN5-pyre-unlocked",
     "file": "src/ai/tactics.js",
-    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz));",
-    "new": "  if (shape === 'pyre') b.ahead = 0;",
+    "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz)); // Its disc at my feet, locked",
+    "new": "  if (shape === 'pyre') b.ahead = 0; // Its disc at my feet, locked",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "RVN5-mult-unread",
     "file": "src/ai/tactics.js",
-    "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
-    "new": "b.sig = true; b.windPitch = sig.windPitch;",
+    "old": "    b.mult = sig.mult;\n    b.windPitch = sig.windPitch;",
+    "new": "    b.windPitch = sig.windPitch;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "RVN5-wind-unread",
     "file": "src/ai/tactics.js",
-    "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
-    "new": "b.sig = true; b.mult = sig.mult;",
+    "old": "    b.windPitch = sig.windPitch;\n    const [lo, hi] = sig.cooldown;",
+    "new": "    const [lo, hi] = sig.cooldown;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "RVN5-cooldown-unset",
     "file": "src/ai/tactics.js",
-    "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();\n",
-    "new": "",
+    "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();\n    ai._sigCall = now;",
+    "new": "    ai._sigCall = now;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "RVN5-uncalled",
     "file": "src/ai/tactics.js",
-    "old": "    ai._sigCall = now;\n",
-    "new": "",
+    "old": "    ai._sigCall = now;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "RVN5-signature-feints",
     "file": "src/ai/tactics.js",
-    "old": "if (chain === 0 && !sig && shape !== 'aimed'",
-    "new": "if (chain === 0 && shape !== 'aimed'",
+    "old": "    !sig &&\n    shape !== 'aimed' &&",
+    "new": "    shape !== 'aimed' &&",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "RVN5-pyre-swing-held",
     "file": "src/ai/tactics.js",
-    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';",
-    "new": "  const swings = shape !== 'aimed';",
+    "old": "  const swings = shape !== 'aimed' && shape !== 'pyre'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
+    "new": "  const swings = shape !== 'aimed'; // A shot draws no held swing - its landing looses it (ai._blowShot); RVN5: nor a pyre - its landing is a spell",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "RVN5-miss-no-overreach",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && !hit) { beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe); return true; }   // TELL4: missed - it stands spent\n    s.state = 'wait';",
-    "new": "    s.state = 'wait';",
+    "old": "    if (tf && !hit) {\n      beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe);\n      return true;\n    } // Missed - it stands spent\n    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
+    "new": "    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "RVN5-hit-swings-on",
     "file": "src/ai/tactics.js",
-    "old": "    s.state = 'wait';   // the aimed shot's law",
-    "new": "    s.state = 'engage'; ai._tacStrike = true; ai._blowSwing = true;   // the aimed shot's law",
+    "old": "    s.state = 'wait'; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
+    "new": "    s.state = 'engage';\n    ai._tacStrike = true;\n    ai._blowSwing = true; // the aimed shot's law: its landing was its blow - no swing, no spell on top",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "RVN5-reach-pyre-any-range",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return !!ai.inSight && targetKey(ai) === LOCAL;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return !!ai.inSight && targetKey(ai) === LOCAL; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "RVN5-reach-pyre-blind",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && targetKey(ai) === LOCAL;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && targetKey(ai) === LOCAL; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "RVN5-reach-pyre-at-anyone",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight;",
+    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
+    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight; // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "RVN5-reach-any-out-of-reach",
     "file": "src/ai/tactics.js",
-    "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return near;",
-    "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return true;",
+    "old": "  return near;",
+    "new": "  return true;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -770,8 +770,8 @@
   {
     "name": "RVN5-page-rank-1",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  const sig = signatureStamp(r);\n  if (!sig?.name) return '';",
-    "new": "  const sig = signatureStamp({ ...r, rank: Math.max(2, r?.rank | 0) });\n  if (!sig?.name) return '';",
+    "old": "  const sig = signatureStamp(r);",
+    "new": "  const sig = signatureStamp({ ...r, rank: Math.max(2, r?.rank | 0) });",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "RVN5-page-switch-unread",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${enhanced ? '' : ' (with Enhanced AI)'}.`;",
-    "new": ".`;",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "RVN5-page-iron-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${sig.iron ? ', unstoppable' : ''}",
-    "new": "",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -797,8 +797,8 @@
   {
     "name": "RVN5-page-shape-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${what ? ` - ${what}` : ''}",
-    "new": "",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -806,8 +806,8 @@
   {
     "name": "RVN5-page-row-unwired",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (sig) text.append(el('span', 'rvn-will', sig));\n",
-    "new": "",
+    "old": "  if (sig) text.append(el('span', 'rvn-will', sig));\n  const art = fallen ? '' : artWords(r); // RVN-ARTS (Revenants.md section 41)",
+    "new": "  const art = fallen ? '' : artWords(r); // RVN-ARTS (Revenants.md section 41)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

@@ -306,7 +306,6 @@ test('TESA10 the host by source: the base and the blocks off the game\'s rows be
   assert.match(W, /const _capitalNames = _capitalBase \? cityBlockNames\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\)\) : null;/);
   assert.ok(W.indexOf('const _capitalNames = ') < W.indexOf('  _classicRows = null;   // read, let go'));
   // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
-  // PIN MOVED (WG2-TOWNS): a World 2.0 town asked first past the Bay, before a capital (scenes/settle2Host.js)
   assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| settle2LocationAt\(px, py\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\) \|\| spawnPastBayAt\(px, py\);/);   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`   // PIN MOVED (SPAWN-WORLD 2026-10-26): online, the spawner's last - never on a place   // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js) - carried into scenes/spawnStandHost.js at the packages' merge (AUDIT BAY-LEFT)
 });
 

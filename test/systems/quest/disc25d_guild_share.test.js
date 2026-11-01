@@ -1,4 +1,4 @@
-// DISC25-D (2026-09-25, Sir McMobdon on Discord, the general chat: "Assumed it was cause I wasn't a part of same guild I
+// DISC25-D (2026-09-25, a player on Discord, the general chat: "Assumed it was cause I wasn't a part of same guild I
 // couldn't receive the quest. But I checked i am In guild. Still cant get quest shared"; and "Guard the guild quest -
 // Can't be done online", Malentor: "They did for me, but I had to wait the entire duration of time that the quest
 // mentions - fast forwarding by loitering isn't a possibility in online mode").

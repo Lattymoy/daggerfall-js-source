@@ -196,7 +196,7 @@ test('VC6c: a sun behind a bank throws no shafts - the gate is the cloud shadow 
   assert.match(air, /return uSunColor \* \(acc \/ \$\{AIR_SHAFT_TAPS\}\.0 \* uShaftParams\.y \* through \* through\);/, 'squared: a shaft needs a BEAM, so half the sun is a quarter of the rays (VC7b: the beams\' own function, the gate unchanged)');
   assert.match(air, /\$\{CLOUD_SHADOW_GLSL\}/, 'the same block the ground reads - one field, three consumers');
   assert.match(air, /uniform vec3 uEye;/);
-  assert.match(air, /shaft: P\(QUAD_VS, SHAFT_FS, \['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect', 'uSunOn', 'uViewRot', 'uCloudSky', 'uCloudSkyOn', 'uLightDir', 'uHaze'\]\)/, 'every uniform it declares has its location fetched (VC7b: the sky map and the haze)');
+  assert.match(air, /shaft: P\(QUAD_VS, SHAFT_FS, \[\n\s*'uDepth',\n\s*'uSun',\n\s*'uShaftParams',\n\s*'uSunColor',\n\s*'uProjInfo',\n\s*'uRect',\n\s*'uCanvas',\n\s*'uEye',\n\s*'uCloudShadowMap',\n\s*'uCloudShadowRect',\n\s*'uSunOn',\n\s*'uViewRot',\n\s*'uCloudSky',\n\s*'uCloudSkyOn',\n\s*'uLightDir',\n\s*'uHaze',\n\s*\]\)/, 'every uniform it declares has its location fetched (VC7b: the sky map and the haze)');
   assert.match(air, /gl\.uniform3fv\(S\.uEye, f\.eye\);/);   // VC7b: S is this.programs.shaft
   assert.match(air, /gl\.uniform4fv\(S\.uCloudShadowRect, deck\?\.rect \?\? this\._noDeck\);/);
   assert.match(air, /const S = this\.programs\.shaft;/, 'S is the shaft program');
@@ -209,7 +209,7 @@ test('VC6c: a sun behind a bank throws no shafts - the gate is the cloud shadow 
   // game: the gate could never have fired. No pin could see it - the pins
   // drive no frame - and the field probe did (tools/vc6ShaftProbe.mjs).
   assert.doesNotMatch(air, /f\.cloudShadow/, 'never a prepare input');
-  assert.match(air, /setCloudShadow\(deck\) \{ this\.cloudShadow = deck \?\? null; \}/);
+  assert.match(air, /setCloudShadow\(deck\) \{\n\s*this\.cloudShadow = deck \?\? null;\n\s*\}/);
   assert.match(air, /const deck = this\.cloudShadow;/, 'the shafts read what the resolve set');
   const r = read('src/render/renderer.js');
   assert.match(r, /this\._air\.setCloudShadow\(this\._cloudShadow \?\? this\._deckOwed\);[^\n]*\n\s*this\._air\.composite\(\);/, 'set at the resolve, immediately before the images are drawn');

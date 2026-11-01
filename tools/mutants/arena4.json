@@ -2,8 +2,8 @@
   {
     "name": "ARENA4-LADDER-SPEC-ROW",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "[[[138, 1]], [[136, 2]], [[143, 3]], [[143, 3]]],",
-    "new": "[[[138, 1]], [[137, 2]], [[143, 3]], [[143, 3]]],",
+    "old": "    [[[138, 1]], [[136, 2]], [[143, 3]], [[143, 3]]],",
+    "new": "    [[[138, 1]], [[137, 2]], [[143, 3]], [[143, 3]]],",
     "tests": [
       "test/net/arena/arena4_client.test.js",
       "test/net/arena/arena4_relay.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ARENA4-BEAST-HEALTH",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "2: Object.freeze([3, 12, 26, 1, 8])",
-    "new": "2: Object.freeze([3, 12, 27, 1, 8])",
+    "old": "  2: Object.freeze([3, 12, 26, 1, 8]),",
+    "new": "  2: Object.freeze([3, 12, 27, 1, 8]),",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "ARENA4-WEAPON-MAX",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "122: 18, 123: 21,",
-    "new": "122: 18, 123: 22,",
+    "old": "  123: 21,",
+    "new": "  123: 22,",
     "tests": [
       "test/net/arena/arena4_client.test.js",
       "test/net/arena/arena4_relay.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "ARENA4-SEASON-NONE-EARLIER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaSeasonOf = (nowS) => Math.max(1,",
-    "new": "export const arenaSeasonOf = (nowS) => Math.max(0,",
+    "old": "  Math.max(1, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_SEASON_S) + 1);",
+    "new": "  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_SEASON_S) + 1);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "ARENA4-SEASON-DAY-ONE-BASED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "% ARENA_SEASON_S / 86400) + 1;",
-    "new": "% ARENA_SEASON_S / 86400);",
+    "old": "  ) + 1;",
+    "new": "  );",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "ARENA4-ELO-SUM-KEPT",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "Math.max(ARENA_ELO_MIN, rb - d)];",
-    "new": "Math.max(ARENA_ELO_MIN, rb)];",
+    "old": "  return [Math.max(ARENA_ELO_MIN, ra + d), Math.max(ARENA_ELO_MIN, rb - d)];",
+    "new": "  return [Math.max(ARENA_ELO_MIN, ra + d), Math.max(ARENA_ELO_MIN, rb)];",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "ARENA4-ELO-FLOOR",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return [Math.max(ARENA_ELO_MIN, ra + d),",
-    "new": "return [(ra + d),",
+    "old": "  return [Math.max(ARENA_ELO_MIN, ra + d), Math.max(ARENA_ELO_MIN, rb - d)];",
+    "new": "  return [ra + d, Math.max(ARENA_ELO_MIN, rb - d)];",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -141,7 +141,7 @@
   {
     "name": "ARENA4-RATING-SIGNED",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaRatingOk = (r) => (Number.isSafeInteger(r) && r >= ARENA_ELO_MIN && r <= ARENA_ELO_MAX ? r : ARENA_ELO_START);",
+    "old": "export const arenaRatingOk = (r) =>\n  Number.isSafeInteger(r) && r >= ARENA_ELO_MIN && r <= ARENA_ELO_MAX ? r : ARENA_ELO_START;",
     "new": "export const arenaRatingOk = (r) => ARENA_ELO_START;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
@@ -195,8 +195,8 @@
   {
     "name": "ARENA4-PAIR-NARROWER-BAND",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (d > Math.min(matchBand(now - a.at), matchBand(now - b.at))) continue;",
-    "new": "if (d > Math.max(matchBand(now - a.at), matchBand(now - b.at))) continue;",
+    "old": "      if (d > Math.min(matchBand(now - a.at), matchBand(now - b.at))) continue;",
+    "new": "      if (d > Math.max(matchBand(now - a.at), matchBand(now - b.at))) continue;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "ARENA4-PAIR-NEAREST",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (d < gap || (d === gap && best && b.at < best.at)) { best = b; gap = d; }",
-    "new": "if (!best) { best = b; gap = d; }",
+    "old": "      if (d < gap || (d === gap && best && b.at < best.at)) {",
+    "new": "      if (!best) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "ARENA4-PAIR-OLDEST-FIRST",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "const list = [...queue].sort((x, y) => x.at - y.at ||",
-    "new": "const list = [...queue].sort((x, y) => y.at - x.at ||",
+    "old": "  const list = [...queue].sort((x, y) => x.at - y.at || (x.sub < y.sub ? -1 : 1));",
+    "new": "  const list = [...queue].sort((x, y) => y.at - x.at || (x.sub < y.sub ? -1 : 1));",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "ARENA4-PAIR-NEVER-SELF",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (b === a || b.sub === a.sub || taken.has(b.sub)",
-    "new": "if (b === a || taken.has(b.sub)",
+    "old": "      if (b === a || b.sub === a.sub || taken.has(b.sub) || apart(a.sub, b.sub) || !!a.casual !== !!b.casual) continue;",
+    "new": "      if (b === a || taken.has(b.sub) || apart(a.sub, b.sub) || !!a.casual !== !!b.casual) continue;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "ARENA4-CLIMB-GAP-NO-STEP",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "while (k < ARENA_TIERS * (ARENA_TIER_BOUTS + 1) && have.has(k)) k++;",
-    "new": "k = Math.min(have.size, ARENA_TIERS * (ARENA_TIER_BOUTS + 1));",
+    "old": "  while (k < ARENA_TIERS * (ARENA_TIER_BOUTS + 1) && have.has(k)) k++;",
+    "new": "  k = Math.min(have.size, ARENA_TIERS * (ARENA_TIER_BOUTS + 1));",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "ARENA4-CLIMB-CHAMPION-IN-ORDER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "have.has(ladderKey(i, ARENA_TIER_BOUTS)) && ladderKey(i, ARENA_TIER_BOUTS) < k)",
-    "new": "have.has(ladderKey(i, ARENA_TIER_BOUTS)))",
+    "old": "  const champs = Array.from(\n    { length: ARENA_TIERS },\n    (_, i) => have.has(ladderKey(i, ARENA_TIER_BOUTS)) && ladderKey(i, ARENA_TIER_BOUTS) < k,\n  );",
+    "new": "  const champs = Array.from({ length: ARENA_TIERS }, (_, i) => have.has(ladderKey(i, ARENA_TIER_BOUTS)));",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "ARENA4-CLIMB-NOTHING-PAST-GRAND",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return L.grand ? null : { tier: L.tier, bout: L.won };",
-    "new": "return { tier: L.tier, bout: L.won };",
+    "old": "  return L.grand ? null : { tier: L.tier, bout: L.won };",
+    "new": "  return { tier: L.tier, bout: L.won };",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "ARENA4-CAP-CRIT-DOUBLE",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return 2 * (reach + ARENA_MOD_MAX);",
-    "new": "return 1 * (reach + ARENA_MOD_MAX);",
+    "old": "  return 2 * (reach + ARENA_MOD_MAX);",
+    "new": "  return 1 * (reach + ARENA_MOD_MAX);",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "ARENA4-CAP-SPELL",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (r === ARENA_HIT.Spell) return ARENA_SPELL_MAX;",
-    "new": "if (false) return ARENA_SPELL_MAX;",
+    "old": "  if (r === ARENA_HIT.Spell) return ARENA_SPELL_MAX;",
+    "new": "  if (false) return ARENA_SPELL_MAX;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "ARENA4-IN-HIT-KIND",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "const d = num(m.d, 10000), r = int(m.r, 0, 2);",
-    "new": "const d = num(m.d, 10000), r = int(m.r, 0, 3);",
+    "old": "        r = int(m.r, 0, 2);",
+    "new": "        r = int(m.r, 0, 3);",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "ARENA4-IN-HIT-WHOM",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (typeof m.i !== 'string' || !FID_RE.test(m.i)) return null;",
-    "new": "if (typeof m.i !== 'string') return null;",
+    "old": "      if (typeof m.i !== 'string' || !FID_RE.test(m.i)) return null;",
+    "new": "      if (typeof m.i !== 'string') return null;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "ARENA4-IN-NO-ELEVENTH-TIER",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;\n",
-    "new": "if (int(m.tier, 0, ARENA_TIERS) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;\n",
+    "old": "      if (m.tier !== undefined || m.bout !== undefined) {\n        if (int(m.tier, 0, ARENA_TIERS - 1) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;",
+    "new": "      if (m.tier !== undefined || m.bout !== undefined) {\n        if (int(m.tier, 0, ARENA_TIERS) == null || int(m.bout, 0, ARENA_TIER_BOUTS) == null) return null;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "ARENA4-RC-FOREIGN-FIELDS",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "for (const k of FOREIGN) if (c[k] !== undefined) return false;",
-    "new": "for (const k of []) if (c[k] !== undefined) return false;",
+    "old": "  for (const k of FOREIGN) if (c[k] !== undefined) return false;",
+    "new": "  for (const k of []) if (c[k] !== undefined) return false;",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "ARENA4-RC-ONE-ACCOUNT-TWICE",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "|| c.f[0] === c.f[1]) return false;",
-    "new": ") return false;",
+    "old": "    if (\n      !Array.isArray(c.f) ||\n      c.f.length !== 2 ||\n      !c.f.every((s) => typeof s === 'string' && ID_RE.test(s)) ||\n      c.f[0] === c.f[1]\n    )",
+    "new": "    if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((s) => typeof s === 'string' && ID_RE.test(s)))",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -466,8 +466,8 @@
   {
     "name": "ARENA4-RC-RESULT-PAST-DRAW",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;",
-    "new": "if (!Number.isInteger(c.r)) return false;",
+    "old": "    if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;",
+    "new": "    if (!Number.isInteger(c.r)) return false;",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -475,8 +475,8 @@
   {
     "name": "ARENA4-RC-TTL-BOUND",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (c.e <= c.i || c.e - c.i > ARENA_RECEIPT_TTL_S) return false;",
-    "new": "if (c.e <= c.i) return false;",
+    "old": "  if (c.e <= c.i || c.e - c.i > ARENA_RECEIPT_TTL_S) return false;",
+    "new": "  if (c.e <= c.i) return false;",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "ARENA4-RC-READ-VERSION",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (parts.length !== 3 || parts[0] !== ARENA_RECEIPT_V) return null;",
-    "new": "if (parts.length !== 3) return null;",
+    "old": "  if (parts.length !== 3 || parts[0] !== ARENA_RECEIPT_V) return null;",
+    "new": "  if (parts.length !== 3) return null;",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "ARENA4-RC-UNSIGNED",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (!sig64) return { ok: false, why: 'unsigned' };",
-    "new": "if (false) return { ok: false, why: 'unsigned' };",
+    "old": "  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (false) return { ok: false, why: 'unsigned' };",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "ARENA4-RC-SIGNATURE",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (!good) return { ok: false, why: 'signature' };",
-    "new": "if (false) return { ok: false, why: 'signature' };",
+    "old": "  if (!good) return { ok: false, why: 'signature' };",
+    "new": "  if (false) return { ok: false, why: 'signature' };",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "ARENA4-RC-EXPIRED",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (nowS >= claims.e) return { ok: false, why: 'expired' };",
-    "new": "if (false) return { ok: false, why: 'expired' };",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "  if (false) return { ok: false, why: 'expired' };",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "ARENA4-RC-FUTURE",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
-    "new": "if (false) return { ok: false, why: 'future' };",
+    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "  if (false) return { ok: false, why: 'future' };",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "ARENA4-RC-MINT-REFUSES",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "if (!arenaReceiptValid(claims)) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
-    "new": "if (false) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
+    "old": "  if (!arenaReceiptValid(claims)) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
+    "new": "  if (false) throw new TypeError('mintArenaReceipt refused a claim set it could not verify');",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "ARENA4-RC-SIGNED-FLAG",
     "file": "src/net/arena/arenaReceipt.js",
-    "old": "signed: parts[2].length > 0 }",
-    "new": "signed: true }",
+    "old": "  return arenaReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;",
+    "new": "  return arenaReceiptValid(c) ? { ...c, signed: true } : null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "ARENA4-REF-REACH",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (r === ARENA_HIT.Melee && gap > ARENA_MELEE_REACH + ARENA_POSE_SLACK) {",
-    "new": "if (false) {",
+    "old": "  if (r === ARENA_HIT.Melee && gap > ARENA_MELEE_REACH + ARENA_POSE_SLACK) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "ARENA4-REF-RATE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "    if (M.hits.length >= ARENA_HIT_HZ_MAX) return out;\n",
-    "new": "",
+    "old": "    if (M.hits.length >= ARENA_HIT_HZ_MAX) return out;\n    // THE SPELL'S COUNT - ARENA4b: a cast once, by its sequence, however many bodies its blast met",
+    "new": "    // THE SPELL'S COUNT - ARENA4b: a cast once, by its sequence, however many bodies its blast met",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -565,8 +565,8 @@
   {
     "name": "ARENA4-REF-BUCKET-SPENT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  M.bucket -= got;\n",
-    "new": "",
+    "old": "  M.bucket -= got;\n  if (!(got > 0)) {",
+    "new": "  if (!(got > 0)) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "ARENA4-REF-BUCKET-REFILL",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket + (Math.max(0, now - M.bucketAt) / 1000) * ARENA_BUCKET_RATE);",
-    "new": "M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket);",
+    "old": "  M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket + (Math.max(0, now - M.bucketAt) / 1000) * ARENA_BUCKET_RATE);",
+    "new": "  M.bucket = Math.min(ARENA_BUCKET_DEPTH, M.bucket);",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -583,8 +583,8 @@
   {
     "name": "ARENA4-REF-CAP",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "Math.floor(Math.min(want, arenaBlowCap({ r, w, m, wa }), M.bucket))",
-    "new": "Math.floor(Math.min(want, M.bucket))",
+    "old": "  const got = Math.max(0, Math.floor(Math.min(want, arenaBlowCap({ r, w, m, wa }), M.bucket)));",
+    "new": "  const got = Math.max(0, Math.floor(Math.min(want, M.bucket)));",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -592,8 +592,8 @@
   {
     "name": "ARENA4-REF-POSE-SPEED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (Math.hypot(x - was[0], z - was[1]) > ARENA_SPEED_MAX * dt + ARENA_SPEED_SLACK + (dt > 2 ? ARENA_SPEED_MAX : 0)) return false;",
-    "new": "if (false) return false;",
+    "old": "    if (Math.hypot(x - was[0], z - was[1]) > ARENA_SPEED_MAX * dt + ARENA_SPEED_SLACK + (dt > 2 ? ARENA_SPEED_MAX : 0))\n      return false;",
+    "new": "    if (false) return false;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -601,8 +601,8 @@
   {
     "name": "ARENA4-REF-FALL-AT-ONE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (health <= 1) boutFell(st.b, to, now);\n",
-    "new": "",
+    "old": "  if (health <= 1) boutFell(st.b, to, now);\n}",
+    "new": "}",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "ARENA4-OWED-PVP-RESULT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "r: r.side === 0 ? 0 : r.side === 1 ? 1 : 2,",
-    "new": "r: r.side === 0 ? 1 : r.side === 1 ? 0 : 2,",
+    "old": "        r: r.side === 0 ? 0 : r.side === 1 ? 1 : 2,",
+    "new": "        r: r.side === 0 ? 1 : r.side === 1 ? 0 : 2,",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "ARENA4-OWED-PVP-SIDES",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "f: [st.f[0].sub, st.f[1].sub]",
-    "new": "f: [st.f[1].sub, st.f[0].sub]",
+    "old": "        f: [st.f[0].sub, st.f[1].sub],",
+    "new": "        f: [st.f[1].sub, st.f[0].sub],",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "ARENA4-OWED-LADDER-STEP",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "q: st.tier, u: st.bout,",
-    "new": "q: st.tier, u: st.tier,",
+    "old": "      u: st.bout,",
+    "new": "      u: st.tier,",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "ARENA4-OWED-LADDER-WON",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "r: r.side === 0 ? 1 : 0, h: r.how, ...(st.f[0].tk",
-    "new": "r: r.side === 0 ? 0 : 1, h: r.how, ...(st.f[0].tk",
+    "old": "      r: r.side === 0 ? 1 : 0,",
+    "new": "      r: r.side === 0 ? 0 : 1,",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -646,8 +646,8 @@
   {
     "name": "ARENA4-FORFEIT",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
-    "new": "if (false) {",
+    "old": "      if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -655,8 +655,8 @@
   {
     "name": "ARENA4-FORFEIT-AT-ONCE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
-    "new": "if (g != null && lf && !lf.out) {",
+    "old": "      if (g != null && now - g >= ARENA_GONE_MS && lf && !lf.out) {",
+    "new": "      if (g != null && lf && !lf.out) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -664,8 +664,8 @@
   {
     "name": "ARENA4-FORFEIT-SAID",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "      if (b.result) b.result.how = 'forfeit';\n",
-    "new": "",
+    "old": "        if (b.result) b.result.how = 'forfeit';\n        for (const e of b.events) if (e.k === 'end' && e.how === 'fall') e.how = 'forfeit';",
+    "new": "        for (const e of b.events) if (e.k === 'end' && e.how === 'fall') e.how = 'forfeit';",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -673,8 +673,8 @@
   {
     "name": "ARENA4-VOID-SAID",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "{ st.phase = 'void'; words.push({ k: 'no', m: 'void' }); }",
-    "new": "{ st.phase = 'void'; }",
+    "old": "      words.push({ k: 'no', m: 'void' });\n    }",
+    "new": "    }",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -682,8 +682,8 @@
   {
     "name": "ARENA4-NOT-YOURS",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "    if (!me) return { no: 'not yours' };\n",
-    "new": "",
+    "old": "    if (!me) return { no: 'not yours' };\n    me.in = true;",
+    "new": "    me.in = true;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "ARENA4-SEATS-BOUNDED",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (st.spectators >= ARENA_SPECTATORS_MAX) return { no: 'seats full' };\n",
-    "new": "",
+    "old": "  if (st.spectators >= ARENA_SPECTATORS_MAX) return { no: 'seats full' };\n  st.spectators++;",
+    "new": "  st.spectators++;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "ARENA4-CHEER-ONCE",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "  if (now - (st.cheer[key] ?? -Infinity) < ARENA_CHEER_MS) return null;\n",
-    "new": "",
+    "old": "  if (now - (st.cheer[key] ?? -Infinity) < ARENA_CHEER_MS) return null;\n  st.cheer[key] = now;",
+    "new": "  st.cheer[key] = now;",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -709,8 +709,8 @@
   {
     "name": "ARENA4-AI-WALK",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (!a.mv || !said || Math.hypot(said[0] - tx, said[1] - tz) > AI_RESAY_M || now - a.mv.at > AI_RESAY_MS) {",
-    "new": "if (false) {",
+    "old": "  if (!a.mv || !said || Math.hypot(said[0] - tx, said[1] - tz) > AI_RESAY_M || now - a.mv.at > AI_RESAY_MS) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -718,8 +718,8 @@
   {
     "name": "ARENA4-AI-BLOW-IN-REACH",
     "file": "src/net/arena/arenaBrain.js",
-    "old": ": Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);",
-    "new": ": true);",
+    "old": "    const hit =\n      !!(t && !t.out && p) &&\n      (s\n        ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1])\n        : Math.hypot(p[0] - here[0], p[1] - here[1]) <= a.reach + ARENA_POSE_SLACK * 0.5);",
+    "new": "    const hit = !!(t && !t.out && p) && (s ? inBlow({ kind: s, origin: [ox, 0, oz], yaw: yw }, p[0], p[1]) : true);",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -727,8 +727,8 @@
   {
     "name": "ARENA4-AI-BLOW-TOLD",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "if (tg.startsWith('p')) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
-    "new": "if (false) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
+    "old": "      if (tg.startsWith('p')) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
+    "new": "      if (false) out.push({ k: 'blow', i: a.id, d: dmg, to: tg });",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -736,8 +736,8 @@
   {
     "name": "ARENA4-AI-TELEGRAPH",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "      out.push({ k: 'atk', i: a.id, at: a.atk.at, x: foe.p[0], z: foe.p[1], tg: foe.id });\n",
-    "new": "",
+    "old": "      out.push({ k: 'atk', i: a.id, at: a.atk.at, x: foe.p[0], z: foe.p[1], tg: foe.id });\n    }",
+    "new": "    }",
     "tests": [
       "test/net/arena/arena4_relay.test.js"
     ]
@@ -754,8 +754,8 @@
   {
     "name": "ARENA4-MARKS-RING",
     "file": "src/net/arena/arenaBrain.js",
-    "old": "const a = (s / sides) * Math.PI * 2 + Math.PI;",
-    "new": "const a = (s / sides) * Math.PI * 2;",
+    "old": "        const a = (s / sides) * Math.PI * 2 + Math.PI;",
+    "new": "        const a = (s / sides) * Math.PI * 2;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -763,8 +763,8 @@
   {
     "name": "ARENA4-FOLD-OFFER-MY-CLOCK",
     "file": "src/net/arena/arenaLink.js",
-    "old": "until: w.until - off, casual: w.u === 1 }",
-    "new": "until: w.until, casual: w.u === 1 }",
+    "old": "        offer: { o: w.o, vs: w.vs, until: w.until - off, casual: w.u === 1 },",
+    "new": "        offer: { o: w.o, vs: w.vs, until: w.until, casual: w.u === 1 },",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -772,8 +772,8 @@
   {
     "name": "ARENA4-FOLD-CALL-GOING",
     "file": "src/net/arena/arenaLink.js",
-    "old": "case 'go': return { ...s, queue: 'going',",
-    "new": "case 'go': return { ...s, queue: 'queued',",
+    "old": "        queue: 'going',",
+    "new": "        queue: 'queued',",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -781,8 +781,8 @@
   {
     "name": "ARENA4-FOLD-REFUSAL-SAID",
     "file": "src/net/arena/arenaLink.js",
-    "old": "case 'qx': return { ...s, queue: 'idle', offer: null, said: w.m,",
-    "new": "case 'qx': return { ...s, queue: 'idle', offer: null, said: null,",
+    "old": "      return { ...s, queue: 'idle', offer: null, said: w.m, heardAt: now };",
+    "new": "      return { ...s, queue: 'idle', offer: null, said: null, heardAt: now };",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -790,8 +790,8 @@
   {
     "name": "ARENA4-MIRROR-EVENT-TIME",
     "file": "src/net/arena/arenaLink.js",
-    "old": "const at = e0.at - clock.off;",
-    "new": "const at = e0.at;",
+    "old": "    const at = e0.at - clock.off;",
+    "new": "    const at = e0.at;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "ARENA4-MIRROR-OFFSET-HIGHEST",
     "file": "src/net/arena/arenaLink.js",
-    "old": "Math.max(e0.at - now, clock.off - 5)",
-    "new": "Math.min(e0.at - now, clock.off - 5)",
+    "old": "    clock.off = clock.off == null ? e0.at - now : Math.max(e0.at - now, clock.off - 5);",
+    "new": "    clock.off = clock.off == null ? e0.at - now : Math.min(e0.at - now, clock.off - 5);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "ARENA4-MIRROR-OUT",
     "file": "src/net/arena/arenaLink.js",
-    "old": "if (OUT_EVENTS.has(e.k)) {",
-    "new": "if (false) {",
+    "old": "    if (OUT_EVENTS.has(e.k)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "ARENA4-MIRROR-MY-HEALTH",
     "file": "src/net/arena/arenaLink.js",
-    "old": "if (id === M?.me) mine = [hp, max];",
-    "new": "if (id !== M?.me) mine = [hp, max];",
+    "old": "    if (id === M?.me) mine = [hp, max];",
+    "new": "    if (id !== M?.me) mine = [hp, max];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "ARENA4-MIRROR-AI-NAMES",
     "file": "src/net/arena/arenaLink.js",
-    "old": "names(k - st.f.filter((x) => !x[6]).length, mob)",
-    "new": "names(k, mob)",
+    "old": "    const who = ai ? names(k - st.f.filter((x) => !x[6]).length, mob) : null;",
+    "new": "    const who = ai ? names(k, mob) : null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -835,7 +835,7 @@
   {
     "name": "ARENA4-MIRROR-PHASE",
     "file": "src/net/arena/arenaLink.js",
-    "old": "if (PHASE_EVENTS.has(e.k) && b.phase !== e.k) { b.phase = e.k; b.phaseAt = at; }",
+    "old": "    if (PHASE_EVENTS.has(e.k) && b.phase !== e.k) {\n      b.phase = e.k;\n      b.phaseAt = at;\n    }",
     "new": "",
     "tests": [
       "test/net/arena/arena4_client.test.js"
@@ -844,8 +844,8 @@
   {
     "name": "ARENA4-MIRROR-HIT-TALLY",
     "file": "src/net/arena/arenaLink.js",
-    "old": "if (f) { f.dealt += e.dmg ?? 0; f.hits++; }",
-    "new": "if (f) { f.hits++; }",
+    "old": "        f.dealt += e.dmg ?? 0;\n        f.hits++;",
+    "new": "        f.hits++;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -853,8 +853,8 @@
   {
     "name": "ARENA4-MIRROR-WINNERS",
     "file": "src/net/arena/arenaLink.js",
-    "old": "b.fighters.filter((f) => f.side === side).map((f) => f.id), losers",
-    "new": "b.fighters.filter((f) => f.side !== side).map((f) => f.id), losers",
+    "old": "    winners: side == null ? [] : b.fighters.filter((f) => f.side === side).map((f) => f.id),",
+    "new": "    winners: side == null ? [] : b.fighters.filter((f) => f.side !== side).map((f) => f.id),",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -862,8 +862,8 @@
   {
     "name": "ARENA4-WALK-RELAY-CLOCK",
     "file": "src/net/arena/arenaLink.js",
-    "old": "const along = Math.min(len, (Math.max(0, now - (mv.at - off)) / 1000) * mv.v);",
-    "new": "const along = Math.min(len, (Math.max(0, now - mv.at) / 1000) * mv.v);",
+    "old": "  const along = Math.min(len, (Math.max(0, now - (mv.at - off)) / 1000) * mv.v);",
+    "new": "  const along = Math.min(len, (Math.max(0, now - mv.at) / 1000) * mv.v);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -871,8 +871,8 @@
   {
     "name": "ARENA4-WALK-DONE",
     "file": "src/net/arena/arenaLink.js",
-    "old": "* mv.v >= Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
-    "new": "* mv.v >= 2 * Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
+    "old": "  !mv || !(mv.v > 0) || (Math.max(0, now - (mv.at - off)) / 1000) * mv.v >= Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
+    "new": "  !mv || !(mv.v > 0) || (Math.max(0, now - (mv.at - off)) / 1000) * mv.v >= 2 * Math.hypot(mv.tx - mv.x, mv.tz - mv.z);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -880,8 +880,8 @@
   {
     "name": "ARENA4-CLAIMS-ANOTHERS",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "(c.a === 'l' ? c.s === me : Array.isArray(c.f) && c.f.includes(me))",
-    "new": "(c.a === 'l' ? true : Array.isArray(c.f) && c.f.includes(me))",
+    "old": "  !!c && !!me && (c.a === 'l' ? c.s === me : Array.isArray(c.f) && c.f.includes(me));",
+    "new": "  !!c && !!me && (c.a === 'l' ? true : Array.isArray(c.f) && c.f.includes(me));",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -889,8 +889,8 @@
   {
     "name": "ARENA4-CLAIMS-GUEST-KEPT",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';",
-    "new": "if (answer?.ok) return 'done';",
+    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, counted before, out of order",
+    "new": "  if (answer?.ok) return 'done'; // counted, counted before, out of order",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "ARENA4-CLAIMS-MENDABLE",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "return answer?.error === 'receipt' && !ARENA_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
-    "new": "return answer?.error === 'receipt' ? 'done' : 'keep';",
+    "old": "  return answer?.error === 'receipt' && !ARENA_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return answer?.error === 'receipt' ? 'done' : 'keep';",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -907,8 +907,8 @@
   {
     "name": "ARENA4-CLAIMS-ONE-A-BOUT",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "if (!list.some((k) => arenaKeptReceipt(k) === r || readArenaReceipt(arenaKeptReceipt(k))?.j === c.j)) keep(",
-    "new": "if (true) keep(",
+    "old": "      if (!list.some((k) => arenaKeptReceipt(k) === r || readArenaReceipt(arenaKeptReceipt(k))?.j === c.j))\n        keep([...list, arenaKeptEntry(r, character(), name())].slice(-ARENA_CLAIMS_MAX));",
+    "new": "      if (true) keep([...list, arenaKeptEntry(r, character(), name())].slice(-ARENA_CLAIMS_MAX));",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -916,8 +916,8 @@
   {
     "name": "ARENA4-CLAIMS-SETTLED-LET-GO",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "if (arenaClaimVerdict(answer) === 'done') { settled.add(r);",
-    "new": "if (false) { settled.add(r);",
+    "old": "        if (arenaClaimVerdict(answer) === 'done') {",
+    "new": "        if (false) {",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -925,8 +925,8 @@
   {
     "name": "ARENA4-CLAIMS-UNSIGNED-NOT-KEPT",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
-    "new": "return c && (t == null || c.e > t) ? c : null;",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -934,8 +934,8 @@
   {
     "name": "ARENA4-CLAIMS-COUNTED-SAID",
     "file": "src/net/arena/arenaClaims.js",
-    "old": "if (answer?.ok && answer.data?.recorded === true) { recorded++; onCounted(answer.data); }",
-    "new": "if (answer?.ok && answer.data?.recorded === true) { recorded++; }",
+    "old": "          onCounted(answer.data);\n        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -943,8 +943,8 @@
   {
     "name": "ARENA4-BOARD-OFFER-PRESSES",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts = left > 0 ? [{ act: 'accept', label: O().accept, why: null }, { act: 'decline', label: O().decline, why: null }] : [];",
-    "new": "acts = [];",
+    "old": "    acts =\n      left > 0\n        ? [\n            { act: 'accept', label: O().accept, why: null },\n            { act: 'decline', label: O().decline, why: null },\n          ]\n        : [];",
+    "new": "    acts = [];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -952,8 +952,8 @@
   {
     "name": "ARENA4-BOARD-OFFLINE-PRESS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const why = st === 'off' ? O().whyOffline :",
-    "new": "const why = st === 'off' ? null :",
+    "old": "  const why = st === 'off' ? O().whyOffline : guest ? O().whyGuest : busy ? busyWhy : null;",
+    "new": "  const why = st === 'off' ? null : guest ? O().whyGuest : busy ? busyWhy : null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "ARENA4-BOARD-ACCOUNT-LADDER",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const oo = { ...o, ladder: on.board.me?.ladder ?? o.ladder };",
-    "new": "const oo = { ...o };",
+    "old": "  const oo = { ...o, ladder: on.board.me?.ladder ?? o.ladder };",
+    "new": "  const oo = { ...o };",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -970,8 +970,8 @@
   {
     "name": "ARENA4-BOARD-OFFER-CLOCK",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "Math.ceil(((hall.offer.until ?? 0) - now) / 1000)",
-    "new": "Math.ceil((hall.offer.until ?? 0) / 1000)",
+    "old": "    const left = Math.max(0, Math.ceil(((hall.offer.until ?? 0) - now) / 1000));",
+    "new": "    const left = Math.max(0, Math.ceil((hall.offer.until ?? 0) / 1000));",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -979,8 +979,8 @@
   {
     "name": "ARENA4-BOARD-UNQUEUE",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "if (st === 'queued') { acts = [{ act: 'unqueue',",
-    "new": "if (st === 'queued') { acts = [{ act: 'queue',",
+    "old": "    acts = [{ act: 'unqueue', label: O().leaveQueue, why: null }];",
+    "new": "    acts = [{ act: 'queue', label: O().leaveQueue, why: null }];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -988,8 +988,8 @@
   {
     "name": "ARENA4-BOARD-RATING-CHIP",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "rating: me.pvp ? O().ratingChip(me.pvp.rating) : null,",
-    "new": "rating: null,",
+    "old": "    rating: me.pvp ? O().ratingChip(me.pvp.rating) : null,",
+    "new": "    rating: null,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -997,8 +997,8 @@
   {
     "name": "ARENA4-BOARD-LAUREL-YOURS",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "laurelYou: !!me.banner && t.laurel === me.banner,",
-    "new": "laurelYou: !!me.banner && t.laurel !== me.banner,",
+    "old": "    laurelYou: !!me.banner && t.laurel === me.banner,",
+    "new": "    laurelYou: !!me.banner && t.laurel !== me.banner,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1006,8 +1006,8 @@
   {
     "name": "ARENA4-BOARD-TITLE-PER-TIER",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "const tiers = Math.floor(Math.max(0, n | 0) / (BOUTS_PER_TIER + 1));",
-    "new": "const tiers = Math.floor(Math.max(0, n | 0) / BOUTS_PER_TIER);",
+    "old": "  const tiers = Math.floor(Math.max(0, n | 0) / (BOUTS_PER_TIER + 1));",
+    "new": "  const tiers = Math.floor(Math.max(0, n | 0) / BOUTS_PER_TIER);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1015,8 +1015,8 @@
   {
     "name": "ARENA4-BOARD-ONLINE-RULES",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "  rules.push({ head: O().rules.head, lines: [...O().rules.lines] });\n",
-    "new": "",
+    "old": "  rules.push({ head: O().rules.head, lines: [...O().rules.lines] });\n  return {",
+    "new": "  return {",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1024,8 +1024,8 @@
   {
     "name": "ARENA4-BOARD-WATCH",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts: [{ act: 'spectate', label: W().watch, why: busy ? busyWhy : null }],",
-    "new": "acts: [],",
+    "old": "    acts: [{ act: 'spectate', label: W().watch, why: busy ? busyWhy : null }],",
+    "new": "    acts: [],",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1033,8 +1033,8 @@
   {
     "name": "ARENA4-BOARD-CHAMPION-NAMED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "champion: board.champion ? O().champion(board.champion.name) : O().noChampion },",
-    "new": "champion: O().noChampion },",
+    "old": "      champion: board.champion ? O().champion(board.champion.name) : O().noChampion,",
+    "new": "      champion: O().noChampion,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1042,8 +1042,8 @@
   {
     "name": "ARENA4-BOARD-ME-PINNED",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "pinned: b.pinned ? row(b.pinned, cells(b.pinned)) : null, total: b.total });",
-    "new": "pinned: null, total: b.total });",
+    "old": "  const map = (b, cells) => ({\n    rows: b.rows.map((r) => row(r, cells(r))),\n    pinned: b.pinned ? row(b.pinned, cells(b.pinned)) : null,\n    total: b.total,\n  });",
+    "new": "  const map = (b, cells) => ({ rows: b.rows.map((r) => row(r, cells(r))), pinned: null, total: b.total });",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1051,8 +1051,8 @@
   {
     "name": "ARENA4-DRIVER-HEALTH-SCALED",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const h = Math.max(1, Math.round((hp / Math.max(1, max)) * Math.max(1, P.maxHealth ?? 1)));",
-    "new": "const h = Math.max(1, hp);",
+    "old": "          const h = Math.max(1, Math.round((hp / Math.max(1, max)) * Math.max(1, P.maxHealth ?? 1)));",
+    "new": "          const h = Math.max(1, hp);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1069,8 +1069,8 @@
   {
     "name": "ARENA4-DRIVER-MISS-TOLD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (me && !me.out && foe) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
-    "new": "if (false) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
+    "old": "      if (me && !me.out && foe) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
+    "new": "      if (false) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1078,8 +1078,8 @@
   {
     "name": "ARENA4-DRIVER-VERDICT-WORD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "r.how === 'yield' ? V.yield(w, l) : r.how === 'ringout' ? V.ringout(w, l) : r.how === 'forfeit'",
-    "new": "r.how === 'yield' ? V.fall(w, l) : r.how === 'ringout' ? V.ringout(w, l) : r.how === 'forfeit'",
+    "old": "        : r.how === 'judges'\n          ? V.judges(w)\n          : r.how === 'yield'\n            ? V.yield(w, l)\n            : r.how === 'ringout'\n              ? V.ringout(w, l)\n              : r.how === 'forfeit'",
+    "new": "        : r.how === 'judges'\n          ? V.judges(w)\n          : r.how === 'yield'\n            ? V.fall(w, l)\n            : r.how === 'ringout'\n              ? V.ringout(w, l)\n              : r.how === 'forfeit'",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1087,8 +1087,8 @@
   {
     "name": "ARENA4-PUPPET-OWNER",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "foe._ownFrom = ARENA_PUPPET_OWNER; foe._ownI = a.i;",
-    "new": "foe._ownFrom = null; foe._ownI = a.i;",
+    "old": "        foe._ownFrom = ARENA_PUPPET_OWNER;",
+    "new": "        foe._ownFrom = null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1096,8 +1096,8 @@
   {
     "name": "ARENA4-PUPPET-WALK-CARRIED",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      foe._pup.feet[0] = p[0]; foe._pup.feet[2] = p[1];\n",
-    "new": "",
+    "old": "      foe._pup.feet[0] = p[0];\n      foe._pup.feet[2] = p[1];\n      if (Number.isFinite(foe.ai?.feet?.[1])) foe._pup.feet[1] = foe.ai.feet[1];",
+    "new": "      if (Number.isFinite(foe.ai?.feet?.[1])) foe._pup.feet[1] = foe.ai.feet[1];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1105,8 +1105,8 @@
   {
     "name": "ARENA4-PUPPET-STOOD-AS-SAID",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const feet = at ? [at[0], c[1], at[1]] : [c[0], c[1], c[2]];",
-    "new": "const feet = [c[0], c[1], c[2]];",
+    "old": "    const feet = at ? [at[0], c[1], at[1]] : [c[0], c[1], c[2]];",
+    "new": "    const feet = [c[0], c[1], c[2]];",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1114,8 +1114,8 @@
   {
     "name": "ARENA4-PUPPET-NO-SENSES",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (foe.ai) { foe.ai.isHostile = false; foe.ai.target = null; }",
-    "new": "if (foe.ai) { foe.ai.target = null; }",
+    "old": "          foe.ai.isHostile = false;\n          foe.ai.target = null;",
+    "new": "          foe.ai.target = null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1123,8 +1123,8 @@
   {
     "name": "ARENA4-PUPPET-TELEGRAPH",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (foe?._pup) { if (!w.s) foe._pup.strike = 'melee';",
-    "new": "if (foe?._pup) { if (!w.s) foe._pup.strike = null;",
+    "old": "          if (!w.s) foe._pup.strike = 'melee';",
+    "new": "          if (!w.s) foe._pup.strike = null;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1132,8 +1132,8 @@
   {
     "name": "ARENA4-PURSE-ON-LOSS",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const won = !!mine && r.side === mine.side;",
-    "new": "const won = !!mine;",
+    "old": "    const won = !!mine && r.side === mine.side;",
+    "new": "    const won = !!mine;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1141,8 +1141,8 @@
   {
     "name": "ARENA4-GLUE-IN-IN-ROOM",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "const here = s.room === bout.room && s.status === 'open';",
-    "new": "const here = s.status === 'open';",
+    "old": "      const here = s.room === bout.room && s.status === 'open';",
+    "new": "      const here = s.status === 'open';",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1150,8 +1150,8 @@
   {
     "name": "ARENA4-GLUE-IN-ONCE",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "bout.sent = s.sendArena?.(inWord) === true;",
-    "new": "bout.sent = false; s.sendArena?.(inWord);",
+    "old": "        bout.sent = s.sendArena?.(inWord) === true;",
+    "new": "        bout.sent = false;\n        s.sendArena?.(inWord);",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1159,8 +1159,8 @@
   {
     "name": "ARENA4-GLUE-RIVAL-SIDE",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "b.kind === 'pvp' && b.side === 1 ? 'rival' : 'ladder';",
-    "new": "b.kind === 'pvp' && b.side === 0 ? 'rival' : 'ladder';",
+    "old": "    const kind = b.kind === 'watch' ? 'watch' : b.kind === 'pvp' && b.side === 1 ? 'rival' : 'ladder';",
+    "new": "    const kind = b.kind === 'watch' ? 'watch' : b.kind === 'pvp' && b.side === 0 ? 'rival' : 'ladder';",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1168,8 +1168,8 @@
   {
     "name": "ARENA4-GLUE-MY-FIGHTER-ID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "const me = b.kind === 'watch' ? '' : b.kind === 'pvp' ? `p${b.side ?? 0}` : 'p0';",
-    "new": "const me = b.kind === 'watch' ? '' : 'p0';",
+    "old": "    const me = b.kind === 'watch' ? '' : b.kind === 'pvp' ? `p${b.side ?? 0}` : 'p0';",
+    "new": "    const me = b.kind === 'watch' ? '' : 'p0';",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1177,8 +1177,8 @@
   {
     "name": "ARENA4-GLUE-RECEIPT-CARRIED",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (w.k === 'rc') { claims.add(w.r); return true; }",
-    "new": "if (w.k === 'rc') { return true; }",
+    "old": "      claims.add(w.r);\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1186,8 +1186,8 @@
   {
     "name": "ARENA4-GLUE-HIT-WHOLE",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "d: Math.max(0, Math.round(Number(d) || 0))",
-    "new": "d: Math.max(0, Number(d) || 0)",
+    "old": "      d: Math.max(0, Math.round(Number(d) || 0)),",
+    "new": "      d: Math.max(0, Number(d) || 0),",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1195,8 +1195,8 @@
   {
     "name": "ARENA4-GLUE-HIT-KIND",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "export const hitKindOf = (kind) => (kind === 'arrow' ? ARENA_HIT.Shaft",
-    "new": "export const hitKindOf = (kind) => (kind === 'arrows' ? ARENA_HIT.Shaft",
+    "old": "  kind === 'arrow' ? ARENA_HIT.Shaft : kind === 'spell' ? ARENA_HIT.Spell : ARENA_HIT.Melee;",
+    "new": "  kind === 'arrows' ? ARENA_HIT.Shaft : kind === 'spell' ? ARENA_HIT.Spell : ARENA_HIT.Melee;",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1204,8 +1204,8 @@
   {
     "name": "ARENA4-GLUE-QUEUE-LEVEL",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "const q = { k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner()",
-    "new": "const q = { k: 'q', ...myBanner()",
+    "old": "      const q = {\n        k: 'q',\n        lv: Math.max(1, Math.floor(deps.level?.() ?? 1)),\n        ...myBanner(),\n        ...(casual ? { u: 1 } : {}),\n      };",
+    "new": "      const q = { k: 'q', ...myBanner(), ...(casual ? { u: 1 } : {}) };",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1213,8 +1213,8 @@
   {
     "name": "ARENA4-GLUE-ACCEPT-YES",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "hallSend({ k: kind === 'accept' ? 'y' : 'n', o });",
-    "new": "hallSend({ k: kind === 'accept' ? 'n' : 'y', o });",
+    "old": "      hallSend({ k: kind === 'accept' ? 'y' : 'n', o });",
+    "new": "      hallSend({ k: kind === 'accept' ? 'n' : 'y', o });",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1222,8 +1222,8 @@
   {
     "name": "ARENA4-GLUE-LADDER-NEXT",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });",
-    "new": "const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: 0, next });",
+    "old": "    const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });",
+    "new": "    const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: 0, next });",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1231,8 +1231,8 @@
   {
     "name": "ARENA4-GLUE-LADDER-IN-STEP",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ k: 'in', r: 'f', tier: bout.tier, bout: bout.bout,",
-    "new": "{ k: 'in', r: 'f', tier: bout.tier, bout: 0,",
+    "old": "                  bout: bout.bout,",
+    "new": "                  bout: 0,",
     "tests": [
       "test/net/arena/arena4_client.test.js"
     ]
@@ -1811,8 +1811,8 @@
   {
     "name": "ARENA4-TITLE-GRAND-THE-ROW",
     "file": "server-account/src/titles.js",
-    "old": "if (player?.arena?.grand === true) held.push('grandchampion');",
-    "new": "if (player?.arena?.grand !== false) held.push('grandchampion');",
+    "old": "  if (player?.arena?.grand === true) held.push('grandchampion');",
+    "new": "  if (player?.arena?.grand !== false) held.push('grandchampion');",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -1820,8 +1820,8 @@
   {
     "name": "ARENA4-TITLE-ARENACHAMPION",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.arena?.champion === true) held.push('arenachampion');\n",
-    "new": "",
+    "old": "  if (player?.arena?.champion === true) held.push('arenachampion');\n  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
+    "new": "  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -1829,8 +1829,8 @@
   {
     "name": "ARENA4-GLYPH-LAUREL",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.arena?.champion === true) on.push('laurel');",
-    "new": "  if (false) on.push('laurel');",
+    "old": "  if (player?.arena?.champion === true) on.push('laurel'); // ARENA4: the laurel, true of the season's #1 while they hold it",
+    "new": "  if (false) on.push('laurel'); // ARENA4: the laurel, true of the season's #1 while they hold it",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]

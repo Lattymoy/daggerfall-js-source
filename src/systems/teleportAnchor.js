@@ -57,14 +57,17 @@
 // the plan and does the work, because the three arms land in three
 // different hosts and only they know how.
 
-import { stampLayout, layoutStampOfPixel } from './layoutPins.js';   // WD3: an anchor set inside keeps its town's layout
-import { instanceOfWord } from '../net/instanceRoom.js';   // INSTANCES (the audit): a dungeon anchor's room
+import { stampLayout, layoutStampOfPixel } from './layoutPins.js'; // WD3: an anchor set inside keeps its town's layout
+import { instanceOfWord } from '../net/instanceRoom.js'; // INSTANCES (the audit): a dungeon anchor's room
 
 /** WorldContext (DaggerfallUnityEnums.cs:582-588), whole. The anchor
  *  carries one, and the interior arm of the compensation restore
  *  (:140-143) tests it by name. */
 export const WORLD_CONTEXT = Object.freeze({
-  Nothing: 'Nothing', Exterior: 'Exterior', Interior: 'Interior', Dungeon: 'Dungeon',
+  Nothing: 'Nothing',
+  Exterior: 'Exterior',
+  Interior: 'Interior',
+  Dungeon: 'Dungeon',
 });
 
 /** The two TEXT.RSC record ids the effect raises (:32-33). */
@@ -111,8 +114,19 @@ export const ANCHOR_MUST_BE_SET = 4001;
  * the number would only have been a field no host reads.
  */
 export function makeAnchor({
-  worldContext = WORLD_CONTEXT.Exterior, pixel, nativeX, nativeZ, y = 0,
-  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null, groundFrame = null, dungeon = null,
+  worldContext = WORLD_CONTEXT.Exterior,
+  pixel,
+  nativeX,
+  nativeZ,
+  y = 0,
+  local = null,
+  yaw = 0,
+  pitch = 0,
+  interior = null,
+  buildingKey = 0,
+  terrainScale = null,
+  groundFrame = null,
+  dungeon = null,
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
@@ -122,18 +136,25 @@ export function makeAnchor({
     // version reads the same way in both directions.
     mode: insideBuilding ? 'interior' : insideDungeon ? 'dungeon' : 'world-exterior',
     pixel: { x: pixel.x, y: pixel.y },
-    nativeX, nativeZ, y,
+    nativeX,
+    nativeZ,
+    y,
     // TERRAIN-SCALE1: the terrain scale `y` stood on; null on an anchor from before the stamp (the prefab's 1.5)
     terrainScale: terrainScale > 0 ? terrainScale : null,
     // BAY-LEFT-GROUND (bible/03-World/Landforms.md, D5): the law of `y`'s frame (terrainSampler.js GROUND_FRAME_LAW); null on an
     // anchor from before it, which past the Bay stood the shaped ground
     groundFrame: groundFrame > 0 ? groundFrame : null,
     local: local ? [...local] : null,
-    yaw, pitch,
-    insideBuilding, insideDungeon,
+    yaw,
+    pitch,
+    insideBuilding,
+    insideDungeon,
     buildingKey: insideBuilding ? buildingKey : 0,
     interior: insideBuilding ? interior : null,
-    dungeon: insideDungeon && dungeon ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true } : null,   // INSTANCES (the audit)
+    dungeon:
+      insideDungeon && dungeon
+        ? { ...(instanceOfWord(dungeon.ins) ? { ins: dungeon.ins } : {}), whole: dungeon.whole === true }
+        : null, // INSTANCES (the audit)
   };
   // WD3: an anchor inside a building re-enters it by its door, and a door names a building only in the layout its town
   // stood in - so it carries that layout, and a load keeps the town in it (systems/layoutPins.js); none for classic
@@ -211,15 +232,15 @@ export function teleportPlan(anchor, here = {}) {
     return {
       kind: 'same-interior',
       local: anchor.local ? [...anchor.local] : null,
-      yaw: anchor.yaw ?? 0, pitch: anchor.pitch ?? 0,
+      yaw: anchor.yaw ?? 0,
+      pitch: anchor.pitch ?? 0,
       // The dungeon arm of IsSameInterior raises the flag on its way
       // out (:216); the building arm does not.
       teleportedIntoDungeon: !!here.insideDungeon,
     };
   }
   const ctx = anchorContextOf(anchor);
-  const arrive = ctx === WORLD_CONTEXT.Dungeon ? 'dungeon'
-    : ctx === WORLD_CONTEXT.Interior ? 'building' : 'exterior';
+  const arrive = ctx === WORLD_CONTEXT.Dungeon ? 'dungeon' : ctx === WORLD_CONTEXT.Interior ? 'building' : 'exterior';
   return {
     kind: 'cross',
     // "Cache scene before departing" (:145-151), the three-way arm:

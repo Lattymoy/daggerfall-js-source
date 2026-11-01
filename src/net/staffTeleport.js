@@ -3,28 +3,39 @@
 // authenticates staff and routes one target's fresh answer only to its asker.
 import { privateInteriorOf } from './privateInterior.js';
 import { boatUid, readSailingCabin } from './boatIdentity.js';
-import { instanceOfWord, instanceOf, instanceWord } from './instanceRoom.js';   // INSTANCES (the audit): a place's instance, where the player stands in one
-import { validPartyPose, gatePixelOk, worldPixelOk } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it; WW2: a gate's pixel, its lane's map; AUDIT RELEASE R2-1: the world's pixel
-import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // AUDIT GATE-COURTS C6: a court's number on a staff landing - gateCourts.js imports nothing
-import { t } from '../systems/textManager.js';   // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
-export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
+import { instanceOfWord, instanceOf, instanceWord } from './instanceRoom.js'; // INSTANCES (the audit): a place's instance, where the player stands in one
+import { validPartyPose, gatePixelOk, worldPixelOk } from './wire.js'; // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it; WW2: a gate's pixel, its lane's map; AUDIT RELEASE R2-1: the world's pixel
+import { GATE_COURTS_MAX } from './gate/gateCourts.js'; // AUDIT GATE-COURTS C6: a court's number on a staff landing - gateCourts.js imports nothing
+import { t } from '../systems/textManager.js'; // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
+export const STAFF_TP_RELAY_MIN = 159; // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
-export const STAFF_TP_ERRORS = Object.freeze(['offline', 'ambiguous', 'busy', 'private', 'battle', 'unavailable', 'denied', 'frozen']);
+export const STAFF_TP_ERRORS = Object.freeze([
+  'offline',
+  'ambiguous',
+  'busy',
+  'private',
+  'battle',
+  'unavailable',
+  'denied',
+  'frozen',
+]);
 export const staffTeleportSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_TP_RELAY_MIN;
 /** STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): the first relay that carries a pull. An older one
  *  closes a socket on a `stp` kind it does not know, so a pull is never sent to it. */
-export const STAFF_PULL_RELAY_MIN = 281;   // world281: the PvP release carries it (world276 on its own branch, #1360)
+export const STAFF_PULL_RELAY_MIN = 281; // world281: the PvP release carries it (world276 on its own branch, #1360)
 export const staffPullSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_PULL_RELAY_MIN;
 /** AUDIT TAMRIEL-WIDE III M1: the first relay that takes an abyss pit past the Bay (B2) - an older one refuses the frame
  *  and closes the socket, so a newer build sends it to none. */
 export const STAFF_ABYSS_WORLD_RELAY_MIN = 284;
-export const staffAbyssWorldSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_ABYSS_WORLD_RELAY_MIN;
+export const staffAbyssWorldSupported = (v) =>
+  Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_ABYSS_WORLD_RELAY_MIN;
 /** How long a pull waits for the player's game to land: it loads the staff member's place first. */
 export const STAFF_PULL_TIMEOUT_MS = 30000;
 /** STAFF-PANEL5-FOLLOW (design doc "DFO Staff Panel: design", weak spot "TP is visible...": "keep it Admin and Shadow Fang
  *  only"): who the hub answers from the target's where note, never asking the target's game - an Admin (`dev`) or the
  *  Shadow Fang. A Dungeon Master's /tp @player stays today's capture. */
-export const quietTeleportAllowed = (glyphs) => Array.isArray(glyphs) && (glyphs.includes('dev') || glyphs.includes('shadowfang'));
+export const quietTeleportAllowed = (glyphs) =>
+  Array.isArray(glyphs) && (glyphs.includes('dev') || glyphs.includes('shadowfang'));
 /** STAFF-PULL: who may bring a player to them - the same Admin and Shadow Fang. It moves another player, so a Dungeon
  *  Master (no moderation) may not. */
 export const staffPullAllowed = quietTeleportAllowed;
@@ -51,7 +62,8 @@ function staffLayout(value) {
   if (value == null || value === 'classic') return 'classic';
   if (typeof value !== 'string' || value.length > 128) return null;
   const parts = value.split('+');
-  if (parts.length > 2 || parts.some((part) => !/^beautiful-(?:cities|villages)@[0-9]+\.[0-9]+\.[0-9]+$/.test(part))) return null;
+  if (parts.length > 2 || parts.some((part) => !/^beautiful-(?:cities|villages)@[0-9]+\.[0-9]+\.[0-9]+$/.test(part)))
+    return null;
   if (new Set(parts.map((part) => part.split('@')[0])).size !== parts.length) return null;
   return parts.sort().join('+');
 }
@@ -64,24 +76,51 @@ export function validStaffDestination(d) {
     if (d.boat != null) {
       if (!token(d.boat.owner) || !integer(d.boat.slot, 255) || !point(d.boat.local)) return null;
       if (d.boat.uid != null && !boatUid(d.boat.uid)) return null;
-      return { ...out, boat: { owner: d.boat.owner, slot: d.boat.slot, ...(d.boat.uid != null ? { uid: d.boat.uid } : {}), local: [...d.boat.local] } };
+      return {
+        ...out,
+        boat: {
+          owner: d.boat.owner,
+          slot: d.boat.slot,
+          ...(d.boat.uid != null ? { uid: d.boat.uid } : {}),
+          local: [...d.boat.local],
+        },
+      };
     }
     return out;
   }
   if (d.kind === 'interior') {
     if (d.sailingCabin != null) {
-      const cabin = readSailingCabin(d.sailingCabin), room = privateInteriorOf(d.privateRoom);
+      const cabin = readSailingCabin(d.sailingCabin),
+        room = privateInteriorOf(d.privateRoom);
       if (!cabin || room?.boatUid !== cabin.uid || !token(d.cabinOwner)) return null;
       return { ...out, sailingCabin: cabin, privateRoom: d.privateRoom, cabinOwner: d.cabinOwner };
     }
     const layout = staffLayout(d.layout);
     if (layout === null) return null;
     const b = d.door;
-    if (!b || !integer(b.blockIndex, 65535) || !integer(b.recordIndex, 65535) || !integer(b.doorIndex, 65535) || !integer(b.buildingKey)) return null;
+    if (
+      !b ||
+      !integer(b.blockIndex, 65535) ||
+      !integer(b.recordIndex, 65535) ||
+      !integer(b.doorIndex, 65535) ||
+      !integer(b.buildingKey)
+    )
+      return null;
     const room = d.privateRoom == null ? null : privateInteriorOf(d.privateRoom);
     if (d.privateRoom != null && (!room || room.buildingKey !== b.buildingKey)) return null;
-    if (d.ins != null && (room || !instanceOfWord(d.ins))) return null;   // INSTANCES: a private room is no instance's
-    return { ...out, ...(d.layout != null ? { layout } : {}), door: { blockIndex: b.blockIndex, recordIndex: b.recordIndex, doorIndex: b.doorIndex, buildingKey: b.buildingKey }, ...(room ? { privateRoom: d.privateRoom } : {}), ...insOf(d) };
+    if (d.ins != null && (room || !instanceOfWord(d.ins))) return null; // INSTANCES: a private room is no instance's
+    return {
+      ...out,
+      ...(d.layout != null ? { layout } : {}),
+      door: {
+        blockIndex: b.blockIndex,
+        recordIndex: b.recordIndex,
+        doorIndex: b.doorIndex,
+        buildingKey: b.buildingKey,
+      },
+      ...(room ? { privateRoom: d.privateRoom } : {}),
+      ...insOf(d),
+    };
   }
   if (d.kind === 'dungeon') {
     if (!integer(d.mapId)) return null;
@@ -89,30 +128,66 @@ export function validStaffDestination(d) {
     if (d.ins != null && !instanceOfWord(d.ins)) return null;
     // INSTANCES: `whole` - the dungeon as Daggerfall lays it (an instance's, or a whole public room's), which staff build to
     // stand where the player does; absent, the world's own size for it
-    return { ...out, mapId: d.mapId, ...(d.locationKey != null ? { locationKey: d.locationKey } : {}), ...insOf(d), ...(d.whole === true || d.ins != null ? { whole: true } : {}) };
+    return {
+      ...out,
+      mapId: d.mapId,
+      ...(d.locationKey != null ? { locationKey: d.locationKey } : {}),
+      ...insOf(d),
+      ...(d.whole === true || d.ins != null ? { whole: true } : {}),
+    };
   }
   if (d.kind === 'gate') {
     const g = d.gate;
-    if (!g || !integer(g.day) || !gatePixelOk(g.day, g.px, g.py) || !point(g.spot, 2) || (g.near != null && g.near !== '' && !label(g.near))) return null;   // WW2: a gate past the Bay stands on a world pixel
-    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null;   // AUDIT GATE-COURTS C6: the court the player stands in
-    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '', ...(g.c ? { c: g.c } : {}) } };
+    if (
+      !g ||
+      !integer(g.day) ||
+      !gatePixelOk(g.day, g.px, g.py) ||
+      !point(g.spot, 2) ||
+      (g.near != null && g.near !== '' && !label(g.near))
+    )
+      return null; // WW2: a gate past the Bay stands on a world pixel
+    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null; // AUDIT GATE-COURTS C6: the court the player stands in
+    return {
+      ...out,
+      gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '', ...(g.c ? { c: g.c } : {}) },
+    };
   }
   if (d.kind === 'abyss') {
     const a = d.abyss;
     // AUDIT TAMRIEL-WIDE B2: a pit stands on the world's grid (PITS-WORLD); its template is a Bay dungeon, so Bay-bound
-    if (!a || !worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)
-      || !integer(a.TemplateMapX, 999) || !integer(a.TemplateMapY, 499)
-      || !integer(a.TemplateRegionIndex, 61) || !integer(a.TemplateLocationIndex, 65535)
-      || !finite(a.ReturnWorldX) || !finite(a.ReturnWorldZ) || !finite(a.ReturnPitDepth)
-      || a.ReturnPitDepth < 0 || !label(a.DungeonName)) return null;
-    return { ...out, abyss: {
-      Active: true, PitMapX: a.PitMapX, PitMapY: a.PitMapY,
-      TemplateMapX: a.TemplateMapX, TemplateMapY: a.TemplateMapY,
-      TemplateRegionIndex: a.TemplateRegionIndex, TemplateLocationIndex: a.TemplateLocationIndex,
-      ReturnWorldX: a.ReturnWorldX, ReturnWorldZ: a.ReturnWorldZ,
-      HasReturnPitDepth: a.HasReturnPitDepth === true, ReturnPitDepth: a.ReturnPitDepth,
-      DungeonName: a.DungeonName, RecallBinding: null,
-    } };
+    if (
+      !a ||
+      !worldPixelOk(a.PitMapX) ||
+      !worldPixelOk(a.PitMapY) ||
+      !integer(a.TemplateMapX, 999) || // BAY-OWN: a template is a Bay dungeon's pixel
+      !integer(a.TemplateMapY, 499) ||
+      !integer(a.TemplateRegionIndex, 61) ||
+      !integer(a.TemplateLocationIndex, 65535) ||
+      !finite(a.ReturnWorldX) ||
+      !finite(a.ReturnWorldZ) ||
+      !finite(a.ReturnPitDepth) ||
+      a.ReturnPitDepth < 0 ||
+      !label(a.DungeonName)
+    )
+      return null;
+    return {
+      ...out,
+      abyss: {
+        Active: true,
+        PitMapX: a.PitMapX,
+        PitMapY: a.PitMapY,
+        TemplateMapX: a.TemplateMapX,
+        TemplateMapY: a.TemplateMapY,
+        TemplateRegionIndex: a.TemplateRegionIndex,
+        TemplateLocationIndex: a.TemplateLocationIndex,
+        ReturnWorldX: a.ReturnWorldX,
+        ReturnWorldZ: a.ReturnWorldZ,
+        HasReturnPitDepth: a.HasReturnPitDepth === true,
+        ReturnPitDepth: a.ReturnPitDepth,
+        DungeonName: a.DungeonName,
+        RecallBinding: null,
+      },
+    };
   }
   return null;
 }
@@ -130,13 +205,15 @@ export function validStaffTeleportIn(m) {
     if (dest && named && label(m.name)) return { k: 'pull', nonce: m.nonce, name: m.name.trim(), dest };
     return null;
   }
-  if (m?.k === 'landed' && token(m.ticket)) {   // why not in `no`: a parsed frame's `error` is the relay's own refusal
+  if (m?.k === 'landed' && token(m.ticket)) {
+    // why not in `no`: a parsed frame's `error` is the relay's own refusal
     if (STAFF_TP_ERRORS.includes(m.no)) return { k: 'landed', ticket: m.ticket, no: m.no };
     return m.no == null ? { k: 'landed', ticket: m.ticket } : null;
   }
   if (m?.k === 'ask' && token(m.nonce)) {
     const nt = m.nt === 1 ? { nt: 1 } : {};
-    if (token(m.id) && m.name == null) return { k: 'ask', nonce: m.nonce, id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };
+    if (token(m.id) && m.name == null)
+      return { k: 'ask', nonce: m.nonce, id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };
     if (label(m.name) && m.id == null) return { k: 'ask', nonce: m.nonce, name: m.name.trim(), ...nt };
   }
   if (m?.k === 'answer' && token(m.ticket)) {
@@ -152,7 +229,8 @@ export function validStaffTeleportIn(m) {
  *  or their game's answer - flagged `fb` when it was asked only because the note was missing or did not match. */
 export function validStaffTeleportOut(m) {
   if (m?.k === 'capture' && token(m.ticket)) return { k: 'capture', ticket: m.ticket };
-  if (m?.k === 'pull' && token(m.ticket)) {   // STAFF-PULL: staff bring me to them
+  if (m?.k === 'pull' && token(m.ticket)) {
+    // STAFF-PULL: staff bring me to them
     const dest = validStaffDestination(m.dest);
     return dest ? { k: 'pull', ticket: m.ticket, dest } : null;
   }
@@ -160,7 +238,7 @@ export function validStaffTeleportOut(m) {
   if (STAFF_TP_ERRORS.includes(m.error)) return { k: 'result', nonce: m.nonce, error: m.error };
   if (!token(m.id) || !label(m.name)) return null;
   const who = { k: 'result', nonce: m.nonce, id: m.id, name: m.name, ...(token(m.acct) ? { acct: m.acct } : {}) };
-  if (m.pulled === 1) return { ...who, pulled: 1 };   // STAFF-PULL: the player landed by me
+  if (m.pulled === 1) return { ...who, pulled: 1 }; // STAFF-PULL: the player landed by me
   if (m.via === 'note') {
     const note = validPartyPose(m.note);
     return note ? { ...who, via: 'note', note, ag: Number.isSafeInteger(m.ag) && m.ag >= 0 ? m.ag : 0 } : null;
@@ -178,16 +256,24 @@ export function notePlace(p) {
   if (!p || !pixel({ x: p.px, y: p.py })) return null;
   const at = { pixel: { x: p.px, y: p.py }, yaw: 0, pitch: 0 };
   if (p.in === 0) {
-    if ([p.wx, p.wy, p.wz].every(finite)) return validStaffDestination({ kind: 'exterior', ...at, pos: [p.wx, p.wy, p.wz] });
+    if ([p.wx, p.wy, p.wz].every(finite))
+      return validStaffDestination({ kind: 'exterior', ...at, pos: [p.wx, p.wy, p.wz] });
     return { kind: 'exterior', ...at, pos: null };
   }
   const rk = typeof p.rk === 'string' ? p.rk : '';
   const inst = instanceOf(rk);
   const word = inst ? instanceWord(inst) : null;
   if (p.in === 1) {
-    const m = /^dungeon:m([1-9]\d{0,9})(\.[ms])?(\.c[1-9]\d{0,2})?/.exec(rk);   // DELVE II: a curated block's room is no whole dungeon either
+    const m = /^dungeon:m([1-9]\d{0,9})(\.[ms])?(\.c[1-9]\d{0,2})?/.exec(rk); // DELVE II: a curated block's room is no whole dungeon either
     if (!m || !integer(+m[1])) return null;
-    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word || (!m[2] && !m[3]), pos: null };
+    return {
+      kind: 'dungeon',
+      ...at,
+      mapId: +m[1],
+      ...(word ? { ins: word } : {}),
+      whole: !!word || (!m[2] && !m[3]),
+      pos: null,
+    };
   }
   const bk = p.bk;
   // STAFF-PANEL5-FOLLOW-FIX (finding 2): a home is its building's door into its own private room; a boat's cabin or a
@@ -196,26 +282,50 @@ export function notePlace(p) {
   if (!integer(bk) || !bk || !(/^interior:m[1-9]/.test(rk) || home?.buildingKey === bk)) return null;
   // the door the TP host's strict restore finds by the building's key (worldModes.js restoreInterior): its record is the
   // key's low byte (talkTopics.js makeBuildingKey), its first door, the block left to the key
-  return { kind: 'interior', ...at, door: { blockIndex: 0, recordIndex: bk & 0xff, doorIndex: 0, buildingKey: bk >>> 0 }, ...(home ? { privateRoom: rk } : {}), ...(word ? { ins: word } : {}), pos: null };
+  return {
+    kind: 'interior',
+    ...at,
+    door: { blockIndex: 0, recordIndex: bk & 0xff, doorIndex: 0, buildingKey: bk >>> 0 },
+    ...(home ? { privateRoom: rk } : {}),
+    ...(word ? { ins: word } : {}),
+    pos: null,
+  };
 }
 
 /** The line a finished /tp @player says - and that the player can see it (design doc: "Label TP 'the player can see
  *  this' everywhere"). @param {{ name: string, via?: string, fb?: string }} who */
 export function staffTpLine(who) {
   const name = { name: who.name };
-  if (who.via === 'note') return t('net.staffTp.viaNote', 'Teleported to {name} from their where note - their game was told nothing, but the player can see you arrive.', name);
-  if (who.fb === 'missing') return t('net.staffTp.noteMissing', "Teleported to {name}'s exact position - their game was asked, because their where note was missing (the player can see this).", name);
-  if (who.fb) return t('net.staffTp.noteMismatch', "Teleported to {name}'s exact position - their game was asked, because their where note did not match (the player can see this).", name);
+  if (who.via === 'note')
+    return t(
+      'net.staffTp.viaNote',
+      'Teleported to {name} from their where note - their game was told nothing, but the player can see you arrive.',
+      name,
+    );
+  if (who.fb === 'missing')
+    return t(
+      'net.staffTp.noteMissing',
+      "Teleported to {name}'s exact position - their game was asked, because their where note was missing (the player can see this).",
+      name,
+    );
+  if (who.fb)
+    return t(
+      'net.staffTp.noteMismatch',
+      "Teleported to {name}'s exact position - their game was asked, because their where note did not match (the player can see this).",
+      name,
+    );
   return t('net.staffTp.exact', "Teleported to {name}'s exact position (the player can see this).", name);
 }
 
 export function staffDestinationKey(d) {
   // A map pixel is part of an interior's identity; door keys repeat in towns.
   const site = `${d.kind}:${d.pixel.x},${d.pixel.y}`;
-  if (d.kind === 'interior') return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}:${d.ins ?? ''}`;   // INSTANCES: and its instance - the same door, another room
+  if (d.kind === 'interior')
+    return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}:${d.ins ?? ''}`; // INSTANCES: and its instance - the same door, another room
   if (d.kind === 'dungeon') return `${site}:${d.mapId}:${d.locationKey ?? ''}:${d.ins ?? ''}:${d.whole ? 'w' : ''}`;
   if (d.kind === 'gate') return `gate:${d.gate.day}.${d.gate.c ?? 0}`;
-  if (d.kind === 'abyss') return `${site}:${d.abyss.PitMapX},${d.abyss.PitMapY}:${d.abyss.TemplateRegionIndex},${d.abyss.TemplateLocationIndex}`;
+  if (d.kind === 'abyss')
+    return `${site}:${d.abyss.PitMapX},${d.abyss.PitMapY}:${d.abyss.TemplateRegionIndex},${d.abyss.TemplateLocationIndex}`;
   return site;
 }
 
@@ -253,60 +363,105 @@ export async function followStaffPlayer(name, { ask, prepare, place, allowed = (
 }
 
 export const STAFF_TP_ERROR_TEXT = Object.freeze({
-  offline: 'That player is not online.', ambiguous: 'More than one player matches. Use their full name.',
+  offline: 'That player is not online.',
+  ambiguous: 'More than one player matches. Use their full name.',
   busy: 'A player is changing locations or the server is busy. Try again.',
   private: 'That private room is not ready. Both players and the server need the latest update.',
   battle: 'That player is in a battle instance. Use its authorized entry.',
   unavailable: 'The target location is unavailable or their client needs updating.',
   denied: 'The server did not authorize this staff teleport.',
-  get frozen() { return t('net.staffPull.frozen', 'That player is frozen. Lift the freeze first.'); },   // STAFF-PULL
+  get frozen() {
+    return t('net.staffPull.frozen', 'That player is frozen. Lift the freeze first.');
+  }, // STAFF-PULL
 });
 
 /** STAFF-PULL: the line a finished pull says to staff, and the one the player sees on landing. */
-export const staffPullLine = (/** @type {{ name: string }} */ who) => t('net.staffPull.done', '{name} was brought to you (the player can see this).', { name: who.name });
+export const staffPullLine = (/** @type {{ name: string }} */ who) =>
+  t('net.staffPull.done', '{name} was brought to you (the player can see this).', { name: who.name });
 export const staffPulledLine = () => t('net.staffPull.landed', 'A staff member brought you here.');
 
 /** The request lifetime belongs to the hub connection, not the chat tab. STAFF-PULL: `pull(target, dest)` asks the hub
  *  to bring a player to `dest`, and `pulled(dest)` is this game landing where staff stand - it resolves to `{}` or
  *  `{ error }`, which goes back to the hub. Without `pulled` a pull is refused `unavailable`. */
-export function createStaffTeleportClient({ send, capture, pulled = null, setTimer = setTimeout, clearTimer = clearTimeout }) {
-  let pending = null, serial = 0, landing = false;
-  const request = (frame, ms, nonce) => new Promise((resolve, reject) => {
-    if (pending) { reject(new Error('A player lookup is already in progress.')); return; }
-    const timer = setTimer(() => { if (pending?.nonce === nonce) { pending = null; reject(new Error('The player did not answer. They may be offline or need a client update.')); } }, ms);
-    pending = { nonce, resolve, reject, timer };
-    if (!send({ ...frame, nonce })) {
-      pending = null; clearTimer(timer); reject(new Error('Exact player teleport requires an updated, connected server.'));
-    }
-  });
+export function createStaffTeleportClient({
+  send,
+  capture,
+  pulled = null,
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+}) {
+  let pending = null,
+    serial = 0,
+    landing = false;
+  const request = (frame, ms, nonce) =>
+    new Promise((resolve, reject) => {
+      if (pending) {
+        reject(new Error('A player lookup is already in progress.'));
+        return;
+      }
+      const timer = setTimer(() => {
+        if (pending?.nonce === nonce) {
+          pending = null;
+          reject(new Error('The player did not answer. They may be offline or need a client update.'));
+        }
+      }, ms);
+      pending = { nonce, resolve, reject, timer };
+      if (!send({ ...frame, nonce })) {
+        pending = null;
+        clearTimer(timer);
+        reject(new Error('Exact player teleport requires an updated, connected server.'));
+      }
+    });
   async function land(m) {
-    if (landing || !pulled) { send({ k: 'landed', ticket: m.ticket, no: landing ? 'busy' : 'unavailable' }); return; }
+    if (landing || !pulled) {
+      send({ k: 'landed', ticket: m.ticket, no: landing ? 'busy' : 'unavailable' });
+      return;
+    }
     landing = true;
     let out;
-    try { out = await pulled(m.dest); } catch { out = { error: 'unavailable' }; } finally { landing = false; }
+    try {
+      out = await pulled(m.dest);
+    } catch {
+      out = { error: 'unavailable' };
+    } finally {
+      landing = false;
+    }
     send({ k: 'landed', ticket: m.ticket, ...(STAFF_TP_ERRORS.includes(out?.error) ? { no: out.error } : {}) });
   }
   function cancel() {
     if (!pending) return;
-    const p = pending; pending = null; clearTimer(p.timer);
+    const p = pending;
+    pending = null;
+    clearTimer(p.timer);
     p.reject(new Error('Teleport cancelled: the connection changed.'));
   }
   return {
     cancel,
-    ask(target) { return request({ k: 'ask', ...target }, STAFF_TP_TIMEOUT_MS, `tp-${++serial}`); },
+    ask(target) {
+      return request({ k: 'ask', ...target }, STAFF_TP_TIMEOUT_MS, `tp-${++serial}`);
+    },
     /** STAFF-PULL: `target` is `{ id }`, `{ acct }` or `{ name }`. */
-    pull(target, dest) { return request({ k: 'pull', ...target, dest }, STAFF_PULL_TIMEOUT_MS, `tp-${++serial}`); },
+    pull(target, dest) {
+      return request({ k: 'pull', ...target, dest }, STAFF_PULL_TIMEOUT_MS, `tp-${++serial}`);
+    },
     receive(raw) {
       const m = validStaffTeleportOut(raw);
       if (!m) return;
       if (m.k === 'capture') {
         let result;
-        try { result = capture(); } catch { result = { error: 'unavailable' }; }
+        try {
+          result = capture();
+        } catch {
+          result = { error: 'unavailable' };
+        }
         send({ k: 'answer', ticket: m.ticket, ...result });
       } else if (m.k === 'pull') void land(m);
       else if (pending?.nonce === m.nonce) {
-        const p = pending; pending = null; clearTimer(p.timer);
-        if ('error' in m) p.reject(new Error(STAFF_TP_ERROR_TEXT[m.error])); else p.resolve(m);
+        const p = pending;
+        pending = null;
+        clearTimer(p.timer);
+        if ('error' in m) p.reject(new Error(STAFF_TP_ERROR_TEXT[m.error]));
+        else p.resolve(m);
       }
     },
   };

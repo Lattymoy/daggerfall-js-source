@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-RPT1026-H1-sheet-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  if (sheetReadTasks(quest).has(no.symbol.name)) return null;\n",
-    "new": "",
+    "old": "  if (sheetReadTasks(quest).has(no.symbol.name)) return null;\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
+    "new": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-RPT1026-H1-stamp-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "if (quest?.ql?.stamp !== QL_STAMP) return out;",
-    "new": "if (!quest) return out;",
+    "old": "  if (quest?.ql?.stamp !== QL_STAMP) return out;",
+    "new": "  if (!quest) return out;",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-RPT1026-H1-outcomes-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  for (const o of sheet.outcomes ?? []) walk(o.on);\n",
-    "new": "",
+    "old": "  for (const o of sheet.outcomes ?? []) walk(o.on);\n  for (const b of sheet.branches ?? [])",
+    "new": "  for (const b of sheet.branches ?? [])",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-RPT1026-H1-objectives-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  for (const o of sheet.objectives ?? []) { walk(o.open); walk(o.done); walk(o.fail); }\n",
-    "new": "",
+    "old": "  for (const o of sheet.objectives ?? []) {\n    walk(o.open);\n    walk(o.done);\n    walk(o.fail);\n  }\n  for (const o of sheet.outcomes ?? []) walk(o.on);",
+    "new": "  for (const o of sheet.outcomes ?? []) walk(o.on);",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-RPT1026-H1-nested-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "    for (const k of ['all', 'any']) if (Array.isArray(b[k])) for (const x of b[k]) walk(x);\n",
-    "new": "",
+    "old": "    for (const k of ['all', 'any']) if (Array.isArray(b[k])) for (const x of b[k]) walk(x);\n    if (b.not) walk(b.not);",
+    "new": "    if (b.not) walk(b.not);",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-RPT1026-H4-gives-any-get-item",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name))) return null;",
-    "new": "a.typeName === 'GetItem')) return null;",
+    "old": "  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name)))\n    return null;",
+    "new": "  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem')) return null;",
     "tests": [
       "test/systems/quest/audit_rpt1026_quests.test.js"
     ],

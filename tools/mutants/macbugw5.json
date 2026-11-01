@@ -114,8 +114,8 @@
   {
     "name": "MAC-BUG-W5-13-the-pools-gate-still-asks-for-the-door-it-no-longer-knocks-on",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (!col?.surfaceHit) return null;",
-    "new": "    if (!col?.raycastHit) return null;",
+    "old": "    const col = liveCollider();\n    if (!col?.surfaceHit) return null;\n    const n = Math.max(1, Math.min(BLEED_DROPS_CAP, count | 0));",
+    "new": "    const col = liveCollider();\n    if (!col?.raycastHit) return null;\n    const n = Math.max(1, Math.min(BLEED_DROPS_CAP, count | 0));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ],

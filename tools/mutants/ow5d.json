@@ -22,8 +22,8 @@
   {
     "name": "OW5b-D2-forgotten-renewed",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        locationIndex.delete(key);\n        return null;",
-    "new": "        host._locIndexGen += 1;   // AUDIT OW4 D5\n        _spawnLedger.forget(key);\n        locationIndex.delete(key);\n        return null;",
+    "old": "        locationIndex.delete(key);",
+    "new": "        _spawnLedger.forget(key);\n        locationIndex.delete(key);",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "OW5b-D2-index-trusted",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, host._spawnClock()) && !_insideSpawn(key)) {",
-    "new": "    if (false) {",
+    "old": "    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, host._spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own",
+    "new": "    if (false) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "OW5b-D2-build-skips-the-ask",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;",
-    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;",
+    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
+    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],

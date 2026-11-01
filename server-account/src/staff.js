@@ -1,9 +1,9 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// STAFF-PANEL1 (2026-10-22, mob: a staff admin panel, its own browser extension; design doc "DFO Staff Panel: design",
+// STAFF-PANEL1 (2026-10-22: a staff admin panel, its own browser extension; design doc "DFO Staff Panel: design",
 // build step 1) - THE PANEL'S SIGN-IN, ITS SESSIONS, ITS ROLES AND ITS AUDIT LOG.
 //
-// ═══ THREE LOCKS (mob, 06:18Z: "just password and extension", "u have to be dev anyway", "thats 3 securitys") ═══
+// ═══ THREE LOCKS ═══
 //
 // 1. The account's password, checked as the game's sign-in checks it (password.js).
 // 2. A key only the staff member's own copy of the extension holds: an Ed25519 pair it made on their computer. The
@@ -11,9 +11,8 @@
 //    handle and the second it was made (staffWords). A signature works once (`last_ts`) and only within STAFF_SIG_S
 //    of the service's clock.
 // 3. The role lists the service already keeps, asked fresh on every request (titles.js): Admin is DEVELOPER_HANDLES,
-//    Moderator anyone canModerate lets in (mob, 06:20Z: "mods still get theres as well"). A handle off a list is off
-//    the panel at its next click. An Admin may also add and remove Moderators from the panel (mob, 07:42Z: "add it so
-//    admins can add or remove moderatoers"): `players.staff_mod`, bound to the account, beside MODERATOR_HANDLES - the
+//    Moderator anyone canModerate lets in. A handle off a list is off
+//    the panel at its next click. An Admin may also add and remove Moderators from the panel: `players.staff_mod`, bound to the account, beside MODERATOR_HANDLES - the
 //    config's own stay the config's, and the panel removes only the ones it added.
 // A key is bound to the account AND the handle it was registered under, so a rename that hands a listed handle to
 // another account (0134) hands it no way in. A key forgotten or cut is REVOKED, never deleted: its row stays, so it never
@@ -32,8 +31,7 @@
 // An owner (OWNER_HANDLES, mob and Latty) mints a one-time invite (24 h) for a staff member; the member's extension
 // signs in with the password and the invite and registers its key, proving it holds the private half. An owner's own
 // first key is named in the config (OWNER_KEYS) - a public key, safe in a public repository - so the first owner needs
-// nobody to invite them and nobody has to set a secret in Cloudflare (mob, 06:16Z: "can we use the tool being an
-// extension to aovid this?"). With OWNER_KEYS empty nobody can sign in at all: unconfigured is shut, never open.
+// nobody to invite them and nobody has to set a secret in Cloudflare. With OWNER_KEYS empty nobody can sign in at all: unconfigured is shut, never open.
 //
 // ═══ WHAT IS REFUSED, AND HOW ══════════════════════════════════════
 //
@@ -63,6 +61,9 @@ import { staffReactions, REACTION_ROUTES } from './staffReactions.js';   // STAF
 import { staffHidden, HIDDEN_ROUTES, hiddenEnd, hiddenSubOf } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: Hide me, and the mark's end
 import { signingKey } from './signing.js';
 import { mintHideOrder, ID_RE } from '../../src/net/identityToken.js';   // STAFF-PANEL5-CUT-FIX: a cut's hide orders
+import { staffClaude, CLAUDE_ROUTES } from './staffClaude.js';   // Claude's suggestions
+import { staffOrder, staffOrderKeys, ORDER_PATH, ORDER_KEY_ROUTES } from './staffOrder.js';   // an order signed outside the panel, and the keys that sign it
+import { claudeHandle } from './claudeStaff.js';
 import { staffFreeze, FREEZE_ROUTES, FREEZE_STATUS } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE
 
 /** The header a staff session rides in - never `authorization`, which is the game's. */
@@ -93,7 +94,7 @@ export const STAFF_TRY_WINDOW_S = 15 * 60;
 export const STAFF_RATE_MAX = 120;
 /** Audit rows one read returns at most. */
 export const STAFF_AUDIT_PAGE = 100;
-/** How long the audit log keeps a row (mob, 12:12Z: "only keep for one month") - past it the hourly job deletes it
+/** How long the audit log keeps a row - past it the hourly job deletes it
  *  (cron.js staff-audit); inside it nobody can (migration 0144's trigger, an hour short of this for the two clocks). */
 export const STAFF_AUDIT_KEEP_S = 30 * 24 * 60 * 60;
 /** A read of the audit log, the team or the moderators is written once in this, a member and a view, whatever its page
@@ -141,6 +142,8 @@ export const STAFF_STATUS = Object.freeze({
   'staff-message-long': 400, 'staff-message-rate': 429,
   // STAFF-PANEL5-FEEDS (staffMonsters.js): a Flag whose spawn case did not open
   'flag-failed': 500,
+  // Claude (staffClaude.js): a suggestion already decided, or not there; an order key refused (staffOrder.js)
+  'no-suggestion': 404, 'suggestion-decided': 409, 'order-keys-full': 409, 'order-key-bad': 400,
   ...EVENT_STATUS,   // STAFF-EVENT (staffEvents.js): an event the law refuses, a full book, one ended, a relay that did not answer
   ...FREEZE_STATUS,   // STAFF-PANEL5-FREEZE (staffFreeze.js): a freeze's and the staff chat's own words
 });
@@ -220,6 +223,8 @@ async function passwordStep(ctx, env, body, ip) {
   const lc = handleLc(body.handle);
   if (await overRate(ctx, `staffip:${ip}`, STAFF_IP_MAX, STAFF_TRY_WINDOW_S)) return { error: 'rate' };
   if (lc && await overRate(ctx, `stafftry:${lc}:${ip}`, STAFF_TRY_MAX, STAFF_TRY_WINDOW_S)) return { error: 'rate' };
+  // Claude's own account is never signed in to the panel, by any key or invite: it only writes
+  if (lc && lc === claudeHandle(env).toLowerCase()) return { error: 'staff-login' };
   const player = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
   const ok = await verifyPassword(body.password, player?.password ?? null, { subtle });
   return { player, role: staffRole(player, env), lc, ok };
@@ -227,7 +232,7 @@ async function passwordStep(ctx, env, body, ip) {
 
 /** A refused sign-in: written down when exactly one of the password and the key was right (somebody holds the other),
  *  or the account is banned; the same word either way. */
-async function refused(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {string|null} */ role, /** @type {string|null} */ why) {
+export async function refused(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {string|null} */ role, /** @type {string|null} */ why) {
   if (why) {
     const write = auditStatement(ctx.db, ctx.nowS, { actor: player, role, act: 'login-refused', detail: { why }, outcome: 'denied' }).run();
     if (typeof ctx.later === 'function') ctx.later(write.catch(() => {})); else await write;
@@ -354,7 +359,7 @@ export async function staffSession(ctx, env, token, { act = true } = {}) {
   if (typeof token !== 'string' || token.length < 16 || token.length > 128) return null;
   const { db, subtle, nowS } = ctx;
   const hash = await hashSecret(token, { subtle });
-  // STAFF-PANEL-SPEED (mob: "slow when moving in menus"): an act's touch rides the lookup's trip. Its guard is the idle and
+  // STAFF-PANEL-SPEED: an act's touch rides the lookup's trip. Its guard is the idle and
   // the life the checks below hold the session to, so either landing first answers the same; one they kill is deleted below
   const [row] = await Promise.all([db.prepare(STAFF_WHO_SQL).bind(hash).first(),
     act && db.prepare('UPDATE staff_sessions SET last_act = ?1 WHERE token_hash = ?2 AND last_act <= ?3 AND last_act > ?4 AND expires_at > ?1')
@@ -379,13 +384,24 @@ export async function staffSession(ctx, env, token, { act = true } = {}) {
 export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (path === '/v1/staff/login') return staffLogin(ctx, env, body, ip);
   if (path === '/v1/staff/enroll') return staffEnroll(ctx, env, body, ip);
+  if (path === ORDER_PATH) return staffOrder(ctx, env, body, ip, (/** @type {any} */ who, /** @type {string} */ doorPath, /** @type {any} */ b) => staffDispatch(ctx, env, doorPath, b, who));
   const who = await staffSession(ctx, env, token, { act: body.poll !== true });
   if (!who) return { error: 'staff-session' };
+  if (ORDER_KEY_ROUTES.includes(path)) return staffOrderKeys(ctx, env, path, body, who);
+  return staffDispatch(ctx, env, path, body, who);
+}
+
+/**
+ * THE STAFF DOORS BEHIND A MEMBER: `who` is a live panel session, or (`who.via`) one signed order from outside the panel
+ * (staffOrder.js) - the same role, owner, claim and rate checks either way, and every audit row of an order carries `via`.
+ * @param {any} ctx @param {any} env @param {string} path @param {any} body @param {any} who
+ */
+export async function staffDispatch(ctx, env, path, body, who) {
   const { db, rand, subtle, nowS } = ctx;
   const me = who.player;
   if (overAccountRate(`staff:${me.id}`, nowS, STAFF_RATE_MAX, 60)) return { error: 'rate' };
   const audit = (/** @type {string} */ act, /** @type {string|null} */ target = null, /** @type {object|null} */ detail = null, /** @type {{ outcome?: 'ok'|'denied'|'failed', okIf?: { sql: string, args: unknown[] }, onceIn?: number }} */ how = {}) =>
-    auditStatement(db, nowS, { actor: me, role: who.role, act, target, detail, keyId: who.keyId, ...how });
+    auditStatement(db, nowS, { actor: me, role: who.role, act, target, detail: who.via ? { ...detail, via: who.via } : detail, keyId: who.keyId, ...how });
   /** A role's door refused this member: written down (a review of the PR: a Moderator trying an owner's page left no trace). */
   const denied = async (/** @type {string} */ error) => { await audit('refused', null, { path, need: error === 'staff-admin' ? 'admin' : 'owner' }, { outcome: 'denied' }).run(); return { error }; };
 
@@ -434,9 +450,10 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (MONSTER_ROUTES.includes(path)) return staffMonsters(ctx, env, path, body, who, audit);
   if (REACTION_ROUTES.includes(path)) return staffReactions(ctx, env, path, body, who, audit);
   if (HIDDEN_ROUTES.includes(path)) return staffHidden(ctx, env, path, body, who, audit);   // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)
+  if (CLAUDE_ROUTES.includes(path)) return staffClaude(ctx, env, path, body, who, audit);   // Claude: Admins read, CLAUDE_ORDER_HANDLES decide
   if (FREEZE_ROUTES.includes(path)) return staffFreeze(ctx, env, path, body, who, audit);   // STAFF-PANEL5-FREEZE: freeze (Admins) and the staff chat (both)
 
-  // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS (mob, 07:42Z: "add it so admins can add or remove moderatoers") ═══
+  // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS ═══
   // /v1/staff/mods lists them; /v1/staff/mod/add and /mod/remove { handle } - a registered account, not banned, not staff
   // already. One the config names (MODERATOR_HANDLES, a moderating title, an Admin) is the config's to remove, never the
   // panel's. Removed, a member holding no other role loses every key, session and invite, as a cut does.
@@ -496,7 +513,7 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
     const lc = handleLc(body.handle);
     const target = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
     // STAFF-PANEL2-FIX: a member cut off holds no role, but an owner's invite brings them back - lifting the cut with it.
-    // STAFF-PANEL5-CUT-FIX (mob: "a failed push must be retryable and audited"): and cut again, the relay's orders are pushed again
+    // STAFF-PANEL5-CUT-FIX: and cut again, the relay's orders are pushed again
     const cutOff = staffSuspended(target);
     const restore = path === '/v1/staff/invite' && cutOff;
     const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);

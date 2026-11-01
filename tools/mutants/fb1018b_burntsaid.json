@@ -2,8 +2,8 @@
   {
     "name": "BURNT-SAID-burnt-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "    WILD_TEXT.deathBurnt(d.burnt ?? 0), ",
-    "new": "    ",
+    "old": "    WILD_TEXT.deathBurnt(d.burnt ?? 0),\n    WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0),",
+    "new": "    WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0),",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "BURNT-SAID-letters-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), ",
-    "new": "",
+    "old": "    WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0),\n    d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),",
+    "new": "    d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],

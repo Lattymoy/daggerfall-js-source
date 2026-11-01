@@ -40,7 +40,9 @@ export const TV_DUNGEON_GROW_MAX = 12;
  * @returns {T[]}
  */
 export function dungeonModelSet(list, max = TV_DUNGEON_MODELS_MAX) {
-  return [...(list ?? [])].sort((a, b) => a.d - b.d || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, Math.max(0, max));
+  return [...(list ?? [])]
+    .sort((a, b) => a.d - b.d || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+    .slice(0, Math.max(0, max));
 }
 
 /** TV-BURST (FIELD BUGS 2026-10-09, Shabalako: "The first time I open the overworld travel the game has a big freeze"):
@@ -80,7 +82,8 @@ export function startDungeonLoads(list, held, up, start, max = TV_DUNGEON_LOADS_
  */
 export function meshHasDungeonEntrance(dfMesh) {
   for (const sm of dfMesh?.subMeshes ?? []) {
-    if (sm.planes?.length && subMeshDoorType(sm.textureArchive, sm.textureRecord) === DOOR_TYPE.DUNGEON_ENTRANCE) return true;
+    if (sm.planes?.length && subMeshDoorType(sm.textureArchive, sm.textureRecord) === DOOR_TYPE.DUNGEON_ENTRANCE)
+      return true;
   }
   return false;
 }
@@ -100,7 +103,8 @@ export function meshHasDungeonEntrance(dfMesh) {
  * @returns {{ modelIdNum: number, local: Float32Array, entrance: boolean } | null}
  */
 export function dungeonEntranceModel(blocks, locX, locZ, meshOf, enhanced = true) {
-  let best = null, most = -1;
+  let best = null,
+    most = -1;
   for (const b of blocks ?? []) {
     for (const placed of b.layout?.models ?? []) {
       if (placed.enhancedOnly && !enhanced) continue;
@@ -129,7 +133,7 @@ export function dungeonEntranceModel(blocks, locX, locZ, meshOf, enhanced = true
  * @param {number} [blend]
  */
 export function owDungeonGrow(h, blend = 1) {
-  if (!(h > 0)) return 1;   // NaN, none or below: itself (Infinity grows to the floor of itself below)
+  if (!(h > 0)) return 1; // NaN, none or below: itself (Infinity grows to the floor of itself below)
   const b = Number.isFinite(blend) ? Math.max(0, Math.min(1, blend)) : 1;
   const full = Math.max(1, Math.min(TV_DUNGEON_GROW_MAX, TV_DUNGEON_ICON_M / h));
   return 1 + (full - 1) * b;
@@ -149,9 +153,13 @@ export function owDungeonGrow(h, blend = 1) {
  * @param {Float32Array} [out]
  */
 export function grownModelMatrix(local, box, at, g, out = new Float32Array(16)) {
-  const fx = (box[0] + box[3]) / 2, fz = (box[2] + box[5]) / 2;
+  const fx = (box[0] + box[3]) / 2,
+    fz = (box[2] + box[5]) / 2;
   for (let c = 0; c < 3; c++) {
-    out[4 * c] = g * local[4 * c]; out[4 * c + 1] = g * local[4 * c + 1]; out[4 * c + 2] = g * local[4 * c + 2]; out[4 * c + 3] = 0;
+    out[4 * c] = g * local[4 * c];
+    out[4 * c + 1] = g * local[4 * c + 1];
+    out[4 * c + 2] = g * local[4 * c + 2];
+    out[4 * c + 3] = 0;
   }
   out[12] = g * (local[12] - fx) + at[0];
   out[13] = g * local[13] + at[1];

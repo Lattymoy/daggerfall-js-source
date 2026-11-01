@@ -32,10 +32,12 @@ import { HUB_CAPITALS, hubClaim, outranks } from '../region/regionHubs.js';
 import { kingdomOf, isMarch, isFreeLand } from '../../net/kingdomLaw.js';
 import { CROWN_SEAT_REGIONS, seatReportOf } from '../../net/townSeatLaw.js';
 
-const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
+const same = (a, b) =>
+  typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** Whether a location's building records hold a Palace (buildingType 16). */
-export const hasPalace = (loc) => (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType === BUILDING_TYPES.Palace);
+export const hasPalace = (loc) =>
+  (loc?.exterior?.buildings ?? []).some((b) => b?.buildingType === BUILDING_TYPES.Palace);
 
 /**
  * A location's seat, or null - `{ key, name, region, tier, pixel: [x, y], kingdom, isHub }`, `key` its map id unsigned.
@@ -46,13 +48,25 @@ export const hasPalace = (loc) => (loc?.exterior?.buildings ?? []).some((b) => b
 export function seatOfLocation(loc, { regionNameOf = (r) => REGION_NAMES[r] ?? '', isHub = () => false } = {}) {
   if (!loc || !Number.isInteger(loc.regionIndex) || !loc.mapTableData) return null;
   const region = loc.regionIndex;
-  const crown = Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region)
-    && HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionNameOf(region)));
+  const crown =
+    Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) &&
+    HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionNameOf(region)));
   if (!crown && !hasPalace(loc)) return null;
   const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
-  const seat = seatReportOf({ key: loc.mapTableData.mapId >>> 0, name: String(loc.name ?? '').trim(), region, tier: crown ? 'crown' : 'palace', pixel: [px.x, px.y] });
+  const seat = seatReportOf({
+    key: loc.mapTableData.mapId >>> 0,
+    name: String(loc.name ?? '').trim(),
+    region,
+    tier: crown ? 'crown' : 'palace',
+    pixel: [px.x, px.y],
+  });
   if (!seat) return null;
-  return Object.freeze({ ...seat, pixel: Object.freeze(seat.pixel), kingdom: kingdomOf(region), isHub: !!isHub(seat.key) });
+  return Object.freeze({
+    ...seat,
+    pixel: Object.freeze(seat.pixel),
+    kingdom: kingdomOf(region),
+    isHub: !!isHub(seat.key),
+  });
 }
 
 /**
@@ -75,7 +89,10 @@ const powerOutranks = (a, ca, b, cb) => {
  * @param {Iterable<any>|null|undefined} locations
  * @param {{ regionNameOf?: (r: number) => string, isBase?: (loc: any) => boolean, isHub?: (key: number) => boolean }} [opts]
  */
-export function deriveTownSeats(locations, { regionNameOf = (r) => REGION_NAMES[r] ?? '', isBase = () => true, isHub } = {}) {
+export function deriveTownSeats(
+  locations,
+  { regionNameOf = (r) => REGION_NAMES[r] ?? '', isBase = () => true, isHub } = {},
+) {
   /** @type {Map<number, any>} */
   const byMapId = new Map();
   /** @type {Map<number, { seat: any, claim: number[]|null }>} */
@@ -95,13 +112,20 @@ export function deriveTownSeats(locations, { regionNameOf = (r) => REGION_NAMES[
 /** WW7-3: the seats' answer - `list` the seats in key order, made again when `byMapId` changes (replaceSeats); the maps
  *  are the seats' own, read by reference by the seats' book and the host. */
 function seatsBook(byMapId, powers) {
-  let made = null, madeAt = -1;
+  let made = null,
+    madeAt = -1;
   const book = { byMapId, powers, extra: new Map(), version: 0 };
-  Object.defineProperty(book, 'list', { enumerable: true, get() {
-    if (madeAt !== book.version) { made = Object.freeze([...byMapId.values()].sort((a, b) => a.key - b.key)); madeAt = book.version; }
-    return made;
-  } });
-  return Object.seal(book);   // its `version` replaceSeats' to move; nothing else added or taken
+  Object.defineProperty(book, 'list', {
+    enumerable: true,
+    get() {
+      if (madeAt !== book.version) {
+        made = Object.freeze([...byMapId.values()].sort((a, b) => a.key - b.key));
+        madeAt = book.version;
+      }
+      return made;
+    },
+  });
+  return Object.seal(book); // its `version` replaceSeats' to move; nothing else added or taken
 }
 
 /**
@@ -117,10 +141,22 @@ function seatsBook(byMapId, powers) {
  */
 export function tamrielSeatsOf({ capitals = [], cities = [] } = {}) {
   const out = [];
-  for (const [tier, rows] of /** @type {const} */ ([['crown', capitals], ['palace', cities]])) {
+  for (const [tier, rows] of /** @type {const} */ ([
+    ['crown', capitals],
+    ['palace', cities],
+  ])) {
     for (const r of rows) {
-      const seat = seatReportOf({ key: r.key >>> 0, name: String(r.name ?? '').trim(), region: r.region, tier, pixel: [r.px, r.py] });
-      if (seat) out.push(Object.freeze({ ...seat, pixel: Object.freeze(seat.pixel), kingdom: kingdomOf(seat.region), isHub: false }));
+      const seat = seatReportOf({
+        key: r.key >>> 0,
+        name: String(r.name ?? '').trim(),
+        region: r.region,
+        tier,
+        pixel: [r.px, r.py],
+      });
+      if (seat)
+        out.push(
+          Object.freeze({ ...seat, pixel: Object.freeze(seat.pixel), kingdom: kingdomOf(seat.region), isHub: false }),
+        );
     }
   }
   return out;
@@ -133,20 +169,28 @@ export function tamrielSeatsOf({ capitals = [], cities = [] } = {}) {
  */
 export function replaceSeats(book, source, seats) {
   const touched = new Set();
-  for (const key of book.extra.get(source) ?? []) { const s = book.byMapId.get(key); if (s) touched.add(s.region); book.byMapId.delete(key); }
+  for (const key of book.extra.get(source) ?? []) {
+    const s = book.byMapId.get(key);
+    if (s) touched.add(s.region);
+    book.byMapId.delete(key);
+  }
   const keys = [];
   for (const seat of seats ?? []) {
     if (book.byMapId.has(seat.key)) continue;
-    book.byMapId.set(seat.key, seat); keys.push(seat.key); touched.add(seat.region);
+    book.byMapId.set(seat.key, seat);
+    keys.push(seat.key);
+    touched.add(seat.region);
   }
   book.extra.set(source, keys);
   const mine = new Set([...book.extra.values()].flat());
   for (const region of touched) {
     let best = null;
-    for (const s of book.byMapId.values()) if (s.region === region && (!best || powerOutranks(s, null, best, null))) best = s;
+    for (const s of book.byMapId.values())
+      if (s.region === region && (!best || powerOutranks(s, null, best, null))) best = s;
     const had = book.powers.get(region);
-    if (had != null && !mine.has(had) && book.byMapId.has(had)) continue;   // a Bay region's power is the Bay's derivation's
-    if (best) book.powers.set(region, best.key); else book.powers.delete(region);
+    if (had != null && !mine.has(had) && book.byMapId.has(had)) continue; // a Bay region's power is the Bay's derivation's
+    if (best) book.powers.set(region, best.key);
+    else book.powers.delete(region);
   }
   book.version++;
 }
@@ -155,16 +199,21 @@ export function replaceSeats(book, source, seats) {
  *  `isSeatPixel` (a Watch tick is kept only in a seat's own pixel), built once over `seats` where the host had kept its
  *  own set beside the book. */
 export function seatPixelTest(seats) {
-  let at = null, of = null;   // WW7-3: made again when the seats' list is (replaceSeats - the seats past the Bay landing)
+  let at = null,
+    of = null; // WW7-3: made again when the seats' list is (replaceSeats - the seats past the Bay landing)
   return (x, y) => {
     const list = seats?.list ?? [];
-    if (list !== of) { of = list; at = new Set(list.map((s) => `${s.pixel[0]},${s.pixel[1]}`)); }
+    if (list !== of) {
+      of = list;
+      at = new Set(list.map((s) => `${s.pixel[0]},${s.pixel[1]}`));
+    }
     return at.has(`${x},${y}`);
   };
 }
 
 /** The seat a location IS, by its map id (signed as MAPS.BSA reads it, or not), or null. */
-export const seatAtMapId = (seats, mapId) => (mapId == null || !Number.isFinite(Number(mapId)) ? null : seats?.byMapId?.get(Number(mapId) >>> 0) ?? null);
+export const seatAtMapId = (seats, mapId) =>
+  mapId == null || !Number.isFinite(Number(mapId)) ? null : (seats?.byMapId?.get(Number(mapId) >>> 0) ?? null);
 
 /** The totals SEAT-COUNT prints: seats, crowns, palaces, hubs among them, and each kingdom's (a March and a Free Land
  *  by their own words). */

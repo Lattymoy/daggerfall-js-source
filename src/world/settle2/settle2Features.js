@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): A WORLD 2.0 TOWN'S FEATURES - its wall and gates,
+// A WORLD 2.0 TOWN'S FEATURES - its wall and gates,
 // its terraces' retaining walls and stairs, its well and stalls, its docks, bridges and stilt platforms - as models of the
 // shells' lane (settle2Shell.js): kind 1 to 6 in the id's top bits, the shape in the rest, so a model is a pure function of
 // its shape. Each kind's fields are the generator's (gen2/settle/settlementGen.js, stage G), read and never changed. A

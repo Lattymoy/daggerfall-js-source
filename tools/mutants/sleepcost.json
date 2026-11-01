@@ -2,8 +2,8 @@
   {
     "name": "GRANT-SLEEP-never-due",
     "file": "src/net/grantMeasure.js",
-    "old": "nowMs - w.from >= GRANT_MEASURE_MS;",
-    "new": "nowMs - w.from >= Infinity;",
+    "old": "export const grantMeasureDue = (w, nowMs) =>\n  (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= GRANT_MEASURE_MS;",
+    "new": "export const grantMeasureDue = (w, nowMs) => (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= Infinity;",
     "tests": [
       "test/net/sleepcost.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GRANT-SLEEP-due-at-once",
     "file": "src/net/grantMeasure.js",
-    "old": "nowMs - w.from >= GRANT_MEASURE_MS;",
-    "new": "nowMs - w.from >= 0;",
+    "old": "export const grantMeasureDue = (w, nowMs) =>\n  (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= GRANT_MEASURE_MS;",
+    "new": "export const grantMeasureDue = (w, nowMs) => (w.rows.size > 0 || w.tallies.size > 0) && nowMs - w.from >= 0;",
     "tests": [
       "test/net/sleepcost.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "GRANT-SLEEP-drain-posts-nothing",
     "file": "server/src/drainWindows.js",
-    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
-    "new": "  if (grants && (grants.timer || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
+    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());",
+    "new": "  if (grants && (grants.timer || grants.w?.tallies.size)) posts.push(room._grantFlush());",
     "tests": [
       "test/net/sleepcost.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "PROVINCE-SLEEP-the-split-read-off-the-channels",
     "file": "src/net/hubShards.js",
-    "old": "canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS); };",
-    "new": "canon(m[1], REGION_CHANNELS) && canon(m[2], REGION_SHARDS); };",
+    "old": "  return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS);",
+    "new": "  return !!m && canon(m[1], REGION_CHANNELS) && canon(m[2], REGION_SHARDS);",
     "tests": [
       "test/net/sleepcost.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PROVINCE-SLEEP-a-provinces-shard",
     "file": "src/net/hubShards.js",
-    "old": "  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;\n",
-    "new": "",
+    "old": "  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;\n  return `${bus}.${shardHash(sub) % REGION_SHARDS}`;",
+    "new": "  return `${bus}.${shardHash(sub) % REGION_SHARDS}`;",
     "tests": [
       "test/net/sleepcost.test.js"
     ],

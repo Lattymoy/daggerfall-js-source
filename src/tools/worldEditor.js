@@ -1,4 +1,4 @@
-// WG2 THE WORLD EDITOR (bible/03-World/World-2-Canon.md, "Editing"): a designer's tool over a region's bake - the map
+// WG2 THE WORLD EDITOR ("Editing"): a designer's tool over a region's bake - the map
 // from above to edit on (brushes, biome paint, settlements, a district made again, a building removed), the pixel under
 // the last click in 3D through the game's own renderer, named layers, undo and redo, the checks a town and protected
 // property must pass, the road from draft to published, and packages in and out. Every change is data in the

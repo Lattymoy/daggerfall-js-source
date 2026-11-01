@@ -36,10 +36,27 @@
 // byte this file reaches is the relay's deploy - test/net/ow6_ledger.test.js holds each copy to its home.
 //
 // Not a DFU member: Daggerfall has no other players, and no Overworld.
-import { WORLD_CELL, sharedClassicMinutes, cellOfRoom, OW_BAND_ID_RE, OW_RAIDER_ID_RE, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX, owWireRow, OW_CELL_GRAVES_MAX, OW_GRAVE_ACCT_MAX, OW_GRAVE_ACCT_ROWS_MAX, owGraveIn, owGraveOut, NAME_MAX } from './wire.js';
-import { gateHash, GATE_DAY_MINUTES } from './gate/gateLaw.js';   // the spawned dungeons' hash (world/spawnedDungeons.js hash32) - the relay's one copy; a game day's minutes
-import { RAID_SLACK_MINUTES } from './raid/raidLaw.js';   // ten real seconds of two clocks' skew (WORLD5)
-import { isCoarseNode, nodeBounds } from './cellTree.js';   // COST-2 (b): a coarse node's square, the ledger's bound for a socket of it
+import {
+  WORLD_CELL,
+  sharedClassicMinutes,
+  cellOfRoom,
+  OW_BAND_ID_RE,
+  OW_RAIDER_ID_RE,
+  OW_WORD_IDS_MAX,
+  OW_WORD_ROWS_MAX,
+  OW_CELL_SPENT_MAX,
+  OW_CELL_ROWS_MAX,
+  owWireRow,
+  OW_CELL_GRAVES_MAX,
+  OW_GRAVE_ACCT_MAX,
+  OW_GRAVE_ACCT_ROWS_MAX,
+  owGraveIn,
+  owGraveOut,
+  NAME_MAX,
+} from './wire.js';
+import { gateHash, GATE_DAY_MINUTES } from './gate/gateLaw.js'; // the spawned dungeons' hash (world/spawnedDungeons.js hash32) - the relay's one copy; a game day's minutes
+import { RAID_SLACK_MINUTES } from './raid/raidLaw.js'; // ten real seconds of two clocks' skew (WORLD5)
+import { isCoarseNode, nodeBounds } from './cellTree.js'; // COST-2 (b): a coarse node's square, the ledger's bound for a socket of it
 
 export { OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX, OW_CELL_GRAVES_MAX };
 
@@ -56,7 +73,7 @@ export const OW_WORLD_SALT = 1;
 /** A pixel's chance of a spawned dungeon of either kind (spawnedDungeons.js ANY_SPAWN_CHANCE: SPAWN_CHANCE + ELITE_CHANCE,
  *  the same sum - pinned equal, and the roll pinned pixel for pixel over the whole map). SPAWN-THIN: the keep, the
  *  world's own share, on the world's own second lane. */
-export const OW_SPAWN_CHANCE = 0.30 + 0.10;
+export const OW_SPAWN_CHANCE = 0.3 + 0.1;
 export const OW_SPAWN_KEEP = 0.75;
 /** How far past its cell's square an id's or a row's pixel may lie, map pixels - a band met at the seam (its cell is
  *  two pixels, its walk a pixel more), a raider's cell origin (six pixels, and a chase), a dungeon over the edge. */
@@ -70,7 +87,8 @@ export const OW_REBIRTH_MIN = 12 * GATE_DAY_MINUTES;
 /** SPAWN-REBIRTH: WHEN A ROW STOPS MATTERING, classic minutes - its spawn's death (the earlier of its two clocks) plus
  *  OW_REBIRTH_MIN, when the same dungeon stands again on fresh clocks (spawnedDungeons.js spawnReborn). A row is kept
  *  until then and not a minute past it. @param {number[]} r a wire row */
-export const owRowUntil = (r) => Math.min(r[2] + OW_GENERAL_TTL_MIN, Number.isFinite(r[3]) ? r[3] + OW_CLEARED_TTL_MIN : Infinity) + OW_REBIRTH_MIN;
+export const owRowUntil = (r) =>
+  Math.min(r[2] + OW_GENERAL_TTL_MIN, Number.isFinite(r[3]) ? r[3] + OW_CLEARED_TTL_MIN : Infinity) + OW_REBIRTH_MIN;
 /** A row's clock may run this far ahead of the relay's (classic minutes) - two machines' skew, taken as the relay's now. */
 export const OW_ROW_SLACK_MIN = RAID_SLACK_MINUTES;
 /** GRAVE-PARTY: how long a searched grave is kept, classic minutes - a search's five game hours (systems/searchables.js
@@ -100,11 +118,15 @@ export function owIdLife(id) {
 export function owIdLive(id, nowMs) {
   const kind = owIdKind(id);
   if (!kind || !Number.isFinite(nowMs)) return false;
-  const life = owIdLife(id), cur = Math.floor(nowMs / owLifeMs(kind));
+  const life = owIdLife(id),
+    cur = Math.floor(nowMs / owLifeMs(kind));
   return life === cur || life === cur - 1;
 }
 /** When a spent id stops mattering, ms: the end of the life AFTER its own (the client's bandPrune keeps it that long). */
-export const owIdUntil = (id) => { const kind = owIdKind(id); return kind ? (owIdLife(id) + 2) * owLifeMs(kind) : NaN; };
+export const owIdUntil = (id) => {
+  const kind = owIdKind(id);
+  return kind ? (owIdLife(id) + 2) * owLifeMs(kind) : NaN;
+};
 /**
  * THE MAP PIXEL OF AN ID'S CELL ORIGIN, `{x, y}` (the map's own rows, y counting south), or null. The two kinds count
  * their cells differently, and this is where that is said once:
@@ -120,7 +142,9 @@ export function owIdPixel(id) {
   if (!kind) return null;
   const s = /** @type {string} */ (id);
   const [cx, cy] = s.slice(1, s.lastIndexOf('.')).split('.').map(Number);
-  return kind === 'band' ? { x: cx * OW_BAND_CELL_PX, y: 499 - cy * OW_BAND_CELL_PX } : { x: cx * OW_RAIDER_CELL_PX, y: cy * OW_RAIDER_CELL_PX };
+  return kind === 'band'
+    ? { x: cx * OW_BAND_CELL_PX, y: 499 - cy * OW_BAND_CELL_PX }
+    : { x: cx * OW_RAIDER_CELL_PX, y: cy * OW_RAIDER_CELL_PX };
 }
 
 // ═══ THE CELL ════════════════════════════════════════════════════════════════════════════════════
@@ -130,12 +154,31 @@ export function owIdPixel(id) {
  *  node's (net/cellTree.js), the square a socket of it covers, widened the same. @param {unknown} roomKey */
 export function owCellSquare(roomKey) {
   const c = cellOfRoom(roomKey);
-  if (!c) { const b = isCoarseNode(roomKey) ? nodeBounds(roomKey) : null; return b && { x0: b.x0 - OW_CELL_MARGIN_PX, y0: b.y0 - OW_CELL_MARGIN_PX, x1: b.x1 + OW_CELL_MARGIN_PX, y1: b.y1 + OW_CELL_MARGIN_PX }; }
-  return { x0: c[0] * WORLD_CELL - OW_CELL_MARGIN_PX, y0: c[1] * WORLD_CELL - OW_CELL_MARGIN_PX, x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX, y1: (c[1] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX };
+  if (!c) {
+    const b = isCoarseNode(roomKey) ? nodeBounds(roomKey) : null;
+    return (
+      b && {
+        x0: b.x0 - OW_CELL_MARGIN_PX,
+        y0: b.y0 - OW_CELL_MARGIN_PX,
+        x1: b.x1 + OW_CELL_MARGIN_PX,
+        y1: b.y1 + OW_CELL_MARGIN_PX,
+      }
+    );
+  }
+  return {
+    x0: c[0] * WORLD_CELL - OW_CELL_MARGIN_PX,
+    y0: c[1] * WORLD_CELL - OW_CELL_MARGIN_PX,
+    x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX,
+    y1: (c[1] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX,
+  };
 }
-const inSquare = (s, x, y) => !!s && Number.isFinite(x) && Number.isFinite(y) && x >= s.x0 && x < s.x1 && y >= s.y0 && y < s.y1;
+const inSquare = (s, x, y) =>
+  !!s && Number.isFinite(x) && Number.isFinite(y) && x >= s.x0 && x < s.x1 && y >= s.y0 && y < s.y1;
 /** Is an id's cell origin inside a cell room's widened square? A word naming one outside it is junk in that room. */
-export const owIdInCell = (id, roomKey) => { const p = owIdPixel(id); return !!p && inSquare(owCellSquare(roomKey), p.x, p.y); };
+export const owIdInCell = (id, roomKey) => {
+  const p = owIdPixel(id);
+  return !!p && inSquare(owCellSquare(roomKey), p.x, p.y);
+};
 /** Is a row's pixel inside a cell room's widened square? */
 export const owRowInCell = (row, roomKey) => Array.isArray(row) && inSquare(owCellSquare(roomKey), row[0], row[1]);
 
@@ -188,7 +231,8 @@ export function owRowFits(r, nowMin) {
 /** An empty ledger. @returns {OwLedger} */
 export const newOwLedger = () => ({ sp: [], dg: {}, gr: {} });
 /** Does a ledger hold nothing? @param {OwLedger} led */
-export const owLedgerEmpty = (led) => !led || (!led.sp.length && !Object.keys(led.dg).length && !Object.keys(led.gr ?? {}).length);
+export const owLedgerEmpty = (led) =>
+  !led || (!led.sp.length && !Object.keys(led.dg).length && !Object.keys(led.gr ?? {}).length);
 /** The oldest first entries out, down to OW_CELL_ROWS_MAX; answers whether any went. @param {OwLedger} led */
 function capRows(led) {
   const keys = Object.keys(led.dg);
@@ -219,8 +263,11 @@ export function owLedgerOf(v) {
     if (w && owRowSane(w)) led.dg[owRowKey(w[0], w[1])] = w;
   }
   capRows(led);
-  const gsrc = /** @type {{gr?: unknown}} */ (v).gr;   // GRAVE-PARTY
-  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) { const g = owGraveOut(r); if (g) led.gr[owGraveKey(g)] = g; }
+  const gsrc = /** @type {{gr?: unknown}} */ (v).gr; // GRAVE-PARTY
+  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) {
+    const g = owGraveOut(r);
+    if (g) led.gr[owGraveKey(g)] = g;
+  }
   capGraves(led);
   return led;
 }
@@ -239,7 +286,8 @@ export function owLedgerOf(v) {
 /** A grave row's key in a ledger: its stone and its searcher. @param {Array<number|string>} g */
 export const owGraveKey = (g) => `${g[0]},${g[1]}|${g[2]}|${g[4]}`;
 /** Is a grave row still inside its search's hours at `nowMin`? @param {Array<number|string>} g @param {number} nowMin */
-export const owGraveLive = (g, nowMin) => Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;
+export const owGraveLive = (g, nowMin) =>
+  Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;
 /**
  * THE BOUNDS (AUDIT GRAVE-PARTY G3): each searcher's own oldest out past OW_GRAVE_ACCT_ROWS_MAX; then, past
  * OW_CELL_GRAVES_MAX, the oldest of whichever searcher holds the MOST - so no searcher's rows push out another's while
@@ -249,16 +297,26 @@ export const owGraveLive = (g, nowMin) => Number.isFinite(nowMin) && nowMin - /*
 function capGraves(led) {
   const age = (k) => /** @type {number} */ (led.gr[k][3]);
   const by = new Map();
-  for (const [k, g] of Object.entries(led.gr)) { const l = by.get(g[4]); if (l) l.push(k); else by.set(g[4], [k]); }
-  let total = 0, dropped = false;
+  for (const [k, g] of Object.entries(led.gr)) {
+    const l = by.get(g[4]);
+    if (l) l.push(k);
+    else by.set(g[4], [k]);
+  }
+  let total = 0,
+    dropped = false;
   for (const keys of by.values()) {
-    keys.sort((a, b) => age(a) - age(b));   // stable: one minute's rows in the order they were taken
-    while (keys.length > OW_GRAVE_ACCT_ROWS_MAX) { delete led.gr[/** @type {string} */ (keys.shift())]; dropped = true; }
+    keys.sort((a, b) => age(a) - age(b)); // stable: one minute's rows in the order they were taken
+    while (keys.length > OW_GRAVE_ACCT_ROWS_MAX) {
+      delete led.gr[/** @type {string} */ (keys.shift())];
+      dropped = true;
+    }
     total += keys.length;
   }
   for (; total > OW_CELL_GRAVES_MAX; total--) {
     let most = null;
-    for (const keys of by.values()) if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0]))) most = keys;
+    for (const keys of by.values())
+      if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0])))
+        most = keys;
     delete led.gr[/** @type {string} */ (/** @type {string[]} */ (most).shift())];
     dropped = true;
   }
@@ -275,13 +333,23 @@ function capGraves(led) {
  */
 export function owFoldGraves(led, rows, acct, nowMin, name = '') {
   const taken = [];
-  if (!led || !Array.isArray(rows) || typeof acct !== 'string' || !acct || acct.length > OW_GRAVE_ACCT_MAX || !Number.isFinite(nowMin) || nowMin < 0) return taken;
+  if (
+    !led ||
+    !Array.isArray(rows) ||
+    typeof acct !== 'string' ||
+    !acct ||
+    acct.length > OW_GRAVE_ACCT_MAX ||
+    !Number.isFinite(nowMin) ||
+    nowMin < 0
+  )
+    return taken;
   const who = typeof name === 'string' && name.length <= NAME_MAX ? name : '';
   for (const [k, g] of Object.entries(led.gr)) if (!owGraveLive(g, nowMin)) delete led.gr[k];
   for (const r of rows.slice(0, OW_WORD_ROWS_MAX)) {
     const w = owGraveIn(r);
     if (!w) continue;
-    const g = [...w, nowMin, acct, who], k = owGraveKey(g);
+    const g = [...w, nowMin, acct, who],
+      k = owGraveKey(g);
     if (led.gr[k]) continue;
     led.gr[k] = g;
     taken.push(g.slice());
@@ -329,10 +397,11 @@ export function owFoldRows(led, rows, nowMin) {
     if (!w) continue;
     const k = owRowKey(w[0], w[1]);
     const had = led.dg[k];
-    const wc = w.length > 3 ? w[3] : null, hc = had && had.length > 3 ? had[3] : null;
+    const wc = w.length > 3 ? w[3] : null,
+      hc = had && had.length > 3 ? had[3] : null;
     const seen = had ? Math.min(had[2], w[2]) : w[2];
     const cleared = hc === null ? wc : wc === null ? hc : Math.min(hc, wc);
-    if (had && seen === had[2] && cleared === hc) continue;   // nothing new: never raised, never re-said
+    if (had && seen === had[2] && cleared === hc) continue; // nothing new: never raised, never re-said
     const row = cleared === null ? [w[0], w[1], seen] : [w[0], w[1], seen, cleared];
     led.dg[k] = row;
     changed.set(k, row);
@@ -357,7 +426,8 @@ export function owRowsBehind(led, rows, changed = []) {
     const k = owRowKey(w[0], w[1]);
     const held = led?.dg?.[k];
     if (!held || moved.has(k) || out.has(k)) continue;
-    const wc = w.length > 3 ? w[3] : null, hc = held.length > 3 ? held[3] : null;
+    const wc = w.length > 3 ? w[3] : null,
+      hc = held.length > 3 ? held[3] : null;
     if (held[2] < w[2] || (hc !== null && (wc === null || hc < wc))) out.set(k, held.slice());
   }
   return [...out.values()];
@@ -375,9 +445,17 @@ export function owPrune(led, nowMs) {
   const sp = led.sp.filter((e) => e[1] > nowMs).slice(-OW_CELL_SPENT_MAX);
   let dropped = sp.length !== led.sp.length;
   led.sp = sp;
-  for (const [k, r] of Object.entries(led.dg)) if (owRowUntil(r) <= nowMin) { delete led.dg[k]; dropped = true; }
+  for (const [k, r] of Object.entries(led.dg))
+    if (owRowUntil(r) <= nowMin) {
+      delete led.dg[k];
+      dropped = true;
+    }
   led.gr ??= {};
-  for (const [k, g] of Object.entries(led.gr)) if (!owGraveLive(g, nowMin)) { delete led.gr[k]; dropped = true; }   // GRAVE-PARTY: a search past its hours
+  for (const [k, g] of Object.entries(led.gr))
+    if (!owGraveLive(g, nowMin)) {
+      delete led.gr[k];
+      dropped = true;
+    } // GRAVE-PARTY: a search past its hours
   const capped = capGraves(led);
   return capRows(led) || capped || dropped;
 }
@@ -390,8 +468,17 @@ export function owPrune(led, nowMs) {
  */
 export function toWelcome(led, nowMs) {
   const nowMin = sharedClassicMinutes(nowMs);
-  const sp = (led?.sp ?? []).filter((e) => e[1] > nowMs).slice(-OW_CELL_SPENT_MAX).map((e) => e[0]);
-  const dg = Object.values(led?.dg ?? {}).filter((r) => owRowUntil(r) > nowMin).slice(0, OW_CELL_ROWS_MAX).map((r) => r.slice());
-  const gr = Object.values(led?.gr ?? {}).filter((g) => owGraveLive(g, nowMin)).slice(0, OW_CELL_GRAVES_MAX).map((g) => g.slice());
+  const sp = (led?.sp ?? [])
+    .filter((e) => e[1] > nowMs)
+    .slice(-OW_CELL_SPENT_MAX)
+    .map((e) => e[0]);
+  const dg = Object.values(led?.dg ?? {})
+    .filter((r) => owRowUntil(r) > nowMin)
+    .slice(0, OW_CELL_ROWS_MAX)
+    .map((r) => r.slice());
+  const gr = Object.values(led?.gr ?? {})
+    .filter((g) => owGraveLive(g, nowMin))
+    .slice(0, OW_CELL_GRAVES_MAX)
+    .map((g) => g.slice());
   return gr.length ? { sp, dg, gr } : { sp, dg };
 }

@@ -1,135 +1,99 @@
-# World 2.0 - World Generation 2.0, Settlement System 2.0 and the World Editor (WG2)
+# World 2.0
 
-Opened 2026-10-31. KPbICA's specification "DFO - World Generation 2.0, Settlement System 2.0 & World Editor" (31 October
-2026, posted to DFO Online Core): a world made from connected environmental rules - geology, water, climate, soil and
-living cover - with towns built from that ground without RMB blocks, and a visual editor that changes both and
-publishes the change safely. KPbICA: *"To address the RMB-contracts restriction we better to take care of the WorldGen at
-first."* The owner, handing it over: *"This is a big arc and we need to do this correctly with no band aids. I give you
-full autonomy."*
+World 2.0 makes the world from connected environmental rules - geology, water, climate, soil and living cover - builds
+towns from that ground without RMB blocks, and gives a World Editor that changes both and publishes the change safely.
+Regions are baked offline and shipped; a client reads a bake and never generates at run time. Nothing is published: the
+prototypes stand behind `?wg2=<id>`. The laws every slice reads are in `03-World/World-2-Canon.md`.
 
-The canon every later slice reads is `03-World/World-2-Canon.md`. The audit that opened the arc is
-`01-Overview/audits/Audit-World-2-Phase-0.md`.
+## How it works
 
-## Decision records
+### The foundation (`src/world/gen2/`)
 
-- **WG-1 (2026-10-31) A layer under the world's own readers, not a second pipeline.** The kernel, its workers, the near
-  grid, the mid and far rings and the collision stay. A published region answers the ground's own reads -
-  `tamrielGround.js`'s byte and climate, `landforms.js`'s shaper, `terrainGen.js`'s water paint - before their laws.
-  Cost: a region is bounded by what those reads carry; the classic skin sees its bytes, not its grain.
-- **WG-2 (2026-10-31) Exact arithmetic for every gameplay field.** Only IEEE-754's correctly rounded operations: no
-  sine, exponent, `**`, `Math.hypot`, random or clock. Two clients on one revision agree to the bit. A sweep holds
-  `src/world/gen2/`. Cost: angles become unit vectors, and the noise is our own seeded gradient noise.
-- **WG-3 (2026-10-31) The canon is the repository's own.** A bake reads the authored geography, the owner's relief and
-  the tables - never the player's traced picture, whose raster is game data. The fit is the manifest's, measured from
-  the freeware. Cost: the authored coast is cruder than the trace, so a published region stays inland (WG-7).
-- **WG-4 (2026-10-31) Erosion offline; clients read bakes.** `tools/wg2Bake.mjs` runs the stages; the bake ships
-  gzipped under `public/worldgen2/`. Cost: 1.4 MB for the two prototype regions.
-- **WG-5 (2026-10-31) A versioned manifest, bound to the ground law.** `world/gen2/worldManifest.json` names every
-  version, the seed, the fit and the published regions. The published set's print is recorded under the online
-  `GROUND_LAW`; publishing without raising it fails a pin, so the relay's ground gate turns an older build away.
-- **WG-6 (2026-10-31) Rivers are vectors.** A bake cell is 410 m; a river is 3 to 60 m. The bake keeps each river's
-  cells and the client carves the channel from the course. Surfaces never rise downstream.
-- **WG-7 (2026-10-31) Nothing published by this arc.** The Bay's ground, its seam band and the coast are refused to a
-  published region without the owner's dated word. Phase 6 is the owner's: the prototypes stand behind `?wg2=<id>`.
-- **WG-8 (2026-10-31) Resources say where and how rich, never what they pay.** The economy stays the server's.
-- **WG-9 (2026-10-31) A building is a record, an RMB block one source of it.** Legacy ids keep the key and the layout
-  stamp; new ids are a settlement's sequence under its own map id lane (0x342), never reused.
+The exact kit (`exact.js`), raster fields (`field.js`), the grid's operations (`gridOps.js`), the stages and their
+invalidation (`stageGraph.js`), the versioned manifest (`manifest.js`, `worldManifest.json`), the canon (`canon.js`)
+and the tables (`tables.js` over `data/*.json`: rocks, soils, biomes, plants and a profile for each of the ten
+theatres). `tools/wg2Measure.mjs` takes the terrain pipeline's baselines.
 
-- **WG-10 (2026-11-01) A lake is a node of the network.** Inside a closed basin water follows the real ground to its
-  floor; the flood's epsilon-graded flat is only for finding the spill. Cost: a second pass over each basin's cells.
-- **WG-11 (2026-11-01) Towns ship in their region's bake.** Made offline on the bake's own ground, minted and refused
-  whole on any problem, so every client stands the same records and nothing is generated at run time. Cost: a town
-  moves with its bake; editing one re-bakes its region.
-- **WG-12 (2026-11-01) A province is tiles on one world lattice, crossfaded.** The weights are a partition of unity, so
-  overlapping tiles sum to one and a lone region eases in as before. Cost: two tiles' rivers may not meet exactly in
-  the overlap; the canon and the continent's inflow keep them close.
-- **WG-13 (2026-11-01) Publishing ships the lean cut.** Height, biome and lakes are all the ground reads; the authoring
-  planes stay with the tools. Cost: a client cannot place plants or sites from a lean bake.
+### The terrain generator
 
-- **WG-14 (2026-10-31) A door is judged on the ground the stream draws.** The kernel draws two triangles over each 6.4 m
-  quad, and most pads are narrower than one, so a floor is never set under its door's drawn ground and no later pad may
-  raise it over an earlier door (`padLaw.js` `drawnAt`). Cost: a terrace's floor may stand over its pad's middle.
+Geology from a world-wide terrane lattice with the canon's spines raised as warped, branched ridges; climate with lapse,
+latitude, orographic rain and rain shadow; stream-power erosion with sediment laid in fans and lakes; a priority-flood
+drainage where a lake is a node of the network and a filled flat falls to its spill with a grain; rivers with monotone
+surfaces, falls, rapids, flood plains, wetlands, springs and the water table; soils, biomes, dunes across the wind,
+oases and resources. The continent's drainage (`continent.js`) brings inflow past a region's edge and scopes an edit's
+stale hydrology to its own river. A province bakes as tiles on one lattice, crossfaded (`tiling.js`), and publishes
+lean: height, biome and lakes.
 
-## Phase 0 - the audit and the canon (DONE)
+### The seam
 
-Four reads of the terrain pipeline, the Tamriel geography, the places and buildings, and the tooling, with the baselines
-`tools/wg2Measure.mjs` takes: `01-Overview/audits/Audit-World-2-Phase-0.md`. The canon: `03-World/World-2-Canon.md`.
+`tools/wg2Bake.mjs` runs the stages; the bake ships gzipped under `public/worldgen2/`. A region answers the ground's own
+reads - `tamrielGround.js`'s byte and climate, `landforms.js`'s shaper, `terrainGen.js`'s water paint - before their
+laws, installed on every thread through the `tamriel` message (`scenes/gen2Host.js`). Rivers are vectors: the bake keeps
+each river's cells and the client carves the channel from the course.
 
-## Phase 1 - the environmental foundation (BUILT)
+### Settlements (`src/world/gen2/settle/`, `src/world/settle2/`)
 
-`src/world/gen2/`: the exact kit (`exact.js`), raster fields (`field.js`), the grid's operations (`gridOps.js`), the
-stages and their invalidation (`stageGraph.js`), the manifest (`manifest.js`), the canon (`canon.js`) and the tables
-(`tables.js` over `data/*.json`: rocks, soils, biomes, plants and a profile for each of the ten theatres).
+The building record and the RMB adapter; site selection by type; the generator's stages; terrain adaptation (plinths,
+terraces with pads and retaining walls, stilts and platforms); a validator. Towns are made offline on the bake's own
+ground and ship in their region's bake, refused whole on any problem. In the streamed world they stand with doors,
+interiors, walls, gates, terraces, stairs, wells, stalls, docks, bridges and stilt platforms. A door is judged on the
+ground the stream draws (`padLaw.js` `drawnAt`). Five prototype towns: Tava Wells, Hollowstone, Sentry Hold, Reedford
+and Hist Shallows.
 
-## Phase 2 - the terrain generator (BUILT)
+### The World Editor
 
-Geology from a world-wide terrane lattice and the canon's spines raised as ridges; climate with lapse, latitude,
-orographic rain and rain shadow; stream-power erosion with sediment laid in fans and lakes; a priority-flood drainage
-with lakes by water balance (terminal lakes and salt flats in a dry land), rivers with monotone surfaces, falls,
-rapids, flood plains, wetlands, springs and the water table; soils, biomes, dunes across the wind, oases and
-resources. Two prototype bakes: the Dragontails east of the Bay (`hammerfell-test`) and a Black Marsh wetland. The seam
-installs a bake on every thread through the `tamriel` message.
+`worldeditor.html` over `src/tools/worldEditor.js` and the model in `src/world/gen2/edit/`: brushes, biome paint, roads
+and rivers by hand, settlements placed and generated, a district made again, buildings removed, named layers, undo and
+redo, the checks, draft to published with rollback, packages, and the pixel in 3D through the game's renderer. A bake
+takes a document as its authored overrides (`tools/wg2Bake.mjs --doc`).
 
-Since: a lake is a node of the drainage (WG-10), a filled flat falls to its spill with a grain, and ranges' ridges are
-warped and branched - the longest straight river run in the Dragontails bake fell from 66 cells to 9. The continent's
-drainage (`continent.js`) brings 10 m3/s into the Dragontails region from past its edge, and scopes an edit's stale
-hydrology to its own river. A province bakes as tiles (`tiling.js`, WG-12) and publishes lean (WG-13).
+### The hosts
 
-## Phase 3 - Settlement System 2.0 (BUILT)
+`scenes/world.js` wires `gen2Bakes()` through `terrainGen.setTamriel`; the towns come through modules it already builds
+(`tamrielPlacesHost.js` constructs `settle2Host.js`, `spawnStandHost.js` asks it first past the Bay, `pixelBuild.js`
+stands its ground). `scenes/exterior.js` streams no ground past the Bay. `scenes/worldModes.js` takes a town's door as a
+static door and its interior as the subrecord's. `scenes/dungeonContext.js` has nothing to do: a mine is a building.
 
-`src/world/gen2/settle/`: the building record and the RMB adapter; site selection by type; the generator's stages A to
-G; terrain adaptation (plinths, terraces with pads and retaining walls, stilts and platforms); a validator. Five
-prototype towns stand without RMB: Tava Wells, Hollowstone, Sentry Hold, Reedford and Hist Shallows.
+## Rules
 
-## Phase 4 - the World Editor (BUILT, first increment)
+- Do it correctly, with no band aids (the owner).
+- A layer under the world's own readers, not a second pipeline: the kernel, its workers, the rings and the collision
+  stay. A region is bounded by what those reads carry; the classic skin sees its bytes, not its grain.
+- Exact arithmetic for every gameplay field: no sine, exponent, `**`, `Math.hypot`, random or clock. A sweep holds
+  `src/world/gen2/`.
+- The canon is the repository's own: the authored geography, the owner's relief and the tables, never the player's
+  traced picture. So a published region stays inland.
+- The published set's print is recorded under the online `GROUND_LAW`. Publishing is the owner's call; the Bay's
+  ground, its seam band and the coast are refused to a region without the owner's word.
+- Resources say where and how rich, never what they pay: the economy stays the server's.
+- A building is a record; an RMB block is one source of it. Legacy ids keep the key and the layout stamp; new ids take a
+  settlement's sequence under map id lane 0x342, never reused.
 
-`worldeditor.html` over `src/tools/worldEditor.js` and the model in `src/world/gen2/edit/`: brushes, biome paint,
-settlements placed and generated, a district made again, buildings removed, named layers, undo and redo, the checks,
-draft to published with rollback, packages, and the pixel in 3D through the game's renderer. Since: roads and rivers
-drawn by hand, and a bake that takes a document as its authored overrides (`tools/wg2Bake.mjs --doc`).
+## Daggerfall Unity
 
-## Phases 5 to 7 - what this arc built of them, and what waits
+DFU reads WOODS.WLD and CLIMATE.PAK and lays every town from RMB blocks. The generator, the bakes, the seam,
+settlements without RMB and the editor are ours.
 
-Built: the services each role carries, the home key lane, the protected-property guard and its refusal, resource sites
-with stable ids, the ground law's binding, and a profile for every province. Since: the continent's inflow, province
-tiles, the two tunings the editor showed (straight rivers on filled flats, streaky ridges), and the baked towns standing
-in the streamed world with their doors, interiors, walls, gates, terraces, stairs, wells, stalls, docks, bridges and
-stilt platforms (`world/settle2/`). Waiting, each its own slice: NPC navigation over a published region, a pixel's build
-in a region profiled (twice the Bay's in the browser bench, `Audit-World-2-Phase-0.md`), crops standing on the towns'
-fields, and published regions (the owner's call).
+## Code and tests
 
-Seen in the game (2026-10-31, `?wg2=hammerfell-test`, headless): the region installs on every thread, the ground's
-bytes at (1100, 430) move from 55-58 to 83-89, and the pixel builds and stands with no error. The editor's close-ups
-showed lake shores straight along cell edges and dune steps up to 5 m; the sampler now reads both between cells. Three
-towns walked in the game (Sentry Hold, Hist Shallows, Tava Wells): arrivals, doors, taverns entered and left, the gate
-walked through and the wall stopping the player. Sentry Hold's terrace doors stood under the drawn ground, 16 of 26 by up
-to 1 m (WG-14).
+- `test/world/gen2/wg2_foundation.test.js` - the sweep, the noise, the tables, the manifest and its ground law, the
+  stages
+- `test/world/gen2/wg2_terrain.test.js` - determinism, water's laws, the readers' bytes, seams, in Hammerfell and Skyrim
+- `test/world/gen2/wg2_bakes.test.js` - the shipped bakes reproduce; plants meet their needs
+- `test/world/gen2/wg2_seam.test.js` - the seam with none and one region, the fit's refusal, the paint
+- `test/world/gen2/wg2_settlements.test.js` - the towns sound, culture's geometry, sites, regeneration, legacy ids, sills
+- `test/world/gen2/wg2_editor.test.js` - layers, undo, stale stages, publishing's gates, property, packages, roads and
+  rivers, the override bake
+- `test/world/gen2/wg2_continent.test.js`, `wg2_tiles.test.js` - the continent's drainage, province tiles, the lean cut
+- `test/world/settle2/wg2towns.test.js`, `wg2towns_freeware.test.js`, `wg2towns_features.test.js` - the towns standing
+- `tools/mutants/wg2.json`, `tools/mutants/wg2towns.json` - the mutants; `tools/wg2TownProbe.mjs` - a town in the game;
+  `tools/wg2Bench.mjs` - frame times with and without a region
 
-## THE FOUR HOSTS (Home.md)
+## Open
 
-- `scenes/world.js` - wired: `gen2Bakes()` (`scenes/gen2Host.js`) rides `terrainGen.setTamriel`; the towns through the
-  modules it already builds (`tamrielPlacesHost.js` constructs `settle2Host.js`, `spawnStandHost.js` asks it first past
-  the Bay, `pixelBuild.js` stands its ground). `bootWorld` gained no line.
-- `scenes/exterior.js` - nothing: the fixed-city bench streams no ground past the Bay.
-- `scenes/worldModes.js` - by data alone: a town's door is a static door and its interior the subrecord's made one.
-- `scenes/dungeonContext.js` - nothing: a town has no dungeon; the mine is a building.
-
-## Pins and mutants
-
-- `test/world/gen2/wg2_foundation.test.js` - the sweep, the noise, the tables, the manifest and its ground law, the stages.
-- `test/world/gen2/wg2_terrain.test.js` - determinism, water's laws, the readers' bytes, seams, in Hammerfell and Skyrim.
-- `test/world/gen2/wg2_bakes.test.js` - the shipped bakes reproduce; Phase 2's exit features; plants meet their needs.
-- `test/world/gen2/wg2_seam.test.js` - the seam with none and one region, the fit's refusal, the paint.
-- `test/world/gen2/wg2_settlements.test.js` - five towns sound, culture's geometry, sites, regeneration, legacy ids.
-- `test/world/gen2/wg2_editor.test.js` - layers, undo, stale stages, publishing's gates, property, packages, prefabs,
-  roads and rivers, the override bake.
-- `test/world/gen2/wg2_continent.test.js` - the continent's drainage, inflow, downstream reach, the basin network.
-- `test/world/gen2/wg2_tiles.test.js` - nine provinces' tiles, the crossfade, the manifest's tilings, the lean cut.
-- `test/world/settle2/wg2towns.test.js`, `wg2towns_freeware.test.js` - the towns standing: lanes, blocks, doors,
-  shells, the plane, interiors from the freeware's donors. `wg2towns_features.test.js` - each feature's model and place.
-- `tools/mutants/wg2.json`, `tools/mutants/wg2towns.json` - the mutants. `tools/wg2TownProbe.mjs` - a town in the game.
-
-## Port-Ledger
-
-Section A, WG2: the generator, the bakes, the seam, settlements without RMB and the editor are ours. DFU reads WOODS.WLD
-and CLIMATE.PAK and lays every town from RMB blocks.
+- NPC navigation over a published region.
+- A pixel's build in a region costs about twice the Bay's in the browser bench (`tools/wg2Bench.mjs`); not yet profiled.
+- Crops standing on the towns' fields.
+- Publishing a region (the owner's call).
+- Two tiles' rivers may not meet exactly in a province's overlap; the canon and the continent's inflow keep them close.
+- A terrace's floor may stand over its pad's middle, so its door is never under the drawn ground.

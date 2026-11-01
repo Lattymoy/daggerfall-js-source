@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 (bible/03-World/World-2.md, WG-2): THE EXACT KIT. Every gameplay field World 2.0 makes is built from IEEE-754's
+// THE EXACT KIT. Every gameplay field World 2.0 makes is built from IEEE-754's
 // correctly rounded operations alone (+ - * /, Math.sqrt, floor, round, abs, min, max, imul, bit operations), so two
 // clients on one revision agree to the bit. Math.sin, exp, pow, the `**` operator and their kin are approximations
 // each engine may round its own way; test/world/gen2/wg2_exact.test.js sweeps world/gen2/ for them.

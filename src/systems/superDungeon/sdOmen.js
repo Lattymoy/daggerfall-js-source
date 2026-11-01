@@ -16,7 +16,7 @@ import { sdPhase, sdStands, sdMarked, sdNameIn, sdWhere, SD_COLLAPSE_MS } from '
 import { timerText } from '../eventTimers.js';
 import { cityPixelOf } from './sdSite.js';
 import { MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS } from '../rumorMill.js';
-import { sdMarksOf, sdEndingOf, sdOmensOf } from '../../net/superDungeon/sdMarks.js';   // SD18c: the Ending a Hollow keeps, by its slot
+import { sdMarksOf, sdEndingOf, sdOmensOf } from '../../net/superDungeon/sdMarks.js'; // SD18c: the Ending a Hollow keeps, by its slot
 
 /** How far the column is seen, map pixels (Chebyshev) - section 4's twelve. */
 export const SD_OMEN_PX = 12;
@@ -46,7 +46,8 @@ export function sdOmenLight(rec, now) {
 }
 
 /** Is the column seen from map pixel (x, y)? Within SD_OMEN_PX of the Hollow's pixel, either way. */
-export const sdOmenSeen = (site, x, y) => !!site && Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;
+export const sdOmenSeen = (site, x, y) =>
+  !!site && Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;
 
 /** The state in words, for the ring's label, the note and the tip: "fades in 1d 04h", "collapsing". */
 export function sdStateWords(rec, now) {
@@ -68,9 +69,22 @@ export function sdMapMark(rec, hollow, now) {
   if (!rec || !sdMarked(phase) || !hollow?.site || hollow.s !== rec.s) return null;
   const name = String(hollow.loc?.name ?? 'An Abyss Dungeon');
   const words = sdStateWords(rec, now);
-  const E = sdEndingOf(sdMarksOf(rec.s));   // SD18c: the Ending it keeps, on its card
-  const lines = [`Near ${hollow.site.cityName || 'the Iliac Bay'}`, ...(E ? [`It keeps the Ending of ${E.stone}`] : []), ...(rec.fb ? [`Found by ${rec.fb}`] : []), ...(words ? [words[0].toUpperCase() + words.slice(1)] : [])];
-  return { day: rec.s, cx: hollow.site.px + 0.5, cy: hollow.site.py + 0.5, r: SD_RING_R, label: words ? `${name} - ${words}` : name, phase, tip: { title: `${name}, an Abyss Dungeon`, lines } };
+  const E = sdEndingOf(sdMarksOf(rec.s)); // SD18c: the Ending it keeps, on its card
+  const lines = [
+    `Near ${hollow.site.cityName || 'the Iliac Bay'}`,
+    ...(E ? [`It keeps the Ending of ${E.stone}`] : []),
+    ...(rec.fb ? [`Found by ${rec.fb}`] : []),
+    ...(words ? [words[0].toUpperCase() + words.slice(1)] : []),
+  ];
+  return {
+    day: rec.s,
+    cx: hollow.site.px + 0.5,
+    cy: hollow.site.py + 0.5,
+    r: SD_RING_R,
+    label: words ? `${name} - ${words}` : name,
+    phase,
+    tip: { title: `${name}, an Abyss Dungeon`, lines },
+  };
 }
 
 /** The note under the red seal on every notice board while it is news - the ring's own words. */
@@ -92,12 +106,16 @@ export function sdNoticeCard(mark, cityName) {
 /** The brass air: whole within fullM metres, gone by edgeM; its most; its dusk (minute of the day, half a window,
  *  what of it stands outside the window). */
 export const SD_AIR = Object.freeze({ fullM: 1000, edgeM: 8000, max: 0.55, duskAt: 1170, duskHalf: 150, base: 0.45 });
-const smooth = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+const smooth = (a, b, x) => {
+  const k = clamp01((x - a) / (b - a));
+  return k * k * (3 - 2 * k);
+};
 /** How much of the brass air reaches `d` metres from the Hollow. Pure. */
 export const sdAirNear = (d) => (Number.isFinite(d) ? 1 - smooth(SD_AIR.fullM, SD_AIR.edgeM, d) : 0);
 /** How much of it the hour gives - SD_AIR.base all day, whole at dusk. Pure. */
 export function sdAirDusk(minute) {
-  const m = ((Number(minute) || 0) % 1440 + 1440) % 1440, dm = Math.abs(((m - SD_AIR.duskAt + 720) % 1440 + 1440) % 1440 - 720);
+  const m = (((Number(minute) || 0) % 1440) + 1440) % 1440,
+    dm = Math.abs(((((m - SD_AIR.duskAt + 720) % 1440) + 1440) % 1440) - 720);
   const k = dm >= SD_AIR.duskHalf ? 0 : 0.5 + 0.5 * Math.cos((Math.PI * dm) / SD_AIR.duskHalf);
   return SD_AIR.base + (1 - SD_AIR.base) * k;
 }
@@ -110,23 +128,34 @@ export { SD_BRASS_RAMP, sdBrassGrade } from '../../world/superDungeon/sdBrassSky
  *  itself where there is no brass and it is one already (AUDIT SD III, V15: none made every outdoor frame for nothing).
  *  Pure. */
 export const SD_BRASS_TINT = Object.freeze([1.1, 0.92, 0.62]);
-export const sdBrassLight = (rgb, w) => (!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0)))));
+export const sdBrassLight = (rgb, w) =>
+  !(w > 0) && rgb instanceof Float32Array
+    ? rgb
+    : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));
 /** The banner at its door: within this many metres of its centre. */
 export const SD_BANNER_M = 60;
 /** The banner's words: its name and its state ("fades in 1d 04h", "collapsing") - AUDIT SD III (T1): what it is is the
  *  card's beside it, and with it a long name ran the banner off both sides of a phone. */
-export const sdBannerText = (name, rec, now) => { const w = sdStateWords(rec, now); return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`; };
+export const sdBannerText = (name, rec, now) => {
+  const w = sdStateWords(rec, now);
+  return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`;
+};
 /** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel, its Sunfall, under the
  *  Brazen Hide and the Short Hour." AUDIT SD III (T11): each mark's article small inside the line (net/superDungeon/sdLaw.js sdNameIn)
  *  - it read "under The Brazen Hide and The Short Hour". AUDIT SD IV (T9): its signature the Ending's own ("its
  *  Lion's Roar") - it hung between dashes, "Sentinel - Sunfall - under", the aside WB13b's law forbids. */
 export function sdMarksLine({ name, s }) {
-  const mk = sdMarksOf(s), E = sdEndingOf(mk), O = sdOmensOf(mk);
-  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.` : '';
+  const mk = sdMarksOf(s),
+    E = sdEndingOf(mk),
+    O = sdOmensOf(mk);
+  return E
+    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`
+    : '';
 }
 /** A found Hollow's last hour, said to the realm once. */
 export const SD_HOUR_LEFT_MS = 60 * 60 * 1000;
-export const sdHourLine = ({ name, near, region, province = '' }) => `${name || 'The Abyss Dungeon'} ${sdWhere(near, region, province)} will fade within the hour.`;   // AUDIT SD III (T19): where, as the find's line says it
+export const sdHourLine = ({ name, near, region, province = '' }) =>
+  `${name || 'The Abyss Dungeon'} ${sdWhere(near, region, province)} will fade within the hour.`; // AUDIT SD III (T19): where, as the find's line says it
 
 /** SD18c: what the taverns say of a Hollow by the Ending it keeps - the omen that goes with it. */
 export const SD_ENDING_RUMOR = Object.freeze({
@@ -134,11 +163,12 @@ export const SD_ENDING_RUMOR = Object.freeze({
   sentinel: 'the sun goes down twice',
   wayrest: 'the tide comes in where there is no sea',
   orsinium: 'something heavy walks just under the earth',
-  underking: 'the dead in their barrows turn their heads toward the walls',   // AUDIT SD III (T12): "toward it" - toward the air, the walls, the city?
-  blades: 'a dragon\'s shadow crosses where no dragon flies',
+  underking: 'the dead in their barrows turn their heads toward the walls', // AUDIT SD III (T12): "toward it" - toward the air, the walls, the city?
+  blades: "a dragon's shadow crosses where no dragon flies",
 });
 /** The taverns' word of it (section 4) - SD18c: the omen its Ending sends, else the bell where there is no bell. */
-export const sdRumorLine = (city, ending = null) => `They say the air goes brass-colored past the walls of ${city} at dusk, and ${SD_ENDING_RUMOR[ending] ?? 'a bell rings where there is no bell'}.`;
+export const sdRumorLine = (city, ending = null) =>
+  `They say the air goes brass-colored past the walls of ${city} at dusk, and ${SD_ENDING_RUMOR[ending] ?? 'a bell rings where there is no bell'}.`;
 
 /**
  * "Any news?" asked in the city a standing Hollow stands by (`here` my map pixel), while it has risen or been found -
@@ -154,10 +184,19 @@ export const sdRumorLine = (city, ending = null) => `They say the air goes brass
  */
 export function sdRumor(rec, hollow, now, here, session, { rolls = Math.random } = {}) {
   const phase = sdPhase(rec, now);
-  if (!rec || (phase !== 'risen' && phase !== 'found') || !hollow?.site?.city || hollow.s !== rec.s || !here || !session) return null;
+  if (
+    !rec ||
+    (phase !== 'risen' && phase !== 'found') ||
+    !hollow?.site?.city ||
+    hollow.s !== rec.s ||
+    !here ||
+    !session
+  )
+    return null;
   const c = cityPixelOf(hollow.site.city);
   if (here.px !== c.px || here.py !== c.py) return null;
-  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster)) return null;
+  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster))
+    return null;
   if (!(rolls() < SD_RUMOR_CHANCE)) return null;
   session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;
   return sdRumorLine(hollow.site.cityName || 'the city', sdMarksOf(rec.s)[0]);

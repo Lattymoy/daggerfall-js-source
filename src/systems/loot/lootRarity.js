@@ -1266,6 +1266,9 @@ export const LEGENDARY_POWERS = Object.freeze({
 let _gilded = null;
 export function registerGildedRecords(api) { _gilded = api && typeof api.powerOf === 'function' && typeof api.loreOf === 'function' ? api : null; }
 export const powerOf = (id) => (typeof id === 'string' ? (LEGENDARY_POWERS[id] ?? legendaryById(id)?.power ?? _gilded?.powerOf(id) ?? null) : null);
+/** The power ids a piece carries: a Legendary's own, a Rare's imprint (LOOT10), a Gilded's - worn (lootPowers.js wornPowers)
+ *  and judged (net/kitMight.js) by one reading. AUDIT POTION-MIGHT D1: the judge had read no imprint. */
+export const powerIdsOf = (/** @type {any} */ it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];
 /** The power's line on a card and a tooltip: its name and its brief. */
 export const powerLine = (p) => (p?.name && p?.brief ? `${p.name}: ${p.brief}${p.survival && !survivalOn() ? SURVIVAL_OFF_NOTE : ''}` : '');   // LOOT15: a survival power says its reader is off
 /** LOOT10 (bible/06-Systems/Loot-Arc.md section 12): A RARE'S IMPRINT - the power of a Legendary of its own group,
@@ -2220,7 +2223,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const tier = item.rarity;
   const old = item.affixes[index];
   const { ids: pool, others, freeParams } = reforgePool(item, index);
-  // PRESS-FLAT (2026-10-28, the owner: "no lean at all", "it need to reroll as well"): a reforge's kind and param are
+  // PRESS-FLAT (2026-10-28): a reforge's kind and param are
   // drawn with no lean - no skill to the item's own, no armour family's weight, no garment's dress
   const id = pickByLines(pool, (k) => drawWeight(k, item, others, null), rolls);
   const k = AFFIX_KINDS[id];

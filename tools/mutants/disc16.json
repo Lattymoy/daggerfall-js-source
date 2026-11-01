@@ -39,8 +39,8 @@
   {
     "name": "DISC16-B-the-preset-left-on",
     "file": "src/systems/modSettings.js",
-    "old": "        default: false,   // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1",
-    "new": "        default: true,   // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1",
+    "old": "        default: false, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
+    "new": "        default: true, // DISC16-B (2026-09-24, Mac: \"I just want it how it was before diverse weapons\"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP (\"mod should be defaulted on\") had it on, DISC14-B off with two departures of its own",
     "tests": [
       "test/combat/disc16.test.js",
       "test/combat/weapon/dw1_diverseweapons.test.js",
@@ -50,8 +50,8 @@
   {
     "name": "DISC16-B-DoubleScaleTextures-at-DISC14-B",
     "file": "src/systems/modSettings.js",
-    "old": "'Modules.DoubleScaleTextures': Object.freeze({ default: false,",
-    "new": "'Modules.DoubleScaleTextures': Object.freeze({ default: true,",
+    "old": "      'Modules.DoubleScaleTextures': Object.freeze({\n        default: false,",
+    "new": "      'Modules.DoubleScaleTextures': Object.freeze({\n        default: true,",
     "tests": [
       "test/combat/disc16.test.js",
       "test/combat/weapon/ww1_weaponwidget.test.js"
@@ -60,8 +60,8 @@
   {
     "name": "DISC16-B-Inertia-Scale-at-DISC14-B",
     "file": "src/systems/modSettings.js",
-    "old": "'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, get description() { return t('mods.weaponWidget.Inertia.Scale.description', 'The maximum distance that the sprite will be offset'); } }),   // DISC16-B",
-    "new": "'Inertia.Scale': Object.freeze({ default: 0, min: 0.0, max: 2.0, float: true, step: 0.1, get description() { return t('mods.weaponWidget.Inertia.Scale.description', 'The maximum distance that the sprite will be offset'); } }),   // DISC16-B",
+    "old": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 1.0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
+    "new": "            'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil',\n          );\n        },\n      }),\n      'Inertia.Scale': Object.freeze({\n        default: 0,\n        min: 0.0,\n        max: 2.0,\n        float: true,\n        step: 0.1,",
     "tests": [
       "test/combat/disc16.test.js",
       "test/combat/weapon/ww1_weaponwidget.test.js"

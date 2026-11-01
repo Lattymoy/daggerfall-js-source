@@ -47,8 +47,8 @@
   {
     "name": "TOAST-SPLIT-market-on-the-toasts-body",
     "file": "src/ui/marketTab.js",
-    "old": "el('div', 'notice-cork market-body')",
-    "new": "el('div', 'notice-body market-body')",
+    "old": "    const box = el('div', 'notice-cork market-body');",
+    "new": "    const box = el('div', 'notice-body market-body');",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TOAST-SPLIT-pin-form-hint-the-toasts",
     "file": "src/ui/noticeWindow.js",
-    "old": "form.append(el('p', 'notice-tip', BOARD_WORDS.pinTip));",
-    "new": "form.append(el('p', 'notice-hint', BOARD_WORDS.pinTip));",
+    "old": "    form.append(el('p', 'notice-tip', BOARD_WORDS.pinTip));",
+    "new": "    form.append(el('p', 'notice-hint', BOARD_WORDS.pinTip));",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TOAST-SPLIT-notice-form-hint-the-toasts",
     "file": "src/ui/noticeWindow.js",
-    "old": "form.append(el('p', 'notice-tip', BOARD_WORDS.noticeTip));",
-    "new": "form.append(el('p', 'notice-hint', BOARD_WORDS.noticeTip));",
+    "old": "    form.append(el('p', 'notice-tip', BOARD_WORDS.noticeTip));",
+    "new": "    form.append(el('p', 'notice-hint', BOARD_WORDS.noticeTip));",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TOAST-SPLIT-market-hint-the-toasts",
     "file": "src/ui/marketTab.js",
-    "old": "box.append(el('p', 'notice-tip', 'Into your Stores,",
-    "new": "box.append(el('p', 'notice-hint', 'Into your Stores,",
+    "old": "    box.append(el('p', 'notice-tip', 'Into your Stores, for the loom.')); // AUDIT 32 R5: Outfitting practised since PROF7 - a bolt withdraws, and sews",
+    "new": "    box.append(el('p', 'notice-hint', 'Into your Stores, for the loom.')); // AUDIT 32 R5: Outfitting practised since PROF7 - a bolt withdraws, and sews",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TOAST-SPLIT-market-stores-count-the-toasts",
     "file": "src/ui/marketTab.js",
-    "old": "const says = el('span', 'notice-tip');",
-    "new": "const says = el('span', 'notice-hint');",
+    "old": "    const says = el('span', 'notice-tip');",
+    "new": "    const says = el('span', 'notice-hint');",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TOAST-SPLIT-scroll-kept-by-the-toasts-body",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const b = /** @type {any} */ (win.querySelector?.('.notice-cork'));\n    return",
-    "new": "    const b = /** @type {any} */ (win.querySelector?.('.notice-body'));\n    return",
+    "old": "    }\n    const b = /** @type {any} */ (win.querySelector?.('.notice-cork'));",
+    "new": "    }\n    const b = /** @type {any} */ (win.querySelector?.('.notice-body'));",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TOAST-SPLIT-skin-kit-every-notice-selector",
     "file": "src/ui/noticeWindow.js",
-    "old": "scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))",
-    "new": "scopeRules(frameCss(), (sel) => sel.includes('notice'))",
+    "old": "  [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))].join('\\n');",
+    "new": "  [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => sel.includes('notice'))].join('\\n');",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TOAST-SPLIT-skin-kit-none",
     "file": "src/ui/noticeWindow.js",
-    "old": "scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))",
-    "new": "scopeRules(frameCss(), (sel) => !BOARD_KIT_SEL.test(sel) && false)",
+    "old": "  [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => BOARD_KIT_SEL.test(sel))].join('\\n');",
+    "new": "  [NOTICE_CSS, PROF_CSS, scopeRules(frameCss(), (sel) => !BOARD_KIT_SEL.test(sel) && false)].join('\\n');",
     "tests": [
       "test/ui/toast_split.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TOAST-SPLIT-skin-kit-header-dropped",
     "file": "src/ui/noticeWindow.js",
-    "old": "/\\.notice-(?:shell|win|head)\\b/",
-    "new": "/\\.notice-(?:shell|win)\\b/",
+    "old": "const BOARD_KIT_SEL = /\\.notice-(?:shell|win|head)\\b/;",
+    "new": "const BOARD_KIT_SEL = /\\.notice-(?:shell|win)\\b/;",
     "tests": [
       "test/ui/toast_split.test.js"
     ]

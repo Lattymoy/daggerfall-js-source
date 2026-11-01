@@ -82,7 +82,9 @@ export function parseBiog(text, classIndex = 0) {
       // leading digits and answers 4116 / 0 / 12 instead.
       const v = tryParseInt(cur.slice(1));
       backstoryId = v !== null ? v : DEFAULT_BACKSTORIES_START + classIndex;
-      do { cur = next(); } while (cur !== null && cur.length <= 1);
+      do {
+        cur = next();
+      } while (cur !== null && cur.length <= 1);
       if (cur === null) break;
     }
 
@@ -116,5 +118,4 @@ export function parseBiog(text, classIndex = 0) {
 }
 
 /** BiogFile's own filename law (BiogFile.cs:69). */
-export const biogFileName = (classIndex, set = 0) =>
-  `BIOG${String(classIndex).padStart(2, '0')}T${set}.TXT`;
+export const biogFileName = (classIndex, set = 0) => `BIOG${String(classIndex).padStart(2, '0')}T${set}.TXT`;

@@ -27,16 +27,29 @@ let held = null;
 /** @returns {{ id: string, until: number, r: string|null } | null} */
 function readMark() {
   let raw = null;
-  try { raw = appStorage()?.getItem(WILD_WP_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(WILD_WP_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (!raw) return held;
   try {
     const v = JSON.parse(raw);
-    return typeof v?.id === 'string' && Number.isFinite(v?.until) ? { id: v.id, until: v.until, r: typeof v.r === 'string' ? v.r : null } : null;
-  } catch { return null; }
+    return typeof v?.id === 'string' && Number.isFinite(v?.until)
+      ? { id: v.id, until: v.until, r: typeof v.r === 'string' ? v.r : null }
+      : null;
+  } catch {
+    return null;
+  }
 }
 function writeMark(v) {
   held = v ? { ...v } : null;
-  try { if (v) appStorage()?.setItem(WILD_WP_KEY, JSON.stringify(v)); else appStorage()?.removeItem(WILD_WP_KEY); } catch { /* held for the session */ }
+  try {
+    if (v) appStorage()?.setItem(WILD_WP_KEY, JSON.stringify(v));
+    else appStorage()?.removeItem(WILD_WP_KEY);
+  } catch {
+    /* held for the session */
+  }
 }
 
 /** The flag standing now, or null. */
@@ -71,7 +84,10 @@ export function markRemains({ mx, my, until, r = null }) {
 export function remainsMarkTick(now) {
   const m = readMark();
   if (!m) return false;
-  if (now >= m.until || !waypointById(m.id)) { clearRemainsMark(); return true; }
+  if (now >= m.until || !waypointById(m.id)) {
+    clearRemainsMark();
+    return true;
+  }
   return false;
 }
 
@@ -101,9 +117,15 @@ export const WILD_MINE_KEY = 'dfjs.wild.mine';
  */
 export function keepMine(m, who = null) {
   try {
-    if (m && who) appStorage()?.setItem(WILD_MINE_KEY, JSON.stringify({ r: m.r, room: m.room, p: m.p, until: m.until, dungeon: m.dungeon ?? null, who }));
+    if (m && who)
+      appStorage()?.setItem(
+        WILD_MINE_KEY,
+        JSON.stringify({ r: m.r, room: m.room, p: m.p, until: m.until, dungeon: m.dungeon ?? null, who }),
+      );
     else appStorage()?.removeItem(WILD_MINE_KEY);
-  } catch { /* the session holds it alone */ }
+  } catch {
+    /* the session holds it alone */
+  }
 }
 
 /**
@@ -116,15 +138,37 @@ export function keepMine(m, who = null) {
 export function keptMine(now, who) {
   if (!who) return null;
   let v = null;
-  try { v = JSON.parse(appStorage()?.getItem(WILD_MINE_KEY) ?? 'null'); } catch { v = null; }
-  if (!v || v.who !== who || typeof v.r !== 'string' || typeof v.room !== 'string' || !Number.isFinite(v.until) || !(v.until > now)) return null;
+  try {
+    v = JSON.parse(appStorage()?.getItem(WILD_MINE_KEY) ?? 'null');
+  } catch {
+    v = null;
+  }
+  if (
+    !v ||
+    v.who !== who ||
+    typeof v.r !== 'string' ||
+    typeof v.room !== 'string' ||
+    !Number.isFinite(v.until) ||
+    !(v.until > now)
+  )
+    return null;
   if (!Array.isArray(v.p) || v.p.length !== 3 || !v.p.every(Number.isFinite)) return null;
-  return { r: v.r, room: v.room, p: [...v.p], until: v.until, dungeon: typeof v.dungeon === 'string' ? v.dungeon : null };
+  return {
+    r: v.r,
+    room: v.room,
+    p: [...v.p],
+    until: v.until,
+    dungeon: typeof v.dungeon === 'string' ? v.dungeon : null,
+  };
 }
 
 /** The room said remains `r` are gone: their kept record goes (another's record stays). */
 export function forgetMine(r) {
   let v = null;
-  try { v = JSON.parse(appStorage()?.getItem(WILD_MINE_KEY) ?? 'null'); } catch { v = null; }
+  try {
+    v = JSON.parse(appStorage()?.getItem(WILD_MINE_KEY) ?? 'null');
+  } catch {
+    v = null;
+  }
   if (v?.r === r) keepMine(null);
 }

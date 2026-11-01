@@ -105,7 +105,7 @@
 // raw byte (world.js / exterior.js playerGroundSample).
 
 import { playerTileMapIndex, WATER_TILE_INDEX, convertTile } from '../world/terrain/terrainSurface.js';
-import { waterCorners, waterCoverage } from '../world/water/waterCorners.js';   // MAC2: the surface pass's own corner table
+import { waterCorners, waterCoverage } from '../world/water/waterCorners.js'; // MAC2: the surface pass's own corner table
 
 /** PlayerMotor.OnExteriorWaterMethod (:79-87). "Defines the way
  *  player can interact with exterior water tiles. Unrelated to deep
@@ -144,16 +144,18 @@ export const rayDistanceFor = (onFoot) => (onFoot ? WALKING_RAY_DISTANCE : RIDIN
  *  player at the water's EDGE water-walks rather than swims - which is
  *  why the deep arm below is record 0 alone. */
 export function onShallowWaterTile(tileIndex) {
-  return tileIndex === 5
-    || tileIndex === 6
-    || tileIndex === 8
-    || tileIndex === 20
-    || tileIndex === 21
-    || tileIndex === 23
-    || tileIndex === 30
-    || tileIndex === 31
-    || (tileIndex >= 33 && tileIndex <= 36)
-    || tileIndex === 49;
+  return (
+    tileIndex === 5 ||
+    tileIndex === 6 ||
+    tileIndex === 8 ||
+    tileIndex === 20 ||
+    tileIndex === 21 ||
+    tileIndex === 23 ||
+    tileIndex === 30 ||
+    tileIndex === 31 ||
+    (tileIndex >= 33 && tileIndex <= 36) ||
+    tileIndex === 49
+  );
 }
 
 /** PlayerMotor.OnPathTile (:568-574) - "Check if player is really
@@ -194,11 +196,11 @@ export function onPathTile(tileIndex) {
  */
 export function downProbe({ centreY, terrainY, meshDist = Infinity, rayDistance = WALKING_RAY_DISTANCE }) {
   const maxDist = rayDistance * 2;
-  const ty = (terrainY == null || !Number.isFinite(terrainY)) ? -Infinity : terrainY;
+  const ty = terrainY == null || !Number.isFinite(terrainY) ? -Infinity : terrainY;
   // A floor at or above the origin is not something the DOWN ray
   // reaches; -Infinity (no built pixel) falls out of this the same way.
-  const terrainDist = (ty <= centreY) ? centreY - ty : Infinity;
-  const md = (meshDist == null || !(meshDist >= 0)) ? Infinity : meshDist;
+  const terrainDist = ty <= centreY ? centreY - ty : Infinity;
+  const md = meshDist == null || !(meshDist >= 0) ? Infinity : meshDist;
   const dist = Math.min(terrainDist, md);
   if (!(dist <= maxDist)) return { hit: false, terrain: false, staticGeometry: false, dist: Infinity };
   // Nearest wins, exactly as one Physics.Raycast does. Ties go to the
@@ -303,13 +305,17 @@ export function exteriorPathMethod({ onGround = false, tileIndex = -1 } = {}) {
  *            onGround: boolean, tileIndex: number}}
  */
 export function exteriorSurfaces({
-  inside = false, rawTile = null, tileIndex = null,
-  waterWalking = false, probe = null, feet = null,
+  inside = false,
+  rawTile = null,
+  tileIndex = null,
+  waterWalking = false,
+  probe = null,
+  feet = null,
 } = {}) {
   const idx = tileIndex == null ? playerTileMapIndex(rawTile) : tileIndex;
   const onGround = onExteriorGroundMethod({ inside, probe });
   return {
-    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking, coverage: feetWaterCoverage(rawTile, feet) }),   // MAC2: the feet's coverage rides beside the record
+    water: exteriorWaterMethod({ onGround, tileIndex: idx, waterWalking, coverage: feetWaterCoverage(rawTile, feet) }), // MAC2: the feet's coverage rides beside the record
     path: exteriorPathMethod({ onGround, tileIndex: idx }),
     staticGeometry: onExteriorStaticGeometryMethod({ inside, probe }),
     onGround,

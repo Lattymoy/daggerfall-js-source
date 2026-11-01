@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-UPDATE-L1-the-outer-scope-lost",
     "file": "src/systems/loot/lootLevelGate.js",
-    "old": "  try { out = fn(); } finally { _scoped = was; }",
-    "new": "  try { out = fn(); } finally { _scoped = null; }",
+    "old": "    _scoped = was;",
+    "new": "    _scoped = null;",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-technique-kept-at-its-Magic-value",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });",
-    "new": "  if (item.rarity === tier) item.affixes.push(...kept);",
+    "old": "    if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });",
+    "new": "    if (item.rarity === tier) item.affixes.push(...kept);",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-sigil-under-the-Rares-floor",
     "file": "src/systems/reforge.js",
-    "old": "power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party))",
-    "new": "power: item.sigil.power",
+    "old": "      item.sigil = { ...item.sigil, power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party)) }; // AUDIT UPDATE II A2: a set's sigil is no blow - it has no power to raise",
+    "new": "      item.sigil = { ...item.sigil, power: item.sigil.power }; // AUDIT UPDATE II A2: a set's sigil is no blow - it has no power to raise",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-law-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) {",
-    "new": "  if (item.rarity !== tier) {",
+    "old": "    if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) {",
+    "new": "    if (item.rarity !== tier) {",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-UPDATE-L3-the-makers-rows-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (makerRows(item)) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (makerRows(item)) return null; // AUDIT UPDATE L3: the Item Maker's rows on a found Magic piece - the Rare's flavour would write over them",
+    "new": "  if (false) return null; // AUDIT UPDATE L3: the Item Maker's rows on a found Magic piece - the Rare's flavour would write over them",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-UPDATE-L3-the-curse-a-makers-row",
     "file": "src/systems/reforge.js",
-    "old": "  .some((e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param));",
-    "new": "  .some((e) => !!e);",
+    "old": "const makerRows = (item) =>\n  (Array.isArray(item.enchantments) ? item.enchantments : []).some(\n    (e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param),\n  );",
+    "new": "const makerRows = (item) => (Array.isArray(item.enchantments) ? item.enchantments : []).some((e) => !!e);",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-UPDATE-L5-the-imbues-worth-unrecorded",
     "file": "src/systems/reforge.js",
-    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before));",
-    "new": "    void before;",
+    "old": "    item.imbueWorth =\n      (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) +\n      Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
+    "new": "    void before; // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-UPDATE-L6-a-Legendary-held-too",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false;",
-    "new": "  if (droughtHeld(rollerLevel())) return false;",
+    "old": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
+    "new": "  if (droughtHeld(rollerLevel())) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-UPDATE-T5-the-ends-rule-at-the-start",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "!['sea', 'landfall'].includes(kinds[0]) ? endRing(0, start, step(0, 1))",
-    "new": "!['sea', 'embark'].includes(kinds[0]) ? endRing(0, start, step(0, 1))",
+    "old": "  const ringStart = n > 1 && !['sea', 'landfall'].includes(kinds[0]) ? endRing(0, start, step(0, 1)) : []; // AUDIT UPDATE T5: afloat at the first pixel when its step out is sailed or a landfall - an embark starts ashore",
+    "new": "  const ringStart = n > 1 && !['sea', 'embark'].includes(kinds[0]) ? endRing(0, start, step(0, 1)) : []; // AUDIT UPDATE T5: afloat at the first pixel when its step out is sailed or a landfall - an embark starts ashore",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-UPDATE-T5-an-embarks-ring-sailed",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "kind: kinds[0] === 'embark' ? 'open' : kinds[0] ?? 'open'",
-    "new": "kind: kinds[0] ?? 'open'",
+    "old": "    legs.push({\n      x: pixels[0].x,\n      y: pixels[0].y,\n      kind: kinds[0] === 'embark' ? 'open' : (kinds[0] ?? 'open'),\n      at: { x: at.x, z: at.z },\n      ring: true,\n    }); // AUDIT UPDATE T5: an embark's ring walked ashore",
+    "new": "    legs.push({ x: pixels[0].x, y: pixels[0].y, kind: kinds[0] ?? 'open', at: { x: at.x, z: at.z }, ring: true }); // AUDIT UPDATE T5: an embark's ring walked ashore",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-UPDATE-T6-the-end-ringed-under-sail",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const ringEnd = n > 1 && !['sea', 'embark'].includes(kinds[n - 2]) ?",
-    "new": "  const ringEnd = n > 1 ?",
+    "old": "  const ringEnd = n > 1 && !['sea', 'embark'].includes(kinds[n - 2]) ? endRing(n - 1, step(n - 1, n - 2), end) : [];",
+    "new": "  const ringEnd = n > 1 ? endRing(n - 1, step(n - 1, n - 2), end) : [];",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],
@@ -305,8 +305,8 @@
   {
     "name": "AUDIT-UPDATE-E3-every-row-an-arrow",
     "file": "src/systems/shopStock.js",
-    "old": "  const took = (bought ?? []).filter(isShelfArrow).reduce(",
-    "new": "  const took = ((bought ?? []).every(isShelfArrow) ? (bought ?? []) : []).reduce(",
+    "old": "  const took = (bought ?? [])\n    .filter(isShelfArrow)\n    .reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);",
+    "new": "  const took = ((bought ?? []).every(isShelfArrow) ? (bought ?? []) : []).reduce(\n    (n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)),\n    0,\n  );",
     "tests": [
       "test/systems/endless_arrows.test.js"
     ],
@@ -397,8 +397,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-registry-never-set",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });",
-    "new": "registerRollerLevel(null);",
+    "old": "registerRollerLevel(() => {\n  const me = playerDoor()?.player?.();\n  return me ? lootGateLevel(me) : null;\n}); // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone",
+    "new": "registerRollerLevel(null); // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-UPDATE-P3-MENTOR2-the-mentored-level-read",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "return me ? lootGateLevel(me) : null; });",
-    "new": "return me ? (me._mentor?.worldLevel ?? me.level) : null; });",
+    "old": "  return me ? lootGateLevel(me) : null;",
+    "new": "  return me ? (me._mentor?.worldLevel ?? me.level) : null;",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -457,8 +457,8 @@
   {
     "name": "AUDIT-UPDATE-P3-an-elites-Rare-ungated",
     "file": "src/systems/eliteFoes.js",
-    "old": "eliteRareChance(lv) * (at == null ? 1 : rareGate(at))",
-    "new": "eliteRareChance(lv) * 1",
+    "old": "  if (rolls() < eliteRareChance(lv) * (at == null ? 1 : rareGate(at))) {",
+    "new": "  if (rolls() < eliteRareChance(lv) * 1) {",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-UPDATE-P3-an-elites-Legendary-ungated",
     "file": "src/systems/eliteFoes.js",
-    "old": "ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))",
-    "new": "ELITE_FOE_LOOT.legendaryChance * 1",
+    "old": "  if (rolls() < ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))) {",
+    "new": "  if (rolls() < ELITE_FOE_LOOT.legendaryChance * 1) {",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-old-marks-kept",
     "file": "src/systems/reforge.js",
-    "old": "    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k];",
-    "new": "    delete item.rarity;",
+    "old": "    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k]; // REFORGE-REPLACE x MAIN: and the reforges it took",
+    "new": "    delete item.rarity; // REFORGE-REPLACE x MAIN: and the reforges it took",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-guilds-identify-skipped",
     "file": "src/systems/reforge.js",
-    "old": "  item.isIdentified = true;   // the guild made it - nothing to identify\n",
-    "new": "",
+    "old": "    item.isIdentified = true; // the guild made it - nothing to identify\n    // AUDIT UPDATE L2: a piece the item law would hold (the judge's own reading) is never made - put back, nothing paid",
+    "new": "    // AUDIT UPDATE L2: a piece the item law would hold (the judge's own reading) is never made - put back, nothing paid",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -527,8 +527,8 @@
   {
     "name": "AUDIT-UPDATE-P3-unknown-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity && !itemIsIdentified(item)) return 'unknown';\n",
-    "new": "",
+    "old": "  if (item.rarity && !itemIsIdentified(item)) return 'unknown';\n  if (isLocked(item)) return 'locked';",
+    "new": "  if (isLocked(item)) return 'locked';",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -557,8 +557,8 @@
   {
     "name": "AUDIT-UPDATE-P3-set-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (socketGems(item).length) return 'set';\n  return shortOf(",
-    "new": "  return shortOf(",
+    "old": "  if (socketGems(item).length) return 'set';\n  return shortOf(player, /** @type {{ shards: number, gold: number }} */ (imbuePrice(item)));",
+    "new": "  return shortOf(player, /** @type {{ shards: number, gold: number }} */ (imbuePrice(item)));",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -567,8 +567,8 @@
   {
     "name": "AUDIT-UPDATE-P3-short-gold-unread",
     "file": "src/systems/reforge.js",
-    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
-    "new": "shardsHeld(player?.items) < p.shards ? 'shards' : null",
+    "old": "const shortOf = (player, p) =>\n  shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null;",
+    "new": "const shortOf = (player, p) => (shardsHeld(player?.items) < p.shards ? 'shards' : null);",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -577,8 +577,8 @@
   {
     "name": "AUDIT-UPDATE-P3-short-shards-unread",
     "file": "src/systems/reforge.js",
-    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
-    "new": "totalGoldAmount(player) < p.gold ? 'gold' : null",
+    "old": "const shortOf = (player, p) =>\n  shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null;",
+    "new": "const shortOf = (player, p) => (totalGoldAmount(player) < p.gold ? 'gold' : null);",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-UPDATE-P3-a-made-piece-imbued",
     "file": "src/systems/reforge.js",
-    "old": "if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null;",
-    "new": "if (!item || item.questItem || item.artifact || isSummoned(item)) return null;",
+    "old": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
+    "new": "  if (!item || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-UPDATE-P3-a-worn-piece-off-the-page",
     "file": "src/systems/reforge.js",
-    "old": "rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null",
-    "new": "rarityEligible(item) ? 'magic' : null",
+    "old": "  if (item.rarity == null) return rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null; // worn is the refusal's word, not the target's",
+    "new": "  if (item.rarity == null) return rarityEligible(item) ? 'magic' : null; // worn is the refusal's word, not the target's",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -668,8 +668,8 @@
   {
     "name": "COMPANION-VOL-0-read-as-unset",
     "file": "src/systems/monsterVolume.js",
-    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
-    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return v ? Math.max(0, Math.min(1, v)) : 1; };",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return v ? Math.max(0, Math.min(1, v)) : 1;",
     "tests": [
       "test/systems/companion_volume.test.js"
     ],
@@ -678,8 +678,8 @@
   {
     "name": "COMPANION-VOL-no-clamp",
     "file": "src/systems/monsterVolume.js",
-    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
-    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? v : 1; };",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return Number.isFinite(v) ? v : 1;",
     "tests": [
       "test/systems/companion_volume.test.js"
     ],
@@ -688,8 +688,8 @@
   {
     "name": "AUDIT-UPDATE-II-A2-a-sets-sigil-raised-to-NaN",
     "file": "src/systems/reforge.js",
-    "old": "if (item.rarity === tier && Number.isFinite(item.sigil?.power)) item.sigil",
-    "new": "if (item.rarity === tier && item.sigil) item.sigil",
+    "old": "    if (item.rarity === tier && Number.isFinite(item.sigil?.power))",
+    "new": "    if (item.rarity === tier && item.sigil)",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -698,8 +698,8 @@
   {
     "name": "AUDIT-UPDATE-II-A3-an-elites-share-ungated-early",
     "file": "src/systems/eliteFoes.js",
-    "old": "  const at = rollerLevel() ?? lv;   // LOOT-GATE; AUDIT UPDATE II A3",
-    "new": "  const at = rollerLevel();   // LOOT-GATE; AUDIT UPDATE II A3",
+    "old": "  const at = rollerLevel() ?? lv; // LOOT-GATE; AUDIT UPDATE II A3: none registered yet (a scene's first foes, before any host frame) - the level the drop is minted at, the player's at every host",
+    "new": "  const at = rollerLevel(); // LOOT-GATE; AUDIT UPDATE II A3: none registered yet (a scene's first foes, before any host frame) - the level the drop is minted at, the player's at every host",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -718,8 +718,8 @@
   {
     "name": "AUDIT-UPDATE-II-A5-the-conjured-unasked",
     "file": "src/systems/reforge.js",
-    "old": "item.questItem || item.artifact || isSummoned(item)) return null;",
-    "new": "item.questItem || item.artifact) return null;",
+    "old": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
+    "new": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -728,8 +728,8 @@
   {
     "name": "AUDIT-UPDATE-II-A7-the-first-imbues-worth-overwritten",
     "file": "src/systems/reforge.js",
-    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + ",
-    "new": "  item.imbueWorth = 0 + ",
+    "old": "    item.imbueWorth =\n      (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) +\n      Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
+    "new": "    item.imbueWorth = 0 + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -748,8 +748,8 @@
   {
     "name": "AUDIT-UPDATE-II-A9-the-throw-left-the-piece-rolled",
     "file": "src/systems/reforge.js",
-    "old": "  } catch (err) { putBack(); throw err; }",
-    "new": "  } catch (err) { throw err; }",
+    "old": "    putBack();\n    throw err;",
+    "new": "    throw err;",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],

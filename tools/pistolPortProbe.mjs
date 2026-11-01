@@ -21,24 +21,52 @@ import { readPng, writePng } from './pngIO.mjs';
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const OUT = process.argv[2] || 'scratch/pistol-port';
 mkdirSync(OUT, { recursive: true });
-const W = 1280, H = 800, WARM = 60;
+const W = 1280,
+  H = 800,
+  WARM = 60;
 const results = [];
-const check = (name, ok, detail = '') => { results.push(!!ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  results.push(!!ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 /** The script: frame -> what happens before it steps - rest, a shot and the other pistol pulled MID-SHOT six frames on
  *  (both firing at once), both reloads, a walk with a shot in it, a stop; then (AUDIT PISTOL-PORT B1 D6) a strafe, a turn
  *  of the head and a jump, the page's own keys and mouse. (Until the audit the second pull came 40 frames on - after the
  *  first shot's frames - and no frame of the run had both pistols firing.) */
-const SCRIPT = new Map([[30, ['pull']], [36, ['pull']], [260, ['walk']], [330, ['pull']], [410, ['stop']],
-  [420, ['strafe']], [440, ['stop']], [446, ['turn']], [447, ['turn']], [448, ['turn']], [449, ['turn']], [450, ['turn']], [455, ['jump']]]);
+const SCRIPT = new Map([
+  [30, ['pull']],
+  [36, ['pull']],
+  [260, ['walk']],
+  [330, ['pull']],
+  [410, ['stop']],
+  [420, ['strafe']],
+  [440, ['stop']],
+  [446, ['turn']],
+  [447, ['turn']],
+  [448, ['turn']],
+  [449, ['turn']],
+  [450, ['turn']],
+  [455, ['jump']],
+]);
 const FRAMES = 490;
-const TURN_PX = 12;   // a turn: the mouse moved this far in a frame
+const TURN_PX = 12; // a turn: the mouse moved this far in a frame
 /** The fixed clock, laid before either page's scripts run. */
 const CLOCK = () => {
-  let T = 0; const q = [];
+  let T = 0;
+  const q = [];
   performance.now = () => T;
-  window.requestAnimationFrame = (cb) => { q.push(cb); return q.length; };
+  window.requestAnimationFrame = (cb) => {
+    q.push(cb);
+    return q.length;
+  };
   window.__dts = [];
-  window.__step = () => { const was = T; T += 1000 / 60; window.__dts.push((T - was) / 1000); const cbs = q.splice(0); for (const cb of cbs) cb(T); };
+  window.__step = () => {
+    const was = T;
+    T += 1000 / 60;
+    window.__dts.push((T - was) / 1000);
+    const cbs = q.splice(0);
+    for (const cb of cbs) cb(T);
+  };
   HTMLCanvasElement.prototype.requestPointerLock = function () {};
   // the mouse held: the page reads its look only while the canvas has the pointer
   Object.defineProperty(Document.prototype, 'pointerLockElement', { get: () => document.getElementById('c') });
@@ -96,7 +124,9 @@ globalThis.__ready = true;
 const vite = await createServer({ server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();
 const base = `http://127.0.0.1:${vite.httpServer.address().port}`;
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const errors = [];
 const open = async (url) => {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
@@ -106,31 +136,47 @@ const open = async (url) => {
   await page.goto(url, { waitUntil: 'load', timeout: 600000 });
   return page;
 };
-const event = (page, e) => page.evaluate((what) => {
-  if (what === 'pull') { document.getElementById('c').dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true })); dispatchEvent(new MouseEvent('mouseup')); }
-  if (what === 'walk') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW' }));
-  if (what === 'stop') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
-  if (what === 'strafe') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyD' }));
-  if (what === 'jump') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyJ' }));
-  if (what.turn) dispatchEvent(new MouseEvent('mousemove', { movementX: what.turn }));
-}, e === 'turn' ? { turn: TURN_PX } : e);
+const event = (page, e) =>
+  page.evaluate(
+    (what) => {
+      if (what === 'pull') {
+        document.getElementById('c').dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+        dispatchEvent(new MouseEvent('mouseup'));
+      }
+      if (what === 'walk') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW' }));
+      if (what === 'stop') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyS' }));
+      if (what === 'strafe') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyD' }));
+      if (what === 'jump') dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyJ' }));
+      if (what.turn) dispatchEvent(new MouseEvent('mousemove', { movementX: what.turn }));
+    },
+    e === 'turn' ? { turn: TURN_PX } : e,
+  );
 
 /** The prototype's run: its dts from the first frame, and each frame's hands. */
 async function labRun(kind) {
   const page = await open(`${base}/pistol-proto.html`);
-  await page.waitForFunction(() => { window.__step(); return globalThis.__pistolLab?.ready; }, null, { timeout: 60000, polling: 100 });
+  await page.waitForFunction(
+    () => {
+      window.__step();
+      return globalThis.__pistolLab?.ready;
+    },
+    null,
+    { timeout: 60000, polling: 100 },
+  );
   if (kind === 'single') await page.evaluate(() => dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit1' })));
   for (let i = 0; i < WARM; i++) await page.evaluate(() => window.__step());
   const warm = await page.evaluate(() => window.__dts.slice());
   const rows = [];
   for (let f = 0; f < FRAMES; f++) {
     for (const e of SCRIPT.get(f) ?? []) await event(page, e);
-    rows.push(await page.evaluate(() => {
-      window.__step();
-      const L = globalThis.__pistolLab;
-      const hand = (h) => (L[h].drawn && L[h].rect ? { h, frame: L[h].frame, rect: L[h].rect } : null);
-      return { hands: L.order.map(hand).filter(Boolean), dt: window.__dts.at(-1) };
-    }));
+    rows.push(
+      await page.evaluate(() => {
+        window.__step();
+        const L = globalThis.__pistolLab;
+        const hand = (h) => (L[h].drawn && L[h].rect ? { h, frame: L[h].frame, rect: L[h].rect } : null);
+        return { hands: L.order.map(hand).filter(Boolean), dt: window.__dts.at(-1) };
+      }),
+    );
   }
   await page.context().close();
   return { warm, rows };
@@ -142,8 +188,13 @@ async function gameRun(kind, lab) {
   const { LookFilter } = await import('../src/player/lookFilter.js');
   const { lookScale } = await import('../src/ui/lookSettings.js');
   const { pistolJumpClimb } = await import('../src/tools/pistolLab.js');
-  const { r, frame, walk } = await pistolRig({ right: createPistolet(), left: kind === 'pair' ? createPistolet() : null, size: [W, H], dts: lab.warm });
-  const head = new LookFilter();   // the host's mouse look, latched for the rig as the camera's radians
+  const { r, frame, walk } = await pistolRig({
+    right: createPistolet(),
+    left: kind === 'pair' ? createPistolet() : null,
+    size: [W, H],
+    dts: lab.warm,
+  });
+  const head = new LookFilter(); // the host's mouse look, latched for the rig as the camera's radians
   const rows = [];
   let jumpT = -1;
   for (let f = 0; f < FRAMES; f++) {
@@ -151,12 +202,16 @@ async function gameRun(kind, lab) {
       if (e === 'pull') r.clickAttack();
       if (e === 'walk') walk.on = true;
       if (e === 'strafe') walk.strafe = 1;
-      if (e === 'stop') { walk.on = false; walk.strafe = 0; }
+      if (e === 'stop') {
+        walk.on = false;
+        walk.strafe = 0;
+      }
       if (e === 'jump') jumpT = 0;
       if (e === 'turn') head.add(TURN_PX * lookScale(), 0);
     }
     walk.vertical = jumpT >= 0 ? pistolJumpClimb(jumpT) : null;
-    if (walk.vertical === null) jumpT = -1; else jumpT += lab.rows[f].dt;
+    if (walk.vertical === null) jumpT = -1;
+    else jumpT += lab.rows[f].dt;
     const q = await frame(lab.rows[f].dt);
     rows.push(q.map((x) => ({ h: x.uv ? 'L' : 'R', frame: Number(String(x.tex).split(':').pop()), rect: x.rect })));
   }
@@ -168,20 +223,35 @@ try {
   for (const kind of ['pair', 'single']) {
     const lab = await labRun(kind);
     const game = await gameRun(kind, lab);
-    let worst = 0, at = -1, pictures = 0, fired = 0;
+    let worst = 0,
+      at = -1,
+      pictures = 0,
+      fired = 0;
     for (let f = 0; f < FRAMES; f++) {
-      const want = lab.rows[f].hands, got = game[f];
+      const want = lab.rows[f].hands,
+        got = game[f];
       if (want.map((x) => `${x.h}${x.frame}`).join() !== got.map((x) => `${x.h}${x.frame}`).join()) pictures++;
       if (want.some((x) => x.frame > 0)) fired++;
-      for (const w of want) {   // AUDIT PISTOL-PORT D6: hand by hand, by NAME - by index a swapped order read as 1,000 px
+      for (const w of want) {
+        // AUDIT PISTOL-PORT D6: hand by hand, by NAME - by index a swapped order read as 1,000 px
         const g = got.find((x) => x.h === w.h);
         if (!g) continue;
-        for (const k of ['x', 'y', 'w', 'h']) { const d = Math.abs(g.rect[k] - w.rect[k]); if (d > worst) { worst = d; at = f; } }
+        for (const k of ['x', 'y', 'w', 'h']) {
+          const d = Math.abs(g.rect[k] - w.rect[k]);
+          if (d > worst) {
+            worst = d;
+            at = f;
+          }
+        }
       }
     }
     check(`${kind}: the script fired on the prototype`, fired > 10, `${fired} frames with a shot drawn`);
     check(`${kind}: every frame the same hands, pictures and order`, pictures === 0, `${pictures} of ${FRAMES} differ`);
-    check(`${kind}: every hand at the prototype's rect`, worst < 1e-6, `worst ${worst.toExponential(2)} px${at >= 0 ? ` (frame ${at})` : ''}`);
+    check(
+      `${kind}: every hand at the prototype's rect`,
+      worst < 1e-6,
+      `worst ${worst.toExponential(2)} px${at >= 0 ? ` (frame ${at})` : ''}`,
+    );
   }
 
   // ── 2. the pictures ──
@@ -193,14 +263,22 @@ try {
   await game.evaluate(() => globalThis.__wear('pair'));
   // both pages wait for their art on the network, not the clock, then step the same frames
   await lab.waitForTimeout(4000);
-  for (let i = 0; i < 200; i++) { await lab.evaluate(() => window.__step()); await game.evaluate(() => window.__step()); }
+  for (let i = 0; i < 200; i++) {
+    await lab.evaluate(() => window.__step());
+    await game.evaluate(() => window.__step());
+  }
   const shots = [];
   for (let f = 0; f <= Math.max(...Object.values(SHOTS)); f++) {
-    for (const e of SCRIPT.get(f) ?? []) { await event(lab, e); if (e === 'pull') await game.evaluate(() => globalThis.__fire()); }
-    await lab.evaluate(() => window.__step()); await game.evaluate(() => window.__step());
+    for (const e of SCRIPT.get(f) ?? []) {
+      await event(lab, e);
+      if (e === 'pull') await game.evaluate(() => globalThis.__fire());
+    }
+    await lab.evaluate(() => window.__step());
+    await game.evaluate(() => window.__step());
     const name = Object.keys(SHOTS).find((k) => SHOTS[k] === f);
     if (!name) continue;
-    const a = readPng(await lab.screenshot()), b = readPng(await game.screenshot());
+    const a = readPng(await lab.screenshot()),
+      b = readPng(await game.screenshot());
     const side = { width: W * 2, height: H, data: new Uint8ClampedArray(W * 2 * H * 4) };
     for (let y = 0; y < H; y++) {
       side.data.set(a.data.subarray(y * W * 4, (y + 1) * W * 4), y * W * 2 * 4);
@@ -209,10 +287,15 @@ try {
     writeFileSync(`${OUT}/${name}.png`, writePng(side));
     shots.push(name);
   }
-  check('the pictures: the prototype left, the game right', shots.length === Object.keys(SHOTS).length, shots.join(', '));
+  check(
+    'the pictures: the prototype left, the game right',
+    shots.length === Object.keys(SHOTS).length,
+    shots.join(', '),
+  );
   check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 } finally {
-  await browser.close(); await vite.close();
+  await browser.close();
+  await vite.close();
   await unlink(RIG_PAGE).catch(() => {});
 }
 const ok = results.every(Boolean);

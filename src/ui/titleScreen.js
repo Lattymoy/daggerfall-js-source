@@ -72,7 +72,7 @@ export async function loadLogo(url = LOGO_URL, doc = globalThis.document) {
     const { data } = g.getImageData(0, 0, cv.width, cv.height);
     return { width: cv.width, height: cv.height, colors: new Uint8Array(data) };
   } catch {
-    return null;                       // absent, blocked, or undecodable
+    return null; // absent, blocked, or undecodable
   }
 }
 
@@ -104,7 +104,8 @@ export async function loadTitleArt({ renderer, fetchBytes, uploadLogo, doc } = {
 export function logoRect(canvasW, canvasH, logoW, logoH, maxWidth = LOGO_MAX_WIDTH) {
   if (!logoW || !logoH) return null;
   const fit = Math.min((canvasW * maxWidth) / logoW, (canvasH * maxWidth) / logoH);
-  const w = Math.round(logoW * fit), h = Math.round(logoH * fit);
+  const w = Math.round(logoW * fit),
+    h = Math.round(logoH * fit);
   return { x: Math.round((canvasW - w) / 2), y: Math.round((canvasH - h) / 2), w, h };
 }
 
@@ -113,12 +114,14 @@ export function logoRect(canvasW, canvasH, logoW, logoH, maxWidth = LOGO_MAX_WID
  *  null - and draws each by its own law. */
 export class TitleScreen {
   constructor(art = null) {
-    this.art = art;                    // { kind:'logo'|'native', ... } or null
+    this.art = art; // { kind:'logo'|'native', ... } or null
     this.done = false;
   }
 
   /** Nothing to show - the caller skips straight to the menu. */
-  get drawable() { return !!this.art; }
+  get drawable() {
+    return !!this.art;
+  }
 
   draw(renderer, canvas) {
     // Opaque black first: the renderer clears to the pale Iliac Bay sky,

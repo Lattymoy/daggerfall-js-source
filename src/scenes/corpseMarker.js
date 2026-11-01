@@ -54,19 +54,19 @@
 // it, so the port does the same. What the window restores is the
 // CHOICE, which is the half that was missing.
 
-import { capFoeLoot } from '../systems/foeLootCap.js';   // FOE-CAP: the death's cap, after its handlers
-import { championName, properName } from '../systems/champions.js';   // LOOT7: a champion's death line names it
-import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
+import { capFoeLoot } from '../systems/foeLootCap.js'; // FOE-CAP: the death's cap, after its handlers
+import { championName, properName } from '../systems/champions.js'; // LOOT7: a champion's death line names it
+import { getBool } from '../systems/settings/settings.js'; // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
-import { addItem, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
+import { addItem, takeOneInto } from '../systems/inventory.js'; // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
-import { lootRarityOn, bestRarity, RARITIES } from '../systems/loot/lootRarity.js';   // LR3: the drop chime asks the body's best tier
+import { lootRarityOn, bestRarity, RARITIES } from '../systems/loot/lootRarity.js'; // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
-import { FlatAnim, isAnimatedFlat } from '../render/flatAnimation.js';   // AUDIT DEX B3: a corpse of more than one frame animates, as DFU's billboard does
-import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
-import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body opened holds silver now and then
+import { FlatAnim, isAnimatedFlat } from '../render/flatAnimation.js'; // AUDIT DEX B3: a corpse of more than one frame animates, as DFU's billboard does
+import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
+import { silverFindAt } from '../systems/silverFinds.js'; // SILVER-FINDS: a body opened holds silver now and then
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
@@ -91,9 +91,16 @@ export function corpseTextureOf(f) {
  * corpse must never mint for a live one.
  */
 export async function mintCorpseMarker({
-  renderer, getTexture, uploadRecordFrame, collider = null,
-  corpseTexture, feet, fallbackSize = null, stillDead = () => true, sizeScale = 1,   // ELITE FOES: an elite's body lies larger
-  centre = null,   // DEX5: a flat stood by its CENTRE, `centre` over `feet` (GameObjectHelper.CreateDaggerfallBillboardGameObject aligns nothing) - a prefab's ash
+  renderer,
+  getTexture,
+  uploadRecordFrame,
+  collider = null,
+  corpseTexture,
+  feet,
+  fallbackSize = null,
+  stillDead = () => true,
+  sizeScale = 1, // ELITE FOES: an elite's body lies larger
+  centre = null, // DEX5: a flat stood by its CENTRE, `centre` over `feet` (GameObjectHelper.CreateDaggerfallBillboardGameObject aligns nothing) - a prefab's ash
 }) {
   if (!corpseTexture) return null;
   const { archive, record } = corpseTexture;
@@ -113,13 +120,11 @@ export async function mintCorpseMarker({
   // BEFORE the await stranded the body, and its loot AABB, a whole map
   // pixel from the kill. Nothing can recenter between here and the
   // caller's push: that is a microtask, and the frame loop is a task.
-  const pos = collider
-    ? floorLanding(collider, [feet[0], feet[1] + 0.1, feet[2]])
-    : [feet[0], feet[1], feet[2]];
+  const pos = collider ? floorLanding(collider, [feet[0], feet[1] + 0.1, feet[2]]) : [feet[0], feet[1], feet[2]];
   uploadRecordFrame(archive, record, 0);
   const size0 = billboardSize(t, record) ?? fallbackSize;
-  const size = sizeScale !== 1 && size0 ? { ...size0, w: size0.w * sizeScale, h: size0.h * sizeScale } : size0;   // ELITE FOES
-  if (centre != null && size) pos[1] += centre - size.h / 2;   // DEX5: the shader bottom-anchors, so the base is half a height under the centre
+  const size = sizeScale !== 1 && size0 ? { ...size0, w: size0.w * sizeScale, h: size0.h * sizeScale } : size0; // ELITE FOES
+  if (centre != null && size) pos[1] += centre - size.h / 2; // DEX5: the shader bottom-anchors, so the base is half a height under the centre
   const batch = renderer.createBillboardBatch(archive, record, size, [[pos[0], pos[1], pos[2]]]);
   // FA1 slice 3: a BARE record plus a frame FIELD - the draw builds
   // `record#frame`, so the record must not carry one already.
@@ -164,12 +169,19 @@ export function tickCorpseMarkers(markers, dt) {
 // the corpse container took the entity's items at :123). The pools
 // raise it at the kill; a vendored mod registers a handler by name.
 const _deathHandlers = new Map();
-export function registerEnemyDeathHandler(name, fn) { if (fn) _deathHandlers.set(name, fn); else _deathHandlers.delete(name); }
+export function registerEnemyDeathHandler(name, fn) {
+  if (fn) _deathHandlers.set(name, fn);
+  else _deathHandlers.delete(name);
+}
 export function raiseEnemyDeath(entity, opts = {}) {
   for (const fn of _deathHandlers.values()) {
-    try { fn(entity, opts); } catch (e) { console.warn('[enemyDeath] a handler threw', e); }
+    try {
+      fn(entity, opts);
+    } catch (e) {
+      console.warn('[enemyDeath] a handler threw', e);
+    }
   }
-  capFoeLoot(entity);   // FOE-CAP: after EVERY handler's find - a plain foe's body never carries more than its cap
+  capFoeLoot(entity); // FOE-CAP: after EVERY handler's find - a plain foe's body never carries more than its cap
 }
 
 /**
@@ -197,41 +209,58 @@ export function raiseEnemyDeath(entity, opts = {}) {
  *     `destroy()` lets every prefab it minted go (D12). A prefab answers `release()` - freed by another road.
  *   scenes/corpsePrefabHost.js holds the two hosts' reach (AUDIT DEX D11).
  */
-const _corpsePrefabs = new Map();   // `${archive}_${record}` -> make
+const _corpsePrefabs = new Map(); // `${archive}_${record}` -> make
 export function registerCorpsePrefab(archive, record, make) {
-  if (!Number.isInteger(archive) || !Number.isInteger(record) || typeof make !== 'function') throw new Error('registerCorpsePrefab(archive, record, make(f, host))');
+  if (!Number.isInteger(archive) || !Number.isInteger(record) || typeof make !== 'function')
+    throw new Error('registerCorpsePrefab(archive, record, make(f, host))');
   _corpsePrefabs.set(`${archive}_${record}`, make);
 }
 /** The test seam. */
-export function _resetCorpsePrefabs() { _corpsePrefabs.clear(); }
+export function _resetCorpsePrefabs() {
+  _corpsePrefabs.clear();
+}
 export function createCorpsePrefabs(host) {
   let alive = true;
   const reach = Object.freeze({ ...host, alive: () => alive });
   const minted = new Set();
-  const release = (f) => { const c = f.corpsePrefab; f.corpsePrefab = null; minted.delete(f); c?.release?.(); };
+  const release = (f) => {
+    const c = f.corpsePrefab;
+    f.corpsePrefab = null;
+    minted.delete(f);
+    c?.release?.();
+  };
   return {
     mint(f, corpseTexture) {
       release(f);
       // an executed revenant's body is the port's own fate (gone for good - revenant.js), never a prefab's to raise
-      const make = corpseTexture && !f.executed ? _corpsePrefabs.get(`${corpseTexture.archive}_${corpseTexture.record}`) : null;
-      f.corpsePrefab = make ? make(f, reach) ?? null : null;
+      const make =
+        corpseTexture && !f.executed ? _corpsePrefabs.get(`${corpseTexture.archive}_${corpseTexture.record}`) : null;
+      f.corpsePrefab = make ? (make(f, reach) ?? null) : null;
       if (f.corpsePrefab) minted.add(f);
       return f.corpsePrefab;
     },
-    frame(foes, dt) { for (const f of foes) if (f.corpsePrefab && f.dead && f.corpse) f.corpsePrefab.frame?.(dt); },
+    frame(foes, dt) {
+      for (const f of foes) if (f.corpsePrefab && f.dead && f.corpse) f.corpsePrefab.frame?.(dt);
+    },
     told(f, kind) {
       if (!f?.dead || f.corpseDestroyed || (kind !== 1 && kind !== 2)) return;
       if (f.corpsePrefab?.gone) f.corpsePrefab.gone(kind);
-      else reach.vanish(f);   // a copy with no prefab of its own (none to name the ash): the body goes, as its runner's did
+      else reach.vanish(f); // a copy with no prefab of its own (none to name the ash): the body goes, as its runner's did
     },
-    forget(f) { release(f); f.corpseDestroyed = 0; },
+    forget(f) {
+      release(f);
+      f.corpseDestroyed = 0;
+    },
     settle(f, kind) {
       if (kind !== 1 && kind !== 2) return;
       release(f);
       if (f.corpse) reach.vanish(f);
       f.corpseDestroyed = kind;
     },
-    destroy() { alive = false; for (const f of [...minted]) release(f); },
+    destroy() {
+      alive = false;
+      for (const f of [...minted]) release(f);
+    },
   };
 }
 /** The body a missile at `pos` meets, among `foes` - a dead one whose prefab stands a trigger (its sphere and the
@@ -243,14 +272,31 @@ export function corpsePrefabStruck(pos, foes, reach) {
   }
   return null;
 }
+/** AUDIT FB1031 II K4: the bodies corpsePrefabStruck meets, as the bodies a flight names (systems/spellcast.js
+ *  flightBodies' records: a sphere is a capsule as tall as it is wide). Unnamed, a prefab lying in a rock's cover in
+ *  front of its middle opened nothing, and my bolt was lost on the rock short of it. */
+export function corpsePrefabBodies(foes) {
+  const out = [];
+  for (const f of foes ?? []) {
+    const s = f?.dead && f.corpse ? f.corpsePrefab?.sphere?.() : null;
+    if (s)
+      out.push({
+        ai: { feet: [s.center[0], s.center[1] - s.radius, s.center[2]], height: 2 * s.radius, radius: s.radius },
+      });
+  }
+  return out;
+}
 
 export function sayEnemyDied(say, mobileType, entity = null) {
   // AUDIT 28 W1: the gate the comment above quotes was never read - the
   // setting sat `stored` while every kill spoke. GetBool, as :82.
   if (getBool('GUI', 'DisableEnemyDeathAlert')) return null;
-  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType));   // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his
+  const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType)); // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his
   if (!name) return null;
-  const line = localizedText('thingJustDied', '%s just died.').replaceAll('%s', getLocalizedEnemyName(mobileType, name));
+  const line = localizedText('thingJustDied', '%s just died.').replaceAll(
+    '%s',
+    getLocalizedEnemyName(mobileType, name),
+  );
   say?.(line);
   return line;
 }
@@ -451,7 +497,8 @@ export const corpseLootHooks = (entry) => ({
  *  stop being a target. Disabling on the take would eat that line. */
 /** :948-952's test - one item, and it is arrows: a body DFU empties into the pack with no window. AUDIT 625 S7: one law
  *  for every reader - this door's, and a peer's grant (exteriorFoes.js), whose arrows alone roll no silver either. */
-export const arrowsOnly = (items) => Array.isArray(items) && items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX;
+export const arrowsOnly = (items) =>
+  Array.isArray(items) && items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX;
 
 function corpsePrelude(entry, playerEntity, say) {
   if (!entry || entry.corpseDisabled) return 0;
@@ -468,7 +515,7 @@ function corpsePrelude(entry, playerEntity, say) {
     playerEntity.items = playerEntity.items || [];
     addItem(playerEntity.items, items[0]);
     items.length = 0;
-    say('You collect the arrows.');   // youCollectArrows
+    say('You collect the arrows.'); // youCollectArrows
     return 1;
   }
   return null;
@@ -566,7 +613,9 @@ export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
   // a law is a third chance to omit it (HARD2). This loop is that door
   // applied to every row; `[...items]` because the door splices the
   // source, so iterating it live would skip every second entry.
-  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }
+  for (const item of [...items]) {
+    if (takeOneInto(playerEntity, items, item)) n++;
+  }
   say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
   return n;
 }

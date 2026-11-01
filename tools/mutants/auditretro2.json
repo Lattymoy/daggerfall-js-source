@@ -220,8 +220,8 @@
   {
     "name": "AUDITRETRO2-G2-the-page-test-first",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search) ?",
-    "new": "  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ?",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)",
+    "new": "  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "AUDITRETRO2-G5-the-reticle-row-ignored",
     "file": "src/ui/classicLootPanel.js",
-    "old": "Math.round(centreY - h / 2)",
-    "new": "Math.round(NATIVE_H / 2 - h / 2)",
+    "old": "  const top = (h) => Math.max(2, Math.min(Math.floor(bottom) - h - 2, Math.round(centreY - h / 2)));",
+    "new": "  const top = (h) => Math.max(2, Math.min(Math.floor(bottom) - h - 2, Math.round(NATIVE_H / 2 - h / 2)));",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "AUDITRETRO2-G5-the-floor-ignored",
     "file": "src/ui/classicLootPanel.js",
-    "old": "Math.min(Math.floor(bottom) - h - 2,",
-    "new": "Math.min(NATIVE_H - h - 2,",
+    "old": "  const top = (h) => Math.max(2, Math.min(Math.floor(bottom) - h - 2, Math.round(centreY - h / 2)));",
+    "new": "  const top = (h) => Math.max(2, Math.min(NATIVE_H - h - 2, Math.round(centreY - h / 2)));",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "AUDITRETRO2-G5-the-floor-below-the-screen",
     "file": "src/ui/classicLootPanel.js",
-    "old": "bottom: floorY == null ? NATIVE_H : Math.min(NATIVE_H, (floorY - m.oy) / m.s),",
-    "new": "bottom: floorY == null ? NATIVE_H : (floorY - m.oy) / m.s,",
+    "old": "    bottom: floorY == null ? NATIVE_H : Math.min(NATIVE_H, (floorY - m.oy) / m.s),",
+    "new": "    bottom: floorY == null ? NATIVE_H : (floorY - m.oy) / m.s,",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]

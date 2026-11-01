@@ -44,7 +44,7 @@ const painted = new WeakMap();
  */
 export function paintSwatch(img, heraldry) {
   const h = heraldryOf(heraldry);
-  const key = h ? heraldryKey(h) : '';   // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture
+  const key = h ? heraldryKey(h) : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture
   if (painted.get(img) === key) return !!h;
   painted.set(img, key);
   if (h) {
@@ -85,15 +85,23 @@ export function heraldryLookup(sources) {
   return (tag, name = undefined) => {
     if (typeof tag !== 'string' || !tag) return null;
     const now = sources() ?? [];
-    if (now.length !== seen.length || now.some((x, i) => x !== seen[i])) { seen = [...now]; index = heraldryIndex(...now); }
+    if (now.length !== seen.length || now.some((x, i) => x !== seen[i])) {
+      seen = [...now];
+      index = heraldryIndex(...now);
+    }
     return armsNamed(index, tag, name);
   };
 }
 
 /** The guild each Chronicle row's line names first (net/townSeatLaw.js chronicleLine), where it is not `guild`. */
 const CHRONICLE_FIRST = Object.freeze({
-  contested: 'a', 'siege-forfeit': 'against', 'siege-void': 'holder',
-  'fealty-sworn': 'vassal', 'fealty-broken': 'breaker', 'fealty-tribute': 'vassal', 'fealty-lapsed': 'vassal',
+  contested: 'a',
+  'siege-forfeit': 'against',
+  'siege-void': 'holder',
+  'fealty-sworn': 'vassal',
+  'fealty-broken': 'breaker',
+  'fealty-tribute': 'vassal',
+  'fealty-lapsed': 'vassal',
 });
 /**
  * THE GUILD A CHRONICLE ROW IS ABOUT - the one its line names first, `{ name, tag }` as it was that day - or null for a row
@@ -102,7 +110,7 @@ const CHRONICLE_FIRST = Object.freeze({
  */
 export function chronicleGuildOf(row) {
   const d = row?.data ?? {};
-  if (row?.kind === 'siege-void' && d.battle === 'tourney') return null;   // its line names neither guild
+  if (row?.kind === 'siege-void' && d.battle === 'tourney') return null; // its line names neither guild
   // AUDIT HERALDRY H1: a battle the Moderators voided names the holder it went back to, if any - never its attacker (`guild`)
   const g = row?.kind === 'siege-voided' ? (d.restored ? d.holder : null) : d[CHRONICLE_FIRST[row?.kind] ?? 'guild'];
   return g && typeof g === 'object' && typeof g.tag === 'string' && g.tag ? g : null;

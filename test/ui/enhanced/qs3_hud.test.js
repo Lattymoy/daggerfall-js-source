@@ -425,7 +425,7 @@ test('QS3: drawHud forwards the sheathe state and the two phone doors', () => {
   // the EM3-3D patch's crossbar fix: the family is still the pad's own id, now held (sticky) until the pad ACTS - the
   // keyboard keeps the diamond meanwhile - rather than re-set every frame
   assert.match(gp, /setPadFamily\(usingController \|\| !P\.handsOff \? padFamilyOf\(pad\.id\) : null\);[^\n]*\n[\s\S]{0,1500}setControllerLook\(usingController\);/);
-  assert.match(gp, /setPadFamily\(null\);   \/\/ QS3: a glyph for a pad nobody is holding is a lie/);
+  assert.match(gp, /setPadFamily\(null\); \/\/ QS3: a glyph for a pad nobody is holding is a lie/);
   assert.match(gp, /dispose\(\) \{[^}]*setPadFamily\(null\);/);
 });
 

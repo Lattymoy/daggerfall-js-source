@@ -58,12 +58,27 @@ import { PrefabNode, instantiatePrefab, prefabShapeStamp } from '../../world/pre
 import { applyRuntimeMaterials, bundleSlots, dfMaterial, gameTextureFromName } from './comeSailAwayModels.js';
 import { createAnimator } from '../../world/unityAnimator.js';
 import { instanceParticleSystems } from '../../world/unityParticles.js';
-import { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES, PACKED_WEIGHT_MAX, packedHullWeight } from './comeSailAwayHulls.js';   // INT1: the table's leaf - the item law reads it in a Worker
+import {
+  HULL_NAMES,
+  HULL_PRICES,
+  HULL_WEIGHTS,
+  VARIANT_NAMES,
+  PACKED_WEIGHT_MAX,
+  packedHullWeight,
+} from './comeSailAwayHulls.js'; // INT1: the table's leaf - the item law reads it in a Worker
 
 /** ComeSailAway.firstHullModelID - SpawnBoat asks for 112410 + hull. */
 export const FIRST_HULL_MODEL_ID = 112410;
 /** The seven trigger prefabs and what Start registers on them (PlayerActivate.RegisterCustomActivation, 3.2). */
-export const TRIGGER_MODEL = Object.freeze({ drive: 112400, board: 112401, cargo: 112402, door: 112403, variant: 112404, status: 112405, position: 112406 });
+export const TRIGGER_MODEL = Object.freeze({
+  drive: 112400,
+  board: 112401,
+  cargo: 112402,
+  door: 112403,
+  variant: 112404,
+  status: 112405,
+  position: 112406,
+});
 export { HULL_NAMES, HULL_PRICES, HULL_WEIGHTS, VARIANT_NAMES };
 /** SHIP-PACK: what a hull's parts weigh packed (the leaf's - PARTS-WEIGHT moved it there for the save's repair). */
 export { PACKED_WEIGHT_MAX, packedHullWeight };
@@ -72,9 +87,17 @@ export { PACKED_WEIGHT_MAX, packedHullWeight };
 export const HULL_VARIANT_COUNTS = Object.freeze([0, 7, 0, 0, 0]);
 export const SAIL_ANIMATION_SPEED = 2;
 /** The five clips Start loads (audioClips[0..4]); SpawnBoat's loops are the first two. */
-export const AUDIO_CLIPS = Object.freeze(['SmallShipAmbience', 'ShipExteriorAmbience2', 'Oars_In', 'Oars_Sweep', 'Oars_Out']);
+export const AUDIO_CLIPS = Object.freeze([
+  'SmallShipAmbience',
+  'ShipExteriorAmbience2',
+  'Oars_In',
+  'Oars_Sweep',
+  'Oars_Out',
+]);
 /** The helper names' three separators (archiveStart, recordStart, alignmentStart). */
-export const ARCHIVE_START = '-', RECORD_START = '_', ALIGNMENT_START = ':';
+export const ARCHIVE_START = '-',
+  RECORD_START = '_',
+  ALIGNMENT_START = ':';
 /** GetBoatTransforms' bed (CreateDaggerfallMeshGameObject(41000)) and fire (CreateDaggerfallBillboardGameObject(210, 1)). */
 export const BED_MODEL_ID = 41000;
 export const FIRE_OBJECT_FLAT = Object.freeze([210, 1]);
@@ -82,7 +105,15 @@ export const FIRE_OBJECT_FLAT = Object.freeze([210, 1]);
 export const LIGHT_ARCHIVE = 210;
 /** AddBillboardLight's settings over DFU's dungeon light prefab: Color32(255, 147, 41, 255), 1, 20, LightType 2 (Point),
  *  LightShadows 1 (Hard), 1, 140. */
-export const LANTERN_LIGHT = Object.freeze({ color: Object.freeze([1, 147 / 255, 41 / 255, 1]), intensity: 1, range: 20, lightType: 'Point', shadows: 'Hard', shadowStrength: 1, spotAngle: 140 });
+export const LANTERN_LIGHT = Object.freeze({
+  color: Object.freeze([1, 147 / 255, 41 / 255, 1]),
+  intensity: 1,
+  range: 20,
+  lightType: 'Point',
+  shadows: 'Hard',
+  shadowStrength: 1,
+  spotAngle: 140,
+});
 /** DungeonLightHandler's defaults: UnscaledBlockRange 2060 (x MeshReader.GlobalScale 0.025), every 0.4 s. */
 export const DUNGEON_LIGHT_HANDLER = Object.freeze({ unscaledBlockRange: 2060, updateInSeconds: 0.4 });
 /** Unity's name for `new GameObject()`. */
@@ -100,20 +131,27 @@ export class Boat {
   constructor(hullTarget = 0, variantTarget = 0) {
     this.hull = hullTarget;
     this.variant = variantTarget;
-    this.uid = 0;   // the deed's item UID (placeItem.UID) - set where CSA-C places the boat
+    this.uid = 0; // the deed's item UID (placeItem.UID) - set where CSA-C places the boat
     this.packable = false;
     this.crewed = false;
-    this.itemValue = null;   // SHIP-PACK (the port's own): the worth of the item that placed her, deed or parts (comeSailAway.js takePlaceItem) - her parts are packed at it
-    this.groundAsked = false;   // FIELD BUGS 29h (LOST-BOAT, the port's own): the ground under it asked once (comeSailAway.js recoverLostBoats)
-    /** @type {any} */ this.charter = null;   // PASSAGE (the port's own): a booked ship's voyage (systems/naval/passage.js charterRecord) - none on a boat of mine
-    this.way = 0;   // PASSAGE-PACE (the port's own): her way at the helm (m/s), laid each step - the journey's leads read it (systems/travel/travelGovernor.js travellerPace)
-    this.helmAfar = false;   // HELM-SIGHT (the port's own): her helm held across a jump that landed on another pixel than hers (comeSailAway.js OnWorldReanchored)
-    this.modifierMoveSpeedOar = 0; this.modifierMoveAccelerationOar = 0;
-    this.modifierMoveSpeedSail = 0; this.modifierMoveAccelerationSail = 0;
-    this.modifierTurnSpeedOar = 0; this.modifierTurnAccelerationOar = 0;
-    this.modifierTurnSpeedSail = 0; this.modifierTurnAccelerationSail = 0;
-    this.modifierAnimation = 0; this.modifierRudder = 0;
-    this.modifierAudioVolume = 0; this.modifierAudioRange = 0; this.modifierAudioSpatialBlend = 0;
+    this.itemValue = null; // SHIP-PACK (the port's own): the worth of the item that placed her, deed or parts (comeSailAway.js takePlaceItem) - her parts are packed at it
+    this.groundAsked = false; // FIELD BUGS 29h (LOST-BOAT, the port's own): the ground under it asked once (comeSailAway.js recoverLostBoats)
+    /** @type {any} */ this.charter = null; // PASSAGE (the port's own): a booked ship's voyage (systems/naval/passage.js charterRecord) - none on a boat of mine
+    this.way = 0; // PASSAGE-PACE (the port's own): her way at the helm (m/s), laid each step - the journey's leads read it (systems/travel/travelGovernor.js travellerPace)
+    this.helmAfar = false; // HELM-SIGHT (the port's own): her helm held across a jump that landed on another pixel than hers (comeSailAway.js OnWorldReanchored)
+    this.modifierMoveSpeedOar = 0;
+    this.modifierMoveAccelerationOar = 0;
+    this.modifierMoveSpeedSail = 0;
+    this.modifierMoveAccelerationSail = 0;
+    this.modifierTurnSpeedOar = 0;
+    this.modifierTurnAccelerationOar = 0;
+    this.modifierTurnSpeedSail = 0;
+    this.modifierTurnAccelerationSail = 0;
+    this.modifierAnimation = 0;
+    this.modifierRudder = 0;
+    this.modifierAudioVolume = 0;
+    this.modifierAudioRange = 0;
+    this.modifierAudioSpatialBlend = 0;
     this.modifierCargoThreshold = 0;
     /** @type {PrefabNode|null} */ this.GameObject = null;
     /** @type {PrefabNode|null} */ this.MeshObject = null;
@@ -166,14 +204,17 @@ export class Boat {
     /** @type {any[] | null} */ this.particleSystems = null;
   }
   /** Boat.GetVariantCount - VariantObject.transform.childCount (a boat without variants throws there in C#). */
-  get GetVariantCount() { return this.VariantObject ? this.VariantObject.childCount : 0; }
+  get GetVariantCount() {
+    return this.VariantObject ? this.VariantObject.childCount : 0;
+  }
 }
 
 // ── the DFU doors ────────────────────────────────────────────────────────────
 
 /** GameObjectHelper.GetGoModelName / GetGoFlatName. */
 export const goModelName = (modelId) => `DaggerfallMesh [ID=${modelId}]`;
-export const goFlatName = (archive, record) => `DaggerfallBillboard [TEXTURE.${String(archive).padStart(3, '0')}, Index=${record}]`;
+export const goFlatName = (archive, record) =>
+  `DaggerfallBillboard [TEXTURE.${String(archive).padStart(3, '0')}, Index=${record}]`;
 
 /**
  * MeshReplacement.ImportCustomGameobject(modelId, parent, player's matrix) -
@@ -212,9 +253,17 @@ function newChild(name, parent) {
 export function createDaggerfallBillboardGameObject(ctx, archive, record, parent) {
   const go = newChild(goFlatName(archive, record), parent);
   const size = ctx.billboardSize?.(archive, record) ?? null;
-  go.addComponent({ type: 'DaggerfallBillboard', Summary: { Archive: archive, Record: record, Size: size ? [size[0], size[1]] : [0, 0] } });
+  go.addComponent({
+    type: 'DaggerfallBillboard',
+    Summary: { Archive: archive, Record: record, Size: size ? [size[0], size[1]] : [0, 0] },
+  });
   // SetMaterial's MeshRenderer: the flat's material (alphaIndex 0, a billboard's cutout); SetLights writes its _EmissionColor
-  go.addComponent({ type: 'MeshRenderer', m_Enabled: true, materials: [{ ...dfMaterial(archive, record), billboard: true }], emissionColor: null });
+  go.addComponent({
+    type: 'MeshRenderer',
+    m_Enabled: true,
+    materials: [{ ...dfMaterial(archive, record), billboard: true }],
+    emissionColor: null,
+  });
   return go;
 }
 
@@ -223,7 +272,13 @@ export function createDaggerfallMeshGameObject(ctx, modelId, parent) {
   const go = newChild(goModelName(modelId), parent);
   go.addComponent({ type: 'DaggerfallMesh', modelId });
   go.addComponent({ type: 'MeshRenderer', m_Enabled: true, classicModel: modelId });
-  go.addComponent({ type: 'MeshCollider', m_Enabled: true, m_Convex: false, m_IsTrigger: false, classicModel: modelId });
+  go.addComponent({
+    type: 'MeshCollider',
+    m_Enabled: true,
+    m_Convex: false,
+    m_IsTrigger: false,
+    classicModel: modelId,
+  });
   return go;
 }
 
@@ -258,19 +313,27 @@ function classicLocalBounds(ctx, modelId) {
  */
 export function worldBounds(node, local) {
   const m = node.worldMatrix();
-  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+  const min = [Infinity, Infinity, Infinity],
+    max = [-Infinity, -Infinity, -Infinity];
   for (let i = 0; i < 8; i++) {
     const l = [0, 1, 2].map((d) => local.center[d] + ((i >> d) & 1 ? local.extent[d] : -local.extent[d]));
     const w = [0, 1, 2].map((d) => m[d] * l[0] + m[4 + d] * l[1] + m[8 + d] * l[2] + m[12 + d]);
-    for (let d = 0; d < 3; d++) { if (w[d] < min[d]) min[d] = w[d]; if (w[d] > max[d]) max[d] = w[d]; }
+    for (let d = 0; d < 3; d++) {
+      if (w[d] < min[d]) min[d] = w[d];
+      if (w[d] > max[d]) max[d] = w[d];
+    }
   }
-  const center = scale3(add3(min, max), 0.5), size = sub3(max, min);
+  const center = scale3(add3(min, max), 0.5),
+    size = sub3(max, min);
   return { center, extents: scale3(size, 0.5), size, min, max };
 }
 
 /** Collider.bounds of a MeshCollider on `node` (its mesh, or the classic model under it). */
 export function colliderBounds(ctx, node, collider) {
-  const local = collider.classicModel != null ? classicLocalBounds(ctx, collider.classicModel) : meshLocalBounds(ctx, collider.m_Mesh);
+  const local =
+    collider.classicModel != null
+      ? classicLocalBounds(ctx, collider.classicModel)
+      : meshLocalBounds(ctx, collider.m_Mesh);
   return local ? worldBounds(node, local) : null;
 }
 /**
@@ -316,7 +379,7 @@ export function spawnBoat(newBoat, ctx) {
   newBoat.GameObject = new PrefabNode('Boat');
   newBoat.GameObject.position = [0, 0, 0];
   const val = importCustomGameobject(ctx, FIRST_HULL_MODEL_ID + newBoat.hull, newBoat.GameObject);
-  if (!val) throw new Error(`Come Sail Away: no hull prefab ${FIRST_HULL_MODEL_ID + newBoat.hull}`);   // the C#'s NullReferenceException at val.transform
+  if (!val) throw new Error(`Come Sail Away: no hull prefab ${FIRST_HULL_MODEL_ID + newBoat.hull}`); // the C#'s NullReferenceException at val.transform
   val.localPosition = [0, 0, 0];
   val.localRotation = [0, 0, 0, 1];
   newBoat.MeshCollider = val.getComponentInChildren('MeshCollider');
@@ -349,11 +412,20 @@ export function spawnBoat(newBoat, ctx) {
   newBoat.ActiveObject.setActive(false);
   setLights(newBoat, newBoat.LightOn);
   const clips = ctx.audioClips ?? AUDIO_CLIPS;
-  const meshBounds = meshLocalBounds(ctx, newBoat.MeshCollider.m_Mesh);   // MeshCollider.sharedMesh.bounds
+  const meshBounds = meshLocalBounds(ctx, newBoat.MeshCollider.m_Mesh); // MeshCollider.sharedMesh.bounds
   const loop = (name, clip) => {
     const go = newChild(name, newBoat.GameObject);
     go.localPosition = [0, 0, 0];
-    const src = go.addComponent({ type: 'AudioSource', clip, loop: true, spatialBlend: 1, minDistance: 0, maxDistance: 0, volume: 1, isPlaying: false });   // CSA-F: AudioSource.volume and isPlaying - the wake reads them
+    const src = go.addComponent({
+      type: 'AudioSource',
+      clip,
+      loop: true,
+      spatialBlend: 1,
+      minDistance: 0,
+      maxDistance: 0,
+      volume: 1,
+      isPlaying: false,
+    }); // CSA-F: AudioSource.volume and isPlaying - the wake reads them
     src.minDistance = Math.fround(meshBounds.extent[2] * 0.5);
     src.maxDistance = Math.fround(src.minDistance * 2);
     return src;
@@ -366,7 +438,12 @@ export function spawnBoat(newBoat, ctx) {
   newBoat.DFAudioSource = val9.addComponent({ type: 'DaggerfallAudioSource' });
   const val10 = newChild('BoatCargo', newBoat.GameObject);
   val10.localPosition = [0, 0, 0];
-  newBoat.Cargo = val10.addComponent({ type: 'DaggerfallLoot', ContainerImage: CARGO_CONTAINER_IMAGE, playerOwned: true, Items: [] });   // DaggerfallLoot.Items: an empty ItemCollection (CSA-C's save reads and writes it)
+  newBoat.Cargo = val10.addComponent({
+    type: 'DaggerfallLoot',
+    ContainerImage: CARGO_CONTAINER_IMAGE,
+    playerOwned: true,
+    Items: [],
+  }); // DaggerfallLoot.Items: an empty ItemCollection (CSA-C's save reads and writes it)
   return newBoat;
 }
 
@@ -387,8 +464,13 @@ export function applyBoatVariant(boat, ctx) {
 }
 /** ReinitializeBoat (1290-1302). */
 export function reinitializeBoat(boat, ctx) {
-  boat.Sails.length = 0; boat.SailsGaff.length = 0; boat.SailsLarge.length = 0; boat.SailsLateen.length = 0;
-  boat.SailsSmall.length = 0; boat.SailsSquare.length = 0; boat.SailsStay.length = 0;
+  boat.Sails.length = 0;
+  boat.SailsGaff.length = 0;
+  boat.SailsLarge.length = 0;
+  boat.SailsLateen.length = 0;
+  boat.SailsSmall.length = 0;
+  boat.SailsSquare.length = 0;
+  boat.SailsStay.length = 0;
   boat.Booms.length = 0;
   boat.FlagObject = null;
   getBoatTransforms(boat, boat.GameObject, ctx, true);
@@ -407,15 +489,23 @@ export function setBoatVariant(boat, variant, ctx) {
  */
 export function helperField(name, sep, length) {
   const i = name.indexOf(sep) + 1;
-  if (i + length > name.length) throw new RangeError(`ArgumentOutOfRangeException: "${name}".Substring(${i}, ${length})`);
+  if (i + length > name.length)
+    throw new RangeError(`ArgumentOutOfRangeException: "${name}".Substring(${i}, ${length})`);
   const s = name.substring(i, i + length);
   if (!/^\s*[+-]?\d+\s*$/.test(s)) throw new TypeError(`FormatException: Convert.ToInt32("${s}")`);
   return Number.parseInt(s.trim(), 10);
 }
 /** SetupBillboardHelper's parse: `BillboardHelper-AAA_RRR:L`. */
-export const billboardHelperFields = (name) => ({ archive: helperField(name, ARCHIVE_START, 3), record: helperField(name, RECORD_START, 3), alignment: helperField(name, ALIGNMENT_START, 1) });
+export const billboardHelperFields = (name) => ({
+  archive: helperField(name, ARCHIVE_START, 3),
+  record: helperField(name, RECORD_START, 3),
+  alignment: helperField(name, ALIGNMENT_START, 1),
+});
 /** SetupModelHelper's parse: `ModelHelper-NNNNN:L`. */
-export const modelHelperFields = (name) => ({ modelId: helperField(name, ARCHIVE_START, 5), alignment: helperField(name, ALIGNMENT_START, 1) });
+export const modelHelperFields = (name) => ({
+  modelId: helperField(name, ARCHIVE_START, 5),
+  alignment: helperField(name, ALIGNMENT_START, 1),
+});
 
 /** SetupBillboardHelper (1344-1377). */
 export function setupBillboardHelper(boat, parent, ctx) {
@@ -425,7 +515,8 @@ export function setupBillboardHelper(boat, parent, ctx) {
   val.localScale = [1, 1, 1];
   const component = val.getComponent('DaggerfallBillboard');
   if (num3 === 1) val.localPosition = add3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));
-  else if (num3 === 2) val.localPosition = sub3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));
+  else if (num3 === 2)
+    val.localPosition = sub3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));
   if (num === LIGHT_ARCHIVE) boat.Lights.push(addBillboardLight(component, val, ctx));
 }
 
@@ -433,9 +524,26 @@ export function setupBillboardHelper(boat, parent, ctx) {
 export function addBillboardLight(billboard, billboardNode, ctx, alignment = 0) {
   const val = newChild('DungeonLight(Clone)', billboardNode);
   val.position = billboardNode.position;
-  const component = val.addComponent({ type: 'Light', enabled: true, ...LANTERN_LIGHT, color: [...LANTERN_LIGHT.color] });
-  val.addComponent({ type: 'DaggerfallLight', enabled: true, Animate: false, InteriorLight: false, lastCityLightsFlag: null });
-  val.addComponent({ type: 'DungeonLightHandler', enabled: true, UnscaledBlockRange: DUNGEON_LIGHT_HANDLER.unscaledBlockRange, UpdateInSeconds: DUNGEON_LIGHT_HANDLER.updateInSeconds, timer: 0 });
+  const component = val.addComponent({
+    type: 'Light',
+    enabled: true,
+    ...LANTERN_LIGHT,
+    color: [...LANTERN_LIGHT.color],
+  });
+  val.addComponent({
+    type: 'DaggerfallLight',
+    enabled: true,
+    Animate: false,
+    InteriorLight: false,
+    lastCityLightsFlag: null,
+  });
+  val.addComponent({
+    type: 'DungeonLightHandler',
+    enabled: true,
+    UnscaledBlockRange: DUNGEON_LIGHT_HANDLER.unscaledBlockRange,
+    UpdateInSeconds: DUNGEON_LIGHT_HANDLER.updateInSeconds,
+    timer: 0,
+  });
   if (alignment === 1) val.localPosition = add3(val.localPosition, scale3(V_UP, billboard.Summary.Size[1] / 2));
   else if (alignment === 2) val.localPosition = sub3(val.localPosition, scale3(V_UP, billboard.Summary.Size[1] / 2));
   component.node = val;
@@ -450,11 +558,16 @@ export function setupModelHelper(boat, parent, ctx) {
   val.localScale = [1, 1, 1];
   const position = val.position;
   let bounds = classicRendererBounds(ctx, val, num);
-  if (!bounds) return;   // the player's ARCH3D has no such model: DFU's renderer has no mesh, its bounds sit at the object
+  if (!bounds) return; // the player's ARCH3D has no such model: DFU's renderer has no mesh, its bounds sit at the object
   const val2 = sub3(position, bounds.center);
   val.localPosition = add3(val.localPosition, val2);
-  if (num2 === 1) { bounds = classicRendererBounds(ctx, val, num); val.localPosition = add3(val.localPosition, scale3(V_UP, bounds.extents[1])); }
-  else if (num2 === 2) { bounds = classicRendererBounds(ctx, val, num); val.localPosition = sub3(val.localPosition, scale3(V_UP, bounds.extents[1])); }
+  if (num2 === 1) {
+    bounds = classicRendererBounds(ctx, val, num);
+    val.localPosition = add3(val.localPosition, scale3(V_UP, bounds.extents[1]));
+  } else if (num2 === 2) {
+    bounds = classicRendererBounds(ctx, val, num);
+    val.localPosition = sub3(val.localPosition, scale3(V_UP, bounds.extents[1]));
+  }
 }
 
 /** SetLights (1452-1476): each lantern's light and its two DFU behaviours on or off, and its flat's emission white or black. */
@@ -476,22 +589,34 @@ export function setLights(boat, value) {
 export const animatorOf = (node) => node?.getComponent('Animator')?.animator ?? null;
 /** SEA-TOWN (FIELD BUGS 2026-10-11c): each boat tree's Animators, kept while her tree's shape stands (prefabNode.js
  *  prefabShapeStamp - prefabColliders.js keeps a tree's colliders by the same stamp). Read-only: the list is shared. */
-const _animators = new WeakMap();   // root -> { stamp, list }
+const _animators = new WeakMap(); // root -> { stamp, list }
 /** Every Animator a boat carries, for the frame's step (Unity updates each after the scripts' Update). SEA-TOWN: found
  *  once a tree shape - the walk of every node (a galleon's 1,228) was made for every boat, every frame. A tree's
  *  Animators change only with its shape: a node hung or a component added (each bumps the stamp), a runtime attached
  *  only as an instance is imported, before it is hung under its parent (importCustomGameobject). BOAT-STAMP: her own
  *  tree's stamp - another boat built anywhere walked every boat's tree again the next frame. */
 export const boatAnimators = (boat) => {
-  const root = boat.GameObject, stamp = prefabShapeStamp(root);
+  const root = boat.GameObject,
+    stamp = prefabShapeStamp(root);
   const had = _animators.get(root);
   if (had && had.stamp === stamp) return had.list;
-  const list = [...root.walk()].flatMap((n) => n.getComponents('Animator').map((c) => c.animator).filter(Boolean));
+  const list = [...root.walk()].flatMap((n) =>
+    n
+      .getComponents('Animator')
+      .map((c) => c.animator)
+      .filter(Boolean),
+  );
   _animators.set(root, { stamp, list });
   return list;
 };
 /** CSA-F: every particle system of a boat's tree, as Unity's ParticleSystem update finds them. */
-export const boatParticleSystems = (boat) => [...boat.GameObject.walk()].flatMap((n) => n.getComponents('ParticleSystem').map((c) => c.particleSystem).filter(Boolean));
+export const boatParticleSystems = (boat) =>
+  [...boat.GameObject.walk()].flatMap((n) =>
+    n
+      .getComponents('ParticleSystem')
+      .map((c) => c.particleSystem)
+      .filter(Boolean),
+  );
 
 // ── GetBoatTransforms ────────────────────────────────────────────────────────
 
@@ -513,12 +638,15 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
     if (boat.VariantObject == null && name === 'Variants') {
       boat.VariantObject = child;
       const v = boat.VariantObject.getChild(boat.variant);
-      if (!v) throw new Error(`Come Sail Away: Transform child out of bounds (variant ${boat.variant} of ${boat.VariantObject.childCount})`);
+      if (!v)
+        throw new Error(
+          `Come Sail Away: Transform child out of bounds (variant ${boat.variant} of ${boat.VariantObject.childCount})`,
+        );
       v.setActive(true);
     }
     if (name.includes('BillboardHelper') && !reinitialize) setupBillboardHelper(boat, child, ctx);
     if (name.includes('ModelHelper') && !reinitialize) setupModelHelper(boat, child, ctx);
-    if (name === 'Crewed') boat.crewed = boat.packable = true;   // SHIP-PACK: a crewed ship is picked up as the small boats are (comeSailAway.js PackBoat - her deed goes with her)
+    if (name === 'Crewed') boat.crewed = boat.packable = true; // SHIP-PACK: a crewed ship is picked up as the small boats are (comeSailAway.js PackBoat - her deed goes with her)
     if (name === 'Packable') boat.packable = true;
     if (name.includes('Handling')) {
       if (name.includes('Oar')) {
@@ -544,7 +672,7 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
     }
     if (boat.FlagObject == null && name === 'FlagObject') {
       boat.FlagObject = child;
-      boat.FlagEmitter = boat.FlagObject.getComponentInChildren('ParticleSystem').particleSystem;   // CSA-F: the component's runtime
+      boat.FlagEmitter = boat.FlagObject.getComponentInChildren('ParticleSystem').particleSystem; // CSA-F: the component's runtime
       boat.FlagEmitterMain = boat.FlagEmitter.main;
     }
     if (boat.WakeObject == null && name === 'WakeObject') {
@@ -578,8 +706,12 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
       const b = colliderBounds(ctx, child.parent, component);
       const c = val2.inverseTransformPoint(b.center);
       component2.m_Center = { x: c[0], y: c[1], z: c[2] };
-      component2.m_Size = { x: Math.fround(b.size[0] + 0.01), y: Math.fround(b.size[1] + 0.01), z: Math.fround(b.size[2] + 0.01) };
-      boat.BoardTriggers.push(val2);   // the C# adds the door's trigger to BoardTriggers; DoorTriggers stays empty (kept)
+      component2.m_Size = {
+        x: Math.fround(b.size[0] + 0.01),
+        y: Math.fround(b.size[1] + 0.01),
+        z: Math.fround(b.size[2] + 0.01),
+      };
+      boat.BoardTriggers.push(val2); // the C# adds the door's trigger to BoardTriggers; DoorTriggers stays empty (kept)
     }
     if (boat.BedObject == null && name.includes('BedObject')) {
       boat.BedObject = createDaggerfallMeshGameObject(ctx, BED_MODEL_ID, child);
@@ -595,7 +727,10 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
     if (boat.FireObject == null && name === 'FireObject') {
       boat.FireObject = createDaggerfallBillboardGameObject(ctx, FIRE_OBJECT_FLAT[0], FIRE_OBJECT_FLAT[1], child);
       boat.FireObject.localScale = [0.5, 0.5, 0.5];
-      boat.FireObject.localPosition = add3([0, 0, 0], scale3(V_UP, Math.fround(boat.FireObject.getComponent('DaggerfallBillboard').Summary.Size[1] / 4)));
+      boat.FireObject.localPosition = add3(
+        [0, 0, 0],
+        scale3(V_UP, Math.fround(boat.FireObject.getComponent('DaggerfallBillboard').Summary.Size[1] / 4)),
+      );
       boat.FireObject.getComponent('MeshRenderer').m_Enabled = false;
     }
     if (boat.VariantTrigger == null && name === 'VariantTrigger') {
@@ -619,12 +754,20 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
       boat.RudderAnimator = child.getComponent('Animator');
       boat.RudderObject.addComponent({ type: 'RudderAnimationEventListener' });
     }
-    if (name === 'RudderEffect' && !reinitialize) boat.RudderEmitters.push(child.getComponent('ParticleSystem')?.particleSystem ?? null);
-    if (name === 'OarEffect' && !reinitialize) boat.OarParticles.push(child.getComponent('ParticleSystem')?.particleSystem ?? null);
+    if (name === 'RudderEffect' && !reinitialize)
+      boat.RudderEmitters.push(child.getComponent('ParticleSystem')?.particleSystem ?? null);
+    if (name === 'OarEffect' && !reinitialize)
+      boat.OarParticles.push(child.getComponent('ParticleSystem')?.particleSystem ?? null);
     if (boat.IdleObject == null && name === 'IdleObject') boat.IdleObject = child;
     if (boat.ActiveObject == null && name === 'ActiveObject') boat.ActiveObject = child;
     if (name.includes('Boom')) boat.Booms.push(child);
-    if (name.includes('Sail') && !name.includes('Skelly') && !name.includes('Mesh') && !name.includes('Bones') && !name.includes('Handling')) {
+    if (
+      name.includes('Sail') &&
+      !name.includes('Skelly') &&
+      !name.includes('Mesh') &&
+      !name.includes('Bones') &&
+      !name.includes('Handling')
+    ) {
       boat.Sails.push(child);
       if (name.includes('Small')) boat.SailsSmall.push(child);
       else if (name.includes('Large')) boat.SailsLarge.push(child);
@@ -642,7 +785,15 @@ export function getBoatTransforms(boat, parent, ctx, reinitialize = false) {
       // AUDIT GN2-RG1/RG9: the renderer's own cadence where its prefab names one (a BakeCadence: the new galleon's,
       // world/ships/galleonRig.js BAKE - her rope every frame, each canvas from its own timer); the mod's carry none: verbatim
       const cadence = child.getComponent('BakeCadence');
-      fixDeformationsAwake(val3.addComponent({ type: 'FixDeformations', interval: 0.1, timer: cadence?.timer ?? 0, ...(cadence?.everyFrame ? { everyFrame: true } : {}) }), val3);
+      fixDeformationsAwake(
+        val3.addComponent({
+          type: 'FixDeformations',
+          interval: 0.1,
+          timer: cadence?.timer ?? 0,
+          ...(cadence?.everyFrame ? { everyFrame: true } : {}),
+        }),
+        val3,
+      );
     }
     getBoatTransforms(boat, child, ctx, reinitialize);
   }
@@ -682,7 +833,11 @@ export function fixDeformationsAwake(script, node) {
   script.skinnedMeshRenderer = skinned;
   skinned.m_Enabled = false;
   script.meshFilter = node.addComponent({ type: 'MeshFilter', m_Mesh: null, baked: true });
-  script.meshRenderer = node.addComponent({ type: 'MeshRenderer', m_Enabled: true, materials: (skinned.materials ?? bundleSlots(skinned)).map((s) => (s ? { ...s } : null)) });
+  script.meshRenderer = node.addComponent({
+    type: 'MeshRenderer',
+    m_Enabled: true,
+    materials: (skinned.materials ?? bundleSlots(skinned)).map((s) => (s ? { ...s } : null)),
+  });
   script.bakedMesh = null;
 }
 
@@ -692,13 +847,19 @@ export function fixDeformationsAwake(script, node) {
  * SpawnBoat run straight through.
  */
 export function boatAssetNeeds(ctx, hull) {
-  const flats = new Set(), models = new Set();
+  const flats = new Set(),
+    models = new Set();
   const tree = ctx.models.prefab(FIRST_HULL_MODEL_ID + hull);
   const visit = (n) => {
     try {
-      if (n.name.includes('BillboardHelper')) { const f = billboardHelperFields(n.name); flats.add(`${f.archive}_${f.record}`); }
+      if (n.name.includes('BillboardHelper')) {
+        const f = billboardHelperFields(n.name);
+        flats.add(`${f.archive}_${f.record}`);
+      }
       if (n.name.includes('ModelHelper')) models.add(modelHelperFields(n.name).modelId);
-    } catch { /* a name SpawnBoat will throw on needs nothing loaded */ }
+    } catch {
+      /* a name SpawnBoat will throw on needs nothing loaded */
+    }
     if (n.name.includes('BedObject')) models.add(BED_MODEL_ID);
     if (n.name === 'FireObject') flats.add(`${FIRE_OBJECT_FLAT[0]}_${FIRE_OBJECT_FLAT[1]}`);
     for (const c of n.children) visit(c);

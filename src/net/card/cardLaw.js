@@ -58,7 +58,9 @@ export function shuffleDeck(rand32, deck = freshDeck()) {
   const d = deck.slice();
   for (let i = d.length - 1; i > 0; i--) {
     const j = drawBelow(i + 1, rand32);
-    const t = d[i]; d[i] = d[j]; d[j] = t;
+    const t = d[i];
+    d[i] = d[j];
+    d[j] = t;
   }
   return d;
 }
@@ -75,7 +77,15 @@ export const HAND_FULL_HOUSE = 6;
 export const HAND_QUADS = 7;
 export const HAND_STRAIGHT_FLUSH = 8;
 export const HAND_NAMES = Object.freeze([
-  'High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight', 'Flush', 'Full House', 'Four of a Kind', 'Straight Flush',
+  'High Card',
+  'Pair',
+  'Two Pair',
+  'Three of a Kind',
+  'Straight',
+  'Flush',
+  'Full House',
+  'Four of a Kind',
+  'Straight Flush',
 ]);
 
 /**
@@ -96,13 +106,23 @@ export function rankFive(five) {
   let top = -1;
   if (groups.length === 5) {
     if (ranks[0] - ranks[4] === 4) top = ranks[0];
-    else if (ranks[0] === 12 && ranks[1] === 3) top = 3;   // the wheel: A-5-4-3-2, the five its top
+    else if (ranks[0] === 12 && ranks[1] === 3) top = 3; // the wheel: A-5-4-3-2, the five its top
   }
   if (top >= 0) return { cat: flush ? HAND_STRAIGHT_FLUSH : HAND_STRAIGHT, ranks: [top] };
   if (flush) return { cat: HAND_FLUSH, ranks };
   const shape = groups.map((g) => g[0]).join('');
-  const cat = shape === '41' ? HAND_QUADS : shape === '32' ? HAND_FULL_HOUSE : shape === '311' ? HAND_TRIPS
-    : shape === '221' ? HAND_TWO_PAIR : shape === '2111' ? HAND_PAIR : HAND_HIGH_CARD;
+  const cat =
+    shape === '41'
+      ? HAND_QUADS
+      : shape === '32'
+        ? HAND_FULL_HOUSE
+        : shape === '311'
+          ? HAND_TRIPS
+          : shape === '221'
+            ? HAND_TWO_PAIR
+            : shape === '2111'
+              ? HAND_PAIR
+              : HAND_HIGH_CARD;
   return { cat, ranks };
 }
 
@@ -124,17 +144,20 @@ export function bestHand(cards) {
   if (cards.length < 5) return null;
   let best = null;
   const n = cards.length;
-  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++)
-    for (let d = c + 1; d < n; d++) for (let e = d + 1; e < n; e++) {
-      const five = [cards[a], cards[b], cards[c], cards[d], cards[e]];
-      const h = rankFive(five);
-      if (!best || compareHands(h, best) > 0) best = { ...h, cards: five };
-    }
+  for (let a = 0; a < n; a++)
+    for (let b = a + 1; b < n; b++)
+      for (let c = b + 1; c < n; c++)
+        for (let d = c + 1; d < n; d++)
+          for (let e = d + 1; e < n; e++) {
+            const five = [cards[a], cards[b], cards[c], cards[d], cards[e]];
+            const h = rankFive(five);
+            if (!best || compareHands(h, best) > 0) best = { ...h, cards: five };
+          }
   return best;
 }
 
 /** The hand as the table says it: "Full House", "Pair". */
-export const pokerHandName = (h) => HAND_NAMES[h.cat];   // not `handName`: shipCrew.js has one (a crew hand's), and AUDIT 24 keeps one name one thing
+export const pokerHandName = (h) => HAND_NAMES[h.cat]; // not `handName`: shipCrew.js has one (a crew hand's), and AUDIT 24 keeps one name one thing
 
 // ── THE POTS ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -154,7 +177,9 @@ export function sidePots(totals, folded) {
     let amount = 0;
     for (const t of totals) amount += Math.max(0, Math.min(t, level) - prev);
     const eligible = [];
-    totals.forEach((t, i) => { if (!folded[i] && t >= level) eligible.push(i); });
+    totals.forEach((t, i) => {
+      if (!folded[i] && t >= level) eligible.push(i);
+    });
     const last = pots[pots.length - 1];
     // A layer the same seats contest is the same pot; a layer nobody live reached joins the one below it.
     if (last && (!eligible.length || eligible.join() === last.eligible.join())) last.amount += amount;
@@ -181,8 +206,13 @@ const chips = (v) => Number.isSafeInteger(v) && v >= 0;
  *  left to act, and with none there is only the bet to match. */
 function owedBy(st, i) {
   const me = st.seats[i];
-  let top = 0, others = false;
-  st.seats.forEach((o, k) => { if (k === i || o.folded) return; if (canAct(o)) others = true; if (o.bet > top) top = o.bet; });
+  let top = 0,
+    others = false;
+  st.seats.forEach((o, k) => {
+    if (k === i || o.folded) return;
+    if (canAct(o)) others = true;
+    if (o.bet > top) top = o.bet;
+  });
   return Math.max(0, (others ? st.currentBet : Math.min(st.currentBet, top)) - me.bet);
 }
 const canAct = (s) => !s.folded && !s.allIn;
@@ -206,12 +236,30 @@ export function newHand({ seats, button, sb, bb, deck } = /** @type {any} */ ({}
   if (new Set(seats.map((s) => s.id)).size !== n) return null;
   if (!chips(sb) || !chips(bb) || sb < 1 || bb < sb) return null;
   if (!Number.isInteger(button) || button < 0 || button >= n) return null;
-  if (!Array.isArray(deck) || deck.length !== DECK_SIZE || new Set(deck).size !== DECK_SIZE || !deck.every(isCard)) return null;
+  if (!Array.isArray(deck) || deck.length !== DECK_SIZE || new Set(deck).size !== DECK_SIZE || !deck.every(isCard))
+    return null;
   const st = {
-    seats: seats.map((s) => ({ id: s.id, stack: s.stack, bet: 0, total: 0, hole: [], folded: false, allIn: false, acted: false, actedAt: 0 })),
-    button, sb, bb,
-    deck: deck.slice(), burned: [], board: [],
-    street: 'preflop', toAct: -1, currentBet: 0, minRaise: bb,
+    seats: seats.map((s) => ({
+      id: s.id,
+      stack: s.stack,
+      bet: 0,
+      total: 0,
+      hole: [],
+      folded: false,
+      allIn: false,
+      acted: false,
+      actedAt: 0,
+    })),
+    button,
+    sb,
+    bb,
+    deck: deck.slice(),
+    burned: [],
+    board: [],
+    street: 'preflop',
+    toAct: -1,
+    currentBet: 0,
+    minRaise: bb,
     result: null,
   };
   // Heads-up the button is the small blind; otherwise the two seats after it.
@@ -219,7 +267,7 @@ export function newHand({ seats, button, sb, bb, deck } = /** @type {any} */ ({}
   const bbSeat = nextSeat(n, sbSeat);
   post(st, sbSeat, sb);
   post(st, bbSeat, bb);
-  st.currentBet = bb;   // a big blind all-in for less is still a full big blind to call (the casino's rule)
+  st.currentBet = bb; // a big blind all-in for less is still a full big blind to call (the casino's rule)
   for (let round = 0; round < 2; round++)
     for (let k = 1; k <= n; k++) st.seats[(button + k) % n].hole.push(st.deck.shift());
   st.toAct = firstToAct(st, nextSeat(n, bbSeat));
@@ -229,7 +277,9 @@ export function newHand({ seats, button, sb, bb, deck } = /** @type {any} */ ({}
 function post(st, i, amount) {
   const s = st.seats[i];
   const paid = Math.min(amount, s.stack);
-  s.stack -= paid; s.bet += paid; s.total += paid;
+  s.stack -= paid;
+  s.bet += paid;
+  s.total += paid;
   if (!s.stack) s.allIn = true;
 }
 
@@ -260,12 +310,13 @@ export function legalActions(st, seat) {
   const s = st.seats[seat];
   const owe = owedBy(st, seat);
   const call = Math.min(owe, s.stack);
-  const reach = s.bet + s.stack;   // all-in, as a total this round
+  const reach = s.bet + s.stack; // all-in, as a total this round
   // A seat that acted may raise again only when the raising since its action adds up to a full raise.
   const open = !s.acted || st.currentBet - s.actedAt >= st.minRaise;
   const others = st.seats.some((o, i) => i !== seat && canAct(o));
   let raise = null;
-  if (open && others && reach > st.currentBet) raise = { min: Math.min(st.currentBet + st.minRaise, reach), max: reach };
+  if (open && others && reach > st.currentBet)
+    raise = { min: Math.min(st.currentBet + st.minRaise, reach), max: reach };
   return { seat, fold: true, check: owe <= 0, call: owe > 0 ? call : 0, raise };
 }
 
@@ -282,11 +333,17 @@ export function act(st, seat, action) {
   const next = structuredClone(st);
   const s = next.seats[seat];
   switch (action.type) {
-    case 'fold': s.folded = true; break;
-    case 'check': if (!legal.check) return null; break;
+    case 'fold':
+      s.folded = true;
+      break;
+    case 'check':
+      if (!legal.check) return null;
+      break;
     case 'call': {
       if (!legal.call) return null;
-      s.stack -= legal.call; s.bet += legal.call; s.total += legal.call;
+      s.stack -= legal.call;
+      s.bet += legal.call;
+      s.total += legal.call;
       if (!s.stack) s.allIn = true;
       break;
     }
@@ -294,13 +351,16 @@ export function act(st, seat, action) {
       const to = action.to;
       if (!legal.raise || !chips(to) || to < legal.raise.min || to > legal.raise.max) return null;
       const put = to - s.bet;
-      s.stack -= put; s.bet = to; s.total += put;
+      s.stack -= put;
+      s.bet = to;
+      s.total += put;
       if (!s.stack) s.allIn = true;
-      if (to - next.currentBet >= next.minRaise) next.minRaise = to - next.currentBet;   // a full raise sets the next
+      if (to - next.currentBet >= next.minRaise) next.minRaise = to - next.currentBet; // a full raise sets the next
       next.currentBet = to;
       break;
     }
-    default: return null;
+    default:
+      return null;
   }
   s.acted = true;
   s.actedAt = next.currentBet;
@@ -340,13 +400,17 @@ function settleIfDone(st) {
   if (live(st).length === 1) return finish(st, false);
   while (st.toAct < 0) {
     if (st.street === 'river') return finish(st, true);
-    for (const s of st.seats) { s.bet = 0; s.acted = false; s.actedAt = 0; }
+    for (const s of st.seats) {
+      s.bet = 0;
+      s.acted = false;
+      s.actedAt = 0;
+    }
     st.currentBet = 0;
     st.minRaise = st.bb;
     st.street = STREETS[STREETS.indexOf(st.street) + 1];
     st.burned.push(st.deck.shift());
     for (let k = 0; k < BOARD_AFTER[st.street]; k++) st.board.push(st.deck.shift());
-    st.toAct = firstToAct(st, nextSeat(st.seats.length, st.button));   // -1 when fewer than two can still bet
+    st.toAct = firstToAct(st, nextSeat(st.seats.length, st.button)); // -1 when fewer than two can still bet
   }
   return st;
 }
@@ -362,7 +426,10 @@ function finish(st, shown) {
   const folded = st.seats.map((s) => s.folded);
   const pots = sidePots(totals, folded);
   const hands = {};
-  if (shown) st.seats.forEach((s, i) => { if (!s.folded) hands[i] = bestHand([...s.hole, ...st.board]); });
+  if (shown)
+    st.seats.forEach((s, i) => {
+      if (!s.folded) hands[i] = bestHand([...s.hole, ...st.board]);
+    });
   const payouts = new Array(n).fill(0);
   const order = Array.from({ length: n }, (_, k) => (st.button + 1 + k) % n);
   const awarded = pots.map((pot) => {
@@ -383,14 +450,19 @@ function finish(st, shown) {
     }
     return { amount: pot.amount, eligible: pot.eligible, winners };
   });
-  st.seats.forEach((s, i) => { s.stack += payouts[i]; s.bet = 0; });
+  st.seats.forEach((s, i) => {
+    s.stack += payouts[i];
+    s.bet = 0;
+  });
   st.street = 'showdown';
   st.toAct = -1;
   st.result = {
     shown,
     pots: awarded,
     payouts,
-    hands: Object.fromEntries(Object.entries(hands).map(([i, h]) => [i, { cat: h.cat, ranks: h.ranks, cards: h.cards }])),
+    hands: Object.fromEntries(
+      Object.entries(hands).map(([i, h]) => [i, { cat: h.cat, ranks: h.ranks, cards: h.cards }]),
+    ),
   };
   return st;
 }
@@ -404,10 +476,21 @@ function finish(st, shown) {
 export function viewFor(st, seat) {
   const shown = !!st.result?.shown;
   return {
-    button: st.button, sb: st.sb, bb: st.bb,
-    board: st.board.slice(), street: st.street, toAct: st.toAct, currentBet: st.currentBet, minRaise: st.minRaise,
+    button: st.button,
+    sb: st.sb,
+    bb: st.bb,
+    board: st.board.slice(),
+    street: st.street,
+    toAct: st.toAct,
+    currentBet: st.currentBet,
+    minRaise: st.minRaise,
     seats: st.seats.map((s, i) => ({
-      id: s.id, stack: s.stack, bet: s.bet, total: s.total, folded: s.folded, allIn: s.allIn,
+      id: s.id,
+      stack: s.stack,
+      bet: s.bet,
+      total: s.total,
+      folded: s.folded,
+      allIn: s.allIn,
       hole: i === seat || (shown && !s.folded) ? s.hole.slice() : null,
     })),
     result: st.result ? structuredClone(st.result) : null,

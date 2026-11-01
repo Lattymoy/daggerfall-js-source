@@ -2,8 +2,8 @@
   {
     "name": "SCALE4h-law-spent-hour-unread",
     "file": "src/net/renownTracker.js",
-    "old": "  if (capped) return true;\n",
-    "new": "",
+    "old": "  if (capped) return true;\n  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
+    "new": "  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE4h-tracker-word-unread",
     "file": "src/net/renownTracker.js",
-    "old": "soonNow() ? RENOWN_REPORT_MS : RENOWN_COALESCE_MS);",
-    "new": "RENOWN_REPORT_MS);",
+    "old": "    refused\n      ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1))\n      : soonNow()\n        ? RENOWN_REPORT_MS\n        : RENOWN_COALESCE_MS;",
+    "new": "    refused ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1)) : RENOWN_REPORT_MS;",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SCALE4h-tracker-throw-not-soon",
     "file": "src/net/renownTracker.js",
-    "old": "  const soonNow = () => { try { return soon() !== false; } catch { return true; } };",
-    "new": "  const soonNow = () => { try { return soon() !== false; } catch { return false; } };",
+    "old": "    } catch {\n      return true;",
+    "new": "    } catch {\n      return false;",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SCALE4h-tracker-default-not-soon",
     "file": "src/net/renownTracker.js",
-    "old": "region = () => null, soon = () => true }) {",
-    "new": "region = () => null, soon = () => false }) {",
+    "old": "  soon = () => true,",
+    "new": "  soon = () => false,",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SCALE4h-answer-room-unchecked",
     "file": "src/net/renownTracker.js",
-    "old": "  const room = Number.isSafeInteger(data?.room) && data.room >= 0 ? data.room : null;",
-    "new": "  const room = data?.room ?? null;",
+    "old": "  const room = Number.isSafeInteger(data?.room) && data.room >= 0 ? data.room : null; // SCALE4h: what the hour still takes",
+    "new": "  const room = data?.room ?? null; // SCALE4h: what the hour still takes",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SCALE4h-service-spend-unreturned",
     "file": "server-account/src/renownTracks.js",
-    "old": ", ${refused} AS refused, renown_hour_xp AS hour_xp`,",
-    "new": ", ${refused} AS refused`,",
+    "old": "       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
+    "new": "       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused`,",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SCALE4h-table-uncharged",
     "file": "server-account/src/metrics.js",
-    "old": "  if (t) { const by = tally.tables ??= {}; by[t] = (by[t] ?? 0) + m.rows_written; }",
-    "new": "",
+    "old": "  if (t) {\n    const by = (tally.tables ??= {});\n    by[t] = (by[t] ?? 0) + m.rows_written;\n  }\n}",
+    "new": "}",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -232,7 +232,7 @@
   {
     "name": "SCALE4h-batch-one-table",
     "file": "server-account/src/metrics.js",
-    "old": "            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));",
+    "old": "            if (Array.isArray(rs))\n              rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));",
     "new": "            if (Array.isArray(rs)) rs.forEach((r) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[0]) : null));",
     "tests": [
       "test/server/scale4h.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "SCALE4h-blob-order",
     "file": "server-account/src/metrics.js",
-    "old": "  .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)",
-    "new": "  .slice(0, 8)",
+    "old": "    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))\n    .slice(0, 8)",
+    "new": "    .slice(0, 8)",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SCALE4h-hot-doubles-dropped",
     "file": "server-account/src/metrics.js",
-    "old": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica,   // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0)],",
-    "new": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica],",
+    "old": "      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table",
+    "new": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica], // SCALE4h: the hot rows, by table",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SCALE4h-parts-after-serve",
     "file": "server-account/src/metrics.js",
-    "old": "  const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read\n",
-    "new": "  const parts = '';\n",
+    "old": "  const parts = typeof said.parts === 'string' ? said.parts : ''; // AUDIT SCALE II A-3: the service's own word on the body it read",
+    "new": "  const parts = '';",
     "tests": [
       "test/server/scale4h.test.js"
     ],

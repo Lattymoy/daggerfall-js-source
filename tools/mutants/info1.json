@@ -30,7 +30,7 @@
     "name": "INFO1-the-notebook-still-takes-the-empty-one",
     "file": "src/ui/hud/hudText.js",
     "old": "    if (String(pgText ?? '').trim() === '') return;",
-    "new": "    if (String(pgText ?? '').trim() === '') { this.onMessage?.(pgText); return; }",
+    "new": "    if (String(pgText ?? '').trim() === '') {\n      this.onMessage?.(pgText);\n      return;\n    }",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

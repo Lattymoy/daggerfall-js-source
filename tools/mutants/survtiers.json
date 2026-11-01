@@ -321,8 +321,8 @@
   {
     "name": "SURVTIERS-casual-drink-blacks-out",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout) return",
-    "new": "  if (s.drunk > endurance) return",
+    "old": "  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout)\n    return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
+    "new": "  if (s.drunk > endurance) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "SURVTIERS-the-half-hour-falls-to-night",
     "file": "src/systems/survival/temperature.js",
-    "old": "  const h = ((Math.floor(hour ?? 12)) % 24 + 24) % 24;\n  const m = NIGHT_MULT[climateIndex] ?? 1;",
-    "new": "  const h = ((hour ?? 12) % 24 + 24) % 24;\n  const m = NIGHT_MULT[climateIndex] ?? 1;",
+    "old": "export function hourTemperature(hour, climateIndex) {\n  const h = ((Math.floor(hour ?? 12) % 24) + 24) % 24;",
+    "new": "export function hourTemperature(hour, climateIndex) {\n  const h = (((hour ?? 12) % 24) + 24) % 24;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "SURVTIERS-a-count-that-is-no-number-asks-nothing",
     "file": "src/systems/encounters.js",
-    "old": "Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
-    "new": "Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -550,8 +550,8 @@
   {
     "name": "SURVTIERS-the-kitchen-sells-casual-a-waste",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0)) return",
-    "new": "  if (false) return",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))\n    return { ok: false, text: TAVERN_MENU_TEXT.fullForMeal };",
+    "new": "  if (false) return { ok: false, text: TAVERN_MENU_TEXT.fullForMeal };",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -559,8 +559,8 @@
   {
     "name": "SURVTIERS-the-kitchen-refuses-at-the-worth",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "mealHunger(s, now) < (row.worth ?? 0)) return",
-    "new": "mealHunger(s, now) <= (row.worth ?? 0)) return",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
+    "new": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) <= (row.worth ?? 0))",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "SURVTIERS-the-order-skips-the-pour",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (row?.kind === 'drink') return tavernPour(s, row.strength, { endurance, rules });",
-    "new": "",
+    "old": "  if (row?.kind === 'drink') return tavernPour(s, row.strength, { endurance, rules });\n  if (row?.kind === 'water') return innWaterOrder(items);",
+    "new": "  if (row?.kind === 'water') return innWaterOrder(items);",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -577,8 +577,8 @@
   {
     "name": "SURVTIERS-pour-refuses-at-the-endurance",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance)",
-    "new": "  if ((s?.drunk ?? 0) + (strength | 0) >= endurance)",
+    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
+    "new": "  if ((s?.drunk ?? 0) + (strength | 0) >= endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -586,8 +586,8 @@
   {
     "name": "SURVTIERS-window-asks-the-house-before-the-gold",
     "file": "src/ui/tavernWindow.js",
-    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];",
-    "new": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
+    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];",
+    "new": "        const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
     "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
     "tests": [
       "test/systems/survival/survtiers.test.js"
@@ -596,8 +596,8 @@
   {
     "name": "SURVTIERS-enhanced-serves-what-the-house-refused",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "",
+    "old": "  if (!order.ok) {\n    say(line(order.text));\n    return;\n  } // the menu stays up, as it does for the gold: a lighter drink still serves",
+    "new": "  // the menu stays up, as it does for the gold: a lighter drink still serves",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "SURVTIERS-enhanced-closes-the-menu-on-a-refusal",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "  if (!order.ok) { menu = null; say(line(order.text)); return; }",
+    "old": "    say(line(order.text));",
+    "new": "    menu = null;\n    say(line(order.text));",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -753,8 +753,8 @@
   {
     "name": "SURVTIERS-the-cap-only-at-the-minute",
     "file": "src/systems/statMods.js",
-    "old": "  if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));\n",
-    "new": "",
+    "old": "  if (survival < 0)\n    survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));\n  mod += survival;",
+    "new": "  mod += survival;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "SURVTIERS-the-shut-kitchen-serves-nothing",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (m.closed) { say(line(m.closedText)); return; }\n  render();\n}",
-    "new": "  if (m.closed) { menu = null; say(line(m.closedText)); return; }\n  render();\n}",
+    "old": "    say(line(m.closedText));",
+    "new": "    menu = null;\n    say(line(m.closedText));",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "SURVTIERS-enhanced-asks-the-house-before-the-gold",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }\n  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) { say(line(order.text)); return; }\n  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }",
+    "old": "  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));\n    return;\n  }\n  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));",
+    "new": "  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));\n    return;\n  }\n  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));",
     "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
     "tests": [
       "test/systems/survival/survtiers.test.js"
@@ -826,8 +826,8 @@
   {
     "name": "SURVTIERS-the-kitchen-reads-null-rules",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "!(rules ?? HARD_RULES).wastedMeal &&",
-    "new": "!rules.wastedMeal &&",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
+    "new": "  if (row?.kind === 'food' && !rules.wastedMeal && mealHunger(s, now) < (row.worth ?? 0))",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -925,8 +925,8 @@
   {
     "name": "SURVTIERS-an-infinite-count-asks-for-ever",
     "file": "src/systems/encounters.js",
-    "old": "const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
-    "new": "const asks = Number.isFinite(ctx.restAsks) || ctx.restAsks === Infinity ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "  const asks = Number.isFinite(ctx.restAsks) || ctx.restAsks === Infinity ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -934,8 +934,8 @@
   {
     "name": "SURVTIERS-the-potion-cite-falls-short",
     "file": "src/systems/potions.js",
-    "old": "exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"const drank = drinkPotion\"",
-    "new": "exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"drinking and placing\"",
+    "old": "//    dungeonContext.js:\"drinkPotion: (key, potent)\", exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"const drank = drinkPotion\"",
+    "new": "//    dungeonContext.js:\"drinkPotion: (key, potent)\", exterior.js:\"drinkPotion: (key, potent)\") and useItem.js:\"drinking and placing\"",
     "tests": [
       "test/scenes/citedrift.test.js"
     ],

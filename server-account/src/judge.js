@@ -44,6 +44,8 @@
 import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_LAW_VERSION, GOLD_INT_MAX } from '../../src/systems/item/itemLaw.js';
 import { ledgerKeyOf } from '../../src/systems/item/itemIds.js';
 import { armsOf } from '../../src/net/siege/siegeRef.js';   // INT7: the arms the token signs
+import { kitMightOf } from '../../src/net/kitMight.js';   // EG-MIGHT: the kit's might the token signs
+import { MIGHT_NONE } from '../../src/net/mightLaw.js';
 import { liquidWorthOf, deedsOf } from '../../src/net/realm/realmGoldLaw.js';
 import { possessedItemLists } from '../../src/systems/item/possessedItems.js';   // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
@@ -58,7 +60,7 @@ import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed, dragonLook
 /** The judge's version: the item law's, and its own character law beside it. */
 export const JUDGE_VERSION = ITEM_LAW_VERSION;
 /** The highest level the realm reads (realm.js REALM_LEVEL_CLAIM_MAX, the summary's own bound - pinned equal). LEVEL-45
- *  (2026-10-27, mob: "juidge will need changed to lvl 45"): the online cap (src/systems/levelCap.js ONLINE_LEVEL_CAP,
+ *  (2026-10-27): the online cap (src/systems/levelCap.js ONLINE_LEVEL_CAP,
  *  pinned equal), which every realm character is converted to at its join before its next checkpoint. */
 export const JUDGE_LEVEL_MAX = 45;
 /** The holds the law has come to before a held character is held for a time (verdict.js LAW_HOLD_S), whatever its next
@@ -221,15 +223,15 @@ const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); }
  * count, wealth, items, provenances, pieces, arms }` - `findings` the first FINDINGS_KEPT of them (`{ code, list, at, t }`
  * an item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
  * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces); `arms`
- * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone).
- * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number }} [o] the level its wealth's debt is read at
+ * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone); `might` EG-MIGHT's (net/kitMight.js).
+ * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number, firm?: Record<string, number> }} [o] its debt's level; its sky
  */
 export function judgeSave(save, summary = null, o = {}) {
   /** @type {any[]} */
   const findings = [];
   let count = 0;
   const keep = (/** @type {any} */ f) => { count++; if (findings.length < FINDINGS_KEPT) findings.push(f); };
-  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], dragons: [] };
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], might: MIGHT_NONE, dragons: [] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
   /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number, l?: string }[]} */
@@ -246,8 +248,11 @@ export function judgeSave(save, summary = null, o = {}) {
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
   // (net/siege/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
-  const arms = armsOf(save.items, (it) => findingsOf(it).length === 0);
-  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, dragons };
+  const lawful = (/** @type {any} */ it) => findingsOf(it).length === 0;
+  const arms = armsOf(save.items, lawful);
+  // EG-MIGHT: AND ITS MIGHT - the most its lawful kit worn at once, and its sky, can grow a blow or a spell over the gate's
+  // reference (net/kitMight.js); the mint signs it (`mg`) and an Elite Breach's purse grows by it
+  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, might: kitMightOf(save, lawful, { firm: o.firm ?? {} }), dragons };
 }
 
 /** INT4: A PIECE'S KEY IN THE LEDGER - systems/item/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room

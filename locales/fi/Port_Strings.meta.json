@@ -5574,6 +5574,21 @@
   "tr": "3b28dc26afa2",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "8d9069ff04d9",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "c35187dae36e",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "4474b6a6ea9b",
+  "by": "claude-in-session"
+ },
  "features.renderScale.note": {
   "en": "3d225bc9f38b",
   "tr": "cb2f3c54d61b",
@@ -11589,6 +11604,51 @@
   "tr": "183005619d4f",
   "by": "claude-in-session"
  },
+ "newera.bombs": {
+  "en": "707dca73678b",
+  "tr": "0df57cdcf13a",
+  "by": "claude-in-session"
+ },
+ "newera.crack": {
+  "en": "6ec037a5e54c",
+  "tr": "78ed216632c8",
+  "by": "claude-in-session"
+ },
+ "newera.dawn": {
+  "en": "d1f5d928dec9",
+  "tr": "1b6917a32828",
+  "by": "claude-in-session"
+ },
+ "newera.peel": {
+  "en": "0a1b57a26a42",
+  "tr": "721d0acff62d",
+  "by": "claude-in-session"
+ },
+ "newera.plane": {
+  "en": "1a78051ecaeb",
+  "tr": "a2db12892fe0",
+  "by": "claude-in-session"
+ },
+ "newera.rumble": {
+  "en": "c30e21ffd9a7",
+  "tr": "0d0e2fdb6b5b",
+  "by": "claude-in-session"
+ },
+ "newera.voice": {
+  "en": "70339d29524e",
+  "tr": "8b11ca0b591b",
+  "by": "claude-in-session"
+ },
+ "newera.voice1": {
+  "en": "2e8892a2d2db",
+  "tr": "62942bf32c3d",
+  "by": "claude-in-session"
+ },
+ "newera.voice2": {
+  "en": "5fd98edc0128",
+  "tr": "2be30804f85c",
+  "by": "claude-in-session"
+ },
  "ore.tip.both": {
   "en": "2eb30f4d244b",
   "tr": "2eb30f4d244b",
@@ -15217,6 +15277,11 @@
  "quest.remain.min": {
   "en": "a47d8efbcf4d",
   "tr": "a47d8efbcf4d",
+  "by": "claude-in-session"
+ },
+ "realm.private": {
+  "en": "40c5934fafa7",
+  "tr": "9880d9f14b8b",
   "by": "claude-in-session"
  },
  "realm.roll.stopped": {

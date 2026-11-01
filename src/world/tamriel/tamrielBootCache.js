@@ -19,13 +19,17 @@ import { idbStore } from '../roadsCache.js';
 
 /** Moved whenever the trace's law (ui/tamrielTrace.js traceTamrielPicture), the relief's mask (tamrielRelief.js
  *  maskRelief) or the fit's (tamrielLand.js fitBayToPicture) moves - every kept continent is then built again. */
-export const BOOT_CACHE_VERSION = 2;   // 2: NIBEN-SEA - the trace opens the Niben's mouth (ui/tamrielTrace.js openNiben)
-const DB = 'dfo-tamriel-boot', STORE = 'continent';
+export const BOOT_CACHE_VERSION = 2; // 2: NIBEN-SEA - the trace opens the Niben's mouth (ui/tamrielTrace.js openNiben)
+const DB = 'dfo-tamriel-boot',
+  STORE = 'continent';
 
 /** FNV-1a over bytes (or a string's char codes), from `h`. @param {ArrayLike<number>|string} data @param {number} [h] */
 export function fnv32(data, h = 0x811c9dc5) {
   const str = typeof data === 'string';
-  for (let i = 0; i < data.length; i++) { h ^= str ? /** @type {string} */ (data).charCodeAt(i) & 0xff : /** @type {ArrayLike<number>} */ (data)[i] & 0xff; h = Math.imul(h, 0x01000193) >>> 0; }
+  for (let i = 0; i < data.length; i++) {
+    h ^= str ? /** @type {string} */ (data).charCodeAt(i) & 0xff : /** @type {ArrayLike<number>} */ (data)[i] & 0xff;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
   return h >>> 0;
 }
 
@@ -65,12 +69,16 @@ const _fits = new Map();
 export async function loadFits(store, key) {
   const v = store ? await store.get(`${key}:fits`).catch(() => null) : null;
   const m = new Map();
-  if (v && v.key === key && Array.isArray(v.fits)) for (const [land, fit] of v.fits) if (typeof land === 'string' && fit && typeof fit === 'object') m.set(land, fit);
+  if (v && v.key === key && Array.isArray(v.fits))
+    for (const [land, fit] of v.fits) if (typeof land === 'string' && fit && typeof fit === 'object') m.set(land, fit);
   _fits.set(key, m);
   _store = store;
   _traceKey = key;
   const l = store ? await store.get(`${key}:lands`).catch(() => null) : null;
-  _lands = l && l.key === key && typeof l.ground === 'string' && Array.isArray(l.lands) ? { ground: l.ground, set: new Set(l.lands) } : null;
+  _lands =
+    l && l.key === key && typeof l.ground === 'string' && Array.isArray(l.lands)
+      ? { ground: l.ground, set: new Set(l.lands) }
+      : null;
   return m;
 }
 let _store = /** @type {any} */ (null);
@@ -87,7 +95,9 @@ export function keptLandRegions({ lattice, scan, ground }) {
   const print = `${ground}|${lattice.x0},${lattice.y0},${lattice.cols},${lattice.rows}`;
   const kept = _traceKey && _lands?.ground === print ? _lands.set : null;
   if (kept) return (r) => kept.has(`${r.i},${r.j}`);
-  const found = new Set(), total = lattice.cols * lattice.rows, key = _traceKey;
+  const found = new Set(),
+    total = lattice.cols * lattice.rows,
+    key = _traceKey;
   let asked = 0;
   return (r) => {
     const has = scan(r);
@@ -100,7 +110,7 @@ export function keptLandRegions({ lattice, scan, ground }) {
   };
 }
 /** The fit kept for a trace's key and the Bay's land's print, or null. @param {string|undefined} key @param {string} land */
-export const keptFit = (key, land) => (key ? _fits.get(key)?.get(land) ?? null : null);
+export const keptFit = (key, land) => (key ? (_fits.get(key)?.get(land) ?? null) : null);
 /** Keep a fit (in memory now, in the store when it answers). @param {string|undefined} key @param {string} land @param {any} fit */
 export function keepFit(key, land, fit) {
   if (!key || !fit) return;

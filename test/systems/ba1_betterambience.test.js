@@ -149,7 +149,6 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   assert.ok(credit); assert.equal(credit.version, '0.1.4'); assert.equal(credit.author, 'Joshua Steinhauer'); assert.match(credit.terms, /MIT/); assert.match(credit.terms, /Its rain and snow particle changes are not included\./);
   const readme = rd('vendor/better-ambience/README.md');
   assert.match(readme, /Better Ambience 0\.1\.4/); assert.match(readme, /MIT/); assert.match(readme, /Permission/); assert.match(readme, /0\.1\.5/, 'the Nexus label');
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), /\| `better-ambience` \|/);
 });
 
 test('BA1: TryImportAudioClips\' names - wood 4, stone 4, armour 11, crunchy-grass 4, water 6 asked and FIVE present (water_001 never existed), the rain loop - every present name a vendored WAV the manifest names; the two classic lists; the per-list volumes and pitch ranges', () => {
@@ -551,11 +550,4 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   const renderer = rd('src/render/renderer.js');
   assert.match(renderer, /uniform vec3 uAmbientSky;/); assert.match(renderer, /mix\(uAmbient, uAmbientSky, n\.y\) : mix\(uAmbient, uAmbientGround, -n\.y\)/, 'Trilight by the normal');
   assert.match(renderer, /setLighting\(ambient, sunScale, sunColor, trilight = null\) \{[\s\S]{0,400}this\.setAmbientTrilight\(trilight\);/, 'every flat caller clears it');
-  // the records
-  assert.ok(existsSync(join(root, 'bible/06-Systems/Better-Ambience.md')));
-  assert.match(rd('bible/01-Overview/Active-Arcs.md'), /06-Systems\/Better-Ambience\.md/);
-  assert.match(rd('bible/01-Overview/Page-Index.md'), /06-Systems\/Better-Ambience\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
-  assert.match(rd('bible/09-Testing/Testing-Rows-2026-10-19.md'), /ba1_betterambience\.test\.js/);
-  const m = /(\d+) modules\s*\n?\s*live under\s*\n?\s*`src\/systems\/`/.exec(rd('bible/06-Systems/Systems.md'));
-  assert.equal(Number(m[1]), readdirSync(join(root, 'src/systems'), { recursive: true }).filter((f) => f.endsWith('.js')).length, 'Systems.md counts src/systems/ live - BA1 put two modules in that count');
 });

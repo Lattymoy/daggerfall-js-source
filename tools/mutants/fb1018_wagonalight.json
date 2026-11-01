@@ -42,8 +42,8 @@
   {
     "name": "WAGON-ALIGHT-step-sign",
     "file": "src/systems/wagon/wagonSeats.js",
-    "old": "[seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP,",
-    "new": "[seat.feet[0] + Math.sin(seat.yaw) * GET_DOWN_STEP,",
+    "old": "  seat.feet[0] - Math.sin(seat.yaw) * GET_DOWN_STEP,",
+    "new": "  seat.feet[0] + Math.sin(seat.yaw) * GET_DOWN_STEP,",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WAGON-ALIGHT-player-own-copy",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "      deps.unpin?.(near ? getDownPoint(at) : null);",
-    "new": "      deps.unpin?.(near ? [at.feet[0] - Math.sin(at.yaw) * 1.6, at.feet[1], at.feet[2] - Math.cos(at.yaw) * 1.6] : null);",
+    "old": "      deps.unpin?.(near ? getDownPoint(at) : null); // over the side behind them (systems/wagon/wagonSeats.js getDownPoint - a companion's too)",
+    "new": "      deps.unpin?.(\n        near ? [at.feet[0] - Math.sin(at.yaw) * 1.6, at.feet[1], at.feet[2] - Math.cos(at.yaw) * 1.6] : null,\n      ); // over the side behind them (systems/wagon/wagonSeats.js getDownPoint - a companion's too)",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "WAGON-ALIGHT-reach-x-only",
     "file": "src/scenes/crewAshore.js",
-    "old": "if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;",
-    "new": "if (!sat || Math.abs(f[0] - sat.feet[0]) > GET_DOWN_REACH) return;",
+    "old": "    if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;",
+    "new": "    if (!sat || Math.abs(f[0] - sat.feet[0]) > GET_DOWN_REACH) return;",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],

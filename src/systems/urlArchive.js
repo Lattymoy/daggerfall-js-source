@@ -34,14 +34,17 @@ export function makeVendoredArchive(urls, fetchBytes) {
       if (bytes.has(key)) return bytes.get(key);
       if (!table.has(key)) return null;
       if (!inflight.has(key)) {
-        inflight.set(key, (async () => {
-          const entry = table.get(key);
-          const url = typeof entry === 'function' ? await entry() : entry;   // AUDIT-WS: the eager table hands URLs, a lazy one loaders
-          const b = await fetchBytes(url);
-          bytes.set(key, b);
-          inflight.delete(key);
-          return b;
-        })());
+        inflight.set(
+          key,
+          (async () => {
+            const entry = table.get(key);
+            const url = typeof entry === 'function' ? await entry() : entry; // AUDIT-WS: the eager table hands URLs, a lazy one loaders
+            const b = await fetchBytes(url);
+            bytes.set(key, b);
+            inflight.delete(key);
+            return b;
+          })(),
+        );
       }
       return inflight.get(key);
     },

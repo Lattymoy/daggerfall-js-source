@@ -1,4 +1,4 @@
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): World 2.0's prototype towns stood as the game
+// World 2.0's prototype towns stood as the game
 // reads a place - every building of every baked town one subrecord at its slot, its door at its record's door facing its
 // way, its record the type the services read; the lanes its ids take; the block family serving its names alone; a shell
 // id its shape; the ground blended nowhere and a terrace's floor on its pad; its row on the world's places. Built from the

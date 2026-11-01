@@ -138,24 +138,25 @@ export const CORNER_DRAWN = Object.freeze([37, 38, 40, 41, 43, 44]);
  */
 export function buildWaterMaskTable(drawn = false) {
   const table = new Uint8Array(256);
-  for (let t = 0; t < 4; t++) table[(WATER_TILE_INDEX << 2) | t] = 0xF;
+  for (let t = 0; t < 4; t++) table[(WATER_TILE_INDEX << 2) | t] = 0xf;
   const lookup = createLookupTable();
   for (let shape = 0; shape < 16; shape++) {
-    const raw = lookup[shape];               // ring 0: water below, dirt above
+    const raw = lookup[shape]; // ring 0: water below, dirt above
     const record = raw & 0x3f;
     const k = SHORE_FAMILIES[0].indexOf(record);
-    if (k < 0) continue;                      // shape 0 is bare water (record 0, above), 15 bare dirt
+    if (k < 0) continue; // shape 0 is bare water (record 0, above), 15 bare dirt
     const t = convertTile(raw) & 3;
-    const water = (~shape) & 0xF;             // the shape's bits are the DIRT corners
+    const water = ~shape & 0xf; // the shape's bits are the DIRT corners
     for (const family of SHORE_FAMILIES) table[(family[k] << 2) | t] = water;
   }
-  for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // MAC2: the docks, moats and puddles, whole
+  for (const r of SHALLOW_WHOLE) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xf; // MAC2: the docks, moats and puddles, whole
   if (!drawn) return table;
-  for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW1: and what the EYE calls water
-  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xF;   // WATER-DRAW2: the water round an island
-  const corner = SHORE_FAMILIES[0][2];   // record 7: one corner of water
-  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = table[(corner << 2) | t];   // WATER-DRAW2: a corner of water
-  for (const family of SHORE_FAMILIES) for (const t of [2, 3]) table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)];   // WATER-DRAW2: a saddle half turned
+  for (const r of SHALLOW_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xf; // WATER-DRAW1: and what the EYE calls water
+  for (const r of ISLAND_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = 0xf; // WATER-DRAW2: the water round an island
+  const corner = SHORE_FAMILIES[0][2]; // record 7: one corner of water
+  for (const r of CORNER_DRAWN) for (let t = 0; t < 4; t++) table[(r << 2) | t] = table[(corner << 2) | t]; // WATER-DRAW2: a corner of water
+  for (const family of SHORE_FAMILIES)
+    for (const t of [2, 3]) table[(family[3] << 2) | t] = table[(family[3] << 2) | (t - 2)]; // WATER-DRAW2: a saddle half turned
   return table;
 }
 
@@ -166,7 +167,7 @@ export const WATER_MASK_TABLE = buildWaterMaskTable();
  *  eye. The law's, plus SHALLOW_DRAWN and WATER-DRAW2's. */
 export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
 
-/** WATER-SHORE: the most of a bank's rise a sheet's texel holds, units (world/water/waterLevel.js writes it, the water's
+/** The most of a bank's rise a sheet's texel holds, units (world/water/waterLevel.js writes it, the water's
  *  program reads it) - here, a leaf both already reach. */
 export const RISE_MAX = 0.5;
 
@@ -174,10 +175,9 @@ export const RISE_MAX = 0.5;
  *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
 export function packWaterMask(table = WATER_MASK_TABLE) {
   const words = new Uint32Array(32);
-  for (let i = 0; i < 256; i++) words[i >> 3] |= (table[i] & 0xF) << ((i & 7) * 4);
+  for (let i = 0; i < 256; i++) words[i >> 3] |= (table[i] & 0xf) << ((i & 7) * 4);
   return words;
 }
-
 
 /** The water corners of one converted byte (the shader's own lookup, in JS). */
 export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[convertedByte & 0xff];
@@ -187,7 +187,10 @@ export const waterCorners = (convertedByte, table = WATER_MASK_TABLE) => table[c
  *  order bit0=(0,0), bit1=(1,0), bit2=(0,1), bit3=(1,1)). No production
  *  caller: test/world/terrain/water.test.js holds the two bodies against each other. */
 export function waterCoverage(mask, fx, fy) {
-  const c00 = mask & 1, c10 = (mask >> 1) & 1, c01 = (mask >> 2) & 1, c11 = (mask >> 3) & 1;
+  const c00 = mask & 1,
+    c10 = (mask >> 1) & 1,
+    c01 = (mask >> 2) & 1,
+    c11 = (mask >> 3) & 1;
   const top = c00 + (c10 - c00) * fx;
   const bottom = c01 + (c11 - c01) * fx;
   return top + (bottom - top) * fy;

@@ -47,8 +47,8 @@
   {
     "name": "SP-every-slip-under-the-spell-ends-the-climb",
     "file": "src/player/climbing.js",
-    "old": "        || (airborneGraspWall && c.slowFalling)",
-    "new": "        || (airborneGraspWall && c.slowFalling) || (c.falling && c.slowFalling)",
+    "old": "      (airborneGraspWall && c.slowFalling) || // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)",
+    "new": "      (airborneGraspWall && c.slowFalling) ||\n      (c.falling && c.slowFalling) || // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)",
     "tests": [
       "test/player/fb1001_slowaudit.test.js"
     ]

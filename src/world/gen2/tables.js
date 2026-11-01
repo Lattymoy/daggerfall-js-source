@@ -1,4 +1,4 @@
-// WG2 (bible/03-World/World-2-Canon.md, "Data"): THE TABLES a designer edits - rocks, soils, biomes, plants and the
+// THE TABLES a designer edits - rocks, soils, biomes, plants and the
 // provinces' profiles, each a JSON file under data/. The generator reads them through here and nowhere else, and
 // `tableProblems` names a broken reference before a bake can read it.
 import ROCKS_JSON from './data/rocks.json' with { type: 'json' };

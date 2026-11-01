@@ -2,8 +2,8 @@
   {
     "name": "DUEL1-accepter-begins-on-its-own-yes",
     "file": "src/net/duel/duelSession.js",
-    "old": "      waiting = { peer, s: a.s, at: now(), sub: a.sub };\n",
-    "new": "      waiting = { peer, s: a.s, at: now(), sub: a.sub }; begin(peer, a.s, [0, 0, 0], a.sub);\n",
+    "old": "      say(`You accepted ${nameOf(peer)}'s challenge.`);",
+    "new": "      begin(peer, a.s, [0, 0, 0], a.sub);\n      say(`You accepted ${nameOf(peer)}'s challenge.`);",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DUEL1-start-never-sent",
     "file": "src/net/duel/duelSession.js",
-    "old": "          if (once({ k: 'start', to: from, s, c })) { begin(from, s, c, sub); return; }",
-    "new": "          begin(from, s, c, sub); return;",
+    "old": "          if (once({ k: 'start', to: from, s, c })) {\n            begin(from, s, c, sub);\n            return;\n          }",
+    "new": "          begin(from, s, c, sub);\n          return;",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DUEL1-a-yes-to-nothing-unanswered",
     "file": "src/net/duel/duelSession.js",
-    "old": "            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });\n",
-    "new": "",
+    "old": "            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from))\n              answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });\n            return;",
+    "new": "            return;",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DUEL1-an-indoor-player-prompted",
     "file": "src/net/duel/duelSession.js",
-    "old": "          if (can()) { answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }\n",
-    "new": "",
+    "old": "          if (can()) {\n            answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' });\n            return;\n          }\n          if (near(from) !== true) {",
+    "new": "          if (near(from) !== true) {",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DUEL1-the-challenged-side-measures-nothing",
     "file": "src/net/duel/duelSession.js",
-    "old": "          if (near(from) !== true) { answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' }); return; }\n",
-    "new": "",
+    "old": "          if (near(from) !== true) {\n            answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' });\n            return;\n          }\n          if (outgoing?.peer === from) {",
+    "new": "          if (outgoing?.peer === from) {",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DUEL1-a-carried-off-duellist-s-leave-told-as-a-fall",
     "file": "src/net/duel/duelSession.js",
-    "old": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }",
-    "new": "      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'fell' }); finish('fell', { lost: true }); return; }",
+    "old": "        post({ k: 'end', to: d.peer, s: d.s, why: 'left' });\n        finish('left', { lost: !counting(d) });",
+    "new": "        post({ k: 'end', to: d.peer, s: d.s, why: 'fell' });\n        finish('fell', { lost: true });",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DUEL1-stub-race-dropped",
     "file": "src/combat/duelCombat.js",
-    "old": "    level: a.lv, raceId: a.r, stats, skillOverrides,",
-    "new": "    level: a.lv, raceId: 0, stats, skillOverrides,",
+    "old": "    raceId: a.r,",
+    "new": "    raceId: 0,",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "DUEL1-stub-condition-lost",
     "file": "src/combat/duelCombat.js",
-    "old": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));",
+    "old": "    if (Number(weapon.maxCondition) > 0)\n      weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));",
     "new": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = weapon.maxCondition;",
     "tests": [
       "test/combat/duel_combat.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "DUEL1-stub-swing-mods-ignored",
     "file": "src/combat/duelCombat.js",
-    "old": "    weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
-    "new": "    weapon, damageMod: 0, toHitMod: 0,",
+    "old": "    damageMod: swing.damage,\n    toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
+    "new": "    damageMod: 0,\n    toHitMod: 0,",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DUEL1-a-swing-from-across-the-ring",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });",
-    "new": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= 2 * ringRadius; });",
+    "old": "      return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3;",
+    "new": "      return me.ground <= 2 * ringRadius;",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DUEL1-disabled-button-challenges",
     "file": "src/ui/profileWindow.js",
-    "old": "      duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });",
-    "new": "      duel.addEventListener('click', () => { if (shownPeer) onDuel(shownPeer); });",
+    "old": "          if (v.duel.enabled && shownPeer) onDuel(shownPeer);",
+    "new": "          if (shownPeer) onDuel(shownPeer);",
     "tests": [
       "test/server/duel_record.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DUEL1-no-decline-row",
     "file": "src/ui/socialMenu.js",
-    "old": "  if (canDeclineDuel) rows.push({ key: 'duel-decline', label: 'Decline duel', enabled: true, why: null, act: { k: 'duel.decline', peer: peerId } });\n",
-    "new": "",
+    "old": "  if (canDeclineDuel)\n    rows.push({\n      key: 'duel-decline',\n      label: 'Decline duel',\n      enabled: true,\n      why: null,\n      act: { k: 'duel.decline', peer: peerId },\n    });\n  rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });",
+    "new": "  rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });",
     "tests": [
       "test/server/duel_record.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DUEL1-a-declined-challenger-prompts-again-at-once",
     "file": "src/net/duel/duelSession.js",
-    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s }); return; }",
-    "new": "",
+    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) {\n            answer(from, { k: 'no', to: from, s: d.s });\n            return;\n          } // declined a moment ago: no, and nothing over my game",
+    "new": "          // declined a moment ago: no, and nothing over my game",
     "tests": [
       "test/net/duel/duel_session.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "DUEL1-the-winner-recorded-as-the-loser",
     "file": "src/net/duel/duelSession.js",
-    "old": "        const won = g.w !== '' && g.w === selfId(), lost = g.w !== '' && g.w !== selfId();",
-    "new": "        const lost = g.w !== '' && g.w === selfId(), won = g.w !== '' && g.w !== selfId();",
+    "old": "        const won = g.w !== '' && g.w === selfId(),\n          lost = g.w !== '' && g.w !== selfId();",
+    "new": "        const lost = g.w !== '' && g.w === selfId(),\n          won = g.w !== '' && g.w !== selfId();",
     "tests": [
       "test/net/duel/duel_session.test.js",
       "test/net/duel/int8_duel_ref.test.js"

@@ -2,7 +2,7 @@
   {
     "name": "ICS-ahead-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "old": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) =>\n    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
     "new": "  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => false;",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ICS-ahead-the-whole-ring",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
-    "new": "Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING + 1;",
+    "old": "    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;",
+    "new": "    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING + 1;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "ICS-heading-never-kept",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "    if (cur && was && (cur.x !== was.x || cur.y !== was.y)) heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)];   // IC-STUTTER",
+    "old": "    if (cur && was && (cur.x !== was.x || cur.y !== was.y))\n      heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)]; // IC-STUTTER",
     "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ICS-holes-asked-last",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "client.need([...holes, ...behind]);",
-    "new": "client.need([...behind, ...holes]);",
+    "old": "    if (holes.length || behind.length) client.need([...holes, ...behind]);",
+    "new": "    if (holes.length || behind.length) client.need([...behind, ...holes]);",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "ICS-view-distance-unread",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "const near = capitalNear(px, py, host.state?.current), id",
-    "new": "const near = true, id",
+    "old": "    const near = capitalNear(px, py, host.state?.current),",
+    "new": "    const near = true,",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "ICS-city-always-ready",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "    if (!on?.cap?.family) return null;\n",
-    "new": "    return null;\n",
+    "old": "    if (!on?.cap?.family) return null;",
+    "new": "    return null;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "ICS-whole-queue-asked",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "      if (++owing > NEED_AHEAD) continue;   // asked when the pump comes nearer it",
+    "old": "      if (++owing > NEED_AHEAD) continue; // asked when the pump comes nearer it",
     "new": "      ++owing;",
     "tests": [
       "test/world/ic_stutter.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "ICS-need-after-the-list",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "      const need = needs.shift(), w = need ?? queue.shift();",
-    "new": "      const q = queue.shift(), need = q ? undefined : needs.shift(), w = q ?? need;",
+    "old": "      const need = needs.shift(),\n        w = need ?? queue.shift();",
+    "new": "      const q = queue.shift(),\n        need = q ? undefined : needs.shift(),\n        w = q ?? need;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "ICS-need-made-before-skipped",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "          done.delete(keyOf(w));   // made before and let go by the page: made again\n",
-    "new": "",
+    "old": "          done.delete(keyOf(w)); // made before and let go by the page: made again\n          needs.push(w);",
+    "new": "          needs.push(w);",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "ICS-need-dropped-by-a-list",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": "      if (msg?.t === 'want') { queue =",
-    "new": "      if (msg?.t === 'want') { needs = []; queue =",
+    "old": "        queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)));",
+    "new": "        needs = [];\n        queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w)));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "ICS-made-need-kept",
     "file": "src/world/imperialPrebuildWorker.js",
-    "old": " needs = needs.filter((w) => keyOf(w) !== msg.key); }",
-    "new": " }",
+    "old": "        needs = needs.filter((w) => keyOf(w) !== msg.key);\n      } else if (msg?.t === 'need') {",
+    "new": "      } else if (msg?.t === 'need') {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "ICS-failure-waited-on",
     "file": "src/world/imperialPrebuildClient.js",
-    "old": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); failed.add(m.key); }",
-    "new": "else if (m?.t === 'error' && m.key) { asked.delete(m.key); }",
+    "old": "        failed.add(m.key);\n      } // IC-STUTTER: never waited on for ever - the page makes it",
+    "new": "      } // IC-STUTTER: never waited on for ever - the page makes it",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "ICS-yards-ground-rows-unbroken",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;\n    for (let gx = 0; gx < W; gx++) {",
+    "new": "    for (let gx = 0; gx < W; gx++) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "ICS-yards-search-rows-unbroken",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;\n",
-    "new": "",
+    "old": "      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;\n      for (let gx = pad; gx + nx + pad <= W; gx++) {",
+    "new": "      for (let gx = pad; gx + nx + pad <= W; gx++) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "ICS-yards-measures-in-one",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  for (const b of yl?.blocks ?? []) { yield; was.push(one(b)); }",
-    "new": "  for (const b of yl?.blocks ?? []) { was.push(one(b)); }",
+    "old": "    yield;\n    was.push(one(b));",
+    "new": "    was.push(one(b));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "ICS-places-rows-unbroken",
     "file": "src/systems/livingWorld/places.js",
-    "old": "    if (y && y % PLACES_ROWS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "    if (y && y % PLACES_ROWS_A_STEP === 0) yield;\n    let row = 0;",
+    "new": "    let row = 0;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "ICS-places-flood-in-one",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;\n      const c = stack[--sp];",
+    "new": "      const c = stack[--sp];",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "ICS-places-doors-in-one",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  let net = streets.label;\n  yield;\n",
-    "new": "  let net = streets.label;\n",
+    "old": "  yield;\n  const netId = forced ?? doorsNet(nav, ordered, streets); // FIELD 2026-10-06: the street its doors open onto",
+    "new": "  const netId = forced ?? doorsNet(nav, ordered, streets); // FIELD 2026-10-06: the street its doors open onto",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "ICS-places-quarters-whole",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
-    "new": "  for (let q = 0; q < quarterIds.length; q++) each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
+    "old": "    each.push(\n      yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }),\n    );",
+    "new": "    each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "ICS-pieces-flood-in-one",
     "file": "src/systems/travel/townWalk.js",
-    "old": "      if (++seen % PIECES_CELLS_A_STEP === 0) yield;\n      const c = stack[--top]",
-    "new": "      const c = stack[--top]",
+    "old": "      if (++seen % PIECES_CELLS_A_STEP === 0) yield;\n      const c = stack[--top],",
+    "new": "      const c = stack[--top],",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "ICS-build-places-in-one",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n",
-    "new": "",
+    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n        // IC-STUTTER: and its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
+    "new": "        // IC-STUTTER: and its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "ICS-build-pieces-unflooded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n",
-    "new": "",
+    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n        population = livingWorldOn() ? new LivingTown(nav, {",
+    "new": "        population = livingWorldOn() ? new LivingTown(nav, {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "ICS-way-shared-scratch",
     "file": "src/systems/travel/townWalk.js",
-    "old": "searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }))",
-    "new": "searchSteps(townPathSearch(g, p, q, { ...opts }))",
+    "old": "  ) => searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }));",
+    "new": "  ) => searchSteps(townPathSearch(g, p, q, { ...opts }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "ICS-host-way-steps-unbounded",
     "file": "src/scenes/townWalkHost.js",
-    "old": "for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++)",
-    "new": "for (let n = 1; !got.done; n++)",
+    "old": "      for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++) got = making.steps.next();",
+    "new": "      for (let n = 1; !got.done; n++) got = making.steps.next();",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "ICS-layout-in-one",
     "file": "src/world/locationLayout.js",
-    "old": "        originZ: y * RMB_SIDE,\n      });\n      yield;\n",
-    "new": "        originZ: y * RMB_SIDE,\n      });\n",
+    "old": "      yield;\n    }",
+    "new": "    }",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ICS-build-layout-whole",
     "file": "src/scenes/pixelBuild.js",
-    "old": "await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());",
-    "new": "stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));",
+    "old": "      const loc = await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());   // WM3: the pack's own switch; IC-STUTTER: a block a step",
+    "new": "      const loc = stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));   // WM3: the pack's own switch; IC-STUTTER: a block a step",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "ICS-build-grid-in-one",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          await breather.breathe();   // IC-STUTTER: a block of the walkers' grid a breath (a city's sixty-four were one task)\n",
-    "new": "",
+    "old": "          await breather.breathe();   // IC-STUTTER: a block of the walkers' grid a breath (a city's sixty-four were one task)\n        }",
+    "new": "        }",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "ICS-looks-unkept",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "      looks.set(id, look);\n",
-    "new": "",
+    "old": "      looks.set(id, look);\n      if (looks.size > LOOKS_KEEP) looks.delete(/** @type {number} */ (looks.keys().next().value));",
+    "new": "      if (looks.size > LOOKS_KEEP) looks.delete(/** @type {number} */ (looks.keys().next().value));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -422,8 +422,8 @@
   {
     "name": "ICS-look-word-taken",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "(look.at >= look.keys.length && (first >= 0 || whole(look)))",
-    "new": "(look.at >= look.keys.length && (first >= 0 || true))",
+    "old": "      if (!look || (look.at >= look.keys.length && (first >= 0 || whole(look)))) {",
+    "new": "      if (!look || (look.at >= look.keys.length && (first >= 0 || true))) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "ICS-looks-kept-past-drop",
     "file": "src/scenes/capitalPrebuild.js",
-    "old": "client = null; looks.clear(); };",
-    "new": "client = null; };",
+    "old": "    looks.clear();\n  };",
+    "new": "  };",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "ICS-family-cache-unread",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "_blockFamilies.some((f) => f.cache.has(name));",
-    "new": "_blockFamilies.some((f) => f.indexOf(name) >= 0);",
+    "old": "export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name)); // a family's cache holds its own names alone",
+    "new": "export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.indexOf(name) >= 0); // a family's cache holds its own names alone",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

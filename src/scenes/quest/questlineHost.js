@@ -24,7 +24,11 @@ import { cakesFoundText } from '../../systems/festival/festivalWords.js';
 export function hearPurse(answer, { say = (line) => festivalDoors().say(line), refresh = refreshFestival } = {}) {
   const n = answer?.ok ? answer.data?.purse : null;
   if (!Number.isSafeInteger(n) || n <= 0) return false;
-  try { say(cakesFoundText(n)); } catch { /* a door's throw is not the claim's */ }
+  try {
+    say(cakesFoundText(n));
+  } catch {
+    /* a door's throw is not the claim's */
+  }
   refresh().catch(() => {});
   return true;
 }
@@ -35,8 +39,18 @@ export function hearPurse(answer, { say = (line) => festivalDoors().say(line), r
  */
 export function questlineService({ search, fetch, storage } = {}) {
   if (!isOnlinePage(search)) return null;
-  const door = accountQuestlines({ fetch: fetch ?? ((u, i) => globalThis.fetch(u, i)), storage: storage ?? appStorage() });
-  return { ...door, claim: async (body) => { const a = await door.claim(body); hearPurse(a); return a; } };
+  const door = accountQuestlines({
+    fetch: fetch ?? ((u, i) => globalThis.fetch(u, i)),
+    storage: storage ?? appStorage(),
+  });
+  return {
+    ...door,
+    claim: async (body) => {
+      const a = await door.claim(body);
+      hearPurse(a);
+      return a;
+    },
+  };
 }
 
 /** Is a line's service there to ask - an online page with an account signed in? */

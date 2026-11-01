@@ -69,20 +69,24 @@
 //   rolls                        - Math.random-compatible
 
 import {
-  ANSWERS_TO_DIRECTIONS, ANSWERS_TO_NON_DIRECTIONS, KNOWLEDGE_MODIFIERS,
-  CHANCE_TO_REVEAL_LOCATION_ON_MAP, DIRECTION_TEXT_ID, MAP_REVEAL_TEXT_ID,
+  ANSWERS_TO_DIRECTIONS,
+  ANSWERS_TO_NON_DIRECTIONS,
+  KNOWLEDGE_MODIFIERS,
+  CHANCE_TO_REVEAL_LOCATION_ON_MAP,
+  DIRECTION_TEXT_ID,
+  MAP_REVEAL_TEXT_ID,
 } from './talk/talkTopics.js';
 import { QUESTION_TYPE, NPC_KNOWLEDGE, BUILDING_HINT_TYPE, FACTIONS_AND_BUILDINGS } from './topicTree.js';
-import { lettersOnMap } from './portPlaces.js';   // AUDIT SHIPYARDS L7-5: the found places no town map letters
+import { lettersOnMap } from './portPlaces.js'; // AUDIT SHIPYARDS L7-5: the found places no town map letters
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
-import { stringHash } from '../formats/netRuntime.js';   // the knowledge seed's string.GetHashCode (Ledger A)
-import { localizedStrings, getLocalizedLocationName, getLocalizedRegionName } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { stringHash } from '../formats/netRuntime.js'; // the knowledge seed's string.GetHashCode (Ledger A)
+import { localizedStrings, getLocalizedLocationName, getLocalizedRegionName } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 
 /** The question records (:1298-1353). */
 export const QUESTION_RECORDS = Object.freeze({
-  news: 7231,          // + toneIndex
-  tellMeAbout: 7212,   // + toneIndex (orgs, quest topics, work)
-  whereIs: 7225,       // + toneIndex (buildings, persons, regional)
+  news: 7231, // + toneIndex
+  tellMeAbout: 7212, // + toneIndex (orgs, quest topics, work)
+  whereIs: 7225, // + toneIndex (buildings, persons, regional)
 });
 
 /** The Work answer records (:2021-2037). */
@@ -90,9 +94,9 @@ export const WORK_RECORDS = Object.freeze({ noWork: 8078, tier0: 8075, tier1: 80
 
 /** GetWorkString (:1158-1161) and the PC opening records (:1133-1147). */
 export const WORK_STRING_RECORD = 7211;
-export const PC_GREETING_RECORD = 7215;    // + toneIndex
-export const PC_FOLLOWUP_RECORD = 7218;    // + toneIndex
-export const PC_STRANGER_RECORD = 7221;    // + toneIndex
+export const PC_GREETING_RECORD = 7215; // + toneIndex
+export const PC_FOLLOWUP_RECORD = 7218; // + toneIndex
+export const PC_STRANGER_RECORD = 7221; // + toneIndex
 
 /** GetOrganizationInfo (:1552-1556): 860 + the index, with the >7
  *  SKIP that DFU's own comment calls error-prone. */
@@ -106,10 +110,8 @@ export const REGIONAL_NOT_FOUND_RECORD = 11;
 /** GetRegionalLocationCityName's lookUpIndexes (:1878-1879) - one per
  *  FactionsAndBuildings row. */
 export const REGIONAL_LOOKUP_INDEXES = Object.freeze([
-  0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d,
-  0x19, 0x1a, 0x1b, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
-  0x24, 0x27,
-  0x00, 0x0b, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0a, 0x0c,
+  0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x0d, 0x19, 0x1a, 0x1b, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24,
+  0x27, 0x00, 0x0b, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x0a, 0x0c,
 ]);
 
 /** GetClassicQuestionIndex (:691-724): the knowledge/reaction tables
@@ -144,45 +146,74 @@ export function getClassicQuestionIndex(questionType) {
  *  C#'s `(byte)(flags << n) >> 7` truncates to 8 bits BEFORE the
  *  unsigned shift, which reads bit (7 - n); the port spells that as
  *  `((flags << n) & 0xff) >> 7`. */
-const bitAt = (flags, shiftLeft) => (((flags << shiftLeft) & 0xff) >> 7);
+const bitAt = (flags, shiftLeft) => ((flags << shiftLeft) & 0xff) >> 7;
 
 export function checkLocationKeyForRegionalBuilding(key, index, faction) {
   const templeFlags = key & 0xff;
   const storeFlags = (key >> 8) & 0xff;
   const guildFlags = (key >> 16) & 0xff;
-  if (index > 0x27) return 0;   // out of range
+  if (index > 0x27) return 0; // out of range
   switch (index) {
-    case 0: return storeFlags & 1;            // Tavern
-    case 3: return bitAt(storeFlags, 6);      // Weapon Smith
-    case 4: return bitAt(storeFlags, 5);      // Armorer
-    case 5: return bitAt(storeFlags, 4);      // Alchemist
-    case 6: return bitAt(storeFlags, 3);      // Bank
-    case 7: return bitAt(storeFlags, 2);      // Bookstore
-    case 8: return bitAt(storeFlags, 1);      // Clothing store
-    case 0xa: return storeFlags >> 7;         // Gem store
-    case 0xb: return guildFlags & 1;          // Library
-    case 0xc: return bitAt(guildFlags, 1);    // Pawn Shop
-    case 0xd:                                  // Temples, by divine faction
+    case 0:
+      return storeFlags & 1; // Tavern
+    case 3:
+      return bitAt(storeFlags, 6); // Weapon Smith
+    case 4:
+      return bitAt(storeFlags, 5); // Armorer
+    case 5:
+      return bitAt(storeFlags, 4); // Alchemist
+    case 6:
+      return bitAt(storeFlags, 3); // Bank
+    case 7:
+      return bitAt(storeFlags, 2); // Bookstore
+    case 8:
+      return bitAt(storeFlags, 1); // Clothing store
+    case 0xa:
+      return storeFlags >> 7; // Gem store
+    case 0xb:
+      return guildFlags & 1; // Library
+    case 0xc:
+      return bitAt(guildFlags, 1); // Pawn Shop
+    case 0xd: // Temples, by divine faction
       switch (faction) {
-        case 21: return bitAt(templeFlags, 6);   // Arkay
-        case 22: return templeFlags >> 7;        // Zen
-        case 24: return bitAt(templeFlags, 2);   // Mara
-        case 26: return templeFlags & 1;         // Akatosh
-        case 27: return bitAt(templeFlags, 4);   // Julianos
-        case 29: return bitAt(templeFlags, 5);   // Dibella
-        case 33: return bitAt(templeFlags, 1);   // Stendarr
-        case 35: return bitAt(templeFlags, 3);   // Kynareth
-        default: return 0;
+        case 21:
+          return bitAt(templeFlags, 6); // Arkay
+        case 22:
+          return templeFlags >> 7; // Zen
+        case 24:
+          return bitAt(templeFlags, 2); // Mara
+        case 26:
+          return templeFlags & 1; // Akatosh
+        case 27:
+          return bitAt(templeFlags, 4); // Julianos
+        case 29:
+          return bitAt(templeFlags, 5); // Dibella
+        case 33:
+          return bitAt(templeFlags, 1); // Stendarr
+        case 35:
+          return bitAt(templeFlags, 3); // Kynareth
+        default:
+          return 0;
       }
-    case 0x19: case 0x1a: case 0x1b: case 0x1d: case 0x1e:
-    case 0x1f: case 0x20: case 0x21: case 0x22: case 0x23:
-      return bitAt(guildFlags, 6);            // the ten knightly orders
-    case 0x24: return bitAt(guildFlags, 5);   // Mages Guild
-    case 0x27: return bitAt(guildFlags, 2);   // Fighters Guild
-    default: return 0;
+    case 0x19:
+    case 0x1a:
+    case 0x1b:
+    case 0x1d:
+    case 0x1e:
+    case 0x1f:
+    case 0x20:
+    case 0x21:
+    case 0x22:
+    case 0x23:
+      return bitAt(guildFlags, 6); // the ten knightly orders
+    case 0x24:
+      return bitAt(guildFlags, 5); // Mages Guild
+    case 0x27:
+      return bitAt(guildFlags, 2); // Fighters Guild
+    default:
+      return 0;
   }
 }
-
 
 /** The Internal_Strings en values this slice speaks, joined from
  *  DFU's own string tables (Internal_Strings Shared Data.asset for the
@@ -200,7 +231,9 @@ export function checkLocationKeyForRegionalBuilding(key, index, faction) {
  * answer rather than a loud one.
  */
 export const SPECIAL_DUNGEON_TEXT_ID = Object.freeze({
-  Daggerfall: 475, Wayrest: 476, Sentinel: 477,
+  Daggerfall: 475,
+  Wayrest: 476,
+  Sentinel: 477,
 });
 export function specialDungeonName(regionName, locationName, textLine = () => null) {
   let name = locationName ?? '';
@@ -213,9 +246,9 @@ export function specialDungeonName(regionName, locationName, textLine = () => nu
 }
 
 export const TALK_STRINGS = localizedStrings({
-  WhereAmI: 'Where am I?',                                    // id 393
-  AnswerTextWhereAmI: 'You are in {0} in {1}.',               // id 394
-  YouAreInSameBuilding: 'You have found {0}. You are in it.',  // id 395
+  WhereAmI: 'Where am I?', // id 393
+  AnswerTextWhereAmI: 'You are in {0} in {1}.', // id 394
+  YouAreInSameBuilding: 'You have found {0}. You are in it.', // id 395
   // id 396. The .asset stores this one YAML-QUOTED - a scalar that
   // begins with `{` has to be, or YAML reads it as a flow mapping - so
   // the surrounding apostrophes are the file's syntax and not part of
@@ -223,19 +256,23 @@ export const TALK_STRINGS = localizedStrings({
   // care; this one was carried across with the quotes still on and
   // answered "'Sirien is around here in The Inn.'".
   NpcInSameBuilding: '{0} is around here in {1}.',
-  Sir: 'Sir',                                                  // id 414
-  "Ma'am": "Ma'am",                                            // id 415
-  toBeReplacedStringRegional: 'Any',                           // id 422
-  replacementStringRegional: 'any',                            // id 423
-  resolvingError: '...never mind...',                          // id 425
-  residence: 'Residence',                                      // id 50
+  Sir: 'Sir', // id 414
+  "Ma'am": "Ma'am", // id 415
+  toBeReplacedStringRegional: 'Any', // id 422
+  replacementStringRegional: 'any', // id 423
+  resolvingError: '...never mind...', // id 425
+  residence: 'Residence', // id 50
   // the four pronoun pairs TalkManagerMCP resolves for %g..%g4, all
   // of them the POTENTIAL QUESTOR's gender rather than the talk
   // partner's (Internal_Strings, the same rows questMacros.js reads)
-  pronounHe: 'he', pronounShe: 'she',
-  pronounHim: 'him', pronounHer: 'her',
-  pronounHis: 'his', pronounHer2: 'her',
-  pronounHis2: 'his', pronounHers: 'hers',
+  pronounHe: 'he',
+  pronounShe: 'she',
+  pronounHim: 'him',
+  pronounHer: 'her',
+  pronounHis: 'his',
+  pronounHer2: 'her',
+  pronounHis2: 'his',
+  pronounHers: 'hers',
   oldLeaderFate0: 'died of heart failure',
   oldLeaderFate1: 'fell and struck his head',
   oldLeaderFate2: 'died of the plague',
@@ -282,7 +319,7 @@ export class AnswerPipeline {
     const toneIndex = this.deps.toneIndex?.() ?? -1;
     if (this.lastToneIndex === toneIndex) return;
     const tier = this.deps.reactionTier?.(questionType, this._session().socialGroup);
-    if (tier == null) return;   // no seam: the standing tier holds (headless)
+    if (tier == null) return; // no seam: the standing tier holds (headless)
     this.reactionToPlayer012 = tier;
     this.lastToneIndex = toneIndex;
   }
@@ -306,13 +343,25 @@ export class AnswerPipeline {
    *  lastToneIndex alongside toneReactionForTalkSession[0..2] (that
    *  triple lives with the reaction tier in talkTopics.js) - so the
    *  host must call both resets, at their two different moments. */
-  resetToneSession() { this.lastToneIndex = -1; }
+  resetToneSession() {
+    this.lastToneIndex = -1;
+  }
 
-  _rolls() { return this.deps.rolls ?? Math.random; }
-  _record(id) { return this.deps.expandRandomTextRecord?.(id) ?? ''; }
-  _text(key) { return this.deps.localizedText?.(key) ?? ''; }
-  _session() { return this.deps.npcSession?.() ?? this.defaultSession; }
-  _knowsEverything() { return this.deps.npcsKnowEverything?.() ?? false; }
+  _rolls() {
+    return this.deps.rolls ?? Math.random;
+  }
+  _record(id) {
+    return this.deps.expandRandomTextRecord?.(id) ?? '';
+  }
+  _text(key) {
+    return this.deps.localizedText?.(key) ?? '';
+  }
+  _session() {
+    return this.deps.npcSession?.() ?? this.defaultSession;
+  }
+  _knowsEverything() {
+    return this.deps.npcsKnowEverything?.() ?? false;
+  }
 
   // ---- the question half (:1298-1353) ----
 
@@ -337,12 +386,15 @@ export class AnswerPipeline {
         this.currentKeySubjectType = 'Person';
         return this._record(QUESTION_RECORDS.whereIs + toneIndex);
       case QUESTION_TYPE.Thing:
-        return 'Not implemented';   // classic did not implement this either
+        return 'Not implemented'; // classic did not implement this either
       case QUESTION_TYPE.Regional:
         this.currentKeySubjectType = 'Building';
         // an improvement over classic DFU keeps: "Any" lower-cased
         // mid-sentence
-        this.currentKeySubject = this.currentKeySubject.replace(this._text('toBeReplacedStringRegional'), this._text('replacementStringRegional'));
+        this.currentKeySubject = this.currentKeySubject.replace(
+          this._text('toBeReplacedStringRegional'),
+          this._text('replacementStringRegional'),
+        );
         return this._record(QUESTION_RECORDS.whereIs + toneIndex);
       case QUESTION_TYPE.QuestLocation:
       case QUESTION_TYPE.QuestPerson:
@@ -381,14 +433,22 @@ export class AnswerPipeline {
     return this.questionOpeningText;
   }
 
-  getWorkString() { return this._record(WORK_STRING_RECORD); }
+  getWorkString() {
+    return this._record(WORK_STRING_RECORD);
+  }
 
   /** GetOrganizationInfo (:1552-1556). */
-  getOrganizationInfo(listItem) { return this._record(organizationInfoRecord(listItem.index)); }
+  getOrganizationInfo(listItem) {
+    return this._record(organizationInfoRecord(listItem.index));
+  }
 
   /** GetHonoric (:1826-1832) / GetOldLeaderFateString (:1834-1837). */
-  getHonoric(gender) { return gender === 'male' ? this._text('Sir') : this._text("Ma'am"); }
-  getOldLeaderFateString(index) { return this._text(`oldLeaderFate${index}`); }
+  getHonoric(gender) {
+    return gender === 'male' ? this._text('Sir') : this._text("Ma'am");
+  }
+  getOldLeaderFateString(index) {
+    return this._text(`oldLeaderFate${index}`);
+  }
 
   // ---- the knowledge roll (:567-627) ----
 
@@ -407,21 +467,26 @@ export class AnswerPipeline {
       return NPC_KNOWLEDGE.KnowsAboutItem;
     }
     // fixed from classic: an NPC of an organization knows about it
-    if (listItem.questionType === QUESTION_TYPE.OrganizationInfo
-      && (this.deps.isFaction2RelatedToFaction1?.(session.factionData?.id ?? 0, listItem.factionID) ?? false)) {
+    if (
+      listItem.questionType === QUESTION_TYPE.OrganizationInfo &&
+      (this.deps.isFaction2RelatedToFaction1?.(session.factionData?.id ?? 0, listItem.factionID) ?? false)
+    ) {
       return NPC_KNOWLEDGE.KnowsAboutItem;
     }
     // fixed from classic: an NPC who cannot place the BUILDING cannot
     // place the person inside it
     if (listItem.questionType === QUESTION_TYPE.Person && this.currentKeySubjectBuildingKey !== -1 && tree) {
       for (const group of tree.listTopicLocation) {
-        const buildingListItem = (group.listChildItems ?? []).find((x) => x.buildingKey === this.currentKeySubjectBuildingKey);
+        const buildingListItem = (group.listChildItems ?? []).find(
+          (x) => x.buildingKey === this.currentKeySubjectBuildingKey,
+        );
         if (buildingListItem) {
           if (buildingListItem.npcKnowledgeAboutItem === NPC_KNOWLEDGE.NotSet) {
             buildingListItem.npcKnowledgeAboutItem = this.getNPCKnowledgeAboutItem(buildingListItem, npcSeed);
           }
-          if (buildingListItem.npcKnowledgeAboutItem === NPC_KNOWLEDGE.DoesNotKnowAboutItem) return NPC_KNOWLEDGE.DoesNotKnowAboutItem;
-          break;   // found the building, no need to continue
+          if (buildingListItem.npcKnowledgeAboutItem === NPC_KNOWLEDGE.DoesNotKnowAboutItem)
+            return NPC_KNOWLEDGE.DoesNotKnowAboutItem;
+          break; // found the building, no need to continue
         }
       }
     }
@@ -435,7 +500,9 @@ export class AnswerPipeline {
     srand(seed);
     const classicQuestionIndex = getClassicQuestionIndex(listItem.questionType);
     const rollToBeat = KNOWLEDGE_MODIFIERS[classicQuestionIndex * 5 + session.socialGroup] + 10;
-    return randomRangeInclusive(1, 20) <= rollToBeat ? NPC_KNOWLEDGE.KnowsAboutItem : NPC_KNOWLEDGE.DoesNotKnowAboutItem;
+    return randomRangeInclusive(1, 20) <= rollToBeat
+      ? NPC_KNOWLEDGE.KnowsAboutItem
+      : NPC_KNOWLEDGE.DoesNotKnowAboutItem;
   }
 
   // ---- the answer half (:1839-2062) ----
@@ -457,7 +524,7 @@ export class AnswerPipeline {
         break;
       case QUESTION_TYPE.LocalBuilding:
       case QUESTION_TYPE.Person:
-      case QUESTION_TYPE.Thing:   // never reached - no where-is for things in classic
+      case QUESTION_TYPE.Thing: // never reached - no where-is for things in classic
         answer = this.getAnswerWhereIs(listItem, npcSeed);
         break;
       case QUESTION_TYPE.Regional:
@@ -470,8 +537,14 @@ export class AnswerPipeline {
         answer = this.getAnswerTellMeAboutTopic(listItem, npcSeed);
         break;
       case QUESTION_TYPE.Work:
-        if (!workAvailable) { answer = this._record(WORK_RECORDS.noWork); break; }
-        if (this.reactionToPlayer012 === 0) { answer = this._record(WORK_RECORDS.tier0); break; }
+        if (!workAvailable) {
+          answer = this._record(WORK_RECORDS.noWork);
+          break;
+        }
+        if (this.reactionToPlayer012 === 0) {
+          answer = this._record(WORK_RECORDS.tier0);
+          break;
+        }
         if (this.reactionToPlayer012 === 1) answer = this._record(WORK_RECORDS.tier1);
         else if (this.reactionToPlayer012 === 2) answer = this._record(WORK_RECORDS.tier2);
         this.deps.setRandomQuestor?.();
@@ -480,7 +553,7 @@ export class AnswerPipeline {
         break;
     }
     this.numQuestionsAsked++;
-    this.questionOpeningText = '';   // re-created for the next question
+    this.questionOpeningText = ''; // re-created for the next question
     return answer;
   }
 
@@ -491,9 +564,11 @@ export class AnswerPipeline {
     if (listItem.npcKnowledgeAboutItem === NPC_KNOWLEDGE.NotSet) {
       listItem.npcKnowledgeAboutItem = this.getNPCKnowledgeAboutItem(listItem, npcSeed);
     }
-    const gateClosed = session.numAnswersGivenTellMeAboutOrRumors >= 1
-      && !(this.deps.tree?.checkNPCisInSameBuildingAsTopic(listItem) ?? false)
-      && !session.isSpyMaster && !this._knowsEverything();
+    const gateClosed =
+      session.numAnswersGivenTellMeAboutOrRumors >= 1 &&
+      !(this.deps.tree?.checkNPCisInSameBuildingAsTopic(listItem) ?? false) &&
+      !session.isSpyMaster &&
+      !this._knowsEverything();
     if (listItem.npcKnowledgeAboutItem === NPC_KNOWLEDGE.DoesNotKnowAboutItem || gateClosed) {
       return this._record(ANSWERS_TO_NON_DIRECTIONS[3 * session.socialGroup + this.reactionToPlayer012]);
     }
@@ -518,7 +593,8 @@ export class AnswerPipeline {
     }
     if (listItem.questionType === QUESTION_TYPE.Person && listItem.npcInSameBuildingAsTopic) {
       const building = this.deps.tree?.getBuildingInfoCurrentBuildingOrPalace();
-      if (building && building.name !== '') return format(this._text('NpcInSameBuilding'), listItem.caption, building.name);
+      if (building && building.name !== '')
+        return format(this._text('NpcInSameBuilding'), listItem.caption, building.name);
       return this._text('resolvingError');
     }
     return this._record(ANSWERS_TO_DIRECTIONS[15 + 3 * session.socialGroup + this.reactionToPlayer012]);
@@ -578,7 +654,10 @@ export class AnswerPipeline {
   }
 
   getRegionalLocationCityName(listItem) {
-    const location = this.getLocationWithRegionalBuilding(REGIONAL_LOOKUP_INDEXES[listItem.index], FACTIONS_AND_BUILDINGS[listItem.index]);
+    const location = this.getLocationWithRegionalBuilding(
+      REGIONAL_LOOKUP_INDEXES[listItem.index],
+      FACTIONS_AND_BUILDINGS[listItem.index],
+    );
     if (location) {
       // C# stores GetLocalizedLocationName(MapTableData.MapId, Name)
       // (:1884) - the language's row for that map id, else the raw
@@ -586,7 +665,8 @@ export class AnswerPipeline {
       // one is wired, still answers first. %fcn shows it and nothing
       // keys on it.
       const mapId = location.mapTableData?.mapId;
-      this.locationOfRegionalBuilding = this.deps.localizedLocationName?.(mapId, location.name) ?? getLocalizedLocationName(mapId, location.name);
+      this.locationOfRegionalBuilding =
+        this.deps.localizedLocationName?.(mapId, location.name) ?? getLocalizedLocationName(mapId, location.name);
       return true;
     }
     return false;
@@ -634,7 +714,7 @@ export class AnswerPipeline {
   getKeySubjectBuildingHint() {
     const randomFloat = this._rolls()();
     if (this.deps.isPlayerInside?.() ?? false) return this.getKeySubjectBuildingDirection();
-    if (!lettersOnMap(this.currentKeySubjectBuildingKey)) return this.getKeySubjectBuildingDirection();   // AUDIT SHIPYARDS L7-5: no mark to make
+    if (!lettersOnMap(this.currentKeySubjectBuildingKey)) return this.getKeySubjectBuildingDirection(); // AUDIT SHIPYARDS L7-5: no mark to make
     // FIELD BUGS 2026-09-30b (RES-MARK, a departure - Port-Ledger A): "People aren't marking it on the map, I've gone
     // in the direction they said but every door looks like just a house". A quest's own building (its row is a quest
     // resource's) is always marked by one who knows where it is, outdoors; DFU's 35% roll marked 26 questions in 100
@@ -738,7 +818,8 @@ export class AnswerPipeline {
       // as a plain residence (a door looked at through World Tooltips discovers it), stayed an unnamed house
       // after "You can see ... on your map". The person's assigned Place is marked with it (Ledger A).
       if (item.questionType === QUESTION_TYPE.Person) {
-        const placeKey = this.deps.tree.getPersonResource(item.questID, item.key)?.getAssignedPlaceSymbol?.()?.name ?? null;
+        const placeKey =
+          this.deps.tree.getPersonResource(item.questID, item.key)?.getAssignedPlaceSymbol?.()?.name ?? null;
         const placeInfo = placeKey ? this._resourceInfo({ questID: item.questID, key: placeKey }) : null;
         if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;
       }
@@ -749,5 +830,5 @@ export class AnswerPipeline {
 
 /** string.Format's {0}/{1} over the localized literals. */
 function format(template, ...args) {
-  return String(template ?? '').replace(/\{(\d+)\}/g, (m, i) => (args[Number(i)] ?? m));
+  return String(template ?? '').replace(/\{(\d+)\}/g, (m, i) => args[Number(i)] ?? m);
 }

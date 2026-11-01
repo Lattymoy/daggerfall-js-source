@@ -3,7 +3,7 @@
     "name": "TDEEP-flood-seeds-the-border",
     "file": "src/world/deepWater/deepWatersBake.js",
     "old": "      if (!seeded && (seedAt || (px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
-    "new": "      if (!seeded && ((px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
+    "new": "      if (!seeded && px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1) continue;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TDEEP-flood-seed-unreached",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "      if (seeded) { r.set(c); pushAround(px, py); continue; }",
-    "new": "      if (seeded) { pushAround(px, py); continue; }",
+    "old": "        r.set(c);\n        pushAround(px, py);",
+    "new": "        pushAround(px, py);",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TDEEP-bay-its-own",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  inFrame(px, py) { return inFrame(this.frame, px, py) && !inBay(px, py); }",
-    "new": "  inFrame(px, py) { return inFrame(this.frame, px, py); }",
+    "old": "    return inFrame(this.frame, px, py) && !inBay(px, py);",
+    "new": "    return inFrame(this.frame, px, py);",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TDEEP-class-kept-off-frame",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "    const cls = (x, y) => (this.inFrame(x, y) ? this._class(this._index(x, y), x, y) : classifyPixel(this.woods, x, y));",
-    "new": "    const cls = (x, y) => this._class(this._index(x, y), x, y);",
+    "old": "    const cls = (x, y) => (this.inFrame(x, y) ? this._class(this._index(x, y), x, y) : classifyPixel(this.woods, x, y)); // past the frame or on the Bay: asked, never kept by another pixel's slot",
+    "new": "    const cls = (x, y) => this._class(this._index(x, y), x, y); // past the frame or on the Bay: asked, never kept by another pixel's slot",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TDEEP-bay-sea-its-own",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "    if (inBay(px, py)) return this.bay?.seaBits(px, py) ?? null;\n",
-    "new": "",
+    "old": "    if (inBay(px, py)) return this.bay?.seaBits(px, py) ?? null;\n    if (!this.inFrame(px, py)) return null;",
+    "new": "    if (!this.inFrame(px, py)) return null;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TDEEP-frame-over-the-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
-    "new": "  : tamriel && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
+    "old": "  ether && inFrame(ETHER_FRAME, px, py)\n    ? ETHER_FRAME\n    : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py)\n      ? tamriel\n      : BAY_FRAME;",
+    "new": "  ether && inFrame(ETHER_FRAME, px, py) ? ETHER_FRAME : tamriel && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TDEEP-worker-untold",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped() }); } catch { /* the main thread's bake answers */ }",
-    "new": "        void t;",
+    "old": "        try {\n          worker.postMessage({\n            t: 'tamriel',\n            trace: t,\n            fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null,\n            wg2: gen2Shipped(),\n          });\n        } catch {\n          /* the main thread's bake answers */\n        } // The published regions",
+    "new": "        void t; // The published regions",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "TDEEP-bake-unset",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "      void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });",
+    "old": "      void ready.then((b) => {\n        if (b && !disposed)\n          b.setTamriel?.(\n            trace\n              ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay })\n              : null,\n          );\n      });",
     "new": "      void ready;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "TDEEP-detail-at-sea",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
-    "new": "const data = [], sea = false, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER",
+    "old": "  const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER: the basin's floor the shore's",
+    "new": "  const data = [], sea = false, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER: the basin's floor the shore's",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/tamriel2.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "TDEEP-swell-cache-kept",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "export const dropGroundCache = () => { _bytes.clear(); _large.clear(); };",
-    "new": "export const dropGroundCache = () => { _bytes.clear(); };",
+    "old": "export const dropGroundCache = () => { _bytes.clear(); _large.clear(); };   // TAMRIEL-DEEP: the large map reads the land too",
+    "new": "export const dropGroundCache = () => { _bytes.clear(); };   // TAMRIEL-DEEP: the large map reads the land too",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]

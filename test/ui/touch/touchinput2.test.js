@@ -289,7 +289,7 @@ test('TI2 pins: the hosts hand the throw to MoveAxes beside the held keys, the m
   }
   assert.match(read('src/scenes/worldModes.js'), /const mv = moveHeld\(keys\);\s*\n\s*mv\.analog = host\.stickAxes\?\.\(\) \?\? null;/, 'worldModes reads it through the host');
   const ax = read('src/player/moveAxes.js');
-  assert.match(ax, /const toward = \(axis, target\) => axis \+ clamp\(target - axis, -MOVE_ACCELERATION_CONST \* dt, MOVE_ACCELERATION_CONST \* dt\);/, 'the throw is a TARGET under acceleration');
+  assert.match(ax, /const toward = \(axis, target\) =>\n\s*axis \+ clamp\(target - axis, -MOVE_ACCELERATION_CONST \* dt, MOVE_ACCELERATION_CONST \* dt\);/, 'the throw is a TARGET under acceleration');
   assert.match(ax, /this\.horizontal = ax !== 0 \? ax : \(held\.right \? 1 : 0\) - \(held\.left \? 1 : 0\);/, 'and the axis itself without');
 });
 

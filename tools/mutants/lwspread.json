@@ -2,8 +2,8 @@
   {
     "name": "LW-SPREAD-squares-gap",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;\n",
-    "new": "",
+    "old": "      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;\n      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;",
+    "new": "      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "LW-SPREAD-squares-reach",
     "file": "src/systems/livingWorld/places.js",
-    "old": "    for (let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH); y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH); y++) {\n      for (let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH); cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH); cx++) {\n        const d = Math.hypot(cx - sx, y - sy);\n        if (d > SQUARE_REACH || net[y * W + cx] !== netId) continue;",
+    "old": "    for (\n      let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH);\n      y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH);\n      y++\n    ) {\n      for (\n        let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH);\n        cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH);\n        cx++\n      ) {\n        const d = Math.hypot(cx - sx, y - sy);\n        if (d > SQUARE_REACH || net[y * W + cx] !== netId) continue;",
     "new": "    for (let y = SQUARE_WINDOW; y <= H - 1 - SQUARE_WINDOW; y++) {\n      for (let cx = SQUARE_WINDOW; cx <= W - 1 - SQUARE_WINDOW; cx++) {\n        const d = Math.hypot(cx - sx, y - sy);\n        if (net[y * W + cx] !== netId) continue;",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "LW-SPREAD-squares-line",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;\n",
-    "new": "",
+    "old": "      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;\n      const [px, pz] = centre([c.x, c.y]);",
+    "new": "      const [px, pz] = centre([c.x, c.y]);",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-SPREAD-squares-cap",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (squares.length >= SQUARE_POINTS) break;\n",
-    "new": "",
+    "old": "      if (squares.length >= SQUARE_POINTS) break;\n      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;",
+    "new": "      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW-SPREAD-corners-gap",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (taken.some((t) => Math.hypot(t[0] - c.x, t[1] - c.y) < CORNER_GAP)) continue;\n",
-    "new": "",
+    "old": "      if (taken.some((t) => Math.hypot(t[0] - c.x, t[1] - c.y) < CORNER_GAP)) continue;\n      const [px, pz] = centre([c.x, c.y]);",
+    "new": "      const [px, pz] = centre([c.x, c.y]);",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-SPREAD-corners-taken",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      taken.push([c.x, c.y]);\n",
-    "new": "",
+    "old": "      taken.push([c.x, c.y]);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW-SPREAD-corners-margin",
     "file": "src/systems/livingWorld/places.js",
-    "old": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {",
-    "new": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS); x++) {",
+    "old": "          let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN);\n          y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN);\n          y++\n        ) {\n          for (\n            let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN);\n            x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN);",
+    "new": "          let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS);\n          y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS);\n          y++\n        ) {\n          for (\n            let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS);\n            x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS);",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "LW-SPREAD-corners-block",
     "file": "src/systems/livingWorld/places.js",
-    "old": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {",
+    "old": "        for (\n          let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN);\n          y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN);\n          y++\n        ) {\n          for (\n            let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN);\n            x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN);\n            x++\n          ) {",
     "new": "        for (let y = SQUARE_WINDOW; y < H - SQUARE_WINDOW; y++) {\n          for (let x = SQUARE_WINDOW; x < W - SQUARE_WINDOW; x++) {",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "LW-SPREAD-squareOf-first",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null;",
-    "new": "  return pts.length ? pts[0] : null;",
+    "old": "  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null; // 'squa'",
+    "new": "  return pts.length ? pts[0] : null; // 'squa'",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LW-SPREAD-corners-unread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "social: [...places.social, ...(places.corners ?? [])], market:",
-    "new": "social: [...places.social], market:",
+    "old": "      social: [...places.social, ...(places.corners ?? [])],",
+    "new": "      social: [...places.social],",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW-SPREAD-market-unspread",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "market: [...places.market, ...(places.squares ?? [])] };",
-    "new": "market: [...places.market] };",
+    "old": "      market: [...places.market, ...(places.squares ?? [])],",
+    "new": "      market: [...places.market],",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW-SPREAD-corners-unranked",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    const spots = [...new Set([...places.doors.values(), ...places.social, ...(places.corners ?? []), ...(places.squares ?? []), ...places.market])]",
-    "new": "    const spots = [...new Set([...places.doors.values(), ...places.social, ...places.market])]",
+    "old": "    const spots = [\n      ...new Set([\n        ...places.doors.values(),\n        ...places.social,\n        ...(places.corners ?? []),\n        ...(places.squares ?? []),\n        ...places.market,\n      ]),\n    ].sort((a, b) => a.key.localeCompare(b.key));",
+    "new": "    const spots = [...new Set([...places.doors.values(), ...places.social, ...places.market])].sort((a, b) =>\n      a.key.localeCompare(b.key),\n    );",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LW-SPREAD-square-not-own",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (at) intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from,",
-    "new": "if (at) intents.push({ kind, at, from,",
+    "old": "    if (at)\n      intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from, dur, until, slack, mark });",
+    "new": "    if (at) intents.push({ kind, at, from, dur, until, slack, mark });",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW-SPREAD-watch-own",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "at: at.kind === 'square' && !mark?.duty ? fav.square : at, from,",
-    "new": "at: at.kind === 'square' ? fav.square : at, from,",
+    "old": "    if (at)\n      intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from, dur, until, slack, mark });",
+    "new": "    if (at) intents.push({ kind, at: at.kind === 'square' ? fav.square : at, from, dur, until, slack, mark });",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW-SPREAD-stall-square",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(13), rollInt(rng, 60, 150));",
-    "new": "      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : places.square ?? fav.market, h(13), rollInt(rng, 60, 150));",
+    "old": "        I('stall', rng() < 0.5 ? (places.square ?? fav.market) : fav.market, h(13), rollInt(rng, 60, 150)); // their wares at the square - LW-SPREAD: or at their market",
+    "new": "        I(\n          'stall',\n          rng() < 0.5 ? (places.square ?? fav.market) : (places.square ?? fav.market),\n          h(13),\n          rollInt(rng, 60, 150),\n        ); // their wares at the square - LW-SPREAD: or at their market",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LW-SPREAD-fisher-square",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(14), rollInt(rng, 60, 90));",
-    "new": "      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : places.square ?? fav.market, h(14), rollInt(rng, 60, 90));",
+    "old": "        I('stall', rng() < 0.5 ? (places.square ?? fav.market) : fav.market, h(14), rollInt(rng, 60, 90)); // LW-SPREAD: the catch at the square, or at their market",
+    "new": "        I(\n          'stall',\n          rng() < 0.5 ? (places.square ?? fav.market) : (places.square ?? fav.market),\n          h(14),\n          rollInt(rng, 60, 90),\n        ); // LW-SPREAD: the catch at the square, or at their market",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW-SPREAD-corners-unstrolled",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    const spots = [...places.social, ...(places.corners ?? []), ...places.market];",
-    "new": "    const spots = [...places.social, ...places.market];",
+    "old": "    const spots = [...places.social, ...(places.corners ?? []), ...places.market]; // LW-SPREAD: the town's corners too",
+    "new": "    const spots = [...places.social, ...places.market]; // LW-SPREAD: the town's corners too",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW-SPREAD-evening-hour",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN);",
-    "new": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN) * 0;",
+    "old": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN); // LW-SPREAD: out for the evening at their own minute",
+    "new": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN) * 0; // LW-SPREAD: out for the evening at their own minute",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LW-SPREAD-market-hour",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0]))",
-    "new": "h(8.5 + rng())",
+    "old": "      I('market', fav.market, h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0])), rollInt(rng, 45, 90)); // LW-SPREAD: the morning's market at their own hour",
+    "new": "      I('market', fav.market, h(8.5 + rng()), rollInt(rng, 45, 90)); // LW-SPREAD: the morning's market at their own hour",
     "tests": [
       "test/systems/livingWorld/lwspread_town.test.js"
     ]

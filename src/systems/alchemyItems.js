@@ -24,14 +24,15 @@ import { createPotion } from './loot/loot.js';
 import { potionById, potentOk, potentLasts, potentAble } from '../net/alchemyLaw.js';
 
 /** What the station says of a brew whose answer did not come (smithItems.js's kept words' shape). */
-export const BREW_KEPT_TEXT = 'The cauldron bubbled, but no word came back. The brew is kept and will be bottled when word comes.';
+export const BREW_KEPT_TEXT =
+  'The cauldron bubbled, but no word came back. The brew is kept and will be bottled when word comes.';
 /** The potions a brew's answer makes (`{ potion, count, potent }`), each DFU's own potion - or none for an answer that
  *  names no potion. */
 export function brewItems(data) {
   const p = potionById(data?.potion);
   if (!p) return [];
   const n = Number.isSafeInteger(data?.count) ? Math.max(1, Math.min(3, data.count)) : 1;
-  const potent = potentOk(data?.potent) && potentAble(p) ? data.potent : 0;   // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing
+  const potent = potentOk(data?.potent) && potentAble(p) ? data.potent : 0; // AUDIT PROF-541 B3: never a Potent Cure - its name and worth +25% for nothing
   const out = [];
   for (let i = 0; i < n; i++) {
     const it = createPotion(p.key);
@@ -50,6 +51,6 @@ export function brewedText(data) {
   const p = potionById(data?.potion);
   if (!p) return 'You brewed nothing.';
   const n = Number.isSafeInteger(data?.count) ? data.count : 1;
-  const potent = potentOk(data?.potent) && potentAble(p);   // AUDIT PROF-541 B3
+  const potent = potentOk(data?.potent) && potentAble(p); // AUDIT PROF-541 B3
   return `You brewed ${n === 1 ? 'a' : n} ${potent ? 'Potent ' : ''}${n === 1 ? 'Potion' : 'Potions'} of ${p.name}${potent ? (potentLasts(p) ? ` (lasts ${data.potent}% longer)` : ` (+${data.potent}% magnitude)`) : ''}`;
 }

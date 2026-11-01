@@ -2,8 +2,8 @@
   {
     "name": "TECHFX1-a-moment-dropped",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "    shaft: f({ burst: 'shaft' }),\n",
-    "new": "",
+    "old": "    shaft: f({ burst: 'shaft' }),\n    close: f({ burst: 'close', shake: 0.5 }),",
+    "new": "    close: f({ burst: 'close', shake: 0.5 }),",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TECHFX1-a-sound-misnamed",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "sound: f(['FallHard', 1, 0.7])",
-    "new": "sound: f(['FallHarder', 1, 0.7])",
+    "old": "      sound: f(['FallHard', 1, 0.7]),",
+    "new": "      sound: f(['FallHarder', 1, 0.7]),",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TECHFX1-the-kick-without-e",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "_sv[ch * 2 + 1] += peak * FX_K[ch] * Math.E;",
-    "new": "_sv[ch * 2 + 1] += peak * FX_K[ch];",
+    "old": "  _sv[ch * 2 + 1] += peak * FX_K[ch] * Math.E;",
+    "new": "  _sv[ch * 2 + 1] += peak * FX_K[ch];",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TECHFX1-the-closed-form-sign",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "v1 = (v - k * b * dt) * e;",
-    "new": "v1 = (v + k * b * dt) * e;",
+    "old": "      v1 = (v - k * b * dt) * e;",
+    "new": "      v1 = (v + k * b * dt) * e;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TECHFX1-no-rest-snap",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) { x1 = 0; v1 = 0; } else any = true;",
-    "new": "any = true;",
+    "old": "    if (Math.abs(x1) < REST_X && Math.abs(v1) < REST_V) {\n      x1 = 0;\n      v1 = 0;\n    } else any = true;",
+    "new": "    any = true;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TECHFX1-the-step-a-fixed-sixtieth",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "const k = FX_K[i], e = Math.exp(-k * dt), b = v + k * x;",
-    "new": "dt = 1 / 60; const k = FX_K[i], e = Math.exp(-k * dt), b = v + k * x;",
+    "old": "    const k = FX_K[i],",
+    "new": "    dt = 1 / 60;\n    const k = FX_K[i],",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TECHFX1-degrees-unconverted",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m);",
-    "new": "kick(FX_CH.pitch, (c.pitch ?? 0) * m);",
+    "old": "    kick(FX_CH.pitch, (c.pitch ?? 0) * DEG * m);",
+    "new": "    kick(FX_CH.pitch, (c.pitch ?? 0) * m);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TECHFX1-the-motion-unread",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "  const m = techniqueMotion();\n",
-    "new": "  const m = 1;\n",
+    "old": "  const m = techniqueMotion();",
+    "new": "  const m = 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TECHFX1-the-motion-unclamped",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
-    "new": "return Number.isFinite(v) ? v : 1;",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return Number.isFinite(v) ? v : 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TECHFX1-the-shake-unscaled",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "door?.shake?.(row.shake * m);",
-    "new": "door?.shake?.(row.shake);",
+    "old": "    if (row.shake) door?.shake?.(row.shake * m);",
+    "new": "    if (row.shake) door?.shake?.(row.shake);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TECHFX1-the-burst-scaled",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (row.burst && place?.at) door",
-    "new": "if (row.burst && place?.at && m === 1) door",
+    "old": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
+    "new": "  if (row.burst && place?.at && m === 1)\n    door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TECHFX1-the-ring-radius-unread",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "row.r != null ? { ...place, r: row.r } : place",
-    "new": "place",
+    "old": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, row.r != null ? { ...place, r: row.r } : place);",
+    "new": "  if (row.burst && place?.at) door?.fx?.(row.burst, place.at, place);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TECHFX1-the-sound-ungated",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "if (row.sound && enhancedSoundsOn()) {",
-    "new": "if (row.sound) {",
+    "old": "  if (row.sound && enhancedSoundsOn()) {",
+    "new": "  if (row.sound) {",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TECHFX1-the-swing-release-uncued",
     "file": "src/combat/techniques.js",
-    "old": "    _s.act = { kind: 'swing', hand, blow, pw, t: 0 };\n    cue(hand, 'release', ctx);   // TECH-FX\n",
-    "new": "    _s.act = { kind: 'swing', hand, blow, pw, t: 0 };\n",
+    "old": "    _s.act = { kind: 'swing', hand, blow, pw, t: 0 };\n    cue(hand, 'release', ctx); // TECH-FX\n    return;",
+    "new": "    _s.act = { kind: 'swing', hand, blow, pw, t: 0 };\n    return;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TECHFX1-the-leap-release-uncued",
     "file": "src/combat/techniques.js",
-    "old": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
-    "new": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n",
+    "old": "  cue(hand, 'release', ctx); // TECH-FX\n}",
+    "new": "}",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TECHFX1-the-hit-off-the-machine",
     "file": "src/combat/techniques.js",
-    "old": "Array.isArray(evs) && evs.includes('hit')) { a.hitCued = true; cue(a.hand, 'hit'",
-    "new": "Array.isArray(evs)) { a.hitCued = true; cue(a.hand, 'hit'",
+    "old": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs) && evs.includes('hit')) {",
+    "new": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs)) {",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "TECHFX1-the-hit-twice",
     "file": "src/combat/techniques.js",
-    "old": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs)",
-    "new": "  if (a?.kind === 'swing' && Array.isArray(evs)",
+    "old": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs) && evs.includes('hit')) {",
+    "new": "  if (a?.kind === 'swing' && Array.isArray(evs) && evs.includes('hit')) {",
     "tests": [
       "test/systems/techfx1.test.js"
     ],
@@ -167,7 +167,7 @@
   {
     "name": "TECHFX1-the-hit-never",
     "file": "src/combat/techniques.js",
-    "old": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs) && evs.includes('hit')) { a.hitCued = true; cue(a.hand, 'hit', ctx, { from: a.from }); }",
+    "old": "  if (a?.kind === 'swing' && !a.hitCued && Array.isArray(evs) && evs.includes('hit')) {\n    a.hitCued = true;\n    cue(a.hand, 'hit', ctx, { from: a.from });\n  }",
     "new": "",
     "tests": [
       "test/systems/techfx1.test.js",
@@ -177,8 +177,8 @@
   {
     "name": "TECHFX1-the-run-start-forgotten",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
-    "new": ", use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "old": "    from: [from[0], from[1], from[2]],\n    use,",
+    "new": "    use,",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "TECHFX1-the-landing-strike-unpassed",
     "file": "src/combat/techniques.js",
-    "old": "_s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0, from: a.from };",
-    "new": "_s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0 };",
+    "old": "      if (ctx.startSwing?.(a.hand.tech.strike)) _s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0, from: a.from };",
+    "new": "      if (ctx.startSwing?.(a.hand.tech.strike)) _s.act = { kind: 'swing', hand: a.hand, blow, pw, t: 0 };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "TECHFX1-the-whirlwind-spun-the-other-way",
     "file": "src/combat/techniques.js",
-    "old": "spin: tech?.strike === 'StrikeRight' ? -1 : 1",
-    "new": "spin: tech?.strike === 'StrikeRight' ? 1 : -1",
+    "old": "        spin: tech?.strike === 'StrikeRight' ? -1 : 1,",
+    "new": "        spin: tech?.strike === 'StrikeRight' ? 1 : -1,",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "TECHFX1-the-star-off-the-front",
     "file": "src/combat/techniques.js",
-    "old": "return { at: [f[0] + fw[0] * 1.2, f[1] + 1.1, f[2] + fw[2] * 1.2]",
-    "new": "return { at: [f[0], f[1] + 1.1, f[2]]",
+    "old": "      return { at: [f[0] + fw[0] * 1.2, f[1] + 1.1, f[2] + fw[2] * 1.2], ground: f[1], yaw, dir: [-fw[0], 0, -fw[2]] };",
+    "new": "      return { at: [f[0], f[1] + 1.1, f[2]], ground: f[1], yaw, dir: [-fw[0], 0, -fw[2]] };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "TECHFX1-the-landings-at-the-loose",
     "file": "src/combat/techniques.js",
-    "old": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
-    "new": "return { t: q.at, at: at(q.from, q.dir, d) };",
+    "old": "      return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
+    "new": "      return { t: q.at, at: at(q.from, q.dir, d) };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "TECHFX1-a-landing-off-its-line",
     "file": "src/combat/techniques.js",
-    "old": "const hit = rayHit(q.from, q.dir, span + 2, ctx.collider), d = Number.isFinite(hit) ? hit : span;",
-    "new": "const d = span;",
+    "old": "      const hit = rayHit(q.from, q.dir, span + 2, ctx.collider),\n        d = Number.isFinite(hit) ? hit : span;",
+    "new": "      const d = span;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "TECHFX1-the-close-twice",
     "file": "src/combat/techniques.js",
-    "old": "if (a.lands && a.li === a.lands.length && !a.closed)",
-    "new": "if (a.lands && a.li === a.lands.length)",
+    "old": "    if (a.lands && a.li === a.lands.length && !a.closed) {",
+    "new": "    if (a.lands && a.li === a.lands.length) {",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "TECHFX1-the-close-off-the-reach",
     "file": "src/combat/techniques.js",
-    "old": "cue(a.hand, 'close', ctx, { at: a.point, r: a.hand.tech.radius });",
-    "new": "cue(a.hand, 'close', ctx, { at: a.point });",
+    "old": "      cue(a.hand, 'close', ctx, { at: a.point, r: a.hand.tech.radius });",
+    "new": "      cue(a.hand, 'close', ctx, { at: a.point });",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "TECHFX1-the-load-unreset",
     "file": "src/combat/techniques.js",
-    "old": "    if (_s.restores != null) resetTechniqueFx();   // TECH-FX: and no spring of the moment before it still moving the view\n",
-    "new": "",
+    "old": "    if (_s.restores != null) resetTechniqueFx(); // TECH-FX: and no spring of the moment before it still moving the view\n    _s.restores = loads;",
+    "new": "    _s.restores = loads;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "TECHFX1-the-view-unapplied",
     "file": "src/player/climb/climbFeel.js",
-    "old": "      if (this.tech) applyClimbView(view, this.tech);\n",
-    "new": "",
+    "old": "      if (this.tech) applyClimbView(view, this.tech);\n      return view;",
+    "new": "      return view;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "TECHFX1-first-person-ignored",
     "file": "src/player/climb/climbFeel.js",
-    "old": "this.tech = firstPerson ? techniqueView() : null;",
-    "new": "this.tech = techniqueView();",
+    "old": "      this.tech = firstPerson ? techniqueView() : null;",
+    "new": "      this.tech = techniqueView();",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "TECHFX1-the-lens-unadded",
     "file": "src/player/climb/climbFeel.js",
-    "old": "fovRad() { return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180; }",
-    "new": "fovRad() { return ((this.fx?.fov ?? 0) * Math.PI) / 180; }",
+    "old": "      return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180;",
+    "new": "      return ((this.fx?.fov ?? 0) * Math.PI) / 180;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "TECHFX1-the-sky-pitch-dropped",
     "file": "src/player/climb/climbFeel.js",
-    "old": "pitch() { return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0); }",
-    "new": "pitch() { return this.applied?.pitch ?? 0; }",
+    "old": "      return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0);",
+    "new": "      return this.applied?.pitch ?? 0;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "TECHFX1-AUDIT-held-with-the-body",
     "file": "src/player/climb/climbFeel.js",
-    "old": "      stepTechniqueFx(dt);\n      const m = player();\n      if (!m || held) return;\n",
-    "new": "      const m = player();\n      if (!m || held) return;\n      stepTechniqueFx(dt);\n",
+    "old": "      stepTechniqueFx(dt);\n      const m = player();\n      if (!m || held) return;",
+    "new": "      const m = player();\n      if (!m || held) return;\n      stepTechniqueFx(dt);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -341,8 +341,8 @@
   {
     "name": "TECHFX1-a-recipe-dropped",
     "file": "src/render/spellImpactFx.js",
-    "old": "      case 'chop':",
-    "new": "      case 'chop-gone':",
+    "old": "      case 'chop': // Headsman's Chop: the star, the spray and a small ring under it",
+    "new": "      case 'chop-gone': // Headsman's Chop: the star, the spray and a small ring under it",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "TECHFX1-the-rings-uncapped",
     "file": "src/render/spellImpactFx.js",
-    "old": "    if (this.decals.length > 160) return;\n",
-    "new": "",
+    "old": "    if (this.decals.length > 160) return;\n    this.decals.push({",
+    "new": "    this.decals.push({",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "TECHFX1-the-trail-guard",
     "file": "src/render/spellImpactFx.js",
-    "old": "        if (!(L > 0.3)) return false;\n",
-    "new": "",
+    "old": "        if (!(L > 0.3)) return false;\n        const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));",
+    "new": "        const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "TECHFX1-the-sweep-unspun",
     "file": "src/render/spellImpactFx.js",
-    "old": "const sg = spin < 0 ? -1 : 1;",
-    "new": "const sg = 1;",
+    "old": "        const sg = spin < 0 ? -1 : 1;",
+    "new": "        const sg = 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "TECHFX1-the-place-unguarded",
     "file": "src/render/spellImpactFx.js",
-    "old": "if (!vec3(at)) return false;\n    if (!Number.isFinite(yaw))",
-    "new": "if (!at) return false;\n    if (!Number.isFinite(yaw))",
+    "old": "    if (!vec3(at)) return false;",
+    "new": "    if (!at) return false;",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "TECHFX1-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "\"port:techniqueMotion\", ",
-    "new": "",
+    "old": "      'port:techniqueMotion',\n      'port:peerSpellShake',",
+    "new": "      'port:peerSpellShake',",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -441,8 +441,8 @@
   {
     "name": "TECHFX1-the-default-off",
     "file": "src/systems/uiPrefs.js",
-    "old": "  techniqueMotion: 1,\n",
-    "new": "  techniqueMotion: 0,\n",
+    "old": "  techniqueMotion: 1,",
+    "new": "  techniqueMotion: 0,",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -450,8 +450,8 @@
   {
     "name": "TECHFX1-the-marks-fresh-list",
     "file": "src/combat/techniques.js",
-    "old": "if (!_s.aim && !_s.act) return NONE;",
-    "new": "if (!_s.aim && !_s.act) return [];",
+    "old": "  if (!_s.aim && !_s.act) return NONE; // TECH-FX: no aim and no act - no mark, and no new list a frame",
+    "new": "  if (!_s.aim && !_s.act) return []; // TECH-FX: no aim and no act - no mark, and no new list a frame",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "TECHFX1-the-chip-fresh-list",
     "file": "src/combat/techniques.js",
-    "old": "if (!hand || (!hand.signature && !lootRarityOn())) return NONE;",
-    "new": "if (!hand || (!hand.signature && !lootRarityOn())) return [];",
+    "old": "  if (!hand || (!hand.signature && !lootRarityOn())) return NONE; // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame (MARTIAL3: a signature needs no ladder)",
+    "new": "  if (!hand || (!hand.signature && !lootRarityOn())) return []; // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame (MARTIAL3: a signature needs no ladder)",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -486,8 +486,8 @@
   {
     "name": "TECHFX1-the-fold-eye-destructured",
     "file": "src/player/climb/climbFeel.js",
-    "old": "const e = fx.eye, ex = e[0], ey = e[1], ez = e[2];",
-    "new": "const [ex, ey, ez] = fx.eye;",
+    "old": "  const e = fx.eye,\n    ex = e[0],\n    ey = e[1],\n    ez = e[2]; // TECH-FX: read by index - a destructure made an iterator a frame (16 B, test/systems/techfx1.test.js)",
+    "new": "  const [ex, ey, ez] = fx.eye; // TECH-FX: read by index - a destructure made an iterator a frame (16 B, test/systems/techfx1.test.js)",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "TECHFX1-AUDIT-the-run-start-aliased",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
-    "new": ", from, use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "old": "    from: [from[0], from[1], from[2]],",
+    "new": "    from,",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -545,8 +545,8 @@
   {
     "name": "TECHFX1-AUDIT-the-roll-unmirrored",
     "file": "src/combat/technique/techniqueFx.js",
-    "old": "kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m);",
-    "new": "kick(FX_CH.roll, (c.roll ?? 0) * DEG * m);",
+    "old": "    kick(FX_CH.roll, -(c.roll ?? 0) * DEG * m);",
+    "new": "    kick(FX_CH.roll, (c.roll ?? 0) * DEG * m);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -585,8 +585,8 @@
   {
     "name": "TECHFX1-AUDIT-the-host-reset-forgets-the-feel",
     "file": "src/player/climb/climbFeel.js",
-    "old": "sounds?.reset(); resetTechniqueFx(); this.fx",
-    "new": "sounds?.reset(); this.fx",
+    "old": "      resetTechniqueFx();\n      this.fx = null;",
+    "new": "      this.fx = null;",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -595,8 +595,8 @@
   {
     "name": "TECHFX1-AUDIT-the-start-unmoved",
     "file": "src/combat/techniques.js",
-    "old": "    move(act.from);   // AUDIT TECH-FX",
-    "new": "    // AUDIT TECH-FX",
+    "old": "    move(act.from); // AUDIT TECH-FX: where a leap or a dash began (a Lunge's trail) - its own point, carried into the landing's swing",
+    "new": "    // AUDIT TECH-FX: where a leap or a dash began (a Lunge's trail) - its own point, carried into the landing's swing",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "TECHFX1-AUDIT-the-landings-unmoved",
     "file": "src/combat/techniques.js",
-    "old": "    for (const l of act.lands ?? []) move(l.at);",
-    "new": "    // the landings left behind",
+    "old": "    for (const l of act.lands ?? []) move(l.at); // ...and where each falling shaft lands (each its own point, never a queue's)",
+    "new": "    // the landings left behind   // ...and where each falling shaft lands (each its own point, never a queue's)",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "TECHFX1-AUDIT-a-landing-aliased",
     "file": "src/combat/techniques.js",
-    "old": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
-    "new": "return { t: q.at + d / ARROW_FLIGHT_SPEED, at: q.to };",
+    "old": "      return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };",
+    "new": "      return { t: q.at + d / ARROW_FLIGHT_SPEED, at: q.to };",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "TECHFX1-AUDIT-the-chip-word-every-frame",
     "file": "src/combat/techniques.js",
-    "old": "  const left = techniqueWait(hand.id);\n  chip.name = techniqueName(hand);",
-    "new": "  const left = techniqueWait(hand.id);\n  if (typeof keyName === 'function') keyName(action);\n  chip.name = techniqueName(hand);",
+    "old": "  chip.name = techniqueName(hand);",
+    "new": "  if (typeof keyName === 'function') keyName(action);\n  chip.name = techniqueName(hand);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -645,8 +645,8 @@
   {
     "name": "TECHFX1-AUDIT-the-hand-memo-blind-to-a-value",
     "file": "src/combat/techniques.js",
-    "old": "h.id === line.param && h.value === line.value && h.known === known",
-    "new": "h.id === line.param && h.known === known",
+    "old": "  if (h && h.item === item && h.line === line && h.id === line.param && h.value === line.value && h.known === known)\n    return h.hand;",
+    "new": "  if (h && h.item === item && h.line === line && h.id === line.param && h.known === known) return h.hand;",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -655,8 +655,8 @@
   {
     "name": "TECHFX1-AUDIT-the-world-word-uncached",
     "file": "src/ui/techniqueKeyWord.js",
-    "old": "if (_store !== b || _rev !== rev || _pad !== pad) {",
-    "new": "if (true) {",
+    "old": "  if (_store !== b || _rev !== rev || _pad !== pad) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "TECHFX1-AUDIT-a-literal-speed",
     "file": "src/combat/techniques.js",
-    "old": "h / ARROW_FLIGHT_SPEED + 0.2",
-    "new": "h / 33.75 + 0.2",
+    "old": "    until: t.delay + t.spread + h / ARROW_FLIGHT_SPEED + 0.2,",
+    "new": "    until: t.delay + t.spread + h / 33.75 + 0.2,",
     "tests": [
       "test/systems/techfx1_audit.test.js"
     ]
@@ -710,8 +710,8 @@
   {
     "name": "TECHFX1-AUDIT-the-step-boxed",
     "file": "src/combat/techniques.js",
-    "old": "  if (_s.act) stepAct(step, ctx);",
-    "new": "  stepAct(step, ctx);",
+    "old": "  if (_s.act) stepAct(step, ctx); // AUDIT TECH-FX: no act, no call (its number boxed a frame at rest)",
+    "new": "  stepAct(step, ctx); // AUDIT TECH-FX: no act, no call (its number boxed a frame at rest)",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -719,8 +719,8 @@
   {
     "name": "TECHFX1-AUDIT-the-marks-clock-read",
     "file": "src/combat/techniques.js",
-    "old": "export const techniqueMarksNow = (now = undefined) => (!_s.aim && !_s.act ? NONE : techniqueMarks(now",
-    "new": "export const techniqueMarksNow = (now = undefined) => (techniqueMarks(now",
+    "old": "  !_s.aim && !_s.act\n    ? NONE\n    : techniqueMarks(now ?? (typeof performance !== 'undefined' ? performance.now() / 1000 : 0)); // AUDIT TECH-FX: at rest, no clock read (its number boxed a frame)",
+    "new": "  techniqueMarks(now ?? (typeof performance !== 'undefined' ? performance.now() / 1000 : 0)); // AUDIT TECH-FX: at rest, no clock read (its number boxed a frame)",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -737,8 +737,8 @@
   {
     "name": "TECHFX1-AUDIT-the-yaw-unguarded",
     "file": "src/render/spellImpactFx.js",
-    "old": "    if (!Number.isFinite(yaw)) yaw = 0;",
-    "new": "    // the yaw unguarded",
+    "old": "    if (!Number.isFinite(yaw)) yaw = 0; // AUDIT TECH-FX: a lost facing faces +z rather than writing NaN instances",
+    "new": "    // the yaw unguarded   // AUDIT TECH-FX: a lost facing faces +z rather than writing NaN instances",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "TECHFX1-AUDIT-the-arc-not-its-own",
     "file": "src/render/spellImpactFx.js",
-    "old": "const hw = Number.isFinite(half) && half > 0 ? Math.min(half, Math.PI) : 80 * Math.PI / 180;",
-    "new": "const hw = 80 * Math.PI / 180;",
+    "old": "        const hw = Number.isFinite(half) && half > 0 ? Math.min(half, Math.PI) : (80 * Math.PI) / 180;",
+    "new": "        const hw = (80 * Math.PI) / 180;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "TECHFX1-AUDIT-the-typed-point-refused",
     "file": "src/render/spellImpactFx.js",
-    "old": "const vec3 = (v) => v != null && v.length >= 3 &&",
-    "new": "const vec3 = (v) => Array.isArray(v) && v.length >= 3 &&",
+    "old": "  v != null && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);",
+    "new": "  Array.isArray(v) && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]

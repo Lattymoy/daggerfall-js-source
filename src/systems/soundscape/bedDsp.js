@@ -7,8 +7,16 @@
 /** A second-order section's coefficients (the audio EQ cookbook's band-pass at 0 dB peak, low-pass or high-pass), a0
  *  divided out: [b0, b1, b2, a1, a2]. */
 export function section(type, f0, q, fs) {
-  const w0 = (2 * Math.PI * f0) / fs, cos = Math.cos(w0), alpha = Math.sin(w0) / (2 * q), a0 = 1 + alpha;
-  const b = type === 'bandpass' ? [alpha, 0, -alpha] : type === 'highpass' ? [(1 + cos) / 2, -(1 + cos), (1 + cos) / 2] : [(1 - cos) / 2, 1 - cos, (1 - cos) / 2];
+  const w0 = (2 * Math.PI * f0) / fs,
+    cos = Math.cos(w0),
+    alpha = Math.sin(w0) / (2 * q),
+    a0 = 1 + alpha;
+  const b =
+    type === 'bandpass'
+      ? [alpha, 0, -alpha]
+      : type === 'highpass'
+        ? [(1 + cos) / 2, -(1 + cos), (1 + cos) / 2]
+        : [(1 - cos) / 2, 1 - cos, (1 - cos) / 2];
   return [b[0] / a0, b[1] / a0, b[2] / a0, (-2 * cos) / a0, (1 - alpha) / a0];
 }
 

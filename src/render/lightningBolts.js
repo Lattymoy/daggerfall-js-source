@@ -24,7 +24,7 @@
 // Built by the enhanced lane at boot (the wisps' law): a shader fault is a
 // constructor fault the boot probe sees.
 
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /** The channel's hot core, metres across (its halo is BOLT_HALO times it). */
 export const BOLT_CORE_M = 2.5;
@@ -41,7 +41,9 @@ export const BOLT_MAX_SEGS = 2048;
 const HEAD = `#version 300 es
 precision highp float;
 `;
-export const BOLT_VS = HEAD + `layout(location = 0) in vec3 aA;
+export const BOLT_VS =
+  HEAD +
+  `layout(location = 0) in vec3 aA;
 layout(location = 1) in vec3 aB;
 layout(location = 2) in vec2 aCorner;   // x: along the segment 0..1, y: across it -1..1
 layout(location = 3) in float aGlow;    // the strike's brightness now x the segment's weight
@@ -74,7 +76,9 @@ void main() {
   vThin = clamp(uCore / core, 0.0, 1.0);
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const BOLT_FS = HEAD + `in float vAcross;
+export const BOLT_FS =
+  HEAD +
+  `in float vAcross;
 in float vGlow;
 in float vDist;
 in float vThin;
@@ -108,7 +112,14 @@ export function farOf(proj) {
 }
 
 /** Two triangles a segment: (along, across) at each corner. */
-const CORNERS = [[0, -1], [1, -1], [1, 1], [0, -1], [1, 1], [0, 1]];
+const CORNERS = [
+  [0, -1],
+  [1, -1],
+  [1, 1],
+  [0, -1],
+  [1, 1],
+  [0, 1],
+];
 /** Floats a vertex: A xyz, B xyz, corner xy, glow. */
 export const BOLT_STRIDE = 9;
 
@@ -126,9 +137,15 @@ export function boltVertices(bolts, out) {
       const glow = b.bright * s[i + 6];
       for (const [al, ac] of CORNERS) {
         const o = v * BOLT_STRIDE;
-        out[o] = s[i]; out[o + 1] = s[i + 1]; out[o + 2] = s[i + 2];
-        out[o + 3] = s[i + 3]; out[o + 4] = s[i + 4]; out[o + 5] = s[i + 5];
-        out[o + 6] = al; out[o + 7] = ac; out[o + 8] = glow;
+        out[o] = s[i];
+        out[o + 1] = s[i + 1];
+        out[o + 2] = s[i + 2];
+        out[o + 3] = s[i + 3];
+        out[o + 4] = s[i + 4];
+        out[o + 5] = s[i + 5];
+        out[o + 6] = al;
+        out[o + 7] = ac;
+        out[o + 8] = glow;
         v++;
       }
     }
@@ -140,7 +157,12 @@ export function boltVertices(bolts, out) {
  *  BOLT_COLOR's group. One draw a colour: a frame holds one or two (the weather's storms, the dread's). Pure. */
 export function boltGroups(bolts) {
   const groups = new Map();
-  for (const b of bolts) { const c = b.color ?? BOLT_COLOR; let g = groups.get(c); if (!g) groups.set(c, g = []); g.push(b); }
+  for (const b of bolts) {
+    const c = b.color ?? BOLT_COLOR;
+    let g = groups.get(c);
+    if (!g) groups.set(c, (g = []));
+    g.push(b);
+  }
   return [...groups];
 }
 
@@ -150,18 +172,24 @@ export class LightningBoltsRenderer {
     const prog = buildProgram(gl, BOLT_VS, BOLT_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uEye', 'uPx', 'uCore', 'uHalo', 'uMinPx', 'uFar', 'uColor', 'uSeen']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uEye', 'uPx', 'uCore', 'uHalo', 'uMinPx', 'uFar', 'uColor', 'uSeen'])
+      this.u[n] = gl.getUniformLocation(prog, n);
     this.data = new Float32Array(BOLT_MAX_SEGS * 6 * BOLT_STRIDE);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, this.data.byteLength, gl.DYNAMIC_DRAW);
-    const F = 4, S = BOLT_STRIDE * F;
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 3 * F);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 6 * F);
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, S, 8 * F);
+    const F = 4,
+      S = BOLT_STRIDE * F;
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 3 * F);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 6 * F);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, S, 8 * F);
     gl.bindVertexArray(null);
     this.vao = vao;
     this._vp = new Float32Array(16);
@@ -177,25 +205,30 @@ export class LightningBoltsRenderer {
   draw(bolts, proj, view, eye, seen = BOLT_SEEN_M, viewH = 0) {
     this.drawn = 0;
     if (!bolts?.length) return;
-    for (const [color, group] of boltGroups(bolts)) this._drawGroup(group, color, proj, view, eye, seen, viewH);   // EVENT1: a colour a draw
+    for (const [color, group] of boltGroups(bolts)) this._drawGroup(group, color, proj, view, eye, seen, viewH); // EVENT1: a colour a draw
   }
 
   _drawGroup(bolts, color, proj, view, eye, seen, viewH) {
     const verts = boltVertices(bolts, this.data);
     if (!verts) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
-    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, viewH || gl.drawingBufferHeight)));   // proj[5] = 1 / tan(fov / 2)
+    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, viewH || gl.drawingBufferHeight))); // proj[5] = 1 / tan(fov / 2)
     gl.uniform1f(U.uFar, farOf(proj));
-    gl.uniform1f(U.uCore, BOLT_CORE_M); gl.uniform1f(U.uHalo, BOLT_HALO); gl.uniform1f(U.uMinPx, BOLT_MIN_PX);
-    gl.uniform3fv(U.uColor, color); gl.uniform1f(U.uSeen, Math.max(1000, seen));
+    gl.uniform1f(U.uCore, BOLT_CORE_M);
+    gl.uniform1f(U.uHalo, BOLT_HALO);
+    gl.uniform1f(U.uMinPx, BOLT_MIN_PX);
+    gl.uniform3fv(U.uColor, color);
+    gl.uniform1f(U.uSeen, Math.max(1000, seen));
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.data.subarray(0, verts * BOLT_STRIDE));
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.drawArrays(gl.TRIANGLES, 0, verts);

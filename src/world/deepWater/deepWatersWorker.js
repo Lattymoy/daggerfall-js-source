@@ -35,32 +35,36 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WoodsFile } from '../../formats/woodsFile.js';
-import { buildGlobal, DeepWatersBake, PLANE_KEEP_RADIUS, bakeMeetsAt } from './deepWatersBake.js';   // AUDIT ETHER-OW C1-2: the planes' keep, one home; ACROSS-EDGE: the towns' meets
+import { buildGlobal, DeepWatersBake, PLANE_KEEP_RADIUS, bakeMeetsAt } from './deepWatersBake.js'; // AUDIT ETHER-OW C1-2: the planes' keep, one home; ACROSS-EDGE: the towns' meets
 import { cachedBake, bakeCacheKey, fnv1a, rectsFingerprint, rectsLookup } from './deepWatersBakeCache.js';
 import { buildDeepWatersPixel, deepWatersPixelTransfers } from './deepWatersPixel.js';
-import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP
+import { worldBakes } from '../etherWatersBake.js'; // ETHER-DEEP
 import { etherWoods } from '../ethericSea.js';
-import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP
+import { TamrielWatersBake } from '../tamrielWatersBake.js'; // TAMRIEL-DEEP
 import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
-import { gen2Install } from '../gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
+import { gen2Install } from '../gen2/gen2Ground.js'; // The published regions
 
+let bake = null; // this thread's DeepWatersBake, once built
+let reader = null; // TAMRIEL-DEEP: the WOODS reader it was built over, the continent's ground composed on it
+let failed = null; // the build's error message, when it failed
+const waiting = []; // pixel messages that arrived before the bake
 
-let bake = null;            // this thread's DeepWatersBake, once built
-let reader = null;          // TAMRIEL-DEEP: the WOODS reader it was built over, the continent's ground composed on it
-let failed = null;          // the build's error message, when it failed
-const waiting = [];         // pixel messages that arrived before the bake
-
-globalThis.onmessage = (ev) => { handle(ev.data ?? {}); };
+globalThis.onmessage = (ev) => {
+  handle(ev.data ?? {});
+};
 
 async function handle(m) {
   if (m.t === 'build') return build(m);
   if (m.t === 'tamriel') {
-    if (!bake) { if (!failed) waiting.push(m); return; }
+    if (!bake) {
+      if (!failed) waiting.push(m);
+      return;
+    }
     setTamrielTrace(m.trace ?? null);
     setTamrielFit(m.fit ?? null);
-    gen2Install(m.wg2 ?? [], m.fit ?? null);   // WG2: the published regions with the trace
+    gen2Install(m.wg2 ?? [], m.fit ?? null); // The published regions with the trace
     dropGroundCache();
     return bake.setTamriel?.(m.trace ? new TamrielWatersBake({ woods: groundWoods(reader), bay: bake.bay }) : null);
   }
@@ -77,14 +81,30 @@ async function build(m) {
     if (!woods.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the deep waters worker');
     const rows = m.rects ?? [];
     const key = bakeCacheKey({ woodsHash: fnv1a(m.woodsBytes), rectsHash: rectsFingerprint(rows) });
-    const locationRectAt = rectsLookup(rows), meetsAt = bakeMeetsAt(woods, locationRectAt);   // ACROSS-EDGE: one read of each town's meet
+    const locationRectAt = rectsLookup(rows),
+      meetsAt = bakeMeetsAt(woods, locationRectAt); // ACROSS-EDGE: one read of each town's meet
     const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt, meetsAt }) });
     if (!g) throw new Error('deep waters bake produced nothing');
     reader = woods;
-    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt, meetsAt }), { woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent });
+    bake = worldBakes(new DeepWatersBake({ woods, global: g, locationRectAt, meetsAt }), {
+      woods: m.ether ? etherWoods(woods) : woods,
+      ether: m.ether ?? null,
+      continent: !!m.continent,
+    });
     // the main thread's copy crosses; this thread's arrays stay behind for the pixels
-    const record = { state: g.state.slice(), classes: g.classes.slice(), partialIndex: g.partialIndex.slice(), partialBits: g.partialBits.slice(), stats: { ...g.stats, cached: !!g.cached } };
-    globalThis.postMessage({ t: 'built', record }, [record.state.buffer, record.classes.buffer, record.partialIndex.buffer, record.partialBits.buffer]);
+    const record = {
+      state: g.state.slice(),
+      classes: g.classes.slice(),
+      partialIndex: g.partialIndex.slice(),
+      partialBits: g.partialBits.slice(),
+      stats: { ...g.stats, cached: !!g.cached },
+    };
+    globalThis.postMessage({ t: 'built', record }, [
+      record.state.buffer,
+      record.classes.buffer,
+      record.partialIndex.buffer,
+      record.partialBits.buffer,
+    ]);
   } catch (e) {
     failed = e?.message ?? String(e);
     globalThis.postMessage({ t: 'error', message: failed });
@@ -95,7 +115,10 @@ async function build(m) {
 let sinceEvict = 0;
 function pixel(m) {
   try {
-    if (Array.isArray(m.centre) && ++sinceEvict >= 16) { sinceEvict = 0; bake.evictOutside(m.centre[0], m.centre[1], PLANE_KEEP_RADIUS); }
+    if (Array.isArray(m.centre) && ++sinceEvict >= 16) {
+      sinceEvict = 0;
+      bake.evictOutside(m.centre[0], m.centre[1], PLANE_KEEP_RADIUS);
+    }
     const result = buildDeepWatersPixel(m.job, bake);
     globalThis.postMessage({ t: 'pixel', id: m.id, result }, deepWatersPixelTransfers(result));
   } catch (e) {

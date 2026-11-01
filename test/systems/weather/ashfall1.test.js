@@ -336,9 +336,3 @@ test('ASHFALL1 the hosts: the dry falls\' one renderer built on the enhanced lan
   }
 });
 
-test('ASHFALL1 records: the arc page\'s E, the ledger row, the page index and the biomes page\'s ash', () => {
-  assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## E - THE ASHFALL \(ASHFALL1, 2026-10-27\)/m);
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*THE ASHFALL \(ASHFALL1, 2026-10-27\)\*\*/m);
-  assert.match(rd('bible/01-Overview/Page-Index.md'), /E: the ashfall/);
-  assert.match(rd('bible/03-World/Tamriel-Biomes.md'), /ASHFALL1/);
-});

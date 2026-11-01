@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 CONTENT PACKAGES (bible/03-World/World-2-Canon.md, "Packages"): an editor's document as a file a designer hands
+// WG2 CONTENT PACKAGES ("Packages"): an editor's document as a file a designer hands
 // on - the manifest's versions it was made under, its region and the bake it edits, its layers - with a print over the
 // lot, so a package that was changed on the way, or made against another bake or generator, is refused on import with
 // the reason.

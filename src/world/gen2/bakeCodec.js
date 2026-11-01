@@ -1,4 +1,4 @@
-// WG2 THE BAKE'S BYTES (bible/03-World/World-2-Canon.md, "The bake file"): `WG2B`, a little-endian header length,
+// WG2 THE BAKE'S BYTES ("The bake file"): `WG2B`, a little-endian header length,
 // the header as JSON (the spec, the versions, the vector water and the sites) and the planes, each a typed array of
 // the region's grid quantised to a fixed step. A runtime module: the terrain worker decodes it. The same bake encodes
 // to the same bytes on every machine, and its print (FNV-1a of them) is what the manifest pins.

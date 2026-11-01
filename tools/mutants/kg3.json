@@ -1,1265 +1,1265 @@
 [
- {
-  "name": "KG3-S-beat-turn-end",
-  "file": "src/net/gambit/gambitTable.js",
-  "old": "export const GAMBIT_TURN_END_MS = 900;",
-  "new": "export const GAMBIT_TURN_END_MS = 1000;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-beat-pause",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_REGULAR_PAUSE_MS = 1200;",
-  "new": "export const GAMBIT_REGULAR_PAUSE_MS = 1000;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-beat-result",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_RESULT_MS = 1300;",
-  "new": "export const GAMBIT_RESULT_MS = 1200;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-pause-skipped",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "      if (!this.over && this.state.turn === 1) this.actAt = now + GAMBIT_REGULAR_PAUSE_MS;",
-  "new": "      if (!this.over && this.state.turn === 1) this.actAt = now;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-turn-ended-at-once",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "else if (this.state.ending) { this.endAt = now + GAMBIT_TURN_END_MS; this.actAt = null; }",
-  "new": "else if (this.state.ending) { this.endAt = now; this.actAt = null; }",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-refusal-applied",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "      if (out.refused === 'rand') this._decide(null, 'void', now);",
-  "new": "      this._decide(null, 'void', now);",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-refusal-ends-turn",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "      return out.refused;\n    }\n    this._apply(out, now);",
-  "new": "      this.state = gambitAct(this.state, 0, { type: 'end' }, this.rand32).state ?? this.state; return out.refused;\n    }\n    this._apply(out, now);",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-result-at-once",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "    this.resultAt = now + GAMBIT_RESULT_MS;",
-  "new": "    this.resultAt = now;",
-  "tests": [
-   "test/systems/kg3_session.test.js",
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-S-forfeit-winner",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "    this._decide(1, 'forfeit', now);",
-  "new": "    this._decide(0, 'forfeit', now);",
-  "tests": [
-   "test/systems/kg3_session.test.js",
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-S-pay",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "{ pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake }",
-  "new": "{ pay: this.stake, net: this.stake }",
-  "tests": [
-   "test/systems/kg3_session.test.js",
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-S-net-sign",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": ": { pay: 0, net: -this.stake };",
-  "new": ": { pay: 0, net: this.stake };",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-void-kept",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "return { pay: winner === null ? this.stake : 0, net: 0 };",
-  "new": "return { pay: 0, net: 0 };",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-regular-idle",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "    if (this.state.turn !== 1 || this.state.ending || this.actAt === null || now < this.actAt) return;",
-  "new": "    if (this.state.turn !== 1 || this.state.ending || this.actAt === null || now < this.actAt || this.state) return;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-book-day-kept",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "const v = e && e.day === day && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
-  "new": "const v = e && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-night-floor",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "return Math.max(0, tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name));",
-  "new": "return tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name);",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-book-bound",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "return Object.fromEntries(keys.slice(0, GAMBIT_PURSES_BOOK_MAX).map((k) => [k, next[k]]));",
-  "new": "return Object.fromEntries(keys.map((k) => [k, next[k]]));",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-book-tie",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "(next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0)",
-  "new": "(next[b]?.day ?? 0) - (next[a]?.day ?? 0)",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-names-cap",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX))",
-  "new": "net: Object.fromEntries(Object.entries(names))",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-S-restore-checks",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "if (!v || !Number.isSafeInteger(v.day) || !v.net || typeof v.net !== 'object' || Array.isArray(v.net)) continue;",
-  "new": "if (!v || !v.net) continue;",
-  "tests": [
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-P-next-arm-short",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "    else if (short) { next = 'short';",
-  "new": "    else if (short && !short) { next = 'short';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-next-enabled-early",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "const ready = !!chosen && (forFun || (!short && stake > 0));",
-  "new": "const ready = !!chosen;",
-  "tests": [
-   "test/systems/kg3_panel.test.js",
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-P-blunder-pct",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "const T = r.tier, blunder = pct(T.blunder);",
-  "new": "const T = r.tier, blunder = pct(T.blunder) + 1;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-never-blunders",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "    fields: blunder > 0\n",
-  "new": "    fields: blunder >= 0\n",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-steps",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1)",
-  "new": "Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key))",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-night-line",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "      : r.forFun ? t('cards.kingsGambit.regular.forFun'",
-  "new": "      : !r ? t('cards.kingsGambit.regular.forFun'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-stake-multiplier",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_STAKE_MULTS = Object.freeze([1, 2, 5]);",
-  "new": "export const GAMBIT_STAKE_MULTS = Object.freeze([1, 2, 4]);",
-  "tests": [
-   "test/systems/kg3_panel.test.js",
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-P-purse-unread",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "const why = gold > purse ? stakePurse(purse, gold)",
-  "new": "const why = gold < 0 ? stakePurse(purse, gold)",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-night-unread",
-  "file": "src/ui/gambitTableHud.js",
-  "old": ": gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
-  "new": ": null;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-win-pays",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_WIN_PAYS = 2;",
-  "new": "export const GAMBIT_WIN_PAYS = 3;",
-  "tests": [
-   "test/systems/kg3_panel.test.js",
-   "test/systems/kg3_session.test.js"
-  ]
- },
- {
-  "name": "KG3-P-court",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "{ name: c.courts[2].name, crown: c.crown }",
-  "new": "{ name: c.courts[1].name, crown: c.crown }",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-crown-order",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_CROWNS = Object.freeze(SUIT_CROWNS.map((c) => c.crown.toLowerCase()));",
-  "new": "export const GAMBIT_CROWNS = Object.freeze(SUIT_CROWNS.map((c) => c.crown.toLowerCase()).reverse());",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-king-numbers",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "{ level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk }",
-  "new": "{ level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk + 1 }",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-grid-order",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "return KG_ROSTER.slice().sort((a, b) => a.cost - b.cost ||",
-  "new": "return KG_ROSTER.slice().sort((a, b) => b.cost - a.cost ||",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-chips",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.hp }),",
-  "new": "t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.atk }),",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-army-refusal-dim",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "        const ok = canRecruit(army, u.id);",
-  "new": "        const ok = !!u;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-start-stake",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun",
-  "new": "label: GAMBIT_PRESS.startFun",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-fallen",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "const fallen = [0, 1].map((s) => (game.dealt?.[s] ?? 0) - st.pieces.filter((x) => x.side === s).length);",
-  "new": "const fallen = [0, 1].map(() => 0);",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-pip",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "{ key: 'actions', pips: st.turn === 0 ? st.actions : 0,",
-  "new": "{ key: 'actions', pips: KG_ACTIONS_PER_TURN,",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-next-step-piece",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "      else if (sel) next = 'piece';",
-  "new": "      else if (!sel && sel) next = 'piece';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-drink-refusal",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "const why = sel.hp >= sel.maxHp ? refusalWords('full', { piece: names(sel.id) }) : st.potions[0] <= 0 ? refusalWords('potions') : null;",
-  "new": "const why = st.potions[0] <= 0 ? refusalWords('potions') : null;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-armed-words",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "label: p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun",
-  "new": "label: staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-staged-press",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "{ id: 'move', label: GAMBIT_PRESS.moveHere,",
-  "new": "{ id: 'move', label: GAMBIT_PRESS.more,",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-strip-mark-model",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "refusalWords('turn'), strip: true });",
-  "new": "refusalWords('turn'), strip: false });",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-info-side",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "    x.mine ? t('cards.kingsGambit.info.mine'",
-  "new": "    !x.mine ? t('cards.kingsGambit.info.mine'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-info-king-line",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "  if (p.king) lines.push(",
-  "new": "  if (!p) lines.push(",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-ground-words",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "    default: return t('cards.kingsGambit.cell.floor', 'Open floor.');",
-  "new": "    default: return t('cards.kingsGambit.cell.water', 'Water: it cannot be crossed on foot, but ranged attacks pass over it.');",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-warning-round",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "    const armsAt = warningsArmAt(st.round);",
-  "new": "    const armsAt = st.round;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-next-warnings",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "      else if (warningsArmAt(st.round) === st.round && st.hazards.some((h) => !h.active)) next = 'warnings';",
-  "new": "      else if (warningsArmAt(st.round) !== st.round && st.hazards.some((h) => !h.active)) next = 'warnings';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-L-warnings-clock",
-  "file": "src/net/kingsGambit.js",
-  "old": "export const warningsArmAt = (round) => round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);",
-  "new": "export const warningsArmAt = (round) => round + 1;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-gold-line",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "  if (over.by === 'void' || over.winner === null) return t('cards.kingsGambit.result.back'",
-  "new": "  if (!over) return t('cards.kingsGambit.result.back'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-fallen-crown",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "const fallenCrown = over.winner === 0 ? crowns[1] : over.winner === 1 ? crowns[0] : null;",
-  "new": "const fallenCrown = over.winner === 0 ? crowns[0] : over.winner === 1 ? crowns[1] : null;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-night",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "        night: game.nightSpent ? nightSpent(name) : null,",
-  "new": "        night: null,",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-typed-number",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "{ cols: KG_COLS, rows: KG_ROWS }",
-  "new": "{ cols: KG_COLS, rows: 12 }",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-word-unsaid",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "    case 'cell': return t('cards.kingsGambit.refuse.cell'",
-  "new": "    case 'cells': return t('cards.kingsGambit.refuse.cell'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-log-pattern",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "t('cards.kingsGambit.log.moveMine', 'Your {piece} moves.'",
-  "new": "t('cards.kingsGambit.log.moveMine', 'Your {piece} walks.'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-log-side",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "  const mine = e.side === 0;\n  switch (e.t) {",
-  "new": "  const mine = e.side === 1;\n  switch (e.t) {",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-log-kill",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "      if (e.killed) return mine ? t('cards.kingsGambit.log.killMine'",
-  "new": "      if (!e) return mine ? t('cards.kingsGambit.log.killMine'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-king-in-sentence",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "(p.king ? kingShort(crowns[p.side]) : unitName(p.unit))",
-  "new": "(p.king ? kingName(crowns[p.side]) : unitName(p.unit))",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-king-fall-title",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "t('cards.kingsGambit.result.kingFalls', '{name}, King of {crown}, falls.', crownKing(crown))",
-  "new": "t('cards.kingsGambit.result.kingFalls', '{name} falls.', crownKing(crown))",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-law-name",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "export const unitName = (id) => getLocalizedEnemyName(id, rosterUnit(id)?.name ?? '?');",
-  "new": "export const unitName = (id) => rosterUnit(id)?.name ?? '?';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-line-tone-end",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "phase === 'battle' ? 'wait' : '';",
-  "new": "phase === 'battle' ? 'wait' : out.result?.tone ?? '';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-points-plural",
-  "file": "src/ui/gambitTableWords.js",
-  "old": "'An army of {points, plural, one {# point} other {# points}} - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time'",
-  "new": "'An army of {points} points - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time'",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-root-stage",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "m?.phase === 'battle' ? 'dfgambit-battle' : ''",
-  "new": "m?.phase === 'battle' ? '' : ''",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-row-on",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "`dfgambit-regular${r.chosen ? ' on' : ''}`",
-  "new": "`dfgambit-regular`",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-chiprow-gone",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "      if (m.battle) {   // the turn's chips stand outside the body",
-  "new": "      if (!m) {   // the turn's chips stand outside the body",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-strip-mark-painted",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "        if (a.strip) b.setAttribute('data-strip', a.id);",
-  "new": "        if (!a) b.setAttribute('data-strip', a.id);",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-fold-forgotten",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "      lastModel = m;\n",
-  "new": "      lastModel = m; collapsed = false;\n",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-first-sight",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "  noteFirstUse('kings-gambit');",
-  "new": "  void 'kings-gambit';",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-chrome",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "${cardPanelChromeCss('.dfgambit')}\n.dfgambit{left:50%",
-  "new": "${cardPanelChromeCss('.dfgambitx')}\n.dfgambit{left:50%",
-  "tests": [
-   "test/systems/kg3_panel.test.js",
-   "test/ui/cardsplus.test.js"
-  ]
- },
- {
-  "name": "KG3-P-edge-coloured",
-  "file": "src/ui/gambitTableHud.js",
-  "old": ".dfgambit-sec{margin:8px 0 0;padding:6px 8px 8px;border-width:2px;border-style:solid}",
-  "new": ".dfgambit-sec{margin:8px 0 0;padding:6px 8px 8px;border:2px solid #c9a24a}",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-size-floor",
-  "file": "src/ui/gambitTableHud.js",
-  "old": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:12px;",
-  "new": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:11px;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-role-dropped",
-  "file": "src/ui/enhanced/enhancedFrame.js",
-  "old": "    'body .dfgambit-unit', 'body .dfgambit-stake', 'body .dfgambit-crown',",
-  "new": "    'body .dfgambit-stake', 'body .dfgambit-crown',",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-bare-word",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "c.append(el('span', `dfgambit-chip${cls}`, w)); return c; };",
-  "new": "c.append(el('span', `chip${cls}`, w)); return c; };",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-dress-lit-word",
-  "file": "src/ui/grimoireDress.js",
-  "old": "${G} body .dfgambit .dfgambit-pip.dfgambit-lit, ${G} body .dfgambit .dfgambit-step i.dfgambit-lit {",
-  "new": "${G} body .dfgambit .dfgambit-pip.on, ${G} body .dfgambit .dfgambit-step i.on {",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-dress-ink-on-wood",
-  "file": "src/ui/grimoireDress.js",
-  "old": "${G} body .dfgambit :is(.dfgambit-regname, .dfgambit-term, .dfgambit-head)${IN_INK}${NOT_WOOD} {",
-  "new": "${G} body .dfgambit :is(.dfgambit-regname, .dfgambit-term, .dfgambit-head) {",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-dress-chosen-resaid",
-  "file": "src/ui/grimoireDress.js",
-  "old": "${G} body .dfgambit button[data-armed=\"true\"] {",
-  "new": "${G} body .dfgambit [aria-pressed=\"true\"] { outline: 2px solid #1d5530 !important; }\n${G} body .dfgambit button[data-armed=\"true\"] {",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-cursor-edge",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "return d ? [Math.max(0, Math.min(KG_COLS - 1, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
-  "new": "return d ? [Math.max(0, Math.min(KG_COLS, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-P-bound-restated",
-  "file": "src/ui/gambitTableHud.js",
-  "old": ".dfgambit.dfgambit-battle:not(.dfgambit-more){left:auto;right:0;width:30vw}",
-  "new": ".dfgambit.dfgambit-battle:not(.dfgambit-more){left:auto;right:0;width:30vw;max-height:calc(100vh - 36px)}",
-  "tests": [
-   "test/ui/cardsplus.test.js"
-  ]
- },
- {
-  "name": "KG3-C-kit-selector",
-  "file": "src/ui/card/cardPanelKit.js",
-  "old": "/\\.df(?:cards|iliac|gambit)(?![\\w-])|\\.dfgambit-[a-z]/",
-  "new": "/\\.df(?:cards|iliac)(?![\\w-])/",
-  "tests": [
-   "test/systems/kg3_panel.test.js",
-   "test/ui/cardsplus.test.js"
-  ]
- },
- {
-  "name": "KG3-C-small-window",
-  "file": "src/ui/grimoireDress.js",
-  "old": "'body .dfcards', 'body .dfiliac', 'body .dfgambit']);",
-  "new": "'body .dfcards', 'body .dfiliac']);",
-  "tests": [
-   "test/systems/kg3_panel.test.js"
-  ]
- },
- {
-  "name": "KG3-C-never-dressing",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "  dressCardPanel(doc);   // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
-  "new": "  void doc;   // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
-  "tests": [
-   "test/ui/cardsplus.test.js"
-  ]
- },
- {
-  "name": "KG3-H-regulars-order",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "GAMBIT_TIERS.indexOf(a.tier) - GAMBIT_TIERS.indexOf(b.tier) || a.chair - b.chair",
-  "new": "a.chair - b.chair",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-crown-default",
-  "file": "src/systems/gambit/gambitTableSession.js",
-  "old": "export const GAMBIT_CROWN_FIRST = 'daggerfall';",
-  "new": "export const GAMBIT_CROWN_FIRST = 'sentinel';",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-regular-prechosen",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "regs: gambitRegulars(d.regulars), regular: /** @type {number|null} */ (null),",
-  "new": "regs: gambitRegulars(d.regulars), regular: /** @type {number|null} */ (0),",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-stake-unchecked",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
-  "new": "    else if (id === 'next') g.phase = 'army';",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-crown-unkept",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "{ g.crown = GAMBIT_CROWNS[value]; d.entity.gambitCrown = g.crown; }",
-  "new": "{ g.crown = GAMBIT_CROWNS[value]; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-bark",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "g.stakeMult = null; bark(g.regs[value].name, barkInvite(), now); }",
-  "new": "g.stakeMult = null; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-army-refusal",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      g.why = g.said;\n",
-  "new": "\n",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-remove-index",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "g.army = g.army.filter((_, k) => k !== value);",
-  "new": "g.army = g.army.filter((_, k) => k !== value + 1);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-full-word",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "g.said = armyRefusal([...g.army, value]) === 'units' ? armyFull()",
-  "new": "g.said = armyRefusal([...g.army, value]) === 'points' ? armyFull()",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-stake-untaken",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (stake > 0) deductGold(d.entity, stake);",
-  "new": "    if (stake < 0) deductGold(d.entity, stake);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-crown-clash",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "return GAMBIT_CROWNS[GAMBIT_CROWNS[i] === mine ? (i + 1) % GAMBIT_CROWNS.length : i];",
-  "new": "return GAMBIT_CROWNS[i];",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-staked-flag",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "staked: () => !g.closed && !!g.session?.playing() && (g.game?.stake ?? 0) > 0,",
-  "new": "staked: () => !g.closed && !!g.session?.playing(),",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-pay",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (gold.pay > 0) addGold(d.entity, gold.pay);",
-  "new": "    if (gold.pay < 0) addGold(d.entity, gold.pay);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-book-sign",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, gold.net);",
-  "new": "d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, -gold.net);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-result-at-once",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (s.shown && g.phase === 'battle') { g.phase = 'over';",
-  "new": "    if (s.over && g.phase === 'battle') { g.phase = 'over';",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-played-flag",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (s.over.by === 'king' || s.over.by === 'forfeit') setPref('gambitPlayed', true);",
-  "new": "    if (!s) setPref('gambitPlayed', true);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-one-press",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      if (g.armed !== 'forfeit') { g.armed = 'forfeit'; g.armedAt = now; return; }",
-  "new": "      if (!s) { g.armed = 'forfeit'; g.armedAt = now; return; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-arm-kept",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (g.armed && now - g.armedAt >= GAMBIT_ARM_MS) { g.armed = null; changed = true; }",
-  "new": "    if (!g) { g.armed = null; changed = true; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-escape-stands-at-once",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      else press('stand');   // nothing to cancel",
-  "new": "      else d.onStand();   // nothing to cancel",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-concession",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      else if (concede && g.session?.playing()) { g.session.forfeit(d.now()); pump(d.now()); }",
-  "new": "      else if (!concede && g.session?.playing()) { g.session.forfeit(d.now()); pump(d.now()); }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-loads-road",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      else if (concede && g.session?.playing()) {",
-  "new": "      else if (g.session?.playing()) {",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-closed-twice",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    close({ concede = true } = {}) {\n      if (g.closed) return;\n",
-  "new": "    close({ concede = true } = {}) {\n",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-night-unread",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "const nightLeft = d.friendly ? 0 : gambitNightLeft(d.entity.gambitPurses, d.key, today(), r.name, r.tier);",
-  "new": "const nightLeft = d.friendly ? 0 : r.tier.stake * 1000;",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-friendly-gold",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (d.friendly || r.forFun) return 0;",
-  "new": "    if (r.forFun) return 0;",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-dpad",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "  [DPAD_CODES.left]: 'ArrowLeft', [DPAD_CODES.right]: 'ArrowRight', [DPAD_CODES.up]: 'ArrowUp', [DPAD_CODES.down]: 'ArrowDown',\n",
-  "new": "\n",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-press-key",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "export const GAMBIT_PRESS_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'Space', 'JoystickButton0']);",
-  "new": "export const GAMBIT_PRESS_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'Space']);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-cancel-key",
-  "file": "src/ui/gambitTableHud.js",
-  "old": "export const GAMBIT_CANCEL_KEYS = Object.freeze(['Escape', 'JoystickButton1']);",
-  "new": "export const GAMBIT_CANCEL_KEYS = Object.freeze(['Escape']);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-key-in-setup",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (g.closed || g.phase !== 'battle' || !g.session) return false;\n    const st = g.session.state;",
-  "new": "    if (g.closed) return false;\n    const st = g.session?.state ?? { pieces: [] };",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-lens",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.view, cam.eye, rect);",
-  "new": "const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.proj, cam.eye, rect);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-snap-radius",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "export const GAMBIT_SNAP_PX = 22;",
-  "new": "export const GAMBIT_SNAP_PX = 30;",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-stage",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    cellPress(cell, !!how.touch, now);",
-  "new": "    cellPress(cell, false, now);",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-felt",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "    if (!cell) { paint(); return true; }",
-  "new": "    if (!cell) { paint(); return false; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-free",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      g.draw?.destroy();\n",
-  "new": "\n",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-H-draw-after-close",
-  "file": "src/scenes/gambitTableGame.js",
-  "old": "      if (g.closed) return;\n      if (cam) g.cam",
-  "new": "      if (cam) g.cam",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ],
-  "equivalent": true,
-  "why": "belt-and-braces: the board's draw is destroyed by the close and its own draw() returns once it is (render/gambitTableDraw.js's alive), so a draw after the close draws nothing either way; the guard keeps the lens from being read after the close"
- },
- {
-  "name": "KG3-W-press-unwired",
-  "file": "src/scenes/worldModes.js",
-  "old": "    if (id === 'gambit') { openGambitGame(); return; }",
-  "new": "    if (id === 'gambit') { return; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-slot-unemptied",
-  "file": "src/scenes/worldModes.js",
-  "old": "    gambitGame = null;\n    gg.unlisten?.();",
-  "new": "    gg.unlisten?.();",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-concession",
-  "file": "src/scenes/worldModes.js",
-  "old": "    closeGambitGame({ concede: cashOut });",
-  "new": "    closeGambitGame({ concede: false });",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-staked-flag",
-  "file": "src/scenes/worldModes.js",
-  "old": "    gambitStaked: () => !!gambitGame?.staked?.(),",
-  "new": "    gambitStaked: () => !!gambitGame?.playing?.(),",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-save-door",
-  "file": "src/scenes/worldQuickSave.js",
-  "old": "if (host.modes?.gambitStaked?.()) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
-  "new": "if (host.modes?.gambitStaked?.() && quiet) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ],
-  "note": "the pin reads the door off world.js as a statement and runs it"
- },
- {
-  "name": "KG3-W-listeners-kept",
-  "file": "src/scenes/worldModes.js",
-  "old": "    gg.unlisten?.();\n    gg.close({ concede });",
-  "new": "    gg.close({ concede });",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-switch-unread",
-  "file": "src/scenes/worldModes.js",
-  "old": "iliac: true, gambit: gambitTableOn(), packPrice",
-  "new": "iliac: true, gambit: true, packPrice",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-iliac-switch",
-  "file": "src/scenes/worldModes.js",
-  "old": "      gambit: gambitTableOn, onGambit: () => openGambitGame(),",
-  "new": "      gambit: () => true, onGambit: () => openGambitGame(),",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-iliac-press",
-  "file": "src/scenes/worldModes.js",
-  "old": "      gambit: gambitTableOn, onGambit: () => openGambitGame(),",
-  "new": "      gambit: gambitTableOn, onGambit: () => {},",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-W-one-game-a-cloth",
-  "file": "src/scenes/worldModes.js",
-  "old": "    if (cardGame) closeCardGame();\n    closeIliacGame();\n    closeGambitGame();\n    const t = interiorCtx?.tables?.[cardSeat.table];\n    if (!t) return;\n    const seats = cardSeatsOf(cardSeat.table);\n    const free = cardSeat.free ?? [];\n    const names = tavernRegulars(Math.max(1, Math.min(5, free.length)));\n    const seeds = regularSeeds(names.length);\n    const gg",
-  "new": "    closeIliacGame();\n    closeGambitGame();\n    const t = interiorCtx?.tables?.[cardSeat.table];\n    if (!t) return;\n    const seats = cardSeatsOf(cardSeat.table);\n    const free = cardSeat.free ?? [];\n    const names = tavernRegulars(Math.max(1, Math.min(5, free.length)));\n    const seeds = regularSeeds(names.length);\n    const gg",
-  "tests": [
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-D-cell",
-  "file": "src/world/gambitCloth.js",
-  "old": "const cell = end ? GAMBIT_FELT_SHORT / KG_COLS : GAMBIT_FELT_SHORT / KG_ROWS;",
-  "new": "const cell = GAMBIT_FELT_SHORT / KG_ROWS;",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-side-test",
-  "file": "src/world/gambitCloth.js",
-  "old": "const end = Math.abs(da) > Math.abs(dq);",
-  "new": "const end = Math.abs(da) < Math.abs(dq);",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-handedness",
-  "file": "src/world/gambitCloth.js",
-  "old": "const right = [-toHost[1], toHost[0]];",
-  "new": "const right = [toHost[1], -toHost[0]];",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-one-yaw",
-  "file": "src/world/gambitCloth.js",
-  "old": "+ (side === 0 ? Math.PI : 0)",
-  "new": "+ (side === 0 ? 0 : 0)",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-atlas-key",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "'k0', 'k1', 'k2', 'k3', 'back']);",
-  "new": "'k0', 'k1', 'k2', 'k2', 'back']);",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-inset",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "const u0 = (col * GAMBIT_CELL_W + 0.5) / GAMBIT_ATLAS_W",
-  "new": "const u0 = (col * GAMBIT_CELL_W) / GAMBIT_ATLAS_W",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-triangle",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] >= 0) indices.push(base, base + 1, base + 2, base, base + 2, base + 3);",
-  "new": "if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0) indices.push(base, base + 1, base + 2, base, base + 2, base + 3);",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-outline",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "    ctx.strokeStyle = I.outline; ctx.lineWidth = w + 2; path(); ctx.stroke();\n",
-  "new": "\n",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-notch",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, p.side === 1);",
-  "new": "ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, false);",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-release",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "    if (matKey !== null) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT);   // the cache keeps",
-  "new": "    if (!renderer) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT);   // the cache keeps",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-scale",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "  const s = (GAMBIT_CARD_SHARE * places.cell) / CARD_W;\n  const yaw = gambitCardYaw(places, side);",
-  "new": "  const s = GAMBIT_CARD_SHARE;\n  const yaw = gambitCardYaw(places, side);",
-  "tests": [
-   "test/world/card/kg3_draw.test.js"
-  ]
- },
- {
-  "name": "KG3-D-plate-a-draw",
-  "file": "src/render/gambitTableDraw.js",
-  "old": "    if (!m) { m = renderer.createMesh(gambitPlateModel(key)); plates.set(key, m); }",
-  "new": "    { m = renderer.createMesh(gambitPlateModel(key)); plates.set(key, m); }",
-  "tests": [
-   "test/world/card/kg3_draw.test.js",
-   "test/systems/kg3_host.test.js"
-  ]
- },
- {
-  "name": "KG3-L-credit-title-literal",
-  "file": "src/ui/credits.js",
-  "old": "      get title() { return t('credits.kingsGambit.title', 'The King\\u2019s Gambit'); },",
-  "new": "      title: 'The King\\u2019s Gambit',",
-  "tests": [
-   "test/systems/l10n4_hardcoded.test.js"
-  ]
- },
- {
-  "name": "KG3-L-features-creator",
-  "file": "src/systems/features.js",
-  "old": "{ title: 'The King\\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }",
-  "new": "{ title: 'The King\\u2019s Gambit', author: '' }",
-  "tests": [
-   "test/systems/ft9_mods.test.js"
-  ]
- }
+  {
+    "name": "KG3-S-beat-turn-end",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "export const GAMBIT_TURN_END_MS = 900;",
+    "new": "export const GAMBIT_TURN_END_MS = 1000;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-beat-pause",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_REGULAR_PAUSE_MS = 1200;",
+    "new": "export const GAMBIT_REGULAR_PAUSE_MS = 1000;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-beat-result",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_RESULT_MS = 1300;",
+    "new": "export const GAMBIT_RESULT_MS = 1200;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-pause-skipped",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "      if (!this.over && this.state.turn === 1) this.actAt = now + GAMBIT_REGULAR_PAUSE_MS;",
+    "new": "      if (!this.over && this.state.turn === 1) this.actAt = now;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-turn-ended-at-once",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "      this.endAt = now + GAMBIT_TURN_END_MS;",
+    "new": "      this.endAt = now;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-refusal-applied",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "      if (out.refused === 'rand') this._decide(null, 'void', now); // the table's source broke: no game, no gold",
+    "new": "      this._decide(null, 'void', now); // the table's source broke: no game, no gold",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-refusal-ends-turn",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "      return out.refused;",
+    "new": "      this.state = gambitAct(this.state, 0, { type: 'end' }, this.rand32).state ?? this.state;\n      return out.refused;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-result-at-once",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    this.resultAt = now + GAMBIT_RESULT_MS;",
+    "new": "    this.resultAt = now;",
+    "tests": [
+      "test/systems/kg3_session.test.js",
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-forfeit-winner",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    this._decide(1, 'forfeit', now);",
+    "new": "    this._decide(0, 'forfeit', now);",
+    "tests": [
+      "test/systems/kg3_session.test.js",
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-pay",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: -this.stake };",
+    "new": "    return winner === 0 ? { pay: this.stake, net: this.stake } : { pay: 0, net: -this.stake };",
+    "tests": [
+      "test/systems/kg3_session.test.js",
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-net-sign",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: -this.stake };",
+    "new": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: this.stake };",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-void-kept",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    if (!this.stake || winner === null) return { pay: winner === null ? this.stake : 0, net: 0 };",
+    "new": "    if (!this.stake || winner === null) return { pay: 0, net: 0 };",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-regular-idle",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    if (this.state.turn !== 1 || this.state.ending || this.actAt === null || now < this.actAt) return;",
+    "new": "    if (this.state.turn !== 1 || this.state.ending || this.actAt === null || now < this.actAt || this.state) return;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-book-day-kept",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "  const v = e && e.day === day && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
+    "new": "  const v = e && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-night-floor",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "  return Math.max(0, tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name));",
+    "new": "  return tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name);",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-book-bound",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "  return Object.fromEntries(keys.slice(0, GAMBIT_PURSES_BOOK_MAX).map((k) => [k, next[k]]));",
+    "new": "  return Object.fromEntries(keys.map((k) => [k, next[k]]));",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-book-tie",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "  const keys = Object.keys(next).sort(\n    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),\n  );",
+    "new": "  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-names-cap",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "  const next = {\n    ...base,\n    [key]: { day, net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX)) },\n  };",
+    "new": "  const next = { ...base, [key]: { day, net: Object.fromEntries(Object.entries(names)) } };",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-S-restore-checks",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "    if (!v || !Number.isSafeInteger(v.day) || !v.net || typeof v.net !== 'object' || Array.isArray(v.net)) continue;",
+    "new": "    if (!v || !v.net) continue;",
+    "tests": [
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-next-arm-short",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    } else if (short) {",
+    "new": "    } else if (short && !short) {",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-next-enabled-early",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    const ready = !!chosen && (forFun || (!short && stake > 0));",
+    "new": "    const ready = !!chosen;",
+    "tests": [
+      "test/systems/kg3_panel.test.js",
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-blunder-pct",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "    blunder = pct(T.blunder);",
+    "new": "    blunder = pct(T.blunder) + 1;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-never-blunders",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "      blunder > 0",
+    "new": "      blunder >= 0",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-steps",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "  Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key) + 1);",
+    "new": "  Math.max(1, ['amateur', 'seasoned', 'veteran', 'grandmaster'].indexOf(key));",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-night-line",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "      : r.forFun",
+    "new": "      : !r",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-stake-multiplier",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_STAKE_MULTS = Object.freeze([1, 2, 5]);",
+    "new": "export const GAMBIT_STAKE_MULTS = Object.freeze([1, 2, 4]);",
+    "tests": [
+      "test/systems/kg3_panel.test.js",
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-purse-unread",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    const why = gold > purse ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
+    "new": "    const why = gold < 0 ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-night-unread",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    const why = gold > purse ? stakePurse(purse, gold) : gold > r.nightLeft ? stakeNight(r.name, r.nightLeft) : null;",
+    "new": "    const why = gold > purse ? stakePurse(purse, gold) : null;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-win-pays",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_WIN_PAYS = 2;",
+    "new": "export const GAMBIT_WIN_PAYS = 3;",
+    "tests": [
+      "test/systems/kg3_panel.test.js",
+      "test/systems/kg3_session.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-court",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  return { name: c.courts[2].name, crown: c.crown };",
+    "new": "  return { name: c.courts[1].name, crown: c.crown };",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-crown-order",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_CROWNS = Object.freeze(SUIT_CROWNS.map((c) => c.crown.toLowerCase()));",
+    "new": "export const GAMBIT_CROWNS = Object.freeze(SUIT_CROWNS.map((c) => c.crown.toLowerCase()).reverse());",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-king-numbers",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "    { level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk },",
+    "new": "    { level: KG_KING_LEVEL, hp: KG_KING_HP, attack: KG_KINGS[0].atk + 1 },",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-grid-order",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      a.cost - b.cost ||",
+    "new": "      b.cost - a.cost ||",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-chips",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.hp }),",
+    "new": "  t('cards.kingsGambit.chip.health', 'HP {n}', { n: u.atk }),",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-army-refusal-dim",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "        const ok = canRecruit(army, u.id);",
+    "new": "        const ok = !!u;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-start-stake",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "        label: stake ? pressStart(stake) : GAMBIT_PRESS.startFun,",
+    "new": "        label: GAMBIT_PRESS.startFun,",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-fallen",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      const fallen = [0, 1].map((s) => (game.dealt?.[s] ?? 0) - st.pieces.filter((x) => x.side === s).length);",
+    "new": "      const fallen = [0, 1].map(() => 0);",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-pip",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "                pips: st.turn === 0 ? st.actions : 0,",
+    "new": "                pips: KG_ACTIONS_PER_TURN,",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-next-step-piece",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      else if (sel) next = 'piece';",
+    "new": "      else if (!sel && sel) next = 'piece';",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-drink-refusal",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "          const why =\n            sel.hp >= sel.maxHp\n              ? refusalWords('full', { piece: names(sel.id) })\n              : st.potions[0] <= 0\n                ? refusalWords('potions')\n                : null;",
+    "new": "          const why = st.potions[0] <= 0 ? refusalWords('potions') : null;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-armed-words",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "          label:\n            p.armed === 'forfeit' ? GAMBIT_PRESS.armed : staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun,",
+    "new": "          label: staked ? pressForfeit(game.stake) : GAMBIT_PRESS.forfeitFun,",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-staged-press",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "            : { id: 'move', label: GAMBIT_PRESS.moveHere, enabled: true, kind: 'primary', strip: true },",
+    "new": "            : { id: 'move', label: GAMBIT_PRESS.more, enabled: true, kind: 'primary', strip: true },",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-strip-mark-model",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "          why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'),\n          strip: true,",
+    "new": "          why: mine ? null : st.turn === 0 && st.ending ? refusalWords('ending') : refusalWords('turn'),\n          strip: false,",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-info-side",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  const lines = [\n    x.mine",
+    "new": "  const lines = [\n    !x.mine",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-info-king-line",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  if (p.king)",
+    "new": "  if (!p)",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-ground-words",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "      return t('cards.kingsGambit.cell.floor', 'Open floor.');",
+    "new": "      return t('cards.kingsGambit.cell.water', 'Water: it cannot be crossed on foot, but ranged attacks pass over it.');",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-warning-round",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    const armsAt = warningsArmAt(st.round);",
+    "new": "    const armsAt = st.round;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-next-warnings",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      else if (warningsArmAt(st.round) === st.round && st.hazards.some((h) => !h.active)) next = 'warnings';",
+    "new": "      else if (warningsArmAt(st.round) !== st.round && st.hazards.some((h) => !h.active)) next = 'warnings';",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-L-warnings-clock",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const warningsArmAt = (round) =>\n  round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);",
+    "new": "export const warningsArmAt = (round) => round + 1;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-gold-line",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  if (!stake) return t('cards.kingsGambit.result.fun', 'Played for fun. No gold changed hands.');\n  if (over.by === 'void' || over.winner === null)",
+    "new": "  if (!stake) return t('cards.kingsGambit.result.fun', 'Played for fun. No gold changed hands.');\n  if (!over)",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-fallen-crown",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      const fallenCrown = over.winner === 0 ? crowns[1] : over.winner === 1 ? crowns[0] : null;",
+    "new": "      const fallenCrown = over.winner === 0 ? crowns[0] : over.winner === 1 ? crowns[1] : null;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-night",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "        night: game.nightSpent ? nightSpent(name) : null,",
+    "new": "        night: null,",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-typed-number",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "    { cols: KG_COLS, rows: KG_ROWS },",
+    "new": "    { cols: KG_COLS, rows: 12 },",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-word-unsaid",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "    case 'cell':",
+    "new": "    case 'cells':",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-log-pattern",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "        ? t('cards.kingsGambit.log.moveMine', 'Your {piece} moves.', { piece: x.names(e.piece) })",
+    "new": "        ? t('cards.kingsGambit.log.moveMine', 'Your {piece} walks.', { piece: x.names(e.piece) })",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-log-side",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  const mine = e.side === 0;",
+    "new": "  const mine = e.side === 1;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-log-kill",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "      const a = { name: x.regular, piece: x.names(e.piece), target: x.names(e.target), damage: e.damage };\n      if (e.killed)",
+    "new": "      const a = { name: x.regular, piece: x.names(e.piece), target: x.names(e.target), damage: e.damage };\n      if (!e)",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-king-in-sentence",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "export const pieceName = (p, crowns) => (p.king ? kingShort(crowns[p.side]) : unitName(p.unit));",
+    "new": "export const pieceName = (p, crowns) => (p.king ? kingName(crowns[p.side]) : unitName(p.unit));",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-king-fall-title",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "  t('cards.kingsGambit.result.kingFalls', '{name}, King of {crown}, falls.', crownKing(crown));",
+    "new": "  t('cards.kingsGambit.result.kingFalls', '{name} falls.', crownKing(crown));",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-law-name",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "export const unitName = (id) => getLocalizedEnemyName(id, rosterUnit(id)?.name ?? '?');",
+    "new": "export const unitName = (id) => rosterUnit(id)?.name ?? '?';",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-line-tone-end",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "        : '';",
+    "new": "        : (out.result?.tone ?? '');",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-points-plural",
+    "file": "src/ui/gambitTableWords.js",
+    "old": "            'An army of {points, plural, one {# point} other {# points}} - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time',",
+    "new": "            'An army of {points} points - {potions, plural, one {# potion} other {# potions}} - blunders {pct}% of the time',",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-root-stage",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    [\n      'dfgambit',\n      collapsed ? 'collapsed' : '',\n      m?.phase === 'battle' ? 'dfgambit-battle' : '',\n      m?.more ? 'dfgambit-more' : '',\n    ]",
+    "new": "    ['dfgambit', collapsed ? 'collapsed' : '', m?.phase === 'battle' ? '' : '', m?.more ? 'dfgambit-more' : '']",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-row-on",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "          const row = el('div', `dfgambit-regular${r.chosen ? ' on' : ''}`, null); // a chosen list row is the kit's .on",
+    "new": "          const row = el('div', `dfgambit-regular`, null); // a chosen list row is the kit's .on",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-chiprow-gone",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      root.append(head);\n      if (m.battle) {",
+    "new": "      root.append(head);\n      if (!m) {",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-strip-mark-painted",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "        if (a.strip) b.setAttribute('data-strip', a.id); // the phone's strip shows it (14.7)",
+    "new": "        if (!a) b.setAttribute('data-strip', a.id); // the phone's strip shows it (14.7)",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-fold-forgotten",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "      const key = JSON.stringify({ ...m, message: null });",
+    "new": "      collapsed = false;\n      const key = JSON.stringify({ ...m, message: null });",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-first-sight",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "  noteFirstUse('kings-gambit'); // 14.5: the page's first sight inside the panel's own painter (TUT1)",
+    "new": "  void 'kings-gambit'; // 14.5: the page's first sight inside the panel's own painter (TUT1)",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-chrome",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "${cardPanelChromeCss('.dfgambit')}",
+    "new": "${cardPanelChromeCss('.dfgambitx')}",
+    "tests": [
+      "test/systems/kg3_panel.test.js",
+      "test/ui/cardsplus.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-edge-coloured",
+    "file": "src/ui/gambitTableHud.js",
+    "old": ".dfgambit-sec{margin:8px 0 0;padding:6px 8px 8px;border-width:2px;border-style:solid}",
+    "new": ".dfgambit-sec{margin:8px 0 0;padding:6px 8px 8px;border:2px solid #c9a24a}",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-size-floor",
+    "file": "src/ui/gambitTableHud.js",
+    "old": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:12px;border-width:1px;border-style:solid}",
+    "new": ".dfgambit-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;font-size:11px;border-width:1px;border-style:solid}",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-role-dropped",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    'body .dfgambit-unit',\n    'body .dfgambit-stake',",
+    "new": "    'body .dfgambit-stake',",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-bare-word",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "    for (const w of words) c.append(el('span', `dfgambit-chip${cls}`, w));",
+    "new": "    for (const w of words) c.append(el('span', `chip${cls}`, w));",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-dress-lit-word",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} body .dfgambit .dfgambit-pip.dfgambit-lit, ${G} body .dfgambit .dfgambit-step i.dfgambit-lit {",
+    "new": "${G} body .dfgambit .dfgambit-pip.on, ${G} body .dfgambit .dfgambit-step i.on {",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-dress-ink-on-wood",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} body .dfgambit :is(.dfgambit-regname, .dfgambit-term, .dfgambit-head)${IN_INK}${NOT_WOOD} {",
+    "new": "${G} body .dfgambit :is(.dfgambit-regname, .dfgambit-term, .dfgambit-head) {",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-dress-chosen-resaid",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} body .dfgambit button[data-armed=\"true\"] {",
+    "new": "${G} body .dfgambit [aria-pressed=\"true\"] { outline: 2px solid #1d5530 !important; }\n${G} body .dfgambit button[data-armed=\"true\"] {",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-cursor-edge",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "  return d ? [Math.max(0, Math.min(KG_COLS - 1, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
+    "new": "  return d ? [Math.max(0, Math.min(KG_COLS, c + d[0])), Math.max(0, Math.min(KG_ROWS - 1, r + d[1]))] : at;",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-P-bound-restated",
+    "file": "src/ui/gambitTableHud.js",
+    "old": ".dfgambit.dfgambit-battle:not(.dfgambit-more){left:auto;right:0;width:30vw}",
+    "new": ".dfgambit.dfgambit-battle:not(.dfgambit-more){left:auto;right:0;width:30vw;max-height:calc(100vh - 36px)}",
+    "tests": [
+      "test/ui/cardsplus.test.js"
+    ]
+  },
+  {
+    "name": "KG3-C-kit-selector",
+    "file": "src/ui/card/cardPanelKit.js",
+    "old": "export const isCardPanelSelector = (/** @type {string} */ sel) =>\n  /\\.df(?:cards|iliac|gambit)(?![\\w-])|\\.dfgambit-[a-z]/.test(sel); // KG3: the third panel, and its own parts",
+    "new": "export const isCardPanelSelector = (/** @type {string} */ sel) => /\\.df(?:cards|iliac)(?![\\w-])/.test(sel); // KG3: the third panel, and its own parts",
+    "tests": [
+      "test/systems/kg3_panel.test.js",
+      "test/ui/cardsplus.test.js"
+    ]
+  },
+  {
+    "name": "KG3-C-small-window",
+    "file": "src/ui/grimoireDress.js",
+    "old": "'body .dfcards', 'body .dfiliac', 'body .dfgambit']);",
+    "new": "'body .dfcards', 'body .dfiliac']);",
+    "tests": [
+      "test/systems/kg3_panel.test.js"
+    ]
+  },
+  {
+    "name": "KG3-C-never-dressing",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "  dressCardPanel(doc); // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
+    "new": "  void doc; // the kit on the classic skin, the face on every skin (CARDS-PLUS)",
+    "tests": [
+      "test/ui/cardsplus.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-regulars-order",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "  regulars\n    .map((r) => ({ ...r, tier: tierFor(r.seed) }))\n    .sort((a, b) => GAMBIT_TIERS.indexOf(a.tier) - GAMBIT_TIERS.indexOf(b.tier) || a.chair - b.chair);",
+    "new": "  regulars.map((r) => ({ ...r, tier: tierFor(r.seed) })).sort((a, b) => a.chair - b.chair);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-crown-default",
+    "file": "src/systems/gambit/gambitTableSession.js",
+    "old": "export const GAMBIT_CROWN_FIRST = 'daggerfall';",
+    "new": "export const GAMBIT_CROWN_FIRST = 'sentinel';",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-regular-prechosen",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    regular: /** @type {number|null} */ (null),",
+    "new": "    regular: /** @type {number|null} */ (0),",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-stake-unchecked",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
+    "new": "    } else if (id === 'next') g.phase = 'army';",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-crown-unkept",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      d.entity.gambitCrown = g.crown;\n    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
+    "new": "    } else if (id === 'next' && stakeNow() !== null) g.phase = 'army';",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-bark",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "        bark(g.regs[value].name, barkInvite(), now);\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-army-refusal",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      g.why = g.said;\n    } else if (id === 'remove' && Number.isInteger(value) && g.army[value] != null) {",
+    "new": "    } else if (id === 'remove' && Number.isInteger(value) && g.army[value] != null) {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-remove-index",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      g.army = g.army.filter((_, k) => k !== value);",
+    "new": "      g.army = g.army.filter((_, k) => k !== value + 1);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-full-word",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "        armyRefusal([...g.army, value]) === 'units'",
+    "new": "        armyRefusal([...g.army, value]) === 'points'",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-stake-untaken",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (stake > 0) deductGold(d.entity, stake);",
+    "new": "    if (stake < 0) deductGold(d.entity, stake);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-crown-clash",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "  return GAMBIT_CROWNS[GAMBIT_CROWNS[i] === mine ? (i + 1) % GAMBIT_CROWNS.length : i];",
+    "new": "  return GAMBIT_CROWNS[i];",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-staked-flag",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    staked: () => !g.closed && !!g.session?.playing() && (g.game?.stake ?? 0) > 0,",
+    "new": "    staked: () => !g.closed && !!g.session?.playing(),",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-pay",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (gold.pay > 0) addGold(d.entity, gold.pay);",
+    "new": "    if (gold.pay < 0) addGold(d.entity, gold.pay);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-book-sign",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, gold.net);",
+    "new": "      d.entity.gambitPurses = gambitPursesAfter(d.entity.gambitPurses, d.key, today(), r.name, -gold.net);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-result-at-once",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (s.shown && g.phase === 'battle') {",
+    "new": "    if (s.over && g.phase === 'battle') {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-played-flag",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (s.over.by === 'king' || s.over.by === 'forfeit') setPref('gambitPlayed', true);",
+    "new": "    if (!s) setPref('gambitPlayed', true);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-one-press",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      if (g.armed !== 'forfeit') {",
+    "new": "      if (!s) {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-arm-kept",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (g.armed && now - g.armedAt >= GAMBIT_ARM_MS) {",
+    "new": "    if (!g) {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-escape-stands-at-once",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      else press('stand'); // nothing to cancel: the Stand up press - asked twice while a game is under way",
+    "new": "      else d.onStand(); // nothing to cancel: the Stand up press - asked twice while a game is under way",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-concession",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      else if (concede && g.session?.playing()) {",
+    "new": "      else if (!concede && g.session?.playing()) {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-loads-road",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      else if (concede && g.session?.playing()) {",
+    "new": "      else if (g.session?.playing()) {",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-closed-twice",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      if (g.closed) return;\n      if (online())",
+    "new": "      if (online())",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-night-unread",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      const nightLeft = d.friendly ? 0 : gambitNightLeft(d.entity.gambitPurses, d.key, today(), r.name, r.tier);",
+    "new": "      const nightLeft = d.friendly ? 0 : r.tier.stake * 1000;",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-friendly-gold",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (d.friendly || r.forFun) return 0;",
+    "new": "    if (r.forFun) return 0;",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-dpad",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "  [DPAD_CODES.left]: 'ArrowLeft',\n  [DPAD_CODES.right]: 'ArrowRight',\n  [DPAD_CODES.up]: 'ArrowUp',\n  [DPAD_CODES.down]: 'ArrowDown',\n});",
+    "new": "});",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-press-key",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "export const GAMBIT_PRESS_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'Space', 'JoystickButton0']);",
+    "new": "export const GAMBIT_PRESS_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'Space']);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-cancel-key",
+    "file": "src/ui/gambitTableHud.js",
+    "old": "export const GAMBIT_CANCEL_KEYS = Object.freeze(['Escape', 'JoystickButton1']);",
+    "new": "export const GAMBIT_CANCEL_KEYS = Object.freeze(['Escape']);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-key-in-setup",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (g.closed || g.phase !== 'battle' || !g.session) return false;\n    const st = g.session.state;",
+    "new": "    if (g.closed) return false;\n    const st = g.session?.state ?? { pieces: [] };",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-lens",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.view, cam.eye, rect);",
+    "new": "    const ray = rayDirFromScreen(at[0], at[1], w, h, cam.proj, cam.proj, cam.eye, rect);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-snap-radius",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "export const GAMBIT_SNAP_PX = 22;",
+    "new": "export const GAMBIT_SNAP_PX = 30;",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-stage",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    cellPress(cell, !!how.touch, now);",
+    "new": "    cellPress(cell, false, now);",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-felt",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      paint();\n      return true;\n    } // the table round the board: taken, and nothing pressed",
+    "new": "      paint();\n      return false;\n    } // the table round the board: taken, and nothing pressed",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-free",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      g.draw?.destroy();",
+    "new": "",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-H-draw-after-close",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "      if (g.closed) return;\n      if (cam) g.cam = { proj: cam.proj, view: Float32Array.from(cam.view), eye: cam.eye.slice() };",
+    "new": "      if (cam) g.cam = { proj: cam.proj, view: Float32Array.from(cam.view), eye: cam.eye.slice() };",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt-and-braces: the board's draw is destroyed by the close and its own draw() returns once it is (render/gambitTableDraw.js's alive), so a draw after the close draws nothing either way; the guard keeps the lens from being read after the close"
+  },
+  {
+    "name": "KG3-W-press-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (id === 'gambit') { openGambitGame(); return; }",
+    "new": "    if (id === 'gambit') { return; }",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-slot-unemptied",
+    "file": "src/scenes/worldModes.js",
+    "old": "    gambitGame = null;\n    gg.unlisten?.();",
+    "new": "    gg.unlisten?.();",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-concession",
+    "file": "src/scenes/worldModes.js",
+    "old": "    closeGambitGame({ concede: cashOut });",
+    "new": "    closeGambitGame({ concede: false });",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-staked-flag",
+    "file": "src/scenes/worldModes.js",
+    "old": "    gambitStaked: () => !!gambitGame?.staked?.(),",
+    "new": "    gambitStaked: () => !!gambitGame?.playing?.(),",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-save-door",
+    "file": "src/scenes/worldQuickSave.js",
+    "old": "if (host.modes?.gambitStaked?.()) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
+    "new": "if (host.modes?.gambitStaked?.() && quiet) { if (!quiet) townTalk.say(stakedSaveRefusal()); return false; }",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ],
+    "note": "the pin reads the door off world.js as a statement and runs it"
+  },
+  {
+    "name": "KG3-W-listeners-kept",
+    "file": "src/scenes/worldModes.js",
+    "old": "    gg.unlisten?.();\n    gg.close({ concede });",
+    "new": "    gg.close({ concede });",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-switch-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "iliac: true, gambit: gambitTableOn(), packPrice",
+    "new": "iliac: true, gambit: true, packPrice",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-iliac-switch",
+    "file": "src/scenes/worldModes.js",
+    "old": "      gambit: gambitTableOn, onGambit: () => openGambitGame(),",
+    "new": "      gambit: () => true, onGambit: () => openGambitGame(),",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-iliac-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "      gambit: gambitTableOn, onGambit: () => openGambitGame(),",
+    "new": "      gambit: gambitTableOn, onGambit: () => {},",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-W-one-game-a-cloth",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (cardGame) closeCardGame();\n    closeIliacGame();\n    closeGambitGame();\n    const t = interiorCtx?.tables?.[cardSeat.table];\n    if (!t) return;\n    const seats = cardSeatsOf(cardSeat.table);\n    const free = cardSeat.free ?? [];\n    const names = tavernRegulars(Math.max(1, Math.min(5, free.length)));\n    const seeds = regularSeeds(names.length);\n    const gg",
+    "new": "    closeIliacGame();\n    closeGambitGame();\n    const t = interiorCtx?.tables?.[cardSeat.table];\n    if (!t) return;\n    const seats = cardSeatsOf(cardSeat.table);\n    const free = cardSeat.free ?? [];\n    const names = tavernRegulars(Math.max(1, Math.min(5, free.length)));\n    const seeds = regularSeeds(names.length);\n    const gg",
+    "tests": [
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-cell",
+    "file": "src/world/gambitCloth.js",
+    "old": "  const cell = end ? GAMBIT_FELT_SHORT / KG_COLS : GAMBIT_FELT_SHORT / KG_ROWS;",
+    "new": "  const cell = GAMBIT_FELT_SHORT / KG_ROWS;",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-side-test",
+    "file": "src/world/gambitCloth.js",
+    "old": "  const end = Math.abs(da) > Math.abs(dq);",
+    "new": "  const end = Math.abs(da) < Math.abs(dq);",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-handedness",
+    "file": "src/world/gambitCloth.js",
+    "old": "  const right = [-toHost[1], toHost[0]];",
+    "new": "  const right = [toHost[1], -toHost[0]];",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-one-yaw",
+    "file": "src/world/gambitCloth.js",
+    "old": "export const gambitCardYaw = (places, side) =>\n  Math.atan2(places.toHost[0], places.toHost[1]) + (side === 0 ? Math.PI : 0);",
+    "new": "export const gambitCardYaw = (places, side) => Math.atan2(places.toHost[0], places.toHost[1]) + (side === 0 ? 0 : 0);",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-atlas-key",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "export const GAMBIT_ATLAS_KEYS = Object.freeze([...KG_ROSTER.map((u) => `u${u.id}`), 'k0', 'k1', 'k2', 'k3', 'back']);",
+    "new": "export const GAMBIT_ATLAS_KEYS = Object.freeze([...KG_ROSTER.map((u) => `u${u.id}`), 'k0', 'k1', 'k2', 'k2', 'back']);",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-inset",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "  const u0 = (col * GAMBIT_CELL_W + 0.5) / GAMBIT_ATLAS_W,",
+    "new": "  const u0 = (col * GAMBIT_CELL_W) / GAMBIT_ATLAS_W,",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-triangle",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "    if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] >= 0)",
+    "new": "    if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0)",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-outline",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "    ctx.strokeStyle = I.outline;\n    ctx.lineWidth = w + 2;\n    path();\n    ctx.stroke();",
+    "new": "",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-notch",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "  for (const p of look.pieces ?? []) ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, p.side === 1);",
+    "new": "  for (const p of look.pieces ?? []) ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, false);",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-release",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "      if (matKey !== null) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT); // the cache keeps a key's first picture: a new look is a new upload",
+    "new": "      if (!renderer) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT); // the cache keeps a key's first picture: a new look is a new upload",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-scale",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "  const s = (GAMBIT_CARD_SHARE * places.cell) / CARD_W;",
+    "new": "  const s = GAMBIT_CARD_SHARE;",
+    "tests": [
+      "test/world/card/kg3_draw.test.js"
+    ]
+  },
+  {
+    "name": "KG3-D-plate-a-draw",
+    "file": "src/render/gambitTableDraw.js",
+    "old": "    let m = plates.get(key);\n    if (!m) {",
+    "new": "    let m = plates.get(key);\n    {",
+    "tests": [
+      "test/world/card/kg3_draw.test.js",
+      "test/systems/kg3_host.test.js"
+    ]
+  },
+  {
+    "name": "KG3-L-credit-title-literal",
+    "file": "src/ui/credits.js",
+    "old": "      get title() {\n        return t('credits.kingsGambit.title', 'The King\\u2019s Gambit');\n      }, // the game's name as its table says it (L10N4)",
+    "new": "      title: 'The King\\u2019s Gambit', // the game's name as its table says it (L10N4)",
+    "tests": [
+      "test/systems/l10n4_hardcoded.test.js"
+    ]
+  },
+  {
+    "name": "KG3-L-features-creator",
+    "file": "src/systems/features.js",
+    "old": "{ title: 'The King\\u2019s Gambit', author: t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }) }",
+    "new": "{ title: 'The King\\u2019s Gambit', author: '' }",
+    "tests": [
+      "test/systems/ft9_mods.test.js"
+    ]
+  }
 ]

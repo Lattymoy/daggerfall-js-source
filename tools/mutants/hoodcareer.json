@@ -2,8 +2,8 @@
   {
     "name": "HOODCAREER-the-burn-asks-no-hood",
     "file": "src/systems/passiveSpecials.js",
-    "old": "    && careerSunAverse(entity)\n",
-    "new": "    && careerSunDamage(career)\n",
+    "old": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(clockMinutes)) {",
+    "new": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunDamage(career) && playerInSunlight(clockMinutes)) {",
     "tests": [
       "test/systems/hoodcareer.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HOODCAREER-every-class-is-sun-averse",
     "file": "src/systems/passiveSpecials.js",
-    "old": "  if (!careerSunDamage(entity?.career)) return false;\n  return !cloakState",
-    "new": "  return !cloakState",
+    "old": "  if (!careerSunDamage(entity?.career)) return false;\n  return !cloakState(entity.equip?.slots ?? null).hood;",
+    "new": "  return !cloakState(entity.equip?.slots ?? null).hood;",
     "tests": [
       "test/systems/hoodcareer.test.js"
     ]

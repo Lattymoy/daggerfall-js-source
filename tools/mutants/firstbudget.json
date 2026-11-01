@@ -2,18 +2,18 @@
   {
     "name": "FIRST-BUDGET-share-off-by-one",
     "file": "src/net/recipeLaw.js",
-    "old": "building: 1823,",
-    "new": "building: 1822,",
+    "old": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1832, provisioning: 3171 });",
+    "new": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1831, provisioning: 3171 });",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
-    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Building's share one XP short - the derivation says 1,823, and at 1,822 Building takes a 173rd craft to Master."
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Building's share one XP short - the derivation says 1,832, and at 1,831 Building takes a 171st craft to Master. Re-aimed by SMITH-RRI (the rerun: 1,823 before)."
   },
   {
     "name": "FIRST-BUDGET-smithing-share-moved",
     "file": "src/net/recipeLaw.js",
-    "old": "{ smithing: 500, ",
-    "new": "{ smithing: 501, ",
+    "old": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1832, provisioning: 3171 });",
+    "new": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 501, outfitting: 518, building: 1832, provisioning: 3171 });",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -22,18 +22,18 @@
   {
     "name": "FIRST-BUDGET-share-past-the-least",
     "file": "src/net/recipeLaw.js",
-    "old": "outfitting: 511,",
-    "new": "outfitting: 512,",
+    "old": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1832, provisioning: 3171 });",
+    "new": "export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 519, building: 1832, provisioning: 3171 });",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
-    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Outfitting's share one past the least that reaches Master in 172 - fast enough, and not the derivation's."
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Outfitting's share one past the least that reaches Master in 170 - fast enough, and not the derivation's. Re-aimed by SMITH-RRI (511 before)."
   },
   {
     "name": "FIRST-BUDGET-pool-asked-as-bought",
     "file": "src/net/recipeLaw.js",
-    "old": "for (const r of RECIPES) if (firstCraftPays(r, true)) firstMake(",
-    "new": "for (const r of RECIPES) if (firstCraftPays(r)) firstMake(",
+    "old": "  if (firstCraftPays(r, true)) firstMake(trackOf(r.profession), /** @type {string} */ (firstCraftKey(r))); // CLOTH-GEMS: every recipe's first can pay - one S1 judges where its units are own",
+    "new": "  if (firstCraftPays(r)) firstMake(trackOf(r.profession), /** @type {string} */ (firstCraftKey(r))); // CLOTH-GEMS: every recipe's first can pay - one S1 judges where its units are own",
     "tests": [
       "test/net/firstbudget_law.test.js",
       "test/net/clothgems_service.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "FIRST-BUDGET-apothecary-brew-counted",
     "file": "src/net/recipeLaw.js",
-    "old": "for (const p of POTION_RECIPES) if (brewFirstPays(p)) firstMake(",
-    "new": "for (const p of POTION_RECIPES) if (p) firstMake(",
+    "old": "for (const p of POTION_RECIPES) if (brewFirstPays(p)) firstMake(trackOf('alchemy'), p.name);",
+    "new": "for (const p of POTION_RECIPES) if (p) firstMake(trackOf('alchemy'), p.name);",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "FIRST-BUDGET-brew-keyed-by-name",
     "file": "src/net/recipeLaw.js",
-    "old": "firstMakeXp('alchemy', potion.id));",
-    "new": "firstMakeXp('alchemy', potion.name));",
+    "old": "export const brewFirstXp = (potion) => (!potion ? 0 : firstMakeXp('alchemy', potion.id));",
+    "new": "export const brewFirstXp = (potion) => (!potion ? 0 : firstMakeXp('alchemy', potion.name));",
     "tests": [
       "test/net/firstbudget_law.test.js",
       "test/net/prof12_service.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "FIRST-BUDGET-counter-guard-dropped",
     "file": "src/net/recipeLaw.js",
-    "old": "(!r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));",
-    "new": "(!r ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));",
+    "old": "export const firstCraftXp = (r, own = false) =>\n  !r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r));",
+    "new": "export const firstCraftXp = (r, own = false) => (!r ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));",
     "tests": [
       "test/net/firstbudget_law.test.js",
       "test/systems/clothgems_client.test.js"
@@ -121,8 +121,8 @@
   {
     "name": "FIRST-BUDGET-words-unformatted",
     "file": "src/ui/craftXpWords.js",
-    "old": "'{xp} {profession} experience, and {more, number} more the first time you make this piece at this grade.'",
-    "new": "'{xp} {profession} experience, and {more} more the first time you make this piece at this grade.'",
+    "old": "            '{xp} {profession} experience, and {more, number} more the first time you make this piece at this grade.',",
+    "new": "            '{xp} {profession} experience, and {more} more the first time you make this piece at this grade.',",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "FIRST-BUDGET-words-dish-the-old-500",
     "file": "src/ui/craftXpWords.js",
-    "old": "t('prof.page.fire.first', 'The first time you cook this dish: {more, number} more {profession} experience.', { more: firstCraftXp(r), profession })",
-    "new": "t('prof.page.fire.first', 'The first time you cook this dish: {more, number} more {profession} experience.', { more: 500, profession })",
+    "old": "              { more: firstCraftXp(r), profession },",
+    "new": "              { more: 500, profession },",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "FIRST-BUDGET-pace-unclean-pan",
     "file": "tools/craftPace.mjs",
-    "old": "cookXp(rank, { clean: true })",
-    "new": "cookXp(rank)",
+    "old": "      xp: (rank) => (r.kind === 'dish' ? cookXp(rank, { clean: true }) : craftXp(r.tier, rank)),",
+    "new": "      xp: (rank) => (r.kind === 'dish' ? cookXp(rank) : craftXp(r.tier, rank)),",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "FIRST-BUDGET-pace-cloth-bought",
     "file": "tools/craftPace.mjs",
-    "old": "first: firstOf(flat, track, firstCraftXp(r, true), firstCraftPays(r, true)),",
-    "new": "first: firstOf(flat, track, firstCraftXp(r), firstCraftPays(r)),",
+    "old": "      first: firstOf(flat, track, firstCraftXp(r, true), firstCraftPays(r, true)), // CLOTH-GEMS: the units his own",
+    "new": "      first: firstOf(flat, track, firstCraftXp(r), firstCraftPays(r)), // CLOTH-GEMS: the units his own",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -178,8 +178,8 @@
   {
     "name": "FIRST-BUDGET-floor-dropped",
     "file": "tools/craftPace.mjs",
-    "old": "let lo = FIRST_MAKE_FLOOR, hi = FIRST_MAKE_FLOOR;",
-    "new": "let lo = 1, hi = 1;",
+    "old": "    let lo = FIRST_MAKE_FLOOR,\n      hi = FIRST_MAKE_FLOOR;",
+    "new": "    let lo = 1,\n      hi = 1;",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "FIRST-BUDGET-bisection-off-by-one",
     "file": "tools/craftPace.mjs",
-    "old": "    out[track] = hi;\n",
-    "new": "    out[track] = lo;\n",
+    "old": "    out[track] = hi;",
+    "new": "    out[track] = lo;",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
@@ -208,8 +208,8 @@
   {
     "name": "FIRST-BUDGET-share-unread",
     "file": "src/net/recipeLaw.js",
-    "old": "(FIRST_MAKE_SHARE)[track] ?? 0);",
-    "new": "(FIRST_MAKE_SHARE).smithing ?? 0);",
+    "old": "    FIRST_XP.set(`${track} ${k}`, /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[track] ?? 0);",
+    "new": "    FIRST_XP.set(`${track} ${k}`, /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE).smithing ?? 0);",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],

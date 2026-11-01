@@ -1,5 +1,5 @@
 // @ts-check
-// WG2: the grid's shared operations - a priority queue that breaks ties by index (so two machines pop the same cell
+// The grid's shared operations - a priority queue that breaks ties by index (so two machines pop the same cell
 // first), a box blur, a chamfer distance and the slope. Exact arithmetic only (exact.js).
 import { Field, D8X, D8Y, D8L } from './field.js';
 

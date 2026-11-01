@@ -1,52 +1,52 @@
 [
- {
-  "name": "AFB-TLA-1-the-guard-unregistered",
-  "file": "vite.config.js",
-  "old": "firstVisitPinsPlugin(), noImportedTopLevelAwait()]",
-  "new": "firstVisitPinsPlugin()]",
-  "tests": [
-   "test/tree/toplevelawait.test.js"
-  ],
-  "why": "the build ships an imported chunk that awaits at its top level - the iPhone's boot again, from vendor code or a template import the source walk cannot see"
- },
- {
-  "name": "AFB-TLA-1-an-entry-refused",
-  "file": "scripts/noTopLevelAwait.mjs",
-  "old": "if (c?.type !== 'chunk' || c.isEntry || !/\\bawait\\b/.test(c.code)) continue;",
-  "new": "if (c?.type !== 'chunk' || !/\\bawait\\b/.test(c.code)) continue;",
-  "tests": [
-   "test/tree/toplevelawait.test.js"
-  ],
-  "why": "a page's own entry refused for an await nothing imports - the prototype pages' builds fail"
- },
- {
-  "name": "AFB-TLA-1-a-nested-await-counted",
-  "file": "scripts/noTopLevelAwait.mjs",
-  "old": "if (/Function/.test(node.type) || node.type === 'StaticBlock') inFn = true;",
-  "new": "",
-  "tests": [
-   "test/tree/toplevelawait.test.js"
-  ],
-  "why": "an await inside a function read as the module's own - every async chunk refused"
- },
- {
-  "name": "AFB-TLA-RO-the-notice-a-crash",
-  "file": "src/ui/crashText.js",
-  "old": "export const isBenignWindowError = (event) => event?.error == null && /^ResizeObserver loop\\b/.test(String(event?.message ?? ''));",
-  "new": "export const isBenignWindowError = (event) => false;",
-  "tests": [
-   "test/scenes/crashreport.test.js"
-  ],
-  "why": "WebKit's ResizeObserver loop notice at the menu says CRASH over the game"
- },
- {
-  "name": "AFB-TLA-RO-the-listener-unasking",
-  "file": "src/main.js",
-  "old": "if (!isBenignWindowError(e)) crashOverlay(",
-  "new": "if (true) crashOverlay(",
-  "tests": [
-   "test/scenes/crashreport.test.js"
-  ],
-  "why": "the crash overlay never asks whether the error event is the spec's notice"
- }
+  {
+    "name": "AFB-TLA-1-the-guard-unregistered",
+    "file": "vite.config.js",
+    "old": "floraPlaygroundAlias(), noImportedTopLevelAwait()]",
+    "new": "floraPlaygroundAlias()]",
+    "tests": [
+      "test/tree/toplevelawait.test.js"
+    ],
+    "why": "the build ships an imported chunk that awaits at its top level - the iPhone's boot again, from vendor code or a template import the source walk cannot see"
+  },
+  {
+    "name": "AFB-TLA-1-an-entry-refused",
+    "file": "scripts/noTopLevelAwait.mjs",
+    "old": "    if (c?.type !== 'chunk' || c.isEntry || !/\\bawait\\b/.test(c.code)) continue;",
+    "new": "    if (c?.type !== 'chunk' || !/\\bawait\\b/.test(c.code)) continue;",
+    "tests": [
+      "test/tree/toplevelawait.test.js"
+    ],
+    "why": "a page's own entry refused for an await nothing imports - the prototype pages' builds fail"
+  },
+  {
+    "name": "AFB-TLA-1-a-nested-await-counted",
+    "file": "scripts/noTopLevelAwait.mjs",
+    "old": "    if (/Function/.test(node.type) || node.type === 'StaticBlock') inFn = true;",
+    "new": "",
+    "tests": [
+      "test/tree/toplevelawait.test.js"
+    ],
+    "why": "an await inside a function read as the module's own - every async chunk refused"
+  },
+  {
+    "name": "AFB-TLA-RO-the-notice-a-crash",
+    "file": "src/ui/crashText.js",
+    "old": "export const isBenignWindowError = (event) =>\n  event?.error == null && /^ResizeObserver loop\\b/.test(String(event?.message ?? ''));",
+    "new": "export const isBenignWindowError = (event) => false;",
+    "tests": [
+      "test/scenes/crashreport.test.js"
+    ],
+    "why": "WebKit's ResizeObserver loop notice at the menu says CRASH over the game"
+  },
+  {
+    "name": "AFB-TLA-RO-the-listener-unasking",
+    "file": "src/main.js",
+    "old": "if (!isBenignWindowError(e)) crashOverlay(",
+    "new": "if (true) crashOverlay(",
+    "tests": [
+      "test/scenes/crashreport.test.js"
+    ],
+    "why": "the crash overlay never asks whether the error event is the spec's notice"
+  }
 ]

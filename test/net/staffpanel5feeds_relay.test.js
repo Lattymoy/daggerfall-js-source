@@ -1,7 +1,7 @@
 // STAFF-PANEL5-FEEDS (2026-10-22, design doc "DFO Staff Panel: design": Network bursts, Monster watch, Bot check, Server
 // load) - THE RELAY'S SIDE, over real Rooms (test/fakeRoom.mjs): a socket's frames counted in memory and reported only
 // over a limit, once a window, signed; a sender's live monsters counted outdoors (indoors a host's) whatever grantStrip
-// says (STAFF-PANEL5-MONSTERS, 2026-10-23: mob wants all three feed pages working with grantStrip off); a natural
+// says (STAFF-PANEL5-MONSTERS, 2026-10-23: chief wants all three feed pages working with grantStrip off); a natural
 // encounter's reaction timed from its grant's mint by the poses the room already takes; nothing counted or posted while a
 // feed's URL is unset; and nothing any player receives changed by any of it.
 import test from 'node:test';

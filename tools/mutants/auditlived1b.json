@@ -78,8 +78,8 @@
   {
     "name": "AUDITLIVED1B-S1-checkpoint-ignores-the-walk",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
-    "new": "return !!online && !!spawned && seatAllows && !duel;",
+    "old": "  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
+    "new": "  return !!online && !!spawned && seatAllows && !duel;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDITLIVED1B-P2-no-fresh-join",
     "file": "src/systems/offlineCopy.js",
-    "old": "  copy.joinFresh = true;\n",
-    "new": "",
+    "old": "  copy.joinFresh = true;\n  if (own === null) return copy;",
+    "new": "  if (own === null) return copy;",
     "tests": [
       "test/systems/auditlived1b.test.js",
       "test/systems/auditlived1.test.js"
@@ -291,8 +291,8 @@
   {
     "name": "AUDITLIVED1B-P2-the-offline-door-keeps-the-flag",
     "file": "src/systems/offlineCopy.js",
-    "old": "  delete copy.joinFresh;\n",
-    "new": "",
+    "old": "  delete copy.joinFresh;\n  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
+    "new": "  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDITLIVED1B-F3-the-ceiling-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "v >= 0 && v < SAVE_CLOCK_MAX ? v : null",
-    "new": "v >= 0 && v <= SAVE_CLOCK_MAX ? v : null",
+    "old": "  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SAVE_CLOCK_MAX ? v : null;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDITLIVED1B-F3-a-negative-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX",
-    "new": "Number.isFinite(v) && v < SAVE_CLOCK_MAX",
+    "old": "export const saneSaveClock = (v) =>\n  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "export const saneSaveClock = (v) => (typeof v === 'number' && Number.isFinite(v) && v < SAVE_CLOCK_MAX ? v : null);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "AUDITLIVED1B-F3-a-string-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "export const saneSaveClock = (v) => (typeof v === 'number' && Number.isFinite(v)",
-    "new": "export const saneSaveClock = (v) => (Number.isFinite(Number(v))",
+    "old": "export const saneSaveClock = (v) =>\n  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "export const saneSaveClock = (v) => (Number.isFinite(Number(v)) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDITLIVED1B-R1-the-raids-ride-offline",
     "file": "src/systems/offlineCopy.js",
-    "old": "delete copy.modData[RAID_RECORD_VENDOR];   // AUDIT LIVED1b R1",
-    "new": "void RAID_RECORD_VENDOR;   // AUDIT LIVED1b R1",
+    "old": "  if (copy.modData && typeof copy.modData === 'object') delete copy.modData[RAID_RECORD_VENDOR]; // AUDIT LIVED1b R1",
+    "new": "  if (copy.modData && typeof copy.modData === 'object') void RAID_RECORD_VENDOR; // AUDIT LIVED1b R1",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDITLIVED1B-R3-the-journal-stays",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
-    "new": "void m;",
+    "old": "        if (world) for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
+    "new": "        if (world) for (const m of v) void m;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ],
@@ -420,8 +420,8 @@
   {
     "name": "AUDITLIVED1B-R3-a-zero-moves",
     "file": "src/systems/quest/questStamps.js",
-    "old": "if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
-    "new": "if (m && Number.isFinite(m.time)) m.time += deltaSeconds;",
+    "old": "        if (world) for (const m of v) if (m && Number.isFinite(m.time) && m.time !== 0) m.time += deltaSeconds;",
+    "new": "        if (world) for (const m of v) if (m && Number.isFinite(m.time)) m.time += deltaSeconds;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ],
@@ -430,8 +430,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-stock-stays",
     "file": "src/systems/offlineCopy.js",
-    "old": "        c.stockedDate = shiftStockDate(c.stockedDate, days);\n",
-    "new": "",
+    "old": "        c.stockedDate = shiftStockDate(c.stockedDate, days);\n        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
+    "new": "        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-lid-stays",
     "file": "src/systems/offlineCopy.js",
-    "old": "        c.openedOn = shiftStockDate(c.openedOn, days);",
-    "new": "        void c.openedOn;",
+    "old": "        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
+    "new": "        void c.openedOn; // UXB1-O: the searched lid is the stock's own day, and moves with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-owned-latch-moves",
     "file": "src/systems/offlineCopy.js",
-    "old": "(Number.isFinite(d) && d > 1 ? stockDateOf",
-    "new": "(Number.isFinite(d) && d > 0 ? stockDateOf",
+    "old": "  Number.isFinite(d) && d > 1 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d;",
+    "new": "  Number.isFinite(d) && d > 0 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -475,8 +475,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-any-other-day-rolls",
     "file": "src/systems/raidingParties.js",
-    "old": "(sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)",
-    "new": "(sharedClockOn() && day !== state.lastSelectedDay)",
+    "old": "  if (day > state.lastSelectedDay || (sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)) {",
+    "new": "  if (day > state.lastSelectedDay || (sharedClockOn() && day !== state.lastSelectedDay)) {",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-save-flag-never-cleared",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (sharedClockOn()) _dayFromSave = false;   // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)\n",
-    "new": "",
+    "old": "  if (sharedClockOn()) _dayFromSave = false; // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)\n  syncLanes(); // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)",
+    "new": "  syncLanes(); // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-restore-never-raises-it",
     "file": "src/systems/raidingParties.js",
-    "old": "  _dayFromSave = true;   // AUDIT LIVED1b A3: the one check that may roll another day than a later one\n",
-    "new": "",
+    "old": "  _dayFromSave = true; // AUDIT LIVED1b A3: the one check that may roll another day than a later one\n  _peerWords = new Map();",
+    "new": "  _peerWords = new Map();",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-later-day-never-stands",
     "file": "src/systems/shopStock.js",
-    "old": "(isOnlinePage() && kept.day > today && _mintedThisSession.has(kept))",
-    "new": "false",
+    "old": "const shelfStands = (kept, today) =>\n  !!kept &&\n  Array.isArray(kept.items) &&\n  (kept.day === today || (isOnlinePage() && kept.day > today && _mintedThisSession.has(kept)));",
+    "new": "const shelfStands = (kept, today) => !!kept && Array.isArray(kept.items) && (kept.day === today || false);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-never-marked-minted",
     "file": "src/systems/shopStock.js",
-    "old": "  _mintedThisSession.add(shelf);\n",
-    "new": "",
+    "old": "  _mintedThisSession.add(shelf);\n  if (store) store[service] = shelf;",
+    "new": "  if (store) store[service] = shelf;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-sweep-takes-the-later-day",
     "file": "src/systems/shopStock.js",
-    "old": "if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k];",
-    "new": "if (store[k]?.day !== today) delete store[k];",
+    "old": "  if (store)\n    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
+    "new": "  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -547,7 +547,7 @@
   },
   {
     "name": "AUDITLIVED1B-R4-born-online-at-the-classic-start",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "          if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());\n",
     "new": "",
     "tests": [
@@ -556,7 +556,7 @@
   },
   {
     "name": "AUDITLIVED1B-R4-the-heir-born-at-the-classic-start",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "      if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());   // AUDIT LIVED1b R4, as the wizard's\n",
     "new": "",
     "tests": [
@@ -960,8 +960,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-bank-enhanced-gets-short-words",
     "file": "src/ui/bankWindow.js",
-    "old": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '',",
-    "new": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '',",
+    "old": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // ...and the enhanced face's whole words",
+    "new": "      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // ...and the enhanced face's whole words",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]
@@ -969,8 +969,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-enhanced-tavern-kitchen-own",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });",
-    "new": "hour: Math.trunc((((now) % 1440) + 1440) % 1440 / 60) });",
+    "old": "    hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
+    "new": "    hour: Math.trunc((((now % 1440) + 1440) % 1440) / 60),",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]
@@ -978,8 +978,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-enhanced-tavern-meal-holiday-own",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "gameMinutes: h.worldNow?.() ?? now });",
-    "new": "gameMinutes: now });",
+    "old": "  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // LIVED1: the meal's holiday is the world's calendar",
+    "new": "  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now }); // LIVED1: the meal's holiday is the world's calendar",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]

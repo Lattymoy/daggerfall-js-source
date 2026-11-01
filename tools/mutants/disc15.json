@@ -119,8 +119,8 @@
   {
     "name": "DISC15-the-lit-loop-reads-the-512-tier-alone",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)",
-    "new": "    float sh = k >= 0 ? pointShadowAt(k, wp, n)",
+    "old": "    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)   // DISC15: a 512 slot or a lo one - indoors, every light has one",
+    "new": "    float sh = k >= 0 ? pointShadowAt(k, wp, n)   // DISC15: a 512 slot or a lo one - indoors, every light has one",
     "tests": [
       "test/render/disc15.test.js"
     ]

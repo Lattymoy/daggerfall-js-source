@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, siegeRise } from '../../../src/net/siege/siegeRef.js';
-import { HEALTH_SHARE_WHOLE, PVP_HEAL_BLOCK_MS, PVP_HEAL, PVP_HEALTH_MAX, PVP_RESTORATION_MAX, pvpHealShare, healRoom, takeHealthReport, poolWord, poolUnheard, resetHealthShare, noteRefereeChange } from '../../../src/net/siege/refereeHealthShare.js';
+import { HEALTH_SHARE_WHOLE, PVP_HEAL_BLOCK_MS, PVP_HEAL, PVP_HEALTH_MAX, PVP_RESTORATION_MAX, pvpHealShare, setPoolMax, healRoom, takeHealthReport, poolWord, poolUnheard, resetHealthShare, noteRefereeChange } from '../../../src/net/siege/refereeHealthShare.js';
 import { WILD_REF } from '../../../src/net/wild/wildRef.js';
 import { validVitIn, VIT_RESTORATION_MAX } from '../../../src/net/wire.js';
 import { createRefereeHealthMirror, HEALTH_REPORT_MS } from '../../../src/net/siege/refereeHealthMirror.js';
@@ -181,6 +181,14 @@ test('PVP-HEALTH: a report\'s real maximum is the pool\'s whole (PVP_HEALTH_MAX 
   takeHealthReport(f, { report: 4, share: HEALTH_SHARE_WHOLE, seen: [], max: 1300 }, 30);
   assert.equal(f.max, 1300);
   assert.equal(f.hp, 2 + Math.floor(1300 * pvpHealShare(250)), 'dropping and lifting the maximum heals no more than the window');
+});
+
+test('PVP-HEALTH: setPoolMax holds its own bound, 1..PVP_HEALTH_MAX, whatever its caller capped (mutant: the bound dropped)', () => {
+  const f = newFighter(1, 0);
+  setPoolMax(f, 99_999, 0);
+  assert.equal(f.max, PVP_HEALTH_MAX);
+  setPoolMax(f, 0, 0);
+  assert.equal(f.max, 1);
 });
 
 test('SHARED-HEALTH: a REPORTED LOSS is taken at once and never fells - the client\'s own death is its own word; a fallen fighter takes no report (mutants: the floor dropped; the fall reported into)', () => {

@@ -35,9 +35,15 @@ import { orient, FRAME_C, FRAME_S, FRAME_OFF } from '../tamriel/tamrielLandforms
  *  saddles' `saddleScale` (summit to summit, 5.8 km), a saddle falling to `saddle` of its crest; the grade (rise over run)
  *  `flank` past which the ground is a flank, the crest field fading out over its half either side. */
 export const MASSIF_DIALS = Object.freeze({
-  foot: 240, crest: 1500, high: 300,
-  across: 380, stretch: 2.2, sharp: 0.05,
-  crestScale: 1100, saddleScale: 900, saddle: 0.35,
+  foot: 240,
+  crest: 1500,
+  high: 300,
+  across: 380,
+  stretch: 2.2,
+  sharp: 0.05,
+  crestScale: 1100,
+  saddleScale: 900,
+  saddle: 0.35,
   flank: 0.06,
 });
 
@@ -57,17 +63,24 @@ export function massifAmp(e) {
  *  it - a crest every `across`, the finer octave riding the coarser's high ground (spurs off the spurs, the valleys kept
  *  smooth). About 0..1.5. `noise` signed noise (the pins count its calls). */
 function spursIn(k, wx, wy, noise) {
-  const D = MASSIF_DIALS, c = FRAME_C[k], s = FRAME_S[k], [ox, oy] = FRAME_OFF[k];
-  const u = (wx * c + wy * s) / D.stretch, v = wy * c - wx * s;
-  const a1 = 1 - softAbs(noise(u / D.across + ox + 101.3, v / D.across + oy + 7.9), D.sharp), a = a1 * a1;
-  const b1 = 1 - softAbs(noise(u / (D.across * 0.42) + oy + 3.1, v / (D.across * 0.42) + ox + 55.7), 0.09), b = b1 * b1;
+  const D = MASSIF_DIALS,
+    c = FRAME_C[k],
+    s = FRAME_S[k],
+    [ox, oy] = FRAME_OFF[k];
+  const u = (wx * c + wy * s) / D.stretch,
+    v = wy * c - wx * s;
+  const a1 = 1 - softAbs(noise(u / D.across + ox + 101.3, v / D.across + oy + 7.9), D.sharp),
+    a = a1 * a1;
+  const b1 = 1 - softAbs(noise(u / (D.across * 0.42) + oy + 3.1, v / (D.across * 0.42) + ox + 55.7), 0.09),
+    b = b1 * b1;
   return a + 0.5 * a * b;
 }
 /** THE CREST: a slow ridged field with no direction (its zero lines the main crests), its height along them modulated by
  *  a slower field - summits, and saddles falling to `saddle` of them between. About 0..1. */
 function crestField(wx, wy, noise) {
   const D = MASSIF_DIALS;
-  const a1 = 1 - softAbs(noise(wx / D.crestScale + 13.7, wy / D.crestScale + 71.1), 0.03), a = a1 * a1 * a1;
+  const a1 = 1 - softAbs(noise(wx / D.crestScale + 13.7, wy / D.crestScale + 71.1), 0.03),
+    a = a1 * a1 * a1;
   const m = 0.5 + 0.5 * noise(wx / D.saddleScale + 47.3, wy / D.saddleScale + 2.9);
   return a * (D.saddle + (1 - D.saddle) * m);
 }
@@ -86,8 +99,9 @@ const _f = new Float64Array(4);
  * @param {(x: number, y: number) => number} [noise]
  */
 export function massifShape(wx, wy, c2, s2, grade, noise = signed) {
-  const D = MASSIF_DIALS, N = MASSIF_NORM;
-  const flank = smooth01((grade - D.flank * 0.5) / D.flank);   // 0 on a summit's plateau, 1 on a flank
+  const D = MASSIF_DIALS,
+    N = MASSIF_NORM;
+  const flank = smooth01((grade - D.flank * 0.5) / D.flank); // 0 on a summit's plateau, 1 on a flank
   let out = 0;
   if (flank > 0) {
     orient(c2, s2, _f);

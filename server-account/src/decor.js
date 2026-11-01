@@ -174,7 +174,7 @@ async function hallPieceBack(ctx, player, guildId, { delta, write, after, refusa
 /** GUILD-YARD: WHAT A HALL'S RULE BARS of a placement - a keeper's own thing anywhere, and a yard's piece at a palace
  *  alone (a guild's hall stands its yard); 1 barred, 0 not. */
 const hallBars = (piece, S, out) => (piece.item || (out && S.seat) ? 1 : 0);
-const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one
+const placeJson = ({ pos, rot, scale, light, storage, paid, station, name, hung }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one
 
 /** A stored row as a piece - projected again on the way out, so a row the law would refuse is never handed out.
  *  DECOR2a: `item` (migration 0012) is the owner's own item's descriptor, or NULL. */

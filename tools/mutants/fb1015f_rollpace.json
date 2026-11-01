@@ -2,8 +2,8 @@
   {
     "name": "ROLL-PACE-the-first-day-uncounted",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;",
-    "new": "Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0);",
+    "old": "  (typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;",
+    "new": "  typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0;",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROLL-PACE-the-reputation-unread",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rollRankCapOf(Math.min(rollRep(standing.rep), paid))",
-    "new": "rollRankCapOf(paid)",
+    "old": "  return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));",
+    "new": "  return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(paid));",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ROLL-PACE-a-promotion-before-the-first-word",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!standing) return 0;\n  const paid",
-    "new": "  if (!standing) return ROLL_BOOK_RANK_MAX;\n  const paid",
+    "old": "  if (!standing) return 0;",
+    "new": "  if (!standing) return ROLL_BOOK_RANK_MAX;",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ROLL-PACE-the-reputation-s-null",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (rollRep(standing.rep) < need) return null;\n",
-    "new": "",
+    "old": "  if (rollRep(standing.rep) < need) return null;\n  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));",
+    "new": "  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ROLL-PACE-the-wait-off-by-a-day",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));",
-    "new": "Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS) + 1);",
+    "old": "  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));",
+    "new": "  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS) + 1);",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ROLL-PACE-the-membership-s-start-unread",
     "file": "src/net/npcRollTracker.js",
-    "old": "since: sinces.get(f) ?? null }",
-    "new": "since: null }",
+    "old": "      return base ? { rep: base[f] ?? 0, since: sinces.get(f) ?? null } : null;",
+    "new": "      return base ? { rep: base[f] ?? 0, since: null } : null;",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROLL-PACE-a-stopped-roll-paces",
     "file": "src/net/npcRollTracker.js",
-    "old": "  if (!tracker || tracker.stopped) return null;\n  const standing",
-    "new": "  if (!tracker) return null;\n  const standing",
+    "old": "  if (!tracker || tracker.stopped) return null;",
+    "new": "  if (!tracker) return null;",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ROLL-PACE-the-hall-s-line-dropped",
     "file": "src/systems/guild/guildServiceFlow.js",
-    "old": "  if (wait > 0) lines.push(t('guild.rankNeeds.paced',",
-    "new": "  if (false) lines.push(t('guild.rankNeeds.paced',",
+    "old": "  if (wait > 0)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]

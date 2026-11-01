@@ -22,8 +22,8 @@
   {
     "name": "RAVEN-CLOSE-table-closes",
     "file": "src/systems/quest/clock.js",
-    "old": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;",
-    "new": "      && closesStartUp(q, this.symbol?.name)) return false;",
+    "old": "    if (\n      this._deadline &&\n      !this._closesOnSuccess &&\n      q?.questSuccess &&\n      !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) &&\n      closesStartUp(q, this.symbol?.name)\n    )",
+    "new": "    if (this._deadline && !this._closesOnSuccess && q?.questSuccess && closesStartUp(q, this.symbol?.name))",
     "tests": [
       "test/systems/quest/fb1021d_ravenclose.test.js",
       "test/systems/quest/auditrestparty_quests.test.js"

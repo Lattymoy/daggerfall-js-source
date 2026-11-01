@@ -22,7 +22,8 @@ const _careers = new Map();
 /** DaggerfallEntity.RegisterCustomCareerTemplate (:957-962): by the indexer, so a later mod overwrites an earlier one's
  *  ("mod 1 provides new enemies, mod 2 rebalances them"). */
 export function registerCustomCareerTemplate(enemyId, template) {
-  if (!Number.isInteger(enemyId) || typeof template?.load !== 'function') throw new Error(`registerCustomCareerTemplate: ${enemyId} needs a template with load()`);
+  if (!Number.isInteger(enemyId) || typeof template?.load !== 'function')
+    throw new Error(`registerCustomCareerTemplate: ${enemyId} needs a template with load()`);
   _careers.set(enemyId, Object.freeze({ name: String(template.name ?? ''), load: template.load }));
 }
 
@@ -51,4 +52,7 @@ export function customEnemyName(enemyId) {
 }
 
 /** The test seam: every registration let go. */
-export function clearCustomEnemies() { _careers.clear(); _names.length = 0; }
+export function clearCustomEnemies() {
+  _careers.clear();
+  _names.length = 0;
+}

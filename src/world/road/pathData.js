@@ -25,7 +25,9 @@ import { MAP_W, MAP_H } from './roadNetwork.js';
  *  @type {(kind: string, x: number, y: number) => number} */
 let roadsPastTable = () => 0;
 /** @param {(kind: string, x: number, y: number) => number} read */
-export const setRoadsPastTable = (read) => { roadsPastTable = read; };
+export const setRoadsPastTable = (read) => {
+  roadsPastTable = read;
+};
 
 /** TravelOptionsMod.cs:73-75 - the four path arrays, in the mod's own
  *  index order (and Basic Roads' own: it answers `getPathData` by it). */
@@ -55,9 +57,9 @@ export const DIRECTIONS = Object.freeze([N, NE, E, SE, S, SW, W, NW]);
  *  (WorldMapTileDim 128 of them across a pixel, world/terrain/terrainTiles.js),
  *  and a path is two tiles wide. */
 export const MP_WORLD_UNITS = 32768;
-export const HALF_MP_WORLD_UNITS = MP_WORLD_UNITS / 2;      // 16384
-export const T_SIZE = MP_WORLD_UNITS / 128;                 // 256 - one terrain tile
-export const P_SIZE = T_SIZE * 2;                           // 512 - a path's width
+export const HALF_MP_WORLD_UNITS = MP_WORLD_UNITS / 2; // 16384
+export const T_SIZE = MP_WORLD_UNITS / 128; // 256 - one terrain tile
+export const P_SIZE = T_SIZE * 2; // 512 - a path's width
 
 /** TravelOptionsMod.cs:808-814, GetPathsDataPoint: roads OR tracks, one
  *  byte. `net` is the port's road bundle - the four Uint8Arrays of
@@ -99,8 +101,11 @@ const onTable = (x, y) => x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;
  *  too: no ruin stands on a road past the Bay. */
 export function dataPoint(net, pathType, mapPixelX, mapPixelY) {
   if (!net) return 0;
-  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;
+  if (!onTable(mapPixelX, mapPixelY))
+    return pathType === PATH_ROADS || pathType === PATH_TRACKS
+      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff
+      : 0;
   const arr = net[PATH_KEYS[pathType]];
   if (!arr) return 0;
-  return arr[mapPixelX + (mapPixelY * MAP_W)] & 0xff;
+  return arr[mapPixelX + mapPixelY * MAP_W] & 0xff;
 }

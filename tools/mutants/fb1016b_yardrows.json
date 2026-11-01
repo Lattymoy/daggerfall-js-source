@@ -1,7 +1,47 @@
 [
-  { "name": "YARD-ROWS-the-auto-track", "file": "src/ui/shipyardWindow.js", "old": "minmax(0, 1.6fr) fit-content(40%); align-items: center;", "new": "minmax(0, 1.6fr) auto; align-items: center;", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
-  { "name": "YARD-ROWS-no-fleet-row", "file": "src/ui/shipyardWindow.js", "old": "      const row = el('div', 'dfyard-row dfyard-fleetrow');", "new": "      const row = el('div', 'dfyard-row');", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
-  { "name": "YARD-ROWS-the-fleet-row-three-tracks", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr); }", "new": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; }", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
-  { "name": "YARD-ROWS-acts-beside", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-fleetrow .dfyard-acts { grid-column: 1 / -1; }", "new": ".dfyard-fleetrow .dfyard-acts { }", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
-  { "name": "YARD-ROWS-AUDIT-the-picker-uncapped", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-acts .dfyard-post { min-width: 0; max-width: 12em; text-overflow: ellipsis; }", "new": ".dfyard-acts .dfyard-post { text-overflow: ellipsis; }", "tests": ["test/ui/fb1016b_yardrows.test.js"] }
+  {
+    "name": "YARD-ROWS-the-auto-track",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) fit-content(40%); align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }",
+    "new": ".dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }",
+    "tests": [
+      "test/ui/fb1016b_yardrows.test.js"
+    ]
+  },
+  {
+    "name": "YARD-ROWS-no-fleet-row",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      const row = el('div', 'dfyard-row dfyard-fleetrow'); // YARD-ROWS: her acts under her words",
+    "new": "      const row = el('div', 'dfyard-row'); // YARD-ROWS: her acts under her words",
+    "tests": [
+      "test/ui/fb1016b_yardrows.test.js"
+    ]
+  },
+  {
+    "name": "YARD-ROWS-the-fleet-row-three-tracks",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr); }",
+    "new": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; }",
+    "tests": [
+      "test/ui/fb1016b_yardrows.test.js"
+    ]
+  },
+  {
+    "name": "YARD-ROWS-acts-beside",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-fleetrow .dfyard-acts { grid-column: 1 / -1; }",
+    "new": ".dfyard-fleetrow .dfyard-acts { }",
+    "tests": [
+      "test/ui/fb1016b_yardrows.test.js"
+    ]
+  },
+  {
+    "name": "YARD-ROWS-AUDIT-the-picker-uncapped",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-acts .dfyard-post { min-width: 0; max-width: 12em; text-overflow: ellipsis; }   /* YARD-ROWS' audit: a long hand's name in the swap picker never holds the presses' track past its fit-content cap */",
+    "new": ".dfyard-acts .dfyard-post { text-overflow: ellipsis; }   /* YARD-ROWS' audit: a long hand's name in the swap picker never holds the presses' track past its fit-content cap */",
+    "tests": [
+      "test/ui/fb1016b_yardrows.test.js"
+    ]
+  }
 ]

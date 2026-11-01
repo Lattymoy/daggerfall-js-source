@@ -2,8 +2,8 @@
   {
     "name": "HOME-DOORS-the-jamb-unhalved",
     "file": "src/systems/decor/decorDoorways.js",
-    "old": "        for (let i = 0; i < 4; i++) {   // halved four times",
-    "new": "        for (let i = 0; i < 0; i++) {   // halved four times",
+    "old": "        for (let i = 0; i < 4; i++) {",
+    "new": "        for (let i = 0; i < 0; i++) {",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "HOME-DOORS-the-near-door-unasked",
     "file": "src/systems/decor/decorDoorways.js",
-    "old": "  return (doorways ?? []).filter((w) => !at.some((d) => Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < DOORWAY_NEAR_DOOR",
-    "new": "  return (doorways ?? []).filter((w) => !at.some((d) => Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < 0",
+    "old": "          Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < DOORWAY_NEAR_DOOR &&\n          Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN,",
+    "new": "          Math.hypot(d[0] - w.center[0], d[2] - w.center[2]) < 0 && Math.abs(d[1] - w.center[1]) < DOORWAY_HEIGHT_MIN,",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "HOME-RENT-the-days-rounded-down",
     "file": "src/net/homeLaw.js",
-    "old": "Math.ceil((until - nowS) / RENT_DAY_S) : 0);",
-    "new": "Math.floor((until - nowS) / RENT_DAY_S) : 0);",
+    "old": "  Number.isSafeInteger(until) && until > nowS ? Math.ceil((until - nowS) / RENT_DAY_S) : 0;",
+    "new": "  Number.isSafeInteger(until) && until > nowS ? Math.floor((until - nowS) / RENT_DAY_S) : 0;",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "HOME-RENT-the-tenant-shut-out",
     "file": "src/net/homeLaw.js",
-    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true;   // HOME-RENT",
-    "new": "  if (false) return true;   // HOME-RENT",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (false) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "HOME-RENT-the-delete-unguarded",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0) return { error: 'home-tenants' };\n",
-    "new": "",
+    "old": "    if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0)\n      return { error: 'home-tenants' };\n    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
+    "new": "    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "HOME-RENT-the-character-unsent",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      .then(() => api.town(id, as === undefined ? character() : as))",
-    "new": "      .then(() => api.town(id, as === undefined ? null : as))",
+    "old": "      .then(() => api.town(id, as === undefined ? character() : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
+    "new": "      .then(() => api.town(id, as === undefined ? null : as)) // HOME-RENT: the playing character's own tenancies ride the answer",
     "tests": [
       "test/server/homerent.test.js",
       "test/systems/online/bootoverlap.test.js"
@@ -286,8 +286,8 @@
   {
     "name": "HOME-LOOK-the-base-dropped",
     "file": "src/world/homeLook.js",
-    "old": "    const swapped = base?.get?.(key);\n    if (swapped) out.set(key, swapped);",
-    "new": "    const swapped = null;\n    if (swapped) out.set(key, swapped);",
+    "old": "    const swapped = base?.get?.(key);",
+    "new": "    const swapped = null;",
     "tests": [
       "test/net/homelook.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "HOME-LOOK-the-home-merged",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
-    "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) {",
+    "old": "          if (!entry._home && !isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { addStatic(cpu, local, climateFree); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out",
+    "new": "          if (!isCityGate(placed.modelIdNum) && cpu.normals && cpu.uvs) { addStatic(cpu, local, climateFree); entry._batched = true; }   // PERF4: the remap for this model's textures is in the map by now (awaited above); HOME-LOOK: a home stays out",
     "tests": [
       "test/net/homelook.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "HOME-RENT-the-refused-delete-withdrawing",
     "file": "server-account/src/realm.js",
-    "old": "  const held = await homeHeld();\n  if (held) return held;\n  await db.prepare(`UPDATE home_rooms SET listed = 0",
-    "new": "  await db.prepare(`UPDATE home_rooms SET listed = 0",
+    "old": "  const held = await homeHeld();\n  if (held) return held;\n  await db",
+    "new": "  await db",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "HOME-RENT-a-leftover-offered",
     "file": "src/systems/homeRent.js",
-    "old": "  if (!o.listed) return 'No longer offered to rent';",
-    "new": "  if (false) return 'No longer offered to rent';",
+    "old": "  if (!o.listed) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
+    "new": "  if (false) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "HOME-RENT-the-tenancy-past-its-end",
     "file": "src/net/homeLaw.js",
-    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true;",
-    "new": "  if (home.tenant) return true;",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (home.tenant) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "HOME-RENT-a-withdrawn-room-offered-to-renew",
     "file": "src/systems/homeRent.js",
-    "old": "(rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours));",
-    "new": "(rooms ?? []).filter((r) => (r.listed && !r.taken) || r.yours);",
+    "old": "export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours)); // one's own renewed while it is still offered (AUDIT: as the service allows)",
+    "new": "export const rentable = (rooms) => (rooms ?? []).filter((r) => (r.listed && !r.taken) || r.yours); // one's own renewed while it is still offered (AUDIT: as the service allows)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "HOME-DOORS-the-unseen-aimed-at",
     "file": "src/systems/decor/decorDoorways.js",
-    "old": "    if (seen && !seen(m, Math.hypot(v[0], v[1], v[2]))) continue;\n",
-    "new": "",
+    "old": "    if (seen && !seen(m, Math.hypot(v[0], v[1], v[2]))) continue;\n    bestD = off;",
+    "new": "    bestD = off;",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "HOME-DOORS-the-lintel-from-inside-the-step",
     "file": "src/systems/decor/decorDoorways.js",
-    "old": "      const sideFloor = Number.isFinite(sd) ? h - sd : floor;",
-    "new": "      const sideFloor = floor;",
+    "old": "        const sideFloor = Number.isFinite(sd) ? h - sd : floor;",
+    "new": "        const sideFloor = floor;",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -671,8 +671,8 @@
   {
     "name": "HOME-LOOK-the-builds-version-spent",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (homeTown) host._homeLookV = -1;",
-    "new": "    if (homeTown) void 0;",
+    "old": "    if (homeTown) host._homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh",
+    "new": "    if (homeTown) void 0;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh",
     "tests": [
       "test/net/homelook.test.js"
     ]

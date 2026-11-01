@@ -2,8 +2,8 @@
   {
     "name": "HILLSHAPES-catalogue-mound",
     "file": "src/world/townStandIns.js",
-    "old": "[id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)]",
-    "new": "[id, () => hillMesh({ ...RMBRP_HILL_SHAPES[id], top: 1.6, reach: RMBRP_HILL_SHAPES[id].reach.map(() => 10), rings: RMBRP_HILL_SHAPES[id].rings.map((r) => r.map((h, j) => (j === r.length - 1 ? h : 1.6 * (1 - j / r.length)))) }, surface)]",
+    "old": "    Object.entries(RMBRP_HILLS).map(([id, surface]) => [id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)]),",
+    "new": "    Object.entries(RMBRP_HILLS).map(([id, surface]) => [\n      id,\n      () =>\n        hillMesh(\n          {\n            ...RMBRP_HILL_SHAPES[id],\n            top: 1.6,\n            reach: RMBRP_HILL_SHAPES[id].reach.map(() => 10),\n            rings: RMBRP_HILL_SHAPES[id].rings.map((r) =>\n              r.map((h, j) => (j === r.length - 1 ? h : 1.6 * (1 - j / r.length))),\n            ),\n          },\n          surface,\n        ),\n    ]),",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HILLSHAPES-reach-halved",
     "file": "src/world/townStandIns.js",
-    "old": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N;",
-    "new": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N / 2;",
+    "old": "      r = (shape.reach[b] * j) / N;",
+    "new": "      r = (shape.reach[b] * j) / N / 2;",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "HILLSHAPES-faces-down",
     "file": "src/world/townStandIns.js",
-    "old": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? -1 : 1;",
-    "new": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? 1 : -1;",
+    "old": "      sgn = n[1] < 0 ? -1 : 1;",
+    "new": "      sgn = n[1] < 0 ? 1 : -1;",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "HILLSHAPES-cell-one-triangle",
     "file": "src/world/townStandIns.js",
-    "old": "    else { face(a, b, c); face(a, c, d); }",
-    "new": "    else { face(a, b, c); }",
+    "old": "        face(a, c, d);\n      }",
+    "new": "      }",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "HILLSHAPES-ipsham-hill-narrowed",
     "file": "src/world/rmbrpHillShapes.js",
-    "old": "  52758: { c: [-0.11, 0.52], top: 3.89, reach: [34.65, 32.7, 31.43, 31.74, 29.58, 27.91, 27.89, 32.93, 35.89, 36.71, 35.12, 32.44, 27.81, 30.01, 30.7, 36.62]",
-    "new": "  52758: { c: [-0.11, 0.52], top: 3.89, reach: [20.79, 19.62, 18.86, 19.04, 17.75, 16.75, 16.73, 19.76, 21.53, 22.03, 21.07, 19.46, 16.69, 18.01, 18.42, 21.97]",
+    "old": "      34.65, 32.7, 31.43, 31.74, 29.58, 27.91, 27.89, 32.93, 35.89, 36.71, 35.12, 32.44, 27.81, 30.01, 30.7, 36.62,",
+    "new": "      20.79, 19.62, 18.86, 19.04, 17.75, 16.75, 16.73, 19.76, 21.53, 22.03, 21.07, 19.46, 16.69, 18.01, 18.42, 21.97,",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "HILLSHAPES-52018-top-raised",
     "file": "src/world/rmbrpHillShapes.js",
-    "old": "  52018: { c: [0.92, -0.53], top: 11.17,",
-    "new": "  52018: { c: [0.92, -0.53], top: 14.17,",
+    "old": "    top: 11.17,",
+    "new": "    top: 14.17,",
     "equivalent": true,
     "why": "AUDIT FB1005 T4: left alive and said - a single table cell (52018's centre, RESIAS01's hill) moved 3 m reaches no pin: raising it hangs nothing for the whole-pack sweep to find, and the table's truth is the tool's measure (tools/rmbrpHills.mjs --shapes regenerates it byte for byte from the pack's clone), which no test can run without the clone",
     "tests": [

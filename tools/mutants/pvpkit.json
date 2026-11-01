@@ -2,8 +2,8 @@
   {
     "name": "PVP-KIT-a-cost-moved",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  heal: Object.freeze({ cost: 12, scale:",
-    "new": "  heal: Object.freeze({ cost: 10, scale:",
+    "old": "  heal: Object.freeze({ cost: 12, scale: Object.freeze([25, 35]), icon: 3 }),",
+    "new": "  heal: Object.freeze({ cost: 10, scale: Object.freeze([25, 35]), icon: 3 }),",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-KIT-a-scale-end-moved",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  shield: Object.freeze({ cost: 15, scale: Object.freeze([10, 25])",
-    "new": "  shield: Object.freeze({ cost: 15, scale: Object.freeze([10, 30])",
+    "old": "  shield: Object.freeze({ cost: 15, scale: Object.freeze([10, 25]), icon: 47 }),",
+    "new": "  shield: Object.freeze({ cost: 15, scale: Object.freeze([10, 30]), icon: 47 }),",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-KIT-the-clamp-off",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "const f = Math.max(0, Math.min(1, ((Number(skill) || 0) - PVP_KIT.lo) / (PVP_KIT.hi - PVP_KIT.lo)));",
-    "new": "const f = Math.max(0, ((Number(skill) || 0) - PVP_KIT.lo) / (PVP_KIT.hi - PVP_KIT.lo));",
+    "old": "  const f = Math.max(0, Math.min(1, ((Number(skill) || 0) - PVP_KIT.lo) / (PVP_KIT.hi - PVP_KIT.lo)));",
+    "new": "  const f = Math.max(0, ((Number(skill) || 0) - PVP_KIT.lo) / (PVP_KIT.hi - PVP_KIT.lo));",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-KIT-the-reach-moved",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15,",
-    "new": "export const PVP_KIT = Object.freeze({ slots: 8, reachM: 24,",
+    "old": "export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });",
+    "new": "export const PVP_KIT = Object.freeze({ slots: 8, reachM: 24, rounds: 12, lo: 100, hi: 300 });",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-KIT-the-base-lost",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "return { magnitudeBaseLow: base, magnitudeBaseHigh: base,",
-    "new": "return { magnitudeBaseLow: 0, magnitudeBaseHigh: 0,",
+    "old": "    magnitudeBaseLow: base,\n    magnitudeBaseHigh: base,",
+    "new": "    magnitudeBaseLow: 0,\n    magnitudeBaseHigh: 0,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-KIT-damage-not-an-area",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "element: damage ? s.pick : 4, rangeType: damage ? 4 : rez ? 1 : 0,",
-    "new": "element: damage ? s.pick : 4, rangeType: damage ? 2 : rez ? 1 : 0,",
+    "old": "    rangeType: damage ? 4 : rez ? 1 : 0,",
+    "new": "    rangeType: damage ? 2 : rez ? 1 : 0,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-KIT-the-element-unread",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "element: damage ? s.pick : 4, rangeType",
-    "new": "element: 4, rangeType",
+    "old": "    element: damage ? s.pick : 4,",
+    "new": "    element: 4,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-KIT-the-gift-reach-unset",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "    ...(damage || rez ? {} : { pvpReach: PVP_KIT.reachM }),\n",
-    "new": "",
+    "old": "    ...(damage || rez ? {} : { pvpReach: PVP_KIT.reachM }),\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PVP-KIT-the-heal-share-wrong",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "case 'heal': return [buff(10, 8, 0, kitMagnitude((n / 100) * maxHealth, level))];",
-    "new": "case 'heal': return [buff(10, 8, 0, kitMagnitude(n * 10, level))];",
+    "old": "      return [buff(10, 8, 0, kitMagnitude((n / 100) * maxHealth, level))];",
+    "new": "      return [buff(10, 8, 0, kitMagnitude(n * 10, level))];",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -84,7 +84,7 @@
     "name": "PVP-KIT-the-pick-kept-on-heal",
     "file": "src/systems/wild/pvpKit.js",
     "old": "  const pick = choices ? (choices.includes(raw?.pick) ? raw.pick : choices[0]) : null;",
-    "new": "  const pick = choices ? (choices.includes(raw?.pick) ? raw.pick : choices[0]) : raw?.pick ?? null;",
+    "new": "  const pick = choices ? (choices.includes(raw?.pick) ? raw.pick : choices[0]) : (raw?.pick ?? null);",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-KIT-a-bad-icon-kept",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "raw.icon >= 0 && raw.icon < 69 ?",
-    "new": "raw.icon >= 0 ?",
+    "old": "  const icon = Number.isInteger(raw?.icon) && raw.icon >= 0 && raw.icon < 69 ? raw.icon : KIT_SPELLS[id].icon;",
+    "new": "  const icon = Number.isInteger(raw?.icon) && raw.icon >= 0 ? raw.icon : KIT_SPELLS[id].icon;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PVP-KIT-the-refusal-never-said",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "(active && !isKitSpell(sp) ?",
-    "new": "(false && !isKitSpell(sp) ?",
+    "old": "  active && !isKitSpell(sp) ? t('pvp.kit.only', 'With PvP on, you can cast only the spells on your PvP bar.') : null;",
+    "new": "  false && !isKitSpell(sp) ? t('pvp.kit.only', 'With PvP on, you can cast only the spells on your PvP bar.') : null;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-KIT-a-kit-spell-refused",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "(active && !isKitSpell(sp) ?",
-    "new": "(active ?",
+    "old": "  active && !isKitSpell(sp) ? t('pvp.kit.only', 'With PvP on, you can cast only the spells on your PvP bar.') : null;",
+    "new": "  active ? t('pvp.kit.only', 'With PvP on, you can cast only the spells on your PvP bar.') : null;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-KIT-the-price-unread",
     "file": "src/systems/spellcost.js",
-    "old": "  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost);",
-    "new": "",
+    "old": "  if (spell.pvpKitCost > 0) sp = Math.trunc(spell.pvpKitCost); // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)",
+    "new": "  // PVP-KIT: the PvP bar's price, a share of maximum magicka (systems/wild/pvpKit.js kitCost)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-KIT-the-kit-poison-barred",
     "file": "src/combat/siegeCombat.js",
-    "old": "sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e;",
-    "new": "sp.element === PVP_POISON_ELEMENT ? null : e;",
+    "old": "  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e; // PVP-KIT: the bar's Damage may be Poison",
+    "new": "  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT ? null : e; // PVP-KIT: the bar's Damage may be Poison",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-KIT-reflect-unread",
     "file": "src/combat/pvpGuard.js",
-    "old": "const turned = (100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity)) / 100;",
-    "new": "const turned = 100 * (100 - pvpAbsorbChance(entity)) / 100;",
+    "old": "  const turned = ((100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
+    "new": "  const turned = (100 * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-KIT-absorb-unread",
     "file": "src/combat/pvpGuard.js",
-    "old": "const turned = (100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity)) / 100;",
-    "new": "const turned = (100 - pvpReflectChance(entity)) * 100 / 100;",
+    "old": "  const turned = ((100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
+    "new": "  const turned = ((100 - pvpReflectChance(entity)) * 100) / 100; // PVP-KIT: what Reflect and Absorb let by",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PVP-KIT-absorb-uncapped",
     "file": "src/combat/pvpGuard.js",
-    "old": "return Math.max(0, Math.min(SPELL_ABSORPTION_CHANCE_CAP, best));",
-    "new": "return Math.max(0, Math.min(100, best));",
+    "old": "  return Math.max(0, Math.min(SPELL_ABSORPTION_CHANCE_CAP, best));",
+    "new": "  return Math.max(0, Math.min(100, best));",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PVP-KIT-the-share-read-as-whole",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "* Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
-    "new": "* PVP_SHIELD.max) / PVP_SHIELD.max;",
+    "old": "  const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
+    "new": "  const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) * PVP_SHIELD.max) / PVP_SHIELD.max;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PVP-KIT-the-shaft-read-as-a-swing",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee))",
-    "new": "const off = ((100 - (PVP_SHIELD.melee))",
+    "old": "  const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
+    "new": "  const off = ((100 - PVP_SHIELD.melee) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PVP-KIT-the-share-never-reported",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "return v === true ? 1 : Math.max(0, Math.round(Number(v) || 0)); };",
-    "new": "return v ? 1 : 0; };",
+    "old": "    return v === true ? 1 : Math.max(0, Math.round(Number(v) || 0));",
+    "new": "    return v ? 1 : 0;",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PVP-KIT-the-gift-level-unclamped",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,",
-    "new": "level,",
+    "old": "    level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,",
+    "new": "    level,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PVP-KIT-a-refusal-read-as-a-cast",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "  if (magic.readySpell?.(sp) === false) return 'refused';\n",
-    "new": "",
+    "old": "  if (magic.readySpell?.(sp) === false) return 'refused';\n  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
+    "new": "  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PVP-KIT-damage-never-fired",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "  if (!magic.spellArmed?.()) return 'cast';",
-    "new": "  return 'cast';",
+    "old": "  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
+    "new": "  return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-KIT-the-kit-press-unread",
     "file": "src/systems/quickslots.js",
-    "old": "const r = kitPress?.(i, { ...e.kit }) ?? 'none';",
-    "new": "const r = 'none';",
+    "old": "    const r = kitPress?.(i, { ...e.kit }) ?? 'none';",
+    "new": "    const r = 'none';",
     "tests": [
       "test/systems/wild/pvpkit.test.js",
       "test/systems/wild/pvpset.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "PVP-KIT-REZ-the-cost-moved",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  resurrect: Object.freeze({ cost: 25, icon: 10 }),",
-    "new": "  resurrect: Object.freeze({ cost: 20, icon: 10 }),",
+    "old": "  resurrect: Object.freeze({ cost: 25, icon: 10 }), // PVP-KIT-REZ: the shop's Resurrection, its icon",
+    "new": "  resurrect: Object.freeze({ cost: 20, icon: 10 }), // PVP-KIT-REZ: the shop's Resurrection, its icon",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "PVP-KIT-REZ-not-by-touch",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "rangeType: damage ? 4 : rez ? 1 : 0,",
-    "new": "rangeType: damage ? 4 : 0,",
+    "old": "    rangeType: damage ? 4 : rez ? 1 : 0,",
+    "new": "    rangeType: damage ? 4 : 0,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "PVP-KIT-REZ-given-the-gift-reach",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "...(damage || rez ? {} : { pvpReach",
-    "new": "...(damage ? {} : { pvpReach",
+    "old": "    ...(damage || rez ? {} : { pvpReach: PVP_KIT.reachM }),",
+    "new": "    ...(damage ? {} : { pvpReach: PVP_KIT.reachM }),",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "PVP-KIT-REZ-no-effect",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "    case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];",
-    "new": "    case 'resurrect': return [];",
+    "old": "      return [{ ...resurrectionSpell().effects[0] }]; // PVP-KIT-REZ: the game's own Resurrect (45,255)",
+    "new": "      return []; // PVP-KIT-REZ: the game's own Resurrect (45,255)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "PVP-KIT-REZ-the-name-lost",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  resurrect: () => t('pvp.kit.resurrect', 'Resurrect') });",
-    "new": " });",
+    "old": "  resurrect: () => t('pvp.kit.resurrect', 'Resurrect'),\n});",
+    "new": "});",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "PVP-KIT-REZ-an-ally-frame-asked",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "s.id !== 'damage' && s.id !== 'resurrect' && allyAimed",
-    "new": "s.id !== 'damage' && allyAimed",
+    "old": "  const gift = s.id !== 'damage' && s.id !== 'resurrect' && allyAimed(PVP_KIT.reachM); // PVP-KIT-REZ: a body is raised, not given a frame",
+    "new": "  const gift = s.id !== 'damage' && allyAimed(PVP_KIT.reachM); // PVP-KIT-REZ: a body is raised, not given a frame",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "PVP-KIT-REGEN-a-saved-cure-lost",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  if (raw?.id === 'cure') raw = {",
-    "new": "  if (raw?.id === 'cured') raw = {",
+    "old": "  if (raw?.id === 'cure') raw = { ...raw, id: 'regen', icon: raw.icon === 49 ? KIT_SPELLS.regen.icon : raw.icon }; // PVP-KIT-REGEN: a saved Cure is Regenerate",
+    "new": "  if (raw?.id === 'cured') raw = { ...raw, id: 'regen', icon: raw.icon === 49 ? KIT_SPELLS.regen.icon : raw.icon }; // PVP-KIT-REGEN: a saved Cure is Regenerate",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "PVP-KIT-REGEN-not-the-regenerate",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "case 'regen': return [buff(18, -1,",
-    "new": "case 'regen': return [buff(10, 8,",
+    "old": "      return [buff(18, -1, 0, kitMagnitude((n / 100) * maxHealth, level))]; // PVP-KIT-REGEN: a share of health each round",
+    "new": "      return [buff(10, 8, 0, kitMagnitude((n / 100) * maxHealth, level))]; // PVP-KIT-REGEN: a share of health each round",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "PVP-KIT-REGEN-a-scale-end-moved",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4])",
-    "new": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 5])",
+    "old": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }), // PVP-KIT-REGEN: in Cure's place, the classic Troll's Blood's icon",
+    "new": "  regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 5]), icon: 1 }), // PVP-KIT-REGEN: in Cure's place, the classic Troll's Blood's icon",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

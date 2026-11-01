@@ -38,10 +38,30 @@ import { t } from '../systems/textManager.js';
 
 /** The words a classic mix says online - why it earned nothing (L10N4: read when said). */
 export const POTION_DOOR_WORDS = Object.freeze({
-  away: () => t('prof.maker.away', 'A potion mixed here earns no {profession} experience. At an alchemy station (an Alchemist\'s, a Mages Guild hall or your own home) the potion maker brews it from your Stores and what you carry, and it does.', { profession: professionName('alchemy') }),
-  rank: (/** @type {string} */ name, /** @type {number} */ rank) => t('prof.maker.rank', 'Mixed as the classic potion maker mixes, it earns no {profession} experience: {potion} is brewed from {profession} rank {rank}.', { profession: professionName('alchemy'), potion: name, rank }),
-  fee: (/** @type {number} */ fee) => t('prof.maker.fee', 'Mixed as the classic potion maker mixes, it earns no {profession} experience: brewing it here costs {fee} gold.', { profession: professionName('alchemy'), fee }),
-  stored: (/** @type {string} */ name, /** @type {number} */ rank) => t('prof.maker.storedRank', '{potion} is brewed from {profession} rank {rank}. Take your Stores\' ingredients out of the cauldron to mix it from what you carry.', { profession: professionName('alchemy'), potion: name, rank }),
+  away: () =>
+    t(
+      'prof.maker.away',
+      "A potion mixed here earns no {profession} experience. At an alchemy station (an Alchemist's, a Mages Guild hall or your own home) the potion maker brews it from your Stores and what you carry, and it does.",
+      { profession: professionName('alchemy') },
+    ),
+  rank: (/** @type {string} */ name, /** @type {number} */ rank) =>
+    t(
+      'prof.maker.rank',
+      'Mixed as the classic potion maker mixes, it earns no {profession} experience: {potion} is brewed from {profession} rank {rank}.',
+      { profession: professionName('alchemy'), potion: name, rank },
+    ),
+  fee: (/** @type {number} */ fee) =>
+    t(
+      'prof.maker.fee',
+      'Mixed as the classic potion maker mixes, it earns no {profession} experience: brewing it here costs {fee} gold.',
+      { profession: professionName('alchemy'), fee },
+    ),
+  stored: (/** @type {string} */ name, /** @type {number} */ rank) =>
+    t(
+      'prof.maker.storedRank',
+      "{potion} is brewed from {profession} rank {rank}. Take your Stores' ingredients out of the cauldron to mix it from what you carry.",
+      { profession: professionName('alchemy'), potion: name, rank },
+    ),
   brewing: () => t('prof.page.alchemy.brewing', 'Brewing...'),
 });
 
@@ -51,7 +71,8 @@ export const POTION_DOOR_WORDS = Object.freeze({
 export function cauldronKey(it) {
   if (typeof it?.stores === 'string') return it.stores;
   const keys = ingredientKeys(it?.templateIndex);
-  if (keys.length > 1) return keys.find((k) => PLANT_GROUPS[/** @type {'p1'|'p2'} */ (k.slice(0, 2))] === it.group) ?? keys[0];
+  if (keys.length > 1)
+    return keys.find((k) => PLANT_GROUPS[/** @type {'p1'|'p2'} */ (k.slice(0, 2))] === it.group) ?? keys[0];
   return keys[0] ?? null;
 }
 
@@ -63,11 +84,17 @@ export function cauldronKey(it) {
  */
 export function potionMakerHooks({ player, surface = () => {}, icons, onClose, door = potionMakerDoor }) {
   const carried = () => [...(player.items ?? []), ...(player.wagonItems ?? []), ...(player.bagItems ?? [])];
-  const station = () => { const d = door(); return d?.station ? d : null; };
+  const station = () => {
+    const d = door();
+    return d?.station ? d : null;
+  };
   /** POTION-DOOR: one DFU item a Stores key, made once (mintMaterialItem - the item a withdrawal would mint). */
   const minted = new Map();
   const itemOf = (/** @type {string} */ key) => {
-    if (!minted.has(key)) { const it = mintMaterialItem(key); minted.set(key, it && isIngredient(it) ? it : null); }
+    if (!minted.has(key)) {
+      const it = mintMaterialItem(key);
+      minted.set(key, it && isIngredient(it) ? it : null);
+    }
     return minted.get(key);
   };
   /** POTION-DOOR: at an alchemy station, online, the Stores' ingredients - each its row's units, its key kept. */
@@ -75,7 +102,8 @@ export function potionMakerHooks({ player, surface = () => {}, icons, onClose, d
     const d = station();
     if (!d) return [];
     return INGREDIENT_KEYS.flatMap((key) => {
-      const n = Math.max(0, Math.trunc(Number(d.held(key)) || 0)), it = n > 0 ? itemOf(key) : null;
+      const n = Math.max(0, Math.trunc(Number(d.held(key)) || 0)),
+        it = n > 0 ? itemOf(key) : null;
       return it ? [{ ...it, stackCount: n, stores: key }] : [];
     });
   };
@@ -84,7 +112,7 @@ export function potionMakerHooks({ player, surface = () => {}, icons, onClose, d
     // BAG1: THE SECOND LIST the walk reads is the cart's, and the Materials Bag's after it - the herbs a player gathered
     // are DFU's own plants, and DFU's mixer takes them wherever they are carried (read here, spent by takeOne below)
     wagonItems: () => [...(player.wagonItems ??= []), ...(player.bagItems ?? [])],
-    storeItems,   // POTION-DOOR: the Stores' beside what is carried, at an alchemy station
+    storeItems, // POTION-DOOR: the Stores' beside what is carried, at an alchemy station
     // AUDIT 58: Refresh's gold label is GetGoldAmount (DaggerfallPotionMakerWindow.cs:138) - coins PLUS letters of credit
     // (PlayerEntity.cs:1313-1316), the reader the item maker, the spellbook and the character sheet take
     gold: () => totalGoldAmount(player),
@@ -126,12 +154,17 @@ export function potionMakerHooks({ player, surface = () => {}, icons, onClose, d
       if (!d) return null;
       if (!d.station) return { classic: true, word: POTION_DOOR_WORDS.away() };
       const stored = cauldron.some((it) => typeof it?.stores === 'string');
-      if (result.kind !== 'mixed') return stored ? { ok: false, failed: true } : null;   // the window's own "potionFailed"
+      if (result.kind !== 'mixed') return stored ? { ok: false, failed: true } : null; // the window's own "potionFailed"
       const potion = potionById(result.recipe?.name);
       const keys = cauldron.map(cauldronKey);
-      if (!potion || keys.some((k) => !k) || !brewSpends(potion, /** @type {string[]} */ (keys))) return stored ? { ok: false, failed: true } : null;
-      const rank = Number(d.rank()) || 0, fee = Number(d.fee()) || 0;
-      if (rank < potion.rank) return stored ? { ok: false, text: POTION_DOOR_WORDS.stored(potion.name, potion.rank) } : { classic: true, word: POTION_DOOR_WORDS.rank(potion.name, potion.rank) };
+      if (!potion || keys.some((k) => !k) || !brewSpends(potion, /** @type {string[]} */ (keys)))
+        return stored ? { ok: false, failed: true } : null;
+      const rank = Number(d.rank()) || 0,
+        fee = Number(d.fee()) || 0;
+      if (rank < potion.rank)
+        return stored
+          ? { ok: false, text: POTION_DOOR_WORDS.stored(potion.name, potion.rank) }
+          : { classic: true, word: POTION_DOOR_WORDS.rank(potion.name, potion.rank) };
       if (!stored && fee > totalGoldAmount(player)) return { classic: true, word: POTION_DOOR_WORDS.fee(fee) };
       return { wait: POTION_DOOR_WORDS.brewing(), answer: d.brew(potion.id, keys) };
     },

@@ -318,8 +318,8 @@
   {
     "name": "C20-own-tab-a-stranger",
     "file": "src/net/social.js",
-    "old": "if (this.acct && this.peers.includes(id)) return this.acct;",
-    "new": "if (false) return this.acct;",
+    "old": "    if (this.acct && this.peers.includes(id)) return this.acct; // AUDIT SOC C20: my own other tab - `relation` says 'me'",
+    "new": "    if (false) return this.acct; // AUDIT SOC C20: my own other tab - `relation` says 'me'",
     "tests": [
       "test/net/auditsoc.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "C23-memo-never-dropped",
     "file": "src/net/social.js",
-    "old": "_changed(kind) { this.version++; this._colors = null; this.onChange?.(kind); }",
-    "new": "_changed(kind) { this.version++; this.onChange?.(kind); }",
+    "old": "    this._colors = null;\n    this.onChange?.(kind);",
+    "new": "    this.onChange?.(kind);",
     "tests": [
       "test/net/auditsoc.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "B10-an-unkept-account-minted",
     "file": "src/net/social.js",
-    "old": "return back === v ? v : null;",
-    "new": "return v;",
+    "old": "  return back === v ? v : null;",
+    "new": "  return v;",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "C1-menu-sheet-in-the-panel-namespace",
     "file": "src/ui/socialMenu.js",
-    "old": ".dfpeer-card { pointer-events: auto;",
-    "new": ".dfsocial-card { pointer-events: auto;",
+    "old": ".dfpeer-card { pointer-events: auto; background: rgba(14, 16, 19, .9); border: 1px solid var(--iron, #2b323b); border-radius: 6px;",
+    "new": ".dfsocial-card { pointer-events: auto; background: rgba(14, 16, 19, .9); border: 1px solid var(--iron, #2b323b); border-radius: 6px;",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "D2-members-on-one-pixel-not-stacked",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.stack ?? 0) * PARTY_LABEL_STACK",
-    "new": "0 * PARTY_LABEL_STACK",
+    "old": "    ctx.fillText(m.name, x, y + 9 + (m.stack ?? 0) * PARTY_LABEL_STACK);",
+    "new": "    ctx.fillText(m.name, x, y + 9 + 0 * PARTY_LABEL_STACK);",
     "tests": [
       "test/ui/soc6_partymap.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "D3-port-action-never-yields",
     "file": "src/systems/controlsConfig.js",
-    "old": "if (yielded.length) yieldDuplicates(u, yielded);",
-    "new": "if (false) yieldDuplicates(u, yielded);",
+    "old": "  if (yielded.length) yieldDuplicates(u, yielded);",
+    "new": "  if (false) yieldDuplicates(u, yielded);",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "D4-saved-F-not-migrated",
     "file": "src/systems/modSettings.js",
-    "old": "key: 'Handling.ToggleLightInput', was: 'F' });",
-    "new": "key: 'Handling.ToggleLightInput', was: 'G' });",
+    "old": "const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });",
+    "new": "const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'G' });",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "B8-hud-clock-never-ticks",
     "file": "src/ui/partyPanel.js",
-    "old": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }",
-    "new": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { return; }",
+    "old": "        paintLive();\n        return;",
+    "new": "        return;",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "C6-hud-on-the-fps-counter",
     "file": "src/ui/partyPanel.js",
-    "old": "top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
-    "new": "top: calc(40px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "old": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "new": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(40px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]

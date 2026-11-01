@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE ARTIST'S PIPELINE (bible/03-World/World-2-Canon.md, "Prefabs"): a prefab record and, for an artist's glTF,
+// WG2 THE ARTIST'S PIPELINE ("Prefabs"): a prefab record and, for an artist's glTF,
 // the file's own numbers - its triangles, its materials, its bounds and its textures' sides - read off its JSON and
 // held to the budgets (data/prefabs.json `budgets`), with its licence and provenance required. A model of the player's
 // own ARENA2 (`arch3d`) is named by id and never shipped (Port-Doctrine).

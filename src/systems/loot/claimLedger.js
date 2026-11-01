@@ -23,7 +23,7 @@
 // LEGACY_ASK_KEEP_MS - with the puppet or without it (a room change, a swept owner).
 // Pure but for the player's hands. Not a DFU member: Daggerfall has one player.
 import { liftPiece, givePiece, ROOM_CLAIM_TIMEOUT_MS, ROOM_TAKEN_TEXT, ROOM_CLAIMS_MAX } from '../roomLoot.js';
-import { addCarryClaims, pieceKg } from '../inventory.js';   // CARRY-CLAIMS: a claim's lifted piece weighs on the carry gate until its verdict
+import { addCarryClaims, pieceKg } from '../inventory.js'; // CARRY-CLAIMS: a claim's lifted piece weighs on the carry gate until its verdict
 
 /** How long a claim waits for its verdict: any verdict inside it lands, past it the claim is given up. */
 export const CLAIM_KEEP_MS = 300_000;
@@ -62,7 +62,15 @@ const ASKS_KEPT_MAX = 256;
  * @param {() => string} io.newId         a fresh claim id
  * @param {number} [io.keepMs] @param {number} [io.lapseMs] @param {number} [io.resendMs] @param {number} [io.resendMax]
  */
-export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAIM_KEEP_MS, lapseMs = ROOM_CLAIM_TIMEOUT_MS, resendMs = CLAIM_RESEND_MS, resendMax = CLAIM_RESEND_MAX_MS }) {
+export function createClaimLedger({
+  entity,
+  say = () => {},
+  newId,
+  keepMs = CLAIM_KEEP_MS,
+  lapseMs = ROOM_CLAIM_TIMEOUT_MS,
+  resendMs = CLAIM_RESEND_MS,
+  resendMax = CLAIM_RESEND_MAX_MS,
+}) {
   /** @type {Map<string, Claim>} */
   const claims = new Map();
   /** The places a claim of this player's was granted on (`container|place`): a sibling's refusal is then no news. */
@@ -74,7 +82,8 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
   /** CARRY-CLAIMS (inventory.js claimedCarryKg): what the claims in flight and not lapsed weigh in `e`'s hands - null once
    *  none is, and the gate lets this ledger go until its next take. */
   const claimedKg = (/** @type {any} */ e) => {
-    let kg = 0, any = false;
+    let kg = 0,
+      any = false;
     for (const c of claims.values()) {
       if (c.done || c.lapsed) continue;
       any = true;
@@ -82,16 +91,43 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
     }
     return any ? kg : null;
   };
-  const tell = (/** @type {string} */ line) => { try { say?.(line); } catch { /* a line that cannot be said is not the claim's */ } };
+  const tell = (/** @type {string} */ line) => {
+    try {
+      say?.(line);
+    } catch {
+      /* a line that cannot be said is not the claim's */
+    }
+  };
 
   /** A take of `n` of `item` off a container: lifted out of the taker's hands now, stood as a claim until its verdict. */
-  function take(/** @type {string} */ container, /** @type {{ p?: number, sp?: string }} */ ref, /** @type {any} */ item, /** @type {number} */ n, /** @type {{ by?: string, [k: string]: any }} */ meta, /** @type {number} */ now) {
+  function take(
+    /** @type {string} */ container,
+    /** @type {{ p?: number, sp?: string }} */ ref,
+    /** @type {any} */ item,
+    /** @type {number} */ n,
+    /** @type {{ by?: string, [k: string]: any }} */ meta,
+    /** @type {number} */ now,
+  ) {
     const give = liftPiece(entity, item, n);
     const { by, ...rest } = meta ?? {};
     /** @type {Claim} */
-    const c = { id: newId(), container, ...(ref.p !== undefined ? { p: ref.p } : { sp: ref.sp }), n, item, give, at: now, lapsed: false, done: false, wait: resendMs, nextAt: now + resendMs, ...(by !== undefined ? { by } : {}), meta: rest };
+    const c = {
+      id: newId(),
+      container,
+      ...(ref.p !== undefined ? { p: ref.p } : { sp: ref.sp }),
+      n,
+      item,
+      give,
+      at: now,
+      lapsed: false,
+      done: false,
+      wait: resendMs,
+      nextAt: now + resendMs,
+      ...(by !== undefined ? { by } : {}),
+      meta: rest,
+    };
     claims.set(c.id, c);
-    addCarryClaims(claimedKg, claimedKg);   // CARRY-CLAIMS: the lifted piece weighs on the gate until its verdict
+    addCarryClaims(claimedKg, claimedKg); // CARRY-CLAIMS: the lifted piece weighs on the gate until its verdict
     trim();
     return c;
   }
@@ -113,7 +149,11 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
    *  refusal is said unless a sibling claim on that place was granted, a withdrawn one lapses quietly. `from`, when the
    *  claim names its authority, must be it. Answers the claim, or null for one this ledger never made, has answered
    *  already (a duplicate lands nothing: AUDIT WORLD6b-iii(c) B8) or was named by anyone but its authority. */
-  function resolve(/** @type {string} */ id, /** @type {number} */ g, /** @type {{ from?: string, withdrawn?: boolean }} */ { from, withdrawn = false } = {}) {
+  function resolve(
+    /** @type {string} */ id,
+    /** @type {number} */ g,
+    /** @type {{ from?: string, withdrawn?: boolean }} */ { from, withdrawn = false } = {},
+  ) {
     const c = claims.get(id);
     if (!c || c.done) return null;
     if (from !== undefined && c.by !== undefined && c.by !== from) return null;
@@ -130,12 +170,25 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
   /** The clock's work: the claims that have just lapsed (their piece is back in their container's view), the claims
    *  to say again (the same ids, `wait` doubling), and the claims given up past the keep. */
   function due(/** @type {number} */ now) {
-    /** @type {Claim[]} */ const lapsed = [], resay = [], expired = [];
+    /** @type {Claim[]} */ const lapsed = [],
+      resay = [],
+      expired = [];
     for (const c of [...claims.values()]) {
-      if (now - c.at > keepMs) { claims.delete(c.id); if (!c.done) expired.push(c); continue; }
+      if (now - c.at > keepMs) {
+        claims.delete(c.id);
+        if (!c.done) expired.push(c);
+        continue;
+      }
       if (c.done) continue;
-      if (!c.lapsed && now - c.at >= lapseMs) { c.lapsed = true; lapsed.push(c); }
-      if (now >= c.nextAt) { c.wait = Math.min(resendMax, c.wait * 2); c.nextAt = now + c.wait; resay.push(c); }
+      if (!c.lapsed && now - c.at >= lapseMs) {
+        c.lapsed = true;
+        lapsed.push(c);
+      }
+      if (now >= c.nextAt) {
+        c.wait = Math.min(resendMax, c.wait * 2);
+        c.nextAt = now + c.wait;
+        resay.push(c);
+      }
     }
     return { lapsed, resay, expired };
   }
@@ -197,7 +250,26 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
   }
 
   /** Everything forgotten - the pool is going away (after `keep` has said what goes with it). */
-  function clear() { claims.clear(); won.clear(); asks.clear(); }
+  function clear() {
+    claims.clear();
+    won.clear();
+    asks.clear();
+  }
 
-  return { take, pending, resolve, due, keep, open, get, ask, askedWithin, landAsk, clear, get size() { return claims.size; } };
+  return {
+    take,
+    pending,
+    resolve,
+    due,
+    keep,
+    open,
+    get,
+    ask,
+    askedWithin,
+    landAsk,
+    clear,
+    get size() {
+      return claims.size;
+    },
+  };
 }

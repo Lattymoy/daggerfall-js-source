@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE WORLD MANIFEST (bible/03-World/World-2-Canon.md, "The manifest"; WG-5): which world this is - its seed,
+// WG2 THE WORLD MANIFEST ("The manifest"; WG-5): which world this is - its seed,
 // the versions of the geography, the generator, the environment's tables, the authored edits and the settlements, the
 // fit the bakes were made on - and which regions are published. Every gameplay ground a published region changes is
 // bound to the online ground law: `groundPrints` holds the published set's print under each GROUND_LAW, and a pin
@@ -32,7 +32,8 @@ export function manifestProblems(m) {
   if (!(Number.isSafeInteger(m.worldSeed) && m.worldSeed >= 0 && m.worldSeed < 4294967296)) out.push('worldSeed');
   if (!(m.fit && Number.isFinite(m.fit.ox) && Number.isFinite(m.fit.oy) && m.fit.ppu > 0)) out.push('fit');
   if (!Number.isSafeInteger(m.groundLaw)) out.push('groundLaw');
-  const pub = Array.isArray(m.published) ? m.published : (out.push('published'), []);
+  if (!Array.isArray(m.published)) out.push('published');
+  const pub = Array.isArray(m.published) ? m.published : [];
   pub.forEach((r, i) => {
     const at = `published ${r?.id ?? i}`, R = r?.rect;
     if (!/^[a-z0-9-]+$/.test(r?.id ?? '')) out.push(`${at}: id`);

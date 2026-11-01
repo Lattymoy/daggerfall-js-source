@@ -39,7 +39,7 @@
   {
     "name": "AUDIT-KB1-F3-a-boot-line-is-dropped",
     "file": "src/systems/notify.js",
-    "old": "  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]);   // in order, behind any still waiting",
+    "old": "  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]); // in order, behind any still waiting",
     "new": "  speak(text, delay);",
     "tests": [
       "test/ui/kb1_audit.test.js"
@@ -141,7 +141,7 @@
   {
     "name": "AUDIT-KB1-UI5-no-mouse-listener",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button",
+    "old": "  window.addEventListener('mousedown', onMouse, true); // AUDIT KB1: a slot bound to a mouse button",
     "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-KB1-H3-the-blob-revoked-at-once",
     "file": "src/ui/screenshot.js",
-    "old": "        later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
-    "new": "        later(() => URL.revokeObjectURL(url), 0);",
+    "old": "          later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
+    "new": "          later(() => URL.revokeObjectURL(url), 0);",
     "tests": [
       "test/ui/kb1_audit.test.js"
     ]

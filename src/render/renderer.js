@@ -20,8 +20,8 @@ import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's sha
 // then. The imports hoist and the leaves have no imports of their own, so
 // this is already guaranteed - the lines stand where they read as the rule.
 import { buildProgram, startPrograms, parallelCompile } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link; SHADER-STALL: and a start that never waits
-import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
-import { windowLightGlsl, WindowLightPass, windowLightOn, windowAperturesOf, WL_MASK_UNIT, WL_UBO_BINDING, WL_FAR_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE, WL_FAR_GRID_ROW, WL_FAR_LIST_BASE, WL_OUTSIDE_EVERY_MS } from './windowLight.js';   // WL1: the windows' light - a lit room's out onto the street, the sun's in onto a floor
+import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, windowLightMode, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
+import { windowLightGlsl, WindowLightPass, windowLightOn, wlKindFor, wlDayShare, windowAperturesOf, WL_MASK_UNIT, WL_UBO_BINDING, WL_FAR_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE, WL_FAR_GRID_ROW, WL_FAR_LIST_BASE, WL_OUTSIDE_EVERY_MS } from './windowLight.js';   // WL1: the windows' light - a lit room's out onto the street, the sun's in onto a floor
 import { MESH_ALPHA_GLSL, samplerParams, samplerKey } from './meshAlpha.js';   // POI-2: a translucent mesh draw, and a texture's own wrap and filter
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
 import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
@@ -2552,7 +2552,7 @@ export class Renderer {
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
     this.tUWaterBed = gl.getUniformLocation(this.terrainProgram, 'uWaterBed');   // WATER-NEXT 2: the bed under the water
     this.tUBedMask = gl.getUniformLocation(this.terrainProgram, 'uBedMask');
-    this.tUShore = gl.getUniformLocation(this.terrainProgram, 'uShore'); this.tUShoreOn = gl.getUniformLocation(this.terrainProgram, 'uShoreOn');   // WATER-SHORE: the silt's line, the water's
+    this.tUShore = gl.getUniformLocation(this.terrainProgram, 'uShore'); this.tUShoreOn = gl.getUniformLocation(this.terrainProgram, 'uShoreOn');   // The silt's line, the water's
     this._tShoreOn = null;   // the program's own value unknown: the next draw sends it
     this.tURoadEdge = gl.getUniformLocation(this.terrainProgram, 'uRoadEdge');   // ROAD-LOOK: the road's edge blended (render/roadEdgeGlsl.js)
     this.tUGroundEdge = gl.getUniformLocation(this.terrainProgram, 'uGroundEdge');   // COAST-LOOK: the ground's kinds blended, the sea cut on their line (render/groundEdgeGlsl.js)
@@ -2863,13 +2863,15 @@ export class Renderer {
   /** WL1: THIS FRAME'S KIND of window light - 'street' (a lit room's lamp through its glass: an exterior frame, and the
    *  view out's street), 'inside' (the sun through a building's glass: the frame DFU lays out under WindowStyle.Disabled,
    *  a building's) or null (no world frame, the door shut, or the Real windows row Off as a host last said it - its
-   *  exterior frame by setWindowRooms, its building's by captureOutsideLight). */
+   *  exterior frame by setWindowRooms, its building's by captureOutsideLight; WINDOW-NIGHT: or the Window light part's
+   *  Off, or its Day only while the sun is down). */
   _wlKindOf(opts) {
     if (!windowLightOn()) return null;
-    if (this._rwOutside) return 'street';
+    const light = windowLightMode();   // WINDOW-NIGHT: the Window light part - the view out and the rooms stand under it
+    if (this._rwOutside) return wlKindFor('street', light, false);
     if (opts?.world !== true || this._panelSaved || this._spriteDepth !== 0 || this._studioDepth !== 0 || this._rwMode === 'off') return null;
     const e = this._windowEmission;
-    return e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside';
+    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);   // AUDIT FB1031 L1: Day only while the day has a share - the frame fades by it
   }
 
   /** WL1: THE FRAME'S WINDOW LIGHTS (render/windowLight.js WindowLightPass.frame), their band of LC1's grid up and its
@@ -2882,6 +2884,7 @@ export class Renderer {
       kind, eye, view, proj, now, lamp: room?.night ? room.lamp : null, shadows: !!this._wlSun,
       glass: this._wlGlass,
       decode: this._lane ? (c) => this._lane.decode3(c, [0, 0, 0]) : null,
+      dayOnly: windowLightMode() === 'day',   // AUDIT FB1031 L1: Day only fades the light by the day's share
     });
     if (!n) return false;
     const gl = this.gl;
@@ -3438,7 +3441,7 @@ export class Renderer {
     (this._tEcoTex ??= [null, null, null]).fill(null);   // ECOTONE1: the neighbours' sets on units 3-5
     this._tEcoOn = null;   // ECOTONE1: and the border switch, a frame's like the tile size
     this._tSnowOn = null; this._tSnowArr = [-1, -1, -1, -1];   // PRECIP4: and the snow's
-    this._tShoreOn = null; this._shoreBound = null;   // WATER-SHORE: the ground's switch for its water's fields, and their unit
+    this._tShoreOn = null; this._shoreBound = null;   // The ground's switch for its water's fields, and their unit
     // LA-COST1 (2026-09-27): THE FOUR FRAME BLOCKS ARE A TEXTURE SHADOW TOO. Each binds the lane's images - the three
     // shadow arrays, the eye, the previous depth, the grid - on units 8 to 14 and then trusts them until the stamp
     // moves; a foreign pass binds its own there (the far ring its 1x1 on unit 11 when the air is off - LA-AUDIT C3: not
@@ -7545,7 +7548,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, buffers, indexCount: indexSet.count, bounds: boundsOf(positions) };   // EL5: the replays cull by it
   }
 
-  /** WATER-AUDIT (M4): a second surface over a terrain surface's OWN
+  /** A second surface over a terrain surface's OWN
    *  vertex buffers with an index set of its own (DW-C: the clip's cull
    *  draws the ground through it - WATER-LEVEL's sheet has its own mesh).
    *  Dies with the terrain it rides: destroy it before destroyMesh frees
@@ -7568,9 +7571,9 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return { vao, ebo, indexCount: indices.length };
   }
 
-  /** WATER-LEVEL: THE WATER'S SHEET - its own mesh at the water's level (world/water/waterLevel.js waterSheet): the
+  /** THE WATER'S SHEET - its own mesh at the water's level (world/water/waterLevel.js waterSheet): the
    *  positions, attribute 1 the depth over the carved ground and the shading's, attribute 2 the shore's cut, attribute 3
-   *  the sea's marks, and the quads that hold a level. WATER-SHORE: its smoothed fields as a texture (`shore`), which the
+   *  the sea's marks, and the quads that hold a level. Its smoothed fields ride a texture (`shore`), which the
    *  ground drawn with `tilemapTex` reads too (its silt). destroyWaterSurface frees what it owns. */
   createWaterSheet({ positions, depths, cut, sea, shore, indices }, tilemapTex = null) {
     const gl = this.gl;
@@ -7595,19 +7598,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     return sheet;
   }
 
-  /** WATER-SHORE: a sheet's fields (world/water/waterLevel.js shoreMap) as an RGBA8 texture, read bilinear - a texel a
+  /** A sheet's fields (world/water/waterLevel.js shoreMap) as an RGBA8 texture, read bilinear - a texel a
    *  lattice point, half a tile apart. */
-  _shoreTexture({ w, h, data }) {
+  _shoreTexture({ w: width, h: height, data }) {
     const gl = this.gl, tex = gl.createTexture();
     this._activeTexture(gl.TEXTURE0 + WATER_SHORE_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    for (const [param, value] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, param, value);
     this._activeTexture(gl.TEXTURE0);
     this._shoreBound = null;
     return tex;
   }
-  /** WATER-SHORE: each ground's water's fields, by the tilemap the ground draws with (createWaterSheet's). */
+  /** Each ground's water's fields, by the tilemap the ground draws with (createWaterSheet's). */
   /** @type {WeakMap<object, any>} */ _shoreOf = new WeakMap();
 
   destroyWaterSurface(water) {
@@ -7622,11 +7625,11 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
   }
 
-  /** WATER-SHORE: a sheet's fields on their unit, or none (`L` a water program's table, else the terrain's switch) -
+  /** A sheet's fields on their unit, or none (`locs` a water program's table, else the terrain's switch) -
    *  bound only when they change. */
-  _bindShore(tex, onLoc, L) {
+  _bindShore(tex, onLoc, locs) {
     const gl = this.gl, on = tex ? 1 : 0;
-    if (L ? L.shoreOn !== on : this._tShoreOn !== on) { gl.uniform1i(onLoc, on); if (L) L.shoreOn = on; else this._tShoreOn = on; }
+    if (locs ? locs.shoreOn !== on : this._tShoreOn !== on) { gl.uniform1i(onLoc, on); if (locs) locs.shoreOn = on; else this._tShoreOn = on; }
     if (!tex || this._shoreBound === tex) return;
     this._activeTexture(gl.TEXTURE0 + WATER_SHORE_UNIT);
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -7658,7 +7661,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._use(P);
     this.gl.uniform1i(L.snow.lines, SNOW_LINES_UNIT); L.snowUnit = true;
     this.gl.uniform1i(L.auroraSky, AURORA_SKY_UNIT);
-    this.gl.uniform1i(L.shore, WATER_SHORE_UNIT);   // WATER-SHORE
+    this.gl.uniform1i(L.shore, WATER_SHORE_UNIT);
   }
 
   /** SKYRIM-AURORA: the aurora's dome map on its unit (render/auroraPass.js, waterUniforms' `aurora`), or the black texel
@@ -8235,7 +8238,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
-    this._bindShore(this.waterBed ? this._shoreOf.get(tilemapTex) ?? null : null, this.tUShoreOn, null);   // WATER-SHORE: the silt on its water's own line
+    this._bindShore(this.waterBed ? this._shoreOf.get(tilemapTex) ?? null : null, this.tUShoreOn, null);   // The silt on its water's own line
     this._terrainFade(surface);   // MID-RING: a just-built pixel's tint, its share left
     // ECOTONE1: a border pixel's neighbours - their sets on units 3-5 (shadowed: a frame's border pixels share them) and
     // the three uniforms that say which wears which; any other pixel sets the one switch off, once while it stays off
@@ -8340,7 +8343,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
       zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'), groundEdge: u('uGroundEdge'),
       swell: u('uSwell'), absorb: u('uAbsorb'), open: u('uOpen'), openColor: u('uOpenColor'),   // WATER-NEXT 2
-      shore: u('uShore'), shoreSwitch: u('uShoreOn'),   // WATER-SHORE: the sheet's smoothed fields, and whether a row has them
+      shore: u('uShore'), shoreSwitch: u('uShoreOn'),   // The sheet's smoothed fields, and whether a row has them
       sceneOn: u('uSceneOn'), scene: u('uScene'), sceneDepth: u('uSceneDepth'), sceneSize: u('uSceneSize'),
       rippleOn: u('uRippleOn'), ripple: u('uRipple'), rippleRect: u('uRippleRect'),   // WATER-NEXT 4
       auroraSky: u('uAuroraSky'), auroraSkyOn: u('uAuroraSkyOn'), auroraOn: 0,   // SKYRIM-AURORA: the aurora's dome map, its switch as sent (GL's own 0)
@@ -8353,7 +8356,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       // the program's own snow state, shadowed (PERF-EXT13: a frame without snow costs the water no call): its lines'
       // unit sent, its switch (GL's own 0 - off - until sent), the altitude it holds, the winter half it reads
       snowUnit: false, snowOn: false, snowAlt: NaN, snowArr: -1,
-      shoreOn: 0,   // WATER-SHORE: the switch as sent (GL's own 0)
+      shoreOn: 0,   // The switch as sent (GL's own 0)
     };
   }
 
@@ -8420,7 +8423,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform1i(L.tileDim, tileDim);
     gl.uniform1i(L.tileArr, 0);
     gl.uniform1i(L.tilemap, 2);
-    gl.uniform3f(L.openColor, sea ? sea[0] : 1, sea ? sea[1] : 1, sea ? sea[2] : 1);   // WATER-SHORE: `sea` the open sea's tint (the mod's Top Color) on the sheets' sea, white with none
+    gl.uniform3f(L.openColor, sea ? sea[0] : 1, sea ? sea[1] : 1, sea ? sea[2] : 1);   // `sea` the open sea's tint (the mod's Top Color) on the sheets' sea, white with none
     this._drawWaterRows(L, rows, n);
   }
 
@@ -8538,7 +8541,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         gl.bindTexture(gl.TEXTURE_2D, tilemapTex ?? null);
         this.stats.texBinds++;
       }
-      this._bindShore(surface.shore ?? null, L.shoreSwitch, L);   // WATER-SHORE: the open sea's rows have none
+      this._bindShore(surface.shore ?? null, L.shoreSwitch, L);   // The open sea's rows have none
       this._bindVao(surface.vao);
       gl.drawElements(gl.TRIANGLES, surface.indexCount, gl.UNSIGNED_INT, 0);
       this.stats.draws++;

@@ -315,10 +315,10 @@ test('AUDIT FEUD H4: EVERY COMMENT ON ITS OWN LINE - the trailing notes FEUD\'s 
   assert.match(read('src/scenes/dungeonContext.js'), /from '\.\.\/ui\/damageFlash\.js';   \/\/ WB13d:/);
   assert.match(read('src/scenes/exterior.js'), /import \{ flashPlayerDamage \} from '\.\.\/ui\/damageFlash\.js';   \/\/ ROAD-G G2:/);
   assert.match(read('src/scenes/hostMagic.js'), /import \{ markPlayerHarm \} from '\.\.\/systems\/harmMark\.js';   \/\/ REVENANT-HARM:/);
-  assert.match(read('src/ui/enhanced/enhancedChronicle.js'), /bountyQuestShareable \} from '\.\.\/\.\.\/systems\/bounty\/bountyJournal\.js';   \/\/ BOUNTY1:/);
+  assert.match(read('src/ui/enhanced/enhancedChronicle.js'), /bountyQuestShareable,\n\s*\} from '\.\.\/\.\.\/systems\/bounty\/bountyJournal\.js'; \/\/ BOUNTY1:/);
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /bountyQuestShareable \} from '\.\.\/\.\.\/systems\/bounty\/bountyJournal\.js';   \/\/ BOUNTY1:/);
   assert.match(read('src/systems/revenant/revenant.js'), /HUNT_QUEST_PREFIX \} from '\.\.\/huntJournal\.js';   \/\/ RVN7c:/);
-  assert.match(read('src/ui/revenant/revenantPage.js'), /import \{ tacticsSwitchOn \} from '\.\.\/\.\.\/ai\/tactics\.js';   \/\/ RVN5:/);
+  assert.match(read('src/ui/revenant/revenantPage.js'), /import \{ tacticsSwitchOn \} from '\.\.\/\.\.\/ai\/tactics\.js'; \/\/ RVN5:/);
   assert.match(read('src/scenes/exteriorFoes.js'), /promoteEliteFoe\(f\.entity, \{ own: false \}\);   \/\/ ELITE FOES: its owner's elite/);
   for (const [f, re] of [['src/scenes/dungeonContext.js', /knockedDown \} from '(?:\.\.?\/)+(?:[\w-]+\/)*blowEffects\.js';   \/\/ TELL6e: knocked down, no swing   \/\//], ['src/scenes/world.js', /routByJump\(\);   \/\/ RVN10 \(Feud-Arc\.md 21\.2\): a jump out of a fight routs me - never a load's\n\s*handOverSiteFoes/]]) assert.doesNotMatch(read(f), re, f);
 });

@@ -2,8 +2,8 @@
   {
     "name": "IC-STAIRS-risers-rounded-down",
     "file": "src/world/imperialFabric.js",
-    "old": "const n = Math.max(1, Math.ceil(rise / STAIR.rise - 1e-9)), nf = Math.ceil(n / STAIR.flight);",
-    "new": "const n = Math.max(1, Math.floor(rise / STAIR.rise - 1e-9)), nf = Math.ceil(n / STAIR.flight);",
+    "old": "  const n = Math.max(1, Math.ceil(rise / STAIR.rise - 1e-9)),",
+    "new": "  const n = Math.max(1, Math.floor(rise / STAIR.rise - 1e-9)),",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IC-STAIRS-a-riser-of-0.4",
     "file": "src/world/imperialFabric.js",
-    "old": "export const STAIR = Object.freeze({ rise: 0.18,",
-    "new": "export const STAIR = Object.freeze({ rise: 0.4,",
+    "old": "  rise: 0.18,",
+    "new": "  rise: 0.4,",
     "tests": [
       "test/world/icstairs.test.js",
       "test/world/icgrand_fabric.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "IC-STAIRS-the-flights-unlanded",
     "file": "src/world/imperialFabric.js",
-    "old": "const n = Math.max(1, Math.ceil(rise / STAIR.rise - 1e-9)), nf = Math.ceil(n / STAIR.flight);",
-    "new": "const n = Math.max(1, Math.ceil(rise / STAIR.rise - 1e-9)), nf = 1;",
+    "old": "    nf = Math.ceil(n / STAIR.flight);",
+    "new": "    nf = 1;",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "IC-STAIRS-the-head-a-landing's-length",
     "file": "src/world/imperialFabric.js",
-    "old": "const run = (m - 1) * STAIR.tread, last = k === s.flights.length - 1, l = last ? STAIR.head : STAIR.landing;",
-    "new": "const run = (m - 1) * STAIR.tread, last = k === s.flights.length - 1, l = STAIR.landing;",
+    "old": "      l = last ? STAIR.head : STAIR.landing;",
+    "new": "      l = STAIR.landing;",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "IC-STAIRS-the-head-under-the-roof",
     "file": "src/world/imperialFabric.js",
-    "old": "at += run; n += m; y = last ? s.top : s.y0 + n * s.rise;",
-    "new": "at += run; n += m; y = last ? s.top - s.rise : s.y0 + n * s.rise;",
+    "old": "    y = last ? s.top : s.y0 + n * s.rise;",
+    "new": "    y = last ? s.top - s.rise : s.y0 + n * s.rise;",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "IC-STAIRS-a-stair-onto-a-gable's-end",
     "file": "src/world/imperialFabric.js",
-    "old": "      if (p.roof !== 'flat' && (p.roof === 'gableS') !== (e % 2 === 0)) continue;   // a gable's end: no eave to step onto",
-    "new": "      if (p.roof !== 'flat' && (p.roof === 'gableS') !== (e % 2 === 0) && false) continue;   // a gable's end: no eave to step onto",
+    "old": "      if (p.roof !== 'flat' && (p.roof === 'gableS') !== (e % 2 === 0)) continue; // a gable's end: no eave to step onto",
+    "new": "      if (p.roof !== 'flat' && (p.roof === 'gableS') !== (e % 2 === 0) && false) continue; // a gable's end: no eave to step onto",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "IC-STAIRS-the-ground-unshut",
     "file": "src/world/imperialFabric.js",
-    "old": "  for (const s of stairs ? G.stairs : []) { const g = stairGround(s, x, z); if (g === GROUND.stair) return g; if (g) under = true; }",
-    "new": "  for (const s of stairs ? G.stairs : []) { const g = stairGround(s, x, z); if (g === GROUND.stair && false) return g; if (g) under = true; }",
+    "old": "    if (g === GROUND.stair) return g;",
+    "new": "    if (g === GROUND.stair && false) return g;",
     "tests": [
       "test/world/icstairs.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "IC-STAIRS-its-cell's-ground-alone",
     "file": "src/world/imperialFabric.js",
-    "old": "if (stair.box[0] < x1 + MARGIN && stair.box[2] > x0 - MARGIN && stair.box[1] < z1 + MARGIN && stair.box[3] > z0 - MARGIN) L.ground.stairs.push(stair);",
-    "new": "if (mine) L.ground.stairs.push(stair);",
+    "old": "      if (\n        stair.box[0] < x1 + MARGIN &&\n        stair.box[2] > x0 - MARGIN &&\n        stair.box[1] < z1 + MARGIN &&\n        stair.box[3] > z0 - MARGIN\n      )\n        L.ground.stairs.push(stair);",
+    "new": "      if (mine) L.ground.stairs.push(stair);",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "IC-STAIRS-a-bridge-over-a-stair",
     "file": "src/world/imperialFabric.js",
-    "old": "          && !stairOver(h, m[0] + n[0] * 0.5, m[1] + n[1] * 0.5, BRIDGE_W / 2) && !stairOver(h2, m[0] + n[0] * (d - 0.5), m[1] + n[1] * (d - 0.5), BRIDGE_W / 2)) {",
-    "new": "          ) {",
+    "old": "          d > ALLEY + 0.5 &&\n          !stairOver(h, m[0] + n[0] * 0.5, m[1] + n[1] * 0.5, BRIDGE_W / 2) &&\n          !stairOver(h2, m[0] + n[0] * (d - 0.5), m[1] + n[1] * (d - 0.5), BRIDGE_W / 2)",
+    "new": "          d > ALLEY + 0.5",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "IC-STAIRS-a-twisted-wedge-for-a-wall",
     "file": "src/world/imperialFabric.js",
-    "old": "    if (!on.some(([, , o]) => inQuad(o.q, ...into))) return null;",
-    "new": "    if (!on.length) return null;   // a twisted wedge for a wall",
+    "old": "    if (!on.some(([, , o]) => inQuad(o.q, ...into))) return null; // FOUND AT THE SWEEP: a polar frame's twisted wedge holds no wall there",
+    "new": "    if (!on.length) return null; // a twisted wedge for a wall   // FOUND AT THE SWEEP: a polar frame's twisted wedge holds no wall there",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "IC-STAIRS-the-parapet-unopened",
     "file": "src/world/imperialFabricModels.js",
-    "old": "      const heads = stairs.filter((s) => s.key === p.key && s.edge === e).map((s) => headSpan(s, a, b, n));   // IC-STAIRS: its stair's head",
-    "new": "      const heads = [];   // IC-STAIRS: its stair's head",
+    "old": "      const heads = stairs.filter((s) => s.key === p.key && s.edge === e).map((s) => headSpan(s, a, b, n)); // IC-STAIRS: its stair's head",
+    "new": "      const heads = []; // IC-STAIRS: its stair's head",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "IC-STAIRS-a-ledge-across-a-stair",
     "file": "src/world/imperialFabricModels.js",
-    "old": "for (const [u0, u1] of openRuns(len, under, 0.5)) slab(mb, stone, on(u0), on(u1), n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);",
-    "new": "for (const [u0, u1] of openRuns(len, [], 0.5)) slab(mb, stone, on(u0), on(u1), n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);",
+    "old": "      for (const [u0, u1] of openRuns(len, under, 0.5))\n        slab(mb, stone, on(u0), on(u1), n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);",
+    "new": "      for (const [u0, u1] of openRuns(len, [], 0.5)) slab(mb, stone, on(u0), on(u1), n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "IC-STAIRS-a-balcony-over-a-stair",
     "file": "src/world/imperialFabricModels.js",
-    "old": "        if (under.some(([u0, u1]) => t1 * len > u0 - 0.5 && t0 * len < u1 + 0.5)) continue;   // IC-STAIRS: none over a stair",
-    "new": "        if (under.some(([u0, u1]) => t1 * len > u0 - 0.5 && t0 * len < u1 + 0.5) && false) continue;   // IC-STAIRS: none over a stair",
+    "old": "        if (under.some(([u0, u1]) => t1 * len > u0 - 0.5 && t0 * len < u1 + 0.5)) continue; // IC-STAIRS: none over a stair",
+    "new": "        if (under.some(([u0, u1]) => t1 * len > u0 - 0.5 && t0 * len < u1 + 0.5) && false) continue; // IC-STAIRS: none over a stair",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "IC-STAIRS-the-treads-of-timber",
     "file": "src/world/imperialFabricModels.js",
-    "old": "  const pave = T('bridgeStone'), stone = T('wallStone'), D = STAIR_DEPTH, IW = STAIR.width,",
-    "new": "  const pave = T('timber'), stone = T('wallStone'), D = STAIR_DEPTH, IW = STAIR.width,",
+    "old": "  const pave = T('bridgeStone'),",
+    "new": "  const pave = T('timber'),",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "IC-STAIRS-the-risers'-v-flipped",
     "file": "src/world/imperialFabricModels.js",
-    "old": "V(x, y1, IN), back, [[u0, vB], [u1, vB], [u1, vN], [u0, vN]]);",
-    "new": "V(x, y1, IN), back, [[u0, vN], [u1, vN], [u1, vB], [u0, vB]]);",
+    "old": "          [u0, vB],\n          [u1, vB],\n          [u1, vN],\n          [u0, vN],",
+    "new": "          [u0, vN],\n          [u1, vN],\n          [u1, vB],\n          [u0, vB],",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "IC-STAIRS-a-pier-off-the-ground",
     "file": "src/world/imperialFabricModels.js",
-    "old": "D - STAIR_PIER.out, D, -0.3, ha - TH, false); }",
-    "new": "D - STAIR_PIER.out, D, 0.5, ha - TH, false); }",
+    "old": "      box(stone, m - STAIR_PIER.along / 2, m + STAIR_PIER.along / 2, D - STAIR_PIER.out, D, -0.3, ha - TH, false);",
+    "new": "      box(stone, m - STAIR_PIER.along / 2, m + STAIR_PIER.along / 2, D - STAIR_PIER.out, D, 0.5, ha - TH, false);",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "IC-STAIRS-the-tombs'-old-step",
     "file": "src/world/capitalImperial.js",
-    "old": "    frontFlight(mb, MARBLE, P, edge, -hw, hw, TOMB_FLIGHT.climb, { cheek: ch });   // IC-STAIRS: its flight up to the portico",
-    "new": "    obox(mb, MARBLE, P, edge, w + pd, -hw - ch, hw + ch, -1, 0.6);   // IC-STAIRS: its flight up to the portico",
+    "old": "    frontFlight(mb, MARBLE, P, edge, -hw, hw, TOMB_FLIGHT.climb, { cheek: ch }); // IC-STAIRS: its flight up to the portico",
+    "new": "    obox(mb, MARBLE, P, edge, w + pd, -hw - ch, hw + ch, -1, 0.6); // IC-STAIRS: its flight up to the portico",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "IC-STAIRS-the-temple's-flight-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "  frontFlight(mb, MARBLE, framed(x, front - 2, [0, -1]), 0, -TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.half, TEMPLE_FLIGHT.climb);",
+    "old": "  frontFlight(\n    mb,\n    MARBLE,\n    framed(x, front - 2, [0, -1]),\n    0,\n    -TEMPLE_FLIGHT.half,\n    TEMPLE_FLIGHT.half,\n    TEMPLE_FLIGHT.climb,\n  );",
     "new": "",
     "tests": [
       "test/world/icstairs.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "IC-STAIRS-the-foot-walled-in",
     "file": "src/world/imperialFabric.js",
-    "old": "C.ground.deadEnds.some((w) => near(w, 0.3)) || C.ground.yards.some((w) => near(w, YARD_WALL.t / 2));",
-    "new": "C.ground.yards.some((w) => near(w, YARD_WALL.t / 2));",
+    "old": "    C.ground.deadEnds.some((w) => near(w, 0.3)) ||\n    C.ground.yards.some((w) => near(w, YARD_WALL.t / 2))",
+    "new": "    C.ground.yards.some((w) => near(w, YARD_WALL.t / 2))",
     "tests": [
       "test/world/icstairs.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "IC-STAIRS-a-steep-roof-at-the-head",
     "file": "src/world/imperialFabric.js",
-    "old": "    if (p.roof !== 'flat' && p.ridge - p.h > Math.tan((STAIR.pitch * Math.PI) / 180) * pointSeg(...head(x, 0), R0, R1)) return null;",
-    "new": "    if (p.roof !== 'flat' && p.ridge - p.h > Math.tan((80 * Math.PI) / 180) * pointSeg(...head(x, 0), R0, R1)) return null;",
+    "old": "    if (p.roof !== 'flat' && p.ridge - p.h > Math.tan((STAIR.pitch * Math.PI) / 180) * pointSeg(...head(x, 0), R0, R1))",
+    "new": "    if (p.roof !== 'flat' && p.ridge - p.h > Math.tan((80 * Math.PI) / 180) * pointSeg(...head(x, 0), R0, R1))",
     "tests": [
       "test/world/icstairs.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "IC-STAIRS-a-foreign-court",
     "file": "src/world/imperialFabric.js",
-    "old": "      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.lawn);",
-    "new": "      if (blk.court && nearCell(blk.lawn)) L.courts.push(blk.lawn);",
+    "old": "      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.lawn); // AUDIT IC-BACKYARD L3: laid out to its ring",
+    "new": "      if (blk.court && nearCell(blk.lawn)) L.courts.push(blk.lawn); // AUDIT IC-BACKYARD L3: laid out to its ring",
     "tests": [
       "test/world/icstairs.test.js"
     ],
@@ -285,8 +285,8 @@
   {
     "name": "IC-STAIRS-the-park-under-it-a-street",
     "file": "src/world/imperialFabric.js",
-    "old": "  if (under && hoodHere.kind !== 'park') return GROUND.under;",
-    "new": "  if (under) return GROUND.under;",
+    "old": "  if (under && hoodHere.kind !== 'park') return GROUND.under; // the street under a stair's upper flights (the Arboretum's ground stays the park's)",
+    "new": "  if (under) return GROUND.under; // the street under a stair's upper flights (the Arboretum's ground stays the park's)",
     "tests": [
       "test/world/icstairs.test.js"
     ]

@@ -656,7 +656,7 @@ test('NODE-GLINT the world host\'s pass (createNodeGlintPass): a mark with pictu
   assert.equal(late, 0, 'an idle build after the end builds nothing');
   assert.equal(mine.pass, null);
   assert.equal(own.calls.filter((x) => x[0] === 'deleteProgram').length - before, 1, 'its own glow\'s program freed with it');
-  assert.match(src('src/render/nodeGlint.js'), /dispose\(\) \{ dead = true; asked = true; pass\?\.dispose\(\); pass = null; if \(handed === undefined\) glow\?\.dispose\?\.\(\); \},/, 'its own glow freed at its end');
+  assert.match(src('src/render/nodeGlint.js'), /dispose\(\) \{\n\s*dead = true;\n\s*asked = true;\n\s*pass\?\.dispose\(\);\n\s*pass = null;\n\s*if \(handed === undefined\) glow\?\.dispose\?\.\(\);\n\s*\},/, 'its own glow freed at its end');
 });
 
 // ─── THE WIRING ──────────────────────────────────────────────────────

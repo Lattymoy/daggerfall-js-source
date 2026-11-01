@@ -22,7 +22,7 @@ export function profileAttribution(profile) {
     if (node.callFrame.functionName === '(idle)') continue;
     busy += w;
     self.set(nodeKey(node), (self.get(nodeKey(node)) || 0) + w);
-    const seen = new Set();   // a recursive function counts once a sample
+    const seen = new Set(); // a recursive function counts once a sample
     for (let c = node.id; c != null; c = parent.get(c)) {
       const key = nodeKey(byId.get(c));
       if (seen.has(key)) continue;
@@ -38,8 +38,13 @@ if (isMain(import.meta.url)) {
   const [file, top = 40, filter = ''] = process.argv.slice(2);
   if (!file) throw new Error('profileAttr: name a .cpuprofile');
   const { busy, inclusive, self } = profileAttribution(JSON.parse(readFileSync(file, 'utf8')));
-  const show = (rows) => rows.filter(([k]) => k.includes(filter)).slice(0, Number(top))
-    .forEach(([k, v]) => console.log(String(v.toFixed(0)).padStart(8), `${(100 * v / busy).toFixed(1)}%`.padStart(6), k));
+  const show = (rows) =>
+    rows
+      .filter(([k]) => k.includes(filter))
+      .slice(0, Number(top))
+      .forEach(([k, v]) =>
+        console.log(String(v.toFixed(0)).padStart(8), `${((100 * v) / busy).toFixed(1)}%`.padStart(6), k),
+      );
   console.log('busy ms', busy.toFixed(0));
   console.log('-- inclusive');
   show(inclusive);

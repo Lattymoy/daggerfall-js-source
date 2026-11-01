@@ -21,8 +21,8 @@
   {
     "name": "BREATHTAKER2-grid-plain-law",
     "file": "src/world/landforms.js",
-    "old": "beyond = lift && !inEtherLaw(x, y) ? continentShare(gx, gy, 128, MAP_H, MAP_W, SEAM_PX) : 0;",
-    "new": "beyond = 0;",
+    "old": "  const gx = x * 128 + 64, gy = (MAP_H - y) * 128 + 64, beyond = lift && !inEtherLaw(x, y) ? continentShare(gx, gy, 128, MAP_H, MAP_W, SEAM_PX) : 0;",
+    "new": "  const gx = x * 128 + 64, gy = (MAP_H - y) * 128 + 64, beyond = 0;",
     "tests": [
       "test/render/farlandmark.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "BREATHTAKER2-far-cell-unasked",
     "file": "src/render/farField.js",
-    "old": "heightOf(high[v], px, py, v)",
-    "new": "heightOf(high[v], 0, 0, v)",
+    "old": "      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py, v); // BREATHTAKER2: the law at the cell's centre pixel; RELIEF-PEAKS: `v` the vertex (the worker's ground at its node)",
+    "new": "      positions[o + 1] = wet ? seaY : heightOf(high[v], 0, 0, v); // BREATHTAKER2: the law at the cell's centre pixel; RELIEF-PEAKS: `v` the vertex (the worker's ground at its node)",
     "tests": [
       "test/render/farlandmark.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "FAR-LANDMARK-triangles-nearest-first",
     "file": "src/render/farLandmarks.js",
-    "old": "keyed[k] = -Math.round(Math.hypot(dx, dz)) * 1048576 + k;",
-    "new": "keyed[k] = Math.round(Math.hypot(dx, dz)) * 1048576 + k;",
+    "old": "      keyed[k] = -Math.round(Math.hypot(dx, dz)) * 1048576 + k; // ascending: the farthest first (metres), then the mesh's own order",
+    "new": "      keyed[k] = Math.round(Math.hypot(dx, dz)) * 1048576 + k; // ascending: the farthest first (metres), then the mesh's own order",
     "tests": [
       "test/render/farlandmark.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "FAR-LANDMARK-traveller-east",
     "file": "src/render/farLandmarks.js",
-    "old": "const tx = (curX - this.px + 0.5) * S, tz = (this.py - curY + 0.5) * S;",
-    "new": "const tx = (this.px - curX + 0.5) * S, tz = (this.py - curY + 0.5) * S;",
+    "old": "    const tx = (curX - this.px + 0.5) * S,",
+    "new": "    const tx = (this.px - curX + 0.5) * S,",
     "tests": [
       "test/render/farlandmark.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "FAR-LANDMARK-mid-range-whole-runs",
     "file": "src/render/midRing.js",
-    "old": "const s = Math.max(first, a), e = Math.min(first + count, b);",
-    "new": "const s = first, e = Math.min(first + count, b);",
+    "old": "      const s = Math.max(first, a),",
+    "new": "      const s = first,",
     "tests": [
       "test/render/farlandmark.test.js"
     ]

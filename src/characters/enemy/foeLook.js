@@ -15,10 +15,13 @@ export function registerFoeGhost(fn) {
   _ghosts.push(fn);
 }
 /** The test seam. */
-export function _resetFoeGhosts() { _ghosts.length = 0; }
+export function _resetFoeGhosts() {
+  _ghosts.length = 0;
+}
 
 /** Whether `mobileType` wears the ghost shader: a Spectral row, or a mod's word. */
-export const foeWearsGhost = (mobileType, row = ENEMY_BASICS[mobileType]) => row?.behaviour === 'Spectral' || _ghosts.some((fn) => fn(mobileType) === true);
+export const foeWearsGhost = (mobileType, row = ENEMY_BASICS[mobileType]) =>
+  row?.behaviour === 'Spectral' || _ghosts.some((fn) => fn(mobileType) === true);
 
 /** The mobile's batch dressed as SetupDemoEnemy dresses its MeshRenderer - answers the batch, so a host wraps its
  *  createBillboardBatch in it and grows nothing. */

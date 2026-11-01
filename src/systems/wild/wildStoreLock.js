@@ -21,9 +21,16 @@ export const WILD_STORE_LOCK_MS = 60_000;
 let _blowAt = -Infinity;
 /** A player's blow landed - mine on another or another's on me: storing locked WILD_STORE_LOCK_MS from `at`.
  *  @param {number} [at] */
-export const noteWildBlow = (at = Date.now()) => { _blowAt = Math.max(_blowAt, at); };
+export const noteWildBlow = (at = Date.now()) => {
+  _blowAt = Math.max(_blowAt, at);
+};
 /** The lock's words, with the seconds it has left. @param {number} s */
-export const storeLockedText = (s) => t('wild.store.locked', 'You cannot store anything for {s, plural, one {# more second} other {# more seconds}} after fighting another player.', { s });
+export const storeLockedText = (s) =>
+  t(
+    'wild.store.locked',
+    'You cannot store anything for {s, plural, one {# more second} other {# more seconds}} after fighting another player.',
+    { s },
+  );
 /** Why nothing may be stored now - the words said - or null. @param {number} [now] */
 export function wildStoreRefusal(now = Date.now()) {
   const left = WILD_STORE_LOCK_MS - (now - _blowAt);

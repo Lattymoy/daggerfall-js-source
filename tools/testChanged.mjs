@@ -20,14 +20,15 @@ import { join, dirname, relative, normalize, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { isMain } from './lib/isMain.mjs';
-import { testFiles, runTests, runnerFlags } from './testShards.mjs';   // FAST-SUITE: run as every list of tests is run - longest first, every core
+import { testFiles, runTests, runnerFlags } from './testShards.mjs'; // FAST-SUITE: run as every list of tests is run - longest first, every core
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Files whose change can move every test: the whole suite runs. */
 export const EVERYTHING = new Set(['package.json', 'package-lock.json', 'tsconfig.json']);
 
-const IMPORT_RE = /(?:^|[\s;])(?:import|export)\s[^'"`;]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s+['"]([^'"]+)['"]/gm;
+const IMPORT_RE =
+  /(?:^|[\s;])(?:import|export)\s[^'"`;]*?from\s*['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s+['"]([^'"]+)['"]/gm;
 
 /** The relative specifiers a module's text imports, resolved against its own path (repo-relative), existing files
  *  only. Pure but for the existence check. */
@@ -39,7 +40,10 @@ export function importsOf(file, text, root = ROOT) {
     const base = normalize(join(dirname(file), spec));
     for (const cand of [base, `${base}.js`, `${base}.mjs`, join(base, 'index.js')]) {
       const abs = join(root, cand);
-      if (existsSync(abs) && statSync(abs).isFile()) { out.push(relative(root, abs).split('\\').join('/')); break; }
+      if (existsSync(abs) && statSync(abs).isFile()) {
+        out.push(relative(root, abs).split('\\').join('/'));
+        break;
+      }
     }
   }
   return out;
@@ -54,11 +58,19 @@ export function closureOf(test, root = ROOT, cache = new Map()) {
     let deps = cache.get(f);
     if (!deps) {
       let text = '';
-      try { text = readFileSync(join(root, f), 'utf8'); } catch { /* gone: no imports */ }
+      try {
+        text = readFileSync(join(root, f), 'utf8');
+      } catch {
+        /* gone: no imports */
+      }
       deps = importsOf(f, text, root);
       cache.set(f, deps);
     }
-    for (const d of deps) if (!seen.has(d)) { seen.add(d); stack.push(d); }
+    for (const d of deps)
+      if (!seen.has(d)) {
+        seen.add(d);
+        stack.push(d);
+      }
   }
   return seen;
 }
@@ -75,11 +87,21 @@ export function testsFor(changed, tests, root = ROOT) {
   const cache = new Map();
   const chosen = [];
   for (const t of tests) {
-    if (set.has(t)) { chosen.push(t); continue; }
+    if (set.has(t)) {
+      chosen.push(t);
+      continue;
+    }
     const reach = closureOf(t, root, cache);
-    if (changed.some((f) => reach.has(f))) { chosen.push(t); continue; }
+    if (changed.some((f) => reach.has(f))) {
+      chosen.push(t);
+      continue;
+    }
     let text = '';
-    try { text = readFileSync(join(root, t), 'utf8'); } catch { continue; }
+    try {
+      text = readFileSync(join(root, t), 'utf8');
+    } catch {
+      continue;
+    }
     if (changed.some((f) => text.includes(f)) || names.some((n) => text.includes(n))) chosen.push(t);
   }
   return chosen;
@@ -87,13 +109,28 @@ export function testsFor(changed, tests, root = ROOT) {
 
 /** What changed: against the merge base with origin/main (else `base`, else HEAD), and every uncommitted file. */
 export function changedFiles(base = null, root = ROOT) {
-  const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return ''; } };
+  const git = (...args) => {
+    try {
+      return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    } catch {
+      return '';
+    }
+  };
   const from = base ?? (git('merge-base', 'HEAD', 'origin/main').trim() || 'HEAD');
   const lines = [
-    git('diff', '--name-only', `${from}...HEAD`), git('diff', '--name-only'), git('diff', '--name-only', '--cached'),
+    git('diff', '--name-only', `${from}...HEAD`),
+    git('diff', '--name-only'),
+    git('diff', '--name-only', '--cached'),
     git('ls-files', '--others', '--exclude-standard'),
   ].join('\n');
-  return [...new Set(lines.split('\n').map((l) => l.trim()).filter(Boolean))].sort();
+  return [
+    ...new Set(
+      lines
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean),
+    ),
+  ].sort();
 }
 
 function main(argv) {
@@ -102,8 +139,13 @@ function main(argv) {
   const tests = testFiles();
   const chosen = testsFor(changed, tests);
   const files = chosen === 'all' ? tests : chosen;
-  if (argv.includes('--list')) { for (const f of files) console.log(f); return 0; }
-  console.log(`${changed.length} changed files -> ${chosen === 'all' ? 'the whole suite (a file every test leans on changed)' : `${files.length} of ${tests.length} test files`}`);
+  if (argv.includes('--list')) {
+    for (const f of files) console.log(f);
+    return 0;
+  }
+  console.log(
+    `${changed.length} changed files -> ${chosen === 'all' ? 'the whole suite (a file every test leans on changed)' : `${files.length} of ${tests.length} test files`}`,
+  );
   return runTests(files, { extra: runnerFlags(argv) });
 }
 

@@ -11,8 +11,8 @@
   {
     "name": "ARENA1-INCELL-Y",
     "file": "src/world/arena/arenaCity.js",
-    "old": "(buildingKey >> 16) === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1]",
-    "new": "(buildingKey >> 16) === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) >= ARENA_CELL[1]",
+    "old": "  buildingKey > 0 && buildingKey >> 16 === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) === ARENA_CELL[1];",
+    "new": "  buildingKey > 0 && buildingKey >> 16 === ARENA_CELL[0] && ((buildingKey >> 8) & 0xff) >= ARENA_CELL[1];",
     "tests": [
       "test/world/arena/arena1_city.test.js",
       "test/systems/arena1_move.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "ARENA1-NO-BLOCKS-EDITS",
     "file": "src/world/arena/arenaCity.js",
-    "old": "if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings) || !blocksFile) return null;",
-    "new": "if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings)) return null;",
+    "old": "  if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings) || !blocksFile) return null;",
+    "new": "  if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings)) return null;",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "ARENA1-PORT-BLOCK-GATED",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName);   // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n",
-    "new": "",
+    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName); // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n  if (!worldDataOn() || !blockName) return null;",
+    "new": "  if (!worldDataOn() || !blockName) return null;",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "ARENA1-PORT-INDEX",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
-    "new": "export const getNewDFBlockIndex = (blockName) => (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
+    "old": "  _portBlocks.get(blockName)?.index ??\n  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ??\n  newBlockIndices.get(blockName) ??\n  -1; // ARENA1: a port block first; IC-GRAND: or a family's",
+    "new": "  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1; // ARENA1: a port block first; IC-GRAND: or a family's",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "ARENA1-PIECE-TURN",
     "file": "src/world/arena/arenaModel.js",
-    "old": "    case 1: return [-z, y, x];",
-    "new": "    case 1: return [z, y, -x];",
+    "old": "      return [-z, y, x];",
+    "new": "      return [z, y, -x];",
     "tests": [
       "test/world/arena/arena1_model.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "ARENA1-CLIMATE-SWAPPED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
-    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
+    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate",
+    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate",
     "tests": [
       "test/world/arena/arena1_model.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "ARENA1-UNDERCROFT-MAPID",
     "file": "src/world/arena/arenaCity.js",
-    "old": "    mapTableData: { ...city.mapTableData, mapId: UNDERCROFT_MAP_ID,",
-    "new": "    mapTableData: { ...city.mapTableData,",
+    "old": "      mapId: UNDERCROFT_MAP_ID,\n      locationType: LOCATION_TYPES.DungeonKeep,",
+    "new": "      locationType: LOCATION_TYPES.DungeonKeep,",
     "tests": [
       "test/world/arena/arena1_undercroft.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "ARENA1-UNDERCROFT-START",
     "file": "src/world/arena/arenaCity.js",
-    "old": "        x: b.X, z: b.Z, isStartingBlock: !!b.IsStartingBlock, blockName: b.BlockName,",
-    "new": "        x: b.X, z: b.Z, isStartingBlock: false, blockName: b.BlockName,",
+    "old": "        isStartingBlock: !!b.IsStartingBlock,",
+    "new": "        isStartingBlock: false,",
     "tests": [
       "test/world/arena/arena1_undercroft.test.js"
     ]
@@ -158,7 +158,7 @@
   {
     "name": "ARENA1-STAIR-ANY-BLOCK",
     "file": "src/world/arena/arenaCity.js",
-    "old": "export const isUndercroftDoor = (e, dungeonEntranceType) => e?.dfBlock?.name === ARENA_BLOCK && e?.door?.doorType === dungeonEntranceType;",
+    "old": "export const isUndercroftDoor = (e, dungeonEntranceType) =>\n  e?.dfBlock?.name === ARENA_BLOCK && e?.door?.doorType === dungeonEntranceType;",
     "new": "export const isUndercroftDoor = (e, dungeonEntranceType) => e?.door?.doorType === dungeonEntranceType;",
     "tests": [
       "test/world/arena/arena1_undercroft.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "ARENA1-RECORD-STANDS",
     "file": "src/systems/layoutPins.js",
-    "old": "  if (_displaced(rec)) return false;\n",
-    "new": "",
+    "old": "  if (_displaced(rec)) return false;\n  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
+    "new": "  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "ARENA1-MOVE-HELD",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "&& !held.has(s.buildingKey)",
-    "new": "",
+    "old": "    .filter(\n      (s) =>\n        s.buildingKey > 0 &&\n        !inArenaCell(s.buildingKey) &&\n        !held.has(s.buildingKey) &&\n        !(isActiveQuestBuilding?.(s) ?? false),\n    )",
+    "new": "    .filter((s) => s.buildingKey > 0 && !inArenaCell(s.buildingKey) && !(isActiveQuestBuilding?.(s) ?? false))",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "ARENA1-MOVE-NO-SCENE",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "  const emptied = scenes ? emptyArenaScene(",
-    "new": "  const emptied = null ? emptyArenaScene(",
+    "old": "  const emptied = scenes",
+    "new": "  const emptied = null",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]
@@ -213,7 +213,7 @@
   {
     "name": "ARENA1-HERALD-ANYONE",
     "file": "src/world/arena/arenaCity.js",
-    "old": "  return ARENA_GATE_PEOPLE.find((p) => p.position === pn.position && p.archive === pn.textureArchive && p.record === pn.textureRecord) ?? null;",
+    "old": "  return (\n    ARENA_GATE_PEOPLE.find(\n      (p) => p.position === pn.position && p.archive === pn.textureArchive && p.record === pn.textureRecord,\n    ) ?? null\n  );",
     "new": "  return ARENA_GATE_PEOPLE.find((p) => p.position === pn.position) ?? null;",
     "tests": [
       "test/systems/arena1_move.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "ARENA1-GATE-NO-FACTION",
     "file": "src/world/arena/arenaCity.js",
-    "old": "TextureArchive: p.archive, TextureRecord: p.record, FactionID: p.faction, Flags: 0 })),",
-    "new": "TextureArchive: p.archive, TextureRecord: p.record, FactionID: 0, Flags: 0 })),",
+    "old": "          FactionID: p.faction,",
+    "new": "          FactionID: 0,",
     "tests": [
       "test/world/arena/arena1_vendor.test.js"
     ]

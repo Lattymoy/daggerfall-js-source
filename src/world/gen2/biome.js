@@ -1,4 +1,4 @@
-// WG2 BIOMES (bible/03-World/World-2-Arc.md, Phase 2): the living cover chosen from the environment - air, rain,
+// WG2 BIOMES (Phase 2): the living cover chosen from the environment - air, rain,
 // soil, water and height - not from a province's name (data/biomes.json). Each biome names the Daggerfall climate
 // its ground and nature are drawn with, so the game's textures and flats read it as they read CLIMATE.PAK. A spring
 // in a dry land greens the ground about it: an oasis. Sand under a dry wind is raised into dunes across the wind.

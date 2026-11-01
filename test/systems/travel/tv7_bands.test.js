@@ -199,7 +199,7 @@ test('TV7 host: the bands about the traveller kept a life and a pixel; made once
   assert.match(w, /if \(!isEnhanced\(\) \|\| \(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \|\| !walkMode \|\| !playerSpawned \|\| getPref\('wildernessCamps'\) === false\n\s*\|\| playerEntity\.preventEnemySpawns \|\| player\.isPlayerSwimming \|\| aboard\n\s*\|\| _inAnyLocationRect\(player\.feetAt\(\)\)\) \{ bandDrop\(\); return; \}/, 'the enhanced interface, outdoors, the camps\' own switch, never at sea, never into a town - and a chase so ended is spent (AUDIT OW3 T7-7)');
   assert.match(w, /function bandDrop\(\) \{ for \(const id of _bandChase\.keys\(\)\) bandSpend\(id\); _bandChase\.clear\(\); \}/);
   assert.match(w, /function bandRoom\(mk\) \{ return campMembers\(mk\.mobileTypes\)\.length <= \(exteriorFoes\.encounterRoom\?\.\(\) \?\? Infinity\); \}\n(?:\s*\/?\*[^\n]*\n)*\s*function bandStand\(mk, yaw, dist\) \{\n\s*if \(!bandRoom\(mk\)\) return false;/, 'the room the band\'s members need, one home (AUDIT OW5b E1)');
-  assert.match(w, /function bandStand\(mk, yaw, dist\) \{[\s\S]{0,300}?const fx = player\.feetAt\(\);[\s\S]{0,500}?const minDistance = Math\.max\(BAND_STAND_MIN_M, dist - PACK_SPACING\), maxDistance = Math\.max\(BAND_STAND_MIN_M, dist\) \+ PACK_SPACING;\n\s*for \(const turn of \[0, Math\.PI \/ 2, -Math\.PI \/ 2, Math\.PI\]\) \{\n\s*const stood = _standCampEncounter\(\{ kind: 'band', mobileTypes: mk\.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,\n\s*minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw \+ turn \}, fx\);\n\s*if \(!stood\) continue;[\s\S]{0,900}?\n\s*return true;\n\s*\}\n\s*return false;/, 'on its own bearing, then a quarter turn either way, then behind (AUDIT OW3 T7-1; WILD-ALERT-FIX: what stood, alerted)');
+  assert.match(w, /function bandStand\(mk, yaw, dist\) \{[\s\S]{0,300}?const fx = player\.feetAt\(\);[\s\S]{0,500}?const minDistance = Math\.max\(BAND_STAND_MIN_M, dist - PACK_SPACING\), maxDistance = Math\.max\(BAND_STAND_MIN_M, dist\) \+ PACK_SPACING;\n\s*for \(const turn of \[0, Math\.PI \/ 2, -Math\.PI \/ 2, Math\.PI\]\) \{\n\s*const stood = _standCampEncounter\(\{ kind: 'band', mobileTypes: mk\.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,\n\s*minDistance, maxDistance, \.\.\.bandStandBearing\(yaw \+ turn, cam\.yaw, fieldOfView\(\) \* 180 \/ Math\.PI, !!travelView\?\.active, largeHudWorldAspect\(canvas\.clientWidth, canvas\.clientHeight\), minDistance, PACK_SPACING, Math\.hypot\(renderer\._camPos\[0\] - fx\[0\], renderer\._camPos\[2\] - fx\[2\]\)\) \}, fx\);[^\n]*\n\s*if \(!stood\) continue;[\s\S]{0,900}?\n\s*return true;\n\s*\}\n\s*return false;/, 'on its own bearing, then a quarter turn either way, then behind (AUDIT OW3 T7-1; WILD-ALERT-FIX: what stood, alerted)');
   assert.match(w, /if \(!anchor\) return null;   \/\/ AUDIT OW3 T7-1/, 'the camps\' stand says whether it stood (THE MERGE: null for nobody, what stood for BOUNTY1\'s pack)');
   assert.match(w, /\}\)\.catch\(\(\) => null\)\);\n\s*\}\n\s*if \(!placed\) return null;[^\n]*\n\s*return \{ foes: Promise\.all\(stands\), anchorFeet \};[^\n]*\n\s*\};\n\s*\/\/ BOUNTY1: A BOUNTY'S PACK/, 'stood is a member placed (AUDIT OW4 B3)');
   assert.match(w, /if \(!spot\) continue;\n\s*placed\+\+;/);
@@ -296,6 +296,8 @@ const bandHost = async (over = {}) => {
     worldTimeScale: () => 1, bandPlace: (b) => b.at, bandMake: () => ({ mobileTypes: [1, 2], name: 'Orc' }), bandPeerChase: () => null,
     bandYaw: (pos) => Math.atan2(pos.x - d.feet.x, pos.z - d.feet.z),
     standOk: () => true, standCalls: [], online: { id: 'b' }, playerTravelPixel: () => ({ x: 0, y: 499 }),
+    cam: { yaw: Math.PI / 4 }, fieldOfView: () => 0.5, renderer: { _camPos: [0, 0, 0] },   // AUDIT FB1031 B1 (PIN MOVED): a view turned off every bearing a band here tries, so each keeps its own
+    largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: the frame's shape (PIN MOVED)
     met: null, metCalls: 0, journeyMet: () => { d.metCalls++; d.order?.push('met'); return typeof d.met === 'function' ? d.met() : d.met; },   // AUDIT OW5b E1: no journey walks, unless a pin says one does
     owed: [], owSaySpent: (id) => d.owed.push(id),   // OW6L: a spend is owed to the cell's ledger
     // WILD-ALERT: a band within its sight notices on a stealth check (systems/wild/wildAlert.js) - these runs stand a band that
@@ -309,7 +311,7 @@ const bandHost = async (over = {}) => {
   const names = Object.keys(d).filter((k) => /^[A-Za-z_$][\w$]*$/.test(k));
   const make = new Function('d', 'law', `
     const { ${names.join(', ')} } = d;
-    const { bandChaseStep, bandSight, validBandWord, bandNearMe, bandPixelOf, chaseYields, BAND_CONTACT_M, BAND_STAND_M, BAND_STAND_TRIES,
+    const { bandChaseStep, bandSight, validBandWord, bandNearMe, bandPixelOf, chaseYields, bandStandBearing, BAND_CONTACT_M, BAND_STAND_M, BAND_STAND_TRIES,
       BAND_STAND_RETRY_MS, BANDS_WIRE_MAX, BAND_LIFE_MS, BAND_STAND_MIN_M, BAND_WORD_MS } = law;
     const NATIVE_PER_M = 40, PACK_SPACING = 6, PACK_ALERT_RADIUS = 30;
     const partyGroupMembers = (t) => t, partySize = () => 1, campMembers = (t) => t, exteriorFoes = { encounterRoom: () => d.room ?? Infinity };
@@ -512,9 +514,10 @@ test('AUDIT OW5b B5 law: A BAND CLOSES TO THE CONTACT\'S RING AND NO NEARER - a 
   assert.ok(Math.abs(far.dist - (100 - BAND_CHASE_MPS)) < 1e-9, 'short of the ring: a runner\'s stride, as ever');
 });
 
-test('AUDIT OW5b B2 host run: A BAND STANDS WHERE IT IS - met under the view at the contact\'s ring, it stands there; met with the view down at BAND_STAND_M (Mac\'s CAMP-FAR, never beside the player out of nowhere), it stands at that distance - not brought a hundred metres nearer', async () => {
-  const { BAND_STAND_MIN_M } = await import('../../../src/systems/travel/travelBands.js');
-  for (const [what, up, contact] of [['under the view', true, BAND_CONTACT_M], ['the view down', false, 140]]) {
+test('AUDIT OW5b B2 host run: A BAND STANDS WHERE IT IS - met under the view at the contact\'s ring, it stands there; met with the view down at BAND_STAND_M (BAND-NEAR: inside its members\' sight), it stands at that distance - not brought nearer', async () => {
+  const { BAND_STAND_MIN_M, BAND_STAND_M } = await import('../../../src/systems/travel/travelBands.js');
+  // PIN MOVED (BAND-NEAR): the view down's distance is the constant's, 45 m (test/systems/travel/bandnear.test.js) - it was a literal 140
+  for (const [what, up, contact] of [['under the view', true, BAND_CONTACT_M], ['the view down', false, BAND_STAND_M]]) {
     const h = await bandHost({ travelView: { active: up }, standAt: [] });
     h.d._bandChase.set('b1.1.5', { band: bandAt('b1.1.5', 0, 400), pos: { x: 0, z: 400 * NATIVE_PER_M }, gainAt: 0, best: 400, dist: 400, tries: 0, retryAt: 0 });
     let t = 1000;

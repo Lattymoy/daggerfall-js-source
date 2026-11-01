@@ -46,21 +46,28 @@ export const CELL_PULLED_KEY = 'cellpulled';
 /** The payload's shape. */
 export const HANDOVER_V = 1;
 /** Every key class, `[key or prefix (ending ':'), class, what it is]`; any key matching none blocks. */
-export const KEY_CLASSES = Object.freeze([
-  ['park:', 'part', 'a parked team - by its spot'],
-  [OW_LEDGER_KEY, 'part', 'the overworld ledger - its spent ids, dungeons and graves, each by its pixel'],
-  ['relaycfg', 'copy', 'the relay\'s settings, as the hub said them'],
-  ['bans', 'copy', 'the room\'s bans'],
-  [FREEZES_KEY, 'copy', 'the room\'s freezes'],
-  ['look:', 'drop', 'an id\'s look - swept at the drain, said again at its hello'],
-  ['secret:', 'drop', 'an id\'s secret - swept at the drain, said again at its hello'],
-  ['hellos', 'drop', 'a relay before SCALE2b\'s hello bucket'],
-  [CELL_MOVED_KEY, 'drop', 'when a move closed this node - a node that takes rows is one again'],
-  [CELL_PULLED_KEY, 'drop', 'the fine cells a coarse node pulled at the seed - a cell that gave once gives nothing again'],
-].map((entry) => Object.freeze(entry)));
+export const KEY_CLASSES = Object.freeze(
+  [
+    ['park:', 'part', 'a parked team - by its spot'],
+    [OW_LEDGER_KEY, 'part', 'the overworld ledger - its spent ids, dungeons and graves, each by its pixel'],
+    ['relaycfg', 'copy', "the relay's settings, as the hub said them"],
+    ['bans', 'copy', "the room's bans"],
+    [FREEZES_KEY, 'copy', "the room's freezes"],
+    ['look:', 'drop', "an id's look - swept at the drain, said again at its hello"],
+    ['secret:', 'drop', "an id's secret - swept at the drain, said again at its hello"],
+    ['hellos', 'drop', "a relay before SCALE2b's hello bucket"],
+    [CELL_MOVED_KEY, 'drop', 'when a move closed this node - a node that takes rows is one again'],
+    [
+      CELL_PULLED_KEY,
+      'drop',
+      'the fine cells a coarse node pulled at the seed - a cell that gave once gives nothing again',
+    ],
+  ].map((entry) => Object.freeze(entry)),
+);
 /** A key's class - 'part', 'copy', 'drop', or 'block' for any key no entry names. @param {string} key */
 export const keyClass = (key) => {
-  for (const [pattern, kind] of KEY_CLASSES) if (pattern.endsWith(':') ? key.startsWith(pattern) : key === pattern) return kind;
+  for (const [pattern, kind] of KEY_CLASSES)
+    if (pattern.endsWith(':') ? key.startsWith(pattern) : key === pattern) return kind;
   return 'block';
 };
 
@@ -85,7 +92,9 @@ export async function blockersOf(storage, max = 8) {
 /** A park record's map pixel - its spot (natives) on the map. @param {any} record @returns {[number, number] | null} */
 export const parkPixel = (record) => {
   const spot = parkSpotOf(record?.r);
-  return spot && Number.isFinite(spot[0]) && Number.isFinite(spot[1]) ? /** @type {[number, number]} */ (mapPixelOfWire(spot[0], spot[1])) : null;
+  return spot && Number.isFinite(spot[0]) && Number.isFinite(spot[1])
+    ? /** @type {[number, number]} */ (mapPixelOfWire(spot[0], spot[1]))
+    : null;
 };
 
 /**
@@ -97,22 +106,59 @@ export const parkPixel = (record) => {
  * @returns {Map<string, HandoverPayload>}
  */
 export function handoverPayloads(rows, targets) {
-  const square = targets.map(nodeBounds).reduce((union, bounds) => (union && bounds ? { x0: Math.min(union.x0, bounds.x0), y0: Math.min(union.y0, bounds.y0), x1: Math.max(union.x1, bounds.x1), y1: Math.max(union.y1, bounds.y1) } : null));
+  const square = targets.map(nodeBounds).reduce((union, bounds) =>
+    union && bounds
+      ? {
+          x0: Math.min(union.x0, bounds.x0),
+          y0: Math.min(union.y0, bounds.y0),
+          x1: Math.max(union.x1, bounds.x1),
+          y1: Math.max(union.y1, bounds.y1),
+        }
+      : null,
+  );
   if (!square) throw new Error('handover: a target that is no node');
-  const clamp = (/** @type {[number, number] | null} */ pixel) => (pixel ? /** @type {[number, number]} */ ([Math.min(Math.max(pixel[0], square.x0), square.x1 - 1), Math.min(Math.max(pixel[1], square.y0), square.y1 - 1)]) : null);
+  const clamp = (/** @type {[number, number] | null} */ pixel) =>
+    pixel
+      ? /** @type {[number, number]} */ ([
+          Math.min(Math.max(pixel[0], square.x0), square.x1 - 1),
+          Math.min(Math.max(pixel[1], square.y0), square.y1 - 1),
+        ])
+      : null;
   const parks = partitionRows(rows.parks, ([, record]) => clamp(parkPixel(record)), targets).by;
-  const spent = partitionRows(rows.led.sp, (entry) => {
-    const pixel = owIdPixel(entry[0]);
-    return clamp(pixel ? [pixel.x, pixel.y] : null);
-  }, targets).by;
+  const spent = partitionRows(
+    rows.led.sp,
+    (entry) => {
+      const pixel = owIdPixel(entry[0]);
+      return clamp(pixel ? [pixel.x, pixel.y] : null);
+    },
+    targets,
+  ).by;
   const dungeons = partitionRows(Object.values(rows.led.dg), (row) => clamp([row[0], row[1]]), targets).by;
   const graves = partitionRows(Object.values(rows.led.gr ?? {}), (grave) => clamp([grave[0], grave[1]]), targets).by;
-  return new Map(targets.map((target) => [target, { v: HANDOVER_V, parks: parks.get(target), sp: spent.get(target), dg: dungeons.get(target), gr: graves.get(target), copy: rows.copy }]));
+  return new Map(
+    targets.map((target) => [
+      target,
+      {
+        v: HANDOVER_V,
+        parks: parks.get(target),
+        sp: spent.get(target),
+        dg: dungeons.get(target),
+        gr: graves.get(target),
+        copy: rows.copy,
+      },
+    ]),
+  );
 }
 
 /** A POST to node `target`'s take door, inside ROOM_CALL_MS - production's `post` for handOver. @param {any} env */
 export const roomPost = (env) => async (/** @type {string} */ target, /** @type {any} */ payload) => {
-  const response = await env.ROOMS.get(env.ROOMS.idFromName(target)).fetch(new Request(`https://relay.internal${CELL_INTERNAL_TAKE}`, { method: 'POST', body: JSON.stringify(payload), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+  const response = await env.ROOMS.get(env.ROOMS.idFromName(target)).fetch(
+    new Request(`https://relay.internal${CELL_INTERNAL_TAKE}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(ROOM_CALL_MS),
+    }),
+  );
   return response.ok;
 };
 
@@ -149,7 +195,16 @@ export async function handOver(room, targets, post, now = Date.now(), { keep = f
   for (const target of targets) if (!(await postOnce(target)) && !(await postOnce(target))) failed.push(target);
   if (failed.length) return { ok: false, failed };
   if (!keep) await letGo(room, rows.parks);
-  return { ok: true, sent: Object.fromEntries([...payloads].map(([target, payload]) => [target, payload.parks.length + payload.sp.length + payload.dg.length + payload.gr.length])), ...orphaned };
+  return {
+    ok: true,
+    sent: Object.fromEntries(
+      [...payloads].map(([target, payload]) => [
+        target,
+        payload.parks.length + payload.sp.length + payload.dg.length + payload.gr.length,
+      ]),
+    ),
+    ...orphaned,
+  };
 }
 /** A node's rows that part or copy: its parks, its ledger (pruned), its copy keys. @param {any} storage @param {number} now
  *  @returns {Promise<NodeRows>} */
@@ -166,7 +221,12 @@ export async function rowsOf(storage, now) {
   return { parks, led: ledger, copy };
 }
 /** Does a node hold no row that parts or copies? @param {{ parks: any[], led: any, copy: object }} rows */
-const emptyRows = (rows) => !rows.parks.length && !rows.led.sp.length && !Object.keys(rows.led.dg).length && !Object.keys(rows.led.gr ?? {}).length && !Object.keys(rows.copy).length;
+const emptyRows = (rows) =>
+  !rows.parks.length &&
+  !rows.led.sp.length &&
+  !Object.keys(rows.led.dg).length &&
+  !Object.keys(rows.led.gr ?? {}).length &&
+  !Object.keys(rows.copy).length;
 /** The handed rows let go here - the parks listed and the ledger - and the instance's kept copies read again on their
  *  next use. @param {any} room @param {Array<[string, any]>} parks */
 export async function letGo(room, parks) {
@@ -198,7 +258,13 @@ export async function takeHandover(room, payload, now = Date.now()) {
   const keptParks = room._parks ? await room._parks : null;
   for (const entry of Array.isArray(payload.parks) ? payload.parks : []) {
     const [key, record] = Array.isArray(entry) ? entry : [];
-    if (typeof key !== 'string' || keyClass(key) !== 'part' || !key.startsWith('park:') || typeof record?.k !== 'string') continue;
+    if (
+      typeof key !== 'string' ||
+      keyClass(key) !== 'part' ||
+      !key.startsWith('park:') ||
+      typeof record?.k !== 'string'
+    )
+      continue;
     const standing = await storage.get(key);
     if (standing && (standing.at ?? 0) >= (record.at ?? 0)) continue;
     await storage.put(key, record);
@@ -208,7 +274,12 @@ export async function takeHandover(room, payload, now = Date.now()) {
   const ledger = await room._owLedger(now);
   const ends = new Map(ledger.sp.map((/** @type {[string, number]} */ entry) => [entry[0], entry[1]]));
   for (const entry of Array.isArray(payload.sp) ? payload.sp : [])
-    if (Array.isArray(entry) && typeof entry[0] === 'string' && Number.isFinite(entry[1]) && !(ends.get(entry[0]) >= entry[1])) {
+    if (
+      Array.isArray(entry) &&
+      typeof entry[0] === 'string' &&
+      Number.isFinite(entry[1]) &&
+      !(ends.get(entry[0]) >= entry[1])
+    ) {
       ends.set(entry[0], entry[1]);
       taken++;
     }
@@ -230,9 +301,9 @@ export async function takeHandover(room, payload, now = Date.now()) {
       taken++;
     }
   }
-  const merged = owLedgerOf({ sp: [...ends].sort((left, right) => left[1] - right[1]), dg: dungeons, gr: graves });   // its law's bounds and sanity, the newest kept
+  const merged = owLedgerOf({ sp: [...ends].sort((left, right) => left[1] - right[1]), dg: dungeons, gr: graves }); // its law's bounds and sanity, the newest kept
   owPrune(merged, now);
-  Object.assign(ledger, merged);   // the instance's own ledger object, so a word that lands next reads the merge
+  Object.assign(ledger, merged); // the instance's own ledger object, so a word that lands next reads the merge
   await room._owWrite(ledger);
   for (const [key, value] of Object.entries(payload.copy && typeof payload.copy === 'object' ? payload.copy : {})) {
     if (keyClass(key) === 'copy' && (await storage.get(key)) === undefined) await storage.put(key, value);
@@ -249,5 +320,8 @@ export async function cellTakeInternal(room, request) {
     body = null;
   }
   const taken = await takeHandover(room, body);
-  return new Response(JSON.stringify(taken == null ? { error: 'not a handover' } : { ok: true, n: taken }), { status: taken == null ? 400 : 200, headers: { 'content-type': 'application/json' } });
+  return new Response(JSON.stringify(taken == null ? { error: 'not a handover' } : { ok: true, n: taken }), {
+    status: taken == null ? 400 : 200,
+    headers: { 'content-type': 'application/json' },
+  });
 }

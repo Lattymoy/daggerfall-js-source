@@ -30,8 +30,8 @@
   {
     "name": "C8-binder-tradeable",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
-    "new": "Object.freeze([570, 571, 572, 575, 577, 580, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -72,8 +72,8 @@
   {
     "name": "C8-binder-not-bound",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,\n  bound: true, packOnly: true,",
-    "new": "  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,",
+    "old": "  bound: true,\n  packOnly: true,\n});",
+    "new": "});",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -171,8 +171,8 @@
   {
     "name": "C8-decks-unbounded",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": " || (i === decks.length && decks.length >= BINDER_DECKS_MAX)) return false;",
-    "new": ") return false;",
+    "old": "  if (!(Number.isInteger(i) && i >= 0 && i <= decks.length) || (i === decks.length && decks.length >= BINDER_DECKS_MAX))\n    return false;",
+    "new": "  if (!(Number.isInteger(i) && i >= 0 && i <= decks.length)) return false;",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -199,8 +199,8 @@
   {
     "name": "C8-builder-past-held",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "    else if (inDeck >= held) _said =",
-    "new": "    else if (false) _said =",
+    "old": "    else if (inDeck >= held)\n      _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;",
+    "new": "    else if (false) _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/auditrealm.test.js",
@@ -228,8 +228,8 @@
   {
     "name": "C8-drop-at-once",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "      if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }\n",
-    "new": "",
+    "old": "      if (_dropArmed !== i) {\n        _dropArmed = i;\n        rerender();\n        return;\n      }\n      dropBinderDeck(binder, i);",
+    "new": "      dropBinderDeck(binder, i);",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",

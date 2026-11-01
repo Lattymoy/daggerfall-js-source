@@ -2,8 +2,8 @@
   {
     "name": "MID-RING-step-off-the-samples",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "const step = (HEIGHTMAP_DIMENSION - 1) / sub",
-    "new": "const step = HEIGHTMAP_DIMENSION / sub",
+    "old": "  const step = (HEIGHTMAP_DIMENSION - 1) / sub,",
+    "new": "  const step = HEIGHTMAP_DIMENSION / sub,",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MID-RING-row-pixel-south-first",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "const py = baseY + radius - pj;",
-    "new": "const py = baseY - radius + pj;",
+    "old": "    const py = baseY + radius - pj;",
+    "new": "    const py = baseY - radius + pj;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MID-RING-band-no-closing-row",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "(pj1 === 2 * radius + 1 ? 1 : 0)",
-    "new": "(pj1 === 2 * radius + 1 ? 0 : 0)",
+    "old": "  (pj1 - pj0) * sub + (pj1 === 2 * radius + 1 ? 1 : 0);",
+    "new": "  (pj1 - pj0) * sub + (pj1 === 2 * radius + 1 ? 0 : 0);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MID-RING-landforms-dropped",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landforms)",
-    "new": "sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, null)",
+    "old": "  const kernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landforms);",
+    "new": "  const kernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, null);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FAR-FIELD-cell-off-its-node",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "const nx = cx * cell + cell / 2 - 1, ny = cy * cell + cell / 2 - 1,",
-    "new": "const nx = cx * cell + cell / 2, ny = cy * cell + cell / 2,",
+    "old": "  const nx = cx * cell + cell / 2 - 1,\n    ny = cy * cell + cell / 2 - 1,",
+    "new": "  const nx = cx * cell + cell / 2,\n    ny = cy * cell + cell / 2,",
     "tests": [
       "test/render/midring.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "FAR-FIELD-sea-count-flipped",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "cy * cell + v) <= seaByte) n++;",
-    "new": "cy * cell + v) >= seaByte) n++;",
+    "old": "    for (const u of FAR_SAMPLES) if (woods.getHeightMapValue(cx * cell + u, cy * cell + v) <= seaByte) n++;",
+    "new": "    for (const u of FAR_SAMPLES) if (woods.getHeightMapValue(cx * cell + u, cy * cell + v) >= seaByte) n++;",
     "tests": [
       "test/render/midring.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "FAR-FIELD-rows-south-first",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "cellAt(baseCX - radius + i, baseCY - radius + j)",
-    "new": "cellAt(baseCX - radius + i, baseCY + radius - j)",
+    "old": "      const [m, n, c, g] = cellAt(baseCX - radius + i, baseCY - radius + j),",
+    "new": "      const [m, n, c, g] = cellAt(baseCX - radius + i, baseCY + radius - j),",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "MID-RING-normal-x-flipped",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "const nx = h(x - 1, z) - h(x + 1, z)",
-    "new": "const nx = h(x + 1, z) - h(x - 1, z)",
+    "old": "      const nx = h(x - 1, z) - h(x + 1, z),",
+    "new": "      const nx = h(x + 1, z) - h(x - 1, z),",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "MID-RING-normal-span-halved",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "ny = 2 * cell;",
-    "new": "ny = cell;",
+    "old": "        ny = 2 * cell;",
+    "new": "        ny = cell;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "MID-RING-frame-off-a-cell",
     "file": "src/render/midRing.js",
-    "old": "positions[o] = (gx - radius * sub) * cell;",
-    "new": "positions[o] = (gx - radius * sub + 1) * cell;",
+    "old": "      positions[o] = (gx - radius * sub) * cell;",
+    "new": "      positions[o] = (gx - radius * sub + 1) * cell;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "MID-RING-tint-lattice-unpadded",
     "file": "src/render/midRing.js",
-    "old": "const fz = (gz - sub / 2) / sub + 1",
-    "new": "const fz = (gz - sub / 2) / sub",
+    "old": "    const fz = (gz - sub / 2) / sub + 1,",
+    "new": "    const fz = (gz - sub / 2) / sub,",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "MID-RING-tint-weights-swapped",
     "file": "src/render/midRing.js",
-    "old": "tints[a + k] * (1 - wx) + tints[b + k] * wx",
-    "new": "tints[a + k] * wx + tints[b + k] * (1 - wx)",
+    "old": "          (tints[a + k] * (1 - wx) + tints[b + k] * wx) * (1 - wz) + (tints[c + k] * (1 - wx) + tints[d + k] * wx) * wz,",
+    "new": "          (tints[a + k] * wx + tints[b + k] * (1 - wx)) * (1 - wz) + (tints[c + k] * (1 - wx) + tints[d + k] * wx) * wz,",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "MID-RING-sea-inverted",
     "file": "src/render/midRing.js",
-    "old": "Math.abs(heights[v] - seaY) < MID_SEA_EPS",
-    "new": "Math.abs(heights[v] - seaY) > MID_SEA_EPS",
+    "old": "      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v]))",
+    "new": "      if (Math.abs(heights[v] - seaY) > MID_SEA_EPS || (wet && wet[v]))",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "MID-RING-coarse-other-diagonal",
     "file": "src/render/midRing.js",
-    "old": "coarse[v] = u >= w ?",
-    "new": "coarse[v] = u <= w ?",
+    "old": "        coarse[v] = u >= w ? h00 + u * (h10 - h00) + w * (h11 - h10) : h00 + w * (h01 - h00) + u * (h11 - h01);",
+    "new": "        coarse[v] = u <= w ? h00 + u * (h10 - h00) + w * (h11 - h10) : h00 + w * (h01 - h00) + u * (h11 - h01);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "MID-RING-coarse-row-off",
     "file": "src/render/midRing.js",
-    "old": "const h00 = ring[(kz + 1) * rw + kx]",
-    "new": "const h00 = ring[kz * rw + kx]",
+    "old": "        const h00 = ring[(kz + 1) * rw + kx],",
+    "new": "        const h00 = ring[kz * rw + kx],",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "MID-RING-coarse-none-flat",
     "file": "src/render/midRing.js",
-    "old": "} else coarse[v] = heights[v];",
-    "new": "} else coarse[v] = 0;",
+    "old": "      } else coarse[v] = heights[v];",
+    "new": "      } else coarse[v] = 0;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "MID-RING-order-nearest-first",
     "file": "src/render/midRing.js",
-    "old": "pixels.sort((a, b) => b.d - a.d",
-    "new": "pixels.sort((a, b) => a.d - b.d",
+    "old": "  pixels.sort((a, b) => b.d - a.d || a.pj - b.pj || a.pi - b.pi);",
+    "new": "  pixels.sort((a, b) => a.d - b.d || a.pj - b.pj || a.pi - b.pi);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "MID-RING-order-east-flipped",
     "file": "src/render/midRing.js",
-    "old": "tpl[(p.px > curX ? 1 : 0)",
-    "new": "tpl[(p.px < curX ? 1 : 0)",
+    "old": "    const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)],",
+    "new": "    const t = tpl[(p.px < curX ? 1 : 0) + (p.py < curY ? 2 : 0)],",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "MID-RING-order-north-flipped",
     "file": "src/render/midRing.js",
-    "old": "(p.py < curY ? 2 : 0)",
-    "new": "(p.py > curY ? 2 : 0)",
+    "old": "    const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)],",
+    "new": "    const t = tpl[(p.px > curX ? 1 : 0) + (p.py > curY ? 2 : 0)],",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "MID-RING-template-east-unreversed",
     "file": "src/render/midRing.js",
-    "old": "const i = q & 1 ? sub - 1 - ii : ii;",
-    "new": "const i = q & 1 ? ii : ii;",
+    "old": "        const i = q & 1 ? sub - 1 - ii : ii;",
+    "new": "        const i = q & 1 ? ii : ii;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "MID-RING-runs-first-lost",
     "file": "src/render/midRing.js",
-    "old": "if (start >= 0) runs.push([start, total - start]);",
-    "new": "if (start > 0) runs.push([start, total - start]);",
+    "old": "  if (start >= 0) runs.push([start, total - start]);",
+    "new": "  if (start > 0) runs.push([start, total - start]);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "MID-RING-reorder-every-frame",
     "file": "src/render/midRing.js",
-    "old": "if (!this.vao || key === this._orderKey) return;",
-    "new": "if (!this.vao) return;",
+    "old": "    if (!this.vao || key === this._orderKey) return;",
+    "new": "    if (!this.vao) return;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "MID-RING-cut-never-again",
     "file": "src/render/midRing.js",
-    "old": "if (key === this._runsKey) return;",
-    "new": "if (key !== this._runsKey) return;",
+    "old": "    if (key === this._runsKey) return;",
+    "new": "    if (key !== this._runsKey) return;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "MID-RING-run-offset-in-indices",
     "file": "src/render/midRing.js",
-    "old": "first * bytes)",
-    "new": "first)",
+    "old": "    for (const [first, count] of this.runs) gl.drawElements(gl.TRIANGLES, count, this.indexType, first * bytes);",
+    "new": "    for (const [first, count] of this.runs) gl.drawElements(gl.TRIANGLES, count, this.indexType, first);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "MID-RING-vao-kept",
     "file": "src/render/midRing.js",
-    "old": "if (this.vao) gl.deleteVertexArray(this.vao);",
-    "new": "if (this.vao) void 0;",
+    "old": "    if (this.vao) gl.deleteVertexArray(this.vao);",
+    "new": "    if (this.vao) void 0;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "FAR-FIELD-frame-off-a-pixel",
     "file": "src/render/farField.js",
-    "old": "positions[o + 2] = (by + 1 - yc) * S;",
-    "new": "positions[o + 2] = (by - yc) * S;",
+    "old": "      positions[o + 2] = (by + 1 - yc) * S;",
+    "new": "      positions[o + 2] = (by - yc) * S;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "FAR-FIELD-sea-a-third",
     "file": "src/render/farField.js",
-    "old": "majority = (FAR_SAMPLES.length ** 2) / 2",
-    "new": "majority = (FAR_SAMPLES.length ** 2) / 3",
+    "old": "    majority = FAR_SAMPLES.length ** 2 / 2;",
+    "new": "    majority = FAR_SAMPLES.length ** 2 / 3;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "FAR-FIELD-ocean-climate-ignored",
     "file": "src/render/farField.js",
-    "old": "const wet = low[v] > majority || oceanAt(px, py, v);",
-    "new": "const wet = low[v] > majority;",
+    "old": "      const wet = low[v] > majority || oceanAt(px, py, v);",
+    "new": "      const wet = low[v] > majority;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "FAR-FIELD-sea-tint-land",
     "file": "src/render/farField.js",
-    "old": "tintAt(px, py, wet ? 0 : high[v], v)",
-    "new": "tintAt(px, py, high[v], v)",
+    "old": "      const t = tintAt(px, py, wet ? 0 : high[v], v);",
+    "new": "      const t = tintAt(px, py, high[v], v);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "FAR-FIELD-order-nearest-first",
     "file": "src/render/farField.js",
-    "old": "b[2] - a[2] ||",
-    "new": "a[2] - b[2] ||",
+    "old": "  list.sort((a, b) => b[2] - a[2] || a[1] - b[1] || a[0] - b[0]);",
+    "new": "  list.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "FAR-FIELD-hole-too-wide",
     "file": "src/render/farField.js",
-    "old": "centre(cx + 1) <= covered.x1",
-    "new": "centre(cx) <= covered.x1",
+    "old": "      if (inY && centre(cx) >= covered.x0 && centre(cx + 1) <= covered.x1) continue;",
+    "new": "      if (inY && centre(cx) >= covered.x0 && centre(cx) <= covered.x1) continue;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "FAR-FIELD-reach-short",
     "file": "src/render/farField.js",
-    "old": "const reach = radius + 2 * FAR_REBUILD_DRIFT + 1",
-    "new": "const reach = radius",
+    "old": "  const reach = radius + 2 * FAR_REBUILD_DRIFT + 1,",
+    "new": "  const reach = radius,",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "FAR-FIELD-reorder-every-frame",
     "file": "src/render/farField.js",
-    "old": "if (!this.vao || key === this._orderKey) return;",
-    "new": "if (!this.vao) return;",
+    "old": "    if (!this.vao || key === this._orderKey) return;",
+    "new": "    if (!this.vao) return;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "PIXEL-FADE-lane-mix-inverted",
     "file": "src/render/enhancedLighting.js",
-    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
-    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
+    "old": "  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
+    "new": "  tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "PIXEL-FADE-stamped-with-the-door-shut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
-    "new": "if (key === pkey && isEnhanced() && midRingDisabled()) stampPixelFade(",
+    "old": "    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint",
+    "new": "    if (key === pkey && isEnhanced() && midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "HORIZON-client-band-offset",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "heights.set(m.heights, pj0 * job.sub * side);",
-    "new": "heights.set(m.heights, pj0 * side);",
+    "old": "      heights.set(m.heights, pj0 * job.sub * side);",
+    "new": "      heights.set(m.heights, pj0 * side);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "HORIZON-client-one-band",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "return kept === false ? null : kept === true ? next(r1) : kept;",
-    "new": "return kept === false ? null : kept;",
+    "old": "      return kept === false ? null : kept === true ? next(r1) : kept;",
+    "new": "      return kept === false ? null : kept;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "HORIZON-client-failed-band-answered",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "return kept === false ? null : kept === true ? next(r1) : kept;",
-    "new": "return kept === false ? kept : kept === true ? next(r1) : kept;",
+    "old": "      return kept === false ? null : kept === true ? next(r1) : kept;",
+    "new": "      return kept === false ? kept : kept === true ? next(r1) : kept;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "HORIZON-client-death-unanswered",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "for (const resolve of this._mids.values()) resolve(null);",
-    "new": "for (const resolve of []) resolve(null);",
+    "old": "    for (const resolve of this._mids.values()) resolve(null);   // MID-RING: no worker, no middle ring",
+    "new": "    for (const resolve of []) resolve(null);   // MID-RING: no worker, no middle ring",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "HORIZON-worker-mid-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "const moved = [heights.buffer, ...(anyWet",
-    "new": "const moved = [...(anyWet",
+    "old": "    const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : []), ...(cover ? [cover.buffer] : [])];",
+    "new": "    const moved = [...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : []), ...(cover ? [cover.buffer] : [])];",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -645,8 +645,8 @@
   {
     "name": "HORIZON-worker-mid-key-no-row",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "keptMid(`${px},${py},",
-    "new": "keptMid(`${px},",
+    "old": "    const pixel = (px, py) => keptMid(`${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));",
+    "new": "    const pixel = (px, py) => keptMid(`${px},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "HORIZON-worker-far-key-no-row",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "keptFar(`${cx},${cy},",
-    "new": "keptFar(`${cx},",
+    "old": "    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte},${m.relief ? 1 : 0}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));",
+    "new": "    const cellAt = (cx, cy) => keptFar(`${cx},${m.cell},${m.seaByte},${m.relief ? 1 : 0}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -663,8 +663,8 @@
   {
     "name": "HORIZON-worker-mid-whole",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "landforms, rows: m.rows ?? null, pixel });",
-    "new": "landforms, rows: null, pixel });",
+    "old": "    const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: m.rows ?? null, pixel });",
+    "new": "    const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: null, pixel });",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "FAR-FIELD-cell-climate-at-its-corner",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2))",
-    "new": "climateAt(cx * cell, cy * cell)",
+    "old": "  const c = climateAt ? climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2)) : FAR_CLIMATE_ASK;",
+    "new": "  const c = climateAt ? climateAt(cx * cell, cy * cell) : FAR_CLIMATE_ASK;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "FAR-FIELD-clim-unassembled",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);",
-    "new": "high.set(m.high, j0 * side); low.set(m.low, j0 * side);",
+    "old": "      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ground.set(m.ground, j0 * side);",
+    "new": "      high.set(m.high, j0 * side); low.set(m.low, j0 * side); ground.set(m.ground, j0 * side);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -708,8 +708,8 @@
   {
     "name": "FAR-FIELD-clim-not-answered",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground }",
-    "new": "m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length), ground: m.ground }",
+    "old": "    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null, cover: m.cover ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);",
+    "new": "    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null, cover: m.cover ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length), ground: m.ground } : null);",
     "tests": [
       "test/render/midring.test.js"
     ],
@@ -718,8 +718,8 @@
   {
     "name": "FAR-FIELD-worker-climate-untraced",
     "file": "src/world/terrain/farClimate.js",
-    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
-    "new": "return !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "old": "  return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "  return !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -727,8 +727,8 @@
   {
     "name": "FAR-FIELD-worker-climate-on-the-bay",
     "file": "src/world/terrain/farClimate.js",
-    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
-    "new": "return tamrielTrace() && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "old": "  return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "  return tamrielTrace() && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -736,8 +736,8 @@
   {
     "name": "FAR-FIELD-worker-climate-unasked",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));",
-    "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, null, !!m.relief));",
+    "old": "    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte},${m.relief ? 1 : 0}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));",
+    "new": "    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte},${m.relief ? 1 : 0}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, null, !!m.relief));",
     "tests": [
       "test/render/midring.test.js"
     ],
@@ -746,8 +746,8 @@
   {
     "name": "FAR-FIELD-clim-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "[high.buffer, low.buffer, clim.buffer, ground.buffer]",
-    "new": "[high.buffer, low.buffer, ground.buffer]",
+    "old": "    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim, ground }, [high.buffer, low.buffer, clim.buffer, ground.buffer]);",
+    "new": "    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim, ground }, [high.buffer, low.buffer, ground.buffer]);",
     "tests": [
       "test/render/midring.test.js"
     ],
@@ -766,8 +766,8 @@
   {
     "name": "FAR-FIELD-steps-by-the-row",
     "file": "src/render/farField.js",
-    "old": "if (v && v % FAR_CELLS_A_STEP === 0) yield;",
-    "new": "if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
+    "old": "      if (v && v % FAR_CELLS_A_STEP === 0) yield;",
+    "new": "      if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -775,8 +775,8 @@
   {
     "name": "FAR-FIELD-normals-whole",
     "file": "src/render/farField.js",
-    "old": "if (j % FAR_NORMAL_ROWS === 0) yield;",
-    "new": "if (j === 0) yield;",
+    "old": "    if (j % FAR_NORMAL_ROWS === 0) yield; // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)",
+    "new": "    if (j === 0) yield; // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -784,8 +784,8 @@
   {
     "name": "MID-RING-tints-whole",
     "file": "src/render/midRing.js",
-    "old": "    if (tj) yield;\n",
-    "new": "",
+    "old": "    if (tj) yield;\n    for (let ti = 0; ti < tw; ti++) {",
+    "new": "    for (let ti = 0; ti < tw; ti++) {",
     "tests": [
       "test/render/midring.test.js"
     ]

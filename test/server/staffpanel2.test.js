@@ -1,4 +1,4 @@
-// STAFF-PANEL2 (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS
+// STAFF-PANEL2 (2026-10-22; design doc "DFO Staff Panel: design", build step 2) - THE PANEL'S REPORTS
 // (server-account/src/staffCases.js), driven through the real Worker on the node:sqlite database every account pin
 // stands on (test/accountDb.mjs): the open cases most urgent first and paged, a case read with its lines and record, a
 // claim (a Moderator one at a time, an Admin any), and Mute, Ban, Unban and Dismiss made as the game's moderators' acts.
@@ -33,13 +33,13 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up, the relay's door recorded: mob (an Admin and owner) signed in, Asynian (a Moderator)
+/** The Worker with the panel set up, the relay's door recorded: chief (an Admin and owner) signed in, Asynian (a Moderator)
  *  invited and signed in, and Troll and Sylvia, two players. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY, DISCORD_MODERATORS: '111111111111111111:Asynian,222222222222222222:Tabbyvish',
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY, DISCORD_MODERATORS: '111111111111111111:Asynian,222222222222222222:Tabbyvish',
   });
   const pushed = [];
   const real = globalThis.fetch;
@@ -55,9 +55,9 @@ async function stand() {
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
   raw.prepare('UPDATE players SET created_at = ? WHERE id = ?').run(nowS() - SPROUT_S - 60, sylvia.id);   // old enough to count
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const enrol = async (handle) => {
-    const inv = await staff('/v1/staff/invite', { handle }, mob.session);
+    const inv = await staff('/v1/staff/invite', { handle }, chief.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -83,7 +83,7 @@ async function stand() {
   /** A player made just to be reported. */
   let m = 0;
   const player = async () => s.registered(`Target${++m}`);
-  return { ...s, raw, staff, mob, asy, tab, troll, sylvia, idOf, caseOn, player, pushed, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, chief, asy, tab, troll, sylvia, idOf, caseOn, player, pushed, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL2: the reports\' doors are listed among the staff panel\'s, and none opens without a staff session', async () => {
@@ -151,7 +151,7 @@ test('STAFF-PANEL2: THE LIST - most urgent first for an Admin and a Moderator al
     const heldOn = await s.player();
     const highHeld = s.caseOn(heldOn, { ai_state: 'failed' });
     assert.equal((await s.staff('/v1/staff/claim', { target: heldOn.id }, s.tab.session)).status, 200);   // STAFF-PANEL2-FIX: a claim is its session's
-    for (const who of [s.mob, s.asy]) {
+    for (const who of [s.chief, s.asy]) {
       const r = await s.staff('/v1/staff/cases', {}, who.session);
       assert.equal(r.status, 200, JSON.stringify(r.body));
       assert.deepEqual(r.body.cases.map((c) => c.id), [high, highHeld, med, low]);
@@ -188,7 +188,7 @@ test('STAFF-PANEL2: A CLAIM - a Moderator holds one case at a time, an Admin tak
     assert.deepEqual((await s.staff('/v1/staff/claim', { target: b.id }, s.asy.session)).body, { error: 'staff-one-case' }, 'a Moderator\'s second case');
     assert.deepEqual((await s.staff('/v1/staff/claim', { target: a.id }, s.tab.session)).body, { error: 'staff-claimed' }, 'another Moderator');
     assert.deepEqual((await s.staff('/v1/staff/mute', { target: a.id, minutes: 30, click: 'press-0001' }, s.tab.session)).body, { error: 'staff-claimed' });
-    assert.deepEqual((await s.staff('/v1/staff/dismiss', { target: a.id }, s.mob.session)).body, { error: 'staff-claimed' }, 'an Admin takes it first');
+    assert.deepEqual((await s.staff('/v1/staff/dismiss', { target: a.id }, s.chief.session)).body, { error: 'staff-claimed' }, 'an Admin takes it first');
     assert.equal(s.raw.prepare('SELECT muted_until FROM players WHERE id = ?').get(a.id).muted_until, null);
     // Discord: the panel's claim of another member stands; the holder's own press goes through
     const ctx = { db: s.env.DB, nowS: nowS(), subtle, rand: (b8) => globalThis.crypto.getRandomValues(b8) };
@@ -197,7 +197,7 @@ test('STAFF-PANEL2: A CLAIM - a Moderator holds one case at a time, an Admin tak
     assert.match(no.data.content, /Another staff member has this case in the staff panel/);
     assert.equal(s.raw.prepare('SELECT status FROM mod_cases WHERE id = ?').get(ca).status, 'open');
     // an Admin takes it from the Moderator, who is told
-    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/claim', { target: a.id }, s.chief.session)).status, 200);
     const told = await s.staff('/v1/staff/cases', {}, s.asy.session);
     assert.deepEqual(told.body.lost, [{ id: ca, target: a.id, name: a.handle, by: 'SirMcMobdon' }]);
     assert.ok(s.raw.prepare("SELECT 1 FROM staff_audit WHERE act = 'case-claim' AND detail LIKE ?").get(`%"from":"${s.idOf('Asynian')}"%`), 'the take written down');
@@ -205,7 +205,7 @@ test('STAFF-PANEL2: A CLAIM - a Moderator holds one case at a time, an Admin tak
     assert.equal((await s.staff('/v1/staff/claim', { target: b.id }, s.asy.session)).status, 200);
     // released, and let go by itself
     assert.deepEqual((await s.staff('/v1/staff/release', { target: a.id }, s.asy.session)).body, { error: 'no-case' }, 'not theirs to release');
-    assert.equal((await s.staff('/v1/staff/release', { target: a.id }, s.mob.session)).status, 200);
+    assert.equal((await s.staff('/v1/staff/release', { target: a.id }, s.chief.session)).status, 200);
     assert.equal(s.raw.prepare('SELECT claimed_by FROM mod_cases WHERE id = ?').get(ca).claimed_by, null);
     s.raw.prepare('UPDATE mod_cases SET claim_until = ? WHERE id = ?').run(nowS(), cb);
     assert.equal((await s.staff('/v1/staff/claim', { target: b.id }, s.tab.session)).status, 200, 'a claim past its time is anyone\'s');
@@ -242,8 +242,8 @@ test('STAFF-PANEL2: THE ACTS are the game\'s moderators\' own - the strike histo
     assert.equal(ban.body.order, undefined);
     assert.ok(s.raw.prepare('SELECT banned_until FROM players WHERE id = ?').get(s.troll.id).banned_until > nowS() + 6 * 86400);
     assert.equal((await s.staff('/v1/staff/strikes', { target: s.troll.id }, s.asy.session)).body.record.strikes, 2);
-    assert.equal((await s.staff('/v1/staff/unban', { target: s.troll.id }, s.mob.session)).status, 200);
-    assert.deepEqual((await s.staff('/v1/staff/unban', { target: s.troll.id }, s.mob.session)).body, { error: 'not-banned' });
+    assert.equal((await s.staff('/v1/staff/unban', { target: s.troll.id }, s.chief.session)).status, 200);
+    assert.deepEqual((await s.staff('/v1/staff/unban', { target: s.troll.id }, s.chief.session)).body, { error: 'not-banned' });
     assert.equal(s.pushed.length, 3);
     // dismiss closes a case, with no strike
     const other = await s.player();
@@ -251,7 +251,7 @@ test('STAFF-PANEL2: THE ACTS are the game\'s moderators\' own - the strike histo
     assert.equal((await s.staff('/v1/staff/dismiss', { target: other.id }, s.asy.session)).status, 200);
     assert.equal(s.raw.prepare('SELECT status FROM mod_cases WHERE id = ?').get(c).status, 'dismissed');
     // refused as the game refuses, and written down as failed
-    const prot = await s.staff('/v1/staff/mute', { target: s.idOf('Tabbyvish'), minutes: 30, click: 'press-0004' }, s.mob.session);
+    const prot = await s.staff('/v1/staff/mute', { target: s.idOf('Tabbyvish'), minutes: 30, click: 'press-0004' }, s.chief.session);
     assert.deepEqual([prot.status, prot.body], [403, { error: 'protected' }], 'a moderator is never muted');
     assert.equal((await s.staff('/v1/staff/mute', { target: s.troll.id, minutes: 99999999, click: 'press-0005' }, s.asy.session)).status, 400);
     assert.equal((await s.staff('/v1/staff/ban', { target: s.troll.id, days: -1, click: 'press-0006' }, s.asy.session)).status, 400);

@@ -69,22 +69,39 @@ export const RITE_CLEAR_M = 20;
  * @param {{day:number, px:number, py:number, spot:number[]}|null} site
  */
 export function gateClearFor(site) {
-  if (!site || !Number.isSafeInteger(site.px) || !Number.isSafeInteger(site.py) || !Array.isArray(site.spot)) return null;
+  if (!site || !Number.isSafeInteger(site.px) || !Number.isSafeInteger(site.py) || !Array.isArray(site.spot))
+    return null;
   const [x, z] = site.spot;
   if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
   const [rx, rz] = Number.isSafeInteger(site.day) ? riteLocalOf(site.day) : [NaN, NaN];
-  return Object.freeze({ key: `${site.day}:${site.px},${site.py}`, day: site.day, px: site.px, py: site.py, x, z, rx, rz });
+  return Object.freeze({
+    key: `${site.day}:${site.px},${site.py}`,
+    day: site.day,
+    px: site.px,
+    py: site.py,
+    x,
+    z,
+    rx,
+    rz,
+  });
 }
 
 /** The gate's foot in pixel (px, py)'s own frame: its pixel's corner from this one's (east by x, north by the rows
  *  above), plus its spot. */
-export const gatePointIn = (clear, px, py) => [(clear.px - px) * PIXEL_M + clear.x, (py - clear.py) * PIXEL_M + clear.z];
+export const gatePointIn = (clear, px, py) => [
+  (clear.px - px) * PIXEL_M + clear.x,
+  (py - clear.py) * PIXEL_M + clear.z,
+];
 /** AUDIT WB12d (G12): the faithful's circle in pixel (px, py)'s own frame, as the gate's foot is. */
-export const ritePointIn = (clear, px, py) => [(clear.px - px) * PIXEL_M + clear.rx, (py - clear.py) * PIXEL_M + clear.rz];
+export const ritePointIn = (clear, px, py) => [
+  (clear.px - px) * PIXEL_M + clear.rx,
+  (py - clear.py) * PIXEL_M + clear.rz,
+];
 
 /** Does the box come within `r` of the point (cx, cz)? Its nearest point, measured on the ground. */
 const boxNear = (cx, cz, x0, z0, x1, z1, r) => {
-  const dx = Math.max(x0 - cx, 0, cx - x1), dz = Math.max(z0 - cz, 0, cz - z1);
+  const dx = Math.max(x0 - cx, 0, cx - x1),
+    dz = Math.max(z0 - cz, 0, cz - z1);
   return dx * dx + dz * dz <= r * r;
 };
 
@@ -98,7 +115,13 @@ const cellKey = (cx, cy) => cx * 1_000_003 + cy;
 /** @type {WeakMap<object, { cells: Map<number, any[]>, wide: any[] }>} */
 const _cells = new WeakMap();
 /** A member's points and their reach, pixel-local to its own pixel: the gate's foot and its circle, or the one heart. */
-const reachOf = (c) => (Number.isFinite(c.r) ? [[c.x, c.z, c.r]] : [[c.x, c.z, GATE_CLEAR_M], ...(Number.isFinite(c.rx) && Number.isFinite(c.rz) ? [[c.rx, c.rz, RITE_CLEAR_M]] : [])]);
+const reachOf = (c) =>
+  Number.isFinite(c.r)
+    ? [[c.x, c.z, c.r]]
+    : [
+        [c.x, c.z, GATE_CLEAR_M],
+        ...(Number.isFinite(c.rx) && Number.isFinite(c.rz) ? [[c.rx, c.rz, RITE_CLEAR_M]] : []),
+      ];
 function cellsOf(set) {
   let idx = _cells.get(set);
   if (idx) return idx;
@@ -106,13 +129,26 @@ function cellsOf(set) {
   for (const c of set.list) {
     const keys = new Set();
     for (const [x, z, r] of reachOf(c)) {
-      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M), c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);
-      const r0 = c.py - Math.floor((z + r + CELL_PAD) / PIXEL_M), r1 = c.py - Math.floor((z - r - CELL_PAD) / PIXEL_M);
-      if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN)) { keys.clear(); keys.add(NaN); break; }
+      const c0 = c.px + Math.floor((x - r - CELL_PAD) / PIXEL_M),
+        c1 = c.px + Math.floor((x + r + CELL_PAD) / PIXEL_M);
+      const r0 = c.py - Math.floor((z + r + CELL_PAD) / PIXEL_M),
+        r1 = c.py - Math.floor((z - r - CELL_PAD) / PIXEL_M);
+      if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN)) {
+        keys.clear();
+        keys.add(NaN);
+        break;
+      }
       for (let cx = c0; cx <= c1; cx++) for (let cy = r0; cy <= r1; cy++) keys.add(cellKey(cx, cy));
     }
-    if (keys.has(NaN)) { idx.wide.push(c); continue; }
-    for (const k of keys) { const at = idx.cells.get(k); if (at) at.push(c); else idx.cells.set(k, [c]); }
+    if (keys.has(NaN)) {
+      idx.wide.push(c);
+      continue;
+    }
+    for (const k of keys) {
+      const at = idx.cells.get(k);
+      if (at) at.push(c);
+      else idx.cells.set(k, [c]);
+    }
   }
   _cells.set(set, idx);
   return idx;
@@ -122,9 +158,12 @@ function setNear(set, px, py, x0, z0, x1, z1, margin) {
   const { cells, wide } = cellsOf(set);
   for (const c of wide) if (boxNearGate(c, px, py, x0, z0, x1, z1, margin)) return true;
   const pad = margin + CELL_PAD;
-  const c0 = px + Math.floor((Math.min(x0, x1) - pad) / PIXEL_M), c1 = px + Math.floor((Math.max(x0, x1) + pad) / PIXEL_M);
-  const r0 = py - Math.floor((Math.max(z0, z1) + pad) / PIXEL_M), r1 = py - Math.floor((Math.min(z0, z1) - pad) / PIXEL_M);
-  if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN)) return set.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));
+  const c0 = px + Math.floor((Math.min(x0, x1) - pad) / PIXEL_M),
+    c1 = px + Math.floor((Math.max(x0, x1) + pad) / PIXEL_M);
+  const r0 = py - Math.floor((Math.max(z0, z1) + pad) / PIXEL_M),
+    r1 = py - Math.floor((Math.min(z0, z1) - pad) / PIXEL_M);
+  if (!(c1 - c0 <= CELL_SPAN && r1 - r0 <= CELL_SPAN))
+    return set.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));
   for (let cx = c0; cx <= c1; cx++) {
     for (let cy = r0; cy <= r1; cy++) {
       const at = cells.get(cellKey(cx, cy));
@@ -143,9 +182,9 @@ function setNear(set, px, py, x0, z0, x1, z1, margin) {
  */
 export function boxNearGate(clear, px, py, x0, z0, x1, z1, margin = 0) {
   if (!clear) return false;
-  if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin);   // EG-F: a set - any of its clearings
+  if (Array.isArray(clear.list)) return setNear(clear, px, py, x0, z0, x1, z1, margin); // EG-F: a set - any of its clearings
   const [gx, gz] = gatePointIn(clear, px, py);
-  if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin);   // EG-F: an arch's, by its own reach
+  if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin); // EG-F: an arch's, by its own reach
   if (boxNear(gx, gz, x0, z0, x1, z1, GATE_CLEAR_M + margin)) return true;
   if (!Number.isFinite(clear.rx) || !Number.isFinite(clear.rz)) return false;
   const [cx, cz] = ritePointIn(clear, px, py);
@@ -171,7 +210,16 @@ function membersFrom(items, id, prefix, r) {
   const out = [];
   const seen = new Set();
   for (const a of [...(items ?? [])].sort((p, q) => (p?.[id] < q?.[id] ? -1 : p?.[id] > q?.[id] ? 1 : 0))) {
-    if (!a || typeof a[id] !== 'string' || seen.has(a[id]) || !Number.isSafeInteger(a.px) || !Number.isSafeInteger(a.py) || !Number.isFinite(a.x) || !Number.isFinite(a.z)) continue;
+    if (
+      !a ||
+      typeof a[id] !== 'string' ||
+      seen.has(a[id]) ||
+      !Number.isSafeInteger(a.px) ||
+      !Number.isSafeInteger(a.py) ||
+      !Number.isFinite(a.x) ||
+      !Number.isFinite(a.z)
+    )
+      continue;
     seen.add(a[id]);
     out.push(Object.freeze({ key: `${prefix}${a[id]}`, px: a.px, py: a.py, x: a.x, z: a.z, r }));
   }
@@ -186,7 +234,12 @@ function membersFrom(items, id, prefix, r) {
  * @param {ReadonlyArray<{f: string, px: number, py: number, x: number, z: number}>} [fissures] */
 export function gateClearSet(gate, arches = [], stars = [], fissures = []) {
   /** @type {any[]} */
-  const list = [...(gate ? [gate] : []), ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M), ...membersFrom(stars, 's', 'star:', STAR_ROCK_M), ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M)];
+  const list = [
+    ...(gate ? [gate] : []),
+    ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M),
+    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),
+    ...membersFrom(fissures, 'f', 'brass:', FISSURE_ROCK_M),
+  ];
   if (!list.length) return null;
   if (list.length === 1 && list[0] === gate) return gate;
   return Object.freeze({ key: list.map((c) => c.key).join(CLEAR_KEY_JOIN), list: Object.freeze(list) });
@@ -198,9 +251,19 @@ export function gateClearSet(gate, arches = [], stars = [], fissures = []) {
  * (the world host's memo, EG-F, moved here with the stars).
  */
 export function gateClearMemo() {
-  let g = null, a = null, s = null, b = null, set = null;
+  let g = null,
+    a = null,
+    s = null,
+    b = null,
+    set = null;
   return (gate, arches, stars, fissures = null) => {
-    if (gate !== g || arches !== a || stars !== s || fissures !== b) { g = gate; a = arches; s = stars; b = fissures; set = gateClearSet(gate, arches ?? [], stars ?? [], fissures ?? []); }
+    if (gate !== g || arches !== a || stars !== s || fissures !== b) {
+      g = gate;
+      a = arches;
+      s = stars;
+      b = fissures;
+      set = gateClearSet(gate, arches ?? [], stars ?? [], fissures ?? []);
+    }
     return set;
   };
 }
@@ -219,7 +282,17 @@ export const pointNearGate = (clear, px, py, x, z, margin = 0) => boxNearGate(cl
 export function wodSiteOffGate(clear, px, py, prefabName, prefab, rect, tileMetres = 6.4) {
   if (!clear || wodPiecewise(prefabName)) return true;
   for (const o of prefab?.obj ?? []) {
-    if (pointNearGate(clear, px, py, rect.x * tileMetres + o.pos.x, rect.y * tileMetres + o.pos.z, WOD_SITE_OBJECT_RADIUS_M)) return false;
+    if (
+      pointNearGate(
+        clear,
+        px,
+        py,
+        rect.x * tileMetres + o.pos.x,
+        rect.y * tileMetres + o.pos.z,
+        WOD_SITE_OBJECT_RADIUS_M,
+      )
+    )
+      return false;
   }
   return true;
 }
@@ -234,10 +307,14 @@ export function wodSiteOffGate(clear, px, py, prefabName, prefab, rect, tileMetr
  */
 export function gateSiteTest(clear, px, py, ledger, tileMetres = 6.4) {
   return (prefabName, prefab, rect) => {
-    if (!wodSiteOffGate(clear, px, py, prefabName, prefab, rect, tileMetres)) { ledger.refused = true; return false; }
+    if (!wodSiteOffGate(clear, px, py, prefabName, prefab, rect, tileMetres)) {
+      ledger.refused = true;
+      return false;
+    }
     if (!wodPiecewise(prefabName)) {
       for (const o of prefab?.obj ?? []) {
-        const x = rect.x * tileMetres + o.pos.x, z = rect.y * tileMetres + o.pos.z;
+        const x = rect.x * tileMetres + o.pos.x,
+          z = rect.y * tileMetres + o.pos.z;
         ledger.reach.push(x, z, x, z, WOD_SITE_OBJECT_RADIUS_M);
       }
     }
@@ -271,11 +348,13 @@ export function reachNearGate(reach, clear, px, py) {
  * (`published`) if the sweep has moved on since. Pure: the host owns the tearing down and the queue.
  */
 export function createGateClearSweep() {
-  let swept = null;   // the clearing's key the built pixels were last asked against
+  let swept = null; // the clearing's key the built pixels were last asked against
   const due = new Set();
   return {
     /** A pixel `k` published, built against `key` - asked again if the sweep has moved on since its build began. */
-    published(k, key) { if ((key ?? null) !== swept) due.add(k); },
+    published(k, key) {
+      if ((key ?? null) !== swept) due.add(k);
+    },
     /**
      * One sweep, between builds. `clear` the clearing now (gateClearFor's, or null); `built` the built pixels by key
      * ({px, py, gateClearKey, gateRefused, wodReach}). Answers the pixels to build again; the others asked are marked
@@ -285,26 +364,31 @@ export function createGateClearSweep() {
      */
     step(clear, built) {
       const key = clear?.key ?? null;
-      if (key !== swept) { swept = key; for (const k of built.keys()) due.add(k); }
+      if (key !== swept) {
+        swept = key;
+        for (const k of built.keys()) due.add(k);
+      }
       const again = [];
-      const now = membersOf(clear), nowKeys = new Set(now.map((c) => c.key));
+      const now = membersOf(clear),
+        nowKeys = new Set(now.map((c) => c.key));
       /** STOREFRONT (AUDIT LANE 5): the clearings come since a key, one set a key - its members indexed once (setNear) -
        *  and whether any of the key's has gone since (`gone`) */
       const comeOf = new Map();
       for (const k of due) {
         const p = built.get(k);
         due.delete(k);
-        if (!p) continue;   // torn down since: it is built fresh, on the clearing its build reads
+        if (!p) continue; // torn down since: it is built fresh, on the clearing its build reads
         if ((p.gateClearKey ?? null) === key) continue;
         // EG-F: THE SET'S CHANGE - the clearings gone since its build, and the ones come (a gate alone: its one key each way)
         const was = String(p.gateClearKey ?? '');
-        if (!comeOf.has(was)) {   // W14: a key read once a sweep - the provinces' fissures make a set hundreds of members long
+        if (!comeOf.has(was)) {
+          // W14: a key read once a sweep - the provinces' fissures make a set hundreds of members long
           const had = new Set(was.split(CLEAR_KEY_JOIN).filter(Boolean));
           comeOf.set(was, { list: now.filter((c) => !had.has(c.key)), gone: [...had].some((x) => !nowKeys.has(x)) });
         }
         const gone = comeOf.get(was).gone;
         if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);
-        else p.gateClearKey = key;   // the old clearings cost it nothing, and nothing it stands reaches a new one
+        else p.gateClearKey = key; // the old clearings cost it nothing, and nothing it stands reaches a new one
       }
       return again;
     },

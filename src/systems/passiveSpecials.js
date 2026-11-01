@@ -8,7 +8,7 @@
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:"V2c filled inSunlight/inHolyPlace"
 // off the host seam that worldModes.js:"now: () => Math.floor(skyMinutes())" and dungeonContext.js:"const _prevPassiveHost"
-// register (bible/01-Overview/Port-Ledger.md:886 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:885 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -37,9 +37,9 @@
 
 import { isDayFromMinutes } from './gameDate.js';
 import { SPECIAL_ABILITY_BITS, REGENERATION_FLAGS } from './specialAdvantages.js';
-import { onlineMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer (EG15: nor the folds' magicka)
-import { regenShare } from './courtRules.js';   // WBX6 / EVENT-RULES: a made level holds regeneration
-import { cloakState } from './survival/temperature.js';   // HOOD-CAREER: the ONE "is the hood up" - the felt temperature's, never a second list
+import { onlineMpOf } from './renownLayer.js'; // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer (EG15: nor the folds' magicka)
+import { regenShare } from './courtRules.js'; // WBX6 / EVENT-RULES: a made level holds regeneration
+import { cloakState } from './survival/temperature.js'; // HOOD-CAREER: the ONE "is the hood up" - the felt temperature's, never a second list
 
 // PassiveSpecialsEffect.cs:35-40, verbatim.
 export const SUN_DAMAGE_AMOUNT = 12;
@@ -64,7 +64,11 @@ export const FIGHTER_TRAINERS_FACTION = 849;
 // nested mount - worldModes' dungeon branch building a dungeonContext
 // - can restore the outer registration on destroy.
 let _host = null;
-export function setPassiveSpecialsHost(host) { const prev = _host; _host = host ?? null; return prev; }
+export function setPassiveSpecialsHost(host) {
+  const prev = _host;
+  _host = host ?? null;
+  return prev;
+}
 
 /** PlayerEnterExit.cs:371, with the clock passed or read from the
  *  registered host. */
@@ -76,7 +80,8 @@ export function playerInSunlight(nowMinutes = null) {
  *  career's darkness (`!day || dungeon` below, PassiveSpecialsEffect's own law): a lit shop at noon is dark here. AUDIT
  *  FB1024 (lane A N1): with no host registered and no clock handed in, idle (false), as the seam's every arm is - the
  *  unregistered clock reads minute 0, midnight, and would answer dark. */
-export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);
+export const playerInDarkness = (nowMinutes = null) =>
+  (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);
 /** PlayerEnterExit.cs:1424-1431, the host's answer. */
 export const playerInHolyPlace = () => !!(_host?.isHolyPlace?.() ?? false);
 
@@ -116,7 +121,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   // IsPlayerInSunlight (:149-172), RegenerateHealth's and the magery's IsDay.
   const isDay = isDayFromMinutes(clockMinutes);
   const career = entity.career ?? null;
-  const override = (entity.racialOverride && !entity.racialOverride.ended) ? entity.racialOverride : null;
+  const override = entity.racialOverride && !entity.racialOverride.ended ? entity.racialOverride : null;
 
   // RegenerateHealth (:81-105): the career's own flag, every 4th round
   if (nowMinutes % REGENERATE_PER_ROUNDS === 0 && career?.regeneration) {
@@ -127,7 +132,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
     else if (career.regeneration === REGENERATION_FLAGS.inDarkness) regenerate = !day || dungeon;
     else if (career.regeneration === REGENERATION_FLAGS.inLight) regenerate = day && !dungeon;
     else if (career.regeneration === REGENERATION_FLAGS.whileImmersed) regenerate = !!(_host?.isSwimming?.() ?? false);
-    const held = regenerate ? regenShare(REGENERATE_AMOUNT, 'career', entity) : 0;   // WBX6 / EVENT-RULES: held in a made level
+    const held = regenerate ? regenShare(REGENERATE_AMOUNT, 'career', entity) : 0; // WBX6 / EVENT-RULES: held in a made level
     if (held > 0) sinks?.heal?.(held);
   }
 
@@ -137,16 +142,16 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   // (vampirism.js vampireStatMod); its override still carries the flag
   // for the travel rules, and a save's old curse burns no more.
   // HOOD-CAREER: never under a raised hood (careerSunAverse).
-  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0
-    && careerSunAverse(entity)
-    && playerInSunlight(clockMinutes)) {
+  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(clockMinutes)) {
     sinks?.hurt?.(SUN_DAMAGE_AMOUNT);
   }
 
   // DamageFromHolyPlaces (:123-137): the same shape over the temple
-  if (nowMinutes % HOLY_DAMAGE_PER_ROUNDS === 0
-    && (careerHolyDamage(career) || override?.holyDamage)
-    && playerInHolyPlace()) {
+  if (
+    nowMinutes % HOLY_DAMAGE_PER_ROUNDS === 0 &&
+    (careerHolyDamage(career) || override?.holyDamage) &&
+    playerInHolyPlace()
+  ) {
     sinks?.hurt?.(HOLY_DAMAGE_AMOUNT);
   }
 
@@ -164,7 +169,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   // thirds of itself online, and a save (offlineVitals, which takes off the whole layer) came back at about 6% of the
   // magicka it had. Taken off here by subtraction, and safely: with the modifier zeroed the accessor's floor cannot
   // bite (the spell points are never below 0), so what it answers is exactly the raw value plus the layer.
-  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));   // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor
+  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor
   entity.maxMagickaModifier = _mod;
   const dark = !isDay || (_host?.isInside?.() ?? false);
   if (dark) {

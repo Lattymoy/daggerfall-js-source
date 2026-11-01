@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 PUBLISHING (bible/03-World/World-2-Canon.md, "Publishing"): a document's road to the world - draft (its author's
+// WG2 PUBLISHING ("Publishing"): a document's road to the world - draft (its author's
 // alone), review (a reviewer and the validators read it), staging (a multiplayer-compatible world tries it) and
 // published (a versioned world revision). Each step has its gate: a draft goes to review only clean; review to staging
 // only approved by someone else; staging to published only when its staging checks passed and no protected property

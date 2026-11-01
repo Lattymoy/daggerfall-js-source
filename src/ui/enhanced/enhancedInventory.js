@@ -135,6 +135,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
 import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
+import { sortInPlace, SORT_STORE_KINDS } from '../packSort.js';   // PACK-SORT: the pack's Sort, and the side window's
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemArmorTypeLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
@@ -157,7 +158,7 @@ import { setCard, setStrip, markSetFrame } from '../setCard.js';   // SET5: a se
 import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
 import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
-import { isBound, boundLine, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
+import { isBound, boundLine, boundRefusesPut, boundText, realmLockedText, isRealmLocked, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { isStolen, stolenLine } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece says so on its card
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -168,6 +169,7 @@ import { landingTiles } from './landingTiles.js';   // VIRT: a picture into its 
 import { overlayAction, eventActions } from '../input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
 import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
+import { discardRefusal, destroyPiece, destroyAct, destroyAsk, destroyedText, destroyRefusalText } from '../../systems/item/itemDiscard.js';   // BOUND-DESTROY: a bound piece nothing else takes
 import { salvageShards, salvageRefusal, salvagePiece, salvageMany, salvageable, shardsText } from '../../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
 import { gemsHeld, setGemPiece, unsetGemPiece } from '../../systems/reforge.js';   // GEM1: a gem set in a socket from the pack, and shattered out of one
 import { ALL_GEM_IDS, SOCKET_EMPTY, emptySockets, gemKindOf } from '../../systems/loot/lootRarity.js';   // GEM1: the socket list and the gems
@@ -1467,6 +1469,38 @@ function reorderPack(item, before) {
   // of the two directions. Take the shift off when moving down.
   list.splice(from, 1);
   list.splice(from < to ? to - 1 : to, 0, item);
+  refresh();
+  render();
+}
+
+/** PACK-SORT: the header's Sort - the player's own list put in packSort.js's order, in place, as reorderPack moves one
+ *  row. Never over a chest's copy of the pack, and not while the pack chooses what to break (its ticks are by row). */
+function sortPack() {
+  if (salvageSel) return;
+  notice = null;
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }
+  if (!sortInPlace(deps.entity?.items, { nameOf: storeNameOf })) return render();
+  picked = null;   // PX24: an act closes the card - its row has moved
+  refresh();
+  render();
+}
+/** PACK-SORT: the Sort press - the pack header's and the side window's are one button. */
+function sortButton(onclick) {
+  const b = el('button', 'act sortbtn', t('inventory.sort.label', 'Sort'));
+  b.type = 'button';
+  b.title = t('inventory.sort.how', 'Sort by page, then rarity, name and value. Quest items stay first.');
+  b.onclick = onclick;
+  return b;
+}
+/** PACK-SORT: whether the side window shows a list of the player's own to sort - never a chest that settles its own
+ *  pieces, whose order is the service's (inventorySession.js settlesOwnPieces). */
+const storeSorts = () => SORT_STORE_KINDS.has(remote?.kind) && !settlesOwnPieces(deps);
+/** PACK-SORT: the side window's Sort - the array remoteTarget answers, in place, saved wherever that list is saved. */
+function sortStore() {
+  if (!storeSorts()) return;
+  notice = null;
+  if (!sortInPlace(remoteTarget(deps, sessionState()), { nameOf: storeNameOf })) return render();
+  picked = null;
   refresh();
   render();
 }
@@ -3071,6 +3105,8 @@ function remoteCol() {
     takeAll.onclick = () => bulkMove('take');
     acts.append(takeAll);
   }
+  // PACK-SORT: the player's own wagon, bag or storage sorts as the pack does; a container and a shared chest do not
+  if (storeSorts() && remote.items.length > 1) acts.append(sortButton(sortStore));
   if (typeof deps.loot?.vaultPour === 'function') {
     const fromVault = el('button', 'act', t('inventory.store.fromVault', 'From the vault'));
     fromVault.onclick = () => {
@@ -3288,6 +3324,9 @@ function catsCol() {
     tabs.append(b);
   }
   col.append(tabs);
+  // PACK-SORT: a phone's header has no room past Body and Close, so its Sort stands at this strip's end (the sheet's
+  // touch-phone rule shows it there and hides the header's)
+  if (!salvageSel) col.append(sortButton(sortPack));
   return col;
 }
 
@@ -3702,10 +3741,19 @@ function itemActs(picked, side, { qty = true } = {}) {
   // SS5 (Mac: "The ability to dismantle in the inventory and recieve back sigil stones", the Broker's wares alone): a
   // ware in the pack is DISMANTLED for a share of its price (systems/sigil/sigilBroker.js), asked first - it is gone for good.
   // A worn one is taken off first (its primary act, beside this); a locked one says why when pressed, as its Drop does.
-  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {
+  // AUDIT FB1031 II R4: never on a copy the realm locked - the Broker refuses it (D5), and Destroy stands instead
+  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {
     const d = el('button', 'act', 'Dismantle');
     d.onclick = () => askDismantle(picked);
     acts.append(d);
+  }
+  // BOUND-DESTROY (FIELD FEEDBACK 2026-10-31, "Soulbound items need to be disposable"): a bound piece nothing else takes -
+  // the Wyrd's Raiment, a ware sold unpriced, a Soul Cake, a Hearth Offering - is DESTROYED, asked first
+  // (systems/item/itemDiscard.js); never where a dismantle pays. A locked one says why when pressed, as Dismantle's does.
+  if (side === 'local' && !line.equipped && [null, 'locked'].includes(discardRefusal(picked))) {
+    const x = el('button', 'act', destroyAct());
+    x.onclick = () => askDestroy(picked);
+    acts.append(x);
   }
   // LOOT9 (the Loot arc): a laddered piece SALVAGED into Welkynd Shards (systems/reforge.js) - the Reforge's coin - asked
   // first, as the dismantle is; never a worn one (taken off first), and a piece that will never break shows no button -
@@ -3762,7 +3810,7 @@ function askDismantle(item) {
   { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the ware left the chest's copy of the pack alone
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = wareName(itemLongName(item, { getQuest: deps.getQuest ?? null }), item);   // AUDIT FB1025i A8: and its set's
-  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };
+  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };   // AUDIT FB1031 D5
   const why = dismantleRefusal(item);
   if (why) { refusedFor(why); return; }
   const n = dismantleStones(item);
@@ -3810,6 +3858,58 @@ function askDismantle(item) {
   // and every Escape for good
   const timer = setTimeout(() => { document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
   dismantleOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
+}
+/** BOUND-DESTROY: THE DESTROY'S QUESTION - the dismantle's own, in the one question's slot: Destroy (or Y) takes the piece
+ *  or its whole stack out for good (systems/item/itemDiscard.js destroyPiece - a Soul Cake or a Hearth Offering through
+ *  the account service, whose answer restacks the pack); Keep, N, Enter, Escape or a press outside keep it. A piece the
+ *  law refuses (locked) is refused in words before any question is asked. */
+function askDestroy(item) {
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: as the dismantle's - a chest's copy of the pack destroys nothing
+  hideTip(); closeMenu(); closeInfo(); closeDismantle();
+  const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
+  const refusedFor = (why, text = null) => { notice = text || destroyRefusalText(name, why); refresh(); render(); };
+  const why = discardRefusal(item);
+  if (why) { refusedFor(why); return; }
+  dismantleEl = el('div', 'inv-info inv-dismantle inv-destroy');
+  dismantleEl.setAttribute('role', 'alertdialog');
+  dismantleEl.setAttribute('aria-label', destroyAct()); dismantleEl.setAttribute('aria-modal', 'true');
+  const card = el('div', 'card');
+  const sec = el('div', 'inv-info-box');
+  for (const line of destroyAsk(name, Math.max(1, item.stackCount ?? 1))) sec.append(el('p', 'center', line));
+  card.append(sec);
+  const row = el('div', 'acts');
+  const ok = el('button', 'act primary', destroyAct());
+  const done = (r) => {
+    if (!host) return;   // the pack closed while the service answered
+    if (picked === item && (r.ok || !(deps.items?.() ?? []).includes(item))) picked = null;   // gone, or restacked by the answer
+    if (!r.ok) return void refusedFor(r.reason, r.text);   // worn, locked or gone since the question, or the service's word
+    notice = destroyedText(name);
+    refresh();
+    render();
+  };
+  ok.onclick = (e) => {
+    e?.stopPropagation?.();
+    closeDismantle();
+    const r = destroyPiece(item, { items: deps.items?.() ?? [] });
+    if (r instanceof Promise) void r.then(done); else done(r);
+  };
+  const no = el('button', 'act', t('inventory.destroy.keep', 'Keep'));
+  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // Keep: nothing moves
+  row.append(pairGuard(ok), no);
+  card.append(row);
+  dismantleEl.append(card);
+  document.body.append(dismantleEl);
+  no.focus?.({ preventScroll: true });   // the answer that loses nothing
+  const box = dismantleEl;
+  const outside = (e) => { if (e.target === box || !box.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };
+  const keys = (e) => {
+    const answer = e.code === 'KeyY' ? 'yes' : (e.key === 'Escape' || e.key === 'Enter' || e.code === 'KeyN' || e.code === 'NumpadEnter') ? 'keep' : null;
+    if (!answer) return;
+    e.preventDefault(); e.stopPropagation();
+    if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();
+  };
+  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);
+  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };
 }
 /** LOOT9: THE SALVAGE'S QUESTION - the dismantle's own (askDismantle), in the one question's slot, its words the
  *  Reforge's: Salvage (or Y) breaks the piece into its shards (systems/reforge.js salvagePiece); Keep, N, Enter, Escape
@@ -3893,15 +3993,20 @@ export const BATCH_ASK = (n, shards) => [
 export const BATCH_NAMES_SHOWN = 6;
 export const BATCH_DONE = (n, shards, kept = 0) => t('inventory.batch.done', 'Salvaged {n, plural, one {# piece} other {# pieces}}, for {shards}.', { n, shards: shardsText(shards) })
   + (kept ? ` ${t('inventory.batch.kept', '{kept, plural, one {# would not break and was kept.} other {# would not break and were kept.}}', { kept })}` : '');
-/** Why a pressed piece takes no tick (systems/reforge.js salvageRefusal's reasons), in the card's own words where it has them. */
-export function batchRefusal(name, why) {
+/** Why a pressed piece takes no tick (systems/reforge.js salvageRefusal's reasons), in the card's own words where it has them.
+ *  BOUND-DESTROY: an Aetheric piece the Broker never priced (the Wyrd's Raiment, the gate's Regalia) is not his to dismantle. */
+export function batchRefusal(name, why, item = null) {
   if (why === 'locked') return lockedText(name);
   if (why === 'gems') return SALVAGE_GEMS(name);
   if (why === 'classic') return SALVAGE_CLASSIC(name);
   if (why === 'worn') return t('inventory.batch.worn', '{name} is worn - take it off to salvage it.', { name });
   if (why === 'bound') return t('inventory.batch.bound', '{name} is bound to you, and does not break.', { name });
   if (why === 'quest') return t('inventory.batch.quest', '{name} belongs to a quest.', { name });
-  if (why === 'aetheric') return t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name });
+  if (why === 'aetheric') {
+    // AUDIT FB1031 II R1: a ware the realm locked is no Broker's to dismantle (D5)
+    return dismantleStones(item) > 0 && !isRealmLocked(item) ? t('inventory.batch.aetheric', '{name} is Aetheric - the Sigil Broker dismantles it, not the Reforge.', { name })
+      : t('inventory.batch.aethericKept', '{name} is Aetheric, and the Reforge never breaks it.', { name });
+  }
   if (why === 'gilded') return t('inventory.batch.gilded', '{name} is Gilded - its roll is never broken down.', { name });
   if (why === 'artifact') return t('inventory.batch.artifact', '{name} is an artifact, and never breaks.', { name });
   return t('inventory.batch.nothing', '{name} has nothing to salvage.', { name });
@@ -3914,7 +4019,7 @@ function pruneSalvage(pack) {
 function chooseSalvage(item) {
   hideTip();
   const why = salvageRefusal(item);
-  if (why) notice = batchRefusal(itemLongName(item, { getQuest: deps.getQuest ?? null }), why);
+  if (why) notice = batchRefusal(itemLongName(item, { getQuest: deps.getQuest ?? null }), why, item);
   else { if (salvageSel.has(item)) salvageSel.delete(item); else salvageSel.add(item); notice = null; }
   render();
 }
@@ -4319,6 +4424,8 @@ function render() {
     if (name) title.append(el('span', 'pack-who', name));
     who.append(title);
     head.append(who);
+    // PACK-SORT: the pack's one-shot Sort, first of the header's presses - gone while the pack chooses what to break
+    if (!salvageSel) head.append(sortButton(sortPack));
     // PACK-PHONE (FIELD BUGS 2026-09-30, "we dont really need paperdoll on phone or at least if it could be hidden"):
     // THE BODY IS A CHOICE ON A PHONE. The sheet hides the figure on a touch phone unless the shell carries `showdoll`,
     // and draws this button there alone; the choice is the player's own shelf, so the pack opens as it was left.

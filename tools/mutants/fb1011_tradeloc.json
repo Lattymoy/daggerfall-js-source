@@ -20,8 +20,8 @@
   {
     "name": "TRADE-LOC-II-c-anything-a-letter",
     "file": "src/systems/walletItem.js",
-    "old": "export const letterWorthGold = (/** @type {any} */ item) => (item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE",
-    "new": "export const letterWorthGold = (/** @type {any} */ item) => (item != null",
+    "old": "  item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE\n    ? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold`\n    : null;",
+    "new": "  item != null ? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold` : null;",
     "tests": [
       "test/systems/fb1011_tradeloc.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TRADE-LOC-II-d-the-line-on-anything",
     "file": "src/systems/walletItem.js",
-    "old": "return g == null ? null : `Worth ${g}`;",
-    "new": "return `Worth ${g}`;",
+    "old": "  return g == null ? null : `Worth ${g}`;",
+    "new": "  return `Worth ${g}`;",
     "tests": [
       "test/systems/fb1011_tradeloc.test.js"
     ]

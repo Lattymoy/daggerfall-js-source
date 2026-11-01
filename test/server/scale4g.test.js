@@ -27,7 +27,8 @@ test('SCALE4g the routes a replica may serve, by route AND method: the mint and 
     ['/v1/market/vendors', 'POST'], ['/v1/marks/balance', 'POST'], ['/v1/guilds/invites', 'POST'], ['/v1/realm/lineages', 'POST'], ['/v1/realm/unions', 'POST'],
     ['/v1/saves', 'GET'], ['/v1/arena/board', 'POST'],
     ['/v1/festival/town', 'POST'],   // PIN MOVED (WITCH1): and a town's Hearth Offerings (test/server/display_replica.test.js)
-    ['/v1/hunt/state', 'POST']]);   // PIN MOVED (HUNT-LEAN): and a character's hunt (test/server/lode_herd.test.js)
+    ['/v1/hunt/state', 'POST'],   // PIN MOVED (HUNT-LEAN): and a character's hunt (test/server/lode_herd.test.js)
+    ['/v1/prof/ground', 'POST']]);   // PIN MOVED (AUDIT FB1031 W3): and the held map's witnessed tiles (test/ui/fb1031_witness.test.js)
   const opened = [];
   const raw = { prepare: () => ({}), withSession(c) { if (c === 'refused') throw new Error('D1_ERROR: bad bookmark'); opened.push(c); return { prepare: () => ({}), getBookmark: () => 'b' }; } };
   assert.equal(routeDb(raw, '/v1/renown/xp', 'POST', MARK(3)), raw, 'a write route: the binding');

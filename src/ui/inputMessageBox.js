@@ -46,9 +46,9 @@ import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './message
 import { drawText, measureText } from './text.js';
 import { typedChar } from './input.js';
 import { normalizeCode } from '../systems/dialogShortcuts.js';
-import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: ReturnPlayerInputEvent's stamp (DaggerfallInputMessageBox.cs:301)
+import { noteInputBoxClosed } from '../player/pointerLock.js'; // PL1: ReturnPlayerInputEvent's stamp (DaggerfallInputMessageBox.cs:301)
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedInputBox, releaseEnhancedInputBox } from './enhanced/enhancedInputBox.js';   // AUDIT HCC U5: the enhanced skin's face - the field's own window
+import { drawEnhancedInputBox, releaseEnhancedInputBox } from './enhanced/enhancedInputBox.js'; // AUDIT HCC U5: the enhanced skin's face - the field's own window
 
 /** AUDIT HCC U5: the caption under the enhanced face - what closes THIS box (Return raises, Escape cancels); never
  *  the notice's "click or press a key", which a field does not keep (a click reaches nothing, a key types). */
@@ -83,29 +83,37 @@ let faceSeq = 0;
 export class InputMessageBoxWindow {
   /** @param {InputMessageBoxOptions} [opts] */
   constructor({
-    lines = [], label = '', value = '', maxCharacters = DEFAULT_INPUT_MAX, widthOverride = 0,
-    numeric = false, parchment = true, atTop = false, onSubmit = null, onCancel = null,
+    lines = [],
+    label = '',
+    value = '',
+    maxCharacters = DEFAULT_INPUT_MAX,
+    widthOverride = 0,
+    numeric = false,
+    parchment = true,
+    atTop = false,
+    onSubmit = null,
+    onCancel = null,
   } = {}) {
     this.lines = lines;
     this.label = String(label ?? '');
     this.maxCharacters = Math.max(0, maxCharacters | 0);
-    this.widthOverride = Math.max(0, widthOverride | 0);   // AUDIT-AMAP W11
-    this.value = String(value ?? '');   // TextBox.Text's setter does not truncate (:74-82); only typing is capped
-    this.cursor = this.value.length;    // SetCursorPosition(text.Length) on Text's setter
+    this.widthOverride = Math.max(0, widthOverride | 0); // AUDIT-AMAP W11
+    this.value = String(value ?? ''); // TextBox.Text's setter does not truncate (:74-82); only typing is capped
+    this.cursor = this.value.length; // SetCursorPosition(text.Length) on Text's setter
     this.numeric = !!numeric;
     this.parchment = !!parchment;
     this.atTop = !!atTop;
     this.onSubmit = onSubmit;
     this.onCancel = onCancel;
     this.done = false;
-    this.isChoiceWindow = true;   // raw browser codes on the native-window hosts
-    this._faceKey = `inputbox${++faceSeq}`;   // AUDIT HCC U5: this box's enhanced window
+    this.isChoiceWindow = true; // raw browser codes on the native-window hosts
+    this._faceKey = `inputbox${++faceSeq}`; // AUDIT HCC U5: this box's enhanced window
   }
 
   _close(submit) {
     if (this.done) return;
     this.done = true;
-    releaseEnhancedInputBox(this._faceKey);   // AUDIT HCC U5: the enhanced window leaves with the box
+    releaseEnhancedInputBox(this._faceKey); // AUDIT HCC U5: the enhanced window leaves with the box
     if (submit) {
       // ReturnPlayerInputEvent (:298-304): CloseWindow() FIRST, then
       // the stamp timeClosedInputMessageBox (:301) - the 0.3s
@@ -120,23 +128,49 @@ export class InputMessageBoxWindow {
   }
 
   /** TextBox.cs:352-409's cursor, as SetCursorPosition clamps it. */
-  _setCursor(n) { this.cursor = Math.max(0, Math.min(this.value.length, n)); }
+  _setCursor(n) {
+    this.cursor = Math.max(0, Math.min(this.value.length, n));
+  }
 
   input(code, e = null) {
     const c = typeof code === 'string' && code.startsWith('char:') ? code : normalizeCode(code, e);
-    if (SUBMIT.has(c)) { this._close(true); return; }
-    if (CANCEL.has(c)) { this._close(false); return; }
-    // the cursor keys (TextBox.cs:356-409)
-    if (c === 'ArrowLeft') { this._setCursor(this.cursor - 1); return; }
-    if (c === 'ArrowRight') { this._setCursor(this.cursor + 1); return; }
-    if (c === 'Home') { this._setCursor(0); return; }
-    if (c === 'End') { this._setCursor(this.value.length); return; }
-    if (c === 'Delete') {   // removes AT the cursor, cursor stays (:368-376)
-      if (this.cursor !== this.value.length) this.value = this.value.slice(0, this.cursor) + this.value.slice(this.cursor + 1);
+    if (SUBMIT.has(c)) {
+      this._close(true);
       return;
     }
-    if (ERASE.has(c)) {   // removes BEFORE the cursor and steps back (:377-386)
-      if (this.cursor !== 0) { this.value = this.value.slice(0, this.cursor - 1) + this.value.slice(this.cursor); this._setCursor(this.cursor - 1); }
+    if (CANCEL.has(c)) {
+      this._close(false);
+      return;
+    }
+    // the cursor keys (TextBox.cs:356-409)
+    if (c === 'ArrowLeft') {
+      this._setCursor(this.cursor - 1);
+      return;
+    }
+    if (c === 'ArrowRight') {
+      this._setCursor(this.cursor + 1);
+      return;
+    }
+    if (c === 'Home') {
+      this._setCursor(0);
+      return;
+    }
+    if (c === 'End') {
+      this._setCursor(this.value.length);
+      return;
+    }
+    if (c === 'Delete') {
+      // removes AT the cursor, cursor stays (:368-376)
+      if (this.cursor !== this.value.length)
+        this.value = this.value.slice(0, this.cursor) + this.value.slice(this.cursor + 1);
+      return;
+    }
+    if (ERASE.has(c)) {
+      // removes BEFORE the cursor and steps back (:377-386)
+      if (this.cursor !== 0) {
+        this.value = this.value.slice(0, this.cursor - 1) + this.value.slice(this.cursor);
+        this._setCursor(this.cursor - 1);
+      }
       return;
     }
     let ch = typedChar(code, e);
@@ -149,15 +183,19 @@ export class InputMessageBoxWindow {
       if (!d) return;
       ch = d[1];
     }
-    this.value = this.value.slice(0, this.cursor) + ch + this.value.slice(this.cursor);   // text.Insert(cursorPosition, ...) (:464)
+    this.value = this.value.slice(0, this.cursor) + ch + this.value.slice(this.cursor); // text.Insert(cursorPosition, ...) (:464)
     this._setCursor(this.cursor + 1);
   }
 
   // Modal, and NOT ClickAnywhereToClose: DaggerfallInputMessageBox
   // never sets it (DaggerfallMessageBox's default is false, :43), so a
   // background click reaches nothing - the raiser's window included.
-  click() { return true; }
-  clickNative() { return true; }
+  click() {
+    return true;
+  }
+  clickNative() {
+    return true;
+  }
 
   /** The field as drawn: the label, the text with the cursor mark at
    *  the cursor - the port's `_` idiom, at the end for an untouched
@@ -178,8 +216,13 @@ export class InputMessageBoxWindow {
     if (isEnhanced() && typeof document !== 'undefined') {
       if (this.done) return;
       drawEnhancedInputBox({
-        key: this._faceKey, rows: this.lines.map((l) => (typeof l === 'string' ? l : (l?.text ?? ''))),
-        label: this.label, value: this.value, cursor: this.cursor, atTop: this.atTop, hint: INPUT_BOX_HINT,
+        key: this._faceKey,
+        rows: this.lines.map((l) => (typeof l === 'string' ? l : (l?.text ?? ''))),
+        label: this.label,
+        value: this.value,
+        cursor: this.cursor,
+        atTop: this.atTop,
+        hint: INPUT_BOX_HINT,
       });
       return;
     }
@@ -210,14 +253,18 @@ export class InputMessageBoxWindow {
     // Art-less: the same rows on the flat panel, at the host's native
     // scale, the entry dimmed as ActionInputBox's always was.
     const scale = s ?? nativeMetrics(canvas).s;
-    const w = Math.max(...rows.map((l) => measureText(font.fnt, l)), measureText(font.fnt, sizing)) * scale + 24 * scale;
+    const w =
+      Math.max(...rows.map((l) => measureText(font.fnt, l)), measureText(font.fnt, sizing)) * scale + 24 * scale;
     const lineH = 12 * scale;
     const h = (rows.length + 2) * lineH + 20 * scale;
     const x = (canvas.width - w) / 2;
     const y = this.atTop ? 8 * scale : (canvas.height - h) / 2;
     renderer.drawScreenQuad(null, { x, y, w, h }, undefined, PANEL);
     let ty = y + 12 * scale;
-    for (const l of rows) { drawText(renderer, font, l, x + 12 * scale, ty, scale, TEXT); ty += lineH; }
+    for (const l of rows) {
+      drawText(renderer, font, l, x + 12 * scale, ty, scale, TEXT);
+      ty += lineH;
+    }
     drawText(renderer, font, entry, x + 12 * scale, ty + lineH, scale, DIM);
   }
 }

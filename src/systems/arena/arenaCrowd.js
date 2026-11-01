@@ -24,13 +24,34 @@ import { ARENA_TEXT } from './arenaText.js';
 export const MOOD_SETTLE_S = 7;
 /** What each event does to the mood. */
 export const MOOD_PUSH = Object.freeze({
-  call: 0.15, fight: 0.25, hit: 0.05, crit: 0.22, knockdown: 0.28, comeback: 0.4, fall: 0.35, ringout: 0.22,
-  stall: -0.32, flee: -0.3, yieldEarly: -0.45, yield: -0.12, timeout: -0.25, miss: -0.01, hitHated: -0.08,
+  call: 0.15,
+  fight: 0.25,
+  hit: 0.05,
+  crit: 0.22,
+  knockdown: 0.28,
+  comeback: 0.4,
+  fall: 0.35,
+  ringout: 0.22,
+  stall: -0.32,
+  flee: -0.3,
+  yieldEarly: -0.45,
+  yield: -0.12,
+  timeout: -0.25,
+  miss: -0.01,
+  hitHated: -0.08,
 });
 /** What each event does to a fighter's favour (`a` the event's fighter; `b` the struck). */
 export const FAVOUR_PUSH = Object.freeze({
-  hit: 0.02, crit: 0.08, knockdown: 0.06, comeback: 0.35, flee: -0.28, yieldEarly: -0.4, yield: -0.1, fall: 0.05,
-  ringout: -0.15, stall: -0.06,
+  hit: 0.02,
+  crit: 0.08,
+  knockdown: 0.06,
+  comeback: 0.35,
+  flee: -0.28,
+  yieldEarly: -0.4,
+  yield: -0.1,
+  fall: 0.05,
+  ringout: -0.15,
+  stall: -0.06,
 });
 /** A yield is EARLY when the yielder still had this share of their health (the crowd paid to see blood). */
 export const YIELD_EARLY_SHARE = 0.1;
@@ -58,9 +79,20 @@ export function newCrowd({ fighters = [], beasts = false, base = 0 } = {}) {
   /** @type {Record<string, number>} */
   const favour = {};
   for (const f of fighters) favour[f.id] = f.home === 'Daggerfall' ? HOME_FAVOUR : 0;
-  if (beasts) for (const f of fighters) if (f.ai === false) favour[f.id] = (favour[f.id] ?? 0) + 0.2;   // the crowd's sympathy for a fighter thrown to the beasts
+  if (beasts) for (const f of fighters) if (f.ai === false) favour[f.id] = (favour[f.id] ?? 0) + 0.2; // the crowd's sympathy for a fighter thrown to the beasts
   const b0 = clamp(base + (beasts ? BEAST_BASE : 0));
-  return { mood: b0, base: b0, favour, homes: Object.fromEntries(fighters.map((f) => [f.id, f.home ?? ''])), peak: b0, lastBarkAt: -Infinity, lastBark: '', hopAt: -Infinity, hopAmp: 0, beasts };
+  return {
+    mood: b0,
+    base: b0,
+    favour,
+    homes: Object.fromEntries(fighters.map((f) => [f.id, f.home ?? ''])),
+    peak: b0,
+    lastBarkAt: -Infinity,
+    lastBark: '',
+    hopAt: -Infinity,
+    hopAmp: 0,
+    beasts,
+  };
 }
 
 /** The mood's band, for the HUD and the sound bed: booing, jeering, murmuring, cheering, roaring. Pure. */
@@ -81,7 +113,10 @@ export function crowdShout(c, dir, n = 1, now = 0) {
   if (!c || (dir !== 1 && dir !== -1)) return [];
   const k = Math.min(SHOUT_MAX, SHOUT_PUSH * Math.max(1, n));
   push(c, dir * k);
-  if (dir > 0 && n >= 5) { c.hopAt = now; c.hopAmp = HOP_M * 0.6; }
+  if (dir > 0 && n >= 5) {
+    c.hopAt = now;
+    c.hopAmp = HOP_M * 0.6;
+  }
   return [{ s: dir > 0 ? 'cheer' : 'boo', v: Math.min(1, 0.35 + 0.08 * n) }];
 }
 
@@ -93,8 +128,13 @@ export function crowdTick(c, dt) {
   return c;
 }
 
-const push = (c, d) => { c.mood = clamp(c.mood + d); if (c.mood > c.peak) c.peak = c.mood; };
-const fav = (c, id, d) => { if (id != null && id in c.favour) c.favour[id] = clamp(c.favour[id] + d); };
+const push = (c, d) => {
+  c.mood = clamp(c.mood + d);
+  if (c.mood > c.peak) c.peak = c.mood;
+};
+const fav = (c, id, d) => {
+  if (id != null && id in c.favour) c.favour[id] = clamp(c.favour[id] + d);
+};
 
 /**
  * THE CROWD HEARS AN EVENT (systems/arena/arenaBout.js) - the mood and the favour moved, and what it sounds: `[{ s, v }]`,
@@ -109,47 +149,113 @@ export function crowdHear(c, e, { share = () => 1, title = false, now = 0 } = {}
   const cues = [];
   if (!c || !e) return cues;
   switch (e.k) {
-    case 'call': push(c, MOOD_PUSH.call); cues.push({ s: 'drumsCall', v: 0.9 }, { s: 'cheer', v: 0.5 }); break;
-    case 'crier': cues.push({ s: 'cheer', v: 0.35 + 0.3 * Math.max(0, c.favour[e.a] ?? 0) }); break;
-    case 'walk': cues.push({ s: 'drums', v: 0.8 }); break;
-    case 'fight': push(c, MOOD_PUSH.fight); cues.push({ s: 'bell', v: 1 }, { s: 'roar', v: 0.7 }); break;
+    case 'call':
+      push(c, MOOD_PUSH.call);
+      cues.push({ s: 'drumsCall', v: 0.9 }, { s: 'cheer', v: 0.5 });
+      break;
+    case 'crier':
+      cues.push({ s: 'cheer', v: 0.35 + 0.3 * Math.max(0, c.favour[e.a] ?? 0) });
+      break;
+    case 'walk':
+      cues.push({ s: 'drums', v: 0.8 });
+      break;
+    case 'fight':
+      push(c, MOOD_PUSH.fight);
+      cues.push({ s: 'bell', v: 1 }, { s: 'roar', v: 0.7 });
+      break;
     case 'hit': {
       const hated = (c.favour[e.a] ?? 0) <= HATED_AT;
-      if (hated) { push(c, MOOD_PUSH.hitHated); cues.push({ s: 'boo', v: 0.45 }); }
-      else { push(c, MOOD_PUSH.hit); if (c.mood > 0.15) cues.push({ s: 'cheer', v: 0.25 + 0.3 * c.mood }); }
+      if (hated) {
+        push(c, MOOD_PUSH.hitHated);
+        cues.push({ s: 'boo', v: 0.45 });
+      } else {
+        push(c, MOOD_PUSH.hit);
+        if (c.mood > 0.15) cues.push({ s: 'cheer', v: 0.25 + 0.3 * c.mood });
+      }
       fav(c, e.a, FAVOUR_PUSH.hit);
       break;
     }
-    case 'crit': push(c, MOOD_PUSH.crit); fav(c, e.a, FAVOUR_PUSH.crit); c.hopAt = now; c.hopAmp = HOP_M; cues.push({ s: 'gasp', v: 0.9 }, { s: 'roar', v: 0.6 }); break;
-    case 'knockdown': push(c, MOOD_PUSH.knockdown); fav(c, e.a, FAVOUR_PUSH.knockdown); cues.push({ s: 'groan', v: 0.9 }, { s: 'roar', v: 0.55 }); break;
-    case 'comeback': push(c, MOOD_PUSH.comeback); fav(c, e.a, FAVOUR_PUSH.comeback); cues.push({ s: 'roar', v: 1 }); break;
-    case 'stall': push(c, MOOD_PUSH.stall); for (const id of Object.keys(c.favour)) fav(c, id, FAVOUR_PUSH.stall); cues.push({ s: 'boo', v: 0.8 }); break;
-    case 'flee': push(c, MOOD_PUSH.flee); fav(c, e.a, FAVOUR_PUSH.flee); cues.push({ s: 'boo', v: 0.85 }); break;
+    case 'crit':
+      push(c, MOOD_PUSH.crit);
+      fav(c, e.a, FAVOUR_PUSH.crit);
+      c.hopAt = now;
+      c.hopAmp = HOP_M;
+      cues.push({ s: 'gasp', v: 0.9 }, { s: 'roar', v: 0.6 });
+      break;
+    case 'knockdown':
+      push(c, MOOD_PUSH.knockdown);
+      fav(c, e.a, FAVOUR_PUSH.knockdown);
+      cues.push({ s: 'groan', v: 0.9 }, { s: 'roar', v: 0.55 });
+      break;
+    case 'comeback':
+      push(c, MOOD_PUSH.comeback);
+      fav(c, e.a, FAVOUR_PUSH.comeback);
+      cues.push({ s: 'roar', v: 1 });
+      break;
+    case 'stall':
+      push(c, MOOD_PUSH.stall);
+      for (const id of Object.keys(c.favour)) fav(c, id, FAVOUR_PUSH.stall);
+      cues.push({ s: 'boo', v: 0.8 });
+      break;
+    case 'flee':
+      push(c, MOOD_PUSH.flee);
+      fav(c, e.a, FAVOUR_PUSH.flee);
+      cues.push({ s: 'boo', v: 0.85 });
+      break;
     case 'yield': {
       const early = share(e.a ?? '') > YIELD_EARLY_SHARE;
-      push(c, early ? MOOD_PUSH.yieldEarly : MOOD_PUSH.yield); fav(c, e.a, early ? FAVOUR_PUSH.yieldEarly : FAVOUR_PUSH.yield);
+      push(c, early ? MOOD_PUSH.yieldEarly : MOOD_PUSH.yield);
+      fav(c, e.a, early ? FAVOUR_PUSH.yieldEarly : FAVOUR_PUSH.yield);
       cues.push({ s: 'boo', v: early ? 1 : 0.6 });
       break;
     }
-    case 'fall': push(c, MOOD_PUSH.fall); fav(c, e.a, FAVOUR_PUSH.fall); c.hopAt = now; c.hopAmp = HOP_M * 1.4; cues.push({ s: 'groan', v: 0.7 }, { s: 'roar', v: 1 }); break;
-    case 'ringout': push(c, MOOD_PUSH.ringout); fav(c, e.a, FAVOUR_PUSH.ringout); cues.push({ s: 'roar', v: 0.8 }); break;
-    case 'timeout': push(c, MOOD_PUSH.timeout); cues.push({ s: 'bell', v: 1 }, { s: 'boo', v: 0.5 }); break;
-    case 'verdict': cues.push({ s: 'roar', v: 0.9 }, { s: title ? 'title' : 'fanfare', v: 1 }); break;   // HOTFIX 1003f (live: "crackling still happens after the bout ends"): the made applause - a rain of noise-burst claps thinning out - was the crackle; the voices' roar in its place
-    case 'miss': push(c, MOOD_PUSH.miss); break;
-    default: break;
+    case 'fall':
+      push(c, MOOD_PUSH.fall);
+      fav(c, e.a, FAVOUR_PUSH.fall);
+      c.hopAt = now;
+      c.hopAmp = HOP_M * 1.4;
+      cues.push({ s: 'groan', v: 0.7 }, { s: 'roar', v: 1 });
+      break;
+    case 'ringout':
+      push(c, MOOD_PUSH.ringout);
+      fav(c, e.a, FAVOUR_PUSH.ringout);
+      cues.push({ s: 'roar', v: 0.8 });
+      break;
+    case 'timeout':
+      push(c, MOOD_PUSH.timeout);
+      cues.push({ s: 'bell', v: 1 }, { s: 'boo', v: 0.5 });
+      break;
+    case 'verdict':
+      cues.push({ s: 'roar', v: 0.9 }, { s: title ? 'title' : 'fanfare', v: 1 });
+      break; // HOTFIX 1003f (live: "crackling still happens after the bout ends"): the made applause - a rain of noise-burst claps thinning out - was the crackle; the voices' roar in its place
+    case 'miss':
+      push(c, MOOD_PUSH.miss);
+      break;
+    default:
+      break;
   }
   return cues;
 }
 
 /** The crowd's darling (the most favoured fighter, 0.25 or better) and its villain (the least, -0.25 or worse), or null. */
 export function darlingOf(c) {
-  let best = null, v = 0.25;
-  for (const [id, f] of Object.entries(c?.favour ?? {})) if (f >= v) { v = f; best = id; }
+  let best = null,
+    v = 0.25;
+  for (const [id, f] of Object.entries(c?.favour ?? {}))
+    if (f >= v) {
+      v = f;
+      best = id;
+    }
   return best;
 }
 export function villainOf(c) {
-  let worst = null, v = -0.25;
-  for (const [id, f] of Object.entries(c?.favour ?? {})) if (f <= v) { v = f; worst = id; }
+  let worst = null,
+    v = -0.25;
+  for (const [id, f] of Object.entries(c?.favour ?? {}))
+    if (f <= v) {
+      v = f;
+      worst = id;
+    }
   return worst;
 }
 
@@ -161,29 +267,54 @@ export function crowdBark(c, e, now, rng = Math.random) {
   let lines = null;
   const B = ARENA_TEXT.barks;
   switch (e.k) {
-    case 'hit': lines = (c.favour[e.a] ?? 0) <= HATED_AT ? B.hitHated : (rng() < 0.35 ? B.hit : null); break;
-    case 'crit': lines = B.crit; break;
-    case 'knockdown': lines = B.knockdown; break;
-    case 'stall': lines = B.stall; break;
-    case 'flee': lines = B.flee; break;
-    case 'comeback': lines = B.comeback; break;
-    case 'yield': lines = B.yield; break;
-    case 'fall': lines = B.fall; break;
-    case 'ringout': lines = B.ringout; break;
-    case 'timeout': lines = B.timeout; break;
-    case 'fight': lines = c.beasts ? B.beast : B.roar; break;
-    default: lines = null;
+    case 'hit':
+      lines = (c.favour[e.a] ?? 0) <= HATED_AT ? B.hitHated : rng() < 0.35 ? B.hit : null;
+      break;
+    case 'crit':
+      lines = B.crit;
+      break;
+    case 'knockdown':
+      lines = B.knockdown;
+      break;
+    case 'stall':
+      lines = B.stall;
+      break;
+    case 'flee':
+      lines = B.flee;
+      break;
+    case 'comeback':
+      lines = B.comeback;
+      break;
+    case 'yield':
+      lines = B.yield;
+      break;
+    case 'fall':
+      lines = B.fall;
+      break;
+    case 'ringout':
+      lines = B.ringout;
+      break;
+    case 'timeout':
+      lines = B.timeout;
+      break;
+    case 'fight':
+      lines = c.beasts ? B.beast : B.roar;
+      break;
+    default:
+      lines = null;
   }
   if (!lines?.length) return null;
   let line;
   // a roar for a fighter with a home: now and then the chant of their town
   const darling = darlingOf(c);
-  if ((e.k === 'crit' || e.k === 'comeback') && darling && c.homes[darling] && rng() < 0.4) line = ARENA_TEXT.chant(c.homes[darling]);
+  if ((e.k === 'crit' || e.k === 'comeback') && darling && c.homes[darling] && rng() < 0.4)
+    line = ARENA_TEXT.chant(c.homes[darling]);
   else {
     const pool = lines.length > 1 ? lines.filter((l) => l !== c.lastBark) : lines;
     line = pool[Math.floor(rng() * pool.length) % pool.length];
   }
-  c.lastBark = line; c.lastBarkAt = now;
+  c.lastBark = line;
+  c.lastBarkAt = now;
   return line;
 }
 
@@ -216,20 +347,81 @@ export function verdictThrows(c, winnerIds = [], loserIds = []) {
 }
 /** The flats thrown: Daggerfall's own item pictures (TEXTURE.254 - the roses, the red and yellow flowers; the teeth
  *  and the bones a crowd keeps for a villain). */
-export const THROWN_FLOWERS = Object.freeze([[254, 26], [254, 27], [254, 11], [254, 12], [254, 29]]);
-export const THROWN_REFUSE = Object.freeze([[254, 57], [254, 58], [254, 59]]);
+export const THROWN_FLOWERS = Object.freeze([
+  [254, 26],
+  [254, 27],
+  [254, 11],
+  [254, 12],
+  [254, 29],
+]);
+export const THROWN_REFUSE = Object.freeze([
+  [254, 57],
+  [254, 58],
+  [254, 59],
+]);
 
 /** THE CROWD'S PEOPLE, by archive and record (Daggerfall's own): the animated gesturer, the entertainers, the
  *  courtiers, the nobles, and the region's commoners (the High Rock sets) - the gesturer the most of them. */
 export const CROWD_PEOPLE = Object.freeze({
   gesturer: Object.freeze([[182, 0]]),
-  entertainers: Object.freeze([[182, 47], [182, 48], [182, 49], [182, 50], [182, 51], [182, 52], [182, 53]]),
-  courtiers: Object.freeze([[180, 1], [180, 2], [180, 3]]),
+  entertainers: Object.freeze([
+    [182, 47],
+    [182, 48],
+    [182, 49],
+    [182, 50],
+    [182, 51],
+    [182, 52],
+    [182, 53],
+  ]),
+  courtiers: Object.freeze([
+    [180, 1],
+    [180, 2],
+    [180, 3],
+  ]),
   // ARENA-FIX 13: TEXTURE.185's court - the lord, the lady, the robed councillor, the king, the eastern lord, the queen -
   // seated at TEXTURE.183's scale (scenes/arena/arenaBouts.js CROWD_SCALE: drawn at its own +128 it stood 6 m tall); its
   // guards and its knight (185:2-4) stay at the Palace
-  nobles: Object.freeze([[183, 0], [183, 1], [183, 4], [185, 0], [185, 1], [185, 5], [185, 6], [185, 7], [185, 8]]),
-  commoners: Object.freeze([[182, 1], [182, 2], [182, 3], [182, 4], [182, 5], [182, 6], [182, 7], [182, 8], [182, 9], [182, 10], [182, 11], [182, 12], [182, 13], [182, 14], [182, 15], [182, 16], [182, 17], [182, 18], [182, 19], [182, 20], [184, 0], [184, 1], [184, 2], [184, 3], [184, 4], [184, 5], [184, 6], [184, 7]]),
+  nobles: Object.freeze([
+    [183, 0],
+    [183, 1],
+    [183, 4],
+    [185, 0],
+    [185, 1],
+    [185, 5],
+    [185, 6],
+    [185, 7],
+    [185, 8],
+  ]),
+  commoners: Object.freeze([
+    [182, 1],
+    [182, 2],
+    [182, 3],
+    [182, 4],
+    [182, 5],
+    [182, 6],
+    [182, 7],
+    [182, 8],
+    [182, 9],
+    [182, 10],
+    [182, 11],
+    [182, 12],
+    [182, 13],
+    [182, 14],
+    [182, 15],
+    [182, 16],
+    [182, 17],
+    [182, 18],
+    [182, 19],
+    [182, 20],
+    [184, 0],
+    [184, 1],
+    [184, 2],
+    [184, 3],
+    [184, 4],
+    [184, 5],
+    [184, 6],
+    [184, 7],
+  ]),
 });
 
 // ── THE BANNERS' HALVES (ARENA5) ────────────────────────────────────────────────────────────────────────────
@@ -264,8 +456,16 @@ export function crowdHalves(fighters, teams) {
 export function seatPeople(seats, rng) {
   return seats.map((s) => {
     const r = rng();
-    const list = s.best && r < 0.55 ? (r < 0.25 ? CROWD_PEOPLE.courtiers : CROWD_PEOPLE.nobles)
-      : r < 0.34 ? CROWD_PEOPLE.gesturer : r < 0.42 ? CROWD_PEOPLE.entertainers : CROWD_PEOPLE.commoners;
+    const list =
+      s.best && r < 0.55
+        ? r < 0.25
+          ? CROWD_PEOPLE.courtiers
+          : CROWD_PEOPLE.nobles
+        : r < 0.34
+          ? CROWD_PEOPLE.gesturer
+          : r < 0.42
+            ? CROWD_PEOPLE.entertainers
+            : CROWD_PEOPLE.commoners;
     const [archive, record] = list[Math.floor(rng() * list.length) % list.length];
     return { ...s, archive, record, phase: rng() };
   });

@@ -294,7 +294,7 @@ test('SEAT1d THE HOSTS BY SOURCE: the service\'s routes and the Turning\'s write
   const cg = rd('src/scenes/cityGuards.js');
   assert.match(cg, /level \?\? effectiveLevel\(playerEntity\) \+ \(levelBonus\?\.\(\) \?\? 0\)/);
   const mt = rd('src/ui/marketTab.js');
-  assert.equal((mt.match(/hubs: m\.hubs, \.\.\.at\(\)/g) ?? []).length, 4, 'the board on a buy, a material listing, a piece listing and an auction');
+  assert.equal((mt.match(/hubs: m\.hubs,\n\s*\.\.\.at\(\)/g) ?? []).length, 4, 'the board on a buy, a material listing, a piece listing and an auction');
   assert.match(mt, /const at = \(\) => \(m\.board \? \{ board: m\.board \} : \{\}\);/);
 });
 

@@ -272,5 +272,5 @@ test('RW1 rooms R9: the Graphics row and the presets - the real windows row on t
   const v = Object.fromEntries(GRAPHICS_PRESETS.map((p) => [p.id, p.values['real-windows']]));
   assert.deepEqual(v, { low: 'off', medium: 'rooms', high: 'full', ultra: 'full' });
   assert.equal(v.high, row.control.initial, 'High is how the game ships');
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:cloud-quality", "feat:real-windows",/, 'on the Graphics tab, beside the clouds');
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'feat:cloud-quality',\n\s*'feat:real-windows',/, 'on the Graphics tab, beside the clouds');
 });

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-NAV2-F6-rekeyed-crew-not-moved",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (ship.boat === w.boat && !want.has(key)) { ships.delete(key); ship.key = w.key; ships.set(w.key, ship); break; }",
-    "new": "if (false) { ships.delete(key); ship.key = w.key; ships.set(w.key, ship); break; }",
+    "old": "        if (ship.boat === w.boat && !want.has(key)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-NAV2-F6-held-never-let-go",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (ship && (ship.boat !== w.boat || ship.held && !w.hold)) {",
-    "new": "if (ship && ship.boat !== w.boat) {",
+    "old": "      if (ship && (ship.boat !== w.boat || (ship.held && !w.hold))) {",
+    "new": "      if (ship && ship.boat !== w.boat) {",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-NAV2-F40-host-keeps-no-toward",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "Math.hypot(w.toward[0] - at[0], w.toward[2] - at[2]) <= CREW_MUSTER_M ? w.toward : null;",
-    "new": "false ? w.toward : null;",
+    "old": "      ship.toward =\n        w.toward && at && Math.hypot(w.toward[0] - at[0], w.toward[2] - at[2]) <= CREW_MUSTER_M ? w.toward : null;",
+    "new": "      ship.toward = w.toward && at && false ? w.toward : null;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-NAV2-F40-range-unread",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "Math.hypot(w.toward[0] - at[0], w.toward[2] - at[2]) <= CREW_MUSTER_M ? w.toward : null;",
-    "new": "true ? w.toward : null;",
+    "old": "      ship.toward =\n        w.toward && at && Math.hypot(w.toward[0] - at[0], w.toward[2] - at[2]) <= CREW_MUSTER_M ? w.toward : null;",
+    "new": "      ship.toward = w.toward && at && true ? w.toward : null;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-NAV2-F42-never-grows-back",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "else if (!w.hold && ship.life.standing() < w.count) {",
-    "new": "else if (false) {",
+    "old": "      else if (!w.hold && ship.life.standing() < w.count) {",
+    "new": "      else if (false) {",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-NAV2-F42-grown-men-unseen",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "for (const m of ship.life.members) if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m));",
-    "new": "for (const m of []) ship.sprites.set(m, sprite(m));",
+    "old": "        for (const m of ship.life.members) if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m));",
+    "new": "        for (const m of []) ship.sprites.set(m, sprite(m));",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "AUDIT-NAV2-F46-host-struck-unkept",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "ship.struck = !!w.struck;",
-    "new": "ship.struck = false;",
+    "old": "      ship.struck = !!w.struck; // AUDIT NAV2 F46: her colours down - no song, no talk",
+    "new": "      ship.struck = false; // AUDIT NAV2 F46: her colours down - no song, no talk",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "AUDIT-NAV2-F50-crew-unconcealed",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "s.batch.conceal = ship.boat.conceal ?? null;",
-    "new": "s.batch.conceal = null;",
+    "old": "        s.batch.conceal = ship.boat.conceal ?? null; // AUDIT NAV2 F50: a concealed owner's crew wears his look, as the pool's flats did (AUDIT PRE-MERGE 0928 O4)",
+    "new": "        s.batch.conceal = null; // AUDIT NAV2 F50: a concealed owner's crew wears his look, as the pool's flats did (AUDIT PRE-MERGE 0928 O4)",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-NAV2-F58-flats-walked-again",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (memo && memo.variant === boat.variant) return memo.list;",
-    "new": "if (memo && false) return memo.list;",
+    "old": "  if (memo && memo.variant === boat.variant) return memo.list;",
+    "new": "  if (memo && false) return memo.list;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "AUDIT-NAV2-F58-flats-kept-past-a-refit",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (memo && memo.variant === boat.variant) return memo.list;",
-    "new": "if (memo) return memo.list;",
+    "old": "  if (memo && memo.variant === boat.variant) return memo.list;",
+    "new": "  if (memo) return memo.list;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "AUDIT-NAV2-F59-size-minted-a-frame",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "const bs = s.batch.size ??= { w: 0, h: 0 };",
-    "new": "const bs = s.batch.size = { w: 0, h: 0 };",
+    "old": "        const bs = (s.batch.size ??= { w: 0, h: 0 }); // written through, not replaced (PERF-TOWN1's): read by value at the draw, held by nothing",
+    "new": "        const bs = (s.batch.size = { w: 0, h: 0 }); // written through, not replaced (PERF-TOWN1's): read by value at the draw, held by nothing",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "AUDIT-NAV2-F59-texture-key-not-the-uploaders",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "textureKey(s.archive, out.record, out.frame)",
-    "new": "textureKey(s.archive, out.frame, out.record)",
+    "old": "        if (!renderer.textures?.has?.(textureKey(s.archive, out.record, out.frame)))",
+    "new": "        if (!renderer.textures?.has?.(textureKey(s.archive, out.frame, out.record)))",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "AUDIT-NAV2-F59-motion-minted-a-frame",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "const out = s.unit.update(dt, _motion,",
-    "new": "const out = s.unit.update(dt, { moving: member.moving },",
+    "old": "        const out = s.unit.update(dt, _motion, s.yaw, s.origin, eye);",
+    "new": "        const out = s.unit.update(dt, { moving: member.moving }, s.yaw, s.origin, eye);",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "AUDIT-NAV2-F59-motion-unwritten",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "        _motion.moving = member.moving;\n",
-    "new": "",
+    "old": "        _motion.moving = member.moving;\n        _motion.striking = !!member.swing; // SHIP-WATCH: a swing at his work - his class's attack",
+    "new": "        _motion.striking = !!member.swing; // SHIP-WATCH: a swing at his work - his class's attack",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "AUDIT-NAV2-F62-rail-past-the-centreline",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (x * side < 0) break;",
-    "new": "if (false) break;",
+    "old": "            if (x * side < 0) break; // past her centreline: this row has no rail on `side`",
+    "new": "            if (false) break; // past her centreline: this row has no rail on `side`",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "AUDIT-NAV2-F62-rail-at-any-level",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue;   // (no level asked: NaN, never over)",
-    "new": "if (Number.isNaN(y[j])) continue;",
+    "old": "            if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue; // (no level asked: NaN, never over)",
+    "new": "            if (Number.isNaN(y[j])) continue;",
     "tests": [
       "test/systems/naval/auditnav2_crew.test.js"
     ]

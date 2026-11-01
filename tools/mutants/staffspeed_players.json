@@ -112,8 +112,8 @@
   {
     "name": "STAFF-SPEED-DESK-notes-row-after",
     "file": "server-account/src/staffDesk.js",
-    "old": ".bind(row.id, before, STAFF_NOTES_PAGE + 1), audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S })]);",
-    "new": ".bind(row.id, before, STAFF_NOTES_PAGE + 1)]); await audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }).run();",
+    "old": "      audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }),\n    ]);",
+    "new": "    ]);\n    await audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }).run();",
     "why": "the notes' audit row a trip after their page",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-SPEED-DESK-watch-row-after",
     "file": "server-account/src/staffDesk.js",
-    "old": ".bind(me.id, STAFF_WATCH_MAX), audit('watch-read', null, null, { onceIn: READ_ROW_S })]);",
-    "new": ".bind(me.id, STAFF_WATCH_MAX)]); await audit('watch-read', null, null, { onceIn: READ_ROW_S }).run();",
+    "old": "      audit('watch-read', null, null, { onceIn: READ_ROW_S }),\n    ]); // STAFF-PANEL-SPEED: one trip",
+    "new": "    ]);\n    await audit('watch-read', null, null, { onceIn: READ_ROW_S }).run(); // STAFF-PANEL-SPEED: one trip",
     "why": "the watchlist's audit row a trip after its read",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-SPEED-DESK-events-row-after",
     "file": "server-account/src/staffDesk.js",
-    "old": "const got = (await db.batch(row ? [...reads, row] : reads))",
-    "new": "if (row) await row.run();\n  const got = (await db.batch(reads))",
+    "old": "  const got = (await db.batch(row ? [...reads, row] : reads))\n    .slice(0, reads.length)\n    .map((/** @type {any} */ r) => r?.results ?? []);",
+    "new": "  if (row) await row.run();\n  const got = (await db.batch(reads)).slice(0, reads.length).map((/** @type {any} */ r) => r?.results ?? []);",
     "why": "the watch events' audit row a trip of its own",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-SPEED-DESK-score-row-after",
     "file": "server-account/src/staffDesk.js",
-    "old": ".bind(nowS - days * 86400, mode, FLAG_SEVERITY), audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S })]);",
-    "new": ".bind(nowS - days * 86400, mode, FLAG_SEVERITY)]); await audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S }).run();",
+    "old": "      audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S }),\n    ]); // STAFF-PANEL-SPEED: one trip",
+    "new": "    ]);\n    await audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S }).run(); // STAFF-PANEL-SPEED: one trip",
     "why": "the scorecard's audit row a trip after its read",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-SPEED-DESK-reported-row-after",
     "file": "server-account/src/staffDesk.js",
-    "old": ".bind(REPORTED_PAGE + 1, from), audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S })]);",
-    "new": ".bind(REPORTED_PAGE + 1, from)]); await audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S }).run();",
+    "old": "      audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S }),\n    ]);",
+    "new": "    ]);\n    await audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S }).run();",
     "why": "the reported notes' and listings' audit row a trip after their page",
     "tests": [
       "test/server/staffspeed_players.test.js"

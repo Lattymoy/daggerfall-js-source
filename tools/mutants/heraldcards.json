@@ -2,8 +2,8 @@
   {
     "name": "HERALD-CARDS-content-on-a-quiet-card",
     "file": "src/net/herald/heraldCard.js",
-    "old": "  if (r) body.content = clip(",
-    "new": "  body.content = clip(",
+    "old": "  if (r) body.content = clip(`<@&${r}> ${ping || embed.title}`, HERALD_CONTENT_MAX);",
+    "new": "  body.content = clip(`<@&${r}> ${ping || embed.title}`, HERALD_CONTENT_MAX);",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HERALD-CARDS-an-empty-field-posted",
     "file": "src/net/herald/heraldCard.js",
-    "old": "if (String(value ?? '').trim() && String(name ?? '').trim()) shown.push(",
-    "new": "shown.push(",
+    "old": "    if (String(value ?? '').trim() && String(name ?? '').trim())\n      shown.push({ name: clip(name, HERALD_FIELD_NAME_MAX), value: clip(value, HERALD_FIELD_VALUE_MAX), inline });",
+    "new": "    shown.push({ name: clip(name, HERALD_FIELD_NAME_MAX), value: clip(value, HERALD_FIELD_VALUE_MAX), inline });",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HERALD-CARDS-inline-said-by-none",
     "file": "src/net/herald/heraldCard.js",
-    "old": "value: clip(value, HERALD_FIELD_VALUE_MAX), inline });",
-    "new": "value: clip(value, HERALD_FIELD_VALUE_MAX), inline: true });",
+    "old": "      shown.push({ name: clip(name, HERALD_FIELD_NAME_MAX), value: clip(value, HERALD_FIELD_VALUE_MAX), inline });",
+    "new": "      shown.push({ name: clip(name, HERALD_FIELD_NAME_MAX), value: clip(value, HERALD_FIELD_VALUE_MAX), inline: true });",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HERALD-CARDS-the-title-unbounded",
     "file": "src/net/herald/heraldCard.js",
-    "old": "title: clip(title, HERALD_TITLE_MAX)",
-    "new": "title: String(title)",
+    "old": "  const embed = { author: { name: fam.name }, title: clip(title, HERALD_TITLE_MAX), color: fam.colour };",
+    "new": "  const embed = { author: { name: fam.name }, title: String(title), color: fam.colour };",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HERALD-CARDS-the-fields-unbounded",
     "file": "src/net/herald/heraldCard.js",
-    "old": "embed.fields = shown.slice(0, HERALD_FIELDS_MAX);",
-    "new": "embed.fields = shown;",
+    "old": "  if (shown.length) embed.fields = shown.slice(0, HERALD_FIELDS_MAX);",
+    "new": "  if (shown.length) embed.fields = shown;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HERALD-CARDS-the-cut-without-its-ellipsis",
     "file": "src/net/herald/heraldCard.js",
-    "old": "v.length > max ? `${v.slice(0, max - 1)}\\u2026` : v;",
-    "new": "v.length > max ? v.slice(0, max) : v;",
+    "old": "  return v.length > max ? `${v.slice(0, max - 1)}\\u2026` : v;",
+    "new": "  return v.length > max ? v.slice(0, max) : v;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HERALD-CARDS-a-family-miscoloured",
     "file": "src/net/herald/heraldCard.js",
-    "old": "colour: 0x3fd6c6",
-    "new": "colour: 0x3fd6c7",
+    "old": "  serpent: Object.freeze({ name: 'The Sea Serpent', colour: 0x3fd6c6, thread: 'serpentThread' }),",
+    "new": "  serpent: Object.freeze({ name: 'The Sea Serpent', colour: 0x3fd6c7, thread: 'serpentThread' }),",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HERALD-CARDS-a-post-left-as-another-family",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "family: 'serpent', moment: 'Slain',",
-    "new": "family: 'gate', moment: 'Slain',",
+    "old": "  return heraldCard({\n    family: 'serpent',\n    moment: 'Slain',",
+    "new": "  return heraldCard({\n    family: 'gate',\n    moment: 'Slain',",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HERALD-CARDS-the-thread-taken-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": "export const heraldThread = (raw) => { const s = String(raw ?? '').trim(); return SNOWFLAKE_RE.test(s) ? s : null; };",
-    "new": "export const heraldThread = (raw) => { const s = String(raw ?? '').trim(); return s || null; };",
+    "old": "export const heraldThread = (raw) => {\n  const s = String(raw ?? '').trim();\n  return SNOWFLAKE_RE.test(s) ? s : null;\n};",
+    "new": "export const heraldThread = (raw) => {\n  const s = String(raw ?? '').trim();\n  return s || null;\n};",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HERALD-CARDS-the-thread-dropped-from-the-url",
     "file": "src/net/herald/heraldCard.js",
-    "old": "(thread ? `${hook}?thread_id=${thread}` : hook)",
-    "new": "(hook)",
+    "old": "export const heraldPostUrl = (hook, thread = null) => (thread ? `${hook}?thread_id=${thread}` : hook);",
+    "new": "export const heraldPostUrl = (hook, thread = null) => hook;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HERALD-CARDS-no-name-left-counts-others",
     "file": "src/net/herald/heraldCard.js",
-    "old": "  if (!shown.length) return '';\n",
-    "new": "",
+    "old": "  if (!shown.length) return '';\n  const others = Number.isSafeInteger(n) ? Math.max(0, n - shown.length) : 0;",
+    "new": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - shown.length) : 0;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HERALD-CARDS-the-setting-floor-ignored",
     "file": "src/net/relayCfg.js",
-    "old": "Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0)",
-    "new": "RELAY_CFG_RELAY_MIN",
+    "old": "  Number(/^world(\\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);",
+    "new": "  Number(/^world(\\d+)$/.exec(String(v ?? ''))?.[1]) >= RELAY_CFG_RELAY_MIN;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-L1-the-facts-before-the-text",
     "file": "src/net/herald/heraldCard.js",
-    "old": "  if (over > 0 && embed.description) embed.description = clip(",
-    "new": "  if (false) embed.description = clip(",
+    "old": "  if (over > 0 && embed.description)\n    embed.description = clip(embed.description, Math.max(1, embed.description.length - over));",
+    "new": "  if (false) embed.description = clip(embed.description, Math.max(1, embed.description.length - over));",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-L1-a-blank-field-posted",
     "file": "src/net/herald/heraldCard.js",
-    "old": "if (String(value ?? '').trim() && String(name ?? '').trim()) shown.push(",
-    "new": "if (value) shown.push(",
+    "old": "    if (String(value ?? '').trim() && String(name ?? '').trim())",
+    "new": "    if (value)",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-L2-a-hyphen-first",
     "file": "src/net/herald/heraldCard.js",
-    "old": ".trim().replace(/^[-\\s]+/, '').slice(0, NAME_MAX)",
-    "new": ".trim().slice(0, NAME_MAX)",
+    "old": "    .replace(/^[-\\s]+/, '')\n    .slice(0, NAME_MAX)",
+    "new": "    .slice(0, NAME_MAX)",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-S1-the-floor-apart-from-its-row",
     "file": "src/net/relayCfg.js",
-    "old": "RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
-    "new": "RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 251, serpentThread: 251, sdThread: 251, egThread: 251, ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
+    "old": "  gateThread: 250,\n  serpentThread: 250,\n  sdThread: 250,\n  egThread: 250,",
+    "new": "  gateThread: 251,\n  serpentThread: 251,\n  sdThread: 251,\n  egThread: 251,",
     "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands at the line's end. PIN MOVED: SD-PARTY world275, re-aimed by content.",
     "tests": [
       "test/net/herald/heraldcards.test.js"

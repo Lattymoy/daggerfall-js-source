@@ -72,7 +72,12 @@ export function beastAttackPose(kind, t, hit = 0.45) {
 
   switch (kind) {
     case BEAST_ATTACKS.MAUL:
-      return { z: strike * 0.1 - gather * 0.04, y: -strike * 0.05 + gather * 0.06, pitch: strike * 0.5 - gather * 0.18, roll: 0 };
+      return {
+        z: strike * 0.1 - gather * 0.04,
+        y: -strike * 0.05 + gather * 0.06,
+        pitch: strike * 0.5 - gather * 0.18,
+        roll: 0,
+      };
     case BEAST_ATTACKS.BITE:
       return { z: strike * 0.22 - gather * 0.06, y: 0, pitch: strike * 0.16, roll: strike * 0.1 };
     case BEAST_ATTACKS.STING:
@@ -80,10 +85,20 @@ export function beastAttackPose(kind, t, hit = 0.45) {
       // body's job is to get out of its way.
       return { z: -strike * 0.1, y: strike * 0.07, pitch: -strike * 0.42 + gather * 0.05, roll: 0 };
     case BEAST_ATTACKS.SWOOP:
-      return { z: strike * 0.34 - gather * 0.1, y: -strike * 0.2 + gather * 0.12, pitch: strike * 0.3, roll: strike * 0.22 };
+      return {
+        z: strike * 0.34 - gather * 0.1,
+        y: -strike * 0.2 + gather * 0.12,
+        pitch: strike * 0.3,
+        roll: strike * 0.22,
+      };
     case BEAST_ATTACKS.LUNGE:
     default:
-      return { z: strike * 0.28 - gather * 0.08, y: -strike * 0.07 + gather * 0.03, pitch: strike * 0.34 - gather * 0.1, roll: 0 };
+      return {
+        z: strike * 0.28 - gather * 0.08,
+        y: -strike * 0.07 + gather * 0.03,
+        pitch: strike * 0.34 - gather * 0.1,
+        roll: 0,
+      };
   }
 }
 

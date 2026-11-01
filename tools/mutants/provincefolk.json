@@ -1,263 +1,263 @@
 [
- {
-  "name": "PFOLK-own-race-second",
-  "file": "src/characters/provinceFolk.js",
-  "old": "Morrowind: folk([['DarkElf', 82], ['Imperial', 6],",
-  "new": "Morrowind: folk([['Imperial', 6], ['DarkElf', 82],",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-a-share-moved",
-  "file": "src/characters/provinceFolk.js",
-  "old": "Sumurset: folk([['HighElf', 92], ['WoodElf', 4],",
-  "new": "Sumurset: folk([['HighElf', 93], ['WoodElf', 3],",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-Bay-High-Rock's",
-  "file": "src/characters/provinceFolk.js",
-  "old": "export const folkOfRegion = (r) => folkOfTheatre(theatreOfRegion(r));",
-  "new": "export const folkOfRegion = (r) => folkOfTheatre(theatreOfRegion(r) || 1);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-a-district-read-as-a-region",
-  "file": "src/characters/provinceFolk.js",
-  "old": "export const folkOfArea = (a) => folkOfTheatre(theatreOfArea(a));",
-  "new": "export const folkOfArea = (a) => folkOfTheatre(theatreOfRegion(a));",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-seed-unmixed",
-  "file": "src/characters/provinceFolk.js",
-  "old": "let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
-  "new": "let r = (seed >>> 0) % total;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-weights-ignored",
-  "file": "src/characters/provinceFolk.js",
-  "old": "for (const [race, w] of people) { if (r < w) return race; r -= w; }",
-  "new": "return people[r % people.length][0];",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-Imperial-bank-a-Breton's",
-  "file": "src/characters/provinceFolk.js",
-  "old": "export const folkNameBank = (race) => (race === 'Imperial' ? BANK_TYPES.Imperial : getNameBank(race));",
-  "new": "export const folkNameBank = (race) => getNameBank(race);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-place-a-Bay-region's",
-  "file": "src/characters/provinceFolk.js",
-  "old": "export const folkHere = () => folkWhere(null);",
-  "new": "export const folkHere = () => PROVINCE_FOLK.HighRock;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-every-race-its-own-picture",
-  "file": "src/characters/mobile/mobilePerson.js",
-  "old": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : fallback);",
-  "new": "export const spriteRaceOf = (race, fallback) => (race ? race : fallback);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-fallback-dropped",
-  "file": "src/characters/mobile/mobilePerson.js",
-  "old": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : fallback);",
-  "new": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : 'Breton');",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-a-variant-of-its-own-race's-alone",
-  "file": "src/characters/folkBodies.js",
-  "old": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
-  "new": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-Bay's-stream-drawn",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
-  "new": "const own = folkRace(this.folk, Math.floor(this.rand() * 0x100000000));",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-walker-the-town's",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "person.folk = own ?? this.race;",
-  "new": "person.folk = this.race;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-walker-named-by-the-region",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "const bank = own ? folkNameBank(own) : (this.nameBank ?? getNameBank(this.race));",
-  "new": "const bank = this.nameBank ?? getNameBank(this.race);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-walker's-picture-the-town's",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "const sprite = spriteRaceOf(own, this.race);",
-  "new": "const sprite = this.race;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-body-the-town's",
-  "file": "src/characters/folkBodies.js",
-  "old": "const s = spawnOf(person, person.folk ?? race);",
-  "new": "const s = spawnOf(person, race);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-resident-the-town's",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate;",
-  "new": "const race = climate;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-resident's-picture-the-town's",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "const sprite = spriteRaceOf(race, climate);",
-  "new": "const sprite = climate;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-keeper's-race-unread",
-  "file": "src/systems/merchantYards.js",
-  "old": "const race = folkRace(people, seed ^ 0x666f6c6b);",
-  "new": "const race = null;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-hand's-region-ignored",
-  "file": "src/scenes/portHost.js",
-  "old": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(site?.regionIndex ?? -1),",
-  "new": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(-1),",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-foe-the-Bay's-anywhere",
-  "file": "src/characters/foeBodies.js",
-  "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
-  "new": "const personRace = (f, h, bay) => bay;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-a-companion-the-place's",
-  "file": "src/characters/foeBodies.js",
-  "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? ownRace(f) ?? bay : placeRace(f, h));",
-  "new": "const personRace = (f, h, bay) => placeRace(f, h);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-Imperial-everywhere",
-  "file": "src/characters/peopleBodies.js",
-  "old": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) : null;",
-  "new": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) ?? 'Imperial' : null;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-named-one-lifted",
-  "file": "src/characters/peopleBodies.js",
-  "old": "  if (!native || faction?.type === FACTION_TYPES.Individual) return own;",
-  "new": "  if (!native) return own;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-place-unset",
-  "file": "src/scenes/world.js",
-  "old": "  setFolkPlace((feet) =>",
-  "new": "  void ((feet) =>",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-pool's-folk-dropped",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "          folk: folkOfLocation(dfLocation),",
-  "new": "          folk: null,",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-yard-keeper-the-town's",
-  "file": "src/scenes/merchantYardsHost.js",
-  "old": "race = y.site.keeper?.race ?? y.site.race ?? 'Breton'",
-  "new": "race = y.site.race ?? 'Breton'",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-port's-people-the-town's",
-  "file": "src/scenes/portHost.js",
-  "old": "folk: raceOf(site, p),",
-  "new": "folk: null,",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "PFOLK-the-regular-a-Breton",
-  "file": "src/world/card/cardRegulars.js",
-  "old": "const race = (bank === BANK_TYPES.Imperial ? (native === undefined ? nativeHere() : native) : null) ?? RACE_OF_BANK[bank] ?? 'Breton';",
-  "new": "const race = RACE_OF_BANK[bank] ?? 'Breton';",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- }
+  {
+    "name": "PFOLK-own-race-second",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['DarkElf', 82],\n    ['Imperial', 6],",
+    "new": "    ['Imperial', 6],\n    ['DarkElf', 82],",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-a-share-moved",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['HighElf', 92],\n    ['WoodElf', 4],",
+    "new": "    ['HighElf', 93],\n    ['WoodElf', 3],",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-Bay-High-Rock's",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const folkOfRegion = (r) => folkOfTheatre(theatreOfRegion(r));",
+    "new": "export const folkOfRegion = (r) => folkOfTheatre(theatreOfRegion(r) || 1);",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-a-district-read-as-a-region",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const folkOfArea = (a) => folkOfTheatre(theatreOfArea(a));",
+    "new": "export const folkOfArea = (a) => folkOfTheatre(theatreOfRegion(a));",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-seed-unmixed",
+    "file": "src/characters/provinceFolk.js",
+    "old": "  let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
+    "new": "  let r = (seed >>> 0) % total;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-weights-ignored",
+    "file": "src/characters/provinceFolk.js",
+    "old": "  for (const [race, w] of people) {\n    if (r < w) return race;\n    r -= w;\n  }",
+    "new": "  return people[r % people.length][0];",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-Imperial-bank-a-Breton's",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const folkNameBank = (race) => (race === 'Imperial' ? BANK_TYPES.Imperial : getNameBank(race));",
+    "new": "export const folkNameBank = (race) => getNameBank(race);",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-place-a-Bay-region's",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const folkHere = () => folkWhere(null);",
+    "new": "export const folkHere = () => PROVINCE_FOLK.HighRock;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-every-race-its-own-picture",
+    "file": "src/characters/mobile/mobilePerson.js",
+    "old": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : fallback);",
+    "new": "export const spriteRaceOf = (race, fallback) => (race ? race : fallback);",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-fallback-dropped",
+    "file": "src/characters/mobile/mobilePerson.js",
+    "old": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : fallback);",
+    "new": "export const spriteRaceOf = (race, fallback) => (race && Object.hasOwn(PERSON_TEXTURES, race) ? race : 'Breton');",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-a-variant-of-its-own-race's-alone",
+    "file": "src/characters/folkBodies.js",
+    "old": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
+    "new": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-Bay's-stream-drawn",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
+    "new": "    const own = folkRace(this.folk, Math.floor(this.rand() * 0x100000000));",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-walker-the-town's",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    person.folk = own ?? this.race;",
+    "new": "    person.folk = this.race;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-walker-named-by-the-region",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    const bank = own ? folkNameBank(own) : (this.nameBank ?? getNameBank(this.race));",
+    "new": "    const bank = this.nameBank ?? getNameBank(this.race);",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-walker's-picture-the-town's",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    const sprite = spriteRaceOf(own, this.race);",
+    "new": "    const sprite = this.race;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-body-the-town's",
+    "file": "src/characters/folkBodies.js",
+    "old": "  const s = spawnOf(person, person.folk ?? race); // PROVINCE-FOLK: the walker's own people, past the Bay the province's",
+    "new": "  const s = spawnOf(person, race); // PROVINCE-FOLK: the walker's own people, past the Bay the province's",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-resident-the-town's",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate; // 'folk'",
+    "new": "  const race = climate; // 'folk'",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-resident's-picture-the-town's",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const sprite = spriteRaceOf(race, climate);",
+    "new": "  const sprite = climate;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-keeper's-race-unread",
+    "file": "src/systems/merchantYards.js",
+    "old": "  const race = folkRace(people, seed ^ 0x666f6c6b); // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "new": "  const race = null; // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-hand's-region-ignored",
+    "file": "src/scenes/portHost.js",
+    "old": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(site?.regionIndex ?? -1),",
+    "new": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(-1),",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-foe-the-Bay's-anywhere",
+    "file": "src/characters/foeBodies.js",
+    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? (ownRace(f) ?? bay) : placeRace(f, h));",
+    "new": "const personRace = (f, h, bay) => bay;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-a-companion-the-place's",
+    "file": "src/characters/foeBodies.js",
+    "old": "const personRace = (f, h, bay) => (ownPerson(f) != null ? (ownRace(f) ?? bay) : placeRace(f, h));",
+    "new": "const personRace = (f, h, bay) => placeRace(f, h);",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-Imperial-everywhere",
+    "file": "src/characters/peopleBodies.js",
+    "old": "    native = own ? nativeAt(feet) : null;",
+    "new": "    native = own ? (nativeAt(feet) ?? 'Imperial') : null;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-named-one-lifted",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  if (!native || faction?.type === FACTION_TYPES.Individual) return own;",
+    "new": "  if (!native) return own;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-place-unset",
+    "file": "src/scenes/world.js",
+    "old": "  setFolkPlace((feet) =>",
+    "new": "  void ((feet) =>",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-pool's-folk-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          folk: folkOfLocation(dfLocation),   // PROVINCE-FOLK: past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "new": "          folk: null,   // PROVINCE-FOLK: past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-yard-keeper-the-town's",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "race = y.site.keeper?.race ?? y.site.race ?? 'Breton'",
+    "new": "race = y.site.race ?? 'Breton'",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-port's-people-the-town's",
+    "file": "src/scenes/portHost.js",
+    "old": "folk: raceOf(site, p),",
+    "new": "folk: null,",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "PFOLK-the-regular-a-Breton",
+    "file": "src/world/card/cardRegulars.js",
+    "old": "  const race =\n    (bank === BANK_TYPES.Imperial ? (native === undefined ? nativeHere() : native) : null) ??\n    RACE_OF_BANK[bank] ??\n    'Breton'; // PROVINCE-FOLK: Cyrodiil's Imperials and Black Marsh's Argonians, both named from that bank",
+    "new": "  const race = RACE_OF_BANK[bank] ?? 'Breton'; // PROVINCE-FOLK: Cyrodiil's Imperials and Black Marsh's Argonians, both named from that bank",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  }
 ]

@@ -2,8 +2,8 @@
   {
     "name": "WB9e-a-weight-left-where-it-was",
     "file": "src/net/gate/gateBrain.js",
-    "old": "shape: 'disc', r: 7, pct: 0.52, base: 14, el: null, aim: 'self'",
-    "new": "shape: 'disc', r: 7, pct: 0.40, base: 10, el: null, aim: 'self'",
+    "old": "    r: 7,\n    pct: 0.52,\n    base: 14,",
+    "new": "    r: 7,\n    pct: 0.4,\n    base: 10,",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB9e-dagons-in-his-aspects-grain",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(isDagons(A) ? TELEGRAPH_STYLE.dagon :",
-    "new": "(false ? TELEGRAPH_STYLE.dagon :",
+    "old": "  isDagons(A) ? TELEGRAPH_STYLE.dagon : (TELEGRAPH_STYLE[P.atk[A.key].el ?? 'weight'] ?? TELEGRAPH_STYLE.weight);",
+    "new": "  false ? TELEGRAPH_STYLE.dagon : (TELEGRAPH_STYLE[P.atk[A.key].el ?? 'weight'] ?? TELEGRAPH_STYLE.weight);",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9e-a-spark-falling-through-the-floor",
     "file": "src/render/gate/gateFx.js",
-    "old": "  let y = Math.max(rest, up * t - g * t * t);",
-    "new": "  let y = up * t - g * t * t;",
+    "old": "  let y = Math.max(rest, up * t - g * t * t); // at rest on the floor once fallen",
+    "new": "  let y = up * t - g * t * t; // at rest on the floor once fallen",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9e-a-burst-living-forever",
     "file": "src/render/gate/gateFx.js",
-    "old": "spent: Math.min(1, t / life) };",
-    "new": "spent: Math.min(1, t / (life * 3)) };",
+    "old": "  return { at: [Math.sin(bearing) * out * t, y, Math.cos(bearing) * out * t], spent: Math.min(1, t / life) };",
+    "new": "  return { at: [Math.sin(bearing) * out * t, y, Math.cos(bearing) * out * t], spent: Math.min(1, t / (life * 3)) };",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9e-the-stone-at-its-mark-all-the-wind-up",
     "file": "src/render/gate/gateFx.js",
-    "old": "d = METEOR_FROM_M * (1 - k * k);",
-    "new": "d = 0;",
+    "old": "    d = METEOR_FROM_M * (1 - k * k); // it gathers speed as it falls",
+    "new": "    d = 0; // it gathers speed as it falls",
     "tests": [
       "test/net/gate/wb9e_gate_blows.test.js"
     ]

@@ -25,16 +25,19 @@
 // degrees, its scale, an optional light, whether it holds things, and
 // the gold it cost (half of which comes back when it is removed).
 // ═══════════════════════════════════════════════════════════════════
-import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted piece's id and mark, one home
-import { TEMPLATES } from '../systems/item/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
-import { isNpcFlat } from '../world/npcFlatArchives.js';   // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
-import { t } from '../systems/textManager.js';   // DECOR-USE: the cooking station's name in the player's language
-import { TROPHY_TEMPLATE } from './trophyLaw.js';   // HUNTERS-MARK: a mounted trophy hangs
+import { PROVENANCE_RE, makerName } from './recipeLaw.js'; // PROF4: a crafted piece's id and mark, one home
+import { TEMPLATES } from '../systems/item/itemKinds.js'; // INT9: the kept-back list's templates - a leaf
+import { isNpcFlat } from '../world/npcFlatArchives.js'; // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
+import { isNatureArchive } from '../world/natureArchives.js'; // AUDIT FB1031 Y6: a tree or a plant - a leaf
+import { t } from '../systems/textManager.js'; // DECOR-USE: the cooking station's name in the player's language
+import { TROPHY_TEMPLATE } from './trophyLaw.js'; // HUNTERS-MARK: a mounted trophy hangs
 
 /** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
  *  player's own spells - set down in a home, it would be out of reach wherever the player went (DECOR2a; INT9: its home
  *  here, since a death in the zone's drop keeps them too, on the account Worker - systems/decor/decorItems.js re-exports it). */
-export const DECOR_OWN_KEPT_BACK = Object.freeze(new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]));
+export const DECOR_OWN_KEPT_BACK = Object.freeze(
+  new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit, TEMPLATES.House_Deed, TEMPLATES.Ship_Deed]),
+);
 
 /** How many pieces one home holds - a room full of furniture, not a frame-rate. */
 export const DECOR_CAP = 200;
@@ -144,13 +147,19 @@ export const DECOR_ARROW_TEMPLATE = 131;
  * boots - where DECOR2c hung the shields alone; it hangs as its pack picture, as a shield does.
  */
 export function decorIsMount(piece) {
-  const it = piece?.item;
-  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
-  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;
+  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;
+  const it = piece.item;
+  if (!it) return piece.hung === true; // YARD-WALLS: a catalogue picture hung flat on a yard's wall (decorPlaceOf `hung`)
+  return (
+    (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||
+    it.g === DECOR_ARMOR_GROUP ||
+    it.t === TROPHY_TEMPLATE
+  );
 }
 /** HUNTERS-MARK (Bounty-Boards.md 12.5): A MOUNTED TROPHY - a mount of its own kind, its beast its item's message (`p`):
  *  hung on its plaque (scenes/decor/trophyArt.js), never as a pack picture. */
-export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);
+export const decorIsTrophy = (piece) =>
+  decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);
 
 /** DECOR-FLIP (2026-09-27, Discord: "Some sprites flipped (allow rotation)"): A FLAT TURNED HALF ROUND FACES THE OTHER
  *  WAY. A billboard turns to the eye whatever its record says, so the one turn a picture has is WHICH WAY it faces:
@@ -175,7 +184,7 @@ export function decorIsFigure(piece) {
   return !!piece && piece.model == null && !piece.item && Array.isArray(piece.flat) && isNpcFlat(piece.flat[0]);
 }
 /** DECOR-FIGURE: the scale a piece is drawn at - a figure's own size, any other its record's. */
-export const decorDrawnScale = (piece) => (decorIsFigure(piece) ? 1 : piece?.scale ?? 1);
+export const decorDrawnScale = (piece) => (decorIsFigure(piece) ? 1 : (piece?.scale ?? 1));
 /** DECOR-FIGURE: whether a piece's scale is one the service writes - a figure's is 1, any other's the law's range. */
 export const decorScaleOk = (piece) => !decorIsFigure(piece) || piece.scale === 1;
 
@@ -195,7 +204,11 @@ export function decorMountFrame(rot) {
   const cp = Math.cos(pitch);
   const normal = [Math.sin(yaw) * cp, Math.sin(pitch), Math.cos(yaw) * cp];
   const r0 = [-Math.cos(yaw), 0, Math.sin(yaw)];
-  const u0 = [r0[1] * normal[2] - r0[2] * normal[1], r0[2] * normal[0] - r0[0] * normal[2], r0[0] * normal[1] - r0[1] * normal[0]];   // r0 x normal
+  const u0 = [
+    r0[1] * normal[2] - r0[2] * normal[1],
+    r0[2] * normal[0] - r0[0] * normal[2],
+    r0[0] * normal[1] - r0[1] * normal[0],
+  ]; // r0 x normal
   const c = Math.cos(spin);
   const s = Math.sin(spin);
   return {
@@ -218,9 +231,17 @@ export function decorWhatOf(raw) {
     const own = decorItemOf(item);
     return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;
   }
-  if (model === null && Array.isArray(flat) && flat.length === 2
-    && Number.isSafeInteger(flat[0]) && flat[0] >= 0 && flat[0] <= DECOR_ARCHIVE_MAX
-    && Number.isSafeInteger(flat[1]) && flat[1] >= 0 && flat[1] <= DECOR_RECORD_MAX) {
+  if (
+    model === null &&
+    Array.isArray(flat) &&
+    flat.length === 2 &&
+    Number.isSafeInteger(flat[0]) &&
+    flat[0] >= 0 &&
+    flat[0] <= DECOR_ARCHIVE_MAX &&
+    Number.isSafeInteger(flat[1]) &&
+    flat[1] >= 0 &&
+    flat[1] <= DECOR_RECORD_MAX
+  ) {
     if (item === null) return { model: null, flat: [flat[0], flat[1]] };
     // AUDIT HOME-VOTE II C1: an own item is never one of Daggerfall's people - an item said beside a person's flat made it
     // no figure (decorIsFigure), and stood one at any size past the figure's law; no item's picture is in their archives
@@ -244,25 +265,70 @@ export function decorLightOf(raw) {
 /** HOME-STATIONS (2026-09-27, Discord - Tabitha: "CRAFTABLE / PURCHASABLE CRAFT / GUILD STATIONS [Spellmaking, Alchemy,
  *  Enchanting] FOR HOMES / SHIPS"): the three crafts a placed piece may be made to serve - the guilds' own makers
  *  (DFU's MakePotions, MakeSpells and MakeMagicItems services), at home. */
-export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)   // MUSIC-BOX: a music box (systems/musicBox.js), after the cooking station so the stations counted from the end stand
+export const DECOR_STATIONS = Object.freeze([
+  'alchemy',
+  'spells',
+  'enchant',
+  'forge',
+  'workbench',
+  'cooking',
+  'music',
+  'loom',
+  'mason',
+  'jeweller',
+  'vendor',
+]); // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)   // MUSIC-BOX: a music box (systems/musicBox.js), after the cooking station so the stations counted from the end stand
 /** What a station costs to make, once - a licence for the craft in that piece, not the piece's own price (`paid`), so
  *  nothing of it comes back when the piece is removed or the room sold. STATION-FEES (2026-09-27, Discord: "Make
  *  crafting stations in interiors way more expensive"): ten times the first pass (5,000, 10,000 and 20,000) - a
  *  guild's maker at home is a hall's worth of gold, not an afternoon's. */
-export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, music: 5_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });   // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's   // DECOR-USE: the cooking station at the crafts' own licence   // MUSIC-BOX: no craft, a tenth of one's licence
+export const DECOR_STATION_FEES = Object.freeze({
+  alchemy: 50_000,
+  spells: 100_000,
+  enchant: 200_000,
+  forge: 50_000,
+  workbench: 50_000,
+  cooking: 50_000,
+  music: 5_000,
+  loom: 50_000,
+  mason: 50_000,
+  jeweller: 50_000,
+  vendor: 25_000,
+}); // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's   // DECOR-USE: the cooking station at the crafts' own licence   // MUSIC-BOX: no craft, a tenth of one's licence
 /** The guild service each craft opens - the same maker windows the Mages Guild and the temples offer (worldModes.js
  *  openServiceFlow's destinations). PROF2: the forge is no guild's - it opens the Stores' forge (ui/professions/profPages.js);
  *  PROF4: nor the workbench - the Stores' workbench; PROF7: nor the loom - the Stores' loom; PROF11: nor the mason's
  *  bench - the Stores' bench; PROF10: nor the jeweller's bench. */
-export const DECOR_STATION_SERVICES = Object.freeze({ alchemy: 'guildServicePotionMaker', spells: 'guildServiceSpellMaker', enchant: 'guildServiceItemMaker' });
+export const DECOR_STATION_SERVICES = Object.freeze({
+  alchemy: 'guildServicePotionMaker',
+  spells: 'guildServiceSpellMaker',
+  enchant: 'guildServiceItemMaker',
+});
 /** A station's name, as the panel and the room say it. */
-export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station', forge: 'Forge', workbench: 'Workbench', get cooking() { return t('decor.station.cooking', 'Cooking station'); }, get music() { return t('decor.station.music', 'Music box'); }, loom: 'Loom', mason: 'Mason\'s bench', jeweller: 'Jeweller\'s bench', vendor: 'Hired trader' });   // HOME-VENDOR   // PROF11; PROF10   // DECOR-USE
+export const DECOR_STATION_NAMES = Object.freeze({
+  alchemy: 'Alchemy station',
+  spells: 'Spellmaking station',
+  enchant: 'Enchanting station',
+  forge: 'Forge',
+  workbench: 'Workbench',
+  get cooking() {
+    return t('decor.station.cooking', 'Cooking station');
+  },
+  get music() {
+    return t('decor.station.music', 'Music box');
+  },
+  loom: 'Loom',
+  mason: "Mason's bench",
+  jeweller: "Jeweller's bench",
+  vendor: 'Hired trader',
+}); // HOME-VENDOR   // PROF11; PROF10   // DECOR-USE
 
 /**
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth
  * of a degree; `rot` is [yaw, pitch, roll]), or null. `light` null is no light; `storage` whether it holds things;
  * HOME-STATIONS: `station` the craft it serves (DECOR_STATIONS), carried only when it serves one - a piece holds
- * things or serves a craft, never both (one press, one thing it does).
+ * things or serves a craft, never both (one press, one thing it does). YARD-WALLS: `hung` - a catalogue picture hung
+ * flat on the wall it was set on (decorIsMount), carried only when it is.
  */
 /** A placed piece's own name. Empty clears it. Longer than this, or with a control character, is no name. */
 export const DECOR_NAME_MAX = 32;
@@ -277,27 +343,39 @@ export function decorNameOf(raw) {
 
 export function decorPlaceOf(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const { pos, rot, scale, light = null, storage = false, paid, station = null } = raw;
+  const { pos, rot, scale, light = null, storage = false, paid, station = null, hung = false } = raw;
   if (!triple(pos, DECOR_POS_MAX) || !triple(rot, 180)) return null;
   if (!fin(scale) || scale < DECOR_SCALE_MIN || scale > DECOR_SCALE_MAX) return null;
-  if (typeof storage !== 'boolean') return null;
+  if (typeof storage !== 'boolean' || typeof hung !== 'boolean') return null;
   if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;
   if (!Number.isSafeInteger(paid) || paid < 0 || paid > DECOR_PRICE_MAX) return null;
   const lit = light === null ? null : decorLightOf(light);
   if (light !== null && !lit) return null;
   const name = decorNameOf(raw.name);
   if (name === false) return null;
-  return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) };
+  return {
+    pos: pos.map((v) => round(v, 3)),
+    rot: rot.map((v) => round(v, 1)),
+    scale: round(scale, 3),
+    light: lit,
+    storage,
+    paid,
+    ...(station ? { station } : {}),
+    ...(name ? { name } : {}),
+    ...(hung ? { hung } : {}),
+  };
 }
 
 /** A WHOLE piece - its id, what it is, where it stands - projected, or null. DECOR2a: the owner's own item costs
  *  nothing to stand (Mac: "Free and can be picked back up") and holds nothing - it IS a thing, not a place to keep
  *  things - so one that says it cost gold (half of it would come back at a sale) or holds things is no piece. */
 export function decorPieceOf(raw) {
-  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null;   // AUDIT FB1029f A5: the home's rest row's id is no piece's
+  if (typeof raw?.id !== 'string' || !DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null; // AUDIT FB1029f A5: the home's rest row's id is no piece's
   const what = decorWhatOf(raw);
   const place = decorPlaceOf(raw);
-  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null;   // HOME-STATIONS: one's own item serves no craft
+  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft
+  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]) || isNatureArchive(what.flat[0])))
+    return null; // YARD-WALLS: a catalogue picture hangs, never a model, one's own item or a person; AUDIT FB1031 Y6: nor a tree or a plant, as the placer hangs none
   return { id: raw.id, ...what, ...place };
 }
 
@@ -311,7 +389,8 @@ export function decorPrice(radiusMetres, scale = 1) {
 export const decorRefund = (paid) => Math.trunc((Number.isSafeInteger(paid) && paid > 0 ? paid : 0) / 2);
 /** DECOR1e: what a sold room's pieces give back - each one's half, as removing it would (the account service sums an
  *  online home's the same way, server-account/src/homes.js releaseHome). */
-export const decorSaleBack = (pieces) => (Array.isArray(pieces) ? pieces : []).reduce((n, p) => n + decorRefund(p?.paid), 0);
+export const decorSaleBack = (pieces) =>
+  (Array.isArray(pieces) ? pieces : []).reduce((n, p) => n + decorRefund(p?.paid), 0);
 
 /**
  * A NEW SCALE for a placed piece: grown, the difference is paid; shrunk, half the difference comes back (as removing
@@ -335,8 +414,14 @@ export function decorGoldMove(was, now, ledger = was?.paid) {
   if (!now) return { delta: decorRefund(own), ledger: 0 };
   const paidNow = Math.max(0, Number(now.paid) || 0);
   let delta, next;
-  if (paidNow >= paidWas) { delta = paidWas - paidNow; next = own + paidNow - paidWas; }
-  else { const base = Math.min(paidWas - paidNow, own); delta = Math.trunc(base / 2); next = own - base; }
+  if (paidNow >= paidWas) {
+    delta = paidWas - paidNow;
+    next = own + paidNow - paidWas;
+  } else {
+    const base = Math.min(paidWas - paidNow, own);
+    delta = Math.trunc(base / 2);
+    next = own - base;
+  }
   if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;
   return { delta, ledger: next };
 }
@@ -372,7 +457,8 @@ export function mintDecorId(rand = Math.random) {
  *  the mods' own archives (DET's 10010-10028, the table clutter's 56790), and a name with a
  *  classic archive's three digits could not name them: online the room's whole list was refused, offline the piece came
  *  back at the next load. */
-export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2})|intdoor:(?:0|[1-9]\d{0,2}))$/;
+export const DECOR_BASE_KEY_RE =
+  /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2})|intdoor:(?:0|[1-9]\d{0,2}))$/;
 /** DOOR-KEPT (FIELD BUGS 2026-10-29f): a room's swing door taken out rides the same list (systems/decor/decorInteriorDoors.js
  *  `intdoor:<record>`), so an online home's is the service's - every visitor's and every device's - as its furniture is. */
 export const decorIsDoorKey = (key) => typeof key === 'string' && key.startsWith('intdoor:');
@@ -385,10 +471,13 @@ export const decorBaseModelKey = (placement, model) => `m${placement}:${model}`;
 export const decorBaseFlatKey = (flat, archive, record) => `f${flat}:${archive}.${record}`;
 /** A built-in piece's name read back: `{ model }` or `{ flat: [archive, record] }`, or null for no such name. */
 export function decorBaseWhat(key) {
-  if (typeof key !== 'string' || !DECOR_BASE_KEY_RE.test(key) || decorIsDoorKey(key)) return null;   // DOOR-KEPT: a door is no piece
+  if (typeof key !== 'string' || !DECOR_BASE_KEY_RE.test(key) || decorIsDoorKey(key)) return null; // DOOR-KEPT: a door is no piece
   const at = key.indexOf(':');
   if (key[0] === 'm') return { model: Number(key.slice(at + 1)) };
-  const [a, r] = key.slice(at + 1).split('.').map(Number);
+  const [a, r] = key
+    .slice(at + 1)
+    .split('.')
+    .map(Number);
   return { flat: [a, r] };
 }
 /** The list a room keeps taken out, as the law takes it: every key a built-in piece's name, none twice, in order,
@@ -421,18 +510,16 @@ export const DECOR_YARD_CAP = 60;
 /** How far from the building's origin a yard's piece may stand, on each axis, metres - past any lot. */
 export const DECOR_YARD_POS_MAX = 48;
 /**
- * YARD-HEIGHT (2026-10-06, Mac: "limit the height at which players can build ... People currently can build towers that
- * seem out of place"; Mac's call: 4 m): HOW HIGH A YARD'S PIECE MAY STAND - its place (`pos`) at most this far over the
- * ground, metres. A town stands on a flat block, so its ground is the building's own origin's height (the yard's `pos`
- * is from it). A flat's place is its foot and a hung one's where it hangs; AUDIT YARD-HEIGHT Y8: a model's is its own
- * origin, which the placer stands above the surface by as much as the model reaches below it (systems/decor/decorPlacer.js
- * lift) - so a model scaled up stands its origin higher on the same ground. The service knows no model's shape, so both
- * ends ask the one place they share. A fence with a lantern on it, a cart, a crate on a crate - never a tower: each piece
- * stood on the one below climbed as far as DECOR_YARD_POS_MAX. A piece placed or moved past it is refused at both ends
- * (decorYardHighOk - scenes/homeYards.js yardWhyNot, server-account/src/decor.js); YARD-SWEEP (2026-10-11): one standing
- * from before it is deleted (migration 0109) and never served or stood (decor.js yardsOf, homeYards.js ensure).
+ * YARD-HEIGHT (2026-10-06, Mac: "People currently can build towers that seem out of place"): HOW HIGH A YARD'S PIECE
+ * MAY STAND - its place (`pos`, from the building's own origin on the town's ground) at most this far up, metres. A
+ * flat's place is its foot, a hung one's its middle, a model's its origin (AUDIT Y8: lifted by its reach below it); the
+ * service knows no shape, so both ends ask the one place they share (decorYardHighOk - scenes/homeYards.js yardWhyNot,
+ * server-account/src/decor.js). YARD-SWEEP deleted those from before it (migration 0109, at 4 m). YARD-WALLS
+ * (2026-10-31, the owner handing on "I should be able to decorate the walls better, and balconies"): Mac's 4 m raised
+ * to 8 - a two-storey house's walls and roof deck stand to 6.45 m. A piece free of its house keeps 4 m, the client's to
+ * measure (homeYards.js YARD_FREE_HIGH).
  */
-export const DECOR_YARD_HIGH = 4;
+export const DECOR_YARD_HIGH = 8;
 /** YARD-HEIGHT: whether a yard piece's place stands within DECOR_YARD_HIGH of the ground. */
 export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) <= DECOR_YARD_HIGH;
 /** YARD-HEIGHT (AUDIT Y3): the refusal in its one sentence - the decorator's (scenes/homeYards.js YARD_TOO_HIGH) and the

@@ -66,8 +66,8 @@
   {
     "name": "SD20B-R4-the-receipts-seed",
     "file": "server-account/src/sds.js",
-    "old": "sdHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0)",
-    "new": "sdHonoursRoll(c.c)",
+    "old": "  const { title, aura } = sdHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0);",
+    "new": "  const { title, aura } = sdHonoursRoll(c.c);",
     "tests": [
       "test/net/superDungeon/sd20b_relay.test.js",
       "test/server/sd9b_claim.test.js"

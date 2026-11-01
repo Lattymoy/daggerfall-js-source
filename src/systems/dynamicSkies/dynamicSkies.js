@@ -72,7 +72,14 @@
 //     one-shot it plays (the cemetery layer does not raise it).
 
 import { LUNAR_PHASES, lunarPhase, dayOfYear, MONTHS_PER_YEAR, DAYS_PER_MONTH } from '../gameDate.js';
-import { SUN_RIG_COLOR, SUN_RIG_INTENSITY, evaluateCurve, DAWN_HOUR, DUSK_HOUR, MINUTES_PER_HOUR } from '../../world/worldClock.js';
+import {
+  SUN_RIG_COLOR,
+  SUN_RIG_INTENSITY,
+  evaluateCurve,
+  DAWN_HOUR,
+  DUSK_HOUR,
+  MINUTES_PER_HOUR,
+} from '../../world/worldClock.js';
 
 export const DYNAMIC_SKIES_MOD = Object.freeze({
   title: 'Dynamic Skies',
@@ -91,18 +98,30 @@ export const DYNAMIC_SKIES_MOD = Object.freeze({
  *  unmapped, both fell to the sunny sky and the sunny fog under a wall of
  *  sand or a pall of ash. */
 export const WEATHER_PRESET = Object.freeze({
-  sunny: 'SkyboxSunny', cloudy: 'SkyboxCloudy', overcast: 'SkyboxOvercast', fog: 'SkyboxFog',
-  rain: 'SkyboxRain', thunder: 'SkyboxThunder', snow: 'SkyboxSnow',
-  sandstorm: 'SkyboxFog', ashfall: 'SkyboxOvercast',
+  sunny: 'SkyboxSunny',
+  cloudy: 'SkyboxCloudy',
+  overcast: 'SkyboxOvercast',
+  fog: 'SkyboxFog',
+  rain: 'SkyboxRain',
+  thunder: 'SkyboxThunder',
+  snow: 'SkyboxSnow',
+  sandstorm: 'SkyboxFog',
+  ashfall: 'SkyboxOvercast',
 });
 
 /** loadFogSettings' dictionary (BLBSkybox.cs:1100-1108): which of the
  *  five WeatherManager fog settings each weather uses. Cloudy takes the
  *  sunny fog and Thunder the rainy one, as WeatherManager.SetWeather. */
 export const FOG_PRESET_FOR_WEATHER = Object.freeze({
-  sunny: 'FogSunny', cloudy: 'FogSunny', overcast: 'FogOvercast', fog: 'FogHeavyFog',
-  rain: 'FogRainy', thunder: 'FogRainy', snow: 'FogSnowy',
-  sandstorm: 'FogHeavyFog', ashfall: 'FogSnowy',   // ASHFALL1's audit: as world/weather.js fogForWeather stands them in
+  sunny: 'FogSunny',
+  cloudy: 'FogSunny',
+  overcast: 'FogOvercast',
+  fog: 'FogHeavyFog',
+  rain: 'FogRainy',
+  thunder: 'FogRainy',
+  snow: 'FogSnowy',
+  sandstorm: 'FogHeavyFog',
+  ashfall: 'FogSnowy', // ASHFALL1's audit: as world/weather.js fogForWeather stands them in
 });
 
 /** "Because game runs at timescale 12" - the mod's own constant. */
@@ -146,39 +165,75 @@ const vec4 = (o, k) => {
   return v && typeof v === 'object' ? [num(v, 'x'), num(v, 'y'), num(v, 'z'), num(v, 'w')] : [0, 0, 0, 0];
 };
 
-function cloudsSetting(o) {   // BLBCloudsSetting
+function cloudsSetting(o) {
+  // BLBCloudsSetting
   return {
-    CloudsTextureFile: str(o, 'CloudsTextureFile'), CloudsNormalTextureFile: str(o, 'CloudsNormalTextureFile'),
-    TilingX: num(o, 'TilingX'), TilingY: num(o, 'TilingY'), OffsetX: num(o, 'OffsetX'), OffsetY: num(o, 'OffsetY'),
-    DayColor: str(o, 'DayColor'), NightColor: str(o, 'NightColor'),
-    AlphaTreshold: num(o, 'AlphaTreshold'), AlphaMax: num(o, 'AlphaMax'), ColorBoost: num(o, 'ColorBoost'),
-    NormalEffect: num(o, 'NormalEffect'), NormalSpeed: num(o, 'NormalSpeed'), Opacity: num(o, 'Opacity'),
-    Speed: num(o, 'Speed'), Direction: num(o, 'Direction'), Bending: num(o, 'Bending'),
-    BlendSpeed: num(o, 'BlendSpeed'), BlendScale: num(o, 'BlendScale'), BlendLB: num(o, 'BlendLB'), BlendUB: num(o, 'BlendUB'),
-    SunColorScale: num(o, 'SunColorScale'), SunColorLerpScale: num(o, 'SunColorLerpScale'), SunColor: str(o, 'SunColor'),
+    CloudsTextureFile: str(o, 'CloudsTextureFile'),
+    CloudsNormalTextureFile: str(o, 'CloudsNormalTextureFile'),
+    TilingX: num(o, 'TilingX'),
+    TilingY: num(o, 'TilingY'),
+    OffsetX: num(o, 'OffsetX'),
+    OffsetY: num(o, 'OffsetY'),
+    DayColor: str(o, 'DayColor'),
+    NightColor: str(o, 'NightColor'),
+    AlphaTreshold: num(o, 'AlphaTreshold'),
+    AlphaMax: num(o, 'AlphaMax'),
+    ColorBoost: num(o, 'ColorBoost'),
+    NormalEffect: num(o, 'NormalEffect'),
+    NormalSpeed: num(o, 'NormalSpeed'),
+    Opacity: num(o, 'Opacity'),
+    Speed: num(o, 'Speed'),
+    Direction: num(o, 'Direction'),
+    Bending: num(o, 'Bending'),
+    BlendSpeed: num(o, 'BlendSpeed'),
+    BlendScale: num(o, 'BlendScale'),
+    BlendLB: num(o, 'BlendLB'),
+    BlendUB: num(o, 'BlendUB'),
+    SunColorScale: num(o, 'SunColorScale'),
+    SunColorLerpScale: num(o, 'SunColorLerpScale'),
+    SunColor: str(o, 'SunColor'),
   };
 }
-function starsSetting(o) {   // BLBStarsSetting
+function starsSetting(o) {
+  // BLBStarsSetting
   return {
     StarsTextureFile: str(o, 'StarsTextureFile'),
-    StarsTilingX: num(o, 'StarsTilingX'), StarsTilingY: num(o, 'StarsTilingY'),
-    StarsOffsetX: num(o, 'StarsOffsetX'), StarsOffsetY: num(o, 'StarsOffsetY'),
+    StarsTilingX: num(o, 'StarsTilingX'),
+    StarsTilingY: num(o, 'StarsTilingY'),
+    StarsOffsetX: num(o, 'StarsOffsetX'),
+    StarsOffsetY: num(o, 'StarsOffsetY'),
     StarBending: num(o, 'StarBending'),
-    StarsTwinkleTextureFile: str(o, 'StarsTwinkleTextureFile'), TwinkleTextureFile: str(o, 'TwinkleTextureFile'),
-    TwinkleTilingX: num(o, 'TwinkleTilingX'), TwinkleTilingY: num(o, 'TwinkleTilingY'),
-    TwinkleOffsetX: num(o, 'TwinkleOffsetX'), TwinkleOffsetY: num(o, 'TwinkleOffsetY'),
-    TwinkleBoost: num(o, 'TwinkleBoost'), TwinkleSpeed: num(o, 'TwinkleSpeed'),
+    StarsTwinkleTextureFile: str(o, 'StarsTwinkleTextureFile'),
+    TwinkleTextureFile: str(o, 'TwinkleTextureFile'),
+    TwinkleTilingX: num(o, 'TwinkleTilingX'),
+    TwinkleTilingY: num(o, 'TwinkleTilingY'),
+    TwinkleOffsetX: num(o, 'TwinkleOffsetX'),
+    TwinkleOffsetY: num(o, 'TwinkleOffsetY'),
+    TwinkleBoost: num(o, 'TwinkleBoost'),
+    TwinkleSpeed: num(o, 'TwinkleSpeed'),
   };
 }
-function moonSetting(o) {   // BLBMoonSetting
+function moonSetting(o) {
+  // BLBMoonSetting
   return {
-    MoonColor: str(o, 'MoonColor'), MoonTextureFile: str(o, 'MoonTextureFile'),
-    TilingX: num(o, 'TilingX'), TilingY: num(o, 'TilingY'), OffsetX: num(o, 'OffsetX'), OffsetY: num(o, 'OffsetY'),
-    MinSize: num(o, 'MinSize'), MaxSize: num(o, 'MaxSize'),
-    OrbitAngle: vec4(o, 'OrbitAngle'), OrbitOffset: num(o, 'OrbitOffset'), OrbitSpeed: num(o, 'OrbitSpeed'),
-    SemiMinAxis: num(o, 'SemiMinAxis'), SemiMajAxis: num(o, 'SemiMajAxis'),
-    AutoPhase: num(o, 'AutoPhase'), Phase: vec4(o, 'Phase'), Spin: num(o, 'Spin'),
-    TidalAngle: vec4(o, 'TidalAngle'), SpinSpeed: vec4(o, 'SpinSpeed'),
+    MoonColor: str(o, 'MoonColor'),
+    MoonTextureFile: str(o, 'MoonTextureFile'),
+    TilingX: num(o, 'TilingX'),
+    TilingY: num(o, 'TilingY'),
+    OffsetX: num(o, 'OffsetX'),
+    OffsetY: num(o, 'OffsetY'),
+    MinSize: num(o, 'MinSize'),
+    MaxSize: num(o, 'MaxSize'),
+    OrbitAngle: vec4(o, 'OrbitAngle'),
+    OrbitOffset: num(o, 'OrbitOffset'),
+    OrbitSpeed: num(o, 'OrbitSpeed'),
+    SemiMinAxis: num(o, 'SemiMinAxis'),
+    SemiMajAxis: num(o, 'SemiMajAxis'),
+    AutoPhase: num(o, 'AutoPhase'),
+    Phase: vec4(o, 'Phase'),
+    Spin: num(o, 'Spin'),
+    TidalAngle: vec4(o, 'TidalAngle'),
+    SpinSpeed: vec4(o, 'SpinSpeed'),
   };
 }
 
@@ -188,18 +243,25 @@ export function parseSkyboxSetting(jsonText) {
   const o = JSON.parse(jsonText);
   const sub = (k) => (typeof o[k] === 'string' ? JSON.parse(o[k]) : {});
   return {
-    SunSize: num(o, 'SunSize'), SunSizeConvergence: Math.trunc(num(o, 'SunSizeConvergence')),   // `public int` on BLBSkyboxSetting: JsonUtility truncates at the parse
+    SunSize: num(o, 'SunSize'),
+    SunSizeConvergence: Math.trunc(num(o, 'SunSizeConvergence')), // `public int` on BLBSkyboxSetting: JsonUtility truncates at the parse
     AtmosphereLerpDuration: num(o, 'AtmosphereLerpDuration'),
     AtmosphereNormalThickness: num(o, 'AtmosphereNormalThickness'),
     AtmosphereDawnDuskThickness: num(o, 'AtmosphereDawnDuskThickness'),
     AtmosphereLerp: num(o, 'AtmosphereLerp'),
-    SkyTint: str(o, 'SkyTint'), GroundColor: str(o, 'GroundColor'),
-    AmbientColor: str(o, 'AmbientColor'), AmbientIntensity: num(o, 'AmbientIntensity'),
+    SkyTint: str(o, 'SkyTint'),
+    GroundColor: str(o, 'GroundColor'),
+    AmbientColor: str(o, 'AmbientColor'),
+    AmbientIntensity: num(o, 'AmbientIntensity'),
     Exposure: num(o, 'Exposure'),
-    NightStartHeight: num(o, 'NightStartHeight'), NightEndHeight: num(o, 'NightEndHeight'),
-    SkyFadeStart: num(o, 'SkyFadeStart'), SkyEndStart: num(o, 'SkyEndStart'),
+    NightStartHeight: num(o, 'NightStartHeight'),
+    NightEndHeight: num(o, 'NightEndHeight'),
+    SkyFadeStart: num(o, 'SkyFadeStart'),
+    SkyEndStart: num(o, 'SkyEndStart'),
     stepSize: num(o, 'stepSize'),
-    FogDayColor: str(o, 'FogDayColor'), FogNightColor: str(o, 'FogNightColor'), FogDistance: num(o, 'FogDistance'),
+    FogDayColor: str(o, 'FogDayColor'),
+    FogNightColor: str(o, 'FogNightColor'),
+    FogDistance: num(o, 'FogDistance'),
     MoonNightColor: str(o, 'MoonNightColor'),
     CloudFadeHeight: num(o, 'CloudFadeHeight'),
     TopClouds: cloudsSetting(sub('TopCloudsFlat')),
@@ -214,8 +276,10 @@ export function parseSkyboxSetting(jsonText) {
 export function parseFogSetting(jsonText) {
   const o = JSON.parse(jsonText);
   return {
-    FogModeInt: Math.trunc(num(o, 'FogModeInt')), Density: num(o, 'Density'),
-    StartDistance: num(o, 'StartDistance'), EndDistance: num(o, 'EndDistance'),
+    FogModeInt: Math.trunc(num(o, 'FogModeInt')),
+    Density: num(o, 'Density'),
+    StartDistance: num(o, 'StartDistance'),
+    EndDistance: num(o, 'EndDistance'),
     ExcludeSkybox: o.ExcludeSkybox === true,
   };
 }
@@ -263,11 +327,16 @@ export function fogSettingsFromPresets(fogJsonByName, densitySetting = 1) {
  *  mapping, which is world/weather.js's fogForWeather with a table). */
 export function fogPresetKey(weather) {
   switch (FOG_PRESET_FOR_WEATHER[weather] ?? 'FogSunny') {
-    case 'FogOvercast': return 'overcast';
-    case 'FogHeavyFog': return 'heavy';
-    case 'FogRainy': return 'rainy';
-    case 'FogSnowy': return 'snowy';
-    default: return 'sunny';
+    case 'FogOvercast':
+      return 'overcast';
+    case 'FogHeavyFog':
+      return 'heavy';
+    case 'FogRainy':
+      return 'rainy';
+    case 'FogSnowy':
+      return 'snowy';
+    default:
+      return 'sunny';
   }
 }
 
@@ -279,52 +348,111 @@ export function fogPresetKey(weather) {
  *  Keywords: REDUCE_COLOR, _SUNDISK_HIGH_QUALITY, both spin options
  *  TIDAL_LOCK, PHASE_LIGHT off - baked into the shader, not switchable. */
 export const MATERIAL_DEFAULTS = Object.freeze({
-  _SunSize: 0.1, _SunSizeConvergence: 10,
-  _AtmosphereLerpDuration: 0.66, _AtmosphereNormalThickness: 0.75, _AtmosphereDawnDuskThickness: 1.5, _AtmosphereLerp: 1,
-  _SkyTint: [0.3803922, 0.4627451, 0.8627451, 1], _GroundColor: [0.2980392, 0.2980392, 0.2980392, 1],
+  _SunSize: 0.1,
+  _SunSizeConvergence: 10,
+  _AtmosphereLerpDuration: 0.66,
+  _AtmosphereNormalThickness: 0.75,
+  _AtmosphereDawnDuskThickness: 1.5,
+  _AtmosphereLerp: 1,
+  _SkyTint: [0.3803922, 0.4627451, 0.8627451, 1],
+  _GroundColor: [0.2980392, 0.2980392, 0.2980392, 1],
   _Exposure: 1.5,
-  _NightStartHeight: 0.01, _NightEndHeight: -0.01, _SkyFadeStart: -0.01, _SkyFadeEnd: -0.04,
+  _NightStartHeight: 0.01,
+  _NightEndHeight: -0.01,
+  _SkyFadeStart: -0.01,
+  _SkyFadeEnd: -0.04,
   _stepSize: 0.015,
   _FogColor: [0.116297, 0.1280244, 0.1788433, 1],
-  _FogDayColor: [0.4666667, 0.5137255, 0.7176471, 1], _FogNightColor: [0, 0, 0, 1], _FogDistance: 1500,
+  _FogDayColor: [0.4666667, 0.5137255, 0.7176471, 1],
+  _FogNightColor: [0, 0, 0, 1],
+  _FogDistance: 1500,
   _MoonNightColor: [0, 0, 0.1529412, 1],
   _CloudFadeHeight: 0.2,
-  _CloudTopColor: [0.7803922, 0.7803922, 0.7803922, 1], _CloudTopNightColor: [0.1882353, 0.1882353, 0.1882353, 1],
-  _CloudTopAlphaCutoff: 0.02, _CloudTopAlphaMax: 0.757, _CloudTopColorBoost: 0.665, _CloudTopNormalEffect: 0.329,
-  _CloudTopOpacity: 0.797, _CloudTopBending: 0, _CloudTopSunScale: 1, _CloudTopSunLerpScale: 1,
+  _CloudTopColor: [0.7803922, 0.7803922, 0.7803922, 1],
+  _CloudTopNightColor: [0.1882353, 0.1882353, 0.1882353, 1],
+  _CloudTopAlphaCutoff: 0.02,
+  _CloudTopAlphaMax: 0.757,
+  _CloudTopColorBoost: 0.665,
+  _CloudTopNormalEffect: 0.329,
+  _CloudTopOpacity: 0.797,
+  _CloudTopBending: 0,
+  _CloudTopSunScale: 1,
+  _CloudTopSunLerpScale: 1,
   _CloudTopSunColor: [0.09803922, 0.09803922, 0.09803922, 1],
-  _CloudColor: [0.7803922, 0.7803922, 0.7803922, 1], _CloudNightColor: [0.1372549, 0.1372549, 0.1607843, 1],
-  _CloudAlphaCutoff: 0.02, _CloudAlphaMax: 0.757, _CloudColorBoost: 0.665, _CloudNormalEffect: 0.665,
-  _CloudNormalSpeed: 0, _CloudOpacity: 0.557, _CloudSpeed: 0.000104125, _CloudDirection: 0, _CloudBending: 0.15,
-  _CloudBlendSpeed: 0, _CloudBlendScale: 0, _CloudBlendLB: 0, _CloudBlendUB: 0,
-  _CloudSunScale: 1, _CloudSunLerpScale: 1, _CloudSunColor: [0.1019608, 0.1019608, 0.1019608, 1],
-  _StarBending: 1, _TwinkleBoost: 1, _TwinkleSpeed: 0.004165,
-  _MoonColor: [0.6705883, 0.6705883, 0.6705883, 1], _MoonMaxSize: 0.11, _MoonMinSize: 0.11,
-  _MoonOrbitAngle: [270, 90, 18.21058, 0], _MoonOrbitOffset: 65.57854, _MoonOrbitSpeed: 0.0000725,
-  _MoonSemiMajAxis: 1, _MoonSemiMinAxis: 1, _MoonPhaseOption: 0, _MoonPhase: [-114.4215, 0, 0, 0],
-  _MoonSpinOption: 0, _MoonTidalAngle: [0, 300, 0, 0], _MoonSpinSpeed: [0.00833, 0, 0, 0],
-  _SecundaColor: [0.6705883, 0.6705883, 0.6705883, 1], _SecundaMaxSize: 0.07, _SecundaMinSize: 0.07,
-  _SecundaOrbitAngle: [270, 90, 29.38951, 0], _SecundaOrbitOffset: 101.5785, _SecundaOrbitSpeed: 0.0000725,
-  _SecundaSemiMajAxis: 0.6, _SecundaSemiMinAxis: 0.9, _SecundaPhaseOption: 0, _SecundaPhase: [-78.42146, 0, 0, 0],
-  _SecundaSpinOption: 0, _SecundaTidalAngle: [30, 160, -30, 0], _SecundaSpinSpeed: [0.1, 0, 0, 0],
+  _CloudColor: [0.7803922, 0.7803922, 0.7803922, 1],
+  _CloudNightColor: [0.1372549, 0.1372549, 0.1607843, 1],
+  _CloudAlphaCutoff: 0.02,
+  _CloudAlphaMax: 0.757,
+  _CloudColorBoost: 0.665,
+  _CloudNormalEffect: 0.665,
+  _CloudNormalSpeed: 0,
+  _CloudOpacity: 0.557,
+  _CloudSpeed: 0.000104125,
+  _CloudDirection: 0,
+  _CloudBending: 0.15,
+  _CloudBlendSpeed: 0,
+  _CloudBlendScale: 0,
+  _CloudBlendLB: 0,
+  _CloudBlendUB: 0,
+  _CloudSunScale: 1,
+  _CloudSunLerpScale: 1,
+  _CloudSunColor: [0.1019608, 0.1019608, 0.1019608, 1],
+  _StarBending: 1,
+  _TwinkleBoost: 1,
+  _TwinkleSpeed: 0.004165,
+  _MoonColor: [0.6705883, 0.6705883, 0.6705883, 1],
+  _MoonMaxSize: 0.11,
+  _MoonMinSize: 0.11,
+  _MoonOrbitAngle: [270, 90, 18.21058, 0],
+  _MoonOrbitOffset: 65.57854,
+  _MoonOrbitSpeed: 0.0000725,
+  _MoonSemiMajAxis: 1,
+  _MoonSemiMinAxis: 1,
+  _MoonPhaseOption: 0,
+  _MoonPhase: [-114.4215, 0, 0, 0],
+  _MoonSpinOption: 0,
+  _MoonTidalAngle: [0, 300, 0, 0],
+  _MoonSpinSpeed: [0.00833, 0, 0, 0],
+  _SecundaColor: [0.6705883, 0.6705883, 0.6705883, 1],
+  _SecundaMaxSize: 0.07,
+  _SecundaMinSize: 0.07,
+  _SecundaOrbitAngle: [270, 90, 29.38951, 0],
+  _SecundaOrbitOffset: 101.5785,
+  _SecundaOrbitSpeed: 0.0000725,
+  _SecundaSemiMajAxis: 0.6,
+  _SecundaSemiMinAxis: 0.9,
+  _SecundaPhaseOption: 0,
+  _SecundaPhase: [-78.42146, 0, 0, 0],
+  _SecundaSpinOption: 0,
+  _SecundaTidalAngle: [30, 160, -30, 0],
+  _SecundaSpinSpeed: [0.1, 0, 0, 0],
   _WorldTime: 0,
   // the texture slots and their scale/offset (_ST = tiling.xy, offset.zw)
-  _CloudTopDiffuse: 'CdMSunny', _CloudTopDiffuse_ST: [0.2, 0.2, 0, 0],
-  _CloudTopNormal: 'CdMCloudsNormal', _CloudTopNormal_ST: [1, 1, 0, 0],
-  _CloudDiffuse: 'CdMSunny2', _CloudDiffuse_ST: [0.25, 0.25, 0.5, 0],
-  _CloudNormal: 'CdMCloudsNormal', _CloudNormal_ST: [1, 1, 0, 0],
-  _StarTex: 'VanillaStars', _StarTex_ST: [0.25, 0.25, 0, 0],
-  _StarTwinkleTex: 'VanillaStarsTwinkleMask', _StarTwinkleTex_ST: [0.25, 0.25, 0, 0],
-  _TwinkleTex: 'NLstarsHighlight', _TwinkleTex_ST: [1, 1, 0, 0],
-  _MoonTex: 'PixelMars', _MoonTex_ST: [0, 0, 0, 0],
-  _SecundaTex: 'PixelEnceladus', _SecundaTex_ST: [0, 0, 0, 0],
+  _CloudTopDiffuse: 'CdMSunny',
+  _CloudTopDiffuse_ST: [0.2, 0.2, 0, 0],
+  _CloudTopNormal: 'CdMCloudsNormal',
+  _CloudTopNormal_ST: [1, 1, 0, 0],
+  _CloudDiffuse: 'CdMSunny2',
+  _CloudDiffuse_ST: [0.25, 0.25, 0.5, 0],
+  _CloudNormal: 'CdMCloudsNormal',
+  _CloudNormal_ST: [1, 1, 0, 0],
+  _StarTex: 'VanillaStars',
+  _StarTex_ST: [0.25, 0.25, 0, 0],
+  _StarTwinkleTex: 'VanillaStarsTwinkleMask',
+  _StarTwinkleTex_ST: [0.25, 0.25, 0, 0],
+  _TwinkleTex: 'NLstarsHighlight',
+  _TwinkleTex_ST: [1, 1, 0, 0],
+  _MoonTex: 'PixelMars',
+  _MoonTex_ST: [0, 0, 0, 0],
+  _SecundaTex: 'PixelEnceladus',
+  _SecundaTex_ST: [0, 0, 0, 0],
 });
 
 /** The material values Init writes before the first preset (:115-125).
  *  `windDirection` is getWindDirection()'s Random.Range(0, 360). */
 export function initMaterial(windDirection = 0) {
   const mat = { ...MATERIAL_DEFAULTS };
-  mat._AtmosphereNormalThickness = 0.75;   // Instance.atmosphere
+  mat._AtmosphereNormalThickness = 0.75; // Instance.atmosphere
   mat._AtmosphereDawnDuskThickness = 0.75;
   mat._AtmosphereLerp = 0;
   mat._SkyTint = [0.5294118, 0.8078431, 0.9215686, 1];
@@ -343,9 +471,12 @@ export function initMaterial(windDirection = 0) {
  *  passes true). A colour that fails to parse leaves the slot as it was,
  *  exactly as the `if (TryParseHtmlString)` guards do. */
 export function applySkyboxSettings(mat, s) {
-  const color = (key, hex) => { const c = parseHtmlColor(hex); if (c) mat[key] = c; };
+  const color = (key, hex) => {
+    const c = parseHtmlColor(hex);
+    if (c) mat[key] = c;
+  };
   mat._SunSize = s.SunSize;
-  mat._SunSizeConvergence = Math.trunc(s.SunSizeConvergence);   // SetInt
+  mat._SunSizeConvergence = Math.trunc(s.SunSizeConvergence); // SetInt
   mat._AtmosphereLerpDuration = s.AtmosphereLerpDuration;
   mat._AtmosphereLerp = s.AtmosphereLerp;
   mat._AtmosphereNormalThickness = s.AtmosphereNormalThickness;
@@ -383,13 +514,13 @@ export function applySkyboxSettings(mat, s) {
   mat._CloudNormalEffect = s.BottomClouds.NormalEffect;
   mat._CloudOpacity = s.BottomClouds.Opacity;
   mat._CloudSpeed = s.BottomClouds.Speed * TIMESCALE_FACTOR;
-  mat._CloudDirection = s.BottomClouds.Direction;   // QUIRK: the preset's 0 overwrites Init's random wind
+  mat._CloudDirection = s.BottomClouds.Direction; // QUIRK: the preset's 0 overwrites Init's random wind
   mat._CloudBending = s.BottomClouds.Bending;
   mat._CloudBlendSpeed = s.BottomClouds.BlendSpeed * TIMESCALE_FACTOR;
   mat._CloudBlendScale = s.BottomClouds.BlendScale;
   mat._CloudBlendLB = s.BottomClouds.BlendLB;
   mat._CloudBlendUB = s.BottomClouds.BlendUB;
-  mat._CloudSunScale = s.TopClouds.SunColorScale;   // QUIRK: TopClouds, verbatim (:1387)
+  mat._CloudSunScale = s.TopClouds.SunColorScale; // QUIRK: TopClouds, verbatim (:1387)
   mat._CloudSunLerpScale = s.BottomClouds.SunColorLerpScale;
   color('_CloudSunColor', s.BottomClouds.SunColor);
   // refreshTextures
@@ -398,13 +529,18 @@ export function applySkyboxSettings(mat, s) {
   mat._CloudTopDiffuse_ST = [s.TopClouds.TilingX, s.TopClouds.TilingY, s.TopClouds.OffsetX, s.TopClouds.OffsetY];
   mat._CloudDiffuse = s.BottomClouds.CloudsTextureFile;
   mat._CloudNormal = s.BottomClouds.CloudsNormalTextureFile;
-  mat._CloudDiffuse_ST = [s.BottomClouds.TilingX, s.BottomClouds.TilingY, s.BottomClouds.OffsetX, s.BottomClouds.OffsetY];
+  mat._CloudDiffuse_ST = [
+    s.BottomClouds.TilingX,
+    s.BottomClouds.TilingY,
+    s.BottomClouds.OffsetX,
+    s.BottomClouds.OffsetY,
+  ];
   mat._StarTex = s.Stars.StarsTextureFile;
   mat._StarTex_ST = [s.Stars.StarsTilingX, s.Stars.StarsTilingY, s.Stars.StarsOffsetX, s.Stars.StarsOffsetY];
   mat._StarTwinkleTex = s.Stars.StarsTwinkleTextureFile;
   mat._StarTwinkleTex_ST = [s.Stars.StarsTilingX, s.Stars.StarsTilingY, s.Stars.StarsOffsetX, s.Stars.StarsOffsetY];
   mat._TwinkleTex = s.Stars.TwinkleTextureFile;
-  mat._TwinkleTex_ST = [s.Stars.TwinkleTilingX, s.Stars.TwinkleTilingY, s.Stars.StarsOffsetX, s.Stars.StarsOffsetY];   // QUIRK: the stars' offset (:1415)
+  mat._TwinkleTex_ST = [s.Stars.TwinkleTilingX, s.Stars.TwinkleTilingY, s.Stars.StarsOffsetX, s.Stars.StarsOffsetY]; // QUIRK: the stars' offset (:1415)
   mat._MoonTex = s.Masser.MoonTextureFile;
   mat._MoonTex_ST = [s.Masser.TilingX, s.Masser.TilingY, s.Masser.OffsetX, s.Masser.OffsetY];
   mat._SecundaTex = s.Secunda.MoonTextureFile;
@@ -420,7 +556,7 @@ export function applySkyboxSettings(mat, s) {
   mat._MoonSemiMajAxis = s.Masser.SemiMajAxis;
   mat._MoonPhaseOption = s.Masser.AutoPhase;
   mat._MoonSpinOption = s.Masser.Spin;
-  mat._MasserTidalAngle = [...s.Masser.TidalAngle];   // QUIRK: not a shader property; _MoonTidalAngle keeps the material's (:1446)
+  mat._MasserTidalAngle = [...s.Masser.TidalAngle]; // QUIRK: not a shader property; _MoonTidalAngle keeps the material's (:1446)
   mat._MoonSpinSpeed = s.Masser.SpinSpeed.map((v) => v * TIMESCALE_FACTOR);
   color('_SecundaColor', s.Secunda.MoonColor);
   mat._SecundaMinSize = s.Secunda.MinSize;
@@ -429,7 +565,7 @@ export function applySkyboxSettings(mat, s) {
   mat._SecundaSemiMajAxis = s.Secunda.SemiMajAxis;
   mat._SecundaSpinOption = s.Secunda.Spin;
   mat._SecundaTidalAngle = [...s.Secunda.TidalAngle];
-  mat._SecundaSpinSpeed = [...s.Secunda.SpinSpeed];   // not timescaled (:1464), verbatim
+  mat._SecundaSpinSpeed = [...s.Secunda.SpinSpeed]; // not timescaled (:1464), verbatim
   return mat;
 }
 
@@ -437,8 +573,15 @@ export function applySkyboxSettings(mat, s) {
  *  settings the bundle carries for each file (Point = NEAREST, Bilinear
  *  = LINEAR; mips as imported; sRGB as flagged; all Repeat). */
 export const TEXTURE_SLOTS = Object.freeze([
-  '_CloudTopDiffuse', '_CloudTopNormal', '_CloudDiffuse', '_CloudNormal',
-  '_StarTex', '_StarTwinkleTex', '_TwinkleTex', '_MoonTex', '_SecundaTex',
+  '_CloudTopDiffuse',
+  '_CloudTopNormal',
+  '_CloudDiffuse',
+  '_CloudNormal',
+  '_StarTex',
+  '_StarTwinkleTex',
+  '_TwinkleTex',
+  '_MoonTex',
+  '_SecundaTex',
 ]);
 // DS3 (2026-09-15, Mac: "the nighttime sky has these dark spots in the
 // skybox") - THE STAR FIELD IS FILTERED, AND THAT IS A DEPARTURE.
@@ -480,13 +623,13 @@ export const TEXTURE_IMPORTS = Object.freeze({
   CdMOvercast2: { filter: 'point', mips: true, srgb: true },
   CdMThunder: { filter: 'point', mips: true, srgb: true },
   CdMSnow: { filter: 'point', mips: true, srgb: true },
-  VanillaStars: { filter: 'bilinear', mips: true, srgb: true },   // DS3: the star FIELD is filtered - see the note above
+  VanillaStars: { filter: 'bilinear', mips: true, srgb: true }, // DS3: the star FIELD is filtered - see the note above
   VanillaStarsTwinkleMask: { filter: 'point', mips: true, srgb: true },
   NLstarsHighlight: { filter: 'point', mips: true, srgb: true },
-  DefaultStars: { filter: 'bilinear', mips: false, srgb: true },   // DS3
+  DefaultStars: { filter: 'bilinear', mips: false, srgb: true }, // DS3
   DefaultStarsTwinkleMask: { filter: 'point', mips: false, srgb: false },
   DefaultStarsTwinkleNoise: { filter: 'point', mips: true, srgb: true },
-  NLStarsBlack: { filter: 'bilinear', mips: true, srgb: true },   // DS3 (uniformly black - no visible change, but the field's rule is one rule)
+  NLStarsBlack: { filter: 'bilinear', mips: true, srgb: true }, // DS3 (uniformly black - no visible change, but the field's rule is one rule)
   NLStarsThiefTwinkleMask: { filter: 'point', mips: true, srgb: true },
   PixelMars: { filter: 'point', mips: false, srgb: true },
   PixelEnceladus: { filter: 'point', mips: true, srgb: true },
@@ -495,15 +638,29 @@ export const TEXTURE_IMPORTS = Object.freeze({
 /** The shader's own default for an unassigned slot ("black", "bump",
  *  "white"), as an RGBA byte - what a slot shows until its file lands. */
 export const SLOT_DEFAULT_TEXEL = Object.freeze({
-  _CloudTopDiffuse: [0, 0, 0, 255], _CloudTopNormal: [128, 128, 255, 128], _CloudDiffuse: [0, 0, 0, 255], _CloudNormal: [128, 128, 255, 128],
-  _StarTex: [0, 0, 0, 255], _StarTwinkleTex: [0, 0, 0, 255], _TwinkleTex: [0, 0, 0, 255],
-  _MoonTex: [255, 255, 255, 255], _SecundaTex: [255, 255, 255, 255],
+  _CloudTopDiffuse: [0, 0, 0, 255],
+  _CloudTopNormal: [128, 128, 255, 128],
+  _CloudDiffuse: [0, 0, 0, 255],
+  _CloudNormal: [128, 128, 255, 128],
+  _StarTex: [0, 0, 0, 255],
+  _StarTwinkleTex: [0, 0, 0, 255],
+  _TwinkleTex: [0, 0, 0, 255],
+  _MoonTex: [255, 255, 255, 255],
+  _SecundaTex: [255, 255, 255, 255],
 });
 
 // ── The day-part machine (:195-280, :417-457) ─────────────────────
 
 export const DAY_PARTS = Object.freeze({
-  None: 0, Dawn: 1, DawnEnd: 2, Morning: 3, Midday: 4, Dusk: 5, DuskEnd: 6, Evening: 7, Night: 8,
+  None: 0,
+  Dawn: 1,
+  DawnEnd: 2,
+  Morning: 3,
+  Midday: 4,
+  Dusk: 5,
+  DuskEnd: 6,
+  Evening: 7,
+  Night: 8,
 });
 /** isHourDayPart, folded: the part an hour is in, in Update's own
  *  test order (Dawn, DawnEnd, Dusk, DuskEnd, Night, Morning, Midday,
@@ -528,28 +685,48 @@ export function weatherIndexOf(dayPart) {
 /** Update's `dayTime` flag per part (unused by anything that reads it
  *  today - setFogColor(day) ignores its argument - carried verbatim). */
 export function dayTimeOf(dayPart) {
-  return dayPart === DAY_PARTS.DawnEnd || dayPart === DAY_PARTS.Dusk || dayPart === DAY_PARTS.Morning || dayPart === DAY_PARTS.Midday;
+  return (
+    dayPart === DAY_PARTS.DawnEnd ||
+    dayPart === DAY_PARTS.Dusk ||
+    dayPart === DAY_PARTS.Morning ||
+    dayPart === DAY_PARTS.Midday
+  );
 }
 
 // ── The moons (:773-1027) ──────────────────────────────────────────
 
 /** LunarPhaseStates: the phase's X angle. */
 export const LUNAR_PHASE_X = Object.freeze({
-  [LUNAR_PHASES.New]: 180, [LUNAR_PHASES.OneWax]: 135, [LUNAR_PHASES.HalfWax]: 90, [LUNAR_PHASES.ThreeWax]: 45,
-  [LUNAR_PHASES.Full]: 0, [LUNAR_PHASES.ThreeWane]: -45, [LUNAR_PHASES.HalfWane]: -90, [LUNAR_PHASES.OneWane]: -135,
+  [LUNAR_PHASES.New]: 180,
+  [LUNAR_PHASES.OneWax]: 135,
+  [LUNAR_PHASES.HalfWax]: 90,
+  [LUNAR_PHASES.ThreeWax]: 45,
+  [LUNAR_PHASES.Full]: 0,
+  [LUNAR_PHASES.ThreeWane]: -45,
+  [LUNAR_PHASES.HalfWane]: -90,
+  [LUNAR_PHASES.OneWane]: -135,
 });
 /** GetLunarPhaseLength (:902-913), in days. */
 export function lunarPhaseLength(phase) {
   switch (phase) {
-    case LUNAR_PHASES.Full: return 1;
-    case LUNAR_PHASES.New: return 1;
-    case LUNAR_PHASES.ThreeWane: return 5;
-    case LUNAR_PHASES.HalfWane: return 5;
-    case LUNAR_PHASES.OneWane: return 5;
-    case LUNAR_PHASES.OneWax: return 6;
-    case LUNAR_PHASES.HalfWax: return 6;
-    case LUNAR_PHASES.ThreeWax: return 3;
-    default: return 1;
+    case LUNAR_PHASES.Full:
+      return 1;
+    case LUNAR_PHASES.New:
+      return 1;
+    case LUNAR_PHASES.ThreeWane:
+      return 5;
+    case LUNAR_PHASES.HalfWane:
+      return 5;
+    case LUNAR_PHASES.OneWane:
+      return 5;
+    case LUNAR_PHASES.OneWax:
+      return 6;
+    case LUNAR_PHASES.HalfWax:
+      return 6;
+    case LUNAR_PHASES.ThreeWax:
+      return 3;
+    default:
+      return 1;
   }
 }
 /** GetPhaseDayOffset (:916-931): the day within the phase, from the
@@ -567,15 +744,24 @@ export function phaseDayOffset(moonRatio) {
 /** GetNextLunarPhase (:934-945). */
 export function nextLunarPhase(phase) {
   switch (phase) {
-    case LUNAR_PHASES.New: return LUNAR_PHASES.OneWax;
-    case LUNAR_PHASES.OneWax: return LUNAR_PHASES.HalfWax;
-    case LUNAR_PHASES.HalfWax: return LUNAR_PHASES.ThreeWax;
-    case LUNAR_PHASES.ThreeWax: return LUNAR_PHASES.Full;
-    case LUNAR_PHASES.Full: return LUNAR_PHASES.ThreeWane;
-    case LUNAR_PHASES.ThreeWane: return LUNAR_PHASES.HalfWane;
-    case LUNAR_PHASES.HalfWane: return LUNAR_PHASES.OneWane;
-    case LUNAR_PHASES.OneWane: return LUNAR_PHASES.New;
-    default: return LUNAR_PHASES.None;
+    case LUNAR_PHASES.New:
+      return LUNAR_PHASES.OneWax;
+    case LUNAR_PHASES.OneWax:
+      return LUNAR_PHASES.HalfWax;
+    case LUNAR_PHASES.HalfWax:
+      return LUNAR_PHASES.ThreeWax;
+    case LUNAR_PHASES.ThreeWax:
+      return LUNAR_PHASES.Full;
+    case LUNAR_PHASES.Full:
+      return LUNAR_PHASES.ThreeWane;
+    case LUNAR_PHASES.ThreeWane:
+      return LUNAR_PHASES.HalfWane;
+    case LUNAR_PHASES.HalfWane:
+      return LUNAR_PHASES.OneWane;
+    case LUNAR_PHASES.OneWane:
+      return LUNAR_PHASES.New;
+    default:
+      return LUNAR_PHASES.None;
   }
 }
 /** InterpolateAngle (:889-899): the short way round. */
@@ -623,9 +809,14 @@ export function orbitParameters(masser, secunda) {
   if (masser.phase === LUNAR_PHASES.OneWane) masserZ += 15 * masser.progress;
   if (secunda.phase === LUNAR_PHASES.OneWane) secundaZ += 20 * secunda.progress;
   return {
-    _MoonOrbitAngle: [270, 90, masserZ, 0], _MoonOrbitSpeed: orbitSpeed, _MoonOrbitOffset: masserOrbitOffset,
-    _SecundaOrbitAngle: [270, 90, secundaZ, 0], _SecundaOrbitSpeed: orbitSpeed, _SecundaOrbitOffset: secundaOrbitOffset,
-    _MoonPhase: [masser.interpolatedX, 0, 0, 0], _SecundaPhase: [secunda.interpolatedX, 0, 0, 0],
+    _MoonOrbitAngle: [270, 90, masserZ, 0],
+    _MoonOrbitSpeed: orbitSpeed,
+    _MoonOrbitOffset: masserOrbitOffset,
+    _SecundaOrbitAngle: [270, 90, secundaZ, 0],
+    _SecundaOrbitSpeed: orbitSpeed,
+    _SecundaOrbitOffset: secundaOrbitOffset,
+    _MoonPhase: [masser.interpolatedX, 0, 0, 0],
+    _SecundaPhase: [secunda.interpolatedX, 0, 0, 0],
   };
 }
 
@@ -643,7 +834,10 @@ export function applyLunarPhases(mat, date) {
 // where a moon is (the port's moonlight term) from the same numbers the
 // dome draws it with.
 
-const norm3 = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const norm3 = (v) => {
+  const l = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+};
 const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
@@ -651,7 +845,12 @@ const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
  *  mul(rotMat, position) is rows dot position. */
 export function rotateWorldPosition(p, rot) {
   const [x, y, z] = rot;
-  const cx = Math.cos(x), sx = Math.sin(x), cy = Math.cos(y), sy = Math.sin(y), cz = Math.cos(z), sz = Math.sin(z);
+  const cx = Math.cos(x),
+    sx = Math.sin(x),
+    cy = Math.cos(y),
+    sy = Math.sin(y),
+    cz = Math.cos(z),
+    sz = Math.sin(z);
   const r0 = [cy * cz, -cy * sz, sy];
   const r1 = [cx * sz + sx * sy * cz, cx * cz - sx * sy * sz, -sx * cy];
   const r2 = [sx * sz - cx * sy * cz, sx * cz + cx * sy * sz, cx * cy];
@@ -664,12 +863,18 @@ export function ellipsePosition(majMin, angle) {
 /** GetOrbitPosition. */
 export function orbitPosition(orbitOffsetAngles, majMin, angle) {
   const d = Math.PI / 180;
-  return rotateWorldPosition(ellipsePosition(majMin, angle), [orbitOffsetAngles[0] * d, orbitOffsetAngles[1] * d, orbitOffsetAngles[2] * d]);
+  return rotateWorldPosition(ellipsePosition(majMin, angle), [
+    orbitOffsetAngles[0] * d,
+    orbitOffsetAngles[1] * d,
+    orbitOffsetAngles[2] * d,
+  ]);
 }
 /** RotateArbitraryAxis - the axis-angle matrix, rows again. */
 export function rotateArbitraryAxis(v, angleDeg, axis) {
-  const r = angleDeg * Math.PI / 180;
-  const c = Math.cos(r), s = Math.sin(r), t = 1 - c;
+  const r = (angleDeg * Math.PI) / 180;
+  const c = Math.cos(r),
+    s = Math.sin(r),
+    t = 1 - c;
   const [ax, ay, az] = axis;
   const r0 = [c + ax * ax * t, ax * ay * t - az * s, ax * az * t + ay * s];
   const r1 = [ay * ax * t + az * s, c + ay * ay * t, ay * az * t - ax * s];
@@ -728,7 +933,11 @@ export function sunCurveTime(minuteOfDay) {
 export function sunLightColor(minuteOfDay, lightCurve, weatherScale = 1) {
   const t = Math.max(0, Math.min(1, sunCurveTime(minuteOfDay)));
   const intensity = SUN_RIG_INTENSITY * evaluateCurve(lightCurve, t) * weatherScale;
-  return [srgbToLinear(SUN_RIG_COLOR[0]) * intensity, srgbToLinear(SUN_RIG_COLOR[1]) * intensity, srgbToLinear(SUN_RIG_COLOR[2]) * intensity];
+  return [
+    srgbToLinear(SUN_RIG_COLOR[0]) * intensity,
+    srgbToLinear(SUN_RIG_COLOR[1]) * intensity,
+    srgbToLinear(SUN_RIG_COLOR[2]) * intensity,
+  ];
 }
 
 /** Mathf.SmoothStep(from, to, t). */
@@ -780,14 +989,16 @@ export const MAX_DELTA_SECONDS = 1 / 3;
 export class LightningFlash {
   constructor(rng = Math.random, { flashDuration = 0.2, timeScale = 1 } = {}) {
     this.rng = rng;
-    this.flashDuration = flashDuration;   // BLBSkybox.Start sets 0.2 (:183)
+    this.flashDuration = flashDuration; // BLBSkybox.Start sets 0.2 (:183)
     this.timeScale = timeScale;
     this.light = { x: 0, y: 0, z: 0, range: 0, color: [1, 1, 1], intensity: 0 };
     this.enabled = false;
     this._routines = [];
   }
 
-  _range(min, max) { return min + this.rng() * (max - min); }
+  _range(min, max) {
+    return min + this.rng() * (max - min);
+  }
 
   /** StartFlash(). `playerPos` is the position at the roll; FlashOnce
    *  reads `playerTransform.position` LIVE at each flash (:95), so a
@@ -798,10 +1009,24 @@ export class LightningFlash {
     if (!playerPos) return false;
     if (this.rng() < 0.5 / this.timeScale) {
       if (this.rng() < 0.33 / this.timeScale) {
-        const half = this.flashDuration * this.timeScale / 2;
-        this._routines.push({ t: 0, steps: [['on', half], ['gap', 0.1 * this.timeScale], ['on', half]], step: -1, playerPos: [...playerPos] });
+        const half = (this.flashDuration * this.timeScale) / 2;
+        this._routines.push({
+          t: 0,
+          steps: [
+            ['on', half],
+            ['gap', 0.1 * this.timeScale],
+            ['on', half],
+          ],
+          step: -1,
+          playerPos: [...playerPos],
+        });
       } else {
-        this._routines.push({ t: 0, steps: [['on', this.flashDuration * this.timeScale]], step: -1, playerPos: [...playerPos] });
+        this._routines.push({
+          t: 0,
+          steps: [['on', this.flashDuration * this.timeScale]],
+          step: -1,
+          playerPos: [...playerPos],
+        });
       }
       return true;
     }
@@ -831,11 +1056,16 @@ export class LightningFlash {
       // resume before the next frame, so a flash is always rendered for
       // at least one frame (the DS1 review: a hitch frame's dt used to
       // switch the light on and off inside one call - no flash at all).
-      if (r.step === -1) { r.step = 0; r.t = 0; this._enter(r); continue; }
+      if (r.step === -1) {
+        r.step = 0;
+        r.t = 0;
+        this._enter(r);
+        continue;
+      }
       r.t += dt;
       while (r.step < r.steps.length && r.t >= r.steps[r.step][1]) {
         r.t -= r.steps[r.step][1];
-        if (r.steps[r.step][0] === 'on') this.enabled = false;   // "Turn off the light"
+        if (r.steps[r.step][0] === 'on') this.enabled = false; // "Turn off the light"
         r.step++;
         if (r.step < r.steps.length) this._enter(r);
       }
@@ -843,7 +1073,13 @@ export class LightningFlash {
     this._routines = this._routines.filter((r) => r.step < r.steps.length);
     if (!this.enabled) return null;
     const l = this.light;
-    return { x: l.x, y: l.y, z: l.z, range: l.range, color: [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity] };
+    return {
+      x: l.x,
+      y: l.y,
+      z: l.z,
+      range: l.range,
+      color: [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity],
+    };
   }
 
   _enter(r) {

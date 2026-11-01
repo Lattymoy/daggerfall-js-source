@@ -2,8 +2,8 @@
   {
     "name": "FAST-road-cross-narrowed",
     "file": "src/world/road/roadPainter.js",
-    "old": "if (!(x >= MID_LO - 1 && x <= MID_HI + 1) && !(y >= MID_LO - 1 && y <= MID_HI + 1)",
-    "new": "if (!(x >= MID_LO && x <= MID_HI) && !(y >= MID_LO - 1 && y <= MID_HI + 1)",
+    "old": "        !(x >= MID_LO - 1 && x <= MID_HI + 1) &&",
+    "new": "        !(x >= MID_LO && x <= MID_HI) &&",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/systems/ledger.test.js",
@@ -17,8 +17,8 @@
   {
     "name": "FAST-road-cross-y-narrowed",
     "file": "src/world/road/roadPainter.js",
-    "old": "&& !(y >= MID_LO - 1 && y <= MID_HI + 1)\n",
-    "new": "&& !(y >= MID_LO && y <= MID_HI)\n",
+    "old": "        !(y >= MID_LO - 1 && y <= MID_HI + 1) &&",
+    "new": "        !(y >= MID_LO && y <= MID_HI) &&",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/systems/ledger.test.js",
@@ -32,8 +32,8 @@
   {
     "name": "FAST-road-diag-narrowed",
     "file": "src/world/road/roadPainter.js",
-    "old": "&& Math.abs(x - y) > 2 &&",
-    "new": "&& Math.abs(x - y) > 1 &&",
+    "old": "        Math.abs(x - y) > 2 &&",
+    "new": "        Math.abs(x - y) > 1 &&",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/systems/ledger.test.js",
@@ -47,8 +47,8 @@
   {
     "name": "FAST-road-mirror-narrowed",
     "file": "src/world/road/roadPainter.js",
-    "old": "Math.abs(DIM - 1 - x - y) > 2",
-    "new": "Math.abs(DIM - 1 - x - y) > 1",
+    "old": "        Math.abs(DIM - 1 - x - y) > 2 &&",
+    "new": "        Math.abs(DIM - 1 - x - y) > 1 &&",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/systems/ledger.test.js",
@@ -62,8 +62,8 @@
   {
     "name": "FAST-road-rect-dropped",
     "file": "src/world/road/roadPainter.js",
-    "old": "\n        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)",
-    "new": "",
+    "old": "        !(\n          locationRect &&\n          x > locationRect.xMin &&\n          x < locationRect.xMax &&\n          y > locationRect.yMin &&\n          y < locationRect.yMax\n        ) &&\n        !locationRect?.ring?.[i]",
+    "new": "        !locationRect?.ring?.[i]",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/systems/ledger.test.js",

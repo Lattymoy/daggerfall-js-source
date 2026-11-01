@@ -127,8 +127,8 @@
   {
     "name": "PROF1-14-respec-free",
     "file": "src/net/professionLaw.js",
-    "old": "    out[row.respec_rank] = row.respec_to;",
-    "new": "",
+    "old": "    out[row.respec_rank] = row.respec_to;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/foraging/prof1_law.test.js",
       "test/net/prof1_service.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "PROF1-28-a-harvest-asked-twice-twice",
     "file": "server-account/src/professions.js",
-    "old": "  if (prior) return harvestAnswer(db, player, env, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered",
-    "new": "",
+    "old": "  if (prior) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
+    "new": "  if (false) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered",
     "tests": [
       "test/net/prof1_service.test.js"
     ],
@@ -441,8 +441,8 @@
   {
     "name": "PROF1-49-letting-go-finishes",
     "file": "src/systems/herbAct.js",
-    "old": "        if (!held) { st.cancelled = true; return st; }   // let go before the end: nothing lost",
-    "new": "",
+    "old": "        if (!held) {\n          st.cancelled = true;\n          return st;\n        } // let go before the end: nothing lost\n        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
+    "new": "        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]
@@ -459,7 +459,7 @@
   {
     "name": "PROF1-51-a-turn-the-long-way",
     "file": "src/systems/herbAct.js",
-    "old": "const turnDeg = (a, b) => { let d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };",
+    "old": "const turnDeg = (a, b) => {\n  let d = (a - b) % 360;\n  if (d > 180) d -= 360;\n  if (d < -180) d += 360;\n  return Math.abs(d);\n};",
     "new": "const turnDeg = (a, b) => Math.abs(a - b);",
     "tests": [
       "test/systems/prof1_client.test.js"
@@ -513,8 +513,8 @@
   {
     "name": "PROF1-57-take-without-the-stores",
     "file": "src/ui/noticeWindow.js",
-    "old": "      b.disabled = busy || workBusy || held < w.qty || full;",
-    "new": "      b.disabled = busy || workBusy || full;",
+    "old": "      b.disabled = busy || workBusy || held < w.qty || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
+    "new": "      b.disabled = busy || workBusy || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]

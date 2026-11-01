@@ -6,8 +6,15 @@
 //   RELEASE (/v1/crew/release): a recruit the asker holds let go. An account holds CREW_SIGN_DAY_MAX a day.
 // A row's holder is `<account>:<character>` (AUDIT HORIZONTAL C8: one account's two characters held one man as one, and
 // the first to pay him off let him go from under the other). No gold moves here. Not a DFU member.
-import { crewSignOf, crewDayOk, CREW_SIGN_DAY_MAX, CREW_SIGN_SLOTS, CREW_SIGN_KEEP_DAYS, crewDayAt } from '../../src/net/crewSignLaw.js';
-import { renownCharacterOk } from './renownTracks.js';   // a character id in the saves' shape - the same id, one door
+import {
+  crewSignOf,
+  crewDayOk,
+  CREW_SIGN_DAY_MAX,
+  CREW_SIGN_SLOTS,
+  CREW_SIGN_KEEP_DAYS,
+  crewDayAt,
+} from '../../src/net/crewSignLaw.js';
+import { renownCharacterOk } from './renownTracks.js'; // a character id in the saves' shape - the same id, one door
 
 /** A refusal's HTTP status. */
 export const CREW_STATUS = Object.freeze({ 'crew-bad': 400, 'crew-day': 400, 'crew-taken': 409, 'crew-many': 429 });
@@ -28,12 +35,20 @@ function asked(ctx, id) {
 /** HALL: `{ town, day, character }` - `{ taken, mine }`, the slots held by others (the account's other characters too)
  *  and by the asking character. @param {any} ctx @param {any} player @param {any} body */
 export async function crewHall(ctx, player, body = {}) {
-  const town = Number(body?.town), day = Number(body?.day), who = holderOf(player, body?.character);
-  if (!who || !Number.isInteger(town) || town < 0 || town > 0xffffffff || !Number.isInteger(day) || day < 0) return { error: 'crew-bad' };
+  const town = Number(body?.town),
+    day = Number(body?.day),
+    who = holderOf(player, body?.character);
+  if (!who || !Number.isInteger(town) || town < 0 || town > 0xffffffff || !Number.isInteger(day) || day < 0)
+    return { error: 'crew-bad' };
   if (!crewDayOk(day, ctx.nowS * 1000)) return { error: 'crew-day' };
-  const { results } = await ctx.db.prepare('SELECT slot, player FROM crew_signed WHERE town = ?1 AND day = ?2').bind(town, day).all();
-  const taken = [], mine = [];
-  for (const r of results ?? []) if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player === who ? mine : taken).push(r.slot);
+  const { results } = await ctx.db
+    .prepare('SELECT slot, player FROM crew_signed WHERE town = ?1 AND day = ?2')
+    .bind(town, day)
+    .all();
+  const taken = [],
+    mine = [];
+  for (const r of results ?? [])
+    if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player === who ? mine : taken).push(r.slot);
   return { taken: taken.sort(), mine: mine.sort() };
 }
 
@@ -49,12 +64,21 @@ export async function crewSign(ctx, player, body = {}) {
   // read the count under the cap. The key settles two asks for one man; the loser reads the winner. A second try only
   // when the read finds him free under the cap: a release landed between the two statements.
   for (let tries = 0; tries < 2; tries++) {
-    const r = await ctx.db.prepare(`INSERT OR IGNORE INTO crew_signed (town, day, slot, player, at) SELECT ?1, ?2, ?3, ?4, ?5
-      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`)
-      .bind(s.town, s.day, s.slot, who, ctx.nowS, lo, hi, CREW_SIGN_DAY_MAX).run();
+    const r = await ctx.db
+      .prepare(
+        `INSERT OR IGNORE INTO crew_signed (town, day, slot, player, at) SELECT ?1, ?2, ?3, ?4, ?5
+      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,
+      )
+      .bind(s.town, s.day, s.slot, who, ctx.nowS, lo, hi, CREW_SIGN_DAY_MAX)
+      .run();
     if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: true };
-    const held = await ctx.db.prepare(`SELECT (SELECT player FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3) AS holder,
-      (SELECT COUNT(*) FROM crew_signed WHERE player >= ?4 AND player < ?5 AND day = ?2) AS n`).bind(s.town, s.day, s.slot, lo, hi).first();
+    const held = await ctx.db
+      .prepare(
+        `SELECT (SELECT player FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3) AS holder,
+      (SELECT COUNT(*) FROM crew_signed WHERE player >= ?4 AND player < ?5 AND day = ?2) AS n`,
+      )
+      .bind(s.town, s.day, s.slot, lo, hi)
+      .first();
     if (held?.holder != null) return held.holder === who ? { signed: true, fresh: false } : { error: 'crew-taken' };
     if (Number(held?.n ?? 0) >= CREW_SIGN_DAY_MAX) return { error: 'crew-many' };
   }
@@ -64,13 +88,19 @@ export async function crewSign(ctx, player, body = {}) {
 /** RELEASE: `{ id, character }` - `{ released }`, whether that character held him. Any day's id is let go.
  *  @param {any} ctx @param {any} player @param {any} body */
 export async function crewRelease(ctx, player, body = {}) {
-  const s = crewSignOf(body?.id), who = holderOf(player, body?.character);
+  const s = crewSignOf(body?.id),
+    who = holderOf(player, body?.character);
   if (!s || !who) return { error: 'crew-bad' };
-  const r = await ctx.db.prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4').bind(s.town, s.day, s.slot, who).run();
+  const r = await ctx.db
+    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4')
+    .bind(s.town, s.day, s.slot, who)
+    .run();
   return { released: Number(r?.meta?.changes ?? 0) > 0 };
 }
 
 /** The sweep (cron.js): rows CREW_SIGN_KEEP_DAYS past their day - `[sql, cutoff day]`. */
-export const crewSweep = (/** @type {number} */ nowS) => /** @type {[string, number]} */ ([
-  'DELETE FROM crew_signed WHERE rowid IN (SELECT rowid FROM crew_signed WHERE day < ?1 LIMIT ?2)', crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,
-]);
+export const crewSweep = (/** @type {number} */ nowS) =>
+  /** @type {[string, number]} */ ([
+    'DELETE FROM crew_signed WHERE rowid IN (SELECT rowid FROM crew_signed WHERE day < ?1 LIMIT ?2)',
+    crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,
+  ]);

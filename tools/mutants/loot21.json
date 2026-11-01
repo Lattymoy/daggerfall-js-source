@@ -38,8 +38,8 @@
   {
     "name": "LOOT21-the-welkynd-a-shard",
     "file": "src/systems/ayleidStones.js",
-    "old": "  Object.freeze({ index: WELKYND_STONE_TEMPLATE, name: 'Welkynd Stone', baseWeight: 0.5, hitPoints: 1000, basePrice: 1500, rarity: 20,\n    worldTextureArchive: 254, worldTextureRecord: 5 }),",
-    "new": "  Object.freeze({ index: WELKYND_STONE_TEMPLATE, name: 'Welkynd Stone', baseWeight: 0.5, hitPoints: 1000, basePrice: 1500, rarity: 20,\n    worldTextureArchive: 254, worldTextureRecord: 2 }),",
+    "old": "    worldTextureRecord: 5,",
+    "new": "    worldTextureRecord: 2,",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LOOT21-a-gem-a-slot-takes",
     "file": "src/systems/ayleidStones.js",
-    "old": "export const welkyndStone = () => mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: WELKYND_STONE_TEMPLATE }));",
-    "new": "export const welkyndStone = () => mintCondition(setItemFields({ group: 'Gems', templateIndex: WELKYND_STONE_TEMPLATE }));",
+    "old": "  mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: WELKYND_STONE_TEMPLATE }));",
+    "new": "  mintCondition(setItemFields({ group: 'Gems', templateIndex: WELKYND_STONE_TEMPLATE }));",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LOOT21-the-welkynd-in-the-early-roll",
     "file": "src/systems/ayleidStones.js",
-    "old": "registerUniqueFind({ id: 'welkynd-stone', minTier: WELKYND_STONE_TIER, weight: 1, late: true,",
-    "new": "registerUniqueFind({ id: 'welkynd-stone', minTier: WELKYND_STONE_TIER, weight: 1,",
+    "old": "registerUniqueFind({\n  id: 'welkynd-stone',\n  minTier: WELKYND_STONE_TIER,\n  weight: 1,\n  late: true,\n  mint: () => [welkyndStone()],\n});",
+    "new": "registerUniqueFind({ id: 'welkynd-stone', minTier: WELKYND_STONE_TIER, weight: 1, mint: () => [welkyndStone()] });",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LOOT21-the-pool-unfilled",
     "file": "src/systems/ayleidStones.js",
-    "old": "  entity.magicka = max;\n",
-    "new": "",
+    "old": "  entity.magicka = max;\n  spend(item, list);",
+    "new": "  spend(item, list);",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LOOT21-a-stack-spent-whole",
     "file": "src/systems/ayleidStones.js",
-    "old": "  if ((item.stackCount ?? 1) > 1) { item.stackCount -= 1; return; }\n",
-    "new": "",
+    "old": "  if ((item.stackCount ?? 1) > 1) {\n    item.stackCount -= 1;\n    return;\n  }\n  const i = Array.isArray(list) ? list.indexOf(item) : -1;",
+    "new": "  const i = Array.isArray(list) ? list.indexOf(item) : -1;",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LOOT21-the-welkynd-never-spent",
     "file": "src/systems/ayleidStones.js",
-    "old": "  entity.magicka = max;\n  spend(item, list);",
-    "new": "  entity.magicka = max;",
+    "old": "  spend(item, list);\n  return { kind: 'text', text: STONE_TEXT.welkynd };",
+    "new": "  return { kind: 'text', text: STONE_TEXT.welkynd };",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOOT21-plain-pieces-mended",
     "file": "src/systems/ayleidStones.js",
-    "old": "equipTableOf(entity).filter((it) => it && isEnchanted(it) && Number.isFinite(it.maxCondition)",
-    "new": "equipTableOf(entity).filter((it) => it && Number.isFinite(it.maxCondition)",
+    "old": "        (it) =>\n          it &&\n          isEnchanted(it) &&\n          Number.isFinite(it.maxCondition) &&\n          (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
+    "new": "        (it) => it && Number.isFinite(it.maxCondition) && (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LOOT21-the-pack-mended",
     "file": "src/systems/ayleidStones.js",
-    "old": "export const varlaMends = (entity) => (entity ? equipTableOf(entity).filter(",
-    "new": "export const varlaMends = (entity) => (entity ? (entity.items ?? []).filter(",
+    "old": "    ? equipTableOf(entity).filter(",
+    "new": "    ? (entity.items ?? []).filter(",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT21-whole-pieces-counted",
     "file": "src/systems/ayleidStones.js",
-    "old": "(it.currentCondition ?? it.maxCondition) < it.maxCondition)",
-    "new": "(it.currentCondition ?? it.maxCondition) <= it.maxCondition)",
+    "old": "          (it.currentCondition ?? it.maxCondition) < it.maxCondition,",
+    "new": "          (it.currentCondition ?? it.maxCondition) <= it.maxCondition,",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LOOT21-wasted-on-whole-pieces",
     "file": "src/systems/ayleidStones.js",
-    "old": "  if (!pieces.length) return { kind: 'text', text: STONE_TEXT.varlaWhole };\n",
-    "new": "",
+    "old": "  if (!pieces.length) return { kind: 'text', text: STONE_TEXT.varlaWhole };\n  const was = pieces.map((it) => it.currentCondition);",
+    "new": "  const was = pieces.map((it) => it.currentCondition);",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LOOT21-nothing-mended",
     "file": "src/systems/ayleidStones.js",
-    "old": "  for (const it of pieces) it.currentCondition = it.maxCondition;\n",
-    "new": "",
+    "old": "  for (const it of pieces) it.currentCondition = it.maxCondition;\n  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
+    "new": "  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
     "tests": [
       "test/systems/loot21_stones.test.js"
     ]

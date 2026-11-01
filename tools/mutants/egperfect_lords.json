@@ -2,8 +2,8 @@
   {
     "name": "EGPERFECT-haven-check-unseen",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "const blows = list.filter((b) => b && (!b.ch || egHavenCheck(b)) && b.at > now).sort((a, b) => a.at - b.at);",
-    "new": "const blows = list.filter((b) => b && !b.ch && b.at > now).sort((a, b) => a.at - b.at);",
+    "old": "  const blows = list.filter((b) => b && (!b.ch || egHavenCheck(b)) && b.at > now).sort((a, b) => a.at - b.at);",
+    "new": "  const blows = list.filter((b) => b && !b.ch && b.at > now).sort((a, b) => a.at - b.at);",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGPERFECT-haven-check-held",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "  if (!next || next.ch || !emptied(",
-    "new": "  if (!next || !emptied(",
+    "old": "  if (\n    !next ||\n    next.ch ||\n    !emptied([...pending, next], px, pz, now, onFloor, nextBurns.length ? [...burns, ...nextBurns] : burns)\n  )",
+    "new": "  if (!next || !emptied([...pending, next], px, pz, now, onFloor, nextBurns.length ? [...burns, ...nextBurns] : burns))",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGPERFECT-named-blow-a-landing",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "export const egHavenCheck = (b) => !!b?.ch && !b.on && Array.isArray(b.s)",
-    "new": "export const egHavenCheck = (b) => !!b?.ch && Array.isArray(b.s)",
+    "old": "export const egHavenCheck = (b) =>\n  !!b?.ch && !b.on && Array.isArray(b.s) && b.s.length > 0 && b.s.every((s) => s?.[0] === 'h');",
+    "new": "export const egHavenCheck = (b) => !!b?.ch && Array.isArray(b.s) && b.s.length > 0 && b.s.every((s) => s?.[0] === 'h');",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGPERFECT-fill-frozen-at-arrival",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "{ ...b, cut: Number.isFinite(w.at) ? Math.min(now, w.at) : now }",
-    "new": "{ ...b, cut: now }",
+    "old": "      return {\n        ...f,\n        blows: f.blows.map((b) => (b.i === w.i ? { ...b, cut: Number.isFinite(w.at) ? Math.min(now, w.at) : now } : b)),\n      }; // EG-PERFECT: frozen at the instant the relay cut it (its FEINT_AT), never the beat's",
+    "new": "      return { ...f, blows: f.blows.map((b) => (b.i === w.i ? { ...b, cut: now } : b)) }; // EG-PERFECT: frozen at the instant the relay cut it (its FEINT_AT), never the beat's",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGPERFECT-guard-unread",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ? EG_GUARD_GLINT : band",
-    "new": "export const egRimOf = (band, fl, lord = true) => (false ? EG_GUARD_GLINT : band",
+    "old": "  (fl & EG_FL.lit) !== 0 && lord\n    ? EG_GUARD_GLINT\n    : band === EG_SHADE_BAND && (fl & (EG_FL.dormant | EG_FL.friend)) === 0\n      ? EG_SHADE_RIM\n      : null; // (THE AUDIT: `lord` - a Binder's raise is lit too, and no guard)",
+    "new": "  false ? EG_GUARD_GLINT : band === EG_SHADE_BAND && (fl & (EG_FL.dormant | EG_FL.friend)) === 0 ? EG_SHADE_RIM : null; // (THE AUDIT: `lord` - a Binder's raise is lit too, and no guard)",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGPERFECT-lord-eclipse-unread",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "    if (!b.ch || b.nm !== EG_ECLIPSE_NM || b.cut",
-    "new": "    if (true || b.nm !== EG_ECLIPSE_NM || b.cut",
+    "old": "      !b.ch ||",
+    "new": "      true ||",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]

@@ -1,4 +1,4 @@
-// WG2 PHASE 2 EXIT (bible/03-World/World-2-Arc.md): THE SHIPPED PROTOTYPE BAKES (public/worldgen2/) are made again from
+// WG2 PHASE 2 EXIT: THE SHIPPED PROTOTYPE BAKES (public/worldgen2/) are made again from
 // the repository alone and match to the byte; the Hammerfell ground holds what the specification asks of it - a range,
 // a river valley, a desert basin, dunes, an oasis, plants that differ by place - and Black Marsh's wetland drains low
 // and slow. Every plant the law places meets every need it declares. Pins mutation-checked (tools/mutants/wg2.json).

@@ -4,251 +4,323 @@
     "file": "src/systems/faction/provinceFactions.js",
     "old": "export const PROVINCE_FACTION_BASE = Object.freeze({ province: 6000, ruler: 6100, court: 6200, people: 6300 });",
     "new": "export const PROVINCE_FACTION_BASE = Object.freeze({ province: 6000, ruler: 6100, court: 6200, people: 6200 });",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-childrens-order",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "children: [ids.ruler, ids.court, ids.people] }));",
-    "new": "children: [ids.court, ids.ruler, ids.people] }));",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        children: [ids.ruler, ids.court, ids.people],",
+    "new": "        children: [ids.court, ids.ruler, ids.people],",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-provinces-type",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "out.push(record({ id: ids.province, type: FACTION_TYPES.Province, name: province,",
-    "new": "out.push(record({ id: ids.province, type: FACTION_TYPES.Group, name: province,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        type: FACTION_TYPES.Province,",
+    "new": "        type: FACTION_TYPES.Group,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-ruler-no-individual",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "type: FACTION_TYPES.Individual, name: provinceRulerName(region)",
-    "new": "type: FACTION_TYPES.Official, name: provinceRulerName(region)",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        type: FACTION_TYPES.Individual,",
+    "new": "        type: FACTION_TYPES.Official,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-courts-type",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "type: FACTION_TYPES.Courts, name: withBaseText(() => courtName(province))",
-    "new": "type: FACTION_TYPES.People, name: withBaseText(() => courtName(province))",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        type: FACTION_TYPES.Courts,",
+    "new": "        type: FACTION_TYPES.People,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-peoples-social-group",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "sgroup: SOCIAL_GROUPS.Commoners, ggroup: GUILD_GROUPS.GeneralPopulace, minf: 5, maxf: 30 }));",
-    "new": "sgroup: SOCIAL_GROUPS.Merchants, ggroup: GUILD_GROUPS.GeneralPopulace, minf: 5, maxf: 30 }));",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        sgroup: SOCIAL_GROUPS.Commoners,",
+    "new": "        sgroup: SOCIAL_GROUPS.Merchants,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-courts-guild-group",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "flat2: flat(182, 20), sgroup: SOCIAL_GROUPS.Nobility, ggroup: GUILD_GROUPS.Region, minf: 20, maxf: 80 }));",
-    "new": "flat2: flat(182, 20), sgroup: SOCIAL_GROUPS.Nobility, ggroup: GUILD_GROUPS.None, minf: 20, maxf: 80 }));",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        flat2: flat(182, 20),\n        sgroup: SOCIAL_GROUPS.Nobility,\n        ggroup: GUILD_GROUPS.Region,\n        minf: 20,",
+    "new": "        flat2: flat(182, 20),\n        sgroup: SOCIAL_GROUPS.Nobility,\n        ggroup: GUILD_GROUPS.None,\n        minf: 20,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-courts-power",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "name: withBaseText(() => courtName(province)), region, power: 25,",
-    "new": "name: withBaseText(() => courtName(province)), region, power: 50,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        power: 25,",
+    "new": "        power: 50,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-immunity",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "flags: p.crown ? 60 : FACTION_FLAGS.RulerImmune,",
-    "new": "flags: p.crown ? 60 : 0,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        flags: p.crown ? 60 : FACTION_FLAGS.RulerImmune,",
+    "new": "        flags: p.crown ? 60 : 0,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-rulers-seed",
     "file": "src/systems/faction/provinceFactions.js",
     "old": "      srand(provinceFactionId('ruler', region));",
     "new": "      srand(region);",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-rulers-gender",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "p.ruler % 2 === 1 ? GENDERS.Male : GENDERS.Female);",
-    "new": "p.ruler % 2 === 0 ? GENDERS.Male : GENDERS.Female);",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "      return fullName(REGION_NAME_BANKS[region], p.ruler % 2 === 1 ? GENDERS.Male : GENDERS.Female);",
+    "new": "      return fullName(REGION_NAME_BANKS[region], p.ruler % 2 === 0 ? GENDERS.Male : GENDERS.Female);",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-stream-not-restored",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "  } finally { setSeed(was); }",
-    "new": "  } finally { void was; }",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    setSeed(was);",
+    "new": "    void was;",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-cyrodiil-a-stranger",
     "file": "src/systems/faction/provinceFactions.js",
     "old": "  if (region === BAY_REGION_COUNT + PROVINCE_REGION_NAMES.length - 1) return CYRODIIL_RULER_NAME;",
     "new": "  if (region === -1) return CYRODIIL_RULER_NAME;",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-clan-swapped",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "power: 80, vam: CLAN.Haarvenu,",
-    "new": "power: 80, vam: CLAN.Lyrezi,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    vam: CLAN.Haarvenu,",
+    "new": "    vam: CLAN.Lyrezi,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-skyrims-power",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "ruler: RULER.HighKing, power: 80,",
-    "new": "ruler: RULER.HighKing, power: 65,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    ruler: RULER.HighKing,\n    power: 80,",
+    "new": "    ruler: RULER.HighKing,\n    power: 65,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-title",
     "file": "src/systems/faction/provinceFactions.js",
-    "old": "export const RULER = Object.freeze({ King: 1, Queen: 2, Duke: 3, Duchess: 4, HighKing: 13, HighQueen: 14, Emperor: 15, Empress: 16 });",
-    "new": "export const RULER = Object.freeze({ King: 1, Queen: 2, Duke: 3, Duchess: 4, HighKing: 1, HighQueen: 14, Emperor: 15, Empress: 16 });",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "  HighKing: 13,",
+    "new": "  HighKing: 1,",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-door-adds-twice",
     "file": "src/systems/faction/provinceFactions.js",
     "old": "    if (dict.has(f.id)) continue;",
     "new": "    if (false) continue;",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-name-map-overwritten",
     "file": "src/systems/faction/provinceFactions.js",
     "old": "    if (nameToId && !nameToId.has(f.name)) nameToId.set(f.name, f.id);",
     "new": "    if (nameToId) nameToId.set(f.name, f.id);",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-door-uncalled",
     "file": "src/systems/faction/factionRep.js",
-    "old": "  addProvinceFactions(dict, nameToId);\n",
-    "new": "  void addProvinceFactions;\n",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "  addProvinceFactions(dict, nameToId);",
+    "new": "  void addProvinceFactions;",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-shown-region-unread",
     "file": "src/systems/faction/provinceFactions.js",
     "old": "  const shown = getLocalizedRegionName(region, (i) => REGION_NAMES[i]);",
     "new": "  const shown = REGION_NAMES[region];",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-shown-door-unasked",
     "file": "src/systems/textManager.js",
-    "old": "tryGetLocalizedText(TextCollections.Factions, id) ?? portFactionName(id) ?? fallback;",
-    "new": "tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "export const getLocalizedFactionName = (id, fallback) =>\n  tryGetLocalizedText(TextCollections.Factions, id) ?? portFactionName(id) ?? fallback;",
+    "new": "export const getLocalizedFactionName = (id, fallback) => tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-standing-page-unshown",
     "file": "src/systems/faction/factionStanding.js",
-    "old": "name: getLocalizedFactionName(id, String(f.name ?? id)), rep:",
-    "new": "name: String(f.name ?? id), rep:",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "      rows.push({\n        factionId: id,\n        name: getLocalizedFactionName(id, String(f.name ?? id)),\n        rep: getReputation(store, id),\n      }); // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language",
+    "new": "      rows.push({ factionId: id, name: String(f.name ?? id), rep: getReputation(store, id) }); // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-port-titles",
     "file": "src/world/buildingNames.js",
-    "old": "15: () => t('faction.ruler.emperor', 'Emperor'),",
-    "new": "15: () => t('faction.ruler.emperor', 'Lord'),",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "  15: () => t('faction.ruler.emperor', 'Emperor'),",
+    "new": "  15: () => t('faction.ruler.emperor', 'Lord'),",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-border-dropped",
     "file": "src/systems/faction/factionRelations.js",
-    "old": "[62, 63], [62, 64], [63, 64], [63, 70], [64, 65], [64, 70], [65, 69],",
-    "new": "[62, 63], [62, 64], [63, 64], [63, 70], [64, 65], [65, 69],",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    [64, 70],\n    [65, 69],",
+    "new": "    [65, 69],",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-edge-dropped",
     "file": "src/systems/faction/factionRelations.js",
-    "old": "  [16, 62], [32, 62], [38, 62], [40, 62],\n",
-    "new": "  [16, 62], [38, 62], [40, 62],\n",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    [32, 62],\n    [38, 62],",
+    "new": "    [38, 62],",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-borders-type-gate",
     "file": "src/systems/faction/factionRelations.js",
-    "old": "    return faction1.type === FACTION_TYPES.Province && faction2.type === FACTION_TYPES.Province && provinceRegionsBorder(faction1.region, faction2.region);",
+    "old": "    return (\n      faction1.type === FACTION_TYPES.Province &&\n      faction2.type === FACTION_TYPES.Province &&\n      provinceRegionsBorder(faction1.region, faction2.region)\n    );",
     "new": "    return provinceRegionsBorder(faction1.region, faction2.region);",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-bays-table-read-for-a-province",
     "file": "src/systems/faction/factionRelations.js",
     "old": "  if (isProvinceRegion(faction1.region) || isProvinceRegion(faction2.region)) {",
     "new": "  if (isProvinceRegion(faction1.region) && isProvinceRegion(faction2.region)) {",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-pools-palace-unread",
     "file": "src/systems/npcSession.js",
-    "old": "      id = buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace",
-    "new": "      id = buildingType === 'Palace'",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "        buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace",
+    "new": "        buildingType === 'Palace'",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-thrones-seat",
     "file": "src/world/capitalCastles.js",
     "old": "  ruler: Object.freeze({ faction: 852,",
     "new": "  ruler: Object.freeze({ faction: 242,",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-seats-list",
     "file": "src/world/capitalCastles.js",
     "old": "  knight: Object.freeze({ faction: 853, flats: Object.freeze([[183, 3], [183, 14]]), ids: Object.freeze([368, 384, 408, 409]) }),",
     "new": "  knight: Object.freeze({ faction: 853, flats: Object.freeze([[183, 3], [183, 14]]), ids: Object.freeze([368, 384, 408, 409, 501]) }),",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-seats-gender",
     "file": "src/world/capitalCastles.js",
     "old": "seat.flats[(f.flags & 32) === 32 ? 1 : 0]",
     "new": "seat.flats[0]",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-royals-look-kept",
     "file": "src/world/capitalCastles.js",
     "old": "    ...(look ? { textureArchive: look[0], textureRecord: look[1], textureBitfield: (look[0] << 7) | look[1] } : {}) } } };",
     "new": "    ...({}) } } };",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-court-stood-down-again",
     "file": "src/world/capitalCastles.js",
     "old": "CASTLE_FOLK.has(f.factionOrMobileId) || !!castleSeatOf(f.factionOrMobileId);",
     "new": "CASTLE_FOLK.has(f.factionOrMobileId);",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-copy-unseated",
     "file": "src/world/capitalCastles.js",
     "old": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o)).map(castleSeated)",
     "new": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o))",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-the-throne-unfound",
     "file": "src/systems/crownHall.js",
-    "old": "(isProvinceFactionId(rulerId) ? list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null : null)",
-    "new": "null",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "  return (\n    list.find((p) => p?.factionID === rulerId) ??\n    (isProvinceFactionId(rulerId) ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)\n  );",
+    "new": "  return list.find((p) => p?.factionID === rulerId) ?? null;",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   },
   {
     "name": "PC-a-bay-throne-taken",
     "file": "src/systems/crownHall.js",
-    "old": "(isProvinceFactionId(rulerId) ? list.find(",
-    "new": "(true ? list.find(",
-    "tests": ["test/world/worldWide/provincecourts.test.js"]
+    "old": "    (isProvinceFactionId(rulerId) ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)",
+    "new": "    (true ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)",
+    "tests": [
+      "test/world/worldWide/provincecourts.test.js"
+    ]
   }
 ]

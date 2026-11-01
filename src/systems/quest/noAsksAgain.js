@@ -49,7 +49,7 @@
 // copy (receiveSharedQuest, updateSharedQuest) and a reclaimed quest (reclaimQuest), which all restore through it.
 import { TaskType } from './task.js';
 import { getInnerSymbolName } from './symbol.js';
-import { QL_STAMP } from '../questlines/qlState.js';   // AUDIT RPT1026 H1: a stamped quest's sheet reads its answers
+import { QL_STAMP } from '../questlines/qlState.js'; // AUDIT RPT1026 H1: a stamped quest's sheet reads its answers
 import { sheetFor } from '../questlines/qlSheets.js';
 
 /** The triggers that read a player's click - ClickedNpc.cs, ClickedItem.cs, ClickedFoe.cs, TotingItemAndClickedNpc.cs,
@@ -66,8 +66,11 @@ export function namesOf(action) {
   const names = [];
   for (const [field, kind = 'raw'] of action?.saveShape ?? []) {
     const v = action[field];
-    if (kind === 'sym') { if (v?.name) names.push(v.name); }
-    else if (kind === 'symArray') { for (const s of v ?? []) if (s?.name) names.push(s.name); }
+    if (kind === 'sym') {
+      if (v?.name) names.push(v.name);
+    } else if (kind === 'symArray') {
+      for (const s of v ?? []) if (s?.name) names.push(s.name);
+    }
   }
   if (action?.typeName === 'WhenTask') for (const e of action.evaluations ?? []) names.push(getInnerSymbolName(e.task));
   return names;
@@ -98,8 +101,8 @@ function timesNamed(quest, name) {
 export function inertNo(quest, prompt) {
   const no = quest.getTask(prompt.noTaskSymbol);
   if (!no || no.type !== TaskType.Variable) return null;
-  if (no.actions.length > 0) return null;   // a `_x_ task:` merged into the variable does something
-  return timesNamed(quest, no.symbol.name) === 1 ? no : null;   // the prompt's own `no`, and nothing else
+  if (no.actions.length > 0) return null; // a `_x_ task:` merged into the variable does something
+  return timesNamed(quest, no.symbol.name) === 1 ? no : null; // the prompt's own `no`, and nothing else
 }
 
 /**
@@ -113,8 +116,16 @@ export function inertNo(quest, prompt) {
 export function clearingNo(quest, task, prompt) {
   const no = quest.getTask(prompt.noTaskSymbol);
   if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;
-  if (!no.actions.length || !no.actions.every((/** @type {any} */ a) => a.typeName === 'ClearTask' && a.taskSymbols?.length
-    && a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name))) return null;
+  if (
+    !no.actions.length ||
+    !no.actions.every(
+      (/** @type {any} */ a) =>
+        a.typeName === 'ClearTask' &&
+        a.taskSymbols?.length &&
+        a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name),
+    )
+  )
+    return null;
   return timesNamed(quest, no.symbol.name) === 1 ? no : null;
 }
 
@@ -134,9 +145,15 @@ export function clearingNo(quest, task, prompt) {
  */
 export function givesBackNo(quest, task, prompt) {
   const no = quest.getTask(prompt.noTaskSymbol);
-  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length || !no.actions.length) return null;
-  const toted = new Set(task.actions.filter((/** @type {any} */ a) => a.typeName === 'TotingItemAndClickedNpc').map((/** @type {any} */ a) => a.itemSymbol?.name));
-  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name))) return null;
+  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length || !no.actions.length)
+    return null;
+  const toted = new Set(
+    task.actions
+      .filter((/** @type {any} */ a) => a.typeName === 'TotingItemAndClickedNpc')
+      .map((/** @type {any} */ a) => a.itemSymbol?.name),
+  );
+  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name)))
+    return null;
   // AUDIT RPT1026 H1: and nothing the questlines' sheet reads - a No the sheet takes as the player's answer is a choice,
   // not a soft-lock, and forgetting it rewrote how the quest ended (N0B00Y09 settled `loyal` for `refused` and lost the
   // standing the refusal moves; $CUREWER's `spared` became `failed`)
@@ -164,9 +181,14 @@ export function sheetReadTasks(quest) {
     if (b.not) walk(b.not);
     if (b.task != null) out.add(getInnerSymbolName(String(b.task)));
   };
-  for (const o of sheet.objectives ?? []) { walk(o.open); walk(o.done); walk(o.fail); }
+  for (const o of sheet.objectives ?? []) {
+    walk(o.open);
+    walk(o.done);
+    walk(o.fail);
+  }
   for (const o of sheet.outcomes ?? []) walk(o.on);
-  for (const b of sheet.branches ?? []) for (const c of b.choices ?? []) if (c?.sets) out.add(getInnerSymbolName(String(c.sets)));
+  for (const b of sheet.branches ?? [])
+    for (const c of b.choices ?? []) if (c?.sets) out.add(getInnerSymbolName(String(c.sets)));
   return out;
 }
 
@@ -178,7 +200,7 @@ export function sheetReadTasks(quest) {
  * @param {number} [named]
  */
 export function asksOnAClick(quest, task, named = 0) {
-  if (task.type !== TaskType.Standard) return false;   // a `_x_ task:` - a global's is every quest's (SAVEVARS)
+  if (task.type !== TaskType.Standard) return false; // a `_x_ task:` - a global's is every quest's (SAVEVARS)
   const triggers = task.actions.filter((/** @type {any} */ a) => a.isTriggerCondition);
   if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;
   return timesNamed(quest, task.symbol.name) === named;
@@ -194,9 +216,26 @@ function lawFor(quest, task, prompt) {
     const inert = onClick ? inertNo(quest, prompt) : null;
     const clearer = inert ? null : clearingNo(quest, task, prompt);
     // the No's own clears are the only names of the asking it allows
-    const clears = clearer && asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;
-    const gives = !inert && !clears && onClick ? givesBackNo(quest, task, prompt) : null;   // RPT1026-QUESTS NO-GIVES-BACK
-    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : gives ? { no: gives, clears: false, gives: true } : null);
+    const clears =
+      clearer &&
+      asksOnAClick(
+        quest,
+        task,
+        clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0),
+      )
+        ? clearer
+        : null;
+    const gives = !inert && !clears && onClick ? givesBackNo(quest, task, prompt) : null; // RPT1026-QUESTS NO-GIVES-BACK
+    verdicts.set(
+      prompt,
+      inert
+        ? { no: inert, clears: false }
+        : clears
+          ? { no: clears, clears: true }
+          : gives
+            ? { no: gives, clears: false, gives: true }
+            : null,
+    );
   }
   return verdicts.get(prompt);
 }
@@ -236,16 +275,16 @@ export function askAgain(quest) {
         // the author's own clear has run: the asking listens again, and only the prompt is still spent
         if (!no.getTriggerValue() || task.getTriggerValue()) continue;
         prompt.isComplete = false;
-        no.clear();                 // its `clear` rearms (Task.Clear), for a second No
+        no.clear(); // its `clear` rearms (Task.Clear), for a second No
         asked++;
         continue;
       }
       if (!task.getTriggerValue()) continue;
-      if (!no.getTriggerValue()) continue;   // not answered No (yet)
-      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;   // NO-GIVES-BACK: its item back in the pack first
-      task.clear();                 // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)
-      prompt.isComplete = false;    // the one action the departure re-arms (Prompt.cs: allowRearm = false)
-      no.clear();                   // the No forgotten - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)
+      if (!no.getTriggerValue()) continue; // not answered No (yet)
+      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue; // NO-GIVES-BACK: its item back in the pack first
+      task.clear(); // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)
+      prompt.isComplete = false; // the one action the departure re-arms (Prompt.cs: allowRearm = false)
+      no.clear(); // the No forgotten - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)
       asked++;
     }
   }

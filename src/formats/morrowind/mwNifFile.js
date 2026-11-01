@@ -225,8 +225,15 @@ function readNode(s, rec) {
  * so: "Only for NiNode-s for now".
  */
 const NI_NODE_TYPES = new Set([
-  'NiNode', 'RootCollisionNode', 'NiBSAnimationNode', 'NiBSParticleNode',
-  'AvoidNode', 'NiBillboardNode', 'NiSwitchNode', 'NiLODNode', 'NiSortAdjustNode',
+  'NiNode',
+  'RootCollisionNode',
+  'NiBSAnimationNode',
+  'NiBSParticleNode',
+  'AvoidNode',
+  'NiBillboardNode',
+  'NiSwitchNode',
+  'NiLODNode',
+  'NiSortAdjustNode',
 ]);
 
 /**
@@ -594,7 +601,12 @@ const READERS = {
   NiCamera(s, rec) {
     readAVObject(s, rec);
     rec.frustum = {
-      left: s.f32(), right: s.f32(), top: s.f32(), bottom: s.f32(), near: s.f32(), far: s.f32(),
+      left: s.f32(),
+      right: s.f32(),
+      top: s.f32(),
+      bottom: s.f32(),
+      near: s.f32(),
+      far: s.f32(),
     };
     rec.viewport = { left: s.f32(), right: s.f32(), top: s.f32(), bottom: s.f32() };
     rec.lodAdjust = s.f32();
@@ -893,12 +905,7 @@ const READERS = {
   },
 
   NiUVData(s, rec) {
-    rec.groups = [
-      readKeyGroup(s, 1),
-      readKeyGroup(s, 1),
-      readKeyGroup(s, 1),
-      readKeyGroup(s, 1),
-    ];
+    rec.groups = [readKeyGroup(s, 1), readKeyGroup(s, 1), readKeyGroup(s, 1), readKeyGroup(s, 1)];
   },
 
   // NOT a KeyGroup: NiVisData writes the count and the keys with no
@@ -923,7 +930,7 @@ const READERS = {
       for (let k = 0; k < count; k++) {
         const key = { time: s.f32(), value: s.f32() };
         if (type === KEY_TYPE.quadratic) {
-          key.inTan = s.f32();   // stream order per readQuadratic (nifkey.hpp:141-143)
+          key.inTan = s.f32(); // stream order per readQuadratic (nifkey.hpp:141-143)
           key.outTan = s.f32();
         } else if (type === KEY_TYPE.tbc) {
           key.tbc = [s.f32(), s.f32(), s.f32()];
@@ -1092,9 +1099,7 @@ export function parseNif(bytes) {
 
   const version = s.u32();
   if (version !== MW_NIF_VERSION) {
-    throw new Error(
-      `NIF: unsupported version 0x${version.toString(16)} (Morrowind 0x4000002 only)`,
-    );
+    throw new Error(`NIF: unsupported version 0x${version.toString(16)} (Morrowind 0x4000002 only)`);
   }
   const recordCount = s.u32();
   const records = new Array(recordCount);

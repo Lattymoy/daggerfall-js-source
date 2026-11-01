@@ -2,7 +2,7 @@
   {
     "name": "CLIMB2-grip-ignores-skill",
     "file": "src/player/parkour.js",
-    "old": "  return lerp(PARKOUR_GRIP_MIN_S, PARKOUR_GRIP_MAX_S, clamp01(skill / 100)) * lerp(PARKOUR_GRIP_TIRED, 1, clamp01(fatigue));",
+    "old": "  return (\n    lerp(PARKOUR_GRIP_MIN_S, PARKOUR_GRIP_MAX_S, clamp01(skill / 100)) * lerp(PARKOUR_GRIP_TIRED, 1, clamp01(fatigue))\n  );",
     "new": "  return PARKOUR_GRIP_MIN_S * lerp(PARKOUR_GRIP_TIRED, 1, clamp01(fatigue));",
     "tests": [
       "test/player/climb2.test.js",
@@ -14,7 +14,7 @@
   {
     "name": "CLIMB2-grip-ignores-fatigue",
     "file": "src/player/parkour.js",
-    "old": "  return lerp(PARKOUR_GRIP_MIN_S, PARKOUR_GRIP_MAX_S, clamp01(skill / 100)) * lerp(PARKOUR_GRIP_TIRED, 1, clamp01(fatigue));",
+    "old": "  return (\n    lerp(PARKOUR_GRIP_MIN_S, PARKOUR_GRIP_MAX_S, clamp01(skill / 100)) * lerp(PARKOUR_GRIP_TIRED, 1, clamp01(fatigue))\n  );",
     "new": "  return lerp(PARKOUR_GRIP_MIN_S, PARKOUR_GRIP_MAX_S, clamp01(skill / 100));",
     "tests": [
       "test/player/climb2.test.js",
@@ -74,8 +74,8 @@
   {
     "name": "CLIMB2-grip-any-depth",
     "file": "src/player/parkour.js",
-    "old": "if (deep - dist >= PARKOUR_GRIP_DEPTH) {",
-    "new": "if (deep - dist >= 0) {",
+    "old": "    if (deep - dist >= PARKOUR_GRIP_DEPTH) {",
+    "new": "    if (deep - dist >= 0) {",
     "tests": [
       "test/player/climb2.test.js",
       "test/systems/parkour.test.js",
@@ -98,7 +98,7 @@
   {
     "name": "CLIMB2-grip-any-face",
     "file": "src/player/parkour.js",
-    "old": "  if (!under || under.normal[0] * normal[0] + under.normal[2] * normal[2] < PARKOUR_FACE_FOLLOW - PARKOUR_RAY_SCATTER) return null;",
+    "old": "  if (!under || under.normal[0] * normal[0] + under.normal[2] * normal[2] < PARKOUR_FACE_FOLLOW - PARKOUR_RAY_SCATTER)\n    return null;",
     "new": "  if (!under) return null;",
     "tests": [
       "test/player/climb2.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "CLIMB2-grip-out-of-window",
     "file": "src/player/parkour.js",
-    "old": "  if (Math.abs(y - lipY) > PARKOUR_LIP_FOLLOW + 0.01) return null;\n",
-    "new": "",
+    "old": "  if (Math.abs(y - lipY) > PARKOUR_LIP_FOLLOW + 0.01) return null;\n  // 3. the face under it - under an eave the roof runs on past the edge, and the face is the rung's under the lip",
+    "new": "  // 3. the face under it - under an eave the roof runs on past the edge, and the face is the rung's under the lip",
     "tests": [
       "test/player/climb2.test.js",
       "test/systems/parkour.test.js",
@@ -158,8 +158,8 @@
   {
     "name": "CLIMB2-hold-not-carried",
     "file": "src/player/parkour.js",
-    "old": "  carryPoint(pos, was, now);\n  carryLip(",
-    "new": "  carryLip(",
+    "old": "  carryPoint(pos, was, now);\n  carryLip(hold, pos[1] - y0, was, now);",
+    "new": "  carryLip(hold, pos[1] - y0, was, now);",
     "tests": [
       "test/player/climb2.test.js",
       "test/systems/parkour.test.js",

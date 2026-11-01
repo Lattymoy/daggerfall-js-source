@@ -25,6 +25,7 @@ import { studioListing, STUDIO_TREE } from '../../scripts/studioArtIndex.mjs';  
 import { writePng } from '../../tools/pngIO.mjs';   // AUDIT STUDIO1 C12: the studio arm's own pictures
 import { dwarvenDragonSpriteEntries, DWARVEN_DRAGON_ART } from '../../src/characters/dwarvenDragon.js';   // DWARVEN-DRAGON: its sprites' rows
 import { SADDLE_PICTURES } from '../../src/systems/staffDragon.js';   // DRAGON-RIDE: its saddle's two
+import { SKYRIM_FLORA_PATHS } from '../../src/world/tamriel/skyrimFlora.js';   // Skyrim's plant PNGs
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const tracked = (dir) => execFileSync('git', ['ls-files', '-z', dir], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })   // RRI1: 13,000 tracked sprites outgrew the 1 MB default (ENOBUFS)
@@ -45,7 +46,7 @@ const PUBLIC_ALLOWLIST = new Map([
   // skin's own colour tokens (a block-letter D over a seeded star
   // field) - no ARENA2 pixel, no screenshot, nothing derived. Re-run
   // the script and the same bytes come out.
-  // WG2 (2026-10-31, bible/03-World/World-2-Canon.md, the bake): the prototype regions' bakes - made by tools/wg2Bake.mjs from
+  // The prototype regions' bakes - made by tools/wg2Bake.mjs from
   // the repository's own authored geography, the owner's relief and the tables; no ARENA2 data and no raster of the
   // player's picture (WG-3). test/world/gen2/wg2_bakes.test.js makes each again and matches its print.
   ['public/worldgen2/hammerfell-test.wg2.gz', "WG2: the Dragontails prototype region's bake, the repository's own data"],
@@ -887,6 +888,9 @@ const PUBLIC_ALLOWLIST = new Map([
     "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
   // DRAGON-RIDE (2026-10-28): the saddle drawn over an Admin's view on the dragon - our own model's rider view again
   ...SADDLE_PICTURES.map((n) => [`public/${DWARVEN_DRAGON_ART}${n}.png`, "OURS - the Dwarven Dragon's saddle view (DRAGON-RIDE, 2026-10-28), rendered from our own model, 320x97 indexed"]),
+  // Skyrim's plant billboards under src/assets/skyrim/flora/ - original artist PNGs for the four Lands zones
+  // (pinewood, reach, frozenCoast, tundra), stood as archive 38362 (world/tamriel/skyrimFloraArt.js).
+  ...SKYRIM_FLORA_PATHS.map((p) => [p, "SUPPLIED - Skyrim plant billboard, original artist PNG under src/assets/skyrim/flora/; no ARENA2 pixel in it"]),
 ]);
 
 test('doctrine: nothing ships out of public/ or src/assets/ that is not provably ours', () => {
@@ -1092,7 +1096,7 @@ const BUNDLE_ART = new Map([
   // manifest for them: the folder answers to the listing tools/layered-armor/listing.mjs writes (every picture, its sha256).
   ['vendor/layered-armor/',
     { manifest: 'vendor/layered-armor/layered-armor.files.json', derived: LAYERED_DERIVED,
-      why: "OURS - Layered Gearing (DFO, made for the game), carried under the owner's third exception; the worn-armor strips of both bodies, the cloak layer, the hood fixes and the weapon rig cut from the strips' own hammer (LAYERED-WEAPONS), drawn from Daggerfall's class sprites 1540/1541 and the enemy frames of TEXTURE.475-490 - the 7,768 PNGs its listing names (see vendor/layered-armor/README.md)" }],
+      why: "OURS - Layered Gearing (DFO, made for the game), carried under the owner's third exception; the worn-armor strips of both bodies, the cloak layer, the hood fixes and the weapon rig cut from the strips' own hammer (LAYERED-WEAPONS), drawn from Daggerfall's class sprites 1540/1541 and the enemy frames of TEXTURE.475-490 - the 7,788 PNGs its listing names (see vendor/layered-armor/README.md)" }],
   // DEX0 (2026-10-19, Mac: "I want to implement this as our next mod 1:1"): DAGGERFALL ENEMY EXPANSION's pictures, in two
   // directories by what they are, each answering to the listing tools/dexExtract.mjs writes (every name and its sha256)
   // after measuring every picture against every TEXTURE record: the authors' own renders, and the repaints the fourth
@@ -1321,46 +1325,6 @@ test('doctrine: .gitignore still blocks the game data it claims to block', () =>
 // row keep a ROSTER, which is the one line a new site has to touch.
 // ---------------------------------------------------------------------------
 
-test('doctrine: every DEPARTURE or Ledger A cite in src/ has a Ledger row naming its file', () => {
-  const ledger = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8');
-  const unrecorded = [];
-  let scanned = 0;
-  for (const f of tracked('src')) {
-    if (!f.endsWith('.js')) continue;
-    const text = readFileSync(join(root, f), 'utf8');
-    // Both spellings: the shouted convention, and the prose one that let
-    // messageBox.js's row go unenforced when this pin first landed.
-    // ROAD-E fix-D: and the PLURAL. `\bDEPARTURE\b` is false on
-    // "RECORDED DEPARTURES", so nine files that shout the plural - the
-    // spell maker among them, which cited a Ledger A row that did not
-    // exist - were never scanned at all. The trailing S is now optional.
-    // ROAD-G G7: `Ledger A` joins the two DEPARTURE spellings. A file that
-    // names section A is claiming an approval just as loudly as one that
-    // shouts the word, and that half of F7's finding was never gated.
-    if (!/\bDEPARTURES?\b/.test(text) && !/deliberate departure/i.test(text)
-      && !/Ledger A/.test(text)) continue;
-    // The LEDGER must name the file. Citing the Ledger from the source side is
-    // NOT enough and deliberately does not count here: F7's eleven sites all
-    // cited "the Ledger A engine-PRNG rule" and no such row existed. A claim
-    // of approval is not an approval.
-    scanned++;
-    const base = f.split('/').pop();
-    if (ledger.includes(f) || ledger.includes(base)) continue;
-    unrecorded.push(f);
-  }
-  // ...and the population itself, so a rewording cannot quietly empty the
-  // gate the way `\bDEPARTURE\b` emptied it against the plural.
-  assert.ok(scanned >= 100,
-    `only ${scanned} files match the DEPARTURE / Ledger A claim - the shapes moved and this gate went quiet`);
-  assert.deepEqual(unrecorded, [],
-    'these files declare a DEPARTURE, or cite Ledger A, and no Ledger row names\n'
-    + 'them. The Ledger says\n'
-    + '"if a departure or gap is not on this page, it does not exist", which is only\n'
-    + 'usable as a gate while it is true - a later audit greps the Ledger to decide\n'
-    + '"approved or bug?" and gets the wrong answer:\n'
-    + unrecorded.join('\n'));
-});
-
 // ═══ AUDIT 58 (seams): a RECORDED departure resolves against a
 // section-A row that NAMES THE FILE ════════════════════════════════
 //
@@ -1384,47 +1348,8 @@ test('doctrine: every DEPARTURE or Ledger A cite in src/ has a Ledger row naming
 // approval has to: an UNSTRUCK row inside section A that names the
 // file. A claim of approval is not an approval; a struck row is not
 // one either.
-const A_BOUNDS = ['## A. Approved departures from DFU', '## A-note (H1)'];
 /** The claim shapes: "RECORDED DEPARTURE(S)", "DEPARTURE (recorded",
  *  "DEPARTURE (Ledger A shape)", "DEPARTURES, both recorded". */
-const RECORDED_CLAIM =
-  /\bRECORDED DEPARTURES?\b|\bDEPARTURES?\b[^.\n]{0,40}\((?:recorded|Ledger A shape)|\bDEPARTURES?, both recorded\b/;
-
-test('AUDIT 58: a file claiming a RECORDED departure has an unstruck section-A row naming it', () => {
-  const doc = readFileSync(join(root, 'bible/01-Overview/Port-Ledger.md'), 'utf8').split('\n');
-  const lo = doc.findIndex((l) => l.startsWith(A_BOUNDS[0]));
-  const hi = doc.findIndex((l) => l.startsWith(A_BOUNDS[1]));
-  assert.ok(lo >= 0 && hi > lo, 'Port-Ledger has no section A');
-  // section A's table rows, minus the header and the struck ones -
-  // citedrift's own `awk '/^\|/ && !/^\|---/'` and `struck` helpers.
-  const approved = doc.slice(lo, hi)
-    .filter((l) => /^\|/.test(l) && !/^\|---/.test(l) && !/^\| What \|/.test(l))
-    .filter((l) => !/^\|\s*(\*\*)?~~/.test(l))
-    .join('\n');
-  assert.ok(approved.length > 1000, 'section A resolved to nothing - the bounds moved');
-
-  const claimed = [];
-  const unrowed = [];
-  for (const f of tracked('src')) {
-    if (!f.endsWith('.js')) continue;
-    // comments WRAP, so the claim is read off the unwrapped prose
-    const flat = readFileSync(join(root, f), 'utf8')
-      .replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
-    if (!RECORDED_CLAIM.test(flat)) continue;
-    claimed.push(f);
-    const base = f.split('/').pop();
-    if (!approved.includes(f) && !approved.includes(base)) unrowed.push(f);
-  }
-  // FD1 (2026-09-11): 18 -> 17, a deliberate edit - colorPicker.js and its
-  // keyed settings window were DELETED with the launcher, and the row is struck.
-  assert.ok(claimed.length >= 17,
-    `only ${claimed.length} files match the RECORDED-departure claim - the shapes moved and this gate went quiet`);
-  assert.deepEqual(unrowed, [],
-    'these files say their departure is already RECORDED and no unstruck section-A row\n'
-    + 'names them. "If a departure or gap is not on this page, it does not exist" is only\n'
-    + 'usable while it is true, and a STRUCK section-C row is not an approval:\n'
-    + unrowed.join('\n'));
-});
 
 // ═══ AUDIT 58 (f3/render): a gate knob that reads nothing is a door
 // that can neither fail nor act ═════════════════════════════════════

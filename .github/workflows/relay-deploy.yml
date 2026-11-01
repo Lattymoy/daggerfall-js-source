@@ -235,7 +235,8 @@ jobs:
         if: (steps.live.outputs.version != steps.ver.outputs.version || github.event.inputs.redeploy == 'true') && github.event.inputs.force != 'true'
         run: |
           url='https://daggerfall-online.mackcothran.workers.dev/v1/eg/live'
-          laws=$(grep -oP "^export const EG_LAWS = Object\.freeze\(\{\K[^}]*" src/net/eliteGates/egDurable.js | grep -oP '\d+(?=:)' | tr '\n' ' ')
+          laws=$(node -e "const s=require('fs').readFileSync('src/net/eliteGates/egDurable.js','utf8');const m=/export const EG_LAWS = Object\.freeze\(\{([^}]*)\}/.exec(s);process.stdout.write(m?[...m[1].matchAll(/(\d+)\s*:/g)].map((x)=>x[1]).join(' '):'')")
+          if [ -z "$laws" ]; then echo "::error::could not read EG_LAWS from src/net/eliteGates/egDurable.js - refusing to drain against an empty list, where every live breach looks like a law this build does not draw and the wait never ends"; exit 1; fi
           echo "this build draws the spec laws: ${laws}"
           tries=0
           while :; do

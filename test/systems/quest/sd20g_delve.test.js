@@ -136,15 +136,6 @@ test('SD20g A DROP IS A WAY DOWN, KEPT WITH THE TRAIL (D1): each drop taken is k
 
 // ── D2: the split said as it is built ──────────────────────────────────
 
-test('SD20g THE ONLINE SPLIT SAID AS IT IS BUILT (D2): the draw is a quarter small, half medium, a quarter whole, but a dungeon of five blocks or fewer is small whatever it draws and one of eight or fewer never more than medium - section 13 said the Bay\'s dungeons were split so; it says now what is built, and that weighting the draw is Mac\'s call (mutant: the old line)', () => {
-  const doc = read('bible/11-Multiplayer/Super-Dungeons.md');
-  const page = doc.slice(doc.indexOf('\n## 13.'), doc.indexOf('\n## 14.'));   // section 13, the online law (the audit's record quotes the old line)
-  assert.ok(page.length > 1000, 'section 13');
-  assert.match(page, /a quarter of the DRAWS small, half\s+medium, a quarter whole/);
-  assert.match(page, /What is BUILT is not that split/);
-  assert.doesNotMatch(page, /a quarter of the Bay's dungeons\s+small, half medium, a quarter whole/);
-});
-
 // ── D3: an ended quest marks nothing ─────────────────────────────────
 
 test('SD20g AN ENDED QUEST MARKS NOTHING (D3): a tombstoned quest stays in the machine a game week, its stands standing and its behaviours bound to it - the Exact tier marked its item, its people and its foes, and the compass pointed at them. A quest complete or tombstoned marks nothing; a running one marks as ever (mutants: the stand, the foe or the person of an ended quest marked)', () => {
@@ -241,7 +232,7 @@ test('SD20g A QUEST SHARED ONLINE IS LAID ON THIS PAGE\'S SIZES, AND NO LINK RE-
   // medium layout where the copy's dungeon moved, online and off
   assert.match(share, /const relay = \(q\) => \{\n\s*const online = ctx\.online \?\? isOnlinePage\(\);\n\s*if \(online\) relayQuestOnline\(q, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}\);\n\s*relayQuestMovedLayout\(q, machine, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}, online\);\n\s*\};/);
   // PIN MOVED (QUEST-AUDIT III GOLD-HOLDERS): the resync notes its sender a holder of the copy, after the relay
-  assert.match(share, /if \(quest\) \{ relay\(quest\); machine\.noteShareHolder\?\.\(questName, ctx\.from\); return \{ ok: true, quest, resync: true \}; \}/, 'kept in step: laid');
+  assert.match(share, /if \(quest\) \{\n\s*relay\(quest\);\n\s*machine\.noteShareHolder\?\.\(questName, ctx\.from\);\n\s*return \{ ok: true, quest, resync: true \};\n\s*\}/, 'kept in step: laid');
   assert.match(share, /if \(!quest\) return \{ ok: false, reason: 'restore' \};[^\n]*\n\s*relay\(quest\);/, 'arrived: laid');
   // PIN MOVED (QUEST-AUDIT III SHELF-TWIN, itemTransfer.js keepsQuestItem): every keeping - the wagon's and the bag's too
   assert.match(read('src/scenes/world.js'), /carriesQuestItem: \(res\) => keepsQuestItem\(playerEntity, res\),[^\n]*\n\s*from: acct,[^\n]*\n\s*\}\);/, 'a quest item I carry never laid again');

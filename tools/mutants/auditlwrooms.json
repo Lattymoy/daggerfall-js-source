@@ -257,8 +257,8 @@
   {
     "name": "AUDIT-LWR-minute",
     "file": "tools/livingRoomProbe.mjs",
-    "old": "for (let m = h0 * 60; m < h1 * 60; m++) {",
-    "new": "for (let m = h0 * 60; m < h1 * 60; m += 15) {",
+    "old": "      for (let m = h0 * 60; m < h1 * 60; m++) {",
+    "new": "      for (let m = h0 * 60; m < h1 * 60; m += 15) {",
     "tests": [
       "test/systems/livingWorld/lwrooms_tavern.test.js"
     ]

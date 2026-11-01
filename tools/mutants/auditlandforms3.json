@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-A2-mountain-woods-old-centre",
     "file": "src/world/landforms.js",
-    "old": "mountainWoods: Object.freeze([0, 1.9])",
-    "new": "mountainWoods: Object.freeze([0.165, 1.9])",
+    "old": "  woodlands: Object.freeze([0, 1]), mountainWoods: Object.freeze([0, 1.9]), mountain: RIDGED_NORM,",
+    "new": "  woodlands: Object.freeze([0, 1]), mountainWoods: Object.freeze([0.165, 1.9]), mountain: RIDGED_NORM,",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-A2-haunted-old-centre",
     "file": "src/world/landforms.js",
-    "old": "haunted: Object.freeze([-0.256, 1.25])",
-    "new": "haunted: Object.freeze([-0.31, 1.25])",
+    "old": "  subtropical: Object.freeze([0.02, 1.5]), swamp: Object.freeze([-0.005, 2.6]), haunted: Object.freeze([-0.256, 1.25]),",
+    "new": "  subtropical: Object.freeze([0.02, 1.5]), swamp: Object.freeze([-0.005, 2.6]), haunted: Object.freeze([-0.31, 1.25]),",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-A8-dunes-on-the-engine",
     "file": "src/world/landforms.js",
-    "old": "0.5 - 0.5 * cosPi(f / DUNE_WINDWARD)",
-    "new": "0.5 - 0.5 * Math.cos(Math.PI * f / DUNE_WINDWARD)",
+    "old": "  const p = f < DUNE_WINDWARD ? 0.5 - 0.5 * cosPi(f / DUNE_WINDWARD) : 0.5 + 0.5 * cosPi((f - DUNE_WINDWARD) / (1 - DUNE_WINDWARD));",
+    "new": "  const p = f < DUNE_WINDWARD ? 0.5 - 0.5 * Math.cos(Math.PI * f / DUNE_WINDWARD) : 0.5 + 0.5 * cosPi((f - DUNE_WINDWARD) / (1 - DUNE_WINDWARD));",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-A8-path-weight-pow",
     "file": "src/world/landforms.js",
-    "old": "const w = ((r * r) / (q * q))",
-    "new": "const w = ((r ** 2) / (q * q))",
+    "old": "        const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "        const w = ((r ** 2) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C2-level-on-the-woodlands",
     "file": "src/world/landforms.js",
-    "old": "(ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);",
-    "new": "(ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, null, null, span) : 0);",
+    "old": "        sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);",
+    "new": "        sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, null, null, span) : 0);",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C4-sites-of-the-3x3",
     "file": "src/world/landforms.js",
-    "old": "    for (let qx = px - SITE_REACH_PIXELS; qx <= px + SITE_REACH_PIXELS; qx++) {\n      let xa, xb, ya, yb;\n      if (onSiteTable(qx, qy)) {",
-    "new": "    for (let qx = px - 1; qx <= px + 1; qx++) {\n      let xa, xb, ya, yb;\n      if (onSiteTable(qx, qy)) {",
+    "old": "    for (let qx = px - SITE_REACH_PIXELS; qx <= px + SITE_REACH_PIXELS; qx++) {",
+    "new": "    for (let qx = px - 1; qx <= px + 1; qx++) {",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C5-reach-by-the-short-side",
     "file": "src/world/landforms.js",
-    "old": "reach: Math.min(most, reach + per * Math.max(x1 - x0, y1 - y0) / 2)",
-    "new": "reach: Math.min(most, reach + per * Math.min(x1 - x0, y1 - y0) / 2)",
+    "old": "      out.push({ x0, x1, y0, y1, reach: Math.min(most, reach + per * Math.max(x1 - x0, y1 - y0) / 2), level: () => (level ??= siteLevel(woods, qx, qy, hDim, ground)) });",
+    "new": "      out.push({ x0, x1, y0, y1, reach: Math.min(most, reach + per * Math.min(x1 - x0, y1 - y0) / 2), level: () => (level ??= siteLevel(woods, qx, qy, hDim, ground)) });",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-B4-lift-default-says-relief-alone",
     "file": "src/world/landforms.js",
-    "old": "or null: its defaults (the\n *   relief and the woodlands' hills, no paths, no sites)",
-    "new": "or null: the relief alone",
+    "old": " * LANDFORM1: how far the landforms move DFU's ground at a point of a pixel, in kernel units - what a height written in\n * one frame is moved by to stand on the other (world.js groundFrameHeight and restandHeight: a save, a cached scene,\n * an anchor). The one step DFU takes after the kernel that moves a point's ground - a location's blend, which lerps\n * every sample toward the pixel's mean - is linear in the samples, so a point's move is a FIELD taken through that\n * same blend (blendLocationTerrain itself, over the field): exact over a town's levelled ground, exact in the wild.\n * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's\n * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood\n * up to 29.8 m over a road's cut (a fall billing over 120 HP) - on the real data now 1.6 m over at worst, 2.0 m under\n * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them - no network, no sites, no\n * climates - createLandforms' own defaults, the relief's lift and the hills in woodlands, through the same kernel (AUDIT\n * LANDFORMS II J9: it was a second formula the game never ran, and the pins that read it as \"the real pipeline\" read\n * that; AUDIT LANDFORMS III B4: this said \"the relief alone\" after LANDFORM5 gave the default its hills). Not followed: World of Daggerfall's flatten.\n * @param {object} woods - the sampler's three-method surface.\n * @param {number} px\n * @param {number} py\n * @param {number} sx - the point's x in the pixel's sample space (0..128, east)\n * @param {number} sy - its y (0..128, north)\n * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [locationRect] - the pixel's location rect\n *   (setLocationTiles' answer), or null in the wild.\n * @param {number} [hDim]\n * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: its defaults (the\n *   relief and the woodlands' hills, no paths, no sites)",
+    "new": " * How far the landforms move DFU's ground at a point of a pixel, in kernel units - what a height written in\n * one frame is moved by to stand on the other (world.js groundFrameHeight and restandHeight: a save, a cached scene,\n * an anchor). The one step DFU takes after the kernel that moves a point's ground - a location's blend, which lerps\n * every sample toward the pixel's mean - is linear in the samples, so a point's move is a FIELD taken through that\n * same blend (blendLocationTerrain itself, over the field): exact over a town's levelled ground, exact in the wild.\n * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's\n * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood\n * up to 29.8 m over a road's cut (a fall billing over 120 HP) - on the real data now 1.6 m over at worst, 2.0 m under\n * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them - no network, no sites, no\n * climates - createLandforms' own defaults, the relief's lift and the hills in woodlands, through the same kernel (AUDIT\n * LANDFORMS II J9: it was a second formula the game never ran, and the pins that read it as \"the real pipeline\" read\n * that; AUDIT LANDFORMS III B4: this said \"the relief alone\" after LANDFORM5 gave the default its hills). Not followed: World of Daggerfall's flatten.\n * @param {object} woods - the sampler's three-method surface.\n * @param {number} px\n * @param {number} py\n * @param {number} sx - the point's x in the pixel's sample space (0..128, east)\n * @param {number} sy - its y (0..128, north)\n * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [locationRect] - the pixel's location rect\n *   (setLocationTiles' answer), or null in the wild.\n * @param {number} [hDim]\n * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: the relief alone",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C4-road-noise-unlevelled",
     "file": "src/world/landforms.js",
-    "old": "      const smoothLand = land - g * keep;",
-    "new": "      const smoothLand = land - g;",
+    "old": "      const smoothLand = land - g * keep;   // LANDFORM4: a site's pull levels the ground noise by as much as the land",
+    "new": "      const smoothLand = land - g;   // LANDFORM4: a site's pull levels the ground noise by as much as the land",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C2-level-hills-regardless",
     "file": "src/world/landforms.js",
-    "old": "+ (ground.hills ? hillsAt(ox + x",
-    "new": "+ (true ? hillsAt(ox + x",
+    "old": "        sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);",
+    "new": "        sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (true ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "AUDIT-LANDFORMS-III-C6-hills-eased-on-the-noise",
     "file": "src/world/landforms.js",
-    "old": "    let land = landAt(gx, gy, h, h - g, low,",
-    "new": "    let land = landAt(gx, gy, h, h, low,",
+    "old": "    let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);",
+    "new": "    let land = landAt(gx, gy, h, h, low, cliff ? cliff(x, y) : 1, near);",
     "tests": [
       "test/world/terrain/auditlandforms3.test.js"
     ]

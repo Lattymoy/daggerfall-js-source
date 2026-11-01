@@ -2,8 +2,8 @@
   {
     "name": "AUDITTESA2M-M1-the-cap-the-count-alone",
     "file": "src/ui/tamrielTiles.js",
-    "old": "while (tiles.size > Math.max(kept, want.length)) {",
-    "new": "while (tiles.size > kept) {",
+    "old": "      while (tiles.size > Math.max(kept, want.length)) {",
+    "new": "      while (tiles.size > kept) {",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js",
       "test/tesa15_mapfidelity.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDITTESA2M-M1-a-drawn-tile-not-to-the-back",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (t) { tiles.delete(id); tiles.set(id, t); }",
-    "new": "if (t && t.word === word && !t.job) { tiles.delete(id); tiles.set(id, t); }",
+    "old": "        if (t) {",
+    "new": "        if (t && t.word === word && !t.job) {",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js",
       "test/tesa15_mapfidelity.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AUDITTESA2M-M3-the-stand-in-level-a-float",
     "file": "src/ui/tamrielTiles.js",
-    "old": "const t = tiles.get(idOf(key, n + k, dpr, tx, ty));",
-    "new": "const t = tiles.get(idOf(key, Math.log2(2 ** (n / LEVEL_STEPS) * 2 ** (k / LEVEL_STEPS)) * LEVEL_STEPS, dpr, tx, ty));",
+    "old": "          const t = tiles.get(idOf(key, n + k, dpr, tx, ty));",
+    "new": "          const t = tiles.get(\n            idOf(key, Math.log2(2 ** (n / LEVEL_STEPS) * 2 ** (k / LEVEL_STEPS)) * LEVEL_STEPS, dpr, tx, ty),\n          );",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "AUDITTESA2M-M10-the-budget-between-tiles-alone",
     "file": "src/ui/tamrielTiles.js",
-    "old": "while (!t.job.done && may()) {",
-    "new": "while (!t.job.done) {",
+    "old": "          while (!t.job.done && may()) {",
+    "new": "          while (!t.job.done) {",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "AUDITTESA2M-M5-the-carriages-back",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
-    "new": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1), 'Carriages run inside the zone every 10 minutes, at higher prices.'] : [ZONE_MAP_TEXT.offline()];",
+    "old": "    ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)]",
+    "new": "    ? [\n        ZONE_RULES[0],\n        ZONE_SAFE_TEXT.rule,\n        ...ZONE_RULES.slice(1),\n        'Carriages run inside the zone every 10 minutes, at higher prices.',\n      ]",
     "tests": [
       "test/ui/audittesa2m_window.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "AUDITTESA2M-M5-the-loot-said-offline",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : '')",
-    "new": "el('span', 'hmwild-bonus', wildRingBonus(r))",
+    "old": "    li.append(sw, name, el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : ''), depth);",
+    "new": "    li.append(sw, name, el('span', 'hmwild-bonus', wildRingBonus(r)), depth);",
     "tests": [
       "test/ui/audittesa2m_window.test.js"
     ]

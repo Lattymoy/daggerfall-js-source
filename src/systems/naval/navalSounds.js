@@ -22,7 +22,7 @@ export const NAVAL_SFX = Object.freeze({
   runout: 'naval:runout',
   ready: 'naval:ready',
   sinking: 'naval:sinking',
-  whistle: 'naval:whistle',   // COMBAT-FEEL NEAR-MISS: a ball going by close
+  whistle: 'naval:whistle', // COMBAT-FEEL NEAR-MISS: a ball going by close
 });
 /** Each key's file under public/sfx. */
 export const NAVAL_SFX_FILES = Object.freeze({
@@ -38,7 +38,13 @@ export const NAVAL_SFX_FILES = Object.freeze({
   [NAVAL_SFX.whistle]: 'naval-whistle.wav',
 });
 /** DAGGER.SND's own, by index (SoundClips): the splashes, the bell, the bubbles, the fire. */
-export const NAVAL_CLASSIC = Object.freeze({ splashLarge: 342, splashSmall: 346, bell: 107, bubbles: 114, burning: 420 });
+export const NAVAL_CLASSIC = Object.freeze({
+  splashLarge: 342,
+  splashSmall: 346,
+  bell: 107,
+  bubbles: 114,
+  burning: 420,
+});
 
 /** How far each is heard (m): full level within `refDistance`, inverse past it, gone past `maxDistance`. */
 export const NAVAL_SOUND_RANGE = Object.freeze({
@@ -67,7 +73,8 @@ export const NAVAL_SINK_LOOP = Object.freeze({ refDistance: 18, maxDistance: 420
 /** The range a key is played with - its own, or the bus's default for anything else. */
 export const navalSoundRange = (key) => NAVAL_SOUND_RANGE[/** @type {any} */ (key)] ?? null;
 
-export const navalSfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const navalSfxUrl = (file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _sounds = null;
 /** Register the ten clips, once (the first ship seen). Answers how many took; a clip that will not load is silence,
@@ -75,17 +82,25 @@ let _sounds = null;
 export function installNavalSounds(audio, { fetchBytes = null } = {}) {
   if (!audio?.registerSound) return Promise.resolve(0);
   return (_sounds ??= (async () => {
-    const load = fetchBytes ?? (async (file) => {
-      const r = await fetch(navalSfxUrl(file));
-      if (!r.ok) throw new Error(`${file}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+    const load =
+      fetchBytes ??
+      (async (file) => {
+        const r = await fetch(navalSfxUrl(file));
+        if (!r.ok) throw new Error(`${file}: ${r.status}`);
+        return new Uint8Array(await r.arrayBuffer());
+      });
     let n = 0;
     for (const [key, file] of Object.entries(NAVAL_SFX_FILES)) {
-      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the gun still fires, silently */ }
+      try {
+        if (await audio.registerSound(key, await load(file))) n++;
+      } catch {
+        /* the gun still fires, silently */
+      }
     }
     return n;
   })());
 }
 /** Test seam. */
-export function _resetNavalSounds() { _sounds = null; }
+export function _resetNavalSounds() {
+  _sounds = null;
+}

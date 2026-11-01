@@ -57,7 +57,8 @@
 import { PHASE_AT, SHIELD_MS, THREAT_PICK, THREAT_DECAY, HIT_KINDS, STUN_MS, STUN_HIT_X } from '../gate/gateBrain.js';
 import { ATTACKS, POOLS } from '../gate/gateBrain.js';   // AUDIT EG III (section 13.4; ONE DFU MEMBER, ONE EXPORT): the gate's Cleave, Slam, Charge and Meteor read, never copied - the Meteor's burning ground with it
 import { GATE_ASPECTS, gateAspectOf } from '../gate/gateMods.js';   // AUDIT EG III (sections 13.3 and 13.4): a lord's aspect - Garoth's in turn, an earlier band's lord re-aspected
-import { dpsRef, retireShare, restoreShare } from '../gate/gateBrain.js';   // EG-ZQ (section 13.2): a lord's shares - the gate's level claim, its retirement and its return
+import { retireShare, restoreShare } from '../gate/gateBrain.js';   // EG-ZQ (section 13.2): a lord's shares - the gate's level claim, its retirement and its return
+import { egHealthRef, egRefDealt } from './egMight.js';   // EG-MIGHT: a member's share counted at its might's root; AUDIT POTION-MIGHT B3: its damage at the reference
 import { EG_ROLE, EG_FL, EG_GONE, egBodyNew, egWalk, egStop, egPlace, egAim, egGone, egHas, egSetFl, egHpTeam, egBodiesOf, egBodyById, egMark, egUnmark, egMarkOf, egShareX, egCut, egSaid, egObSay, EG_TELL_LEAD_MS, EG_FEINT_AT } from './egBodies.js';   // EG-ZJ: egSaid, egObSay - a body's state kept as said
 import { egHitBody, egFightState } from './egBodies.js';   // EG-ZK: the seam's blow (the gate's hand and purse) and the fight's state
 import { egFace } from './egBodies.js';   // AUDIT EG V (lane1 #7): a lord's turn said
@@ -229,7 +230,7 @@ const elOf = (L, el) => (el != null && L?.asp ? gateAspectOf(L.asp)?.el ?? el : 
 /**
  * A LORD'S FIGHTERS: each member's share of its health (`{ share, retired }`, the gate's own record - net/gate/gateBrain.js
  * retireShare/restoreShare move it), kept on the lord (`fs`) from the first share it moves - the company the hall woke
- * with (`F.subs`, at `F.lvs`), each `per` x its reference damage (`dpsRef`), `per` the lord's health per unit of the
+ * with (`F.subs`, at `F.lvs`), each `per` x its reference damage (`dpsRef`, EG-MIGHT: at its might's root - egHealthRef), `per` the lord's health per unit of the
  * company's reference damage as it was stood (ttkRef, a champion's EG_PROVE_HP_S x the depth, Colossal, a twin's part,
  * a stratum's 0.6), so its shares sum to its health.
  */
@@ -237,7 +238,7 @@ function sharesOf(F, L) {
   if (L.fs) return L.fs;
   L.per = L.max / Math.max(1, F.team);
   L.fs = {};
-  (F.subs ?? []).forEach((s, j) => { L.fs[s] = { share: L.per * dpsRef(F.lvs[j]), retired: false }; });
+  (F.subs ?? []).forEach((s, j) => { L.fs[s] = { share: L.per * egHealthRef(F.lvs[j], F.mgs?.[j] ?? null), retired: false }; });   // EG-MIGHT: at its might's root, as the team was
   return L.fs;
 }
 /**
@@ -257,15 +258,15 @@ function sharesOf(F, L) {
  * A mirror or an image carries no share (its health its own). A share moved keeps an errand's held threshold at its fraction
  * and says the whole fight at the beat's end (`F.stateAt`), so every bar's health and its max move together. Answers
  * whether any share moved.
- * @param {any} F @param {string} sub @param {number} lv @param {boolean} admits
+ * @param {any} F @param {string} sub @param {number} lv @param {boolean} admits @param {number|null} [mg] EG-MIGHT (section 21.1): its kit's might - a share brought counted at its root (egHealthRef), as the hall's were
  */
-export function egLordsShare(F, sub, lv, admits) {
+export function egLordsShare(F, sub, lv, admits, mg = null) {
   let moved = false;
   for (const L of F.bodies) {
     if (L.role !== EG_ROLE.lord || egHas(L, EG_FL.mirror)) continue;
     const fs = sharesOf(F, L), max0 = L.max;
     let p = fs[sub];
-    if (admits && !p) p = fs[sub] = { share: L.per * dpsRef(lv), retired: true };
+    if (admits && !p) p = fs[sub] = { share: L.per * egHealthRef(lv, mg), retired: true };
     if (admits) restoreShare(L, p);
     else if (p && !L.up2 && Object.values(fs).some((q) => q !== p && !q.retired)) retireShare(L, p);
     if (L.max === max0) continue;
@@ -1915,7 +1916,7 @@ export const EG_EARN_HALLS = 3;
  */
 export const EG_SEAM = bossSeam('eg', {
   new: ({ F, spec, key, now, out, decrees = {}, n = F.n, at = undefined }) => ({ ...egLordsFight(F, spec, { decrees, n }, now), stood: egLordsNew(F, spec, key, now, out, { decrees, n, at }) }),
-  join: (f, sub, name, lv, now, present = null, o = {}) => { const up = egLordsOf(f.F).length > 0; if (up) { egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits) egUnchain(f.F, sub); } return !!o.admits && up; },   // EG-ZQ: its share in while admitted - LORD-SHARES: kept at its fall by a lord awake; AUDIT EG V (lane1 #8): unchained as it goes
+  join: (f, sub, name, lv, now, present = null, o = {}) => { const up = egLordsOf(f.F).length > 0; if (up) { egLordsShare(f.F, sub, lv, !!o.admits, o.mg ?? null); if (!o.admits) egUnchain(f.F, sub); } return !!o.admits && up; },   // EG-ZQ: its share in while admitted - LORD-SHARES: kept at its fall by a lord awake; AUDIT EG V (lane1 #8): unchained as it goes
   hit: (f, sub, d, r, pose, now, seq = null, o = {}) => {
     const L = egBodyById(f.F, o.i);
     if (!L || L.role !== EG_ROLE.lord) return { got: 0, b: null };
@@ -1928,7 +1929,7 @@ export const EG_SEAM = bossSeam('eg', {
   judge: (f, bodies, now) => { const hits = judgeShapes(f.F, bodies, now, f.spec); egLordsJudged(f.F, hits); return egChainShared(f.F, hits, bodies); },   // AUDIT EG III: a chained member's blow divided with its chain; AUDIT EG V (lane1 #25): its catch told its lord's kit
   earned: (f, sub) => {
     if (!f.F || !egLordsFell(f.F)) return false;
-    const co = f.ctx?.co ?? [], total = co.reduce((s, [, m]) => s + m.dc, 0), n = Math.max(1, co.length), m = co.find(([s]) => s === sub)?.[1];
-    return !!m && (m.dc >= (total * EG_EARN_SHARE) / n || m.act >= EG_EARN_HALLS);
+    const co = f.ctx?.co ?? [], total = co.reduce((s, [, m]) => s + egRefDealt(m.dc, m.mg), 0), n = Math.max(1, co.length), m = co.find(([s]) => s === sub)?.[1];
+    return !!m && (egRefDealt(m.dc, m.mg) >= (total * EG_EARN_SHARE) / n || m.act >= EG_EARN_HALLS);   // AUDIT POTION-MIGHT B3: at the reference
   },
 });

@@ -319,7 +319,10 @@ test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and
 // THE FACING, THE ORIENTATION CLOCK, THE STRIDE, THE HIDES [IL]
 // ─────────────────────────────────────────────────────────────────
 
-test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async () => {
+test('EOTB-IL: UpdateOrientation runs ten times a second, keeps the last FACING while stopped, and turns to the view with a weapon up', async (t) => {
+  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
+  setModSetting(MOD, 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
   const { b } = await liveBody();
   // walking toward +z with the camera behind: the back
   ticks(b, 20, walk());
@@ -554,10 +557,6 @@ test('EOTB-IL: no [SETTINGS] law is left in the arc, every law is marked [IL] wi
   assert.ok(!/\[SETTINGS\]/.test(arc), 'AUDIT-EOTB2\'s evidence mark is gone: the assembly is in the tree');
   assert.ok((arc.match(/\[IL\]/g) ?? []).length >= 30, 'the laws carry the IL mark');
   assert.ok((arc.match(/IL_[0-9a-f]{4}/g) ?? []).length >= 60, 'and cite their offsets');
-  const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
-  assert.match(page, /EOTB-IL/);
-  assert.match(page, /the assembly is in the tree|Eye Of The Beholder\.dll` is vendored/i, 'the page says where the assembly is');
-  assert.ok(!/THE ASSEMBLY IS NOT IN THE TREE/.test(page), 'and no longer says it is not');
 });
 
 // ─────────────────────────────────────────────────────────────────

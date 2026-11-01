@@ -20,8 +20,8 @@
   {
     "name": "ROCK-FOOT-the-whole-box-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "{ const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }",
-    "new": "pixelRocks.push(box);",
+    "old": "        if (rockPick(m.pick)) { const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }   // PROF2: a rock piece that stood - a vein's foot or a boulder; ROCK-FOOT: as it stands out of the ground, never its whole mesh's box (none if wholly under it)",
+    "new": "        if (rockPick(m.pick)) pixelRocks.push(box);   // PROF2: a rock piece that stood - a vein's foot or a boulder; ROCK-FOOT: as it stands out of the ground, never its whole mesh's box (none if wholly under it)",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SETTLE-SAID-the-patch-never-asks",
     "file": "src/scenes/herbHost.js",
-    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID\n",
-    "new": "",
+    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS), // SETTLE-SAID\n    /** PROF-MENU: the menu's title - the patch's herb. */",
+    "new": "    /** PROF-MENU: the menu's title - the patch's herb. */",
     "tests": [
       "test/scenes/fb1001_settlesaid.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "CAST-LOOK-the-cast-under-the-eye",
     "file": "src/scenes/fishHost.js",
-    "old": "at: () => castAt(host.eye()),",
-    "new": "at: () => { const { pos, dir } = host.eye(); const l = Math.hypot(dir[0], dir[2]) || 1; return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] - 0.6, pos[2] + (dir[2] / l) * CAST_AHEAD_M]; },",
+    "old": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M, yields: true }];",
+    "new": "      return [\n        {\n          key: c.key,\n          at: () => {\n            const { pos, dir } = host.eye();\n            const l = Math.hypot(dir[0], dir[2]) || 1;\n            return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] - 0.6, pos[2] + (dir[2] / l) * CAST_AHEAD_M];\n          },\n          lift: 0,\n          reach: CAST_REACH_M,\n          yields: true,\n        },\n      ];",
     "tests": [
       "test/scenes/fb1001_lifeskills.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "CAST-LOOK-the-cast-yields-nothing",
     "file": "src/scenes/fishHost.js",
-    "old": "lift: 0, reach: CAST_REACH_M, yields: true }];",
-    "new": "lift: 0, reach: CAST_REACH_M }];",
+    "old": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M, yields: true }];",
+    "new": "      return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M }];",
     "tests": [
       "test/scenes/fb1001_lifeskills.test.js"
     ]
@@ -203,7 +203,7 @@
   },
   {
     "name": "SETTLE-STAND-the-block-forgotten",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND",
     "new": "inLocationRect: (() => { const r = locationWorldRect(loc, p.x, p.y); return wc.x >= r.minX && wc.x <= r.maxX && wc.z >= r.minZ && wc.z <= r.maxZ; })(), inside: false }); },   // SETTLE-STAND",
     "tests": [
@@ -212,7 +212,7 @@
   },
   {
     "name": "SETTLE-STAND-every-location-a-settlement",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "new": "isPlayerInTown(0, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "tests": [
@@ -351,8 +351,8 @@
   {
     "name": "GATHER-OW-never-filtered",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (k === 'gather') return 'gathering';   // GATHER-OW\n",
-    "new": "",
+    "old": "  if (k === 'gather') return 'gathering'; // GATHER-OW\n  return null; // dest, target, party - always drawn",
+    "new": "  return null; // dest, target, party - always drawn",
     "tests": [
       "test/scenes/gatherow.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "GATHER-OW-the-view-drops-the-colour",
     "file": "src/scenes/travelView.js",
-    "old": ", ...(m.color ? { color: m.color } : {}), badge:",
-    "new": ", badge:",
+    "old": "        ...(m.color ? { color: m.color } : {}),\n        badge: m.badge ?? null,",
+    "new": "        badge: m.badge ?? null,",
     "tests": [
       "test/scenes/gatherow.test.js"
     ]

@@ -515,8 +515,8 @@
   {
     "name": "TESA8-host-no-lairs",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first",
-    "new": "|| host.countryLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/tesa8_lairs.test.js"
     ],
@@ -534,8 +534,8 @@
   {
     "name": "TESA8-host-rates-types",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "countryRates(_lairCounts, bayLandNow(), LAIR_TYPES)",
-    "new": "countryRates(_lairCounts, bayLandNow())",
+    "old": "  const lairRatesNow = () => (_pastBay.lairRates ??= countryRates(_lairCounts, bayLandNow(), LAIR_TYPES));   // TESA8: the lairs' over the same land",
+    "new": "  const lairRatesNow = () => (_pastBay.lairRates ??= countryRates(_lairCounts, bayLandNow()));   // TESA8: the lairs' over the same land",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "TESA8-host-bank-clamp",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c))",
-    "new": "lairName(pick.type, dungeonType, getNameBankOfRegion(regionIndex), lairNameSeed(c))",
+    "old": "    return { c, pick, regionIndex, dungeonType, name: lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c)) };",
+    "new": "    return { c, pick, regionIndex, dungeonType, name: lairName(pick.type, dungeonType, getNameBankOfRegion(regionIndex), lairNameSeed(c)) };",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "TESA8-host-not-deleted",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    if (had?.country?.dungeon) { host._locIndexGen += 1; locationIndex.delete(key); }",
-    "new": "    if (had?.country?.dungeon) { host._locIndexGen += 1; }",
+    "old": "    if (had?.country?.dungeon) { host._locIndexGen += 1; locationIndex.delete(key); }   // its cell's roll moved (the trace landing, a road): out",
+    "new": "    if (had?.country?.dungeon) { host._locIndexGen += 1; }   // its cell's roll moved (the trace landing, a road): out",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "TESA8-host-not-indexed",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const loc = at ? lairCloneOf(at, px, py) : null;\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);\n    return loc;\n",
-    "new": "    const loc = at ? lairCloneOf(at, px, py) : null;\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    return loc;\n",
+    "old": "    if (!loc) return null;\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA8: a rolled lair laid out to its plan and cloned under its own id, name and index - NOT stood (START2: the start",
+    "new": "    if (!loc) return null;\n    host._locIndexGen += 1;\n    return loc;\n  }\n  /** TESA8: a rolled lair laid out to its plan and cloned under its own id, name and index - NOT stood (START2: the start",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

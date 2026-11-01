@@ -120,11 +120,7 @@ export class BsaFile {
 
   /** ID of a number record. NumberRecord directories only, else 0. */
   getRecordId(record) {
-    if (
-      record < 0 ||
-      record >= this._directoryCount ||
-      this._directoryType !== DIRECTORY_TYPES.NumberRecord
-    ) {
+    if (record < 0 || record >= this._directoryCount || this._directoryType !== DIRECTORY_TYPES.NumberRecord) {
       return 0;
     }
     return this._directory[record].id;

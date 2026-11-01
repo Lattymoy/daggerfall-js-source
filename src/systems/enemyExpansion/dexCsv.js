@@ -21,17 +21,27 @@ export function splitCsvLine(line) {
   for (const m of String(line).matchAll(CSV_SPLIT)) {
     const curr = m[0];
     if (curr.length === 0) list.push('');
-    list.push(curr.replace(/^[,;]+/, '').replaceAll('\\"', '"').replace(/^"+|"+$/g, ''));
+    list.push(
+      curr
+        .replace(/^[,;]+/, '')
+        .replaceAll('\\"', '"')
+        .replace(/^"+|"+$/g, ''),
+    );
   }
   return list;
 }
 
 /** The header's fields (BestiaryMod.cs:334, :676, :1641): split on `;` or `,` with no quoting, each `"`-trimmed. */
-export const splitCsvHeader = (header) => String(header).split(/[;,]/).map((f) => f.replace(/^"+|"+$/g, ''));
+export const splitCsvHeader = (header) =>
+  String(header)
+    .split(/[;,]/)
+    .map((f) => f.replace(/^"+|"+$/g, ''));
 
 /** The lines after the header, as StreamReader.ReadLine reads them (CRLF or LF; no line for a final terminator). */
 export function csvLines(text) {
-  const lines = String(text).replace(/^﻿/, '').split(/\r\n|\n|\r/);
+  const lines = String(text)
+    .replace(/^﻿/, '')
+    .split(/\r\n|\n|\r/);
   if (lines.length && lines[lines.length - 1] === '') lines.pop();
   return lines;
 }
@@ -65,7 +75,8 @@ export function parseFloatArrayArg(arg, context = '') {
   }
   return a.split(/[,;]/).map((s) => {
     const v = (s === '' ? '-1' : s).trim();
-    if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v)) throw new Error(`Error parsing (${context}): '${s}' is not a number`);
+    if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v))
+      throw new Error(`Error parsing (${context}): '${s}' is not a number`);
     return Number(v);
   });
 }
@@ -95,7 +106,10 @@ export function readCsvTable(text) {
   const fields = splitCsvHeader(lines[0] ?? '');
   const lower = fields.map((f) => f.toLowerCase());
   /** GetIndexOpt: the column of a field, or null. */
-  const column = (name) => { const i = lower.indexOf(String(name).toLowerCase()); return i === -1 ? null : i; };
+  const column = (name) => {
+    const i = lower.indexOf(String(name).toLowerCase());
+    return i === -1 ? null : i;
+  };
   const rows = lines.slice(1).map((line, i) => ({ lineNumber: i + 2, line, tokens: splitCsvLine(line) }));
   return { fields, column, rows };
 }

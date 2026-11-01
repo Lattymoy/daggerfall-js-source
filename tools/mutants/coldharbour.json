@@ -2,8 +2,8 @@
   {
     "name": "COLDHARBOUR-gradient-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "coldharbour: Object.freeze([COLD_CRIMSON, COLD_MAGENTA, COLD_LAVENDER]),",
-    "new": "coldharbour: Object.freeze([COLD_LAVENDER, COLD_MAGENTA, COLD_CRIMSON]),",
+    "old": "  coldharbour: Object.freeze([COLD_CRIMSON, COLD_MAGENTA, COLD_LAVENDER]), // BLOOD-OF-COLDHARBOUR: \"Blood\" in the crimson, \"Coldharbour\" into the violet",
+    "new": "  coldharbour: Object.freeze([COLD_LAVENDER, COLD_MAGENTA, COLD_CRIMSON]), // BLOOD-OF-COLDHARBOUR: \"Blood\" in the crimson, \"Coldharbour\" into the violet",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "COLDHARBOUR-one-colour-the-crimson",
     "file": "src/ui/playerBadge.js",
-    "old": "  coldharbour: COLD_MAGENTA,   // BLOOD-OF-COLDHARBOUR: the crimson and the violet blended",
-    "new": "  coldharbour: COLD_CRIMSON,   // BLOOD-OF-COLDHARBOUR: the crimson and the violet blended",
+    "old": "  coldharbour: COLD_MAGENTA, // BLOOD-OF-COLDHARBOUR: the crimson and the violet blended - the colour a face that cannot draw a gradient uses",
+    "new": "  coldharbour: COLD_CRIMSON, // BLOOD-OF-COLDHARBOUR: the crimson and the violet blended - the colour a face that cannot draw a gradient uses",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COLDHARBOUR-edge-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "  coldharbour: Object.freeze([0, 0, 0, 1]),   // BLOOD-OF-COLDHARBOUR: its lavender end is light",
-    "new": "  // BLOOD-OF-COLDHARBOUR: its lavender end is light",
+    "old": "  coldharbour: Object.freeze([0, 0, 0, 1]), // BLOOD-OF-COLDHARBOUR: its lavender end is light - edged in black, as the Nirnroot Sage's",
+    "new": "  // BLOOD-OF-COLDHARBOUR: its lavender end is light - edged in black, as the Nirnroot Sage's",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COLDHARBOUR-mark-taken",
     "file": "src/ui/playerBadge.js",
-    "old": "  coldharbour: 'R',   // BLOOD-OF-COLDHARBOUR: the rose",
-    "new": "  coldharbour: 'Y',   // BLOOD-OF-COLDHARBOUR: the rose",
+    "old": "  coldharbour: 'R', // BLOOD-OF-COLDHARBOUR: the rose",
+    "new": "  coldharbour: 'Y', // BLOOD-OF-COLDHARBOUR: the rose",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "COLDHARBOUR-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "cog: false, coldharbour: false });",
-    "new": "cog: false, coldharbour: true });",
+    "old": "  coldharbour: false,",
+    "new": "  coldharbour: true,",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "COLDHARBOUR-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "vampirichaze: 'coldharbour' });",
-    "new": "vampirichaze: 'shadowfang' });",
+    "old": "  vampirichaze: 'coldharbour',",
+    "new": "  vampirichaze: 'shadowfang',",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "COLDHARBOUR-details-out-of-order",
     "file": "src/ui/playerBadge.js",
-    "old": "    Object.freeze({ path: 'M8 2.25L8.26 2.27L8.52 2.33L8.77 2.43L9 2.57L9.22 2.75L9.41 2.97L9.57 3.22L9.69 3.51L9.76 3.84L9.78 4.22L9.7 4.67L9.29 5.52L9.97 4.87L10.38 4.66L10.74 4.56L11.08 4.53L11.4 4.55L11.69 4.62L11.95 4.74L12.19 4.88L12.39 5.06L12.56 5.27L12.7 5.5L12.8 5.74L12.86 6L12.89 6.26L12.87 6.53L12.81 6.79L12.7 7.05L12.56 7.3L12.36 7.53L12.12 7.73L11.83 7.91L11.48 8.04L11.02 8.11L10.09 7.98L10.92 8.42L11.25 8.75L11.46 9.06L11.59 9.37L11.66 9.68L11.69 9.98L11.66 10.26L11.59 10.53L11.49 10.79L11.34 11.01L11.17 11.21L10.97 11.39L10.74 11.52L10.5 11.63L10.24 11.69L9.97 11.72L9.69 11.7L9.41 11.63L9.13 11.52L8.86 11.36L8.61 11.13L8.37 10.84L8.16 10.43L8 9.5L7.84 10.43L7.63 10.84L7.39 11.13L7.14 11.36L6.87 11.52L6.59 11.63L6.31 11.7L6.03 11.72L5.76 11.69L5.5 11.63L5.26 11.52L5.03 11.39L4.83 11.21L4.66 11.01L4.51 10.79L4.41 10.53L4.34 10.26L4.31 9.98L4.34 9.68L4.41 9.37L4.54 9.06L4.75 8.75L5.08 8.42L5.91 7.98L4.98 8.11L4.52 8.04L4.17 7.91L3.88 7.73L3.64 7.53L3.44 7.3L3.3 7.05L3.19 6.79L3.13 6.53L3.11 6.26L3.14 6L3.2 5.74L3.3 5.5L3.44 5.27L3.61 5.06L3.81 4.88L4.05 4.74L4.31 4.62L4.6 4.55L4.92 4.53L5.26 4.56L5.62 4.66L6.03 4.87L6.71 5.52L6.3 4.67L6.22 4.22L6.24 3.84L6.31 3.51L6.43 3.22L6.59 2.97L6.78 2.75L7 2.57L7.23 2.43L7.48 2.33L7.74 2.27Z', rgba: COLD_VIOLET }),",
-    "new": "    Object.freeze({ path: 'M8 2.25L8.26 2.27L8.52 2.33L8.77 2.43L9 2.57L9.22 2.75L9.41 2.97L9.57 3.22L9.69 3.51L9.76 3.84L9.78 4.22L9.7 4.67L9.29 5.52L9.97 4.87L10.38 4.66L10.74 4.56L11.08 4.53L11.4 4.55L11.69 4.62L11.95 4.74L12.19 4.88L12.39 5.06L12.56 5.27L12.7 5.5L12.8 5.74L12.86 6L12.89 6.26L12.87 6.53L12.81 6.79L12.7 7.05L12.56 7.3L12.36 7.53L12.12 7.73L11.83 7.91L11.48 8.04L11.02 8.11L10.09 7.98L10.92 8.42L11.25 8.75L11.46 9.06L11.59 9.37L11.66 9.68L11.69 9.98L11.66 10.26L11.59 10.53L11.49 10.79L11.34 11.01L11.17 11.21L10.97 11.39L10.74 11.52L10.5 11.63L10.24 11.69L9.97 11.72L9.69 11.7L9.41 11.63L9.13 11.52L8.86 11.36L8.61 11.13L8.37 10.84L8.16 10.43L8 9.5L7.84 10.43L7.63 10.84L7.39 11.13L7.14 11.36L6.87 11.52L6.59 11.63L6.31 11.7L6.03 11.72L5.76 11.69L5.5 11.63L5.26 11.52L5.03 11.39L4.83 11.21L4.66 11.01L4.51 10.79L4.41 10.53L4.34 10.26L4.31 9.98L4.34 9.68L4.41 9.37L4.54 9.06L4.75 8.75L5.08 8.42L5.91 7.98L4.98 8.11L4.52 8.04L4.17 7.91L3.88 7.73L3.64 7.53L3.44 7.3L3.3 7.05L3.19 6.79L3.13 6.53L3.11 6.26L3.14 6L3.2 5.74L3.3 5.5L3.44 5.27L3.61 5.06L3.81 4.88L4.05 4.74L4.31 4.62L4.6 4.55L4.92 4.53L5.26 4.56L5.62 4.66L6.03 4.87L6.71 5.52L6.3 4.67L6.22 4.22L6.24 3.84L6.31 3.51L6.43 3.22L6.59 2.97L6.78 2.75L7 2.57L7.23 2.43L7.48 2.33L7.74 2.27Z', rgba: COLD_CRIMSON }),",
+    "old": "      rgba: COLD_VIOLET,",
+    "new": "      rgba: COLD_CRIMSON,",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "COLDHARBOUR-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "coldharbour: 'coldharbour' });",
-    "new": "coldharbour: 'nirnrootsage' });",
+    "old": "  coldharbour: 'coldharbour',",
+    "new": "  coldharbour: 'nirnrootsage',",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "COLDHARBOUR-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "nirnrootsage: 'sagesmoke' });",
+    "old": "  coldharbour: 'vampirichaze',\n}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, for the Shadow Fang account: a holo shadow cloak with red accents, extremely detailed): the Holo Shadow Cloak",
+    "new": "}); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, for the Shadow Fang account: a holo shadow cloak with red accents, extremely detailed): the Holo Shadow Cloak",
     "tests": [
       "test/net/coldharbour.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "COLDHARBOUR-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'gildedcoil', 'aetherwings', 'vampirichaze']);",
-    "new": "'gildedcoil', 'aetherwings']);",
+    "old": "  'vampirichaze',\n]); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze last - a dark violet haze, blood rising into Daedric runes;   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium; the Aetherium Wings, the Gilded Folio's capstone (2026-10-30) Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: \"a unique different version of the aura\"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: \"a circle of tiny purple squares going up and down out of the ground\"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: \"I want to build an aura for the developers ... Golden Angel wings that flow\"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"A holo shadow cloak with red accents\"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: \"can the aura be a golden light around the character?\"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold",
+    "new": "]); // BLOOD-OF-COLDHARBOUR: the Vampiric Haze last - a dark violet haze, blood rising into Daedric runes;   // STOREFRONT (2026-10-29): the Daedric Dominion (the bundles' own) and the Battle Pass's Aetherium; the Aetherium Wings, the Gilded Folio's capstone (2026-10-30) Coil and Gilded Coil, last;   // SHOP (2026-10-28): ETERNAL last - a cape of blue-violet fire hung from the shoulders and flowing down the back, the shop's pre-alpha aura, bought once;   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;   // EG-E2 (2026-10-12, Elite-Gates.md section 19): THE SPIRE'S THREE, last (after SERPENT5's Maelstrom, which main ships first) - Beaconlight (Kynbane's: gold-white motes), The Burning Stair (Wellhead-Walker's: falling embers) and Firstlight (First of the Spire's: a dawn-white ring), each granted with its title, never sold;   // SERPENT5 (2026-10-15, Sea-Serpent.md section 17): THE MAELSTROM last - the Old Coil's whirlpool of tide and foam about the feet, one dealing ship's serpent kill in fifty on its first write (server-account/src/serpents.js), held for good   // HOURS-FIRST (2026-10-08, Mac: \"a unique different version of the aura\"): THE FIRST HOUR, last - The Turning Hour's wheel in the light of the first dawn, its dial turning forward, the Hour's own mark ablaze; Hour's First's own, granted with the title by name, never rolled or sold;   // SD9c (2026-10-07, the Super Dungeons arc): THE TURNING HOUR, last - the Brass Remnant's wheel of brass gears and gold light, one kill in eight on its first write (server-account/src/sds.js), held for good; CRYSTAL-FIST (2026-10-05, the owner, for Flylighter: \"a circle of tiny purple squares going up and down out of the ground\"): the Crystal Resonance - the Crystal Fist's own ring of rising and falling purple squares, granted with its title by name, never sold.    // SERAPH-WINGS (2026-10-05, Mac: \"I want to build an aura for the developers ... Golden Angel wings that flow\"): the Seraph Wings.    // SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"A holo shadow cloak with red accents\"): the Holo Shadow Cloak - the Shadow Fang's own hooded cloak of shadow and crimson light, granted with its title by name, never sold; PRIMARCH (2026-10-04, GA00250: \"can the aura be a golden light around the character?\"): the Golden Radiance - the Primarch's own column of golden light about the body, granted with its title by name, never sold; AEGIS (2026-10-03): the Oblivion Ward - the Aegis of Oblivion's own ring of runes, granted with its title by name (server-account/src/titles.js TIER_AURA), never sold",
     "tests": [
       "test/net/coldharbour.test.js"
     ]

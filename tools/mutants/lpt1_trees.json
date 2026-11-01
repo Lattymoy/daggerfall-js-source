@@ -92,8 +92,8 @@
   {
     "name": "LPT1-whole-flat-discarded",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "(vFade > 1.5 && vFade < 3.0 &&",
-    "new": "(vFade < 3.0 &&",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LPT1-crossfade-overlaps",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "+ 0.03125 < 3.0 - vFade)) discard;",
-    "new": "+ 0.03125 < vFade - 2.0)) discard;",
+    "old": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < 3.0 - vFade)) discard;",
+    "new": "  if (vFade < 1.0 ? bayer4(gl_FragCoord.xy) + 0.03125 >= vFade : (vFade > 1.5 && vFade < 3.0 && bayer4(gl_FragCoord.xy) + 0.03125 < vFade - 2.0)) discard;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "LPT1-A4-impostor-cut-at-half",
     "file": "src/world/lowPolyTrees.js",
-    "old": "const cut = Math.round((sub.cutoff ?? 0.5) * 255), [cr, cg, cb] = sub.color ?? [1, 1, 1];",
-    "new": "const cut = 128, [cr, cg, cb] = sub.color ?? [1, 1, 1];",
+    "old": "    const cut = Math.round((sub.cutoff ?? 0.5) * 255),",
+    "new": "    const cut = 128,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LPT1-A4-impostor-uncoloured",
     "file": "src/world/lowPolyTrees.js",
-    "old": "data[i * 4] = Math.round(pic.data[s] * sh * cr);",
-    "new": "data[i * 4] = Math.round(pic.data[s] * sh);",
+    "old": "          data[i * 4] = Math.round(pic.data[s] * sh * cr);",
+    "new": "          data[i * 4] = Math.round(pic.data[s] * sh);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LPT1-A7-texel-cleared",
     "file": "src/render/lowPolyTreesGlsl.js",
-    "old": "  if (vFade > 1.5) tex = lptTexel;\n",
-    "new": "",
+    "old": "  if (vFade > 1.5) tex = lptTexel;\n  tex.rgb *= vShade;",
+    "new": "  tex.rgb *= vShade;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "LPT1-B1-no-flat-height",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        batch.farH = plain.h;",
-    "new": "        batch.farH = undefined;",
+    "old": "        batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's",
+    "new": "        batch.farH = undefined;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "LPT1-B2-one-source-for-every-archive",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "const sourceOf = (proto) => seasonal?.key?.(proto.archive) ?? '';",
-    "new": "const sourceOf = (proto) => seasonal?.key?.(504) ?? '';",
+    "old": "  const sourceOf = (proto) => seasonal?.key?.(proto.archive) ?? '';",
+    "new": "  const sourceOf = (proto) => seasonal?.key?.(504) ?? '';",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "LPT1-B2-season-under-the-classic-key",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "const sib = source && frame === 0 ? seasonal?.picture?.(archive, record) : null;",
-    "new": "const sib = frame === 0 ? seasonal?.picture?.(archive, record) : null;",
+    "old": "    const sib = source && frame === 0 ? seasonal?.picture?.(archive, record) : null;",
+    "new": "    const sib = frame === 0 ? seasonal?.picture?.(archive, record) : null;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "LPT1-B3-overtaken-paint-kept",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (source && generation() !== gen) return null;",
-    "new": "if (false) return null;",
+    "old": "          if (source && generation() !== gen) return null; // a new install overtook the paint (AUDIT LPT B3): never kept",
+    "new": "          if (false) return null; // a new install overtook the paint (AUDIT LPT B3): never kept",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "LPT1-B3-installing-never-up",
     "file": "src/systems/seasonsIliacBay.js",
-    "old": "get installing() { return !!this._applying; }",
-    "new": "get installing() { return false; }",
+    "old": "    return !!this._applying;",
+    "new": "    return false;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "LPT1-B4-no-cull",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "const visible = cullNear(gathered, planes, vis);",
-    "new": "const visible = cullNear(gathered, null, vis);",
+    "old": "      const visible = cullNear(gathered, planes, vis);",
+    "new": "      const visible = cullNear(gathered, null, vis);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "LPT1-B4-cull-without-the-sphere",
     "file": "src/world/lowPolyTrees.js",
-    "old": "+ planes[p + 3] < -rad) { inside = false; break; }",
-    "new": "+ planes[p + 3] < 0) { inside = false; break; }",
+    "old": "          if (planes[p] * x + planes[p + 1] * y + planes[p + 2] * z + planes[p + 3] < -rad) {",
+    "new": "          if (planes[p] * x + planes[p + 1] * y + planes[p + 2] * z + planes[p + 3] < 0) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "LPT1-B4-sphere-at-no-scale",
     "file": "src/world/lowPolyTrees.js",
-    "old": "const x = g[o], y = g[o + 1] + mid * s, z = g[o + 2], rad = k * s;",
-    "new": "const x = g[o], y = g[o + 1] + mid * s, z = g[o + 2], rad = k;",
+    "old": "          rad = k * s;",
+    "new": "          rad = k;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "LPT1-B5-held-handle-freed",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (h && h.refs <= 0 && t - h.idleAt > LPT_IDLE_S * 1000)",
-    "new": "if (h && t - h.idleAt > LPT_IDLE_S * 1000)",
+    "old": "      if (h && h.refs <= 0 && t - h.idleAt > LPT_IDLE_S * 1000) {",
+    "new": "      if (h && t - h.idleAt > LPT_IDLE_S * 1000) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "LPT1-B5-handle-never-freed",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "{ freeHandle(key, entry); continue; }",
-    "new": "{ continue; }",
+    "old": "        freeHandle(key, entry);\n        continue;",
+    "new": "        continue;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "LPT1-B5-picture-kept",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (entry.pic && !entry.painting && t - entry.picAt > LPT_PIC_IDLE_S * 1000) entry.pic = null;",
-    "new": "if (false) entry.pic = null;",
+    "old": "        if (entry.pic && !entry.painting && t - entry.picAt > LPT_PIC_IDLE_S * 1000) entry.pic = null;",
+    "new": "        if (false) entry.pic = null;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "LPT1-B5-atlas-never-freed",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (t - entry.lastLive > LPT_IDLE_S * 1000 && !entry.painting) freeAtlas(entry);",
-    "new": "if (false) freeAtlas(entry);",
+    "old": "      if (t - entry.lastLive > LPT_IDLE_S * 1000 && !entry.painting) freeAtlas(entry);",
+    "new": "      if (false) freeAtlas(entry);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "LPT1-B5-release-forgets-the-time",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "release(handle) { if (handle && --handle.refs <= 0) { handle.refs = 0; handle.idleAt = now(); } },",
-    "new": "release(handle) { if (handle && --handle.refs <= 0) { handle.refs = 0; } },",
+    "old": "        handle.idleAt = now();\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "LPT1-B5-handles-never-held",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);",
-    "new": "        lptHandles.push(far);",
+    "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes",
+    "new": "        lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "LPT1-B5-overtaken-upload-kept",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (atlases.get(key) !== e) return e;   // given back while it painted: nothing uploaded",
-    "new": "if (false) return e;   // given back while it painted: nothing uploaded",
+    "old": "        if (atlases.get(key) !== e) return e; // given back while it painted: nothing uploaded",
+    "new": "        if (false) return e; // given back while it painted: nothing uploaded",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "LPT1-B6-trim-off-centre",
     "file": "src/world/lowPolyTrees.js",
-    "old": "    side = Math.min(side, x, W - 1 - x);",
-    "new": "    side = Math.min(side, x);",
+    "old": "      side = Math.min(side, x, W - 1 - x);",
+    "new": "      side = Math.min(side, x);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "LPT1-B7-no-triangle-cap",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
-    "new": "if (texels >= LPT_IMPOSTOR_TEXELS) { texels = 0; tris = 0; yield; }",
+    "old": "      if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) {",
+    "new": "      if (texels >= LPT_IMPOSTOR_TEXELS) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "LPT1-B7-no-texel-cap",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
-    "new": "if (tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
+    "old": "      if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) {",
+    "new": "      if (tris >= LPT_IMPOSTOR_TRIS) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "LPT1-B7-mip-rows-fixed",
     "file": "src/world/lowPolyTrees.js",
-    "old": "const rows = Math.max(1, Math.floor(LPT_MIP_TEXELS / w));",
-    "new": "const rows = 64;",
+    "old": "    const rows = Math.max(1, Math.floor(LPT_MIP_TEXELS / w));",
+    "new": "    const rows = 64;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "LPT1-B7-upload-whole",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "const y1 = Math.min(h, y0 + LPT_ATLAS_BAND), n = (y1 - y0) * row;",
-    "new": "const y1 = h, n = (y1 - y0) * row;",
+    "old": "        const y1 = Math.min(h, y0 + LPT_ATLAS_BAND),",
+    "new": "        const y1 = h,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "LPT1-B7-band-not-flipped",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "band.set(d.subarray(y * row, (y + 1) * row), (y1 - 1 - y) * row);",
-    "new": "band.set(d.subarray(y * row, (y + 1) * row), (y - y0) * row);",
+    "old": "        for (let y = y0; y < y1; y++) band.set(d.subarray(y * row, (y + 1) * row), (y1 - 1 - y) * row);",
+    "new": "        for (let y = y0; y < y1; y++) band.set(d.subarray(y * row, (y + 1) * row), (y - y0) * row);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "LPT1-B7-quarter-turns-swapped",
     "file": "src/world/lowPolyTrees.js",
-    "old": "rot === 1 ? [0, 0, 1, h - 1, -1, 0] : rot === 2",
-    "new": "rot === 1 ? [w - 1, 0, -1, 0, 1, 0] : rot === 2",
+    "old": "        ? [0, 0, 1, h - 1, -1, 0]",
+    "new": "        ? [w - 1, 0, -1, 0, 1, 0]",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "LPT1-B9-missing-uncounted",
     "file": "src/world/lowPolyTrees.js",
-    "old": "    if (!src) { missing++; continue; }\n    const erase",
-    "new": "    if (!src) { continue; }\n    const erase",
+    "old": "    const src = recordRgba(a, r, f);\n    if (!src) {\n      missing++;\n      continue;\n    }",
+    "new": "    const src = recordRgba(a, r, f);\n    if (!src) {\n      continue;\n    }",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "LPT1-B9-missing-handle-kept",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (a.missing || !a.tex) return null;",
-    "new": "if (!a.tex && !a.missing) return null;",
+    "old": "            if (a.missing || !a.tex) return null;",
+    "new": "            if (!a.tex && !a.missing) return null;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "LPT1-B10-set-made-ignored",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "|| l[4] !== s.trees) return false;",
-    "new": ") return false;",
+    "old": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz || l[4] !== s.trees) return false;",
+    "new": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz) return false;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "LPT1-C1-scale-range-short",
     "file": "src/world/lowPolyTrees.js",
-    "old": "LPT_SCALE_MIN + (LPT_SCALE_MAX - LPT_SCALE_MIN) * unit(qx, qz, k, 2)",
-    "new": "LPT_SCALE_MIN + (1 - LPT_SCALE_MIN) * unit(qx, qz, k, 2)",
+    "old": "  return { scale: LPT_SCALE_MIN + (LPT_SCALE_MAX - LPT_SCALE_MIN) * unit(qx, qz, k, 2), yaw };",
+    "new": "  return { scale: LPT_SCALE_MIN + (1 - LPT_SCALE_MIN) * unit(qx, qz, k, 2), yaw };",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "LPT1-C1-location-varied",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (location) return { scale: 1, yaw };",
-    "new": "if (location) return { scale: 1.2, yaw };",
+    "old": "  if (location) return { scale: 1, yaw };",
+    "new": "  if (location) return { scale: 1.2, yaw };",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "LPT1-C2-season-never-painted",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (img?.width) return nearestRgba(topDownOf(img), bm.width, bm.height);",
-    "new": "if (img?.width && 0) return nearestRgba(topDownOf(img), bm.width, bm.height);",
+    "old": "    if (img?.width) return nearestRgba(topDownOf(img), bm.width, bm.height);",
+    "new": "    if (img?.width && 0) return nearestRgba(topDownOf(img), bm.width, bm.height);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -607,8 +607,8 @@
   {
     "name": "LPT1-C6-material-colour-lost",
     "file": "src/world/lowPolyTrees.js",
-    "old": "color: mat?.color ?? [1, 1, 1] };",
-    "new": "color: [1, 1, 1] };",
+    "old": "        color: mat?.color ?? [1, 1, 1],",
+    "new": "        color: [1, 1, 1],",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "LPT1-C6-material-cut-lost",
     "file": "src/world/lowPolyTrees.js",
-    "old": "cutoff: mat?.cutoff ?? 0.5, cull:",
-    "new": "cutoff: 0.5, cull:",
+    "old": "        cutoff: mat?.cutoff ?? 0.5,",
+    "new": "        cutoff: 0.5,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "LPT1-C6-material-faces-lost",
     "file": "src/world/lowPolyTrees.js",
-    "old": "cull: mat?.cull ?? 0, color:",
-    "new": "cull: 0, color:",
+    "old": "        cull: mat?.cull ?? 0,",
+    "new": "        cull: 0,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "LPT1-D1-impostor-upside-down",
     "file": "src/world/lowPolyTrees.js",
-    "old": "toY = (y) => (1 - (y * sy) / h) * H;",
-    "new": "toY = (y) => ((y * sy) / h) * H;",
+    "old": "    toY = (y) => (1 - (y * sy) / h) * H;",
+    "new": "    toY = (y) => ((y * sy) / h) * H;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "LPT1-D1-impostor-off-centre",
     "file": "src/world/lowPolyTrees.js",
-    "old": "const toX = (x) => ((x * sx) / w + 0.5) * W,",
-    "new": "const toX = (x) => ((x * sx) / w + 0.4) * W,",
+    "old": "  const toX = (x) => ((x * sx) / w + 0.5) * W,",
+    "new": "  const toX = (x) => ((x * sx) / w + 0.4) * W,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "LPT1-D1-atlas-read-upside-down",
     "file": "src/world/lowPolyTrees.js",
-    "old": "Math.floor((1 - (vv - Math.floor(vv))) * pic.height)",
-    "new": "Math.floor((vv - Math.floor(vv)) * pic.height)",
+    "old": "          const ty = Math.min(pic.height - 1, Math.max(0, Math.floor((1 - (vv - Math.floor(vv))) * pic.height))); // uv's v=0 is the picture's bottom",
+    "new": "          const ty = Math.min(pic.height - 1, Math.max(0, Math.floor((vv - Math.floor(vv)) * pic.height))); // uv's v=0 is the picture's bottom",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -661,8 +661,8 @@
   {
     "name": "LPT1-D1-light-inverted",
     "file": "src/world/lowPolyTrees.js",
-    "old": "return Math.min(1, Math.max(0.5, 0.72 + 0.28 *",
-    "new": "return Math.min(1, Math.max(0.5, 0.72 - 0.28 *",
+    "old": "  return Math.min(1, Math.max(0.5, 0.72 + 0.28 * ((n0 * l[0] + n1 * l[1] + n2 * l[2]) / len)));",
+    "new": "  return Math.min(1, Math.max(0.5, 0.72 - 0.28 * ((n0 * l[0] + n1 * l[1] + n2 * l[2]) / len)));",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -679,8 +679,8 @@
   {
     "name": "LPT1-D1-root-scale-ignored",
     "file": "src/world/lowPolyTrees.js",
-    "old": "  const [sx, sy, sz] = proto.scale;\n  const toX",
-    "new": "  const [sx, sy, sz] = [1, 1, 1];\n  const toX",
+    "old": "  const [sx, sy, sz] = proto.scale;",
+    "new": "  const [sx, sy, sz] = [1, 1, 1];",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "LPT1-D1-height-without-the-scale",
     "file": "src/world/lowPolyTrees.js",
-    "old": "h: Math.max(0.5, m.max[1] * sy) } });",
-    "new": "h: Math.max(0.5, m.max[1]) } });",
+    "old": "      size: { w: reach * 2, h: Math.max(0.5, m.max[1] * sy) },",
+    "new": "      size: { w: reach * 2, h: Math.max(0.5, m.max[1]) },",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "LPT1-D1-impostor-uncut",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (!sub.opaque && pic.data[s + 3] < cut) continue;",
-    "new": "if (!sub.opaque && pic.data[s + 3] < 0) continue;",
+    "old": "          if (!sub.opaque && pic.data[s + 3] < cut) continue;",
+    "new": "          if (!sub.opaque && pic.data[s + 3] < 0) continue;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "LPT1-D5-run-unscaled",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "out.runs.push({ run: r, scale: p.scale,",
-    "new": "out.runs.push({ run: r, scale: [1, 1, 1],",
+    "old": "            scale: p.scale,",
+    "new": "            scale: [1, 1, 1],",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -715,8 +715,8 @@
   {
     "name": "LPT1-D5-run-unswayed",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "sway: swayOf ? swayOf(p) : 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
-    "new": "sway: 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
+    "old": "            sway: swayOf ? swayOf(p) : 0,",
+    "new": "            sway: 0,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "LPT1-D5-sub-without-its-material",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "subs.push({ offset: at[0], count: at[1], tex, alpha: lptAlphaOf(s), color: s.color, cull: s.cull });",
-    "new": "subs.push({ offset: at[0], count: at[1], tex, alpha: 1, color: [1, 1, 1], cull: 0 });",
+    "old": "            subs.push({ offset: at[0], count: at[1], tex, alpha: lptAlphaOf(s), color: s.color, cull: s.cull });",
+    "new": "            subs.push({ offset: at[0], count: at[1], tex, alpha: 1, color: [1, 1, 1], cull: 0 });",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -769,8 +769,8 @@
   {
     "name": "LPT1-gather-no-margin",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "LPT_NEAR_M, LPT_BAND_M + LPT_REGATHER_M, data, skip)",
-    "new": "LPT_NEAR_M, LPT_BAND_M, data, skip)",
+    "old": "        gathered = gatherNear(sets, ex, ez, LPT_NEAR_M, LPT_BAND_M + LPT_REGATHER_M, data, skip); // the band and the way the eye may go before the next gather: a tree it walks into the band toward is there",
+    "new": "        gathered = gatherNear(sets, ex, ez, LPT_NEAR_M, LPT_BAND_M, data, skip); // the band and the way the eye may go before the next gather: a tree it walks into the band toward is there",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -778,8 +778,8 @@
   {
     "name": "LPT1-regather-every-frame",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "const moved = !lastEye || Math.hypot(ex - lastEye[0], ez - lastEye[2]) > LPT_REGATHER_M;",
-    "new": "const moved = true;",
+    "old": "      const moved = !lastEye || Math.hypot(ex - lastEye[0], ez - lastEye[2]) > LPT_REGATHER_M;",
+    "new": "      const moved = true;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "LPT1-felling-ignored",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (moved || stamp !== lastStamp || !sameSets(sets) || !gathered) {",
-    "new": "if (moved || !sameSets(sets) || !gathered) {",
+    "old": "      if (moved || stamp !== lastStamp || !sameSets(sets) || !gathered) {",
+    "new": "      if (moved || !sameSets(sets) || !gathered) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "LPT1-recentre-ignored",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz ||",
-    "new": "if (l[0] !== s ||",
+    "old": "      if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz || l[4] !== s.trees) return false;",
+    "new": "      if (l[0] !== s || l[4] !== s.trees) return false;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "LPT1-runs-every-frame",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (out.from !== gathered || out.readyGen !== readyGen) {",
-    "new": "if (true) {",
+    "old": "      if (out.from !== gathered || out.readyGen !== readyGen) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "LPT1-unpainted-drawn",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (s.atlas && !tex) ok = false;",
-    "new": "if (false) ok = false;",
+    "old": "            if (s.atlas && !tex) ok = false;",
+    "new": "            if (false) ok = false;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ],
@@ -825,8 +825,8 @@
   {
     "name": "LPT1-B5-uploaded-into-a-freed-entry",
     "file": "src/systems/lowPolyTreesAssets.js",
-    "old": "if (atlases.get(key) !== e) { renderer.releaseAtlasTexture(e.tex); e.tex = null; return e; }",
-    "new": "if (false) { renderer.releaseAtlasTexture(e.tex); e.tex = null; return e; }",
+    "old": "        if (atlases.get(key) !== e) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -834,8 +834,8 @@
   {
     "name": "LPT1-first-paint-overwritten",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (data[d + 3] || erased[i]) continue;",
-    "new": "if (erased[i]) continue;",
+    "old": "        if (data[d + 3] || erased[i]) continue;",
+    "new": "        if (erased[i]) continue;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -843,8 +843,8 @@
   {
     "name": "LPT1-erase-ignored",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (erase) for (let i = 0; i < erase.length; i += 3) erased.fill(1,",
-    "new": "if (false) for (let i = 0; i < erase.length; i += 3) erased.fill(1,",
+    "old": "    const erase = typeof blit[10] === 'number' ? decodeErase(eraseBytes, blit[10], blit[11], x0, y0) : blit[10];\n    if (erase)",
+    "new": "    const erase = typeof blit[10] === 'number' ? decodeErase(eraseBytes, blit[10], blit[11], x0, y0) : blit[10];\n    if (false)",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "LPT1-fill-outside-cells",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (cells && !cells[Math.floor(y / LPT_FILL_CELL) * cols + Math.floor(x / LPT_FILL_CELL)]) continue;",
-    "new": "if (false) continue;",
+    "old": "        if (cells && !cells[Math.floor(y / LPT_FILL_CELL) * cols + Math.floor(x / LPT_FILL_CELL)]) continue;",
+    "new": "        if (false) continue;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "LPT1-fit-unmirrored",
     "file": "src/world/lowPolyTrees.js",
-    "old": "x0 + (mirror ? bw - 1 - fx : fx)) * 4;",
-    "new": "x0 + fx) * 4;",
+    "old": "      const s = (sy * src.width + x0 + (mirror ? bw - 1 - fx : fx)) * 4;",
+    "new": "      const s = (sy * src.width + x0 + fx) * 4;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -870,8 +870,8 @@
   {
     "name": "LPT1-tile-unmirrored-down",
     "file": "src/world/lowPolyTrees.js",
-    "old": "const sy = cy + (ty & 1 ? ch - 1 - my : my);",
-    "new": "const sy = cy + my;",
+    "old": "    const sy = cy + (ty & 1 ? ch - 1 - my : my);",
+    "new": "    const sy = cy + my;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -879,8 +879,8 @@
   {
     "name": "LPT1-mip-clear-darkens",
     "file": "src/world/lowPolyTrees.js",
-    "old": "data[d] = Math.round((src[s0] * a0 + src[s1] * a1 + src[s2] * a2 + src[s3] * a3) / a);",
-    "new": "data[d] = Math.round((src[s0] + src[s1] + src[s2] + src[s3]) / 4);",
+    "old": "          data[d] = Math.round((src[s0] * a0 + src[s1] * a1 + src[s2] * a2 + src[s3] * a3) / a);",
+    "new": "          data[d] = Math.round((src[s0] + src[s1] + src[s2] + src[s3]) / 4);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -888,8 +888,8 @@
   {
     "name": "LPT1-gather-skips-none",
     "file": "src/world/lowPolyTrees.js",
-    "old": "if (skip && skip(set, i / F)) continue;",
-    "new": "if (false) continue;",
+    "old": "      if (skip && skip(set, i / F)) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -924,8 +924,8 @@
   {
     "name": "LPT1-every-flat-wild",
     "file": "src/scenes/pixelBuild.js",
-    "old": "wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
-    "new": "wild[i] = 0;",
+    "old": "          wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
+    "new": "          wild[i] = 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -979,8 +979,8 @@
   {
     "name": "LPT1-cover-at-the-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain,",
-    "new": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size,",
+    "old": "        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));",
+    "new": "        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js",
       "test/scenes/tact1.test.js"
@@ -989,8 +989,8 @@
   {
     "name": "LPT1-sway-of-the-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);\n        _lptSway",
-    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);\n        _lptSway",
+    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);",
+    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -998,8 +998,8 @@
   {
     "name": "LPT1-gpu-scale-two-wide",
     "file": "src/render/lowPolyTreesRender.js",
-    "old": "gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
-    "new": "gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
+    "old": "    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
+    "new": "    gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

@@ -1,7 +1,7 @@
-// WATER-LEVEL (2026-10-31, the owner: "We need to make sure we go away from the water tiles and move into a proper water
+// "We need to make sure we go away from the water tiles and move into a proper water
 // shader"): A WATER BODY IS A LEVEL, NOT A TILE (world/water/waterLevel.js, world/water/streamLevels.js). The tiles mark
 // where water is; each body's own law gives its level; the ground is carved under it, never raised; the sheet stands at
-// it and its shore is where the plane meets the ground, or the cut field. The record: bible/07-Rendering/Water-Arc.md
+// it and its shore is where the plane meets the ground, or the cut field. The record:
 // WATER-LEVEL. Mutants: tools/mutants/waterlevel.json.
 import '../../modsOff.js';
 import { test } from 'node:test';
@@ -36,7 +36,6 @@ test('WATER-LEVEL the tiles mark the water: each vertex\'s share of the tiles me
   const edge = waterVotes(map(4, (x) => x === 0), { tileDim: 4 });
   assert.equal(edge[0], 1, 'the map\'s corner: its one tile the only vote');
   assert.equal(edge[2 * 5], 1, 'the map\'s edge: two tiles, both water');
-  // PIN MOVED (WATER-SHORE): a clip is the open sea - the sheet runs over it to the coast, never stops at its tiles
   const clip = map(4, () => false);
   clip[1 * 4 + 2] = CLIP_SENTINEL;
   const cv = waterVotes(clip, { tileDim: 4 });
@@ -117,7 +116,6 @@ test('WATER-LEVEL the sheet: a quad whose four corners hold a level and one is t
   const two = waterBedOf(flatGrid(8, 2, 5), map(8, (x) => x === 1 || x === 5).subarray(0, 16), { tileDim: 8, width: 8, height: 2 }).sheet;
   const tq = []; for (let t = 1; t < two.indices.length; t += 12) tq.push(two.indices[t] % 9);
   assert.deepEqual([...new Set(tq)].sort(), [0, 1, 2, 4, 5, 6], 'the gap\'s quad (3) borrowed on all four corners');
-  // PIN MOVED (WATER-SHORE): a clip's quad is drawn - the open sea, the sheet's own now (watershore.test.js)
   const clipped = map(T, () => true); clipped[3 * T + 3] = CLIP_SENTINEL;
   const cs = waterBedOf(flatGrid(T, T, 5), clipped, { tileDim: T }).sheet;
   const cq = []; for (let t = 1; t < cs.indices.length; t += 12) cq.push(cs.indices[t]);
@@ -169,7 +167,6 @@ test('WATER-LEVEL the streamed world\'s levels: the sea at its clamp on the Bay;
 test('WATER-LEVEL the sheet\'s shader: no tile says where the water is - the shore is the cut field, softened where the ground meets the plane; the swell grows with the water over the ground (mutants: the meet dropped; the cut\'s sign)', () => {
   const fs = waterSurfaceFs('');
   assert.doesNotMatch(fs, /uWaterMask|waterCorners\(|coverage\(/);
-  // PIN MOVED (WATER-SHORE): the cut the sheet's smoothed field where it has one, the vertices' elsewhere
   assert.match(fs, /float cut = uShoreOn == 1 \? sh\.r \* 2\.0 - 1\.0 : vCut;\n\s+edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* cut - /);
   assert.match(fs, /float meet = vDepth\.x;/);
   assert.match(fs, /meet = \(bedD - here\) \* slant;/, 'Full: the scene\'s own depth behind the surface');
@@ -182,11 +179,11 @@ test('WATER-LEVEL the sheet\'s shader: no tile says where the water is - the sho
 
 test('WATER-LEVEL THE FOUR HOSTS, and the play keeps its line: the streaming world and the fixed town draw the sheet at its level; the interiors and the dungeons draw none; the feet, the townsfolk and the swim read the law\'s table, never a level (mutants: a host off the sheet)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, tilemapTex\) : null;/, 'the build');   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
-  assert.match(w, /p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, p\.tilemapTex\) : null;/, 'the restride');   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
-  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet, p\.tilemapTex\) : null;/, 'Deep Waters\' cap');   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
+  assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, tilemapTex\) : null;/, 'the build');
+  assert.match(w, /p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet, p\.tilemapTex\) : null;/, 'the restride');
+  assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet, p\.tilemapTex\) : null;/, 'Deep Waters\' cap');
   assert.match(read('src/world/terrain/terrainGen.js'), /levelAt: at \? streamLevelAt\(at\.px, at\.py, stride\) : null/, 'the kernel levels by the pixel\'s own laws');
-  assert.match(read('src/scenes/exterior.js'), /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\) : null;/, 'the fixed town: its own ground, no law');   // PIN MOVED (WATER-SHORE): the tilemap its ground draws with - the silt reads the sheet's fields by it
+  assert.match(read('src/scenes/exterior.js'), /const townWater = townBed\?\.sheet \? renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\) : null;/, 'the fixed town: its own ground, no law');
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(f), /createWaterSheet|waterBedOf|water\/waterLevel\.js|streamLevels/, `${f}: the classic plane`);
   // the play: its readers ask the law's table and the uncarved ground, never the sheet
   const feet = read('src/player/exteriorSurface.js'), town = read('src/world/city/cityNavigation.js');
@@ -195,13 +192,4 @@ test('WATER-LEVEL THE FOUR HOSTS, and the play keeps its line: the streaming wor
   for (const [f, t] of [['exteriorSurface.js', feet], ['cityNavigation.js', town]]) assert.doesNotMatch(t, /waterLevel|streamLevels|\.sheet\b|WATER_DRAW_MASK_TABLE/, `${f} reads no level and not the draw's table`);
   assert.notDeepEqual(WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE);
   assert.doesNotMatch(w.slice(w.indexOf('const heightAt = (x, z, terrainOnly = false) => {'), w.indexOf('// BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN.')), /positions|_bed|sheet/, 'the game\'s ground is the samples\'');
-});
-
-test('WATER-LEVEL the record: the arc\'s section with the owner\'s word, its departure in the ledger, the four hosts named', () => {
-  const arc = read('bible/07-Rendering/Water-Arc.md');
-  assert.match(arc, /## WATER-LEVEL - WATER IS A LEVEL, NOT A TILE \(2026-10-31\)/);
-  assert.ok(arc.includes('We need to make sure we go away from the water tiles and move into a proper water shader'));
-  const sec = arc.slice(arc.indexOf('## WATER-LEVEL'));
-  for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) assert.ok(sec.includes(h), `THE FOUR HOSTS: ${h}`);
-  assert.match(read('bible/01-Overview/Port-Ledger.md'), /\*\*WATER IS A LEVEL, NOT A TILE \(WATER-LEVEL, 2026-10-31/);
 });

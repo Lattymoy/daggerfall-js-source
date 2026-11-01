@@ -76,8 +76,8 @@ test('RF4: the registry sits under the stores - it imports neither, the lanes re
   assert.match(reg, /^import \{ declareOnlinePrefs \} from '\.\/online\/onlineLane\.js';/m);
   assert.match(reg, /^declareOnlinePrefs\(FEATURE_PREF_ONLINE\);/m, 'the lane learns at the registry\'s load');
   assert.match(read('src/systems/uiPrefs.js'), /^import \{ FEATURE_PREF_DEFAULTS \} from '\.\/features\.js';/m);
-  assert.match(read('src/world/landView.js'), /^registerFeatureLane\('landView', \{ tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite, readOf: landViewAsRead \}\);/m);   // PIN MOVED (AUDIT MEM-AUDIT G2): and what it reads once a value is written
-  assert.match(read('src/world/outdoors.js'), /^registerFeatureLane\('outdoors', \{ tiers: OUTDOORS_TIERS, default: OUTDOORS_DEFAULT, read: outdoorsRead, write: outdoorsWrite \}\);/m);
+  assert.match(read('src/world/landView.js'), /registerFeatureLane\('landView', \{\n\s*tiers: LAND_VIEW_TIERS,\n\s*read: landViewRead,\n\s*write: landViewWrite,\n\s*readOf: landViewAsRead,\n\s*\}\);/m);   // PIN MOVED (AUDIT MEM-AUDIT G2): and what it reads once a value is written
+  assert.match(read('src/world/outdoors.js'), /registerFeatureLane\('outdoors', \{\n\s*tiers: OUTDOORS_TIERS,\n\s*default: OUTDOORS_DEFAULT,\n\s*read: outdoorsRead,\n\s*write: outdoorsWrite,\n\s*\}\);/m);
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /const c = resolveControl\(f\);/, 'the menu draws the resolved control');
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /^import '\.\.\/\.\.\/world\/landView\.js';/m, 'and loads the lanes so they are registered before a row is drawn');
   assert.ok(featureLane('landView') && featureLane('outdoors'));

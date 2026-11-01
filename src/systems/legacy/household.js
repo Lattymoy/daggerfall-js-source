@@ -68,10 +68,14 @@ export const heldByDead = (family, h) => !!personOf(family, h?.by)?.died;
  * @param {{ whole?: boolean }} [opts]
  */
 export function syncHouses(family, personId, held, taken = [], { whole = false } = {}) {
-  const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
+  const mine = (held ?? [])
+    .filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
     .map((h) => ({
-      regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''),
-      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}),   // PERMADEATH-HOUSES: the layout the deed names its building in (WD3)
+      regionIndex: h.regionIndex | 0,
+      mapId: h.mapId | 0,
+      buildingKey: h.buildingKey | 0,
+      location: String(h.location ?? ''),
+      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}), // PERMADEATH-HOUSES: the layout the deed names its building in (WD3)
       by: personId,
     }));
   const holds = (h) => mine.some((m) => sameHouse(m, h));
@@ -86,9 +90,13 @@ export function syncHouses(family, personId, held, taken = [], { whole = false }
   for (const h of was) {
     if (h.by === personId) {
       if (holds(h)) next.push(h);
-      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }
-    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }
-    else if (holds(h)) next.push({ ...h, by: personId, from: h.by });
+      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) {
+        const { from, ...row } = h;
+        next.push({ ...row, by: from });
+      }
+    } else if (!took(h)) {
+      if (!whole || holds(h)) next.push(h);
+    } else if (holds(h)) next.push({ ...h, by: personId, from: h.by });
   }
   for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);
   if (JSON.stringify(next) === JSON.stringify(was)) return false;
@@ -106,16 +114,20 @@ export function syncHouses(family, personId, held, taken = [], { whole = false }
 export function deedsDue(family, p) {
   if (!family || !p || !isAlive(p)) return [];
   const taken = p.deedsTaken ?? [];
-  return (family.houses ?? []).filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h))).map((h) => ({ ...h }));
+  return (family.houses ?? [])
+    .filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h)))
+    .map((h) => ({ ...h }));
 }
 
 /** THE FAMILY HOME: the house the player marked, else the one in the family's seat, else the first; null with none. */
 export function familyHome(family) {
   const houses = family?.houses ?? [];
   if (!houses.length) return null;
-  return houses.find((h) => sameHouse(h, family.home))
-    ?? (family.seat?.loc ? houses.find((h) => h.location === family.seat.loc) : null)
-    ?? houses[0];
+  return (
+    houses.find((h) => sameHouse(h, family.home)) ??
+    (family.seat?.loc ? houses.find((h) => h.location === family.seat.loc) : null) ??
+    houses[0]
+  );
 }
 
 /** Mark a house of the family's as the family home. Answers whether it is one of theirs. */
@@ -151,12 +163,19 @@ export function householdOf(family) {
 }
 
 /** A climate's tables for a race the town's walkers have no outfit for - the three human tables, by build. */
-const outfitRaceOf = (race) => (race === 'Nord' || race === 'Redguard' || race === 'Breton' ? race
-  : race === 'Khajiit' || race === 'Argonian' ? 'Redguard' : 'Breton');
+const outfitRaceOf = (race) =>
+  race === 'Nord' || race === 'Redguard' || race === 'Breton'
+    ? race
+    : race === 'Khajiit' || race === 'Argonian'
+      ? 'Redguard'
+      : 'Breton';
 /** A small stable hash of a string (the outfit's and the face's pick, the same every day). */
 function hashOf(s) {
   let h = 2166136261;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
   return h >>> 0;
 }
 
@@ -174,17 +193,39 @@ export function residentOf(family, p, home) {
   const variant = pick % set.length;
   const faces = PERSON_FACE_RECORDS[outfitRace][sex];
   // AUDIT SUGGESTIONS-1019 L5-4: a stock class with a class skill changed still wears its class (isCustomCareer counts it, for the heir's copy)
-  const stock = Number.isInteger(p.careerIndex) && p.careerIndex >= 0 && p.careerIndex < CLASS_CAREERS.length && (!isCustomCareer(p) || (p.career?.swapped === true && String(p.career.name ?? '') === CLASS_CAREERS[p.careerIndex]));
+  const stock =
+    Number.isInteger(p.careerIndex) &&
+    p.careerIndex >= 0 &&
+    p.careerIndex < CLASS_CAREERS.length &&
+    (!isCustomCareer(p) ||
+      (p.career?.swapped === true && String(p.career.name ?? '') === CLASS_CAREERS[p.careerIndex]));
   return {
-    id: familyResId(family.id, p.id), town: home.mapId >>> 0, slot: FAMILY_SLOT_BASE + p.id, roll: FAMILY_ROLL,
-    name: fullNameOf(p.given, p.surname), gender: sex === 'female' ? GENDERS.Female : GENDERS.Male, sex, race: p.race,
-    variant, archive: set[variant], face: faces[variant] + ((pick >>> 8) % 24), guard: false, job: FAMILY_JOB,
-    home: home.buildingKey | 0, work: null, temper: 1, social: 0.6, pious: 0.4, drink: 0.2,
-    cls: stock ? CLASS_MOBILE_BASE + p.careerIndex : null, level: Math.max(1, p.level | 0), faction: 0,
+    id: familyResId(family.id, p.id),
+    town: home.mapId >>> 0,
+    slot: FAMILY_SLOT_BASE + p.id,
+    roll: FAMILY_ROLL,
+    name: fullNameOf(p.given, p.surname),
+    gender: sex === 'female' ? GENDERS.Female : GENDERS.Male,
+    sex,
+    race: p.race,
+    variant,
+    archive: set[variant],
+    face: faces[variant] + ((pick >>> 8) % 24),
+    guard: false,
+    job: FAMILY_JOB,
+    home: home.buildingKey | 0,
+    work: null,
+    temper: 1,
+    social: 0.6,
+    pious: 0.4,
+    drink: 0.2,
+    cls: stock ? CLASS_MOBILE_BASE + p.careerIndex : null,
+    level: Math.max(1, p.level | 0),
+    faction: 0,
     legacy: { familyId: family.id, personId: p.id },
-    household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)
-    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/native/nativeTalk.js setNpcPortrait)
-    look: p.look ?? null,   // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit
+    household: `F${family.id}`, // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)
+    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) }, // their own chargen head in the talk window (ui/native/nativeTalk.js setNpcPortrait)
+    look: p.look ?? null, // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit
   };
 }
 
@@ -195,7 +236,14 @@ const ancestorsOf = (family, p, depth) => {
   let ring = [p];
   for (let d = 1; d <= depth; d++) {
     const next = [];
-    for (const x of ring) for (const id of x?.parents ?? []) { const q = personOf(family, id); if (q && !out.has(q.id)) { out.set(q.id, d); next.push(q); } }
+    for (const x of ring)
+      for (const id of x?.parents ?? []) {
+        const q = personOf(family, id);
+        if (q && !out.has(q.id)) {
+          out.set(q.id, d);
+          next.push(q);
+        }
+      }
     ring = next;
   }
   return out;
@@ -210,21 +258,33 @@ const ancestorsOf = (family, p, depth) => {
  * brother or sister, or every sibling's cousin.
  */
 export function kinOf(family, viewer, other, depth = 0) {
-  if (!viewer || !other || viewer.id === other.id || depth > 1) return 'kin';   // AUDIT LEGACY II A9: bounded - a damaged record's cycle never recurses
+  if (!viewer || !other || viewer.id === other.id || depth > 1) return 'kin'; // AUDIT LEGACY II A9: bounded - a damaged record's cycle never recurses
   const m = other.gender === 'female';
   if (viewer.spouse === other.id) return m ? 'wife' : 'husband';
-  const up = ancestorsOf(family, viewer, 3), down = ancestorsOf(family, other, 3);
+  const up = ancestorsOf(family, viewer, 3),
+    down = ancestorsOf(family, other, 3);
   if (up.get(other.id) === 1) return m ? 'mother' : 'father';
   if (up.get(other.id) === 2) return m ? 'grandmother' : 'grandfather';
   if (down.get(viewer.id) === 1) return m ? 'daughter' : 'son';
   if (down.get(viewer.id) === 2) return m ? 'granddaughter' : 'grandson';
-  if ((viewer.kind ?? 'member') !== 'member' || (other.kind ?? 'member') !== 'member') return 'kin';   // an in-law
-  const shared = viewer.parents.some((id) => other.parents.includes(id))
-    || (!viewer.parents.length && !other.parents.length && viewer.gen === other.gen);
+  if ((viewer.kind ?? 'member') !== 'member' || (other.kind ?? 'member') !== 'member') return 'kin'; // an in-law
+  const shared =
+    viewer.parents.some((id) => other.parents.includes(id)) ||
+    (!viewer.parents.length && !other.parents.length && viewer.gen === other.gen);
   if (shared) return m ? 'sister' : 'brother';
   // a parent's sibling, a sibling's child
-  if ([...up].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), other, depth + 1).match(/^(brother|sister)$/))) return m ? 'aunt' : 'uncle';
-  if ([...down].some(([id, d]) => d === 1 && kinOf(family, personOf(family, id), viewer, depth + 1).match(/^(brother|sister)$/))) return m ? 'niece' : 'nephew';
+  if (
+    [...up].some(
+      ([id, d]) => d === 1 && kinOf(family, personOf(family, id), other, depth + 1).match(/^(brother|sister)$/),
+    )
+  )
+    return m ? 'aunt' : 'uncle';
+  if (
+    [...down].some(
+      ([id, d]) => d === 1 && kinOf(family, personOf(family, id), viewer, depth + 1).match(/^(brother|sister)$/),
+    )
+  )
+    return m ? 'niece' : 'nephew';
   if (other.gen === viewer.gen) return 'cousin';
   return 'kin';
 }
@@ -237,16 +297,36 @@ export function kinLine(family, viewer, other) {
 
 /** How a member greets the one played: their word for them, what they are to them, and a line by how the house fares. */
 export function kinGreeting(family, viewer, other, { elder = false } = {}) {
-  const word = kinOf(family, other, viewer);   // what the PLAYED one is to the speaker
-  const address = {
-    father: 'Father', mother: 'Mother', son: 'my son', daughter: 'my daughter', brother: 'brother', sister: 'sister',
-    grandfather: 'Grandfather', grandmother: 'Grandmother', grandson: 'child', granddaughter: 'child', uncle: 'Uncle',
-    aunt: 'Aunt', nephew: 'nephew', niece: 'niece', husband: 'my love', wife: 'my love', cousin: 'cousin', kin: 'kin',
-  }[word] ?? 'kin';
+  const word = kinOf(family, other, viewer); // what the PLAYED one is to the speaker
+  const address =
+    {
+      father: 'Father',
+      mother: 'Mother',
+      son: 'my son',
+      daughter: 'my daughter',
+      brother: 'brother',
+      sister: 'sister',
+      grandfather: 'Grandfather',
+      grandmother: 'Grandmother',
+      grandson: 'child',
+      granddaughter: 'child',
+      uncle: 'Uncle',
+      aunt: 'Aunt',
+      nephew: 'nephew',
+      niece: 'niece',
+      husband: 'my love',
+      wife: 'my love',
+      cousin: 'cousin',
+      kin: 'kin',
+    }[word] ?? 'kin';
   const fallen = (family.people ?? []).filter((p) => p.died).length;
   const lines = [
     `"${address[0].toUpperCase()}${address.slice(1)}! You're home."`,
-    elder ? `"These old bones are glad of the company."` : fallen ? `"We remember the ones we lost. The house goes on because of you."` : `"The house is well. Tell me of the road."`,
+    elder
+      ? `"These old bones are glad of the company."`
+      : fallen
+        ? `"We remember the ones we lost. The house goes on because of you."`
+        : `"The house is well. Tell me of the road."`,
   ];
   return { word, is: kinLine(family, viewer, other), lines };
 }

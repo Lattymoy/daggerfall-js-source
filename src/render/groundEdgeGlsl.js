@@ -5,8 +5,8 @@
 // the JS. `uGroundEdge` is the switch (renderer.js `coastEdges`): 0 draws every tile as DFU does.
 import { GROUND_EDGE, COAST_CUT, COAST_CUT_WANDER, GROUND_KIND, packGroundKinds } from '../world/terrain/groundEdge.js';
 import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';
-import { pageParam } from '../systems/pageQuery.js';   // the kill door
-import { isEnhanced } from '../systems/uiSkin.js';   // the skin
+import { pageParam } from '../systems/pageQuery.js'; // the kill door
+import { isEnhanced } from '../systems/uiSkin.js'; // the skin
 
 /** The enhanced skin's, `?coastedges=off` the kill door; the classic skin keeps DFU's tiles and the mod's whole-tile cut.
  *  No Features row: a picture alone, as ROAD-LOOK's. @param {string} [search] */
@@ -34,7 +34,7 @@ export function groundKindsGlsl() {
 highp uint geEntry(highp uint d) { return (GE_KINDS[int(d >> 1u)] >> ((d & 1u) * 16u)) & 65535u; }`;
 }
 
-/** WATER-SHORE: the ground's read of its water's smoothed fields (world/water/waterLevel.js shoreMap; renderer.js
+/** The ground's read of its water's smoothed fields (world/water/waterLevel.js shoreMap; renderer.js
  *  drawTerrain binds them) - `shoreWet(p)` at a tile coordinate, 1 wet, 0 dry: the silt's line and a shore's kinds'. */
 export function shoreGlsl() {
   return `uniform sampler2D uShore;
@@ -59,7 +59,7 @@ bool groundMix(highp uint d, vec2 f, vec2 p, out highp uint a, out highp uint b,
   if (e == 0u) return false;
   a = (e >> 1u) & 3u; b = (e >> 3u) & 3u;
   highp uint m = (e >> 5u) & 15u;
-  float c = uShoreOn == 1 && a == ${GROUND_KIND.water}u ? 1.0 - shoreWet(p)   // WATER-SHORE: a shore's land on its water's line
+  float c = uShoreOn == 1 && a == ${GROUND_KIND.water}u ? 1.0 - shoreWet(p)   // a shore's land on its water's line
     : mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);
   s = smoothstep(${f(0.5 - s)}, ${f(0.5 + s)}, c + geWander(p));
   return true;

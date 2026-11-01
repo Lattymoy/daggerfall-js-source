@@ -43,10 +43,13 @@ const anyTurn = (r) => [0, 1, 2, 3].some((t) => WATER_DRAW_MASK_TABLE[(r << 2) |
  * water as a ragged shape that reaches past that line - 7 to 34% of a temperate shore tile was painted water left
  * bare, outside the silt and outside the sheet: flat blue paint on the bank.
  */
-export const SHORE_RECORDS = Object.freeze(Array.from({ length: GROUND_RECORDS - 1 }, (_, i) => i + 1)
-  .filter((r) => anyTurn(r) && !PUDDLE_RECORDS.includes(r)));
+export const SHORE_RECORDS = Object.freeze(
+  Array.from({ length: GROUND_RECORDS - 1 }, (_, i) => i + 1).filter((r) => anyTurn(r) && !PUDDLE_RECORDS.includes(r)),
+);
 /** SHORE-SILT: the records with no water at any turn - the ground the shores' water is told apart from. */
-export const DRY_RECORDS = Object.freeze(Array.from({ length: GROUND_RECORDS - 1 }, (_, i) => i + 1).filter((r) => !anyTurn(r)));
+export const DRY_RECORDS = Object.freeze(
+  Array.from({ length: GROUND_RECORDS - 1 }, (_, i) => i + 1).filter((r) => !anyTurn(r)),
+);
 
 /** How far (Euclidean RGB, 0..255 a channel) from one of the water tile's colours a texel may sit and still be water:
  *  a puddle's lighter or darker blue counts, a brown or a green does not (WATER5's tolerance). */
@@ -71,23 +74,42 @@ export function cleanMask(wet, w, h, minArea = MIN_PATCH_TEXELS) {
   // array a texel - the walk made four neighbours' array at every texel it reached (a 256-texel set's 3.6 million), and
   // a ground set met at a new climate on the journey was built in one frame. A patch is a 4-connected component, so the
   // order it is walked in moves nothing; its texels are a run of `patch` (a stack's worth at most: every texel once).
-  const n = w * h, seen = new Uint8Array(n), stack = new Int32Array(n), patch = new Int32Array(n);
+  const n = w * h,
+    seen = new Uint8Array(n),
+    stack = new Int32Array(n),
+    patch = new Int32Array(n);
   for (let pass = 0; pass < 2; pass++) {
     const want = pass === 0 ? 1 : 0;
     if (pass) seen.fill(0);
     for (let start = 0; start < n; start++) {
       if (seen[start] || wet[start] !== want) continue;
-      let top = 0, size = 0;
-      stack[top++] = start; seen[start] = 1;
+      let top = 0,
+        size = 0;
+      stack[top++] = start;
+      seen[start] = 1;
       let edge = false;
       while (top) {
-        const i = stack[--top], x = i % w, y = (i - x) / w;
+        const i = stack[--top],
+          x = i % w,
+          y = (i - x) / w;
         patch[size++] = i;
         if (x === 0 || y === 0 || x === w - 1 || y === h - 1) edge = true;
-        if (x > 0 && !seen[i - 1] && wet[i - 1] === want) { seen[i - 1] = 1; stack[top++] = i - 1; }
-        if (x < w - 1 && !seen[i + 1] && wet[i + 1] === want) { seen[i + 1] = 1; stack[top++] = i + 1; }
-        if (y > 0 && !seen[i - w] && wet[i - w] === want) { seen[i - w] = 1; stack[top++] = i - w; }
-        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) { seen[i + w] = 1; stack[top++] = i + w; }
+        if (x > 0 && !seen[i - 1] && wet[i - 1] === want) {
+          seen[i - 1] = 1;
+          stack[top++] = i - 1;
+        }
+        if (x < w - 1 && !seen[i + 1] && wet[i + 1] === want) {
+          seen[i + 1] = 1;
+          stack[top++] = i + 1;
+        }
+        if (y > 0 && !seen[i - w] && wet[i - w] === want) {
+          seen[i - w] = 1;
+          stack[top++] = i - w;
+        }
+        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) {
+          seen[i + w] = 1;
+          stack[top++] = i + w;
+        }
       }
       if (size < minArea && (want === 1 || !edge)) for (let k = 0; k < size; k++) wet[patch[k]] = 1 - want;
     }
@@ -99,27 +121,48 @@ export function cleanMask(wet, w, h, minArea = MIN_PATCH_TEXELS) {
  *  tile set's shores cost (shoreWaterColours counts every texel of thirty records). `add(key)` counts one; `get(key)` its
  *  count (0 for none); `forEach(fn)` each colour counted and its count. */
 class ColourCounts {
-  constructor() { this._grow(1 << 12); this.size = 0; }
+  constructor() {
+    this._grow(1 << 12);
+    this.size = 0;
+  }
   _grow(cap) {
-    const oldK = this.keys, oldC = this.counts;
-    this.keys = new Int32Array(cap).fill(-1); this.counts = new Float64Array(cap); this.mask = cap - 1;
-    if (oldK) for (let i = 0; i < oldK.length; i++) if (oldK[i] >= 0) { const at = this._slot(oldK[i]); this.keys[at] = oldK[i]; this.counts[at] = oldC[i]; }
+    const oldK = this.keys,
+      oldC = this.counts;
+    this.keys = new Int32Array(cap).fill(-1);
+    this.counts = new Float64Array(cap);
+    this.mask = cap - 1;
+    if (oldK)
+      for (let i = 0; i < oldK.length; i++)
+        if (oldK[i] >= 0) {
+          const at = this._slot(oldK[i]);
+          this.keys[at] = oldK[i];
+          this.counts[at] = oldC[i];
+        }
   }
   _slot(key) {
-    let i = Math.imul(key, 0x9e3779b1) >>> 0 & this.mask;
+    let i = (Math.imul(key, 0x9e3779b1) >>> 0) & this.mask;
     while (this.keys[i] !== -1 && this.keys[i] !== key) i = (i + 1) & this.mask;
     return i;
   }
   add(key) {
     let i = this._slot(key);
     if (this.keys[i] === -1) {
-      if ((this.size + 1) * 2 > this.keys.length) { this._grow(this.keys.length * 2); i = this._slot(key); }
-      this.keys[i] = key; this.size++;
+      if ((this.size + 1) * 2 > this.keys.length) {
+        this._grow(this.keys.length * 2);
+        i = this._slot(key);
+      }
+      this.keys[i] = key;
+      this.size++;
     }
     this.counts[i]++;
   }
-  get(key) { const i = this._slot(key); return this.keys[i] === key ? this.counts[i] : 0; }
-  forEach(fn) { for (let i = 0; i < this.keys.length; i++) if (this.keys[i] >= 0) fn(this.keys[i], this.counts[i]); }
+  get(key) {
+    const i = this._slot(key);
+    return this.keys[i] === key ? this.counts[i] : 0;
+  }
+  forEach(fn) {
+    for (let i = 0; i < this.keys.length; i++) if (this.keys[i] >= 0) fn(this.keys[i], this.counts[i]);
+  }
 }
 
 /** A color32 layer's bytes (RGBA), whatever typed array carries them. */
@@ -127,10 +170,15 @@ const bytesOf = (layer) => new Uint8Array(layer.colors.buffer, layer.colors.byte
 
 /** The water tile's own colours: every RGB record 0 paints, once each. */
 export function waterColours(layer0) {
-  const b = bytesOf(layer0), seen = new Set(), out = [];
+  const b = bytesOf(layer0),
+    seen = new Set(),
+    out = [];
   for (let i = 0; i < b.length; i += 4) {
     const k = (b[i] << 16) | (b[i + 1] << 8) | b[i + 2];
-    if (!seen.has(k)) { seen.add(k); out.push([b[i], b[i + 1], b[i + 2]]); }
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push([b[i], b[i + 1], b[i + 2]]);
+    }
   }
   return out;
 }
@@ -157,12 +205,19 @@ export function markPuddleWater(layers, tolerance = WATER_COLOUR_TOLERANCE) {
  *  that want it now, every function below by its old name), `stepsBreathing` gives the frame back between records
  *  through the host's breather. The same records, in the same order: the same bytes. */
 export function stepsDone(steps) {
-  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
 }
 /** OW-HITCH: `steps` run with `breathe()` awaited between them (the build's breather: a frame given back once its slice
  *  is spent, a microtask before). */
 export async function stepsBreathing(steps, breathe) {
-  for (;;) { const r = steps.next(); if (r.done) return r.value; await breathe(); }
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+    await breathe();
+  }
 }
 /** OW-HITCH: markPuddleWater a record at a time (yields between them); its value the marked layers. */
 export function* markPuddleWaterSteps(layers, tolerance = WATER_COLOUR_TOLERANCE) {
@@ -191,7 +246,7 @@ export function* markPuddleWaterSteps(layers, tolerance = WATER_COLOUR_TOLERANCE
     out[rec] = { ...layer, colors: b };
     yield;
   }
-  return yield* markShoreWaterSteps(out);   // SHORE-SILT: and each shore's painted water, by its own rule (markShoreWater)
+  return yield* markShoreWaterSteps(out); // SHORE-SILT: and each shore's painted water, by its own rule (markShoreWater)
 }
 
 /** SHORE-SILT: how much rarer on the dry tiles than on the wet ones a colour must be to be the water's - twenty times. */
@@ -212,7 +267,7 @@ export function shoreWaterColours(layers) {
 /** OW-HITCH: shoreWaterColours a record at a time. */
 export function* shoreWaterColoursSteps(layers) {
   function* count(records) {
-    const c = new ColourCounts();   // OW-HITCH: the same counts, in typed arrays
+    const c = new ColourCounts(); // OW-HITCH: the same counts, in typed arrays
     let total = 0;
     for (const r of records) {
       if (!layers[r]) continue;
@@ -223,9 +278,12 @@ export function* shoreWaterColoursSteps(layers) {
     }
     return { c, total: Math.max(total, 1) };
   }
-  const wet = yield* count([0, ...SHORE_RECORDS]), dry = yield* count(DRY_RECORDS);
+  const wet = yield* count([0, ...SHORE_RECORDS]),
+    dry = yield* count(DRY_RECORDS);
   const water = new Set();
-  wet.c.forEach((k, n) => { if (dry.c.get(k) / dry.total < SHORE_DRY_RATIO * n / wet.total) water.add(k); });
+  wet.c.forEach((k, n) => {
+    if (dry.c.get(k) / dry.total < (SHORE_DRY_RATIO * n) / wet.total) water.add(k);
+  });
   return water;
 }
 
@@ -239,18 +297,22 @@ export function* markShoreWaterSteps(layers) {
   if (!layers?.[0]) return layers;
   const water = yield* shoreWaterColoursSteps(layers);
   const out = layers.slice();
-  let lastKey = -1, lastWet = 0;   // OW-HITCH: a texel the colour of the last is its answer - a tile paints in runs
+  let lastKey = -1,
+    lastWet = 0; // OW-HITCH: a texel the colour of the last is its answer - a tile paints in runs
   for (const rec of SHORE_RECORDS) {
     const layer = layers[rec];
     if (!layer) continue;
-    const b = new Uint8Array(bytesOf(layer));   // a copy: a record's color32 may be another reader's too
+    const b = new Uint8Array(bytesOf(layer)); // a copy: a record's color32 may be another reader's too
     const wet = new Uint8Array(layer.width * layer.height);
     for (let i = 0; i < wet.length; i++) {
       const k = (b[i * 4] << 16) | (b[i * 4 + 1] << 8) | b[i * 4 + 2];
-      if (k !== lastKey) { lastKey = k; lastWet = water.has(k) ? 1 : 0; }
+      if (k !== lastKey) {
+        lastKey = k;
+        lastWet = water.has(k) ? 1 : 0;
+      }
       wet[i] = lastWet;
     }
-    cleanMask(wet, layer.width, layer.height, MIN_PATCH_TEXELS * Math.max(1, (layer.width * layer.height) / 4096));   // a speck is a speck at any size: Vanilla Enhanced paints 256 x 256
+    cleanMask(wet, layer.width, layer.height, MIN_PATCH_TEXELS * Math.max(1, (layer.width * layer.height) / 4096)); // a speck is a speck at any size: Vanilla Enhanced paints 256 x 256
     for (let i = 0; i < wet.length; i++) b[i * 4 + 3] = 255 * wet[i];
     out[rec] = { ...layer, colors: b };
     yield;
@@ -262,10 +324,14 @@ export function* markShoreWaterSteps(layers) {
  *  fraction across the tile, in the tilemap's frame, to the fraction across the record's own art. */
 export function turnFraction(turn, fx, fz) {
   switch (turn & 3) {
-    case 1: return [fz, 1 - fx];
-    case 2: return [1 - fx, 1 - fz];
-    case 3: return [1 - fz, fx];
-    default: return [fx, fz];
+    case 1:
+      return [fz, 1 - fx];
+    case 2:
+      return [1 - fx, 1 - fz];
+    case 3:
+      return [1 - fz, fx];
+    default:
+      return [fx, fz];
   }
 }
 
@@ -302,14 +368,17 @@ export function carryPuddleMask(modLayers, classicMarked) {
 /** OW-HITCH: carryPuddleMask a record at a time. */
 export function* carryPuddleMaskSteps(modLayers, classicMarked) {
   const out = modLayers.slice();
-  for (const rec of [...PUDDLE_RECORDS, ...SHORE_RECORDS]) {   // SHORE-SILT: and the shores' water (Vanilla Enhanced, worn by default, repaints them in the classic layout)
-    const m = modLayers[rec], c = classicMarked?.[rec];
+  for (const rec of [...PUDDLE_RECORDS, ...SHORE_RECORDS]) {
+    // SHORE-SILT: and the shores' water (Vanilla Enhanced, worn by default, repaints them in the classic layout)
+    const m = modLayers[rec],
+      c = classicMarked?.[rec];
     if (!m || !c) continue;
-    const src = bytesOf(c), b = bytesOf(m).slice();
+    const src = bytesOf(c),
+      b = bytesOf(m).slice();
     for (let y = 0; y < m.height; y++) {
-      const sy = Math.min(c.height - 1, Math.floor(y * c.height / m.height));
+      const sy = Math.min(c.height - 1, Math.floor((y * c.height) / m.height));
       for (let x = 0; x < m.width; x++) {
-        const sx = Math.min(c.width - 1, Math.floor(x * c.width / m.width));
+        const sx = Math.min(c.width - 1, Math.floor((x * c.width) / m.width));
         b[(y * m.width + x) * 4 + 3] = src[(sy * c.width + sx) * 4 + 3];
       }
     }
@@ -325,7 +394,8 @@ export function* carryPuddleMaskSteps(modLayers, classicMarked) {
 /** SHORE-SILT: does a tile set paint in a palette - its water tile in at most 256 colours? */
 export function palettedSet(layers) {
   if (!layers?.[0]) return false;
-  const b = bytesOf(layers[0]), seen = new Set();
+  const b = bytesOf(layers[0]),
+    seen = new Set();
   for (let i = 0; i < b.length; i += 4) {
     seen.add((b[i] << 16) | (b[i + 1] << 8) | b[i + 2]);
     if (seen.size > 256) return false;

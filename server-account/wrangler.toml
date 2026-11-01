@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct232"
+ACCOUNT_VERSION = "acct243"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -157,13 +157,12 @@ ALLOWED_ORIGIN = "*"
 # title, the glyph, the Seraph Wings, /red, /mute and /unmute, the developer's
 # acts and the POI editor's builder door - on their next token and next call.
 # Case-folded as every list is: the account roderic, Roderic or RODERIC.
-# STAFF-PANEL1 (2026-10-22, mob: "can we just add me to the dev and my shadow fang just becomes vanity and i gain admin as
-# well?"): SirMcMobdon, with the whole set above - the developer's acts include the relay's live settings (/relay) and
+# STAFF-PANEL1 (2026-10-22): the Shadow Fang account, with the whole set above - the developer's acts include the relay's live settings (/relay) and
 # the trade-freeze review's clear and roll back - and the staff panel's Admin role (server-account/src/staff.js), which is
 # this list. SHADOW_FANG_HANDLES still names them: that title, glyph and cloak stay theirs to wear.
-# STAFF-PANEL1 (2026-10-22, mob: "kpblca_1 needs added to them as welll"): the account kpblca_1, with the same whole set.
+# STAFF-PANEL1 (2026-10-22): the account kpblca_1, with the same whole set.
 DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1"
-# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (mob: "only mob and Latty" read the audit
+# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (read the audit
 # log) - staff who may also read the audit log of every staff sign-in and act, invite a staff member to enrol one more
 # extension (a new invite replaces the member's unspent one; keys stay) and cut one off (every key and session ended). A handle here that no role list names is no owner (staff.js isOwner). Comma-separated,
 # case-insensitive, read at every call.
@@ -172,7 +171,7 @@ OWNER_HANDLES = "Lattymoy,SirMcMobdon"
 # staff panel extension minted the pair on their computer and holds the private half; this half only checks its signature,
 # so it is safe in a public repository. It is that owner's first way in; every other staff member is invited from the
 # panel. Empty: no owner can enrol (no key is a shut door, never an open one).
-# STAFF-PANEL1 (2026-10-22, mob pasted the key his panel showed): SirMcMobdon's first computer. Latty enrols by mob's invite,
+# STAFF-PANEL1 (2026-10-22, the key the first owner's panel showed): the first owner's computer. Latty enrols by that owner's invite,
 # or adds a pair here.
 OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"
 # POI-1 (2026-10-14, the POI editor; bible/06-Systems/POI-Editor-Arc.md): WHO BUILDS AND WHO APPROVES. Mac, asked how a
@@ -218,6 +217,18 @@ MOD_AI = "shadow"
 # a UTC day, empty for 1,500.
 MOD_AI_MODEL = ""
 MOD_AI_DAILY_MAX = ""
+# CLAUDE_STAFF (src/claudeStaff.js, bible/11-Multiplayer/Claude-Staff.md): Claude as staff, which reads the stored feeds on
+# the minute clock and writes suggestions for members to accept or dismiss. "off" reads nothing and calls nothing; "on" needs
+# ANTHROPIC_API_KEY (the reviewer's own). It never acts. CLAUDE_STAFF_HANDLE: the staff account it writes as, which can never
+# sign in to the panel. CLAUDE_STAFF_MODEL: its model. CLAUDE_STAFF_DAILY_MAX: its calls a UTC day. CLAUDE_STAFF_QUIET_MIN:
+# under this many players online it sweeps every two hours instead of every fifteen minutes. CLAUDE_ORDER_HANDLES: who may
+# accept or dismiss a suggestion and enrol an order key (src/staffOrder.js).
+CLAUDE_STAFF = "off"
+CLAUDE_STAFF_HANDLE = "Claude"
+CLAUDE_STAFF_MODEL = "claude-sonnet-5-5"
+CLAUDE_STAFF_DAILY_MAX = "200"
+CLAUDE_STAFF_QUIET_MIN = "50"
+CLAUDE_ORDER_HANDLES = "SirMcMobdon,kpblca_1,Lattymoy"
 # SAFE8: THE MODERATORS' QUEUE IN DISCORD (src/discord.js). DISCORD_MOD_CHANNEL: the private channel's id the bot posts
 # each case to. DISCORD_PUBLIC_KEY: the Discord application's public key (hex - not a secret), which every press and
 # /mod is signed with. DISCORD_MODERATORS: "<discord user id>:<game handle>", comma-separated - a press is that
@@ -230,7 +241,7 @@ DISCORD_PUBLIC_KEY = "36e74945022f94ec7955a84ccccb270e63780100e558d30777742337b6
 # `<discord user id>:<in-game handle>` - the handle must also stand in MODERATOR_HANDLES or DEVELOPER_HANDLES, which
 # every press and /mod re-checks (discord.js actorOf); anyone not here is answered that only the game's moderators may act
 DISCORD_MODERATORS = "128705730965536768:Lattymoy"
-# STAFF-PANEL5-FREEZE (2026-10-22, mob, 03:22Z; design doc "DFO Staff Panel: design", Freeze player): DISCORD_INVITE_URL - the
+# STAFF-PANEL5-FREEZE (2026-10-22; design doc "DFO Staff Panel: design", Freeze player): DISCORD_INVITE_URL - the
 # server's Discord invite the frozen player's Staff tab shows beside its Copy button (server-account/src/staffFreeze.js
 # discordInvite), so it changes without a game update. An https address; empty, the tab shows none.
 DISCORD_INVITE_URL = "https://discord.gg/QADbZYQ73j"
@@ -270,6 +281,15 @@ HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDee
 # this list is matched against the account's handle, never the name the
 # room reads. A handle goes here, never a name off the herald.
 EG_FIRST_HANDLES = "Serveride"
+# FIRST-WYRM (2026-10-31, the owner: "Seasoning needs to be granted the
+# first dragon rider. He hasnt recieved it"): FIRST WYRM RIDER by name, as
+# First of the Spire is (titles.js isNamedFirstWyrm). While this list names
+# anyone, it names the First: the earliest brass tame (hunts.js FIRST_OF)
+# holds the title only if listed here. An account's handle, never a
+# character's name. Comma-separated, case-insensitive; held while listed.
+# FIRST-WYRM-NAME (2026-10-31, the owner: "His name is Seanobi"): the
+# account is Seanobi.
+FIRST_WYRM_RIDER_HANDLES = "Seanobi"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
@@ -285,8 +305,8 @@ DUNGEON_MASTER_HANDLES = "SquidKamer"
 # 2026-09-26, Mac: "Grant Flylighter the disciple title/glyph".
 # 2026-09-29, Mac: "Add valenvalarys as a disciple ingame".
 DISCIPLE_HANDLES = "Dutchess,Satranath,Skibbster,Flylighter,valenvalarys"
-# 2026-09-25, Mac: "Add SirMcMobdon as an Apostle ingame title/glyph";
-# 2026-09-26, Mac: "SirMcMobdon gets a brand new title/glyph. Remove them
+# 2026-09-25, Mac: "Add the Shadow Fang account as an Apostle ingame title/glyph";
+# 2026-09-26, Mac: "the Shadow Fang account gets a brand new title/glyph. Remove them
 # from Apostle" - the list is empty again, and the grant is the line below.
 APOSTLE_HANDLES = ""
 HIEROPHANT_HANDLES = ""
@@ -492,25 +512,26 @@ PATREON_CAMPAIGN_ID = ""
 # says what the daily wares may draw from too.
 SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,aurum:500,aurum:1100,aurum:2400,aurum:3900,icon:gatefire,icon:aurbis,icon:elderscroll,icon:azurastar,icon:redmountain,icon:hourglass,icon:sanguinerose,icon:whitegold"
 # STOREFRONT: THE LAUNCH WINDOWS - what the shop's carousel features and when, a line a window: `<ware> <from> <to>`, UTC
-# days, the last day inside; `limited` after it sells the ware only inside that window. A ware is never sold before its
-# first window opens. One drop a fortnight, as the developer asked ("every step in Donate Shop should be rethinked 5
-# times before ship and in exact right moment").
+# days, the last day inside; `limited` after it sells the ware only inside that window. One feature a fortnight, as the
+# developer asked ("every step in Donate Shop should be rethinked 5 times before ship and in exact right moment").
+# OPEN-ALL (2026-10-31, the owner: "Why not just open everything?"): every ware on SHOP_ON_SALE sells now. A window only
+# features its ware, and no bundle is limited. The portal skins are featured from 31 October, not 13 November.
 SHOP_FEATURED = """
 kill:ashen 2026-10-30 2026-11-12
 kill:voidrend 2026-10-30 2026-11-12
 kill:pyre 2026-10-30 2026-11-12
-portal:runic 2026-11-13 2026-11-26
-portal:daedric 2026-11-13 2026-11-26
-portal:aetheric 2026-11-13 2026-11-26
+portal:runic 2026-10-31 2026-11-26
+portal:daedric 2026-10-31 2026-11-26
+portal:aetheric 2026-10-31 2026-11-26
 title:dawnbringer 2026-11-27 2026-12-10
 title:voidwalker 2026-11-27 2026-12-10
 title:eternalchampion 2026-11-27 2026-12-10
-bundle:portalmaster 2026-11-27 2026-12-10 limited
+bundle:portalmaster 2026-11-27 2026-12-10
 mount:spectral 2026-12-11 2026-12-24
 mount:dawnfire 2026-12-11 2026-12-24
 mount:warhorse 2026-12-11 2026-12-24
-bundle:daedricchampion 2026-12-25 2027-01-08 limited
-bundle:lordofoblivion 2026-12-25 2027-01-08 limited
+bundle:daedricchampion 2026-12-25 2027-01-08
+bundle:lordofoblivion 2026-12-25 2027-01-08
 """
 
 [[d1_databases]]

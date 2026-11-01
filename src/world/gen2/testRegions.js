@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 PHASE 2 (bible/03-World/World-2-Arc.md): THE PROTOTYPE REGIONS - the spec's Hammerfell test ground (foothills,
+// WG2 PHASE 2: THE PROTOTYPE REGIONS - the spec's Hammerfell test ground (foothills,
 // the Dragontail range on the canon's spine, a river valley, a desert basin with its dunes and an oasis) east of the
 // Bay, and a wetland in the heart of Black Marsh for low, slow drainage. Each is a spec the bake reads (geology.js
 // RegionSpec); the oasis's spring is the region's own authored water. Neither is published: a client walks one only

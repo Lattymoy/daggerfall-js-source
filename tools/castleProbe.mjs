@@ -13,23 +13,49 @@ const SHOTS = process.env.SHOTS ?? 'castle-shots';
 mkdirSync(SHOTS, { recursive: true });
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 
-const server = await createServer({ root: process.cwd(), server: { port: 5231, strictPort: true, hmr: false, watch: null } });
+const server = await createServer({
+  root: process.cwd(),
+  server: { port: 5231, strictPort: true, hmr: false, watch: null },
+});
 await server.listen();
-const browser = await chromium.launch({ headless: true, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({
+  headless: true,
+  args: [
+    '--use-gl=angle',
+    '--use-angle=swiftshader',
+    '--enable-unsafe-swiftshader',
+    '--autoplay-policy=no-user-gesture-required',
+  ],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 const logs = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e.message)));
-page.on('console', (m) => { logs.push(`[${m.type()}] ${m.text()}`); if (m.type() === 'error' && !/CURSOR\.IMG|status of 404/.test(m.text())) errors.push(`[console] ${m.text()}`); });
+page.on('console', (m) => {
+  logs.push(`[${m.type()}] ${m.text()}`);
+  if (m.type() === 'error' && !/CURSOR\.IMG|status of 404/.test(m.text())) errors.push(`[console] ${m.text()}`);
+});
 
 let fails = 0;
-const check = (ok, label) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`); if (!ok) fails++; return !!ok; };
+const check = (ok, label) => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}`);
+  if (!ok) fails++;
+  return !!ok;
+};
 const ev = (fn, ...args) => page.evaluate(fn, ...args);
-const shot = async (name) => { try { await page.screenshot({ path: `${SHOTS}/${name}`, timeout: 8000 }); } catch (e) { console.log(`(screenshot ${name} skipped: ${e.message.split('\n')[0]})`); } };
+const shot = async (name) => {
+  try {
+    await page.screenshot({ path: `${SHOTS}/${name}`, timeout: 8000 });
+  } catch (e) {
+    console.log(`(screenshot ${name} skipped: ${e.message.split('\n')[0]})`);
+  }
+};
 
 const LOC = process.env.LOC ?? 'Daggerfall';
 const REGION = process.env.REGION ?? 'Daggerfall';
-await page.goto(`http://localhost:5231/play/?world&shot&play&region=${encodeURIComponent(REGION)}&loc=${encodeURIComponent(LOC)}&class=1&novideo&tod=12:00`);
+await page.goto(
+  `http://localhost:5231/play/?world&shot&play&region=${encodeURIComponent(REGION)}&loc=${encodeURIComponent(LOC)}&class=1&novideo&tod=12:00`,
+);
 
 let mode = null;
 for (const until = Date.now() + 240000; Date.now() < until;) {
@@ -49,7 +75,8 @@ const pixel = await ev(() => window.__currentPixel());
 console.log(`player pixel ${pixel}`);
 
 // The headless class start pops the main quest's opening box on the street; a player reads it and clicks it away.
-for (let i = 0; i < 60; i++) {   // the tutorial's pages, then the main quest's opening box
+for (let i = 0; i < 60; i++) {
+  // the tutorial's pages, then the main quest's opening box
   const t = JSON.parse(await ev(() => window.__talk()));
   if (!t.overlay) break;
   await page.keyboard.press('Space');
@@ -76,11 +103,13 @@ await shot('2-inside.png');
 
 const probe = JSON.parse(await ev(() => window.__dungeonProbe()));
 console.log(JSON.stringify({ ...probe, people: probe.people.length, nearTargets: probe.nearTargets.slice(0, 5) }));
-console.log('talk: ' + await ev(() => window.__talk()));
-console.log('overlayKind: ' + await ev(() => window.__overlayKind()));
+console.log('talk: ' + (await ev(() => window.__talk())));
+console.log('overlayKind: ' + (await ev(() => window.__overlayKind())));
 check(probe.transitioning === false, 'the transition latch is down');
 check(!probe.overlay, `no window is up in the dungeon's own slot (${probe.overlayKind})`);
-console.log(`street slot held: ${probe.talkOverlay} (a headless class start's tutorial pages ride there; a played character read them on the street)`);
+console.log(
+  `street slot held: ${probe.talkOverlay} (a headless class start's tutorial pages ride there; a played character read them on the street)`,
+);
 
 // Try the exit door the way classicStartProbe does.
 if (probe.exits.length) {
@@ -90,8 +119,17 @@ if (probe.exits.length) {
   await ev(([p, y]) => window.__warpTo(p, y), [st, yw]);
   await page.waitForTimeout(300);
   const before = JSON.parse(await ev(() => window.__dungeonProbe()));
-  console.log('at exit: ' + JSON.stringify({ pick: before.pick, picked: before.picked, wall: before.wall, containing: before.containing, near: before.nearTargets.slice(0, 4) }));
-check(before.pick?.key === 'exit:0', `the ray at the exit door names the exit (${before.pick?.key})`);
+  console.log(
+    'at exit: ' +
+      JSON.stringify({
+        pick: before.pick,
+        picked: before.picked,
+        wall: before.wall,
+        containing: before.containing,
+        near: before.nearTargets.slice(0, 4),
+      }),
+  );
+  check(before.pick?.key === 'exit:0', `the ray at the exit door names the exit (${before.pick?.key})`);
   const left = await ev(() => window.__dungeonExit());
   console.log(`__dungeonExit -> ${left}`);
   await page.waitForTimeout(1500);
@@ -133,9 +171,14 @@ check(castleSave != null, `the castle save has a slot (${JSON.stringify(keys)})`
 // 1. the dungeon's own door, the castle's own save: home, no line
 await ev((k) => window.__dungeonQuickLoad(k), castleSave);
 await page.waitForTimeout(2500);
-let p1 = JSON.parse(await ev(() => window.__dungeonProbe()) ?? 'null');
-console.log(`load 1 (own door, castle save): mode=${await ev(() => window.__mode())} key=${p1?.locationKey} hud=${JSON.stringify(p1?.hud)}`);
-check(p1 && p1.locationKey === castleKey && !(p1.hud ?? []).some((l) => /different dungeon/.test(l)), 'the dungeon\'s own door loads its own save in place');
+let p1 = JSON.parse((await ev(() => window.__dungeonProbe())) ?? 'null');
+console.log(
+  `load 1 (own door, castle save): mode=${await ev(() => window.__mode())} key=${p1?.locationKey} hud=${JSON.stringify(p1?.hud)}`,
+);
+check(
+  p1 && p1.locationKey === castleKey && !(p1.hud ?? []).some((l) => /different dungeon/.test(l)),
+  "the dungeon's own door loads its own save in place",
+);
 // 2. a save from the STREET, loaded through the dungeon's own door
 await ev(() => window.__dungeonExit());
 await untilMode('exterior', 60000);
@@ -148,19 +191,32 @@ await reenter();
 await ev((k) => window.__dungeonQuickLoad(k), streetSave);
 const m2 = await untilMode('exterior');
 console.log(`load 2 (own door, street save): mode=${m2} street hud=${await ev(() => window.__hudLines())}`);
-check(m2 === 'exterior', 'a save from another place, loaded underground, puts the player THERE (the world host\'s load took it)');
+check(
+  m2 === 'exterior',
+  "a save from another place, loaded underground, puts the player THERE (the world host's load took it)",
+);
 // 3. the street's load on the castle save: the SAVED dungeon is re-entered
 await ev((k) => window.__loadSave(k), castleSave);
 const m3 = await untilMode('dungeon');
 await page.waitForTimeout(2000);
-const p3 = JSON.parse(await ev(() => window.__dungeonProbe()) ?? 'null');
-console.log(`load 3 (street load, castle save): mode=${m3} key=${p3?.locationKey} (saved in ${castleKey}) hud=${JSON.stringify(p3?.hud)} feet=${JSON.stringify(p3?.feet)}`);
-check(m3 === 'dungeon' && p3?.locationKey === castleKey && !(p3.hud ?? []).some((l) => /different dungeon/.test(l)), 'the load comes home to the saved dungeon, and the dungeon host agrees it is the one');
+const p3 = JSON.parse((await ev(() => window.__dungeonProbe())) ?? 'null');
+console.log(
+  `load 3 (street load, castle save): mode=${m3} key=${p3?.locationKey} (saved in ${castleKey}) hud=${JSON.stringify(p3?.hud)} feet=${JSON.stringify(p3?.feet)}`,
+);
+check(
+  m3 === 'dungeon' && p3?.locationKey === castleKey && !(p3.hud ?? []).some((l) => /different dungeon/.test(l)),
+  'the load comes home to the saved dungeon, and the dungeon host agrees it is the one',
+);
 await shot('3-after.png');
 const real = errors.filter((e) => !/CURSOR\.IMG|Failed to load resource/.test(e));
 check(real.length === 0, real.length ? `page errors: ${real.slice(0, 3).join(' | ')}` : 'zero page errors');
 console.log('--- last console lines ---');
-console.log(logs.filter((l) => !/404|\[warning\] \[vite\]/.test(l)).slice(-80).join('\n'));
+console.log(
+  logs
+    .filter((l) => !/404|\[warning\] \[vite\]/.test(l))
+    .slice(-80)
+    .join('\n'),
+);
 await browser.close();
 await server.close();
 console.log(fails === 0 ? 'CASTLE PROBE: ALL GREEN' : `CASTLE PROBE: ${fails} FAILURE(S)`);

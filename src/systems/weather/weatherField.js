@@ -41,7 +41,7 @@
 import { TERRAIN_SIZE, WORLD_MAP_TERRAIN_DIM } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_Y, CLIMATES } from '../../formats/mapsFile.js';
 import { seededRng } from '../wind/wind.js';
-import { tamrielBiomeAt } from '../../world/tamriel/tamrielBiomes.js';   // ASHFALL1: the volcano's country past the Bay
+import { tamrielBiomeAt } from '../../world/tamriel/tamrielBiomes.js'; // ASHFALL1: the volcano's country past the Bay
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** Native world units to field metres (TERRAIN_SIZE per pixel). */
@@ -56,16 +56,22 @@ export function pixelOfField(mx, mz) {
 }
 /** A fixed location's host space (the ?exterior host: its pixel's local
  *  frame, x east, z north) to field metres, and back. */
-export const fieldOfPixelLocal = (px, py, x, z) => [px * TERRAIN_SIZE + x, (MAX_MAP_PIXEL_Y - 1 - py) * TERRAIN_SIZE + z];
-export const pixelLocalOfField = (px, py, mx, mz) => [mx - px * TERRAIN_SIZE, mz - (MAX_MAP_PIXEL_Y - 1 - py) * TERRAIN_SIZE];
+export const fieldOfPixelLocal = (px, py, x, z) => [
+  px * TERRAIN_SIZE + x,
+  (MAX_MAP_PIXEL_Y - 1 - py) * TERRAIN_SIZE + z,
+];
+export const pixelLocalOfField = (px, py, mx, mz) => [
+  mx - px * TERRAIN_SIZE,
+  mz - (MAX_MAP_PIXEL_Y - 1 - py) * TERRAIN_SIZE,
+];
 
 /** The words that become cells: the lattice spacing (m), the radius
  *  range (m), the coin (the share of candidates that stand), and the
  *  BASE sky between them. */
 export const CELL_WORDS = Object.freeze({
-  rain:    Object.freeze({ spacing: 24000, radius: [9000, 16000], p: 0.62, base: 'overcast' }),
-  thunder: Object.freeze({ spacing: 22000, radius: [3500, 7500],  p: 0.55, base: 'cloudy' }),
-  snow:    Object.freeze({ spacing: 26000, radius: [10000, 18000], p: 0.62, base: 'overcast' }),
+  rain: Object.freeze({ spacing: 24000, radius: [9000, 16000], p: 0.62, base: 'overcast' }),
+  thunder: Object.freeze({ spacing: 22000, radius: [3500, 7500], p: 0.55, base: 'cloudy' }),
+  snow: Object.freeze({ spacing: 26000, radius: [10000, 18000], p: 0.62, base: 'overcast' }),
   // WEATHER2d: the sandstorm - never a zone's word; stood over the
   // DESERT tables' land (Desert, Desert2 - the climates weatherTableFor
   // sends to the desert table) on a day whose word there is cloudy or
@@ -92,7 +98,7 @@ export const ASH_FIELD_GAIN = 2.8;
  *  Bay answers no zone's climate there. The one reading of the volcano's country, the field's and the map's
  *  (weatherMap.js). Pure over climateAt. */
 export function ashAtPixel(climateAt, px, py) {
-  if (inBay(px, py)) return 0;   // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)
+  if (inBay(px, py)) return 0; // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)
   const zone = tamrielBiomeAt(px, py);
   return zone?.ash > 0 && climateAt(px, py) === zone.climate ? zone.ash : 0;
 }
@@ -111,8 +117,8 @@ export const DRIFT_M_PER_MIN = 15;
 /** How far from the player cells are gathered for the clouds (the sky
  *  march reaches 24 km; the widest cell is 18 km across the radius). */
 export const FIELD_RANGE_M = 40000;
-const FIELD_SEED = 0x4649454C;   // 'FIEL'
-const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3, sandstorm: 4, ashfall: 5 });   // each word its own lattice of coins
+const FIELD_SEED = 0x4649454c; // 'FIEL'
+const WORD_SALT = Object.freeze({ rain: 1, thunder: 2, snow: 3, sandstorm: 4, ashfall: 5 }); // each word its own lattice of coins
 /** The cell words' order where cells overlap - the world weather map's PRIORITY (weatherMap.js), the strongest first. */
 const CELL_RANK = Object.freeze({ thunder: 0, rain: 1, snow: 2, sandstorm: 3, ashfall: 4 });
 /** THE CELL WORN among cells nearest first (each { word, d, r }): the strongest word the point stands in, the nearest of
@@ -139,10 +145,17 @@ export function driftOfDay(day, minuteOfDay) {
 export function cellCandidate(word, day, gx, gz) {
   const w = CELL_WORDS[word];
   if (!w) return null;
-  const seed = (Math.imul(day, 73856093) ^ Math.imul(gx, 19349663) ^ Math.imul(gz, 83492791) ^ Math.imul(WORD_SALT[word], 2971215073) ^ FIELD_SEED) >>> 0;
+  const seed =
+    (Math.imul(day, 73856093) ^
+      Math.imul(gx, 19349663) ^
+      Math.imul(gz, 83492791) ^
+      Math.imul(WORD_SALT[word], 2971215073) ^
+      FIELD_SEED) >>>
+    0;
   const r = seededRng(seed);
   if (r() >= w.p) return null;
-  const jx = (r() - 0.5) * 2 * CELL_JITTER, jz = (r() - 0.5) * 2 * CELL_JITTER;
+  const jx = (r() - 0.5) * 2 * CELL_JITTER,
+    jz = (r() - 0.5) * 2 * CELL_JITTER;
   const radius = w.radius[0] + r() * (w.radius[1] - w.radius[0]);
   return { x: (gx + 0.5 + jx) * w.spacing, z: (gz + 0.5 + jz) * w.spacing, r: radius, u: r() };
 }
@@ -164,24 +177,29 @@ export function fieldAt({ day, minuteOfDay, at, climateAt, wordOfClimate }) {
   const here = climateAt(p0.x, p0.y);
   const zoneWord = wordOfClimate(here);
   const drift = driftOfDay(day, minuteOfDay);
-  const ux = at[0] - drift[0], uz = at[1] - drift[1];   // the undrifted frame the lattice lives in
+  const ux = at[0] - drift[0],
+    uz = at[1] - drift[1]; // the undrifted frame the lattice lives in
   const cells = [];
   for (const word of Object.keys(CELL_WORDS)) {
     const s = CELL_WORDS[word].spacing;
     const n = Math.ceil(FIELD_RANGE_M / s) + 1;
-    const gx0 = Math.floor(ux / s), gz0 = Math.floor(uz / s);
+    const gx0 = Math.floor(ux / s),
+      gz0 = Math.floor(uz / s);
     for (let gx = gx0 - n; gx <= gx0 + n; gx++) {
       for (let gz = gz0 - n; gz <= gz0 + n; gz++) {
         const c = cellCandidate(word, day, gx, gz);
         if (!c) continue;
-        const cx = c.x + drift[0], cz = c.z + drift[1];
-        const dx = cx - at[0], dz = cz - at[1];
+        const cx = c.x + drift[0],
+          cz = c.z + drift[1];
+        const dx = cx - at[0],
+          dz = cz - at[1];
         const d = Math.hypot(dx, dz);
         if (d - c.r > FIELD_RANGE_M) continue;
         // the cell's word is the day's word for the climate under its (undrifted) seat
         const p = pixelOfField(c.x, c.z);
         const seat = climateAt(p.x, p.y);
-        if (!cellSeats(word, seat, wordOfClimate(seat), word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u)) continue;   // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one
+        if (!cellSeats(word, seat, wordOfClimate(seat), word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u))
+          continue; // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one
         cells.push({ x: cx, z: cz, r: c.r, word, d });
       }
     }

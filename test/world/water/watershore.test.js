@@ -1,8 +1,7 @@
-// WATER-SHORE (2026-11-01, the owner after WATER-LEVEL: "It still looks tiled on the shorelines"): A SHORE IS A LINE, NOT A
-// TILE'S EDGE (world/water/waterLevel.js shoreMap, render/waterSurface.js, render/groundEdgeGlsl.js shoreGlsl). The sea
-// Deep Waters carved is the terrain's sheet's open sea, so a coast has one water and one edge; the cut field is smoothed,
-// so that edge - and the silt and a shore's two kinds under it - is a curve. The record: bible/07-Rendering/Water-Arc.md
-// WATER-SHORE. Mutants: tools/mutants/watershore.json.
+// A SHORE IS A LINE, NOT A TILE'S EDGE (world/water/waterLevel.js shoreMap, render/waterSurface.js, render/groundEdgeGlsl.js
+// shoreGlsl). The sea Deep Waters carved is the terrain's sheet's open sea, so a coast has one water and one edge; the
+// cut field is smoothed and a bank's rise fades the water short of the ground's triangles, so that edge - and the silt
+// and a shore's two kinds under it - is a curve. Mutants: tools/mutants/watershore.json.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -293,9 +292,11 @@ test('WATER-SHORE the hosts: from above, a coastal pixel\'s sea is its own sheet
   assert.match(read('src/scenes/exterior.js'), /renderer\.createWaterSheet\(townBed\.sheet, tilemapTex\)/);
 });
 
-test('WATER-SHORE the record: the arc\'s section with the owner\'s word, its departure in the ledger', () => {
+test('WATER-SHORE the page: the arc says how a shore is drawn now - the smoothed line, the rounded bank, the open sea over the clip - and names the departure from Iliac Puddle No More', () => {
   const arc = read('bible/07-Rendering/Water-Arc.md');
-  assert.match(arc, /## WATER-SHORE - A SHORE IS A LINE, NOT A TILE'S EDGE \(2026-11-01\)/);
-  assert.ok(arc.includes('It still looks tiled on the shorelines'));
-  assert.match(read('bible/01-Overview/Port-Ledger.md'), /\*\*A SHORE IS A LINE, NOT A TILE'S EDGE \(WATER-SHORE, 2026-11-01/);
+  const how = arc.slice(arc.indexOf('## How it works'), arc.indexOf('## Rules'));
+  for (const said of ['**The shore is a curve, never a tile\'s edge.**', '`shoreMap`', '`SHORE_SIGMA`', '**A bank is rounded.**', '`RISE_FADE`', '`OPEN_PATH`'])
+    assert.ok(how.includes(said), said);
+  assert.ok(arc.slice(arc.indexOf('## Daggerfall Unity')).includes('its Top Color tints the near sheet\'s sea'));
+  assert.ok(arc.includes('`test/world/water/watershore.test.js`'));
 });

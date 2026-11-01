@@ -8,7 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { inEther } from '../../world/ethericSea.js';
-import { provinceKeyBeyondBay } from '../../world/tamriel/tamrielLand.js';   // PORTAL-ANYWHERE: the land's own law (SMOOTH-LAND)
+import { provinceKeyBeyondBay } from '../../world/tamriel/tamrielLand.js'; // PORTAL-ANYWHERE: the land's own law (SMOOTH-LAND)
 import { provinceByKey } from '../../world/tamriel/tamrielGeography.js';
 
 /**
@@ -35,7 +35,7 @@ export function pastBayJourney(_from, _to, _mask, zone) {
  * @returns {{ ok: boolean, text?: string, fee?: number }}
  */
 export function teleportJourney(_from, _to, _mask, _zone) {
-  return { ok: true, fee: 0 };   // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's
+  return { ok: true, fee: 0 }; // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's
 }
 
 /**

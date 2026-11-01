@@ -2,8 +2,8 @@
   {
     "name": "OW3-T7-3-closing-never-counted",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  const closer = gained ? left : best, at = gained ? now : gainAt;",
-    "new": "  const closer = gained ? left : best, at = gainAt;",
+    "old": "    at = gained ? now : gainAt;",
+    "new": "    at = gainAt;",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "OW3-T7-4-make-shares-the-birth",
     "file": "src/systems/travel/travelBands.js",
-    "old": "export const bandMakeSeed = (band) => (band.seed ^ 0x4d414b45) >>> 0;",
-    "new": "export const bandMakeSeed = (band) => band.seed >>> 0;",
+    "old": "export const bandMakeSeed = (band) => (band.seed ^ 0x4d414b45) >>> 0; // 'MAKE'",
+    "new": "export const bandMakeSeed = (band) => band.seed >>> 0; // 'MAKE'",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "OW3-T7-8-night-unkept",
     "file": "src/systems/travel/travelBands.js",
-    "old": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, night, born:",
-    "new": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, born:",
+    "old": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, night, born: { x, z }, bornMs: life * BAND_LIFE_MS };",
+    "new": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, born: { x, z }, bornMs: life * BAND_LIFE_MS };",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],

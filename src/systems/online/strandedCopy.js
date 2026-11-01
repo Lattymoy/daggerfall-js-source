@@ -23,7 +23,11 @@ export async function copyStrandedToOffline({ storage, id, name }) {
   if (!copy) return { ok: false, error: 'no-data' };
   const text = copy.packed ? await unpackUnsent(copy.packed) : copy.text;
   let snap = null;
-  try { snap = JSON.parse(text ?? 'null'); } catch { snap = null; }
+  try {
+    snap = JSON.parse(text ?? 'null');
+  } catch {
+    snap = null;
+  }
   if (!snap || typeof snap !== 'object') return { ok: false, error: 'no-data' };
   const offline = offlineCopyOf(snap);
   offline.characterId = mintCharacterId();
@@ -35,13 +39,19 @@ export async function copyStrandedToOffline({ storage, id, name }) {
   try {
     storage.setItem(strandedTextKey(id), strandedText);
     storage.setItem(strandedRecordKey(id), strandedRecord);
-  } catch { /* no room to put it back either: the device had none left */ }
+  } catch {
+    /* no room to put it back either: the device had none left */
+  }
   return { ok: false, error: 'no-room' };
 }
 
 /** Whether this device holds a save set aside for realm character `id`. */
 export const hasStranded = (/** @type {any} */ storage, /** @type {string} */ id) => {
-  try { return storage?.getItem?.(strandedRecordKey(id)) != null; } catch { return false; }
+  try {
+    return storage?.getItem?.(strandedRecordKey(id)) != null;
+  } catch {
+    return false;
+  }
 };
 
 /** realmSaves.js's own keys for a set-aside copy: its text, and its record beside it. */

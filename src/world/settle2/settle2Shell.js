@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): A WORLD 2.0 BUILDING'S SHELL - walls, roof and
+// A WORLD 2.0 BUILDING'S SHELL - walls, roof and
 // footing made from its prefab's numbers (prefabs.json's 'massing'), as a model family (world/customModels.js). The id is
 // the shape, never the building: one GPU mesh serves every building of that shape. The frame is its subrecord's: the door
 // at the origin facing -z, x along the front, z in from it, y up from the floor. Pictures are Daggerfall's exterior sets

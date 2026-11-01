@@ -66,7 +66,10 @@ export function pingGround(eye, dir, ground, reach = PING_GROUND_M) {
   if (!(len > 1e-8) || !(reach > 0)) return null;
   const far = reach > 600;
   const hit = groundHit([eye[0], eye[1], eye[2]], [dir[0] / len, dir[1] / len, dir[2] / len], ground, {
-    maxDist: reach, stepMin: far ? 2 : 0.4, stepShare: far ? 0.004 : 0.01, refine: 12,
+    maxDist: reach,
+    stepMin: far ? 2 : 0.4,
+    stepShare: far ? 0.004 : 0.01,
+    refine: 12,
   });
   return hit.point && hit.dist <= reach ? hit.point : null;
 }
@@ -105,15 +108,23 @@ export function markUnderLook(eye, dir, marks) {
   if (!eye || !dir || !marks) return null;
   const len = Math.hypot(dir[0], dir[1], dir[2]);
   if (!(len > 1e-8)) return null;
-  const ux = dir[0] / len, uy = dir[1] / len, uz = dir[2] / len;
-  let best = null, bestT = Infinity;
+  const ux = dir[0] / len,
+    uy = dir[1] / len,
+    uz = dir[2] / len;
+  let best = null,
+    bestT = Infinity;
   for (const m of marks) {
     if (!m || m.mine || !m.at) continue;
-    const cx = m.at[0], cy = m.at[1], cz = m.at[2];
+    const cx = m.at[0],
+      cy = m.at[1],
+      cz = m.at[2];
     const t = (cx - eye[0]) * ux + (cy - eye[1]) * uy + (cz - eye[2]) * uz;
     if (t < 0.4) continue;
     const miss = Math.hypot(eye[0] + ux * t - cx, eye[1] + uy * t - cy, eye[2] + uz * t - cz);
-    if (miss <= Math.max(0.45, t * 0.03) && t < bestT) { best = m; bestT = t; }
+    if (miss <= Math.max(0.45, t * 0.03) && t < bestT) {
+      best = m;
+      bestT = t;
+    }
   }
   return best;
 }
@@ -132,7 +143,10 @@ export function placeOk(k) {
   return typeof k === 'string' && PING_PLACE_RE.test(k) && k.length <= PING_PLACE_MAX;
 }
 
-const safeBit = (v, n = 24) => String(v ?? '').replace(/[^\w.-]/g, '').slice(0, n);
+const safeBit = (v, n = 24) =>
+  String(v ?? '')
+    .replace(/[^\w.-]/g, '')
+    .slice(0, n);
 
 /** The instance, a private room and a cabin, so two copies of one place do not share a ping. */
 function placeTag(id) {
@@ -164,7 +178,8 @@ function placeTag(id) {
  */
 export function pingPlace(mode, id, pixel) {
   if (mode === 'exterior' || mode == null) {
-    if (pixel && Number.isFinite(pixel.x) && Number.isFinite(pixel.y)) return { k: `w:${pixel.x | 0}.${pixel.y | 0}`, space: 'world' };
+    if (pixel && Number.isFinite(pixel.x) && Number.isFinite(pixel.y))
+      return { k: `w:${pixel.x | 0}.${pixel.y | 0}`, space: 'world' };
     return { k: 'w', space: 'world' };
   }
   let k = null;
@@ -173,8 +188,16 @@ export function pingPlace(mode, id, pixel) {
     space = 'dungeon';
     if (id.kind === 'dungeon') {
       if (Number.isFinite(id.mapId)) k = `d:${id.mapId >>> 0}${id.size ? `.${id.size}` : ''}`;
-    } else if (typeof id.kind === 'string') k = `d:${safeBit(id.kind, 12)}:${safeBit(id.day ?? id.s ?? id.b ?? id.o ?? '', 24)}`;
-  } else if (mode === 'interior' && id && Number.isFinite(Number(id.buildingKey)) && pixel && Number.isFinite(pixel.x) && Number.isFinite(pixel.y)) {
+    } else if (typeof id.kind === 'string')
+      k = `d:${safeBit(id.kind, 12)}:${safeBit(id.day ?? id.s ?? id.b ?? id.o ?? '', 24)}`;
+  } else if (
+    mode === 'interior' &&
+    id &&
+    Number.isFinite(Number(id.buildingKey)) &&
+    pixel &&
+    Number.isFinite(pixel.x) &&
+    Number.isFinite(pixel.y)
+  ) {
     space = 'interior';
     k = `i:${pixel.x | 0}.${pixel.y | 0}.${id.buildingKey >>> 0}`;
   }
@@ -184,7 +207,10 @@ export function pingPlace(mode, id, pixel) {
   return placeOk(k) ? { k, space } : null;
 }
 
-const smooth = (t) => { const u = t < 0 ? 0 : t > 1 ? 1 : t; return u * u * (3 - 2 * u); };
+const smooth = (t) => {
+  const u = t < 0 ? 0 : t > 1 ? 1 : t;
+  return u * u * (3 - 2 * u);
+};
 
 /**
  * How bright something born at `born` and gone at `until` is now. In over
@@ -268,45 +294,67 @@ export function groundRoute(from, to, ground, clear) {
   if (!goal) return null;
   const straight = walk(start, goal);
   if (straight) return straight;
-  const cell = 3, margin = 12;
-  const x0 = Math.min(start[0], goal[0]) - margin, z0 = Math.min(start[2], goal[2]) - margin;
-  const x1 = Math.max(start[0], goal[0]) + margin, z1 = Math.max(start[2], goal[2]) + margin;
-  const nx = Math.ceil((x1 - x0) / cell) + 1, nz = Math.ceil((z1 - z0) / cell) + 1;
+  const cell = 3,
+    margin = 12;
+  const x0 = Math.min(start[0], goal[0]) - margin,
+    z0 = Math.min(start[2], goal[2]) - margin;
+  const x1 = Math.max(start[0], goal[0]) + margin,
+    z1 = Math.max(start[2], goal[2]) + margin;
+  const nx = Math.ceil((x1 - x0) / cell) + 1,
+    nz = Math.ceil((z1 - z0) / cell) + 1;
   if (nx < 2 || nz < 2 || nx * nz > 4000) return null;
   const clamp = (v, n) => (v < 0 ? 0 : v >= n ? n - 1 : v);
-  const sx = clamp(Math.round((start[0] - x0) / cell), nx), sz = clamp(Math.round((start[2] - z0) / cell), nz);
-  const gx = clamp(Math.round((goal[0] - x0) / cell), nx), gz = clamp(Math.round((goal[2] - z0) / cell), nz);
-  const N = nx * nz, id = (ix, iz) => iz * nx + ix;
-  const gScore = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const sx = clamp(Math.round((start[0] - x0) / cell), nx),
+    sz = clamp(Math.round((start[2] - z0) / cell), nz);
+  const gx = clamp(Math.round((goal[0] - x0) / cell), nx),
+    gz = clamp(Math.round((goal[2] - z0) / cell), nz);
+  const N = nx * nz,
+    id = (ix, iz) => iz * nx + ix;
+  const gScore = new Float64Array(N).fill(Infinity),
+    prev = new Int32Array(N).fill(-1),
+    closed = new Uint8Array(N);
   const open = [id(sx, sz)];
   gScore[open[0]] = 0;
   const heur = (ix, iz) => Math.hypot(ix - gx, iz - gz);
-  let guard = 0, found = false;
+  let guard = 0,
+    found = false;
   while (open.length && guard++ < 4000) {
     let bi = 0;
     for (let i = 1; i < open.length; i++) {
-      const ia = open[i], ib = open[bi];
-      const fa = gScore[ia] + heur(ia % nx, (ia / nx) | 0), fb = gScore[ib] + heur(ib % nx, (ib / nx) | 0);
+      const ia = open[i],
+        ib = open[bi];
+      const fa = gScore[ia] + heur(ia % nx, (ia / nx) | 0),
+        fb = gScore[ib] + heur(ib % nx, (ib / nx) | 0);
       if (fa < fb) bi = i;
     }
     const cur = open.splice(bi, 1)[0];
     if (closed[cur]) continue;
     closed[cur] = 1;
-    const cx = cur % nx, cz = (cur / nx) | 0;
-    if (cx === gx && cz === gz) { found = true; break; }
+    const cx = cur % nx,
+      cz = (cur / nx) | 0;
+    if (cx === gx && cz === gz) {
+      found = true;
+      break;
+    }
     const a = P(x0 + cx * cell, z0 + cz * cell);
     if (!a) continue;
-    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
-      if (!dx && !dz) continue;
-      const ix = cx + dx, iz = cz + dz;
-      if (ix < 0 || iz < 0 || ix >= nx || iz >= nz) continue;
-      const q = id(ix, iz);
-      if (closed[q]) continue;
-      const b = P(x0 + ix * cell, z0 + iz * cell);
-      if (!b || !stepOk(a, b)) continue;
-      const ng = gScore[cur] + Math.hypot(dx, dz);
-      if (ng < gScore[q]) { gScore[q] = ng; prev[q] = cur; if (!open.includes(q)) open.push(q); }
-    }
+    for (let dz = -1; dz <= 1; dz++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dz) continue;
+        const ix = cx + dx,
+          iz = cz + dz;
+        if (ix < 0 || iz < 0 || ix >= nx || iz >= nz) continue;
+        const q = id(ix, iz);
+        if (closed[q]) continue;
+        const b = P(x0 + ix * cell, z0 + iz * cell);
+        if (!b || !stepOk(a, b)) continue;
+        const ng = gScore[cur] + Math.hypot(dx, dz);
+        if (ng < gScore[q]) {
+          gScore[q] = ng;
+          prev[q] = cur;
+          if (!open.includes(q)) open.push(q);
+        }
+      }
   }
   if (!found) return null;
   /** @type {number[][]} */
@@ -327,34 +375,68 @@ export function groundRoute(from, to, ground, clear) {
  * on the floor. Empty when there is no span.
  * @param {ReadonlyArray<ReadonlyArray<number>>} points
  */
-export function pathRibbon(points, { dash = PING_DASH_M, gap = PING_GAP_M, lift = PING_LIFT_M, half = PING_HALF_M } = {}) {
+export function pathRibbon(
+  points,
+  { dash = PING_DASH_M, gap = PING_GAP_M, lift = PING_LIFT_M, half = PING_HALF_M } = {},
+) {
   /** @type {number[]} */
   const out = [];
   if (!points || points.length < 2) return out;
   const period = dash + gap;
   let carry = 0;
   for (let i = 0; i + 1 < points.length; i++) {
-    const a = points[i], b = points[i + 1];
-    const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+    const a = points[i],
+      b = points[i + 1];
+    const dx = b[0] - a[0],
+      dy = b[1] - a[1],
+      dz = b[2] - a[2];
     const len = Math.hypot(dx, dy, dz);
     if (!(len > 1e-3)) continue;
-    const ux = dx / len, uy = dy / len, uz = dz / len;
-    let px = -uz, pz = ux;
+    const ux = dx / len,
+      uy = dy / len,
+      uz = dz / len;
+    let px = -uz,
+      pz = ux;
     const pl = Math.hypot(px, pz) || 1;
-    px = (px / pl) * half; pz = (pz / pl) * half;
+    px = (px / pl) * half;
+    pz = (pz / pl) * half;
     let t = 0;
     while (t < len - 1e-6) {
       const into = carry % period;
       const on = into < dash;
       const room = (on ? dash : period) - into;
       const step = Math.min(room, len - t);
-      if (!(step > 1e-6)) { t += 1e-4; carry += 1e-4; continue; }
+      if (!(step > 1e-6)) {
+        t += 1e-4;
+        carry += 1e-4;
+        continue;
+      }
       if (on && step > 0.02) {
-        const ax = a[0] + ux * t, ay = a[1] + uy * t + lift, az = a[2] + uz * t;
-        const bx = a[0] + ux * (t + step), by = a[1] + uy * (t + step) + lift, bz = a[2] + uz * (t + step);
+        const ax = a[0] + ux * t,
+          ay = a[1] + uy * t + lift,
+          az = a[2] + uz * t;
+        const bx = a[0] + ux * (t + step),
+          by = a[1] + uy * (t + step) + lift,
+          bz = a[2] + uz * (t + step);
         out.push(
-          ax + px, ay, az + pz, bx + px, by, bz + pz, bx - px, by, bz - pz,
-          ax + px, ay, az + pz, bx - px, by, bz - pz, ax - px, ay, az - pz,
+          ax + px,
+          ay,
+          az + pz,
+          bx + px,
+          by,
+          bz + pz,
+          bx - px,
+          by,
+          bz - pz,
+          ax + px,
+          ay,
+          az + pz,
+          bx - px,
+          by,
+          bz - pz,
+          ax - px,
+          ay,
+          az - pz,
         );
       }
       t += step;

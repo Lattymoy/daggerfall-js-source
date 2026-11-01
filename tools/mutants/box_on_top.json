@@ -2,8 +2,8 @@
   {
     "name": "BOT-the-box-raises-no-layer",
     "file": "src/ui/actionText.js",
-    "old": "    catchBoxClicks(this);   // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks",
-    "new": "",
+    "old": "    catchBoxClicks(this); // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks\n    // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in",
+    "new": "    // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in",
     "tests": [
       "test/ui/boxontop.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "BOT-the-layer-outlives-the-box-it-closed",
     "file": "src/ui/actionText.js",
-    "old": "    releaseBoxClicks(this);   // BOX-ON-TOP: ...and so does the layer that took its clicks",
+    "old": "    releaseBoxClicks(this); // BOX-ON-TOP: ...and so does the layer that took its clicks",
     "new": "",
     "tests": [
       "test/ui/boxontop.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "BOT-the-layer-outlives-a-replaced-box",
     "file": "src/ui/actionText.js",
-    "old": "  dispose() { this.onClose = null; noticeRelease(this); releaseBoxClicks(this); }",
-    "new": "  dispose() { this.onClose = null; noticeRelease(this); }",
+    "old": "    releaseBoxClicks(this);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/boxontop.test.js"
     ]

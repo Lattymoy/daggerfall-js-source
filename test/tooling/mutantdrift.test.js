@@ -129,6 +129,7 @@ test('AUDIT QS6 F7: every mutant record still names source that is there - a rec
 //   birth gate, written twice in weatherMap.js). They are carried as they came,
 //   for their authors to re-aim; the rule that nothing new joins stands for
 //   this branch's own records.
+// LEGIBLE 3's carry put eleven of them on one site each (a formatted line stands once), and they came off.
 // The map can only shrink.
 const CARRIED_AIM = new Map([
   ['disc13.json::DISC13-A-world-hands-the-torch-the-stepped-feet', 2],
@@ -137,19 +138,7 @@ const CARRIED_AIM = new Map([
   ['auditsoc.json::B9-any-tab-speaks-for-the-seat', 2],
   ['auditsoc.json::B8-panel-clock-never-ticks', 2],
   ['auditwod.json::WOD6-quickload-no-onload', 2],
-  ['blood1.json::BLOOD1a-the-decal-pass-turns-the-depth-test-off', 3],
-  ['blood1.json::BLOOD1a-the-mark-size-reads-a-second-copy-of-the-ladder', 2],
-  ['blood1.json::BLOOD1b-the-flying-quads-are-rebuilt-every-frame', 2],
-  ['blood1.json::BLOOD1b-the-quads-do-not-follow-the-chunks', 2],
-  ['blood1.json::AUDIT-the-flight-builds-a-centre-list-every-frame', 2],
-  ['box1.json::guild-popup-reads-per-draw', 2],
-  ['box1.json::coven-reads-per-draw', 2],
   ['hcc.json::HCC-disabled-still-shows', 2],
-  ['macbugw5.json::MAC-BUG-W5-13-the-pools-gate-still-asks-for-the-door-it-no-longer-knocks-on', 4],
-  ['perfsun.json::PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays', 3],
-  ['perfsun.json::PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay', 3],
-  ['perfsun.json::PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit', 3],
-  ['perfsun.json::TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it', 3],
   ['soc1.json::S32-room-budget-missing', 2],
 ]);
 

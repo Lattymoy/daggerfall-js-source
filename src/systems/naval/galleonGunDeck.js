@@ -65,22 +65,27 @@ export function createGalleonGunDeck() {
     if (!boat?.GameObject) return null;
     let r = rigs.get(boat);
     if (r && r.root === boat.GameObject) return r.sides ? r : null;
-    const found = { starboard: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] }, port: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] } };
+    const found = {
+      starboard: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] },
+      port: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] },
+    };
     for (const n of boat.GameObject.walk()) {
       const m = /^(Gun|Gunport)(Starboard|Port)(\d+)$/.exec(n.name);
       if (!m) continue;
       const side = m[2] === 'Starboard' ? found.starboard : found.port;
       (m[1] === 'Gun' ? side.guns : side.lids)[Number(m[3])] = n;
     }
-    const any = found.starboard.guns.length || found.port.guns.length || found.starboard.lids.length || found.port.lids.length;
+    const any =
+      found.starboard.guns.length || found.port.guns.length || found.starboard.lids.length || found.port.lids.length;
     r = { root: boat.GameObject, sides: any ? found : null };
-    if (any) for (const s of Object.values(found)) {
-      s.firedAt = s.guns.map(() => -Infinity);
-      // SHIPS-2: each gun's own stations where its carriage names them
-      s.inX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runInX ?? RUN_IN_X);
-      s.outX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runOutX ?? RUN_OUT_X);
-      s.x = s.guns.map((g, i) => Math.abs(g?.localPosition?.[0] ?? s.inX[i]));
-    }
+    if (any)
+      for (const s of Object.values(found)) {
+        s.firedAt = s.guns.map(() => -Infinity);
+        // SHIPS-2: each gun's own stations where its carriage names them
+        s.inX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runInX ?? RUN_IN_X);
+        s.outX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runOutX ?? RUN_OUT_X);
+        s.x = s.guns.map((g, i) => Math.abs(g?.localPosition?.[0] ?? s.inX[i]));
+      }
     rigs.set(boat, r);
     return any ? r : null;
   }
@@ -113,7 +118,10 @@ export function createGalleonGunDeck() {
     /** A side laid (or run out) now: its shutters open and its guns run out until HOLD_S past `now`. */
     lay(boat, side, now) {
       const s = rigOf(boat)?.sides?.[side];
-      if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }
+      if (s) {
+        s.laidUntil = Math.max(s.laidUntil, now + HOLD_S);
+        settling.add(boat);
+      }
     },
     /** A gun of a side fired now (its index in the battery): it kicks back, and the side is laid. */
     fired(boat, side, index, now) {
@@ -128,7 +136,11 @@ export function createGalleonGunDeck() {
       // and a Play left for their next update stood the shutter at 0-27 deg as its ball left
       if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];
       const a = s.lids[index]?.getComponent?.('Animator')?.animator;
-      if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }
+      if (a) {
+        a.SetBool('Opened', true);
+        a.Play(OPENED_STATE);
+        a.update(0);
+      }
     },
     /** Every boat's shutters and guns as `now` stands them - those named, and every one still settling. */
     step(boats, now) {
@@ -150,7 +162,11 @@ export function createGalleonGunDeck() {
       for (const boat of settling) {
         const r = rigOf(boat);
         if (!r) continue;
-        for (const s of Object.values(r.sides)) { s.laidUntil = -Infinity; s.firedAt.fill(-Infinity); s.x = [...s.inX]; }
+        for (const s of Object.values(r.sides)) {
+          s.laidUntil = -Infinity;
+          s.firedAt.fill(-Infinity);
+          s.x = [...s.inX];
+        }
         stand(r, lastNow, 0);
       }
       settling.clear();
@@ -160,7 +176,12 @@ export function createGalleonGunDeck() {
       const r = rigOf(boat);
       if (!r) return null;
       const out = {};
-      for (const [side, s] of Object.entries(r.sides)) out[side] = { laid: now < s.laidUntil, guns: s.guns.map((g) => (g ? Math.abs(g.localPosition[0]) : null)), open: s.lids.map((l) => !!l?.getComponent?.('Animator')?.animator?.GetBool('Opened')) };
+      for (const [side, s] of Object.entries(r.sides))
+        out[side] = {
+          laid: now < s.laidUntil,
+          guns: s.guns.map((g) => (g ? Math.abs(g.localPosition[0]) : null)),
+          open: s.lids.map((l) => !!l?.getComponent?.('Animator')?.animator?.GetBool('Opened')),
+        };
       return out;
     },
   };

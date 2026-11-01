@@ -2,8 +2,8 @@
   {
     "name": "INT4-a-stack-earns-an-id",
     "file": "src/systems/item/itemIds.js",
-    "old": "  if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;\n",
-    "new": "",
+    "old": "  if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;\n  if (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE) return true;",
+    "new": "  if (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE) return true;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "INT4-an-id-stamped-again",
     "file": "src/systems/item/itemIds.js",
-    "old": "      if (!valuablePiece(it) || (typeof it.uid === 'string' && ITEM_UID_RE.test(it.uid)) || !Object.isExtensible(it)) continue;",
+    "old": "      if (!valuablePiece(it) || (typeof it.uid === 'string' && ITEM_UID_RE.test(it.uid)) || !Object.isExtensible(it))\n        continue;",
     "new": "      if (!valuablePiece(it) || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "INT4-contested-never",
     "file": "server-account/src/ledger.js",
-    "old": "    if (r.claim_char == null) claim.push(key);   // another's, or the service's: claimed - one claim at a time\n",
-    "new": "",
+    "old": "    if (r.claim_char == null) claim.push(key); // another's, or the service's: claimed - one claim at a time\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "INT4-the-keeper-forgiven",
     "file": "server-account/src/ledger.js",
-    "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S) proven.set(r.claim_char, [...(proven.get(r.claim_char) ?? []), key]);\n",
-    "new": "",
+    "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S)\n        proven.set(r.claim_char, [...(proven.get(r.claim_char) ?? []), key]);\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "INT4-twice-in-one",
     "file": "server-account/src/ledger.js",
-    "old": "    if (n > 1) { copies.push(key); if (!r) fresh.push([key, fp]); continue; }   // one piece twice in one record\n",
-    "new": "",
+    "old": "    if (n > 1) {\n      copies.push(key);\n      if (!r) fresh.push([key, fp]);\n      continue;\n    } // one piece twice in one record\n    if (!r) {",
+    "new": "    if (!r) {",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "INT4-the-dupe-moves",
     "file": "server-account/src/realm.js",
-    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  if (why) return { error: why };\n",
-    "new": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  void why;\n",
+    "old": "        : null;\n  if (why) return { error: why };",
+    "new": "        : null;\n  void why;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "INT5-a-stand-still-found",
     "file": "server-account/src/verdict.js",
-    "old": "  if (budget.over > 0 && gain > 0) finding(",
-    "new": "  if (budget.over > 0) finding(",
+    "old": "  if (budget.over > 0 && gain > 0)",
+    "new": "  if (budget.over > 0)",
     "tests": [
       "test/server/int5_budget.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "INT5-the-spoils-unfilled",
     "file": "server-account/src/budget.js",
-    "old": "    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'",
-    "new": "    'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1)) + 0 * ?4'",
+    "old": "      'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4' +",
+    "new": "      'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1)) + 0 * ?4' +",
     "tests": [
       "test/server/int5_budget.test.js"
     ],

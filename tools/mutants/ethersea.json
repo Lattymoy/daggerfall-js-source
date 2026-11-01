@@ -425,8 +425,8 @@
   {
     "name": "SEA-client-unsaid",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    this._ether = !!woods?.isEtherGround;",
-    "new": "    this._ether = false;",
+    "old": "    this._ether = !!woods?.isEtherGround;   // ETHER-SEA: ...and the Eltheric Ocean (world/ethericSea.js etherWoods), composed there the same way",
+    "new": "    this._ether = false;   // ETHER-SEA: ...and the Eltheric Ocean (world/ethericSea.js etherWoods), composed there the same way",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "SEA-worker-uncomposed",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "      if (m.ether) woods = etherWoods(woods);",
-    "new": "      if (false) woods = etherWoods(woods);",
+    "old": "      if (m.ether) woods = etherWoods(woods);   // ETHER-SEA: the Eltheric Ocean over it, as the host composes its own",
+    "new": "      if (false) woods = etherWoods(woods);   // ETHER-SEA: the Eltheric Ocean over it, as the host composes its own",
     "tests": [
       "test/world/ethersea.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "SWAP-BEHIND-late-parts-left",
     "file": "src/player/lateSolid.js",
-    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);",
-    "new": "",
+    "old": "        held.delete(k);\n        held.set(as, [...(held.get(as) ?? []), ...parts]);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SWAP-BEHIND-pixel-build-under-its-own-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py),",
-    "new": "const pkey = `${px},${py}`, key = pkey,",
+    "old": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
+    "new": "    const pkey = `${px},${py}`, key = pkey, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SWAP-BEHIND-doors-live-while-building",
     "file": "src/scenes/pixelBuild.js",
-    "old": "(key === pkey ? buildingDoors : (made.doors ??= [])).push({",
-    "new": "buildingDoors.push({",
+    "old": "              (key === pkey ? buildingDoors : (made.doors ??= [])).push({   // IC-SWAP-BEHIND: staged on its ledger while it builds behind",
+    "new": "              buildingDoors.push({   // IC-SWAP-BEHIND: staged on its ledger while it builds behind",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SWAP-BEHIND-a-swap-fades-in",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
-    "new": "if (isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "old": "    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint",
+    "new": "    if (isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint",
     "tests": [
       "test/render/midring.test.js",
       "test/scenes/swapbehind.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "SWAP-BEHIND-reskin-under-the-build-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "_reskin.mark(pkey);",
-    "new": "_reskin.mark(key);",
+    "old": "    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(pkey);   // ROAD-H H3: ITS key, not the grid (IC-SWAP-BEHIND: the pixel's, never the build's behind it)",
+    "new": "    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(key);   // ROAD-H H3: ITS key, not the grid (IC-SWAP-BEHIND: the pixel's, never the build's behind it)",
     "tests": [
       "test/systems/seasonsIliacBay.test.js",
       "test/scenes/swapbehind.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "SWAP-BEHIND-restride-under-the-build-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "host.restridePending.set(pkey, entry);",
-    "new": "host.restridePending.set(key, entry);",
+    "old": "      if (wantStride === 1) host.restridePending.set(pkey, entry);   // IC-SWAP-BEHIND: the pixel's key",
+    "new": "      if (wantStride === 1) host.restridePending.set(key, entry);   // IC-SWAP-BEHIND: the pixel's key",
     "tests": [
       "test/world/terrain/stream1_restride.test.js",
       "test/scenes/swapbehind.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "SWAP-BEHIND-ground-ride-unheld-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
-    "new": "      host.rideGround?.(t, pkey, moved, false);",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld",
+    "new": "      host.rideGround?.(t, pkey, moved, false);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "SWAP-BEHIND-place-rekey-inert",
     "file": "src/scenes/placeHolds.js",
-    "old": "      rekey(to) { if (h.state === 'live') h.key = to; },",
-    "new": "      rekey(to) { },",
+    "old": "      rekey(to) {\n        if (h.state === 'live') h.key = to;\n      },",
+    "new": "      rekey(to) {},",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "SWAP-BEHIND-place-kept-under-its-first-key",
     "file": "src/scenes/placeHolds.js",
-    "old": "        const older = shelf.get(h.key);\n        if (older) { shelf.delete(h.key); drop(older); }\n        shelf.set(h.key, h);",
-    "new": "        const older = shelf.get(key);\n        if (older) { shelf.delete(key); drop(older); }\n        shelf.set(key, h);",
+    "old": "        const older = shelf.get(h.key);\n        if (older) {\n          shelf.delete(h.key);\n          drop(older);\n        }\n        shelf.set(h.key, h);",
+    "new": "        const older = shelf.get(key);\n        if (older) {\n          shelf.delete(key);\n          drop(older);\n        }\n        shelf.set(key, h);",
     "tests": [
       "test/scenes/swapbehind.test.js"
     ]

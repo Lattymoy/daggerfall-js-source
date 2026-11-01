@@ -2,8 +2,8 @@
   {
     "name": "RAID-ASHORE-seam-unasked",
     "file": "src/systems/warmAshesShips.js",
-    "old": "      h.raidAshore?.(this.parentQuest);\n",
-    "new": "",
+    "old": "      h.raidAshore?.(this.parentQuest);\n      this.parentQuest.questBreak = true;",
+    "new": "      this.parentQuest.questBreak = true;",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAID-ASHORE-quest-left-running",
     "file": "src/systems/warmAshesShips.js",
-    "old": "      this.parentQuest.endQuest();\n",
-    "new": "",
+    "old": "      this.parentQuest.endQuest();\n      this.setComplete();",
+    "new": "      this.setComplete();",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID-ASHORE-taken-at-sea",
     "file": "src/systems/warmAshesShips.js",
-    "old": "    if (h.currentRegionIndex?.() === WA_SEA_REGION) {\n      resetShipVariants();",
-    "new": "    if (false) {\n      resetShipVariants();",
+    "old": "    if (h.currentRegionIndex?.() === WA_SEA_REGION) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID-ASHORE-fast-travel-unguarded",
     "file": "src/systems/warmAshesShips.js",
-    "old": "if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();",
-    "new": "if (travelShip) return armRaid();",
+    "old": "  if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();",
+    "new": "  if (travelShip) return armRaid();",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RAID-ASHORE-the-dead-taken",
     "file": "src/scenes/raidAshore.js",
-    "old": "(f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid",
-    "new": "(f) => f && f.questBehaviour?.questUID === quest.uid",
+    "old": "  quest ? (foes ?? []).filter((f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid) : [];",
+    "new": "  quest ? (foes ?? []).filter((f) => f && f.questBehaviour?.questUID === quest.uid) : [];",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAID-ASHORE-another-quests-taken",
     "file": "src/scenes/raidAshore.js",
-    "old": "(f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid",
-    "new": "(f) => f && !f.dead && !!f.questBehaviour",
+    "old": "  quest ? (foes ?? []).filter((f) => f && !f.dead && f.questBehaviour?.questUID === quest.uid) : [];",
+    "new": "  quest ? (foes ?? []).filter((f) => f && !f.dead && !!f.questBehaviour) : [];",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RAID-ASHORE-end-unswept",
     "file": "src/scenes/raidAshore.js",
-    "old": "      ending.add(quest.uid);\n",
-    "new": "",
+    "old": "      ending.add(quest.uid);\n      return withdraw(quest);",
+    "new": "      return withdraw(quest);",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RAID-ASHORE-swept-twice",
     "file": "src/scenes/raidAshore.js",
-    "old": "      ending.delete(quest.uid);\n",
-    "new": "",
+    "old": "      ending.delete(quest.uid);\n      return withdraw(quest);",
+    "new": "      return withdraw(quest);",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]

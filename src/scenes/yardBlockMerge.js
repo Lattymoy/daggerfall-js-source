@@ -6,7 +6,14 @@
 // crossing the range is merged in or out at the next merge, the old merge drawn until then. Merges are made nearest
 // block first on a time budget a frame, always at least one.
 
-import { DECOR_MERGE_SETTLE_MS, DECOR_DRAW, DECOR_SHADOW, standDecorMerge, decorMergeMatrix, decorFlatSeen } from './decor/decorRoom.js';
+import {
+  DECOR_MERGE_SETTLE_MS,
+  DECOR_DRAW,
+  DECOR_SHADOW,
+  standDecorMerge,
+  decorMergeMatrix,
+  decorFlatSeen,
+} from './decor/decorRoom.js';
 import { transformedAabb } from '../render/frustum.js';
 
 /** How long one frame spends merging blocks, milliseconds. At least one block is merged in a frame that has one due. */
@@ -74,7 +81,18 @@ export function createYardBlockMerge({ renderer, now, clock }) {
     door(key, px, py, origin) {
       let block = blocks.get(key);
       if (!block) {
-        block = { key, px, py, origin, yards: new Set(), merged: null, held: new Set(), changed: false, changedAt: 0, distance: 0 };
+        block = {
+          key,
+          px,
+          py,
+          origin,
+          yards: new Set(),
+          merged: null,
+          held: new Set(),
+          changed: false,
+          changedAt: 0,
+          distance: 0,
+        };
         blocks.set(key, block);
       }
       const owner = block;
@@ -151,7 +169,7 @@ export function createYardBlockMerge({ renderer, now, clock }) {
       for (const block of blocks.values()) {
         const mesh = block.merged?.mesh;
         if (!mesh) continue;
-        const seen = cull ? cull(mesh.wbox ??= transformedAabb(mesh.box, mesh.matrix)) : DECOR_DRAW;
+        const seen = cull ? cull((mesh.wbox ??= transformedAabb(mesh.box, mesh.matrix))) : DECOR_DRAW;
         const remap = remapOf(block.px, block.py);
         if (seen === DECOR_SHADOW) r?.recordShadowMesh?.(mesh.gpu, mesh.matrix, remap);
         else if (seen === DECOR_DRAW) {

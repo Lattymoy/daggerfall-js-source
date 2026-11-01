@@ -1,4 +1,4 @@
-// WG2 THE EDITOR'S MODEL (bible/03-World/World-2-Canon.md, "Editing"): a designer's changes as data, never written
+// WG2 THE EDITOR'S MODEL ("Editing"): a designer's changes as data, never written
 // into the bake - named layers of operations (brushes on the ground, biome paint, roads, settlements, a building moved
 // or removed), applied in order over the bake by `editedSampler`. The ground's changes are kept as patches filed by
 // 16-pixel tile, so an edit costs what it touches. Every operation says the rectangle it moves, and the stages it

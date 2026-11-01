@@ -253,7 +253,6 @@ test('COAST-LOOK the GLSL is the JS: the wander to the float, the table entry fo
 
 test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground blends, and their own elsewhere: the bed\'s share the water\'s coverage less the wander on a blended transition, the art\'s painted water no fringe there, a tile not blended its own share and its art\'s; the sheet\'s program the same wander and the same table, its shore the coverage less the wander on a blended transition alone (mutants: the bed\'s wander ungated; the fringe kept on a blend; the sheet\'s wander ungated or its sign)', () => {
   const words = packWaterMask(WATER_DRAW_MASK_TABLE);
-  // PIN MOVED (WATER-SHORE): the ground's read of its water's smoothed fields beside the bed (render/groundEdgeGlsl.js
   // shoreGlsl) - off here, the tile's own line as before; watershore.test.js runs it on
   const bed = glslFunctions(`uniform sampler2DArray uTileArr;\n${EDGE_NOISE_GLSL}\n${groundWanderGlsl()}\n${shoreGlsl()}\n${WATER_BED_GLSL}`, {
     uGroundEdge: 1, uWaterBed: 1, uSnowArr: [0, 0, 0, 0], uShoreOn: 0,
@@ -278,8 +277,7 @@ test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground
   const sheet = glslFunctions(fs, { uGroundEdge: 1 });
   for (let y = 0.05; y < D; y += 7.1) for (let x = 0.07; x < D; x += 6.3) near(sheet.geWander([x, y]), groundEdgeWander(x, y), 1e-12, `the sheet's wander at (${x}, ${y})`);
   for (let byte = 0; byte < 256; byte++) assert.equal(sheet.geEntry(byte), GROUND_KIND_TABLE[byte], `the sheet's entry ${byte}`);
-  // PIN MOVED (WATER-LEVEL): the sheet's shore is its cut field's coverage (world/water/waterLevel.js), less the same wander
-  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* cut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');   // PIN MOVED (WATER-SHORE): the cut the smoothed field's where the sheet has one
+  assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* cut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
   // the sheet and the sand on one line: where the ground's share of land is a half, the sheet's water is a half - the
   // sheet built over a dirt row, a row of the march's edge and a row of water, its cut as the GPU interpolates it
   const edge = convertTile(marchTile(DIRT, DIRT, WATER, WATER)), dirt = convertTile(marchTile(DIRT, DIRT, DIRT, DIRT));

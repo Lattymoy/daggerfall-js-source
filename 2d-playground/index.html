@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DFO Online — 2D flora playground</title>
+<!--
+  SKYRIM-FLORA playground: one full Lands pixel (ground dress + nature flats) for a biome.
+  Catalog / upload overlays a preview plant. ARENA2 required. src/tools/floraPlayground.js only.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0f12; color: #cdc4a8;
+    font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  .hud { position: fixed; left: 12px; top: 12px; background: rgba(10,12,16,.78);
+    border: 1px solid #55503f; padding: 10px 12px; max-width: min(340px, 48vw);
+    max-height: calc(100vh - 24px); overflow: auto; }
+  .hud h1 { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #e0d5ad; }
+  .hud label { display: flex; flex-direction: column; gap: 4px; margin: 8px 0 0; color: #9c9378; }
+  .hud select, .hud input[type=file] { width: 100%; background: #1a1c22; color: #cdc4a8;
+    border: 1px solid #55503f; padding: 6px 8px; font: inherit; }
+  .hud p { margin: 8px 0 0; color: #8d836c; font-size: 12px; }
+  .hud .hint { color: #6e6758; }
+  .thumb { margin-top: 8px; max-width: 120px; image-rendering: pixelated;
+    background: repeating-conic-gradient(#2a2a34 0% 25%, #202028 0% 50%) 0 0 / 10px 10px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="hud">
+  <h1>2D flora playground</h1>
+  <p class="hint">Full Lands pixel (ground + trees/bushes). Orbit: drag. Zoom: wheel. Catalog/upload = overlay plant.</p>
+  <label>Biome
+    <select id="biome"></select>
+  </label>
+  <label>Catalog sprite
+    <select id="sprite"></select>
+  </label>
+  <label>Upload PNG (preview only)
+    <input id="file" type="file" accept="image/png,image/*">
+  </label>
+  <img id="thumb" class="thumb" alt="" hidden>
+  <p id="status"></p>
+</div>
+<script type="module" src="/src/tools/floraPlayground.js"></script>
+</body>
+</html>

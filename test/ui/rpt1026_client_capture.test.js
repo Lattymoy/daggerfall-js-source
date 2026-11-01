@@ -75,8 +75,9 @@ test('RPT1026-CLIENT: no capture or release in the game\'s own code stands outsi
   for (const p of walk(join(root, 'src'))) {
     const file = relative(root, p);
     if (file.startsWith('src/tools/') || file === 'src/ui/pointerCapture.js') continue;
-    readFileSync(p, 'utf8').split('\n').forEach((ln, i) => {
-      if (/\.(set|release)PointerCapture\b/.test(ln) && !/try \{/.test(ln) && !/^\s*(\/\/|\*)/.test(ln)) bare.push(`${file}:${i + 1}`);
+    // PIN MOVED (LEGIBLE 3): the formatter opens a try on the line above its body, so that line counts as the try
+    readFileSync(p, 'utf8').split('\n').forEach((ln, i, lines) => {
+      if (/\.(set|release)PointerCapture\b/.test(ln) && !/try \{/.test(ln) && !/try \{\s*$/.test(lines[i - 1] ?? '') && !/^\s*(\/\/|\*)/.test(ln)) bare.push(`${file}:${i + 1}`);
     });
   }
   assert.deepEqual(bare, [], 'each goes through ui/pointerCapture.js (or catches its own refusal on its line)');

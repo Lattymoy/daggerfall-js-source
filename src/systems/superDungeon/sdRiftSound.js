@@ -28,7 +28,14 @@ export const RIFT_BELL_RMS = 0.07;
 export const RIFT_BELL_RANGE = Object.freeze({ refDistance: 3, maxDistance: 40 });
 export const RIFT_BELL_LOWPASS_HZ = 900;
 /** The toll's pitch (a ratio), its echo's delay (s) and share, the swell's rate (Hz) and depth. */
-export const RIFT_BELL_SHAPE = Object.freeze({ ratio: 0.62, echoS: 0.33, echo: 0.35, swellHz: 0.45, swell: 0.3, darkHz: 1100 });
+export const RIFT_BELL_SHAPE = Object.freeze({
+  ratio: 0.62,
+  echoS: 0.33,
+  echo: 0.35,
+  swellHz: 0.45,
+  swell: 0.3,
+  darkHz: 1100,
+});
 
 /**
  * THE BELL UNDER WATER: `bell` and `bubbles` (Float32Arrays at `srcRate`, either may be missing) into one periodic toll of
@@ -36,18 +43,24 @@ export const RIFT_BELL_SHAPE = Object.freeze({ ratio: 0.62, echoS: 0.33, echo: 0
  * @param {Float32Array | null | undefined} bell
  * @param {Float32Array | null | undefined} bubbles
  */
-export function buildRiftBell(bell, bubbles, { srcRate = SND_RATE, rate = RIFT_BELL_RATE, seconds = RIFT_BELL_SECONDS } = {}) {
+export function buildRiftBell(
+  bell,
+  bubbles,
+  { srcRate = SND_RATE, rate = RIFT_BELL_RATE, seconds = RIFT_BELL_SECONDS } = {},
+) {
   const out = new Float32Array(Math.round(rate * seconds));
   const S = RIFT_BELL_SHAPE;
   if (bell?.length) {
     addVoice(out, rate, bell, srcRate, { ratio: S.ratio, offset: 0.05, gain: 1, wrap: true });
     addVoice(out, rate, bell, srcRate, { ratio: S.ratio * 0.995, offset: 0.05 + S.echoS, gain: S.echo, wrap: true });
   }
-  if (bubbles?.length) addVoice(out, rate, bubbles, srcRate, { ratio: 0.8, offset: seconds * 0.45, gain: 0.18, wrap: true });
-  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole
+  if (bubbles?.length)
+    addVoice(out, rate, bubbles, srcRate, { ratio: 0.8, offset: seconds * 0.45, gain: 0.18, wrap: true });
+  lowpassLoop(out, rate, S.darkHz); // AUDIT SD III (A3): its seam whole
   // the swell: a whole number of slow waves in the loop, so its end meets its start
   const waves = Math.max(1, Math.round(S.swellHz * seconds));
-  for (let i = 0; i < out.length; i++) out[i] *= 1 - S.swell * 0.5 * (1 - Math.cos((2 * Math.PI * waves * i) / out.length));
+  for (let i = 0; i < out.length; i++)
+    out[i] *= 1 - S.swell * 0.5 * (1 - Math.cos((2 * Math.PI * waves * i) / out.length));
   return level(out, RIFT_BELL_RMS);
 }
 
@@ -61,8 +74,16 @@ export function startRiftBell(audio, at) {
   if (!audio?.loop3d || !at) return null;
   try {
     if (!bellOn(audio)) return null;
-    return audio.loop3d(RIFT_BELL_KEY, at, 1, { ...RIFT_BELL_RANGE, distanceModel: 'linear', lowpass: RIFT_BELL_LOWPASS_HZ }) ?? null;
-  } catch { return null; }   // a sound that cannot stand never costs the Rift
+    return (
+      audio.loop3d(RIFT_BELL_KEY, at, 1, {
+        ...RIFT_BELL_RANGE,
+        distanceModel: 'linear',
+        lowpass: RIFT_BELL_LOWPASS_HZ,
+      }) ?? null
+    );
+  } catch {
+    return null;
+  } // a sound that cannot stand never costs the Rift
 }
 
 /** AUDIT SD III (A7): the toll's samples, built once its archive is read - the Rift asks for its bell again until one
@@ -96,6 +117,15 @@ export function tollRiftBell(audio, at) {
   try {
     if (!bellOn(audio)) return false;
     const T = SD_HOME_TOLL;
-    return audio.play3d(RIFT_BELL_KEY, at, 1, { refDistance: T.refDistance, maxDistance: T.maxDistance, distanceModel: 'linear', pitch: T.pitch }) != null;
-  } catch { return false; }   // a toll that cannot sound never costs the way home
+    return (
+      audio.play3d(RIFT_BELL_KEY, at, 1, {
+        refDistance: T.refDistance,
+        maxDistance: T.maxDistance,
+        distanceModel: 'linear',
+        pitch: T.pitch,
+      }) != null
+    );
+  } catch {
+    return false;
+  } // a toll that cannot sound never costs the way home
 }

@@ -20,8 +20,8 @@
   {
     "name": "EGA3-law-six-not-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
-    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "old": "  6: '2026-10-13',\n  7: '2026-10-13',",
+    "new": "  7: '2026-10-13',",
     "tests": [
       "test/net/eliteGates/egaudit3_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGA3-law-five-forgotten",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
-    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "old": "  5: '2026-10-12',\n  6: '2026-10-13',",
+    "new": "  6: '2026-10-13',",
     "tests": [
       "test/net/eliteGates/egaudit3_law.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGA3-sb-no-holder-check",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "m.home || m.mast !== EG_SPIREBRIDGE_ID || !spec",
-    "new": "m.home || !spec",
+    "old": "  if (!m || !m.in || !m.alive || m.home || m.mast !== EG_SPIREBRIDGE_ID || !spec || !p || !(B.h > 0) || spec.h !== B.h)\n    return null;",
+    "new": "  if (!m || !m.in || !m.alive || m.home || !spec || !p || !(B.h > 0) || spec.h !== B.h) return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGA3-sb-once-a-span-unread",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "(B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
-    "new": "(B.sg !== 'trial' && B.sg !== 'closing')) return null;",
+    "old": "  if ((B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
+    "new": "  if (B.sg !== 'trial' && B.sg !== 'closing') return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGA3-sb-any-stage",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "(B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
-    "new": "m.sbH === B.h) return null;",
+    "old": "  if ((B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
+    "new": "  if (m.sbH === B.h) return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGA3-sb-the-fallen-ask",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "  if (!m || !m.in || !m.alive || m.home ||",
-    "new": "  if (!m || !m.in || m.home ||",
+    "old": "  if (!m || !m.in || !m.alive || m.home || m.mast !== EG_SPIREBRIDGE_ID || !spec || !p || !(B.h > 0) || spec.h !== B.h)\n    return null;",
+    "new": "  if (!m || !m.in || m.home || m.mast !== EG_SPIREBRIDGE_ID || !spec || !p || !(B.h > 0) || spec.h !== B.h) return null;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGA3-sb-the-gap-behind",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
-    "new": "if (far <= z + EG_BODY_R || near > z + EG_SB_AHEAD_M) continue;",
+    "old": "    if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
+    "new": "    if (far <= z + EG_BODY_R || near > z + EG_SB_AHEAD_M) continue;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGA3-sb-reach-unbounded",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
-    "new": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M) continue;",
+    "old": "    if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
+    "new": "    if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M) continue;",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGA3-sb-laps-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "z0: za - EG_SB_LAP_M, z1: zb + EG_SB_LAP_M, y0, y1 };",
-    "new": "z0: za, z1: zb, y0, y1 };",
+    "old": "    z0: za - EG_SB_LAP_M,\n    z1: zb + EG_SB_LAP_M,",
+    "new": "    z0: za,\n    z1: zb,",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "EGA3-sb-near-side-wrong-height",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  const y0 = a ? a.y : floorAt(spec, b.x, za - EG_SB_LAP_M) ?? b.y,",
+    "old": "  const y0 = a ? a.y : (floorAt(spec, b.x, za - EG_SB_LAP_M) ?? b.y),",
     "new": "  const y0 = b ? b.y : a.y,",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "EGA3-sb-fold-lost",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "bridges: (f.bridges ?? []).filter((q) => q.h === w.h) };",
-    "new": "bridges: [] };",
+    "old": "        bridges: (f.bridges ?? []).filter((q) => q.h === w.h),",
+    "new": "        bridges: [],",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGA3-sb-never-offered",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "const pool = EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
-    "new": "const pool = EG_MASTERIES.filter((M) => M.id !== mast && M.key !== 'spirebridge' && egCardActs(M.key, n, kinds));",
+    "old": "    const pool = EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
+    "new": "    const pool = EG_MASTERIES.filter((M) => M.id !== mast && M.key !== 'spirebridge' && egCardActs(M.key, n, kinds));",
     "tests": [
       "test/net/eliteGates/egaudit3_law_bridge.test.js"
     ]

@@ -23,8 +23,8 @@
   {
     "name": "MWSTEEL5-the-closed-helm-lifted-again",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ]),",
-    "new": "    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),\n  ], HELM_LIFT - 1),",
+    "old": "  piece('helm_closed', 'set', [\n    shape('Sphere', 'helm', [\n      [-7.5, -7.93, 113.88],\n      [7.5, 8.95, 132.82],\n    ]),\n    shape('Sphere.001 Remeshed Remeshed', 'visor', [\n      [-5.07, -8.02, 112.58],\n      [6.82, 10.29, 140.61],\n    ]),\n  ]),",
+    "new": "  piece(\n    'helm_closed',\n    'set',\n    [\n      shape('Sphere', 'helm', [\n        [-7.5, -7.93, 113.88],\n        [7.5, 8.95, 132.82],\n      ]),\n      shape('Sphere.001 Remeshed Remeshed', 'visor', [\n        [-5.07, -8.02, 112.58],\n        [6.82, 10.29, 140.61],\n      ]),\n    ],\n    HELM_LIFT - 1,\n  ),",
     "tests": [
       "test/tooling/mwsteel5.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "MWSTEEL5-the-open-helm-left-down",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])], HELM_LIFT),",
-    "new": "[[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])]),",
+    "old": "  piece(\n    'helm_open',\n    'openHelm',\n    [\n      shape('Sphere.002', 'helm', [\n        [-7.5, -7.93, 112.88],\n        [7.5, 9.22, 131.82],\n      ]),\n    ],\n    HELM_LIFT,\n  ),",
+    "new": "  piece('helm_open', 'openHelm', [\n    shape('Sphere.002', 'helm', [\n      [-7.5, -7.93, 112.88],\n      [7.5, 9.22, 131.82],\n    ]),\n  ]),",
     "tests": [
       "test/tooling/mwsteel5.test.js"
     ]
@@ -51,7 +51,7 @@
   {
     "name": "MWSTEEL5-the-bounds-left-behind",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "    bounds: { min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])], max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])] },",
+    "old": "    bounds: {\n      min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])],\n      max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])],\n    },",
     "new": "    bounds: mesh.bounds,",
     "tests": [
       "test/tooling/mwsteel5.test.js"
@@ -60,8 +60,8 @@
   {
     "name": "MWSTEEL5-the-bake-ignores-the-lift",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0)",
-    "new": "liftMesh(bakeObject(trees[p.file], s.object, s.box), 0)",
+    "old": "export const pieceMeshes = (trees, p) =>\n  p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0));",
+    "new": "export const pieceMeshes = (trees, p) => p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), 0));",
     "tests": [
       "test/tooling/mwsteel5.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -70,8 +70,8 @@
   {
     "name": "MWSTEEL5-the-band-dropped-from-the-cuirass",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [[-10.69, -9.98, 85.82], [10.44, 10.28, 89.57]]),\n",
-    "new": "",
+    "old": "    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [\n      [-10.69, -9.98, 85.82],\n      [10.44, 10.28, 89.57],\n    ]),\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/tooling/mwsteel5.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "MWSTEEL5-the-pauldrons-by-their-old-names",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.003'",
-    "new": "piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.001'",
+    "old": "    shape('Breton_Male.009 Remeshed.003', 'pauldron', [",
+    "new": "    shape('Breton_Male.009 Remeshed.001', 'pauldron', [",
     "tests": [
       "test/tooling/mwsteel5.test.js",
       "test/tooling/mwsteel1.test.js"

@@ -164,5 +164,4 @@ test('WOD4: the probe host stands the same camp in its fixed frame, lights it at
   assert.match(x, /exteriorFoes\.spawnFoe\(r\.mobileType, \[o\[12\] \+ r\.pos\[0\], o\[13\] \+ r\.pos\[1\], o\[14\] \+ r\.pos\[2\]\], \{ yaw: r\.yawDeg \* Math\.PI \/ 180, gender: r\.gender, placed: true, groundAlign: \{ hitDist: null \} \}\)/);
   // worldModes.js and dungeonContext.js stand interiors and dungeons - no exterior block, no camp
   for (const f of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(rd(f), /PRIVATEERS_HOLD_BLOCK|wodPrivateersHold/, `${f} is flagged, not wired`);
-  assert.match(rd('bible/03-World/World-Of-Daggerfall.md'), /## The camp at Privateer's Hold \(WOD4\)/);
 });

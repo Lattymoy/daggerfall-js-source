@@ -11,9 +11,21 @@
 // anywhere outside lets it go. One at a time: a second replaces the first.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  WAYPOINT_KINDS, WAYPOINT_COLORS, WAYPOINT_TEXT, WAYPOINT_NAME_MAX, waypointById, nextWaypointName, addWaypoint,
-  renameWaypoint, recolorWaypoint, removeWaypoint, setWaypointFollowed, isWaypointFollowed, shareWaypoint,
-  waypointSharingLive, cleanWaypointName,
+  WAYPOINT_KINDS,
+  WAYPOINT_COLORS,
+  WAYPOINT_TEXT,
+  WAYPOINT_NAME_MAX,
+  waypointById,
+  nextWaypointName,
+  addWaypoint,
+  renameWaypoint,
+  recolorWaypoint,
+  removeWaypoint,
+  setWaypointFollowed,
+  isWaypointFollowed,
+  shareWaypoint,
+  waypointSharingLive,
+  cleanWaypointName,
 } from '../systems/map/mapWaypoints.js';
 
 export const WAYPOINT_MENU_ID = 'wp-menu';
@@ -61,7 +73,7 @@ const CSS = `
 :where(#${WAYPOINT_MENU_ID}) .wpm-btn:focus-visible, :where(#${WAYPOINT_MENU_ID}) .wpm-kind:focus-visible, :where(#${WAYPOINT_MENU_ID}) .wpm-swatch:focus-visible { outline: 1px solid var(--brass, #c08a3e); outline-offset: 1px; }
 `;
 
-let open = null;   // { el, win, key, away, onClose, owner }
+let open = null; // { el, win, key, away, onClose, owner }
 
 /** Whether the box stands (the hosts' overlayUp asks, so their own Escape waits for it). */
 export const waypointMenuOpen = () => !!open;
@@ -70,11 +82,15 @@ export const waypointMenuOpen = () => !!open;
 export function closeWaypointMenu(owner = null) {
   const o = open;
   if (!o || (owner != null && o.owner !== owner)) return;
-  open = null;   // the slot emptied before the occupant is told (bible/Home.md)
+  open = null; // the slot emptied before the occupant is told (bible/Home.md)
   o.win?.removeEventListener?.('keydown', o.key, true);
   o.win?.removeEventListener?.('pointerdown', o.away, true);
   o.el.remove?.();
-  try { o.onClose?.(); } catch { /* the caller's own fault */ }
+  try {
+    o.onClose?.();
+  } catch {
+    /* the caller's own fault */
+  }
 }
 
 function injectStyle(doc) {
@@ -105,7 +121,12 @@ export function openWaypointMenu(o) {
   closeWaypointMenu();
   injectStyle(doc);
   const win = doc.defaultView;
-  const el = (tag, cls = '', text = '') => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+  const el = (tag, cls = '', text = '') => {
+    const n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text) n.textContent = text;
+    return n;
+  };
   const box = el('div');
   box.id = WAYPOINT_MENU_ID;
   box.setAttribute('role', 'dialog');
@@ -120,10 +141,16 @@ export function openWaypointMenu(o) {
   const head = el('div', 'wpm-head');
   const title = el('div', 'wpm-title', adding ? 'New waypoint' : wp.name);
   const x = el('button', 'wpm-x', '×');
-  x.type = 'button'; x.title = 'Close'; x.onclick = (e) => { e.preventDefault(); closeWaypointMenu(); };
+  x.type = 'button';
+  x.title = 'Close';
+  x.onclick = (e) => {
+    e.preventDefault();
+    closeWaypointMenu();
+  };
   head.append(title, x);
   box.append(head);
-  if (!adding) box.append(el('div', 'wpm-sub', `${WAYPOINT_TEXT.kindWord[wp.kind]}${!wp.mine && wp.by ? ` · by ${wp.by}` : ''}`));
+  if (!adding)
+    box.append(el('div', 'wpm-sub', `${WAYPOINT_TEXT.kindWord[wp.kind]}${!wp.mine && wp.by ? ` · by ${wp.by}` : ''}`));
   // the name
   box.append(el('label', 'wpm-label', adding ? 'Name' : 'Rename'));
   const nameRow = el('div', 'wpm-row');
@@ -152,8 +179,19 @@ export function openWaypointMenu(o) {
       b.type = 'button';
       const allowed = k === 'personal' || o.canKind?.[k] !== false;
       b.disabled = !allowed;
-      b.title = k === 'personal' ? 'Only you see it' : !allowed ? `You are not in a ${k}` : !live ? 'Saved here. You are offline, so share it later' : `Your ${k} sees it`;
-      b.onclick = (e) => { e.preventDefault(); kind = k; paint(); };
+      b.title =
+        k === 'personal'
+          ? 'Only you see it'
+          : !allowed
+            ? `You are not in a ${k}`
+            : !live
+              ? 'Saved here. You are offline, so share it later'
+              : `Your ${k} sees it`;
+      b.onclick = (e) => {
+        e.preventDefault();
+        kind = k;
+        paint();
+      };
       kindBtns[k] = b;
       kinds.append(b);
     }
@@ -183,12 +221,31 @@ export function openWaypointMenu(o) {
   const acts = el('div', 'wpm-acts');
   const note = el('div', 'wpm-note');
   note.style.display = 'none';
-  const say = (t) => { note.textContent = t; note.style.display = t ? '' : 'none'; o.onNote?.(t); };
-  const btn = (label, cls, fn) => { const b = el('button', `wpm-btn ${cls}`, label); b.type = 'button'; b.onclick = (e) => { e.preventDefault(); fn(); }; acts.append(b); return b; };
+  const say = (t) => {
+    note.textContent = t;
+    note.style.display = t ? '' : 'none';
+    o.onNote?.(t);
+  };
+  const btn = (label, cls, fn) => {
+    const b = el('button', `wpm-btn ${cls}`, label);
+    b.type = 'button';
+    b.onclick = (e) => {
+      e.preventDefault();
+      fn();
+    };
+    acts.append(b);
+    return b;
+  };
   const doAdd = () => {
     const r = addWaypoint({ kind, mx: o.point.mx, my: o.point.my, name: input.value, color, by: o.by ?? '' });
-    if (!r) { closeWaypointMenu(); return; }
-    if (r.shared === false) o.onNote?.(`Waypoint "${r.waypoint.name}" saved, but it could not be sent to your ${kind} right now. Use Share again later.`);
+    if (!r) {
+      closeWaypointMenu();
+      return;
+    }
+    if (r.shared === false)
+      o.onNote?.(
+        `Waypoint "${r.waypoint.name}" saved, but it could not be sent to your ${kind} right now. Use Share again later.`,
+      );
     closeWaypointMenu();
   };
   const doRename = () => {
@@ -201,31 +258,49 @@ export function openWaypointMenu(o) {
     btn('Add', 'main', doAdd);
     btn('Cancel', '', closeWaypointMenu);
   } else {
-    saveName.onclick = (e) => { e.preventDefault(); doRename(); };
+    saveName.onclick = (e) => {
+      e.preventDefault();
+      doRename();
+    };
     const follow = btn(isWaypointFollowed(wp.id) ? 'Unfollow' : 'Follow', '', () => {
       const on = !isWaypointFollowed(wp.id);
       setWaypointFollowed(wp.id, on);
       follow.textContent = on ? 'Unfollow' : 'Follow';
     });
-    if (o.onTravel) btn('Travel here', 'main', () => { const w = waypointById(wp.id); closeWaypointMenu(); if (w) o.onTravel(w); });
+    if (o.onTravel)
+      btn('Travel here', 'main', () => {
+        const w = waypointById(wp.id);
+        closeWaypointMenu();
+        if (w) o.onTravel(w);
+      });
     if (wp.mine && wp.kind !== 'personal') {
-      btn('Share again', '', () => say(shareWaypoint(wp.id) ? `Sent to your ${wp.kind}.` : `Could not reach your ${wp.kind} right now.`));
+      btn('Share again', '', () =>
+        say(shareWaypoint(wp.id) ? `Sent to your ${wp.kind}.` : `Could not reach your ${wp.kind} right now.`),
+      );
     }
-    btn('Remove', 'danger', () => { removeWaypoint(wp.id); closeWaypointMenu(); });
+    btn('Remove', 'danger', () => {
+      removeWaypoint(wp.id);
+      closeWaypointMenu();
+    });
   }
   box.append(acts, note);
   function paint() {
-    for (const [k, b] of Object.entries(kindBtns)) { b.className = k === kind ? 'wpm-kind on' : 'wpm-kind'; b.setAttribute('aria-pressed', k === kind ? 'true' : 'false'); }
+    for (const [k, b] of Object.entries(kindBtns)) {
+      b.className = k === kind ? 'wpm-kind on' : 'wpm-kind';
+      b.setAttribute('aria-pressed', k === kind ? 'true' : 'false');
+    }
     for (const [k, b] of Object.entries(swatches)) b.className = k === color ? 'wpm-swatch on' : 'wpm-swatch';
   }
   paint();
   // its own presses: never the map's, never the world's (the browser's own menu is the document's ONE guard's - ui/input.js
   // installContextMenuGuard, MAC-L3 - so the name keeps its paste menu, as every field does)
   const own = (e) => e.stopPropagation?.();
-  for (const t of ['pointerdown', 'mousedown', 'mouseup', 'pointerup', 'click', 'dblclick', 'wheel', 'touchstart']) box.addEventListener(t, own);
+  for (const t of ['pointerdown', 'mousedown', 'mouseup', 'pointerup', 'click', 'dblclick', 'wheel', 'touchstart'])
+    box.addEventListener(t, own);
   doc.body.append(box);
   // placed at the pointer, kept on the screen
-  const vw = win?.innerWidth ?? 800, vh = win?.innerHeight ?? 600;
+  const vw = win?.innerWidth ?? 800,
+    vh = win?.innerHeight ?? 600;
   const r = box.getBoundingClientRect?.() ?? { width: MENU_W, height: 240 };
   const left = Math.max(8, Math.min(o.x + 6, vw - r.width - 8));
   const top = Math.max(8, Math.min(o.y + 6, vh - r.height - 8));
@@ -235,21 +310,33 @@ export function openWaypointMenu(o) {
   const key = (e) => {
     const k = e.key ?? e.code ?? '';
     if (k === 'Escape' || e.code === 'Escape') {
-      e.preventDefault?.(); e.stopImmediatePropagation?.(); e.stopPropagation?.();
+      e.preventDefault?.();
+      e.stopImmediatePropagation?.();
+      e.stopPropagation?.();
       closeWaypointMenu();
       return;
     }
     if ((k === 'Enter' || e.code === 'NumpadEnter') && box.contains(e.target)) {
-      e.preventDefault?.(); e.stopImmediatePropagation?.(); e.stopPropagation?.();
-      if (adding) doAdd(); else if (e.target === input) doRename();
+      e.preventDefault?.();
+      e.stopImmediatePropagation?.();
+      e.stopPropagation?.();
+      if (adding) doAdd();
+      else if (e.target === input) doRename();
       else /** @type {any} */ (e.target)?.click?.();
     }
   };
-  const away = (e) => { if (!box.contains(e.target)) closeWaypointMenu(); };
+  const away = (e) => {
+    if (!box.contains(e.target)) closeWaypointMenu();
+  };
   win?.addEventListener?.('keydown', key, true);
   // the press that opened it is over; the next one outside lets it go
   win?.addEventListener?.('pointerdown', away, true);
   open = { el: box, win, key, away, onClose: o.onClose ?? null, owner: o.owner ?? null };
-  try { input.focus({ preventScroll: true }); input.select(); } catch { /* a headless page */ }
+  try {
+    input.focus({ preventScroll: true });
+    input.select();
+  } catch {
+    /* a headless page */
+  }
   return true;
 }

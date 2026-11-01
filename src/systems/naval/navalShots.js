@@ -85,15 +85,41 @@ export function createShotField(deps) {
     const back = Math.max(0, since);
     for (const l of launches) {
       balls.push({
-        volley: id, shooter, owner, resolve, side, gun: l.gun, shot: l.shot ?? null, weight: l.weight ?? 1, index: l.index, count: launches.length,   // GALLEON-WEIGHT: to its hit; SHOT-KINDS: its load
-        p0: [...l.p0], v0: [...l.v0], born: clock - back + Math.max(0, l.delay ?? 0), t: 0, shown: false, prev: [...l.p0], pos: [...l.p0], spin: random() * Math.PI * 2,
+        volley: id,
+        shooter,
+        owner,
+        resolve,
+        side,
+        gun: l.gun,
+        shot: l.shot ?? null,
+        weight: l.weight ?? 1,
+        index: l.index,
+        count: launches.length, // GALLEON-WEIGHT: to its hit; SHOT-KINDS: its load
+        p0: [...l.p0],
+        v0: [...l.v0],
+        born: clock - back + Math.max(0, l.delay ?? 0),
+        t: 0,
+        shown: false,
+        prev: [...l.p0],
+        pos: [...l.p0],
+        spin: random() * Math.PI * 2,
       });
     }
   }
 
   /** A fire barrel dropped at `pos` (on the sea) by `shooter`. */
   function dropBarrel({ id, shooter, pos, resolve = true, owner = null }) {
-    floaters.push({ kind: 'barrel', id, shooter, owner, resolve, pos: [...pos], born: clock, life: BARREL.life, phase: random() * Math.PI * 2 });
+    floaters.push({
+      kind: 'barrel',
+      id,
+      shooter,
+      owner,
+      resolve,
+      pos: [...pos],
+      born: clock,
+      life: BARREL.life,
+      phase: random() * Math.PI * 2,
+    });
   }
   /** A cask of a sunk ship's cargo, worth `lot` (NAV-D's); `owner` (AUDIT NAV1, online #15) the player whose sea it
    *  floats in, when another's - hauled in here, it is only claimed of them. CAPT-WATERS: `deep` a ship of the deep
@@ -101,7 +127,18 @@ export function createShotField(deps) {
    *  of its own (navalHost.js SITE_LOT) and its own `life`.
    *  @param {{ id: string, pos: number[], lot?: number|string, from?: string|null, owner?: string|null, deep?: boolean, life?: number }} f */
   function dropFlotsam({ id, pos, lot = 0, from = null, owner = null, deep = false, life = FLOTSAM_LIFE }) {
-    floaters.push({ kind: 'flotsam', id, from, lot, owner, deep: !!deep, pos: [...pos], born: clock, life, phase: random() * Math.PI * 2 });   // CAPT-BOARD: a wreck's casks their own `life`
+    floaters.push({
+      kind: 'flotsam',
+      id,
+      from,
+      lot,
+      owner,
+      deep: !!deep,
+      pos: [...pos],
+      born: clock,
+      life,
+      phase: random() * Math.PI * 2,
+    }); // CAPT-BOARD: a wreck's casks their own `life`
   }
 
   const nearestHit = (targets, a, b, radius, shooter) => {
@@ -117,9 +154,19 @@ export function createShotField(deps) {
   const rigsCrossed = (targets, a, b, radius, ball, before) => {
     const out = [];
     for (const t of targets) {
-      if (t.alive === false || t.id === ball.shooter || t.hitBy?.(ball.shooter) === false || !t.rig?.length || ball.rigged?.has(t.id)) continue;
+      if (
+        t.alive === false ||
+        t.id === ball.shooter ||
+        t.hitBy?.(ball.shooter) === false ||
+        !t.rig?.length ||
+        ball.rigged?.has(t.id)
+      )
+        continue;
       let best = null;
-      for (const box of t.rig) { const e = segmentBoxEntry(a, b, box, radius); if (e && e.t <= before && (!best || e.t < best.t)) best = e; }
+      for (const box of t.rig) {
+        const e = segmentBoxEntry(a, b, box, radius);
+        if (e && e.t <= before && (!best || e.t < best.t)) best = e;
+      }
       if (best) out.push({ t, e: best });
     }
     return out.sort((x, y) => x.e.t - y.e.t);
@@ -143,15 +190,26 @@ export function createShotField(deps) {
     if (!n) return;
     b.near.delete(id);
     (b.passed ??= new Set()).add(id);
-    emit({ type: 'pass', volley: b.volley, shooter: b.shooter, owner: b.owner, target: id, gun: b.gun, shot: b.shot, point: n.point, gap: n.gap, dir: n.dir });
+    emit({
+      type: 'pass',
+      volley: b.volley,
+      shooter: b.shooter,
+      owner: b.owner,
+      target: id,
+      gun: b.gun,
+      shot: b.shot,
+      point: n.point,
+      gap: n.gap,
+      dir: n.dir,
+    });
   }
   /**
    * One piece of a ball's flight, `a` to `next` (its flight's `t1` there): the canvas it tears on the way, then whatever
    * stops it - a hull, the land or the sea. True when the ball is done.
    */
   function flyPiece(b, a, next, targets, seaY, t1 = b.t) {
-    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1);   // AUDIT 2: read once a ball (shotGun makes its row)
-    const flight = (k) => b.t + (t1 - b.t) * k;   // SHOT-KINDS: its time aloft where it meets her
+    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1); // AUDIT 2: read once a ball (shotGun makes its row)
+    const flight = (k) => b.t + (t1 - b.t) * k; // SHOT-KINDS: its time aloft where it meets her
     const ship = nearestHit(targets, a, next, radius, b.shooter);
     const sea = segmentCrossesDown(a, next, seaY);
     const land = groundAlong(a, next);
@@ -160,7 +218,21 @@ export function createShotField(deps) {
     // the canvas it tears on the way - before whatever stops it
     for (const r of rigsCrossed(targets, a, next, radius, b, firstT)) {
       (b.rigged ??= new Set()).add(r.t.id);
-      emit({ type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: r.t.id, gun: b.gun, shot: b.shot, t: flight(r.e.t), weight: b.weight, point: r.e.point, zone: 'rig', dir, resolve: b.resolve });
+      emit({
+        type: 'hit',
+        volley: b.volley,
+        shooter: b.shooter,
+        owner: b.owner,
+        target: r.t.id,
+        gun: b.gun,
+        shot: b.shot,
+        t: flight(r.e.t),
+        weight: b.weight,
+        point: r.e.point,
+        zone: 'rig',
+        dir,
+        resolve: b.resolve,
+      });
     }
     // NEAR-MISS: the ships that hear it, passed close (to where it stops) and not struck in this piece. AUDIT 2: TOLD WHERE
     // IT PASSED NEAREST - a piece is a frame's flight (a metre or so), and the first piece within NEAR_MISS_M told it 7 m off
@@ -169,22 +241,48 @@ export function createShotField(deps) {
     // where the ball stops; a ball that strikes her is no pass
     for (const t of targets) {
       if (!t.ear || t.id === b.shooter || b.passed?.has(t.id)) continue;
-      if (ship && ship.t.id === t.id && ship.e.t === firstT) { b.near?.delete(t.id); continue; }
+      if (ship && ship.t.id === t.id && ship.e.t === firstT) {
+        b.near?.delete(t.id);
+        continue;
+      }
       const upTo = firstT === Infinity ? 1 : firstT;
-      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;   // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)
-      const near = segmentNearBox(a, next, t.box, upTo), was = b.near?.get(t.id);
-      if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap)) (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });
+      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M)
+        continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)
+      const near = segmentNearBox(a, next, t.box, upTo),
+        was = b.near?.get(t.id);
+      if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))
+        (b.near ??= new Map()).set(t.id, { point: near.point, gap: near.gap, dir });
       if (near.u < upTo - 1e-3 || firstT !== Infinity) passTold(b, t.id);
     }
     if (firstT === Infinity) return false;
     const at = (k) => [a[0] + (next[0] - a[0]) * k, a[1] + (next[1] - a[1]) * k, a[2] + (next[2] - a[2]) * k];
     if (ship && ship.e.t === firstT) {
       emit({
-        type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t), weight: b.weight, point: ship.e.point,
-        zone: hitZone(ship.e.point[1] - seaY), dir, resolve: b.resolve,
+        type: 'hit',
+        volley: b.volley,
+        shooter: b.shooter,
+        owner: b.owner,
+        target: ship.t.id,
+        gun: b.gun,
+        shot: b.shot,
+        t: flight(ship.e.t),
+        weight: b.weight,
+        point: ship.e.point,
+        zone: hitZone(ship.e.point[1] - seaY),
+        dir,
+        resolve: b.resolve,
       });
-    } else if (land != null && land === firstT) emit({ type: 'land', volley: b.volley, shooter: b.shooter, gun: b.gun, shot: b.shot, point: at(land) });
-    else emit({ type: 'splash', volley: b.volley, shooter: b.shooter, gun: b.gun, shot: b.shot, point: [at(sea ?? 0)[0], seaY, at(sea ?? 0)[2]] });
+    } else if (land != null && land === firstT)
+      emit({ type: 'land', volley: b.volley, shooter: b.shooter, gun: b.gun, shot: b.shot, point: at(land) });
+    else
+      emit({
+        type: 'splash',
+        volley: b.volley,
+        shooter: b.shooter,
+        gun: b.gun,
+        shot: b.shot,
+        point: [at(sea ?? 0)[0], seaY, at(sea ?? 0)[2]],
+      });
     return true;
   }
 
@@ -195,20 +293,45 @@ export function createShotField(deps) {
     const targets = balls.length || floaters.length ? deps.targets() : [];
     const keep = [];
     for (const b of balls) {
-      if (clock < b.born) { keep.push(b); continue; }
+      if (clock < b.born) {
+        keep.push(b);
+        continue;
+      }
       const age = clock - b.born;
       if (!b.shown) {
         b.shown = true;
-        emit({ type: 'muzzle', volley: b.volley, shooter: b.shooter, owner: b.owner, side: b.side, gun: b.gun, shot: b.shot, index: b.index, count: b.count, pos: [...b.p0], dir: [...b.v0], resolve: b.resolve });
+        emit({
+          type: 'muzzle',
+          volley: b.volley,
+          shooter: b.shooter,
+          owner: b.owner,
+          side: b.side,
+          gun: b.gun,
+          shot: b.shot,
+          index: b.index,
+          count: b.count,
+          pos: [...b.p0],
+          dir: [...b.v0],
+          resolve: b.resolve,
+        });
       }
-      if (age > BALL_LIFE) { for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id); emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun }); continue; }   // AUDIT 2: a pass still kept, told as it goes
+      if (age > BALL_LIFE) {
+        for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id);
+        emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun });
+        continue;
+      } // AUDIT 2: a pass still kept, told as it goes
       // its flight since the last step, BALL_STEP_S at a time - one piece in an ordinary frame
       let ended = false;
       while (!ended && b.t < age) {
         const t1 = Math.min(age, b.t + BALL_STEP_S);
-        const a = b.pos, next = shotPosition(b.p0, b.v0, t1, undefined, [0, 0, 0]);
+        const a = b.pos,
+          next = shotPosition(b.p0, b.v0, t1, undefined, [0, 0, 0]);
         ended = flyPiece(b, a, next, targets, seaY, t1);
-        if (!ended) { b.prev = a; b.pos = next; b.t = t1; }
+        if (!ended) {
+          b.prev = a;
+          b.pos = next;
+          b.t = t1;
+        }
       }
       if (!ended) keep.push(b);
     }
@@ -218,16 +341,51 @@ export function createShotField(deps) {
     const span = Math.max(0, dt);
     for (const f of floaters) {
       const age = clock - f.born;
-      if (age > f.life) { emit({ type: 'sink', kind: f.kind, id: f.id, point: [...f.pos] }); continue; }
-      if (w) { f.pos[0] += (w[0] ?? 0) * FLOAT_DRIFT * span; f.pos[2] += (w[2] ?? 0) * FLOAT_DRIFT * span; }
+      if (age > f.life) {
+        emit({ type: 'sink', kind: f.kind, id: f.id, point: [...f.pos] });
+        continue;
+      }
+      if (w) {
+        f.pos[0] += (w[0] ?? 0) * FLOAT_DRIFT * span;
+        f.pos[2] += (w[2] ?? 0) * FLOAT_DRIFT * span;
+      }
       f.pos[1] = seaY + 0.15 * Math.sin(clock * 1.7 + f.phase);
       if (f.kind === 'barrel' && age >= BARREL_ARM) {
-        const t = targets.find((s) => s.alive !== false && s.id !== f.shooter && s.hitBy?.(f.shooter) !== false && insideGrown(s.box, f.pos, BARREL.fuse));
-        if (t) { emit({ type: 'blast', id: f.id, shooter: f.shooter, owner: f.owner, target: t.id, point: [...f.pos], resolve: f.resolve }); continue; }
+        const t = targets.find(
+          (s) =>
+            s.alive !== false &&
+            s.id !== f.shooter &&
+            s.hitBy?.(f.shooter) !== false &&
+            insideGrown(s.box, f.pos, BARREL.fuse),
+        );
+        if (t) {
+          emit({
+            type: 'blast',
+            id: f.id,
+            shooter: f.shooter,
+            owner: f.owner,
+            target: t.id,
+            point: [...f.pos],
+            resolve: f.resolve,
+          });
+          continue;
+        }
       }
       if (f.kind === 'flotsam') {
         const c = (deps.collectors?.() ?? []).find((k) => insideGrown(k.box, f.pos, FLOTSAM_REACH));
-        if (c) { emit({ type: 'pickup', id: f.id, lot: f.lot, from: f.from, owner: f.owner, deep: !!f.deep, collector: c.id, point: [...f.pos] }); continue; }
+        if (c) {
+          emit({
+            type: 'pickup',
+            id: f.id,
+            lot: f.lot,
+            from: f.from,
+            owner: f.owner,
+            deep: !!f.deep,
+            collector: c.id,
+            point: [...f.pos],
+          });
+          continue;
+        }
       }
       floatKeep.push(f);
     }
@@ -236,50 +394,104 @@ export function createShotField(deps) {
 
   /** The floating origin moved: every ball's launch and every floater with it. */
   function offsetAll(o) {
-    for (const b of balls) for (const k of ['p0', 'prev', 'pos']) { b[k][0] += o[0]; b[k][1] += o[1]; b[k][2] += o[2]; }
-    for (const f of floaters) { f.pos[0] += o[0]; f.pos[1] += o[1]; f.pos[2] += o[2]; }
+    for (const b of balls)
+      for (const k of ['p0', 'prev', 'pos']) {
+        b[k][0] += o[0];
+        b[k][1] += o[1];
+        b[k][2] += o[2];
+      }
+    for (const f of floaters) {
+      f.pos[0] += o[0];
+      f.pos[1] += o[1];
+      f.pos[2] += o[2];
+    }
   }
 
   return {
-    fireVolley, dropBarrel, dropFlotsam, step, offsetAll,
+    fireVolley,
+    dropBarrel,
+    dropFlotsam,
+    step,
+    offsetAll,
     /** The balls in the air, for the draw: `{ pos, gun, shot, spin, age, vel }` - SHOT-KINDS: its load, its time aloft (a
      *  bag of grape opens) and its way (a heated ball trails along it). */
-    balls: () => balls.filter((b) => b.shown).map((b) => ({ pos: b.pos, gun: b.gun, shot: b.shot, spin: b.spin + (clock - b.born) * 12, age: clock - b.born, vel: shotVelocity(b.v0, b.t) })),
+    balls: () =>
+      balls
+        .filter((b) => b.shown)
+        .map((b) => ({
+          pos: b.pos,
+          gun: b.gun,
+          shot: b.shot,
+          spin: b.spin + (clock - b.born) * 12,
+          age: clock - b.born,
+          vel: shotVelocity(b.v0, b.t),
+        })),
     /** What floats, for the draw: `{ kind, pos, phase }`. */
-    floaters: () => floaters.map((f) => ({ kind: f.kind, pos: f.pos, id: f.id, phase: f.phase, lot: f.lot, from: f.from, owner: f.owner ?? null, deep: !!f.deep })),   // CAPT-WATERS: a deep ship's cask
+    floaters: () =>
+      floaters.map((f) => ({
+        kind: f.kind,
+        pos: f.pos,
+        id: f.id,
+        phase: f.phase,
+        lot: f.lot,
+        from: f.from,
+        owner: f.owner ?? null,
+        deep: !!f.deep,
+      })), // CAPT-WATERS: a deep ship's cask
     /** AUDIT NAV1 (online #15): one floater itself, by id (its place and owner the host's to set), or null. */
     floater: (id) => floaters.find((f) => f.id === id) ?? null,
     /** AUDIT NAV1 (online #15): a floater gone without a word - hauled in by another, sunk in another's sea. */
-    removeFloater(id) { const i = floaters.findIndex((f) => f.id === id); if (i >= 0) floaters.splice(i, 1); return i >= 0; },
+    removeFloater(id) {
+      const i = floaters.findIndex((f) => f.id === id);
+      if (i >= 0) floaters.splice(i, 1);
+      return i >= 0;
+    },
     /** Everything gone (a transition, a load). */
-    clear() { balls = []; floaters = []; },
-    get clock() { return clock; },
-    get inFlight() { return balls.length; },
+    clear() {
+      balls = [];
+      floaters = [];
+    },
+    get clock() {
+      return clock;
+    },
+    get inFlight() {
+      return balls.length;
+    },
   };
 }
 
 /** NEAR-MISS: how far a point is from a box (0 inside it). */
 export function boxGap(box, p) {
   const l = toBoxLocal(box, p);
-  return Math.hypot(Math.max(0, Math.abs(l[0]) - box.h[0]), Math.max(0, Math.abs(l[1]) - box.h[1]), Math.max(0, Math.abs(l[2]) - box.h[2]));
+  return Math.hypot(
+    Math.max(0, Math.abs(l[0]) - box.h[0]),
+    Math.max(0, Math.abs(l[1]) - box.h[1]),
+    Math.max(0, Math.abs(l[2]) - box.h[2]),
+  );
 }
 /** NEAR-MISS: how near a segment's first `upTo` share comes to a point (m) - the cheap test before the search below. */
 const segmentPointGap = (a, b, p, upTo = 1) => {
-  const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], w = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
+  const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
+    w = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
   const dd = d[0] * d[0] + d[1] * d[1] + d[2] * d[2];
-  const u = dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;
+  const u =
+    dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;
   return Math.hypot(w[0] - d[0] * u, w[1] - d[1] * u, w[2] - d[2] * u);
 };
 /** NEAR-MISS: a segment's nearest to a box over its first `upTo` share - `{ u, gap, point }`. The gap is convex along a
  *  line (a box is convex), so its least is found by thirds. */
 export function segmentNearBox(a, b, box, upTo = 1) {
   const at = (u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
-  let lo = 0, hi = Math.max(0, Math.min(1, upTo));
+  let lo = 0,
+    hi = Math.max(0, Math.min(1, upTo));
   for (let i = 0; i < 40; i++) {
-    const m1 = lo + (hi - lo) / 3, m2 = hi - (hi - lo) / 3;
-    if (boxGap(box, at(m1)) <= boxGap(box, at(m2))) hi = m2; else lo = m1;
+    const m1 = lo + (hi - lo) / 3,
+      m2 = hi - (hi - lo) / 3;
+    if (boxGap(box, at(m1)) <= boxGap(box, at(m2))) hi = m2;
+    else lo = m1;
   }
-  const u = (lo + hi) / 2, point = at(u);
+  const u = (lo + hi) / 2,
+    point = at(u);
   return { u, gap: boxGap(box, point), point };
 }
 /** Whether a point lies inside a box grown by `r` on every axis. */

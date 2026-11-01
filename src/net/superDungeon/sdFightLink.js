@@ -12,7 +12,18 @@
 // answered me.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, SD_STUN_MS, keepInArena, sdProfileOf } from './sdRemnant.js';
+import {
+  SD_BLOW_BY_ID,
+  SD_BLOWS,
+  SD_BODY,
+  SD_REM,
+  SD_REM_START,
+  SD_ECHO_SPOTS,
+  SD_PHASE_AT,
+  SD_STUN_MS,
+  keepInArena,
+  sdProfileOf,
+} from './sdRemnant.js';
 import { STATE_SEND_MS } from '../gate/gateBrain.js';
 
 /**
@@ -32,8 +43,29 @@ const STILL = Object.freeze({ x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.P
 export const sdHourOver = (s, now) => !!s && s.ends > 0 && now >= s.ends;
 /** The empty state: no fight heard. @type {Readonly<SdFightState>} */
 export const SD_FIGHT_EMPTY = Object.freeze({
-  fi: 0, s: 0, ph: 1, h: 0, m: 0, op: 0, ou: 0, rem: STILL, ec: null, clk: null, pu: 0, pa: 0, ends: 0, ended: 0,
-  cx: null, su: 0, stunAt: 0, rk: 0, n: 0, fell: null, lost: 0, heardAt: 0, mk: null,
+  fi: 0,
+  s: 0,
+  ph: 1,
+  h: 0,
+  m: 0,
+  op: 0,
+  ou: 0,
+  rem: STILL,
+  ec: null,
+  clk: null,
+  pu: 0,
+  pa: 0,
+  ends: 0,
+  ended: 0,
+  cx: null,
+  su: 0,
+  stunAt: 0,
+  rk: 0,
+  n: 0,
+  fell: null,
+  lost: 0,
+  heardAt: 0,
+  mk: null,
 });
 
 /** How long the page waits for the realm's answer before it says its `in` again (and between two at most). */
@@ -54,17 +86,20 @@ export const SD_FIGHT_TEXT = Object.freeze({
     'the Hour has closed': 'The Hour has closed.',
     'the fight is over': 'The Last Moment is over.',
     'the arena is full': 'The arena is full.',
-    'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.',   // AUDIT SD II (L1 F5, L6 F12): it said "save" where the Hour refuses a save
+    'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.', // AUDIT SD II (L1 F5, L6 F12): it said "save" where the Hour refuses a save
   }),
   // AUDIT SD II (L6 F21, SD11d): WB13b's words - the event, then what to do; no dash asides, no shouted names, nothing
   // the bar already says (it was "The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.")
-  dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`,   // AUDIT SD III (T14): the window's one form, by its frame's own - "together" said none
+  dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`, // AUDIT SD III (T14): the window's one form, by its frame's own - "together" said none
   lastMoment: 'The Last Moment! The Remnant returns.',
   echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,
   echoRose: (e) => `The ${e === 0 ? 'Gold' : 'Silver'} Echo rises again!`,
-  stunned: 'The Reset breaks! Strike now!',   // the bar says "Stunned - 8s"
+  stunned: 'The Reset breaks! Strike now!', // the bar says "Stunned - 8s"
   // AUDIT SD II (L6 F7): each Heart broken, said - the gate's crystals' words (gateCourt.js COURT_RECKON_TEXT.shattered)
-  heartBroken: (who, left) => (left > 0 ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.` : `${who || 'A fighter'} breaks the last Heart!`),
+  heartBroken: (who, left) =>
+    left > 0
+      ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.`
+      : `${who || 'A fighter'} breaks the last Heart!`,
   lost: 'The Hour turns back. The Remnant waits.',
 });
 /** The refusals the page never says its `in` again after, this visit (the rest wait for another fight). */
@@ -79,13 +114,28 @@ const wholeArena = (atk) => !!atk && SD_BLOW_BY_ID[atk.a]?.shape === 'all';
  * (net/superDungeon/sdRemnant.js stepWalk - kept within SD_REM.keep of the centre). Pure.
  * @param {SdBody|null|undefined} B @param {number} now @returns {[number, number]}
  */
-export function sdBodyAt(B, now, out = null) {   // AUDIT SD III (V5): into `out` when one is given - a frame's bodies make nothing
+export function sdBodyAt(B, now, out = null) {
+  // AUDIT SD III (V5): into `out` when one is given - a frame's bodies make nothing
   const o = out ?? [0, 0];
-  if (!B) { o[0] = STILL.x; o[1] = STILL.z; return o; }
+  if (!B) {
+    o[0] = STILL.x;
+    o[1] = STILL.z;
+    return o;
+  }
   const m = B.mv;
-  if (!m || !(m.v > 0)) { o[0] = B.x; o[1] = B.z; return o; }
-  const lx = m.tx - m.x, lz = m.tz - m.z, len = Math.sqrt(lx * lx + lz * lz);   // never Math.hypot in a frame: its builtin boxes its numbers
-  if (len < 1e-6) { o[0] = m.tx; o[1] = m.tz; return o; }
+  if (!m || !(m.v > 0)) {
+    o[0] = B.x;
+    o[1] = B.z;
+    return o;
+  }
+  const lx = m.tx - m.x,
+    lz = m.tz - m.z,
+    len = Math.sqrt(lx * lx + lz * lz); // never Math.hypot in a frame: its builtin boxes its numbers
+  if (len < 1e-6) {
+    o[0] = m.tx;
+    o[1] = m.tz;
+    return o;
+  }
   const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);
   return keepInArena(m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along, SD_REM.keep, o);
 }
@@ -107,7 +157,10 @@ export function sdHeartsOf(s, now) {
   return s?.cx && a && a.a === SD_BLOWS.reset.id && a.i === s.cx.i && now < a.at ? s.cx : null;
 }
 /** A body stopped where its walk had taken it by `at`, its walk and blow done with. */
-const stopped = (B, at) => { const [x, z] = sdBodyAt(B, at); return { ...B, x, z, mv: null, atk: null }; };
+const stopped = (B, at) => {
+  const [x, z] = sdBodyAt(B, at);
+  return { ...B, x, z, mv: null, atk: null };
+};
 /** A body as a whole state says it. */
 const bodyOf = (B) => ({ x: B.x, z: B.z, yw: B.yw, mv: B.mv ?? null, atk: B.atk ?? null });
 /** A walk's word on a body: where it set out, toward what, how fast - and a walk ends the blow before it. */
@@ -118,7 +171,19 @@ const walked = (B, w) => {
 };
 /** A blow's word on a body: it stands where it struck from, facing its aim. */
 const struck = (B, w) => ({ ...B, x: w.x, z: w.z, yw: w.yw, mv: null, atk: atkOf(w) });
-const atkOf = (w) => ({ b: w.b, i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.sw != null ? { sw: w.sw } : {}), ...(w.n != null ? { n: w.n } : {}), ...(w.sh != null ? { sh: w.sh } : {}) });   // SD18a: its shape
+const atkOf = (w) => ({
+  b: w.b,
+  i: w.i,
+  a: w.a,
+  at: w.at,
+  x: w.x,
+  z: w.z,
+  yw: w.yw,
+  tg: w.tg,
+  ...(w.sw != null ? { sw: w.sw } : {}),
+  ...(w.n != null ? { n: w.n } : {}),
+  ...(w.sh != null ? { sh: w.sh } : {}),
+}); // SD18a: its shape
 /** An Echo fresh at its spot (risen, or risen again), facing the way in. */
 const echoAt = (e) => ({ x: SD_ECHO_SPOTS[e][0], z: SD_ECHO_SPOTS[e][1], yw: Math.PI, mv: null, atk: null });
 
@@ -136,15 +201,32 @@ export function foldSdFight(s, w, now) {
   if (w.k === 'st') {
     const same = s.fi === w.fi;
     return {
-      fi: w.fi, s: w.s, ph: w.ph, h: w.h, m: w.m, op: w.op, ou: w.ou, rem: bodyOf(w.rem),
+      fi: w.fi,
+      s: w.s,
+      ph: w.ph,
+      h: w.h,
+      m: w.m,
+      op: w.op,
+      ou: w.ou,
+      rem: bodyOf(w.rem),
       ec: w.ec ? w.ec.map((E) => ({ ...bodyOf(E), h: E.h, m: E.m, up: E.up, dn: E.dn })) : null,
-      clk: w.clk ?? null, pu: w.pu, pa: w.pa, ends: w.ends, ended: w.ended,
+      clk: w.clk ?? null,
+      pu: w.pu,
+      pa: w.pa,
+      ends: w.ends,
+      ended: w.ended,
       cx: w.cx ? { i: w.cx.i, m: w.cx.m, c: w.cx.c.map((q) => [q[0], q[1], q[2]]) } : null,
-      su: w.su, stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0, rk: w.rk, n: w.n, fell: w.fell ?? null, lost: w.lost, heardAt: now,
-      mk: w.mk ?? null,   // SD18a: its Hollow's marks
+      su: w.su,
+      stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0,
+      rk: w.rk,
+      n: w.n,
+      fell: w.fell ?? null,
+      lost: w.lost,
+      heardAt: now,
+      mk: w.mk ?? null, // SD18a: its Hollow's marks
     };
   }
-  if (!s.fi) return s;   // nothing but a whole state starts a fight
+  if (!s.fi) return s; // nothing but a whole state starts a fight
   switch (w.k) {
     case 'mv': {
       if (w.b === SD_BODY.remnant) return { ...s, rem: walked(s.rem, w), heardAt: now };
@@ -157,34 +239,84 @@ export function foldSdFight(s, w, now) {
         // THE HOUR ENDS - the law stops every body and says no word for it: each stopped where it stood as the End was
         // said (its wind-up before it lands - within a beat of the law's moment), the Hearts and the stun gone with it
         const at = w.at - SD_BLOWS.end.windup;
-        return { ...s, clk: atkOf(w), ended: w.at, rem: stopped(s.rem, at), ec: s.ec ? s.ec.map((E) => ({ ...E, ...stopped(E, at) })) : null, cx: null, su: 0, heardAt: now };
+        return {
+          ...s,
+          clk: atkOf(w),
+          ended: w.at,
+          rem: stopped(s.rem, at),
+          ec: s.ec ? s.ec.map((E) => ({ ...E, ...stopped(E, at) })) : null,
+          cx: null,
+          su: 0,
+          heardAt: now,
+        };
       }
       if (w.b === SD_BODY.remnant) return { ...s, rem: struck(s.rem, w), heardAt: now };
       const k = w.b - SD_BODY.gold;
       return s.ec?.[k] ? { ...s, ec: s.ec.map((E, j) => (j === k ? { ...E, ...struck(E, w) } : E)), heardAt: now } : s;
     }
-    case 'hp': return { ...s, h: w.h, m: w.m, heardAt: now };
+    case 'hp':
+      return { ...s, h: w.h, m: w.m, heardAt: now };
     case 'ph':
       if (w.n === 2) return { ...s, ph: 2, rem: stopped(s.rem, w.at), heardAt: now };
-      return { ...s, ph: 3, ec: null, ou: w.up, rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null }, h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + sdProfileOf(s).resetFirstMs, heardAt: now };
+      return {
+        ...s,
+        ph: 3,
+        ec: null,
+        ou: w.up,
+        rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null },
+        h: Math.min(s.h, SD_PHASE_AT[1] * s.m),
+        rk: w.up + sdProfileOf(s).resetFirstMs,
+        heardAt: now,
+      };
     case 'ec': {
       const ec = w.e.map((t, k) => {
         const had = s.ec?.[k] ?? null;
         let B = !had || w.r === k ? echoAt(k) : had;
-        if (had && w.d === k) B = stopped(B, w.at);   // fallen where it stood
+        if (had && w.d === k) B = stopped(B, w.at); // fallen where it stood
         return { ...bodyOf(B), h: t[0], m: t[1], up: t[2], dn: t[3] };
       });
       return { ...s, ph: Math.max(2, s.ph), ec, heardAt: now };
     }
-    case 'cx': return { ...s, cx: { i: w.i, m: w.m, c: w.c.map((q) => [q[0], q[1], w.m]) }, heardAt: now };
-    case 'cxh': return s.cx && s.cx.i === w.i ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => [q[0], q[1], Number.isFinite(w.h[k]) ? w.h[k] : q[2]]) }, heardAt: now } : s;
-    case 'cxb': return s.cx && s.cx.i === w.i && s.cx.c[w.c] ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => (k === w.c ? [q[0], q[1], 0] : q)) }, heardAt: now } : s;
-    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null, rk: w.until + sdProfileOf(s).resetMs, heardAt: now };
+    case 'cx':
+      return { ...s, cx: { i: w.i, m: w.m, c: w.c.map((q) => [q[0], q[1], w.m]) }, heardAt: now };
+    case 'cxh':
+      return s.cx && s.cx.i === w.i
+        ? {
+            ...s,
+            cx: { ...s.cx, c: s.cx.c.map((q, k) => [q[0], q[1], Number.isFinite(w.h[k]) ? w.h[k] : q[2]]) },
+            heardAt: now,
+          }
+        : s;
+    case 'cxb':
+      return s.cx && s.cx.i === w.i && s.cx.c[w.c]
+        ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => (k === w.c ? [q[0], q[1], 0] : q)) }, heardAt: now }
+        : s;
+    case 'stun':
+      return {
+        ...s,
+        su: w.until,
+        stunAt: w.at,
+        rem: stopped(s.rem, w.at),
+        cx: null,
+        rk: w.until + sdProfileOf(s).resetMs,
+        heardAt: now,
+      };
     case 'fell':
-      if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };
-      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: stopped(s.rem, w.at), h: 0, clk: null, cx: null, heardAt: now };
-    case 'lost': return { ...s, lost: w.at, heardAt: now };
-    default: return s;
+      if (s.fell)
+        return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };
+      return {
+        ...s,
+        fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) },
+        rem: stopped(s.rem, w.at),
+        h: 0,
+        clk: null,
+        cx: null,
+        heardAt: now,
+      };
+    case 'lost':
+      return { ...s, lost: w.at, heardAt: now };
+    default:
+      return s;
   }
 }
 
@@ -198,7 +330,8 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
   /** @type {Readonly<SdFightState>} */
   let state = SD_FIGHT_EMPTY;
   /** my `in`: when it was last said, the fight the realm counted me in, and the refusal standing against it */
-  let inAt = -Infinity, mine = 0;
+  let inAt = -Infinity,
+    mine = 0;
   /** @type {{fi: number, lost: number, m: string}|null} */
   let refused = null;
   /** AUDIT SD IV (5): THE WHOLE ARENA'S BLOWS OWED. The state keeps a blow until a later word replaces it - a Pulse's `clk`
@@ -213,17 +346,19 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
   function owe(was, w) {
     if (state.fi !== was.fi) owed = [];
     if (state.fi > 0 && mine === state.fi) {
-      const c = state.clk, r = state.rem.atk;
+      const c = state.clk,
+        r = state.rem.atk;
       if (wholeArena(c) && !owed.some((o) => o.atk.i === c.i)) owed.push({ b: SD_BODY.hour, atk: c });
       if (wholeArena(r) && !owed.some((o) => o.atk.i === r.i)) owed.push({ b: SD_BODY.remnant, atk: r });
       if (owed.length > SD_OWED_MAX) owed.shift();
     }
     if (!owed.length) return;
     const cut = Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity);
-    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity;   // an `st` alone after a reconnect says the stun by its end
-    const end = state.ended > 0 && !was.ended ? state.ended - SD_BLOWS.end.windup : Infinity;   // the End said: the Remnant's blow called off
+    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity; // an `st` alone after a reconnect says the stun by its end
+    const end = state.ended > 0 && !was.ended ? state.ended - SD_BLOWS.end.windup : Infinity; // the End said: the Remnant's blow called off
     const off = Math.min(stun, end);
-    if (cut < Infinity || off < Infinity) owed = owed.filter((o) => o.atk.at <= cut && (o.atk.a !== SD_BLOWS.reset.id || o.atk.at <= off));
+    if (cut < Infinity || off < Infinity)
+      owed = owed.filter((o) => o.atk.at <= cut && (o.atk.a !== SD_BLOWS.reset.id || o.atk.at <= off));
   }
   return {
     /** A word from the realm I stand in: its fight's, folded; a refusal said; the turns said once each. */
@@ -237,12 +372,19 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
       }
       const was = state;
       state = foldSdFight(state, w, now());
-      if (w.k === 'st' && w.me === 1) { mine = state.fi; refused = null; }   // the realm's answer to my `in`: I am in this fight
+      if (w.k === 'st' && w.me === 1) {
+        mine = state.fi;
+        refused = null;
+      } // the realm's answer to my `in`: I am in this fight
       owe(was, w);
-      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);
-      else if (w.k === 'ec' && was.fi) { if (w.d != null && w.n) say(SD_FIGHT_TEXT.echoFell(w.n, w.d)); else if (w.r != null) say(SD_FIGHT_TEXT.echoRose(w.r)); }
-      else if (w.k === 'stun' && was.fi) say(SD_FIGHT_TEXT.stunned);
-      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0) say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY);   // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand
+      if (w.k === 'ph' && was.fi)
+        say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);
+      else if (w.k === 'ec' && was.fi) {
+        if (w.d != null && w.n) say(SD_FIGHT_TEXT.echoFell(w.n, w.d));
+        else if (w.r != null) say(SD_FIGHT_TEXT.echoRose(w.r));
+      } else if (w.k === 'stun' && was.fi) say(SD_FIGHT_TEXT.stunned);
+      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0)
+        say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY); // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand
       else if (w.k === 'lost' && was.fi && !was.lost) say(SD_FIGHT_TEXT.lost);
     },
     /** The fight's state now. */
@@ -250,7 +392,7 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
     /** The relay's clock. */
     now: () => now(),
     /** Whether the realm has counted me in the fight it is fighting - a blow of mine may go out. */
-    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()),   // AUDIT SD II (L4 F3): its End by the clock
+    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()), // AUDIT SD II (L4 F3): its End by the clock
     /** SD9e: whether the realm counted me in the fight it holds - fallen or not (its spoils' word, scenes/superDungeon/sdSpoils.js). */
     counted: () => state.fi > 0 && mine === state.fi,
     /**
@@ -261,17 +403,31 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
      */
     inDue(t) {
       const silent = state.fi > 0 && t - state.heardAt >= SD_FIGHT_HEARD_MS;
-      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;
+      if (
+        refused &&
+        (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))
+      )
+        return false;
       if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;
       return t - inAt >= SD_IN_RETRY_MS;
     },
     /** My `in` left the socket at `t`. */
-    sentIn(t) { inAt = t; },
+    sentIn(t) {
+      inAt = t;
+    },
     /** AUDIT SD IV (5): the whole arena's blows owed a verdict, `{b, atk}` each - the page judges them, then pays. */
     owed: () => owed,
     /** AUDIT SD IV (5): blow `i` judged - owed no more. */
-    paid(i) { owed = owed.filter((o) => o.atk.i !== i); },
+    paid(i) {
+      owed = owed.filter((o) => o.atk.i !== i);
+    },
     /** Out of the realm: its fight forgotten, my place in it and the refusals with it. */
-    leave() { state = SD_FIGHT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; },
+    leave() {
+      state = SD_FIGHT_EMPTY;
+      inAt = -Infinity;
+      mine = 0;
+      refused = null;
+      owed = [];
+    },
   };
 }

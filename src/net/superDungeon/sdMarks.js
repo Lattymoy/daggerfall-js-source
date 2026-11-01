@@ -38,47 +38,122 @@ export const SD_ELEMENTS = Object.freeze(['fire', 'frost', 'shock', 'poison', 'm
  *  @type {ReadonlyArray<Readonly<SdEnding>>} */
 export const SD_ENDINGS = Object.freeze([
   Object.freeze({
-    id: 'daggerfall', stone: 'Daggerfall', sign: 'the lion', el: 'shock', light: Object.freeze([0.75, 0.82, 1.0]),
-    sig: 'The Lion\'s Roar', text: 'Its Stomp\'s ring rolls faster, out to the arena\'s rim.',
+    id: 'daggerfall',
+    stone: 'Daggerfall',
+    sign: 'the lion',
+    el: 'shock',
+    light: Object.freeze([0.75, 0.82, 1.0]),
+    sig: "The Lion's Roar",
+    text: "Its Stomp's ring rolls faster, out to the arena's rim.",
     law: Object.freeze({ stompR1: 26, stompWave: 13 }),
   }),
   Object.freeze({
-    id: 'sentinel', stone: 'Sentinel', sign: 'the sun', el: 'fire', light: Object.freeze([1.0, 0.62, 0.22]),
-    sig: 'Sunfall', text: 'Its Gear Volley throws 7 gears, and its brass burns 50% longer.',
+    id: 'sentinel',
+    stone: 'Sentinel',
+    sign: 'the sun',
+    el: 'fire',
+    light: Object.freeze([1.0, 0.62, 0.22]),
+    sig: 'Sunfall',
+    text: 'Its Gear Volley throws 7 gears, and its brass burns 50% longer.',
     law: Object.freeze({ volleyMax: 7, poolMsX: 1.5 }),
   }),
   Object.freeze({
-    id: 'wayrest', stone: 'Wayrest', sign: 'the ship', el: 'frost', light: Object.freeze([0.55, 0.9, 1.0]),
-    sig: 'The Turning Tide', text: 'Its Hour-Hand sweeps three quarters of the arena over 5 seconds.',
+    id: 'wayrest',
+    stone: 'Wayrest',
+    sign: 'the ship',
+    el: 'frost',
+    light: Object.freeze([0.55, 0.9, 1.0]),
+    sig: 'The Turning Tide',
+    text: 'Its Hour-Hand sweeps three quarters of the arena over 5 seconds.',
     law: Object.freeze({ handArc: 1.5 * Math.PI, handActive: 5000 }),
   }),
   Object.freeze({
-    id: 'orsinium', stone: 'Orsinium', sign: 'the tusk', el: 'poison', light: Object.freeze([0.62, 1.0, 0.3]),
-    sig: 'The Tusk', text: 'It walks faster, and its Stomp lands wider.',
+    id: 'orsinium',
+    stone: 'Orsinium',
+    sign: 'the tusk',
+    el: 'poison',
+    light: Object.freeze([0.62, 1.0, 0.3]),
+    sig: 'The Tusk',
+    text: 'It walks faster, and its Stomp lands wider.',
     law: Object.freeze({ remSpeedX: 1.4, stompR: 8.5 }),
   }),
   Object.freeze({
-    id: 'underking', stone: 'the Underking', sign: 'the crown of bone', el: 'magic', light: Object.freeze([0.78, 0.5, 1.0]),
-    sig: 'The Hungering Heart', text: 'The Mantella pulses every 22 seconds.',
+    id: 'underking',
+    stone: 'the Underking',
+    sign: 'the crown of bone',
+    el: 'magic',
+    light: Object.freeze([0.78, 0.5, 1.0]),
+    sig: 'The Hungering Heart',
+    text: 'The Mantella pulses every 22 seconds.',
     law: Object.freeze({ pulseMs: 22_000 }),
   }),
   Object.freeze({
-    id: 'blades', stone: 'the Blades', sign: 'the dragon', el: 'fire', light: Object.freeze([1.0, 0.36, 0.26]),
-    sig: 'The Dragon\'s Haste', text: 'Its Echoes walk faster and must fall within 10 seconds of each other.',   // AUDIT SD III (T9): "The Dragon's Break" beside its phase's "The Dragon Break", one apostrophe apart
+    id: 'blades',
+    stone: 'the Blades',
+    sign: 'the dragon',
+    el: 'fire',
+    light: Object.freeze([1.0, 0.36, 0.26]),
+    sig: "The Dragon's Haste",
+    text: 'Its Echoes walk faster and must fall within 10 seconds of each other.', // AUDIT SD III (T9): "The Dragon's Break" beside its phase's "The Dragon Break", one apostrophe apart
     law: Object.freeze({ pairMs: 10_000, echoSpeedX: 1.2 }),
   }),
 ]);
 /** THE OMENS - two a Hollow. @type {ReadonlyArray<Readonly<SdOmen>>} */
 export const SD_OMENS = Object.freeze([
-  Object.freeze({ id: 'brazen', name: 'The Brazen Hide', text: 'It has 25% more health.', law: Object.freeze({ hpX: 1.25 }) }),
-  Object.freeze({ id: 'quickened', name: 'The Quickened Gears', text: 'Its blows wind up faster.', law: Object.freeze({ windX: 0.85 }) }),
-  Object.freeze({ id: 'short', name: 'The Short Hour', text: 'The Hour ends at 12 minutes.', law: Object.freeze({ endsMs: 12 * 60_000 }) }),
-  Object.freeze({ id: 'hardened', name: 'The Hardened Hearts', text: 'Its Hearts take 25% more to break.', law: Object.freeze({ heartX: 1.25 }) }),   // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
-  Object.freeze({ id: 'burning', name: 'The Burning Brass', text: 'Its brass burns twice as long and spreads wider.', law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }) }),
-  Object.freeze({ id: 'fraying', name: 'The Fraying', text: 'The Orrery snaps back at 36 turns.', law: Object.freeze({ fray: 36 }) }),
-  Object.freeze({ id: 'restless', name: 'The Restless Pulse', text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.', law: Object.freeze({ pulseStep: 0.04 }) }),   // AUDIT SD III (T13): "climbs twice as steeply - to three quarters" read garbled
-  Object.freeze({ id: 'unending', name: 'The Unending Reset', text: 'The Reset comes every 40 seconds.', law: Object.freeze({ resetMs: 40_000 }) }),
-  Object.freeze({ id: 'twin', name: 'The Twin Hands', text: 'The Echoes\' paired Hour-Hand comes every 10 seconds.', law: Object.freeze({ pairHandMs: 10_000 }) }),
+  Object.freeze({
+    id: 'brazen',
+    name: 'The Brazen Hide',
+    text: 'It has 25% more health.',
+    law: Object.freeze({ hpX: 1.25 }),
+  }),
+  Object.freeze({
+    id: 'quickened',
+    name: 'The Quickened Gears',
+    text: 'Its blows wind up faster.',
+    law: Object.freeze({ windX: 0.85 }),
+  }),
+  Object.freeze({
+    id: 'short',
+    name: 'The Short Hour',
+    text: 'The Hour ends at 12 minutes.',
+    law: Object.freeze({ endsMs: 12 * 60_000 }),
+  }),
+  Object.freeze({
+    id: 'hardened',
+    name: 'The Hardened Hearts',
+    text: 'Its Hearts take 25% more to break.',
+    law: Object.freeze({ heartX: 1.25 }),
+  }), // AUDIT SD III (F5): half again made the Reset a race no party at reference damage could run between its Hearts
+  Object.freeze({
+    id: 'burning',
+    name: 'The Burning Brass',
+    text: 'Its brass burns twice as long and spreads wider.',
+    law: Object.freeze({ poolMsX: 2, poolRX: 4 / 3 }),
+  }),
+  Object.freeze({
+    id: 'fraying',
+    name: 'The Fraying',
+    text: 'The Orrery snaps back at 36 turns.',
+    law: Object.freeze({ fray: 36 }),
+  }),
+  Object.freeze({
+    id: 'restless',
+    name: 'The Restless Pulse',
+    text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.',
+    law: Object.freeze({ pulseStep: 0.04 }),
+  }), // AUDIT SD III (T13): "climbs twice as steeply - to three quarters" read garbled
+  Object.freeze({
+    id: 'unending',
+    name: 'The Unending Reset',
+    text: 'The Reset comes every 40 seconds.',
+    law: Object.freeze({ resetMs: 40_000 }),
+  }),
+  Object.freeze({
+    id: 'twin',
+    name: 'The Twin Hands',
+    text: "The Echoes' paired Hour-Hand comes every 10 seconds.",
+    law: Object.freeze({ pairHandMs: 10_000 }),
+  }),
 ]);
 /** How many omens a Hollow keeps. */
 export const SD_OMENS_A_HOLLOW = 2;
@@ -96,13 +171,21 @@ function rngOf(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const shuffled = (r, xs) => { const a = [...xs]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const shuffled = (r, xs) => {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 /** A ring through every pair of `n` seats, each pair sharing no seat with the next (nor the last with the first) - found
  *  by a depth-first walk in a fixed order. Pure. */
 export function disjointRing(n) {
   const pairs = [];
   for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) pairs.push([i, j]);
-  const used = new Array(pairs.length).fill(false), ring = [0];
+  const used = new Array(pairs.length).fill(false),
+    ring = [0];
   used[0] = true;
   const apart = (p, q) => p[0] !== q[0] && p[0] !== q[1] && p[1] !== q[0] && p[1] !== q[1];
   const walk = () => {
@@ -110,9 +193,11 @@ export function disjointRing(n) {
     const last = pairs[ring[ring.length - 1]];
     for (let k = 0; k < pairs.length; k++) {
       if (used[k] || !apart(last, pairs[k])) continue;
-      used[k] = true; ring.push(k);
+      used[k] = true;
+      ring.push(k);
       if (walk()) return true;
-      used[k] = false; ring.pop();
+      used[k] = false;
+      ring.pop();
     }
     return false;
   };
@@ -129,25 +214,42 @@ let _cycle = null;
 export function sdMarksCycle() {
   if (_cycle) return _cycle;
   const r = rngOf(SD_MARKS_SALT);
-  const ends = shuffled(r, SD_ENDINGS.map((e) => e.id)), seats = shuffled(r, SD_OMENS.map((o) => o.id)), ring = disjointRing(seats.length);
+  const ends = shuffled(
+      r,
+      SD_ENDINGS.map((e) => e.id),
+    ),
+    seats = shuffled(
+      r,
+      SD_OMENS.map((o) => o.id),
+    ),
+    ring = disjointRing(seats.length);
   const n = ends.length * ring.length;
-  _cycle = Object.freeze(Array.from({ length: n }, (_, k) => {
-    const p = ring[k % ring.length], e = ends[(k + Math.floor(k / ring.length)) % ends.length];
-    return Object.freeze([e, seats[p[0]], seats[p[1]]]);
-  }));
+  _cycle = Object.freeze(
+    Array.from({ length: n }, (_, k) => {
+      const p = ring[k % ring.length],
+        e = ends[(k + Math.floor(k / ring.length)) % ends.length];
+      return Object.freeze([e, seats[p[0]], seats[p[1]]]);
+    }),
+  );
   return _cycle;
 }
 /** A Hollow's marks by its slot (1, 2, 3 ...): `[ending id, omen id, omen id]`. Pure. */
 export function sdMarksOf(s) {
-  const c = sdMarksCycle(), k = Math.floor(Number(s) || 0) - 1;
+  const c = sdMarksCycle(),
+    k = Math.floor(Number(s) || 0) - 1;
   return c[((k % c.length) + c.length) % c.length];
 }
 /** The Ending and the omens a set of marks names (unknown ids dropped). */
 export const sdEndingOf = (mk) => SD_ENDINGS.find((e) => e.id === mk?.[0]) ?? null;
-export const sdOmensOf = (mk) => (Array.isArray(mk) ? mk.slice(1) : []).map((id) => SD_OMENS.find((o) => o.id === id)).filter(Boolean);
+export const sdOmensOf = (mk) =>
+  (Array.isArray(mk) ? mk.slice(1) : []).map((id) => SD_OMENS.find((o) => o.id === id)).filter(Boolean);
 /** Whether `mk` is a set of marks: one known Ending, then SD_OMENS_A_HOLLOW distinct known omens. */
-export const validSdMarks = (mk) => Array.isArray(mk) && mk.length === 1 + SD_OMENS_A_HOLLOW && !!sdEndingOf(mk)
-  && sdOmensOf(mk).length === SD_OMENS_A_HOLLOW && mk[1] !== mk[2];
+export const validSdMarks = (mk) =>
+  Array.isArray(mk) &&
+  mk.length === 1 + SD_OMENS_A_HOLLOW &&
+  !!sdEndingOf(mk) &&
+  sdOmensOf(mk).length === SD_OMENS_A_HOLLOW &&
+  mk[1] !== mk[2];
 /** A set of marks' law, composed: multipliers multiplied, the rest the last that names it (an Ending's, then its omens'). */
 export function sdMarksLaw(mk) {
   /** @type {Record<string, number>} */

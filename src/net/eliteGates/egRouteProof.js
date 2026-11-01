@@ -74,7 +74,8 @@ export const EG_GRIP_SLACK_S = 0.1;
  *  A ledge said shallower rests nobody, and the pitches either side of it are one. */
 export const EG_CLIMB_LEDGE_MIN_M = 0.8;
 /** THE MANTLE's seconds (parkour.js mantleDuration): longer the higher the lip, a third quicker at Climbing 100 than at 0. */
-export const egMantleS = (/** @type {number} */ rise, /** @type {number} */ skill) => (0.25 + 0.22 * Math.max(0, rise)) * (1.3 - 0.5 * Math.min(1, Math.max(0, skill / 100)));
+export const egMantleS = (/** @type {number} */ rise, /** @type {number} */ skill) =>
+  (0.25 + 0.22 * Math.max(0, rise)) * (1.3 - 0.5 * Math.min(1, Math.max(0, skill / 100)));
 /** THE FAST BUILD's climb over its run (m/s per m/s): climbing.js climbingSpeed's Speed / 3, doubled under the Climbing spell,
  *  CLIMB-PAST's x1.4 at the effective cap (systems/skillSoftcap.js overcapClimbSpeed), Climbing 100's share (PARKOUR_CLIMB_MAX
  *  1.3) - the fastest a body climbs (parkour.js freeClimbSpeed(run, 100, true, the cap)). */
@@ -103,8 +104,12 @@ const max0 = (v) => (v > 0 ? v : 0);
 // ── A CLIMB ───────────────────────────────────────────────────────────────────────────────────────────────────
 /** The squared distance in plan from (x, z) to the segment (ax, az)-(bx, bz). */
 function segD2(x, z, ax, az, bx, bz) {
-  const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz, u = L2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2)) : 0;
-  const ex = x - (ax + dx * u), ez = z - (az + dz * u);
+  const dx = bx - ax,
+    dz = bz - az,
+    L2 = dx * dx + dz * dz,
+    u = L2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2)) : 0;
+  const ex = x - (ax + dx * u),
+    ez = z - (az + dz * u);
   return ex * ex + ez * ez;
 }
 /**
@@ -116,20 +121,26 @@ function segD2(x, z, ax, az, bx, bz) {
 export function egRouteClimbOf(spec, link, lo, hi) {
   const all = spec?.climbs ?? [];
   if (Number.isInteger(link?.climb) && all[link.climb]) return all[link.climb];
-  let best = null, bd = EG_ROUTE_CLIMB_NEAR_M * EG_ROUTE_CLIMB_NEAR_M;
+  let best = null,
+    bd = EG_ROUTE_CLIMB_NEAR_M * EG_ROUTE_CLIMB_NEAR_M;
   for (const c of all) {
     if (!c || !fin(c.y0) || !fin(c.y1)) continue;
     if (Math.abs(c.y0 - lo[1]) > EG_ROUTE_CLIMB_Y_M || Math.abs(c.y1 - hi[1]) > EG_ROUTE_CLIMB_Y_M) continue;
     const d = segD2(lo[0], lo[2], c.x0, c.z0, c.x1, c.z1);
-    if (d <= bd) { bd = d; best = c; }
+    if (d <= bd) {
+      bd = d;
+      best = c;
+    }
   }
   return best;
 }
 /** A CLIMB'S PITCHES (m, foot to lip): its heights between its foot, its rest ledges (those strictly between, each a floor -
  *  none when the climb says its ledges shallower than EG_CLIMB_LEDGE_MIN_M) and its lip. */
 export function egClimbPitches(/** @type {any} */ c) {
-  const rests = fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] : (c.ledges ?? []).filter((y) => fin(y) && y > c.y0 && y < c.y1);
-  const ys = [c.y0, ...[...new Set(rests)].sort((a, b) => a - b), c.y1], out = [];
+  const rests =
+    fin(c.d) && c.d < EG_CLIMB_LEDGE_MIN_M ? [] : (c.ledges ?? []).filter((y) => fin(y) && y > c.y0 && y < c.y1);
+  const ys = [c.y0, ...[...new Set(rests)].sort((a, b) => a - b), c.y1],
+    out = [];
   for (let k = 1; k < ys.length; k++) out.push(ys[k] - ys[k - 1]);
   return out;
 }
@@ -145,7 +156,8 @@ export function egClimbGrip(c) {
   if (!(c.y1 > c.y0)) return `a climb from ${c.y0} m to ${c.y1} m`;
   for (const H of egClimbPitches(c)) {
     const wall = egPitchWallS(H);
-    if (wall > EG_GRIP_S - EG_GRIP_SLACK_S) return `a pitch of ${H.toFixed(2)} m holds the wall ${wall.toFixed(2)} s, past the grip at Climbing 0 with fatigue spent (${EG_GRIP_S.toFixed(1)} s less ${EG_GRIP_SLACK_S})`;
+    if (wall > EG_GRIP_S - EG_GRIP_SLACK_S)
+      return `a pitch of ${H.toFixed(2)} m holds the wall ${wall.toFixed(2)} s, past the grip at Climbing 0 with fatigue spent (${EG_GRIP_S.toFixed(1)} s less ${EG_GRIP_SLACK_S})`;
   }
   return '';
 }
@@ -159,16 +171,35 @@ export function egClimbGrip(c) {
 const _legs = new WeakMap();
 /** THE STEPS A SPAN LINK CROSSES: its road's pieces (an alcove's side way's never) whose rest stands between its ends along z,
  *  within EG_ROUTE_COURSE_SIDE_M of its line across and EG_ROUTE_COURSE_RISE_M of its ends' heights - in the hall's count. */
-export function egRouteSpanSteps(/** @type {any} */ spec, /** @type {number[]} */ A, /** @type {number[]} */ B, road = 0) {
-  const z0 = Math.min(A[2], B[2]), z1 = Math.max(A[2], B[2]), y0 = Math.min(A[1], B[1]) - EG_ROUTE_COURSE_RISE_M, y1 = Math.max(A[1], B[1]) + EG_ROUTE_COURSE_RISE_M;
-  const dz = B[2] - A[2], dx = B[0] - A[0];
+export function egRouteSpanSteps(
+  /** @type {any} */ spec,
+  /** @type {number[]} */ A,
+  /** @type {number[]} */ B,
+  road = 0,
+) {
+  const z0 = Math.min(A[2], B[2]),
+    z1 = Math.max(A[2], B[2]),
+    y0 = Math.min(A[1], B[1]) - EG_ROUTE_COURSE_RISE_M,
+    y1 = Math.max(A[1], B[1]) + EG_ROUTE_COURSE_RISE_M;
+  const dz = B[2] - A[2],
+    dx = B[0] - A[0];
   // (THE BROKEN WAY - spec law 10: a link along x - a broken bridge turned - takes the pieces along its line across x)
   if (dz === 0 && dx !== 0) {
-    const x0 = Math.min(A[0], B[0]), x1 = Math.max(A[0], B[0]);
-    return (spec?.steps ?? []).filter((s) => (s.road ?? 0) === road && s.hd % 2 === 1 && s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1 && Math.abs(s.z - A[2]) <= EG_ROUTE_COURSE_SIDE_M);
+    const x0 = Math.min(A[0], B[0]),
+      x1 = Math.max(A[0], B[0]);
+    return (spec?.steps ?? []).filter(
+      (s) =>
+        (s.road ?? 0) === road &&
+        s.hd % 2 === 1 &&
+        s.x >= x0 &&
+        s.x <= x1 &&
+        s.y >= y0 &&
+        s.y <= y1 &&
+        Math.abs(s.z - A[2]) <= EG_ROUTE_COURSE_SIDE_M,
+    );
   }
   return (spec?.steps ?? []).filter((s) => {
-    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false;   // (THE AUDIT: a link along z takes no piece turned along x)
+    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)
     const x = dz !== 0 ? A[0] + ((B[0] - A[0]) * (s.z - A[2])) / dz : A[0];
     return Math.abs(s.x - x) <= EG_ROUTE_COURSE_SIDE_M;
   });
@@ -186,14 +217,36 @@ export function egRouteLegs(spec, road = 0) {
   let kept = _legs.get(spec);
   if (!kept) {
     const R = egRouteOf(spec);
-    kept = [0, 1].map((r) => R.ways[r].map((i, k) => {
-      const l = R.links[i], from = R.nodes[R.paths[r][k]], to = R.nodes[R.paths[r][k + 1]];
-      const dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2], plan = Math.sqrt(dx * dx + dz * dz);
-      const kind = l.kind ?? 'walk', len = fin(l.len) && l.len >= 0 ? l.len : Math.sqrt(dx * dx + dy * dy + dz * dz), lr = Math.max(0, Math.min(2, (l.road ?? 0) | 0));
-      const lo = dy >= 0 ? from : to, hi = dy >= 0 ? to : from;
-      return { i, kind, road: lr, from, to, rise: dy, plan, len, climb: kind === 'climb' ? egRouteClimbOf(spec, l, lo, hi) : null,
-        steps: kind === 'span' ? egRouteSpanSteps(spec, from, to, lr) : [], z0: Math.min(from[2], to[2]), z1: Math.max(from[2], to[2]) };
-    }));
+    kept = [0, 1].map((r) =>
+      R.ways[r].map((i, k) => {
+        const l = R.links[i],
+          from = R.nodes[R.paths[r][k]],
+          to = R.nodes[R.paths[r][k + 1]];
+        const dx = to[0] - from[0],
+          dy = to[1] - from[1],
+          dz = to[2] - from[2],
+          plan = Math.sqrt(dx * dx + dz * dz);
+        const kind = l.kind ?? 'walk',
+          len = fin(l.len) && l.len >= 0 ? l.len : Math.sqrt(dx * dx + dy * dy + dz * dz),
+          lr = Math.max(0, Math.min(2, (l.road ?? 0) | 0));
+        const lo = dy >= 0 ? from : to,
+          hi = dy >= 0 ? to : from;
+        return {
+          i,
+          kind,
+          road: lr,
+          from,
+          to,
+          rise: dy,
+          plan,
+          len,
+          climb: kind === 'climb' ? egRouteClimbOf(spec, l, lo, hi) : null,
+          steps: kind === 'span' ? egRouteSpanSteps(spec, from, to, lr) : [],
+          z0: Math.min(from[2], to[2]),
+          z1: Math.max(from[2], to[2]),
+        };
+      }),
+    );
     _legs.set(spec, kept);
   }
   return kept[road === 1 ? 1 : 0];
@@ -215,9 +268,16 @@ export function egLegRefusal(g) {
   if (g.kind === 'walk' || g.kind === 'bridge' || g.kind === 'span') return '';
   if (g.kind === 'stair') {
     const plan = Math.sqrt(max0(g.len * g.len - h * h));
-    return h > EG_ROUTE_STAIR_MAX * plan + 1e-9 ? `a stair of ${h.toFixed(2)} m over ${plan.toFixed(2)} m, steeper than the motor walks` : '';
+    return h > EG_ROUTE_STAIR_MAX * plan + 1e-9
+      ? `a stair of ${h.toFixed(2)} m over ${plan.toFixed(2)} m, steeper than the motor walks`
+      : '';
   }
-  if (g.kind === 'drop') return g.rise > 1e-9 ? 'a Drop taken upward' : h > EG_ROUTE_FALL_MAX_M ? `a Drop of ${h.toFixed(2)} m, past the ${EG_ROUTE_FALL_MAX_M} m a fall is billed at` : '';
+  if (g.kind === 'drop')
+    return g.rise > 1e-9
+      ? 'a Drop taken upward'
+      : h > EG_ROUTE_FALL_MAX_M
+        ? `a Drop of ${h.toFixed(2)} m, past the ${EG_ROUTE_FALL_MAX_M} m a fall is billed at`
+        : '';
   if (g.kind === 'climb') return g.rise < -1e-9 ? 'a climb taken downward' : egClimbGrip(g.climb);
   return `a link of kind '${g.kind}'`;
 }
@@ -249,7 +309,8 @@ export const egLegGripOwed = (/** @type {Leg} */ g) => {
  * @param {Leg} g @param {any} B
  */
 export function egLegSeconds(g, B) {
-  const h = Math.abs(g.rise), fall = Math.sqrt((2 * h) / B.g);
+  const h = Math.abs(g.rise),
+    fall = Math.sqrt((2 * h) / B.g);
   if (g.kind === 'stair') {
     const plan = Math.sqrt(max0(g.len * g.len - h * h));
     if (g.rise >= 0) return plan > 0 ? (plan * plan + h * h) / (plan * B.run) : Infinity;

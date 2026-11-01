@@ -22,22 +22,42 @@ const zt = (s) => [...ascii(s), 0];
 
 function buildBsa(entries) {
   const n = entries.length;
-  const names = []; const nameOffsets = [];
+  const names = [];
+  const nameOffsets = [];
   let no = 0;
-  for (const e of entries) { nameOffsets.push(no); names.push(...zt(e.name)); no += e.name.length + 1; }
+  for (const e of entries) {
+    nameOffsets.push(no);
+    names.push(...zt(e.name));
+    no += e.name.length + 1;
+  }
   const dirsize = 12 * n + names.length;
-  const table = []; let off = 0;
-  for (const e of entries) { table.push(...u32(e.data.length), ...u32(off)); off += e.data.length; }
+  const table = [];
+  let off = 0;
+  for (const e of entries) {
+    table.push(...u32(e.data.length), ...u32(off));
+    off += e.data.length;
+  }
   for (const o of nameOffsets) table.push(...u32(o));
-  return Uint8Array.from([...u32(0x100), ...u32(dirsize), ...u32(n), ...table, ...names,
-    ...new Array(8 * n).fill(0xcd), ...entries.flatMap((e) => [...e.data])]);
+  return Uint8Array.from([
+    ...u32(0x100),
+    ...u32(dirsize),
+    ...u32(n),
+    ...table,
+    ...names,
+    ...new Array(8 * n).fill(0xcd),
+    ...entries.flatMap((e) => [...e.data]),
+  ]);
 }
 const nif = (line, ver) => Uint8Array.from([...ascii(line), 0x0a, ...u32(ver), ...new Array(64).fill(0)]);
 const sub = (name, data) => [...ascii(name), ...u32(data.length), ...data];
 const PARTS = ['head', 'hair', 'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm', 'upperarm'];
 const body = (id, race, part, { female = false, model = 'b/x.nif' } = {}) => {
-  const d = [...sub('NAME', zt(id)), ...sub('MODL', zt(model)), ...sub('FNAM', zt(race)),
-    ...sub('BYDT', [PARTS.indexOf(part), 0, female ? 1 : 0, 0])];
+  const d = [
+    ...sub('NAME', zt(id)),
+    ...sub('MODL', zt(model)),
+    ...sub('FNAM', zt(race)),
+    ...sub('BYDT', [PARTS.indexOf(part), 0, female ? 1 : 0, 0]),
+  ];
   return [...ascii('BODY'), ...u32(d.length), ...u32(0), ...u32(0), ...d];
 };
 
@@ -49,7 +69,10 @@ const crashes = [];
 page.on('pageerror', (e) => crashes.push(String(e.message)));
 
 const fails = [];
-const ok = (cond, label) => { console.log(`${cond ? 'ok  ' : 'FAIL'} ${label}`); if (!cond) fails.push(label); };
+const ok = (cond, label) => {
+  console.log(`${cond ? 'ok  ' : 'FAIL'} ${label}`);
+  if (!cond) fails.push(label);
+};
 
 await page.goto('http://localhost:5223/mw-inspect.html');
 
@@ -98,12 +121,12 @@ const bsa = buildBsa([
 ]);
 const esm = Uint8Array.from([
   ...body('b_n_nord_m_hand.1st', 'nord', 'hand', { model: 'b/H1.nif' }),
-  ...body('b_n_nord_m_wrist', 'nord', 'wrist', { model: 'b/W.nif' }),   // third-person only
+  ...body('b_n_nord_m_wrist', 'nord', 'wrist', { model: 'b/W.nif' }), // third-person only
   // Part VI found `b_n_nord_m_upper arm` on retail - the id carries a
   // SPACE, and any lookup assuming record ids are token-safe breaks on
   // this slot specifically. The fixture keeps the space.
   ...body('b_n_nord_m_upper arm', 'nord', 'upperarm', { model: 'b/U.nif' }),
-  ...body('b_n_nord_m_chest', 'nord', 'chest'),                          // not an arm
+  ...body('b_n_nord_m_chest', 'nord', 'chest'), // not an arm
 ]);
 
 await page.setInputFiles('#file', [
@@ -115,25 +138,34 @@ const text = await page.textContent('#out');
 
 ok(/6 files/.test(text), 'the archive is read and its file count shown');
 ok(/xbase_anim\.1st\.nif[\s\S]{0,80}present/.test(text), 'the REAL first-person skeleton is reported present');
-ok(/base_anim\.1st\.nif[\s\S]{0,120}ABSENT/.test(text),
-  'and the name the reverted rig hardcoded is reported ABSENT');
-ok(/not in this archive[\s\S]{0,200}never drew anything/.test(text),
-  'the page SAYS WHY IN WORDS, which is the whole point of it');
+ok(/base_anim\.1st\.nif[\s\S]{0,120}ABSENT/.test(text), 'and the name the reverted rig hardcoded is reported ABSENT');
+ok(
+  /not in this archive[\s\S]{0,200}never drew anything/.test(text),
+  'the page SAYS WHY IN WORDS, which is the whole point of it',
+);
 ok(/4\.0\.0\.2/.test(text), 'the NIF header is parsed and its version shown');
 ok(/bool = 4 bytes/.test(text), 'and the version-derived bool width is reported');
-ok(/4 body records/.test(text) && /1 of them are first-person/.test(text),
-  'the ESM body records are counted, first-person ones separately');
+ok(
+  /4 body records/.test(text) && /1 of them are first-person/.test(text),
+  'the ESM body records are counted, first-person ones separately',
+);
 ok(/hand[\s\S]{0,120}first-person record found/.test(text), 'the hand slot finds its .1st record');
-ok(/wrist[\s\S]{0,160}falls back to the third-person mesh/.test(text),
-  'the wrist has no .1st record and the fallback is named as such');
+ok(
+  /wrist[\s\S]{0,160}falls back to the third-person mesh/.test(text),
+  'the wrist has no .1st record and the fallback is named as such',
+);
 ok(/forearm[\s\S]{0,120}NOTHING for this slot/.test(text), 'a slot with no data says so plainly');
 
 ok(/SKINNED/.test(text), 'the skinned hand mesh is reported SKINNED');
 ok(/rigid/.test(text), 'and the unskinned wrist mesh is reported rigid');
-ok(/Both kinds are present here, so the rig must handle both/.test(text),
-  'and when the two disagree the page says so, instead of picking one');
-ok(/scan<\/b>, not a parse/.test(text) || /scan.{0,12}not a parse/.test(text),
-  'the verdict carries its own uncertainty on screen');
+ok(
+  /Both kinds are present here, so the rig must handle both/.test(text),
+  'and when the two disagree the page says so, instead of picking one',
+);
+ok(
+  /scan<\/b>, not a parse/.test(text) || /scan.{0,12}not a parse/.test(text),
+  'the verdict carries its own uncertainty on screen',
+);
 
 // MW-D3: the fixture arm meshes are NOT real NIFs (they are record-name
 // stubs for the scan), so the reader must REFUSE them and print the stage
@@ -152,10 +184,15 @@ const pixels = await page.evaluate(() => {
   });
 });
 ok(pixels.length >= 1, 'a real NIF gets a canvas, not just a message');
-ok(pixels.some((n) => n > 200), `and the wireframe actually DRAWS (${pixels.join(', ')} lit pixels)`);
-ok(/parse:|flatten:|geometry:/.test(drawText),
-  `a mesh the strict reader refuses names its STAGE (got: ${drawText.replace(/\s+/g, ' ').slice(0, 120)})`);
-ok(!/^\s*$/.test(drawText), 'and never an empty box - the reverted rig\'s defining behaviour');
+ok(
+  pixels.some((n) => n > 200),
+  `and the wireframe actually DRAWS (${pixels.join(', ')} lit pixels)`,
+);
+ok(
+  /parse:|flatten:|geometry:/.test(drawText),
+  `a mesh the strict reader refuses names its STAGE (got: ${drawText.replace(/\s+/g, ' ').slice(0, 120)})`,
+);
+ok(!/^\s*$/.test(drawText), "and never an empty box - the reverted rig's defining behaviour");
 
 // ── MW-D6: THE ASSEMBLED ARM, DRAWN ───────────────────────────────
 //
@@ -191,45 +228,64 @@ ok(armPixels > 200, `the assembled arm actually DRAWS (${armPixels} lit pixels)`
 const sym = await page.evaluate(() => {
   const c = document.querySelector('#assembly canvas');
   const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-  const B = 4; const W = Math.ceil(c.width / B); const H = Math.ceil(c.height / B);
+  const B = 4;
+  const W = Math.ceil(c.width / B);
+  const H = Math.ceil(c.height / B);
   const cell = new Uint8Array(W * H);
   for (let y = 0; y < c.height; y++) {
     for (let x = 0; x < c.width; x++) {
       if (d[(y * c.width + x) * 4 + 3] > 8) cell[((y / B) | 0) * W + ((x / B) | 0)] = 1;
     }
   }
-  let hit = 0; let tot = 0;
+  let hit = 0;
+  let tot = 0;
   for (let j = 0; j < H; j++) {
     for (let i = 0; i < W; i++) {
-      if (cell[j * W + i]) { tot++; if (cell[j * W + (W - 1 - i)]) hit++; }
+      if (cell[j * W + i]) {
+        tot++;
+        if (cell[j * W + (W - 1 - i)]) hit++;
+      }
     }
   }
   return { score: tot ? hit / tot : 0, tot };
 });
-ok(sym.tot > 20 && sym.score >= 0.9,
-  `and it is SYMMETRIC about x=0 - two identical hands would not be (${sym.score.toFixed(2)} over ${sym.tot} cells)`);
+ok(
+  sym.tot > 20 && sym.score >= 0.9,
+  `and it is SYMMETRIC about x=0 - two identical hands would not be (${sym.score.toFixed(2)} over ${sym.tot} cells)`,
+);
 
 // LAYER 3. The signed numbers, off the same rows the page's table shows.
 const arm = await page.evaluate(() => window.__mwArm);
-ok(Array.isArray(arm) && arm.length === 4,
-  `four pieces: a skinned hand per side and a rigid upper arm per side (${arm ? arm.length : 'none'})`);
+ok(
+  Array.isArray(arm) && arm.length === 4,
+  `four pieces: a skinned hand per side and a rigid upper arm per side (${arm ? arm.length : 'none'})`,
+);
 if (Array.isArray(arm)) {
   const skinned = arm.filter((r) => r.kind === 'skinned');
   const rigid = arm.filter((r) => r.kind === 'rigid');
-  ok(skinned.map((r) => r.bone).join() === 'left hand,right hand',
-    `BOTH hands bind - a latch that stops after the first bone gives one (${skinned.map((r) => r.bone).join() || 'none'})`);
+  ok(
+    skinned.map((r) => r.bone).join() === 'left hand,right hand',
+    `BOTH hands bind - a latch that stops after the first bone gives one (${skinned.map((r) => r.bone).join() || 'none'})`,
+  );
   ok(rigid.map((r) => r.mirrored).join() === 'true,false', 'and the LEFT upper arm is the mirrored one');
   const by = (b) => arm.find((r) => r.bone === b);
-  const L = by('left upper arm'); const R = by('right upper arm');
-  ok(L && R && Math.abs(L.bounds.minX + R.bounds.maxX) < 1e-3 && Math.abs(L.bounds.maxX + R.bounds.minX) < 1e-3,
-    'the left rigid piece is the right one with X negated, exactly');
-  ok(by('left hand').bounds.maxX < 0 && by('right hand').bounds.minX > 0,
-    'and rule 15 put each SKINNED side on its own side of x=0');
+  const L = by('left upper arm');
+  const R = by('right upper arm');
+  ok(
+    L && R && Math.abs(L.bounds.minX + R.bounds.maxX) < 1e-3 && Math.abs(L.bounds.maxX + R.bounds.minX) < 1e-3,
+    'the left rigid piece is the right one with X negated, exactly',
+  );
+  ok(
+    by('left hand').bounds.maxX < 0 && by('right hand').bounds.minX > 0,
+    'and rule 15 put each SKINNED side on its own side of x=0',
+  );
 }
 ok(/MIRRORED/.test(armText), 'the table names the mirrored piece as such');
 ok(/skinned/.test(armText) && /rigid/.test(armText), 'and both kinds by name');
-ok(/Not in the picture/.test(armText) && /forearm/.test(armText),
-  'a slot with no data is listed WITH ITS REASON, never silently absent');
+ok(
+  /Not in the picture/.test(armText) && /forearm/.test(armText),
+  'a slot with no data is listed WITH ITS REASON, never silently absent',
+);
 
 // ── MW-D7: THE IDLE CLIP, PLAYED ──────────────────────────────────
 //
@@ -276,8 +332,10 @@ const live = await page.evaluate(async () => {
   return { before, after: hash(), frames: window.__mwClipFrames - start };
 });
 ok(live.frames > 5, `the clip's own frame loop is running (${live.frames} frames in 400ms)`);
-ok(live.before !== live.after,
-  'and the picture changes WITHOUT being driven - a page frozen on frame one passes every layer below');
+ok(
+  live.before !== live.after,
+  'and the picture changes WITHOUT being driven - a page frozen on frame one passes every layer below',
+);
 
 const CLIP_TIMES = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
 
@@ -286,7 +344,9 @@ const CLIP_TIMES = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0];
 const shots = await page.evaluate((times) => {
   const c = document.querySelector('#clip canvas');
   const g = c.getContext('2d');
-  const B = 4; const W = Math.ceil(c.width / B); const H = Math.ceil(c.height / B);
+  const B = 4;
+  const W = Math.ceil(c.width / B);
+  const H = Math.ceil(c.height / B);
   const out = [];
   for (const t of times) {
     window.__mwArmAt(t);
@@ -297,10 +357,14 @@ const shots = await page.evaluate((times) => {
         if (d[(y * c.width + x) * 4 + 3] > 8) cell[((y / B) | 0) * W + ((x / B) | 0)] = 1;
       }
     }
-    let hit = 0; let tot = 0;
+    let hit = 0;
+    let tot = 0;
     for (let j = 0; j < H; j++) {
       for (let i = 0; i < W; i++) {
-        if (cell[j * W + i]) { tot++; if (cell[j * W + (W - 1 - i)]) hit++; }
+        if (cell[j * W + i]) {
+          tot++;
+          if (cell[j * W + (W - 1 - i)]) hit++;
+        }
       }
     }
     out.push({ t, hash: cell.join(''), sym: tot ? hit / tot : 0, tot });
@@ -308,83 +372,115 @@ const shots = await page.evaluate((times) => {
   return out.map((r) => ({ ...r, hash: [...r.hash].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7) }));
 }, CLIP_TIMES);
 const distinct = new Set(shots.map((s2) => s2.hash)).size;
-ok(distinct >= 5,
-  `the picture CHANGES across the clip - a clip that bound nothing gives 1 (${distinct} distinct of ${shots.length})`);
+ok(
+  distinct >= 5,
+  `the picture CHANGES across the clip - a clip that bound nothing gives 1 (${distinct} distinct of ${shots.length})`,
+);
 
 // L3 - symmetry at EVERY time, not once. The fixture's left arm track is
 // the right's negated about Y, which the x-mirror conjugates exactly, so
 // the assembly is x-symmetric at every instant. A one-sided binding or a
 // mirror lost under animation collapses this.
 const worst = shots.reduce((a, b) => (b.sym < a.sym ? b : a));
-ok(shots.every((s2) => s2.tot > 20 && s2.sym >= 0.9),
-  `and stays SYMMETRIC at every time (worst ${worst.sym.toFixed(2)} at t=${worst.t})`);
+ok(
+  shots.every((s2) => s2.tot > 20 && s2.sym >= 0.9),
+  `and stays SYMMETRIC at every time (worst ${worst.sym.toFixed(2)} at t=${worst.t})`,
+);
 
 // L4 - the signed readback, per piece, per time.
-const poses = await page.evaluate((times) => times.map((t) => {
-  const rows = window.__mwArmAt(t);
-  const pick = (b) => rows.find((r) => r.bone === b);
-  return {
-    t,
-    rh: pick('right hand').bounds,
-    lh: pick('left hand').bounds,
-    rc: pick('right upper arm').bounds,
-    lc: pick('left upper arm').bounds,
-  };
-}), CLIP_TIMES);
+const poses = await page.evaluate(
+  (times) =>
+    times.map((t) => {
+      const rows = window.__mwArmAt(t);
+      const pick = (b) => rows.find((r) => r.bone === b);
+      return {
+        t,
+        rh: pick('right hand').bounds,
+        lh: pick('left hand').bounds,
+        rc: pick('right upper arm').bounds,
+        lc: pick('left upper arm').bounds,
+      };
+    }),
+  CLIP_TIMES,
+);
 const at = (t) => poses.find((p) => p.t === t);
 // ANTI-VACUITY: the intro pose must be REACHABLE, or L5's "never returns
 // to it" could pass by never arriving in the first place.
-ok(at(1.0).rh.maxX < 0,
-  `at the clip's start the right hand is still LEFT of centre (${at(1.0).rh.maxX.toFixed(3)})`);
+ok(at(1.0).rh.maxX < 0, `at the clip's start the right hand is still LEFT of centre (${at(1.0).rh.maxX.toFixed(3)})`);
 ok(at(2.0).rh.maxX > 2.4, `and by t=2.0 it has swung across (${at(2.0).rh.maxX.toFixed(3)})`);
-ok(poses.every((p) => Math.abs(p.lh.minX + p.rh.maxX) < 1e-3 && Math.abs(p.lc.minX + p.rc.maxX) < 1e-3),
-  'the two sides stay exact mirrors of each other at every time, hands and cuffs alike');
-ok(poses.some((p) => Math.abs(p.rc.maxX - at(1.0).rc.maxX) > 1e-3),
-  'and the RIGID pieces move too - a pose that re-skins and leaves the cuffs at rest is half a rig');
+ok(
+  poses.every((p) => Math.abs(p.lh.minX + p.rh.maxX) < 1e-3 && Math.abs(p.lc.minX + p.rc.maxX) < 1e-3),
+  'the two sides stay exact mirrors of each other at every time, hands and cuffs alike',
+);
+ok(
+  poses.some((p) => Math.abs(p.rc.maxX - at(1.0).rc.maxX) > 1e-3),
+  'and the RIGID pieces move too - a pose that re-skins and leaves the cuffs at rest is half a rig',
+);
 
 // L5 - THE LOOP LAW, as a sequence. The one measurement that separates a
 // correct player from a plausible one, asserted in time-space AND in
 // pose-space so a time-bookkeeping fake cannot pass it.
 const trace = await page.evaluate(() => window.__mwClipTrace({ dt: 0.2, steps: 40, loopCount: 2 }));
-ok(trace.length > 6 && Math.abs(trace[0].time - 1.2) < 1e-3,
-  `the clip starts at 1.0, not 0 - a forward scan takes the decoy block (first step t=${trace[0] && trace[0].time})`);
+ok(
+  trace.length > 6 && Math.abs(trace[0].time - 1.2) < 1e-3,
+  `the clip starts at 1.0, not 0 - a forward scan takes the decoy block (first step t=${trace[0] && trace[0].time})`,
+);
 const stopIdx = trace.findIndex((r) => r.firedKeys.includes('idle: loop stop'));
 ok(stopIdx > 0, 'the loop-stop key is crossed at all');
 const after = trace.slice(stopIdx + 1);
-ok(after.length > 0 && after.every((r) => r.time >= 1.5 - 1e-6),
-  'and after it the playhead never re-enters the clip INTRO - a % span player replays it every wrap');
-ok(after.every((r) => r.rightHandMaxX == null || r.rightHandMaxX > 1.4),
-  'measured in the POSE too, not just the clock - the intro reaches x < 0 and the loop never does');
-ok(trace[trace.length - 1].loopStartTime === 1.5 && trace[trace.length - 1].loopStopTime === 2.5,
-  'the loop window ends at 1.5..2.5 - DISCOVERED by crossing the keys, not read at load');
+ok(
+  after.length > 0 && after.every((r) => r.time >= 1.5 - 1e-6),
+  'and after it the playhead never re-enters the clip INTRO - a % span player replays it every wrap',
+);
+ok(
+  after.every((r) => r.rightHandMaxX == null || r.rightHandMaxX > 1.4),
+  'measured in the POSE too, not just the clock - the intro reaches x < 0 and the loop never does',
+);
+ok(
+  trace[trace.length - 1].loopStartTime === 1.5 && trace[trace.length - 1].loopStopTime === 2.5,
+  'the loop window ends at 1.5..2.5 - DISCOVERED by crossing the keys, not read at load',
+);
 // loopCount is a count of ADDITIONAL passes, so a count of 2 CROSSES the
 // loop-stop key three times and WRAPS twice - the third crossing finds
 // the count exhausted and runs on to the stop key. Both numbers are
 // asserted, because an off-by-one in either direction moves exactly one
 // of them.
 const wraps = trace.filter((r, i) => i > 0 && r.loopCount < trace[i - 1].loopCount).length;
-ok(wraps === 2 && trace[trace.length - 1].loopCount === 0,
-  `two wraps for a loop count of 2 (${wraps}, ending at ${trace[trace.length - 1].loopCount})`);
-ok(trace.flatMap((r) => r.firedKeys).filter((k) => k === 'idle: loop stop').length === 3,
-  'and the loop SEGMENT plays three times - loops are ADDITIONAL passes, not total');
+ok(
+  wraps === 2 && trace[trace.length - 1].loopCount === 0,
+  `two wraps for a loop count of 2 (${wraps}, ending at ${trace[trace.length - 1].loopCount})`,
+);
+ok(
+  trace.flatMap((r) => r.firedKeys).filter((k) => k === 'idle: loop stop').length === 3,
+  'and the loop SEGMENT plays three times - loops are ADDITIONAL passes, not total',
+);
 const tail = trace[trace.length - 1];
-ok(!tail.playing && Math.abs(tail.time - 3.0) < 1e-6,
-  `then it runs on to the stop key and finishes (t=${tail.time}, playing=${tail.playing})`);
+ok(
+  !tail.playing && Math.abs(tail.time - 3.0) < 1e-6,
+  `then it runs on to the stop key and finishes (t=${tail.time}, playing=${tail.playing})`,
+);
 const allFired = trace.flatMap((r) => r.firedKeys);
 ok(allFired.includes('idle: chop hit'), 'a key with no handler is still CROSSED and logged (rule 24)');
-ok(allFired.includes('soundgen: left'),
-  'and rule 47 lets a soundgen key through even though its group is not the playing one');
-ok(!allFired.some((k) => k.startsWith('idle1h:') || k.startsWith('sneak')),
-  'while another group\'s ordinary keys are dropped - "idle" must not swallow "idle1h"');
+ok(
+  allFired.includes('soundgen: left'),
+  'and rule 47 lets a soundgen key through even though its group is not the playing one',
+);
+ok(
+  !allFired.some((k) => k.startsWith('idle1h:') || k.startsWith('sneak')),
+  'while another group\'s ordinary keys are dropped - "idle" must not swallow "idle1h"',
+);
 
 // The page has to SAY the things a picture cannot.
-ok(/1\.00\s*…\s*3\.00s|1\.00 &hellip; 3\.00s|1\.00.{0,10}3\.00s/.test(clipText),
-  `the resolved clip range is printed (got: ${clipText.replace(/\s+/g, ' ').slice(0, 200)})`);
+ok(
+  /1\.00\s*…\s*3\.00s|1\.00 &hellip; 3\.00s|1\.00.{0,10}3\.00s/.test(clipText),
+  `the resolved clip range is printed (got: ${clipText.replace(/\s+/g, ' ').slice(0, 200)})`,
+);
 ok(/5 of 5/.test(clipText), 'the binding count is printed - the answer to the silent failure');
-ok(/runs backwards/.test(clipText),
-  'and the group LISTING\'s divergent answer is shown beside it, not hidden');
-ok(/Right Hand|Left Hand/.test(clipText),
-  'bones the clip does not drive are named, since they are indistinguishable from an unbound clip');
+ok(/runs backwards/.test(clipText), "and the group LISTING's divergent answer is shown beside it, not hidden");
+ok(
+  /Right Hand|Left Hand/.test(clipText),
+  'bones the clip does not drive are named, since they are indistinguishable from an unbound clip',
+);
 
 // MW-D4: the bone table. The fixture skeleton is a TEST RIG, not
 // Morrowind's, so the retail bone names are expected to be MISSING - and
@@ -392,11 +488,15 @@ ok(/Right Hand|Left Hand/.test(clipText),
 // shortening the list or defaulting to cheerful.
 await page.waitForSelector('#bones table', { timeout: 10000 });
 const boneText = await page.textContent('#bones');
-ok(/Left Hand/.test(boneText) && /Weapon Bone Left/.test(boneText),
-  'every required bone gets a row, including the bow-only one');
+ok(
+  /Left Hand/.test(boneText) && /Weapon Bone Left/.test(boneText),
+  'every required bone gets a row, including the bow-only one',
+);
 ok(/MISSING/.test(boneText), 'and a bone this skeleton lacks is named MISSING');
-ok(/are missing[\s\S]{0,300}before a rig is written against them/.test(boneText),
-  'with the consequence spelled out, not left for the reader to infer');
+ok(
+  /are missing[\s\S]{0,300}before a rig is written against them/.test(boneText),
+  'with the consequence spelled out, not left for the reader to infer',
+);
 
 // L6 - THE SILENT FAILURE, MADE VISIBLE. Swap in a .kf that keys bones
 // this skeleton does not have. The arm still draws, still symmetric,
@@ -411,26 +511,42 @@ await page.setInputFiles('#file', [
   { name: 'Morrowind.bsa', mimeType: 'application/octet-stream', buffer: Buffer.from(blindBsa) },
   { name: 'Morrowind.esm', mimeType: 'application/octet-stream', buffer: Buffer.from(esm) },
 ]);
-await page.waitForFunction(() => {
-  const el = document.getElementById('clip');
-  return el && /holds its rest pose|names no such animation/.test(el.textContent);
-}, { timeout: 10000 }).catch(() => {});
+await page
+  .waitForFunction(
+    () => {
+      const el = document.getElementById('clip');
+      return el && /holds its rest pose|names no such animation/.test(el.textContent);
+    },
+    { timeout: 10000 },
+  )
+  .catch(() => {});
 const blindText = await page.textContent('#clip');
 const blindClip = await page.evaluate(() => window.__mwClip);
-ok(blindClip && blindClip.binding && blindClip.binding.matched.length === 0
-  && blindClip.binding.unmatched.join() === 'bone1',
-  `a .kf keyed to foreign bones binds NOTHING (${blindClip && blindClip.binding
-    ? blindClip.binding.matched.length + ' matched' : 'no report'})`);
-ok(blindClip && /names no such animation/.test(blindClip.refusal || ''),
-  'and the refusal itself is readable, not only the success path');
+ok(
+  blindClip &&
+    blindClip.binding &&
+    blindClip.binding.matched.length === 0 &&
+    blindClip.binding.unmatched.join() === 'bone1',
+  `a .kf keyed to foreign bones binds NOTHING (${
+    blindClip && blindClip.binding ? blindClip.binding.matched.length + ' matched' : 'no report'
+  })`,
+);
+ok(
+  blindClip && /names no such animation/.test(blindClip.refusal || ''),
+  'and the refusal itself is readable, not only the success path',
+);
 // BOTH sentences, not either. The clip refusal and the empty binding are
 // two different failures of the same file, and an OR lets one stand in for
 // the other - which is how a page stops reporting the binding at all and
 // nothing notices.
-ok(/names no such animation/.test(blindText),
-  `the refused clip is named (got: ${blindText.replace(/\s+/g, ' ').slice(0, 160)})`);
-ok(/holds its rest pose/.test(blindText),
-  'AND the unmatched track is named, with the consequence spelled out - the failure a picture cannot show');
+ok(
+  /names no such animation/.test(blindText),
+  `the refused clip is named (got: ${blindText.replace(/\s+/g, ' ').slice(0, 160)})`,
+);
+ok(
+  /holds its rest pose/.test(blindText),
+  'AND the unmatched track is named, with the consequence spelled out - the failure a picture cannot show',
+);
 
 // a corrupt archive must be named, not swallowed
 const bad = Uint8Array.from([...u32(0x102), ...u32(0), ...u32(0)]);

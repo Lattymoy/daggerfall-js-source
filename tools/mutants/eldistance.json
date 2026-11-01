@@ -12,19 +12,19 @@
   {
     "name": "EL-DISTANCE-the-far-ring-blends-the-fog-in-linear-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
-    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
+    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));   // BANTHA1: and the jungle's haze; AUDIT FB1031 L2: a weather's own factor",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"
     ],
-    "note": "Re-aimed by content (RED-MOUNTAIN): the hold eased over the summits (summitHold)."
+    "note": "Re-aimed by content (RED-MOUNTAIN): the hold eased over the summits (summitHold); (AUDIT FB1031 L2): under a weather row its own law (horizonHazeOf)."
   },
   {
     "name": "EL-DISTANCE-the-lanterns-glow-in-the-fog-is-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n",
-    "new": "",
+    "old": "    if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n  }",
+    "new": "    }",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "EL-DISTANCE-the-glow-is-added-in-display-space",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
-    "new": "  col += glow;",
+    "old": "    if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
+    "new": "    col += glow;",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"

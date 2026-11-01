@@ -23,8 +23,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "export function currentOption(panel) { return panel.options.find((o) => o.isOn()) ?? null; }",
-    "new": "export function currentOption(panel) { return panel.options.find((o) => o.isOn()) ?? panel.options[0] ?? null; }"
+    "old": "  return panel.options.find((o) => o.isOn()) ?? null;",
+    "new": "  return panel.options.find((o) => o.isOn()) ?? panel.options[0] ?? null;"
   },
   {
     "name": "OVH-pack-set-without-the-skin",
@@ -32,8 +32,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  if (setUiSkin(skin) === null) url.searchParams.set('skin', skin);\n",
-    "new": "  if (skin === 'x') setUiSkin(skin);\n"
+    "old": "  if (setUiSkin(skin) === null) url.searchParams.set('skin', skin);",
+    "new": "  if (skin === 'x') setUiSkin(skin);"
   },
   {
     "name": "OVH-classic-reads-grimoire-in-use",
@@ -41,8 +41,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  isOn: () => uiSkin() === skin && (skin !== 'classic' ? dressWorn() === dress : (activeUiPack()?.id ?? UI_PACK_NONE) === pack),",
-    "new": "  isOn: () => uiSkin() === skin,"
+    "old": "    isOn: () =>\n      uiSkin() === skin && (skin !== 'classic' ? dressWorn() === dress : (activeUiPack()?.id ?? UI_PACK_NONE) === pack),",
+    "new": "    isOn: () => uiSkin() === skin,"
   },
   {
     "name": "OVH-pack-worn-on-the-enhanced-skin",
@@ -50,8 +50,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  if (uiSkin(search) !== 'classic') return null;\n",
-    "new": ""
+    "old": "  if (uiSkin(search) !== 'classic') return null;\n  const url = uiPackOverride(search);",
+    "new": "  const url = uiPackOverride(search);"
   },
   {
     "name": "OVH-override-door-wears-the-stored-pack",
@@ -59,8 +59,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "(skinOverride(search) ? UI_PACK_NONE : clean(getPref('uiPack')) ?? UI_PACK_NONE)",
-    "new": "(clean(getPref('uiPack')) ?? UI_PACK_NONE)"
+    "old": "  const id = url ?? (skinOverride(search) ? UI_PACK_NONE : (clean(getPref('uiPack')) ?? UI_PACK_NONE));",
+    "new": "  const id = url ?? clean(getPref('uiPack')) ?? UI_PACK_NONE;"
   },
   {
     "name": "OVH-cifrci-case-fold-dropped",
@@ -77,8 +77,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "{ smooth: true, alpha: true }",
-    "new": "{ smooth: true }"
+    "old": "      return renderer.uploadTexture('pack', url, px, { smooth: true, alpha: true });",
+    "new": "      return renderer.uploadTexture('pack', url, px, { smooth: true });"
   },
   {
     "name": "OVH-loadimg-hands-the-pack-size",
@@ -140,8 +140,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "export const playerTradeReady = () => typeof document !== 'undefined';",
-    "new": "export const playerTradeReady = () => false;"
+    "old": "export const playerTradeReady = () => typeof document !== 'undefined'; // OVH3: an online window - it keeps its own face over either skin",
+    "new": "export const playerTradeReady = () => false; // OVH3: an online window - it keeps its own face over either skin"
   },
   {
     "name": "OVH3-chat-gated-back-on-the-skin",

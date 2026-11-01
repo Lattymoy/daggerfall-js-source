@@ -1,479 +1,479 @@
 [
- {
-  "name": "LOAD1-turn-ignores-out",
-  "file": "src/systems/shotGallery.js",
-  "old": "filter((s) => s && s.loading !== false)",
-  "new": "filter((s) => s)",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-no-cap",
-  "file": "src/systems/shotGallery.js",
-  "old": "if ((await b.count()) >= GALLERY_MAX) return 'full';",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-upscale",
-  "file": "src/systems/shotGallery.js",
-  "old": "const s = Math.min(1, edge / Math.max(W, H));",
-  "new": "const s = edge / Math.max(W, H);",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-last-never-picked",
-  "file": "src/systems/shotGallery.js",
-  "old": "Math.floor(Math.max(0, rand()) * pool.length)",
-  "new": "Math.floor(Math.max(0, rand()) * (pool.length - 1))",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-thumb-at-full-edge",
-  "file": "src/systems/shotGallery.js",
-  "old": "const thumb = fitWithin(w, h, THUMB_W);",
-  "new": "const thumb = fitWithin(w, h, FULL_EDGE);",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-id-strip-inverted",
-  "file": "src/systems/shotGallery.js",
-  "old": "s.put(id == null ? fresh : rec)",
-  "new": "s.put(id == null ? rec : fresh)",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-no-open-fallback",
-  "file": "src/systems/shotGallery.js",
-  "old": "if (!e?.galleryOpenFailed) throw e;",
-  "new": "throw e;",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-cap-raced",
-  "file": "src/systems/shotGallery.js",
-  "old": "const run = _keeping.then(() => keepOne(image, meta));",
-  "new": "const run = keepOne(image, meta);",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-no-delay",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (delay > 0) appearTimer",
-  "new": "if (false) appearTimer",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-no-stand",
-  "file": "src/ui/loadingScreen.js",
-  "old": "const wait = Math.max(0, MIN_SHOWN_MS - (Date.now() - shownAt));",
-  "new": "const wait = 0;",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-no-ceiling",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (Number.isFinite(maxMs) && maxMs > 0) {",
-  "new": "if (false) {",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-first-hold-additive",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!holds.size) { place = String(p ?? ''); line = String(l ?? ''); }",
-  "new": "if (holds.size) { place = String(p ?? ''); line = String(l ?? ''); }",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-nested-hold-wipes",
-  "file": "src/ui/loadingScreen.js",
-  "old": "else { if (p) place = String(p); if (l) line = String(l); }",
-  "new": "else { place = String(p); line = String(l); }",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-hold-per-frame",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!framed) framed = beginLoading(",
-  "new": "if (true) framed = beginLoading(",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-frame-hold-never-ended",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (framed) { const h = framed; framed = null; h.end(); }",
-  "new": "if (framed) { framed = null; }",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-classic-drawn",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!isEnhanced(search)) return 'off';",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-shot-probe-drawn",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (pageHas('shot', search) || pageHas('noloading', search)) return 'off';",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-stale-line",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!holds.size) return; line = String",
-  "new": "line = String",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-stale-place",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!holds.size) return; place = String",
-  "new": "place = String",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-shot-never-asked",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  if (loadingMode() === 'shots') {\n    loadingShot()",
-  "new": "  if (false) {\n    loadingShot()",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-caption-lost",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (cap) corner.replaceChildren(el('span', 'ld-cap', cap));",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-with-loading-no-finally",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  try { return await fn(hold); } finally { hold.end(); }",
-  "new": "  return await fn(hold);",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-aside-paints-nothing",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  if (node) node.classList.toggle('aside', hiddenNow() || !!node._keepHidden);\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-flash-back-after-film",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  if (had && !on && !asideFor.size && framed?.open) revealOnSync = true;\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-ends-visible-after-film",
-  "file": "src/ui/loadingScreen.js",
-  "old": "    if (!busy && node) node._keepHidden = true;   // the move ended under the film or the window: it ends hidden\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-built-over-a-window",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  if (hiddenNow()) root.classList.add('aside');\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-veil-never-lifted",
-  "file": "src/ui/loadingScreen.js",
-  "old": "!!node && !hiddenNow() && !node._keepHidden",
-  "new": "!!node",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-css-off-the-constant",
-  "file": "src/ui/loadingScreen.js",
-  "old": "z-index: ${LOADING_Z}; overflow: hidden;",
-  "new": "z-index: 119; overflow: hidden;",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-sky-drawn-per-screen",
-  "file": "src/ui/loadingScreen.js",
-  "old": "if (!groundKept || groundKept.w !== w || groundKept.h !== h) {",
-  "new": "if (true) {",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-place-left-said",
-  "file": "src/ui/loadingScreen.js",
-  "old": "  return moving ? '' : here();",
-  "new": "  return here();",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-download-unswitchable",
-  "file": "src/ui/screenshot.js",
-  "old": "download: getPref(SHOT_DOWNLOAD_PREF) !== false",
-  "new": "download: true",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-place-not-read-at-press",
-  "file": "src/ui/screenshot.js",
-  "old": "  const place = placeNow();",
-  "new": "  const place = 'x';",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-keep-never-called",
-  "file": "src/ui/screenshot.js",
-  "old": "Promise.resolve().then(() => keep(blob))",
-  "new": "Promise.resolve().then(() => null)",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-delete-first-press",
-  "file": "src/ui/shotsPane.js",
-  "old": "if (armed !== s.id) { armed = s.id; fill(root); return; }",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-switch-writes-nothing",
-  "file": "src/ui/shotsPane.js",
-  "old": "turn.onclick = () => { armed = null; setShotLoading(s.id, !on); };",
-  "new": "turn.onclick = () => { armed = null; };",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-arm-outlives-pane",
-  "file": "src/ui/shotsPane.js",
-  "old": "  viewing = null; armed = null; focusNext = null;\n  const root = el('div', 'shots');",
-  "new": "  const root = el('div', 'shots');",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-focus-dropped",
-  "file": "src/ui/shotsPane.js",
-  "old": "  if (want) [...root.querySelectorAll('button')].find((b) => keyOf(b) === want)?.focus?.();\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-deleted-focus-lost",
-  "file": "src/ui/shotsPane.js",
-  "old": "    focusNext = focusAfterDelete;\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-unread-silent",
-  "file": "src/ui/shotsPane.js",
-  "old": "  if (unread) words.push(",
-  "new": "  if (false) words.push(",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-file-day-ignored",
-  "file": "src/ui/shotsPane.js",
-  "old": "at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now()",
-  "new": "at: Date.now()",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-classic-words-lost",
-  "file": "src/ui/shotsPane.js",
-  "old": "(isEnhanced() ? loadingMode() : 'classic')",
-  "new": "loadingMode()",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-frame-sync-gone",
-  "file": "src/scenes/world.js",
-  "old": "    syncLoading(_moving, { place: loadingPlaceNow, line: loadingLineNow });\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-frame-window-aside-gone",
-  "file": "src/scenes/world.js",
-  "old": "    setLoadingAside('window', townTalk.overlayActive || !!modes?.overlayHeld);\n",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-boot-hold-never-ended",
-  "file": "src/scenes/world.js",
-  "old": "if (msg == null) bootLoading.end(); else ",
-  "new": "",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-boot-place-guard-stale",
-  "file": "src/scenes/world.js",
-  "old": "if (!params.has('load') && !(params.has('classicload') && peekPendingClassicSave())) setLoadingPlace",
-  "new": "if (!params.has('load') && !params.has('classicload')) setLoadingPlace",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-chargen-under-the-screen",
-  "file": "src/scenes/world.js",
-  "old": "      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard",
-  "new": "      // AUDIT LOAD1 2: the wizard",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-abyss-borrowed-name",
-  "file": "src/scenes/world.js",
-  "old": "    if (_ohGpsName?.key === key && _ohGpsName.name) return _ohGpsName.name;",
-  "new": "    if (false) return _ohGpsName.name;",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-party-wait-unsaid",
-  "file": "src/scenes/world.js",
-  "old": "_traveling ? (_partyWaitLine || 'Travelling')",
-  "new": "_traveling ? 'Travelling'",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-dest-never-set",
-  "file": "src/scenes/world.js",
-  "old": "    _loadingDest = { x: px, y: py }; setLoadingPlace(placeAtPixel(px, py));",
-  "new": "    setLoadingPlace(placeAtPixel(px, py));",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-claimed-loop-keeps",
-  "file": "src/scenes/shared.js",
-  "old": "export function claimFrame() { syncLoading(false); return",
-  "new": "export function claimFrame() { return",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-film-not-aside",
-  "file": "src/scenes/shared.js",
-  "old": "  _frameHold++;\n  stepAsideLoading(true);",
-  "new": "  _frameHold++;",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-film-aside-for-ever",
-  "file": "src/scenes/shared.js",
-  "old": " if (!_frameHold) stepAsideLoading(false); };",
-  "new": " };",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- },
- {
-  "name": "LOAD1-pane-release-gone",
-  "file": "src/ui/enhanced/enhancedMenu.js",
-  "old": "      releaseShotsPane();   // LOAD1",
-  "new": "      // LOAD1",
-  "tests": [
-   "test/ui/load1_loading.test.js"
-  ]
- }
+  {
+    "name": "LOAD1-turn-ignores-out",
+    "file": "src/systems/shotGallery.js",
+    "old": "  const pool = (Array.isArray(list) ? list : []).filter((s) => s && s.loading !== false);",
+    "new": "  const pool = (Array.isArray(list) ? list : []).filter((s) => s);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-no-cap",
+    "file": "src/systems/shotGallery.js",
+    "old": "    if ((await b.count()) >= GALLERY_MAX) return 'full';",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-upscale",
+    "file": "src/systems/shotGallery.js",
+    "old": "  const s = Math.min(1, edge / Math.max(W, H));",
+    "new": "  const s = edge / Math.max(W, H);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-last-never-picked",
+    "file": "src/systems/shotGallery.js",
+    "old": "  const i = Math.min(pool.length - 1, Math.floor(Math.max(0, rand()) * pool.length));",
+    "new": "  const i = Math.min(pool.length - 1, Math.floor(Math.max(0, rand()) * (pool.length - 1)));",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-thumb-at-full-edge",
+    "file": "src/systems/shotGallery.js",
+    "old": "  const thumb = fitWithin(w, h, THUMB_W);",
+    "new": "  const thumb = fitWithin(w, h, FULL_EDGE);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-id-strip-inverted",
+    "file": "src/systems/shotGallery.js",
+    "old": "      return run('readwrite', (s) => s.put(id == null ? fresh : rec)).then(Number);",
+    "new": "      return run('readwrite', (s) => s.put(id == null ? rec : fresh)).then(Number);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-no-open-fallback",
+    "file": "src/systems/shotGallery.js",
+    "old": "          if (!e?.galleryOpenFailed) throw e;",
+    "new": "          throw e;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-cap-raced",
+    "file": "src/systems/shotGallery.js",
+    "old": "  const run = _keeping.then(() => keepOne(image, meta));",
+    "new": "  const run = keepOne(image, meta);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-no-delay",
+    "file": "src/ui/loadingScreen.js",
+    "old": "    if (delay > 0)",
+    "new": "    if (false)",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-no-stand",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  const wait = Math.max(0, MIN_SHOWN_MS - (Date.now() - shownAt));",
+    "new": "  const wait = 0;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-no-ceiling",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (Number.isFinite(maxMs) && maxMs > 0) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-first-hold-additive",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!holds.size) {",
+    "new": "  if (holds.size) {",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-nested-hold-wipes",
+    "file": "src/ui/loadingScreen.js",
+    "old": "    if (p) place = String(p);\n    if (l) line = String(l);",
+    "new": "    place = String(p);\n    line = String(l);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-hold-per-frame",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!framed) framed = beginLoading({ place: placeOf(), line: lineOf(), delay, why: 'a world move' });",
+    "new": "  if (true) framed = beginLoading({ place: placeOf(), line: lineOf(), delay, why: 'a world move' });",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-frame-hold-never-ended",
+    "file": "src/ui/loadingScreen.js",
+    "old": "      const h = framed;\n      framed = null;\n      h.end();",
+    "new": "      framed = null;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-classic-drawn",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!isEnhanced(search)) return 'off';",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-shot-probe-drawn",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (pageHas('shot', search) || pageHas('noloading', search)) return 'off';\n  if (!isEnhanced(search)) return 'off';",
+    "new": "  if (!isEnhanced(search)) return 'off';",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-stale-line",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!holds.size) return;\n  line = String(text ?? '');",
+    "new": "  line = String(text ?? '');",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-stale-place",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!holds.size) return;\n  place = String(text ?? '');",
+    "new": "  place = String(text ?? '');",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-shot-never-asked",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (loadingMode() === 'shots') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-caption-lost",
+    "file": "src/ui/loadingScreen.js",
+    "old": "        if (cap) corner.replaceChildren(el('span', 'ld-cap', cap));\n      })",
+    "new": "      })",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-with-loading-no-finally",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  try {\n    return await fn(hold);\n  } finally {\n    hold.end();\n  }",
+    "new": "  return await fn(hold);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-aside-paints-nothing",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (node) node.classList.toggle('aside', hiddenNow() || !!node._keepHidden);\n  paintHudVeil();",
+    "new": "  paintHudVeil();",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-flash-back-after-film",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (had && !on && !asideFor.size && framed?.open) revealOnSync = true;\n  paintAside();",
+    "new": "  paintAside();",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-ends-visible-after-film",
+    "file": "src/ui/loadingScreen.js",
+    "old": "    if (!busy && node) node._keepHidden = true; // the move ended under the film or the window: it ends hidden\n    paintAside();",
+    "new": "    paintAside();",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-built-over-a-window",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (hiddenNow()) root.classList.add('aside');\n",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-veil-never-lifted",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  globalThis.document?.body?.classList?.toggle('ld-up', !!node && !hiddenNow() && !node._keepHidden);",
+    "new": "  globalThis.document?.body?.classList?.toggle('ld-up', !!node);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-css-off-the-constant",
+    "file": "src/ui/loadingScreen.js",
+    "old": ".ld { position: fixed; inset: 0; z-index: ${LOADING_Z}; overflow: hidden; background: var(--ink, #0e1013);",
+    "new": ".ld { position: fixed; inset: 0; z-index: 119; overflow: hidden; background: var(--ink, #0e1013);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-sky-drawn-per-screen",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  if (!groundKept || groundKept.w !== w || groundKept.h !== h) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-place-left-said",
+    "file": "src/ui/loadingScreen.js",
+    "old": "  return moving ? '' : here();",
+    "new": "  return here();",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-download-unswitchable",
+    "file": "src/ui/screenshot.js",
+    "old": "  _shoot(_canvas, {\n    keep: (blob) => keepInGallery(blob, place),\n    download: getPref(SHOT_DOWNLOAD_PREF) !== false,\n    said: sayOnHud,\n  });",
+    "new": "  _shoot(_canvas, { keep: (blob) => keepInGallery(blob, place), download: true, said: sayOnHud });",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-place-not-read-at-press",
+    "file": "src/ui/screenshot.js",
+    "old": "  const place = placeNow(); // where the key was pressed, not where the gallery's answer finds the player",
+    "new": "  const place = 'x'; // where the key was pressed, not where the gallery's answer finds the player",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-keep-never-called",
+    "file": "src/ui/screenshot.js",
+    "old": "            .then(() => keep(blob))",
+    "new": "            .then(() => null)",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-delete-first-press",
+    "file": "src/ui/shotsPane.js",
+    "old": "    if (armed !== s.id) {\n      armed = s.id;\n      fill(root);\n      return;\n    }\n    armed = null;",
+    "new": "    armed = null;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-switch-writes-nothing",
+    "file": "src/ui/shotsPane.js",
+    "old": "    setShotLoading(s.id, !on);\n  };",
+    "new": "  };",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-arm-outlives-pane",
+    "file": "src/ui/shotsPane.js",
+    "old": "  viewing = null;\n  armed = null;\n  focusNext = null;\n  const root = el('div', 'shots');",
+    "new": "  const root = el('div', 'shots');",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-focus-dropped",
+    "file": "src/ui/shotsPane.js",
+    "old": "  if (want) [...root.querySelectorAll('button')].find((b) => keyOf(b) === want)?.focus?.();\n}",
+    "new": "}",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-deleted-focus-lost",
+    "file": "src/ui/shotsPane.js",
+    "old": "    focusNext = focusAfterDelete;\n    deleteShot(s.id);",
+    "new": "    deleteShot(s.id);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-unread-silent",
+    "file": "src/ui/shotsPane.js",
+    "old": "  if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);",
+    "new": "  if (false) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-file-day-ignored",
+    "file": "src/ui/shotsPane.js",
+    "old": "    const r = await keepShot(f, {\n      place: '',\n      at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now(),\n    });",
+    "new": "    const r = await keepShot(f, { place: '', at: Date.now() });",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-classic-words-lost",
+    "file": "src/ui/shotsPane.js",
+    "old": "export const loadingWordsKey = () => (isEnhanced() ? loadingMode() : 'classic');",
+    "new": "export const loadingWordsKey = () => loadingMode();",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-frame-sync-gone",
+    "file": "src/scenes/world.js",
+    "old": "    syncLoading(_moving, { place: loadingPlaceNow, line: loadingLineNow });\n",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-frame-window-aside-gone",
+    "file": "src/scenes/world.js",
+    "old": "    setLoadingAside('window', townTalk.overlayActive || !!modes?.overlayHeld);\n",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-boot-hold-never-ended",
+    "file": "src/scenes/world.js",
+    "old": "if (msg == null) bootLoading.end(); else ",
+    "new": "",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-boot-place-guard-stale",
+    "file": "src/scenes/world.js",
+    "old": "if (!params.has('load') && !(params.has('classicload') && peekPendingClassicSave())) setLoadingPlace",
+    "new": "if (!params.has('load') && !params.has('classicload')) setLoadingPlace",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-chargen-under-the-screen",
+    "file": "src/scenes/testPresetHost.js",
+    "old": "      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard",
+    "new": "      // AUDIT LOAD1 2: the wizard",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-abyss-borrowed-name",
+    "file": "src/scenes/world.js",
+    "old": "    if (_ohGpsName?.key === key && _ohGpsName.name) return _ohGpsName.name;",
+    "new": "    if (false) return _ohGpsName.name;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-party-wait-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "_traveling ? (_partyWaitLine || 'Travelling')",
+    "new": "_traveling ? 'Travelling'",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-dest-never-set",
+    "file": "src/scenes/world.js",
+    "old": "    _loadingDest = { x: px, y: py }; setLoadingPlace(placeAtPixel(px, py));",
+    "new": "    setLoadingPlace(placeAtPixel(px, py));",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-claimed-loop-keeps",
+    "file": "src/scenes/shared.js",
+    "old": "export function claimFrame() { syncLoading(false); return",
+    "new": "export function claimFrame() { return",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-film-not-aside",
+    "file": "src/scenes/shared.js",
+    "old": "  _frameHold++;\n  stepAsideLoading(true);",
+    "new": "  _frameHold++;",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-film-aside-for-ever",
+    "file": "src/scenes/shared.js",
+    "old": " if (!_frameHold) stepAsideLoading(false); };",
+    "new": " };",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  },
+  {
+    "name": "LOAD1-pane-release-gone",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      releaseShotsPane();   // LOAD1",
+    "new": "      // LOAD1",
+    "tests": [
+      "test/ui/load1_loading.test.js"
+    ]
+  }
 ]

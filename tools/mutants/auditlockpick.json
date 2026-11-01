@@ -11,8 +11,8 @@
   {
     "name": "AUDITLOCK-A1-tally-dropped",
     "file": "src/scenes/lockpickHost.js",
-    "old": "onOpen: () => { tallyCrimeGuildRequirements(player, true, 1); ",
-    "new": "onOpen: () => { ",
+    "old": "          tallyCrimeGuildRequirements(player, true, 1);\n          line(LOCKPICKING_SUCCESS_TEXT);",
+    "new": "          line(LOCKPICKING_SUCCESS_TEXT);",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITLOCK-A1-never-entered",
     "file": "src/scenes/lockpickHost.js",
-    "old": "audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); enter(); }",
-    "new": "audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); }",
+    "old": "          enter();\n        },",
+    "new": "        },",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITLOCK-A2-jitter-narrowed",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "riseJitter: 0.45,",
-    "new": "riseJitter: 0.3,",
+    "old": "  riseJitter: 0.45,",
+    "new": "  riseJitter: 0.3,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITLOCK-A2-hang-widened",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "windowMinS: 0.08,",
-    "new": "windowMinS: 0.18,",
+    "old": "  windowMinS: 0.08,",
+    "new": "  windowMinS: 0.18,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITLOCK-A2-grace-widened",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "graceS: 0.03,",
-    "new": "graceS: 0.05,",
+    "old": "  graceS: 0.03,",
+    "new": "  graceS: 0.05,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITLOCK-A3-tail-any-close",
     "file": "src/scenes/lockpickHost.js",
-    "old": "if (opened && self && !dead",
-    "new": "if (opened && !dead",
+    "old": "          if (opened && self && !dead && !(player?.health <= 0)) onOpen();",
+    "new": "          if (opened && !dead && !(player?.health <= 0)) onOpen();",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITLOCK-A3-gone-unread",
     "file": "src/ui/lockpickWindow.js",
-    "old": "    if (deps.gone?.()) { deps.onGone?.(); return; }",
-    "new": "    if (false) { deps.onGone?.(); return; }",
+    "old": "    if (deps.gone?.()) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDITLOCK-A8-gentle-times",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const press = () => { if (gentle) gentleWord(); else if (!out && !st.done) answered(act.press()); };",
-    "new": "const press = () => { if (!out && !st.done) answered(act.press()); };",
+    "old": "    if (gentle) gentleWord();\n    else if (!out && !st.done) answered(act.press());",
+    "new": "    if (!out && !st.done) answered(act.press());",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js",
       "test/systems/lockpick/lockpick_ui.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AUDITLOCK-A8-closes-twice",
     "file": "src/ui/lockpickDoor.js",
-    "old": "    if (fired) return;\n",
-    "new": "",
+    "old": "    if (fired) return;\n    unregister();",
+    "new": "    unregister();",
     "tests": [
       "test/systems/lockpick/lockpick_door.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDITLOCK-B4-whole-on-any",
     "file": "src/systems/shopStock.js",
-    "old": "n += restockLockpicks(shelfItems, (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0));",
-    "new": "n += restockLockpicks(shelfItems, 999);",
+    "old": "  n += restockLockpicks(\n    shelfItems,\n    (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0),\n  ); // AUDIT LOCKPICK B4: what the purchase took",
+    "new": "  n += restockLockpicks(shelfItems, 999); // AUDIT LOCKPICK B4: what the purchase took",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDITLOCK-B4-past-the-stack",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);",
-    "new": "stack.stackCount = was + took;",
+    "old": "  stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);",
+    "new": "  stack.stackCount = was + took;",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDITLOCK-C1-window-role",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .lk-win',   // AUDIT LOCKPICK C1",
-    "new": "    // AUDIT LOCKPICK C1",
+    "old": "    'body .lk-win', // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)",
+    "new": "    // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDITLOCK-C1-classic-unlaid",
     "file": "src/ui/lockpickWindow.js",
-    "old": "  injectLockSkinStyle(doc);\n",
-    "new": "",
+    "old": "  injectLockSkinStyle(doc);\n  const el = (tag, cls, text = '') => {",
+    "new": "  const el = (tag, cls, text = '') => {",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDITLOCK-C1-cut-wide",
     "file": "src/ui/lockpickWindow.js",
-    "old": "scopeRules(frameCss(), (sel) => sel.includes('.lk-'))",
-    "new": "scopeRules(frameCss(), (sel) => sel.includes('lk-'))",
+    "old": "  [PIXELIFY_FIVE_FACE, LOCK_CSS, scopeRules(frameCss(), (sel) => sel.includes('.lk-'))].join('\\n');",
+    "new": "  [PIXELIFY_FIVE_FACE, LOCK_CSS, scopeRules(frameCss(), (sel) => sel.includes('lk-'))].join('\\n');",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDITLOCK-C3-dpad-jumps",
     "file": "src/ui/gamepadInput.js",
-    "old": "const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);",
-    "new": "const to = spatialStep(cursor, dir);",
+    "old": "          const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);",
+    "new": "          const to = spatialStep(cursor, dir);",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDITLOCK-C3-x-quick-act",
     "file": "src/ui/gamepadInput.js",
-    "old": "try { if (!arm?.auto?.()) quickActApi()",
-    "new": "try { if (true) quickActApi()",
+    "old": "            if (!arm?.auto?.())\n              quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null);",
+    "new": "            if (true) quickActApi()?.act?.(globalThis.document?.elementFromPoint?.(cursor[0], cursor[1]) ?? null);",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDITLOCK-C3-window-prompts",
     "file": "src/ui/gamepadInput.js",
-    "old": "showPrompts(arm ? lockPrompts(",
-    "new": "showPrompts(false ? lockPrompts(",
+    "old": "        arm",
+    "new": "        false",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDITLOCK-C3-arm-left",
     "file": "src/ui/lockpickWindow.js",
-    "old": "      unarm();\n",
-    "new": "",
+    "old": "      unarm();\n      win.remove();",
+    "new": "      win.remove();",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ],
@@ -248,8 +248,8 @@
   {
     "name": "AUDITLOCK-C3-pad-codes-unread",
     "file": "src/ui/lockpickWindow.js",
-    "old": "ArrowRight: 'right', KeyD: 'right', JoystickAxis6Button0: 'right',",
-    "new": "ArrowRight: 'right', KeyD: 'right',",
+    "old": "  JoystickAxis6Button0: 'right',\n  Space: 'press',",
+    "new": "  Space: 'press',",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "AUDITLOCK-C3-door-deaf",
     "file": "src/ui/lockpickDoor.js",
-    "old": ": lockKeyAct(String(a ?? ''));",
-    "new": ": null;",
+    "old": "      const k =\n        a === 'up' || a === 'confirm' || a === 'select'\n          ? 'press'\n          : a === 'left' || a === 'right'\n            ? a\n            : lockKeyAct(String(a ?? ''));",
+    "new": "      const k = a === 'up' || a === 'confirm' || a === 'select' ? 'press' : a === 'left' || a === 'right' ? a : null;",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDITLOCK-C4-button-enter",
     "file": "src/ui/lockpickWindow.js",
-    "old": "&& to?.closest?.('.lk-acts button')) { e.stopPropagation(); return; }",
-    "new": "&& false) { e.stopPropagation(); return; }",
+    "old": "    if ((k === 'Enter' || k === 'NumpadEnter' || k === 'Space') && to?.closest?.('.lk-acts button')) {",
+    "new": "    if ((k === 'Enter' || k === 'NumpadEnter' || k === 'Space') && false) {",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AUDITLOCK-S1-field-taken",
     "file": "src/ui/lockpickWindow.js",
-    "old": "    if (to?.closest?.('input, textarea, select, [contenteditable=\"true\"]')) return;",
-    "new": "",
+    "old": "    if (to?.closest?.('input, textarea, select, [contenteditable=\"true\"]')) return; // AUDIT LOCKPICK S1: a field's typing is the field's",
+    "new": "    // AUDIT LOCKPICK S1: a field's typing is the field's",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "AUDITLOCK-C5-narrow-target",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const half = n <= 1 ? (G.right - G.left) / 2 : Math.max(G.chamber * 0.9, (chamberX(n, 1) - chamberX(n, 0)) / 2);",
-    "new": "const half = G.chamber * 0.9;",
+    "old": "  const half = n <= 1 ? (G.right - G.left) / 2 : Math.max(G.chamber * 0.9, (chamberX(n, 1) - chamberX(n, 0)) / 2);",
+    "new": "  const half = G.chamber * 0.9;",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDITLOCK-C6-auto-plain",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "warn: ['body .lk-acts .lk-auto',",
-    "new": "warn: [",
+    "old": "    'body .lk-acts .lk-auto',\n    /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn',",
+    "new": "    /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn',",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "AUDITLOCK-C7-refusal-silent",
     "file": "src/ui/lockpickWindow.js",
-    "old": "    if (out) say(LOCK_WORDS.none(), TONE.none);",
-    "new": "    if (out) {}",
+    "old": "    if (out)\n      say(LOCK_WORDS.none(), TONE.none); // AUDIT LOCKPICK C7: the refused Auto says why",
+    "new": "    if (out) {\n    } // AUDIT LOCKPICK C7: the refused Auto says why",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "AUDITLOCK-C7-disabled",
     "file": "src/ui/lockpickWindow.js",
-    "old": "autoB.setAttribute('aria-disabled', String(out || st.done));",
-    "new": "autoB.disabled = out || st.done;",
+    "old": "    autoB.setAttribute('aria-disabled', String(out || st.done));",
+    "new": "    autoB.disabled = out || st.done;",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AUDITLOCK-C7-gentle-silent",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const gentleWord = () => say(LOCK_WORDS.gentlePress(), TONE.springy);",
-    "new": "const gentleWord = () => {};",
+    "old": "  const gentleWord = () => say(LOCK_WORDS.gentlePress(), TONE.springy);",
+    "new": "  const gentleWord = () => {};",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "AUDITLOCK-C9-dash-aside",
     "file": "src/ui/lockpickWindow.js",
-    "old": "waits at the line. Press again while it waits to set it.')",
-    "new": "waits at the line - press again while it waits to set it.')",
+    "old": "      'Lift the pins one at a time. The binding pin rises slowly and waits at the line. Press again while it waits to set it.',",
+    "new": "      'Lift the pins one at a time. The binding pin rises slowly and waits at the line - press again while it waits to set it.',",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "AUDITLOCK-C9-keys-six",
     "file": "src/ui/lockpickWindow.js",
-    "old": "Q: auto attempt. Esc: leave.', { n }),",
-    "new": "Q: auto attempt. Esc: leave.', { n: 6 }),",
+    "old": "      { n },",
+    "new": "      { n: 6 },",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "AUDITLOCK-C12-dpr-one",
     "file": "src/ui/lockpickWindow.js",
-    "old": "const dpr = Math.max(1, Number(screenDpr()) || 1);",
-    "new": "const dpr = 1;",
+    "old": "  const dpr = Math.max(1, Number(screenDpr()) || 1);",
+    "new": "  const dpr = 1;",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "AUDITLOCK-C13-classic-silent",
     "file": "src/systems/lockpick/lockpickSounds.js",
-    "old": " break: SOUND.Parry6, slip: SOUND.EquipShortBlade,",
-    "new": "",
+    "old": "  break: SOUND.Parry6,\n  slip: SOUND.EquipShortBlade,\n});",
+    "new": "});",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]

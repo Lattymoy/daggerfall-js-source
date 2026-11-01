@@ -1,4 +1,4 @@
-// WG2 PHASE 4 (bible/03-World/World-2-Arc.md): THE WORLD EDITOR'S MODEL - edits as data in named layers over a bake,
+// WG2 PHASE 4: THE WORLD EDITOR'S MODEL - edits as data in named layers over a bake,
 // never in it; undo and redo; what an edit makes stale; the road from draft to published with its gates (validation, a
 // second pair of eyes, staging, protected property) and an atomic publication a rollback restores; packages that refuse
 // a change on the way; the artist's prefabs held to their budgets. Pins mutation-checked (tools/mutants/wg2.json).

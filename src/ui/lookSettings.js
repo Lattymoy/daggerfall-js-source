@@ -10,7 +10,7 @@
 // shipped default of 2.0 is twice as fast - the same relationship
 // DFU's own default has to its base.
 import { getFloat, getBool } from '../systems/settings/settings.js';
-import { LOOK_SENSITIVITY_FIELD } from '../systems/gamepad.js';   // WIDGET-LOOK: PlayerMouseLook's serialized 2, one export
+import { LOOK_SENSITIVITY_FIELD } from '../systems/gamepad.js'; // WIDGET-LOOK: PlayerMouseLook's serialized 2, one export
 
 /** Radians per pixel at MouseLookSensitivity 1.0 - the port's own
  *  feel constant, unchanged from before the setting existed. */
@@ -46,7 +46,8 @@ export const lookInvert = () => (getBool('Controls', 'InvertMouseVertical') ? -1
  *  uncapped rAF cannot be the first). Radians a second at the live
  *  sensitivity. */
 export const KEYBOARD_LOOK_UNITS_PER_SECOND = 60;
-export const keyboardLookRate = () => (Math.PI / 180) * KEYBOARD_LOOK_UNITS_PER_SECOND * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0);
+export const keyboardLookRate = () =>
+  (Math.PI / 180) * KEYBOARD_LOOK_UNITS_PER_SECOND * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0);
 
 /** WIDGET-LOOK (FIELD BUGS 2026-10-03, SlipperyPeasant: "The inertia module for the weapon and shield widget mods dont
  *  work, the sprites dont sway back and forth when you look around"): THE FRAME'S LOOK IN DFU'S OWN AXES. Weapon
@@ -58,6 +59,6 @@ export const keyboardLookRate = () => (Math.PI / 180) * KEYBOARD_LOOK_UNITS_PER_
  *  over 4). So: degrees, over the field times the setting, the invert undone. The Thunderlock's own feel keeps the
  *  radians its lab is tuned on (gun-proto.html feeds them; FIELD-GUN8's "1:1" is with the lab). */
 export function dfuLookAxes(look) {
-  const k = (180 / Math.PI) / (LOOK_SENSITIVITY_FIELD * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0));
+  const k = 180 / Math.PI / (LOOK_SENSITIVITY_FIELD * getFloat('Controls', 'MouseLookSensitivity', 0.1, 16.0));
   return [(look?.[0] ?? 0) * k, (look?.[1] ?? 0) * k * lookInvert()];
 }

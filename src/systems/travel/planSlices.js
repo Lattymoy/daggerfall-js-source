@@ -24,9 +24,11 @@ export const PLAN_PENDING = Object.freeze({ planPending: true });
 
 /** A plan's ask as a key: its goal, the roads and tracks it is handed, the sea's ask, the goal's exemption - never its
  *  start, which a traveller still walking moves while the plan is made (the plan from where the journey was asked). */
-const keyOf = (from, to, o = {}) => `${to?.x},${to?.y}|${o.roads ? 'r' : ''}${o.tracks ? 't' : ''}|${o.sea ? `${o.sea.start}/${o.sea.goal}/${!!o.sea.again}/${!!o.sea.voyage}` : '-'}|${o.goalExempt ?? ''}|${o.lanes ?? ''}`;
+const keyOf = (from, to, o = {}) =>
+  `${to?.x},${to?.y}|${o.roads ? 'r' : ''}${o.tracks ? 't' : ''}|${o.sea ? `${o.sea.start}/${o.sea.goal}/${!!o.sea.again}/${!!o.sea.voyage}` : '-'}|${o.goalExempt ?? ''}|${o.lanes ?? ''}`;
 
-const nextFrame = (fn) => (typeof globalThis.requestAnimationFrame === 'function' ? globalThis.requestAnimationFrame(fn) : setTimeout(fn, 0));
+const nextFrame = (fn) =>
+  typeof globalThis.requestAnimationFrame === 'function' ? globalThis.requestAnimationFrame(fn) : setTimeout(fn, 0);
 
 /**
  * @param {{ budget?: number, schedule?: (fn: () => void) => any, onPending?: (() => void) | null }} [o]
@@ -42,12 +44,17 @@ export function createPlanSlices({ budget = PLAN_FRAME_CELLS, schedule = nextFra
     p.slices++;
     for (;;) {
       const r = p.it.next();
-      if (r.done) { p.done = true; p.value = r.value; return; }
+      if (r.done) {
+        p.done = true;
+        p.value = r.value;
+        return;
+      }
       if (p.tally.n - start >= budget) return;
     }
   }
   function go(j) {
-    current = j; j.k = 0;
+    current = j;
+    j.k = 0;
     try {
       const v = j.run();
       current = null;
@@ -55,9 +62,17 @@ export function createPlanSlices({ budget = PLAN_FRAME_CELLS, schedule = nextFra
       return v;
     } catch (e) {
       current = null;
-      if (e !== PLAN_PENDING) { if (live === j) live = null; throw e; }
-      if (!j.waiting) { j.waiting = true; onPending?.(); }
-      schedule(() => { if (live === j) go(j); });
+      if (e !== PLAN_PENDING) {
+        if (live === j) live = null;
+        throw e;
+      }
+      if (!j.waiting) {
+        j.waiting = true;
+        onPending?.();
+      }
+      schedule(() => {
+        if (live === j) go(j);
+      });
       return true;
     }
   }
@@ -68,7 +83,7 @@ export function createPlanSlices({ budget = PLAN_FRAME_CELLS, schedule = nextFra
      * @template T @param {() => T} run @returns {T | true}
      */
     journey(run) {
-      if (current) return run();   // asked from inside a journey: its own
+      if (current) return run(); // asked from inside a journey: its own
       const j = { run, plans: [], k: 0, waiting: false, slices: 0 };
       live = j;
       return go(j);
@@ -77,7 +92,8 @@ export function createPlanSlices({ budget = PLAN_FRAME_CELLS, schedule = nextFra
     plan(from, to, opts = {}) {
       const j = current;
       if (!j) return drainPlan(planRouteSteps(from, to, opts));
-      const k = j.k++, key = keyOf(from, to, opts);
+      const k = j.k++,
+        key = keyOf(from, to, opts);
       let p = j.plans[k];
       if (!p || p.key !== key) {
         const tally = { n: 0 };
@@ -85,13 +101,19 @@ export function createPlanSlices({ budget = PLAN_FRAME_CELLS, schedule = nextFra
         j.plans[k] = p;
         j.plans.length = k + 1;
       }
-      if (!p.done) { slice(p); j.slices++; if (!p.done) throw PLAN_PENDING; }
+      if (!p.done) {
+        slice(p);
+        j.slices++;
+        if (!p.done) throw PLAN_PENDING;
+      }
       return p.value;
     },
     /** Whether a journey's plan is being made. */
     planning: () => !!live,
     /** The journey being planned let go (its plan never lands). */
-    cancel() { live = null; },
+    cancel() {
+      live = null;
+    },
   };
 }
 

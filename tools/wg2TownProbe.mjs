@@ -1,12 +1,12 @@
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements") - WORLD 2.0 TOWNS STANDING in the real game.
+// WORLD 2.0 TOWNS STANDING in the real game.
 // Boots the streaming world headless on SwiftShader at a one-square land view with the prototype regions behind `?wg2=`,
 // jumps to each town asked (`__tesaJump`, as a fast travel lands) and judges what stood: the pixel's location is the town,
 // the arrival on its own pixel, every building a door, each floor on the region's ground, each record its building's
 // type, its walkers on its streets and walking, its features stood (a wall and its gate, stilt platforms and a dock), and
 // its tavern's door entered into its made interior. Every wait is on the shot-mode frame counter or the stream's idle
-// flag, never a sleep (Home.md, Process). Photographs each town, its features and its tavern.
+// flag, never a sleep (Process). Photographs each town, its features and its tavern.
 //
-//   ARENA2_PATH=/home/claude/dfdata/arena2 OUT=/tmp/wg2towns node tools/wg2TownProbe.mjs
+//  ARENA2_PATH=/home/claude/dfdata/arena2 OUT=/tmp/wg2towns node tools/wg2TownProbe.mjs
 //
 // Env: OUT the PNGs' directory (renders of game data stay outside the tree); TOWNS pixels `x,y;x,y` (default Tava Wells,
 // Sentry Hold and Hist Shallows); PORT the dev server's; W/H the viewport; CHROMIUM a browser other than Playwright's.
@@ -119,7 +119,7 @@ try {
     const gap = (k) => Math.max(0, ...doors.filter((d) => d.kind === k).map((d) => Math.abs(d.lift - d.exact)));
     console.log(`${town.name}: ${doors.length} doors for ${town.buildings} buildings (${ids.size} distinct); each floor over the stream's ground within ${Math.max(0, ...plinths.map((d) => Math.abs(d.lift - d.want))).toFixed(2)} m of the region's as sampled; ${doors.filter((d) => d.kind === 'terrace').length} on pads, ${doors.length - plinths.length} on stilts; the sampling's gap to the exact ground at a door: plinth ${gap('plinth').toFixed(2)} m, terrace ${gap('terrace').toFixed(2)} m`);
     if (ids.size < town.buildings || doors.length < town.buildings) fail(`${town.name}: ${ids.size} buildings with a door of ${town.buildings}`);
-    // WG-14: no door under the ground the game draws before it (bible/03-World/World-2-Arc.md)
+    // No door under the ground the game draws before it
     const low = (k) => { const v = doors.filter((d) => d.kind === k).map((d) => d.lift); return v.length ? `${Math.min(...v).toFixed(2)} m` : 'none'; };
     const sunk = plinths.filter((d) => d.lift < -0.05);
     console.log(`${town.name}: the lowest sill over the drawn ground: plinth ${low('plinth')}, terrace ${low('terrace')}`);

@@ -266,7 +266,7 @@ test('LOOT4: the thorns - back to the foe whose blow took my health, through the
   setStruck(orc, me, 5); hurtPlayer(me, 5);
   assert.equal(d.hurts.length, before, 'off: none');
   // the registration, in the sigil sets' own hurt: one law of a landed blow
-  assert.match(strip(read('src/systems/sigil/sigilSetPowers.js')), /if \(before - after > 0\) for \(const fn of _landed\.values\(\)\)/);
+  assert.match(strip(read('src/systems/sigil/sigilSetPowers.js')), /if \(before - after > 0\)\n\s*for \(const fn of _landed\.values\(\)\)/);
 });
 
 test('LOOT4: the focus - my spells cost less, all I wear under the cap; registered at every seam under one name', () => {

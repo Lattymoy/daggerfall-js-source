@@ -56,15 +56,25 @@ export const STAR_FALL_COLOR = Object.freeze([0.66, 0.5, 1.0]);
  */
 export function streakAt(site, bearing, k) {
   const out = [Math.sin(bearing) * STAR_FALL_FROM_M, STAR_FALL_ALT_M, Math.cos(bearing) * STAR_FALL_FROM_M];
-  const len = Math.hypot(out[0], out[1], out[2]), d = 1 - Math.min(1, Math.max(0, k)) ** 2;
-  return { head: [site[0] + out[0] * d, site[1] + out[1] * d, site[2] + out[2] * d], dir: [out[0] / len, out[1] / len, out[2] / len] };
+  const len = Math.hypot(out[0], out[1], out[2]),
+    d = 1 - Math.min(1, Math.max(0, k)) ** 2;
+  return {
+    head: [site[0] + out[0] * d, site[1] + out[1] * d, site[2] + out[2] * d],
+    dir: [out[0] / len, out[1] / len, out[2] / len],
+  };
 }
 /** The omen's star over `site`: straight up its altitude, and its glow's size `k` 0..1 through the omen. Pure. */
-export const omenAt = (site, k) => ({ at: [site[0], site[1] + STAR_OMEN_ALT_M, site[2]], w: STAR_OMEN_W[0] + (STAR_OMEN_W[1] - STAR_OMEN_W[0]) * Math.min(1, Math.max(0, k)) ** 2 });
+export const omenAt = (site, k) => ({
+  at: [site[0], site[1] + STAR_OMEN_ALT_M, site[2]],
+  w: STAR_OMEN_W[0] + (STAR_OMEN_W[1] - STAR_OMEN_W[0]) * Math.min(1, Math.max(0, k)) ** 2,
+});
 /** A sky thing at `p` as the frame can hold it: scaled about `eye` to STAR_SKY_R when it is farther - `{ at, s }`, `s`
  *  the scale every length of it takes. Pure. */
 export function skyClamp(eye, p) {
-  const dx = p[0] - eye[0], dy = p[1] - eye[1], dz = p[2] - eye[2], d = Math.hypot(dx, dy, dz);
+  const dx = p[0] - eye[0],
+    dy = p[1] - eye[1],
+    dz = p[2] - eye[2],
+    d = Math.hypot(dx, dy, dz);
   const s = d > STAR_SKY_R ? STAR_SKY_R / d : 1;
   return { at: [eye[0] + dx * s, eye[1] + dy * s, eye[2] + dz * s], s };
 }
@@ -78,7 +88,7 @@ export function shockRingAt(ms) {
 const HEAD = `#version 300 es
 precision highp float;
 precision highp int;
-`;   // the int too: a fragment shader's is mediump by default, and `uKind` is both stages' (they would not link)
+`; // the int too: a fragment shader's is mediump by default, and `uKind` is both stages' (they would not link)
 const FOG = `uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
@@ -86,7 +96,9 @@ uniform vec3 uCamPos;
 `;
 /** A glow (kind 1, camera-facing, round) or a trail (kind 0, a ribbon back up its path) - the court meteor's two shapes
  *  (render/gate/gateFx.js), the trail's way a uniform here (every star falls its own way). */
-export const STAR_SKY_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const STAR_SKY_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform int uKind;
 uniform vec3 uHead;
@@ -110,7 +122,9 @@ void main() {
   vWorld = w;
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-export const STAR_SKY_FS = HEAD + `in vec2 vUv;
+export const STAR_SKY_FS =
+  HEAD +
+  `in vec2 vUv;
 in vec3 vWorld;
 uniform int uKind;
 uniform vec3 uColor;
@@ -140,7 +154,9 @@ void main() {
  *  the map's ground (the audit's probe: 63.5% of its land pixels): the ring ran under the hills. Now a strip of
  *  STAR_RING_SEGS bearings, its inner and outer edge each lifted to its own ground (`uGround`, over the heart's, the
  *  host's read - [bearing * 2 + edge]). `aP` is (the bearing, the edge: 0 inner, 1 outer). */
-export const STAR_RING_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const STAR_RING_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform vec3 uAt;
 uniform float uR;
@@ -161,7 +177,9 @@ void main() {
   vWorld = w;
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-export const STAR_RING_FS = HEAD + `in float vD;
+export const STAR_RING_FS =
+  HEAD +
+  `in float vD;
 in vec3 vWorld;
 uniform float uR;
 uniform float uWidth;
@@ -186,7 +204,18 @@ const QUAD = new Float32Array([-1, 0, 1, 0, 1, 1, -1, 0, 1, 1, -1, 1]);
 export function ringStrip(segs = STAR_RING_SEGS) {
   const out = new Float32Array(segs * 12);
   let o = 0;
-  for (let i = 0; i < segs; i++) for (const [u, v] of [[i, 0], [i + 1, 0], [i + 1, 1], [i, 0], [i + 1, 1], [i, 1]]) { out[o++] = u; out[o++] = v; }
+  for (let i = 0; i < segs; i++)
+    for (const [u, v] of [
+      [i, 0],
+      [i + 1, 0],
+      [i + 1, 1],
+      [i, 0],
+      [i + 1, 1],
+      [i, 1],
+    ]) {
+      out[o++] = u;
+      out[o++] = v;
+    }
   return out;
 }
 const FLAT_RING = new Float32Array(STAR_RING_SEGS * 2);
@@ -195,7 +224,8 @@ const vao = (gl, verts) => {
   gl.bindVertexArray(v);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
   gl.bindVertexArray(null);
   return v;
 };
@@ -203,7 +233,13 @@ const uniforms = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.ge
 
 /** FIRST-USE (#1144): the pass's three programs, as its constructor builds them - what its warm starts and waits on
  *  (render/glProgram.js startPrograms). The beacon's is the gate's own, started with the passes play meets. */
-export const STARFALL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[BEACON_DRAW_VS, BEACON_DRAW_FS], [STAR_SKY_VS, STAR_SKY_FS], [STAR_RING_VS, STAR_RING_FS]]));
+export const STARFALL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [BEACON_DRAW_VS, BEACON_DRAW_FS],
+    [STAR_SKY_VS, STAR_SKY_FS],
+    [STAR_RING_VS, STAR_RING_FS],
+  ])
+);
 
 /** The Starfall's pass. */
 export class StarfallPassRenderer {
@@ -212,18 +248,68 @@ export class StarfallPassRenderer {
     this.gl = gl;
     const [beacon, sky, ring] = STARFALL_PROGRAMS;
     this.beacon = buildProgram(gl, beacon[0], beacon[1], 'star beacon');
-    this.ub = uniforms(gl, this.beacon, ['uVP', 'uOrigin', 'uEye', 'uRadius', 'uTime', 'uFade', 'uColor', 'uBelow', 'uHeight', 'uFoot', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
+    this.ub = uniforms(gl, this.beacon, [
+      'uVP',
+      'uOrigin',
+      'uEye',
+      'uRadius',
+      'uTime',
+      'uFade',
+      'uColor',
+      'uBelow',
+      'uHeight',
+      'uFoot',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+    ]);
     this.sky = buildProgram(gl, sky[0], sky[1], 'star sky');
     // AUDIT STARFALL R5: the travel view's focus and the jungle's haze, as the beacon's - the sky's and the ring's fog
     // read them (render/fogGlsl.js FOG_GLSL) and were never handed them
-    this.us = uniforms(gl, this.sky, ['uVP', 'uKind', 'uHead', 'uDir', 'uLen', 'uW', 'uEye', 'uColor', 'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
+    this.us = uniforms(gl, this.sky, [
+      'uVP',
+      'uKind',
+      'uHead',
+      'uDir',
+      'uLen',
+      'uW',
+      'uEye',
+      'uColor',
+      'uLight',
+      'uTime',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+    ]);
     this.ring = buildProgram(gl, ring[0], ring[1], 'star ring');
-    this.ur = uniforms(gl, this.ring, ['uVP', 'uAt', 'uR', 'uWidth', 'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
+    this.ur = uniforms(gl, this.ring, [
+      'uVP',
+      'uAt',
+      'uR',
+      'uWidth',
+      'uGround',
+      'uFade',
+      'uColor',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+    ]);
     const col = beaconVertices();
-    this.colVao = vao(gl, col); this.colCount = col.length / 2;
+    this.colVao = vao(gl, col);
+    this.colCount = col.length / 2;
     this.quadVao = vao(gl, QUAD);
     const strip = ringStrip();
-    this.ringVao = vao(gl, strip); this.ringCount = strip.length / 2;
+    this.ringVao = vao(gl, strip);
+    this.ringCount = strip.length / 2;
     this._vp = new Float32Array(16);
     /** what the last draw put up, for the stats and the tests */
     this.drawn = 0;
@@ -295,8 +381,10 @@ export class StarfallPassRenderer {
         gl.uniform1i(U.uKind, 0);
         gl.uniform3f(U.uHead, t.head[0], t.head[1], t.head[2]);
         gl.uniform3f(U.uDir, t.dir[0], t.dir[1], t.dir[2]);
-        gl.uniform1f(U.uLen, t.len); gl.uniform1f(U.uW, t.w);
-        gl.uniform3fv(U.uColor, t.color ?? STAR_FALL_COLOR); gl.uniform1f(U.uLight, t.light);
+        gl.uniform1f(U.uLen, t.len);
+        gl.uniform1f(U.uW, t.w);
+        gl.uniform3fv(U.uColor, t.color ?? STAR_FALL_COLOR);
+        gl.uniform1f(U.uLight, t.light);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         this.drawn++;
       }
@@ -304,7 +392,8 @@ export class StarfallPassRenderer {
         gl.uniform1i(U.uKind, 1);
         gl.uniform3f(U.uHead, g.at[0], g.at[1], g.at[2]);
         gl.uniform1f(U.uW, g.w);
-        gl.uniform3fv(U.uColor, g.color ?? STAR_FALL_COLOR); gl.uniform1f(U.uLight, g.light);
+        gl.uniform3fv(U.uColor, g.color ?? STAR_FALL_COLOR);
+        gl.uniform1f(U.uLight, g.light);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         this.drawn++;
       }
@@ -318,7 +407,8 @@ export class StarfallPassRenderer {
       gl.bindVertexArray(this.ringVao);
       for (const r of rings) {
         gl.uniform3f(U.uAt, r.at[0], r.at[1], r.at[2]);
-        gl.uniform1f(U.uR, r.r); gl.uniform1f(U.uFade, Math.min(1, r.fade));
+        gl.uniform1f(U.uR, r.r);
+        gl.uniform1f(U.uFade, Math.min(1, r.fade));
         gl.uniform1fv(U.uGround, r.ground?.length === STAR_RING_SEGS * 2 ? r.ground : FLAT_RING);
         gl.uniform3fv(U.uColor, r.color ?? STAR_FALL_COLOR);
         gl.drawArrays(gl.TRIANGLES, 0, this.ringCount);

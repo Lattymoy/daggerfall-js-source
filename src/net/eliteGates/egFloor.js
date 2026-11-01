@@ -41,7 +41,7 @@
 import { egInBlow, egInShape, segDist, EG_ESCAPE_MPS, EG_REACT_S } from './egShape.js';
 import { egVentAt, EG_VENT_FIRE_MS } from './egLaw.js';
 import { egHazardParts, EG_HAZARDS } from './egFragLaw.js';
-import { egByHeight, egBears } from './egWalkGraph.js';   // THE ASCENT - HEIGHT: a zone lies on its own floor
+import { egByHeight, egBears } from './egWalkGraph.js'; // THE ASCENT - HEIGHT: a zone lies on its own floor
 
 /** A held blow waits a tick and is dropped after this many (section 13.2). */
 export const EG_UNION_HOLD_TICKS = 4;
@@ -62,7 +62,12 @@ export const EG_PLACE_STEP_MS = 100;
  * @param {any[]} [burns]
  */
 export function egUnionHolds(pending, next, px, pz, now, onFloor, burns = [], nextBurns = []) {
-  if (!next || next.ch || !emptied([...pending, next], px, pz, now, onFloor, nextBurns.length ? [...burns, ...nextBurns] : burns)) return false;
+  if (
+    !next ||
+    next.ch ||
+    !emptied([...pending, next], px, pz, now, onFloor, nextBurns.length ? [...burns, ...nextBurns] : burns)
+  )
+    return false;
   // AUDIT EG V (lane1 #10): held only if the new blow is what empties it - (h) its landing judged without it too, where the
   // ground burning may empty the set alone (a court burning whole holds nothing more). EG-PERFECT: the ground the new blow
   // leaves burning (`nextBurns` - its pool) is its own, so it is judged with it alone
@@ -71,16 +76,20 @@ export function egUnionHolds(pending, next, px, pz, now, onFloor, burns = [], ne
 /** EG-PERFECT (section 13.2): is `b` a HAVEN CHECK - a CHECK every stamp of which is 'h' (everywhere outside its havens), naming
  *  no member (an errand's failure blow lands on the members it names wherever they stand, and is no landing of the set)? Such a
  *  landing takes every cell outside its havens. Pure. */
-export const egHavenCheck = (b) => !!b?.ch && !b.on && Array.isArray(b.s) && b.s.length > 0 && b.s.every((s) => s?.[0] === 'h');
+export const egHavenCheck = (b) =>
+  !!b?.ch && !b.on && Array.isArray(b.s) && b.s.length > 0 && b.s.every((s) => s?.[0] === 'h');
 /** Does the set over landings `list` empty (egUnionHolds's search)? AUDIT EG V (h): at each landing it loses the cells of every
  *  burn (`burns`) standing then too. EG-PERFECT: a haven CHECK is a landing (egHavenCheck). */
 function emptied(list, px, pz, now, onFloor, burns = []) {
   const blows = list.filter((b) => b && (!b.ch || egHavenCheck(b)) && b.at > now).sort((a, b) => a.at - b.at);
   if (!blows.length) return false;
-  const C = EG_UNION_CELL, R = Math.ceil(EG_UNION_R / C), side = 2 * R + 1;
+  const C = EG_UNION_CELL,
+    R = Math.ceil(EG_UNION_R / C),
+    side = 2 * R + 1;
   const ix = (i, j) => (i + R) * side + (j + R);
   const floor = new Uint8Array(side * side);
-  for (let i = -R; i <= R; i++) for (let j = -R; j <= R; j++) if (i * i + j * j <= R * R && onFloor(px + i * C, pz + j * C)) floor[ix(i, j)] = 1;
+  for (let i = -R; i <= R; i++)
+    for (let j = -R; j <= R; j++) if (i * i + j * j <= R * R && onFloor(px + i * C, pz + j * C)) floor[ix(i, j)] = 1;
   let set = new Uint8Array(side * side);
   set[ix(0, 0)] = 1;
   let t = now;
@@ -88,15 +97,18 @@ function emptied(list, px, pz, now, onFloor, burns = []) {
     const steps = Math.max(0, Math.floor(m / C));
     for (let k = 0; k < steps; k++) {
       const nx = set.slice();
-      for (let i = -R; i <= R; i++) for (let j = -R; j <= R; j++) {
-        if (!set[ix(i, j)]) continue;
-        for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
-          const a = i + di, b = j + dj;
-          if (a < -R || a > R || b < -R || b > R) continue;
-          const q = ix(a, b);
-          if (floor[q] && (di === 0 || dj === 0 || k % 3 !== 2)) nx[q] = 1;   // diagonals two steps in three: a disc, not a square
+      for (let i = -R; i <= R; i++)
+        for (let j = -R; j <= R; j++) {
+          if (!set[ix(i, j)]) continue;
+          for (let di = -1; di <= 1; di++)
+            for (let dj = -1; dj <= 1; dj++) {
+              const a = i + di,
+                b = j + dj;
+              if (a < -R || a > R || b < -R || b > R) continue;
+              const q = ix(a, b);
+              if (floor[q] && (di === 0 || dj === 0 || k % 3 !== 2)) nx[q] = 1; // diagonals two steps in three: a disc, not a square
+            }
         }
-      }
       set = nx;
     }
   };
@@ -104,12 +116,14 @@ function emptied(list, px, pz, now, onFloor, burns = []) {
     grow(EG_ESCAPE_MPS * Math.max(0, (b.at - t) / 1000 - EG_REACT_S));
     t = b.at;
     let any = false;
-    const lit = burns.filter((z) => z.from <= b.at && z.until > b.at);   // AUDIT EG V (h): the ground burning as it lands
-    for (let i = -R; i <= R; i++) for (let j = -R; j <= R; j++) {
-      const q = ix(i, j);
-      if (!set[q]) continue;
-      if (egInBlow(b, px + i * C, pz + j * C) || lit.some((z) => egInShape(z.s, px + i * C, pz + j * C))) set[q] = 0; else any = true;
-    }
+    const lit = burns.filter((z) => z.from <= b.at && z.until > b.at); // AUDIT EG V (h): the ground burning as it lands
+    for (let i = -R; i <= R; i++)
+      for (let j = -R; j <= R; j++) {
+        const q = ix(i, j);
+        if (!set[q]) continue;
+        if (egInBlow(b, px + i * C, pz + j * C) || lit.some((z) => egInShape(z.s, px + i * C, pz + j * C))) set[q] = 0;
+        else any = true;
+      }
     if (!any) return true;
   }
   return false;
@@ -125,8 +139,18 @@ const onZoneFloor = (z, y) => !Number.isFinite(z.y) || egBears(z.y, y);
  * THE ASCENT (section 2): a zone that says its floor's height lands at it (`y`).
  * @param {any[]|undefined} zones @param {number} now @param {number} until
  */
-export const egZoneLandings = (zones, now, until) => (zones ?? []).filter((z) => (z.kind === 'burn' || z.kind === 'void') && z.from > now && z.from <= until && z.until > z.from)
-  .map((z) => ({ s: [z.s], at: z.from, sp: z.until - z.from, ch: 0, o: 0, i: 0, ...(Number.isFinite(z.y) ? { y: z.y } : {}) }));
+export const egZoneLandings = (zones, now, until) =>
+  (zones ?? [])
+    .filter((z) => (z.kind === 'burn' || z.kind === 'void') && z.from > now && z.from <= until && z.until > z.from)
+    .map((z) => ({
+      s: [z.s],
+      at: z.from,
+      sp: z.until - z.from,
+      ch: 0,
+      o: 0,
+      i: 0,
+      ...(Number.isFinite(z.y) ? { y: z.y } : {}),
+    }));
 /**
  * The member's fight floor `onFloor` less the floor gone over (`now`, `until`]: every void zone standing in it (a fallen
  * island, a fallen third, the Molten Rim) is no ground to flee to. Pure; answers `onFloor` itself when none stands. THE ASCENT
@@ -146,7 +170,8 @@ export function egFloorLess(onFloor, zones, now, until, y = NaN) {
  * THE ASCENT (section 2): `y` the member's feet - the burns of its own floor alone (onZoneFloor).
  * @param {any[]|undefined} zones @param {number} now @param {number} until @param {number} [y]
  */
-export const egBurnsIn = (zones, now, until, y = NaN) => (zones ?? []).filter((z) => z.kind === 'burn' && z.from <= until && z.until > now && onZoneFloor(z, y));
+export const egBurnsIn = (zones, now, until, y = NaN) =>
+  (zones ?? []).filter((z) => z.kind === 'burn' && z.from <= until && z.until > now && onZoneFloor(z, y));
 
 // ── THE PLACE'S LANDINGS (section 13.2: "Pendulums, vents and the place's hazards are tested in the same set") ──
 /** A Rampart vent's lane as a stamp (its rectangle's capsule - a little wider at its ends: the set's favour). */
@@ -169,7 +194,8 @@ export function egPlaceLandings(spec, wokeAt, now, until) {
       for (let n = Math.max(0, Math.ceil((now - first) / v.cycle)); ; n++) {
         const at = first + n * v.cycle;
         if (at > until) break;
-        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire') out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });
+        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire')
+          out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });
       }
     }
   }
@@ -182,7 +208,15 @@ export function egPlaceLandings(spec, wokeAt, now, until) {
         if (p.st !== 'live' || seen.has(p.key) || p.sh[0] === 'a') continue;
         seen.add(p.key);
         // EG-PERFECT: the place's haven CHECK (the Eclipse Vault's) a landing of the set too, as a lord's is (egHavenCheck)
-        out.push({ s: [p.sh], at: t, sp: L.live, ch: p.sh[0] === 'h' ? 1 : 0, o: 0, i: 0, ...(egByHeight(spec) ? { y: hz.y ?? 0 } : {}) });   // THE ASCENT: at its own height
+        out.push({
+          s: [p.sh],
+          at: t,
+          sp: L.live,
+          ch: p.sh[0] === 'h' ? 1 : 0,
+          o: 0,
+          i: 0,
+          ...(egByHeight(spec) ? { y: hz.y ?? 0 } : {}),
+        }); // THE ASCENT: at its own height
       }
     }
   }
@@ -194,12 +228,21 @@ export function egPlaceLandings(spec, wokeAt, now, until) {
  *  0 everywhere. */
 export function egStampDist(s, x, z) {
   switch (s?.[0]) {
-    case 'd': return Math.max(0, Math.hypot(x - s[1], z - s[2]) - s[3]);
-    case 'l': return Math.max(0, segDist(x, z, s[1], s[2], s[3], s[4]) - s[5] / 2);
-    case 'c': return Math.max(0, Math.hypot(x - s[1], z - s[2]) - s[4]);   // its reach from its apex, every bearing (the near side's favour)
-    case 'r': { const d = Math.hypot(x - s[1], z - s[2]); return d < s[3] ? s[3] - d : Math.max(0, d - s[4]); }
-    case 'a': case 'h': return 0;
-    default: return Infinity;
+    case 'd':
+      return Math.max(0, Math.hypot(x - s[1], z - s[2]) - s[3]);
+    case 'l':
+      return Math.max(0, segDist(x, z, s[1], s[2], s[3], s[4]) - s[5] / 2);
+    case 'c':
+      return Math.max(0, Math.hypot(x - s[1], z - s[2]) - s[4]); // its reach from its apex, every bearing (the near side's favour)
+    case 'r': {
+      const d = Math.hypot(x - s[1], z - s[2]);
+      return d < s[3] ? s[3] - d : Math.max(0, d - s[4]);
+    }
+    case 'a':
+    case 'h':
+      return 0;
+    default:
+      return Infinity;
   }
 }
 /** The least distance from (x, z) to any of a blow's stamps. */

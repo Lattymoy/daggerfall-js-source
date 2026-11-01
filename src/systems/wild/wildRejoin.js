@@ -49,7 +49,11 @@ export const WILD_REJOIN_KNOWN_MS = (WILD_DEATH_HOLD_S + 30) * 1000;
  *   puts the character down and its death screen up without telling the death's subscribers again
  *   (characters/playerEntity.js presentHeardDeath); `place` where the player stands now (the host's hall and pixel)
  */
-export function createWildRejoin({ now = () => Date.now(), present = () => {}, place = () => ({ dungeon: null, px: null }) } = {}) {
+export function createWildRejoin({
+  now = () => Date.now(),
+  present = () => {},
+  place = () => ({ dungeon: null, px: null }),
+} = {}) {
   let ownDeathAt = -Infinity;
   /** @type {WildRejoinDeath | null} */
   let waiting = null;
@@ -87,7 +91,12 @@ export function createWildRejoin({ now = () => Date.now(), present = () => {}, p
       const servedS = Math.max(0, WILD_DEATH_HOLD_S - Math.ceil(word.ms / 1000));
       waiting = { servedS, p: Array.isArray(word.p) ? [...word.p] : null };
       // PVP-LINGER-RISE: a body slain while I was away (`aw`), its killer named (`n`)
-      setWildDeath({ kill: true, dropped: 0, served: servedS, ...(word.aw === 1 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}) });
+      setWildDeath({
+        kill: true,
+        dropped: 0,
+        served: servedS,
+        ...(word.aw === 1 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}),
+      });
       present();
       return waiting;
     },

@@ -124,7 +124,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, plus a 3,155 first-time bonus\./);   // PIN MOVED (CRAFT-HALL): the real Worker says it is still to earn;   // PIN MOVED (CRAFT3): the XP is Provisioning's; PIN MOVED (FIRST-BUDGET): Provisioning's share
+    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, plus a 3,171 first-time bonus\./);   // PIN MOVED (CRAFT-HALL): the real Worker says it is still to earn;   // PIN MOVED (CRAFT3): the XP is Provisioning's; PIN MOVED (FIRST-BUDGET): Provisioning's share
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
@@ -133,9 +133,9 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     assert.deepEqual([bottle.group, bottle.templateIndex, bottle.potionRecipeKey, bottle.value, bottle.potent, itemLongName(bottle)],
       ['UselessItems1', POTION_TEMPLATE_INDEX, potionById('healing').key, 50, undefined, 'Potion of Healing'], 'DFU\'s own Healing');
     assert.deepEqual(paid, [ALCHEMY_FEE], 'the fee kept with the brew and paid as its potion was bottled');
-    assert.equal(book.track('alchemy').xp, 3175);   // PIN MOVED (FIRST-BUDGET): 20 and Provisioning's 3,155
+    assert.equal(book.track('alchemy').xp, 3191);   // PIN MOVED (FIRST-BUDGET): 20 and Provisioning's 3,171
     page.draw();
-    assert.match(page.text(), /You brewed 2 Potions of Healing \(\+3175 Provisioning XP\)\./);   // PIN MOVED (CRAFT-PAYS)   // PIN MOVED (CRAFT3): the world's word names the track it raised
+    assert.match(page.text(), /You brewed 2 Potions of Healing \(\+3191 Provisioning XP\)\./);   // PIN MOVED (CRAFT-PAYS)   // PIN MOVED (CRAFT3): the world's word names the track it raised
     // A MASTER ALCHEMIST'S: three potions, Potent at +40%
     track('provisioning', xpForRank(100), null, 'master-alchemist');   // PIN MOVED (CRAFT3): the Master Alchemist stands under Provisioning, Alchemy's craft's track
     for (const k of ['p1:16', 'metal:mercury', 'reagent:troll-blood', 'reagent:elixir-vitae']) give(k, 1);
@@ -351,7 +351,7 @@ test('PROF12 goods: the Apothecaries\' sixteen withdraw as DFU\'s own ingredient
   // BOARD-UI (PIN MOVED): the counters folded under the suppliers' line, which the Materials view hangs
   assert.match(m, /if \(\(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
   assert.match(m, /if \(st\.view === 'materials'\) box\.append\(suppliersNode\(\)\);/);
-  assert.match(m, /box\.append\(el\('h4', null, 'The Apothecaries\\' counter'\)\);/);
+  assert.match(m, /box\.append\(el\('h4', null, "The Apothecaries' counter"\)\);/);
   assert.match(hostText('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
 });
 
@@ -398,20 +398,20 @@ test('PROF12 wiring: the alchemy station an Alchemist\'s (open for trade) or a h
   assert.match(m, /guildGroupOfFaction\(townTalk\?\.factionDict \?\? null, interiorBuilding\.factionId\) === GUILD_GROUPS\.MagesGuild\) return \{ kind: 'shop', fee: ENCHANT_FEE \};/);
   assert.match(m, /if \(stationOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'enchant'\)\) return \{ kind: 'home', fee: 0 \};/);   // PIN MOVED (FB1018D HOME-BENCH, test/scenes/fb1018d_homebench.test.js): a home's stations serve its owner's account
   assert.match(m, /goldDiscountPct: \(\) => enchantGoldPct\(\),/);
-  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{ gold: this\.gold\(\), discountPct: this\.goldDiscountPct\(\), souls: this\._souls \}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
+  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{\n\s*gold: this\.gold\(\),\n\s*discountPct: this\.goldDiscountPct\(\),\n\s*souls: this\._souls,\n\s*\}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /alchemy: \(\) => modes\?\.alchemyHere\?\.\(\) \?\? null,/);
-  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)
+  assert.match(w, /alchemy: \(\) => host\.modes\?\.alchemyHere\?\.\(\) \?\? null,/);
+  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(host\._musicLoc\?\.mapTableData\?\.mapId\), host\.guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)
   assert.match(w, /const \{ seat \} = alchemyHall\(\);\n\s*const r = await profBook\.brew\(potion, keys, \{ fee: f\.fee > 0 \? f\.fee : 0, seat \}, profMintCraft\);/);
   assert.match(w, /alchemySteps: \(\) => alchemyHall\(\)\.steps,/, 'AUDIT PROF-541 B4: the station\'s line says the steps the service adds');
   assert.match(w, /if \(typeof data\?\.potion === 'string'\) \{\n\s*const potions = brewItems\(data\);/);
-  assert.match(w, /const f = \(alch \? modes\?\.alchemyHere\?\.\(\) : mason \?/);
+  assert.match(w, /const f = \(alch \? host\.modes\?\.alchemyHere\?\.\(\) : mason \?/);
   assert.match(w, /r = await profBook\.disenchant\(provenance\);\n\s*if \(r\?\.ok && here\(\) && !r\.elsewhere\) takeOut\(\);/);
   assert.match(w, /if \(at >= 0\) out = \{ piece: playerEntity\.items\.splice\(at, 1\)\[0\], at \};/);
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/prof\/brew': \(\) => brewAtStation\(ctx, who\.player, env, body\),/);
   assert.match(idx, /'\/v1\/prof\/disenchant': \(\) => disenchantPiece\(\{ \.\.\.ctx, bucket: env\.SAVES \}, who\.player, env, body\),/);
-  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew', '\/v1\/prof\/disenchant',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew',\n\s*'\/v1\/prof\/disenchant',/);
   assert.match(src('src/ui/professions/profPages.js'), /\['jeweller', \(d\) => drawJewellerBench\(d, rerender, kit\)\],   \/\/ PROF10\n\s*\['alchemy', \(d\) => drawAlchemyStation\(d, rerender, kit\)\],   \/\/ PROF12\n\s*\['enchant', \(d\) => drawEnchantingStation\(d, rerender, kit\)\],   \/\/ PROF12/);   // PIN MOVED (MENU-ORDER)
   assert.equal(POTENT.pct, 25);
 });

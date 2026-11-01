@@ -13,7 +13,7 @@
     "name": "HILLSEAT-2-footprint-middle",
     "file": "src/world/townStandIns.js",
     "old": "  return { base, hull: hullXZ(pts) };",
-    "new": "  const h0 = hullXZ(pts), mx = h0.reduce((s, q) => s + q[0], 0) / h0.length, mz = h0.reduce((s, q) => s + q[1], 0) / h0.length;\n  return { base, hull: h0.map(([x, z]) => [mx + (x - mx) / 2, mz + (z - mz) / 2]) };",
+    "new": "  const h0 = hullXZ(pts),\n    mx = h0.reduce((s, q) => s + q[0], 0) / h0.length,\n    mz = h0.reduce((s, q) => s + q[1], 0) / h0.length;\n  return { base, hull: h0.map(([x, z]) => [mx + (x - mx) / 2, mz + (z - mz) / 2]) };",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HILLSEAT-4-world-not-drawn",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false); ",
-    "new": "if (hillPatch) { ",
+    "old": "        if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
+    "new": "        if (hillPatch) { collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HILLSEAT-5-world-not-solid",
     "file": "src/scenes/pixelBuild.js",
-    "old": "addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
-    "new": "addStatic(hillPatch, originMatrix, false);",
+    "old": "        if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
+    "new": "        if (hillPatch) { addStatic(hillPatch, originMatrix, false); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "HILLSEAT-6-world-own-upload",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false);",
-    "new": "if (hillPatch) { models.push({ gpu: renderer.createMesh(hillPatch), local: originMatrix, _box: transformedAabb(localAabb(hillPatch.positions), originMatrix), _order: -2 });",
+    "old": "        if (hillPatch) { addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
+    "new": "        if (hillPatch) { models.push({ gpu: renderer.createMesh(hillPatch), local: originMatrix, _box: transformedAabb(localAabb(hillPatch.positions), originMatrix), _order: -2 }); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]))); unionBox(transformedAabb(localAabb(hillPatch.positions), originMatrix)); }",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "HILLSEAT-10-seat-cells-stale",
     "file": "src/world/townStandIns.js",
-    "old": "      cells = null;   // filed again on the next ask",
+    "old": "      cells = null; // filed again on the next ask",
     "new": "      void cells;",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "HILLSEAT-11-plane-padded",
     "file": "src/world/townStandIns.js",
-    "old": "    if (hull.length < 3 || base < HILL_SEAT_PLANE) continue;",
-    "new": "    if (hull.length < 3) continue;",
+    "old": "    if (hull.length < 3 || base < HILL_SEAT_PLANE) continue; // on the block's plane",
+    "new": "    if (hull.length < 3) continue; // on the block's plane",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "HILLSEAT-12-hung-padded",
     "file": "src/world/townStandIns.js",
-    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue;",
-    "new": "    if (gap <= HILL_PATCH_SINK) continue;",
+    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue; // hung over the hill, or held by it already",
+    "new": "    if (gap <= HILL_PATCH_SINK) continue; // hung over the hill, or held by it already",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HILLSEAT-13-held-padded",
     "file": "src/world/townStandIns.js",
-    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue;",
-    "new": "    if (base - high > HILL_SEAT_STAND) continue;",
+    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue; // hung over the hill, or held by it already",
+    "new": "    if (base - high > HILL_SEAT_STAND) continue; // hung over the hill, or held by it already",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HILLSEAT-14-crossings-missed",
     "file": "src/world/townStandIns.js",
-    "old": "if (s >= 0 && s <= 1 && u >= 0 && u <= 1) out.push([px + rx * s, pz + rz * s]);",
-    "new": "if (s > 2) out.push([px + rx * s, pz + rz * s]);",
+    "old": "        if (s >= 0 && s <= 1 && u >= 0 && u <= 1) out.push([px + rx * s, pz + rz * s]);",
+    "new": "        if (s > 2) out.push([px + rx * s, pz + rz * s]);",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "HILLSEAT-16-bank-short",
     "file": "src/world/townStandIns.js",
-    "old": "    while (d < reach && top",
-    "new": "    while (d < 0 && top",
+    "old": "    while (d < reach && top - s * d > under(cx + dx * d, cz + dz * d) - HILL_PATCH_TOE) d += HILL_PATCH_STEP;",
+    "new": "    while (d < 0 && top - s * d > under(cx + dx * d, cz + dz * d) - HILL_PATCH_TOE) d += HILL_PATCH_STEP;",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HILLSEAT-18-uv-block-frame",
     "file": "src/world/townStandIns.js",
-    "old": "hillUvAt(on.placed.matrix)",
-    "new": "hillUvAt([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])",
+    "old": "        hillUvAt(on.placed.matrix),",
+    "new": "        hillUvAt([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),",
     "tests": [
       "test/world/fb1013e_hillseat.test.js"
     ],

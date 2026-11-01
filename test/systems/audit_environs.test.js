@@ -233,7 +233,7 @@ test('AUDIT ENVIRONS G1 + G3 + G4: the snow\'s GL owes the renderer its seam bef
   assert.equal(log[0]?.[0], 'endUiRun');
   assert.ok(!log.some((c) => c[0] === 'pixelStorei' && c[1] === 'UNPACK_FLIP_Y_WEBGL' && c[2] === true), 'no flip asked of an ImageBitmap');
   assert.ok(log.some((c) => c[0] === 'texParameteri' && c[2] === 'TEXTURE_MIN_FILTER' && c[3] === 'NEAREST_MIPMAP_NEAREST'), 'FilterMode.Point: the nearest level');
-  assert.match(read('src/scenes/snowfallHost.js'), /createImageBitmap\(await r\.blob\(\), \{ imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' \}\)/);
+  assert.match(read('src/scenes/snowfallHost.js'), /createImageBitmap\(await r\.blob\(\), \{\n\s*imageOrientation: 'flipY',\n\s*premultiplyAlpha: 'none',\n\s*colorSpaceConversion: 'none',\n\s*\}\)/);
 });
 
 test('AUDIT ENVIRONS G6: the blanket\'s tiles are culled to the frame\'s frustum by their bounds - the ground\'s span and the deepest snow over it - as each tile\'s renderer is culled in the mod (mutants: the cull ignored; the bounds without the snow; the span unread)', () => {

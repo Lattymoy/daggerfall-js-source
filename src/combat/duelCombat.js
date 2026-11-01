@@ -20,29 +20,43 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { calculateAttackDamage, baseDamageMax, damageModifier, WEAPON_MATERIAL_MODIFIER } from './formulas.js';
-import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS (AUDIT B): a fist in wraps strikes as the bare hand
+import { isHandWraps } from '../characters/handWrapsIds.js'; // HAND-WRAPS (AUDIT B): a fist in wraps strikes as the bare hand
 import { weaponDamageMods } from '../systems/entityMods.js';
 import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
 import { SKILLS, skillValue } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
-import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js'; // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
-import { pvpArrowScale } from './pvpTriangle.js';   // PVP-TRIANGLE
-import { bowFastDamage, landingShaft } from './bowBloom.js';   // BOW-FAST
-import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
-import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
-import { weaponPastPct } from '../systems/weaponMastery.js';   // PVP-SCALE: the weapon's skill and gear, on a blow at a player
+import { pvpArrowScale } from './pvpTriangle.js'; // PVP-TRIANGLE
+import { bowFastDamage, landingShaft } from './bowBloom.js'; // BOW-FAST
+import { armorValuesOf } from '../systems/equip.js'; // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
+import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js'; // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
+import { weaponPastPct } from '../systems/weaponMastery.js'; // PVP-SCALE: the weapon's skill and gear, on a blow at a player
 import { blowRoom } from '../systems/powerCeiling.js';
 import { breakNormalPowerConcealment } from '../systems/concealment.js';
-import { pvpGearBlowPct, pvpGearBlowFlat, pvpGearLanded } from './pvpGearPowers.js';   // PVP-GEAR: the striker's lines and powers on a blow at a player   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
-import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
+import { pvpGearBlowPct, pvpGearBlowFlat, pvpGearLanded } from './pvpGearPowers.js'; // PVP-GEAR: the striker's lines and powers on a blow at a player   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
+import {
+  DUEL_LEVEL_MAX,
+  DUEL_STAT_MAX,
+  DUEL_RACE_MAX,
+  DUEL_TEMPLATE_MAX,
+  DUEL_MATERIAL_MAX,
+  CARD_VITAL_MAX,
+  CAST_EFFECTS_MAX,
+  DUEL_SWINGS,
+} from '../net/wire.js';
 
 /** The four skills a blow reads, in the order the wire carries them (`sk`): the weapon's own (Archery for a bow, the
  *  blade's or the axe's ...), HandToHand, CriticalStrike, Backstabbing. The weapon's slot is resolved on each end off
  *  the template, so a sheet cannot name a skill the weapon does not use. */
-export const DUEL_SKILL_SLOTS = Object.freeze(['weapon', SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing]);
+export const DUEL_SKILL_SLOTS = Object.freeze([
+  'weapon',
+  SKILLS.HandToHand,
+  SKILLS.CriticalStrike,
+  SKILLS.Backstabbing,
+]);
 /** How far past a weapon's reach a melee strike may be claimed from, metres - the eased pose a striker saw trails the
  *  body by an interval and the wire (exteriorFoes.js PUPPET_LEAP_SLACK's two metres, the same allowance). */
 export const DUEL_MELEE_SLACK_M = 2;
@@ -68,7 +82,10 @@ export const DUEL_SPELL_TYPES = Object.freeze(new Set([0, 1, 4, 5, 7, 19]));
 
 const int = (v) => Math.trunc(Number(v) || 0);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, int(v)));
-const u32 = (v) => { const n = Number(v); return Number.isFinite(n) ? (n >>> 0) : 0; };
+const u32 = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n >>> 0 : 0;
+};
 
 /** A body whose health share this machine has no word of (combat/healthShare.js: null - the mean). */
 const UNREAD_SHARE = Object.freeze({ relayHealth: true });
@@ -90,25 +107,39 @@ export function duelAttackerOf(entity, weapon = null, wraps = null, foe = null) 
     lv: clamp(entity?.level ?? 1, 1, DUEL_LEVEL_MAX),
     r: clamp(entity?.raceId ?? 0, 0, DUEL_RACE_MAX),
     st: STAT_KEYS_ORDER.map((k) => clamp(liveStat(entity, k), 0, DUEL_STAT_MAX)),
-    sk: [ws, SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing].map((id) => clamp(skillValue(entity, id), 0, PVP_SKILL_TOP)),
-    cf: [clamp(entity?.career?.attackModifierFlags ?? 0, 0, 255), u32(entity?.career?.weaponArmorShieldsBitfield), u32(entity?.career?.abilityFlagsAndSpellPointsBitfield)],
+    sk: [ws, SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing].map((id) =>
+      clamp(skillValue(entity, id), 0, PVP_SKILL_TOP),
+    ),
+    cf: [
+      clamp(entity?.career?.attackModifierFlags ?? 0, 0, 255),
+      u32(entity?.career?.weaponArmorShieldsBitfield),
+      u32(entity?.career?.abilityFlagsAndSpellPointsBitfield),
+    ],
     h: [clamp(entity?.health ?? 0, 0, CARD_VITAL_MAX), clamp(entity?.maxHealth ?? 1, 1, CARD_VITAL_MAX)],
     cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),
     // PVP-SCALE (the PvP rework, 2026-10-28): the percent the weapon's climb and gear add, as a blow at a foe takes it -
     // the target's share unread (an axe's and a hammer's halves at their mean)
     wp: Math.max(0, Math.round(blowRoom(weaponPastPct(weapon, entity, UNREAD_SHARE), 'mastery') || 0)),
-    pl: Math.max(1, Math.trunc(Number(entity?.level) || 1)),   // PVP-TRIANGLE: the real level (`lv` stops at the cast's 30)
-    gp: pvpGearBlowPct(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, undefined, foe),   // WERE-WRAPS: claws strike in the wraps   // PVP-GEAR: what the striker's gear adds, capped - a fist's own pair of Hand Wraps
-    gf: pvpGearBlowFlat(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, foe),   // PVP-GEAR: Serpent's Kiss, flat
-    ...(foe != null ? { fo: foe } : {}),   // PVP-GEAR: the foe struck, for First Blood's memory
+    pl: Math.max(1, Math.trunc(Number(entity?.level) || 1)), // PVP-TRIANGLE: the real level (`lv` stops at the cast's 30)
+    gp: pvpGearBlowPct(entity, weapon?.werecreatureClaws ? wraps : (weapon ?? wraps), undefined, foe), // WERE-WRAPS: claws strike in the wraps   // PVP-GEAR: what the striker's gear adds, capped - a fist's own pair of Hand Wraps
+    gf: pvpGearBlowFlat(entity, weapon?.werecreatureClaws ? wraps : (weapon ?? wraps), foe), // PVP-GEAR: Serpent's Kiss, flat
+    ...(foe != null ? { fo: foe } : {}), // PVP-GEAR: the foe struck, for First Blood's memory
   };
 }
 
 /** THE WEAPON, as the wire carries it (`w`): template, material and condition as a percentage - null for a bare hand
  *  (a werecreature's claws strike as the bare hand: playerWeapon.js strikingWeapon hands none; HAND-WRAPS: so do the wraps). */
 export function duelWeaponOf(item) {
-  if (!item || isHandWraps(item) || !Number.isInteger(item.templateIndex) || item.templateIndex < 0 || item.templateIndex > DUEL_TEMPLATE_MAX) return null;
-  const max = Number(item.maxCondition), cur = Number(item.currentCondition);
+  if (
+    !item ||
+    isHandWraps(item) ||
+    !Number.isInteger(item.templateIndex) ||
+    item.templateIndex < 0 ||
+    item.templateIndex > DUEL_TEMPLATE_MAX
+  )
+    return null;
+  const max = Number(item.maxCondition),
+    cur = Number(item.currentCondition);
   const c = max > 0 && Number.isFinite(cur) ? clamp(Math.round((100 * cur) / max), 0, 100) : 100;
   return { t: item.templateIndex, m: clamp(item.material ?? 0, 0, DUEL_MATERIAL_MAX), c };
 }
@@ -120,11 +151,14 @@ export function duelWeaponOf(item) {
  *  formula lands falls on a copy (the striker's own wears by the referee's word - duelWearDamage). */
 export function duelStub(a, w = null) {
   const stats = {};
-  STAT_KEYS_ORDER.forEach((k, i) => { stats[k] = a.st[i]; });
+  STAT_KEYS_ORDER.forEach((k, i) => {
+    stats[k] = a.st[i];
+  });
   const weapon = w ? createWeapon(w.t, w.m, () => 0.5) : null;
   if (weapon) {
     weapon.poisonType = -1;
-    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));
+    if (Number(weapon.maxCondition) > 0)
+      weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));
   }
   const skillOverrides = {
     [skillForTemplate(w?.t)]: a.sk[0],
@@ -133,11 +167,22 @@ export function duelStub(a, w = null) {
     [SKILLS.Backstabbing]: a.sk[3],
   };
   const stub = {
-    isPlayer: true, peer: true,
-    level: a.lv, raceId: a.r, stats, skillOverrides,
-    career: { attackModifierFlags: a.cf[0], weaponArmorShieldsBitfield: a.cf[1], abilityFlagsAndSpellPointsBitfield: a.cf[2] },
-    health: a.h[0], maxHealth: a.h[1],
-    activeEffects: [], items: [], equipTable: {},
+    isPlayer: true,
+    peer: true,
+    level: a.lv,
+    raceId: a.r,
+    stats,
+    skillOverrides,
+    career: {
+      attackModifierFlags: a.cf[0],
+      weaponArmorShieldsBitfield: a.cf[1],
+      abilityFlagsAndSpellPointsBitfield: a.cf[2],
+    },
+    health: a.h[0],
+    maxHealth: a.h[1],
+    activeEffects: [],
+    items: [],
+    equipTable: {},
     // AUDIT CLAWS A1: the claws' metal as the sheet's word, never the gauntlets themselves - the stub has no equip table
     // to wear them from (and AUDIT C&C H5's neutral stand-in, duelStandIn, carries no `cm`: it has no claws)
     clawMetal: clamp(a.cm ?? 0, 0, CLAW_METAL_MAX),
@@ -156,7 +201,8 @@ export function duelStub(a, w = null) {
  *  blow, its own willpower and race saved against its spell - Thriving LOWERED its owner's hit chance, 60.59% bare to
  *  59.62% (200,000 seeded swings of the starting Shortsword); it lands 61.62% now, and its +5 Luck alone 60.59%. */
 export const DUEL_STAND_IN = Object.freeze({
-  lv: 1, r: 0,
+  lv: 1,
+  r: 0,
   st: Object.freeze(STAT_KEYS_ORDER.map(() => DUEL_STAT_MAX / 2)),
   sk: Object.freeze([0, 0, 0, 0]),
   cf: Object.freeze([0, 0, 0]),
@@ -198,24 +244,38 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
   // AUDIT PISTOLET A1: and a pair's off-hand SHOT - a Pistolet's, the one ranged weapon a pair holds
   const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;
   const dmg = calculateAttackDamage(stub, target, {
-    weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),
+    weapon,
+    damageMod: swing.damage,
+    toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),
     ...(off ? OFF_HAND_BLOW : {}),
     backstabChance: backFacing ? stub.skillOverrides[SKILLS.Backstabbing] : 0,
-    weaponAnimTime: d.at ?? 0, rolls, say: null, onInflictPoison: null,
+    weaponAnimTime: d.at ?? 0,
+    rolls,
+    say: null,
+    onInflictPoison: null,
   });
   const rolled = Math.max(0, int(dmg));
-  const climbed = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
-  const geared = climbed + Math.floor((climbed * Math.max(0, Number(d.a?.gp) || 0)) / 100);   // PVP-GEAR: the striker's lines and powers
-  const scaled = geared > 0 ? geared + Math.max(0, Math.trunc(Number(d.a?.gf) || 0)) : 0;   // PVP-GEAR: and a landed blow's flat
-  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;   // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)
-  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
-  if (n > 0 && target?.struckBy) pvpGearLanded(target.struckBy, undefined, d.a?.fo ?? null);   // PVP-GEAR: Way of the Sword's stack, First Blood's mark
+  const climbed = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100); // PVP-SCALE: the weapon's climb and gear
+  const geared = climbed + Math.floor((climbed * Math.max(0, Number(d.a?.gp) || 0)) / 100); // PVP-GEAR: the striker's lines and powers
+  const scaled = geared > 0 ? geared + Math.max(0, Math.trunc(Number(d.a?.gf) || 0)) : 0; // PVP-GEAR: and a landed blow's flat
+  const n =
+    d.by === 'arrow'
+      ? bowFastDamage(
+          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),
+          Math.floor(scaled * pvpArrowScale(d.a?.pl)),
+        )
+      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)
+  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
+  if (n > 0 && target?.struckBy) pvpGearLanded(target.struckBy, undefined, d.a?.fo ?? null); // PVP-GEAR: Way of the Sword's stack, First Blood's mark
   return { hit: n > 0, dmg: n };
 }
 
 /** The ground distance between two world-frame points (natives on x and z), in metres, and their height apart. */
 const NATIVES_PER_M = 40;
-const worldApart = (a, b) => ({ ground: Math.hypot(a[0] - b[0], a[2] - b[2]) / NATIVES_PER_M, up: Math.abs(a[1] - b[1]) });
+const worldApart = (a, b) => ({
+  ground: Math.hypot(a[0] - b[0], a[2] - b[2]) / NATIVES_PER_M,
+  up: Math.abs(a[1] - b[1]),
+});
 
 /**
  * IS THE BLOW WHERE IT CLAIMS TO BE? The striker's claimed feet (`p`, world frame) must stand near where this machine
@@ -232,7 +292,11 @@ export function duelBlowPlausible(d, mine, seen, ringRadius) {
   const claim = worldApart(d.p, seen);
   const slack = melee ? DUEL_MELEE_POS_SLACK_M : DUEL_POS_SLACK_M;
   if (claim.ground > slack || claim.up > DUEL_POS_SLACK_M) return false;
-  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });
+  if (melee)
+    return mines.some((m) => {
+      const me = worldApart(d.p, m);
+      return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3;
+    });
   return worldApart(d.p, mines.at(-1)).ground <= 2 * ringRadius + DUEL_POS_SLACK_M;
 }
 
@@ -241,15 +305,19 @@ export function duelBlowPlausible(d, mine, seen, ringRadius) {
 export function duelWearDamage(dmg, weapon, attacker) {
   const d = Number.isFinite(dmg) && dmg > 0 ? Math.trunc(dmg) : 0;
   if (!weapon || !d) return 0;
-  const top = weaponDamageMods(weapon, baseDamageMax(weapon)) + damageModifier(liveStat(attacker, 'strength'))
-    + (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0);
+  const top =
+    weaponDamageMods(weapon, baseDamageMax(weapon)) +
+    damageModifier(liveStat(attacker, 'strength')) +
+    (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0);
   return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);
 }
 
 /** A spell's duel half: its effects of the DUEL_SPELL_TYPES families, or null when it has none (then it is no blow -
  *  a beneficial spell is ALLY-CAST's, and the rest stays home). */
 export function duelSpellOf(spell) {
-  const fx = (Array.isArray(spell?.effects) ? spell.effects : []).filter((e) => e && Number.isInteger(e.type) && DUEL_SPELL_TYPES.has(e.type)).slice(0, CAST_EFFECTS_MAX);
+  const fx = (Array.isArray(spell?.effects) ? spell.effects : [])
+    .filter((e) => e && Number.isInteger(e.type) && DUEL_SPELL_TYPES.has(e.type))
+    .slice(0, CAST_EFFECTS_MAX);
   if (!fx.length) return null;
   return {
     name: String(spell?.name ?? ''),
@@ -267,7 +335,15 @@ export function duelSpellFromWire(sp) {
   if (!sp || !Array.isArray(sp.effects)) return null;
   const effects = sp.effects.filter((e) => e && DUEL_SPELL_TYPES.has(e.type)).slice(0, CAST_EFFECTS_MAX);
   if (!effects.length) return null;
-  return { name: typeof sp.name === 'string' ? sp.name : '', element: sp.element ?? 4, rangeType: sp.rangeType >= 1 && sp.rangeType <= 4 ? sp.rangeType : 1, effects, icon: Number.isInteger(sp.icon) ? sp.icon : 0, index: -1, custom: true };
+  return {
+    name: typeof sp.name === 'string' ? sp.name : '',
+    element: sp.element ?? 4,
+    rangeType: sp.rangeType >= 1 && sp.rangeType <= 4 ? sp.rangeType : 1,
+    effects,
+    icon: Number.isInteger(sp.icon) ? sp.icon : 0,
+    index: -1,
+    custom: true,
+  };
 }
 
 /** A swing's name as the wire says it (DUEL_SWINGS), or undefined for a state that is not one. */

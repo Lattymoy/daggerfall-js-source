@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen): THE BOX - "a box in the middle of their screen headed 'Message from staff', with
 // the staff member's name and the text, until they press OK".
 //
@@ -27,12 +27,17 @@ export const staffMessageOk = () => t('net.staffMsg.ok', 'OK');
  * @param {{ from: string, text: string, onOk: () => void }} m
  * @param {Document|null} [doc]
  */
-export function showStaffMessageBox({ from, text, onOk }, doc = (typeof document === 'undefined' ? null : document)) {
+export function showStaffMessageBox({ from, text, onOk }, doc = typeof document === 'undefined' ? null : document) {
   if (!doc?.body) return null;
   current?.remove();
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
-  const el = (/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ words) => { const n = doc.createElement(tag); n.className = cls; n.textContent = words; return n; };
+  const el = (/** @type {string} */ tag, /** @type {string} */ cls, /** @type {string} */ words) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    n.textContent = words;
+    return n;
+  };
   const root = doc.createElement('div');
   root.id = STAFF_MESSAGE_BOX_ID;
   root.className = 'inputbox yesnobox';
@@ -41,12 +46,21 @@ export function showStaffMessageBox({ from, text, onOk }, doc = (typeof document
   const rows = el('div', 'inputbox-rows', '');
   const head = el('div', 'notice-row center highlight', staffMessageTitle());
   head.id = `${STAFF_MESSAGE_BOX_ID}-head`;
-  rows.append(head, el('div', 'notice-row center inputbox-label', staffMessageFrom(from)), el('div', 'notice-row', text));
+  rows.append(
+    head,
+    el('div', 'notice-row center inputbox-label', staffMessageFrom(from)),
+    el('div', 'notice-row', text),
+  );
   const acts = el('div', 'yesnobox-acts', '');
   const ok = el('button', 'act primary', staffMessageOk());
   /** @type {any} */ (ok).type = 'button';
   let done = false;
-  ok.onclick = () => { if (done) return; done = true; root.remove(); onOk(); };
+  ok.onclick = () => {
+    if (done) return;
+    done = true;
+    root.remove();
+    onOk();
+  };
   acts.append(ok);
   root.append(rows, acts);
   doc.body.append(root);

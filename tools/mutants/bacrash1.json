@@ -2,8 +2,8 @@
   {
     "name": "C1-kind-kept-across-the-transition",
     "file": "src/systems/betterAmbience.js",
-    "old": "fogState = null; stopRain(); rainKind = null; owe(); footsteps.rebase(); },",
-    "new": "fogState = null; stopRain(); owe(); footsteps.rebase(); },",
+    "old": "      rainKind = null;\n      owe();",
+    "new": "      owe();",
     "tests": [
       "test/systems/bacrash1.test.js"
     ]

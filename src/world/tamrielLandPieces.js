@@ -24,19 +24,35 @@
  * @returns {{ w: number, h: number, count: number, rowStart: Uint32Array, runLen: Uint16Array, runLabel: Uint32Array, ring: Uint8Array }}
  */
 export function labelLand(dryAt, w, h) {
-  const n = w * h, root = new Int32Array(n).fill(-1);
+  const n = w * h,
+    root = new Int32Array(n).fill(-1);
   for (let v = 0; v < h; v++) for (let u = 0; u < w; u++) if (dryAt(u, v)) root[v * w + u] = v * w + u;
-  const find = (i) => { while (root[i] !== i) { root[i] = root[root[i]]; i = root[i]; } return i; };
+  const find = (i) => {
+    while (root[i] !== i) {
+      root[i] = root[root[i]];
+      i = root[i];
+    }
+    return i;
+  };
   for (let v = 0; v < h; v++) {
     for (let u = 0; u < w; u++) {
       const i = v * w + u;
       if (root[i] < 0) continue;
-      if (u + 1 < w && root[i + 1] >= 0) { const a = find(i), b = find(i + 1); if (a !== b) root[Math.max(a, b)] = Math.min(a, b); }
-      if (v + 1 < h && root[i + w] >= 0) { const a = find(i), b = find(i + w); if (a !== b) root[Math.max(a, b)] = Math.min(a, b); }
+      if (u + 1 < w && root[i + 1] >= 0) {
+        const a = find(i),
+          b = find(i + 1);
+        if (a !== b) root[Math.max(a, b)] = Math.min(a, b);
+      }
+      if (v + 1 < h && root[i + w] >= 0) {
+        const a = find(i),
+          b = find(i + w);
+        if (a !== b) root[Math.max(a, b)] = Math.min(a, b);
+      }
     }
   }
   const label = new Map();
-  /** @type {number[]} */ const len = [], lab = [];
+  /** @type {number[]} */ const len = [],
+    lab = [];
   const rowStart = new Uint32Array(h + 1);
   for (let v = 0; v < h; v++) {
     rowStart[v] = len.length;
@@ -44,15 +60,32 @@ export function labelLand(dryAt, w, h) {
     for (let u = 0; u < w; u++) {
       const i = v * w + u;
       let l = 0;
-      if (root[i] >= 0) { const r = find(i); l = label.get(r) ?? 0; if (!l) { l = label.size + 1; label.set(r, l); } }
+      if (root[i] >= 0) {
+        const r = find(i);
+        l = label.get(r) ?? 0;
+        if (!l) {
+          l = label.size + 1;
+          label.set(r, l);
+        }
+      }
       if (l === cur && len[len.length - 1] < 65535) len[len.length - 1]++;
-      else { len.push(1); lab.push(l); cur = l; }
+      else {
+        len.push(1);
+        lab.push(l);
+        cur = l;
+      }
     }
   }
   rowStart[h] = len.length;
   const ring = new Uint8Array(2 * w + 2 * h);
-  for (let u = 0; u < w; u++) { ring[u] = dryAt(u, -1) ? 1 : 0; ring[w + u] = dryAt(u, h) ? 1 : 0; }
-  for (let v = 0; v < h; v++) { ring[2 * w + v] = dryAt(-1, v) ? 1 : 0; ring[2 * w + h + v] = dryAt(w, v) ? 1 : 0; }
+  for (let u = 0; u < w; u++) {
+    ring[u] = dryAt(u, -1) ? 1 : 0;
+    ring[w + u] = dryAt(u, h) ? 1 : 0;
+  }
+  for (let v = 0; v < h; v++) {
+    ring[2 * w + v] = dryAt(-1, v) ? 1 : 0;
+    ring[2 * w + h + v] = dryAt(w, v) ? 1 : 0;
+  }
   return { w, h, count: label.size, rowStart, runLen: Uint16Array.from(len), runLabel: Uint32Array.from(lab), ring };
 }
 

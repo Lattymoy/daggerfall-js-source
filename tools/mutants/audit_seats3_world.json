@@ -1,53 +1,53 @@
 [
- {
-  "name": "SEATS3-E1-curfew-player-clock",
-  "file": "src/scenes/world.js",
-  "old": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),",
-  "new": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(playerTicker.ownMinutes)),",
-  "tests": [
-   "test/systems/seat1d_client.test.js",
-   "test/scenes/time1_census.test.js"
-  ]
- },
- {
-  "name": "F-siege-market-boards-dropped",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre:",
-  "new": "gates: pixelGates.map((g) => ({ box: g.entry?._box })), centre:",
-  "tests": [
-   "test/scenes/fb1029g_townpanel.test.js"
-  ]
- },
- {
-  "name": "F-seat1d-edicts-regionAt-dropped",
-  "file": "src/scenes/world.js",
-  "old": "    minutes: () => worldMinutes(),\n    regionAt: (px, py) => maps.getRegionIndexAt(px, py),",
-  "new": "    minutes: () => worldMinutes(),\n    regionAt: () => null,",
-  "tests": [
-   "test/systems/seat1d_client.test.js",
-   "test/net/seat1b_client.test.js",
-   "test/net/tide_orcs.test.js",
-   "test/systems/rep4_recovery.test.js",
-   "test/scenes/regionlive.test.js"
-  ]
- },
- {
-  "name": "F-crown1-strike-out-royal-dropped",
-  "file": "src/scenes/world.js",
-  "old": "    const battle = royalSession?.active() ? royalSession : siegeSession;\n    if (!to ||",
-  "new": "    const battle = siegeSession;\n    if (!to ||",
-  "tests": [
-   "test/net/crown1_royal_client.test.js",
-   "test/net/audit_seats_client.test.js"
-  ]
- },
- {
-  "name": "F-crown1-melee-royal-dropped",
-  "file": "src/scenes/world.js",
-  "old": "const battle = royalSession?.active() ? royalSession : siegeSession;   // CROWN1 part two",
-  "new": "const battle = siegeSession;   // CROWN1 part two",
-  "tests": [
-   "test/net/crown1_royal_client.test.js"
-  ]
- }
+  {
+    "name": "SEATS3-E1-curfew-player-clock",
+    "file": "src/scenes/world.js",
+    "old": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),",
+    "new": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(playerTicker.ownMinutes)),",
+    "tests": [
+      "test/systems/seat1d_client.test.js",
+      "test/scenes/time1_census.test.js"
+    ]
+  },
+  {
+    "name": "F-siege-market-boards-dropped",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre: townCentreOf(pixelHomeFrames),",
+    "new": "      gates: pixelGates.map((g) => ({ box: g.entry?._box })), centre: townCentreOf(pixelHomeFrames),",
+    "tests": [
+      "test/scenes/fb1029g_townpanel.test.js"
+    ]
+  },
+  {
+    "name": "F-seat1d-edicts-regionAt-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    minutes: () => worldMinutes(),\n    regionAt: (px, py) => maps.getRegionIndexAt(px, py),",
+    "new": "    minutes: () => worldMinutes(),\n    regionAt: () => null,",
+    "tests": [
+      "test/systems/seat1d_client.test.js",
+      "test/net/seat1b_client.test.js",
+      "test/net/tide_orcs.test.js",
+      "test/systems/rep4_recovery.test.js",
+      "test/scenes/regionlive.test.js"
+    ]
+  },
+  {
+    "name": "F-crown1-strike-out-royal-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    const battle = royalSession?.active() ? royalSession : siegeSession;\n    if (!to ||",
+    "new": "    const battle = siegeSession;\n    if (!to ||",
+    "tests": [
+      "test/net/crown1_royal_client.test.js",
+      "test/net/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "F-crown1-melee-royal-dropped",
+    "file": "src/scenes/world.js",
+    "old": "const battle = royalSession?.active() ? royalSession : siegeSession;   // CROWN1 part two",
+    "new": "const battle = siegeSession;   // CROWN1 part two",
+    "tests": [
+      "test/net/crown1_royal_client.test.js"
+    ]
+  }
 ]

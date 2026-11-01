@@ -1,15 +1,15 @@
 # World 2.0 - the canon
 
 What World 2.0 is, its data and the rules that hold it. Read this before changing anything under `src/world/gen2/`, the
-seam in the ground's readers, `scenes/gen2Host.js`, `public/worldgen2/` or the World Editor. The arc's record and its
-decisions (WG-1 to WG-9) are `03-World/World-2-Arc.md`.
+seam in the ground's readers, `scenes/gen2Host.js`, `public/worldgen2/` or the World Editor. How it fits together, its
+rules and what is open are `03-World/World-2-Arc.md`.
 
 ## The layers
 
 Five, each over the one before, none writing into another:
 
 1. **Canon** - the authored geography (`world/tamriel/tamrielGeography.js`: provinces, ranges, rivers) and the owner's
-   relief, read through `world/gen2/canon.js`. Never the player's traced picture (WG-3).
+   relief, read through `world/gen2/canon.js`. Never the player's traced picture.
 2. **Generated environment** - a region's bake: geology, climate, worked land, water, soil, biomes, resources.
 3. **Authored overrides** - an editor document's layers (`world/gen2/edit/`), and the land rows of
    `world/land/landEdits.json`, which still win over any ground (they are asked last).
@@ -23,7 +23,7 @@ point is a fraction of a pixel; pixel P covers [P, P + 1). The kernel's sample (
 (px + x / 128, py + 1 - y / 128). A pixel's WOODS byte stands at its node, its south-east corner. A region's cell (i, j)
 at `res` cells a pixel covers [x0 + i / res, x0 + (i + 1) / res). A facing is a unit vector, never an angle.
 
-## Determinism (WG-2)
+## Determinism
 
 Every gameplay field - a bake, the sampler, a town, a plant, an edit - is built from `+ - * /`, `Math.sqrt`, `floor`,
 `round`, `abs`, `min`, `max`, `imul` and bit operations. `exact.js` `INEXACT_CALLS` lists what is barred, and
@@ -64,7 +64,7 @@ the seam crossfades them: `regionSampler.js` `weight` is a product of the axes' 
 anything else overlapping is refused, at install and in the manifest. All nine provinces make 628 tiles: about 11 s
 and 0.59 MB gzipped each, a third of that lean.
 
-## The seam (WG-1)
+## The seam
 
 `gen2Ground.js` holds the installed bakes, fetched under the app's root (`scenes/gen2Host.js` `bakeUrl`). `tamrielHeightByte` asks `gen2Byte` before the land rows,
 `tamrielClimateAt` asks `gen2Climate` after them, the shaper's `landAt` takes `gen2Units`, and `terrainGen.js` paints
@@ -72,7 +72,7 @@ and 0.59 MB gzipped each, a third of that lean.
 `tamriel` message to the terrain, roads and deep-water workers. A bake made on another fit is refused. With none
 installed every hook answers undefined. The kept roads past the Bay are keyed by `gen2Stamp`.
 
-## The manifest (WG-5)
+## The manifest
 
 `world/gen2/worldManifest.json`: `worldId`, `schemaVersion`, the five versions, `worldSeed`, `fit`, `groundLaw`,
 `published` and `groundPrints`. A published region names its rectangle, bake file, print, generator and revision.
@@ -85,7 +85,7 @@ overlap, and a generator this build cannot read. Publishing changes `groundPrint
 Rivers carry discharge from runoff (`hydrology.js` `runoff`, Budyko's shape), lose water in a dry land, and need
 `RIVER_KM2` of drainage. A course's surface never rises; its bed is under it by `riverDepth`. A closed hollow holds
 water to where evaporation meets inflow: brimful and spilling, a terminal lake, or a salt flat. A spring's pool is
-`POOL_PX` across. Channels are carved by the sampler from the courses (WG-6). The sampler reads the ground between
+`POOL_PX` across. Channels are carved by the sampler from the courses. The sampler reads the ground between
 cells: a lake's shore is where the ground meets its level, and a dune field fades out - never a step or a straight
 shore at a cell's edge (`regionSampler.js` `waterAt`).
 
@@ -102,7 +102,7 @@ never upstream.
 `vegetation.js` `plantsIn` grows each species of the biomes present on its own jittered lattice, thinned by its grove
 field, never past a need (`speciesProblems`); trees keep their spacing. The same box grows the same plants.
 
-## Buildings and settlements (WG-9)
+## Buildings and settlements
 
 A building (`settle/buildingRecord.js`) has an id, a role and the Daggerfall type the game reads, services, access, a
 place, a footprint, doors on the street side, an interior and, for a house, a home key. Legacy:

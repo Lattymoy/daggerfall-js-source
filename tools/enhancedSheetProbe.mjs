@@ -46,11 +46,12 @@ const browser = await chromium.launch();
  *  A boot that SUCCEEDS never writes that text, so the wait times out
  *  and that is the correct outcome - hence the swallowed rejection. */
 async function bootSettled(page) {
-  await page.waitForFunction(
-    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
-  ).catch(() => { /* a successful boot never says it - nothing to wait for */ });
+  await page
+    .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+    .catch(() => {
+      /* a successful boot never says it - nothing to wait for */
+    });
 }
-
 
 /** Drive the front door to the moment a game starts, so the boot menu
  *  unmounts through runEnhancedMenu's own resolve and what is left is
@@ -78,19 +79,34 @@ async function openSheet(page, withChild = ['inventory', 'spellbook']) {
       wheel: () => globalThis.__calls.push('wheel'),
       hover: () => globalThis.__calls.push('hover'),
       tick: () => globalThis.__calls.push('tick'),
-      draw: () => { globalThis.__calls.push('draw'); return 'drew'; },
+      draw: () => {
+        globalThis.__calls.push('draw');
+        return 'drew';
+      },
       dispose: () => globalThis.__calls.push('dispose'),
     };
     const deps = {
       entity: {
-        name: 'Aelwyn', race: 'Redguard', level: 4,
+        name: 'Aelwyn',
+        race: 'Redguard',
+        level: 4,
         career: { name: 'Spellsword', primarySkills: [0, 1], majorSkills: [2, 3], minorSkills: [4, 5, 6] },
         stats: {
-          strength: 50, intelligence: 62, willpower: 40, agility: 55,
-          endurance: 48, personality: 33, speed: 51, luck: 44,
+          strength: 50,
+          intelligence: 62,
+          willpower: 40,
+          agility: 55,
+          endurance: 48,
+          personality: 33,
+          speed: 51,
+          luck: 44,
         },
         skills: { 0: 41, 1: 38, 2: 27, 3: 22, 4: 15, 5: 11, 6: 9 },
-        health: 41, maxHealth: 58, magicka: 20, maxMagicka: 44, fatigue: 3200,
+        health: 41,
+        maxHealth: 58,
+        magicka: 20,
+        maxMagicka: 44,
+        fatigue: 3200,
         items: [{ name: 'Gold Pieces', group: 'Currency', stackCount: 1287 }],
       },
     };
@@ -102,8 +118,8 @@ async function openSheet(page, withChild = ['inventory', 'spellbook']) {
 
 const calls = (page) => page.evaluate(() => globalThis.__calls);
 const done = (page) => page.evaluate(() => globalThis.__slot?.done ?? null);
-const visible = (page) => page.evaluate(() =>
-  getComputedStyle(document.getElementById('enhanced-charsheet')).visibility);
+const visible = (page) =>
+  page.evaluate(() => getComputedStyle(document.getElementById('enhanced-charsheet')).visibility);
 
 async function run(label, opts) {
   const ctx = await browser.newContext(opts);
@@ -114,13 +130,16 @@ async function run(label, opts) {
   await openSheet(page);
 
   // ── 1. THE SCREEN ──────────────────────────────────────────────
-  check(`${label}: F5's screen is the enhanced one`,
-    (await page.locator('#enhanced-charsheet').count()) === 1);
+  check(`${label}: F5's screen is the enhanced one`, (await page.locator('#enhanced-charsheet').count()) === 1);
   check(`${label}: the host is holding it`, (await done(page)) === false);
-  check(`${label}: it names the character`,
-    (await page.locator('#enhanced-charsheet .sheet-id h2').textContent()) === 'Aelwyn');
-  check(`${label}: eight attributes, every one on a track`,
-    (await page.locator('#enhanced-charsheet .sheetcol').first().locator('.meter').count()) === 8);
+  check(
+    `${label}: it names the character`,
+    (await page.locator('#enhanced-charsheet .sheet-id h2').textContent()) === 'Aelwyn',
+  );
+  check(
+    `${label}: eight attributes, every one on a track`,
+    (await page.locator('#enhanced-charsheet .sheetcol').first().locator('.meter').count()) === 8,
+  );
 
   // ── 2. THE DENSITY ARGUMENT ────────────────────────────────────
   // The classic sheet shows NINE skills at a time behind keys 1-4
@@ -132,11 +151,12 @@ async function run(label, opts) {
   await page.locator('#enhanced-charsheet button.more').click();
   const all = await page.locator('#enhanced-charsheet .skillrow').count();
   check(`${label}: and the whole catalogue is one press away`, all === 35, `${all} rows`);
-  check(`${label}: ...and the press is reversible`,
-    (await page.locator('#enhanced-charsheet button.more').textContent()).includes('Hide'));
+  check(
+    `${label}: ...and the press is reversible`,
+    (await page.locator('#enhanced-charsheet button.more').textContent()).includes('Hide'),
+  );
   await page.locator('#enhanced-charsheet button.more').click();
-  check(`${label}: back to the career skills`,
-    (await page.locator('#enhanced-charsheet .skillrow').count()) === 7);
+  check(`${label}: back to the career skills`, (await page.locator('#enhanced-charsheet .skillrow').count()) === 7);
 
   // ── 3. A BUTTON ONLY WHERE THE HOST HANDED A FACTORY ───────────
   const nav = await page.$$eval('#enhanced-charsheet .sheet-nav button', (ns) => ns.map((n) => n.textContent));
@@ -146,45 +166,59 @@ async function run(label, opts) {
   // which is the standalone ?dungeon page's real situation - and an
   // empty journal would tell a player they have no quests when the
   // truth is that this screen cannot see them.
-  check(`${label}: the host-specific windows are drawn, the refused one is not`,
-    JSON.stringify(nav) === JSON.stringify(['Inventory', 'Spellbook', 'History']), nav.join('/'));
+  check(
+    `${label}: the host-specific windows are drawn, the refused one is not`,
+    JSON.stringify(nav) === JSON.stringify(['Inventory', 'Spellbook', 'History']),
+    nav.join('/'),
+  );
   check(`${label}: ...and History is there whatever the host hands`, nav.includes('History'));
   check(`${label}: ...and the Logbook is not, with no quest source`, !nav.includes('Logbook'));
 
   // ── 4. THE PUSH: the div hides, the child takes the contract ───
   await page.locator('#enhanced-charsheet .sheet-nav button', { hasText: 'Inventory' }).click();
-  check(`${label}: pushing a canvas child HIDES the opaque sheet`,
+  check(
+    `${label}: pushing a canvas child HIDES the opaque sheet`,
     (await visible(page)) === 'hidden',
-    'the child draws underneath it - a visible sheet makes the child invisible');
+    'the child draws underneath it - a visible sheet makes the child invisible',
+  );
   const forwarded = await page.evaluate(() => {
     const w = globalThis.__slot;
-    w.input('back'); w.click(1, 2); w.wheel(1); w.hover(3, 4); w.tick(0.016);
+    w.input('back');
+    w.click(1, 2);
+    w.wheel(1);
+    w.hover(3, 4);
+    w.tick(0.016);
     const drew = w.draw({}, {}, {}, 1);
     return { calls: globalThis.__calls, drew };
   });
   for (const arm of ['input', 'click', 'wheel', 'hover', 'tick', 'draw']) {
-    check(`${label}: ${arm} reaches the child`, forwarded.calls.includes(arm),
-      forwarded.calls.join(','));
+    check(`${label}: ${arm} reaches the child`, forwarded.calls.includes(arm), forwarded.calls.join(','));
   }
-  check(`${label}: draw RETURNS the child's draw - it is the canvas half`,
-    forwarded.drew === 'drew');
+  check(`${label}: draw RETURNS the child's draw - it is the canvas half`, forwarded.drew === 'drew');
   check(`${label}: the sheet is still the host's one overlay`, (await done(page)) === false);
 
   // ── 5. THE POP: a finished child gives the sheet back ──────────
-  await page.evaluate(() => { globalThis.__child.done = true; globalThis.__slot.tick(0.016); });
+  await page.evaluate(() => {
+    globalThis.__child.done = true;
+    globalThis.__slot.tick(0.016);
+  });
   check(`${label}: a finished child pops and the sheet returns`, (await visible(page)) === 'visible');
-  check(`${label}: ...and the popped child was disposed`,
-    (await calls(page)).includes('dispose'));
-  check(`${label}: ...and the sheet is still readable`,
-    (await page.locator('#enhanced-charsheet .skillrow').count()) === 7);
+  check(`${label}: ...and the popped child was disposed`, (await calls(page)).includes('dispose'));
+  check(
+    `${label}: ...and the sheet is still readable`,
+    (await page.locator('#enhanced-charsheet .skillrow').count()) === 7,
+  );
   check(`${label}: the host never saw the sheet finish`, (await done(page)) === false);
 
   // ── 6. A REFUSED WINDOW SAYS SO ────────────────────────────────
   await page.evaluate(() => globalThis.__slot.dispose());
   await openSheet(page, ['inventory']);
   const nav2 = await page.$$eval('#enhanced-charsheet .sheet-nav button', (ns) => ns.map((n) => n.textContent));
-  check(`${label}: a host that hands no spellbook draws no Spellbook button`,
-    !nav2.includes('Spellbook') && nav2.includes('Inventory'), nav2.join('/'));
+  check(
+    `${label}: a host that hands no spellbook draws no Spellbook button`,
+    !nav2.includes('Spellbook') && nav2.includes('Inventory'),
+    nav2.join('/'),
+  );
 
   // ── 7. THE KEYS THAT OPENED IT CLOSE IT ────────────────────────
   await page.keyboard.press('Escape');
@@ -193,21 +227,27 @@ async function run(label, opts) {
   await openSheet(page);
   await page.keyboard.press('F5');
   await page.waitForSelector('#enhanced-charsheet', { state: 'detached', timeout: 10000 });
-  check(`${label}: F5 closes it too - and did NOT reload the page`,
+  check(
+    `${label}: F5 closes it too - and did NOT reload the page`,
     (await done(page)) === true && (await page.evaluate(() => !!globalThis.__slot)),
-    'an unclaimed F5 destroys the session');
+    'an unclaimed F5 destroys the session',
+  );
 
   // ── 8. THE PHONE LESSON, APPLIED IN ADVANCE ────────────────────
   await openSheet(page);
-  const small = await page.$$eval('#enhanced-charsheet button', (ns) => ns
-    .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 20), r: n.getBoundingClientRect() }))
-    .filter(({ r }) => r.height > 0 && r.height < 44)
-    .map(({ t, r }) => `${t}@${Math.round(r.height)}`));
+  const small = await page.$$eval('#enhanced-charsheet button', (ns) =>
+    ns
+      .map((n) => ({ t: (n.textContent ?? '').trim().slice(0, 20), r: n.getBoundingClientRect() }))
+      .filter(({ r }) => r.height > 0 && r.height < 44)
+      .map(({ t, r }) => `${t}@${Math.round(r.height)}`),
+  );
   check(`${label}: every target a finger has to hit is 44px`, small.length === 0, small.join(', '));
-  const off = await page.$$eval('#enhanced-charsheet .sheet-nav button', (ns) => ns
-    .map((n) => ({ t: (n.textContent ?? '').trim(), r: n.getBoundingClientRect() }))
-    .filter(({ r }) => r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1)
-    .map(({ t }) => t));
+  const off = await page.$$eval('#enhanced-charsheet .sheet-nav button', (ns) =>
+    ns
+      .map((n) => ({ t: (n.textContent ?? '').trim(), r: n.getBoundingClientRect() }))
+      .filter(({ r }) => r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1)
+      .map(({ t }) => t),
+  );
   check(`${label}: every navigation button is ON the screen`, off.length === 0, off.join(', '));
 
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));

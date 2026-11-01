@@ -18,16 +18,33 @@ export function createTownTable(places) {
   const own = new Map();
   return {
     /** @param {number} mapId @param {TownRow} row */
-    set(mapId, row) { own.set(mapId >>> 0, row); return this; },
+    set(mapId, row) {
+      own.set(mapId >>> 0, row);
+      return this;
+    },
     /** @param {number} mapId @returns {TownRow|undefined} */
     get(mapId) {
-      const id = Number(mapId) >>> 0, row = own.get(id);
+      const id = Number(mapId) >>> 0,
+        row = own.get(id);
       if (row) return row;
       const p = places()?.byMapId(id);
-      return p ? { name: p.name, px: p.px, py: p.py, region: p.region, type: p.type, ...(p.location != null ? { location: p.location } : {}) } : undefined;   // WW7-5: its location's index, the town economy's report's
+      return p
+        ? {
+            name: p.name,
+            px: p.px,
+            py: p.py,
+            region: p.region,
+            type: p.type,
+            ...(p.location != null ? { location: p.location } : {}),
+          }
+        : undefined; // WW7-5: its location's index, the town economy's report's
     },
     /** @param {number} mapId */
-    has(mapId) { return this.get(mapId) !== undefined; },
-    get size() { return own.size; },
+    has(mapId) {
+      return this.get(mapId) !== undefined;
+    },
+    get size() {
+      return own.size;
+    },
   };
 }

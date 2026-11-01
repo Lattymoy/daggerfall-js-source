@@ -42,13 +42,36 @@ export function readVendorMark(fn, size) {
  *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
 export function readVendorMarkIn(fn, box) {
   let m = null;
-  try { m = typeof fn === 'function' ? fn() : null; } catch { return null; }
+  try {
+    m = typeof fn === 'function' ? fn() : null;
+  } catch {
+    return null;
+  }
   if (!m || typeof m !== 'object') return null;
   const { px, py } = m;
-  if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) return null;
+  if (
+    !Number.isInteger(px) ||
+    !Number.isInteger(py) ||
+    px < box.x0 ||
+    py < box.y0 ||
+    px >= box.x0 + box.w ||
+    py >= box.y0 + box.h
+  )
+    return null;
   const label = String(m.label ?? VENDOR_LEGEND_TEXT).slice(0, LABEL_MAX);
   const town = String(m.town ?? '').slice(0, LABEL_MAX);
-  return { key: `${px},${py}|${label}|${town}`, px, py, x: px + 0.5, y: py + 0.5, cx: px + 0.5, cy: py + 0.5, r: VENDOR_RING_R, label, town };
+  return {
+    key: `${px},${py}|${label}|${town}`,
+    px,
+    py,
+    x: px + 0.5,
+    y: py + 0.5,
+    cx: px + 0.5,
+    cy: py + 0.5,
+    r: VENDOR_RING_R,
+    label,
+    town,
+  };
 }
 
 /** What a map repaints on: the mark's pixel and its words. */
@@ -72,32 +95,62 @@ export function paintVendorMark(ctx, view, m, toPaper, pen = {}) {
   ctx.save();
   ctx.setLineDash([]);
   // the town ringed - the waypoint's own place, apart from the map's yellow mark
-  ctx.strokeStyle = VENDOR_RIM_CSS; ctx.lineWidth = 3.2;
-  ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = VENDOR_MARK_CSS; ctx.lineWidth = 1.8;
-  ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = VENDOR_RIM_CSS;
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = VENDOR_MARK_CSS;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(x, y, 8, 0, Math.PI * 2);
+  ctx.stroke();
   // the pin
-  ctx.strokeStyle = VENDOR_RIM_CSS; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x, y - 8); ctx.lineTo(x, cy + r); ctx.stroke();
+  ctx.strokeStyle = VENDOR_RIM_CSS;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 8);
+  ctx.lineTo(x, cy + r);
+  ctx.stroke();
   // the coin, on a soft gold glow so it reads at every zoom
   ctx.fillStyle = 'rgba(240, 199, 90, 0.30)';
-  ctx.beginPath(); ctx.arc(x, cy, r + 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = VENDOR_MARK_CSS;
-  ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = VENDOR_RIM_CSS; ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(90, 58, 14, 0.75)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(x, cy, r - 3, 0, Math.PI * 2); ctx.stroke();
-  ctx.fillStyle = 'rgba(255, 246, 214, 0.85)';
-  ctx.beginPath(); ctx.arc(x - 3.4, cy - 3.4, 1.8, 0, Math.PI * 2); ctx.fill();
-  // the coin's face: a trader's scales, struck in the rim's brown
-  ctx.strokeStyle = VENDOR_RIM_CSS; ctx.lineWidth = 1.3;
   ctx.beginPath();
-  ctx.moveTo(x, cy - 4); ctx.lineTo(x, cy + 4);   // the post
-  ctx.moveTo(x - 4.5, cy - 2.5); ctx.lineTo(x + 4.5, cy - 2.5);   // the beam
-  ctx.moveTo(x - 4.5, cy - 2.5); ctx.lineTo(x - 5.5, cy + 1); ctx.lineTo(x - 3.5, cy + 1); ctx.closePath();
-  ctx.moveTo(x + 4.5, cy - 2.5); ctx.lineTo(x + 3.5, cy + 1); ctx.lineTo(x + 5.5, cy + 1); ctx.closePath();
-  ctx.moveTo(x - 2.5, cy + 4); ctx.lineTo(x + 2.5, cy + 4);   // the foot
+  ctx.arc(x, cy, r + 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = VENDOR_MARK_CSS;
+  ctx.beginPath();
+  ctx.arc(x, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = VENDOR_RIM_CSS;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(90, 58, 14, 0.75)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(x, cy, r - 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 246, 214, 0.85)';
+  ctx.beginPath();
+  ctx.arc(x - 3.4, cy - 3.4, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  // the coin's face: a trader's scales, struck in the rim's brown
+  ctx.strokeStyle = VENDOR_RIM_CSS;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(x, cy - 4);
+  ctx.lineTo(x, cy + 4); // the post
+  ctx.moveTo(x - 4.5, cy - 2.5);
+  ctx.lineTo(x + 4.5, cy - 2.5); // the beam
+  ctx.moveTo(x - 4.5, cy - 2.5);
+  ctx.lineTo(x - 5.5, cy + 1);
+  ctx.lineTo(x - 3.5, cy + 1);
+  ctx.closePath();
+  ctx.moveTo(x + 4.5, cy - 2.5);
+  ctx.lineTo(x + 3.5, cy + 1);
+  ctx.lineTo(x + 5.5, cy + 1);
+  ctx.closePath();
+  ctx.moveTo(x - 2.5, cy + 4);
+  ctx.lineTo(x + 2.5, cy + 4); // the foot
   ctx.stroke();
   // the words, beside the coin on the parchment's halo - the trader's house (the sheet names the town itself)
   const lines = [m.label].filter(Boolean);
@@ -108,7 +161,8 @@ export function paintVendorMark(ctx, view, m, toPaper, pen = {}) {
     let ty = cy;
     for (const [i, t] of lines.entries()) {
       if (i === 1) ctx.font = 'italic 10px Georgia, "Times New Roman", serif';
-      ctx.lineWidth = 3.5; ctx.strokeStyle = pen.halo ?? 'rgba(236, 222, 190, 0.85)';
+      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = pen.halo ?? 'rgba(236, 222, 190, 0.85)';
       ctx.strokeText(t, x + r + 6, ty);
       ctx.fillStyle = i === 0 ? '#6b4310' : (pen.name ?? 'rgba(46, 32, 18, 0.95)');
       ctx.fillText(t, x + r + 6, ty);

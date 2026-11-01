@@ -52,12 +52,12 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: mob (an Admin) signed in, Asynian (a Moderator) invited and signed in; the market,
+/** The Worker with the panel set up: chief (an Admin) signed in, Asynian (a Moderator) invited and signed in; the market,
  *  the professions and the Marks open; realm characters seated through the service. */
 async function stand() {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
     PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on',
   });
   const raw = s.env.DB._raw;
@@ -68,11 +68,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const asyKey = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await asyKey.proof('enroll', 'Asynian')) })).body;
-  const admin = (path, body = {}) => staff(path, body, mob.session);
+  const admin = (path, body = {}) => staff(path, body, chief.session);
   /** A checkpoint under the character's lease, one on. */
   const put = async (who, id, save, { seq = null, lease = null } = {}) => {
     const row = raw.prepare('SELECT lease, seq FROM realm_characters WHERE id = ?').get(id);
@@ -91,7 +91,7 @@ async function stand() {
   const row = (id) => ({ ...raw.prepare('SELECT * FROM realm_characters WHERE id = ?').get(id) });
   const staffFindings = (id) => raw.prepare("SELECT detail FROM realm_findings WHERE char_id = ? AND kind = 'staff' ORDER BY id").all(id).map((r) => JSON.parse(r.detail));
   const audits = (act) => raw.prepare('SELECT act, target, detail, outcome FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r, detail: r.detail ? JSON.parse(r.detail) : null }));
-  return { ...s, raw, staff, admin, mob, asy, put, seat, row, staffFindings, audits };
+  return { ...s, raw, staff, admin, chief, asy, put, seat, row, staffFindings, audits };
 }
 
 test('STAFF-PANEL3-REALM: every door is listed among the staff panel\'s, none opens without a staff session, and each is an Admin\'s - a Moderator refused and written down (mutant: the role check dropped)', async () => {
@@ -429,18 +429,18 @@ test('STAFF-PANEL3-REALM: A PULL THROUGH THE GAME\'S DOOR IS WRITTEN DOWN (FLAW 
   s.raw.prepare("INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, 'ore:mithril', 'own', 50)").run(seller.id, seller.character);
   s.raw.prepare('INSERT INTO marks (account, balance) VALUES (?, 100)').run(seller.id);
   const list = async () => (await s.call('/v1/market/list', { character: seller.character, region: DF, kind: 'material', material: 'ore:mithril', units: 5, price: 8, hubs: HUBS, rid: rid() }, seller.secret)).body.listing.id;
-  const mob = (await s.call('/v1/auth/login', { handle: 'SirMcMobdon', password: PASSWORD })).body.secret;
+  const chief = (await s.call('/v1/auth/login', { handle: 'SirMcMobdon', password: PASSWORD })).body.secret;
   const asy = (await s.call('/v1/auth/login', { handle: 'Asynian', password: PASSWORD })).body.secret;
   const l = await list();
   assert.deepEqual((await s.call('/v1/market/remove', { listing: l }, asy)).body, { error: 'not-developer' });
   assert.deepEqual(s.audits('market-pull'), [], 'a refused player is no staff act');
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: l }, mob)).body, { ok: true });
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: l }, mob)).body, { error: 'market-gone' });
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: '!' }, mob)).body, { error: 'bad-listing' });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: l }, chief)).body, { ok: true });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: l }, chief)).body, { error: 'market-gone' });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: '!' }, chief)).body, { error: 'bad-listing' });
   // an auction likewise
   s.raw.prepare(`INSERT INTO market_auctions (id, seller, char_id, region, provenance, wear, opening, fee, at, ends_at, state, rid, n)
     VALUES ('auctionbbbbbbbbbbbbbbbbb', ?, ?, ?, 'p000000000000002', 900, 10, 1, ?, ?, 'open', 'r2', 'n2')`).run(seller.id, seller.character, DF, nowS(), nowS() + 3600);
-  assert.deepEqual((await s.call('/v1/market/remove', { listing: 'auctionbbbbbbbbbbbbbbbbb' }, mob)).body, { ok: true });
+  assert.deepEqual((await s.call('/v1/market/remove', { listing: 'auctionbbbbbbbbbbbbbbbbb' }, chief)).body, { ok: true });
   const rows = s.raw.prepare("SELECT actor_name, role, act, target, detail, outcome FROM staff_audit WHERE act = 'market-pull' ORDER BY id").all().map((r) => ({ ...r, detail: JSON.parse(r.detail) }));
   assert.deepEqual(rows, [
     { actor_name: 'SirMcMobdon', role: 'admin', act: 'market-pull', target: seller.id, detail: { listing: l, door: 'game' }, outcome: 'ok' },

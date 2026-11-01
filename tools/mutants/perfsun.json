@@ -56,8 +56,8 @@
   {
     "name": "PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-    "new": "  float diff = (uSunScale > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "old": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
+    "new": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-    "new": "  float diff = (ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "old": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
+    "new": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 1.0;   // EL2: the sun map",
+    "old": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
+    "new": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 1.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "  vBBSunVis = (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y));",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y));   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
     "file": "src/render/enhancedLighting.js",
-    "old": "sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "PERF-SUN2-the-water-reads-its-shadow-all-night",
     "file": "src/render/waterSurface.js",
-    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
-    "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};   // EL7: a quay's shadow lies on the water under the lane",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "TREES1-the-flat-goes-back-to-the-cheap-tap-and-a-distant-tree-flips-lit-to-dark",
     "file": "src/render/enhancedLighting.js",
-    "old": "sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0))) : 1.0;",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0))) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowSoftAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "old": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
+    "new": "  // output-identical rather than an approximation.\n  float ndl = max(dot(n, uLightDir), 0.0);\n  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowSoftAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff = max(dot(n, uLight3Dir), 0.0);",
     "tests": [
       "test/render/perfsun_fragment.test.js"
     ]

@@ -474,7 +474,7 @@ test('EE13: the Enhanced pane offers a season/weather test that spawns in a rand
   const w = read('src/scenes/bootStartHost.js');   // PIN MOVED (BAY-LEFT-B): the boot's start, out of world.js (HOST-SPLIT)
   assert.match(w, /if \(!startLoc && params\.get\('spawn'\) === 'random'\) \{/);
   assert.match(w, /\[0, 1, 2\]\.includes\(l\.mapTableData\?\.locationType\)/, 'a city, a hamlet or a village - a place with ground and people');
-  assert.match(w, /console\.info\(`\[world\] random spawn: /, 'the town is named, so a good one can be found again');
+  assert.match(w, /console\.info\(\n\s*`\[world\] random spawn: /, 'the town is named, so a good one can be found again');
 });
 
 // ── AUDIT 58: THE SAVE CARD'S GOLD ROW ───────────────────────────

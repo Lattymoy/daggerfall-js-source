@@ -2,8 +2,8 @@
   {
     "name": "VC-1-edge",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "edge: Object.freeze({ out: 0, in: 600 }),",
-    "new": "edge: Object.freeze({ out: 0, in: 300 }),",
+    "old": "  edge: Object.freeze({ out: 0, in: 600 }),",
+    "new": "  edge: Object.freeze({ out: 0, in: 300 }),",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "VC-3-under-inverted",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "(Number.isFinite(h) ? 1 - smoothstep(",
-    "new": "(Number.isFinite(h) ? smoothstep(",
+    "old": "  Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1;",
+    "new": "  Number.isFinite(h) ? smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "VC-4-under-unknown-open",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1);",
-    "new": "JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 0);",
+    "old": "  Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1;",
+    "new": "  Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 0;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "VC-5-no-jump",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > JUNGLE_CANOPY.jump;",
-    "new": "Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > 1e12;",
+    "old": "  const jumped = !s.primed || !s.eye || Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > JUNGLE_CANOPY.jump;",
+    "new": "  const jumped = !s.primed || !s.eye || Math.hypot(eye[0] - s.eye[0], eye[2] - s.eye[2]) > 1e12;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "VC-6-no-ease",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "s.w = jumped ? t : s.w + (t - s.w) * (1 - Math.exp(-Math.max(0, dt) / JUNGLE_CANOPY.lag));",
-    "new": "s.w = t;",
+    "old": "  s.w = jumped ? t : s.w + (t - s.w) * (1 - Math.exp(-Math.max(0, dt) / JUNGLE_CANOPY.lag));",
+    "new": "  s.w = t;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "VC-7-tail-kept",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "  if (s.w < 1e-4) s.w = 0;\n",
-    "new": "",
+    "old": "  if (s.w < 1e-4) s.w = 0;\n  const e = (s.eye ??= [0, 0, 0]); // the state's own, never a frame's allocation",
+    "new": "  const e = (s.eye ??= [0, 0, 0]); // the state's own, never a frame's allocation",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VC-8-light-new-at-none",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "  if (!(k > 0) && rgb instanceof Float32Array) return rgb;\n",
-    "new": "",
+    "old": "  if (!(k > 0) && rgb instanceof Float32Array) return rgb;\n  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)));",
+    "new": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)));",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "VC-9-light-not-dimmed",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)",
-    "new": "rgb[i] * (1 + (tint[i] - 1) * k)",
+    "old": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)));",
+    "new": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (tint[i] - 1) * k)));",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "VC-10-light-not-leaned",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)",
-    "new": "rgb[i] * (1 - take * k)",
+    "old": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 - take * k) * (1 + (tint[i] - 1) * k)));",
+    "new": "  return new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 - take * k)));",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "VC-12-moon-kept",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "scale: moon.scale * canopyKey(w),",
-    "new": "scale: moon.scale,",
+    "old": "  return { ...moon, scale: moon.scale * canopyKey(w), color: canopyLight(moon.color, w, 0) };",
+    "new": "  return { ...moon, scale: moon.scale, color: canopyLight(moon.color, w, 0) };",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "VC-13-moon-dimmed-twice",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "color: canopyLight(moon.color, w, 0) };",
-    "new": "color: canopyLight(moon.color, w) };",
+    "old": "  return { ...moon, scale: moon.scale * canopyKey(w), color: canopyLight(moon.color, w, 0) };",
+    "new": "  return { ...moon, scale: moon.scale * canopyKey(w), color: canopyLight(moon.color, w) };",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "VC-14-fog-kept",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "out[c] = color[c] * (1 - JUNGLE_CANOPY.fog * k) * (1 + (t[c] - 1) * k);",
-    "new": "out[c] = color[c] * (1 + (t[c] - 1) * k);",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = color[c] * (1 - JUNGLE_CANOPY.fog * k) * (1 + (t[c] - 1) * k);",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = color[c] * (1 + (t[c] - 1) * k);",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "VC-17-leaves-unlit",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "for (let c = 0; c < 3; c++) out[c] = clamp01(color[c] * l[c]);",
-    "new": "for (let c = 0; c < 3; c++) out[c] = clamp01(l[c]);",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = clamp01(color[c] * l[c]);",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = clamp01(l[c]);",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "VC-18-water-kept",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "  if (!sky || !(w > 0)) return sky;\n  const lerp",
-    "new": "  return sky;\n  const lerp",
+    "old": "  if (!sky || !(w > 0)) return sky;",
+    "new": "  return sky;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]

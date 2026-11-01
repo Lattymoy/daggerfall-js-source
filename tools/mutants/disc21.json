@@ -2,8 +2,8 @@
   {
     "name": "DISC21-A-the-biography-weapon-hand-built",
     "file": "src/systems/biography.js",
-    "old": "  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);\n",
-    "new": "  if (group === 'Weapons') return { group, templateIndex: t.index, material, name: t.name, value: 1 };\n",
+    "old": "  if (group === 'Weapons') return createWeapon(t.index, t.index === ARROW_TEMPLATE ? 0 : material, rolls);",
+    "new": "  if (group === 'Weapons') return { group, templateIndex: t.index, material, name: t.name, value: 1 };",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DISC21-A-the-bare-record-unminted",
     "file": "src/systems/biography.js",
-    "old": "  return mintCondition(item);\n};",
-    "new": "  return item;\n};",
+    "old": "  return mintCondition(item);",
+    "new": "  return item;",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DISC21-A-the-kit-s-mint-dropped",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      mintCondition(dagger);\n",
-    "new": "",
+    "old": "      mintCondition(dagger);\n      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC21-A-the-kit-wears-nothing",
     "file": "src/systems/roleplayRealismItems/rriKits.js",
-    "old": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
-    "new": "      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0);\n",
+    "old": "      dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "      dagger.currentCondition = Math.trunc((dagger.maxCondition ?? 0) * 0);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISC21-A-the-repair-reminted-what-was-minted",
     "file": "src/systems/conditionRepair.js",
-    "old": "if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group)",
-    "new": "if (!it || typeof it !== 'object' || !WEARABLE.has(it.group)",
+    "old": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it))\n      continue;",
+    "new": "    if (!it || typeof it !== 'object' || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC21-A-the-repair-mints-what-is-not-worn",
     "file": "src/systems/conditionRepair.js",
-    "old": " || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;",
-    "new": " || !Object.isExtensible(it)) continue;",
+    "old": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it))\n      continue;",
+    "new": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC21-A-the-arrow-whole",
     "file": "src/systems/conditionRepair.js",
-    "old": "    if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;\n    else if",
-    "new": "    if",
+    "old": "    if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;\n    else if (had === 0 && isQuestionsDagger(it))\n      it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "    if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISC21-A-the-dagger-whole",
     "file": "src/systems/conditionRepair.js",
-    "old": "    else if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
-    "new": "",
+    "old": "    else if (had === 0 && isQuestionsDagger(it))\n      it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);\n    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
+    "new": "    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DISC21-C-the-line-never-names-the-key",
     "file": "src/systems/quickslots.js",
-    "old": "  if (!r) { say?.(emptySlotLine(hooks.hand?.() ?? undefined)); return { kind: 'empty' }; }",
-    "new": "  if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }",
+    "old": "    say?.(emptySlotLine(hooks.hand?.() ?? undefined));",
+    "new": "    say?.(QUICKSLOT_TEXT.emptySlot);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DISC21-C-names-it-with-the-weapon-out",
     "file": "src/systems/quickslots.js",
-    "old": "  return weapon && sheathed && readyKey ?",
-    "new": "  return weapon && readyKey ?",
+    "old": "  return weapon && sheathed && readyKey",
+    "new": "  return weapon && readyKey",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DISC21-C-names-it-for-bare-hands",
     "file": "src/systems/quickslots.js",
-    "old": "  return weapon && sheathed && readyKey ?",
-    "new": "  return sheathed && readyKey ?",
+    "old": "  return weapon && sheathed && readyKey",
+    "new": "  return sheathed && readyKey",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DISC21-C-the-hand-reads-no-sheath",
     "file": "src/ui/quickslotTags.js",
-    "old": "sheathed: !!pw?.sheathed,",
-    "new": "sheathed: false,",
+    "old": "  return { weapon: pw?.weapon ?? null, sheathed: !!pw?.sheathed, readyKey: tag?.kind === 'key' ? tag.text : null };",
+    "new": "  return { weapon: pw?.weapon ?? null, sheathed: false, readyKey: tag?.kind === 'key' ? tag.text : null };",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DISC21-C-the-wrong-action-s-key",
     "file": "src/ui/quickslotTags.js",
-    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller",
-    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, { bindings: store, controller",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, {",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, {",
     "tests": [
       "test/systems/disc21.test.js"
     ]

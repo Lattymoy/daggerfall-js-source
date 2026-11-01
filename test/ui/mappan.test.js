@@ -97,7 +97,7 @@ test('MAP-PAN: the sheet blits the layer in place of the mark walk, and the worl
   const held = read('src/ui/heldMap.js');
   const sheet = held.slice(held.indexOf('  _worldSheet() {'), held.indexOf('  _showChrome('));
   assert.match(sheet, /syncMarksLayer\(this\._marksLayer/);
-  assert.match(sheet, /contentKey: \[env\.view\.scale, env\.band, env\.dpr, env\.paperW, env\.paperH, sheet\.staticKey\(\)\]/);
+  assert.match(sheet, /contentKey: \[env\.view\.scale, env\.band, env\.dpr, env\.paperW, env\.paperH, sheet\.marksKey\(\)\]/);   // PIN MOVED (AUDIT FB1031 W2): the marks' key, the kept layer's less the witnessed ground's read
   assert.doesNotMatch(sheet, /contentKey: \[[^\]]*env\.view\.ox/);
   assert.match(sheet, /marksLayer: synced\?\.layer \?\? null,/);   // PIN MOVED (ZOOM-FAST): no bake while the scale settles - inked on the paper
   assert.match(sheet, /const synced = settling \? null : syncMarksLayer\(this\._marksLayer, \{/);

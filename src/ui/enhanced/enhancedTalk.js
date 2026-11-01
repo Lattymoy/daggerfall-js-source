@@ -62,7 +62,7 @@
 // the top of the list.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
+import { closeOnOutsideTap } from './enhancedOverlays.js'; // OT1
 import { npcPortraitPixels, npcPortraitKey } from '../native/nativeTalk.js';
 
 const el = (tag, cls, text) => {
@@ -94,8 +94,14 @@ export const CATEGORY_BUTTONS = Object.freeze([
  */
 export function talkPanelModel(model) {
   const entries = model.conversation.map((c, i) => {
-    const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c;   // the greeting is a bare string (nativeTalk.js draw/_close)
-    return { i, text: e.text, kind: e.kind === 'question' ? 'question' : 'answer', selected: i === model.conversationSelected, copied: model.copyIndexes.has(i) };
+    const e = typeof c === 'string' ? { text: c, kind: 'answer' } : c; // the greeting is a bare string (nativeTalk.js draw/_close)
+    return {
+      i,
+      text: e.text,
+      kind: e.kind === 'question' ? 'question' : 'answer',
+      selected: i === model.conversationSelected,
+      copied: model.copyIndexes.has(i),
+    };
   });
   const whereIs = model._talkOption === 'whereIs';
   // L10N3g: the name, the player-says line and each topic row as the
@@ -115,11 +121,22 @@ export function talkPanelModel(model) {
     mode: model.topicMode,
     question: model.shownQuestion?.() ?? model.question ?? '',
     entries,
-    topics: model.topics.map((t, i) => ({ i, label: model.shownTopic?.(t) ?? t.label ?? t.name ?? '', selected: i === model.selected, group: model.topicMode === 'categories' })),
+    topics: model.topics.map((t, i) => ({
+      i,
+      label: model.shownTopic?.(t) ?? t.label ?? t.name ?? '',
+      selected: i === model.selected,
+      group: model.topicMode === 'categories',
+    })),
     // a category page (buildings) carries a way back - the list it
     // descended from is one press of Location away
     back: model.topicMode === 'buildings',
-    categories: CATEGORY_BUTTONS.map(([id, button, label]) => ({ id, button, label, on: whereIs && model._lastCategory === id, enabled: whereIs })),
+    categories: CATEGORY_BUTTONS.map(([id, button, label]) => ({
+      id,
+      button,
+      label,
+      on: whereIs && model._lastCategory === id,
+      enabled: whereIs,
+    })),
     // ASK has something to ask: the Work page's question, or a selected
     // row that is not a group (a group descends instead - DFU's OKAY
     // takes SelectTopicFromTopicList either way, so ASK on a group
@@ -132,20 +149,24 @@ let host = null;
 let model = null;
 let onExit = () => {};
 let relock = () => {};
-let faceKey = null;      // the portrait key painted into the face canvas
+let faceKey = null; // the portrait key painted into the face canvas
 let faceCanvas = null;
 let logEl = null;
 let listEl = null;
 let lastLogCount = -1;
 let lastTopicsKey = null;
-let regardOpen = false;  // PLAIN-UI: the regard badge's words shown (a press on the badge)
+let regardOpen = false; // PLAIN-UI: the regard badge's words shown (a press on the badge)
 
 /** Every press: through the model, then a fresh picture; and when the
  *  press was Goodbye, the exit - INSIDE the gesture, so the host's
  *  relock lands in the click that closed the panel (MAC1). */
 function act(fn) {
   fn();
-  if (model?.done) { relock(); onExit(); return; }
+  if (model?.done) {
+    relock();
+    onExit();
+    return;
+  }
   render();
 }
 
@@ -153,14 +174,23 @@ function paintFace() {
   if (!faceCanvas) return;
   const key = npcPortraitKey();
   const px = npcPortraitPixels();
-  if (!px || key === faceKey) { if (!key) { faceKey = null; faceCanvas.hidden = true; } return; }
+  if (!px || key === faceKey) {
+    if (!key) {
+      faceKey = null;
+      faceCanvas.hidden = true;
+    }
+    return;
+  }
   try {
-    faceCanvas.width = px.w; faceCanvas.height = px.h;
+    faceCanvas.width = px.w;
+    faceCanvas.height = px.h;
     const ctx = faceCanvas.getContext('2d');
     ctx.putImageData(new ImageData(px.rgba, px.w, px.h), 0, 0);
     faceCanvas.hidden = false;
     faceKey = key;
-  } catch { /* a headless canvas has no 2d context; the name still says who */ }
+  } catch {
+    /* a headless canvas has no 2d context; the name still says who */
+  }
 }
 
 function render() {
@@ -190,7 +220,10 @@ function render() {
     r.title = m.regard.words;
     r.setAttribute('aria-expanded', String(regardOpen));
     r.setAttribute('aria-label', `${m.regard.label}, ${m.regard.value}. What this means`);
-    r.onclick = () => { regardOpen = !regardOpen; render(); };   // a press says what it means - a finger has no hover
+    r.onclick = () => {
+      regardOpen = !regardOpen;
+      render();
+    }; // a press says what it means - a finger has no hover
     const bar = el('span', 'talk-regard-bar');
     const mark = el('i');
     mark.style.left = `${(m.regard.share * 100).toFixed(1)}%`;
@@ -211,7 +244,7 @@ function render() {
   const bye = el('button', 'act door-goodbye', 'Goodbye');
   bye.onclick = () => act(() => model.press('goodbye'));
   head.append(bye);
-  if (m.regard && regardOpen) head.append(el('p', 'talk-regard-words', m.regard.words));   // PLAIN-UI: the badge, in words
+  if (m.regard && regardOpen) head.append(el('p', 'talk-regard-words', m.regard.words)); // PLAIN-UI: the badge, in words
   panel.append(head);
 
   // ── main: the conversation and the topics
@@ -228,7 +261,10 @@ function render() {
 
   const topics = el('aside', 'talk-topics');
   const modes = el('div', 'talk-modes');
-  for (const [button, label] of [['tellMeAbout', 'Tell me about'], ['whereIs', 'Where is']]) {
+  for (const [button, label] of [
+    ['tellMeAbout', 'Tell me about'],
+    ['whereIs', 'Where is'],
+  ]) {
     const b = el('button', `talk-mode${m.option === button ? ' on' : ''}`, label);
     b.onclick = () => act(() => model.press(button));
     modes.append(b);
@@ -237,7 +273,7 @@ function render() {
   const cats = el('div', 'talk-cats');
   for (const c of m.categories) {
     const b = el('button', `talk-cat${c.on ? ' on' : ''}`, c.label);
-    if (!c.enabled) b.disabled = true;   // greyed under Tell me about, as TALK02I0 greys them; the model's gate is silent too
+    if (!c.enabled) b.disabled = true; // greyed under Tell me about, as TALK02I0 greys them; the model's gate is silent too
     b.onclick = () => act(() => model.press(c.button));
     cats.append(b);
   }
@@ -267,11 +303,16 @@ function render() {
 
   // ── foot: the player-says line, ASK, the logbook
   const foot = el('footer', 'talk-say');
-  foot.append(el('div', `talk-q${m.question ? '' : ' none'}`, m.question || (m.mode === 'none' ? '' : 'Pick a topic.')));
+  foot.append(
+    el('div', `talk-q${m.question ? '' : ' none'}`, m.question || (m.mode === 'none' ? '' : 'Pick a topic.')),
+  );
   const note = el('button', 'act', 'Note');
   note.title = 'Copy the selected line to your logbook. Right-click to copy the whole conversation';
   note.onclick = () => act(() => model.press('logbook'));
-  note.oncontextmenu = (e) => { e.preventDefault(); act(() => model.press('logbook', true)); };
+  note.oncontextmenu = (e) => {
+    e.preventDefault();
+    act(() => model.press('logbook', true));
+  };
   foot.append(note);
   const ask = el('button', 'act primary door-ask', 'Ask');
   if (!m.canAsk) ask.disabled = true;
@@ -302,7 +343,10 @@ function render() {
  *  the key was taken. Enter and the arrows are this panel's own (see
  *  the header); everything else is the classic window's input(). */
 export function talkKey(code, m, e = null) {
-  if (code === 'Enter') { m.press('okay'); return true; }
+  if (code === 'Enter') {
+    m.press('okay');
+    return true;
+  }
   if (code === 'ArrowDown' || code === 'ArrowUp') {
     if (!m.topics.length) return true;
     const cur = m.selected < 0 ? -1 : m.selected;
@@ -333,18 +377,33 @@ export function mountEnhancedTalk(hostEl, d = {}) {
   model = d.model;
   onExit = d.onExit ?? (() => {});
   relock = d.relock ?? (() => {});
-  faceKey = null; faceCanvas = null; logEl = null; listEl = null;
-  lastLogCount = -1; lastTopicsKey = null; regardOpen = false;
+  faceKey = null;
+  faceCanvas = null;
+  logEl = null;
+  listEl = null;
+  lastLogCount = -1;
+  lastTopicsKey = null;
+  regardOpen = false;
   render();
   return {
     render,
     /** Per frame from the door's draw(): the portrait lands async. */
-    frame() { paintFace(); },
+    frame() {
+      paintFace();
+    },
     /** A routed key, through the map, then a fresh picture. */
-    key(code, e = null) { act(() => talkKey(code, model, e)); },
+    key(code, e = null) {
+      act(() => talkKey(code, model, e));
+    },
     destroy() {
-      host = null; model = null; onExit = () => {}; relock = () => {};
-      faceKey = null; faceCanvas = null; logEl = null; listEl = null;
+      host = null;
+      model = null;
+      onExit = () => {};
+      relock = () => {};
+      faceKey = null;
+      faceCanvas = null;
+      logEl = null;
+      listEl = null;
     },
   };
 }

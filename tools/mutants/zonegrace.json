@@ -2,148 +2,190 @@
   {
     "name": "ZONE-GRACE-the-length",
     "file": "src/net/wild/wildRef.js",
-    "old": "export const WILD_GRACE = Object.freeze({ ms: 60_000,",
-    "new": "export const WILD_GRACE = Object.freeze({ ms: 30_000,",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "export const WILD_GRACE = Object.freeze({ ms: 60_000, awayMs: 30_000, fightMs: 60_000 });",
+    "new": "export const WILD_GRACE = Object.freeze({ ms: 30_000, awayMs: 30_000, fightMs: 60_000 });",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-entry-ungraced",
     "file": "src/net/wild/wildRef.js",
-    "old": "WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);",
-    "new": "WILD_GRACE.fightMs) x.graceUntil = x.graceUntil;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "      x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);",
+    "new": "      x.graceUntil = x.graceUntil;",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-passage-unread-at-a-blow",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (t.graceUntil > now) return {",
-    "new": "  if (false && t.graceUntil > now) return {",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };",
+    "new": "  if (false && t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-strikers-kept",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (graceEnded) a.graceUntil = -Infinity;\n",
-    "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  if (graceEnded) a.graceUntil = -Infinity;\n  if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };",
+    "new": "  if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-away-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": " && now - x.outAt >= WILD_GRACE.awayMs && ",
-    "new": " && ",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    else if (\n      !x.down &&\n      !rose &&\n      ed &&\n      now - x.outAt >= WILD_GRACE.awayMs &&\n      now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs\n    )",
+    "new": "    else if (!x.down && !rose && ed && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-fight-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs",
-    "new": "true",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    else if (\n      !x.down &&\n      !rose &&\n      ed &&\n      now - x.outAt >= WILD_GRACE.awayMs &&\n      now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs\n    )",
+    "new": "    else if (!x.down && !rose && ed && now - x.outAt >= WILD_GRACE.awayMs && true)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-struck-side-alone",
     "file": "src/net/wild/wildRef.js",
-    "old": "now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs",
-    "new": "now - x.struckAt >= WILD_GRACE.fightMs",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    else if (\n      !x.down &&\n      !rose &&\n      ed &&\n      now - x.outAt >= WILD_GRACE.awayMs &&\n      now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs\n    )",
+    "new": "    else if (!x.down && !rose && ed && now - x.outAt >= WILD_GRACE.awayMs && now - x.struckAt >= WILD_GRACE.fightMs)",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "PVP-DEATH-the-rise-graced",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (rose) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }",
-    "new": "if (rose) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "    x.struckAt = -Infinity;\n  }",
+    "new": "    x.struckAt = -Infinity;\n    x.graceUntil = now + WILD_GRACE.ms;\n  }",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "PVP-DEATH-the-rise-an-entry",
     "file": "src/net/wild/wildRef.js",
-    "old": "else if (!x.down && !rose && ed && now",
-    "new": "else if (!x.down && ed && now",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "      !rose &&\n      ed &&",
+    "new": "      ed &&",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-passage-dropped-at-a-crossing",
     "file": "src/net/wild/wildRef.js",
-    "old": "  x.graceUntil = Number.isFinite(carry.gr) && carry.gr > now ? carry.gr : -Infinity;",
-    "new": "  x.graceUntil = -Infinity;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "  x.graceUntil = Number.isFinite(carry.gr) && carry.gr > now ? carry.gr : -Infinity; // ZONE-GRACE: the safe passage it had there - or none",
+    "new": "  x.graceUntil = -Infinity; // ZONE-GRACE: the safe passage it had there - or none",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-carry-without-it",
     "file": "src/net/wild/wildRef.js",
     "old": "  const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};",
     "new": "  const grace = {};",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-relay-entry-unsaid",
     "file": "server/src/index.js",
     "old": "    if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(",
     "new": "    if (false && x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-striker-untold",
     "file": "server/src/index.js",
     "old": "    if (mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'grace', id: tb.id,",
     "new": "    if (false && mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'grace', id: tb.id,",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-end-unsaid",
     "file": "server/src/index.js",
     "old": "    if (res.graceEnded) { this._wildGraceSay(a, 0); this._wildCarryPut(",
     "new": "    if (res.graceEnded) { this._wildCarryPut(",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-wire-bound-apart",
     "file": "src/net/wire.js",
     "old": "export const WILD_GRACE_MS_MAX = 60_000;",
     "new": "export const WILD_GRACE_MS_MAX = 120_000;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-wire-takes-any-n",
     "file": "src/net/wire.js",
     "old": "(m.n === undefined || m.n === 1) ? { k: 'grace'",
     "new": "true ? { k: 'grace'",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-client-says-it-twice",
     "file": "src/systems/wild/wildGrace.js",
     "old": "        const fresh = mine <= at;",
     "new": "        const fresh = true;",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-client-end-unsaid",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      } else if (mine > at) { mine = 0; say(WILD_TEXT.graceOff()); }",
-    "new": "      } else if (mine > at) { mine = 0; }",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "      } else if (mine > at) {\n        mine = 0;\n        say(WILD_TEXT.graceOff());\n      }\n    },",
+    "new": "      } else if (mine > at) {\n        mine = 0;\n      }\n    },",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-client-run-out-unsaid",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      if (mine && mine <= at) { mine = 0; say(WILD_TEXT.graceOff()); }",
-    "new": "      if (false) { mine = 0; say(WILD_TEXT.graceOff()); }",
-    "tests": ["test/net/zonegrace.test.js"]
+    "old": "      if (mine && mine <= at) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-client-kept-off-every-swing",
     "file": "src/systems/wild/wildGrace.js",
     "old": "        if (at - keptSaid >= WILD_GRACE_SAY_MS) {",
     "new": "        if (true) {",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   },
   {
     "name": "ZONE-GRACE-the-host-unwired",
     "file": "src/scenes/world.js",
     "old": "    else if (g.k === 'grace') wildGrace.heard(g);   // ZONE-GRACE: safe passage, the referee's word\n",
     "new": "",
-    "tests": ["test/net/zonegrace.test.js"]
+    "tests": [
+      "test/net/zonegrace.test.js"
+    ]
   }
 ]

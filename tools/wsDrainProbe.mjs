@@ -32,14 +32,23 @@ const PAYLOAD_BYTES = PAYLOAD_KB * 1024;
 /** One connection's worth of bytes, resolved when the socket ends. */
 function listen() {
   const conns = [];
-  const server = createServer((_req, res) => { res.writeHead(404); res.end(); });
+  const server = createServer((_req, res) => {
+    res.writeHead(404);
+    res.end();
+  });
   server.on('upgrade', (req, socket) => {
-    const accept = createHash('sha1').update(req.headers['sec-websocket-key'] + GUID).digest('base64');
-    socket.write('HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n'
-      + `Connection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
+    const accept = createHash('sha1')
+      .update(req.headers['sec-websocket-key'] + GUID)
+      .digest('base64');
+    socket.write(
+      'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n' +
+        `Connection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`,
+    );
     const c = { bytes: 0 };
     conns.push(c);
-    socket.on('data', (chunk) => { c.bytes += chunk.length; });
+    socket.on('data', (chunk) => {
+      c.bytes += chunk.length;
+    });
     socket.on('error', () => {});
   });
   return { server, conns };
@@ -57,23 +66,28 @@ async function trial(mode) {
   const before = conns.length;
   const page = await browser.newPage();
   await page.setContent('<meta charset="utf-8">');
-  const buffered = await page.evaluate(async ([p, m, bytes]) => {
-    const ws = new WebSocket(`ws://127.0.0.1:${p}/probe`);   // a PATH, not the root: U60's pin reads a bare host-and-port as a probe driving the game
-    const opened = await new Promise((res) => {
-      ws.onopen = () => res(true); ws.onerror = () => res(false); setTimeout(() => res(false), 5000);
-    });
-    if (!opened) return -1;
-    ws.send(JSON.stringify({ pad: 'x'.repeat(bytes) }));
-    const held = ws.bufferedAmount;
-    if (m === 'drained') {
-      const t0 = performance.now();
-      while (ws.readyState === 1 && ws.bufferedAmount > 0 && performance.now() - t0 < 500) {
-        await new Promise((r) => setTimeout(r, 15));
+  const buffered = await page.evaluate(
+    async ([p, m, bytes]) => {
+      const ws = new WebSocket(`ws://127.0.0.1:${p}/probe`); // a PATH, not the root: U60's pin reads a bare host-and-port as a probe driving the game
+      const opened = await new Promise((res) => {
+        ws.onopen = () => res(true);
+        ws.onerror = () => res(false);
+        setTimeout(() => res(false), 5000);
+      });
+      if (!opened) return -1;
+      ws.send(JSON.stringify({ pad: 'x'.repeat(bytes) }));
+      const held = ws.bufferedAmount;
+      if (m === 'drained') {
+        const t0 = performance.now();
+        while (ws.readyState === 1 && ws.bufferedAmount > 0 && performance.now() - t0 < 500) {
+          await new Promise((r) => setTimeout(r, 15));
+        }
       }
-    }
-    ws.close(1000, 'leaving');
-    return held;
-  }, [port, mode, PAYLOAD_BYTES]);
+      ws.close(1000, 'leaving');
+      return held;
+    },
+    [port, mode, PAYLOAD_BYTES],
+  );
   await page.waitForTimeout(250);
   await page.close();
   const c = conns[before];
@@ -83,14 +97,17 @@ async function trial(mode) {
 const rows = [];
 try {
   for (const mode of ['close-now', 'drained']) {
-    let arrived = 0, everBuffered = 0;
+    let arrived = 0,
+      everBuffered = 0;
     for (let i = 0; i < TRIALS; i++) {
       const r = await trial(mode);
       if (r.arrived) arrived++;
       if (r.buffered > 0) everBuffered++;
     }
     rows.push([mode, arrived, everBuffered]);
-    console.log(`  ${mode.padEnd(10)} whole payload arrived ${arrived}/${TRIALS}   (it was still buffered at the close in ${everBuffered}/${TRIALS})`);
+    console.log(
+      `  ${mode.padEnd(10)} whole payload arrived ${arrived}/${TRIALS}   (it was still buffered at the close in ${everBuffered}/${TRIALS})`,
+    );
   }
 } finally {
   await browser.close();
@@ -99,10 +116,12 @@ try {
 
 const now = rows.find(([m]) => m === 'close-now');
 console.log(`\npayload ${PAYLOAD_KB} KiB, ${TRIALS} trials each`);
-console.log(now[2] === 0
-  ? 'INCONCLUSIVE: nothing was ever buffered, so no close ever raced a flush - raise PAYLOAD_KB.'
-  : now[1] === TRIALS
-    ? 'VERDICT: close() after send() loses NOTHING. The browser flushes the send buffer before the close frame\n'
-      + '         (RFC 6455 7.1.1: the close frame follows the data already queued), so a drain loop before\n'
-      + '         close() buys nothing on this path.'
-    : `VERDICT: close() after send() LOSES the frame (${now[1]}/${TRIALS} arrived); draining first recovers ${rows[1][1]}/${TRIALS}.`);
+console.log(
+  now[2] === 0
+    ? 'INCONCLUSIVE: nothing was ever buffered, so no close ever raced a flush - raise PAYLOAD_KB.'
+    : now[1] === TRIALS
+      ? 'VERDICT: close() after send() loses NOTHING. The browser flushes the send buffer before the close frame\n' +
+        '         (RFC 6455 7.1.1: the close frame follows the data already queued), so a drain loop before\n' +
+        '         close() buys nothing on this path.'
+      : `VERDICT: close() after send() LOSES the frame (${now[1]}/${TRIALS} arrived); draining first recovers ${rows[1][1]}/${TRIALS}.`,
+);

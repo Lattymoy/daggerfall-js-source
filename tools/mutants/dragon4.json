@@ -1,53 +1,182 @@
 [
-  { "name": "DRAGON4-counted-twice", "file": "server-account/src/dragons.js",
+  {
+    "name": "DRAGON4-counted-twice",
+    "file": "server-account/src/dragons.js",
     "old": "  return row?.results?.length ? { recorded: true, ...answer } : { recorded: false, why: 'claimed', ...answer };",
-    "new": "  return { recorded: true, ...answer };", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-hoard-to-any-device", "file": "server-account/src/dragons.js",
+    "new": "  return { recorded: true, ...answer };",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-hoard-to-any-device",
+    "file": "server-account/src/dragons.js",
     "old": "const hoardAnswer = (res, cid) => res?.results?.[0]?.cid === cid;",
-    "new": "const hoardAnswer = (res, cid) => !!res;", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-a-stander-tamed", "file": "server-account/src/dragons.js",
+    "new": "const hoardAnswer = (res, cid) => !!res;",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-stander-tamed",
+    "file": "server-account/src/dragons.js",
     "old": "  const draw = c.x === 'dealt' ? rand(new Uint8Array(4)) : null;",
-    "new": "  const draw = rand(new Uint8Array(4));", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-two-dragons-a-character", "file": "server-account/src/dragons.js",
+    "new": "  const draw = rand(new Uint8Array(4));",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-two-dragons-a-character",
+    "file": "server-account/src/dragons.js",
     "old": "\n         AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,",
-    "new": "`,", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-tame-untold-at-a-reclaim", "file": "server-account/src/dragons.js",
+    "new": "`,",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-tame-untold-at-a-reclaim",
+    "file": "server-account/src/dragons.js",
     "old": "spoils, tamed: tameOf(mount?.results?.[0]) };",
-    "new": "spoils, tamed: row?.results?.length ? tameOf(mount?.results?.[0]) : null };", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-a-guest-counted", "file": "server-account/src/dragons.js",
-    "old": "  if (!player.handle) {   // a guest: never counted and never tamed",
-    "new": "  if (false) {   // a guest: never counted and never tamed", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-chance", "file": "server-account/src/dragons.js",
-    "old": "() < 1 / DRAGON_TAME_ONE_IN;", "new": "() < 1 / 10;", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-salt-the-serpents", "file": "server-account/src/dragons.js",
-    "old": "export const DRAGON_TAME_SALT = 0x54414d45;", "new": "export const DRAGON_TAME_SALT = 0x434f494c;", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-route-unlisted", "file": "server-account/src/service.js",
-    "old": "  '/v1/dragon/claim',   // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame\n", "new": "", "tests": ["test/net/dragon/dragon4_service.test.js"] },
-  { "name": "DRAGON4-the-act-on-any-answer", "file": "src/net/dragon/dragonClaims.js",
-    "old": "        if (answer?.ok && answer.data?.recorded === true) {", "new": "        if (answer?.ok) {", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-a-tame-said-each-time", "file": "src/net/dragon/dragonClaims.js",
-    "old": "if (tame && typeof tame.id === 'string' && !tamedSaid.has(tame.id)) {", "new": "if (tame && typeof tame.id === 'string') {", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-a-failed-grant-settled", "file": "src/net/dragon/dragonClaims.js",
-    "old": "        if (given && dragonClaimVerdict(answer) === 'done') {", "new": "        if (dragonClaimVerdict(answer) === 'done') {", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-a-stander-paid-a-dealers", "file": "src/systems/dragon/dragonSpoils.js",
-    "old": "  const dealt = earned !== 'stood';", "new": "  const dealt = true;", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-the-legendarys-share", "file": "src/systems/dragon/dragonSpoils.js",
-    "old": "rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare'", "new": "rolls() < 0.5 ? 'legendary' : 'rare'", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-the-hoard-never-given", "file": "src/scenes/dragonRewards.js",
-    "old": "onSpoils: (entry) => grant(entry),", "new": "onSpoils: () => {},", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-a-tame-forgotten", "file": "src/scenes/dragonRewards.js",
-    "old": "    writeTames([...readTames(), { id: t.id,", "new": "    void ([...readTames(), { id: t.id,", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-the-receipt-unheard", "file": "src/scenes/dragonHost.js",
-    "old": ", onReceipt: (r) => host?.receipt(r) })", "new": " })", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-the-crash-door-unasked", "file": "src/scenes/world.js",
-    "old": "    dragonSky?.recoverSpoils(who, _spoilsInSave);   // DRAGON4", "new": "    // DRAGON4", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
-  { "name": "DRAGON4-the-save-unheard", "file": "src/scenes/world.js",
-    "old": " dragonSky?.spoilsSaved(who, ids); };", "new": " };", "tests": ["test/net/dragon/dragon4_claims.test.js"] },
+    "new": "spoils, tamed: row?.results?.length ? tameOf(mount?.results?.[0]) : null };",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-guest-counted",
+    "file": "server-account/src/dragons.js",
+    "old": "  if (!player.handle) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-chance",
+    "file": "server-account/src/dragons.js",
+    "old": "() < 1 / DRAGON_TAME_ONE_IN;",
+    "new": "() < 1 / 10;",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-salt-the-serpents",
+    "file": "server-account/src/dragons.js",
+    "old": "export const DRAGON_TAME_SALT = 0x54414d45;",
+    "new": "export const DRAGON_TAME_SALT = 0x434f494c;",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/dragon/claim', // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame\n  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back",
+    "new": "  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back",
+    "tests": [
+      "test/net/dragon/dragon4_service.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-act-on-any-answer",
+    "file": "src/net/dragon/dragonClaims.js",
+    "old": "        if (answer?.ok && answer.data?.recorded === true) {",
+    "new": "        if (answer?.ok) {",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-tame-said-each-time",
+    "file": "src/net/dragon/dragonClaims.js",
+    "old": "if (tame && typeof tame.id === 'string' && !tamedSaid.has(tame.id)) {",
+    "new": "if (tame && typeof tame.id === 'string') {",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-failed-grant-settled",
+    "file": "src/net/dragon/dragonClaims.js",
+    "old": "        if (given && dragonClaimVerdict(answer) === 'done') {",
+    "new": "        if (dragonClaimVerdict(answer) === 'done') {",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-stander-paid-a-dealers",
+    "file": "src/systems/dragon/dragonSpoils.js",
+    "old": "  const dealt = earned !== 'stood';",
+    "new": "  const dealt = true;",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-legendarys-share",
+    "file": "src/systems/dragon/dragonSpoils.js",
+    "old": "rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare'",
+    "new": "rolls() < 0.5 ? 'legendary' : 'rare'",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-hoard-never-given",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "onSpoils: (entry) => grant(entry),",
+    "new": "onSpoils: () => {},",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-a-tame-forgotten",
+    "file": "src/scenes/dragonRewards.js",
+    "old": "    writeTames([\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ]);",
+    "new": "    void [\n      ...readTames(),\n      {\n        id: t.id,\n        look: t.look === 1 ? 1 : 0,\n        character: typeof t.character === 'string' ? t.character : (entry?.ch ?? null),\n        w: c?.q ?? null,\n      },\n    ];",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-receipt-unheard",
+    "file": "src/scenes/dragonHost.js",
+    "old": ", onReceipt: (r) => host?.receipt(r) })",
+    "new": " })",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-crash-door-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    dragonSky?.recoverSpoils(who, _spoilsInSave);   // DRAGON4",
+    "new": "    // DRAGON4",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON4-the-save-unheard",
+    "file": "src/scenes/world.js",
+    "old": " dragonSky?.spoilsSaved(who, ids); };",
+    "new": " };",
+    "tests": [
+      "test/net/dragon/dragon4_claims.test.js"
+    ]
+  },
   {
     "name": "DRAGON4-the-way-left-english",
     "file": "src/systems/dragon/dragonWords.js",
     "old": "    const way = DRAGON_WAY[dir]?.() ?? DRAGON_WAY.north();",
     "new": "    const way = `to the ${dir}`;",
-    "tests": ["test/net/dragon/dragon3_client.test.js"]
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
   }
 ]

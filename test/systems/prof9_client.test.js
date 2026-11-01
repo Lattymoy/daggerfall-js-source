@@ -153,9 +153,9 @@ test('PROF9 DONE WHEN: a Hunter\'s Stew cooked with a clean pan at a fire from t
     assert.match(stew.provenance, /^[0-9a-f]{16}$/);
     assert.deepEqual([isFood(stew), isDish(stew), foodOf(stew).satiety], [true, true, FOOD[TEMPLATE.Meat].satiety]);
     // PIN MOVED (CRAFT3): book.track('cooking') is Provisioning's track, the dish's XP credited there
-    assert.deepEqual([book.track('cooking').profession, book.track('cooking').xp, book.track('provisioning').xp], ['provisioning', 30 + 3155, 30 + 3155], 'a clean pan half again, and the first stew\'s - Provisioning\'s share');   // PIN MOVED (FIRST-BUDGET): 3,155
+    assert.deepEqual([book.track('cooking').profession, book.track('cooking').xp, book.track('provisioning').xp], ['provisioning', 30 + 3171, 30 + 3171], 'a clean pan half again, and the first stew\'s - Provisioning\'s share');   // PIN MOVED (FIRST-BUDGET): 3,171
     assert.deepEqual([book.held('food:meat'), book.held('food:mushroom'), book.held('p1:13')], [0, 0, 0]);
-    assert.match(page.text(), /You cooked a Hunter's Stew \(\+3185 Provisioning XP\)\./);   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the fire's xp word
+    assert.match(page.text(), /You cooked a Hunter's Stew \(\+3201 Provisioning XP\)\./);   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the fire's xp word
     // EATEN: C&C's own law - the hunger met - and Endurance +5 for two hours, the player's own buff
     const now = 100_000;
     hungry(player, now);
@@ -489,7 +489,7 @@ test('PROF9 wiring: the fire is any lit one (the street\'s camps and braziers, a
   assert.match(w, /fieldCook: \(\) => fieldCookNow\(\),   \/\/ PROF9: a Field Cook's own Campfire keeps its fuel\n/);
   assert.match(w, /const fieldCookNow = \(\) => profBook\?\.state\?\.open === true && profBook\.track\('cooking'\)\?\.specs\?\.\[50\] === 'field-cook';/);
   assert.match(w, /fieldCook: \(\) => fieldCookNow\(\),   \/\/ PROF9: a Field Cook's own Campfire keeps its fuel underground too/);
-  assert.match(w, /setFeastShare\(\(spell\) => \{\n\s+if \(!online \|\| online\.status !== 'open' \|\| !social\?\.party\) return \[\];\n(?:\s+\/\/[^\n]*\n)*\s+return shareFeastWith\(peersNear\(\), \{ isMate: \(id\) => social\.isPartyPeer\(id\), send: \(id\) => online\.sendCast\?\.\(allyCastFrame\(spell, DISH_LEVEL, id\)\),/);   // PIN MOVED (AUDIT PROF-541 K5, R2-H1): the mates in sight, by cookItems.js shareFeastWith
+  assert.match(w, /setFeastShare\(\(spell\) => \{\n\s+if \(!host\.online \|\| host\.online\.status !== 'open' \|\| !host\.social\?\.party\) return \[\];\n(?:\s+\/\/[^\n]*\n)*\s+return shareFeastWith\(host\.peersNear\(\), \{ isMate: \(id\) => host\.social\.isPartyPeer\(id\), send: \(id\) => host\.online\.sendCast\?\.\(allyCastFrame\(spell, DISH_LEVEL, id\)\),/);   // PIN MOVED (AUDIT PROF-541 K5, R2-H1): the mates in sight, by cookItems.js shareFeastWith
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /cookFireHere\(\) \{\n\s+if \(mode === 'interior'\) return interiorCamps\.fireNear\(player\.pos\) \? COOK_FIRE : null;\n\s+if \(mode === 'dungeon'\) return dungeonCtx\?\.cookFire\?\.\(\) === true \? COOK_FIRE : null;\n\s+return null;/);
   assert.match(m, /fieldCook: \(\) => host\.fieldCook\?\.\(\) === true,/);
@@ -611,7 +611,7 @@ test('AUDIT PROF-541 K5: a feast is shared with the party mates in sight at the 
   // the host's wiring (world.js's boot closure - no test stands its online and party up, the repo's exception): the
   // peers it hands in are those in sight (peersNear), the send ALLY-CAST's frame at the dish's level
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /return shareFeastWith\(peersNear\(\), \{ isMate: \(id\) => social\.isPartyPeer\(id\), send: \(id\) => online\.sendCast\?\.\(allyCastFrame\(spell, DISH_LEVEL, id\)\), nameOf: \(id\) => peerName\(id\) \}\);/);
+  assert.match(w, /return shareFeastWith\(host\.peersNear\(\), \{ isMate: \(id\) => host\.social\.isPartyPeer\(id\), send: \(id\) => host\.online\.sendCast\?\.\(allyCastFrame\(spell, DISH_LEVEL, id\)\), nameOf: \(id\) => host\.peerName\(id\) \}\);/);
 });
 
 test('AUDIT PROF-541 K6: the Orchard Tart\'s stamina is the player\'s to end, as every other dish (BUFF-END: mysticism.js ENDABLE_KINDS)', () => {
@@ -747,7 +747,7 @@ test('AUDIT PROF-541 R2-H1: a station\'s steps where my guild holds the town, by
   // the host's wiring (world.js's boot closure - no test stands its seat and guild books up, the repo's exception): every
   // station's guard is it, written once
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);\n\s+const alchemyHall = \(\) => myHall\('alchemy'\);/);
+  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(host\._musicLoc\?\.mapTableData\?\.mapId\), host\.guildBook\?\.guild\?\.id \?\? null, profession\);\n\s+const alchemyHall = \(\) => myHall\('alchemy'\);/);
   assert.match(w, /const \{ seat \} = myHall\(recipeById\(recipe\)\?\.profession\);/);
   assert.match(w, /cookSteps: \(\) => myHall\('cooking'\)\.steps,/);
   assert.equal(w.match(/holder\?\.guild\?\.id === \(guildBook/g), null, 'no guard of its own left in world.js');

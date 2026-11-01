@@ -1,186 +1,1666 @@
 [
-  { "name": "TWOHANDS-light-not-the-left-hand", "file": "src/combat/twoHands/handsLaw.js", "old": "if (claws || leftBusy) return HANDS_MODE.Single;", "new": "if (claws) return HANDS_MODE.Single;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-fists-one-hand-empty", "file": "src/combat/twoHands/handsLaw.js", "old": "if ((!right?.item || isHandWraps(right.item)) && (!left?.item || isHandWraps(left.item))) return HANDS_MODE.Fists;", "new": "if (!right?.item || isHandWraps(right.item)) return HANDS_MODE.Fists;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-two-hander-in-a-pair", "file": "src/combat/twoHands/handsLaw.js", "old": "return !!h?.item && !h.shield && h.hands !== HANDS_BOTH && (DUAL_TYPES", "new": "return !!h?.item && !h.shield && (DUAL_TYPES", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-flurry-window-exclusive", "file": "src/combat/twoHands/handsLaw.js", "old": "&& sinceLast <= FLURRY_WINDOW;", "new": "&& sinceLast < FLURRY_WINDOW;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-never-alternates", "file": "src/combat/twoHands/handsLaw.js", "old": "const hand = flurry ? otherHand(last) : lh;", "new": "const hand = lh;", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-fists-pay-the-off-hand", "file": "src/combat/twoHands/handsLaw.js", "old": "return { hand, flurry: dual && flurry, off: dual && hand !== lh };", "new": "return { hand, flurry: dual && flurry, off: hand !== lh };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-flurry-tempo", "file": "src/combat/twoHands/handsLaw.js", "old": "FLURRY_FROM_FRAME: 1,", "new": "FLURRY_FROM_FRAME: 2,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-off-damage-share", "file": "src/combat/twoHands/handsLaw.js", "old": "OFF_DAMAGE: 0.8,", "new": "OFF_DAMAGE: 0.75,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-agility-backwards", "file": "src/combat/twoHands/handsLaw.js", "old": "Math.round((a - 50) * DUAL.OFF_TO_HIT_PER_AGILITY)", "new": "Math.round((50 - a) * DUAL.OFF_TO_HIT_PER_AGILITY)", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-off-damage-of-a-miss", "file": "src/combat/twoHands/handsLaw.js", "old": "if (!(damage > 0)) return damage;", "new": "if (damage === 0) return damage;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-no-off-burden", "file": "src/combat/twoHands/handsLaw.js", "old": "return swingHeft((weightKg || 0) * DUAL.OFF_WEIGHT, strength) / swingHeft(weightKg || 0, strength);", "new": "return swingHeft((weightKg || 0), strength) / swingHeft(weightKg || 0, strength);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-hold-forgets-the-carry", "file": "src/combat/twoHands/handsLaw.js", "old": "const owed = Math.max(0, (Math.min(burden, most) - 1) * ticks) + Math.max(0, carry || 0);", "new": "const owed = Math.max(0, (Math.min(burden, most) - 1) * ticks);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-hold-not-held-to-the-slowest", "file": "src/combat/twoHands/handsLaw.js", "old": "const most = tick > 0 ? Math.max(1, SWING_FRAME_MAX / tick) : 1;", "new": "const most = Infinity;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-hold-rounds-up", "file": "src/combat/twoHands/handsLaw.js", "old": "const hold = Math.floor(owed + 1e-9);", "new": "const hold = Math.ceil(owed - 1e-9);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-machine-never-holds", "file": "src/characters/weaponStates.js", "old": "if (m.hold > 0 && m.frame >= frames - 1) { m.hold -= 1; continue; }", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-machine-holds-before-the-hit", "file": "src/characters/weaponStates.js", "old": "if (m.hold > 0 && m.frame >= frames - 1) { m.hold -= 1; continue; }", "new": "if (m.hold > 0) { m.hold -= 1; continue; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-strike-keeps-an-old-hold", "file": "src/characters/weaponStates.js", "old": "  m.hold = 0;   // TWO-HANDS (AUDIT 2): ticks held at the swing's end - set by its caller for an off-hand blow, else none\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-schedule-forgets-the-hold", "file": "src/characters/weaponStates.js", "old": "return { seconds: (strikeTicks(m) + holdOf(m)) * step,", "new": "return { seconds: strikeTicks(m) * step,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-off-blow-drops-its-carry", "file": "src/combat/playerWeapon.js", "old": "this.machine.hold = owed.hold; this._burdenCarry = owed.carry;", "new": "this.machine.hold = owed.hold;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-off-blow-holds-nothing", "file": "src/combat/playerWeapon.js", "old": "this.machine.hold = owed.hold; this._burdenCarry = owed.carry;", "new": "this._burdenCarry = owed.carry;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-lead-blow-held-too", "file": "src/combat/playerWeapon.js", "old": "    if (this.offStrike) {\n      const ctx = this.animCtx?.() ?? null;", "new": "    if (twoHanded(this.handsMode)) {\n      const ctx = this.animCtx?.() ?? null;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-burden-on-a-whole-swing", "file": "src/combat/playerWeapon.js", "old": "ticks: strikeTicks(this.machine), tick,", "new": "ticks: 5, tick,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-mirror-map-wrong", "file": "src/combat/twoHands/handsLaw.js", "old": "StrikeLeft: 'StrikeRight', StrikeRight: 'StrikeLeft',", "new": "StrikeLeft: 'StrikeLeft', StrikeRight: 'StrikeRight',", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-mirror-forgets-x0", "file": "src/combat/twoHands/handsLaw.js", "old": "return { ...r, x: x0 + (x0 + width) - (r.x + r.w) };", "new": "return { ...r, x: (x0 + width) - (r.x + r.w) };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-handedness-ignored", "file": "src/combat/twoHands/handsLaw.js", "old": "export const handOnLeft = (hand, leftHanded) => (hand === 'L') !== !!leftHanded;", "new": "export const handOnLeft = (hand, leftHanded) => hand === 'L';", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-guard-wrong-way", "file": "src/combat/twoHands/handsLaw.js", "old": "const toMid = side === 'left' ? 1 : -1;", "new": "const toMid = 1;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-guard-in-slow", "file": "src/combat/twoHands/handsLaw.js", "old": "otherStriking ? GUARD.IN_TAU : GUARD.OUT_TAU", "new": "GUARD.OUT_TAU", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-two-strokes-a-step", "file": "src/combat/twoHands/handsLaw.js", "old": "* Math.PI / RUN_STEP_M;", "new": "* 2 * Math.PI / RUN_STEP_M;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-hands-in-step", "file": "src/combat/twoHands/handsLaw.js", "old": "  const s = Math.sin(phase + (hand === 'L' ? Math.PI : 0));", "new": "  const s = Math.sin(phase);", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-run-with-a-weapon", "file": "src/combat/twoHands/handsLaw.js", "old": "&& !!emptyHands && speed >= RUN_PUMP.MIN_SPEED;", "new": "&& speed >= RUN_PUMP.MIN_SPEED;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-punch-waits", "file": "src/combat/twoHands/handsLaw.js", "old": "if (punching) return easeTo(w, 0, RUN_PUMP.PUNCH_TAU, dt);", "new": "", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-weapon-not-the-striking-hand", "file": "src/combat/playerWeapon.js", "old": "if (twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws) this.weapon = this.handItem(s.hand);", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-apply-the-lead-always", "file": "src/combat/playerWeapon.js", "old": "this.weapon = this.handItem(this.activeHand);", "new": "this.weapon = this.handItem(this.leadHand);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-last-hand-forgotten", "file": "src/combat/playerWeapon.js", "old": "this._lastHand = this.strike?.hand ?? this.leadHand;", "new": "this._lastHand = this.leadHand;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-off-hand-sure", "file": "src/combat/playerWeapon.js", "old": "const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;", "new": "const offToHit = 0;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-off-hand-full-damage", "file": "src/combat/playerWeapon.js", "old": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }", "new": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, { blowWeight: OFF_HAND_BLOW.blowWeight }); }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-mode-ignores-the-light", "file": "src/combat/playerWeapon.js", "old": "leftBusy: this.leftBusy,", "new": "leftBusy: false,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-technique-takes-the-flurry", "file": "src/combat/playerWeapon.js", "old": "return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());", "new": "return this._swing(state, this._nextStrike());", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-rig-light-unread", "file": "src/combat/weapon/weaponRig.js", "old": "playerWeapon.leftBusy = lightInHand();", "new": "playerWeapon.leftBusy = false;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-rig-pair-not-drawn", "file": "src/combat/weapon/weaponRig.js", "old": "if (pairUp() && shown()) twoHands.drawPair(", "new": "if (false) twoHands.drawPair(", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-rig-sheathed-run-not-drawn", "file": "src/combat/weapon/weaponRig.js", "old": "if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });", "new": "if (runDrawn && shown()) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-rig-left-clone-frozen", "file": "src/combat/weapon/weaponRig.js", "old": "widget.endOfFrame(); twoHands.offWidget.endOfFrame(); shield.endOfFrame();", "new": "widget.endOfFrame(); shield.endOfFrame();", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-rig-dfu-line-for-a-pair", "file": "src/combat/weapon/weaponRig.js", "old": "if (twoHanded(playerWeapon.handsMode)) say(", "new": "if (false) say(", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-left-strike-unmirrored", "file": "src/combat/twoHands/twoHands.js", "old": "get state() { return mine(hand) ? picture(hand).state : 'Idle'; },", "new": "get state() { return mine(hand) ? st.machine.state : 'Idle'; },", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-uv-not-mirrored", "file": "src/combat/twoHands/twoHands.js", "old": "    const uv = mirror ? MIRROR_UV : q.uv;\n", "new": "    const uv = q.uv;\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-striking-under", "file": "src/combat/twoHands/twoHands.js", "old": "const drawOrder = () => (st.strikeHand === 'L' ? ['R', 'L'] : ['L', 'R']);", "new": "const drawOrder = () => ['L', 'R'];", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-run-order", "file": "src/combat/twoHands/twoHands.js", "old": "drawn.sort((a, b) => a.s - b.s);", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-guard-mirrored-twice", "file": "src/combat/twoHands/twoHands.js", "old": "guardOffset(st.guard[hand], handOnLeft(hand, st.leftHanded) ? 'left' : 'right', {", "new": "guardOffset(st.guard[hand], 'right', {", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-sprite-no-bounce", "file": "src/combat/twoHands/twoHands.js", "old": "st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0, BOUNCE_TAU, d);", "new": "st.bounce = 0;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-mirror-weapon-bone-unpaired", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (n === 'weapon bone') return 'weapon bone left';", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-mirror-shield-bone-crosses", "file": "src/combat/twoHands/mirrorRig.js", "old": "for (const s of ['L', 'R']) for (const ref of arms[s]) if (counterpart.get(ref) === ref) counterpart.set(ref, null);", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-mirror-plane-at-zero", "file": "src/combat/twoHands/mirrorRig.js", "old": "const x0 = (rest.get(upL).t[0] + rest.get(upR).t[0]) / 2;", "new": "const x0 = 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-mirror-carry-snaps", "file": "src/combat/twoHands/mirrorRig.js", "old": "} else if (st.k > 0) st.k *= Math.exp(-Math.max(0, c.dt || 0) / Math.max(1e-4, c.tau || 0.06));", "new": "} else if (st.k > 0) st.k = 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-mirror-carry-from-written-only", "file": "src/combat/twoHands/mirrorRig.js", "old": "const prevOf = st.last ?? clip;", "new": "const prevOf = clip;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-mirror-right-always", "file": "src/combat/twoHands/mirrorRig.js", "old": "return r >= l ? 'R' : 'L';", "new": "return 'R';", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-left-blow-unmirrored", "file": "src/combat/fpArm.js", "old": "if (attackingNow() && attackHand === 'L') {", "new": "if (false) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-hand-ignored", "file": "src/combat/fpArm.js", "old": "const blowHand = hand === 'L' || hand === 'R' ? hand : leadHand;", "new": "const blowHand = leadHand;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-fists-always-mirror", "file": "src/combat/fpArm.js", "old": "if (side && side !== attackHand) {", "new": "if (side) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-punch-keeps-the-pump", "file": "src/combat/fpArm.js", "old": "runPump.w = runWeightStep(runPump.w, runPump.wanted && viewMode === 'first', attackingNow(), dt);", "new": "runPump.w = runWeightStep(runPump.w, runPump.wanted && viewMode === 'first', false, dt);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-pump-one-side", "file": "src/combat/fpArm.js", "old": "const out = side === 'R' ? 1 : -1;", "new": "const out = 1;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-arm-off-weapon-shown-sheathed", "file": "src/combat/fpArm.js", "old": "const offShown = (r) => handsMode === 'dual' && weaponInHand() && !!(r && r.offWeapon);", "new": "const offShown = (r) => handsMode === 'dual' && !!(r && r.offWeapon);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-painted-arm-assumed-right", "file": "src/combat/twoHands/twoHands.js", "old": "const paintedAt = (i) => (st.mode === HANDS_MODE.Fists ? MELEE_PAINTED_ARM[MELEE_ANIMS[i]?.Record ?? 0] ?? 'R' : 'R');", "new": "const paintedAt = (i) => 'R';", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-painted-arm-table-all-right", "file": "src/combat/twoHands/handsLaw.js", "old": "export const MELEE_PAINTED_ARM = Object.freeze(['R', 'L', 'R', 'L', 'R', 'R', 'L']);", "new": "export const MELEE_PAINTED_ARM = Object.freeze(['R', 'R', 'R', 'R', 'R', 'R', 'R']);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-picture-other-way-mirrored", "file": "src/combat/twoHands/handsLaw.js", "old": "return painted(ms) === side ? { state: ms, mirror: false } : { state: ms, mirror: true };", "new": "return { state: ms, mirror: true };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-widget-mirror-from-the-machine", "file": "src/combat/twoHands/twoHands.js", "old": "const mirror = mirrorOf(hand, paintedAt(shows));", "new": "const mirror = mirrorOf(hand, painted(views[hand].state));", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-h-keeps-the-exchange", "file": "src/combat/playerWeapon.js", "old": "    if (twoHanded(this.handsMode)) { this._lastHand = null; this._lastEnd = -Infinity; }\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-h-bills-a-switch", "file": "src/combat/playerWeapon.js", "old": "    if (bowSwitching && !twoHanded(this.handsMode)) {", "new": "    if (bowSwitching) {", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-share-after-the-report", "file": "src/combat/formulas.js", "old": "  damage = shared(Math.max(0, damage));", "new": "  damage = Math.max(0, damage);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-pvp-off-ignored", "file": "src/combat/duelCombat.js", "old": "  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;", "new": "  const off = false;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-off-strike-never", "file": "src/combat/playerWeapon.js", "old": "  get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }", "new": "  get offStrike() { return false; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-flurry-from-the-first-frame", "file": "src/combat/playerWeapon.js", "old": "    if (s.flurry) this.machine.frame = DUAL.FLURRY_FROM_FRAME;\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-schedule-from-zero", "file": "src/characters/weaponStates.js", "old": "  const at = Math.max(0, m.frame | 0);", "new": "  const at = 0;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-active-hand-ungated", "file": "src/combat/playerWeapon.js", "old": "    return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;", "new": "    return this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-resting-is-in-use", "file": "src/combat/playerWeapon.js", "old": "  get restingWeapon() { return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon; }", "new": "  get restingWeapon() { return this.weapon; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-light-without-a-lane", "file": "src/combat/weapon/weaponRig.js", "old": "    && (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());", "new": "    && true;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-eye-in-the-gate", "file": "src/combat/weapon/weaponRig.js", "old": "      keepEye(cam?.pos);\n", "new": "      if (widgetOn() || handheldOn() || shieldOn()) keepEye(cam?.pos);\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-pair-under-the-run", "file": "src/combat/twoHands/twoHands.js", "old": "      if ((running && hand !== st.strikeHand) || (only && hand !== only)) continue;\n", "new": "      if (only && hand !== only) continue;\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-run-hides-the-punch", "file": "src/combat/twoHands/twoHands.js", "old": ".filter((hand) => hand !== st.strikeHand)", "new": ".filter(() => true)", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-run-over-the-punch", "file": "src/combat/weapon/weaponRig.js", "old": "        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow\n        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element", "new": "        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element\n        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-windup-forever", "file": "src/combat/weapon/weaponWidget.js", "old": "    while (machineIsAttacking() && machineFrame() < hitFrame()) {", "new": "    while (machineFrame() < hitFrame()) {", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-sway-mirrored", "file": "src/combat/weapon/weaponWidget.js", "old": "  const pairRect = (mirror) => (mirror ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] }) : getWeaponRect());", "new": "  const pairRect = (mirror) => getWeaponRect();", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-bob-timer-stale", "file": "src/player/headBobber.js", "old": "    if (this.timer > Math.PI * 2) this.timer = 0;\n    if (out) out.bobTimer = this.timer;", "new": "    if (this.timer > Math.PI * 2) this.timer = 0;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-pump-own-clock", "file": "src/combat/twoHands/twoHands.js", "old": "runPhaseFollow(st.run.phase, Number.isFinite(r.bob) ? runPhaseOfBob(r.bob) : null,", "new": "runPhaseFollow(st.run.phase, null,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-motion-bag-no-bob", "file": "src/player/motor.js", "old": "    bobTimer: Number.isFinite(player.bobTimer) ? player.bobTimer : null,", "new": "    bobTimer: null,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-technique-off-weapon", "file": "src/combat/techniques.js", "old": "  const w = pw?.restingWeapon ?? pw?.weapon ?? null;", "new": "  const w = pw?.weapon ?? null;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-hud-off-weapon", "file": "src/scenes/world.js", "old": "          weapon: weaponRig.playerWeapon.restingWeapon ?? null,", "new": "          weapon: weaponRig.playerWeapon.weapon ?? null,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-off-hand-to-hit-kept", "file": "src/combat/playerWeapon.js", "old": "      if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }", "new": "      if (off) { Object.assign(opts, OFF_HAND_BLOW); }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-strike-ticks-from-the-first-frame", "file": "src/characters/weaponStates.js", "old": "  return Math.max(0, frames - Math.max(0, m.frame | 0));\n}", "new": "  return frames;\n}", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-run-pump-swings-outward-at-top", "file": "src/combat/twoHands/twoHands.js", "old": "x: cx - q.rect.w / 2 - p.dx * canvas.width,", "new": "x: cx - q.rect.w / 2 + p.dx * canvas.width,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-run-rises-from-rest-not-below", "file": "src/combat/twoHands/twoHands.js", "old": "y: placed.y + (under(placed) - placed.y) * (1 - k) };", "new": "y: placed.y };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-run-hands-with-a-spell", "file": "src/combat/weapon/weaponRig.js", "old": "if (spellArmed() || fpsSpellCasting.isPlayingAnim || actTool() || sheetWindowUp()) return false;", "new": "if (actTool() || sheetWindowUp()) return false;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-run-hands-mid-swap", "file": "src/combat/weapon/weaponRig.js", "old": "return (entity.equipCountdown ?? 0) <= 0;", "new": "return true;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-run-hands-for-the-beast", "file": "src/combat/weapon/weaponRig.js", "old": "if (lightInHand() || racialFpsWeapon(entity)) return false;", "new": "if (lightInHand()) return false;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-pair-rises-on-the-climb", "file": "src/combat/weapon/weaponRig.js", "old": "tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };", "new": "tint: fpTint, offsetHeight: weaponOffsetHeight() + climbDrop(_climbLower, c.height) };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-one-hand-says-the-lead-line", "file": "src/combat/weapon/weaponRig.js", "old": "if (twoHanded(playerWeapon.handsMode)) say(", "new": "if (true) say(", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-every-flurry-blow-pays-the-off-hand", "file": "src/combat/playerWeapon.js", "old": "const off = this.offStrike;", "new": "const off = !!this.strikeInFlight?.flurry;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-widget-left-hand-not-moved-across", "file": "src/combat/weapon/weaponWidget.js", "old": "if (mirror) rect = mirrorRect(rect, w.screenRect.width, w.screenRect.x);", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-widget-hands-no-guard", "file": "src/combat/weapon/weaponWidget.js", "old": "if (transform) rect = transform(rect);", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-shield-and-empty-right-is-fists", "file": "src/combat/playerWeapon.js", "old": "left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),", "new": "left: handDesc(this.currentLeftHandWeapon),", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-waist-lantern-takes-the-hand", "file": "src/combat/weapon/weaponRig.js", "old": "&& !lanternAtWaist(entity.lightSource)\n", "new": "\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-fists-bounce-while-walking", "file": "src/combat/twoHands/twoHands.js", "old": "mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0", "new": "mode === HANDS_MODE.Fists && !st.strikeHand ? 1 : 0", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT-PINS-pair-drawn-under-the-run", "file": "src/combat/twoHands/twoHands.js", "old": "(running && hand !== st.strikeHand) || (only", "new": "(only", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-the-pump-lifts", "file": "src/combat/twoHands/handsLaw.js", "old": "dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back, dy: RUN_PUMP.DROP * (1 - s) / 2,", "new": "dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back, dy: RUN_PUMP.DROP * (1 - s) / 2 - 0.3 * fwd,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-the-idle-record", "file": "src/combat/twoHands/handsLaw.js", "old": "ARM_STATE: 'StrikeDownLeft',", "new": "ARM_STATE: 'StrikeDown',", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-drawn-in-the-idle", "file": "src/combat/twoHands/twoHands.js", "old": "fpsWeaponQuad(canvas, fistArt, RUN_PUMP.ARM_STATE, p.frame, { flipHorizontal: false, offsetHeight });", "new": "fpsWeaponQuad(canvas, fistArt, 'Idle', 0, { flipHorizontal: false, offsetHeight });", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-rest-not-lowered", "file": "src/combat/twoHands/twoHands.js", "old": "{ ...rest, y: rest.y + (under(rest) - rest.y) * k }", "new": "{ ...rest, y: rest.y }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-fists-vanish", "file": "src/combat/twoHands/twoHands.js", "old": "    if (w < RUN_PUMP.SWAP) {\n", "new": "    if (false) {\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-unmirrored", "file": "src/combat/twoHands/twoHands.js", "old": "uv: mirrorOf(hand, painted(RUN_PUMP.ARM_STATE)) ? MIRROR_UV : q.uv,", "new": "uv: q.uv,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-one-art-twice", "file": "src/combat/twoHands/twoHands.js", "old": "const hands = /** @type {const} */ (['R', 'L']).filter((hand) => hand !== st.strikeHand);   // a punch on the run is drawPair's", "new": "const hands = /** @type {const} */ (['R', 'L']);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-the-fists-tuck", "file": "src/combat/twoHands/handsLaw.js", "old": "const down = weapon ? GUARD.LOWER * /** @type {number} */ (height) : GUARD.DOWN;", "new": "const down = GUARD.DOWN;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-no-height-classic", "file": "src/combat/twoHands/twoHands.js", "old": "nudge(hand, canvas, q.rect.h, v.state !== 'Idle'));", "new": "nudge(hand, canvas, null, v.state !== 'Idle'));", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-no-height-widget", "file": "src/combat/twoHands/twoHands.js", "old": "nudgeBefore(hand, canvas, mirror, r.h, shows !== 0)),", "new": "nudgeBefore(hand, canvas, mirror, null, shows !== 0)),", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-fists-by-height", "file": "src/combat/twoHands/twoHands.js", "old": "const height = st.mode === HANDS_MODE.Dual && Number.isFinite(h) ?", "new": "const height = Number.isFinite(h) ?", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-too-far", "file": "src/combat/twoHands/handsLaw.js", "old": "  LOWER: 0.12,", "new": "  LOWER: 0.2,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-ARM-another-frame", "file": "src/combat/twoHands/handsLaw.js", "old": "  ARM_FRAME: 1,", "new": "  ARM_FRAME: 0,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-LOWER-tucks-in", "file": "src/combat/twoHands/handsLaw.js", "old": "  return [weapon ? 0 : toMid * GUARD.IN * g, down * g + b];", "new": "  return [toMid * GUARD.IN * g, down * g + b];", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-classic-hand-no-outline", "file": "src/combat/twoHands/twoHands.js", "old": "    if (glow) renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, { art: [q.rec.width, q.rec.height], view: [canvas.width, canvas.height] });\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-left-outline-unmirrored", "file": "src/combat/twoHands/twoHands.js", "old": "(drawFpsWeapon's line)\n    if (glow) renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow,", "new": "(drawFpsWeapon's line)\n    if (glow) renderer.drawScreenQuadGlow?.(q.tex, rect, q.uv, glow,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-pair-hands-no-glow", "file": "src/combat/twoHands/twoHands.js", "old": "{ tint, offsetHeight, glow: glowFor(hand) }", "new": "{ tint, offsetHeight }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-left-blade-unlit", "file": "src/render/renderer.js", "old": "    if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-gate-ignores-the-left", "file": "src/render/renderer.js", "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) &&", "new": "const glow = !!(mesh.weaponGlow || mesh.handGlow) &&", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-every-slot-the-weapons", "file": "src/render/renderer.js", "old": "if (!inGlowSlot(r, slot) || r.hidden) continue;", "new": "if (!inGlowSlot(r, 'weapon') || r.hidden) continue;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-pad-one-look", "file": "src/render/characterSprite.js", "old": "...(Array.isArray(glowLook) ? glowLook : glowLook ? [glowLook] : []).map((l) => glowPad(l, ph)), 0);", "new": "(Array.isArray(glowLook) ? glowPad(glowLook[0], ph) : glowLook ? glowPad(glowLook, ph) : 0));", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-arm-another-blades-glow", "file": "src/combat/fpArm.js", "old": "offGlowKey != null && offGlowKey === offKey && ", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-GLOW-arm-sheathed-blade-glows", "file": "src/combat/fpArm.js", "old": "&& handsMode === 'dual' && weaponInHand() ? offGlowSpec : null);", "new": "&& handsMode === 'dual' ? offGlowSpec : null);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-GLOW-rig-arm-the-striking-item", "file": "src/combat/weapon/weaponRig.js", "old": "fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);", "new": "fpArm.setWeaponGlow?.(meshGlow(playerWeapon.weapon), playerWeapon.weapon);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-clone-the-held-glow", "file": "src/combat/weapon/weaponRig.js", "old": "glow: item ? glowOf(item) : handGlowOf(hand),", "new": "glow: heldGlowNow(),", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-GLOW-clone-pair-no-outline", "file": "src/combat/weapon/weaponWidget.js", "old": "    if (ctx.glow) renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: this hand's own element, on its own rect and source\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-relay-drops-the-off", "file": "src/scenes/worldModes.js", "old": "wildStrike: (id, w, sw, o) => !!host.wildStrike?.(id, w, sw, o),", "new": "wildStrike: (id, w, sw) => !!host.wildStrike?.(id, w, sw),", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-strikes-payload-every-blow", "file": "src/combat/formulas.js", "old": "(attacker.isPlayer || damage > 0) && whole) {", "new": "(attacker.isPlayer || damage > 0)) {", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-weight-never-rolled", "file": "src/combat/formulas.js", "old": "const whole = !(blowWeight < 1) || rolls() < blowWeight;", "new": "const whole = true;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-listeners-not-told", "file": "src/combat/formulas.js", "old": "const info = { backstab: notes.backstab, blow: whole, wraps };", "new": "const info = { backstab: notes.backstab, wraps };", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-swing-hands-no-weight", "file": "src/combat/playerWeapon.js", "old": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }", "new": "if (off) { opts.toHitMod += offToHit; opts.blowShare = OFF_HAND_BLOW.blowShare; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-core-not-handed-the-share", "file": "src/combat/formulas.js", "old": "onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;", "new": "onStruck: (part) => (struckPart = part), unaware }) : undefined;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-shared-twice-under-a-core", "file": "src/combat/formulas.js", "old": "damage = notes.shared ? overridden : shared(overridden);", "new": "damage = shared(overridden);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-pcaao-never-shares", "file": "src/combat/pcaao.js", "old": "  damage = shared(damage);\n  // WEAR-VANILLA", "new": "  // WEAR-VANILLA", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-pcaao-does-not-say", "file": "src/combat/pcaao.js", "old": "  if (blowShare && notes) notes.shared = true;\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-tally-unweighed", "file": "src/scenes/hostCombat.js", "old": "if (w < 1 && player && typeof player === 'object') {", "new": "if (false) {", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-tally-forgets-the-carry", "file": "src/scenes/hostCombat.js", "old": "_swingTallyCarry.set(player, owed >= 1 - 1e-9 ? Math.max(0, owed - 1) : owed);", "new": "_swingTallyCarry.set(player, owed >= 1 - 1e-9 ? 0 : owed);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-blow-always-whole", "file": "src/combat/playerWeapon.js", "old": "get blowWeight() { return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1; }", "new": "get blowWeight() { return 1; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-host-tally-unweighed", "file": "src/scenes/dungeonContext.js", "old": "if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon, playerWeapon.blowWeight);", "new": "if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-conduit-every-blow", "file": "src/systems/loot/lootPowers.js", "old": "case 'conduit': if (whole) gainMana(attacker, p.mana); break;", "new": "case 'conduit': gainMana(attacker, p.mana); break;", "tests": ["test/systems/loot5_powers.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-flow-every-blow", "file": "src/systems/loot/lootPowers.js", "old": "case 'flow': if (whole) { _s.flow", "new": "case 'flow': if (true) { _s.flow", "tests": ["test/systems/loot5_powers.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-undertow-every-blow", "file": "src/systems/loot/lootPowers.js", "old": "case 'undertow': if (held && whole) _undertow.set(", "new": "case 'undertow': if (held) _undertow.set(", "tests": ["test/systems/gilded2_world.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-loot-reads-no-weight", "file": "src/systems/loot/lootPowers.js", "old": "const whole = info?.blow !== false;", "new": "const whole = true;", "tests": ["test/systems/loot5_powers.test.js", "test/systems/gilded2_world.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-coil-every-blow", "file": "src/systems/sigil/sigilSetPowers.js", "old": "if (info?.blow !== false) coiled(attacker, target);", "new": "coiled(attacker, target);", "tests": ["test/systems/audit625_serpent.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-beast-h-loses-the-claws", "file": "src/combat/playerWeapon.js", "old": "if (apply) this.applyWeapon(this.weapon?.werecreatureClaws ? this.weapon : null);", "new": "if (apply) this.applyWeapon();", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-off-surety-the-sheet", "file": "src/combat/playerWeapon.js", "old": "offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50)", "new": "offHandToHit(playerCombat ? playerCombat.stats.agility : 50)", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-duel-surety-fixed", "file": "src/combat/duelCombat.js", "old": "offHandToHit(stub.stats.agility)", "new": "offHandToHit(50)", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-guard-on-a-strike", "file": "src/combat/twoHands/twoHands.js", "old": "    if (striking) return [0, 0];\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-bounce-lifts", "file": "src/combat/twoHands/handsLaw.js", "old": "(1 - Math.cos(time * 2 * Math.PI * GUARD.BOUNCE_HZ + phase)) * GUARD.BOUNCE_PX * bounce", "new": "Math.sin(time * 2 * Math.PI * GUARD.BOUNCE_HZ + phase) * GUARD.BOUNCE_PX * bounce", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-bounce-in-a-strike", "file": "src/combat/twoHands/twoHands.js", "old": "mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0", "new": "mode === HANDS_MODE.Fists && standing ? 1 : 0", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-bob-inward", "file": "src/combat/weapon/weaponWidget.js", "old": "position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]]", "new": "position: [-w.position[0], w.position[1]]", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-inertia-mirrored", "file": "src/combat/weapon/weaponWidget.js", "old": "position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]]", "new": "position: [w.swayDx.bob + w.swayDx.inertia, w.position[1]]", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-own-clock", "file": "src/combat/weapon/weaponWidget.js", "old": "      w.time = k.time;\n", "new": "      w.time += dt;\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-clock-not-handed", "file": "src/combat/weapon/weaponRig.js", "old": "shown: pair && spriteShown(), clockOf: widget, ...gunClone('L') });", "new": "shown: pair && spriteShown(), ...gunClone('L') });", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-windup-at-rest", "file": "src/combat/weapon/weaponWidget.js", "old": "      if (c.fromBelow && w.s.offset) w.offsetCurrent = [0, 1];\n", "new": "", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-from-below-never", "file": "src/combat/twoHands/twoHands.js", "old": "st.fromBelow = st.run.w >= RUN_PUMP.SWAP ? strike.hand : null;", "new": "st.fromBelow = null;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-no-hop", "file": "src/combat/twoHands/handsLaw.js", "old": "return !!wanted || (!!aloft && !!wasWanted && airSeconds <= RUN_PUMP.AIR_GRACE);", "new": "return !!wanted;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-hop-forever", "file": "src/combat/twoHands/handsLaw.js", "old": "return !!wanted || (!!aloft && !!wasWanted && airSeconds <= RUN_PUMP.AIR_GRACE);", "new": "return !!wanted || (!!aloft && !!wasWanted);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-run-snaps", "file": "src/combat/twoHands/twoHands.js", "old": "if (!st.run.wanted && st.run.w < 1e-3) st.run.w = 0;", "new": "if (!st.run.wanted) st.run.w = 0;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-run-over-a-picture", "file": "src/combat/weapon/weaponRig.js", "old": "const runDrawn = runHands && (handsEmpty() || !(shown() || torchOnly || !!shieldRect || gunSliding || spellHandsDrawn));", "new": "const runDrawn = runHands;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-left-clone-born-shown", "file": "src/combat/twoHands/twoHands.js", "old": "handedness: () => false, hidden: true });", "new": "handedness: () => false });", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-born-slides-in", "file": "src/combat/weapon/weaponWidget.js", "old": "if (c.shown) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; }", "new": "if (c.shown) { w.offsetTarget = [0, 0]; }", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-arm-holds-the-lead", "file": "src/combat/weapon/weaponRig.js", "old": "    const armItem = pairUp() ? playerWeapon.handItem('R') : playerWeapon.weapon;\n    fpArm.setWeapon(armItem,", "new": "    const armItem = playerWeapon.weapon;\n    fpArm.setWeapon(armItem,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-pack-own-read", "file": "src/ui/enhanced/enhancedInventory.js", "old": "if (typeof deps.handArm === 'function') deps.handArm();", "new": "if (false) deps.handArm();", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-host-no-door", "file": "src/scenes/exterior.js", "old": ", handArm: () => (modes?.liveArm?.()?.rig ?? weaponRig).handArm?.(),", "new": ",", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-SPRITE2-pair-clone-flipped", "file": "src/combat/weapon/weaponWidget.js", "old": "    if (c.pairHand) {\n", "new": "    if (false) {\n", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-sprite-phase-taken-whole", "file": "src/combat/twoHands/twoHands.js", "old": "if (st.run.wanted || st.run.w > 0) st.run.phase = runPhaseFollow(st.run.phase, Number.isFinite(r.bob) ? runPhaseOfBob(r.bob) : null, r.speed ?? 0, d, !(st.run.w > 0));", "new": "if (st.run.wanted || st.run.w > 0) st.run.phase = Number.isFinite(r.bob) ? runPhaseOfBob(r.bob) : runPhaseFollow(st.run.phase, null, r.speed ?? 0, d, false);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-sprite-fresh-ignored", "file": "src/combat/twoHands/twoHands.js", "old": "r.speed ?? 0, d, !(st.run.w > 0));", "new": "r.speed ?? 0, d, false);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-follow-jumps", "file": "src/combat/twoHands/handsLaw.js", "old": "  if (off >= lo && off <= hi) return bob;\n  return (phase + Math.min(hi, Math.max(lo, off))) % turn;", "new": "  return bob;", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-follow-backward", "file": "src/combat/twoHands/handsLaw.js", "old": "Math.min(hi, Math.max(lo, off))", "new": "Math.min(hi, Math.max(-hi, off))", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-follow-the-long-way", "file": "src/combat/twoHands/handsLaw.js", "old": "turn * Math.round((bob - phase) / turn)", "new": "turn * Math.trunc((bob - phase) / turn)", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-follow-not-fresh", "file": "src/combat/twoHands/handsLaw.js", "old": "  if (fresh || !Number.isFinite(phase)) return bob;", "new": "  if (!Number.isFinite(phase)) return bob;", "tests": ["test/combat/twohands.test.js", "test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-RUN_PUMP-catch", "file": "src/combat/twoHands/handsLaw.js", "old": "  CATCH: 0.5,", "new": "  CATCH: 1,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-RUN_PUMP-in", "file": "src/combat/twoHands/handsLaw.js", "old": "  IN: 0.06,", "new": "  IN: 0.12,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-RUN_PUMP-drop", "file": "src/combat/twoHands/handsLaw.js", "old": "  DROP: 1.05,", "new": "  DROP: 1.5,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-FIELD-run-on-a-high-frame", "file": "src/combat/twoHands/handsLaw.js", "old": "  ARM_FRAME: 1,", "new": "  ARM_FRAME: 3,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-RUN_PUMP-swap", "file": "src/combat/twoHands/handsLaw.js", "old": "  SWAP: 0.5,", "new": "  SWAP: 0.3,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-RUN_PUMP-min-speed", "file": "src/combat/twoHands/handsLaw.js", "old": "  MIN_SPEED: 1.0,", "new": "  MIN_SPEED: 3.0,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-AUDIT2-bob-off-freezes-the-arms", "file": "src/player/headBobber.js", "old": "    if (out) out.bobTimer = enabled ? this.timer : null;", "new": "    if (out) out.bobTimer = this.timer;", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-FIELD-the-stroke-snaps", "file": "src/combat/twoHands/handsLaw.js", "old": "  const s = Math.sin(phase + (hand === 'L' ? Math.PI : 0));", "new": "  const raw = Math.sin(phase + (hand === 'L' ? Math.PI : 0)); const s = Math.sign(raw) * Math.pow(Math.abs(raw), 0.7);", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-FIELD-held-at-the-top", "file": "src/combat/twoHands/handsLaw.js", "old": "dy: RUN_PUMP.DROP * (1 - s) / 2,", "new": "dy: RUN_PUMP.DROP * back,", "tests": ["test/combat/twohands.test.js"] },
-  { "name": "TWOHANDS-FIELD-run-on-the-uppercut", "file": "src/combat/twoHands/handsLaw.js", "old": "  ARM_STATE: 'StrikeDownLeft',", "new": "  ARM_STATE: 'StrikeDownRight',", "tests": ["test/combat/twohands.test.js"] }
+  {
+    "name": "TWOHANDS-light-not-the-left-hand",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (claws || leftBusy) return HANDS_MODE.Single;",
+    "new": "  if (claws) return HANDS_MODE.Single;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-fists-one-hand-empty",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if ((!right?.item || isHandWraps(right.item)) && (!left?.item || isHandWraps(left.item))) return HANDS_MODE.Fists;",
+    "new": "  if (!right?.item || isHandWraps(right.item)) return HANDS_MODE.Fists;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-two-hander-in-a-pair",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return !!h?.item && !h.shield && h.hands !== HANDS_BOTH && (DUAL_TYPES.includes(t) || DUAL_GUN_TYPES.includes(t));",
+    "new": "  return !!h?.item && !h.shield && (DUAL_TYPES.includes(t) || DUAL_GUN_TYPES.includes(t));",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-flurry-window-exclusive",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const flurry = (last === 'R' || last === 'L') && sinceLast <= FLURRY_WINDOW;",
+    "new": "  const flurry = (last === 'R' || last === 'L') && sinceLast < FLURRY_WINDOW;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-never-alternates",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const hand = flurry ? otherHand(last) : lh;",
+    "new": "  const hand = lh;",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-fists-pay-the-off-hand",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return { hand, flurry: dual && flurry, off: dual && hand !== lh };",
+    "new": "  return { hand, flurry: dual && flurry, off: hand !== lh };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-flurry-tempo",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  FLURRY_FROM_FRAME: 1,",
+    "new": "  FLURRY_FROM_FRAME: 2,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-off-damage-share",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  OFF_DAMAGE: 0.8,",
+    "new": "  OFF_DAMAGE: 0.75,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-agility-backwards",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const t = DUAL.OFF_TO_HIT + Math.round((a - 50) * DUAL.OFF_TO_HIT_PER_AGILITY);",
+    "new": "  const t = DUAL.OFF_TO_HIT + Math.round((50 - a) * DUAL.OFF_TO_HIT_PER_AGILITY);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-off-damage-of-a-miss",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (!(damage > 0)) return damage;",
+    "new": "  if (damage === 0) return damage;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-no-off-burden",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return swingHeft((weightKg || 0) * DUAL.OFF_WEIGHT, strength) / swingHeft(weightKg || 0, strength);",
+    "new": "  return swingHeft(weightKg || 0, strength) / swingHeft(weightKg || 0, strength);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-hold-forgets-the-carry",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const owed = Math.max(0, (Math.min(burden, most) - 1) * ticks) + Math.max(0, carry || 0);",
+    "new": "  const owed = Math.max(0, (Math.min(burden, most) - 1) * ticks);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-hold-not-held-to-the-slowest",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const most = tick > 0 ? Math.max(1, SWING_FRAME_MAX / tick) : 1;",
+    "new": "  const most = Infinity;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-hold-rounds-up",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const hold = Math.floor(owed + 1e-9);",
+    "new": "  const hold = Math.ceil(owed - 1e-9);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-machine-never-holds",
+    "file": "src/characters/weaponStates.js",
+    "old": "      if (m.hold > 0 && m.frame >= frames - 1) {\n        m.hold -= 1;\n        continue;\n      }",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-machine-holds-before-the-hit",
+    "file": "src/characters/weaponStates.js",
+    "old": "      if (m.hold > 0 && m.frame >= frames - 1) {",
+    "new": "      if (m.hold > 0) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-strike-keeps-an-old-hold",
+    "file": "src/characters/weaponStates.js",
+    "old": "  m.hold = 0; // TWO-HANDS (AUDIT 2): ticks held at the swing's end - set by its caller for an off-hand blow, else none\n  return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-schedule-forgets-the-hold",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return {\n    seconds: (strikeTicks(m) + holdOf(m)) * step,\n    hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step,\n    step,\n  };",
+    "new": "  return { seconds: strikeTicks(m) * step, hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step, step };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-off-blow-drops-its-carry",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        this._burdenCarry = owed.carry;\n      }",
+    "new": "      }",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-off-blow-holds-nothing",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        this.machine.hold = owed.hold;\n        this._burdenCarry = owed.carry;",
+    "new": "        this._burdenCarry = owed.carry;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-lead-blow-held-too",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (this.offStrike) {",
+    "new": "    if (twoHanded(this.handsMode)) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-burden-on-a-whole-swing",
+    "file": "src/combat/playerWeapon.js",
+    "old": "          ticks: strikeTicks(this.machine),",
+    "new": "          ticks: 5,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-map-wrong",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  StrikeLeft: 'StrikeRight',\n  StrikeRight: 'StrikeLeft',",
+    "new": "  StrikeLeft: 'StrikeLeft',\n  StrikeRight: 'StrikeRight',",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-forgets-x0",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return { ...r, x: x0 + (x0 + width) - (r.x + r.w) };",
+    "new": "  return { ...r, x: x0 + width - (r.x + r.w) };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-handedness-ignored",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "export const handOnLeft = (hand, leftHanded) => (hand === 'L') !== !!leftHanded;",
+    "new": "export const handOnLeft = (hand, leftHanded) => hand === 'L';",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-guard-wrong-way",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const toMid = side === 'left' ? 1 : -1;",
+    "new": "  const toMid = 1;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-guard-in-slow",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return easeTo(g, otherStriking ? 1 : 0, otherStriking ? GUARD.IN_TAU : GUARD.OUT_TAU, dt);",
+    "new": "  return easeTo(g, otherStriking ? 1 : 0, GUARD.OUT_TAU, dt);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-two-strokes-a-step",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "const strideStep = (speed, dt) => (Math.max(0, speed || 0) * Math.max(0, dt) * Math.PI) / RUN_STEP_M;",
+    "new": "const strideStep = (speed, dt) => (Math.max(0, speed || 0) * Math.max(0, dt) * 2 * Math.PI) / RUN_STEP_M;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-hands-in-step",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const s = Math.sin(phase + (hand === 'L' ? Math.PI : 0));",
+    "new": "  const s = Math.sin(phase);",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-run-with-a-weapon",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "    !!emptyHands &&\n    speed >= RUN_PUMP.MIN_SPEED",
+    "new": "    speed >= RUN_PUMP.MIN_SPEED",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-punch-waits",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (punching) return easeTo(w, 0, RUN_PUMP.PUNCH_TAU, dt);\n  return easeTo(w, wanted ? 1 : 0, wanted ? RUN_PUMP.IN_TAU : RUN_PUMP.OUT_TAU, dt);",
+    "new": "  return easeTo(w, wanted ? 1 : 0, wanted ? RUN_PUMP.IN_TAU : RUN_PUMP.OUT_TAU, dt);",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-weapon-not-the-striking-hand",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws) this.weapon = this.handItem(s.hand);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-apply-the-lead-always",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this.weapon = this.handItem(this.activeHand);",
+    "new": "    this.weapon = this.handItem(this.leadHand);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-last-hand-forgotten",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      this._lastHand = this.strike?.hand ?? this.leadHand;",
+    "new": "      this._lastHand = this.leadHand;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-off-hand-sure",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;",
+    "new": "    const offToHit = 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-off-hand-full-damage",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        Object.assign(opts, { blowWeight: OFF_HAND_BLOW.blowWeight });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mode-ignores-the-light",
+    "file": "src/combat/playerWeapon.js",
+    "old": "          leftBusy: this.leftBusy,",
+    "new": "          leftBusy: false,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-technique-takes-the-flurry",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());",
+    "new": "    return this._swing(state, this._nextStrike());",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-rig-light-unread",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "playerWeapon.leftBusy = lightInHand();",
+    "new": "playerWeapon.leftBusy = false;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-rig-pair-not-drawn",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (pairUp() && shown()) twoHands.drawPair(",
+    "new": "if (false) twoHands.drawPair(",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-rig-sheathed-run-not-drawn",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });",
+    "new": "if (runDrawn && shown()) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-rig-left-clone-frozen",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "widget.endOfFrame(); twoHands.offWidget.endOfFrame(); shield.endOfFrame();",
+    "new": "widget.endOfFrame(); shield.endOfFrame();",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-rig-dfu-line-for-a-pair",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (twoHanded(playerWeapon.handsMode)) say(",
+    "new": "if (false) say(",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-left-strike-unmirrored",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "        return mine(hand) ? picture(hand).state : 'Idle';",
+    "new": "        return mine(hand) ? st.machine.state : 'Idle';",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-uv-not-mirrored",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    const uv = mirror ? MIRROR_UV : q.uv;",
+    "new": "    const uv = q.uv;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-striking-under",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "  const drawOrder = () => (st.strikeHand === 'L' ? ['R', 'L'] : ['L', 'R']);",
+    "new": "  const drawOrder = () => ['L', 'R'];",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-run-order",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    drawn.sort((a, b) => a.s - b.s);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-guard-mirrored-twice",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    const [gx, gy] = guardOffset(st.guard[hand], handOnLeft(hand, st.leftHanded) ? 'left' : 'right', {\n      time: st.time,\n      bounce: st.bounce,\n      hand,\n      height,\n    });",
+    "new": "    const [gx, gy] = guardOffset(st.guard[hand], 'right', { time: st.time, bounce: st.bounce, hand, height });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-sprite-no-bounce",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0, BOUNCE_TAU, d);",
+    "new": "    st.bounce = 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-weapon-bone-unpaired",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  if (n === 'weapon bone') return 'weapon bone left';",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-shield-bone-crosses",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  for (const s of ['L', 'R']) for (const ref of arms[s]) if (counterpart.get(ref) === ref) counterpart.set(ref, null);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-plane-at-zero",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const x0 = (rest.get(upL).t[0] + rest.get(upR).t[0]) / 2;",
+    "new": "  const x0 = 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-carry-snaps",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    } else if (st.k > 0) st.k *= Math.exp(-Math.max(0, c.dt || 0) / Math.max(1e-4, c.tau || 0.06));",
+    "new": "    } else if (st.k > 0) st.k = 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-carry-from-written-only",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "      const prevOf = st.last ?? clip;",
+    "new": "      const prevOf = clip;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-mirror-right-always",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  return r >= l ? 'R' : 'L';",
+    "new": "  return 'R';",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-left-blow-unmirrored",
+    "file": "src/combat/fpArm.js",
+    "old": "if (attackingNow() && attackHand === 'L') {",
+    "new": "if (false) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-hand-ignored",
+    "file": "src/combat/fpArm.js",
+    "old": "const blowHand = hand === 'L' || hand === 'R' ? hand : leadHand;",
+    "new": "const blowHand = leadHand;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-fists-always-mirror",
+    "file": "src/combat/fpArm.js",
+    "old": "if (side && side !== attackHand) {",
+    "new": "if (side) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-punch-keeps-the-pump",
+    "file": "src/combat/fpArm.js",
+    "old": "runPump.w = runWeightStep(runPump.w, runPump.wanted && viewMode === 'first', attackingNow(), dt);",
+    "new": "runPump.w = runWeightStep(runPump.w, runPump.wanted && viewMode === 'first', false, dt);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-pump-one-side",
+    "file": "src/combat/fpArm.js",
+    "old": "const out = side === 'R' ? 1 : -1;",
+    "new": "const out = 1;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-arm-off-weapon-shown-sheathed",
+    "file": "src/combat/fpArm.js",
+    "old": "const offShown = (r) => handsMode === 'dual' && weaponInHand() && !!(r && r.offWeapon);",
+    "new": "const offShown = (r) => handsMode === 'dual' && !!(r && r.offWeapon);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-painted-arm-assumed-right",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "  const paintedAt = (i) =>\n    st.mode === HANDS_MODE.Fists ? (MELEE_PAINTED_ARM[MELEE_ANIMS[i]?.Record ?? 0] ?? 'R') : 'R';",
+    "new": "  const paintedAt = (i) => 'R';",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-painted-arm-table-all-right",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "export const MELEE_PAINTED_ARM = Object.freeze(['R', 'L', 'R', 'L', 'R', 'R', 'L']);",
+    "new": "export const MELEE_PAINTED_ARM = Object.freeze(['R', 'R', 'R', 'R', 'R', 'R', 'R']);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-picture-other-way-mirrored",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return painted(ms) === side ? { state: ms, mirror: false } : { state: ms, mirror: true };",
+    "new": "  return { state: ms, mirror: true };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-widget-mirror-from-the-machine",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      const mirror = mirrorOf(hand, paintedAt(shows));",
+    "new": "      const mirror = mirrorOf(hand, painted(views[hand].state));",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-h-keeps-the-exchange",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (twoHanded(this.handsMode)) {\n      this._lastHand = null;\n      this._lastEnd = -Infinity;\n    }\n    if (bowSwitching && !twoHanded(this.handsMode)) {",
+    "new": "    if (bowSwitching && !twoHanded(this.handsMode)) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-h-bills-a-switch",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (bowSwitching && !twoHanded(this.handsMode)) {",
+    "new": "    if (bowSwitching) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-share-after-the-report",
+    "file": "src/combat/formulas.js",
+    "old": "  damage = shared(Math.max(0, damage));",
+    "new": "  damage = Math.max(0, damage);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-pvp-off-ignored",
+    "file": "src/combat/duelCombat.js",
+    "old": "  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
+    "new": "  const off = false;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-off-strike-never",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off);",
+    "new": "    return false;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-flurry-from-the-first-frame",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (s.flurry) this.machine.frame = DUAL.FLURRY_FROM_FRAME;\n    // TWO-HANDS (AUDIT 2): the off hand's burden, in whole ticks held at its swing's end (handsLaw.js offHandHold) - read",
+    "new": "    // TWO-HANDS (AUDIT 2): the off hand's burden, in whole ticks held at its swing's end (handsLaw.js offHandHold) - read",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-schedule-from-zero",
+    "file": "src/characters/weaponStates.js",
+    "old": "  const at = Math.max(0, m.frame | 0);",
+    "new": "  const at = 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-active-hand-ungated",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;",
+    "new": "    return this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-resting-is-in-use",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon;",
+    "new": "    return this.weapon;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-light-without-a-lane",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    && (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());",
+    "new": "    && true;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-eye-in-the-gate",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      keepEye(cam?.pos);\n",
+    "new": "      if (widgetOn() || handheldOn() || shieldOn()) keepEye(cam?.pos);\n",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-pair-under-the-run",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      if ((running && hand !== st.strikeHand) || (only && hand !== only)) continue;",
+    "new": "      if (only && hand !== only) continue;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-run-hides-the-punch",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    const hands = /** @type {const} */ (['R', 'L']).filter((hand) => hand !== st.strikeHand); // a punch on the run is drawPair's",
+    "new": "    const hands = /** @type {const} */ (['R', 'L']).filter(() => true); // a punch on the run is drawPair's",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-run-over-the-punch",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow\n        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element",
+    "new": "        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element\n        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-windup-forever",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    while (machineIsAttacking() && machineFrame() < hitFrame()) {",
+    "new": "    while (machineFrame() < hitFrame()) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-sway-mirrored",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "  const pairRect = (mirror) =>\n    mirror\n      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })\n      : getWeaponRect();",
+    "new": "  const pairRect = (mirror) => getWeaponRect();",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-bob-timer-stale",
+    "file": "src/player/headBobber.js",
+    "old": "    if (out) out.bobTimer = this.timer;\n    posY = this._applySimpleBouncing(dt, posY, { grounded, swimming, climbing, levitating });",
+    "new": "    posY = this._applySimpleBouncing(dt, posY, { grounded, swimming, climbing, levitating });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-pump-own-clock",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      st.run.phase = runPhaseFollow(\n        st.run.phase,\n        Number.isFinite(r.bob) ? runPhaseOfBob(r.bob) : null,\n        r.speed ?? 0,\n        d,\n        !(st.run.w > 0),\n      );",
+    "new": "      st.run.phase = runPhaseFollow(st.run.phase, null, r.speed ?? 0, d, !(st.run.w > 0));",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-motion-bag-no-bob",
+    "file": "src/player/motor.js",
+    "old": "    bobTimer: Number.isFinite(player.bobTimer) ? player.bobTimer : null,",
+    "new": "    bobTimer: null,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-technique-off-weapon",
+    "file": "src/combat/techniques.js",
+    "old": "  const w = pw?.restingWeapon ?? pw?.weapon ?? null;",
+    "new": "  const w = pw?.weapon ?? null;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-hud-off-weapon",
+    "file": "src/scenes/world.js",
+    "old": "          weapon: weaponRig.playerWeapon.restingWeapon ?? null,",
+    "new": "          weapon: weaponRig.playerWeapon.weapon ?? null,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-off-hand-to-hit-kept",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        opts.toHitMod += offToHit;\n        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        Object.assign(opts, OFF_HAND_BLOW);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-strike-ticks-from-the-first-frame",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return Math.max(0, frames - Math.max(0, m.frame | 0));",
+    "new": "  return frames;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-run-pump-swings-outward-at-top",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "        x: cx - q.rect.w / 2 - p.dx * canvas.width,",
+    "new": "        x: cx - q.rect.w / 2 + p.dx * canvas.width,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-run-rises-from-rest-not-below",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      const rect = { ...placed, y: placed.y + (under(placed) - placed.y) * (1 - k) };",
+    "new": "      const rect = { ...placed, y: placed.y };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-run-hands-with-a-spell",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (spellArmed() || fpsSpellCasting.isPlayingAnim || actTool() || sheetWindowUp()) return false;",
+    "new": "if (actTool() || sheetWindowUp()) return false;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-run-hands-mid-swap",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "return (entity.equipCountdown ?? 0) <= 0;",
+    "new": "return true;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-run-hands-for-the-beast",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (lightInHand() || racialFpsWeapon(entity)) return false;",
+    "new": "if (lightInHand()) return false;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-pair-rises-on-the-climb",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };",
+    "new": "tint: fpTint, offsetHeight: weaponOffsetHeight() + climbDrop(_climbLower, c.height) };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-one-hand-says-the-lead-line",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (twoHanded(playerWeapon.handsMode)) say(",
+    "new": "if (true) say(",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-every-flurry-blow-pays-the-off-hand",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const off = this.offStrike; // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)",
+    "new": "    const off = !!this.strikeInFlight?.flurry; // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-widget-left-hand-not-moved-across",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    if (mirror) rect = mirrorRect(rect, w.screenRect.width, w.screenRect.x);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-widget-hands-no-guard",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    if (transform) rect = transform(rect);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-shield-and-empty-right-is-fists",
+    "file": "src/combat/playerWeapon.js",
+    "old": "          left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),",
+    "new": "          left: handDesc(this.currentLeftHandWeapon),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-waist-lantern-takes-the-hand",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "&& !lanternAtWaist(entity.lightSource)\n",
+    "new": "\n",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-fists-bounce-while-walking",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0, BOUNCE_TAU, d);",
+    "new": "    st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && !st.strikeHand ? 1 : 0, BOUNCE_TAU, d);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT-PINS-pair-drawn-under-the-run",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      if ((running && hand !== st.strikeHand) || (only && hand !== only)) continue;",
+    "new": "      if (only && hand !== only) continue;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-the-pump-lifts",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "    dy: (RUN_PUMP.DROP * (1 - s)) / 2,",
+    "new": "    dy: (RUN_PUMP.DROP * (1 - s)) / 2 - 0.3 * fwd,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-the-idle-record",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  ARM_STATE: 'StrikeDownLeft',",
+    "new": "  ARM_STATE: 'StrikeDown',",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-drawn-in-the-idle",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      const q = fpsWeaponQuad(canvas, fistArt, RUN_PUMP.ARM_STATE, p.frame, { flipHorizontal: false, offsetHeight });",
+    "new": "      const q = fpsWeaponQuad(canvas, fistArt, 'Idle', 0, { flipHorizontal: false, offsetHeight });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-rest-not-lowered",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "        const rect = { ...rest, y: rest.y + (under(rest) - rest.y) * k },",
+    "new": "        const rect = { ...rest, y: rest.y },",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-fists-vanish",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (w < RUN_PUMP.SWAP) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-unmirrored",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      drawn.push({\n        tex: q.tex,\n        uv: mirrorOf(hand, painted(RUN_PUMP.ARM_STATE)) ? MIRROR_UV : q.uv,\n        rect,\n        s: p.s,\n        glow: glowFor(hand),\n        art: [q.rec.width, q.rec.height],\n      });",
+    "new": "      drawn.push({ tex: q.tex, uv: q.uv, rect, s: p.s, glow: glowFor(hand), art: [q.rec.width, q.rec.height] });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-one-art-twice",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    const hands = /** @type {const} */ (['R', 'L']).filter((hand) => hand !== st.strikeHand); // a punch on the run is drawPair's",
+    "new": "    const hands = /** @type {const} */ (['R', 'L']);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-the-fists-tuck",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const down = weapon ? GUARD.LOWER * /** @type {number} */ (height) : GUARD.DOWN;",
+    "new": "  const down = GUARD.DOWN;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-no-height-classic",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      nudge(hand, canvas, q.rect.h, v.state !== 'Idle'),",
+    "new": "      nudge(hand, canvas, null, v.state !== 'Idle'),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-no-height-widget",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "          transform: (r) => moved(r, nudgeBefore(hand, canvas, mirror, r.h, shows !== 0)),",
+    "new": "          transform: (r) => moved(r, nudgeBefore(hand, canvas, mirror, null, shows !== 0)),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-fists-by-height",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    const height =\n      st.mode === HANDS_MODE.Dual && Number.isFinite(h) ? /** @type {number} */ (h * NATIVE_H) / canvas.height : null;",
+    "new": "    const height = Number.isFinite(h) ? /** @type {number} */ (h * NATIVE_H) / canvas.height : null;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-too-far",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  LOWER: 0.12,",
+    "new": "  LOWER: 0.2,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-ARM-another-frame",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  ARM_FRAME: 1,",
+    "new": "  ARM_FRAME: 0,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-LOWER-tucks-in",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return [weapon ? 0 : toMid * GUARD.IN * g, down * g + b];",
+    "new": "  return [toMid * GUARD.IN * g, down * g + b];",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-classic-hand-no-outline",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (glow)\n      renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, {\n        art: [q.rec.width, q.rec.height],\n        view: [canvas.width, canvas.height],\n      });\n    return rect;",
+    "new": "    return rect;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-left-outline-unmirrored",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (glow)\n      renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, {",
+    "new": "    if (glow)\n      renderer.drawScreenQuadGlow?.(q.tex, rect, q.uv, glow, {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-pair-hands-no-glow",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      if (shown) drawClassicHand(renderer, canvas, hand, artFor(hand), { tint, offsetHeight, glow: glowFor(hand) });",
+    "new": "      if (shown) drawClassicHand(renderer, canvas, hand, artFor(hand), { tint, offsetHeight });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-left-blade-unlit",
+    "file": "src/render/renderer.js",
+    "old": "    if (mesh.offWeaponGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'offweapon', mesh.offWeaponGlow);\n",
+    "new": "",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-gate-ignores-the-left",
+    "file": "src/render/renderer.js",
+    "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) &&",
+    "new": "const glow = !!(mesh.weaponGlow || mesh.handGlow) &&",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-every-slot-the-weapons",
+    "file": "src/render/renderer.js",
+    "old": "if (!inGlowSlot(r, slot) || r.hidden) continue;",
+    "new": "if (!inGlowSlot(r, 'weapon') || r.hidden) continue;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-pad-one-look",
+    "file": "src/render/characterSprite.js",
+    "old": "...(Array.isArray(glowLook) ? glowLook : glowLook ? [glowLook] : []).map((l) => glowPad(l, ph)), 0);",
+    "new": "(Array.isArray(glowLook) ? glowPad(glowLook[0], ph) : glowLook ? glowPad(glowLook, ph) : 0));",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-arm-another-blades-glow",
+    "file": "src/combat/fpArm.js",
+    "old": "offGlowKey != null && offGlowKey === offKey && ",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-arm-sheathed-blade-glows",
+    "file": "src/combat/fpArm.js",
+    "old": "&& handsMode === 'dual' && weaponInHand() ? offGlowSpec : null);",
+    "new": "&& handsMode === 'dual' ? offGlowSpec : null);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-rig-arm-the-striking-item",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);",
+    "new": "fpArm.setWeaponGlow?.(meshGlow(playerWeapon.weapon), playerWeapon.weapon);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-clone-the-held-glow",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "glow: item ? glowOf(item) : handGlowOf(hand),",
+    "new": "glow: heldGlowNow(),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-GLOW-clone-pair-no-outline",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    if (ctx.glow)\n      renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, {\n        art: [rec.width, rec.height],\n        view: [canvas.width, canvas.height],\n      }); // WEAPON-GLOW1: this hand's own element, on its own rect and source\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-relay-drops-the-off",
+    "file": "src/scenes/worldModes.js",
+    "old": "wildStrike: (id, w, sw, o) => !!host.wildStrike?.(id, w, sw, o),",
+    "new": "wildStrike: (id, w, sw) => !!host.wildStrike?.(id, w, sw),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-strikes-payload-every-blow",
+    "file": "src/combat/formulas.js",
+    "old": "(attacker.isPlayer || damage > 0) && whole) {",
+    "new": "(attacker.isPlayer || damage > 0)) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-weight-never-rolled",
+    "file": "src/combat/formulas.js",
+    "old": "const whole = !(blowWeight < 1) || rolls() < blowWeight;",
+    "new": "const whole = true;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-listeners-not-told",
+    "file": "src/combat/formulas.js",
+    "old": "const info = { backstab: notes.backstab, blow: whole, wraps };",
+    "new": "const info = { backstab: notes.backstab, wraps };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-swing-hands-no-weight",
+    "file": "src/combat/playerWeapon.js",
+    "old": "        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        opts.blowShare = OFF_HAND_BLOW.blowShare;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-core-not-handed-the-share",
+    "file": "src/combat/formulas.js",
+    "old": "onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;",
+    "new": "onStruck: (part) => (struckPart = part), unaware }) : undefined;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-shared-twice-under-a-core",
+    "file": "src/combat/formulas.js",
+    "old": "damage = notes.shared ? overridden : shared(overridden);",
+    "new": "damage = shared(overridden);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-pcaao-never-shares",
+    "file": "src/combat/pcaao.js",
+    "old": "  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot",
+    "new": "  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-pcaao-does-not-say",
+    "file": "src/combat/pcaao.js",
+    "old": "  if (blowShare && notes) notes.shared = true;\n  if (modules.equipmentDamageEnhanced)",
+    "new": "  if (modules.equipmentDamageEnhanced)",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-tally-unweighed",
+    "file": "src/scenes/hostCombat.js",
+    "old": "if (w < 1 && player && typeof player === 'object') {",
+    "new": "if (false) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-tally-forgets-the-carry",
+    "file": "src/scenes/hostCombat.js",
+    "old": "_swingTallyCarry.set(player, owed >= 1 - 1e-9 ? Math.max(0, owed - 1) : owed);",
+    "new": "_swingTallyCarry.set(player, owed >= 1 - 1e-9 ? 0 : owed);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-blow-always-whole",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1;",
+    "new": "    return 1;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-host-tally-unweighed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon, playerWeapon.blowWeight);",
+    "new": "if (hitEnemy) tallySwingSkills(playerEntity, playerWeapon.weapon);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-conduit-every-blow",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "        if (whole) gainMana(attacker, p.mana);",
+    "new": "        gainMana(attacker, p.mana);",
+    "tests": [
+      "test/systems/loot5_powers.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-flow-every-blow",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "        if (whole) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/systems/loot5_powers.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-undertow-every-blow",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "        if (held && whole)",
+    "new": "        if (held)",
+    "tests": [
+      "test/systems/gilded2_world.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-loot-reads-no-weight",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  const whole = info?.blow !== false;",
+    "new": "  const whole = true;",
+    "tests": [
+      "test/systems/loot5_powers.test.js",
+      "test/systems/gilded2_world.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-coil-every-blow",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (info?.blow !== false) coiled(attacker, target); // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)",
+    "new": "  coiled(attacker, target); // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)",
+    "tests": [
+      "test/systems/audit625_serpent.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-beast-h-loses-the-claws",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (apply) this.applyWeapon(this.weapon?.werecreatureClaws ? this.weapon : null);",
+    "new": "    if (apply) this.applyWeapon();",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-off-surety-the-sheet",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;",
+    "new": "    const offToHit = off ? offHandToHit(playerCombat ? playerCombat.stats.agility : 50) : 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-duel-surety-fixed",
+    "file": "src/combat/duelCombat.js",
+    "old": "    toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
+    "new": "    toHitMod: swing.toHit + (off ? offHandToHit(50) : 0),",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-guard-on-a-strike",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (striking) return [0, 0];\n    const height =",
+    "new": "    const height =",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-bounce-lifts",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const b = bounce > 0 ? (1 - Math.cos(time * 2 * Math.PI * GUARD.BOUNCE_HZ + phase)) * GUARD.BOUNCE_PX * bounce : 0;",
+    "new": "  const b = bounce > 0 ? Math.sin(time * 2 * Math.PI * GUARD.BOUNCE_HZ + phase) * GUARD.BOUNCE_PX * bounce : 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-bounce-in-a-strike",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && !st.strikeHand && standing ? 1 : 0, BOUNCE_TAU, d);",
+    "new": "    st.bounce = easeTo(st.bounce, mode === HANDS_MODE.Fists && standing ? 1 : 0, BOUNCE_TAU, d);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-bob-inward",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    mirror\n      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })\n      : getWeaponRect();",
+    "new": "    mirror ? transformRect(w.weaponPosition, { position: [-w.position[0], w.position[1]] }) : getWeaponRect();",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-inertia-mirrored",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })",
+    "new": "      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob + w.swayDx.inertia, w.position[1]] })",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-own-clock",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "      w.time = k.time;",
+    "new": "      w.time += dt;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-clock-not-handed",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "shown: pair && spriteShown(), clockOf: widget, ...gunClone('L') });",
+    "new": "shown: pair && spriteShown(), ...gunClone('L') });",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-windup-at-rest",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "      if (c.fromBelow && w.s.offset) w.offsetCurrent = [0, 1];\n      playAttackAnimation(play);",
+    "new": "      playAttackAnimation(play);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-from-below-never",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (strike?.hand && strike.hand !== st.strikeHand) st.fromBelow = st.run.w >= RUN_PUMP.SWAP ? strike.hand : null;",
+    "new": "    if (strike?.hand && strike.hand !== st.strikeHand) st.fromBelow = null;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-no-hop",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return !!wanted || (!!aloft && !!wasWanted && airSeconds <= RUN_PUMP.AIR_GRACE);",
+    "new": "  return !!wanted;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-hop-forever",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return !!wanted || (!!aloft && !!wasWanted && airSeconds <= RUN_PUMP.AIR_GRACE);",
+    "new": "  return !!wanted || (!!aloft && !!wasWanted);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-run-snaps",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "    if (!st.run.wanted && st.run.w < 1e-3) st.run.w = 0;",
+    "new": "    if (!st.run.wanted) st.run.w = 0;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-run-over-a-picture",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const runDrawn = runHands && (handsEmpty() || !(shown() || torchOnly || !!shieldRect || gunSliding || spellHandsDrawn));",
+    "new": "const runDrawn = runHands;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-left-clone-born-shown",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "  const offWidget = createWeaponWidget({ audio, envHit, missEffect, settings, handedness: () => false, hidden: true }); // AUDIT 2: born resting out of sight - single-hand play never steps it",
+    "new": "  const offWidget = createWeaponWidget({ audio, envHit, missEffect, settings, handedness: () => false }); // AUDIT 2: born resting out of sight - single-hand play never steps it",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-born-slides-in",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "        w.offsetCurrent = [0, 0];\n        w.offsetTarget = [0, 0];",
+    "new": "        w.offsetTarget = [0, 0];",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-arm-holds-the-lead",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    const armItem = pairUp() ? playerWeapon.handItem('R') : playerWeapon.weapon;\n    fpArm.setWeapon(armItem,",
+    "new": "    const armItem = playerWeapon.weapon;\n    fpArm.setWeapon(armItem,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-pack-own-read",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (typeof deps.handArm === 'function') deps.handArm();",
+    "new": "if (false) deps.handArm();",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-host-no-door",
+    "file": "src/scenes/exterior.js",
+    "old": ", handArm: () => (modes?.liveArm?.()?.rig ?? weaponRig).handArm?.(),",
+    "new": ",",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-SPRITE2-pair-clone-flipped",
+    "file": "src/combat/weapon/weaponWidget.js",
+    "old": "    if (c.pairHand) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-sprite-phase-taken-whole",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      st.run.phase = runPhaseFollow(\n        st.run.phase,\n        Number.isFinite(r.bob) ? runPhaseOfBob(r.bob) : null,\n        r.speed ?? 0,\n        d,\n        !(st.run.w > 0),\n      );",
+    "new": "      st.run.phase = Number.isFinite(r.bob)\n        ? runPhaseOfBob(r.bob)\n        : runPhaseFollow(st.run.phase, null, r.speed ?? 0, d, false);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-sprite-fresh-ignored",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "        !(st.run.w > 0),",
+    "new": "        false,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-follow-jumps",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (off >= lo && off <= hi) return bob;\n  return (phase + Math.min(hi, Math.max(lo, off))) % turn;",
+    "new": "  return bob;",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-follow-backward",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return (phase + Math.min(hi, Math.max(lo, off))) % turn;",
+    "new": "  return (phase + Math.min(hi, Math.max(-hi, off))) % turn;",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-follow-the-long-way",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const off = bob - phase - turn * Math.round((bob - phase) / turn); // the bob's lead, the shorter way round",
+    "new": "  const off = bob - phase - turn * Math.trunc((bob - phase) / turn); // the bob's lead, the shorter way round",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-follow-not-fresh",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (fresh || !Number.isFinite(phase)) return bob;",
+    "new": "  if (!Number.isFinite(phase)) return bob;",
+    "tests": [
+      "test/combat/twohands.test.js",
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-RUN_PUMP-catch",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  CATCH: 0.5,",
+    "new": "  CATCH: 1,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-RUN_PUMP-in",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  IN: 0.06,",
+    "new": "  IN: 0.12,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-RUN_PUMP-drop",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  DROP: 1.05,",
+    "new": "  DROP: 1.5,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-FIELD-run-on-a-high-frame",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  ARM_FRAME: 1,",
+    "new": "  ARM_FRAME: 3,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-RUN_PUMP-swap",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  SWAP: 0.5,",
+    "new": "  SWAP: 0.3,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-RUN_PUMP-min-speed",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  MIN_SPEED: 1.0,",
+    "new": "  MIN_SPEED: 3.0,",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-AUDIT2-bob-off-freezes-the-arms",
+    "file": "src/player/headBobber.js",
+    "old": "    if (out) out.bobTimer = enabled ? this.timer : null;",
+    "new": "    if (out) out.bobTimer = this.timer;",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-FIELD-the-stroke-snaps",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  const s = Math.sin(phase + (hand === 'L' ? Math.PI : 0));",
+    "new": "  const raw = Math.sin(phase + (hand === 'L' ? Math.PI : 0));\n  const s = Math.sign(raw) * Math.pow(Math.abs(raw), 0.7);",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-FIELD-held-at-the-top",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return {\n    dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back,\n    dy: (RUN_PUMP.DROP * (1 - s)) / 2,\n    frame: RUN_PUMP.ARM_FRAME,\n    s,\n  };",
+    "new": "  return { dx: RUN_PUMP.IN * fwd - RUN_PUMP.OUT * back, dy: RUN_PUMP.DROP * back, frame: RUN_PUMP.ARM_FRAME, s };",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDS-FIELD-run-on-the-uppercut",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  ARM_STATE: 'StrikeDownLeft',",
+    "new": "  ARM_STATE: 'StrikeDownRight',",
+    "tests": [
+      "test/combat/twohands.test.js"
+    ]
+  }
 ]

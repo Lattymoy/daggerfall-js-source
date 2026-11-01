@@ -11,7 +11,7 @@
   {
     "name": "NPC-MARKS-guild-unmarked",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (route?.kind === 'guildService') return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
+    "old": "  if (route?.kind === 'guildService')\n    return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
     "new": "  if (route?.kind === 'guildService') return null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "NPC-MARKS-route-no-custom-service",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "    hasCustomMerchantService,   // RR3",
-    "new": "    // RR3",
+    "old": "      hasCustomMerchantService, // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)",
+    "new": "      // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)",
     "tests": [
       "test/scenes/npcmarks.test.js",
       "test/systems/quest/rr3_questline.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "NPC-MARKS-route-no-building-faction",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "    buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,",
-    "new": "    buildingFaction: null,",
+    "old": "      buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,",
+    "new": "      buildingFaction: null,",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "NPC-MARKS-route-street-is-inside",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "    insideBuilding: !!building,",
-    "new": "    insideBuilding: true,",
+    "old": "      insideBuilding: !!building,",
+    "new": "      insideBuilding: true,",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "NPC-MARKS-route-over-quest",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';\n  if (holder.factionID == null) return null;",
-    "new": "  if (holder.factionID == null) return questMarked(holder.questBehaviour ?? holder.behaviour) ? 'quest' : null;\n  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';",
+    "old": "  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';\n  if (holder.factionID == null) return null; // a quest's stand carries no faction of its own: it is the quest's or no one's",
+    "new": "  if (holder.factionID == null) return questMarked(holder.questBehaviour ?? holder.behaviour) ? 'quest' : null;\n  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest'; // a quest's stand carries no faction of its own: it is the quest's or no one's",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -113,7 +113,7 @@
   {
     "name": "NPC-MARKS-kept-before-table",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "    if (!dict?.get(holder.factionID)) return null;   // L1: never before the faction's row is in - asked again, nothing kept",
+    "old": "    if (!dict?.get(holder.factionID)) return null; // L1: never before the faction's row is in - asked again, nothing kept",
     "new": "    if (!dict) return null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "NPC-MARKS-sprite-marked",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "        if (!(height > 0)) continue;",
-    "new": "        if (!(height >= 0)) continue;",
+    "old": "        if (!(height > 0)) continue; // no body stands for them: their own picture is their mark",
+    "new": "        if (!(height >= 0)) continue; // no body stands for them: their own picture is their mark",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "NPC-MARKS-unsorted",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "        while (at > 0 && marks[at - 1].d > d) { marks[at] = marks[at - 1]; at--; }",
-    "new": "        while (false) { marks[at] = marks[at - 1]; at--; }",
+    "old": "        while (at > 0 && marks[at - 1].d > d) {",
+    "new": "        while (false) {",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "NPC-MARKS-no-fade",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "        m.alpha = d <= fadeFrom ? 1 :",
-    "new": "        m.alpha = true ? 1 :",
+    "old": "        m.alpha = d <= fadeFrom ? 1 : Math.max(0, (NPC_MARKS_REACH - d) / (NPC_MARKS_REACH - fadeFrom));",
+    "new": "        m.alpha = true ? 1 : Math.max(0, (NPC_MARKS_REACH - d) / (NPC_MARKS_REACH - fadeFrom));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "NPC-MARKS-not-over-head",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "feet[1] + height + MARK_OVER_HEAD_M +",
-    "new": "feet[1] + MARK_OVER_HEAD_M +",
+    "old": "        m.at[1] = feet[1] + height + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still);",
+    "new": "        m.at[1] = feet[1] + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "NPC-MARKS-bob-still-moves",
     "file": "src/render/npcMarkPass.js",
-    "old": "  if (still) return 0;\n",
-    "new": "\n",
+    "old": "  if (still) return 0;\n  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
+    "new": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "NPC-MARKS-bob-unwrapped",
     "file": "src/render/npcMarkPass.js",
-    "old": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase))",
-    "new": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * seconds * 1.001 + phase))",
+    "old": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
+    "new": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * seconds * 1.001 + phase));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "NPC-MARKS-quest-dot-joins",
     "file": "src/render/npcMarkPass.js",
-    "old": "box(p - vec2(0.0, -0.62), vec2(0.21, 0.2))",
-    "new": "box(p - vec2(0.0, -0.52), vec2(0.21, 0.2))",
+    "old": "    d = min(box(p - vec2(0.0, 0.3), vec2(0.21, 0.52)), box(p - vec2(0.0, -0.62), vec2(0.21, 0.2)));",
+    "new": "    d = min(box(p - vec2(0.0, 0.3), vec2(0.21, 0.52)), box(p - vec2(0.0, -0.52), vec2(0.21, 0.2)));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "NPC-MARKS-no-rim",
     "file": "src/render/npcMarkPass.js",
-    "old": "  float outline = 0.22;",
-    "new": "  float outline = 0.0;",
+    "old": "  float outline = 0.22;   // a dark pixel's rim round the shape, so it reads over a lit wall and a dark one alike",
+    "new": "  float outline = 0.0;   // a dark pixel's rim round the shape, so it reads over a lit wall and a dark one alike",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -257,7 +257,7 @@
   {
     "name": "NPC-MARKS-guild-any-group",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (route?.kind === 'guildService') return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
+    "old": "  if (route?.kind === 'guildService')\n    return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
     "new": "  if (route?.kind === 'guildService') return 'service';",
     "tests": [
       "test/scenes/npcmarks.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "NPC-MARKS-arena-unmarked",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (arenaOfficer(holder)) return 'service';\n",
-    "new": "\n",
+    "old": "  if (arenaOfficer(holder)) return 'service';",
+    "new": "",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "NPC-MARKS-arena-gate-unread",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "ARENA_OFFICES.has(holder?.arenaRole) || (holder?.position != null && ARENA_OFFICES.has(arenaGatePersonOf(holder)?.role))",
-    "new": "ARENA_OFFICES.has(holder?.arenaRole)",
+    "old": "export const arenaOfficer = (holder) =>\n  ARENA_OFFICES.has(holder?.arenaRole) ||\n  (holder?.position != null && ARENA_OFFICES.has(arenaGatePersonOf(holder)?.role));",
+    "new": "export const arenaOfficer = (holder) => ARENA_OFFICES.has(holder?.arenaRole);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "NPC-MARKS-widthless-marked",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if ('width' in holder && !holder.width) return false;\n",
-    "new": "\n",
+    "old": "  if ('width' in holder && !holder.width) return false;\n  const flag = holder.action?.actionFlag;",
+    "new": "  const flag = holder.action?.actionFlag;",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -311,7 +311,7 @@
   {
     "name": "NPC-MARKS-work-unmarked",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  return ctx?.offersWork?.(holder) ? 'quest' : null;   // L2: the talk arm's first door",
+    "old": "  return ctx?.offersWork?.(holder) ? 'quest' : null; // L2: the talk arm's first door",
     "new": "  return null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
@@ -320,8 +320,8 @@
   {
     "name": "NPC-MARKS-work-over-route",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  return ctx?.offersWork?.(holder) ? 'quest' : null;",
-    "new": "  if (ctx?.offersWork?.(holder)) return 'quest';\n  return holder._mwMarkRoute;",
+    "old": "  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  return ctx?.offersWork?.(holder) ? 'quest' : null; // L2: the talk arm's first door",
+    "new": "  if (ctx?.offersWork?.(holder)) return 'quest';\n  return holder._mwMarkRoute; // L2: the talk arm's first door",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "NPC-MARKS-right-unmirrored",
     "file": "src/render/npcMarkPass.js",
-    "old": "gl.uniform3f(U.uRight, -view[0], -view[4], -view[8]);",
-    "new": "gl.uniform3f(U.uRight, view[0], view[4], view[8]);",
+    "old": "    gl.uniform3f(U.uRight, -view[0], -view[4], -view[8]);",
+    "new": "    gl.uniform3f(U.uRight, view[0], view[4], view[8]);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "NPC-MARKS-centred-on-point",
     "file": "src/render/npcMarkPass.js",
-    "old": "vec3(0.0, (aP.y + 1.0) * h, 0.0)",
-    "new": "vec3(0.0, aP.y * h, 0.0)",
+    "old": "  vec3 p = uAt + uRight * (aP.x * h) + vec3(0.0, (aP.y + 1.0) * h, 0.0);",
+    "new": "  vec3 p = uAt + uRight * (aP.x * h) + vec3(0.0, aP.y * h, 0.0);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "NPC-MARKS-pass-per-host",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  let e = SHARED.get(gl);\n  if (!e) {",
-    "new": "  let e = null;\n  if (!e) {",
+    "old": "  let e = SHARED.get(gl);",
+    "new": "  let e = null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "NPC-MARKS-never-freed",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "  e.pass?.dispose?.();\n",
-    "new": "\n",
+    "old": "  e.pass?.dispose?.();\n};",
+    "new": "};",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "NPC-MARKS-dispose-keeps-gl",
     "file": "src/render/npcMarkPass.js",
-    "old": "    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);",
-    "new": "    gl.deleteProgram(this.program);",
+    "old": "    gl.deleteVertexArray(this.vao);\n    gl.deleteBuffer(this.vbo);\n    this.program = null;",
+    "new": "    this.program = null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]

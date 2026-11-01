@@ -20,8 +20,8 @@
   {
     "name": "FIELD-GUN13-3-the-lift-multiplies-so-a-black-room-stays-black",
     "file": "src/combat/gun/gunFeel.js",
-    "old": "  flashLight: 0.6, flashGain: 1.9,\n  /**",
-    "new": "  flashLight: 0.6, flashGain: 1.0,\n  /**",
+    "old": "  flashLight: 0.6,\n  flashGain: 1.9,\n  /** How far the flash throws light into the room, at the peak. A",
+    "new": "  flashLight: 0.6,\n  flashGain: 1.0,\n  /** How far the flash throws light into the room, at the peak. A",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FIELD-GUN13-4-the-muzzle-throws-no-light",
     "file": "src/systems/thunderlock.js",
-    "old": "  const glow = entity?._thunderlockFlash;\n  if (!(glow > 0) || !feet) return null;",
-    "new": "  const glow = entity?._thunderlockFlash;\n  if (true) return null;\n  if (!(glow > 0) || !feet) return null;",
+    "old": "  if (!(glow > 0) || !feet) return null;",
+    "new": "  if (true) return null;\n  if (!(glow > 0) || !feet) return null;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

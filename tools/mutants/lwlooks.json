@@ -2,8 +2,8 @@
   {
     "name": "LW-LOOKS-own-class",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (res.cls != null) return res.cls;\n",
-    "new": "",
+    "old": "  if (res.cls != null) return res.cls;\n  if (res.job === 'priest') return PRIEST_CLASS;",
+    "new": "  if (res.job === 'priest') return PRIEST_CLASS;",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW-LOOKS-priest",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (res.job === 'priest') return PRIEST_CLASS;\n",
-    "new": "",
+    "old": "  if (res.job === 'priest') return PRIEST_CLASS;\n  if (res.job !== 'guildsman') return null;",
+    "new": "  if (res.job !== 'guildsman') return null;",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW-LOOKS-guildsman",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (res.job !== 'guildsman') return null;\n",
-    "new": "",
+    "old": "  if (res.job !== 'guildsman') return null;\n  const f = res.faction ?? 0;",
+    "new": "  const f = res.faction ?? 0;",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW-LOOKS-order",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (ORDER_FACTIONS.has(f)) return M.Knight;\n",
-    "new": "",
+    "old": "  if (ORDER_FACTIONS.has(f)) return M.Knight;\n  const list = /** @type {readonly number[]|undefined} */ (",
+    "new": "  const list = /** @type {readonly number[]|undefined} */ (",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW-LOOKS-guild-seed",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "list[lwSeed(textSeed(res.id), 0x636c7373) % list.length]",
-    "new": "list[0]",
+    "old": "  return list ? list[lwSeed(textSeed(res.id), 0x636c7373) % list.length] : null; // 'clss'",
+    "new": "  return list ? list[0] : null; // 'clss'",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW-LOOKS-pitch",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (e.kind === 'beg') return 'beggar';\n",
-    "new": "",
+    "old": "  if (e.kind === 'beg') return 'beggar';\n  if (e.kind === 'stall')",
+    "new": "  if (e.kind === 'stall')",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW-LOOKS-stall",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  if (e.kind === 'stall') return /** @type {any} */ (STALL_ROLE",
-    "new": "  if (e.kind === 'stall') return null && /** @type {any} */ (STALL_ROLE",
+    "old": "    return /** @type {any} */ (STALL_ROLE[/** @type {keyof typeof STALL_ROLE} */ (res.job)] ?? null);",
+    "new": "    return null && /** @type {any} */ (STALL_ROLE[/** @type {keyof typeof STALL_ROLE} */ (res.job)] ?? null);",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW-LOOKS-stall-courier",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "fisher: 'fisher', labourer: 'labourer' });",
-    "new": "fisher: 'fisher', labourer: 'labourer', courier: 'labourer' });",
+    "old": "const STALL_ROLE = Object.freeze({ merchant: 'merchant', crafter: 'crafter', fisher: 'fisher', labourer: 'labourer' });",
+    "new": "const STALL_ROLE = Object.freeze({\n  merchant: 'merchant',\n  crafter: 'crafter',\n  fisher: 'fisher',\n  labourer: 'labourer',\n  courier: 'labourer',\n});",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW-LOOKS-priest-door",
     "file": "src/systems/livingWorld/looks.js",
-    "old": " && e.at?.building === res.work) return 'priest';",
-    "new": ") return 'priest';",
+    "old": "  if (res.job === 'priest' && e.kind === 'social' && res.work != null && e.at?.building === res.work) return 'priest';",
+    "new": "  if (res.job === 'priest' && e.kind === 'social' && res.work != null) return 'priest';",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW-LOOKS-priest-social",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "if (res.job === 'priest' && e.kind === 'social' && ",
-    "new": "if (res.job === 'priest' && ",
+    "old": "  if (res.job === 'priest' && e.kind === 'social' && res.work != null && e.at?.building === res.work) return 'priest';",
+    "new": "  if (res.job === 'priest' && res.work != null && e.at?.building === res.work) return 'priest';",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW-LOOKS-sex",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(",
-    "new": "  const list = STILL_FLATS[role].male.filter(",
+    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) =>\n    MOVING_STILLS.has(`${a}.${r}`),\n  );",
+    "new": "  const list = STILL_FLATS[role].male.filter(([a, r]) => MOVING_STILLS.has(`${a}.${r}`));",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW-LOOKS-still-seed",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "list[lwSeed(textSeed(res.id), 0x7374696c) % list.length]",
-    "new": "list[0]",
+    "old": "  const [archive, record] = list[lwSeed(textSeed(res.id), 0x7374696c) % list.length]; // 'stil'",
+    "new": "  const [archive, record] = list[0]; // 'stil'",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW-LOOKS-walker-picture",
     "file": "src/characters/residentWalker.js",
-    "old": "    if (this.stillLook && this._stillAnim) return this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false);",
-    "new": "",
+    "old": "    if (this.stillLook && this._stillAnim)\n      return this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false); // LW-LOOKS: a still picture",
+    "new": "    // LW-LOOKS: a still picture",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LW-LOOKS-walker-clock",
     "file": "src/characters/residentWalker.js",
-    "old": "this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false)",
-    "new": "this._frameOut(this.stillLook.record, 0, false)",
+    "old": "    if (this.stillLook && this._stillAnim)\n      return this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false); // LW-LOOKS: a still picture",
+    "new": "    if (this.stillLook && this._stillAnim) return this._frameOut(this.stillLook.record, 0, false); // LW-LOOKS: a still picture",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW-LOOKS-walker-archive-back",
     "file": "src/characters/residentWalker.js",
-    "old": "      this._stillAnim = null;\n      this.archive = this.classArchive;",
-    "new": "      this._stillAnim = null;\n      this.archive = this.ownArchive;",
+    "old": "      this.archive = this.classArchive;",
+    "new": "      this.archive = this.ownArchive;",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW-LOOKS-walker-identity",
     "file": "src/characters/residentWalker.js",
-    "old": " this.cls = null; this.stillLook = null; this.stillRole = null; this._stillAnim = null; }",
-    "new": " }",
+    "old": "    this.cls = null;\n    this.stillLook = null;\n    this.stillRole = null;\n    this._stillAnim = null;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LW-LOOKS-sprites-talk",
     "file": "src/world/travellerSprites.js",
-    "old": "      const person = talk ? { nameNPC: res.name,",
-    "new": "      const person = true ? { nameNPC: res.name,",
+    "old": "      const person = talk",
+    "new": "      const person = true",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LW-LOOKS-sprites-still-talk",
     "file": "src/world/travellerSprites.js",
-    "old": "      const person = talk ? { nameNPC: res.name,",
-    "new": "      const person = false ? { nameNPC: res.name,",
+    "old": "      const person = talk",
+    "new": "      const person = false",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "LW-LOOKS-sprites-clock",
     "file": "src/world/travellerSprites.js",
-    "old": "anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1))",
-    "new": "anim: null",
+    "old": "        anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1)),",
+    "new": "        anim: null,",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "LW-LOOKS-host-flats",
     "file": "src/scenes/pixelBuild.js",
-    "old": "armOf: livingArmOf, flatOf: livingFlatOf,",
-    "new": "armOf: livingArmOf,",
+    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
+    "new": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]

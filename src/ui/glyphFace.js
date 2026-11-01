@@ -25,12 +25,14 @@ export function defaultCanvas(w, h) {
   if (typeof globalThis.OffscreenCanvas === 'function') return new globalThis.OffscreenCanvas(w, h);
   const c = globalThis.document?.createElement?.('canvas');
   if (!c) return null;
-  c.width = w; c.height = h;
+  c.width = w;
+  c.height = h;
   return c;
 }
 
 /** Whether this runtime can rasterise a face at all. */
-export const canRasterise = () => typeof globalThis.OffscreenCanvas === 'function' || !!globalThis.document?.createElement;
+export const canRasterise = () =>
+  typeof globalThis.OffscreenCanvas === 'function' || !!globalThis.document?.createElement;
 
 /**
  * A face over a CSS font family (a single loaded FontFace's family, or a fallback list), growing as it is asked.
@@ -39,7 +41,10 @@ export const canRasterise = () => typeof globalThis.OffscreenCanvas === 'functio
  * @returns {{ family: string, name: string, glyphs: Map<number, object>, missing: Set<number>, pages: object[],
  *   add: (code: number) => boolean, flush: (renderer: any) => number, texOf: (g: object) => any }}
  */
-export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE, makeCanvas = defaultCanvas, name = family, lang = null, weight = 400 } = {}) {
+export function createGlyphFace(
+  family,
+  { raster = FACE_RASTER, page = FACE_PAGE, makeCanvas = defaultCanvas, name = family, lang = null, weight = 400 } = {},
+) {
   const k = raster / FACE_POINT_SIZE;
   const font = `${weight} ${raster}px ${family}`;
   const glyphs = new Map();
@@ -53,12 +58,16 @@ export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE
     if (lang && 'lang' in ctx) ctx.lang = lang;
   };
   const measure = (ch) => {
-    if (!measurer) { const c = makeCanvas(1, 1); measurer = c?.getContext('2d') ?? null; if (measurer) dress(measurer); }
+    if (!measurer) {
+      const c = makeCanvas(1, 1);
+      measurer = c?.getContext('2d') ?? null;
+      if (measurer) dress(measurer);
+    }
     return measurer?.measureText(ch) ?? null;
   };
   const newPage = () => {
     const canvas = makeCanvas(page, page);
-    const ctx = canvas?.getContext('2d', { willReadFrequently: true });   // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload
+    const ctx = canvas?.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload
     if (!ctx) return null;
     dress(ctx);
     const p = { canvas, ctx, x: PAD, y: PAD, rowH: 0, dirty: false, tex: null, uploads: 0 };
@@ -70,20 +79,40 @@ export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE
   function add(code) {
     if (glyphs.has(code)) return true;
     if (missing.has(code)) return false;
-    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff || isControlCode(code)) { missing.add(code); return false; }
+    if (!Number.isInteger(code) || code < 0 || code > 0x10ffff || isControlCode(code)) {
+      missing.add(code);
+      return false;
+    }
     const ch = String.fromCodePoint(code);
     const mt = measure(ch);
-    if (!mt) { missing.add(code); return false; }
-    const left = mt.actualBoundingBoxLeft ?? 0, right = mt.actualBoundingBoxRight ?? mt.width;
-    const ascent = mt.actualBoundingBoxAscent ?? raster * 0.8, descent = mt.actualBoundingBoxDescent ?? 0;
-    const w = Math.max(0, Math.ceil(left + right)), h = Math.max(0, Math.ceil(ascent + descent));
-    let src = { u0: 0, v0: 0, u1: 0, v1: 0 }, at = -1;
+    if (!mt) {
+      missing.add(code);
+      return false;
+    }
+    const left = mt.actualBoundingBoxLeft ?? 0,
+      right = mt.actualBoundingBoxRight ?? mt.width;
+    const ascent = mt.actualBoundingBoxAscent ?? raster * 0.8,
+      descent = mt.actualBoundingBoxDescent ?? 0;
+    const w = Math.max(0, Math.ceil(left + right)),
+      h = Math.max(0, Math.ceil(ascent + descent));
+    let src = { u0: 0, v0: 0, u1: 0, v1: 0 },
+      at = -1;
     if (w > 0 && h > 0) {
-      if (w + 2 * PAD > page || h + 2 * PAD > page) { missing.add(code); return false; }
+      if (w + 2 * PAD > page || h + 2 * PAD > page) {
+        missing.add(code);
+        return false;
+      }
       let p = pages[pages.length - 1] ?? newPage();
-      if (p && p.x + w + PAD > page) { p.x = PAD; p.y += p.rowH + PAD; p.rowH = 0; }   // the next shelf
-      if (p && p.y + h + PAD > page) p = newPage();                                    // the next page
-      if (!p) { missing.add(code); return false; }
+      if (p && p.x + w + PAD > page) {
+        p.x = PAD;
+        p.y += p.rowH + PAD;
+        p.rowH = 0;
+      } // the next shelf
+      if (p && p.y + h + PAD > page) p = newPage(); // the next page
+      if (!p) {
+        missing.add(code);
+        return false;
+      }
       p.ctx.fillText(ch, p.x + left, p.y + ascent);
       src = { u0: p.x / page, v0: p.y / page, u1: (p.x + w) / page, v1: (p.y + h) / page };
       at = pages.indexOf(p);
@@ -92,9 +121,14 @@ export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE
       p.dirty = true;
     }
     glyphs.set(code, {
-      code, advance: mt.width / k,                                   // horizontalAdvance
-      offX: -left / k, offY: ascent / k, w: w / k, h: h / k,         // horizontalBearingX / Y, width, height
-      page: at, src,
+      code,
+      advance: mt.width / k, // horizontalAdvance
+      offX: -left / k,
+      offY: ascent / k,
+      w: w / k,
+      h: h / k, // horizontalBearingX / Y, width, height
+      page: at,
+      src,
     });
     return true;
   }
@@ -107,7 +141,7 @@ export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE
       if (!p.dirty || typeof renderer?.uploadTexture !== 'function') return;
       const img = p.ctx.getImageData(0, 0, page, page);
       const colors = new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength);
-      for (let o = 0; o < colors.length; o += 4) colors[o] = colors[o + 1] = colors[o + 2] = 255;   // no dark fringe under LINEAR
+      for (let o = 0; o < colors.length; o += 4) colors[o] = colors[o + 1] = colors[o + 2] = 255; // no dark fringe under LINEAR
       const key = `${name}#p${i}`;
       if (p.tex) renderer.releaseTexture?.('fnt', key);
       p.tex = renderer.uploadTexture('fnt', key, { width: page, height: page, colors }, { smooth: true, alpha: true });
@@ -118,6 +152,6 @@ export function createGlyphFace(family, { raster = FACE_RASTER, page = FACE_PAGE
     return n;
   }
 
-  const texOf = (g) => (g && g.page >= 0 ? pages[g.page]?.tex ?? null : null);
+  const texOf = (g) => (g && g.page >= 0 ? (pages[g.page]?.tex ?? null) : null);
   return { family, name, raster, glyphs, missing, pages, add, flush, texOf };
 }

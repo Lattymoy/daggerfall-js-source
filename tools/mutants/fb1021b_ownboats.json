@@ -2,8 +2,8 @@
   {
     "name": "BO-tree-stamps-never-kept",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "  life.shape = shape; life.on = on;   // held",
-    "new": "  // held",
+    "old": "  life.shape = shape;\n  life.on = on; // held, she stood at both already: only a ship whose stamps read as kept is judged by range",
+    "new": "  // held, she stood at both already: only a ship whose stamps read as kept is judged by range",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BO-lives-eye-unread",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "root, root.localPosition, at);",
-    "new": "root, root.localPosition, null);",
+    "old": "        life.lived = farTreeStep(life, dt, root, root.localPosition, at);",
+    "new": "        life.lived = farTreeStep(life, dt, root, root.localPosition, null);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BO-lives-range-unread",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "life.lived = farTreeStep(life, dt, root, root.localPosition, at);",
-    "new": "life.lived = farTreeStep(life, dt, root, null, at);",
+    "old": "        life.lived = farTreeStep(life, dt, root, root.localPosition, at);",
+    "new": "        life.lived = farTreeStep(life, dt, root, null, at);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BO-lives-missed-time-dropped",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "a.update(life.lived);",
-    "new": "a.update(dt);",
+    "old": "        if (life.lived !== null) for (const a of boatAnimators(boat)) a.update(life.lived);",
+    "new": "        if (life.lived !== null) for (const a of boatAnimators(boat)) a.update(dt);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BO-lives-one-stride",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "life = { ...farLife(seq++), lived: null };",
-    "new": "life = { ...farLife(0), lived: null };",
+    "old": "          life = { ...farLife(seq++), lived: null };",
+    "new": "          life = { ...farLife(0), lived: null };",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BO-particles-their-own-time",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "system.step(lived);",
-    "new": "system.step(1 / 60);",
+    "old": "          for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(lived);",
+    "new": "          for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(1 / 60);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BO-particles-every-frame",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "        if (lived !== null) for (const system of",
-    "new": "        for (const system of",
+    "old": "        if (lived !== null)\n          for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(lived);",
+    "new": "        for (const system of (boat.particleSystems ??= boatParticleSystems(boat))) system.step(lived);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BO-peers-tree-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "dt, s.boat.GameObject, s.shown, eye);",
-    "new": "dt, { _treeStamp: 0, _treeSwitch: 0, parent: null }, s.shown, eye);",
+    "old": "    const lived = farTreeStep((s.life ??= farLife(lifeSeq++)), dt, s.boat.GameObject, s.shown, eye);",
+    "new": "    const lived = farTreeStep(\n      (s.life ??= farLife(lifeSeq++)),\n      dt,\n      { _treeStamp: 0, _treeSwitch: 0, parent: null },\n      s.shown,\n      eye,\n    );",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]

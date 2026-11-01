@@ -2,8 +2,8 @@
   {
     "name": "GREEDY-BEYOND-the-lean-dropped",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {\n    return yield* searchSteps(",
-    "new": "  if (false) {\n    return yield* searchSteps(",
+    "old": "  if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GREEDY-BEYOND-asked-of-every-refusal",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {",
-    "new": "if (!best && past && !roads && !tracks && !sea) {",
+    "old": "  if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {",
+    "new": "  if (!best && past && !roads && !tracks && !sea) {",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GREEDY-BEYOND-its-count-unbounded",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "margin: BEYOND_MARGIN, maxExpansions: BEYOND_MAX_EXPANSIONS, openBlocked, goalExempt, peakAt, sea, beyond, hCost: BEYOND_GREED",
-    "new": "margin: BEYOND_MARGIN, maxExpansions: Infinity, openBlocked, goalExempt, peakAt, sea, beyond, hCost: BEYOND_GREED",
+    "old": "      maxExpansions: BEYOND_MAX_EXPANSIONS,",
+    "new": "      maxExpansions: Infinity,",
     "tests": [
       "test/systems/travel/road_beyond.test.js",
       "test/systems/travel/greedy_beyond.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "GREEDY-BEYOND-the-lean-on-the-roads'-price",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "hCost: BEYOND_GREED * ROUTE_COST.open, tally, endLeg });",
-    "new": "hCost: BEYOND_GREED * ROUTE_COST.road, tally, endLeg });",
+    "old": "      hCost: BEYOND_GREED * ROUTE_COST.open,",
+    "new": "      hCost: BEYOND_GREED * ROUTE_COST.road,",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "GREEDY-BEYOND-the-box-the-first-rung's",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "bounds: reachOf(BEYOND_MARGIN), margin: BEYOND_MARGIN, maxExpansions: BEYOND_MAX_EXPANSIONS,",
-    "new": "bounds: reachOf(6), margin: 6, maxExpansions: BEYOND_MAX_EXPANSIONS,",
+    "old": "      bounds: reachOf(BEYOND_MARGIN),\n      margin: BEYOND_MARGIN,",
+    "new": "      bounds: reachOf(6),\n      margin: 6,",
     "tests": [
       "test/systems/travel/greedy_beyond.test.js"
     ]

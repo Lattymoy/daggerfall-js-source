@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): THE TOWNS THE INSTALLED REGIONS HOLD, found by
+// THE TOWNS THE INSTALLED REGIONS HOLD, found by
 // their pixel and their ordinal, and their lanes in the world's ids - a location index, a block a cell of their 8 x 8 grid,
 // the plane their location stands on. A town lies wholly inside the pixel its centre is on (settlementGen.js), so that
 // pixel is its location. Read on the thread that installed the bakes (gen2Ground.js gen2Install).

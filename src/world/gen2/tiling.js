@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 A PROVINCE IN TILES (bible/03-World/World-2-Canon.md, "Tiles"): a province too large for one bake is cut on ONE
+// WG2 A PROVINCE IN TILES ("Tiles"): a province too large for one bake is cut on ONE
 // lattice over the world (tile x tile world pixels, anchored at the Bay's corner, so two provinces' tiles never disagree)
 // into the tiles that hold its land; each tile is baked over its core grown by `overlap` each way, and where two tiles
 // overlap the seam crossfades them (regionSampler.js weight: a partition of unity). The canon and the continent are

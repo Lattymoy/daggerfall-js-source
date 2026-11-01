@@ -16,6 +16,8 @@ import { modSaveRecords, _resetModSaveData } from '../../../src/systems/modSaveD
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 
+import { hostText } from '../../hostText.mjs';
+
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const mem = () => { const m = new Map(); return { map: m, get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
 const ent = (cid, name = 'Ysolde Hlaalu') => ({
@@ -227,7 +229,7 @@ test('LEGACY7 the chargen\'s question and the birth\'s address: Bloodline open o
 });
 
 test('LEGACY7 wiring: the boot reads the lines before any save; the realm\'s copy follows each write; a fall is the session\'s tombstone; a member is born and joined through the realm', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT TEST-PRESET): the host whole
   // PIN MOVED (BOOT-OVERLAP, 2026-10-12): the lines and the roster read at once, behind the boot, from the join - and
   // waited for where their reader (Project Legacy's host) is made, which stands above the boot's load door (both on the
   // boot's own walk, so the text's order is the run's)

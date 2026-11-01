@@ -72,7 +72,7 @@ test('PVP-REWARD THE GOLD: a policy\'s gold is a coin pile; paid as coin where i
 test('PVP-REWARD THE HOST AND THE WORDS: no worn offer at my death; my collect says my free weight and a policy\'s gold is said as coin or a letter; the relay signs a fall after a short wait, the body window\'s pinned equal (mutants: the offer back; the weight unsaid)', () => {
   const w = rd('src/scenes/world.js'), eh = rd('src/scenes/wildEscrowHost.js');
   assert.ok(!w.includes('wildFight.offerWorn('), 'no worn offer');
-  assert.ok(eh.includes('free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }'), 'my free weight');
+  assert.ok(eh.includes('free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity),\n          }'), 'my free weight');
   assert.ok(eh.includes('if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);'), 'coin into the purse');
   assert.equal(WILD_TEXT.policyGold(1200), 'All their gear was insured. You take 1,200 gold from one policy.');
   assert.equal(WILD_TEXT.policyLetter(1200), 'All their gear was insured. The coin was too heavy, so you take a letter of credit for 1,200 gold.');
@@ -80,7 +80,7 @@ test('PVP-REWARD THE HOST AND THE WORDS: no worn offer at my death; my collect s
   assert.equal(WILD_BODY_MS, WILD_REF.pickMs);
 });
 
-test('PVP-NO-TENTH THE LAST ROLL (wildDropLaw.js takeWildLastRoll; the owner: "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough gold"): a tenth of the coin and the letters together, the purse first, the letters in bag order paying only what it cannot, each kept where it lies; a letter the ledger or a policy holds pays nothing; a tab from before the word, the purse alone; no other kill takes coin (mutants: the letters before the purse; the letters left out of the sum; the purse taken at every kill)', () => {
+test('PVP-NO-TENTH THE LAST ROLL (wildDropLaw.js takeWildLastRoll): a tenth of the coin and the letters together, the purse first, the letters in bag order paying only what it cannot, each kept where it lies; a letter the ledger or a policy holds pays nothing; a tab from before the word, the purse alone; no other kill takes coin (mutants: the letters before the purse; the letters left out of the sum; the purse taken at every kill)', () => {
   const letter = (v, uid) => ({ group: 'MiscItems', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: v, uid });
   const rich = { goldPieces: 5000, items: [letter(20_000, '00000000000000b1')] };
   const a = takeWildLastRoll(rich, () => false, { letters: true });

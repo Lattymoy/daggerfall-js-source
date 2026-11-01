@@ -17,4 +17,7 @@ export const WILD_REVENANTS_MAX = 1;
  *  save's `list` or the live one): sworn, not fallen, walking with them (a companion's state, 'with' where none is kept -
  *  revenantCompanions.js stateOf), the first WILD_REVENANTS_MAX in the list's order - the ones the zone stands.
  *  @param {any} list @returns {any[]} */
-export const wildSwornAtSide = (list) => (Array.isArray(list) ? list : []).filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with').slice(0, WILD_REVENANTS_MAX);
+export const wildSwornAtSide = (list) =>
+  (Array.isArray(list) ? list : [])
+    .filter((r) => !!r && !!r.sworn && !r.defeated && !r.gone && (r.companion?.state ?? 'with') === 'with')
+    .slice(0, WILD_REVENANTS_MAX);

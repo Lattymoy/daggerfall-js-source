@@ -2,8 +2,8 @@
   {
     "name": "TAMRIEL1-offset-scaled",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return [x + _fit.ox, y + _fit.oy];",
-    "new": "return [x * 1.01 + _fit.ox, y + _fit.oy];",
+    "old": "  return [x + _fit.ox, y + _fit.oy];",
+    "new": "  return [x * 1.01 + _fit.ox, y + _fit.oy];",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TAMRIEL1-picture-to-bay-forgets-the-origin",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];",
-    "new": "return [px * _fit.ppu - _fit.ox, py * _fit.ppu];",
+    "old": "  return [px * _fit.ppu - _fit.ox, py * _fit.ppu - _fit.oy];",
+    "new": "  return [px * _fit.ppu - _fit.ox, py * _fit.ppu];",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TAMRIEL1-inBay-off-by-one",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H;",
-    "new": "return x >= 0 && y >= 0 && x <= BAY_W && y < BAY_H;",
+    "old": "  return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H; // BAY-OWN: inBay itself",
+    "new": "  return x >= 0 && y >= 0 && x <= BAY_W && y < BAY_H; // BAY-OWN: inBay itself",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TAMRIEL1-frame-in-bay-unsigned",
     "file": "src/world/tamriel/tamrielFrame.js",
-    "old": "return { x0, y0, w, h };",
-    "new": "return { x0: -x0, y0, w, h };",
+    "old": "  return { x0, y0, w, h };",
+    "new": "  return { x0: -x0, y0, w, h };",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TAMRIEL1-a-ring-left-open",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')), rev(B('cy_el')))]),",
-    "new": "rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')))]),",
+    "old": "    rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')), rev(B('cy_el')))]),",
+    "new": "    rings: Object.freeze([ring(coastRun('c48', 'c54'), rev(B('el_vw')))]),",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TAMRIEL1-classify-a-three-owner-edge-as-a-border",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "else if (o.length === 2 && o[0] !== o[1]) border.set(k, o);",
-    "new": "else if (o.length >= 2) border.set(k, o);",
+    "old": "    else if (o.length === 2 && o[0] !== o[1]) border.set(k, o);",
+    "new": "    else if (o.length >= 2) border.set(k, o);",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TAMRIEL1-point-in-ring-inverted",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
-    "new": "if ((a.y > y) !== (b.y > y) && x > ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
+    "old": "    if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
+    "new": "    if (a.y > y !== b.y > y && x > ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;",
     "tests": [
       "test/ui/tamriel.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "TAMRIEL1-a-city-moved-across-its-border",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "{ name: 'Markarth', province: 'Skyrim', at: [124, 48] },",
-    "new": "{ name: 'Markarth', province: 'Skyrim', at: [110, 48] },",
+    "old": "    { name: 'Markarth', province: 'Skyrim', at: [124, 48] },",
+    "new": "    { name: 'Markarth', province: 'Skyrim', at: [110, 48] },",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "TAMRIEL1-raster-sea-climate",
     "file": "src/world/tamriel/tamrielRaster.js",
-    "old": "const climate = new Uint8Array(n).fill(CLIMATES.Ocean);",
-    "new": "const climate = new Uint8Array(n).fill(CLIMATES.Woodlands);",
+    "old": "  const climate = new Uint8Array(n).fill(CLIMATES.Ocean);",
+    "new": "  const climate = new Uint8Array(n).fill(CLIMATES.Woodlands);",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "TAMRIEL1-raster-range-flat",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
-    "new": "if (false) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
+    "old": "  if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
+    "new": "  if (false) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "TAMRIEL1-compose-past-the-bay",
     "file": "src/world/tamriel/tamrielRaster.js",
-    "old": "if (bx < 0 || by < 0 || bx >= BAY_W || by >= BAY_H) continue;",
-    "new": "if (bx < 0 || by < 0) continue;",
+    "old": "      if (bx < 0 || by < 0 || bx >= BAY_W || by >= BAY_H) continue;",
+    "new": "      if (bx < 0 || by < 0) continue;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "TAMRIEL1-compose-takes-the-edge-climate",
     "file": "src/world/tamriel/tamrielRaster.js",
-    "old": "if (typeof c === 'number' && c >= 0) raster.climate[i] = c;",
-    "new": "if (typeof c === 'number') raster.climate[i] = c;",
+    "old": "      if (typeof c === 'number' && c >= 0) raster.climate[i] = c;",
+    "new": "      if (typeof c === 'number') raster.climate[i] = c;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "TAMRIEL1-clamp-origin-dropped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "return Math.min(lo + map - visible, Math.max(lo, o));",
-    "new": "return Math.min(lo + map - visible, Math.max(0, o));",
+    "old": "    return Math.min(lo + map - visible, Math.max(lo, o));",
+    "new": "    return Math.min(lo + map - visible, Math.max(0, o));",
     "tests": [
       "test/ui/tamriel.test.js",
       "test/ui/heldmap.test.js"
@@ -277,8 +277,8 @@
   {
     "name": "TAMRIEL1-clamp-rest-off-the-frame",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (visible >= map) return lo + (map - visible) / 2;",
-    "new": "if (visible >= map) return (map - visible) / 2;",
+    "old": "    if (visible >= map) return lo + (map - visible) / 2;",
+    "new": "    if (visible >= map) return (map - visible) / 2;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "TAMRIEL1-region-names-on-the-continent",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (band !== 'near' && !opts.continent && opts.regionNames) {",
-    "new": "if (band !== 'near' && opts.regionNames) {",
+    "old": "  if (band !== 'near' && !opts.continent && opts.regionNames) {",
+    "new": "  if (band !== 'near' && opts.regionNames) {",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "TAMRIEL1-carets-not-thinned-on-the-continent",
     "file": "src/ui/ink/inkMap.js",
-    "old": "const caretBand = opts.continent ? CONTINENT_BAND : band;",
-    "new": "const caretBand = band;",
+    "old": "  const caretBand = opts.continent ? CONTINENT_BAND : band; // TAMRIEL1: on the continent the carets thin further",
+    "new": "  const caretBand = band; // TAMRIEL1: on the continent the carets thin further",
     "tests": [
       "test/ui/tamriel.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "DISC29-B-light-word-before-fold-only",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "raw(item) === ARMOR_MATERIAL.Chain || (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1)",
-    "new": "raw(item) === ARMOR_MATERIAL.Chain",
+    "old": "  raw(item) === ARMOR_MATERIAL.Chain || (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1)\n    ? RRI_TEXT.fur\n    : raw(item) >= ARMOR_MATERIAL.Iron\n      ? RRI_TEXT.brig\n      : '';",
+    "new": "  raw(item) === ARMOR_MATERIAL.Chain ? RRI_TEXT.fur : raw(item) >= ARMOR_MATERIAL.Iron ? RRI_TEXT.brig : '';",
     "tests": [
       "test/systems/disc29_rarity.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DISC29-B-light-class-no-word",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "  variantWord: lightWord,",
-    "new": "  variantWord: null,",
+    "old": "    variantWord: lightWord,",
+    "new": "    variantWord: null,",
     "tests": [
       "test/systems/disc29_rarity.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC29-B-chain-class-no-word",
     "file": "src/systems/roleplayRealismItems/rriItems.js",
-    "old": "  variantWord: mailWord,",
-    "new": "  variantWord: null,",
+    "old": "    variantWord: mailWord,",
+    "new": "    variantWord: null,",
     "tests": [
       "test/systems/disc29_rarity.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISC29-B-footsteps-raw-material",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "(item ? rriNativeMaterialValue(item) : -1)",
-    "new": "(item ? (item.material ?? ARMOR_MATERIAL.Leather) : -1)",
+    "old": "const nativeMaterialValue = (item) => (item ? rriNativeMaterialValue(item) : -1); // GetMaterialValueOrDefault (Main.cs:605-608)",
+    "new": "const nativeMaterialValue = (item) => (item ? (item.material ?? ARMOR_MATERIAL.Leather) : -1); // GetMaterialValueOrDefault (Main.cs:605-608)",
     "tests": [
       "test/systems/if1_immersivefootsteps.test.js"
     ]

@@ -342,7 +342,7 @@ test('AUDIT LIVED1 T3/T4/T6/T7/T8 + V: by source, every host read LIVED1 re-poin
   assert.match(w, /skyMinutes: sharedClockOn\(\) \? Math\.floor\(skyMinutes\(\)\) : null/, 'the encounter roll\'s table reads the world\'s hour');   // TIME1: the sky's own clock
   assert.match(rd('src/ui/enhanced/enhancedTavern.js'), /date: \{ dayOfYear: dayOfYearFromMinutes\(deps\.worldNow\?\.\(\) \?\? now\) \}/, 'the enhanced tavern\'s Heart\'s Day');
   const tw = rd('src/ui/tavernWindow.js');
-  assert.match(tw, /hour: Math\.trunc\(\(\(\(h\.worldNow\?\.\(\) \?\? now\) % 1440\) \+ 1440\) % 1440 \/ 60\)/, 'the kitchen\'s hours');
+  assert.match(tw, /hour: Math\.trunc\(\(\(\(\(h\.worldNow\?\.\(\) \?\? now\) % 1440\) \+ 1440\) % 1440\) \/ 60\)/, 'the kitchen\'s hours');
   assert.match(tw, /gameMinutes: h\.worldNow\?\.\(\) \?\? now \}\);/, 'the meal\'s holiday');
   assert.match(dc, /const wm = skyMinutes\(\)/, 'the dungeon\'s air');   // TIME1: the sky's
   // V (P6): a foe's poison off the wire resumes at this host's now

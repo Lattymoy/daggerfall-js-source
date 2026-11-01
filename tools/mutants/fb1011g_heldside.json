@@ -38,7 +38,7 @@
   {
     "name": "HELD-SIDE-e-the-reason-unread",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    const notice = typeof said === 'string' && said ? said : typeof reason === 'string' ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason] : undefined;",
+    "old": "    const notice =\n      typeof said === 'string' && said\n        ? said\n        : typeof reason === 'string'\n          ? /** @type {Record<string, string>} */ (TRADE_HELD_NOTICES)[reason]\n          : undefined;",
     "new": "    const notice = typeof said === 'string' && said ? said : undefined;",
     "tests": [
       "test/systems/item/fb1011g_heldside.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "HELD-SIDE-f-theirs-unsaid",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (why === 'trade-held' && held === 'theirs') return",
-    "new": "  if (why === 'trade-held' && held === 'never') return",
+    "old": "  if (why === 'trade-held' && held === 'theirs')",
+    "new": "  if (why === 'trade-held' && held === 'never')",
     "tests": [
       "test/systems/item/fb1011g_heldside.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HELD-SIDE-g-open-said-of-a-held-player",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "${reason === null ? ' Your own trading is open.' : ''}",
-    "new": "${' Your own trading is open.'}",
+    "old": "    return `The realm is reviewing the other character in this trade, and its trading is frozen. Nothing changed hands.${reason === null ? ' Your own trading is open.' : ''}`;",
+    "new": "    return `The realm is reviewing the other character in this trade, and its trading is frozen. Nothing changed hands.${' Your own trading is open.'}`;",
     "tests": [
       "test/systems/item/fb1011g_heldside.test.js"
     ]

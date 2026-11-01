@@ -28,21 +28,21 @@
 //   NPCsKnowEverything debug) don't apply to street mobiles.
 
 import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../../world/buildingNames.js';
-import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // RR3b: RMBLayout.cs:662-672's replacement arm
+import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js'; // RR3b: RMBLayout.cs:662-672's replacement arm
 import { randomRangeInclusive, srand } from '../../formats/dfRandom.js';
 import { RMB_SIDE } from '../../world/locationLayout.js';
-import { directionHintString } from './talk.js';   // wave 27: one compass law
-import { staticNpcData, isChildNPCData } from '../../characters/staticNpc.js';   // QP1: the one SetLayoutData law
-import { collectInteriorPeople } from '../../characters/interiorPeople.js';   // QP1: the one people mapper
-import { hasInteriorModels, interiorCast } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale; IC-INTERIORS: a made room's cast
-import { buildingSummaries } from '../../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
-import { localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { directionHintString } from './talk.js'; // wave 27: one compass law
+import { staticNpcData, isChildNPCData } from '../../characters/staticNpc.js'; // QP1: the one SetLayoutData law
+import { collectInteriorPeople } from '../../characters/interiorPeople.js'; // QP1: the one people mapper
+import { hasInteriorModels, interiorCast } from '../../world/interior/interiorLayout.js'; // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale; IC-INTERIORS: a made room's cast
+import { buildingSummaries } from '../../world/buildingSummaries.js'; // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
+import { localizedTable } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
 // social groups).
 export const KNOWLEDGE_MODIFIERS = Object.freeze([
-  5, 7, 0, 0, 4, 1, 2, -2, 3, 7, -3, 0, 7, 2, 4, 4, 3, -2, -4, -3,
-  0, 3, 5, 2, 0, -4, -3, -6, -3, 4, -7, -5, 7, 0, 1, -1, 1, 6, 4, 2,
+  5, 7, 0, 0, 4, 1, 2, -2, 3, 7, -3, 0, 7, 2, 4, 4, 3, -2, -4, -3, 0, 3, 5, 2, 0, -4, -3, -6, -3, 4, -7, -5, 7, 0, 1,
+  -1, 1, 6, 4, 2,
 ]);
 
 // BuildingDirectory.MakeBuildingKey, verbatim (key 0 maps to the
@@ -57,7 +57,7 @@ export function makeBuildingKey(layoutX, layoutY, recordIndex) {
  *  buildingKey so the SAME NPC always gives the same answer about
  *  the SAME building. questionIndex 0 = Where-is Location. */
 export function npcKnowsAboutItem(npcSeed, buildingKey, socialGroup = 0, questionIndex = 0) {
-  srand((((npcSeed >>> 0) + (buildingKey >>> 0)) >>> 0));
+  srand(((npcSeed >>> 0) + (buildingKey >>> 0)) >>> 0);
   const rollToBeat = KNOWLEDGE_MODIFIERS[questionIndex * 5 + socialGroup] + 10;
   return randomRangeInclusive(1, 20) <= rollToBeat;
 }
@@ -74,10 +74,18 @@ export function npcKnowsAboutItem(npcSeed, buildingKey, socialGroup = 0, questio
 // OPENED_SHOP_TYPES; scenes/townTalk.js, systems/topicTree.js) - this
 // list stays DFU's.
 const SKIPPED_BUILDING_TYPES = new Set([
-  BUILDING_TYPES.HouseForSale, BUILDING_TYPES.Town4, BUILDING_TYPES.FurnitureStore,
-  BUILDING_TYPES.Palace, BUILDING_TYPES.House1, BUILDING_TYPES.House2,
-  BUILDING_TYPES.House3, BUILDING_TYPES.House4, BUILDING_TYPES.House5,
-  BUILDING_TYPES.House6, BUILDING_TYPES.Town23, BUILDING_TYPES.Ship,
+  BUILDING_TYPES.HouseForSale,
+  BUILDING_TYPES.Town4,
+  BUILDING_TYPES.FurnitureStore,
+  BUILDING_TYPES.Palace,
+  BUILDING_TYPES.House1,
+  BUILDING_TYPES.House2,
+  BUILDING_TYPES.House3,
+  BUILDING_TYPES.House4,
+  BUILDING_TYPES.House5,
+  BUILDING_TYPES.House6,
+  BUILDING_TYPES.Town23,
+  BUILDING_TYPES.Ship,
 ]);
 export const isBuildingTypeSkipped = (t) => SKIPPED_BUILDING_TYPES.has(t);
 
@@ -100,9 +108,17 @@ const CAPTION_BY_TYPE = localizedTable({
 export const TOPIC_CATEGORIES = Object.freeze(
   Object.keys(CAPTION_BY_TYPE)
     .map(Number)
-    .sort((a, b) => a - b)   // DFU walks the enum in numeric order
+    .sort((a, b) => a - b) // DFU walks the enum in numeric order
     .filter((t) => !isBuildingTypeSkipped(t))
-    .map((t) => Object.freeze({ type: t, get caption() { return CAPTION_BY_TYPE[t]; } })));
+    .map((t) =>
+      Object.freeze({
+        type: t,
+        get caption() {
+          return CAPTION_BY_TYPE[t];
+        },
+      }),
+    ),
+);
 
 // TalkManager.answersToDirections (TalkManager.cs:107-108): 15
 // doesn't-know + 15 knows, 3 reaction tiers x 5 social groups.
@@ -113,12 +129,12 @@ export const TOPIC_CATEGORIES = Object.freeze(
 // export for the pending Tell-me-about slice, which is what DFU
 // uses it for (TalkManager.cs:109-110).
 export const ANSWERS_TO_DIRECTIONS = Object.freeze([
-  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
-  7256, 7271, 7286, 7255, 7270, 7285, 7257, 7272, 7287, 7258, 7273, 7288, 7259, 7274, 7289,
+  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284, 7256, 7271, 7286, 7255,
+  7270, 7285, 7257, 7272, 7287, 7258, 7273, 7288, 7259, 7274, 7289,
 ]);
 export const ANSWERS_TO_NON_DIRECTIONS = Object.freeze([
-  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
-  7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
+  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284, 7261, 7276, 7291, 7260,
+  7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
 ]);
 
 /**
@@ -156,25 +172,31 @@ export function mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex =
  *  (a draw a building replacement handed back is not among them) - world/arena/arenaCity.js strips exactly the entries the
  *  cell the arena takes drew, so every other building keeps the entry it always drew. */
 export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
-  const drawnBy = new Map();   // block -> [the location's BuildingData objects it drew]
+  const drawnBy = new Map(); // block -> [the location's BuildingData objects it drew]
   const pool = exteriorBuildings
     .filter((b) => isNamedBuildingType(b.buildingType))
     .filter((b) => !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)))
     .map((b) => ({ data: b, used: false }));
   const next = (type) => {
     for (const it of pool) {
-      if (!it.used && it.data.buildingType === type) { it.used = true; return it; }
+      if (!it.used && it.data.buildingType === type) {
+        it.used = true;
+        return it;
+      }
     }
     return null;
   };
-  const out = new Map();   // block -> merged buildingDataList copy
+  const out = new Map(); // block -> merged buildingDataList copy
   for (const b of blocks) {
     const list = b.dfBlock.rmbBlock.fldHeader.buildingDataList.map((d) => ({ ...d }));
     // BLD (bible/03-World/Arena-Provinces.md IC-GRAND, BLD; Port-Ledger section A, IC-GRAND): A BLOCK THAT NAMES ITS OWN
     // BUILDINGS - the Imperial City's fabric (world/imperialFabricBuildings.js withFabricBuildings) - keeps its records and
     // draws none of the location's list: the outcome that list would give carrying them in grid order, and a classic
     // block's draw after it untouched
-    if (b.dfBlock.ownNamedBuildings) { out.set(b, list); continue; }
+    if (b.dfBlock.ownNamedBuildings) {
+      out.set(b, list);
+      continue;
+    }
     // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
     // full 32-slot header - garbage entries past the subrecord count
     // must never steal pool draws (they misalign every later name).
@@ -245,12 +267,18 @@ export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 
 function blockInstanceOf(blocks, d) {
   const cands = blocks.filter((b) => b.dfBlock === d.dfBlock);
   if (cands.length === 1) return cands[0];
-  return cands.find((b) =>
-    d.position[0] >= b.originX - 1 && d.position[0] < b.originX + RMB_SIDE + 1 &&
-    d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
+  return (
+    cands.find(
+      (b) =>
+        d.position[0] >= b.originX - 1 &&
+        d.position[0] < b.originX + RMB_SIDE + 1 &&
+        d.position[2] >= b.originZ - 1 &&
+        d.position[2] < b.originZ + RMB_SIDE + 1,
+    ) ?? cands[0]
+  );
 }
 
-const footprintOf = (sub) => (sub?.footprintM2 > 0 ? { footprintM2: sub.footprintM2 } : {});   // IC-HOMES: the Imperial City's fabric building - one model, its door - carries its ground for its home price
+const footprintOf = (sub) => (sub?.footprintM2 > 0 ? { footprintM2: sub.footprintM2 } : {}); // IC-HOMES: the Imperial City's fabric building - one model, its door - carries its ground for its home price
 /** E2: one exterior door -> its MERGED building data + buildingKey
  *  (the interior host's shop identity: type/quality/seed/faction).
  *  HOME1: and the building's MODEL (`modelIdNum`, locationBuildings'
@@ -268,7 +296,13 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationI
   const sub = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex];
   const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
   // FIELD BUGS 2026-10-05 CRYPT-SALE: whether the room can be laid out at all - a graveyard's crypt cannot
-  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };
+  return {
+    ...data,
+    buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex),
+    modelIdNum: model?.modelIdNum ?? null,
+    hasInterior: hasInteriorModels(sub),
+    ...footprintOf(sub),
+  };
 }
 
 /**
@@ -314,7 +348,7 @@ export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0
         recordIndex: i,
         modelId: model?.modelId ?? null,
         modelIdNum: model?.modelIdNum ?? null,
-        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE
+        hasInterior: hasInteriorModels(sub), // FIELD BUGS 2026-10-05 CRYPT-SALE
         ...footprintOf(sub),
       });
     }
@@ -345,9 +379,11 @@ export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0
  * The 25% roll, the social-group filter and the spent-roll ordering
  * all stay in npcSession.buildQuestorPool - policy there, data here.
  */
-export function questorCandidateBuildings(exteriorBuildings, blocks, {
-  locationIndex = 0, mapId = 0, nameOpts = {}, getFaction = null, raceOfCurrentRegion = null,
-} = {}) {
+export function questorCandidateBuildings(
+  exteriorBuildings,
+  blocks,
+  { locationIndex = 0, mapId = 0, nameOpts = {}, getFaction = null, raceOfCurrentRegion = null } = {},
+) {
   const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
   const out = [];
   for (const b of blocks) {
@@ -362,7 +398,11 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
       const cast = interiorCast(sub);
       const npcs = (cast?.blockPeopleRecords ? collectInteriorPeople({ interior: cast }) : []).map((p) => {
         const d = staticNpcData(p, {
-          mapId, locationIndex, buildingKey, getFaction, raceOfCurrentRegion,
+          mapId,
+          locationIndex,
+          buildingKey,
+          getFaction,
+          raceOfCurrentRegion,
         });
         return { ...d, isChild: isChildNPCData(d) };
       });
@@ -370,9 +410,11 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
         buildingType: data.buildingType,
         buildingKey,
         isNamedBuilding: isNamedBuildingType(data.buildingType),
-        buildingName: generateBuildingName(data.nameSeed, data.buildingType,
-          { ...nameOpts, factionId: data.factionId }),
-        factionId: data.factionId,   // AUDIT QA2: the hall's own faction - a questor's guild rung asks it (person.js reseatMovedQuestor)
+        buildingName: generateBuildingName(data.nameSeed, data.buildingType, {
+          ...nameOpts,
+          factionId: data.factionId,
+        }),
+        factionId: data.factionId, // AUDIT QA2: the hall's own faction - a questor's guild rung asks it (person.js reseatMovedQuestor)
         npcs,
       });
     }
@@ -441,7 +483,7 @@ export function buildBuildingDirectory(exteriorBuildings, blocks, nameOpts) {
       factionId: s.factionId,
       quality: s.quality,
       position: [(b?.originX ?? 0) + s.position[0], s.position[1], (b?.originZ ?? 0) + s.position[2]],
-      buildingKey: s.buildingKey,   // the knowledge roll's per-building term
+      buildingKey: s.buildingKey, // the knowledge roll's per-building term
     };
   });
 }
@@ -491,8 +533,18 @@ export function toneTaste(toneIndex, socialGroup = 0) {
  *  the cached value; onTally fires with 'Etiquette'/'Streetwise' on
  *  the FIRST use of that tone this session (the cache-empty gate).
  *  The NPC-seeded 0..20 roll keeps the band stable per partner. */
-export function reactionTier012({ personality, npcSeed, socialGroup = 0, questionIndex = 0, toneIndex = 1, skillValue = 0, session = null, rolls = Math.random, onTally = null }) {
-  const sg = socialGroup >= 5 ? 1 : socialGroup;   // Merchants fold
+export function reactionTier012({
+  personality,
+  npcSeed,
+  socialGroup = 0,
+  questionIndex = 0,
+  toneIndex = 1,
+  skillValue = 0,
+  session = null,
+  rolls = Math.random,
+  onTally = null,
+}) {
+  const sg = socialGroup >= 5 ? 1 : socialGroup; // Merchants fold
   let toneModifier = 0;
   if (toneIndex === 0) {
     toneModifier += ETIQUETTE_REACTION_MODS[sg];
@@ -501,14 +553,14 @@ export function reactionTier012({ personality, npcSeed, socialGroup = 0, questio
     toneModifier += STREETWISE_REACTION_MODS[sg];
     if (!session || session[2] === 0) onTally?.('Streetwise');
   }
-  if (toneIndex !== 1) toneModifier += Math.floor(rolls() * 100) >= skillValue ? -10 : 5;   // Dice100.FailedRoll
+  if (toneIndex !== 1) toneModifier += Math.floor(rolls() * 100) >= skillValue ? -10 : 5; // Dice100.FailedRoll
   let reaction = Math.trunc(personality / 5) + QUESTION_TYPE_REACTION_MODS[questionIndex] + toneModifier;
   srand(npcSeed >>> 0);
   const rollToBeat = randomRangeInclusive(0, 20);
   if (session && session[toneIndex] !== 0) reaction = session[toneIndex];
   else if (session) session[toneIndex] = reaction;
   if (reaction < rollToBeat) return 0;
-  if (reaction < rollToBeat + 20) return 1;   // DFU's +20 (classic +30), doctrine-kept
+  if (reaction < rollToBeat + 20) return 1; // DFU's +20 (classic +30), doctrine-kept
   return 2;
 }
 
@@ -523,7 +575,7 @@ export function reactionTier(personality, npcSeed) {
  *  Returns { textId, direction, tier, knows } - the caller expands
  *  the record and replaces %di/%key. */
 export function whereIsAnswer(playerPos, building, personality, npcSeed, socialGroup = 0, opts = {}) {
-  const tier = opts.tier ?? reactionTier(personality, npcSeed);   // T3f: the host passes the toned tier
+  const tier = opts.tier ?? reactionTier(personality, npcSeed); // T3f: the host passes the toned tier
   const knows = npcKnowsAboutItem(npcSeed, building.buildingKey ?? 0, socialGroup, 0);
   const textId = ANSWERS_TO_DIRECTIONS[(knows ? 15 : 0) + 3 * socialGroup + tier];
   const direction = directionHintString(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
@@ -533,8 +585,8 @@ export function whereIsAnswer(playerPos, building, personality, npcSeed, socialG
 // T4: the %hnt fork. TalkManager.cs:123 - DFU's own comment on the
 // constant is "Chances unknown".
 export const CHANCE_TO_REVEAL_LOCATION_ON_MAP = 0.35;
-export const DIRECTION_TEXT_ID = 7333;   // GetKeySubjectBuildingDirection (:1693-1696)
-export const MAP_REVEAL_TEXT_ID = 7332;  // GetKeySubjectBuildingOnMap (:1698-1705)
+export const DIRECTION_TEXT_ID = 7333; // GetKeySubjectBuildingDirection (:1693-1696)
+export const MAP_REVEAL_TEXT_ID = 7332; // GetKeySubjectBuildingOnMap (:1698-1705)
 
 /** GetKeySubjectBuildingHint (TalkManager.cs:1707-1723): %hnt resolves
  *  to EITHER the 7333 directional hint or the 7332 map reveal - the

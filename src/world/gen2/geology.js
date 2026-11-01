@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 GEOLOGY (bible/03-World/World-2-Arc.md, Phase 2): the canon laid on a region's grid, the rocks under it and the
+// WG2 GEOLOGY (Phase 2): the canon laid on a region's grid, the rocks under it and the
 // land before the water works it. Terranes are a warped Voronoi on ONE lattice over the whole world, so a rock's edge
 // runs on across two regions' seam. A range is the canon's spine raised as ridges that run along it (ridged noise
 // stretched along the spine), not as cones; the hills' height follows the rock's hardness; hard flat-bedded rock

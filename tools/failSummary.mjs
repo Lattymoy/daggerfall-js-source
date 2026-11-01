@@ -26,7 +26,11 @@ export const ownFailure = (data) => data?.details?.error?.failureType !== 'subte
 /** The first line of why a test failed (its cause's message where the runner wrapped it), at most 300 characters. */
 export function whyOf(error) {
   const e = error?.cause ?? error;
-  const m = String(e?.message ?? e ?? '').split('\n').map((s) => s.trim()).find(Boolean) ?? '';
+  const m =
+    String(e?.message ?? e ?? '')
+      .split('\n')
+      .map((s) => s.trim())
+      .find(Boolean) ?? '';
   return m.length > 300 ? `${m.slice(0, 299)}…` : m;
 }
 
@@ -53,15 +57,30 @@ export function summaryOf(fails, { github = false } = {}) {
     ...fails.map((f) => `# FAIL ${where(f)}  ${f.name}${f.why ? `\n#      ${f.why}` : ''}`),
     '',
   ].join('\n');
-  const annotations = github ? fails.map((f) => `::error file=${escProp(f.file)}${f.line ? `,line=${f.line}` : ''},title=${escProp(f.name.slice(0, 200))}::${escData(f.why || 'failed')}`) : [];
-  const markdown = [`### ${fails.length} failing test${fails.length === 1 ? '' : 's'}`, '', '| Where | Test | Why |', '|---|---|---|',
-    ...fails.map((f) => `| \`${where(f)}\` | ${f.name.replace(/\|/g, '\\|').slice(0, 300)} | ${(f.why || '').replace(/\|/g, '\\|')} |`), ''].join('\n');
+  const annotations = github
+    ? fails.map(
+        (f) =>
+          `::error file=${escProp(f.file)}${f.line ? `,line=${f.line}` : ''},title=${escProp(f.name.slice(0, 200))}::${escData(f.why || 'failed')}`,
+      )
+    : [];
+  const markdown = [
+    `### ${fails.length} failing test${fails.length === 1 ? '' : 's'}`,
+    '',
+    '| Where | Test | Why |',
+    '|---|---|---|',
+    ...fails.map(
+      (f) =>
+        `| \`${where(f)}\` | ${f.name.replace(/\|/g, '\\|').slice(0, 300)} | ${(f.why || '').replace(/\|/g, '\\|')} |`,
+    ),
+    '',
+  ].join('\n');
   return { log, annotations, markdown };
 }
 
 /** The reporter (node --test --test-reporter=tools/failSummary.mjs): collects, then writes once the run ends. */
 export default async function* failSummary(source) {
-  const fails = [], times = {};
+  const fails = [],
+    times = {};
   for await (const ev of source) {
     const timed = fileTimeOf(ev);
     if (timed) times[timed[0]] = timed[1];
@@ -70,7 +89,11 @@ export default async function* failSummary(source) {
     fails.push({ file: repoPath(d.file), line: d.line, name: String(d.name ?? ''), why: whyOf(d.details?.error) });
   }
   if (RECORD && Object.keys(times).length) {
-    try { addTimes(RECORD, times); } catch (e) { yield `# [tests] the times were not recorded: ${e?.message ?? e}\n`; }
+    try {
+      addTimes(RECORD, times);
+    } catch (e) {
+      yield `# [tests] the times were not recorded: ${e?.message ?? e}\n`;
+    }
   }
   const github = process.env.GITHUB_ACTIONS === 'true';
   const { log, annotations, markdown } = summaryOf(fails, { github });
@@ -78,6 +101,10 @@ export default async function* failSummary(source) {
   yield `${log}\n`;
   for (const a of annotations) yield `${a}\n`;
   if (github && process.env.GITHUB_STEP_SUMMARY) {
-    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`); } catch { /* the summary is a convenience; the log has it */ }
+    try {
+      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`);
+    } catch {
+      /* the summary is a convenience; the log has it */
+    }
   }
 }

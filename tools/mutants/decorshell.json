@@ -38,8 +38,8 @@
   {
     "name": "DECOR-SHELL-the-ceiling-stood-on",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
-    "new": "const hang = false;",
+    "old": "      const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
+    "new": "      const hang = false;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DECOR-SHELL-the-hang-at-the-bottom",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const up = hang ? drop() + s.raise : lift() + s.raise;",
-    "new": "const up = lift() + s.raise;",
+    "old": "      const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "      const up = lift() + s.raise;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DECOR-SHELL-a-flat-hung",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      if (hang && entry.model == null) return null;\n",
-    "new": "",
+    "old": "      if (hang && entry.model == null) return null;\n      // AUDIT DECOR-SHELL 4: the owner's lift is world-up and kept from surface to surface (to three metres), so a hung",
+    "new": "      // AUDIT DECOR-SHELL 4: the owner's lift is world-up and kept from surface to surface (to three metres), so a hung",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]

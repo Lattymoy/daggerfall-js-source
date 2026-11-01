@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-FLICKER-S1-the-flat-hands-no-height",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
-    "new": "vec3(0.0, 1.0, 0.0), 0.0)) : 1.0;",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), 0.0)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/audit_flicker.test.js",
       "test/render/perfsun_fragment.test.js",
@@ -96,8 +96,8 @@
   {
     "name": "AUDIT-FLICKER-P1-no-lift",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));",
-    "new": "vec3 at = base;",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base;   // AUDIT FLICKER P1: off the flat's own (late) card",
     "tests": [
       "test/render/audit_flicker.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDIT-FLICKER-P1-lift-away",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3 at = base + toL * (min(",
-    "new": "vec3 at = base - toL * (min(",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base - toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
     "tests": [
       "test/render/audit_flicker.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-FLICKER-P1-no-half-way-cap",
     "file": "src/render/enhancedLighting.js",
-    "old": "(min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4))",
-    "new": "(${glslFloat(EL_FLAT_LAMP_LIFT)} / max(tl, 1e-4))",
+    "old": "    vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
+    "new": "    vec3 at = base + toL * (${glslFloat(EL_FLAT_LAMP_LIFT)} / max(tl, 1e-4));   // AUDIT FLICKER P1: off the flat's own (late) card",
     "tests": [
       "test/render/audit_flicker.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-FLICKER-F3-the-derivative-after-the-return",
     "file": "src/render/airPass.js",
-    "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n",
-    "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);\n",
+    "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }",
+    "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);",
     "tests": [
       "test/render/el3_air.test.js"
     ]

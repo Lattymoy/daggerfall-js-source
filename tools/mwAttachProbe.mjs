@@ -43,8 +43,9 @@ const r = await page.evaluate(async () => {
   await new Promise((s) => setTimeout(s, 400));
 
   // the ENHANCED pane (the face's buttons carry diamonds)
-  const tab = [...host.querySelectorAll('button')]
-    .find((b) => /Enhanced/.test(b.textContent ?? '') && b.textContent.includes('◆'));
+  const tab = [...host.querySelectorAll('button')].find(
+    (b) => /Enhanced/.test(b.textContent ?? '') && b.textContent.includes('◆'),
+  );
   out.reachedPane = !!tab;
   tab?.click();
   await new Promise((s) => setTimeout(s, 400));

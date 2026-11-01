@@ -131,8 +131,8 @@
   {
     "name": "AH-F4-settled-while-owed",
     "file": "src/systems/fleet.js",
-    "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
-    "new": "  for (const r of _ships.values()) if (r.credit) { r.credit = null; n++; }",
+    "old": "    if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) {",
+    "new": "    if (r.credit) {",
     "tests": [
       "test/systems/naval/auditholdings.test.js",
       "test/systems/naval/fleet.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AH-F7-her-worth-unbounded",
     "file": "src/systems/fleet.js",
-    "old": "Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined);",
-    "new": "Number.isFinite(s.value) ? s.value : undefined);",
+    "old": "    const r = recordFor(\n      s.uid,\n      s.hull,\n      variant,\n      Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined,\n    );",
+    "new": "    const r = recordFor(s.uid, s.hull, variant, Number.isFinite(s.value) ? s.value : undefined);",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -160,7 +160,7 @@
     "name": "AH-F7-no-cap",
     "file": "src/systems/fleet.js",
     "old": "  for (const s of (Array.isArray(data?.ships) ? data.ships : []).slice(0, FLEET_MAX)) {",
-    "new": "  for (const s of (Array.isArray(data?.ships) ? data.ships : [])) {",
+    "new": "  for (const s of Array.isArray(data?.ships) ? data.ships : []) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AH-F7-a-line-break-dropped",
     "file": "src/systems/fleet.js",
-    "old": "if (c >= 32 && c <= 126) t += ch; else if (/\\s/.test(ch)) t += ' '; }",
-    "new": "if (c >= 32 && c <= 126) t += ch; }",
+    "old": "    else if (/\\s/.test(ch)) t += ' ';\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AH-F8-the-failed-claim-remembered",
     "file": "src/systems/fleet.js",
-    "old": "export function forgetShip(uid) {\n  _ships.delete(uid);",
-    "new": "export function forgetShip(uid) {\n  void uid;",
+    "old": "  _ships.delete(uid);",
+    "new": "  void uid;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AH-O1-sounded-off-a-streaming-shore",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "    if (!h) { if (near.ready?.() !== false) book.set(",
-    "new": "    if (!h) { if (true) book.set(",
+    "old": "      if (near.ready?.() !== false)\n        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
+    "new": "      if (true) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "AH-Q1-the-head-in-her-side",
     "file": "src/systems/naval/quays.js",
-    "old": "  Object.freeze([6.21, 8.31]),   // 4 Carrack",
-    "new": "  Object.freeze([5.86, 7.6]),   // 4 Carrack",
+    "old": "  Object.freeze([6.21, 8.31]), // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck",
+    "new": "  Object.freeze([5.86, 7.6]), // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -406,8 +406,8 @@
   {
     "name": "AH-Q1-a-boats-head-under-her-gunwale",
     "file": "src/systems/naval/quays.js",
-    "old": "  Object.freeze([0.95, 0.7]),    // 0 Rowboat",
-    "new": "  Object.freeze([0.95, 0.5]),    // 0 Rowboat",
+    "old": "  Object.freeze([0.95, 0.7]), // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)",
+    "new": "  Object.freeze([0.95, 0.5]), // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "AH-Q1-cargo-in-the-gangways-lane",
     "file": "src/systems/naval/quays.js",
-    "old": " || Math.abs(lz) < GANGWAY_LANE ||",
-    "new": " ||",
+    "old": "    if (\n      Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 ||\n      Math.abs(lz) < GANGWAY_LANE ||\n      Math.abs(lz - z0) < 1.6 ||\n      Math.abs(lz - z1) < 1.6\n    )\n      continue;",
+    "new": "    if (Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -424,7 +424,7 @@
   {
     "name": "AH-Q2-a-galley-warped-in",
     "file": "src/systems/naval/quays.js",
-    "old": "  if (DOCK_REFUSED.includes(ship.hull)) return null;   // AUDIT HOLDINGS Q2",
+    "old": "  if (DOCK_REFUSED.includes(ship.hull)) return null; // AUDIT HOLDINGS Q2",
     "new": "  // AUDIT HOLDINGS Q2",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
@@ -451,8 +451,8 @@
   {
     "name": "AH-Q9-a-jetty-into-the-wall",
     "file": "src/systems/naval/quays.js",
-    "old": "x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0)",
-    "new": "x1 + t + JETTY_LAND",
+    "old": "      jetty = {\n        x0: x1,\n        x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0),\n        z0: zJ - JETTY_WIDTH / 2,\n        z1: zJ + JETTY_WIDTH / 2,\n      };",
+    "new": "      jetty = { x0: x1, x1: x1 + t + JETTY_LAND, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "AH-Q7-the-quays-on-a-movers-bucket",
     "file": "src/scenes/quayPool.js",
-    "old": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0));\n    b.stood = true;",
-    "new": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0), () => [b.berth.pos[0], deps.seaY(), b.berth.pos[1]]);\n    b.stood = true;",
+    "old": "    );",
+    "new": "      () => [b.berth.pos[0], deps.seaY(), b.berth.pos[1]],\n    );",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "AH-Q7-never-stood-again",
     "file": "src/scenes/quayPool.js",
-    "old": "  function offsetAll() { for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b); }",
-    "new": "  function offsetAll() { }",
+    "old": "  function offsetAll() {\n    for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b);\n  }",
+    "new": "  function offsetAll() {}",
     "tests": [
       "test/systems/naval/quays.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "AH-Q9-the-gangway-left-pending",
     "file": "src/scenes/quayPool.js",
-    "old": "        try { gangwayGpu = r.createMesh(model); } catch { gangwayGpu = null; }",
-    "new": "        try { gangwayGpu = r.createMesh(model); } catch { /* left */ }",
+    "old": "            gangwayGpu = null;",
+    "new": "            /* left */",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -496,7 +496,7 @@
   {
     "name": "AH-Q9-the-gangway-never-freed",
     "file": "src/scenes/quayPool.js",
-    "old": "    if (gangwayGpu && !gangwayGpu.pending) { try { deps.renderer?.destroyMesh?.(gangwayGpu); } catch { /* the context went first */ } }",
+    "old": "    if (gangwayGpu && !gangwayGpu.pending) {\n      try {\n        deps.renderer?.destroyMesh?.(gangwayGpu);\n      } catch {\n        /* the context went first */\n      }\n    }",
     "new": "    void 0;",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
@@ -569,8 +569,8 @@
   {
     "name": "AH-C3-a-bard-at-the-bow",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard) return { ok: false,",
-    "new": "      if (false) return { ok: false,",
+    "old": "      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard)\n        return { ok: false, text: `${h.name} leads the songs and doesn't keep lookout.` }; // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)",
+    "new": "      if (false) return { ok: false, text: `${h.name} leads the songs and doesn't keep lookout.` }; // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "AH-Q9-an-unnamed-quay-afloat",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
-    "new": "      if (s.docked) return { state: 'Moored', tone: 'is-away',",
+    "old": "      if (s.docked != null)",
+    "new": "      if (s.docked)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "AH-C1-a-note-mid-line",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "'.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell',",
-    "new": "'.px-sys .cmp-rank',   // a note '.px-sys .cmp-mood', '.hud-qspell',",
+    "old": "    '.px-sys .cmp-rank',\n    '.px-sys .cmp-mood',\n    '.hud-qspell',\n    '.hud-temp',\n    '.pack-shell .sf-tile',\n    '.pack-shell .sf-pill',\n    '.hud-qstag',\n    '.hud-readied',\n    '.lv-note-key', // (UI3: the effect and need chips are the status widget's tiles now)",
+    "new": "    '.px-sys .cmp-rank', // a note '.px-sys .cmp-mood', '.hud-qspell', '.hud-temp', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "AH-C5-an-unnamed-horse-unowned",
     "file": "src/ui/holdingsPages.js",
-    "old": "const n = runtime.renameHorse(arg); return n == null ?",
-    "new": "const n = runtime.renameHorse(arg); return !n ?",
+    "old": "        return n == null",
+    "new": "        return !n",
     "tests": [
       "test/systems/naval/auditholdings.test.js"
     ]

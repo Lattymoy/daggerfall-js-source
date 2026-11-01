@@ -11,8 +11,8 @@
   {
     "name": "BR-the-pin-unasked",
     "file": "src/world/terrain/terrainTiles.js",
-    "old": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true)",
-    "new": "false",
+    "old": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
+    "new": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || false);",
     "tests": [
       "test/world/terrain/bootrects.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BR-a-door-that-cannot-say-taken-as-none",
     "file": "src/world/terrain/terrainTiles.js",
-    "old": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true)",
-    "new": "(door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? false)",
+    "old": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
+    "new": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? false));",
     "tests": [
       "test/world/terrain/bootrects.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BR-a-place-with-no-indices-shared",
     "file": "src/world/terrain/terrainTiles.js",
-    "old": "door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned",
-    "new": "door !== null && ((door.locationPinned",
+    "old": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
+    "new": "    const own = door !== null && ((door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
     "tests": [
       "test/world/terrain/bootrects.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BR-no-door-reads-through",
     "file": "src/world/terrain/terrainTiles.js",
-    "old": "    const own = door !== null && (",
-    "new": "    const own = door === null || (",
+    "old": "    const own = door !== null && (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
+    "new": "    const own = door === null || (!Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || (door.locationPinned?.(loc.regionIndex, loc.locationIndex) ?? true));",
     "tests": [
       "test/world/terrain/bootrects.test.js"
     ]

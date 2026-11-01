@@ -22,8 +22,8 @@
   {
     "name": "SHORE-build-ungated",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
-    "new": "maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;",
+    "old": "      if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
+    "new": "      if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;",
     "tests": [
       "test/world/terrain/spawnshore.test.js",
       "test/world/spawneddungeons.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "SHORE-overworld-ungated",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (!plateauDry(px, py)) return null;\n",
-    "new": "",
+    "old": "    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;",
+    "new": "    if (clocks && spawnGone(px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js",
       "test/world/terrain/spawnshore.test.js"

@@ -30,7 +30,7 @@
 // so the worker's graph stays flat (guildLaw.js's law).
 //
 // Not a DFU member. Ledger A (RAID1's row).
-import { frontStands } from '../frontLaw.js';   // FRONTS: a province's raids on its turn alone
+import { frontStands } from '../frontLaw.js'; // FRONTS: a province's raids on its turn alone
 
 /** A raid's key - RaidEnemyName's bracket [IL_13cc]: `region:location:day` (systems/raidingParties.js raidKey).
  *  AUDIT RAID R5: CANONICAL - no leading zero (`3:07:0600` was forty spellings of one raid, at the relay and at the
@@ -39,7 +39,8 @@ import { frontStands } from '../frontLaw.js';   // FRONTS: a province's raids on
  *  WW-R) with its town's OWN location index, negative (world/arenaLocations.js arenaLocationIndex,
  *  world/tamrielCapitals.js capitalLocationIndex - no MAPS.BSA row holds a place past the Bay; the town economy's
  *  `region:location` reads a town past the Bay so, net/townEconLaw.js townReportOf). */
-export const RAID_KEY_RE = /^(?:(?:0|[1-5]?\d|6[01]):(?:0|[1-9]\d{0,3})|(?:6[2-9]|70):-[1-9]\d{0,7}):(?:0|[1-9]\d{0,6})$/;
+export const RAID_KEY_RE =
+  /^(?:(?:0|[1-5]?\d|6[01]):(?:0|[1-9]\d{0,3})|(?:6[2-9]|70):-[1-9]\d{0,7}):(?:0|[1-9]\d{0,6})$/;
 /** A game day, classic minutes. */
 export const RAID_DAY_MINUTES = 1440;
 /** A raid's window, classic minutes (systems/raidingParties.js RAID_DURATION_MINUTES - pinned equal). */
@@ -92,7 +93,7 @@ export const RAID_TOP_MAX = 3;
  * @param {{st: number, tg: number, ty: number, px: number, py: number}} w
  */
 export const raidSig = (w) => `${w.st}.${w.tg}.${w.ty}.${w.px}.${w.py}`;
-export const RAID_SIG_RE = /^\d{1,11}\.\d{1,2}\.\d\.-?\d{1,4}\.-?\d{1,4}$/;   // the start reaches eleven digits at the key's last day; WW6: the town's pixel the world's (RAID_PIXEL_BOUND - four digits, either side of the Bay's corner)
+export const RAID_SIG_RE = /^\d{1,11}\.\d{1,2}\.\d\.-?\d{1,4}\.-?\d{1,4}$/; // the start reaches eleven digits at the key's last day; WW6: the town's pixel the world's (RAID_PIXEL_BOUND - four digits, either side of the Bay's corner)
 /** A ledger's identity in its cell: the raid's key and its signature. */
 export const raidLedgerId = (w) => `${w.key}|${raidSig(w)}`;
 
@@ -141,10 +142,28 @@ export const raidLedgerEndMinute = (led) => led.st + RAID_WINDOW_MINUTES + RAID_
  * @returns {RaidLedger}
  */
 export function newRaidLedger(w, nowMs, by = '') {
-  return { key: w.key, st: w.st, tg: w.tg, ty: w.ty, px: w.px, py: w.py, first: nowMs, n: 0, a: {}, cl: null, rc: {}, told: false, by };
+  return {
+    key: w.key,
+    st: w.st,
+    tg: w.tg,
+    ty: w.ty,
+    px: w.px,
+    py: w.py,
+    first: nowMs,
+    n: 0,
+    a: {},
+    cl: null,
+    rc: {},
+    told: false,
+    by,
+  };
 }
 /** AUDIT RAID R3: the ledger's last moment of fighting - its newest word folded, or its making. */
-export const raidLedgerLast = (led) => Object.values(led.a ?? {}).reduce((t, r) => Math.max(t, Number.isFinite(r?.last) ? r.last : 0), Number.isFinite(led.first) ? led.first : 0);
+export const raidLedgerLast = (led) =>
+  Object.values(led.a ?? {}).reduce(
+    (t, r) => Math.max(t, Number.isFinite(r?.last) ? r.last : 0),
+    Number.isFinite(led.first) ? led.first : 0,
+  );
 /**
  * AUDIT RAID R3: WHICH LEDGER GIVES ITS PLACE to a new raid in a full cell, or null for none - a new word took the
  * stalest live one, a raid being fought and a cleansed one (whose receipts and hub word it still owes) among them.
@@ -155,7 +174,7 @@ export const raidLedgerLast = (led) => Object.values(led.a ?? {}).reduce((t, r) 
 export function raidEvictPick(ledgers, nowMs) {
   const free = ledgers.filter((led) => led && !led.cl && nowMs - raidLedgerLast(led) >= RAID_LEDGER_BUSY_MS);
   if (!free.length) return null;
-  const empty = free.filter((led) => !(led.n > 0));   // nothing counted (its maker stands on it - a ledger is made by a word from its town)
+  const empty = free.filter((led) => !(led.n > 0)); // nothing counted (its maker stands on it - a ledger is made by a word from its town)
   const pool = empty.length ? empty : free;
   return pool.reduce((a, b) => (raidLedgerLast(b) < raidLedgerLast(a) ? b : a));
 }
@@ -202,14 +221,25 @@ export function raidEarned(led, atMs) {
 
 /** The names a cleanse says: the earners who counted most deaths first, then by name, RAID_TOP_MAX of them. */
 export function raidTop(earned) {
-  return earned.slice()
+  return earned
+    .slice()
     .sort(([, a], [, b]) => b.n - a.n || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))
-    .map(([, r]) => r.nm).filter((nm) => typeof nm === 'string' && nm).slice(0, RAID_TOP_MAX);
+    .map(([, r]) => r.nm)
+    .filter((nm) => typeof nm === 'string' && nm)
+    .slice(0, RAID_TOP_MAX);
 }
 
 /** The ledger as a word says it: the count, the target, the start, the cleanse's moment (0: none yet), and (AUDIT RAID
  *  R1) its signature - the client hears it only of the raid it holds. */
-export const raidLedgerState = (led) => ({ k: 'st', key: led.key, n: led.n, tg: led.tg, st: led.st, c: led.cl ? led.cl.at : 0, g: raidSig(led) });
+export const raidLedgerState = (led) => ({
+  k: 'st',
+  key: led.key,
+  n: led.n,
+  tg: led.tg,
+  st: led.st,
+  c: led.cl ? led.cl.at : 0,
+  g: raidSig(led),
+});
 
 // ═══ RAID-ROLL (2026-09-28, Mac: "Fix it" - AUDIT RAID's "not changed": the relay held no copy of the day's schedule,
 // so a modified client could name a raid the day never rolled, stand on its own pixel and be paid for it, and a
@@ -226,7 +256,7 @@ export const raidLedgerState = (led) => ({ k: 'st', key: led.key, n: led.n, tg: 
 
 /** The raids' salt and the world's day seed - systems/worldTick.js DAY_SALT.raids and SHARED_DAY_SEED, pinned equal. */
 export const RAID_DAY_SALT = 5;
-const RAID_DAY_SEED = 0x44415953;   // 'DAYS'
+const RAID_DAY_SEED = 0x44415953; // 'DAYS'
 /** WW6: a lane's own stir of the day's seed - the Bay's lane 0 stirs nothing, so its generator is worldTick's to the bit. */
 export const RAID_LANE_SALT = 0x85ebca6b;
 /**
@@ -238,9 +268,10 @@ export const RAID_LANE_SALT = 0x85ebca6b;
  * @param {number} day @param {number} [lane] @returns {() => number}
  */
 export function raidDayRandom(day, lane = 0) {
-  let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9E3779B1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;
+  let a =
+    ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9e3779b1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -248,12 +279,15 @@ export function raidDayRandom(day, lane = 0) {
   };
 }
 /** UnityEngine.Random.Range(int, int) as the roll draws it (systems/raidingParties.js's own, moved here). */
-const rangeInt = (min, maxExclusive, random) => (maxExclusive <= min ? min : min + Math.floor(random() * (maxExclusive - min)));
+const rangeInt = (min, maxExclusive, random) =>
+  maxExclusive <= min ? min : min + Math.floor(random() * (maxExclusive - min));
 /** Mac, 2026-09-27 ("4"): a region is raided about once every four real hours; a game day is two (DFU's TimeScale 12)
  *  - systems/raidingParties.js RAID_REGION_REAL_HOURS and GAME_DAY_REAL_HOURS, pinned equal. */
-const RAID_REGION_HOURS = 4, RAID_GAME_DAY_HOURS = 2;
+const RAID_REGION_HOURS = 4,
+  RAID_GAME_DAY_HOURS = 2;
 /** The day's count: half a raid for each region the roll can pick (systems/raidingParties.js's, the one copy). */
-export const raidsPerDay = (regionCount) => Math.round((Math.max(0, regionCount | 0) * RAID_GAME_DAY_HOURS) / RAID_REGION_HOURS);
+export const raidsPerDay = (regionCount) =>
+  Math.round((Math.max(0, regionCount | 0) * RAID_GAME_DAY_HOURS) / RAID_REGION_HOURS);
 /** The most regions a towns table names - MAPS.BSA holds 62, and a picker pixel names 128 + its region. */
 export const RAID_REGIONS_MAX = 64;
 /** The most raids any day rolls, whatever a client's table - the slots the relay reads a word against. WW6: a lane's
@@ -289,18 +323,31 @@ export const raidLaneOfRegion = (r) => {
   return n < 0 || n >= RAID_REGION_COUNT ? -1 : n < RAID_BAY_REGIONS ? 0 : n - (RAID_BAY_REGIONS - 1);
 };
 /** A key's lane, or -1. @param {unknown} key */
-export const raidLaneOfKey = (key) => (typeof key === 'string' && RAID_KEY_RE.test(key) ? raidLaneOfRegion(Number(key.slice(0, key.indexOf(':')))) : -1);
+export const raidLaneOfKey = (key) =>
+  typeof key === 'string' && RAID_KEY_RE.test(key) ? raidLaneOfRegion(Number(key.slice(0, key.indexOf(':')))) : -1;
 /** Does a lane stand raids - the Bay's, and every province's but the open zone's? @param {unknown} lane */
-export const raidLaneOpen = (lane) => Number.isInteger(lane) && /** @type {number} */ (lane) >= 0 && /** @type {number} */ (lane) < RAID_LANES && lane !== RAID_ZONE_LANE;
+export const raidLaneOpen = (lane) =>
+  Number.isInteger(lane) &&
+  /** @type {number} */ (lane) >= 0 &&
+  /** @type {number} */ (lane) < RAID_LANES &&
+  lane !== RAID_ZONE_LANE;
 /** FRONTS (bible/03-World/World-Wide.md FRONTS): does a lane stand raids on game day `day` - open, and a province on its
  *  turn alone (net/frontLaw.js); the Bay's every day. @param {number} day @param {unknown} lane */
 export const raidLaneStands = (day, lane) => raidLaneOpen(lane) && frontStands(day, /** @type {number} */ (lane));
 /** The lanes past the Bay that stand raids, ascending. */
-export const RAID_LANES_BEYOND = Object.freeze(Array.from({ length: RAID_LANES - 1 }, (_, i) => i + 1).filter(raidLaneOpen));
+export const RAID_LANES_BEYOND = Object.freeze(
+  Array.from({ length: RAID_LANES - 1 }, (_, i) => i + 1).filter(raidLaneOpen),
+);
 /** WW6: the world's pixel, as the wire bounds it (net/wire.js WORLD_PIXEL_BOUND - pinned equal). */
 export const RAID_PIXEL_BOUND = 8192;
 /** Is a pixel on the Bay's own map (MapsFile's 1000 x 500)? @param {unknown} px @param {unknown} py */
-const onBayMap = (px, py) => Number.isInteger(px) && Number.isInteger(py) && /** @type {number} */ (px) >= 0 && /** @type {number} */ (px) < 1000 && /** @type {number} */ (py) >= 0 && /** @type {number} */ (py) < 500;
+const onBayMap = (px, py) =>
+  Number.isInteger(px) &&
+  Number.isInteger(py) &&
+  /** @type {number} */ (px) >= 0 &&
+  /** @type {number} */ (px) < 1000 &&
+  /** @type {number} */ (py) >= 0 &&
+  /** @type {number} */ (py) < 500;
 /** Is a number a pixel of the world's grid? @param {unknown} v */
 const worldPixel = (v) => Number.isInteger(v) && Math.abs(/** @type {number} */ (v)) < RAID_PIXEL_BOUND;
 /**
@@ -323,7 +370,9 @@ export function raidSideOk(w) {
  * by the same table, with no game data. By lane: the Bay, High Rock, Hammerfell, Skyrim, Morrowind, Summerset, Valenwood,
  * Elsweyr, Black Marsh, Cyrodiil (the open zone: none).
  */
-export const RAID_LANE_PARTIES = Object.freeze([[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)));
+export const RAID_LANE_PARTIES = Object.freeze(
+  [[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)),
+);
 /** A lane's parties ([] for none). @param {number} lane */
 export const raidLaneParties = (lane) => RAID_LANE_PARTIES[lane] ?? RAID_LANE_PARTIES[RAID_ZONE_LANE];
 
@@ -350,9 +399,13 @@ export function rollRaidTowns(day, regions, count, random, parties = RAID_LANE_P
     g.towns.splice(j, 1);
     if (g.towns.length === 0) lists.splice(i, 1);
     const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);
-    const ty = parties[rangeInt(0, parties.length, random)];   // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw
+    const ty = parties[rangeInt(0, parties.length, random)]; // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw
     const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);
-    out.push(Number.isInteger(g.area) ? { region: g.region, area: g.area, town, st, ty, tg } : { region: g.region, town, st, ty, tg });
+    out.push(
+      Number.isInteger(g.area)
+        ? { region: g.region, area: g.area, town, st, ty, tg }
+        : { region: g.region, town, st, ty, tg },
+    );
   }
   return out;
 }
@@ -364,10 +417,13 @@ export function rollRaidTowns(day, regions, count, random, parties = RAID_LANE_P
  * @param {number} day @param {number} [lane] @returns {Set<string>}
  */
 export function raidDaySlots(day, lane = 0) {
-  const random = raidDayRandom(day, lane), parties = raidLaneParties(lane), out = new Set();
-  if (!raidLaneStands(day, lane) || !parties.length) return out;   // FRONTS: a province off its turn rolls no slot
+  const random = raidDayRandom(day, lane),
+    parties = raidLaneParties(lane),
+    out = new Set();
+  if (!raidLaneStands(day, lane) || !parties.length) return out; // FRONTS: a province off its turn rolls no slot
   for (let l = 0; l < RAID_SLOTS_MAX; l++) {
-    random(); random();   // its region and its town - the towns table's
+    random();
+    random(); // its region and its town - the towns table's
     const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);
     const ty = parties[rangeInt(0, parties.length, random)];
     const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);
@@ -381,7 +437,8 @@ export const raidOnSlot = (w, slots) => slots.has(`${w.st}.${w.tg}.${w.ty}`);
 /** RAID-ROLL: the towns table's ONE spelling - its regions ascending, each its towns in its table's order,
  *  `[[region, [[index, px, py], ...]], ...]` (systems/raidingParties.js raidRegions, less the names). What is hashed,
  *  handed and kept. @param {ReadonlyArray<{region: number, towns: ReadonlyArray<{index: number, px: number, py: number}>}>|null} regions */
-export const raidTownsCanon = (regions) => JSON.stringify((regions ?? []).map((g) => [g.region, g.towns.map((t) => [t.index, t.px, t.py])]));
+export const raidTownsCanon = (regions) =>
+  JSON.stringify((regions ?? []).map((g) => [g.region, g.towns.map((t) => [t.index, t.px, t.py])]));
 /** RAID-ROLL: the most a table may weigh - the Bay's towns are a few thousand rows of three small numbers. */
 export const RAID_TOWNS_BYTES_MAX = 256 * 1024;
 /** RAID-ROLL: a table goes to the relay in pieces this long, at most RAID_TOWNS_CHUNKS_MAX of them. */
@@ -397,15 +454,39 @@ export const RAID_TOWNS_SHA_RE = /^[0-9a-f]{64}$/;
 export function readRaidTowns(s) {
   if (typeof s !== 'string' || s.length > RAID_TOWNS_BYTES_MAX) return null;
   let v;
-  try { v = JSON.parse(s); } catch { return null; }
+  try {
+    v = JSON.parse(s);
+  } catch {
+    return null;
+  }
   if (!Array.isArray(v) || v.length > RAID_REGIONS_MAX) return null;
   const out = [];
   let last = -1;
   for (const g of v) {
-    if (!Array.isArray(g) || g.length !== 2 || !Number.isInteger(g[0]) || g[0] <= last || g[0] >= RAID_REGIONS_MAX || !Array.isArray(g[1]) || !g[1].length) return null;
+    if (
+      !Array.isArray(g) ||
+      g.length !== 2 ||
+      !Number.isInteger(g[0]) ||
+      g[0] <= last ||
+      g[0] >= RAID_REGIONS_MAX ||
+      !Array.isArray(g[1]) ||
+      !g[1].length
+    )
+      return null;
     const towns = [];
     for (const t of g[1]) {
-      if (!Array.isArray(t) || t.length !== 3 || !t.every(Number.isInteger) || t[0] < 0 || t[0] > 0xffff || t[1] < 0 || t[1] >= 1000 || t[2] < 0 || t[2] >= 500) return null;
+      if (
+        !Array.isArray(t) ||
+        t.length !== 3 ||
+        !t.every(Number.isInteger) ||
+        t[0] < 0 ||
+        t[0] > 0xffff ||
+        t[1] < 0 ||
+        t[1] >= 1000 ||
+        t[2] < 0 ||
+        t[2] >= 500
+      )
+        return null;
       towns.push(Object.freeze({ index: t[0], px: t[1], py: t[2] }));
     }
     last = g[0];
@@ -432,7 +513,16 @@ export async function raidTownsHash(s, subtle = globalThis.crypto?.subtle) {
 export function raidDayIds(day, regions) {
   const out = new Set();
   for (const r of rollRaidTowns(day, regions, raidsPerDay(regions.length), raidDayRandom(day))) {
-    out.add(raidLedgerId({ key: `${r.region}:${r.town.index}:${day}`, st: r.st, tg: r.tg, ty: r.ty, px: r.town.px, py: r.town.py }));
+    out.add(
+      raidLedgerId({
+        key: `${r.region}:${r.town.index}:${day}`,
+        st: r.st,
+        tg: r.tg,
+        ty: r.ty,
+        px: r.town.px,
+        py: r.town.py,
+      }),
+    );
   }
   return out;
 }

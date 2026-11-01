@@ -51,7 +51,8 @@ export const SERPENT_SALT = 0x5e7a;
 /** The game day a relay-clock instant stands in (the gate's own - pinned equal: gateLaw.js gameDayAt). */
 export const serpentDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / SERPENT_DAY_MINUTES);
 /** Does game day `day` hold a serpent? */
-export const isSerpentDay = (day) => Number.isSafeInteger(day) && day >= 0 && day % SERPENT_EVERY_DAYS === SERPENT_DAY_PHASE;
+export const isSerpentDay = (day) =>
+  Number.isSafeInteger(day) && day >= 0 && day % SERPENT_EVERY_DAYS === SERPENT_DAY_PHASE;
 
 /**
  * A serpent's instants, RELAY-CLOCK milliseconds, made once a day (the client's clock asks every frame).
@@ -62,7 +63,13 @@ export function serpentTimes(day) {
   if (t) return t;
   const base = day * SERPENT_DAY_MINUTES;
   const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));
-  t = Object.freeze({ day, omenAt: at(SERPENT_OMEN_MINUTE), riseAt: at(SERPENT_RISE_MINUTE), sealAt: at(SERPENT_SEAL_MINUTE), soundAt: at(SERPENT_SOUND_MINUTE) });
+  t = Object.freeze({
+    day,
+    omenAt: at(SERPENT_OMEN_MINUTE),
+    riseAt: at(SERPENT_RISE_MINUTE),
+    sealAt: at(SERPENT_SEAL_MINUTE),
+    soundAt: at(SERPENT_SOUND_MINUTE),
+  });
   if (_timesOf.size >= 8) _timesOf.delete(_timesOf.keys().next().value);
   _timesOf.set(day, t);
   return t;
@@ -95,7 +102,8 @@ export const SERPENT_PHASES = Object.freeze(['quiet', 'omen', 'rising', 'hunt', 
  */
 export function serpentPhase(t, nowMs, fellAt = null) {
   if (!t || !Number.isFinite(nowMs)) return 'quiet';
-  const slain = Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.riseAt && /** @type {number} */ (fellAt) < t.soundAt;
+  const slain =
+    Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.riseAt && /** @type {number} */ (fellAt) < t.soundAt;
   const end = slain ? /** @type {number} */ (fellAt) : t.soundAt;
   if (nowMs >= end + SERPENT_DIVE_MS) return 'gone';
   if (nowMs >= end) return slain ? 'slain' : 'sounding';
@@ -107,15 +115,22 @@ export function serpentPhase(t, nowMs, fellAt = null) {
 }
 
 /** Does the serpent swim in the world in this phase (drawn, struck, fought)? */
-export const serpentSwims = (phase) => phase === 'rising' || phase === 'hunt' || phase === 'late' || phase === 'slain' || phase === 'sounding';
+export const serpentSwims = (phase) =>
+  phase === 'rising' || phase === 'hunt' || phase === 'late' || phase === 'slain' || phase === 'sounding';
 /** Does the map mark its waters in this phase (from the sighting until it is gone)? */
 export const serpentMarked = (phase) => phase !== 'quiet' && phase !== 'gone';
 /** May a player join the fight now - from the rising until it dives? SERPENT4 (2026-10-11): a ship sailing in late joins
  *  as any other (the late ship's law: her share at the fraction it stands at - serpentBrain.js joinSerpentFight); the
  *  storm at SERPENT_SEAL_MINUTE closed its waters to her, and to a friend who sailed out to help. */
-export const serpentAdmits = (day, nowMs) => { const t = serpentTimes(day); return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };
+export const serpentAdmits = (day, nowMs) => {
+  const t = serpentTimes(day);
+  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt;
+};
 /** May a fighter already in it be in it now (a reconnect after a blip)? From the rising until it has gone. */
-export const serpentHolds = (day, nowMs) => { const t = serpentTimes(day); return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt + SERPENT_DIVE_MS; };
+export const serpentHolds = (day, nowMs) => {
+  const t = serpentTimes(day);
+  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt + SERPENT_DIVE_MS;
+};
 
 /** What a countdown on the serpent counts to, and says: to its rising from the sighting; to its sounding while it swims
  *  (AUDIT SERPENT B9: from the rising itself - never "rises in 0s" as it rises). SERPENT4: its waters are open until it
@@ -123,7 +138,8 @@ export const serpentHolds = (day, nowMs) => { const t = serpentTimes(day); retur
 export function serpentCountdown(t, nowMs, phase = serpentPhase(t, nowMs)) {
   if (!t) return null;
   if (phase === 'omen') return { to: 'rise', ms: Math.max(0, t.riseAt - nowMs) };
-  if (phase === 'rising' || phase === 'hunt' || phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };
+  if (phase === 'rising' || phase === 'hunt' || phase === 'late')
+    return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };
   return null;
 }
 /** "4m 07s", "9s" - the seconds rounded UP, so a countdown never reads 0s while time is left (gateLaw.js's law). AUDIT
@@ -134,7 +150,8 @@ export function serpentClock(ms) {
 }
 /** A countdown's words: "rises in 4m 07s", "dives in 6m 12s" - null for none. AUDIT SERPENT (words): it DIVES -
  *  "sounds", the sailors' word, read as a noise. */
-export const serpentCountdownWords = (cd) => (cd ? `${cd.to === 'rise' ? 'rises' : 'dives'} in ${serpentClock(cd.ms)}` : null);
+export const serpentCountdownWords = (cd) =>
+  cd ? `${cd.to === 'rise' ? 'rises' : 'dives'} in ${serpentClock(cd.ms)}` : null;
 
 // ═══ THE ROLLS ════════════════════════════════════════════════════════
 //
@@ -155,7 +172,8 @@ export const SERPENT_SITE_LAW = 2;
 export const serpentLaneScore = (day, ka, kb) => gateHash(SERPENT_SALT, day, 100, ka, kb);
 /** A lane's place along its way on a day, a share of its length: the middle stretch, never a port's mouth. */
 export const SERPENT_ALONG = Object.freeze([0.3, 0.7]);
-export const serpentAlongAt = (day, ka, kb) => SERPENT_ALONG[0] + (gateHash(SERPENT_SALT, day, 200, ka, kb) / 4294967296) * (SERPENT_ALONG[1] - SERPENT_ALONG[0]);
+export const serpentAlongAt = (day, ka, kb) =>
+  SERPENT_ALONG[0] + (gateHash(SERPENT_SALT, day, 200, ka, kb) / 4294967296) * (SERPENT_ALONG[1] - SERPENT_ALONG[0]);
 /** The way it first swims as it rises, radians about y (0 north - the site frame's facing law). */
 export const serpentRiseYaw = (day) => unit(day, 7) * 2 * Math.PI;
 
@@ -164,8 +182,14 @@ export const SERPENT_NATIVE_PER_M = 40;
 /** AUDIT SERPENT S1: A SITE'S NAME - its native point to the whole unit (every honest client finds the same point; the
  *  relay keeps one fight a name, and a client hears the kill of its own site's serpent alone). */
 export const serpentSiteKey = (sx, sz) => `${Math.round(sx)},${Math.round(sz)}`;
-export const sameSerpentSite = (a, b) => !!a && !!b && Number.isFinite(a.sx) && Number.isFinite(a.sz) && Number.isFinite(b.sx) && Number.isFinite(b.sz)
-  && serpentSiteKey(a.sx, a.sz) === serpentSiteKey(b.sx, b.sz);
+export const sameSerpentSite = (a, b) =>
+  !!a &&
+  !!b &&
+  Number.isFinite(a.sx) &&
+  Number.isFinite(a.sz) &&
+  Number.isFinite(b.sx) &&
+  Number.isFinite(b.sz) &&
+  serpentSiteKey(a.sx, a.sz) === serpentSiteKey(b.sx, b.sz);
 
 /** The omen's ring on the map: this many map pixels across its radius (about 2.5 km) - its waters with room to sail
  *  into - and its centre pulled this far at most off the site, so the ring says where to sail and the sea where. */
@@ -177,8 +201,10 @@ export const SERPENT_RING_SHIFT_PIXELS = 1.2;
  * @param {number} day @param {number} sx @param {number} sz the site, native units
  */
 export function serpentRing(day, sx, sz) {
-  const gx = sx / (PIXEL_M * SERPENT_NATIVE_PER_M), gy = 500 - sz / (PIXEL_M * SERPENT_NATIVE_PER_M);
-  const a = unit(day, 8) * 2 * Math.PI, r = Math.sqrt(unit(day, 9)) * SERPENT_RING_SHIFT_PIXELS;
+  const gx = sx / (PIXEL_M * SERPENT_NATIVE_PER_M),
+    gy = 500 - sz / (PIXEL_M * SERPENT_NATIVE_PER_M);
+  const a = unit(day, 8) * 2 * Math.PI,
+    r = Math.sqrt(unit(day, 9)) * SERPENT_RING_SHIFT_PIXELS;
   return { cx: gx + Math.cos(a) * r, cy: gy + Math.sin(a) * r, r: SERPENT_RING_PIXELS, gx, gy };
 }
 
@@ -200,17 +226,20 @@ export const serpentBossById = (id) => SERPENT_BOSSES.find((b) => b.id === id) ?
 // The chat's lines at the serpent's moments, each the event, where and when (WB13b's law: the map's ring and the bar
 // say the rest). `near` the port the site lies off ("Sentinel"); `at` a local time ("14:32" - TIME1: a line that names
 // a time names this machine's); `left` a countdown ("4:07").
-export const sightingLine = ({ near, at, boss }) => `Bells ring in the harbors: a great serpent is sighted off ${near}. ${boss} rises at ${at} your time.`;
+export const sightingLine = ({ near, at, boss }) =>
+  `Bells ring in the harbors: a great serpent is sighted off ${near}. ${boss} rises at ${at} your time.`;
 /** SERPENT4: its waters open until it dives - the rising counts to the dive, and the storm's breaking says a ship may
  *  still sail in. */
-export const risingLine = ({ near, boss, left }) => `${boss} rises off ${near}. It dives in ${left}. Sail out and join the fight.`;
-export const sealLine = ({ near, boss, at }) => `A storm breaks over ${boss}'s waters off ${near}, but every ship may still join the fight. It dives at ${at} your time.`;
+export const risingLine = ({ near, boss, left }) =>
+  `${boss} rises off ${near}. It dives in ${left}. Sail out and join the fight.`;
+export const sealLine = ({ near, boss, at }) =>
+  `A storm breaks over ${boss}'s waters off ${near}, but every ship may still join the fight. It dives at ${at} your time.`;
 export const soundLine = ({ near, boss }) => `${boss} dives off ${near} and is gone into the deep.`;
 /** The Bay hears the kill (the relay's word, fanned by the hub): "Sethrakul is slain off Sentinel by Ama, Bel and Cor."
  *  AUDIT SERPENT (words): the whole Bay hears it - its hoard is said to be the ships' that fought it, never everyone's. */
 export function slainLine({ near, boss, top }) {
   const names = (Array.isArray(top) ? top : []).filter((n) => typeof n === 'string' && n);
-  const by = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0] ?? '';
+  const by = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : (names[0] ?? '');
   return `${boss} is slain${near ? ` off ${near}` : ''}${by ? ` by ${by}` : ''}. Its hoard goes to the ships that fought it.`;
 }
 

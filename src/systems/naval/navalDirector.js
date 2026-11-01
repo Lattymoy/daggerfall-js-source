@@ -62,8 +62,8 @@ import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL, SHIP_CLASSES } from './navalShips.js';
 import { HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
-import { classPower, odds, WARY_ODDS } from './navalAI.js';   // SEA-PEACE: a plunder's merchantman is one her pirate outguns
-import { etherFactionWeights, LEGEND_CHANCE, LEGEND_SALT } from './etherShips.js';   // ETHER-SEA: the Eltheric Ocean's traffic and its legends
+import { classPower, odds, WARY_ODDS } from './navalAI.js'; // SEA-PEACE: a plunder's merchantman is one her pirate outguns
+import { etherFactionWeights, LEGEND_CHANCE, LEGEND_SALT } from './etherShips.js'; // ETHER-SEA: the Eltheric Ocean's traffic and its legends
 
 /** How many ships the density keeps at sea near a player. SEA-EASE: one, two or four (they were two, three and five). */
 export const DENSITY = Object.freeze({ off: 0, few: 1, some: 2, many: 4 });
@@ -116,7 +116,9 @@ export function encounterClasses(kind, level, r) {
   const pick = (list) => {
     const total = list.reduce((sum, c) => sum + c.weight, 0);
     let x = r() * total;
-    for (const c of list) { if ((x -= c.weight) < 0) return c; }
+    for (const c of list) {
+      if ((x -= c.weight) < 0) return c;
+    }
     return list[list.length - 1] ?? null;
   };
   if (kind === 'patrol') {
@@ -127,7 +129,9 @@ export function encounterClasses(kind, level, r) {
   const pirate = pirates.length ? pick(pirates) : null;
   if (!pirate) return null;
   // AUDIT NAV2 F25: outguns by the odds - the time each needs to make the other strike (navalAI.js odds)
-  const prey = SHIP_CLASSES.filter((c) => c.faction === 'merchant' && c.minLevel <= lv && odds(classPower(pirate), classPower(c)) >= WARY_ODDS);
+  const prey = SHIP_CLASSES.filter(
+    (c) => c.faction === 'merchant' && c.minLevel <= lv && odds(classPower(pirate), classPower(c)) >= WARY_ODDS,
+  );
   const merchant = prey.length ? pick(prey) : null;
   return merchant ? { hunter: pirate, quarry: merchant } : null;
 }
@@ -137,15 +141,25 @@ export function weightedPick(weights, r) {
   const keys = Object.keys(weights).filter((k) => weights[k] > 0);
   const total = keys.reduce((s, k) => s + weights[k], 0);
   let x = Math.max(0, Math.min(0.999999, r)) * total;
-  for (const k of keys) { if ((x -= weights[k]) < 0) return k; }
+  for (const k of keys) {
+    if ((x -= weights[k]) < 0) return k;
+  }
   return keys[keys.length - 1] ?? null;
 }
 
 /** The factions' weights for these waters. CAPT-WATERS: `deep` the deep waters' - more pirates, less of the trade. */
 export function factionWeights({ nearPort = false, notoriety = 0, deep = false } = {}) {
   const w = { ...FACTION_WEIGHTS };
-  if (nearPort) { w.merchant += PORT_WEIGHTS.merchant; w.navy += PORT_WEIGHTS.navy; w.pirate *= PORT_PIRATE_K; }   // SEA-EASE: the crown's own waters
-  else if (deep) { w.pirate *= DEEP_PIRATE_K; w.merchant *= DEEP_TRADE_K; w.navy *= DEEP_TRADE_K; }   // CAPT-WATERS: the deep waters
+  if (nearPort) {
+    w.merchant += PORT_WEIGHTS.merchant;
+    w.navy += PORT_WEIGHTS.navy;
+    w.pirate *= PORT_PIRATE_K;
+  } // SEA-EASE: the crown's own waters
+  else if (deep) {
+    w.pirate *= DEEP_PIRATE_K;
+    w.merchant *= DEEP_TRADE_K;
+    w.navy *= DEEP_TRADE_K;
+  } // CAPT-WATERS: the deep waters
   if (notoriety >= HUNTER_AT) w.navy += HUNTER_WEIGHT;
   return w;
 }
@@ -158,8 +172,18 @@ export function factionWeights({ nearPort = false, notoriety = 0, deep = false }
  * @param {any[]} ships @param {(id: any) => any} entryOf
  */
 export function directorShips(ships, entryOf) {
-  for (const x of ships) { const f = entryOf(x.id); if (f?.ship.cls.fisher) { x.berthed = true; x.engaged ||= !!f.fisher && !x.theirs; } }
-  const chased = new Set(ships.filter((y) => y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher).map((y) => entryOf(y.id)?.ship.target));
+  for (const x of ships) {
+    const f = entryOf(x.id);
+    if (f?.ship.cls.fisher) {
+      x.berthed = true;
+      x.engaged ||= !!f.fisher && !x.theirs;
+    }
+  }
+  const chased = new Set(
+    ships
+      .filter((y) => y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher)
+      .map((y) => entryOf(y.id)?.ship.target),
+  );
   for (const x of ships) if (!x.theirs && chased.has(x.id)) x.engaged = true;
   return ships;
 }
@@ -213,8 +237,8 @@ export function createNavalDirector({ random = Math.random } = {}) {
     const r = encounterRng(seed);
     if (!(r() < ENCOUNTER_CHANCE)) return null;
     const drawn = /** @type {'plunder'|'patrol'} */ (weightedPick(ENCOUNTERS, r()));
-    const kind = ctx.ether ? 'plunder' : drawn;   // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader
-    const deep = !ctx.ether && !ctx.nearPort && !!ctx.deep;   // AUDIT CAPTAIN'S SEA D9: a pair of the deep waters is the deep's, as a single is
+    const kind = ctx.ether ? 'plunder' : drawn; // ETHER-SEA: no crown's ship past the Veil - a corsair on a trader
+    const deep = !ctx.ether && !ctx.nearPort && !!ctx.deep; // AUDIT CAPTAIN'S SEA D9: a pair of the deep waters is the deep's, as a single is
     const pair = encounterClasses(kind, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ctx.ether?.band?.level ?? 0), r);
     if (!pair) return null;
     for (let i = 0; i < SPAWN_TRIES; i++) {
@@ -225,13 +249,39 @@ export function createNavalDirector({ random = Math.random } = {}) {
       const yaw = toPlayer + (r() < 0.5 ? 1 : -1) * (0.6 + r() * 0.9);
       const gap = ENCOUNTER_GAP[0] + r() * (ENCOUNTER_GAP[1] - ENCOUNTER_GAP[0]);
       const along = (k) => [mid[0] + Math.sin(yaw) * gap * k, mid[1], mid[2] + Math.cos(yaw) * gap * k];
-      const hunterPos = along(-0.5), quarryPos = along(0.5);
+      const hunterPos = along(-0.5),
+        quarryPos = along(0.5);
       if (nearest(hunterPos) < SPAWN_CLEAR || nearest(quarryPos) < SPAWN_CLEAR) continue;
-      if (!ctx.isOpenWater(hunterPos[0], hunterPos[2], pair.hunter.hull) || !ctx.isOpenWater(quarryPos[0], quarryPos[2], pair.quarry.hull)) continue;
-      const variantOf = (cls) => { const n = HULL_VARIANT_COUNTS[cls.hull] ?? 0; return cls.hull === HULL.LargeBoat && n > 0 ? Math.floor(r() * n) : 0; };
-      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {};   // ETHER-SEA: launched of the Eltheric Ocean; CAPT-WATERS: of the deep
-      const company = { seed: hash32(ctx.seedBase >>> 0, count++), classId: pair.quarry.id, variant: variantOf(pair.quarry), pos: quarryPos, yaw, hunter: false, ...etherOf };
-      return { seed, classId: pair.hunter.id, variant: variantOf(pair.hunter), pos: hunterPos, yaw, hunter: false, encounter: kind, company, ...etherOf };
+      if (
+        !ctx.isOpenWater(hunterPos[0], hunterPos[2], pair.hunter.hull) ||
+        !ctx.isOpenWater(quarryPos[0], quarryPos[2], pair.quarry.hull)
+      )
+        continue;
+      const variantOf = (cls) => {
+        const n = HULL_VARIANT_COUNTS[cls.hull] ?? 0;
+        return cls.hull === HULL.LargeBoat && n > 0 ? Math.floor(r() * n) : 0;
+      };
+      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {}; // ETHER-SEA: launched of the Eltheric Ocean; CAPT-WATERS: of the deep
+      const company = {
+        seed: hash32(ctx.seedBase >>> 0, count++),
+        classId: pair.quarry.id,
+        variant: variantOf(pair.quarry),
+        pos: quarryPos,
+        yaw,
+        hunter: false,
+        ...etherOf,
+      };
+      return {
+        seed,
+        classId: pair.hunter.id,
+        variant: variantOf(pair.hunter),
+        pos: hunterPos,
+        yaw,
+        hunter: false,
+        encounter: kind,
+        company,
+        ...etherOf,
+      };
     }
     return null;
   }
@@ -240,7 +290,7 @@ export function createNavalDirector({ random = Math.random } = {}) {
   function reliefSpawn(seed, ctx, nearest, at) {
     const r = mulberry32(((seed >>> 0) ^ RELIEF_SALT) >>> 0);
     const roll = r();
-    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null;   // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)
+    if (!ctx.reliefSure && !(roll < RELIEF_CHANCE)) return null; // CAPT-BOARD: an Admiral's crown always answers (the draw taken either way)
     const cls = classFor('navy', ctx.level ?? 1, r());
     if (!cls) return null;
     for (let i = 0; i < SPAWN_TRIES; i++) {
@@ -250,7 +300,15 @@ export function createNavalDirector({ random = Math.random } = {}) {
       if (nearest(pos) < SPAWN_CLEAR || !ctx.isOpenWater(pos[0], pos[2], cls.hull)) continue;
       const variants = HULL_VARIANT_COUNTS[cls.hull] ?? 0;
       const variant = cls.hull === HULL.LargeBoat && variants > 0 ? Math.floor(r() * variants) : 0;
-      return { seed, classId: cls.id, variant, pos, yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]), hunter: false, relief: true };
+      return {
+        seed,
+        classId: cls.id,
+        variant,
+        pos,
+        yaw: Math.atan2(at[0] - pos[0], at[2] - pos[2]),
+        hunter: false,
+        relief: true,
+      };
     }
     return null;
   }
@@ -259,7 +317,13 @@ export function createNavalDirector({ random = Math.random } = {}) {
    *  (AUDIT CAPTAIN'S SEA D7/D14), never by a port (SEA-EASE: a captain at a freeport's quay sees none come). */
   function legendSpawn(seed, ctx, nearest) {
     const want = ctx.ether?.legend;
-    if (!want?.classId || ctx.nearPort || (ctx.legends ?? []).length || (ctx.ships ?? []).some((s) => s.classId === want.classId)) return null;
+    if (
+      !want?.classId ||
+      ctx.nearPort ||
+      (ctx.legends ?? []).length ||
+      (ctx.ships ?? []).some((s) => s.classId === want.classId)
+    )
+      return null;
     const r = mulberry32(((seed >>> 0) ^ LEGEND_SALT) >>> 0);
     if (!(r() < LEGEND_CHANCE)) return null;
     const cls = SHIP_CLASSES.find((c) => c.id === want.classId);
@@ -269,49 +333,73 @@ export function createNavalDirector({ random = Math.random } = {}) {
       const d = SPAWN_RING[0] + r() * (SPAWN_RING[1] - SPAWN_RING[0]);
       const pos = [ctx.player[0] + Math.sin(a) * d, ctx.seaY ?? ctx.player[1], ctx.player[2] + Math.cos(a) * d];
       if (nearest(pos) < SPAWN_CLEAR || !ctx.isOpenWater(pos[0], pos[2], cls.hull)) continue;
-      return { seed, classId: cls.id, variant: 0, pos, yaw: Math.atan2(ctx.player[0] - pos[0], ctx.player[2] - pos[2]), hunter: false, ether: ctx.ether.band.id, legend: want.id };
+      return {
+        seed,
+        classId: cls.id,
+        variant: 0,
+        pos,
+        yaw: Math.atan2(ctx.player[0] - pos[0], ctx.player[2] - pos[2]),
+        hunter: false,
+        ether: ctx.ether.band.id,
+        legend: want.id,
+      };
     }
     return null;
   }
   const director = {
     step(dt, ctx) {
       const out = { spawn: null, despawn: [] };
-      const spent = trafficSeconds(dt, ctx.real, lastReal);   // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts
+      const spent = trafficSeconds(dt, ctx.real, lastReal); // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts
       lastReal = Number.isFinite(ctx.real) ? ctx.real : null;
       const players = ctx.players?.length ? ctx.players : [ctx.player];
       const nearest = (p) => Math.min(...players.map((q) => Math.hypot(p[0] - q[0], p[2] - q[2])));
-      for (const s of ctx.ships ?? []) if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);
-      if (!((ctx.density ?? 0) > 0)) return out;   // AUDIT NAV1 (online): letting go only - no roll, no draw on the stream
+      for (const s of ctx.ships ?? [])
+        if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);
+      if (!((ctx.density ?? 0) > 0)) return out; // AUDIT NAV1 (online): letting go only - no roll, no draw on the stream
       // SEA-EASE: a lawful player under a pirate's guns with no crown's ship by them - help is rolled for soon, in a
       // berth of its own, one relief at a time
-      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null;   // ETHER-SEA: no navy to answer past the Veil
+      const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null; // ETHER-SEA: no navy to answer past the Veil
       if (distress) wait = Math.min(wait, RELIEF_WAIT_S);
       wait -= spent;
       if (wait > 0) return out;
       wait = SPAWN_EVERY[0] + random() * (SPAWN_EVERY[1] - SPAWN_EVERY[0]);
       // AUDIT NAV1 (B1): a prize, a hulk or a wreck going down fills no berth; SHIP-LIFE: nor a ship moored in a harbour
       // (the harbour's own count, navalHost.js HARBOUR_ROLL)
-      const alive = (ctx.ships ?? []).filter((s) => !out.despawn.includes(s.id) && s.afloat !== false && !s.berthed).length;
+      const alive = (ctx.ships ?? []).filter(
+        (s) => !out.despawn.includes(s.id) && s.afloat !== false && !s.berthed,
+      ).length;
       if (alive >= (ctx.density ?? 0) + (distress ? 1 : 0) || random() >= SHIP_SPAWN_CHANCE) return out;
       const seed = hash32(ctx.seedBase >>> 0, count++);
-      if (distress) {   // while they fight, the sea sends help - never more strangers
+      if (distress) {
+        // while they fight, the sea sends help - never more strangers
         out.spawn = reliefSpawn(seed, ctx, nearest, distress);
         return out;
       }
       // ETHER-LEGENDS: a legend in her haunt, before anything else the roll would launch
       const legend = ctx.ether ? legendSpawn(seed, ctx, nearest) : null;
-      if (legend) { out.spawn = legend; return out; }
+      if (legend) {
+        out.spawn = legend;
+        return out;
+      }
       // SEA-PEACE: a pair already at it, where the density has room for two
       if (alive + 2 <= (ctx.density ?? 0)) {
         const pair = encounterSpawn(seed, ctx, nearest);
-        if (pair) { out.spawn = pair; return out; }
+        if (pair) {
+          out.spawn = pair;
+          return out;
+        }
       }
       const rng = mulberry32(seed);
-      const ether = ctx.ether ?? null;   // ETHER-SEA: the band's weights and levels past the Veil
-      const deep = !ether && !ctx.nearPort && !!ctx.deep;   // CAPT-WATERS
-      const faction = weightedPick(ether ? etherFactionWeights(ether.band, { nearPort: !!ctx.nearPort }) : factionWeights({ nearPort: !!ctx.nearPort, notoriety: ctx.notoriety ?? 0, deep }), rng());
+      const ether = ctx.ether ?? null; // ETHER-SEA: the band's weights and levels past the Veil
+      const deep = !ether && !ctx.nearPort && !!ctx.deep; // CAPT-WATERS
+      const faction = weightedPick(
+        ether
+          ? etherFactionWeights(ether.band, { nearPort: !!ctx.nearPort })
+          : factionWeights({ nearPort: !!ctx.nearPort, notoriety: ctx.notoriety ?? 0, deep }),
+        rng(),
+      );
       let cls = classFor(faction, (ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ether?.band?.level ?? 0), rng());
-      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng());   // one flagship at a time
+      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng()); // one flagship at a time
       if (!cls) return out;
       for (let i = 0; i < SPAWN_TRIES; i++) {
         const a = rng() * Math.PI * 2;
@@ -325,16 +413,32 @@ export function createNavalDirector({ random = Math.random } = {}) {
         const yaw = hunter ? toPlayer : toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);
         const variants = HULL_VARIANT_COUNTS[cls.hull] ?? 0;
         const variant = cls.hull === HULL.LargeBoat && variants > 0 ? Math.floor(rng() * variants) : 0;
-        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(deep ? { deep: true } : {}), ...(ether ? { ether: ether.band.id } : {}) };   // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean
+        out.spawn = {
+          seed,
+          classId: cls.id,
+          variant,
+          pos,
+          yaw,
+          hunter,
+          ...(deep ? { deep: true } : {}),
+          ...(ether ? { ether: ether.band.id } : {}),
+        }; // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean
         break;
       }
       return out;
     },
     /** The water was left, or a transition: the next roll waits its first wait again (TRAFFIC-REAL: from the next clock
      *  read - the time ashore is no wait spent). */
-    reset() { wait = FIRST_ROLL_S; lastReal = null; },
-    get count() { return count; },
-    set count(n) { count = Math.max(0, n | 0); },
+    reset() {
+      wait = FIRST_ROLL_S;
+      lastReal = null;
+    },
+    get count() {
+      return count;
+    },
+    set count(n) {
+      count = Math.max(0, n | 0);
+    },
   };
   return director;
 }
@@ -350,7 +454,8 @@ export const DEEP_TIER = 2;
 /** CAPT-WATERS: the waters a captain sails - 'coastal' within a port's reach (SEA-EASE's own `nearPort`), 'deep' DEEP_PX
  *  and more from every port (`portPx`: the nearest port's distance in map pixels, null where none is known), else
  *  'open'. */
-export const watersOf = ({ nearPort = false, portPx = null } = {}) => (nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open');
+export const watersOf = ({ nearPort = false, portPx = null } = {}) =>
+  nearPort ? 'coastal' : Number.isFinite(portPx) && portPx >= DEEP_PX ? 'deep' : 'open';
 
 /** The seed base's own salt: the waters' - the host folds a stander's id into it online (navalHost.js idSalt). */
 export const SEED_SALT = 0x5ea;

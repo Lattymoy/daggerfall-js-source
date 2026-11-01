@@ -69,8 +69,29 @@ export const ILIAC_ROOM = 4;
 
 /** THE EFFECT LANGUAGE's words - the engine knows these and no others (fxValid). */
 export const ILIAC_TRIGGERS = Object.freeze(['reveal', 'ongoing', 'end']);
-export const ILIAC_VERBS = Object.freeze(['buff', 'weaken', 'destroy', 'move', 'draw', 'magicka', 'summon', 'transform', 'room', 'veil', 'nospell', 'discount']);
-export const ILIAC_TARGETS = Object.freeze(['self', 'here.mine', 'here.theirs', 'here.all', 'all.mine', 'all.theirs', 'here']);
+export const ILIAC_VERBS = Object.freeze([
+  'buff',
+  'weaken',
+  'destroy',
+  'move',
+  'draw',
+  'magicka',
+  'summon',
+  'transform',
+  'room',
+  'veil',
+  'nospell',
+  'discount',
+]);
+export const ILIAC_TARGETS = Object.freeze([
+  'self',
+  'here.mine',
+  'here.theirs',
+  'here.all',
+  'all.mine',
+  'all.theirs',
+  'here',
+]);
 export const ILIAC_PICKS = Object.freeze(['weakest', 'strongest']);
 
 /** Which verbs each trigger may carry: the triggered ones act once, the ongoing ones hold while their source stands. */
@@ -89,7 +110,12 @@ const NUMBER_WORDS = Object.freeze(['no', 'a', 'two', 'three', 'four']);
 const an = (name) => (/^[AEIOU]/.test(name) ? `an ${name}` : `a ${name}`);
 /** AUDIT CARDS-5 A5: a card's name made plural - its head noun ("Priests of Arkay", "Rats", "Harpies"). */
 const pluralWord = (w) => (/(s|x|ch|sh)$/.test(w) ? `${w}es` : /[^aeiou]y$/.test(w) ? `${w.slice(0, -1)}ies` : `${w}s`);
-const plural = (name) => { const ws = name.split(' '); const k = ws.indexOf('of') > 0 ? ws.indexOf('of') - 1 : ws.length - 1; ws[k] = pluralWord(ws[k]); return ws.join(' '); };
+const plural = (name) => {
+  const ws = name.split(' ');
+  const k = ws.indexOf('of') > 0 ? ws.indexOf('of') - 1 : ws.length - 1;
+  ws[k] = pluralWord(ws[k]);
+  return ws.join(' ');
+};
 
 /** "that cost 1 or 2", "that costs 4 or more" - a `cost` [lo, hi] filter said (hi at the magicka's ceiling is open). */
 function costWords([lo, hi], one) {
@@ -124,26 +150,41 @@ function clause(fx, kind) {
   const t = TARGETED.includes(fx.do) ? targetWords(fx) : null;
   const n = fx.n ?? 1;
   switch (fx.do) {
-    case 'buff': return fx.on === 'ongoing' ? `${t.words} ${t.one ? 'has' : 'have'} +${n} power` : `${t.words} ${t.one ? 'gains' : 'gain'} +${n} power`;
-    case 'weaken': return fx.on === 'ongoing' ? `${t.words} ${t.one ? 'has' : 'have'} -${n} power` : `${t.words} ${t.one ? 'loses' : 'lose'} ${n} power`;
-    case 'destroy': return `destroy ${t.words}`;
-    case 'move': return `move ${t.words} to the next holding round the table with room`;   // AUDIT CARDS-5 A7: it wraps from the last to the first
-    case 'transform': return `turn ${t.words} into ${an(cardById(fx.card)?.name ?? '?')}`;
+    case 'buff':
+      return fx.on === 'ongoing'
+        ? `${t.words} ${t.one ? 'has' : 'have'} +${n} power`
+        : `${t.words} ${t.one ? 'gains' : 'gain'} +${n} power`;
+    case 'weaken':
+      return fx.on === 'ongoing'
+        ? `${t.words} ${t.one ? 'has' : 'have'} -${n} power`
+        : `${t.words} ${t.one ? 'loses' : 'lose'} ${n} power`;
+    case 'destroy':
+      return `destroy ${t.words}`;
+    case 'move':
+      return `move ${t.words} to the next holding round the table with room`; // AUDIT CARDS-5 A7: it wraps from the last to the first
+    case 'transform':
+      return `turn ${t.words} into ${an(cardById(fx.card)?.name ?? '?')}`;
     case 'summon': {
       const name = cardById(fx.card)?.name ?? '?';
       const many = n === 1 ? an(name) : `${NUMBER_WORDS[n] ?? n} ${plural(name)}`;
-      return loc ? `its owner summons ${many} here` : `summon ${many} here`;   // AUDIT CARDS-5 A5: a location's summon is its owner's
+      return loc ? `its owner summons ${many} here` : `summon ${many} here`; // AUDIT CARDS-5 A5: a location's summon is its owner's
     }
     case 'draw': {
       const cards = n === 1 ? 'a card' : `${n} cards`;
       return loc ? `its owner draws ${cards}` : `draw ${cards}`;
     }
-    case 'magicka': return loc ? `its owner gains +${n} magicka next turn` : `gain +${n} magicka next turn`;
-    case 'room': return `each side holds only ${n === 1 ? 'one card' : `${n} cards`} here`;   // AUDIT CARDS-5 A5
-    case 'veil': return 'cards here are played face down and unveiled when the game ends';
-    case 'nospell': return 'spells cannot be played here';
-    case 'discount': return loc ? `${fx.kind}s played here cost ${n} less` : `your ${fx.kind}s cost ${n} less`;
-    default: return '?';
+    case 'magicka':
+      return loc ? `its owner gains +${n} magicka next turn` : `gain +${n} magicka next turn`;
+    case 'room':
+      return `each side holds only ${n === 1 ? 'one card' : `${n} cards`} here`; // AUDIT CARDS-5 A5
+    case 'veil':
+      return 'cards here are played face down and unveiled when the game ends';
+    case 'nospell':
+      return 'spells cannot be played here';
+    case 'discount':
+      return loc ? `${fx.kind}s played here cost ${n} less` : `your ${fx.kind}s cost ${n} less`;
+    default:
+      return '?';
   }
 }
 
@@ -165,9 +206,11 @@ const joinAnd = (xs) => (xs.length < 3 ? xs.join(' and ') : `${xs.slice(0, -1).j
 export function fxText(fx, kind) {
   const out = [];
   for (let i = 0; i < fx.length;) {
-    const on = fx[i].on, pre = lead(on, kind);
+    const on = fx[i].on,
+      pre = lead(on, kind);
     const group = [];
-    do group.push(clause(fx[i], kind)); while (++i < fx.length && fx[i].on === on && (pre || kind === 'spell'));
+    do group.push(clause(fx[i], kind));
+    while (++i < fx.length && fx[i].on === on && (pre || kind === 'spell'));
     const s = pre + joinAnd(group);
     out.push(s[0].toUpperCase() + s.slice(1) + '.');
   }
@@ -187,7 +230,7 @@ export function fxRefusal(fx, kind) {
   if (!(fx.on === 'ongoing' ? ONGOING_VERBS : TRIGGERED_VERBS).includes(fx.do)) return 'verb';
   if (kind === 'spell' && fx.on !== 'reveal') return 'trigger';
   if (HOLDING_RULES.includes(fx.do) && !loc) return 'verb';
-  if (loc && fx.on === 'end' && (fx.do === 'draw' || fx.do === 'magicka')) return 'verb';   // a holding has no owner at the turn's end
+  if (loc && fx.on === 'end' && (fx.do === 'draw' || fx.do === 'magicka')) return 'verb'; // a holding has no owner at the turn's end
   if (fx.n !== undefined && !(Number.isInteger(fx.n) && fx.n >= 1 && fx.n <= ILIAC_MAGICKA_MAX)) return 'n';
   if ((fx.do === 'room' || fx.do === 'discount') && fx.n === undefined) return 'n';
   const aims = TARGETED.includes(fx.do);
@@ -197,9 +240,21 @@ export function fxRefusal(fx, kind) {
     if (fx.to === 'self' && kind === 'spell') return 'target';
   } else if (fx.to !== undefined) return 'target';
   if (fx.do === 'move' && !OWN_TARGETS.includes(fx.to)) return 'target';
-  if (fx.pick !== undefined && (!ILIAC_PICKS.includes(fx.pick) || !aims || fx.on === 'ongoing' || fx.to === 'self')) return 'pick';
+  if (fx.pick !== undefined && (!ILIAC_PICKS.includes(fx.pick) || !aims || fx.on === 'ongoing' || fx.to === 'self'))
+    return 'pick';
   if (fx.tag !== undefined && (!ILIAC_TAGS.includes(fx.tag) || !aims || fx.to === 'self')) return 'tag';
-  if (fx.cost !== undefined && !(Array.isArray(fx.cost) && fx.cost.length === 2 && fx.cost.every(Number.isInteger) && fx.cost[0] <= fx.cost[1] && aims && fx.to !== 'self')) return 'cost';
+  if (
+    fx.cost !== undefined &&
+    !(
+      Array.isArray(fx.cost) &&
+      fx.cost.length === 2 &&
+      fx.cost.every(Number.isInteger) &&
+      fx.cost[0] <= fx.cost[1] &&
+      aims &&
+      fx.to !== 'self'
+    )
+  )
+    return 'cost';
   if (fx.do === 'summon' || fx.do === 'transform') {
     const c = cardById(fx.card);
     if (!c || c.kind !== 'unit') return 'card';
@@ -238,7 +293,8 @@ export function deckValid(ids) {
 /** The card an instance is now (a transformed one is its new form). */
 const cardOf = (inst) => cardById(inst.form ?? inst.id);
 const holdingCard = (state, h) => cardById(state.holdings[h].id);
-const holdingRule = (state, h, verb) => holdingCard(state, h).fx.find((f) => f.on === 'ongoing' && f.do === verb) ?? null;
+const holdingRule = (state, h, verb) =>
+  holdingCard(state, h).fx.find((f) => f.on === 'ongoing' && f.do === verb) ?? null;
 /** The cards one side of holding `h` stands. */
 export const holdingRoomOf = (state, h) => holdingRule(state, h, 'room')?.n ?? ILIAC_ROOM;
 const veiled = (state, h) => !!holdingRule(state, h, 'veil');
@@ -246,15 +302,17 @@ const noSpells = (state, h) => !!holdingRule(state, h, 'nospell');
 
 /** Where a card stands: {h, p, i, inst}, or null. */
 function find(state, uid) {
-  for (let h = 0; h < ILIAC_HOLDINGS; h++) for (let p = 0; p < 2; p++) {
-    const i = state.holdings[h].sides[p].findIndex((x) => x.uid === uid);
-    if (i >= 0) return { h, p, i, inst: state.holdings[h].sides[p][i] };
-  }
+  for (let h = 0; h < ILIAC_HOLDINGS; h++)
+    for (let p = 0; p < 2; p++) {
+      const i = state.holdings[h].sides[p].findIndex((x) => x.uid === uid);
+      if (i >= 0) return { h, p, i, inst: state.holdings[h].sides[p][i] };
+    }
   return null;
 }
 
 /** The free room on player `p`'s side of `h`, less the plays of his still on their way there this reveal (`T.res`). */
-const freeRoom = (state, T, p, h) => holdingRoomOf(state, h) - state.holdings[h].sides[p].length - (T ? T.res[p][h] : 0);
+const freeRoom = (state, T, p, h) =>
+  holdingRoomOf(state, h) - state.holdings[h].sides[p].length - (T ? T.res[p][h] : 0);
 
 /** The refs on one side of one holding. */
 const sideRefs = (state, h, p) => state.holdings[h].sides[p].map((inst, i) => ({ h, p, i, inst }));
@@ -288,7 +346,8 @@ function select(state, ctx, fx, pw) {
   return kept.flatMap((g) => {
     if (!g.length) return [];
     let best = g[0];
-    for (const r of g) if (fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid] : pw[r.inst.uid] > pw[best.inst.uid]) best = r;
+    for (const r of g)
+      if (fx.pick === 'weakest' ? pw[r.inst.uid] < pw[best.inst.uid] : pw[r.inst.uid] > pw[best.inst.uid]) best = r;
     return [best];
   });
 }
@@ -301,14 +360,20 @@ function select(state, ctx, fx, pw) {
  */
 export function powers(state) {
   const pw = {};
-  const each = (fn) => state.holdings.forEach((hd, h) => hd.sides.forEach((side, p) => side.forEach((inst) => fn(inst, h, p))));
-  each((inst) => { pw[inst.uid] = cardOf(inst).power + (inst.mod ?? 0); });
+  const each = (fn) =>
+    state.holdings.forEach((hd, h) => hd.sides.forEach((side, p) => side.forEach((inst) => fn(inst, h, p))));
+  each((inst) => {
+    pw[inst.uid] = cardOf(inst).power + (inst.mod ?? 0);
+  });
   const apply = (ctx, fx) => {
     if (fx.on !== 'ongoing' || (fx.do !== 'buff' && fx.do !== 'weaken')) return;
     for (const r of select(state, ctx, fx, null)) pw[r.inst.uid] += fx.do === 'buff' ? fx.n : -fx.n;
   };
-  each((inst, h, p) => { if (!inst.down && !inst.unveiled) for (const fx of cardOf(inst).fx) apply({ p, h, uid: inst.uid }, fx); });   // AUDIT CARDS-5 A2: nor one unveiled at the end
-  for (let h = 0; h < ILIAC_HOLDINGS; h++) for (const fx of holdingCard(state, h).fx) apply({ p: null, h, uid: null }, fx);
+  each((inst, h, p) => {
+    if (!inst.down && !inst.unveiled) for (const fx of cardOf(inst).fx) apply({ p, h, uid: inst.uid }, fx);
+  }); // AUDIT CARDS-5 A2: nor one unveiled at the end
+  for (let h = 0; h < ILIAC_HOLDINGS; h++)
+    for (const fx of holdingCard(state, h).fx) apply({ p: null, h, uid: null }, fx);
   for (const k of Object.keys(pw)) pw[k] = Math.max(0, pw[k]);
   return pw;
 }
@@ -320,11 +385,14 @@ export function powers(state) {
  */
 export function costOf(state, p, card, h) {
   let off = 0;
-  for (const fx of holdingCard(state, h).fx) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
-  for (let hh = 0; hh < ILIAC_HOLDINGS; hh++) for (const inst of state.holdings[hh].sides[p]) {
-    if (inst.down) continue;
-    for (const fx of cardOf(inst).fx) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
-  }
+  for (const fx of holdingCard(state, h).fx)
+    if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
+  for (let hh = 0; hh < ILIAC_HOLDINGS; hh++)
+    for (const inst of state.holdings[hh].sides[p]) {
+      if (inst.down) continue;
+      for (const fx of cardOf(inst).fx)
+        if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;
+    }
   return Math.max(0, card.cost - off);
 }
 
@@ -358,7 +426,10 @@ export function revealOrder(state) {
 function drawCards(state, p, n) {
   const pl = state.players[p];
   let k = 0;
-  while (k < n && pl.deck.length && pl.hand.length < ILIAC_HAND_MAX) { pl.hand.push(pl.deck.shift()); k++; }
+  while (k < n && pl.deck.length && pl.hand.length < ILIAC_HAND_MAX) {
+    pl.hand.push(pl.deck.shift());
+    k++;
+  }
   return k;
 }
 
@@ -375,10 +446,14 @@ export function newGame({ decks, rand32: source, locations }) {
   let draws = 0;
   const rand32 = () => {
     const v = source();
-    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws > ILIAC_RAND_DRAWS_MAX) throw new Error('rand32');
+    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff || ++draws > ILIAC_RAND_DRAWS_MAX) throw new Error('rand32');
     return v;
   };
-  try { return deal(decks, rand32, locations); } catch { return null; }
+  try {
+    return deal(decks, rand32, locations);
+  } catch {
+    return null;
+  }
 }
 /** AUDIT CARDS-5 A6: the most draws a deal may take - its own need is a few hundred; past this the source is broken. */
 export const ILIAC_RAND_DRAWS_MAX = 100_000;
@@ -387,7 +462,13 @@ function deal(decks, rand32, locations) {
   let held;
   if (locations !== undefined) {
     const ids = new Set(ILIAC_LOCATIONS.map((c) => c.id));
-    if (!Array.isArray(locations) || locations.length !== ILIAC_HOLDINGS || new Set(locations).size !== ILIAC_HOLDINGS || !locations.every((id) => ids.has(id))) return null;
+    if (
+      !Array.isArray(locations) ||
+      locations.length !== ILIAC_HOLDINGS ||
+      new Set(locations).size !== ILIAC_HOLDINGS ||
+      !locations.every((id) => ids.has(id))
+    )
+      return null;
     held = locations.slice();
   } else {
     const pool = ILIAC_LOCATIONS.map((c) => c.id);
@@ -395,15 +476,24 @@ function deal(decks, rand32, locations) {
     for (let k = 0; k < ILIAC_HOLDINGS; k++) held.push(pool.splice(drawBelow(pool.length, rand32), 1)[0]);
   }
   const state = {
-    turn: 1, over: false, nextUid: 2 * ILIAC_DECK_SIZE,
+    turn: 1,
+    over: false,
+    nextUid: 2 * ILIAC_DECK_SIZE,
     holdings: held.map((id) => ({ id, sides: [[], []] })),
     players: decks.map((d, p) => ({
       // The cards' own shuffle, over the deck's places (its law deals integers): Fisher-Yates, each partner unbiased.
-      deck: shuffleDeck(rand32, d.map((_, i) => i)).map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + k, id: d[i] })),
-      hand: [], discard: [], magicka: 1, bonus: 0, plays: null,
+      deck: shuffleDeck(
+        rand32,
+        d.map((_, i) => i),
+      ).map((i, k) => ({ uid: p * ILIAC_DECK_SIZE + k, id: d[i] })),
+      hand: [],
+      discard: [],
+      magicka: 1,
+      bonus: 0,
+      plays: null,
     })),
   };
-  state.coin = drawBelow(2, rand32);   // AUDIT CARDS-5 A3: who reveals first in a tie - drawn after the shuffles, so no deal moves
+  state.coin = drawBelow(2, rand32); // AUDIT CARDS-5 A3: who reveals first in a tie - drawn after the shuffles, so no deal moves
   for (let p = 0; p < 2; p++) drawCards(state, p, ILIAC_HAND_START);
   return state;
 }
@@ -421,7 +511,8 @@ export function playsRefusal(state, player, plays) {
   const pl = state.players[player];
   if (pl.plays) return 'committed';
   if (!Array.isArray(plays) || plays.length > ILIAC_HAND_MAX) return 'shape';
-  const seen = new Set(), units = [0, 0, 0];
+  const seen = new Set(),
+    units = [0, 0, 0];
   let spend = 0;
   for (const x of plays) {
     if (!x || typeof x !== 'object' || !Number.isInteger(x.card) || !Number.isInteger(x.holding)) return 'shape';
@@ -429,7 +520,9 @@ export function playsRefusal(state, player, plays) {
     if (x.holding < 0 || x.holding >= ILIAC_HOLDINGS) return 'holding';
     seen.add(x.card);
     const card = cardById(pl.hand[x.card].id);
-    if (card.kind === 'spell') { if (noSpells(state, x.holding)) return 'spell'; } else units[x.holding]++;
+    if (card.kind === 'spell') {
+      if (noSpells(state, x.holding)) return 'spell';
+    } else units[x.holding]++;
     spend += costOf(state, player, card, x.holding);
   }
   if (spend > pl.magicka) return 'magicka';
@@ -446,7 +539,8 @@ export function legalPlays(state, player) {
   if (playsRefusal(state, player, []) !== null) return [];
   const out = [];
   state.players[player].hand.forEach((_, card) => {
-    for (let holding = 0; holding < ILIAC_HOLDINGS; holding++) if (playsRefusal(state, player, [{ card, holding }]) === null) out.push({ card, holding });
+    for (let holding = 0; holding < ILIAC_HOLDINGS; holding++)
+      if (playsRefusal(state, player, [{ card, holding }]) === null) out.push({ card, holding });
   });
   return out;
 }
@@ -474,14 +568,15 @@ function act(state, T, ctx, fx, src) {
   const ev = T.events;
   const n = fx.n ?? 1;
   switch (fx.do) {
-    case 'buff': case 'weaken': {
+    case 'buff':
+    case 'weaken': {
       const pw = powers(state);
       for (const r of select(state, ctx, fx, fx.pick ? pw : null)) {
         const before = r.inst.mod ?? 0;
         // a weaken takes from the power the card SHOWS, and stops at 0 (AUDIT CARDS-5 A1: it stopped at the card's own
         // power, so a buffed card lost less than its text said)
         const take = fx.do === 'weaken' ? Math.min(n, Math.max(0, pw[r.inst.uid] ?? 0)) : n;
-        if (!take) continue;   // AUDIT CARDS-5 A9: a card at 0 loses nothing, and nothing is said
+        if (!take) continue; // AUDIT CARDS-5 A9: a card at 0 loses nothing, and nothing is said
         r.inst.mod = fx.do === 'buff' ? before + n : before - take;
         ev.push({ t: fx.do, uid: r.inst.uid, n: take, src });
       }
@@ -501,7 +596,8 @@ function act(state, T, ctx, fx, src) {
       for (const uid of select(state, ctx, fx, pw).map((r) => r.inst.uid)) {
         const r = find(state, uid);
         let to = -1;
-        for (let k = 1; k < ILIAC_HOLDINGS && to < 0; k++) if (freeRoom(state, T, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0) to = (r.h + k) % ILIAC_HOLDINGS;
+        for (let k = 1; k < ILIAC_HOLDINGS && to < 0; k++)
+          if (freeRoom(state, T, r.p, (r.h + k) % ILIAC_HOLDINGS) > 0) to = (r.h + k) % ILIAC_HOLDINGS;
         if (to < 0) continue;
         state.holdings[r.h].sides[r.p].splice(r.i, 1);
         state.holdings[to].sides[r.p].push(r.inst);
@@ -526,20 +622,28 @@ function act(state, T, ctx, fx, src) {
       }
       return;
     }
-    case 'draw': ev.push({ t: 'draw', p: ctx.p, n: drawCards(state, ctx.p, n), src }); return;
-    case 'magicka': state.players[ctx.p].bonus += n; ev.push({ t: 'magicka', p: ctx.p, n, src }); return;
-    default: return;   // a holding's rule, or an ongoing verb: read where it bends, never acted
+    case 'draw':
+      ev.push({ t: 'draw', p: ctx.p, n: drawCards(state, ctx.p, n), src });
+      return;
+    case 'magicka':
+      state.players[ctx.p].bonus += n;
+      ev.push({ t: 'magicka', p: ctx.p, n, src });
+      return;
+    default:
+      return; // a holding's rule, or an ongoing verb: read where it bends, never acted
   }
 }
 
 /** The holding's own "After a card is revealed here" text, for the revealed card's owner. */
 function holdingReveal(state, T, p, h) {
-  for (const fx of holdingCard(state, h).fx) if (fx.on === 'reveal') act(state, T, { p, h, uid: null }, fx, { holding: h });
+  for (const fx of holdingCard(state, h).fx)
+    if (fx.on === 'reveal') act(state, T, { p, h, uid: null }, fx, { holding: h });
 }
 
 /** One committed play, landed and revealed. */
 function resolvePlay(state, T, p, inst, h) {
-  const card = cardById(inst.id), ev = T.events;
+  const card = cardById(inst.id),
+    ev = T.events;
   if (card.kind === 'spell') {
     ev.push({ t: 'play', p, uid: inst.uid, id: inst.id, holding: h, kind: card.kind });
     for (const fx of card.fx) if (fx.on === 'reveal') act(state, T, { p, h, uid: null }, fx, { uid: inst.uid });
@@ -554,13 +658,16 @@ function resolvePlay(state, T, p, inst, h) {
     // his own summons and moves leave room for his plays still landing. Kept so a broken promise costs a card's
     // play, never a card: it goes home to the hand. The random games pin that it never fires.
     state.players[p].hand.push(inst);
-    ev.push({ t: 'fizzle', p, uid: inst.uid, holding: h });   // AUDIT CARDS-5 A9: never the card's id - it goes back to a hidden hand
+    ev.push({ t: 'fizzle', p, uid: inst.uid, holding: h }); // AUDIT CARDS-5 A9: never the card's id - it goes back to a hidden hand
     return;
   }
   const down = veiled(state, h);
   const b = { uid: inst.uid, id: inst.id, mod: 0, ...(down ? { down: true } : {}) };
   state.holdings[h].sides[p].push(b);
-  if (down) { ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true }); return; }   // the other player is told a card, never which
+  if (down) {
+    ev.push({ t: 'play', p, uid: b.uid, holding: h, down: true });
+    return;
+  } // the other player is told a card, never which
   ev.push({ t: 'play', p, uid: b.uid, id: b.id, holding: h, kind: card.kind });
   for (const fx of card.fx) if (fx.on === 'reveal') act(state, T, { p, h, uid: b.uid }, fx, { uid: b.uid });
   holdingReveal(state, T, p, h);
@@ -575,7 +682,13 @@ function resolvePlay(state, T, p, inst, h) {
 export function reveal(state) {
   if (!state || state.over || !state.players[0].plays || !state.players[1].plays) return [];
   const order = revealOrder(state);
-  const T = { events: /** @type {any[]} */ ([{ t: 'order', first: order[0], turn: state.turn }]), res: [[0, 0, 0], [0, 0, 0]] };
+  const T = {
+    events: /** @type {any[]} */ ([{ t: 'order', first: order[0], turn: state.turn }]),
+    res: [
+      [0, 0, 0],
+      [0, 0, 0],
+    ],
+  };
   // Every play leaves the hand at once (the indices are the hand as it was committed), its room held for it.
   const landing = [0, 1].map((p) => {
     const pl = state.players[p];
@@ -588,7 +701,8 @@ export function reveal(state) {
   for (const p of order) for (const x of landing[p]) resolvePlay(state, T, p, x.inst, x.h);
   // THE END OF THE TURN: every face-up card's end text once (it may move on its way), then the holdings'.
   const uids = [];
-  for (let h = 0; h < ILIAC_HOLDINGS; h++) for (const p of order) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);
+  for (let h = 0; h < ILIAC_HOLDINGS; h++)
+    for (const p of order) for (const inst of state.holdings[h].sides[p]) uids.push(inst.uid);
   for (const uid of uids) {
     const at = find(state, uid);
     if (!at || at.inst.down) continue;
@@ -599,20 +713,33 @@ export function reveal(state) {
       act(state, T, { p: r.p, h: r.h, uid }, fx, { uid });
     }
   }
-  for (let h = 0; h < ILIAC_HOLDINGS; h++) for (const fx of holdingCard(state, h).fx) if (fx.on === 'end') act(state, T, { p: null, h, uid: null }, fx, { holding: h });
+  for (let h = 0; h < ILIAC_HOLDINGS; h++)
+    for (const fx of holdingCard(state, h).fx)
+      if (fx.on === 'end') act(state, T, { p: null, h, uid: null }, fx, { holding: h });
   for (const pl of state.players) pl.plays = null;
   if (state.turn >= ILIAC_TURNS) {
     const cards = [];
-    state.holdings.forEach((hd, h) => hd.sides.forEach((side, p) => side.forEach((inst) => {
-      if (inst.down) { delete inst.down; inst.unveiled = true; cards.push({ uid: inst.uid, id: inst.id, p, holding: h }); }
-    })));
+    state.holdings.forEach((hd, h) =>
+      hd.sides.forEach((side, p) =>
+        side.forEach((inst) => {
+          if (inst.down) {
+            delete inst.down;
+            inst.unveiled = true;
+            cards.push({ uid: inst.uid, id: inst.id, p, holding: h });
+          }
+        }),
+      ),
+    );
     if (cards.length) T.events.push({ t: 'unveil', cards });
     state.over = true;
     T.events.push({ t: 'over', result: result(state) });
     return T.events;
   }
   state.turn++;
-  for (const pl of state.players) { pl.magicka = Math.min(ILIAC_MAGICKA_MAX, state.turn + pl.bonus); pl.bonus = 0; }
+  for (const pl of state.players) {
+    pl.magicka = Math.min(ILIAC_MAGICKA_MAX, state.turn + pl.bonus);
+    pl.bonus = 0;
+  }
   T.events.push({ t: 'turn', turn: state.turn, magicka: state.players.map((pl) => pl.magicka) });
   for (const p of order) T.events.push({ t: 'drew', p, n: drawCards(state, p, 1) });
   return T.events;
@@ -631,8 +758,18 @@ export function result(state) {
   const held = [0, 1, 2].map((h) => (power[0][h] > power[1][h] ? 0 : power[1][h] > power[0][h] ? 1 : null));
   const total = power.map((row) => row.reduce((a, b) => a + b, 0));
   const count = [0, 1].map((p) => held.filter((x) => x === p).length);
-  let winner = null, by = 'draw';
-  if (count[0] >= 2) { winner = 0; by = 'holdings'; } else if (count[1] >= 2) { winner = 1; by = 'holdings'; } else if (total[0] !== total[1]) { winner = total[0] > total[1] ? 0 : 1; by = 'power'; }
+  let winner = null,
+    by = 'draw';
+  if (count[0] >= 2) {
+    winner = 0;
+    by = 'holdings';
+  } else if (count[1] >= 2) {
+    winner = 1;
+    by = 'holdings';
+  } else if (total[0] !== total[1]) {
+    winner = total[0] > total[1] ? 0 : 1;
+    by = 'power';
+  }
   return { winner, held, power, total, by };
 }
 
@@ -645,20 +782,42 @@ export function result(state) {
 export function iliacView(state, viewer) {
   const pw = powers(state);
   const seen = (p) => (inst) => !inst.down || p === viewer;
-  const cardView = (inst, p) => (seen(p)(inst)
-    ? { uid: inst.uid, id: inst.id, power: pw[inst.uid], mod: inst.mod ?? 0, ...(inst.form ? { form: inst.form } : {}), ...(inst.token ? { token: true } : {}), ...(inst.down ? { down: true } : {}) }
-    : { uid: inst.uid, down: true });
+  const cardView = (inst, p) =>
+    seen(p)(inst)
+      ? {
+          uid: inst.uid,
+          id: inst.id,
+          power: pw[inst.uid],
+          mod: inst.mod ?? 0,
+          ...(inst.form ? { form: inst.form } : {}),
+          ...(inst.token ? { token: true } : {}),
+          ...(inst.down ? { down: true } : {}),
+        }
+      : { uid: inst.uid, down: true };
   return {
-    viewer, turn: state.turn, turns: ILIAC_TURNS, over: state.over,
+    viewer,
+    turn: state.turn,
+    turns: ILIAC_TURNS,
+    over: state.over,
     holdings: state.holdings.map((hd, h) => ({
-      id: hd.id, room: holdingRoomOf(state, h),
+      id: hd.id,
+      room: holdingRoomOf(state, h),
       sides: hd.sides.map((side, p) => side.map((inst) => cardView(inst, p))),
       power: [0, 1].map((p) => sidePower(state, pw, h, p, seen(p))),
     })),
     players: state.players.map((pl, p) => ({
-      handCount: pl.hand.length, deckCount: pl.deck.length, magicka: pl.magicka, bonus: pl.bonus, committed: !!pl.plays,
+      handCount: pl.hand.length,
+      deckCount: pl.deck.length,
+      magicka: pl.magicka,
+      bonus: pl.bonus,
+      committed: !!pl.plays,
       discard: pl.discard.map((c) => ({ uid: c.uid, id: c.id })),
-      ...(p === viewer ? { hand: pl.hand.map((c) => ({ uid: c.uid, id: c.id })), plays: pl.plays ? pl.plays.map((x) => ({ ...x })) : null } : {}),
+      ...(p === viewer
+        ? {
+            hand: pl.hand.map((c) => ({ uid: c.uid, id: c.id })),
+            plays: pl.plays ? pl.plays.map((x) => ({ ...x })) : null,
+          }
+        : {}),
     })),
     result: result(state),
   };

@@ -55,18 +55,18 @@
   },
   {
     "name": "ACT-CLICK-the-click-left-out",
-    "file": "src/scenes/world.js",
-    "old": "attack: pressed(latch.edge, keys, 'SwingWeapon') || pressed(latch.edge, keys, 'ActivateCenterObject'),",
-    "new": "attack: pressed(latch.edge, keys, 'SwingWeapon'),",
+    "file": "src/scenes/professionsHost.js",
+    "old": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || pressed(host.latch.edge, host.keys, 'ActivateCenterObject'),",
+    "new": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon'),",
     "tests": [
       "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
     "name": "ACT-CLICK-the-hold-read-for-the-press",
-    "file": "src/scenes/world.js",
-    "old": "attack: pressed(latch.edge, keys, 'SwingWeapon') || pressed(latch.edge, keys, 'ActivateCenterObject'),",
-    "new": "attack: pressed(latch.edge, keys, 'SwingWeapon') || held(keys, 'ActivateCenterObject'),",
+    "file": "src/scenes/professionsHost.js",
+    "old": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || pressed(host.latch.edge, host.keys, 'ActivateCenterObject'),",
+    "new": "attack: pressed(host.latch.edge, host.keys, 'SwingWeapon') || held(host.keys, 'ActivateCenterObject'),",
     "tests": [
       "test/scenes/fb1001_mining.test.js"
     ]

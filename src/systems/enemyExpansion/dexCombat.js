@@ -13,11 +13,18 @@
 // GetCustomProperties is; the group and the language read the fifty alone, as the C#'s `customEnemies` lookup does.
 
 import { runMonsterHitArm, CLASSIC_HIT_ARM, MONSTER_HIT_ARMS } from '../diseases.js';
-import { ENEMY_GROUPS, SKELETAL_WARRIOR_INDEX } from '../../combat/formulas.js';   // the career's number, the ID the mod compares (MonsterCareers.SkeletalWarrior)
+import { ENEMY_GROUPS, SKELETAL_WARRIOR_INDEX } from '../../combat/formulas.js'; // the career's number, the ID the mod compares (MonsterCareers.SkeletalWarrior)
 import { CAREER_SKILLS } from './dexTables.js';
 
 /** BestiaryEnemySpells (BestiaryEnemySpells.cs): the spells the mod's own arms ready, by arm. */
-export const DEX_HIT_SPELLS = Object.freeze(new Map([[10, 500], [11, 23], [12, 501], [13, 502]]));
+export const DEX_HIT_SPELLS = Object.freeze(
+  new Map([
+    [10, 500],
+    [11, 23],
+    [12, 501],
+    [13, 502],
+  ]),
+);
 
 /** OnMonsterHit's override: `propsOf(mobileType)` the row's properties. The attacker's id is the C#'s
  *  `attacker.MobileEnemy.ID` (a classic monster's is its career). */
@@ -26,9 +33,12 @@ export function createDexMonsterHit(propsOf) {
     const customEffect = propsOf(attacker.mobileType)?.onHitEffect ?? 0;
     const classicArm = CLASSIC_HIT_ARM[attacker.mobileType] ?? 0;
     for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {
-      if (classicArm === arm || customEffect === arm) { runMonsterHitArm(arm, attacker, target, damage, deps); return; }
+      if (classicArm === arm || customEffect === arm) {
+        runMonsterHitArm(arm, attacker, target, damage, deps);
+        return;
+      }
     }
-    const spell = DEX_HIT_SPELLS.get(customEffect);   // "Custom effects start at 10"
+    const spell = DEX_HIT_SPELLS.get(customEffect); // "Custom effects start at 10"
     if (spell != null) deps.readySpell?.(spell);
   };
 }
@@ -43,12 +53,22 @@ export function createDexCombatDoors(enemies, propsOf) {
     /** registerSkeletalTarget, the override's whole test (:1593-1601): the Skeletal Warrior by its ID - not its career, so
      *  no class rides its slot (AUDIT DEX C2) - or a row whose Affinity cell read `Skeletal` (dexTables.js), the
      *  classic's or a mod id's. */
-    skeletal: (target) => target?.mobileType === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,
+    skeletal: (target) =>
+      target?.mobileType === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,
     /** registerEnemyGroup: the fifty's row (a mod's career index is its id), null for DFU's switch. */
-    group: (careerIndex) => { const e = enemies.get(careerIndex); return e ? valueOf(ENEMY_GROUPS, e.props.group) : null; },
+    group: (careerIndex) => {
+      const e = enemies.get(careerIndex);
+      return e ? valueOf(ENEMY_GROUPS, e.props.group) : null;
+    },
     /** registerEnemyLanguage: the fifty's row, null for DFU's. */
-    language: (entity) => { const e = enemies.get(entity?.mobileType); return e ? valueOf(CAREER_SKILLS, e.props.language) : null; },
+    language: (entity) => {
+      const e = enemies.get(entity?.mobileType);
+      return e ? valueOf(CAREER_SKILLS, e.props.language) : null;
+    },
     /** registerForcedGender: DFBlock.EnemyGenders' Male or Female over the unit's. */
-    gender: (mobileType) => { const g = propsOf(mobileType)?.forcedGender; return g === 'Male' ? 'male' : g === 'Female' ? 'female' : null; },
+    gender: (mobileType) => {
+      const g = propsOf(mobileType)?.forcedGender;
+      return g === 'Male' ? 'male' : g === 'Female' ? 'female' : null;
+    },
   };
 }

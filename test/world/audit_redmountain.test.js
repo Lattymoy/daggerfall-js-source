@@ -127,10 +127,11 @@ test('AUDIT RED-MOUNTAIN F4/F6: one haze in both draws, the far ring\'s own (its
   // both draws hand the same haze; the far its split and no depth, the near its box and no split
   const { gl, calls } = recordingGl();
   const pass = { eye: [0, 0, 0], fog: { color: [0.5, 0.5, 0.5], start: 1000, end: 3200 }, rim: [18000, 30000], hold: 0.85, ringOrigin: [0, -1500, 0], summitFrom: 3500, worldFar: 4000, depth: new Float32Array([-1, -2, 3, 4]) };
-  const U = Object.fromEntries(['uVP', 'uEye', 'uCone', 'uDepth', 'uFogColor', 'uHaze', 'uHold', 'uSplit'].map((n) => [n, { name: n }]));
+  const U = Object.fromEntries(['uVP', 'uEye', 'uCone', 'uDepth', 'uFogColor', 'uHaze', 'uHold', 'uFogLaw', 'uHazeFrom', 'uSplit'].map((n) => [n, { name: n }]));   // PIN MOVED (AUDIT FB1031 II G1): the weather's law and the haze's point
   const of = (isFar) => { calls.length = 0; setFireCommon(gl, U, pass, isFar, new Float32Array(16), null); return Object.fromEntries(calls.map((c) => [c[1].name, c.slice(2)])); };
   const far = of(true), near = of(false);
   assert.deepEqual(far.uHaze, near.uHaze); assert.deepEqual(far.uHold, near.uHold);
+  assert.deepEqual(far.uFogLaw, near.uFogLaw); assert.deepEqual(far.uHazeFrom, near.uHazeFrom);
   assert.deepEqual(far.uHaze, [1000, 3200, 18000, 30000]); assert.deepEqual(far.uHold, [0.85, -1500, 3500]);
   assert.deepEqual(far.uSplit, [4000]); assert.deepEqual(near.uSplit, [0]);
   assert.deepEqual(far.uDepth, [1, 1, -1, -1], 'the far draw: no depth anywhere'); assert.deepEqual(near.uDepth, [-1, -2, 3, 4]);
@@ -256,7 +257,7 @@ test('AUDIT RED-MOUNTAIN N2: the Ghostfence\'s glow drawn after the water and th
   const w = read('src/scenes/world.js');
   assert.ok(w.indexOf('frameRing();') < w.indexOf('frameWater();') && w.indexOf('frameWater();') < w.indexOf('renderer.drawBillboards(allBatches, camRight, bbUp);'), 'the ring, the water, the flats');
   const g = read('src/render/ghostfenceGlow.js');
-  assert.match(g, /gl\.depthMask\(true\); gl\.depthFunc\(gl\.LESS\); gl\.enable\(gl\.CULL_FACE\);/);
+  assert.match(g, /gl\.depthMask\(true\);\n\s*gl\.depthFunc\(gl\.LESS\);\n\s*gl\.enable\(gl\.CULL_FACE\);/);
 });
 
 // ── THE FENCE'S LAW AND THE LAND (G, L) ───────────────────────────

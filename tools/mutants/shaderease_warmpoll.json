@@ -32,8 +32,8 @@
   {
     "name": "SE-an-ocean-holes-pair-missed",
     "file": "src/render/oceanHolesRender.js",
-    "old": "(Object.freeze([[DISC_VS, DISC_FS], [MIASMA_VS, MIASMA_FS]]));",
-    "new": "(Object.freeze([[DISC_VS, DISC_FS]]));",
+    "old": "  Object.freeze([\n    [DISC_VS, DISC_FS],\n    [MIASMA_VS, MIASMA_FS],\n  ])",
+    "new": "  Object.freeze([[DISC_VS, DISC_FS]])",
     "tests": [
       "test/render/shaderease.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SE-ocean-holes-built-at-once",
     "file": "src/render/oceanHolesRender.js",
-    "old": "    return [{ start: () => startPrograms(this.gl, OCEAN_HOLES_PROGRAMS), run:",
-    "new": "    return [{ start: () => () => true, run:",
+    "old": "        start: () => startPrograms(this.gl, OCEAN_HOLES_PROGRAMS),",
+    "new": "        start: () => () => true,",
     "tests": [
       "test/render/shaderease.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SE-the-lab-never-started",
     "file": "src/render/precipitation.js",
-    "old": "  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS]);\n",
-    "new": "",
+    "old": "  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS]);\n  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
+    "new": "  if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);",
     "tests": [
       "test/render/shaderease.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SE-rain-built-over-the-weathers",
     "file": "src/render/precipitation.js",
-    "old": "run: () => { if (!get()) set(new PrecipitationRenderer(gl, opts)); }",
-    "new": "run: () => { set(new PrecipitationRenderer(gl, opts)); }",
+    "old": "      if (!get()) set(new PrecipitationRenderer(gl, opts));",
+    "new": "      set(new PrecipitationRenderer(gl, opts));",
     "tests": [
       "test/render/shaderease.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SE-rain-need-never-false",
     "file": "src/render/precipitation.js",
-    "old": "}, need: () => !get() };",
-    "new": "}, need: () => true };",
+    "old": "    need: () => !get(),",
+    "new": "    need: () => true,",
     "tests": [
       "test/render/shaderease.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LW-started-never-true",
     "file": "src/render/glProgram.js",
-    "old": "started: !!took?.prog };",
-    "new": "started: false };",
+    "old": "    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };",
+    "new": "    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: false };",
     "tests": [
       "test/render/shaderease.test.js"
     ],

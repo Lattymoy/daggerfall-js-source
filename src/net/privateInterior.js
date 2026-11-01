@@ -22,7 +22,10 @@ export function caravanKeyOf(key) {
 }
 /** The first `bytes` of SHA-256 over `s`, in hex. INSTANCES: exported - an instance room's owner and epoch are digests
  *  too (net/instanceRoom.js), one hash for the family. */
-export const digest = async (s, bytes) => [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))).slice(0, bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+export const digest = async (s, bytes) =>
+  [...new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))).slice(0, bytes)]
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 
 export async function privateInteriorPrefix(account, character) {
   if (!identity(account) || !identity(character)) return null;
@@ -32,7 +35,8 @@ export async function privateInteriorPrefix(account, character) {
 }
 
 export function privateInteriorRoom(prefix, mapId, buildingKey) {
-  if (!PREFIX.test(prefix ?? '') || !Number.isInteger(mapId) || !Number.isInteger(buildingKey) || !buildingKey) return null;
+  if (!PREFIX.test(prefix ?? '') || !Number.isInteger(mapId) || !Number.isInteger(buildingKey) || !buildingKey)
+    return null;
   return `${prefix}:${mapId >>> 0}.${buildingKey >>> 0}`;
 }
 
@@ -42,7 +46,7 @@ export function privateBoatRoom(prefix, uid) {
 
 export function privateInteriorOf(key) {
   const cv = caravanKeyOf(key);
-  if (cv) return { caravan: cv };   // WAGONS2-VISIT: a caravan's room is one of the family - its poses MapsFile's (world.js nativeFrame, online.js nativePoseRoom)
+  if (cv) return { caravan: cv }; // WAGONS2-VISIT: a caravan's room is one of the family - its poses MapsFile's (world.js nativeFrame, online.js nativePoseRoom)
   const b = typeof key === 'string' && BOAT_ROOM.exec(key);
   if (b && Number.isSafeInteger(+b[3])) return { owner: b[1], character: b[2], boatUid: +b[3] };
   const m = typeof key === 'string' && ROOM.exec(key);
@@ -52,12 +56,18 @@ export function privateInteriorOf(key) {
 
 export function privateInteriorMatches(key, mapId, buildingKey) {
   const r = privateInteriorOf(key);
-  return !!r && Number.isInteger(mapId) && Number.isInteger(buildingKey) && r.mapId === (mapId >>> 0) && r.buildingKey === (buildingKey >>> 0);
+  return (
+    !!r &&
+    Number.isInteger(mapId) &&
+    Number.isInteger(buildingKey) &&
+    r.mapId === mapId >>> 0 &&
+    r.buildingKey === buildingKey >>> 0
+  );
 }
 
 /** `subject` and `staff` must come from the relay's verified token, never hello fields. */
 export async function privateInteriorAdmits(key, subject, staff) {
   const r = privateInteriorOf(key);
   if (!r || !identity(subject)) return false;
-  return staff || r.owner === await digest(`private-interior:account:${subject}`, 16);
+  return staff || r.owner === (await digest(`private-interior:account:${subject}`, 16));
 }

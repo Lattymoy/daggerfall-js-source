@@ -1,4 +1,4 @@
-// WG2 PROVINCES IN TILES (bible/03-World/World-2-Canon.md, "Tiles"): each of the nine provinces cut into tiles on one
+// WG2 PROVINCES IN TILES ("Tiles"): each of the nine provinces cut into tiles on one
 // world lattice that hold all its land; two neighbouring tiles baked apart crossfade across their overlap - their
 // shares sum to one, the ground runs on without a step, a lone region's overlap is still refused - and the manifest
 // takes tiles of one tiling over each other's bands alone. Pins mutation-checked (tools/mutants/wg2.json).

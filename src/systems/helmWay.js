@@ -32,7 +32,14 @@
 //   - A HULL WITH NO CARGO NODE carries the largest hold the mod gave any hull (CARGO_HOLD_MISSING, the Large Galley's).
 //   - SAIL-FREE (below): her way under sail is her canvas by the point of sail, at her own pace (SAIL_FREE).
 
-export const HELM_WAY = Object.freeze({ sailAccel: 3.5, coast: 3, turnAccelSail: 2.4, steerFloor: 3, steerPeak: 14, steerPeakV: 4.5 });
+export const HELM_WAY = Object.freeze({
+  sailAccel: 3.5,
+  coast: 3,
+  turnAccelSail: 2.4,
+  steerFloor: 3,
+  steerPeak: 14,
+  steerPeakV: 4.5,
+});
 
 /**
  * SAIL-FREE (DECLARED, the Port-Ledger's own SAIL-FREE row - AUDIT SHIPS D10; 2026-10-05, Mac: "Currently its too hard
@@ -68,10 +75,10 @@ export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1.643 });
  * on the runtime and pinned there (test/systems/auditships_sail.test.js): a rig whose drive moves moves them.
  */
 export const SAIL_FREE_GAINS = Object.freeze({
-  1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),   // the Large Boat's seven rigs
-  2: Object.freeze([SAIL_FREE.gain]),   // the Small Ship (Mac's galleon)
-  3: Object.freeze([2.131]),            // the Large Galley
-  4: Object.freeze([1.798]),            // the Carrack
+  1: Object.freeze([1.065, 1.159, 2.071, 1.19, 1.233, 1.212, 2.131]), // the Large Boat's seven rigs
+  2: Object.freeze([SAIL_FREE.gain]), // the Small Ship (Mac's galleon)
+  3: Object.freeze([2.131]), // the Large Galley
+  4: Object.freeze([1.798]), // the Carrack
 });
 /** AUDIT SHIPS A5: a boat's gain (SAIL_FREE_GAINS) - her hull's first rig's for a variant it lacks; 1 for a hull with no
  *  sails (the rowboat). */

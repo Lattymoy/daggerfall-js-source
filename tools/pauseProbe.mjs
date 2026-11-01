@@ -14,7 +14,10 @@ await page.goto('http://localhost:5209/play/?nomenu&class=0&novideo&shot&play');
 await page.waitForFunction(() => window.__frame > 5, { timeout: 120000 });
 const frames = async (n) => {
   const f0 = await page.evaluate(() => window.__frame ?? 0);
-  for (let i = 0; i < 100; i++) { await page.waitForTimeout(150); if (await page.evaluate(() => window.__frame ?? 0) >= f0 + n) break; }
+  for (let i = 0; i < 100; i++) {
+    await page.waitForTimeout(150);
+    if ((await page.evaluate(() => window.__frame ?? 0)) >= f0 + n) break;
+  }
 };
 await frames(5);
 const overlay = () => page.evaluate(() => JSON.parse(window.__overlay() ?? 'null'));
@@ -40,7 +43,9 @@ out.steps.declined = await overlay();
 await page.keyboard.press('Escape');
 await frames(2);
 out.steps.closed = await overlay();
-out.steps.sound = await page.evaluate(() => JSON.parse(localStorage.getItem('dagger.settings.v1') ?? '{}').Controls?.SoundVolume ?? null);
+out.steps.sound = await page.evaluate(
+  () => JSON.parse(localStorage.getItem('dagger.settings.v1') ?? '{}').Controls?.SoundVolume ?? null,
+);
 // and reopens
 await page.keyboard.press('Escape');
 await frames(2);
@@ -52,53 +57,71 @@ out.steps.reopened = await overlay();
 await page.evaluate(() => window.__overlayClick(85 + 5 + 2, 40 + 60 + 2));
 await frames(2);
 out.steps.controls = await overlay();
-await page.evaluate(() => window.__overlayClick(57 + 2, 13 + 2));   // MoveForwards
+await page.evaluate(() => window.__overlayClick(57 + 2, 13 + 2)); // MoveForwards
 await frames(1);
 await page.evaluate(() => window.__overlayKey('KeyP'));
 await frames(1);
-await page.evaluate(() => window.__overlayClick(240 + 2, 190 + 2));  // CONTINUE
+await page.evaluate(() => window.__overlayClick(240 + 2, 190 + 2)); // CONTINUE
 await frames(2);
 out.steps.backToPause = await overlay();
-out.steps.rebound = await page.evaluate(() => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyP ?? null);
-out.steps.oldGone = await page.evaluate(() => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyW ?? null);
+out.steps.rebound = await page.evaluate(
+  () => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyP ?? null,
+);
+out.steps.oldGone = await page.evaluate(
+  () => JSON.parse(localStorage.getItem('dagger.keybinds') ?? '{}').actionKeyBinds?.KeyW ?? null,
+);
 // U37: the tooltip, live. Rebind MoveForwards to a code whose label
 // ELONGATES, hover it, and read the tip through the window.
-await page.evaluate(() => window.__overlayClick(85 + 5 + 2, 40 + 60 + 2));   // CONTROLS again
+await page.evaluate(() => window.__overlayClick(85 + 5 + 2, 40 + 60 + 2)); // CONTROLS again
 await frames(2);
 out.steps.tipShort = await page.evaluate(() => {
   const w = window.__overlayWindow?.();
-  w?.hover?.(57 + 2, 13 + 2); w?.tick?.(1);
+  w?.hover?.(57 + 2, 13 + 2);
+  w?.tick?.(1);
   return w?.tip?.text ?? null;
 });
 await page.evaluate(async () => {
   const cc = await import('/src/systems/controlsConfig.js');
   const w = window.__overlayWindow();
   cc.setUnsavedBinding(w.unsaved, 'MoveForwards', 'SomethingVeryLongIndeed');
-  w.hover(57 + 2, 13 + 2); w.tick(1);
+  w.hover(57 + 2, 13 + 2);
+  w.tick(1);
 });
 out.steps.tipLong = await page.evaluate(() => window.__overlayWindow()?.tip?.text ?? null);
-await page.evaluate(() => { const w = window.__overlayWindow(); w.hover(-1, -1); w.tick(1); });
+await page.evaluate(() => {
+  const w = window.__overlayWindow();
+  w.hover(-1, -1);
+  w.tick(1);
+});
 out.steps.tipGone = await page.evaluate(() => window.__overlayWindow()?.tip?.text ?? null);
 await page.keyboard.press('Escape');
 await frames(2);
 await page.keyboard.press('Escape');
 await frames(2);
 
-out.ok = !!(out.steps.boot === null
-  && out.steps.open && out.steps.open.kind === 'PauseOptionsWindow'
-  && out.steps.sound === '0.25'
-  && out.steps.declined && out.steps.declined.kind === 'PauseOptionsWindow'
-  && out.steps.closed === null
-  && out.steps.reopened && out.steps.reopened.kind === 'PauseOptionsWindow'
-  && out.steps.controls && out.steps.controls.kind === 'ControlsWindow'
-  && out.steps.backToPause && out.steps.backToPause.kind === 'PauseOptionsWindow'
-  && out.steps.rebound === 'MoveForwards'
-  && out.steps.oldGone === null
-  && out.steps.tipShort === null
-  && out.steps.tipLong === 'Something Very Long Indeed'
-  && out.steps.tipGone === null
-  && errors.length === 0);
+out.ok = !!(
+  out.steps.boot === null &&
+  out.steps.open &&
+  out.steps.open.kind === 'PauseOptionsWindow' &&
+  out.steps.sound === '0.25' &&
+  out.steps.declined &&
+  out.steps.declined.kind === 'PauseOptionsWindow' &&
+  out.steps.closed === null &&
+  out.steps.reopened &&
+  out.steps.reopened.kind === 'PauseOptionsWindow' &&
+  out.steps.controls &&
+  out.steps.controls.kind === 'ControlsWindow' &&
+  out.steps.backToPause &&
+  out.steps.backToPause.kind === 'PauseOptionsWindow' &&
+  out.steps.rebound === 'MoveForwards' &&
+  out.steps.oldGone === null &&
+  out.steps.tipShort === null &&
+  out.steps.tipLong === 'Something Very Long Indeed' &&
+  out.steps.tipGone === null &&
+  errors.length === 0
+);
 out.errors = errors.slice(0, 6);
 console.log(JSON.stringify(out, null, 2));
-await browser.close(); await server.close();
+await browser.close();
+await server.close();
 process.exit(out.ok ? 0 : 1);

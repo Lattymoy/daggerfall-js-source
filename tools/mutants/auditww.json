@@ -146,8 +146,8 @@
   {
     "name": "AUDITWW-F5-the-rites-line",
     "file": "src/scenes/riteHost.js",
-    "old": "say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }), C.day);",
-    "new": "say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }));",
+    "old": "        say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }), C.day);",
+    "new": "        say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }));",
     "tests": [
       "test/world/worldWide/auditww.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDITWW-F9-the-band-over-the-border",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "!inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;",
-    "new": "inBay(px, py) || !inWorldGrid(px, py)) continue;",
+    "old": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue; // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)",
+    "new": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : inBay(px, py) || !inWorldGrid(px, py)) continue; // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]

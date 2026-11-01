@@ -218,7 +218,7 @@ test('DW1 spellings: the worker is spelled the way the bundler reads, imports on
   assert.match(client, /new Worker\(new URL\('\.\/unityBundleWorker\.js', import\.meta\.url\), \{ type: 'module' \}\)/, 'the literal spelling Vite bundles');
   assert.equal((client.match(/new Worker\(new URL\('\.\//g) ?? []).length, 1, 'spelled once');
   // DFMOD2: bytes still cross as a copy with the buffer transferred; a Blob crosses as the handle it is (read by range)
-  assert.match(client, /const copy = bytes\.slice\(\); opened = await ask\(\{ t: 'open', bytes: copy, maxTextureSize, knownTextures \}, \[copy\.buffer\]\);/, 'a copy crosses, its buffer transferred');
+  assert.match(client, /const copy = bytes\.slice\(\);\n\s*opened = await ask\(\{ t: 'open', bytes: copy, maxTextureSize, knownTextures \}, \[copy\.buffer\]\);/, 'a copy crosses, its buffer transferred');
   assert.match(client, /if \(isBlob\) opened = await ask\(\{ t: 'open', blob: bytes, maxTextureSize, knownTextures \}\);/, 'a Blob crosses whole, never read here');
   const worker = rd('src/formats/unity/unityBundleWorker.js');
   const imports = [...worker.matchAll(/^import .* from '([^']+)';/gm)].map((m) => m[1]);
@@ -227,8 +227,8 @@ test('DW1 spellings: the worker is spelled the way the bundler reads, imports on
   const door = rd('src/combat/diverseWeapons/diverseWeaponsAssets.js');
   assert.match(door, /import \{ openUnityBundle \} from '\.\.\/\.\.\/formats\/unity\/unityBundleClient\.js';/);
   assert.ok(!/readUnityBundle/.test(door), 'the door never opens on this thread itself');
-  assert.match(door, /const img = await b\.bundle\.rgba\(name\); if \(img\) return toScreenOrder\(img\);/, 'rows kept on this side of the wire (DWHD1)');
-  assert.match(door, /if \(!manifest\) \{ bundle\.close\(\); continue; \}/, 'a bundle that is not a mod is closed, not leaked');
+  assert.match(door, /const img = await b\.bundle\.rgba\(name\);\n\s*if \(img\) return toScreenOrder\(img\);/, 'rows kept on this side of the wire (DWHD1)');
+  assert.match(door, /if \(!manifest\) \{\n\s*bundle\.close\(\);\n\s*continue;\n\s*\}/, 'a bundle that is not a mod is closed, not leaked');
   // Weapon Widget's small bundle keeps its own in-thread door - nothing here reached into it
   assert.match(rd('src/combat/weapon/weaponWidgetAssets.js'), /readUnityBundle\(/);
 });

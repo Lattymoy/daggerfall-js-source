@@ -17,11 +17,32 @@
 // silent rather than naming nowhere.
 //
 // Not a DFU member. Ledger A (WB).
-import { gateAt, gateBaseMinute, gatePhase, gateCountdown, countdownText, countdownWords, gateMarked, gateStands, gateBossOf, gateModsOf, riseLine, wrathLine, marksLine, gatePortentsOf, portentsLine, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_COLLAPSE_MS, PIXEL_M } from '../../net/gate/gateLaw.js';
-import { gateModsWords, gatePortentsWords } from '../../net/gate/gateMods.js';   // WB8c: tonight's marks on the card
+import {
+  gateAt,
+  gateBaseMinute,
+  gatePhase,
+  gateCountdown,
+  countdownText,
+  countdownWords,
+  gateMarked,
+  gateStands,
+  gateBossOf,
+  gateModsOf,
+  riseLine,
+  wrathLine,
+  marksLine,
+  gatePortentsOf,
+  portentsLine,
+  GATE_OPEN_MINUTE,
+  GATE_SEAL_MINUTE,
+  GATE_WRATH_MINUTE,
+  GATE_COLLAPSE_MS,
+  PIXEL_M,
+} from '../../net/gate/gateLaw.js';
+import { gateModsWords, gatePortentsWords } from '../../net/gate/gateMods.js'; // WB8c: tonight's marks on the card
 import { GATE_TOWN_MAX_PX } from './gateSite.js';
-import { t } from '../textManager.js';   // GATE-COURTS: a court's kill in the player's language (L10N4)
-import { RITE_OMEN_LINE, cageStands } from '../../net/gate/gateRite.js';   // BROKER-CAGE: the Broker's cage, omen to midnight
+import { t } from '../textManager.js'; // GATE-COURTS: a court's kill in the player's language (L10N4)
+import { RITE_OMEN_LINE, cageStands } from '../../net/gate/gateRite.js'; // BROKER-CAGE: the Broker's cage, omen to midnight
 
 // TIME1 (bible/06-Systems/Online-Time-Arc.md section 7): THE GATE SAYS REAL TIMES ALONE. Its schedule is the EVENT
 // clock's (net/gate/gateLaw.js, unchanged: a gate every two real hours, its phases the same real minutes), and the sky the
@@ -30,15 +51,19 @@ import { RITE_OMEN_LINE, cageStands } from '../../net/gate/gateRite.js';   // BR
 // (WB13b). gateLaw.js's own three, in the relay's bundle, retired with WB12's relay deploy (world151), the one that
 // happened anyway; the rise, the wrath and the marks name no time and are still its.
 /** The omen: where, and when it opens - local time. */
-export const omenTimeLine = ({ place, at }) => `The sky burns near ${place}. Dagon's faithful open a breach at ${at} your time.`;
+export const omenTimeLine = ({ place, at }) =>
+  `The sky burns near ${place}. Dagon's faithful open a breach at ${at} your time.`;
 /** The opening: when the Covenant seals it - local time. */
-export const openTimeLine = ({ near, at }) => `Dagon's Breach near ${near} is open. The Covenant seals it at ${at} your time.`;
+export const openTimeLine = ({ near, at }) =>
+  `Dagon's Breach near ${near} is open. The Covenant seals it at ${at} your time.`;
 /** The seal: when it collapses - local time (GATE-COLLAPSE). */
-export const sealTimeLine = ({ near, at }) => `The Covenant has sealed Dagon's Breach near ${near}. It collapses at ${at} your time.`;
+export const sealTimeLine = ({ near, at }) =>
+  `The Covenant has sealed Dagon's Breach near ${near}. It collapses at ${at} your time.`;
 
 /** Is map pixel (px, py) within the omen's ring, give or take `slack` pixels? The compass carries the gate only here:
  *  inside the area the map drew, where the player has come looking. */
-export const insideGateRing = (mark, px, py, slack = 1) => !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r + slack;
+export const insideGateRing = (mark, px, py, slack = 1) =>
+  !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r + slack;
 /** The gate's spot in the SCENE's x/z: its pixel's translation (the streaming host's `pixelTranslation`, the pixel's
  *  south-west corner) plus the spot, [east, north] metres - spawned dungeons' own sum (scenes/world.js, the sight line). */
 export const gateSceneXZ = (standing, t) => [t[0] + standing.spot[0], t[2] + standing.spot[1]];
@@ -70,7 +95,10 @@ export const GATE_SKY_EDGE_M = 12_000;
  *  itself, far ones over the land round it (world/dreadSky.js dreadStrikes' ring). */
 export const GATE_STORM_RING = Object.freeze({ salt: 0x6a7e5b1d, near: 120, split: 1400, far: 4500, nearShare: 0.55 });
 
-const smooth01 = (x) => { const k = Math.max(0, Math.min(1, x)); return k * k * (3 - 2 * k); };
+const smooth01 = (x) => {
+  const k = Math.max(0, Math.min(1, x));
+  return k * k * (3 - 2 * k);
+};
 
 /**
  * How much the sky burns over a gate at `nowMs`, 0..1, by its life alone (its times `t`, the relay's word of its fall).
@@ -82,11 +110,18 @@ const smooth01 = (x) => { const k = Math.max(0, Math.min(1, x)); return k * k * 
 export function gateSkyPhaseWeight(t, nowMs, fellAt = null) {
   if (!t || !Number.isFinite(nowMs) || nowMs < t.omenAt) return 0;
   if (nowMs < t.riseAt) {
-    return GATE_SKY_KINDLE * smooth01((nowMs - t.omenAt) / GATE_SKY_KINDLE_MS) + (GATE_SKY_OMEN - GATE_SKY_KINDLE) * smooth01((nowMs - t.omenAt) / (t.riseAt - t.omenAt));
+    return (
+      GATE_SKY_KINDLE * smooth01((nowMs - t.omenAt) / GATE_SKY_KINDLE_MS) +
+      (GATE_SKY_OMEN - GATE_SKY_KINDLE) * smooth01((nowMs - t.omenAt) / (t.riseAt - t.omenAt))
+    );
   }
-  if (nowMs < t.openAt) return GATE_SKY_OMEN + (GATE_SKY_RISEN - GATE_SKY_OMEN) * smooth01((nowMs - t.riseAt) / (t.openAt - t.riseAt));
-  const end = Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt ? Math.min(/** @type {number} */ (fellAt), t.wrathAt) : t.wrathAt;
-  const whole = GATE_SKY_RISEN + (1 - GATE_SKY_RISEN) * smooth01((nowMs - t.openAt) / GATE_SKY_KINDLE_MS);   // the opening burns it whole
+  if (nowMs < t.openAt)
+    return GATE_SKY_OMEN + (GATE_SKY_RISEN - GATE_SKY_OMEN) * smooth01((nowMs - t.riseAt) / (t.openAt - t.riseAt));
+  const end =
+    Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt
+      ? Math.min(/** @type {number} */ (fellAt), t.wrathAt)
+      : t.wrathAt;
+  const whole = GATE_SKY_RISEN + (1 - GATE_SKY_RISEN) * smooth01((nowMs - t.openAt) / GATE_SKY_KINDLE_MS); // the opening burns it whole
   if (nowMs < end) return whole;
   return whole * (1 - smooth01((nowMs - end) / GATE_COLLAPSE_MS));
 }
@@ -105,15 +140,24 @@ export const gateSkyWeight = (t, nowMs, fellAt, distM) => gateSkyPhaseWeight(t, 
  *  the seal where every court has won; a hub that missed it is told again GATE_TELL_RETRY_MS on, net/wire.js). */
 export const SEAL_SAY_HOLD_MS = 6_000;
 /** WB3b: the kill, said to everyone online (the hub's word): who stood where, and who struck hardest. */
-export const fellLine = ({ near, boss, top }) => `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`;   // WB13b: "in the wilds" where this screen never found the site, as Discord says it
+export const fellLine = ({ near, boss, top }) =>
+  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: "in the wilds" where this screen never found the site, as Discord says it
 /** GATE-COURTS (net/gate/gateCourts.js): a court's kill, said to everyone online (the hub's `cf`) - its court by its number
  *  (the first is 1), where, and who struck hardest; no collapse - the breach stands for the night's other courts until
  *  every one is done (the night's own `fell`). In the player's language. */
 export const courtFellLine = ({ near, boss, top, c = 0 }) => {
   const args = { boss, court: c + 1, near: near ?? '', by: (top ?? []).join(', '), struck: top?.length ? 'yes' : 'no' };
   return near
-    ? t('net.gate.courtFell', "{boss} has fallen in court {court} of Dagon's Breach near {near}{struck, select, yes {, struck down by {by}} other {}}.", args)
-    : t('net.gate.courtFellWilds', "{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}.", args);
+    ? t(
+        'net.gate.courtFell',
+        "{boss} has fallen in court {court} of Dagon's Breach near {near}{struck, select, yes {, struck down by {by}} other {}}.",
+        args,
+      )
+    : t(
+        'net.gate.courtFellWilds',
+        "{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}.",
+        args,
+      );
 };
 
 /**
@@ -127,10 +171,25 @@ export const courtFellLine = ({ near, boss, top, c = 0 }) => {
  */
 export function gateTip(c, cd, fell = null, boss = gateBossOf(c.t.day)) {
   const when = cd
-    ? (cd.to === 'open' ? `Opens in ${countdownText(cd.ms)}` : cd.to === 'seal' ? `Open. Seals in ${countdownText(cd.ms)}` : `Sealed. Collapses in ${countdownText(cd.ms)}`)
-    : (c.phase === 'collapsing' ? 'Collapsing' : null);
-  const pt = gatePortentsWords(gatePortentsOf(c.t.day));   // WB14b: the night's portents, named
-  return { title: 'Dagon\'s Breach', lines: [`Near ${c.site.place}`, ...(when ? [when] : []), ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])] };
+    ? cd.to === 'open'
+      ? `Opens in ${countdownText(cd.ms)}`
+      : cd.to === 'seal'
+        ? `Open. Seals in ${countdownText(cd.ms)}`
+        : `Sealed. Collapses in ${countdownText(cd.ms)}`
+    : c.phase === 'collapsing'
+      ? 'Collapsing'
+      : null;
+  const pt = gatePortentsWords(gatePortentsOf(c.t.day)); // WB14b: the night's portents, named
+  return {
+    title: "Dagon's Breach",
+    lines: [
+      `Near ${c.site.place}`,
+      ...(when ? [when] : []),
+      ...(Number.isFinite(fell)
+        ? [`${boss.name} has fallen`]
+        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),
+    ],
+  };
 }
 /** AUDIT PRE-MERGE 0929 W2-2: a day's marks as the card says them, worded once a day - the card is asked every frame a
  *  gate stands on the map, and the marks were read and joined anew each time. WW2: once a gate - every lane's card is
@@ -149,7 +208,14 @@ function marksLineOf(day) {
 }
 
 /** The phases that say a line on arrival, and the line each says. */
-const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'rise', open: 'open', closed: 'seal', collapsing: 'wrath' });
+const SAYS = Object.freeze({
+  omen: 'omen',
+  rising: 'rise',
+  sealed: 'rise',
+  open: 'open',
+  closed: 'seal',
+  collapsing: 'wrath',
+});
 /** AUDIT WB C4: the lines in the order a gate lives them - a line is said only past the last one said for its day, so a
  *  clock that steps back (the relay's offset arriving, a correction) never says one twice. */
 const LINE_ORDER = Object.freeze(['omen', 'rise', 'open', 'seal', 'wrath']);
@@ -169,36 +235,60 @@ export const OMEN_SETTLE_MS = 1500;
  * gate's NUMBER (gateNumber - the game day on the Bay's).
  * @param {{now: () => number, site: (day: number) => any, say: (text: string, day?: number) => void, localTime?: (classicMinutes: number) => (string|null), fellAt?: (day: number) => (number|null), ready?: () => boolean, settleMs?: number, riteBroken?: (day: number, site: any) => boolean, riteReady?: () => boolean, lane?: number}} deps
  */
-export function createGateOmen({ now, site, say, localTime = () => null, fellAt = () => null, ready = () => true, settleMs = 0, riteBroken = () => false, riteReady = () => true, lane = 0 }) {
-  let saidDay = null, saidRank = -1;   // the day the last line was said for, and how far through its lines
-  let marksDay = null;   // WB8c: the day whose marks were said (once, beside the first of its omen, rise or open)
-  let riteDay = null;   // WB12d: the day whose rite was said (once, beside its omen or its rise)
-  let readyAt = null, settled = false; // when the host was first ready (the relay's clock), and whether its settle is over
+export function createGateOmen({
+  now,
+  site,
+  say,
+  localTime = () => null,
+  fellAt = () => null,
+  ready = () => true,
+  settleMs = 0,
+  riteBroken = () => false,
+  riteReady = () => true,
+  lane = 0,
+}) {
+  let saidDay = null,
+    saidRank = -1; // the day the last line was said for, and how far through its lines
+  let marksDay = null; // WB8c: the day whose marks were said (once, beside the first of its omen, rise or open)
+  let riteDay = null; // WB12d: the day whose rite was said (once, beside its omen or its rise)
+  let readyAt = null,
+    settled = false; // when the host was first ready (the relay's clock), and whether its settle is over
   let cache = { day: null, site: null };
-  let cage = null;   // BROKER-CAGE: the last site the cage was asked for - made once a site
+  let cage = null; // BROKER-CAGE: the last site the cage was asked for - made once a site
   const siteOf = (day) => {
     if (cache.day !== day) cache = { day, site: site(day) ?? null };
     return cache.site;
   };
-  const at = (day, minute) => localTime(gateBaseMinute(day) + minute) ?? '?';   // WW2: the gate's own day's minute, its lane's stagger in it
+  const at = (day, minute) => localTime(gateBaseMinute(day) + minute) ?? '?'; // WW2: the gate's own day's minute, its lane's stagger in it
   let current = null;
 
   return {
     /** One frame: the gate's state now, and its line if a new one is due. */
     frame() {
-      if (!ready()) { readyAt = null; settled = false; current = null; return null; }
+      if (!ready()) {
+        readyAt = null;
+        settled = false;
+        current = null;
+        return null;
+      }
       if (!settled) {
         // a clock that steps back while the omen settles counts the wait from where it stands now; once settled, a
         // step never silences the gate again - only the host's losing the relay does
         if (readyAt == null || now() < readyAt) readyAt = now();
-        if (now() - readyAt < settleMs) { current = null; return null; }
+        if (now() - readyAt < settleMs) {
+          current = null;
+          return null;
+        }
         settled = true;
       }
       const t = gateAt(now(), lane);
-      const sayOf = (/** @type {string} */ text) => say(text, t.day);   // WW2: each line with its gate's number - a lane past the Bay's card is its own
+      const sayOf = (/** @type {string} */ text) => say(text, t.day); // WW2: each line with its gate's number - a lane past the Bay's card is its own
       const fell = fellAt(t.day);
       const phase = gatePhase(t, now(), fell);
-      if (phase === 'quiet' || phase === 'gone') { current = { t, phase, site: null }; return current; }
+      if (phase === 'quiet' || phase === 'gone') {
+        current = { t, phase, site: null };
+        return current;
+      }
       const s = siteOf(t.day);
       current = { t, phase, site: s };
       if (!s) return current;
@@ -209,23 +299,28 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall
       const rank = LINE_ORDER.indexOf(line);
       if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {
-        saidDay = t.day; saidRank = rank;
+        saidDay = t.day;
+        saidRank = rank;
         const words = { place: s.place, near: s.near, boss: gateBossOf(t.day).name };
-        if (line === 'omen') sayOf(omenTimeLine({ ...words, at: at(t.day, GATE_OPEN_MINUTE) }));   // TIME1: local time alone
+        if (line === 'omen')
+          sayOf(omenTimeLine({ ...words, at: at(t.day, GATE_OPEN_MINUTE) })); // TIME1: local time alone
         else if (line === 'rise') sayOf(riseLine({ ...words, left: countdownText(t.openAt - now()) }));
         else if (line === 'open') sayOf(openTimeLine({ ...words, at: at(t.day, GATE_SEAL_MINUTE) }));
         // WB12d: the faithful's rite, while it holds - right after the omen's or the rise's line (AUDIT WB12d D3: its
         // "nearby" is the breach just named), once a day; AUDIT WB12d (C8, L5): never once the hub says it broken, nor
         // where the relay cannot keep it
-        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) { riteDay = t.day; if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine()); }
+        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) {
+          riteDay = t.day;
+          if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());
+        }
         // WB8c: tonight's marks, beside the first line of a gate still to be fought (never after it has sealed)
         if ((line === 'omen' || line === 'rise' || line === 'open') && marksDay !== t.day) {
           marksDay = t.day;
           sayOf(marksLine({ boss: words.boss, md: gateModsOf(t.day) }));
-          const pt = portentsLine(gatePortentsOf(t.day));   // WB14b: and the night's portents, after them - announced, always
+          const pt = portentsLine(gatePortentsOf(t.day)); // WB14b: and the night's portents, after them - announced, always
           if (pt) sayOf(pt);
-        }
-        else if (line === 'seal') sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) }));   // GATE-COLLAPSE: and when it goes
+        } else if (line === 'seal')
+          sayOf(sealTimeLine({ ...words, at: at(t.day, GATE_WRATH_MINUTE) })); // GATE-COLLAPSE: and when it goes
         else if (line === 'wrath') sayOf(wrathLine(words));
       }
       return current;
@@ -237,8 +332,18 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       const c = current;
       if (!c?.site || !gateMarked(c.phase)) return null;
       const cd = gateCountdown(c.t, now(), c.phase);
-      const label = cd ? `Dagon's Breach - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}` : 'Dagon\'s Breach';   // GATE-COLLAPSE: the sealed hours count down too
-      return { day: c.t.day, cx: c.site.ring.cx, cy: c.site.ring.cy, r: c.site.ring.r, label, phase: c.phase, tip: gateTip(c, cd, fellAt(c.t.day)) };   // EVENT-TIP: and its card
+      const label = cd
+        ? `Dagon's Breach - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`
+        : "Dagon's Breach"; // GATE-COLLAPSE: the sealed hours count down too
+      return {
+        day: c.t.day,
+        cx: c.site.ring.cx,
+        cy: c.site.ring.cy,
+        r: c.site.ring.r,
+        label,
+        phase: c.phase,
+        tip: gateTip(c, cd, fellAt(c.t.day)),
+      }; // EVENT-TIP: and its card
     },
     /** WBX8: THE SKY THE GATE BURNS over an eye at `eye` (scene metres): its weight (gateSkyWeight - its life by its
      *  reach) and where the site stands in the scene (`x`, `z` - the storm gathers there), or null when no gate burns
@@ -258,14 +363,26 @@ export function createGateOmen({ now, site, say, localTime = () => null, fellAt 
       if (!c?.t || !cageStands(c.t.day, now())) return null;
       const s = c.site ?? siteOf(c.t.day);
       if (!s) return null;
-      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py) cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });
+      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py)
+        cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });
       return cage;
     },
     /** Where the gate stands, for the compass and the gate's own pool (WB2): its pixel and its spot in it, its phase,
      *  its times and the relay's word of its fall (the pool times the rise and the collapse by them), while it stands. */
     standing() {
       const c = current;
-      return c?.site && gateStands(c.phase) ? { day: c.t.day, px: c.site.px, py: c.site.py, spot: c.site.spot, phase: c.phase, t: c.t, fellAt: fellAt(c.t.day), near: c.site.near } : null;
+      return c?.site && gateStands(c.phase)
+        ? {
+            day: c.t.day,
+            px: c.site.px,
+            py: c.site.py,
+            spot: c.site.spot,
+            phase: c.phase,
+            t: c.t,
+            fellAt: fellAt(c.t.day),
+            near: c.site.near,
+          }
+        : null;
     },
   };
 }

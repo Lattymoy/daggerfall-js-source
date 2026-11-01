@@ -266,7 +266,17 @@ export const BEAST_DESIGNS = [
     // — and produced a flat strip at ankle height that the viewer's own
     // UI sat on top of. The word in the name is doing work: this is an
     // animal a man fights, so it meets him around the chest.
-    beast: { back: 0.66, len: 0.5, girth: 0.15, legs: 0.024, crouch: 0.5, head: 0.13, snout: 0.08, tail: 0.1, tailUp: 0.4 },
+    beast: {
+      back: 0.66,
+      len: 0.5,
+      girth: 0.15,
+      legs: 0.024,
+      crouch: 0.5,
+      head: 0.13,
+      snout: 0.08,
+      tail: 0.1,
+      tailUp: 0.4,
+    },
     wings: { span: 0.92, at: 0.78, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
     pelt: 'batskin',
   },
@@ -350,7 +360,17 @@ export const BEAST_DESIGNS = [
     // legPairs 0: the CLAWS and nothing else. Without it the arachnid
     // builder brings its eight legs along, and a dreugh stands on its
     // own legs with a spider's underneath.
-    claws: { span: 0.2, ride: 1.24, thorax: 0.12, abdomen: 0.02, legR: 0.02, arch: 0, claws: 1.3, sting: 0, legPairs: 0 },
+    claws: {
+      span: 0.2,
+      ride: 1.24,
+      thorax: 0.12,
+      abdomen: 0.02,
+      legR: 0.02,
+      arch: 0,
+      claws: 1.3,
+      sting: 0,
+      legPairs: 0,
+    },
     pelt: 'dreughblue',
   },
 
@@ -423,7 +443,17 @@ export const BEAST_DESIGNS = [
     // A SMALL WINGED QUADRUPED: the beast builder and the wings, and
     // nothing new at all. Long in the neck and the tail, low to the
     // ground — a dragonling is a lizard that got above itself.
-    beast: { back: 0.5, len: 0.8, girth: 0.13, legs: 0.036, crouch: 0.45, head: 0.11, snout: 0.14, tail: 0.6, tailUp: 0.55 },
+    beast: {
+      back: 0.5,
+      len: 0.8,
+      girth: 0.13,
+      legs: 0.036,
+      crouch: 0.45,
+      head: 0.11,
+      snout: 0.14,
+      tail: 0.6,
+      tailUp: 0.55,
+    },
     wings: { span: 0.66, at: 0.56, fold: 0.25, fingers: 4, droop: 0.2, rib: 0.012 },
     pelt: 'dragonhide',
   },
@@ -437,7 +467,17 @@ export const BEAST_DESIGNS = [
     // The same animal, older: the game ships two and gives them
     // identical numbers, so the only honest difference is the one the
     // eye can see. Longer, heavier and carrying its wings further open.
-    beast: { back: 0.6, len: 1.0, girth: 0.17, legs: 0.044, crouch: 0.4, head: 0.13, snout: 0.17, tail: 0.75, tailUp: 0.5 },
+    beast: {
+      back: 0.6,
+      len: 1.0,
+      girth: 0.17,
+      legs: 0.044,
+      crouch: 0.4,
+      head: 0.13,
+      snout: 0.17,
+      tail: 0.75,
+      tailUp: 0.5,
+    },
     wings: { span: 0.86, at: 0.66, fold: 0.12, fingers: 4, droop: 0.26, rib: 0.014 },
     pelt: 'dragonhide',
   },
@@ -463,7 +503,6 @@ export const BEAST_DESIGNS = [
     tail: { len: 0.16, up: 0.6, thick: 0.022 },
     pelt: 'batskin',
   },
-
 ];
 
 /** Every group of the human rig, because none of it is wanted. */

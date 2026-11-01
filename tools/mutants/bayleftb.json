@@ -2,330 +2,424 @@
   {
     "name": "BAY-LEFT-B-B1-guard",
     "file": "src/scenes/bootStartHost.js",
-    "old": "  if (far) startLoc = bayGuardOf(far, { worldPlaces, locationIndex, maps });\n",
-    "new": "",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "  if (far) startLoc = bayGuardOf(far, { worldPlaces, locationIndex, maps });\n  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);",
+    "new": "  if (!startLoc) throw new Error(`location not found: ${regionName}/${locationName}`);",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-province-test",
     "file": "src/scenes/bootStartHost.js",
-    "old": "if (id == null && !isProvinceRegion(REGION_NAMES.indexOf(regionName))) return null;",
-    "new": "if (id == null) return null;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "  if (id == null && !isProvinceRegion(REGION_NAMES.indexOf(regionName))) return null;",
+    "new": "  if (id == null) return null;",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-seat-parse",
     "file": "src/scenes/bootStartHost.js",
-    "old": "const id = /^\\d+$/.test(seat) ? Number(seat) >>> 0 : null;",
-    "new": "const id = null;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "  const id = /^\\d+$/.test(seat) ? Number(seat) >>> 0 : null;",
+    "new": "  const id = null;",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-id-arm",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    if (listed) return { x: listed.px, y: listed.py };   // a Bay place by its id too, where its names no longer answer\n",
-    "new": "",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "    if (listed) return { x: listed.px, y: listed.py }; // a Bay place by its id too, where its names no longer answer\n    const country = countryPixelOfId(far.id);",
+    "new": "    const country = countryPixelOfId(far.id);",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-country-check",
     "file": "src/scenes/bootStartHost.js",
-    "old": "if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;",
-    "new": "if (country) return country;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "    if (country && (worldPlaces?.at?.(country.x, country.y)?.mapId ?? -1) === far.id) return country;",
+    "new": "    if (country) return country;",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-isle",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    if (isle) return isle;\n",
-    "new": "",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "    if (isle) return isle;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-name-arm",
     "file": "src/scenes/bootStartHost.js",
     "old": "  return named ? { x: named.px, y: named.py } : null;",
     "new": "  return null;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-ready-wait",
     "file": "src/scenes/bootStartHost.js",
-    "old": "    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed = _worldReady() && await",
-    "new": "    const landed = await",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "    for (let i = 0; !_worldReady() && i < START_READY_TRIES; i++) await wait(START_READY_MS);\n    const landed =\n      _worldReady() &&\n      (await Promise.race([\n        Promise.resolve(host.arenaTraced).then(\n          () => true,\n          () => true,\n        ),\n        wait(ARENA_LOAD_WAIT_MS).then(() => false),\n      ]));",
+    "new": "    const landed = await Promise.race([\n      Promise.resolve(host.arenaTraced).then(\n        () => true,\n        () => true,\n      ),\n      wait(ARENA_LOAD_WAIT_MS).then(() => false),\n    ]);",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-load-skip",
     "file": "src/scenes/bootStartHost.js",
-    "old": "const farStart = far && !params.has('load') && !params.has('classicload') ? reach(far) : Promise.resolve(null);",
-    "new": "const farStart = far ? reach(far) : Promise.resolve(null);",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "  const farStart = far && !params.has('load') && !params.has('classicload') ? reach(far) : Promise.resolve(null);",
+    "new": "  const farStart = far ? reach(far) : Promise.resolve(null);",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-ready-three",
     "file": "src/scenes/world.js",
     "old": "const _worldReady = () => playerSpawned && _bootLoaded && !_loading;",
     "new": "const _worldReady = () => playerSpawned;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-reposition",
     "file": "src/scenes/bootStartHost.js",
-    "old": "await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
-    "new": "await _teleportToPixel(at.x, at.y, null, {});",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "      await _teleportToPixel(at.x, at.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "      await _teleportToPixel(at.x, at.y, null, {});",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-said",
     "file": "src/scenes/bootStartHost.js",
-    "old": "      host.townTalk?.say(STARTS_TEXT.noSite);\n",
-    "new": "",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "      host.townTalk?.say(STARTS_TEXT.noSite);\n      return null;",
+    "new": "      return null;",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-birth-waits",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])",
     "new": "Promise.all([createChargenFlow(fetchBytes), legacyReady])",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-host-nearest",
     "file": "src/scenes/world.js",
     "old": "?? nearestTownAnywhere(nearestTownOf, REGION_NAMES, h.pixel);",
     "new": "?? null;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-anywhere-kind",
     "file": "src/systems/legacy/places.js",
     "old": "(hit) => hit.kind === TOWN_KIND && !!hit.place?.name",
     "new": "(hit) => !!hit.place?.name",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-anywhere-id",
     "file": "src/systems/legacy/places.js",
     "old": ", ...(Number.isFinite(p.mapId) ? { mapId: p.mapId >>> 0 } : {}) };",
     "new": " };",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-birth-seat",
     "file": "src/systems/legacy/places.js",
     "old": "  if (Number.isInteger(place?.mapId)) p.set('seat', String(place.mapId >>> 0));   // BAY-LEFT-B\n",
     "new": "",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-load-drops-seat",
     "file": "src/systems/legacy/places.js",
     "old": "'legacyborn', 'region', 'loc', 'seat', 'start']) p.delete(k);   // BAY-LEFT-B: and a birth's seat",
     "new": "'legacyborn', 'region', 'loc', 'start']) p.delete(k);   // BAY-LEFT-B: and a birth's seat",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-country-lane",
     "file": "src/world/tamrielCountry.js",
     "old": "if (lane < COUNTRY_LANE || lane >= COUNTRY_LANE + COUNTRY_LANES || (v & 0x80000) === 0) return null;",
     "new": "if (lane < COUNTRY_LANE || (v & 0x80000) === 0) return null;",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-country-width",
     "file": "src/world/tamrielCountry.js",
     "old": "return { x: (n & ((1 << COUNTRY_GRID.wBits) - 1)) - COUNTRY_GRID.x0,",
     "new": "return { x: (n & 4095) - COUNTRY_GRID.x0,",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-isle-cell",
     "file": "src/world/etherPlaces.js",
-    "old": "const isle = isleOfCell(n % CELLS_W, Math.floor(n / CELLS_W));",
-    "new": "const isle = isleOfCell(Math.floor(n / CELLS_W), n % CELLS_W);",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "old": "  const isle = isleOfCell(n % CELLS_W, Math.floor(n / CELLS_W));",
+    "new": "  const isle = isleOfCell(Math.floor(n / CELLS_W), n % CELLS_W);",
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-front-door-seat",
     "file": "src/main.js",
     "old": "      if (Number.isInteger(legacyBirth.mapId)) params.set('seat', String(legacyBirth.mapId >>> 0));\n      else params.delete('seat');\n",
     "new": "",
-    "tests": ["test/systems/legacy/fb1012d_familytree.test.js"]
+    "tests": [
+      "test/systems/legacy/fb1012d_familytree.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-waiting-house-id",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "place: { region: place.region, loc: place.loc, ...(Number.isInteger(mapId) ? { mapId } : {}) } };",
-    "new": "place: { region: place.region, loc: place.loc } };",
-    "tests": ["test/systems/fb1009f.test.js"]
+    "old": "  return {\n    ok: true,\n    family,\n    heirId: heir.id,\n    place: { region: place.region, loc: place.loc, ...(Number.isInteger(mapId) ? { mapId } : {}) },\n  }; // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here; BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)",
+    "new": "  return { ok: true, family, heirId: heir.id, place: { region: place.region, loc: place.loc } }; // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here; BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)",
+    "tests": [
+      "test/systems/fb1009f.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B1-menu-id",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "_pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc, ...(Number.isInteger(took.place.mapId) ? { mapId: took.place.mapId } : {}) };",
     "new": "_pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc };",
-    "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
+    "tests": [
+      "test/systems/legacy/bayleftb_seat.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B3-quest-maps",
     "file": "src/scenes/questWorld.js",
     "old": "{ playerMapPixel: playerTravelPixel, maps: questWorld.maps },",
     "new": "{ playerMapPixel: playerTravelPixel, maps },",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B3-bound",
     "file": "src/systems/talk/talk.js",
-    "old": "if (region < 0 || region >= REGION_NAMES.length) region = -1;",
-    "new": "if (region < 0 || region >= (maps?.regionCount ?? 0)) region = -1;",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "  if (region < 0 || region >= REGION_NAMES.length) region = -1;",
+    "new": "  if (region < 0 || region >= (maps?.regionCount ?? 0)) region = -1;",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-region",
     "file": "src/scenes/world.js",
     "old": "currentRegion: () => questWorld.maps.getRegion(_questRegionIndex()) ?? null,",
     "new": "currentRegion: () => maps.getRegion(_questRegionIndex()) ?? null,",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-location",
     "file": "src/scenes/world.js",
     "old": "getLocation: (r, i) => (isProvinceRegion(r) ? questWorld.provinceSites?.getLocation(r, i) ?? null : maps.getLocation(r, i)),",
     "new": "getLocation: (r, i) => maps.getLocation(r, i),",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-row-key",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "key: (p.tableKey ?? 0) >>> 0,",
-    "new": "key: 0,",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    key: (p.tableKey ?? 0) >>> 0,",
+    "new": "    key: 0,",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-row-no-dungeon",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "const dungeonType = p.hasDungeon === false ? DUNGEON_TYPES.NoDungeon : p.dungeonType ?? DUNGEON_TYPES.NoDungeon;",
-    "new": "const dungeonType = p.dungeonType ?? 0;",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "  const dungeonType = p.hasDungeon === false ? DUNGEON_TYPES.NoDungeon : (p.dungeonType ?? DUNGEON_TYPES.NoDungeon);",
+    "new": "  const dungeonType = p.dungeonType ?? 0;",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-town-key-read",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));",
-    "new": "name: sliceQuestName(p.px, p.py) ?? p.name }));",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) })); // R2-5b: a slice under its quest name; BAY-LEFT-B: its key",
+    "new": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name })); // R2-5b: a slice under its quest name; BAY-LEFT-B: its key",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-stood-key",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    if (had) return had.mapTableData?.key ?? null;\n",
-    "new": "",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    if (had) return had.mapTableData?.key ?? null;\n    if (onBayPixel(px, py) || (_capitalBase && capitalOnPixel(px, py))) return null;",
+    "new": "    if (onBayPixel(px, py) || (_capitalBase && capitalOnPixel(px, py))) return null;",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-template-key",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    return template?.mapTableData?.key ?? null;\n",
-    "new": "    return null;\n",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    return template?.mapTableData?.key ?? null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-capital-own-key",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    if (loc) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(",
-    "new": "    if (false) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    if (loc) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(CAPITALS[at.k]?.family ? [...(loc.exterior?.buildings ?? []), ...fabricSliceSites(at.s)] : loc.exterior?.buildings ?? []) };",
+    "new": "    if (false) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(CAPITALS[at.k]?.family ? [...(loc.exterior?.buildings ?? []), ...fabricSliceSites(at.s)] : loc.exterior?.buildings ?? []) };",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B4-capital-fabric",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "CAPITALS[at.k]?.family ? [...(loc.exterior?.buildings ?? []), ...fabricSliceSites(at.s)] : loc.exterior?.buildings ?? []",
-    "new": "loc.exterior?.buildings ?? []",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    if (loc) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(CAPITALS[at.k]?.family ? [...(loc.exterior?.buildings ?? []), ...fabricSliceSites(at.s)] : loc.exterior?.buildings ?? []) };",
+    "new": "    if (loc) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(loc.exterior?.buildings ?? []) };",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-KEY-shop-bit",
     "file": "src/world/locationKey.js",
-    "old": "[T.Tavern]: 8, [T.WeaponSmith]: 9,",
-    "new": "[T.Tavern]: 9, [T.WeaponSmith]: 8,",
-    "tests": ["test/world/locationkey.test.js"]
+    "old": "  [T.Tavern]: 8,\n  [T.WeaponSmith]: 9,",
+    "new": "  [T.Tavern]: 9,\n  [T.WeaponSmith]: 8,",
+    "tests": [
+      "test/world/locationkey.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-KEY-guild-bit",
     "file": "src/world/locationKey.js",
-    "old": "[GUILD_FACTION_IDS.MagesGuild]: 18, [GUILD_FACTION_IDS.FightersGuild]: 21,",
-    "new": "[GUILD_FACTION_IDS.MagesGuild]: 21, [GUILD_FACTION_IDS.FightersGuild]: 18,",
-    "tests": ["test/world/locationkey.test.js"]
+    "old": "  [GUILD_FACTION_IDS.MagesGuild]: 18,\n  [GUILD_FACTION_IDS.FightersGuild]: 21,",
+    "new": "  [GUILD_FACTION_IDS.MagesGuild]: 21,\n  [GUILD_FACTION_IDS.FightersGuild]: 18,",
+    "tests": [
+      "test/world/locationkey.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-KEY-divine-bit",
     "file": "src/world/locationKey.js",
-    "old": "[DIVINES.Kynareth]: 4, [DIVINES.Mara]: 5,",
-    "new": "[DIVINES.Kynareth]: 5, [DIVINES.Mara]: 4,",
-    "tests": ["test/world/locationkey.test.js"]
+    "old": "  [DIVINES.Kynareth]: 4,\n  [DIVINES.Mara]: 5,",
+    "new": "  [DIVINES.Kynareth]: 5,\n  [DIVINES.Mara]: 4,",
+    "tests": [
+      "test/world/locationkey.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-KEY-temple-order",
     "file": "src/world/locationKey.js",
-    "old": "DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f]",
-    "new": "DIVINE_KEY_BITS[f]",
-    "tests": ["test/world/locationkey.test.js"]
+    "old": "      type === T.Temple\n        ? DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f]\n        : type === T.GuildHall\n          ? GUILD_KEY_BITS[f]\n          : BUILDING_KEY_BITS[type];",
+    "new": "      type === T.Temple ? DIVINE_KEY_BITS[f] : type === T.GuildHall ? GUILD_KEY_BITS[f] : BUILDING_KEY_BITS[type];",
+    "tests": [
+      "test/world/locationkey.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-KEY-general-store",
     "file": "src/world/locationKey.js",
-    "old": "[T.Palace]: 23, [T.GeneralStore]: 24,",
-    "new": "[T.Palace]: 23,",
-    "tests": ["test/world/locationkey.test.js"]
+    "old": "  [T.GeneralStore]: 24,\n});",
+    "new": "});",
+    "tests": [
+      "test/world/locationkey.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B5-politic-region",
     "file": "src/scenes/world.js",
     "old": "const region = questWorld.maps.getRegion(_questRegionIndex());",
     "new": "const region = maps.getRegion(_questRegionIndex());",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B6-scry-table",
     "file": "src/scenes/world.js",
     "old": "const region = questWorld.maps.getRegion(maps.getRegionIndexAt(at.x, at.y));",
     "new": "const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-B7-lp",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);\n",
-    "new": "",
-    "tests": ["test/systems/quest/bayleftb_quest.test.js"]
+    "old": "    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);\n    const race = hooks?.world?.currentRegionRace?.();",
+    "new": "    const race = hooks?.world?.currentRegionRace?.();",
+    "tests": [
+      "test/systems/quest/bayleftb_quest.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-H-made-bound",
     "file": "src/world/placeIds.js",
     "old": "((Number(id) >>> 0) & 0xfffff) >= BAY_PIXEL_IDS;",
     "new": "((Number(id) >>> 0) & 0xfffff) > BAY_PIXEL_IDS;",
-    "tests": ["test/systems/bayleftb_houses.test.js"]
+    "tests": [
+      "test/systems/bayleftb_houses.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-H-deed-made",
     "file": "src/systems/banking.js",
     "old": "mapId == null || !isMadePlaceId(mapId) || ((slot",
     "new": "mapId == null || true || ((slot",
-    "tests": ["test/systems/bayleftb_houses.test.js"]
+    "tests": [
+      "test/systems/bayleftb_houses.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-H-market-gate",
     "file": "src/scenes/worldModes.js",
     "old": "    if (isEtherPlaceId(dir.mapId)) return [];\n    return housesForSale(dir.buildings, {",
     "new": "    if (isEtherPlaceId(dir.mapId) || ((dir.mapId >>> 0) & 0xfffff) >= 500000) return [];\n    return housesForSale(dir.buildings, {",
-    "tests": ["test/systems/bayleftb_houses.test.js"]
+    "tests": [
+      "test/systems/bayleftb_houses.test.js"
+    ]
   },
   {
     "name": "BAY-LEFT-B-H-isles-gate",
     "file": "src/scenes/worldModes.js",
     "old": "    if (isEtherPlaceId(dir.mapId)) return [];\n    return housesForSale(dir.buildings, {",
     "new": "    return housesForSale(dir.buildings, {",
-    "tests": ["test/systems/bayleftb_houses.test.js"]
+    "tests": [
+      "test/systems/bayleftb_houses.test.js"
+    ]
   }
 ]

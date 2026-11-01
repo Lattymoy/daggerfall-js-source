@@ -22,7 +22,9 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   const who = await S.registered('Wyrmward');
   const r = await mintDragonReceipt({ q: W, b: 1, s: who.id, c: 5, x: 'dealt', l: 12 }, S.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: who.character, cid: 'a1b2c3d4e5f60718' }, who.secret)).status, 200);
-  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked)
+  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked). The
+  // claim's own draw, when it tamed, is cleared first: its random id beside this one failed the pin one run in a hundred.
+  S.env.DB._raw.prepare('DELETE FROM dragon_mounts WHERE account = ?').run(who.id);
   S.env.DB._raw.prepare('INSERT OR IGNORE INTO dragon_mounts (id, account, char_id, look, watch, at) VALUES (?, ?, ?, ?, ?, ?)').run('dg0123456789abcdef', who.id, who.character, 1, W, 1);
   assert.equal((await S.call('/v1/dragon/tames', {}, null)).status, 401, 'behind a session');
   const tames = await S.call('/v1/dragon/tames', {}, who.secret);
@@ -38,7 +40,7 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   assert.deepEqual(card.body.dragons, { slain: 1 }, 'a stranger is told the dragons slain, never the tames');
   const own = await (await S.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${who.secret}` } })).json();
   assert.deepEqual(own.account.dragons, { slain: 1, tamed: 1 }, 'its own card, both');
-  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames',   \/\/ AUDIT DRAGON/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/tames', \/\/ AUDIT DRAGON/);
   assert.match(src('src/net/duel/duelRecord.js'), /\.\.\.\(Number\.isSafeInteger\(d\?\.dragons\?\.slain\) \? \{ dragons: \{ slain: d\.dragons\.slain \} \} : \{\}\),/, 'and the Inspect card keeps it');
 });
 
@@ -74,7 +76,7 @@ test('AUDIT DRAGON the recall: with the mount on, the service\'s tames for the s
       dragonAccount: { me: () => 'acct-1', claim: async () => ({ ok: false }), tames: async () => { asked++; return { ok: true, data: { tames: served } }; } } });
     await off.recall('char-0001');
     assert.equal(asked, 1, 'the mount waiting: the service not asked');
-    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
+    assert.match(src('src/scenes/dragonRewards.js'), /recall\(characterId\)\n\s*\.then\(\(\) => bind\(characterId\)\)/, 'a stand-up recalls, then binds');
   } finally { playerEntity.items = was.items; playerEntity.characterId = was.id; }
 });
 

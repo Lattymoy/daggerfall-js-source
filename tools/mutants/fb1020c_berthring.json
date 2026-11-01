@@ -52,7 +52,7 @@
     "name": "BERTH-RING-a-cargo-port-a-pixel",
     "file": "src/systems/naval/harbourBoard.js",
     "old": "export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);",
-    "new": "export const deliveryPort = (p, seaAt) => !!p && typeof seaAt === 'function' && [-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => seaAt(p.px + dx, p.py + dy)));",
+    "new": "export const deliveryPort = (p, seaAt) =>\n  !!p && typeof seaAt === 'function' && [-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => seaAt(p.px + dx, p.py + dy)));",
     "tests": [
       "test/systems/naval/fb1020c_berthring.test.js",
       "test/systems/naval/fb1013c_porttowns.test.js"

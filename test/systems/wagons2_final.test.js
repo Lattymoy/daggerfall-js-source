@@ -251,7 +251,7 @@ test('RW1 x WAGONS2 (FINAL AUDIT) THE SEA IN THE VIEW OUT: Deep Waters (on by de
   assert.match(street, /if \(deepWaters\) \{ drawDeepWatersFloors\(ground\); r\.markForeignPass\(\); \}/, 'the seafloor, the mod\'s programs told');
   assert.match(street, /if \(flats\.length\) r\.drawBillboards\([^\n]*\n(?:\s*\/\/[^\n]*\n)+\s*if \(deepWaters\) drawDeepWatersSurfaces\(performance\.now\(\), ground\);\n\s*\};/, 'the sea\'s top last, on the pass\'s own pixels');
   const surf = lift('src/scenes/world.js', 'drawDeepWatersSurfaces');
-  assert.match(surf, /for \(const p of cells \?\? built\.values\(\)\) \{[^\n]*\n\s+const h = p\.deepWaters\?\.gpu;\n\s+if \(\(cells \|\| p\._visible\) && h\?\.surface && /, 'the given cells, never the street frame\'s _visible');   // PIN MOVED (WATER-SHORE): and where no sheet of the terrain's stands
+  assert.match(surf, /for \(const p of cells \?\? built\.values\(\)\) \{[^\n]*\n\s+const h = p\.deepWaters\?\.gpu;\n\s+if \(\(cells \|\| p\._visible\) && h\?\.surface && /, 'the given cells, never the street frame\'s _visible');
 });
 
 test('RW1 x WAGONS2 (FINAL AUDIT) A DARK ROOM GLOWS NOWHERE: the room\'s lit seed is one text (RW_SEED_GLSL), read by the room behind the glass and by the air pass\'s emission replay - which blooms an exterior pane\'s mask only where its room is lit, so a room drawn dark at night wears no amber halo with Enhanced Lighting on (mutants: the replay\'s test, its uniform never set, the renderer\'s word)', () => {
@@ -264,7 +264,7 @@ test('RW1 x WAGONS2 (FINAL AUDIT) A DARK ROOM GLOWS NOWHERE: the room\'s lit see
   assert.match(EMIT_MESH_FS, /if \(uRoomsLit > 0\.5 && !rwRoomLit\(rwSeedBits\(normalize\(vNormal\), vWorldPos, uModel\[3\]\.xyz, vUV\)\)\) discard;/, 'unlit (the room\'s own law): no bloom');
   const ap = read('src/render/airPass.js');
   assert.match(ap, /gl\.uniform1f\(P\.emitMesh\.uRoomsLit, f\.windowRooms && sm\._evWin === GLASS_EXTERIOR \? 1 : 0\);/, 'set for every sub-mesh - a room\'s glass alone');
-  assert.match(ap, /'uBloomSize', 'uRoomsLit'\]\),/, 'its location asked');
+  assert.match(ap, /'uBloomSize',\n\s*'uRoomsLit',\n\s*\]\),/, 'its location asked');
   assert.match(read('src/render/renderer.js'), /windowRooms: !!this\._rw\?\.rooms,/, 'the renderer says whether rooms stand behind exterior glass');
   // the JS twin of the hash (world/windowRoomArt.js roomSeedBits): the share the shader keeps
   let lit = 0, n = 0;

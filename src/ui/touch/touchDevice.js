@@ -37,11 +37,13 @@ export function isTouchDevice(win = globalThis.window) {
   if (door !== null) return door;
   const sniff = 'ontouchstart' in win || (win.navigator?.maxTouchPoints ?? 0) > 0;
   if (!sniff) return false;
-  if (typeof win.matchMedia !== 'function') return true;   // no media queries: the sniff is all there is
+  if (typeof win.matchMedia !== 'function') return true; // no media queries: the sniff is all there is
   try {
     const coarse = win.matchMedia('(pointer: coarse)').matches;
     const fine = win.matchMedia('(pointer: fine)').matches;
-    if (!coarse && !fine) return true;   // the query is unknown here (neither answers): the sniff stands
+    if (!coarse && !fine) return true; // the query is unknown here (neither answers): the sniff stands
     return coarse && win.matchMedia('(hover: none)').matches;
-  } catch { return true; }
+  } catch {
+    return true;
+  }
 }
