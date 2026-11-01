@@ -132,7 +132,8 @@ export function createSnowGround(host) {
     settlements: (minX, minZ, maxX, maxZ) =>
       settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
     // OWN-AUDIT (2026-11-01): Snowfall's Location Loader keys - World of Daggerfall's sites on the built pixels
-    footprints: (gx, gz, radius) => siteFootprintsIn((x, y) => snowGround.pixelOn(x, y), gx, gz, radius),
+    footprints: (globalX, globalZ, radius) =>
+      siteFootprintsIn((x, y) => snowGround.pixelOn(x, y), globalX, globalZ, radius),
   };
   return { _snowPixels, snowGround };
 }

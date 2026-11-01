@@ -7,85 +7,86 @@
 
 /** @typedef {{ width: number, height: number, data: Uint8Array | Uint8ClampedArray }} Rgba */
 
-const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const smooth = (a, b, v) => {
-  const t = clamp01((v - a) / (b - a));
-  return t * t * (3 - 2 * t);
+const clamp01 = (value) => (value < 0 ? 0 : value > 1 ? 1 : value);
+const smooth = (a, b, value) => {
+  const fraction = clamp01((value - a) / (b - a));
+  return fraction * fraction * (3 - 2 * fraction);
 };
-const lumaOf = (r, g, b) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+const lumaOf = (red, green, blue) => (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
 const wrapI = (i, n) => ((i % n) + n) % n;
 const clampI = (i, n) => (i < 0 ? 0 : i >= n ? n - 1 : i);
 
 /** A 32-bit integer hash of a lattice point and a seed, as [0, 1). */
 export function hash01(x, y, seed) {
-  let h = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ Math.imul(seed | 0, 0x9e3779b9);
-  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b);
-  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  let hash = Math.imul(x | 0, 0x27d4eb2d) ^ Math.imul(y | 0, 0x165667b1) ^ Math.imul(seed | 0, 0x9e3779b9);
+  hash = Math.imul(hash ^ (hash >>> 15), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  return ((hash ^ (hash >>> 16)) >>> 0) / 4294967296;
 }
 
-/** Value noise in [0, 1) over a lattice of `cells` x `cells` that wraps, read at (u, v) in cells - so a picture whose
+/** Value noise in [0, 1) over a lattice of `cells` x `cells` that wraps, read at (cellX, cellY) in cells - so a picture whose
  *  side is a whole number of cells tiles. */
-export function tileNoise(u, v, cells, seed) {
-  const i = Math.floor(u),
-    j = Math.floor(v);
-  const fx = u - i,
-    fy = v - j;
-  const sx = fx * fx * (3 - 2 * fx),
-    sy = fy * fy * (3 - 2 * fy);
-  const i0 = wrapI(i, cells),
-    i1 = wrapI(i + 1, cells),
-    j0 = wrapI(j, cells),
-    j1 = wrapI(j + 1, cells);
-  const a = hash01(i0, j0, seed),
-    b = hash01(i1, j0, seed),
-    c = hash01(i0, j1, seed),
-    d = hash01(i1, j1, seed);
-  const top = a + (b - a) * sx;
-  return top + (c + (d - c) * sx - top) * sy;
+export function tileNoise(cellX, cellY, cells, seed) {
+  const i = Math.floor(cellX),
+    j = Math.floor(cellY);
+  const fracX = cellX - i,
+    fracY = cellY - j;
+  const easeX = fracX * fracX * (3 - 2 * fracX),
+    easeY = fracY * fracY * (3 - 2 * fracY);
+  const column0 = wrapI(i, cells),
+    column1 = wrapI(i + 1, cells),
+    row0 = wrapI(j, cells),
+    row1 = wrapI(j + 1, cells);
+  const topLeft = hash01(column0, row0, seed),
+    topRight = hash01(column1, row0, seed),
+    bottomLeft = hash01(column0, row1, seed),
+    bottomRight = hash01(column1, row1, seed);
+  const top = topLeft + (topRight - topLeft) * easeX;
+  return top + (bottomLeft + (bottomRight - bottomLeft) * easeX - top) * easeY;
 }
 
-/** Octaves of tileNoise across a w x h picture, centred on 0 (about +-1): `cells` the coarsest lattice across the
+/** Octaves of tileNoise across a width x height picture, centred on 0 (about +-1): `cells` the coarsest lattice across the
  *  picture's width, doubled each octave, each half as strong. */
-export function grain(w, h, cells, octaves, seed) {
-  const out = new Float32Array(w * h);
+export function textureGrain(width, height, cells, octaves, seed) {
+  const out = new Float32Array(width * height);
   let amp = 1,
     total = 0;
-  const fy = new Float32Array(h),
-    jy = new Int32Array(h),
-    fx = new Float32Array(w),
-    ix = new Int32Array(w);
-  for (let o = 0; o < octaves; o++) {
-    const cx = cells << o,
-      cy = Math.max(1, Math.round((cx * h) / w));
+  const rowEase = new Float32Array(height),
+    rowCell = new Int32Array(height),
+    columnEase = new Float32Array(width),
+    columnCell = new Int32Array(width);
+  for (let octave = 0; octave < octaves; octave++) {
+    const cellsAcross = cells << octave,
+      cellsDown = Math.max(1, Math.round((cellsAcross * height) / width));
     // the lattice once (tileNoise's values), then each texel a smoothstep blend of its four corners
-    const lat = new Float32Array(cx * cy);
-    for (let j = 0; j < cy; j++) for (let i = 0; i < cx; i++) lat[j * cx + i] = 2 * hash01(i, j, seed + o * 7919) - 1;
-    for (let x = 0; x < w; x++) {
-      const u = ((x + 0.5) * cx) / w,
-        i = Math.floor(u),
-        t = u - i;
-      ix[x] = i % cx;
-      fx[x] = t * t * (3 - 2 * t);
+    const lat = new Float32Array(cellsAcross * cellsDown);
+    for (let j = 0; j < cellsDown; j++)
+      for (let i = 0; i < cellsAcross; i++) lat[j * cellsAcross + i] = 2 * hash01(i, j, seed + octave * 7919) - 1;
+    for (let x = 0; x < width; x++) {
+      const cellX = ((x + 0.5) * cellsAcross) / width,
+        i = Math.floor(cellX),
+        fraction = cellX - i;
+      columnCell[x] = i % cellsAcross;
+      columnEase[x] = fraction * fraction * (3 - 2 * fraction);
     }
-    for (let y = 0; y < h; y++) {
-      const v = ((y + 0.5) * cy) / h,
-        j = Math.floor(v),
-        t = v - j;
-      jy[y] = j % cy;
-      fy[y] = t * t * (3 - 2 * t);
+    for (let y = 0; y < height; y++) {
+      const cellY = ((y + 0.5) * cellsDown) / height,
+        j = Math.floor(cellY),
+        fraction = cellY - j;
+      rowCell[y] = j % cellsDown;
+      rowEase[y] = fraction * fraction * (3 - 2 * fraction);
     }
-    for (let y = 0; y < h; y++) {
-      const r0 = jy[y] * cx,
-        r1 = ((jy[y] + 1) % cy) * cx,
-        sy = fy[y];
-      for (let x = 0; x < w; x++) {
-        const i0 = ix[x],
-          i1 = (i0 + 1) % cx,
-          sx = fx[x];
-        const top = lat[r0 + i0] + (lat[r0 + i1] - lat[r0 + i0]) * sx;
-        const bottom = lat[r1 + i0] + (lat[r1 + i1] - lat[r1 + i0]) * sx;
-        out[y * w + x] += amp * (top + (bottom - top) * sy);
+    for (let y = 0; y < height; y++) {
+      const row0 = rowCell[y] * cellsAcross,
+        row1 = ((rowCell[y] + 1) % cellsDown) * cellsAcross,
+        easeY = rowEase[y];
+      for (let x = 0; x < width; x++) {
+        const column0 = columnCell[x],
+          column1 = (column0 + 1) % cellsAcross,
+          easeX = columnEase[x];
+        const top = lat[row0 + column0] + (lat[row0 + column1] - lat[row0 + column0]) * easeX;
+        const bottom = lat[row1 + column0] + (lat[row1 + column1] - lat[row1 + column0]) * easeX;
+        out[y * width + x] += amp * (top + (bottom - top) * easeY);
       }
     }
     total += amp;
@@ -98,11 +99,11 @@ export function grain(w, h, cells, octaves, seed) {
 /** The classic picture with every clear texel's colour taken from its opaque neighbours, so an upscale's blend at a
  *  sprite's edge never pulls in the clear texels' black. The alpha is kept. */
 export function bleedClear(src) {
-  const { width: w, height: h } = src;
+  const { width, height } = src;
   const data = new Uint8Array(src.data);
-  const known = new Uint8Array(w * h);
+  const known = new Uint8Array(width * height);
   let todo = [];
-  for (let i = 0; i < w * h; i++) {
+  for (let i = 0; i < width * height; i++) {
     if (data[i * 4 + 3] === 0) todo.push(i);
     else known[i] = 1;
   }
@@ -110,46 +111,53 @@ export function bleedClear(src) {
     const filled = [],
       left = [];
     for (const i of todo) {
-      const x = i % w,
-        y = (i / w) | 0;
-      let r = 0,
-        g = 0,
-        b = 0,
+      const x = i % width,
+        y = (i / width) | 0;
+      let red = 0,
+        green = 0,
+        blue = 0,
         n = 0;
       for (let dy = -1; dy <= 1; dy++)
         for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx,
-            ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= w || ny >= h || !known[ny * w + nx]) continue;
-          const k = (ny * w + nx) * 4;
-          r += data[k];
-          g += data[k + 1];
-          b += data[k + 2];
+          const neighbourX = x + dx,
+            neighbourY = y + dy;
+          if (
+            neighbourX < 0 ||
+            neighbourY < 0 ||
+            neighbourX >= width ||
+            neighbourY >= height ||
+            !known[neighbourY * width + neighbourX]
+          )
+            continue;
+          const k = (neighbourY * width + neighbourX) * 4;
+          red += data[k];
+          green += data[k + 1];
+          blue += data[k + 2];
           n++;
         }
-      if (n) filled.push(i, r / n, g / n, b / n);
+      if (n) filled.push(i, red / n, green / n, blue / n);
       else left.push(i);
     }
-    for (let f = 0; f < filled.length; f += 4) {
-      const i = filled[f];
-      data[i * 4] = filled[f + 1];
-      data[i * 4 + 1] = filled[f + 2];
-      data[i * 4 + 2] = filled[f + 3];
+    for (let entry = 0; entry < filled.length; entry += 4) {
+      const i = filled[entry];
+      data[i * 4] = filled[entry + 1];
+      data[i * 4 + 1] = filled[entry + 2];
+      data[i * 4 + 2] = filled[entry + 3];
       known[i] = 1;
     }
     todo = left;
   }
-  return { width: w, height: h, data };
+  return { width, height, data };
 }
 
 /** Catmull-Rom's four weights at fraction t. */
-function cubicWeights(t, out, o) {
-  const t2 = t * t,
-    t3 = t2 * t;
-  out[o] = -0.5 * t3 + t2 - 0.5 * t;
-  out[o + 1] = 1.5 * t3 - 2.5 * t2 + 1;
-  out[o + 2] = -1.5 * t3 + 2 * t2 + 0.5 * t;
-  out[o + 3] = 0.5 * t3 - 0.5 * t2;
+function cubicWeights(fraction, out, offset) {
+  const squared = fraction * fraction,
+    cubed = squared * fraction;
+  out[offset] = -0.5 * cubed + squared - 0.5 * fraction;
+  out[offset + 1] = 1.5 * cubed - 2.5 * squared + 1;
+  out[offset + 2] = -1.5 * cubed + 2 * squared + 0.5 * fraction;
+  out[offset + 3] = 0.5 * cubed - 0.5 * squared;
 }
 
 /**
@@ -157,219 +165,223 @@ function cubicWeights(t, out, o) {
  * source texels nearest it - a cubic's overshoot past an edge is what draws a halo, and the clamp takes it away while
  * the curve keeps the edge's slope. A tile wraps (`wrap`), a sprite's border is its own edge. The alpha is the same
  * curve cut at half, so a sprite's outline is smoothed and stays a cutout. Smaller than the record: a box filter.
- * @param {Rgba} src @param {number} w @param {number} h @param {boolean} wrap @returns {Rgba}
+ * @param {Rgba} src @param {number} width @param {number} height @param {boolean} wrap @returns {Rgba}
  */
-export function upscaleEdgeAware(src, w, h, wrap) {
-  const { width: sw, height: sh } = src;
-  if (w <= sw && h <= sh) return boxFit(src, w, h);
-  const s = bleedClear(src).data;
+export function upscaleEdgeAware(src, width, height, wrap) {
+  const { width: srcWidth, height: srcHeight } = src;
+  if (width <= srcWidth && height <= srcHeight) return boxFit(src, width, height);
+  const bled = bleedClear(src).data;
   const at = wrap ? wrapI : clampI;
   // each output column's four taps and their weights, and its two nearest source columns (the clamp's range)
-  const tap = new Int32Array(w * 4),
-    wx = new Float32Array(w * 4),
-    near = new Int32Array(w * 2);
-  for (let x = 0; x < w; x++) {
-    const f = ((x + 0.5) * sw) / w - 0.5,
-      i = Math.floor(f);
-    cubicWeights(f - i, wx, x * 4);
-    for (let k = 0; k < 4; k++) tap[x * 4 + k] = at(i - 1 + k, sw) * 4;
-    near[x * 2] = at(i, sw) * 4;
-    near[x * 2 + 1] = at(i + 1, sw) * 4;
+  const tap = new Int32Array(width * 4),
+    weightsX = new Float32Array(width * 4),
+    near = new Int32Array(width * 2);
+  for (let x = 0; x < width; x++) {
+    const srcX = ((x + 0.5) * srcWidth) / width - 0.5,
+      i = Math.floor(srcX);
+    cubicWeights(srcX - i, weightsX, x * 4);
+    for (let k = 0; k < 4; k++) tap[x * 4 + k] = at(i - 1 + k, srcWidth) * 4;
+    near[x * 2] = at(i, srcWidth) * 4;
+    near[x * 2 + 1] = at(i + 1, srcWidth) * 4;
   }
   // the horizontal pass: sh rows of w texels, four channels, float
-  const mid = new Float32Array(sh * w * 4);
-  for (let y = 0; y < sh; y++) {
-    const row = y * sw * 4;
-    for (let x = 0; x < w; x++) {
-      const o = (y * w + x) * 4;
-      let r = 0,
-        g = 0,
-        b = 0,
-        a = 0;
+  const mid = new Float32Array(srcHeight * width * 4);
+  for (let y = 0; y < srcHeight; y++) {
+    const row = y * srcWidth * 4;
+    for (let x = 0; x < width; x++) {
+      const offset = (y * width + x) * 4;
+      let red = 0,
+        green = 0,
+        blue = 0,
+        alpha = 0;
       for (let k = 0; k < 4; k++) {
-        const c = row + tap[x * 4 + k],
-          wt = wx[x * 4 + k];
-        r += s[c] * wt;
-        g += s[c + 1] * wt;
-        b += s[c + 2] * wt;
-        a += s[c + 3] * wt;
+        const tapAt = row + tap[x * 4 + k],
+          weight = weightsX[x * 4 + k];
+        red += bled[tapAt] * weight;
+        green += bled[tapAt + 1] * weight;
+        blue += bled[tapAt + 2] * weight;
+        alpha += bled[tapAt + 3] * weight;
       }
-      mid[o] = r;
-      mid[o + 1] = g;
-      mid[o + 2] = b;
-      mid[o + 3] = a;
+      mid[offset] = red;
+      mid[offset + 1] = green;
+      mid[offset + 2] = blue;
+      mid[offset + 3] = alpha;
     }
   }
-  const out = new Uint8Array(w * h * 4);
-  const wy = new Float32Array(4);
-  for (let y = 0; y < h; y++) {
-    const f = ((y + 0.5) * sh) / h - 0.5,
-      j = Math.floor(f);
-    cubicWeights(f - j, wy, 0);
-    const m0 = at(j - 1, sh) * w * 4,
-      m1 = at(j, sh) * w * 4,
-      m2 = at(j + 1, sh) * w * 4,
-      m3 = at(j + 2, sh) * w * 4;
-    const s1 = at(j, sh) * sw * 4,
-      s2 = at(j + 1, sh) * sw * 4;
-    const w0 = wy[0],
-      w1 = wy[1],
-      w2 = wy[2],
-      w3 = wy[3];
-    for (let x = 0; x < w; x++) {
-      const o = (y * w + x) * 4,
-        mx = x * 4;
-      const a0 = s1 + near[x * 2],
-        a1 = s1 + near[x * 2 + 1],
-        a2 = s2 + near[x * 2],
-        a3 = s2 + near[x * 2 + 1];
-      for (let c = 0; c < 4; c++) {
-        let v = mid[m0 + mx + c] * w0 + mid[m1 + mx + c] * w1 + mid[m2 + mx + c] * w2 + mid[m3 + mx + c] * w3;
-        const p0 = s[a0 + c],
-          p1 = s[a1 + c],
-          p2 = s[a2 + c],
-          p3 = s[a3 + c];
+  const out = new Uint8Array(width * height * 4);
+  const weightsY = new Float32Array(4);
+  for (let y = 0; y < height; y++) {
+    const srcY = ((y + 0.5) * srcHeight) / height - 0.5,
+      j = Math.floor(srcY);
+    cubicWeights(srcY - j, weightsY, 0);
+    const midRow0 = at(j - 1, srcHeight) * width * 4,
+      midRow1 = at(j, srcHeight) * width * 4,
+      midRow2 = at(j + 1, srcHeight) * width * 4,
+      midRow3 = at(j + 2, srcHeight) * width * 4;
+    const nearRow0 = at(j, srcHeight) * srcWidth * 4,
+      nearRow1 = at(j + 1, srcHeight) * srcWidth * 4;
+    const weight0 = weightsY[0],
+      weight1 = weightsY[1],
+      weight2 = weightsY[2],
+      weight3 = weightsY[3];
+    for (let x = 0; x < width; x++) {
+      const offset = (y * width + x) * 4,
+        midColumn = x * 4;
+      const corner0 = nearRow0 + near[x * 2],
+        corner1 = nearRow0 + near[x * 2 + 1],
+        corner2 = nearRow1 + near[x * 2],
+        corner3 = nearRow1 + near[x * 2 + 1];
+      for (let channel = 0; channel < 4; channel++) {
+        let value =
+          mid[midRow0 + midColumn + channel] * weight0 +
+          mid[midRow1 + midColumn + channel] * weight1 +
+          mid[midRow2 + midColumn + channel] * weight2 +
+          mid[midRow3 + midColumn + channel] * weight3;
+        const cornerValue0 = bled[corner0 + channel],
+          cornerValue1 = bled[corner1 + channel],
+          cornerValue2 = bled[corner2 + channel],
+          cornerValue3 = bled[corner3 + channel];
         const lo =
-          p0 < p1
-            ? p0 < p2
-              ? p0 < p3
-                ? p0
-                : p3
-              : p2 < p3
-                ? p2
-                : p3
-            : p1 < p2
-              ? p1 < p3
-                ? p1
-                : p3
-              : p2 < p3
-                ? p2
-                : p3;
+          cornerValue0 < cornerValue1
+            ? cornerValue0 < cornerValue2
+              ? cornerValue0 < cornerValue3
+                ? cornerValue0
+                : cornerValue3
+              : cornerValue2 < cornerValue3
+                ? cornerValue2
+                : cornerValue3
+            : cornerValue1 < cornerValue2
+              ? cornerValue1 < cornerValue3
+                ? cornerValue1
+                : cornerValue3
+              : cornerValue2 < cornerValue3
+                ? cornerValue2
+                : cornerValue3;
         const hi =
-          p0 > p1
-            ? p0 > p2
-              ? p0 > p3
-                ? p0
-                : p3
-              : p2 > p3
-                ? p2
-                : p3
-            : p1 > p2
-              ? p1 > p3
-                ? p1
-                : p3
-              : p2 > p3
-                ? p2
-                : p3;
-        v = v < lo ? lo : v > hi ? hi : v;
-        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;
+          cornerValue0 > cornerValue1
+            ? cornerValue0 > cornerValue2
+              ? cornerValue0 > cornerValue3
+                ? cornerValue0
+                : cornerValue3
+              : cornerValue2 > cornerValue3
+                ? cornerValue2
+                : cornerValue3
+            : cornerValue1 > cornerValue2
+              ? cornerValue1 > cornerValue3
+                ? cornerValue1
+                : cornerValue3
+              : cornerValue2 > cornerValue3
+                ? cornerValue2
+                : cornerValue3;
+        value = value < lo ? lo : value > hi ? hi : value;
+        out[offset + channel] = channel === 3 ? (value >= 127.5 ? 255 : 0) : value + 0.5;
       }
     }
   }
-  return { width: w, height: h, data: out };
+  return { width, height, data: out };
 }
 
 /** A box filter to a smaller size, alpha-weighted, the cutout kept a cutout. */
-function boxFit(src, w, h) {
-  const { width: sw, height: sh, data: s } = src;
-  if (sw === w && sh === h) return { width: w, height: h, data: new Uint8Array(s) };
-  const out = new Uint8Array(w * h * 4);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const x0 = Math.floor((x * sw) / w),
-        x1 = Math.max(x0 + 1, Math.floor(((x + 1) * sw) / w)),
-        y0 = Math.floor((y * sh) / h),
-        y1 = Math.max(y0 + 1, Math.floor(((y + 1) * sh) / h));
-      let r = 0,
-        g = 0,
-        b = 0,
-        a = 0,
+function boxFit(src, width, height) {
+  const { width: srcWidth, height: srcHeight, data: srcData } = src;
+  if (srcWidth === width && srcHeight === height) return { width, height, data: new Uint8Array(srcData) };
+  const out = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const x0 = Math.floor((x * srcWidth) / width),
+        x1 = Math.max(x0 + 1, Math.floor(((x + 1) * srcWidth) / width)),
+        y0 = Math.floor((y * srcHeight) / height),
+        y1 = Math.max(y0 + 1, Math.floor(((y + 1) * srcHeight) / height));
+      let red = 0,
+        green = 0,
+        blue = 0,
+        alpha = 0,
         n = 0;
-      for (let yy = y0; yy < y1; yy++)
-        for (let xx = x0; xx < x1; xx++) {
-          const i = (yy * sw + xx) * 4,
-            al = s[i + 3];
-          r += s[i] * al;
-          g += s[i + 1] * al;
-          b += s[i + 2] * al;
-          a += al;
+      for (let srcY = y0; srcY < y1; srcY++)
+        for (let srcX = x0; srcX < x1; srcX++) {
+          const i = (srcY * srcWidth + srcX) * 4,
+            texelAlpha = srcData[i + 3];
+          red += srcData[i] * texelAlpha;
+          green += srcData[i + 1] * texelAlpha;
+          blue += srcData[i + 2] * texelAlpha;
+          alpha += texelAlpha;
           n++;
         }
-      const o = (y * w + x) * 4;
-      if (a) {
-        out[o] = r / a + 0.5;
-        out[o + 1] = g / a + 0.5;
-        out[o + 2] = b / a + 0.5;
+      const offset = (y * width + x) * 4;
+      if (alpha) {
+        out[offset] = red / alpha + 0.5;
+        out[offset + 1] = green / alpha + 0.5;
+        out[offset + 2] = blue / alpha + 0.5;
       }
-      out[o + 3] = a / n >= 127.5 ? 255 : 0;
+      out[offset + 3] = alpha / n >= 127.5 ? 255 : 0;
     }
-  return { width: w, height: h, data: out };
+  return { width, height, data: out };
 }
 
 /** Unsharp masking on the luma, held inside each texel's own 3 x 3 range of it: crisper edges, never a halo past
  *  them. The colour moves with its luma. */
 export function sharpenInRange(pic, amount, wrap) {
-  const { width: w, height: h, data: d } = pic;
+  const { width, height, data } = pic;
   const at = wrap ? wrapI : clampI;
-  const n = w * h;
-  const L = new Float32Array(n);
-  for (let i = 0; i < n; i++) L[i] = 0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2];
+  const n = width * height;
+  const luma = new Float32Array(n);
+  for (let i = 0; i < n; i++) luma[i] = 0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2];
   // a row's three: sum, least and most; then a column's three of those
-  const hs = new Float32Array(n),
-    hl = new Float32Array(n),
-    hh = new Float32Array(n);
-  for (let y = 0; y < h; y++) {
-    const r = y * w;
-    for (let x = 0; x < w; x++) {
-      const a = L[r + at(x - 1, w)],
-        b = L[r + x],
-        c = L[r + at(x + 1, w)];
-      hs[r + x] = a + b + c;
-      hl[r + x] = a < b ? (a < c ? a : c) : b < c ? b : c;
-      hh[r + x] = a > b ? (a > c ? a : c) : b > c ? b : c;
+  const rowSum = new Float32Array(n),
+    rowLeast = new Float32Array(n),
+    rowMost = new Float32Array(n);
+  for (let y = 0; y < height; y++) {
+    const row = y * width;
+    for (let x = 0; x < width; x++) {
+      const left = luma[row + at(x - 1, width)],
+        centre = luma[row + x],
+        right = luma[row + at(x + 1, width)];
+      rowSum[row + x] = left + centre + right;
+      rowLeast[row + x] = left < centre ? (left < right ? left : right) : centre < right ? centre : right;
+      rowMost[row + x] = left > centre ? (left > right ? left : right) : centre > right ? centre : right;
     }
   }
-  const out = new Uint8Array(d);
-  for (let y = 0; y < h; y++) {
-    const u = at(y - 1, h) * w,
-      r = y * w,
-      v = at(y + 1, h) * w;
-    for (let x = 0; x < w; x++) {
-      const i = r + x;
-      if (d[i * 4 + 3] === 0) continue;
-      const mean = (hs[u + x] + hs[i] + hs[v + x]) / 9;
-      const lo = Math.min(hl[u + x], hl[i], hl[v + x]),
-        hi = Math.max(hh[u + x], hh[i], hh[v + x]);
-      let t = L[i] + amount * (L[i] - mean);
-      t = t < lo ? lo : t > hi ? hi : t;
-      const dl = t - L[i];
-      for (let c = 0; c < 3; c++) {
-        const q = d[i * 4 + c] + dl;
-        out[i * 4 + c] = q < 0 ? 0 : q > 255 ? 255 : q + 0.5;
+  const out = new Uint8Array(data);
+  for (let y = 0; y < height; y++) {
+    const above = at(y - 1, height) * width,
+      row = y * width,
+      below = at(y + 1, height) * width;
+    for (let x = 0; x < width; x++) {
+      const i = row + x;
+      if (data[i * 4 + 3] === 0) continue;
+      const mean = (rowSum[above + x] + rowSum[i] + rowSum[below + x]) / 9;
+      const lo = Math.min(rowLeast[above + x], rowLeast[i], rowLeast[below + x]),
+        hi = Math.max(rowMost[above + x], rowMost[i], rowMost[below + x]);
+      let sharpened = luma[i] + amount * (luma[i] - mean);
+      sharpened = sharpened < lo ? lo : sharpened > hi ? hi : sharpened;
+      const lift = sharpened - luma[i];
+      for (let channel = 0; channel < 3; channel++) {
+        const value = data[i * 4 + channel] + lift;
+        out[i * 4 + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
       }
     }
   }
-  return { width: w, height: h, data: out };
+  return { width, height, data: out };
 }
 
 /** How busy the record is round each texel: the luma's spread over its 3 x 3, 0 (flat) to 1 (a strong pattern). */
 function busyness(src, wrap) {
-  const { width: w, height: h, data: d } = src;
-  const out = new Float32Array(w * h);
+  const { width, height, data } = src;
+  const out = new Float32Array(width * height);
   const at = wrap ? wrapI : clampI;
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      let s = 0,
-        s2 = 0;
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let sum = 0,
+        sumSquares = 0;
       for (let dy = -1; dy <= 1; dy++)
         for (let dx = -1; dx <= 1; dx++) {
-          const i = (at(y + dy, h) * w + at(x + dx, w)) * 4;
-          const l = lumaOf(d[i], d[i + 1], d[i + 2]);
-          s += l;
-          s2 += l * l;
+          const i = (at(y + dy, height) * width + at(x + dx, width)) * 4;
+          const level = lumaOf(data[i], data[i + 1], data[i + 2]);
+          sum += level;
+          sumSquares += level * level;
         }
-      const sd = Math.sqrt(Math.max(0, s2 / 9 - (s / 9) * (s / 9)));
-      out[y * w + x] = clamp01(sd / 0.12);
+      const deviation = Math.sqrt(Math.max(0, sumSquares / 9 - (sum / 9) * (sum / 9)));
+      out[y * width + x] = clamp01(deviation / 0.12);
     }
   return out;
 }
@@ -379,22 +391,22 @@ function busyness(src, wrap) {
  * smooth wall), and never on a clear texel. `cells` is the grain's coarsest lattice across the picture.
  */
 export function addDetail(pic, src, { strength, cells, seed, wrap }) {
-  const { width: w, height: h, data: d } = pic;
+  const { width, height, data } = pic;
   const busy = busyness(src, wrap);
-  const n = grain(w, h, cells, 3, seed);
-  const sw = src.width,
-    sh = src.height;
-  const col = new Int32Array(w);
-  for (let x = 0; x < w; x++) col[x] = Math.min(sw - 1, Math.floor((x * sw) / w));
-  for (let y = 0; y < h; y++) {
-    const sr = Math.min(sh - 1, Math.floor((y * sh) / h)) * sw;
-    for (let x = 0; x < w; x++) {
-      const o = (y * w + x) * 4;
-      if (d[o + 3] === 0) continue;
-      const k = 1 + strength * (0.35 + 0.65 * busy[sr + col[x]]) * n[y * w + x];
-      d[o] = Math.min(255, d[o] * k + 0.5);
-      d[o + 1] = Math.min(255, d[o + 1] * k + 0.5);
-      d[o + 2] = Math.min(255, d[o + 2] * k + 0.5);
+  const n = textureGrain(width, height, cells, 3, seed);
+  const srcWidth = src.width,
+    srcHeight = src.height;
+  const col = new Int32Array(width);
+  for (let x = 0; x < width; x++) col[x] = Math.min(srcWidth - 1, Math.floor((x * srcWidth) / width));
+  for (let y = 0; y < height; y++) {
+    const srcRow = Math.min(srcHeight - 1, Math.floor((y * srcHeight) / height)) * srcWidth;
+    for (let x = 0; x < width; x++) {
+      const offset = (y * width + x) * 4;
+      if (data[offset + 3] === 0) continue;
+      const k = 1 + strength * (0.35 + 0.65 * busy[srcRow + col[x]]) * n[y * width + x];
+      data[offset] = Math.min(255, data[offset] * k + 0.5);
+      data[offset + 1] = Math.min(255, data[offset + 1] * k + 0.5);
+      data[offset + 2] = Math.min(255, data[offset + 2] * k + 0.5);
     }
   }
   return pic;
@@ -402,19 +414,19 @@ export function addDetail(pic, src, { strength, cells, seed, wrap }) {
 
 /** OUR GRADE: a soft S-curve on the luma about its middle, and the colour widened round it. */
 export function grade(pic, { contrast, saturation }) {
-  const d = pic.data;
-  for (let o = 0; o < d.length; o += 4) {
-    if (d[o + 3] === 0) continue;
-    const r = d[o],
-      g = d[o + 1],
-      b = d[o + 2];
-    const y = lumaOf(r, g, b);
-    const y2 = clamp01(y + contrast * (y - 0.5) * (1 - Math.abs(2 * y - 1)));
-    const k = y > 0.001 ? y2 / y : 1;
-    const Y = y2 * 255;
-    for (let c = 0; c < 3; c++) {
-      const v = Y + saturation * (d[o + c] * k - Y);
-      d[o + c] = v < 0 ? 0 : v > 255 ? 255 : v + 0.5;
+  const data = pic.data;
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (data[offset + 3] === 0) continue;
+    const red = data[offset],
+      green = data[offset + 1],
+      blue = data[offset + 2];
+    const luma = lumaOf(red, green, blue);
+    const gradedLuma = clamp01(luma + contrast * (luma - 0.5) * (1 - Math.abs(2 * luma - 1)));
+    const k = luma > 0.001 ? gradedLuma / luma : 1;
+    const gradedLevel = gradedLuma * 255;
+    for (let channel = 0; channel < 3; channel++) {
+      const value = gradedLevel + saturation * (data[offset + channel] * k - gradedLevel);
+      data[offset + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
     }
   }
   return pic;
@@ -432,13 +444,13 @@ export const wrapsOf = (archive) => {
 export const recordSeed = (archive, record, frame = 0) => (archive * 1009 + record * 97 + frame * 13 + 0x51ed) | 0;
 
 /**
- * THE ENHANCED LOOK. The record upscaled to w x h (edge-aware), sharpened in range, given our grain and graded. A tile
+ * THE ENHANCED LOOK. The record upscaled to width x height (edge-aware), sharpened in range, given our grain and graded. A tile
  * that wraps wraps at every step, so it still repeats without a seam; the grain's lattice wraps always.
- * @param {Rgba} src @param {number} w @param {number} h @param {{ wrap: boolean, seed: number }} o @returns {Rgba}
+ * @param {Rgba} src @param {number} width @param {number} height @param {{ wrap: boolean, seed: number }} o @returns {Rgba}
  */
-export function enhance(src, w, h, { wrap, seed }) {
-  const up = upscaleEdgeAware(src, w, h, wrap);
-  const factor = w / src.width;
+export function enhance(src, width, height, { wrap, seed }) {
+  const up = upscaleEdgeAware(src, width, height, wrap);
+  const factor = width / src.width;
   const sharp = factor > 1.01 ? sharpenInRange(up, 0.55, wrap) : up;
   const cells = Math.max(2, Math.round(src.width / 4));
   addDetail(sharp, src, { strength: factor > 1.01 ? 0.07 : 0.04, cells, seed, wrap });
@@ -446,25 +458,25 @@ export function enhance(src, w, h, { wrap, seed }) {
 }
 
 /** How much a texel is paving: grey (no colour to speak of) and darker than snow. */
-const pavingOf = (r, g, b) => {
-  const mx = Math.max(r, g, b),
-    mn = Math.min(r, g, b);
-  const sat = mx ? (mx - mn) / mx : 0;
-  return (1 - smooth(0.06, 0.14, sat)) * (1 - smooth(0.7, 0.78, lumaOf(r, g, b)));
+const pavingOf = (red, green, blue) => {
+  const most = Math.max(red, green, blue),
+    least = Math.min(red, green, blue);
+  const sat = most ? (most - least) / most : 0;
+  return (1 - smooth(0.06, 0.14, sat)) * (1 - smooth(0.7, 0.78, lumaOf(red, green, blue)));
 };
 
 /** A picture's luma softened over a 3 x 3, held at its border. */
 function softLuma(pic) {
-  const { width: w, height: h, data: d } = pic;
-  const raw = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) raw[i] = lumaOf(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
-  const out = new Float32Array(w * h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      let t = 0;
+  const { width, height, data } = pic;
+  const raw = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) raw[i] = lumaOf(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+  const out = new Float32Array(width * height);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let sum = 0;
       for (let dy = -1; dy <= 1; dy++)
-        for (let dx = -1; dx <= 1; dx++) t += raw[clampI(y + dy, h) * w + clampI(x + dx, w)];
-      out[y * w + x] = t / 9;
+        for (let dx = -1; dx <= 1; dx++) sum += raw[clampI(y + dy, height) * width + clampI(x + dx, width)];
+      out[y * width + x] = sum / 9;
     }
   return out;
 }
@@ -474,43 +486,47 @@ function softLuma(pic) {
  * paving's own stones raised: the picture's soft luma taken as height, lit from the north-west, so every stone the
  * record draws stands as a cobble and its joint sinks. Where the paving meets the ground a worn verge darkens it, its
  * edge broken by a noise rather than drawn as a line.
- * @param {Rgba} src @param {number} w @param {number} h @param {{ seed: number }} o @returns {Rgba}
+ * @param {Rgba} src @param {number} width @param {number} height @param {{ seed: number }} o @returns {Rgba}
  */
-export function road(src, w, h, { seed }) {
-  const out = enhance(src, w, h, { wrap: false, seed });
-  const d = out.data,
-    sw = src.width,
-    sh = src.height,
-    s = src.data;
-  const ht = softLuma(out);
-  const edge = grain(w, h, 6, 2, seed + 31);
-  const relief = 1.4 * (w / sw);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const si = (Math.min(sh - 1, Math.floor((y * sh) / h)) * sw + Math.min(sw - 1, Math.floor((x * sw) / w))) * 4;
-      const p0 = pavingOf(s[si], s[si + 1], s[si + 2]);
-      const p = p0 > 0.02 ? p0 + 0.22 * edge[y * w + x] : 0; // no grey at all: the enhanced look itself
-      const pave = smooth(0.45, 0.7, p),
-        verge = smooth(0.2, 0.45, p) * (1 - pave);
+export function road(src, width, height, { seed }) {
+  const out = enhance(src, width, height, { wrap: false, seed });
+  const data = out.data,
+    srcWidth = src.width,
+    srcHeight = src.height,
+    srcData = src.data;
+  const heightField = softLuma(out);
+  const edge = textureGrain(width, height, 6, 2, seed + 31);
+  const relief = 1.4 * (width / srcWidth);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const srcAt =
+        (Math.min(srcHeight - 1, Math.floor((y * srcHeight) / height)) * srcWidth +
+          Math.min(srcWidth - 1, Math.floor((x * srcWidth) / width))) *
+        4;
+      const paving = pavingOf(srcData[srcAt], srcData[srcAt + 1], srcData[srcAt + 2]);
+      const pavingEdged = paving > 0.02 ? paving + 0.22 * edge[y * width + x] : 0; // no grey at all: the enhanced look itself
+      const pave = smooth(0.45, 0.7, pavingEdged),
+        verge = smooth(0.2, 0.45, pavingEdged) * (1 - pave);
       if (pave <= 0 && verge <= 0) continue;
-      const gx = ht[y * w + clampI(x + 1, w)] - ht[y * w + clampI(x - 1, w)],
-        gy = ht[clampI(y + 1, h) * w + x] - ht[clampI(y - 1, h) * w + x];
-      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);
-      const o = (y * w + x) * 4;
-      for (let c = 0; c < 3; c++) d[o + c] = Math.min(255, d[o + c] * k + 0.5);
+      const slopeX = heightField[y * width + clampI(x + 1, width)] - heightField[y * width + clampI(x - 1, width)],
+        slopeY = heightField[clampI(y + 1, height) * width + x] - heightField[clampI(y - 1, height) * width + x];
+      const k = pave * (1 + clamp01(0.5 - (slopeX + slopeY) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);
+      const offset = (y * width + x) * 4;
+      for (let channel = 0; channel < 3; channel++)
+        data[offset + channel] = Math.min(255, data[offset + channel] * k + 0.5);
     }
   return out;
 }
 
-/** A field's mean over the (2r + 1)-square round each texel, held at the border. */
-function boxMean(a, w, h, r) {
-  const out = new Float32Array(w * h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      let t = 0;
-      for (let dy = -r; dy <= r; dy++)
-        for (let dx = -r; dx <= r; dx++) t += a[clampI(y + dy, h) * w + clampI(x + dx, w)];
-      out[y * w + x] = t / ((2 * r + 1) * (2 * r + 1));
+/** A field's mean over the (2 radius + 1)-square round each texel, held at the border. */
+function boxMean(field, width, height, radius) {
+  const out = new Float32Array(width * height);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let sum = 0;
+      for (let dy = -radius; dy <= radius; dy++)
+        for (let dx = -radius; dx <= radius; dx++) sum += field[clampI(y + dy, height) * width + clampI(x + dx, width)];
+      out[y * width + x] = sum / ((2 * radius + 1) * (2 * radius + 1));
     }
   return out;
 }
@@ -524,76 +540,79 @@ function boxMean(a, w, h, r) {
  * @param {Rgba} src @param {{ seed: number, road?: false | 'full' | 'flank' }} o @returns {Rgba}
  */
 export function desert(src, { seed, road = false }) {
-  const { width: w, height: h, data: s } = src;
-  const out = new Uint8Array(s);
-  const luma = new Float32Array(w * h),
-    own = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) {
-    const r = s[i * 4],
-      g = s[i * 4 + 1],
-      b = s[i * 4 + 2];
-    luma[i] = lumaOf(r, g, b);
-    const warm = smooth(0.02, 0.1, (r - b) / 255) * smooth(-0.02, 0.06, (g - b) / 255);
+  const { width, height, data: srcData } = src;
+  const out = new Uint8Array(srcData);
+  const luma = new Float32Array(width * height),
+    own = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    const red = srcData[i * 4],
+      green = srcData[i * 4 + 1],
+      blue = srcData[i * 4 + 2];
+    luma[i] = lumaOf(red, green, blue);
+    const warm = smooth(0.02, 0.1, (red - blue) / 255) * smooth(-0.02, 0.06, (green - blue) / 255);
     own[i] = warm * smooth(0.3, 0.42, luma[i]);
   }
-  const near = boxMean(own, w, h, 2),
-    wide = road ? boxMean(luma, w, h, 3) : null;
-  const field = new Float32Array(w * h);
+  const near = boxMean(own, width, height, 2),
+    wide = road ? boxMean(luma, width, height, 3) : null;
+  const field = new Float32Array(width * height);
   let sum = 0,
     n = 0;
-  for (let i = 0; i < w * h; i++) {
-    const r = s[i * 4],
-      g = s[i * 4 + 1],
-      b = s[i * 4 + 2];
-    const kept = (1 - waterOf(r, g, b)) * (1 - smooth(0.02, 0.08, (g - Math.max(r, b)) / 255));
-    const side = road === 'flank' ? smooth(-0.3, -0.1, ((i % w) + ((i / w) | 0) + 1) / w - 1) : 1;
+  for (let i = 0; i < width * height; i++) {
+    const red = srcData[i * 4],
+      green = srcData[i * 4 + 1],
+      blue = srcData[i * 4 + 2];
+    const kept = (1 - waterOf(red, green, blue)) * (1 - smooth(0.02, 0.08, (green - Math.max(red, blue)) / 255));
+    const side = road === 'flank' ? smooth(-0.3, -0.1, ((i % width) + ((i / width) | 0) + 1) / width - 1) : 1;
     const paved = wide ? (1 - smooth(0.49, 0.53, wide[i])) * side : 0;
     field[i] = smooth(0.3, 0.6, near[i]) * kept * (1 - paved);
     sum += own[i] * field[i] * luma[i];
     n += own[i] * field[i];
   }
   const mean = n > 0 ? sum / n : 0.5;
-  const warp = grain(w, h, 4, 2, seed);
+  const warp = textureGrain(width, height, 4, 2, seed);
   const tone = [236, 210, 166];
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      const m = field[y * w + x] * 0.9;
-      if (m <= 0 || s[i + 3] === 0) continue;
-      const rel = luma[y * w + x] / mean;
-      const ripple = Math.sin(2 * Math.PI * ((7 * x) / w + (3 * y) / h) + 2.4 * warp[y * w + x]);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const amount = field[y * width + x] * 0.9;
+      if (amount <= 0 || srcData[i + 3] === 0) continue;
+      const rel = luma[y * width + x] / mean;
+      const ripple = Math.sin(2 * Math.PI * ((7 * x) / width + (3 * y) / height) + 2.4 * warp[y * width + x]);
       const k = Math.min(1.1, Math.max(0.62, 0.86 + 0.7 * (rel - 1))) * (1 + 0.06 * ripple);
-      for (let c = 0; c < 3; c++) {
-        const v = s[i + c] + m * (tone[c] * k - s[i + c]);
-        out[i + c] = v < 0 ? 0 : v > 255 ? 255 : v + 0.5;
+      for (let channel = 0; channel < 3; channel++) {
+        const value = srcData[i + channel] + amount * (tone[channel] * k - srcData[i + channel]);
+        out[i + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
       }
     }
-  return { width: w, height: h, data: out };
+  return { width, height, data: out };
 }
 
 /** How much a texel is water: blue well over red, and too dark to be snow in a blue light. */
-const waterOf = (r, g, b) =>
-  smooth(0.06, 0.16, (b - r) / 255) * smooth(-0.02, 0.06, (b - g) / 255) * (1 - smooth(0.6, 0.7, lumaOf(r, g, b)));
+const waterOf = (red, green, blue) =>
+  smooth(0.06, 0.16, (blue - red) / 255) *
+  smooth(-0.02, 0.06, (blue - green) / 255) *
+  (1 - smooth(0.6, 0.7, lumaOf(red, green, blue)));
 
 /** A record's pseudo-height (its soft luma) and the slope, the lee and the light there: the snow law's ground. Held at
  *  the record's border - a terrain record's far edge is another record's. */
 function snowGround(src) {
-  const { width: w, height: h } = src;
-  const ht = softLuma(src);
-  const slope = new Float32Array(w * h),
-    lee = new Float32Array(w * h),
-    lit = new Float32Array(w * h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const gx = (ht[y * w + clampI(x + 1, w)] - ht[y * w + clampI(x - 1, w)]) * 4,
-        gy = (ht[clampI(y + 1, h) * w + x] - ht[clampI(y - 1, h) * w + x]) * 4;
-      const i = y * w + x;
-      slope[i] = Math.sqrt(gx * gx + gy * gy);
+  const { width, height } = src;
+  const heightField = softLuma(src);
+  const slope = new Float32Array(width * height),
+    lee = new Float32Array(width * height),
+    lit = new Float32Array(width * height);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const slopeX =
+          (heightField[y * width + clampI(x + 1, width)] - heightField[y * width + clampI(x - 1, width)]) * 4,
+        slopeY = (heightField[clampI(y + 1, height) * width + x] - heightField[clampI(y - 1, height) * width + x]) * 4;
+      const i = y * width + x;
+      slope[i] = Math.sqrt(slopeX * slopeX + slopeY * slopeY);
       // the wind and the light are from the north-west: a face falling to the south-east is the lee, and in shade
-      lee[i] = clamp01(0.5 + (gx + gy) * 0.9);
-      lit[i] = clamp01(0.92 - 0.25 * (gx + gy));
+      lee[i] = clamp01(0.5 + (slopeX + slopeY) * 0.9);
+      lit[i] = clamp01(0.92 - 0.25 * (slopeX + slopeY));
     }
-  return { ht, slope, lee, lit };
+  return { ht: heightField, slope, lee, lit };
 }
 
 /**
@@ -603,50 +622,54 @@ function snowGround(src) {
  * joints of a paving too - the picture's, not the mask's (a dusted joint is no snow to stand in).
  */
 function snowCover(src, ground, fromSummer, joints) {
-  const { width: w, height: h, data: s } = src;
-  const cover = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) {
-    const water = waterOf(s[i * 4], s[i * 4 + 1], s[i * 4 + 2]);
+  const { width, height, data: srcData } = src;
+  const cover = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    const water = waterOf(srcData[i * 4], srcData[i * 4 + 1], srcData[i * 4 + 2]);
     const steep = smooth(0.45, 1.4, ground.slope[i]) * (1.2 - 0.6 * ground.lee[i]);
     cover[i] = (1 - water) * (fromSummer ? clamp01(1.02 - 0.75 * steep) : smooth(0.62, 0.71, ground.ht[i]));
   }
   if (fromSummer) return cover;
-  const raw = new Float32Array(w * h);
-  for (let i = 0; i < w * h; i++) raw[i] = lumaOf(s[i * 4], s[i * 4 + 1], s[i * 4 + 2]);
+  const raw = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) raw[i] = lumaOf(srcData[i * 4], srcData[i * 4 + 1], srcData[i * 4 + 2]);
   const spread = new Float32Array(cover);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x;
       if (cover[i] >= 0.99) continue;
       // the exposure: snow drifts downwind - a snowy texel to the north-west (the wind's side) reaches further
       let near = 0;
       for (let dy = -2; dy <= 2; dy++)
         for (let dx = -2; dx <= 2; dx++) {
           const wind = 0.55 + 0.45 * clamp01((-dx - dy) / 4);
-          const v = (cover[clampI(y + dy, h) * w + clampI(x + dx, w)] * wind) / (1 + Math.abs(dx) + Math.abs(dy));
-          if (v > near) near = v;
+          const reach =
+            (cover[clampI(y + dy, height) * width + clampI(x + dx, width)] * wind) / (1 + Math.abs(dx) + Math.abs(dy));
+          if (reach > near) near = reach;
         }
-      const r = s[i * 4],
-        g = s[i * 4 + 1],
-        b = s[i * 4 + 2];
+      const red = srcData[i * 4],
+        green = srcData[i * 4 + 1],
+        blue = srcData[i * 4 + 2];
       // the slope: the bare ground's own (a snowy neighbour counts at this texel's height - its brightness is no hill)
       const at = (j) => (cover[j] > 0.5 ? raw[i] : raw[j]);
-      const gx = (at(y * w + clampI(x + 1, w)) - at(y * w + clampI(x - 1, w))) * 4,
-        gy = (at(clampI(y + 1, h) * w + x) - at(clampI(y - 1, h) * w + x)) * 4;
-      const flat = 1 - smooth(0.25, 0.7, Math.sqrt(gx * gx + gy * gy));
-      const joint = joints ? pavingOf(r, g, b) * smooth(0.02, 0.08, mean3(ground.ht, x, y, w, h) - ground.ht[i]) : 0;
+      const slopeX = (at(y * width + clampI(x + 1, width)) - at(y * width + clampI(x - 1, width))) * 4,
+        slopeY = (at(clampI(y + 1, height) * width + x) - at(clampI(y - 1, height) * width + x)) * 4;
+      const flat = 1 - smooth(0.25, 0.7, Math.sqrt(slopeX * slopeX + slopeY * slopeY));
+      const joint = joints
+        ? pavingOf(red, green, blue) * smooth(0.02, 0.08, mean3(ground.ht, x, y, width, height) - ground.ht[i])
+        : 0;
       // a joint takes snow only near the drift's edge: a whole road hatched white is no snowfall
       spread[i] = Math.max(
         cover[i],
-        (1 - waterOf(r, g, b)) * Math.max(near * flat, 0.8 * joint * smooth(0.1, 0.45, near)),
+        (1 - waterOf(red, green, blue)) * Math.max(near * flat, 0.8 * joint * smooth(0.1, 0.45, near)),
       );
     }
   return spread;
 }
-const mean3 = (a, x, y, w, h) => {
-  let t = 0;
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) t += a[clampI(y + dy, h) * w + clampI(x + dx, w)];
-  return t / 9;
+const mean3 = (field, x, y, width, height) => {
+  let sum = 0;
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++) sum += field[clampI(y + dy, height) * width + clampI(x + dx, width)];
+  return sum / 9;
 };
 
 /**
@@ -657,43 +680,43 @@ const mean3 = (a, x, y, w, h) => {
  * @param {Rgba} src @param {{ seed: number, fromSummer?: boolean }} o @returns {Rgba}
  */
 export function snow(src, { seed, fromSummer = false }) {
-  const { width: w, height: h, data: s } = src;
+  const { width, height, data: srcData } = src;
   const ground = snowGround(src);
   const cover = snowCover(src, ground, fromSummer, true);
-  const fine = grain(w, h, Math.max(2, w >> 3), 2, seed);
+  const fine = textureGrain(width, height, Math.max(2, width >> 3), 2, seed);
   const keepOwn = fromSummer ? 0.25 : 0.5; // the record's own grain, kept in the snow: a field of it is never blank
-  const out = new Uint8Array(s);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x,
-        m = cover[i];
-      if (m <= 0) continue;
-      const o = i * 4;
-      const own = 255 * keepOwn * (lumaOf(s[o], s[o + 1], s[o + 2]) - ground.ht[i]);
-      const hollow = clamp01((mean3(ground.ht, x, y, w, h) - ground.ht[i]) * 6);
+  const out = new Uint8Array(srcData);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const i = y * width + x,
+        amount = cover[i];
+      if (amount <= 0) continue;
+      const offset = i * 4;
+      const own = 255 * keepOwn * (lumaOf(srcData[offset], srcData[offset + 1], srcData[offset + 2]) - ground.ht[i]);
+      const hollow = clamp01((mean3(ground.ht, x, y, width, height) - ground.ht[i]) * 6);
       const glint = hash01(x, y, seed) > 0.985 ? 1.05 : 1;
-      const v = (0.95 + 0.03 * fine[i]) * (0.88 + 0.14 * ground.lit[i]) * glint;
-      const tone = [v * (240 - 16 * hollow), v * (244 - 8 * hollow), v * 254];
-      for (let c = 0; c < 3; c++) {
-        const t = s[o + c] + m * (tone[c] + own - s[o + c]);
-        out[o + c] = t < 0 ? 0 : t > 255 ? 255 : t + 0.5;
+      const light = (0.95 + 0.03 * fine[i]) * (0.88 + 0.14 * ground.lit[i]) * glint;
+      const tone = [light * (240 - 16 * hollow), light * (244 - 8 * hollow), light * 254];
+      for (let channel = 0; channel < 3; channel++) {
+        const value = srcData[offset + channel] + amount * (tone[channel] + own - srcData[offset + channel]);
+        out[offset + channel] = value < 0 ? 0 : value > 255 ? 255 : value + 0.5;
       }
     }
-  return { width: w, height: h, data: out };
+  return { width, height, data: out };
 }
 
 /** The bytes of one winter record's surface mask - where snow may lie, 0 to 255, in the record's own rows (row 0 its
  *  top: systems/snowfall.js SnowCoverage reads row (1 - v) * 63 at the ground's v, and the ground draws the record's
  *  top row at v = 1) - from our snow law's coverage softened over a 3 x 3. A texel under 2% is bare, one over 96% full. */
 export function snowMask(src, { fromSummer = false } = {}) {
-  const { width: w, height: h } = src;
+  const { width, height } = src;
   const ground = snowGround(src);
   const cover = snowCover(src, ground, fromSummer, false);
-  const out = new Uint8Array(w * h);
-  for (let y = 0; y < h; y++)
-    for (let x = 0; x < w; x++) {
-      const m = mean3(cover, x, y, w, h);
-      out[y * w + x] = m >= 0.96 ? 255 : m < 0.02 ? 0 : Math.round(m * 255);
+  const out = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const coverage = mean3(cover, x, y, width, height);
+      out[y * width + x] = coverage >= 0.96 ? 255 : coverage < 0.02 ? 0 : Math.round(coverage * 255);
     }
   return out;
 }
@@ -701,16 +724,16 @@ export function snowMask(src, { fromSummer = false } = {}) {
 /** OUR SNOW'S ALBEDO: a cold white with a soft drift of light and shadow and a few glints, `size` square, repeating -
  *  rows top-down. */
 export function snowAlbedo(size = 64, seed = 0x5a0f) {
-  const drift = grain(size, size, 4, 3, seed),
-    fine = grain(size, size, 16, 2, seed + 11);
+  const drift = textureGrain(size, size, 4, 3, seed),
+    fine = textureGrain(size, size, 16, 2, seed + 11);
   const data = new Uint8Array(size * size * 4);
   for (let i = 0; i < size * size; i++) {
-    const v = 0.92 + 0.05 * drift[i] + 0.02 * fine[i];
+    const light = 0.92 + 0.05 * drift[i] + 0.02 * fine[i];
     const cold = clamp01(0.5 - drift[i]) * 0.05;
     const glint = hash01(i % size, (i / size) | 0, seed) > 0.992 ? 0.06 : 0;
-    data[i * 4] = Math.min(255, 255 * (v - cold + glint) + 0.5);
-    data[i * 4 + 1] = Math.min(255, 255 * (v - cold * 0.5 + glint) + 0.5);
-    data[i * 4 + 2] = Math.min(255, 255 * (v + 0.03 + glint) + 0.5);
+    data[i * 4] = Math.min(255, 255 * (light - cold + glint) + 0.5);
+    data[i * 4 + 1] = Math.min(255, 255 * (light - cold * 0.5 + glint) + 0.5);
+    data[i * 4 + 2] = Math.min(255, 255 * (light + 0.03 + glint) + 0.5);
     data[i * 4 + 3] = 255;
   }
   return { width: size, height: size, data };
@@ -720,7 +743,8 @@ export function snowAlbedo(size = 64, seed = 0x5a0f) {
 export const OWN_RULE_NAMES = Object.freeze(['enhance', 'road', 'desert', 'snow']);
 
 /** The source at the spec's size, where a pack keeps a record at a size of its own. */
-const fit = (src, w, h) => (src.width === w && src.height === h ? src : upscaleEdgeAware(src, w, h, false));
+const fit = (src, width, height) =>
+  src.width === width && src.height === height ? src : upscaleEdgeAware(src, width, height, false);
 
 /**
  * One picture by its spec: `{ rule, w, h, wrap?, fromSummer?, seed }` over the classic source picture. Answers a new

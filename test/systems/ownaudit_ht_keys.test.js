@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHandheldTorches, readTorchSettings, throwArcPoints } from '../../src/systems/handheldTorches.js';
 import { createDroppedTorches, ENEMY_FIRE_KIND, ENEMY_LIGHT_EFFECT_KEY } from '../../src/scenes/droppedTorches.js';
-import { toScreen, arcDots, drawArc, ARC_LOOK } from '../../src/systems/torchArc.js';
+import { worldToScreen, arcDots, drawArc, ARC_LOOK } from '../../src/systems/torchArc.js';
 import { withPlayerLights } from '../../src/scenes/magicCandle.js';
 import { CARRIED_IN_HAND, CARRIED_SHADOWLESS } from '../../src/render/lightId.js';
 import { pickShadowCasters } from '../../src/render/shadowPass.js';
@@ -61,11 +61,11 @@ test('OWN-AUDIT ShowTrajectory: winding up a throw holds the flight\'s own arc f
 });
 
 test('OWN-AUDIT ShowTrajectory: the arc\'s dots through the camera - every few steps, none behind the eye or off the screen, the landing always drawn and larger; drawn as screen quads less the letterbox', () => {
-  assert.deepEqual(toScreen([0, 0, -1], LOOK, IDENTITY, 200, 100), [100, 50], 'straight ahead: the middle');
-  assert.equal(toScreen([0, 0, 1], LOOK, IDENTITY, 200, 100), null, 'behind the eye');
+  assert.deepEqual(worldToScreen([0, 0, -1], LOOK, IDENTITY, 200, 100), [100, 50], 'straight ahead: the middle');
+  assert.equal(worldToScreen([0, 0, 1], LOOK, IDENTITY, 200, 100), null, 'behind the eye');
   const pts = Array.from({ length: 11 }, (_, i) => [i * 0.01, 0, -1 - i]);
   const dots = arcDots(pts, LOOK, IDENTITY, 1920, 1080);
-  assert.deepEqual(dots.map((d) => d[0]), [4, 10].map((i) => toScreen(pts[i], LOOK, IDENTITY, 1920, 1080)[0]), 'every few steps (4), the one crowding the landing (8) left out, and the landing (10)');
+  assert.deepEqual(dots.map((d) => d[0]), [4, 10].map((i) => worldToScreen(pts[i], LOOK, IDENTITY, 1920, 1080)[0]), 'every few steps (4), the one crowding the landing (8) left out, and the landing (10)');
   assert.equal(dots.at(-1)[2], ARC_LOOK.landPx, 'the landing, larger');
   assert.ok(dots[0][2] < dots.at(-1)[2]);
   assert.deepEqual(arcDots(pts.map((p) => [p[0], p[1], -p[2]]), LOOK, IDENTITY, 1920, 1080), [], 'all behind: none');

@@ -495,8 +495,8 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.enhancedEnvironments.title', 'Enhanced environments'); },
     get note() { return t('features.enhancedEnvironments.note', 'A living sky with the sun, both moons and stars, clouds that build with the weather and cast '
       + 'shadows, falling rain and snow, and grass that bends in the wind. Off brings back the classic '
-      + 'painted sky and weather. The third choice uses Dynamic Skies by BadLuckBurt and carademono, included '
-      + 'with permission; its settings open on this tile.'); },
+      + 'painted sky and weather. The third choice is our own Dynamic Skies, after BadLuckBurt and '
+      + 'carademono\u2019s mod; its settings open on this tile.'); },
     get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced', 'mod']),
     // EE1: the outdoors as ONE switch (the sky, the ground's surfaces, the

@@ -10,7 +10,7 @@ import {
   mirrorFlips, MIRROR_TABLES, mirrorRevertTime, autoToggleRows, DELAYED_FRAMES, ORIENTATION_TIME,
 } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { EOTB_DERIVED, eotbHas } from '../../../tools/lib/eotbPictures.mjs';
-import { deathKeys } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
+import { ownDeathKeys } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
 
 // ═══ EOTB3: THE PLAYER BILLBOARD ══════════════════════════════════
 //
@@ -35,7 +35,7 @@ const SHIPPED_STATES = {
 const bundle = { tables: Object.fromEntries(Object.entries(SHIPPED_STATES).map(([t, [recs, frames]]) => [t, recs.split(' ').map((r) => ({ record: parseInt(r, 10), mirror: r.endsWith('m'), frames }))])) };
 // NO-BETHESDA2 (2026-10-31): a sprite the mod ships is an eotbDerived.json spec, rebuilt from the player's ARENA2;
 // OWN-WORK4: or our own death (eotbDeath.js) - so the names the mod has are both (nobethesda2_eotb.test.js)
-const SPRITE_NAMES = [...Object.keys(EOTB_DERIVED), ...deathKeys(EOTB_DERIVED)];
+const SPRITE_NAMES = [...Object.keys(EOTB_DERIVED), ...ownDeathKeys(EOTB_DERIVED)];
 
 test('EOTB3: the GENERATED table is the mod’s own - all 168 states, checked not claimed', () => {
   // THE PIN THIS SLICE EXISTS FOR. The port carries 21 base records and

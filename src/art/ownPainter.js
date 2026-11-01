@@ -4,8 +4,8 @@
 // palette made to sit beside Daggerfall's own. Pure and deterministic: no file is read, one recipe gives one picture.
 
 /** '#rrggbb' to [r, g, b]. */
-export const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
-const ramp = (...hs) => Object.freeze(hs.map((h) => Object.freeze(hex(h))));
+export const hex = (hexCode) => [parseInt(hexCode.slice(1, 3), 16), parseInt(hexCode.slice(3, 5), 16), parseInt(hexCode.slice(5, 7), 16)];
+const ramp = (...codes) => Object.freeze(codes.map((hexCode) => Object.freeze(hex(hexCode))));
 
 /** The palette: ramps dark to light, in Daggerfall's earthy, muted hand. */
 export const RAMP = Object.freeze({
@@ -40,87 +40,87 @@ export const RAMP = Object.freeze({
 
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 /** The 4x4 ordered-dither threshold of a pixel, in [0, 1). */
-export const bayer = (x, y) => (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+export const ditherAt = (x, y) => (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
 /** A pixel's own grain in [0, 1): an integer hash of where it is, under `seed`. */
 export function grain(x, y, seed = 1) {
-  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(seed | 0, 2246822519)) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  let hash = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(seed | 0, 2246822519)) | 0;
+  hash = Math.imul(hash ^ (hash >>> 13), 1274126177);
+  return ((hash ^ (hash >>> 16)) >>> 0) / 4294967296;
 }
 
-/** A ramp's colour at light `t` for pixel (px, py), dithered as `fill` lays it - for a paint that picks its ramp. */
-export function shadeOf(r, t, px, py) {
-  const v = Math.max(0, Math.min(1, t)) * (r.length - 1);
-  return r[Math.max(0, Math.min(r.length - 1, Math.floor(v + bayer(px, py))))];
+/** A ramp's colour at `light` for pixel (px, py), dithered as `fill` lays it - for a paint that picks its ramp. */
+export function rampShade(steps, light, px, py) {
+  const step = Math.max(0, Math.min(1, light)) * (steps.length - 1);
+  return steps[Math.max(0, Math.min(steps.length - 1, Math.floor(step + ditherAt(px, py))))];
 }
 
 // The light falls from the upper left, toward the viewer: a shape's lit side is its upper-left one.
-const LX = -0.55, LY = -0.62, LZ = 0.56;
-const lit = (nx, ny, nz) => (nx * LX + ny * LY + nz * LZ + 1) / 2;
-const clamp01 = (t) => (t < 0 ? 0 : t > 1 ? 1 : t);
+const LIGHT_X = -0.55, LIGHT_Y = -0.62, LIGHT_Z = 0.56;
+const lit = (normalX, normalY, normalZ) => (normalX * LIGHT_X + normalY * LIGHT_Y + normalZ * LIGHT_Z + 1) / 2;
+const clamp01 = (value) => (value < 0 ? 0 : value > 1 ? 1 : value);
 
-/** An ellipse at (cx, cy), radii rx, ry, turned `rot` radians; lit as a dome. */
-export function ellipse(cx, cy, rx, ry, rot = 0) {
-  const c = Math.cos(rot), s = Math.sin(rot), r = Math.max(rx, ry);
-  const local = (x, y) => [((x - cx) * c + (y - cy) * s) / rx, (-(x - cx) * s + (y - cy) * c) / ry];
+/** An ellipse at (centreX, centreY), radii radiusX, radiusY, turned `rot` radians; lit as a dome. */
+export function ellipse(centreX, centreY, radiusX, radiusY, rot = 0) {
+  const cos = Math.cos(rot), sin = Math.sin(rot), reach = Math.max(radiusX, radiusY);
+  const local = (x, y) => [((x - centreX) * cos + (y - centreY) * sin) / radiusX, (-(x - centreX) * sin + (y - centreY) * cos) / radiusY];
   return {
-    box: [cx - r, cy - r, cx + r, cy + r],
-    has: (x, y) => { const [u, v] = local(x, y); return u * u + v * v <= 1; },
-    tone: (x, y) => { const [u, v] = local(x, y); const d = Math.min(1, u * u + v * v); return lit(u * c - v * s, u * s + v * c, Math.sqrt(1 - d)); },
+    box: [centreX - reach, centreY - reach, centreX + reach, centreY + reach],
+    has: (x, y) => { const [localX, localY] = local(x, y); return localX * localX + localY * localY <= 1; },
+    tone: (x, y) => { const [localX, localY] = local(x, y); const radial = Math.min(1, localX * localX + localY * localY); return lit(localX * cos - localY * sin, localX * sin + localY * cos, Math.sqrt(1 - radial)); },
   };
 }
 
 /** A polygon (points [[x, y], ...]); lit as a slab whose upper-left is nearer the light. */
 export function poly(points) {
-  const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
-  const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-  const cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2, ext = Math.max(1e-6, Math.hypot(box[2] - box[0], box[3] - box[1]) / 2);
+  const allX = points.map((point) => point[0]), allY = points.map((point) => point[1]);
+  const box = [Math.min(...allX), Math.min(...allY), Math.max(...allX), Math.max(...allY)];
+  const centreX = (box[0] + box[2]) / 2, centreY = (box[1] + box[3]) / 2, ext = Math.max(1e-6, Math.hypot(box[2] - box[0], box[3] - box[1]) / 2);
   return {
     box,
     has: (x, y) => {
       let inside = false;
       for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-        const [xi, yi] = points[i], [xj, yj] = points[j];
-        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+        const [startX, startY] = points[i], [endX, endY] = points[j];
+        if (startY > y !== endY > y && x < ((endX - startX) * (y - startY)) / (endY - startY) + startX) inside = !inside;
       }
       return inside;
     },
-    tone: (x, y) => clamp01(0.62 + (((x - cx) * LX + (y - cy) * LY) / ext) * 0.42),
+    tone: (x, y) => clamp01(0.62 + (((x - centreX) * LIGHT_X + (y - centreY) * LIGHT_Y) / ext) * 0.42),
   };
 }
 
 /** A rectangle [x0, x1) x [y0, y1); lit as a slab. */
 export const rect = (x0, y0, x1, y1) => poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
 
-/** A thick line through `points`, radius r0 at its start to r1 at its end, round-capped; lit as a rod. */
-export function stroke(points, r0, r1 = r0) {
+/** A thick line through `points`, radius startRadius at its start to endRadius at its end, round-capped; lit as a rod. */
+export function stroke(points, startRadius, endRadius = startRadius) {
   const segs = [];
   let total = 0;
   for (let i = 1; i < points.length; i++) {
-    const [ax, ay] = points[i - 1], [bx, by] = points[i], len = Math.hypot(bx - ax, by - ay) || 1e-6;
-    segs.push({ ax, ay, dx: (bx - ax) / len, dy: (by - ay) / len, len, at: total });
+    const [fromX, fromY] = points[i - 1], [toX, toY] = points[i], len = Math.hypot(toX - fromX, toY - fromY) || 1e-6;
+    segs.push({ ax: fromX, ay: fromY, dx: (toX - fromX) / len, dy: (toY - fromY) / len, len, at: total });
     total += len;
   }
-  const rmax = Math.max(r0, r1);
-  const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+  const rmax = Math.max(startRadius, endRadius);
+  const allX = points.map((point) => point[0]), allY = points.map((point) => point[1]);
   const near = (x, y) => {
     let best = null;
-    for (const s of segs) {
-      const t = Math.max(0, Math.min(s.len, (x - s.ax) * s.dx + (y - s.ay) * s.dy));
-      const ox = x - (s.ax + s.dx * t), oy = y - (s.ay + s.dy * t), d = Math.hypot(ox, oy);
-      const r = r0 + (r1 - r0) * ((s.at + t) / (total || 1));
-      if (d <= r && (!best || d / r < best.k)) best = { k: d / r, side: Math.sign(ox * -s.dy + oy * s.dx) || 1, s };
+    for (const segment of segs) {
+      const along = Math.max(0, Math.min(segment.len, (x - segment.ax) * segment.dx + (y - segment.ay) * segment.dy));
+      const offX = x - (segment.ax + segment.dx * along), offY = y - (segment.ay + segment.dy * along), distance = Math.hypot(offX, offY);
+      const radius = startRadius + (endRadius - startRadius) * ((segment.at + along) / (total || 1));
+      if (distance <= radius && (!best || distance / radius < best.k)) best = { k: distance / radius, side: Math.sign(offX * -segment.dy + offY * segment.dx) || 1, s: segment };
     }
     return best;
   };
   return {
-    box: [Math.min(...xs) - rmax, Math.min(...ys) - rmax, Math.max(...xs) + rmax, Math.max(...ys) + rmax],
+    box: [Math.min(...allX) - rmax, Math.min(...allY) - rmax, Math.max(...allX) + rmax, Math.max(...allY) + rmax],
     has: (x, y) => near(x, y) != null,
     tone: (x, y) => {
       const n = near(x, y);
       if (!n) return 0.5;
-      const o = n.k * n.side; // across the rod, -1..1
-      return lit(-n.s.dy * o, n.s.dx * o, Math.sqrt(Math.max(0, 1 - o * o)));
+      const across = n.k * n.side; // across the rod, -1..1
+      return lit(-n.s.dy * across, n.s.dx * across, Math.sqrt(Math.max(0, 1 - across * across)));
     },
   };
 }
@@ -134,7 +134,7 @@ export const and = (a, b) => ({ box: a.box, has: (x, y) => a.has(x, y) && b.has(
  *  default): a picture Unity's import stretched is drawn in the shape it shows and sampled at its own size. */
 export function createPainter(width, height, { space = [width, height] } = {}) {
   const data = new Uint8Array(width * height * 4);
-  const kx = space[0] / width, ky = space[1] / height;
+  const scaleX = space[0] / width, scaleY = space[1] / height;
   const at = (x, y) => (y * width + x) * 4;
   const opaque = (x, y) => x >= 0 && y >= 0 && x < width && y < height && data[at(x, y) + 3] !== 0;
   /** Paint `shape` with `paint` - a ramp (dark to light), one colour, or ({ x, y, px, py, t }) => colour. Options:
@@ -142,33 +142,33 @@ export function createPainter(width, height, { space = [width, height] } = {}) {
    *  painted, `under` only where clear, `clip` only inside another shape, `flat` lays no dither. */
   function fill(shape, paint, { bias = 0, gain = 1, seed = 0, rough = 0, over = false, under = false, clip = null, flat = false } = {}) {
     const [x0, y0, x1, y1] = shape.box;
-    const px0 = Math.max(0, Math.floor(x0 / kx)), py0 = Math.max(0, Math.floor(y0 / ky));
-    const px1 = Math.min(width - 1, Math.ceil(x1 / kx)), py1 = Math.min(height - 1, Math.ceil(y1 / ky));
+    const px0 = Math.max(0, Math.floor(x0 / scaleX)), py0 = Math.max(0, Math.floor(y0 / scaleY));
+    const px1 = Math.min(width - 1, Math.ceil(x1 / scaleX)), py1 = Math.min(height - 1, Math.ceil(y1 / scaleY));
     for (let py = py0; py <= py1; py++) {
       for (let px = px0; px <= px1; px++) {
-        const x = (px + 0.5) * kx, y = (py + 0.5) * ky;
+        const x = (px + 0.5) * scaleX, y = (py + 0.5) * scaleY;
         if (!shape.has(x, y) || (clip && !clip.has(x, y))) continue;
-        const o = at(px, py);
-        if ((over && !data[o + 3]) || (under && data[o + 3])) continue;
-        let t = 0.5 + (shape.tone(x, y) - 0.5) * gain + bias;
-        if (rough) t += (grain(px, py, seed) - 0.5) * rough;
-        let c;
-        if (typeof paint === 'function') c = paint({ x, y, px, py, t: clamp01(t) });
+        const offset = at(px, py);
+        if ((over && !data[offset + 3]) || (under && data[offset + 3])) continue;
+        let light = 0.5 + (shape.tone(x, y) - 0.5) * gain + bias;
+        if (rough) light += (grain(px, py, seed) - 0.5) * rough;
+        let colour;
+        if (typeof paint === 'function') colour = paint({ x, y, px, py, t: clamp01(light) });
         else if (Array.isArray(paint[0])) {
-          const v = clamp01(t) * (paint.length - 1);
-          c = paint[Math.max(0, Math.min(paint.length - 1, flat ? Math.round(v) : Math.floor(v + bayer(px, py))))];
-        } else c = paint;
-        if (!c) continue;
-        data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+          const step = clamp01(light) * (paint.length - 1);
+          colour = paint[Math.max(0, Math.min(paint.length - 1, flat ? Math.round(step) : Math.floor(step + ditherAt(px, py))))];
+        } else colour = paint;
+        if (!colour) continue;
+        data[offset] = colour[0]; data[offset + 1] = colour[1]; data[offset + 2] = colour[2]; data[offset + 3] = 255;
       }
     }
   }
   /** Set one pixel (picture coordinates); `null` clears it. */
-  function set(px, py, c) {
+  function set(px, py, colour) {
     if (px < 0 || py < 0 || px >= width || py >= height) return;
-    const o = at(px, py);
-    if (!c) { data.fill(0, o, o + 4); return; }
-    data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+    const offset = at(px, py);
+    if (!colour) { data.fill(0, offset, offset + 4); return; }
+    data[offset] = colour[0]; data[offset + 1] = colour[1]; data[offset + 2] = colour[2]; data[offset + 3] = 255;
   }
   const get = (px, py) => (opaque(px, py) ? [...data.subarray(at(px, py), at(px, py) + 3)] : null);
   /** The rim: every painted pixel beside a clear one (or the picture's edge, `edges`) drawn toward `dark`, `keep` of
@@ -178,60 +178,60 @@ export function createPainter(width, height, { space = [width, height] } = {}) {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         if (!opaque(x, y)) continue;
-        const out = (nx, ny) => (nx < 0 || ny < 0 || nx >= width || ny >= height ? edges : !opaque(nx, ny));
+        const out = (neighbourX, neighbourY) => (neighbourX < 0 || neighbourY < 0 || neighbourX >= width || neighbourY >= height ? edges : !opaque(neighbourX, neighbourY));
         if (out(x - 1, y) || out(x + 1, y) || out(x, y - 1) || out(x, y + 1)) rim.push(at(x, y));
       }
     }
-    for (const o of rim) for (let c = 0; c < 3; c++) data[o + c] = Math.round(data[o + c] * keep + dark[c] * (1 - keep));
+    for (const offset of rim) for (let channel = 0; channel < 3; channel++) data[offset + channel] = Math.round(data[offset + channel] * keep + dark[channel] * (1 - keep));
   }
   /** Words in our letters (5x7, or the 4x7 `NARROW` set) at picture pixel (px, py), with a one-pixel shadow under
    *  and right when `shadow`. */
-  function text(str, px, py, c, { shadow = null, font = GLYPHS } = {}) {
-    const draw = (ox, oy, col) => {
-      let x = ox;
-      for (const ch of String(str)) {
-        const g = font[ch] ?? font[' '];
-        g.forEach((row, gy) => { for (let gx = 0; gx < row.length; gx++) if (row[gx] === '#') set(x + gx, oy + gy, col); });
-        x += g[0].length + 1;
+  function text(str, px, py, colour, { shadow = null, font = PAINTED_LETTERS } = {}) {
+    const draw = (originX, originY, col) => {
+      let x = originX;
+      for (const letter of String(str)) {
+        const glyph = font[letter] ?? font[' '];
+        glyph.forEach((row, glyphY) => { for (let glyphX = 0; glyphX < row.length; glyphX++) if (row[glyphX] === '#') set(x + glyphX, originY + glyphY, col); });
+        x += glyph[0].length + 1;
       }
     };
     if (shadow) draw(px + 1, py + 1, shadow);
-    draw(px, py, c);
+    draw(px, py, colour);
   }
   return { width, height, data, fill, set, get, outline, text, picture: () => ({ width, height, data }) };
 }
 
 /** How many pixels `str` takes in our letters (the gap after the last one not counted). */
-export const textWidth = (str, font = GLYPHS) =>
-  [...String(str)].reduce((w, ch) => w + (font[ch] ?? font[' '])[0].length + 1, 0) - 1;
+export const textWidth = (str, font = PAINTED_LETTERS) =>
+  [...String(str)].reduce((w, letter) => w + (font[letter] ?? font[' '])[0].length + 1, 0) - 1;
 
 // Our letters: 5x7 capitals, a 3-wide 'x' and ':' - what the travel strip's buttons and labels say.
-const G = (s) => Object.freeze(s.split('|'));
-export const GLYPHS = Object.freeze({
-  ' ': G('...|...|...|...|...|...|...'),
-  A: G('.###.|#...#|#...#|#####|#...#|#...#|#...#'),
-  C: G('.###.|#...#|#....|#....|#....|#...#|.###.'),
-  D: G('####.|#...#|#...#|#...#|#...#|#...#|####.'),
-  E: G('#####|#....|#....|####.|#....|#....|#####'),
-  I: G('###|.#.|.#.|.#.|.#.|.#.|###'),
-  M: G('#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#'),
-  N: G('#...#|##..#|#.#.#|#..##|#...#|#...#|#...#'),
-  O: G('.###.|#...#|#...#|#...#|#...#|#...#|.###.'),
-  P: G('####.|#...#|#...#|####.|#....|#....|#....'),
-  R: G('####.|#...#|#...#|####.|#.#..|#..#.|#...#'),
-  S: G('.####|#....|#....|.###.|....#|....#|####.'),
-  T: G('#####|..#..|..#..|..#..|..#..|..#..|..#..'),
-  X: G('#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#'),
-  x: G('...|...|#.#|.#.|#.#|...|...'),
-  ':': G('.|.|#|.|#|.|.'),
+const glyphOf = (rows) => Object.freeze(rows.split('|'));
+export const PAINTED_LETTERS = Object.freeze({
+  ' ': glyphOf('...|...|...|...|...|...|...'),
+  A: glyphOf('.###.|#...#|#...#|#####|#...#|#...#|#...#'),
+  C: glyphOf('.###.|#...#|#....|#....|#....|#...#|.###.'),
+  D: glyphOf('####.|#...#|#...#|#...#|#...#|#...#|####.'),
+  E: glyphOf('#####|#....|#....|####.|#....|#....|#####'),
+  I: glyphOf('###|.#.|.#.|.#.|.#.|.#.|###'),
+  M: glyphOf('#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#'),
+  N: glyphOf('#...#|##..#|#.#.#|#..##|#...#|#...#|#...#'),
+  O: glyphOf('.###.|#...#|#...#|#...#|#...#|#...#|.###.'),
+  P: glyphOf('####.|#...#|#...#|####.|#....|#....|#....'),
+  R: glyphOf('####.|#...#|#...#|####.|#.#..|#..#.|#...#'),
+  S: glyphOf('.####|#....|#....|.###.|....#|....#|####.'),
+  T: glyphOf('#####|..#..|..#..|..#..|..#..|..#..|..#..'),
+  X: glyphOf('#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#'),
+  x: glyphOf('...|...|#.#|.#.|#.#|...|...'),
+  ':': glyphOf('.|.|#|.|#|.|.'),
 });
 
 /** Our narrow letters, 4x7: what a 32-pixel message-box button has room for. */
 export const NARROW = Object.freeze({
-  ' ': G('..|..|..|..|..|..|..'),
-  5: G('####|#...|###.|...#|...#|#..#|.##.'),
-  A: G('.##.|#..#|#..#|####|#..#|#..#|#..#'),
-  D: G('###.|#..#|#..#|#..#|#..#|#..#|###.'),
-  S: G('.###|#...|#...|.##.|...#|...#|###.'),
-  Y: G('#..#|#..#|#..#|.##.|.##.|.##.|.##.'),
+  ' ': glyphOf('..|..|..|..|..|..|..'),
+  5: glyphOf('####|#...|###.|...#|...#|#..#|.##.'),
+  A: glyphOf('.##.|#..#|#..#|####|#..#|#..#|#..#'),
+  D: glyphOf('###.|#..#|#..#|#..#|#..#|#..#|###.'),
+  S: glyphOf('.###|#...|#...|.##.|...#|...#|###.'),
+  Y: glyphOf('#..#|#..#|#..#|.##.|.##.|.##.|.##.'),
 });

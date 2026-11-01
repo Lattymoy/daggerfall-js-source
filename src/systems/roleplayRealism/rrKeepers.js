@@ -71,7 +71,7 @@ export const RR_KEEPERS = Object.freeze({
 
 /** The picture sizes, by record. */
 export const RR_KEEPER_SIZE = Object.freeze(
-  Object.fromEntries(Object.entries(RR_KEEPERS).map(([r, k]) => [r, k.size])),
+  Object.fromEntries(Object.entries(RR_KEEPERS).map(([record, k]) => [record, k.size])),
 );
 
 /** Keeper `spec` put together from `read(archive, record)` -> { width, height, data } (palette indices, frame 0).
@@ -91,17 +91,17 @@ export function composeKeeper(spec, read) {
         if (i && i !== MASK && dx >= 0 && dy >= 0 && dx < w && dy < height) out[dy * w + dx] = i;
       }
   };
-  const inside = ([x0, y0, x1, y1], f) => {
+  const inside = ([x0, y0, x1, y1], visit) => {
     for (let y = Math.max(0, top + y0); y < Math.min(height, top + y1); y++)
-      for (let x = Math.max(0, left + x0); x < Math.min(w, left + x1); x++) f(y * w + x);
+      for (let x = Math.max(0, left + x0); x < Math.min(w, left + x1); x++) visit(y * w + x);
   };
   lay(body, [0, 0, body.width, body.height], 0, 0);
-  for (const rect of spec.clear ?? []) inside(rect, (p) => (out[p] = 0));
+  for (const rect of spec.clear ?? []) inside(rect, (index) => (out[index] = 0));
   for (const piece of spec.pieces ?? []) lay(read(...piece.from), piece.rect, piece.at[0], piece.at[1]);
   for (const swap of spec.swaps ?? [])
-    inside(swap.rect, (p) => {
-      if (out[p] && RAMP_OF(out[p]) === swap.from)
-        out[p] = (swap.to << 4) | Math.min(15, (out[p] & 15) + (swap.darker ?? 0));
+    inside(swap.rect, (index) => {
+      if (out[index] && RAMP_OF(out[index]) === swap.from)
+        out[index] = (swap.to << 4) | Math.min(15, (out[index] & 15) + (swap.darker ?? 0));
     });
   return { width: w, height, data: out };
 }
@@ -113,17 +113,17 @@ export async function rrKeeperPicture(record, art) {
   if (!spec) return null;
   const records = [spec.body, ...(spec.pieces ?? []).map((piece) => piece.from)];
   const [bitmaps, palette] = await Promise.all([
-    Promise.all(records.map(([a, r]) => art.bitmap(a, r, 0))),
+    Promise.all(records.map(([archive, recordNo]) => art.bitmap(archive, recordNo, 0))),
     art.palette(),
   ]);
   if (bitmaps.some((b) => !b?.width)) throw new Error(`keeper ${record}: a record is not in the player's data`);
-  const byKey = new Map(records.map(([a, r], i) => [`${a}_${r}`, bitmaps[i]]));
-  const { width, height, data } = composeKeeper(spec, (a, r) => byKey.get(`${a}_${r}`));
+  const byKey = new Map(records.map(([archive, recordNo], i) => [`${archive}_${recordNo}`, bitmaps[i]]));
+  const { width, height, data } = composeKeeper(spec, (archive, recordNo) => byKey.get(`${archive}_${recordNo}`));
   const rgba = new Uint8Array(width * height * 4);
-  for (let p = 0; p < data.length; p++) {
-    if (!data[p]) continue;
-    const c = palette.get(data[p]);
-    rgba.set([c.r, c.g, c.b, 255], p * 4);
+  for (let index = 0; index < data.length; index++) {
+    if (!data[index]) continue;
+    const colour = palette.get(data[index]);
+    rgba.set([colour.r, colour.g, colour.b, 255], index * 4);
   }
   return { width, height, data: rgba };
 }

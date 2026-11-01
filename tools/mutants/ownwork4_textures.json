@@ -2,8 +2,8 @@
   {
     "name": "OWN4-upscale-clamp-dropped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "        v = v < lo ? lo : v > hi ? hi : v;\n        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
-    "new": "        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
+    "old": "        value = value < lo ? lo : value > hi ? hi : value;\n        out[offset + channel] = channel === 3 ? (value >= 127.5 ? 255 : 0) : value + 0.5;",
+    "new": "        out[offset + channel] = channel === 3 ? (value >= 127.5 ? 255 : 0) : value + 0.5;",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OWN4-upscale-alpha-soft",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "        out[o + c] = c === 3 ? (v >= 127.5 ? 255 : 0) : v + 0.5;",
-    "new": "        out[o + c] = v + 0.5;",
+    "old": "        out[offset + channel] = channel === 3 ? (value >= 127.5 ? 255 : 0) : value + 0.5;",
+    "new": "        out[offset + channel] = value + 0.5;",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OWN4-sharpen-past-its-range",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      t = t < lo ? lo : t > hi ? hi : t;\n",
-    "new": "",
+    "old": "      sharpened = sharpened < lo ? lo : sharpened > hi ? hi : sharpened;\n      const lift = sharpened - luma[i];",
+    "new": "      const lift = sharpened - luma[i];",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "OWN4-road-relief-unlit",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
+    "old": "      const k = pave * (1 + clamp01(0.5 - (slopeX + slopeY) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
     "new": "      const k = pave + verge * 0.88 + (1 - pave - verge);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "OWN4-road-verge-dropped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
-    "new": "      const k = pave * (1 + clamp01(0.5 - (gx + gy) * relief) * 0.5 - 0.25) + (1 - pave);",
+    "old": "      const k = pave * (1 + clamp01(0.5 - (slopeX + slopeY) * relief) * 0.5 - 0.25) + verge * 0.88 + (1 - pave - verge);",
+    "new": "      const k = pave * (1 + clamp01(0.5 - (slopeX + slopeY) * relief) * 0.5 - 0.25) + (1 - pave);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "OWN4-desert-water-graded",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "    const kept = (1 - waterOf(r, g, b)) * (1 - smooth(0.02, 0.08, (g - Math.max(r, b)) / 255));",
-    "new": "    const kept = 1 - smooth(0.02, 0.08, (g - Math.max(r, b)) / 255);",
+    "old": "    const kept = (1 - waterOf(red, green, blue)) * (1 - smooth(0.02, 0.08, (green - Math.max(red, blue)) / 255));",
+    "new": "    const kept = 1 - smooth(0.02, 0.08, (green - Math.max(red, blue)) / 255);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "OWN4-desert-flank-side-dropped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "    const side = road === 'flank' ? smooth(-0.3, -0.1, ((i % w) + ((i / w) | 0) + 1) / w - 1) : 1;",
+    "old": "    const side = road === 'flank' ? smooth(-0.3, -0.1, ((i % width) + ((i / width) | 0) + 1) / width - 1) : 1;",
     "new": "    const side = 1;",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "OWN4-snow-left-warm",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      const tone = [v * (240 - 16 * hollow), v * (244 - 8 * hollow), v * 254];",
-    "new": "      const tone = [v * 254, v * (244 - 8 * hollow), v * (240 - 16 * hollow)];",
+    "old": "      const tone = [light * (240 - 16 * hollow), light * (244 - 8 * hollow), light * 254];",
+    "new": "      const tone = [light * 254, light * (244 - 8 * hollow), light * (240 - 16 * hollow)];",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "OWN4-snow-grain-dropped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      const own = 255 * keepOwn * (lumaOf(s[o], s[o + 1], s[o + 2]) - ground.ht[i]);",
+    "old": "      const own = 255 * keepOwn * (lumaOf(srcData[offset], srcData[offset + 1], srcData[offset + 2]) - ground.ht[i]);",
     "new": "      const own = 0 * keepOwn;",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "OWN4-mask-rows-flipped",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "      out[y * w + x] = m >= 0.96 ? 255 : m < 0.02 ? 0 : Math.round(m * 255);",
-    "new": "      out[(h - 1 - y) * w + x] = m >= 0.96 ? 255 : m < 0.02 ? 0 : Math.round(m * 255);",
+    "old": "      out[y * width + x] = coverage >= 0.96 ? 255 : coverage < 0.02 ? 0 : Math.round(coverage * 255);",
+    "new": "      out[(height - 1 - y) * width + x] = coverage >= 0.96 ? 255 : coverage < 0.02 ? 0 : Math.round(coverage * 255);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWN4-albedo-warm",
     "file": "src/systems/ownTextures/ownTextureRules.js",
-    "old": "    data[i * 4 + 2] = Math.min(255, 255 * (v + 0.03 + glint) + 0.5);",
-    "new": "    data[i * 4 + 2] = Math.min(255, 255 * (v - 0.08 + glint) + 0.5);",
+    "old": "    data[i * 4 + 2] = Math.min(255, 255 * (light + 0.03 + glint) + 0.5);",
+    "new": "    data[i * 4 + 2] = Math.min(255, 255 * (light - 0.08 + glint) + 0.5);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "OWN4-snow-fallback-dropped",
     "file": "src/systems/ownTextures/ownTexturePacks.js",
-    "old": "      return { rule: 'snow', from: [archive, record, frame], fallback: [archive - 1, record, frame], w, h, seed };",
-    "new": "      return { rule: 'snow', from: [archive, record, frame], w, h, seed };",
+    "old": "      return {\n        rule: 'snow',\n        from: [archive, record, frame],\n        fallback: [archive - 1, record, frame],\n        w: width,\n        h: height,\n        seed,\n      };",
+    "new": "      return { rule: 'snow', from: [archive, record, frame], w: width, h: height, seed };",
     "tests": [
       "test/systems/ownwork4_textures.test.js",
       "test/systems/environs_texturePacks.test.js"
@@ -202,7 +202,7 @@
   {
     "name": "OWN4-masks-summer-unread",
     "file": "src/systems/ownTextures/ownTexturePacks.js",
-    "old": "        src = await picture(a - 1, r).catch(() => null);",
+    "old": "        src = await picture(archive - 1, record).catch(() => null);",
     "new": "        src = null;",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "OWN4-masks-nothing-taken-for-snow",
     "file": "src/systems/ownTextures/ownTexturePacks.js",
-    "old": "    if (!read) throw new Error(`TEXTURE.${String(a).padStart(3, '0')}: no record to lay the snow by`);\n",
-    "new": "",
+    "old": "    if (!read) throw new Error(`TEXTURE.${String(archive).padStart(3, '0')}: no record to lay the snow by`);\n    masks.push(out);",
+    "new": "    masks.push(out);",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]

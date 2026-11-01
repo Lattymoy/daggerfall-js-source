@@ -2,24 +2,27 @@
 // for our painter (art/ownPainter.js), keyed by the texture name the species reads, at the power-of-two size the sea
 // samples. A fish is drawn in the shape it shows (its billboard's aspect, `space`) and sampled at its picture's size,
 // so restoreIconAspect gives its icon that shape back. All face left. No pixel of the retired release is read.
-import { createPainter, RAMP, ellipse, poly, stroke, union, shadeOf } from '../../art/ownPainter.js';
+import { createPainter, RAMP, ellipse, poly, stroke, union, rampShade } from '../../art/ownPainter.js';
 
 /** A body lit from above: `back` over the line `split` (a y), `belly` under it. */
 const twoTone =
   (back, belly, split) =>
-  ({ y, px, py, t }) =>
-    shadeOf(y < split ? back : belly, t, px, py);
-/** The eye at (x, y), radius r: dark, its rim pale, one glint. */
-function eye(p, x, y, r, rim = RAMP.white) {
-  p.fill(ellipse(x, y, r, r), rim[2]);
-  p.fill(ellipse(x, y, r * 0.66, r * 0.66), RAMP.black[0]);
-  p.fill(ellipse(x - r * 0.3, y - r * 0.3, Math.max(0.5, r * 0.25), Math.max(0.5, r * 0.25)), RAMP.white[5]);
+  ({ y, px, py, t: light }) =>
+    rampShade(y < split ? back : belly, light, px, py);
+/** The eye at (x, y), `radius` round: dark, its rim pale, one glint. */
+function eye(painter, x, y, radius, rim = RAMP.white) {
+  painter.fill(ellipse(x, y, radius, radius), rim[2]);
+  painter.fill(ellipse(x, y, radius * 0.66, radius * 0.66), RAMP.black[0]);
+  painter.fill(
+    ellipse(x - radius * 0.3, y - radius * 0.3, Math.max(0.5, radius * 0.25), Math.max(0.5, radius * 0.25)),
+    RAMP.white[5],
+  );
 }
 
 function butterflyfish() {
-  const p = createPainter(64, 64, { space: [89, 64] });
+  const painter = createPainter(64, 64, { space: [89, 64] });
   const body = ellipse(50, 33, 25, 21);
-  p.fill(
+  painter.fill(
     poly([
       [30, 18],
       [44, 8],
@@ -30,7 +33,7 @@ function butterflyfish() {
     RAMP.yellow,
     { gain: 0.6 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [40, 50],
       [70, 44],
@@ -40,7 +43,7 @@ function butterflyfish() {
     RAMP.yellow,
     { gain: 0.6, bias: -0.1 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [72, 33],
       [86, 22],
@@ -49,8 +52,8 @@ function butterflyfish() {
     RAMP.yellow,
     { gain: 0.5, bias: 0.05 },
   );
-  p.fill(body, twoTone(RAMP.yellow, RAMP.white, 51), { gain: 1.1 });
-  p.fill(
+  painter.fill(body, twoTone(RAMP.yellow, RAMP.white, 51), { gain: 1.1 });
+  painter.fill(
     stroke(
       [
         [28, 31],
@@ -62,7 +65,7 @@ function butterflyfish() {
     RAMP.yellow,
     { bias: -0.05 },
   );
-  p.fill(
+  painter.fill(
     stroke(
       [
         [34, 14],
@@ -74,16 +77,16 @@ function butterflyfish() {
     RAMP.black,
     { over: true },
   );
-  p.fill(ellipse(66, 46, 3, 3), RAMP.black[1], { over: true });
-  eye(p, 34, 29, 3.4);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  painter.fill(ellipse(66, 46, 3, 3), RAMP.black[1], { over: true });
+  eye(painter, 34, 29, 3.4);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function bass() {
-  const p = createPainter(64, 32, { space: [73, 32] });
+  const painter = createPainter(64, 32, { space: [73, 32] });
   const body = union(ellipse(34, 17, 27, 10), ellipse(22, 16, 16, 10.5));
-  p.fill(
+  painter.fill(
     poly([
       [22, 8],
       [30, 2],
@@ -93,7 +96,7 @@ function bass() {
     RAMP.olive,
     { gain: 0.6, bias: -0.1 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [40, 24],
       [52, 23],
@@ -102,7 +105,7 @@ function bass() {
     RAMP.olive,
     { gain: 0.6 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [57, 17],
       [71, 6],
@@ -112,8 +115,8 @@ function bass() {
     RAMP.ember,
     { gain: 0.6 },
   );
-  p.fill(body, twoTone(RAMP.olive, RAMP.pale, 19), { gain: 1.1 });
-  p.fill(
+  painter.fill(body, twoTone(RAMP.olive, RAMP.pale, 19), { gain: 1.1 });
+  painter.fill(
     stroke(
       [
         [16, 16],
@@ -126,7 +129,7 @@ function bass() {
     RAMP.olive.slice(0, 3),
     { over: true, seed: 2, rough: 0.6 },
   );
-  p.fill(
+  painter.fill(
     stroke(
       [
         [4, 16],
@@ -137,7 +140,7 @@ function bass() {
     RAMP.black[1],
     { over: true },
   );
-  p.fill(
+  painter.fill(
     stroke(
       [
         [17, 9],
@@ -149,15 +152,15 @@ function bass() {
     RAMP.olive[1],
     { over: true },
   );
-  eye(p, 10, 12, 2.4, RAMP.yellow);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  eye(painter, 10, 12, 2.4, RAMP.yellow);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function rockfish() {
-  const p = createPainter(32, 16, { space: [44, 16] });
+  const painter = createPainter(32, 16, { space: [44, 16] });
   const body = union(ellipse(21, 8.5, 16, 5.6), ellipse(13, 8, 10, 6));
-  p.fill(
+  painter.fill(
     poly([
       [10, 4],
       [16, 0.5],
@@ -167,7 +170,7 @@ function rockfish() {
     RAMP.ember,
     { gain: 0.5, bias: 0.05 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [34, 8.5],
       [43, 2],
@@ -176,8 +179,8 @@ function rockfish() {
     RAMP.ember,
     { gain: 0.5 },
   );
-  p.fill(body, twoTone(RAMP.ember, RAMP.yellow, 10), { gain: 1.1 });
-  p.fill(
+  painter.fill(body, twoTone(RAMP.ember, RAMP.yellow, 10), { gain: 1.1 });
+  painter.fill(
     stroke(
       [
         [12, 8],
@@ -188,15 +191,15 @@ function rockfish() {
     RAMP.ember[2],
     { over: true },
   );
-  eye(p, 7, 6.5, 1.8, RAMP.yellow);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  eye(painter, 7, 6.5, 1.8, RAMP.yellow);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function carp() {
-  const p = createPainter(32, 32, { space: [52, 32] });
+  const painter = createPainter(32, 32, { space: [52, 32] });
   const body = ellipse(25, 17, 20, 11);
-  p.fill(
+  painter.fill(
     poly([
       [16, 8],
       [24, 2],
@@ -206,7 +209,7 @@ function carp() {
     RAMP.bronze,
     { gain: 0.5, bias: -0.1 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [42, 17],
       [51, 7],
@@ -216,7 +219,7 @@ function carp() {
     RAMP.bronze,
     { gain: 0.5 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [26, 26],
       [34, 26],
@@ -225,11 +228,11 @@ function carp() {
     RAMP.bronze,
     { gain: 0.5 },
   );
-  p.fill(body, twoTone(RAMP.bronze, RAMP.gold, 21), { gain: 1.1 });
-  const scale = ({ px, py, t }) =>
-    (px + (py >> 1)) % 3 === 0 && py % 2 === 0 ? shadeOf(RAMP.bronze, t - 0.25, px, py) : null;
-  p.fill(ellipse(27, 17, 15, 8), scale, { over: true });
-  p.fill(
+  painter.fill(body, twoTone(RAMP.bronze, RAMP.gold, 21), { gain: 1.1 });
+  const scale = ({ px, py, t: light }) =>
+    (px + (py >> 1)) % 3 === 0 && py % 2 === 0 ? rampShade(RAMP.bronze, light - 0.25, px, py) : null;
+  painter.fill(ellipse(27, 17, 15, 8), scale, { over: true });
+  painter.fill(
     stroke(
       [
         [13, 9],
@@ -241,15 +244,15 @@ function carp() {
     RAMP.bronze[1],
     { over: true },
   );
-  eye(p, 9, 14, 2.2, RAMP.gold);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  eye(painter, 9, 14, 2.2, RAMP.gold);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function mackerel() {
-  const p = createPainter(32, 16, { space: [36, 16] });
+  const painter = createPainter(32, 16, { space: [36, 16] });
   const body = union(ellipse(16, 8, 13, 4.4), ellipse(10, 8, 8, 4.6));
-  p.fill(
+  painter.fill(
     poly([
       [27, 8],
       [35, 2],
@@ -259,7 +262,7 @@ function mackerel() {
     RAMP.sea,
     { gain: 0.5 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [12, 4],
       [16, 1.5],
@@ -268,18 +271,18 @@ function mackerel() {
     RAMP.sea,
     { gain: 0.5, bias: -0.1 },
   );
-  p.fill(body, twoTone(RAMP.sea, RAMP.white, 8.5), { gain: 1.1 });
-  const bars = ({ x, y, px, py, t }) =>
-    y < 7.5 && Math.floor(x + Math.abs(y - 5) * 1.5) % 4 < 1.5 ? shadeOf(RAMP.black, t + 0.2, px, py) : null;
-  p.fill(body, bars, { over: true });
-  eye(p, 5, 7, 1.4);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  painter.fill(body, twoTone(RAMP.sea, RAMP.white, 8.5), { gain: 1.1 });
+  const bars = ({ x, y, px, py, t: light }) =>
+    y < 7.5 && Math.floor(x + Math.abs(y - 5) * 1.5) % 4 < 1.5 ? rampShade(RAMP.black, light + 0.2, px, py) : null;
+  painter.fill(body, bars, { over: true });
+  eye(painter, 5, 7, 1.4);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function angelfish() {
-  const p = createPainter(32, 64, { space: [40, 64] });
-  p.fill(
+  const painter = createPainter(32, 64, { space: [40, 64] });
+  painter.fill(
     poly([
       [11, 22],
       [19, 6],
@@ -290,7 +293,7 @@ function angelfish() {
     RAMP.white,
     { gain: 0.6, bias: -0.1 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [11, 42],
       [19, 58],
@@ -301,7 +304,7 @@ function angelfish() {
     RAMP.white,
     { gain: 0.6, bias: -0.15 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [28, 32],
       [38, 24],
@@ -310,7 +313,7 @@ function angelfish() {
     RAMP.white,
     { gain: 0.5, bias: -0.05 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [4, 32],
       [16, 18],
@@ -320,10 +323,10 @@ function angelfish() {
     RAMP.white,
     { gain: 1.1 },
   );
-  p.fill(ellipse(17, 32, 11, 11), RAMP.white, { gain: 1.1 });
-  const bands = ({ x, px, py, t }) =>
-    (x > 9.5 && x < 13.5) || (x > 18 && x < 23) || (x > 27 && x < 31) ? shadeOf(RAMP.black, t, px, py) : null;
-  p.fill(
+  painter.fill(ellipse(17, 32, 11, 11), RAMP.white, { gain: 1.1 });
+  const bands = ({ x, px, py, t: light }) =>
+    (x > 9.5 && x < 13.5) || (x > 18 && x < 23) || (x > 27 && x < 31) ? rampShade(RAMP.black, light, px, py) : null;
+  painter.fill(
     poly([
       [0, 0],
       [40, 0],
@@ -333,15 +336,15 @@ function angelfish() {
     bands,
     { over: true },
   );
-  eye(p, 8, 30, 2.1, RAMP.white);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  eye(painter, 8, 30, 2.1, RAMP.white);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 function grouper() {
-  const p = createPainter(32, 32, { space: [55, 32] });
+  const painter = createPainter(32, 32, { space: [55, 32] });
   const body = union(ellipse(28, 17, 23, 11), ellipse(16, 17, 14, 12));
-  p.fill(
+  painter.fill(
     poly([
       [18, 7],
       [26, 2],
@@ -351,7 +354,7 @@ function grouper() {
     RAMP.grey,
     { gain: 0.5, bias: -0.05 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [47, 17],
       [54, 9],
@@ -360,7 +363,7 @@ function grouper() {
     RAMP.grey,
     { gain: 0.5 },
   );
-  p.fill(
+  painter.fill(
     poly([
       [30, 26],
       [40, 26],
@@ -369,10 +372,11 @@ function grouper() {
     RAMP.grey,
     { gain: 0.5, bias: -0.1 },
   );
-  p.fill(body, twoTone(RAMP.grey, RAMP.white, 21), { gain: 1.1 });
-  const spots = ({ px, py, t }) => ((px * 5 + py * 3) % 11 === 0 ? shadeOf(RAMP.grey, t - 0.3, px, py) : null);
-  p.fill(body, spots, { over: true });
-  p.fill(
+  painter.fill(body, twoTone(RAMP.grey, RAMP.white, 21), { gain: 1.1 });
+  const spots = ({ px, py, t: light }) =>
+    (px * 5 + py * 3) % 11 === 0 ? rampShade(RAMP.grey, light - 0.3, px, py) : null;
+  painter.fill(body, spots, { over: true });
+  painter.fill(
     stroke(
       [
         [3, 19],
@@ -383,9 +387,9 @@ function grouper() {
     RAMP.black[1],
     { over: true },
   );
-  eye(p, 10, 13, 2.4, RAMP.yellow);
-  p.outline({ keep: 0.35 });
-  return p.picture();
+  eye(painter, 10, 13, 2.4, RAMP.yellow);
+  painter.outline({ keep: 0.35 });
+  return painter.picture();
 }
 
 /** Each species' recipe, by the texture name it reads (world/passiveFish.js PASSIVE_FISH_SPECIES). */

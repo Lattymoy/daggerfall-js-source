@@ -44,7 +44,7 @@ export const hexLinear = (hex) => [1, 3, 5].map((i) => srgbToLinear(parseInt(hex
 /** Linear light back to an sRGB triple, 0..1. */
 export const toSrgb3 = (rgb) => rgb.map((value) => linearToSrgb(clamp01(value)));
 /** The luminance of linear light (Rec. 709). */
-export const luminance = (rgb) => 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+export const linearLuminance = (rgb) => 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
 
 // ── The preset rule ────────────────────────────────────────────────
 
@@ -109,7 +109,7 @@ const HOURS_LINEAR = SKY_HOURS.map((a) => ({
   light: a.light,
 }));
 
-/** THE WEATHER: one number, its cover c, and the grey its sky turns. The rule (`weatherRow`, `skyFrame`): the sky's
+/** THE WEATHER: one number, its cover c, and the grey its sky turns. The rule (`skyWeatherRow`, `skyFrame`): the sky's
  *  colours mix toward the grey by c^1.5 and darken by 0.35 c^2; the sun, the moons and the stars show (1 - c^2)^2;
  *  the low cloud layer covers c, the high one 0.3 (1 - c), fading out from 0.16 to 0.07. Snow's grey is pale, a storm's
  *  slate, the sandstorm ochre and the ashfall a warm brown, so a province's own weather wears its own sky. */
@@ -201,7 +201,7 @@ export const SKY_EASE_MINUTES = 3;
 export const SKY_JUMP_MINUTES = 60;
 
 /** The easeable numbers of one weather's row. */
-export function weatherRow(weather, looks = WEATHER_LOOK) {
+export function skyWeatherRow(weather, looks = WEATHER_LOOK) {
   const look = looks[weather] ?? looks.sunny;
   return { cover: look.cover, grey: hexLinear(look.grey) };
 }
@@ -266,13 +266,13 @@ const wrap = (value) => value - Math.floor(value);
 
 /**
  * One frame of the sky, in the shape the pass and the bridge read.
- * @param {object} f { minuteOfDay, classicMinutes, row (weatherRow, eased), season (SEASONS), seconds,
+ * @param {object} f { minuteOfDay, classicMinutes, row (skyWeatherRow, eased), season (SEASONS), seconds,
  *   weatherScale, phases (phasesAt), lightCurve, flash (the storm's flash now, StormFlash's level) }
  */
 export function skyFrame({
   minuteOfDay,
   classicMinutes = 0,
-  row = weatherRow('sunny'),
+  row = skyWeatherRow('sunny'),
   season = SEASONS.Spring,
   seconds = 0,
   weatherScale = 1,

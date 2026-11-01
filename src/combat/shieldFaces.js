@@ -2,7 +2,7 @@
 // OWN-WORK4 (2026-10-31): OUR OWN FIRST-PERSON SHIELDS, painted in code for Shield Widget's 600 slots (the mod's
 // pictures are retired). A slot is a kind (its archive), a material group and a wear tier (its record), and one of
 // the five frames the Animation module plays, from the guard (0) to the shield turned out of the way (4).
-import { createPainter, ellipse, poly, stroke, minus, and, RAMP, hex, grain, shadeOf } from '../art/ownPainter.js';
+import { createPainter, ellipse, poly, stroke, minus, and, RAMP, hex, grain, rampShade } from '../art/ownPainter.js';
 import { SHIELD_ARCHIVE_FIRST, SHIELD_FRAMES, SHIELD_RECORDS, SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
 
 /** Each archive's kind, in the widget's order. */
@@ -43,9 +43,9 @@ const OUTLINE = {
 
 /** The painter's light (art/ownPainter.js): from the upper left, toward the viewer. A surface's light by its normal. */
 const LIGHT = [-0.55, -0.62, 0.56];
-export const litBy = (nx, ny, nz) => {
-  const len = Math.hypot(nx, ny, nz) || 1;
-  return Math.max(0, Math.min(1, ((nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]) / len + 1) / 2));
+export const litBy = (normalX, normalY, normalZ) => {
+  const len = Math.hypot(normalX, normalY, normalZ) || 1;
+  return Math.max(0, Math.min(1, ((normalX * LIGHT[0] + normalY * LIGHT[1] + normalZ * LIGHT[2]) / len + 1) / 2));
 };
 /** How a face is made: group 0 is planks of wood, the rest metal. A metal's sheen is the share of the light that turns
  *  to its ramp's brightest shades; the rim's bevel rises at `BEVEL` (its slopes' tilt out of the face). */
@@ -93,33 +93,33 @@ export function paintShieldFace(index, size) {
   if (face.group === 0) {
     // planks of wood, upright: each its own tone, its grain waving along it, a dark seam between
     painter.fill(inner, ({ x, y, px, py }) => {
-      const [u, v] = local(x, y);
-      const across = (u / 0.9 + 0.5) * SHIELD_PLANKS, plank = Math.floor(across), within = across - plank;
-      if (within < 0.07) return shadeOf(paint.face, light(x, y) * 0.35, px, py);
-      const wave = Math.sin(v * 38 + grain(plank, 7, 11 + face.group) * 6 + Math.sin(u * 30) * 1.4);
+      const [localX, localY] = local(x, y);
+      const across = (localX / 0.9 + 0.5) * SHIELD_PLANKS, plank = Math.floor(across), within = across - plank;
+      if (within < 0.07) return rampShade(paint.face, light(x, y) * 0.35, px, py);
+      const wave = Math.sin(localY * 38 + grain(plank, 7, 11 + face.group) * 6 + Math.sin(localX * 30) * 1.4);
       const tone = light(x, y) * 0.85 + (grain(plank, 3, 5) - 0.5) * 0.18 + wave * 0.07 + (grain(px, py, 3) - 0.5) * 0.08;
-      return shadeOf(RAMP.wood, tone, px, py);
+      return rampShade(RAMP.wood, tone, px, py);
     });
   } else {
     // metal: the dome's light, a sheen where it faces the light, brushed along the rows
     painter.fill(inner, ({ x, y, px, py }) => {
-      const t = light(x, y), brushed = (grain(0, py, 17 + face.group) - 0.5) * 0.08;
-      const sheen = t > SHIELD_SHEEN ? (t - SHIELD_SHEEN) * 1.2 : 0;
-      return shadeOf(paint.face, t * 0.82 + sheen + brushed, px, py);
+      const level = light(x, y), brushed = (grain(0, py, 17 + face.group) - 0.5) * 0.08;
+      const sheen = level > SHIELD_SHEEN ? (level - SHIELD_SHEEN) * 1.2 : 0;
+      return rampShade(paint.face, level * 0.82 + sheen + brushed, px, py);
     });
   }
   // the rim, bevelled: its outer slope faces out from the grip, its inner slope back in toward the face
   painter.fill(minus(outer, inner), ({ x, y, px, py }) => {
-    const [u, v] = local(x, y);
-    const len = Math.hypot(u, v) || 1, out = ridge.has(x, y) ? -1 : 1;
-    return shadeOf(paint.rim, litBy((out * u * squash) / len, (out * v) / len, 1 / BEVEL) * 1.1 - 0.05, px, py);
+    const [localX, localY] = local(x, y);
+    const len = Math.hypot(localX, localY) || 1, out = ridge.has(x, y) ? -1 : 1;
+    return rampShade(paint.rim, litBy((out * localX * squash) / len, (out * localY) / len, 1 / BEVEL) * 1.1 - 0.05, px, py);
   });
   // the boss on a round shield, a spine down a long one
   if (shape.round) {
-    const [bossX, bossY] = at([0, 0]), r = 0.09 * k;
+    const [bossX, bossY] = at([0, 0]), bossRadius = 0.09 * k;
     // its shadow on the face, away from the light
-    painter.fill(minus(ellipse(bossX + 0.05 * k, bossY + 0.055 * k, r * squash, r, rot), ellipse(bossX, bossY, r * squash, r, rot)), ({ px, py }) => shadeOf(paint.face, 0.08, px, py), { clip: inner });
-    painter.fill(ellipse(bossX, bossY, r * squash, r, rot), paint.boss, { gain: 1.6 });
+    painter.fill(minus(ellipse(bossX + 0.05 * k, bossY + 0.055 * k, bossRadius * squash, bossRadius, rot), ellipse(bossX, bossY, bossRadius * squash, bossRadius, rot)), ({ px, py }) => rampShade(paint.face, 0.08, px, py), { clip: inner });
+    painter.fill(ellipse(bossX, bossY, bossRadius * squash, bossRadius, rot), paint.boss, { gain: 1.6 });
     painter.fill(ellipse(bossX - 0.035 * k * squash, bossY - 0.035 * k, 0.025 * k * squash, 0.022 * k), paint.boss[paint.boss.length - 1]);
   } else painter.fill(stroke([at([0, -0.38]), at([0, 0.45])], 0.025 * k), paint.rim, { gain: 1.5, clip: inner });
   // the studs round the rim: each a dome, its glint toward the light and its shadow away
@@ -128,9 +128,9 @@ export function paintShieldFace(index, size) {
     const rimAt = (shape.round ?? 0.4) - 0.025;
     const [x, y] = at([Math.cos(a) * rimAt, Math.sin(a) * rimAt * (shape.round ? 1 : 1.1)]);
     if (face.tier === 2 && i % 3 === 1) continue; // battered: some are gone
-    const r = Math.max(1.4, 0.018 * k);
-    painter.fill(ellipse(x + r * 0.6, y + r * 0.6, r, r), ({ px, py }) => shadeOf(paint.rim, 0.05, px, py), { clip: outer });
-    painter.fill(ellipse(x, y, r, r), paint.boss, { gain: 1.7, clip: outer }); // a dome steep enough to glint
+    const studRadius = Math.max(1.4, 0.018 * k);
+    painter.fill(ellipse(x + studRadius * 0.6, y + studRadius * 0.6, studRadius, studRadius), ({ px, py }) => rampShade(paint.rim, 0.05, px, py), { clip: outer });
+    painter.fill(ellipse(x, y, studRadius, studRadius), paint.boss, { gain: 1.7, clip: outer }); // a dome steep enough to glint
   }
   wear(painter, face, at, k, inner, outer);
   painter.outline({ keep: 0.35 });

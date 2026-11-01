@@ -11,8 +11,8 @@
   {
     "name": "OWN4-flash-tail-a-step",
     "file": "src/systems/dynamicSkies/dynamicSkies.js",
-    "old": "      : Math.exp(-(t - FLASH_LOOK.rise) / FLASH_LOOK.decay);",
-    "new": "      : 1;",
+    "old": "export const strokeLevel = (t) =>\n  t < 0 || t > STROKE_END\n    ? 0\n    : t < FLASH_LOOK.rise\n      ? t / FLASH_LOOK.rise\n      : Math.exp(-(t - FLASH_LOOK.rise) / FLASH_LOOK.decay);",
+    "new": "export const strokeLevel = (t) => (t < 0 || t > STROKE_END ? 0 : t < FLASH_LOOK.rise ? t / FLASH_LOOK.rise : 1);",
     "tests": [
       "test/systems/dynamicSkies.test.js"
     ]

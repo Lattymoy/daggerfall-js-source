@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  CLASS_LOOKS, OUTER_SLOT, SLOT_OF_RAMP, SIGNS, CLASS_FIGURE, CLEAR, NONE, CLOTH, DRAPE, METAL, SKIN,
-  paletteTables, paintClassFrame, rampAt, classSkinPicture, regionsOf, torsoOf, BARE_SHEETS, TORSO_HALF,
+  CLASS_LOOKS, OUTER_SLOT, SLOT_OF_RAMP, CLASS_INSIGNIA, CLASS_FIGURE, TRANSPARENT, NONE, CLOTH, DRAPE, METAL, SKIN,
+  paletteTables, paintClassFrame, rampBlend, classSkinPicture, regionsOf, torsoOf, BARE_SHEETS, TORSO_HALF,
 } from '../../src/player/classSkinArt.js';
 import { CLASS_SKINS, classSkinLabel, classRecordScale } from '../../src/player/classSkins.js';
 import { decodeSprite, buildDerivedSprite, worldOrderColors } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
@@ -61,18 +61,18 @@ test('OWN-WORK4: a palette\'s ramps are read by what a class sheet paints in the
     assert.equal(Math.min(...tones), 0, `slot ${slot}: its darkest is 0`);
     assert.equal(Math.max(...tones), 1, `slot ${slot}: its lightest is 1`);
   }
-  assert.deepEqual(rampAt([[0, 0, 0], [100, 200, 50]], 0.5), [50, 100, 25], 'a ramp is blended between its stops');
-  assert.deepEqual(rampAt([[0, 0, 0], [100, 200, 50]], 2), [100, 200, 50], 'and held at its ends');
+  assert.deepEqual(rampBlend([[0, 0, 0], [100, 200, 50]], 0.5), [50, 100, 25], 'a ramp is blended between its stops');
+  assert.deepEqual(rampBlend([[0, 0, 0], [100, 200, 50]], 2), [100, 200, 50], 'and held at its ends');
 });
 
 test('OWN-WORK4: a frame is dyed by its scheme - the outer garment\'s ramp by the sheet, the inner the other, the metal its own; skin, shadow and clear untouched', () => {
   const look = CLASS_LOOKS['Daggerfall Adventurer'];   // no marks: the dye alone
   const onDrape = paintClassFrame(FIGURE, TABLES, look, { outer: DRAPE });
   const onCloth = paintClassFrame(FIGURE, TABLES, look, { outer: CLOTH });
-  assert.deepEqual(at(onDrape, 20, 80), [...rampAt(look.outer, TABLES.tone[0xc4]), 255], 'the drape is the outer garment on a sheet whose hood is olive');
-  assert.deepEqual(at(onDrape, 20, 30), [...rampAt(look.inner, TABLES.tone[0x84]), 255], 'and the cloth the inner');
-  assert.deepEqual(at(onCloth, 20, 30), [...rampAt(look.outer, TABLES.tone[0x84]), 255], 'swapped on a sheet whose hood is teal');
-  assert.deepEqual(at(onDrape, 20, 61), [...rampAt(look.metal, TABLES.tone[0x74]), 255], 'the metal');
+  assert.deepEqual(at(onDrape, 20, 80), [...rampBlend(look.outer, TABLES.tone[0xc4]), 255], 'the drape is the outer garment on a sheet whose hood is olive');
+  assert.deepEqual(at(onDrape, 20, 30), [...rampBlend(look.inner, TABLES.tone[0x84]), 255], 'and the cloth the inner');
+  assert.deepEqual(at(onCloth, 20, 30), [...rampBlend(look.outer, TABLES.tone[0x84]), 255], 'swapped on a sheet whose hood is teal');
+  assert.deepEqual(at(onDrape, 20, 61), [...rampBlend(look.metal, TABLES.tone[0x74]), 255], 'the metal');
   assert.deepEqual(at(onDrape, 20, 10), [...rgb(0x24), 255], 'skin untouched');
   assert.deepEqual(at(onDrape, 20, 40), [...rgb(0xd9), 255], 'a shadow untouched');
   assert.deepEqual(at(onDrape, 2, 50), [0, 0, 0, 0], 'clear stays clear');
@@ -89,9 +89,9 @@ test('OWN-WORK4: every class reads as itself - one scheme a class, every sheet\'
   for (const [name, look] of Object.entries(CLASS_LOOKS)) {
     assert.ok(Object.isFrozen(look), name);
     for (const ramp of [look.outer, look.inner, look.metal]) assert.ok(Array.isArray(ramp) && ramp.length >= 5, `${name}: a ramp of five stops or more`);
-    if (look.sign) assert.ok(SIGNS[look.sign.glyph], `${name}: its insignia is drawn`);
+    if (look.sign) assert.ok(CLASS_INSIGNIA[look.sign.glyph], `${name}: its insignia is drawn`);
   }
-  for (const glyph of Object.values(SIGNS)) assert.ok(glyph.length === 7 && glyph.every((row) => row.length === 7 && /^[#o.]+$/.test(row)));
+  for (const glyph of Object.values(CLASS_INSIGNIA)) assert.ok(glyph.length === 7 && glyph.every((row) => row.length === 7 && /^[#o.]+$/.test(row)));
   // the same frame under each scheme, front and back: no two alike
   const painted = Object.entries(CLASS_LOOKS).map(([name, look]) => [name, Buffer.from([0, 4].flatMap((view) => [...paintClassFrame(FIGURE, TABLES, look, { view }).data])).toString('base64')]);
   for (let i = 0; i < painted.length; i++) for (let j = i + 1; j < painted.length; j++) assert.notEqual(painted[i][1], painted[j][1], `${painted[i][0]} and ${painted[j][0]}`);
@@ -114,9 +114,9 @@ test('OWN-AUDIT: a cloth\'s near-black steps join the garment nearest them - a r
   const look = CLASS_LOOKS['Daggerfall Adventurer'];   // no marks: the dye alone
   const painted = paintClassFrame(robe, TABLES, look, { outer: CLOTH });
   const toneOf = (slot, i) => { const [lo, hi] = TABLES.span[slot]; return Math.max(0, Math.min(1, (TABLES.light[i] - lo) / (hi - lo))); };
-  assert.deepEqual(at(painted, 20, 93), [...rampAt(look.outer, toneOf(CLOTH, 0xce)), 255], 'the hem is the robe\'s, at its own light');
-  assert.deepEqual(at(painted, 32, 59), [...rampAt(look.inner, TABLES.tone[0xce]), 255], 'the glove\'s dark edge, the robe one pixel off and the glove two: the glove\'s');
-  assert.deepEqual(at(painted, 20, 108), [...rampAt(look.inner, toneOf(DRAPE, 0x8e)), 255], 'a teal darkest far inside the olive legs: the legs\'');
+  assert.deepEqual(at(painted, 20, 93), [...rampBlend(look.outer, toneOf(CLOTH, 0xce)), 255], 'the hem is the robe\'s, at its own light');
+  assert.deepEqual(at(painted, 32, 59), [...rampBlend(look.inner, TABLES.tone[0xce]), 255], 'the glove\'s dark edge, the robe one pixel off and the glove two: the glove\'s');
+  assert.deepEqual(at(painted, 20, 108), [...rampBlend(look.inner, toneOf(DRAPE, 0x8e)), 255], 'a teal darkest far inside the olive legs: the legs\'');
 });
 
 /** A bare figure 60 wide and 112 tall, as TEXTURE.482 draws one: a metal helmet, a skin torso lit above (0x22) and
@@ -173,7 +173,7 @@ test('OWN-AUDIT: the acrobat, the bounty hunter and the Dark Brotherhood each we
 test('OWN-WORK4: the marks are drawn on the frame\'s own regions - an insignia on the breast and the back, never the side; a hem; a belt on clothes alone; a shield on the left arm', () => {
   const ink = (pic, colour) => { let n = 0; for (let i = 0; i < pic.data.length; i += 4) if (pic.data[i] === colour[0] && pic.data[i + 1] === colour[1] && pic.data[i + 2] === colour[2] && pic.data[i + 3]) n++; return n; };
   const acolyte = CLASS_LOOKS['Dark Acolyte'];
-  const skullInk = SIGNS.skull.join('').split('').filter((c) => c === '#').length;
+  const skullInk = CLASS_INSIGNIA.skull.join('').split('').filter((c) => c === '#').length;
   for (const view of [0, 1, 3, 4]) assert.equal(ink(paintClassFrame(FIGURE, TABLES, acolyte, { view, outer: CLOTH }), acolyte.sign.colour), skullInk, `view ${view}: the skull`);
   assert.equal(ink(paintClassFrame(FIGURE, TABLES, acolyte, { view: 2, outer: CLOTH }), acolyte.sign.colour), 0, 'the side: none');
   // its centre: the trunk's middle, 69% up from the feet (111) - the figure's columns 8..31
@@ -183,7 +183,7 @@ test('OWN-WORK4: the marks are drawn on the frame\'s own regions - an insignia o
   // silhouette's sides, not the cloth over the metal band
   const robe = picture(40, 112, (x, y) => (y < 2 || x < 8 || x >= 36 || y > 100 ? 0 : y < 20 || (x >= 32 && (y < 30 || y > 60)) ? (x >= 32 ? 0 : 0x24) : x >= 32 ? 0x24 : 0x84));
   const trimmed = paintClassFrame(robe, TABLES, acolyte, { view: 2, outer: CLOTH });
-  const bone = rampAt(acolyte.trim.ramp, 0.35 + 0.65 * TABLES.tone[0x84]), black = rampAt(acolyte.outer, TABLES.tone[0x84]);
+  const bone = rampBlend(acolyte.trim.ramp, 0.35 + 0.65 * TABLES.tone[0x84]), black = rampBlend(acolyte.outer, TABLES.tone[0x84]);
   assert.deepEqual([100, 99, 98].map((y) => at(trimmed, 20, y).slice(0, 3)), [bone, bone, black], 'the hem, two rows');
   assert.deepEqual([31, 30].map((x) => at(trimmed, x, 45).slice(0, 3)), [bone, black], 'the cuff beside the arm');
   assert.deepEqual(at(trimmed, 8, 45).slice(0, 3), black, 'the silhouette\'s side: no trim');
@@ -192,7 +192,7 @@ test('OWN-WORK4: the marks are drawn on the frame\'s own regions - an insignia o
   const monk = CLASS_LOOKS.Monk;
   const belted = paintClassFrame(FIGURE, TABLES, monk, { outer: CLOTH });
   const waist = Math.round(111 - 0.53 * CLASS_FIGURE);
-  assert.deepEqual(at(belted, 20, waist).slice(0, 3), rampAt(monk.belt, 0.2 + 0.65 * TABLES.tone[0x84]), 'the rope at the waist');
+  assert.deepEqual(at(belted, 20, waist).slice(0, 3), rampBlend(monk.belt, 0.2 + 0.65 * TABLES.tone[0x84]), 'the rope at the waist');
   const bare = picture(40, 112, (x, y) => (x < 8 || x >= 32 || y < 2 ? 0 : 0x24));   // a figure all skin
   assert.deepEqual(paintClassFrame(bare, TABLES, monk, { outer: CLOTH }).data, bare.data, 'no clothes, no belt');
   // the shield: the shielded healer alone, its face toward the front, its back behind

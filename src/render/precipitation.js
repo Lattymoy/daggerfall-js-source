@@ -627,18 +627,18 @@ export class PrecipitationRenderer {
   _buildBetter() {
     const gl = this.gl;
     if (!this.labProgram) this._buildLab(); // the lab's instances and VAO
-    const bp = buildProgram(gl, BETTER_FALL_VS, BETTER_FALL_FS);
-    this.betterProgram = bp;
+    const program = buildProgram(gl, BETTER_FALL_VS, BETTER_FALL_FS);
+    this.betterProgram = program;
     this.better = {};
-    for (const u of ['uVP', 'uEye', 'uRight', 'uTime', 'uKind', 'uBox', 'uFall', 'uStorm', 'uWindV', 'uWindOff'])
-      this.better[u] = gl.getUniformLocation(bp, u);
+    for (const uniform of ['uVP', 'uEye', 'uRight', 'uTime', 'uKind', 'uBox', 'uFall', 'uStorm', 'uWindV', 'uWindOff'])
+      this.better[uniform] = gl.getUniformLocation(program, uniform);
   }
 
   /** OWN-WORK4 AUDIT: Better Ambience's switches, read again only when a setting was written. */
   betterSwitches() {
-    const g = modSettingsGeneration();
-    if (g !== this._betterGen) {
-      this._betterGen = g;
+    const generation = modSettingsGeneration();
+    if (generation !== this._betterGen) {
+      this._betterGen = generation;
       this._betterFall = betterFallSwitches();
     }
     return this._betterFall;
@@ -656,17 +656,17 @@ export class PrecipitationRenderer {
     if (!this._vp) this._vp = new Float32Array(16);
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.betterProgram);
-    const B = this.better;
-    gl.uniformMatrix4fv(B.uVP, false, this._vp);
-    gl.uniform3fv(B.uEye, camPos);
-    gl.uniform3fv(B.uRight, camRight);
-    gl.uniform1f(B.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
-    gl.uniform1f(B.uKind, mode === 'snow' ? 1 : 0);
-    gl.uniform1f(B.uStorm, mode === 'storm' ? 1 : 0);
-    gl.uniform1f(B.uBox, LAB_BOX);
-    gl.uniform1f(B.uFall, BETTER_FALL.fall[mode] ?? BETTER_FALL.fall.rain);
-    gl.uniform2fv(B.uWindV, this.windV);
-    gl.uniform2fv(B.uWindOff, this.windUpload()); // the flakes aside while drawFall draws them
+    const uniforms = this.better;
+    gl.uniformMatrix4fv(uniforms.uVP, false, this._vp);
+    gl.uniform3fv(uniforms.uEye, camPos);
+    gl.uniform3fv(uniforms.uRight, camRight);
+    gl.uniform1f(uniforms.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
+    gl.uniform1f(uniforms.uKind, mode === 'snow' ? 1 : 0);
+    gl.uniform1f(uniforms.uStorm, mode === 'storm' ? 1 : 0);
+    gl.uniform1f(uniforms.uBox, LAB_BOX);
+    gl.uniform1f(uniforms.uFall, BETTER_FALL.fall[mode] ?? BETTER_FALL.fall.rain);
+    gl.uniform2fv(uniforms.uWindV, this.windV);
+    gl.uniform2fv(uniforms.uWindOff, this.windUpload()); // the flakes aside while drawFall draws them
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);

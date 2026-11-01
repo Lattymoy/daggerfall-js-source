@@ -13,7 +13,7 @@ import { NIGHT_AIR, airLight, airColor, litFog, nightFogOn } from '../../../src/
 import { exteriorAmbient, setLightCurve, daylightScale } from '../../../src/world/worldClock.js';
 import { FOG_SETTINGS, fogForWeather, weatherSunlightScale } from '../../../src/world/weather.js';
 import { skyState } from '../../../src/render/enhancedSky.js';
-import { DYNAMIC_LIGHT_CURVE, skyFrame, weatherRow } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
+import { DYNAMIC_LIGHT_CURVE, skyFrame, skyWeatherRow } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
 import { createSkyController, outdoorFogColor } from '../../../src/scenes/shared.js';
 import { getFloat, setValue } from '../../../src/systems/settings/settings.js';
 
@@ -26,7 +26,7 @@ const WEATHERS = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow
 // light curve its own rule. The mod's black night these pins were written against is history.
 const MOD_CURVE = DYNAMIC_LIGHT_CURVE;
 /** Dynamic Skies' fog colour at a minute: the sky's horizon, as the instance publishes it */
-const modFog = (w, m) => skyFrame({ minuteOfDay: m, row: weatherRow(w), lightCurve: MOD_CURVE }).fogColor;
+const modFog = (w, m) => skyFrame({ minuteOfDay: m, row: skyWeatherRow(w), lightCurve: MOD_CURVE }).fogColor;
 /** the port's dome's: SetSkyFogColor over the dome's horizon */
 const domeFog = (w, m) => outdoorFogColor(fogForWeather(w), skyState({ minuteOfDay: m, weather: w }).clearColor);
 /** the air at a minute in a weather, no moon */

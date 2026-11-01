@@ -31,7 +31,7 @@ export function deathSpec(/** @type {string} */ key, /** @type {Record<string, {
 }
 
 /** Every own death key for `specs`: each set's records 10-14, frames 0 and 1, that eotbDerived.json does not name. */
-export function deathKeys(/** @type {Record<string, { from: number[], pal?: string }>} */ specs) {
+export function ownDeathKeys(/** @type {Record<string, { from: number[], pal?: string }>} */ specs) {
   const out = [];
   for (let archive = DEATH_ARCHIVES.from; archive <= DEATH_ARCHIVES.to; archive++)
     for (let view = 0; view < 5; view++)

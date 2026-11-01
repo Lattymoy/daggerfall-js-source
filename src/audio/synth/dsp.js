@@ -236,7 +236,7 @@ export function addGrains(rnd, { from, to, peak, density, grain }) {
 }
 
 /** A swell that rises from `at` over `rise` seconds and falls away by e every `fall`: the shape of a press. */
-export const press = (
+export const pressSwell = (
   /** @type {number} */ time,
   /** @type {number} */ at,
   /** @type {number} */ rise,
@@ -266,19 +266,19 @@ export function peakTo(buf, peak) {
   return buf;
 }
 
-/** A high shelf (the RBJ cookbook's): `gainDb` over `freq`, its slope `q`. Five coefficients, as `section` answers. */
-function shelf(freq, gainDb, q, rate) {
-  const A = 10 ** (gainDb / 40),
+/** A high shelf (the RBJ cookbook's): `gainDb` over `freq`, its `slope`. Five coefficients, as `section` answers. */
+function shelf(freq, gainDb, slope, rate) {
+  const shelfGain = 10 ** (gainDb / 40),
     w = (2 * Math.PI * freq) / rate,
     cos = Math.cos(w),
-    sA = Math.sqrt(A) * (Math.sin(w) / q);
-  const a0 = A + 1 - (A - 1) * cos + sA;
+    spread = Math.sqrt(shelfGain) * (Math.sin(w) / slope);
+  const normaliser = shelfGain + 1 - (shelfGain - 1) * cos + spread;
   return [
-    (A * (A + 1 + (A - 1) * cos + sA)) / a0,
-    (-2 * A * (A - 1 + (A + 1) * cos)) / a0,
-    (A * (A + 1 + (A - 1) * cos - sA)) / a0,
-    (2 * (A - 1 - (A + 1) * cos)) / a0,
-    (A + 1 - (A - 1) * cos - sA) / a0,
+    (shelfGain * (shelfGain + 1 + (shelfGain - 1) * cos + spread)) / normaliser,
+    (-2 * shelfGain * (shelfGain - 1 + (shelfGain + 1) * cos)) / normaliser,
+    (shelfGain * (shelfGain + 1 + (shelfGain - 1) * cos - spread)) / normaliser,
+    (2 * (shelfGain - 1 - (shelfGain + 1) * cos)) / normaliser,
+    (shelfGain + 1 - (shelfGain - 1) * cos - spread) / normaliser,
   ];
 }
 
@@ -296,8 +296,8 @@ export function loudnessOf(buf, rate) {
   for (let i = 0; i < n; i++) {
     let value = buf[i];
     for (let k = 0, j = 0; k < 2; k++, j += 4) {
-      const [b0, b1, b2, a1, a2] = stages[k];
-      const y = b0 * value + b1 * state[j] + b2 * state[j + 1] - a1 * state[j + 2] - a2 * state[j + 3];
+      const [ff0, ff1, ff2, fb1, fb2] = stages[k];
+      const y = ff0 * value + ff1 * state[j] + ff2 * state[j + 1] - fb1 * state[j + 2] - fb2 * state[j + 3];
       state[j + 1] = state[j];
       state[j] = value;
       state[j + 3] = state[j + 2];

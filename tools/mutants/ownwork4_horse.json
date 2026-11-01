@@ -101,8 +101,8 @@
   {
     "name": "OWNAUDIT-front-rider-unread",
     "file": "src/systems/horse/horseArt.js",
-    "old": "named.view === 0 ? withFrontRider(mask, record, named.frame) : mask,",
-    "new": "mask,",
+    "old": "  return composeHorse(\n    record,\n    named.view === 0 ? withFrontRider(mask, record, named.frame) : mask,\n    named.view,\n    height,\n    bob,\n  );",
+    "new": "  return composeHorse(record, mask, named.view, height, bob);",
     "tests": [
       "test/systems/horse/ownwork4_horseart.test.js"
     ]

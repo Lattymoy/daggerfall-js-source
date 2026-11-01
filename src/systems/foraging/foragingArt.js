@@ -3,22 +3,25 @@
 // (`<archive>_0-0`, 64 x 64, the Fishing-Net 128 x 128). No pixel of the retired release is read.
 import { createPainter, RAMP, ellipse, poly, stroke, union } from '../../art/ownPainter.js';
 
-/** A frame along a tool's handle: `u` up the handle from (ox, oy) toward (tx, ty), `v` across it to the right. */
-const along = (ox, oy, tx, ty) => {
-  const len = Math.hypot(tx - ox, ty - oy),
-    dx = (tx - ox) / len,
-    dy = (ty - oy) / len;
-  return (u, v) => [ox + u * dx - v * dy, oy + u * dy + v * dx];
+/** A frame along a tool's handle: `up` the handle from (fromX, fromY) toward (toX, toY), `across` it to the right. */
+const along = (fromX, fromY, toX, toY) => {
+  const len = Math.hypot(toX - fromX, toY - fromY),
+    dx = (toX - fromX) / len,
+    dy = (toY - fromY) / len;
+  return (up, across) => [fromX + up * dx - across * dy, fromY + up * dy + across * dx];
 };
-const ptsOf = (T, uvs) => uvs.map(([u, v]) => T(u, v));
+const ptsOf = (onHandle, uvs) => uvs.map(([up, across]) => onHandle(up, across));
 
 function woodAxe() {
-  const p = createPainter(64, 64);
-  const T = along(12, 64, 44, 12); // the head's edge (u 59-61) clear of the top row
-  p.fill(stroke([T(4, 0), T(30, 0.6), T(58, 0)], 2.6, 2.2), RAMP.wood, { seed: 1, rough: 0.25 });
-  p.fill(
+  const painter = createPainter(64, 64);
+  const onHandle = along(12, 64, 44, 12); // the head's edge (u 59-61) clear of the top row
+  painter.fill(stroke([onHandle(4, 0), onHandle(30, 0.6), onHandle(58, 0)], 2.6, 2.2), RAMP.wood, {
+    seed: 1,
+    rough: 0.25,
+  });
+  painter.fill(
     poly(
-      ptsOf(T, [
+      ptsOf(onHandle, [
         [44, -3],
         [55, -3],
         [61, -12],
@@ -32,9 +35,9 @@ function woodAxe() {
     RAMP.iron,
     { gain: 1.2 },
   );
-  p.fill(
+  painter.fill(
     poly(
-      ptsOf(T, [
+      ptsOf(onHandle, [
         [61, -12],
         [61, -20],
         [59, -20],
@@ -44,9 +47,9 @@ function woodAxe() {
     RAMP.steel,
     { bias: 0.25 },
   );
-  p.fill(
+  painter.fill(
     poly(
-      ptsOf(T, [
+      ptsOf(onHandle, [
         [44, -3],
         [55, -3],
         [55, 5],
@@ -56,42 +59,49 @@ function woodAxe() {
     RAMP.iron,
     { bias: -0.08 },
   );
-  p.fill(stroke([T(52, 0), T(58, 0)], 1.4), RAMP.wood, { bias: -0.2 });
-  p.outline();
-  return p.picture();
+  painter.fill(stroke([onHandle(52, 0), onHandle(58, 0)], 1.4), RAMP.wood, { bias: -0.2 });
+  painter.outline();
+  return painter.picture();
 }
 
 function pickAxe() {
-  const p = createPainter(64, 64);
-  const T = along(10, 60, 46, 14);
-  p.fill(stroke([T(0, 0), T(30, 0.5), T(54, 0)], 2.6, 2.4), RAMP.wood, { seed: 2, rough: 0.25 });
-  const head = [T(50, 0)];
-  p.fill(stroke([head[0], T(53, -10), T(52, -19), T(48, -27)], 4.2, 0.8), RAMP.iron, { gain: 1.2 });
-  p.fill(stroke([head[0], T(53, 10), T(52, 19), T(48, 27)], 4.2, 0.8), RAMP.iron, { gain: 1.2 });
-  p.fill(ellipse(...T(51, 0), 5, 5), RAMP.iron, { bias: -0.05 });
-  p.fill(stroke([T(54, -6), T(53, -16)], 0.7), RAMP.steel, { bias: 0.3, over: true });
-  p.outline();
-  return p.picture();
+  const painter = createPainter(64, 64);
+  const onHandle = along(10, 60, 46, 14);
+  painter.fill(stroke([onHandle(0, 0), onHandle(30, 0.5), onHandle(54, 0)], 2.6, 2.4), RAMP.wood, {
+    seed: 2,
+    rough: 0.25,
+  });
+  const head = [onHandle(50, 0)];
+  painter.fill(stroke([head[0], onHandle(53, -10), onHandle(52, -19), onHandle(48, -27)], 4.2, 0.8), RAMP.iron, {
+    gain: 1.2,
+  });
+  painter.fill(stroke([head[0], onHandle(53, 10), onHandle(52, 19), onHandle(48, 27)], 4.2, 0.8), RAMP.iron, {
+    gain: 1.2,
+  });
+  painter.fill(ellipse(...onHandle(51, 0), 5, 5), RAMP.iron, { bias: -0.05 });
+  painter.fill(stroke([onHandle(54, -6), onHandle(53, -16)], 0.7), RAMP.steel, { bias: 0.3, over: true });
+  painter.outline();
+  return painter.picture();
 }
 
 function sickle() {
-  const p = createPainter(64, 64);
-  const T = along(8, 58, 22, 40);
-  p.fill(stroke([T(0, 0), T(18, 0)], 3.4, 3), RAMP.wood, { seed: 3, rough: 0.3 });
-  p.fill(stroke([T(1, 0), T(2.5, 0)], 3.6), RAMP.leather, { bias: -0.1 });
-  p.fill(stroke([T(16, 0), T(19, 0)], 3.4), RAMP.iron, { bias: -0.1 });
-  const arc = [T(18, 0), [18, 34], [19, 24], [25, 15], [34, 10], [44, 9], [53, 13], [58, 20], [59, 27]];
-  p.fill(stroke(arc, 3.8, 0.6), RAMP.steel, { gain: 0.9, bias: -0.05 });
-  p.fill(stroke(arc.slice(2, 7), 1.2, 0.5), RAMP.steel, { bias: 0.3, over: true });
-  p.fill(stroke([T(17, 0), T(21, 0)], 2.6), RAMP.iron);
-  p.outline();
-  return p.picture();
+  const painter = createPainter(64, 64);
+  const onHandle = along(8, 58, 22, 40);
+  painter.fill(stroke([onHandle(0, 0), onHandle(18, 0)], 3.4, 3), RAMP.wood, { seed: 3, rough: 0.3 });
+  painter.fill(stroke([onHandle(1, 0), onHandle(2.5, 0)], 3.6), RAMP.leather, { bias: -0.1 });
+  painter.fill(stroke([onHandle(16, 0), onHandle(19, 0)], 3.4), RAMP.iron, { bias: -0.1 });
+  const arc = [onHandle(18, 0), [18, 34], [19, 24], [25, 15], [34, 10], [44, 9], [53, 13], [58, 20], [59, 27]];
+  painter.fill(stroke(arc, 3.8, 0.6), RAMP.steel, { gain: 0.9, bias: -0.05 });
+  painter.fill(stroke(arc.slice(2, 7), 1.2, 0.5), RAMP.steel, { bias: 0.3, over: true });
+  painter.fill(stroke([onHandle(17, 0), onHandle(21, 0)], 2.6), RAMP.iron);
+  painter.outline();
+  return painter.picture();
 }
 
 function fishingNet() {
-  const p = createPainter(128, 128);
+  const painter = createPainter(128, 128);
   const body = union(union(ellipse(66, 74, 50, 38, -0.2), ellipse(44, 92, 30, 26)), ellipse(88, 52, 30, 26));
-  p.fill(
+  painter.fill(
     stroke(
       [
         [14, 96],
@@ -107,7 +117,7 @@ function fishingNet() {
     RAMP.rope,
     { bias: -0.05 },
   );
-  p.fill(
+  painter.fill(
     stroke(
       [
         [16, 66],
@@ -128,40 +138,40 @@ function fishingNet() {
     [98, 26],
     [116, 33],
   ])
-    p.fill(ellipse(x, y, 5, 3.6, -0.4), RAMP.wood, { bias: 0.1 });
-  p.outline({ keep: 0.4 });
+    painter.fill(ellipse(x, y, 5, 3.6, -0.4), RAMP.wood, { bias: 0.1 });
+  painter.outline({ keep: 0.4 });
   // the mesh after the rim, so a cord is never darkened as an edge: two diagonals every 11 pixels, the holes clear
   const on = (k) => ((k % 11) + 11) % 11 < 2;
-  const cord = ({ px, py, t }) =>
-    on(px + py) || on(px - py) ? RAMP.rope[Math.min(5, Math.floor(t * 4 + (on(px - py) ? 0.6 : 1.4)))] : null;
-  p.fill(body, cord, { under: true, gain: 1.1 });
-  return p.picture();
+  const cord = ({ px, py, t: light }) =>
+    on(px + py) || on(px - py) ? RAMP.rope[Math.min(5, Math.floor(light * 4 + (on(px - py) ? 0.6 : 1.4)))] : null;
+  painter.fill(body, cord, { under: true, gain: 1.1 });
+  return painter.picture();
 }
 
 function woodBundle() {
-  const p = createPainter(64, 64);
+  const painter = createPainter(64, 64);
   const logs = [
     [12, 46, 50, 34, 6.5],
     [10, 36, 48, 24, 6],
     [18, 54, 56, 42, 6],
     [16, 26, 52, 16, 5.5],
   ];
-  for (const [x0, y0, x1, y1, r] of logs) {
-    p.fill(
+  for (const [x0, y0, x1, y1, radius] of logs) {
+    painter.fill(
       stroke(
         [
           [x0, y0],
           [x1, y1],
         ],
-        r,
+        radius,
       ),
       RAMP.wood,
       { seed: x0 + y0, rough: 0.35 },
     );
-    p.fill(ellipse(x1, y1, r * 0.75, r, 0.3), RAMP.pale, { bias: 0.15 });
-    p.fill(ellipse(x1, y1, r * 0.3, r * 0.42, 0.3), RAMP.pale, { bias: -0.35 });
+    painter.fill(ellipse(x1, y1, radius * 0.75, radius, 0.3), RAMP.pale, { bias: 0.15 });
+    painter.fill(ellipse(x1, y1, radius * 0.3, radius * 0.42, 0.3), RAMP.pale, { bias: -0.35 });
   }
-  p.fill(
+  painter.fill(
     stroke(
       [
         [25, 16],
@@ -172,7 +182,7 @@ function woodBundle() {
     RAMP.rope,
     { bias: 0.1 },
   );
-  p.fill(
+  painter.fill(
     stroke(
       [
         [37, 12],
@@ -183,28 +193,28 @@ function woodBundle() {
     RAMP.rope,
     { bias: 0.1 },
   );
-  p.outline();
-  return p.picture();
+  painter.outline();
+  return painter.picture();
 }
 
 function egg() {
-  const p = createPainter(64, 64);
+  const painter = createPainter(64, 64);
   const shell = union(ellipse(32, 38, 15, 16), ellipse(32, 30, 12.5, 17));
-  p.fill(shell, RAMP.egg, { seed: 5, rough: 0.12, gain: 1.15 });
-  p.fill(shell, ({ px, py }) => ((px * 7 + py * 13) % 23 === 0 ? RAMP.egg[1] : null), { over: true });
-  p.fill(ellipse(26, 24, 3, 5, -0.4), RAMP.egg[5], { over: true });
-  p.outline({ keep: 0.45 });
-  return p.picture();
+  painter.fill(shell, RAMP.egg, { seed: 5, rough: 0.12, gain: 1.15 });
+  painter.fill(shell, ({ px, py }) => ((px * 7 + py * 13) % 23 === 0 ? RAMP.egg[1] : null), { over: true });
+  painter.fill(ellipse(26, 24, 3, 5, -0.4), RAMP.egg[5], { over: true });
+  painter.outline({ keep: 0.45 });
+  return painter.picture();
 }
 
 function spade() {
-  const p = createPainter(64, 64);
-  const T = along(52, 8, 18, 50);
-  p.fill(stroke([T(-2, -6), T(-2, 6)], 2.2), RAMP.wood, { bias: 0.05 });
-  p.fill(stroke([T(0, 0), T(30, 0)], 2.4), RAMP.wood, { seed: 7, rough: 0.25 });
-  p.fill(
+  const painter = createPainter(64, 64);
+  const onHandle = along(52, 8, 18, 50);
+  painter.fill(stroke([onHandle(-2, -6), onHandle(-2, 6)], 2.2), RAMP.wood, { bias: 0.05 });
+  painter.fill(stroke([onHandle(0, 0), onHandle(30, 0)], 2.4), RAMP.wood, { seed: 7, rough: 0.25 });
+  painter.fill(
     poly(
-      ptsOf(T, [
+      ptsOf(onHandle, [
         [28, -3],
         [32, -3],
         [32, 3],
@@ -214,9 +224,9 @@ function spade() {
     RAMP.iron,
     { bias: -0.1 },
   );
-  p.fill(
+  painter.fill(
     poly(
-      ptsOf(T, [
+      ptsOf(onHandle, [
         [31, -9],
         [31, 9],
         [46, 9],
@@ -229,9 +239,9 @@ function spade() {
     RAMP.iron,
     { gain: 1.25 },
   );
-  p.fill(stroke([T(47, -7), T(53, -1)], 0.7), RAMP.steel, { bias: 0.3, over: true });
-  p.outline();
-  return p.picture();
+  painter.fill(stroke([onHandle(47, -7), onHandle(53, -1)], 0.7), RAMP.steel, { bias: 0.3, over: true });
+  painter.outline();
+  return painter.picture();
 }
 
 /** Each picture's recipe, by its archive (record 0, frame 0). */

@@ -2,7 +2,7 @@
 // ITEMS, at the names, sizes and doll places rriIndex.js keeps. The armour and the Hatchet are our variations of
 // Daggerfall's matching paper-doll record, read from the player's ARENA2: its shape and light kept, our leather,
 // fur, plates, wood and metals laid on. The Short Flail is drawn whole by our painter. No release pixel is read.
-import { RAMP, bayer, grain, hex, createPainter, stroke, ellipse, poly, minus } from '../../art/ownPainter.js';
+import { RAMP, ditherAt, grain, hex, createPainter, stroke, ellipse, poly, minus } from '../../art/ownPainter.js';
 import { classicArt } from '../classicArt.js';
 import { RRI_SPRITES } from './rriIndex.js';
 
@@ -75,7 +75,7 @@ export async function rriOwnPicture(name, art = classicArt()) {
 const clamp01 = (light) => (light < 0 ? 0 : light > 1 ? 1 : light);
 /** A ramp's colour at `light`, ordered-dithered at (x, y) as the painter lays a ramp. */
 const tint = (colours, light, x, y) =>
-  colours[Math.max(0, Math.min(colours.length - 1, Math.floor(clamp01(light) * (colours.length - 1) + bayer(x, y))))];
+  colours[Math.max(0, Math.min(colours.length - 1, Math.floor(clamp01(light) * (colours.length - 1) + ditherAt(x, y))))];
 /** ART_PAL's index 255, a classic helm's hair mask, reads opaque black; index 0 is the clear. */
 const isMaskTexel = (rgba, at) => rgba[at + 3] !== 0 && rgba[at] === 0 && rgba[at + 1] === 0 && rgba[at + 2] === 0;
 

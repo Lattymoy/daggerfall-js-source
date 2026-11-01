@@ -19,13 +19,13 @@ export function layeredLoop(keys, start) {
   }
   return {
     layers: handles.length,
-    /** @param {number[]} p */
-    move: (p) => handles.forEach((h) => h.move?.(p)),
-    /** @param {number} v */
-    setVolume: (v) => handles.forEach((h) => h.setVolume?.(v)),
-    stop: () => handles.forEach((h) => h.stop()),
+    /** @param {number[]} position */
+    move: (position) => handles.forEach((handle) => handle.move?.(position)),
+    /** @param {number} volume */
+    setVolume: (volume) => handles.forEach((handle) => handle.setVolume?.(volume)),
+    stop: () => handles.forEach((handle) => handle.stop()),
     /** @param {number} [seconds] */
-    fadeStop: (seconds) => handles.forEach((h) => (h.fadeStop ? h.fadeStop(seconds) : h.stop())),
+    fadeStop: (seconds) => handles.forEach((handle) => (handle.fadeStop ? handle.fadeStop(seconds) : handle.stop())),
   };
 }
 
@@ -37,8 +37,8 @@ export function layersPeriod(/** @type {ReadonlyArray<{ samples: number, rate: n
     return a;
   };
   // each period is samples / rate s: their LCM is lcm(samples_i * R / rate_i) / R over a common tick R
-  const tick = layers.reduce((r, l) => (r * BigInt(l.rate)) / gcd(r, BigInt(l.rate)), 1n);
-  const ticks = layers.map((l) => (BigInt(l.samples) * tick) / BigInt(l.rate));
+  const tick = layers.reduce((common, layer) => (common * BigInt(layer.rate)) / gcd(common, BigInt(layer.rate)), 1n);
+  const ticks = layers.map((layer) => (BigInt(layer.samples) * tick) / BigInt(layer.rate));
   const lcm = ticks.reduce((a, b) => (a * b) / gcd(a, b));
   return Number(lcm) / Number(tick);
 }

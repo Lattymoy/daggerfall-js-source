@@ -550,7 +550,7 @@ export const CREDITS = Object.freeze({
       get what() {
         return t(
           'credits.travelOptions.what',
-          'Travel across the land instead of arriving at once. The travel map lets you choose Daggerfall\u2019s fast travel or a sped-up journey, with a panel to steer it, stops for encounters and places, and a key to follow Basic Roads\u2019 roads and tracks. The travel map also gets a ports filter, a page with the road network drawn on it, a location info key and location markers. The autopilot is Jedidia\u2019s, from Tedious Travel.',
+          'Travel across the land instead of arriving at once. The travel map lets you choose Daggerfall\u2019s fast travel or a sped-up journey, with a panel to steer it, stops for encounters and places, and a key to follow the roads and tracks. The travel map also gets a ports filter, a page with the road network drawn on it, a location info key and location markers. The autopilot is Jedidia\u2019s, from Tedious Travel.',
         );
       },
       get terms() {

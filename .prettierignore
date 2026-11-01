@@ -2962,7 +2962,6 @@
 !/tools/icStutterBench.mjs
 !/tools/identifyOutdoorsProbe.mjs
 !/tools/iliacBalance.mjs
-!/tools/iliacPuddleAssets.mjs
 !/tools/imperialCityProbe.mjs
 !/tools/infectionProbe.mjs
 !/tools/interiorDimProbe.mjs
@@ -3224,7 +3223,6 @@
 !/tools/tradePerfProbe.mjs
 !/tools/translate.mjs
 !/tools/translationPackProbe.mjs
-!/tools/travelOptionsAssets.mjs
 !/tools/travelProbe.mjs
 !/tools/travelViewPerf.mjs
 !/tools/travelViewProbe.mjs

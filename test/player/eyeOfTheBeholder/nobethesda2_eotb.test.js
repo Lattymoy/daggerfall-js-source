@@ -25,7 +25,7 @@ import { DFPalette } from '../../../src/formats/dfPalette.js';
 import { horseLookCode } from '../../../src/systems/horse/horseCoats.js';
 import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
 import { EOTB_DERIVED, eotbHas, eotbPictures } from '../../../tools/lib/eotbPictures.mjs';
-import { deathKeys, deathSpec, layDown } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
+import { ownDeathKeys, deathSpec, layDown } from '../../../src/player/eyeOfTheBeholder/eotbDeath.js';
 import { STATE_TABLES, TABLE_FRAMES, ARCHIVE_FOOT, ARCHIVE_HORSE, ARCHIVE_LYCAN, stateFor } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 
 /** OWN-WORK4 (2026-10-31): every sprite the bundle shipped (its manifest's 3035 PNGs, left the tree with the directory),
@@ -39,7 +39,7 @@ const MANIFEST = (() => {
   return [...out];
 })();
 const SPECS = Object.keys(EOTB_DERIVED);
-const OURS = deathKeys(EOTB_DERIVED);
+const OURS = ownDeathKeys(EOTB_DERIVED);
 
 test('NO-BETHESDA2: every picture the mod names is a spec or ours - never both, never neither - and nothing else stands there', () => {
   assert.equal(MANIFEST.length, 3035, 'the bundle shipped 3035 sprites');

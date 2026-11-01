@@ -128,8 +128,8 @@
   {
     "name": "OWNAUDIT-waist-misread",
     "file": "src/player/classSkinArt.js",
-    "old": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) xs.push(x);",
-    "new": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === CLOTH) xs.push(x);",
+    "old": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) loinColumns.push(x);",
+    "new": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === CLOTH) loinColumns.push(x);",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]

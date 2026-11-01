@@ -60,7 +60,7 @@ export const SKY_NOISE_CHANNELS = Object.freeze([
   Object.freeze({ seed: 37, cells: 3, octaves: 4, billow: true }),
 ]);
 
-/** OWN-WORK4 AUDIT (2026-11-01): each octave's lattice turned by a whole-number matrix [a, b, c, d] (so the texture
+/** OWN-WORK4 AUDIT (2026-11-01): each octave's lattice turned by a whole-number matrix [turnA, turnB, turnC, turnD] (so the texture
  *  still tiles) and shifted by its own fraction of a cell. Value noise is flat along its lattice lines, and with every
  *  octave's lines on one grid the lit clouds showed them as long streaks under an overcast deck. */
 export const OCTAVE_TURNS = Object.freeze([
@@ -73,12 +73,13 @@ export const OCTAVE_TURNS = Object.freeze([
 /** An octave's sampler over 0..1 coordinates, its lattice turned and shifted (OCTAVE_TURNS); its cells kept near
  *  `cells` across the picture whatever the turn's own scale. */
 function turnedOctave(cells, seed, index) {
-  const [a, b, c, d] = OCTAVE_TURNS[index % OCTAVE_TURNS.length];
-  const scale = Math.sqrt(a * d - b * c);
+  const [turnA, turnB, turnC, turnD] = OCTAVE_TURNS[index % OCTAVE_TURNS.length];
+  const scale = Math.sqrt(turnA * turnD - turnB * turnC);
   const octave = valueOctave(Math.max(1, Math.round(cells / scale)), seed);
-  const du = latticeHash(index, 1, seed),
-    dv = latticeHash(index, 2, seed);
-  return (across, down) => octave(a * across + b * down + du, c * across + d * down + dv);
+  const shiftAcross = latticeHash(index, 1, seed),
+    shiftDown = latticeHash(index, 2, seed);
+  return (across, down) =>
+    octave(turnA * across + turnB * down + shiftAcross, turnC * across + turnD * down + shiftDown);
 }
 
 /** Paint the sky's noise: RGBA bytes, `size` square, tiling on every edge. Each channel is equalized - its values

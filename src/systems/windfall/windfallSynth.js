@@ -62,8 +62,8 @@ const filter = () => new Section();
 /** A slow wobble: three sines at seeded rates and phases, about 1. */
 function wobble(random, depth, lowHz, highHz) {
   const parts = [0.55, 0.3, 0.15].map((share) => {
-    const hz = lowHz + (highHz - lowHz) * random();
-    return { share: share * depth, radiansPerSecond: TAU * hz, phase: TAU * random() };
+    const rateHz = lowHz + (highHz - lowHz) * random();
+    return { share: share * depth, radiansPerSecond: TAU * rateHz, phase: TAU * random() };
   });
   return (seconds) => {
     let sum = 1;

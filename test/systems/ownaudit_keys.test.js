@@ -126,7 +126,7 @@ test('OWN-AUDIT Snowfall\'s Location Loader keys: a built pixel\'s World of Dagg
   assert.equal(c.sampleLocationCap(edge + 5, g[1]), 0, 'past the four-metre feather: none');
   c.prepare(g[0], g[1], 64, 8, 4, { ...s, locationLoaderIntegration: false });
   assert.equal(c.locations.length, 0, 'the switch off: no site asked');
-  assert.match(src('src/scenes/snowfallHost.js'), /footprints: \(gx, gz, radius\) => ground\.footprints\?\.\(gx, gz, radius\) \?\? \[\],/, 'the host hands the ground\'s sites to the snow');
+  assert.match(src('src/scenes/snowfallHost.js'), /footprints: \(globalX, globalZ, radius\) => ground\.footprints\?\.\(globalX, globalZ, radius\) \?\? \[\],/, 'the host hands the ground\'s sites to the snow');
   const keys = MOD_SETTINGS.snowfall.keys;
   for (const k of ['Context.LocationLoaderIntegration', 'Context.LocationLoaderMaximumDepth', 'Context.LocationLoaderBoundaryFeather']) assert.doesNotMatch(keys[k].description, /no effect/i, k);
 });

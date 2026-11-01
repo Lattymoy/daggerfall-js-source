@@ -99,8 +99,8 @@
   {
     "name": "OWW-SF-1-the-bevel-flat",
     "file": "src/combat/shieldFaces.js",
-    "old": "litBy((out * u * squash) / len, (out * v) / len, 1 / BEVEL)",
-    "new": "litBy(0, 0, 1)",
+    "old": "    return rampShade(paint.rim, litBy((out * localX * squash) / len, (out * localY) / len, 1 / BEVEL) * 1.1 - 0.05, px, py);",
+    "new": "    return rampShade(paint.rim, litBy(0, 0, 1) * 1.1 - 0.05, px, py);",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],
@@ -119,8 +119,8 @@
   {
     "name": "OWW-SF-3-no-boss-shadow",
     "file": "src/combat/shieldFaces.js",
-    "old": "({ px, py }) => shadeOf(paint.face, 0.08, px, py), { clip: inner });",
-    "new": "() => null, { clip: inner });",
+    "old": "    painter.fill(minus(ellipse(bossX + 0.05 * k, bossY + 0.055 * k, bossRadius * squash, bossRadius, rot), ellipse(bossX, bossY, bossRadius * squash, bossRadius, rot)), ({ px, py }) => rampShade(paint.face, 0.08, px, py), { clip: inner });",
+    "new": "    painter.fill(minus(ellipse(bossX + 0.05 * k, bossY + 0.055 * k, bossRadius * squash, bossRadius, rot), ellipse(bossX, bossY, bossRadius * squash, bossRadius, rot)), () => null, { clip: inner });",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],
@@ -129,8 +129,8 @@
   {
     "name": "OWW-SF-4-a-stud-too-flat-to-glint",
     "file": "src/combat/shieldFaces.js",
-    "old": "painter.fill(ellipse(x, y, r, r), paint.boss, { gain: 1.7, clip: outer });",
-    "new": "painter.fill(ellipse(x, y, r, r), paint.boss, { gain: 0.6, clip: outer });",
+    "old": "    painter.fill(ellipse(x, y, studRadius, studRadius), paint.boss, { gain: 1.7, clip: outer }); // a dome steep enough to glint",
+    "new": "    painter.fill(ellipse(x, y, studRadius, studRadius), paint.boss, { gain: 0.6, clip: outer }); // a dome steep enough to glint",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "OWW-SF-5-no-sheen",
     "file": "src/combat/shieldFaces.js",
-    "old": "const sheen = t > SHIELD_SHEEN ? (t - SHIELD_SHEEN) * 1.2 : 0;",
-    "new": "const sheen = 0;",
+    "old": "      const sheen = level > SHIELD_SHEEN ? (level - SHIELD_SHEEN) * 1.2 : 0;",
+    "new": "      const sheen = 0;",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],

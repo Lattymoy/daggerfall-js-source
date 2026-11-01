@@ -98,7 +98,7 @@ function rgbOf(palette) {
 }
 const mix = (a, b, share) => [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * share));
 /** The ramp at `x` in 0..1: shadow to middle to light. */
-export const rampAt = (ramp, x) => (x < 0.5 ? mix(ramp[0], ramp[1], x * 2) : mix(ramp[1], ramp[2], (x - 0.5) * 2));
+export const metalRampAt = (ramp, x) => (x < 0.5 ? mix(ramp[0], ramp[1], x * 2) : mix(ramp[1], ramp[2], (x - 0.5) * 2));
 
 /** The swatch's sixteen shades in `palette`, each placed on 0..1 by its own light. */
 function swatchLight(palette) {
@@ -111,7 +111,7 @@ function swatchLight(palette) {
 
 /** A metal's colour for each swatch shade - our dye, by light, never ChangeDye's tables. */
 export function metalLut(palette, ramp) {
-  return swatchLight(palette).map((x) => rampAt(ramp, x));
+  return swatchLight(palette).map((x) => metalRampAt(ramp, x));
 }
 
 // ---- the shapes ---------------------------------------------------------------------------------------------------
@@ -482,7 +482,7 @@ function colour(idx, w, height, palette, lut, ramp, { fuller = null, rings = nul
     const i = idx[pixel];
     if (!i || i === MASK) continue;
     let here = rings?.[pixel]
-      ? rampAt(ramp, (light(i) - lo) / (hi - lo || 1))
+      ? metalRampAt(ramp, (light(i) - lo) / (hi - lo || 1))
       : isMetal(i)
         ? lut[i - BAND_LO]
         : rgb[i];
@@ -499,7 +499,7 @@ function colour(idx, w, height, palette, lut, ramp, { fuller = null, rings = nul
 }
 
 /** One first-person frame by our look: `bitmap` the classic frame's indices, `metal` a MetalTypes name. */
-export function paintFrame(bitmap, palette, lookName, metal) {
+export function paintWeaponFrame(bitmap, palette, lookName, metal) {
   const look = LOOKS[lookName] ?? {};
   const { width: w, height } = bitmap;
   let idx = bitmap.data,
@@ -592,7 +592,7 @@ export function createOwnWeaponArt(getBytes) {
     const [weaponFile, pal] = await Promise.all([cif(ask.base), palette()]);
     const bitmap = weaponFile.getDFBitmap(ask.record, ask.frame);
     if (!bitmap?.width) return null;
-    const pic = paintFrame(bitmap, pal, ask.look, ask.metal);
+    const pic = paintWeaponFrame(bitmap, pal, ask.look, ask.metal);
     return ask.wide ? scale2x(pic) : pic;
   }
   async function icon(archive, record, ramp) {

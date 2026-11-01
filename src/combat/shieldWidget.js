@@ -939,9 +939,14 @@ export function createShieldWidget({
 
   /** A rect wholly past the screen's edge: the Off-screen pose at rest. The DLL's blit draws nothing there, so the
    *  port's emits no quad (drawRect still answers it, the gate ladder's own verdict). */
-  function offScreen(r) {
-    const sr = w.screenRect;
-    return r.y >= sr.y + sr.height || r.y + r.height <= sr.y || r.x >= sr.x + sr.width || r.x + r.width <= sr.x;
+  function offScreen(rect) {
+    const screen = w.screenRect;
+    return (
+      rect.y >= screen.y + screen.height ||
+      rect.y + rect.height <= screen.y ||
+      rect.x >= screen.x + screen.width ||
+      rect.x + rect.width <= screen.x
+    );
   }
 
   /** AUDIT 27h S3: a rig frame with the Shield Widget switched OFF is a step every widget misses - the switch "takes

@@ -3,7 +3,9 @@
 // The tool re-exports every name below, so each bake writes the bytes it always did. The record writers are keyed as
 // mwNifFile.js's READERS are, and follow the reader's field order exactly; the pins parse what this writes.
 
-export const MW_NIF_VERSION = 0x04000002;
+import { MW_NIF_VERSION } from './mwNifFile.js'; // the reader's own: the one version either side takes
+
+export { MW_NIF_VERSION };
 export const NIF_HEADER_LINE = 'NetImmerse File Format, Version 4.0.0.2\n';
 
 /** A little-endian byte builder whose methods are the reader's, one for one. */
@@ -60,7 +62,7 @@ export class NifOut {
   }
   /** uint32 length + latin1 bytes. */
   string(text) {
-    const bytes = latin1(text);
+    const bytes = latin1Bytes(text);
     return this.u32(bytes.length)._push(bytes);
   }
   vec3(value) {
@@ -94,7 +96,7 @@ export class NifOut {
 }
 
 /** A string's latin1 bytes: each UTF-16 unit's low byte, as Node's 'latin1' encoding writes it. */
-export function latin1(text) {
+export function latin1Bytes(text) {
   const str = String(text ?? '');
   const out = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) out[i] = str.charCodeAt(i) & 0xff;
@@ -229,7 +231,7 @@ export const WRITERS = {
 
   NiStringExtraData(out, rec) {
     out.ref(rec.next ?? -1);
-    out.u32(rec.recordSize ?? 4 + latin1(rec.string).length);
+    out.u32(rec.recordSize ?? 4 + latin1Bytes(rec.string).length);
     out.string(rec.string);
   },
 
@@ -360,7 +362,7 @@ export function boundingSphere(positions) {
  *  `[{ type, ...fields }]` and `roots` is indices into it. Answers a Uint8Array. */
 export function writeNifBytes(records, roots = [0]) {
   const out = new NifOut();
-  out._push(latin1(NIF_HEADER_LINE));
+  out._push(latin1Bytes(NIF_HEADER_LINE));
   out.u32(MW_NIF_VERSION);
   out.u32(records.length);
   for (const rec of records) {

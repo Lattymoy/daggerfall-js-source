@@ -7,31 +7,31 @@
 export const ARC_LOOK = Object.freeze({ every: 4, dotPx: 4, landPx: 9, rgba: Object.freeze([1, 0.78, 0.35, 0.85]) });
 
 /** A world point through `proj` x `view` (column-major, as the renderer uploads them) to pixels from the top left of a
- *  `w` x `h` screen, or null behind the eye. */
-export function toScreen(p, proj, view, w, h) {
-  const v = view,
-    m = proj;
-  const ex = v[0] * p[0] + v[4] * p[1] + v[8] * p[2] + v[12];
-  const ey = v[1] * p[0] + v[5] * p[1] + v[9] * p[2] + v[13];
-  const ez = v[2] * p[0] + v[6] * p[1] + v[10] * p[2] + v[14];
-  const ew = v[3] * p[0] + v[7] * p[1] + v[11] * p[2] + v[15];
-  const cx = m[0] * ex + m[4] * ey + m[8] * ez + m[12] * ew;
-  const cy = m[1] * ex + m[5] * ey + m[9] * ez + m[13] * ew;
-  const cw = m[3] * ex + m[7] * ey + m[11] * ez + m[15] * ew;
-  if (!(cw > 1e-4)) return null;
-  return [(cx / cw + 1) * 0.5 * w, (1 - cy / cw) * 0.5 * h];
+ *  `width` x `height` screen, or null behind the eye. */
+export function worldToScreen(point, proj, view, width, height) {
+  const viewMatrix = view,
+    projMatrix = proj;
+  const eyeX = viewMatrix[0] * point[0] + viewMatrix[4] * point[1] + viewMatrix[8] * point[2] + viewMatrix[12];
+  const eyeY = viewMatrix[1] * point[0] + viewMatrix[5] * point[1] + viewMatrix[9] * point[2] + viewMatrix[13];
+  const eyeZ = viewMatrix[2] * point[0] + viewMatrix[6] * point[1] + viewMatrix[10] * point[2] + viewMatrix[14];
+  const eyeW = viewMatrix[3] * point[0] + viewMatrix[7] * point[1] + viewMatrix[11] * point[2] + viewMatrix[15];
+  const clipX = projMatrix[0] * eyeX + projMatrix[4] * eyeY + projMatrix[8] * eyeZ + projMatrix[12] * eyeW;
+  const clipY = projMatrix[1] * eyeX + projMatrix[5] * eyeY + projMatrix[9] * eyeZ + projMatrix[13] * eyeW;
+  const clipW = projMatrix[3] * eyeX + projMatrix[7] * eyeY + projMatrix[11] * eyeZ + projMatrix[15] * eyeW;
+  if (!(clipW > 1e-4)) return null;
+  return [(clipX / clipW + 1) * 0.5 * width, (1 - clipY / clipW) * 0.5 * height];
 }
 
-/** The dots of an arc on a `w` x `h` screen: [x, y, size] each, the hand's end skipped, the last point the landing. */
-export function arcDots(points, proj, view, w, h) {
+/** The dots of an arc on a `width` x `height` screen: [x, y, size] each, the hand's end skipped, the last point the landing. */
+export function arcDots(points, proj, view, width, height) {
   const out = [];
   if (!points || points.length < 2 || !proj || !view) return out;
-  const k = h / 1080;
+  const k = height / 1080;
   const last = points.length - 1;
   for (let i = ARC_LOOK.every; i <= last; i += ARC_LOOK.every) {
     if (last - i < ARC_LOOK.every) i = last; // the landing is always drawn
-    const at = toScreen(points[i], proj, view, w, h);
-    if (!at || at[0] < 0 || at[1] < 0 || at[0] > w || at[1] > h) continue;
+    const at = worldToScreen(points[i], proj, view, width, height);
+    if (!at || at[0] < 0 || at[1] < 0 || at[0] > width || at[1] > height) continue;
     const size = i === last ? ARC_LOOK.landPx : ARC_LOOK.dotPx * (0.6 + (0.4 * i) / last);
     out.push([at[0], at[1], Math.max(1, size * k)]);
   }
@@ -42,8 +42,8 @@ export function arcDots(points, proj, view, w, h) {
 export function drawArc(renderer, points) {
   const gl = renderer?.gl;
   if (!gl || !renderer._proj || !renderer._view || typeof renderer.drawScreenQuad !== 'function') return 0;
-  const [ox, oy] = renderer.screenOffset ?? [0, 0];
+  const [offsetX, offsetY] = renderer.screenOffset ?? [0, 0];
   const dots = arcDots(points, renderer._proj, renderer._view, gl.drawingBufferWidth, gl.drawingBufferHeight);
-  for (const [x, y, s] of dots) renderer.drawScreenQuad(null, { x: x - s / 2 - ox, y: y - s / 2 - oy, w: s, h: s }, undefined, ARC_LOOK.rgba);
+  for (const [x, y, size] of dots) renderer.drawScreenQuad(null, { x: x - size / 2 - offsetX, y: y - size / 2 - offsetY, w: size, h: size }, undefined, ARC_LOOK.rgba);
   return dots.length;
 }

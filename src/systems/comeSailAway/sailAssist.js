@@ -15,8 +15,8 @@ export const GAFF_FOUL_DEG = 150;
 export function badTackShare(offRunDeg, on, multiplier) {
   if (!on) return 1;
   const keep = Math.max(0, Math.min(1, Number(multiplier) || 0));
-  const t = (Math.abs(Number(offRunDeg) || 0) - BAD_TACK.fromDeg) / (BAD_TACK.fullDeg - BAD_TACK.fromDeg);
-  return 1 - (1 - keep) * Math.max(0, Math.min(1, t));
+  const fraction = (Math.abs(Number(offRunDeg) || 0) - BAD_TACK.fromDeg) / (BAD_TACK.fullDeg - BAD_TACK.fromDeg);
+  return 1 - (1 - keep) * Math.max(0, Math.min(1, fraction));
 }
 
 /** Whether a gaff sail at `deg` (its signed angle to the wind, as updateSails reads it) would be laid aback. */

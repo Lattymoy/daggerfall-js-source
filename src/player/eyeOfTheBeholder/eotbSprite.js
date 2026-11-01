@@ -27,11 +27,11 @@ import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPa
 import spriteInfo from './eotbSpriteInfo.json' with { type: 'json' };   // the mod's per-sprite XML, folded (EOTB0)
 import EOTB_DERIVED from './eotbDerived.json' with { type: 'json' };   // NO-BETHESDA2: the pictures that are Daggerfall's own
 import { classicArt } from '../../systems/classicArt.js';   // NO-BETHESDA2: and the one reader that builds them from the player's files
-import { deathSpec, deathKeys, layDown } from './eotbDeath.js';   // OWN-WORK4: the death, ours
+import { deathSpec, ownDeathKeys, layDown } from './eotbDeath.js';   // OWN-WORK4: the death, ours
 
 const IN_BROWSER = typeof window !== 'undefined';
 /** OWN-WORK4: the death sprites that are ours (eotbDeath.js), by key. */
-const OWN_DEATH = Object.freeze(deathKeys(EOTB_DERIVED));
+const OWN_DEATH = Object.freeze(ownDeathKeys(EOTB_DERIVED));
 
 // NAMED `eotbSpriteUrl`, not `spriteUrl`: `systems/handheldTorches.js`
 // already exports a `spriteUrl` and it answers a different question

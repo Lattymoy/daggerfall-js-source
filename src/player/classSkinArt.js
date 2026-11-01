@@ -11,7 +11,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { classSkinKeyOf, classRecordScale } from './classSkins.js';
 
 /** What a pixel is painted in, by the ART_PAL ramp its index is in. */
-export const CLEAR = 0, NONE = 1, CLOTH = 2, DRAPE = 3, METAL = 4, SKIN = 5;
+export const TRANSPARENT = 0, NONE = 1, CLOTH = 2, DRAPE = 3, METAL = 4, SKIN = 5;
 /** ART_PAL's sixteen-colour ramps, by what a class sheet paints in them (read off TEXTURE.475-490): the cloth (teal 0x80
  *  and the blue 0x60 that lights it), the drape (olive 0xC0, pale green 0xA0), the metal (grey 0x70, lavender 0x50)
  *  and the skin (0x20, 0x40 - its leather too, so never dyed). The rest - the shadows, the wood, the spells - stay. */
@@ -28,7 +28,7 @@ const DARK = Object.freeze([18, 12, 9]);
 /** Our insignia, 7x7: '#' the mark's colour, 'o' dark (an eye, a tooth's gap); a dark ring outside it, so it reads on
  *  any cloth. */
 const glyph = (...rows) => Object.freeze(rows);
-export const SIGNS = Object.freeze({
+export const CLASS_INSIGNIA = Object.freeze({
   sun: glyph('#..#..#', '.#####.', '.#####.', '#######', '.#####.', '.#####.', '#..#..#'),
   moon: glyph('..###..', '.##....', '##.....', '##.....', '##.....', '.##....', '..###..'),
   skull: glyph('.#####.', '#######', '#oo#oo#', '#######', '.##o##.', '.#####.', '.#o#o#.'),
@@ -70,7 +70,7 @@ export const CLASS_LOOKS = Object.freeze({
 });
 
 /** A ramp's colour at light `tone` (0 its darkest, 1 its lightest), blended between its stops. */
-export function rampAt(ramp, tone) {
+export function rampBlend(ramp, tone) {
   const pos = Math.max(0, Math.min(1, tone)) * (ramp.length - 1), lo = Math.floor(pos), hi = Math.min(ramp.length - 1, lo + 1), mix = pos - lo;
   return [0, 1, 2].map((channel) => Math.round(ramp[lo][channel] + (ramp[hi][channel] - ramp[lo][channel]) * mix));
 }
@@ -122,8 +122,8 @@ function shadeByNearest(mat, tone, pal, tables, width, rows) {
     for (let head = 0; head < tail; head++) {
       const i = queue[head], x = i % width, y = (i - x) / width;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const nx = x + dx, ny = y + dy, j = ny * width + nx;
-        if (nx < 0 || ny < 0 || nx >= width || ny >= rows || dist[j] >= 0) continue;
+        const neighbourX = x + dx, neighbourY = y + dy, j = neighbourY * width + neighbourX;
+        if (neighbourX < 0 || neighbourY < 0 || neighbourX >= width || neighbourY >= rows || dist[j] >= 0) continue;
         if (mat[j] !== CLOTH && mat[j] !== DRAPE && mat[j] !== NONE) continue;
         dist[j] = dist[i] + 1;
         queue[tail++] = j;
@@ -180,12 +180,12 @@ export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view =
   const garment = (i) => mat[i] === CLOTH || mat[i] === DRAPE || mat[i] === NONE;
   const put = (i, colour) => { out[i * 4] = colour[0]; out[i * 4 + 1] = colour[1]; out[i * 4 + 2] = colour[2]; };
   const dye = { [slotOf.outer]: scheme.outer, [slotOf.inner]: scheme.inner, [METAL]: scheme.metal };
-  for (let i = 0; i < mat.length; i++) if (dye[mat[i]]) put(i, rampAt(dye[mat[i]], tone[i]));
+  for (let i = 0; i < mat.length; i++) if (dye[mat[i]]) put(i, rampBlend(dye[mat[i]], tone[i]));
   if (scheme.pattern) paintPattern(scheme.pattern, scheme.pattern.on.map((role) => slotOf[role]), reg, width, rows, put);
   if (scheme.trim) paintTrim(slotOf[scheme.trim.on], scheme.trim.ramp, reg, width, rows, put);
   if (bare && scheme.garment) paintGarment(scheme.garment, torsoOf(reg, tables, width, rows, { loin: outer, view }), reg, tables, view, width, put);
-  const band = (inside, ramp, on = (i) => mat[i] !== CLEAR) => {
-    for (let y = 0; y < rows; y++) for (let x = 0; x < width; x++) if (on(y * width + x) && inside(x, y)) put(y * width + x, rampAt(ramp, 0.2 + 0.65 * tone[y * width + x]));
+  const band = (inside, ramp, on = (i) => mat[i] !== TRANSPARENT) => {
+    for (let y = 0; y < rows; y++) for (let x = 0; x < width; x++) if (on(y * width + x) && inside(x, y)) put(y * width + x, rampBlend(ramp, 0.2 + 0.65 * tone[y * width + x]));
   };
   if (scheme.belt) {
     // a belt is worn on the clothes, never across a bare arm
@@ -203,7 +203,7 @@ export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view =
   }
   if (scheme.sign && view !== 2) {
     const shift = { 1: -0.03, 3: 0.03 }[view] ?? 0;
-    paintSign(SIGNS[scheme.sign.glyph], scheme.sign.colour, Math.round(centreX + shift * height) - 3, Math.round(bottom - 0.69 * height) - 3, mat, width, rows, put);
+    paintSign(CLASS_INSIGNIA[scheme.sign.glyph], scheme.sign.colour, Math.round(centreX + shift * height) - 3, Math.round(bottom - 0.69 * height) - 3, mat, width, rows, put);
   }
   if (scheme.shield) paintShield(scheme.shield, reg, view, width, rows, out);
   return { width, height: rows, data: out };
@@ -220,9 +220,9 @@ export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14], 1: [0.1, 0.125], 2: [
 export function torsoOf({ mat, pal, bottom, centreX, height }, tables, width, rows, { loin = DRAPE, view = 0 } = {}) {
   let waist = -1, under = null;
   for (let y = Math.max(0, Math.round(bottom - 0.66 * height)); y <= bottom - 0.35 * height && waist < 0; y++) {
-    const xs = [];
-    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) xs.push(x);
-    if (xs.length >= 2) { waist = y; under = (xs[0] + xs[xs.length - 1]) / 2; }
+    const loinColumns = [];
+    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) loinColumns.push(x);
+    if (loinColumns.length >= 2) { waist = y; under = (loinColumns[0] + loinColumns[loinColumns.length - 1]) / 2; }
   }
   if (waist < 0) { waist = Math.round(bottom - 0.56 * height); under = centreX; }
   // the hips' middle: the body about the waist, near the loincloth, metal (a bracer, a blade) aside
@@ -276,21 +276,21 @@ function paintGarment(garment, { span, top, waist }, { mat, pal, height }, table
       const i = y * width + x;
       if (mat[i] !== SKIN && mat[i] !== NONE) continue;
       const lit = 0.1 + 0.8 * toneIn(tables.span.flesh, tables.light[pal[i]]);
-      let colour = rampAt(garment.ramp, lit);
+      let colour = rampBlend(garment.ramp, lit);
       if (garment.kind === 'motley') {
         const across = x - mid, up = waist - y;
-        if ((Math.floor((across + up) / cell) + Math.floor((up - across) / cell)) & 1) colour = rampAt(garment.alt, lit);
+        if ((Math.floor((across + up) / cell) + Math.floor((up - across) / cell)) & 1) colour = rampBlend(garment.alt, lit);
       } else if (garment.kind === 'harness') {
         const strap = [mid - apart, mid + apart].some((at) => Math.abs(x - at) < 1) || Math.abs(y - chest) < 1;
         const buckle = view !== 2 && Math.abs(y - chest) <= 1 && [mid - apart, mid + apart].some((at) => Math.abs(x - at) <= 1.5);
-        if (buckle) colour = rampAt(garment.buckle, 0.45 + 0.55 * lit);
-        else if (strap) colour = rampAt(garment.strap, 0.15 + 0.5 * lit);
+        if (buckle) colour = rampBlend(garment.buckle, 0.45 + 0.55 * lit);
+        else if (strap) colour = rampBlend(garment.strap, 0.15 + 0.5 * lit);
       } else if (garment.kind === 'wrap') {
         const edge = mid + (view === 4 ? 1 : -1) * (0.09 * height) * (1 - (2 * (y - top)) / Math.max(1, waist - top));
-        if (Math.abs(x - edge) < 1) colour = rampAt(garment.edge, 0.3 + 0.6 * lit);
-        else if ((((x - Math.round(mid) + y) % 4) + 4) % 4 === 0) colour = rampAt(garment.ramp, lit * 0.7);
+        if (Math.abs(x - edge) < 1) colour = rampBlend(garment.edge, 0.3 + 0.6 * lit);
+        else if ((((x - Math.round(mid) + y) % 4) + 4) % 4 === 0) colour = rampBlend(garment.ramp, lit * 0.7);
       }
-      if (garment.hem && y >= waist - 2) colour = rampAt(garment.hem, 0.2 + 0.6 * lit);
+      if (garment.hem && y >= waist - 2) colour = rampBlend(garment.hem, 0.2 + 0.6 * lit);
       put(i, colour);
     }
   }
@@ -309,7 +309,7 @@ function paintPattern({ kind, ramps }, slots, { mat, tone, bottom, centreX, heig
       if (kind === 'motley') pick = (Math.floor((across + up) / cell) + Math.floor((up - across) / cell)) & 1;
       else if (kind === 'stripes') pick = Math.floor(up / 3) & 1;
       else if (kind === 'patches') pick = patches.some(([px, py]) => Math.abs(x - px) <= 2 && Math.abs(y - py) <= 2) ? 0 : -1;
-      if (pick >= 0 && ramps[pick]) put(i, rampAt(ramps[pick], kind === 'patches' ? 0.15 + 0.8 * tone[i] : tone[i]));
+      if (pick >= 0 && ramps[pick]) put(i, rampBlend(ramps[pick], kind === 'patches' ? 0.15 + 0.8 * tone[i] : tone[i]));
     }
   }
 }
@@ -317,13 +317,13 @@ function paintPattern({ kind, ramps }, slots, { mat, tone, bottom, centreX, heig
 /** A cloth's hems and cuffs: its pixels over clear or skin a pixel or two below, or beside skin - never the
  *  silhouette's sides, never a shadow or another cloth inside the garment. */
 function paintTrim(on, ramp, { mat, tone }, width, rows, put) {
-  const below = (x, y) => y >= rows || mat[y * width + x] === CLEAR || mat[y * width + x] === SKIN;
+  const below = (x, y) => y >= rows || mat[y * width + x] === TRANSPARENT || mat[y * width + x] === SKIN;
   const beside = (x, y) => x >= 0 && x < width && mat[y * width + x] === SKIN;
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < width; x++) {
       const i = y * width + x;
       if (mat[i] !== on) continue;
-      if (below(x, y + 1) || below(x, y + 2) || beside(x - 1, y) || beside(x + 1, y)) put(i, rampAt(ramp, 0.35 + 0.65 * tone[i]));
+      if (below(x, y + 1) || below(x, y + 2) || beside(x - 1, y) || beside(x + 1, y)) put(i, rampBlend(ramp, 0.35 + 0.65 * tone[i]));
     }
   }
 }
@@ -334,7 +334,7 @@ function paintSign(mark, colour, left, top, mat, width, rows, put) {
   for (let row = -1; row <= 7; row++) {
     for (let col = -1; col <= 7; col++) {
       const x = left + col, y = top + row, i = y * width + x;
-      if (x < 0 || y < 0 || x >= width || y >= rows || mat[i] === CLEAR) continue;
+      if (x < 0 || y < 0 || x >= width || y >= rows || mat[i] === TRANSPARENT) continue;
       const inBox = row >= 0 && row < 7 && col >= 0 && col < 7;
       if (inked(col, row)) put(i, colour);
       else if (inBox ? mark[row][col] === 'o' : [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => inked(col + dx, row + dy))) put(i, DARK);
@@ -350,7 +350,7 @@ function paintShield(shield, { bottom, centreX, height }, view, width, rows, out
   painter.fill(whole, front ? shield.face : shield.back, { gain: 0.8 });
   painter.fill(minus(whole, inner), shield.rim, { gain: 1.2 });
   if (front && shield.glyph) {
-    const mark = SIGNS[shield.glyph];
+    const mark = CLASS_INSIGNIA[shield.glyph];
     for (let row = 0; row < 7; row++) for (let col = 0; col < 7; col++) if (mark[row][col] === '#') painter.set(Math.round(middleX) - 3 + col, Math.round(middleY) - 3 + row, shield.colour);
   }
   painter.outline({ keep: 0.45 });

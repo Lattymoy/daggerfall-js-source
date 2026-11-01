@@ -15,7 +15,7 @@ import {
   SKY_HOURS, WEATHER_LOOK, WEATHER_PRESET, SEASON_LEAN, SUN_LOOK, MOON_LOOK, STAR_LOOK, CLOUD_LOOK, SKY_LEVELS,
   SKY_EASE_MINUTES, SKY_JUMP_MINUTES, LIGHT_RULE, DYNAMIC_LIGHT_CURVE, FOG_LOOK, FOG_PRESET_FOR_WEATHER,
   TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, MAX_DELTA_SECONDS,
-  srgbToLinear, linearToSrgb, hexLinear, toSrgb3, luminance, weatherRow, easeRow, weatherShow, hourAt, nightWeight, moonNightWeight,
+  srgbToLinear, linearToSrgb, hexLinear, toSrgb3, linearLuminance, skyWeatherRow, easeRow, weatherShow, hourAt, nightWeight, moonNightWeight,
   phasesAt, moonPhaseLight, skyFrame, fogSettingsFromPresets, fogPresetKey, sunLightDirection, sunCurveTime,
   StormFlash, FLASH_LOOK, strokeLevel, pixelSnowSettings,
 } from '../../src/systems/dynamicSkies/dynamicSkies.js';
@@ -77,7 +77,7 @@ test('OWN-WORK4 the hours: five anchors on the sun\'s height, navy to blue throu
   assert.deepEqual(hourAt(1).horizon, hexLinear('#a0c2e4'));
   // the rule's words, held: the day horizon is the zenith lifted toward white; the sunset horizon warmer than blue
   const day = SKY_HOURS[4], sunset = SKY_HOURS[2];
-  assert.ok(luminance(hexLinear(day.horizon)) > luminance(hexLinear(day.zenith)) * 2, 'the day horizon is lifted toward white');
+  assert.ok(linearLuminance(hexLinear(day.horizon)) > linearLuminance(hexLinear(day.zenith)) * 2, 'the day horizon is lifted toward white');
   const sh = hexLinear(sunset.horizon);
   assert.ok(sh[0] > sh[2] * 2, 'the sun on the horizon: an orange horizon');
   // the warm band - LONGER SUNRISES AND SUNSETS: from 7 degrees under to 9 over, about an hour and ten minutes a side
@@ -103,20 +103,20 @@ test('OWN-WORK4 the weathers: one cover and one grey each - snow pale, the storm
   assert.ok(near(weatherShow(0.1), 0.9801, 1e-12));
   assert.ok(near(weatherShow(0.95), (1 - 0.9025) ** 2, 1e-12));
   // an unknown word is the sunny row, and an eased row walks each number
-  assert.deepEqual(weatherRow('blizzard'), weatherRow('sunny'));
-  const half = easeRow(weatherRow('sunny'), weatherRow('thunder'), 0.5);
+  assert.deepEqual(skyWeatherRow('blizzard'), skyWeatherRow('sunny'));
+  const half = easeRow(skyWeatherRow('sunny'), skyWeatherRow('thunder'), 0.5);
   assert.ok(near(half.cover, 0.525, 1e-12));
-  assert.deepEqual(easeRow(weatherRow('sunny'), weatherRow('thunder'), 2), weatherRow('thunder'), 'k is held to 0..1');
+  assert.deepEqual(easeRow(skyWeatherRow('sunny'), skyWeatherRow('thunder'), 2), skyWeatherRow('thunder'), 'k is held to 0..1');
 });
 
 test('OWN-WORK4 what the rule makes: clear noon blue, a storm darker and greyer, a night dark, the sun\'s disc and the stars by the cover; the seasons lean the clear day and leave the night', () => {
-  const at = (weather, minute, season = SEASONS.Spring) => skyFrame({ minuteOfDay: minute, classicMinutes: BASE + minute, row: weatherRow(weather), season });
+  const at = (weather, minute, season = SEASONS.Spring) => skyFrame({ minuteOfDay: minute, classicMinutes: BASE + minute, row: skyWeatherRow(weather), season });
   const noon = at('sunny', 720), storm = at('thunder', 720), night = at('sunny', 0), dusk = at('sunny', 18 * 60);
   assert.ok(noon.zenith[2] > noon.zenith[0] * 2, 'a clear noon\'s zenith is blue');
-  assert.ok(luminance(storm.horizon) < luminance(noon.horizon) * 0.6, 'a storm\'s horizon is darker');
+  assert.ok(linearLuminance(storm.horizon) < linearLuminance(noon.horizon) * 0.6, 'a storm\'s horizon is darker');
   const sat = (c) => (Math.max(...c) - Math.min(...c)) / Math.max(...c);
   assert.ok(sat(toSrgb3(storm.zenith)) < sat(toSrgb3(noon.zenith)) / 2, 'and greyer');
-  assert.ok(luminance(night.zenith) < 0.003, 'midnight is dark');
+  assert.ok(linearLuminance(night.zenith) < 0.003, 'midnight is dark');
   assert.ok(dusk.horizon[0] > dusk.horizon[2], 'the sun on the horizon warms it');
   assert.equal(noon.night, 0, 'no stars at noon');
   assert.ok(near(night.night, nightWeight(-1) * weatherShow(0.1), 1e-12) && night.night > 0.9, 'a clear midnight\'s stars');
@@ -128,7 +128,7 @@ test('OWN-WORK4 what the rule makes: clear noon blue, a storm darker and greyer,
   assert.equal(moonNightWeight(0.02), 0); assert.equal(moonNightWeight(-0.02), 1);
   // the seasons: summer's zenith deeper than winter's at noon; the night untouched within the light's share
   const summer = at('sunny', 720, SEASONS.Summer), winter = at('sunny', 720, SEASONS.Winter), fall = at('sunny', 720, SEASONS.Fall);
-  assert.ok(winter.zenith[0] > summer.zenith[0] && luminance(winter.zenith) > luminance(summer.zenith), 'winter paler');
+  assert.ok(winter.zenith[0] > summer.zenith[0] && linearLuminance(winter.zenith) > linearLuminance(summer.zenith), 'winter paler');
   assert.ok(fall.horizon[0] - fall.horizon[2] > noon.horizon[0] - noon.horizon[2], 'autumn golden at the horizon');
   const nightSummer = at('sunny', 0, SEASONS.Summer);
   for (let k = 0; k < 3; k++) assert.ok(Math.abs(nightSummer.zenith[k] - night.zenith[k]) < 0.002, 'a night stays a night');
@@ -173,13 +173,13 @@ test('OWN-WORK4 the moons, the stars and the clouds: the tables as written, the 
   assert.ok(near(((later.cloudOffset[2] - st.cloudOffset[2]) % 1 + 1) % 1, (30 * CLOUD_LOOK.low.speed) % 1, 1e-6), 'the low layer travels its speed a game minute');
   // the layers' share of the sky is the cover: the low c, the high 0.3 (1 - c); opaque by c - the high layer's sliver
   // through a deck faded out (OWN-WORK4: a thin cut read as scratches over an overcast sky)
-  const storm = skyFrame({ minuteOfDay: 720, row: weatherRow('thunder') });
+  const storm = skyFrame({ minuteOfDay: 720, row: skyWeatherRow('thunder') });
   assert.deepEqual(storm.cloudLow, [0.95, 0.6 + 0.4 * 0.95, CLOUD_LOOK.low.scale, CLOUD_LOOK.soft]);
   assert.ok(near(storm.cloudHigh[0], 0.3 * 0.05, 1e-12) && storm.cloudHigh[1] === 0);
-  const high = (w) => skyFrame({ minuteOfDay: 720, row: weatherRow(w) }).cloudHigh[1];
+  const high = (w) => skyFrame({ minuteOfDay: 720, row: skyWeatherRow(w) }).cloudHigh[1];
   assert.deepEqual([high('sunny'), high('cloudy')], [0.55, 0.55], 'a clear or cloudy sky keeps its high streaks whole');
   assert.deepEqual([high('overcast'), high('rain'), high('fog')], [0, 0, 0], 'an overcast, rain or fog sky none');
-  const between = skyFrame({ minuteOfDay: 720, row: { ...weatherRow('cloudy'), cover: 0.6 } }).cloudHigh[1];
+  const between = skyFrame({ minuteOfDay: 720, row: { ...skyWeatherRow('cloudy'), cover: 0.6 } }).cloudHigh[1];
   assert.ok(between > 0.2 && between < 0.4, `part faded at 12% of the sky: ${between}`);
 });
 
@@ -294,7 +294,7 @@ test('OWN-WORK4 the instance: the first word whole, a new word walked on the gam
   const frame = (minute, weather, extra = {}) => d.tick({ minuteOfDay: minute % 1440, classicMinutes: BASE + minute, weather, seconds: minute, dt: 1 / 60, weatherScale: 1, ...extra });
   const st = frame(720, 'rain');
   assert.equal(st.weather, 'rain');
-  assert.deepEqual(d.row, weatherRow('rain'), 'the first word is a load: whole');
+  assert.deepEqual(d.row, skyWeatherRow('rain'), 'the first word is a load: whole');
   assert.deepEqual(st.sunDir.map((v) => Math.round(v * 1e6) / 1e6), [0, 1, 0]);
   assert.deepEqual(st.clearColor, st.fogColor, 'the sky publishes its fog colour as the horizon the world fogs to');
   assert.equal(d.fogColor, st.fogColor);
@@ -311,13 +311,13 @@ test('OWN-WORK4 the instance: the first word whole, a new word walked on the gam
   frame(720 + SKY_EASE_MINUTES, 'thunder');
   assert.equal(d.row.cover, held, 'a stopped clock holds the sky');
   frame(720 + 200, 'thunder');
-  assert.deepEqual(d.row, weatherRow('thunder'), 'a jump past an hour: whole');
+  assert.deepEqual(d.row, skyWeatherRow('thunder'), 'a jump past an hour: whole');
   frame(700, 'snow');
-  assert.deepEqual(d.row, weatherRow('snow'), 'a clock gone back: whole');
+  assert.deepEqual(d.row, skyWeatherRow('snow'), 'a clock gone back: whole');
   frame(701, 'sunny');
   d.weatherJump();
   frame(702, 'fog');
-  assert.deepEqual(d.row, weatherRow('fog'), 'a load (weatherJump): whole');
+  assert.deepEqual(d.row, skyWeatherRow('fog'), 'a load (weatherJump): whole');
   frame(703, 'blizzard');
   assert.equal(d.currentWeather, 'sunny', 'a word the sky does not know wears the clear sky');
   // phases with a clock at birth
@@ -383,7 +383,7 @@ test('OWN-WORK4 the pass runs whole: every uniform it declares is fetched, and w
   assert.deepEqual([...declared].sort(), [...UNIFORM_NAMES].sort(), 'declared and fetched are one list');
   assert.equal(new Set(UNIFORM_NAMES).size, UNIFORM_NAMES.length);
   assert.doesNotMatch(FS, /#define|\bstruct\b/, 'nothing test/glsl.mjs cannot read');
-  const clear = (minute, weather = 'sunny', minutes = BASE + minute) => skyFrame({ minuteOfDay: minute, classicMinutes: minutes, row: weatherRow(weather) });
+  const clear = (minute, weather = 'sunny', minutes = BASE + minute) => skyFrame({ minuteOfDay: minute, classicMinutes: minutes, row: skyWeatherRow(weather) });
   const noon = clear(720);
   const north = shadeAlong(noon, [0, 0.6, 0.8]);
   const openSky = shadeAlong({ ...noon, cloudLow: [0, 0, 1, 0.1], cloudHigh: [0, 0, 1, 0.1] }, [0, 0.6, 0.8]);
@@ -460,7 +460,7 @@ test('OWN-WORK4 the pass\'s GL: one painted texture on unit 0, the layers handed
   const calls = [];
   const gl = new Proxy({}, { get: (_t, k) => (typeof k === 'string' && /^[A-Z_0-9]+$/.test(k) ? k : (...args) => { calls.push([k, ...args]); return k === 'getUniformLocation' ? args[1] : k === 'getShaderParameter' || k === 'getProgramParameter' ? true : {}; }) });
   const sky = new DynamicSkiesRenderer(/** @type {any} */ (gl));
-  const st = skyFrame({ minuteOfDay: 720, row: weatherRow('cloudy') });
+  const st = skyFrame({ minuteOfDay: 720, row: skyWeatherRow('cloudy') });
   sky.setState(st);
   assert.deepEqual([...sky.clearColor].map((v) => +v.toFixed(5)), st.clearColor.map((v) => +v.toFixed(5)));
   assert.deepEqual([...sky.fillColor].map((v) => +v.toFixed(5)), st.fillColor.map((v) => +v.toFixed(5)));
@@ -529,17 +529,17 @@ test('OWN-WORK4 AUDIT the storm\'s flash: a clap seen at its chance; one to four
 });
 
 test('OWN-WORK4 AUDIT the flash in the sky: the dome and its clouds take it, the clouds the most - the runtime hands its level to the frame (mutants: the sky unflashed; the clouds unflashed)', () => {
-  const at = { minuteOfDay: 1300, classicMinutes: 1300, row: weatherRow('thunder') };
+  const at = { minuteOfDay: 1300, classicMinutes: 1300, row: skyWeatherRow('thunder') };
   const dark = skyFrame(at), lit = skyFrame({ ...at, flash: 1.5 });
-  assert.ok(luminance(lit.zenith) > luminance(dark.zenith) + 0.05 && luminance(lit.horizon) > luminance(dark.horizon) + 0.05, 'the dome brighter');
-  assert.ok(luminance(lit.cloudLit) - luminance(dark.cloudLit) > luminance(lit.zenith) - luminance(dark.zenith), 'the clouds the most');
+  assert.ok(linearLuminance(lit.zenith) > linearLuminance(dark.zenith) + 0.05 && linearLuminance(lit.horizon) > linearLuminance(dark.horizon) + 0.05, 'the dome brighter');
+  assert.ok(linearLuminance(lit.cloudLit) - linearLuminance(dark.cloudLit) > linearLuminance(lit.zenith) - linearLuminance(dark.zenith), 'the clouds the most');
   assert.ok(lit.zenith[2] - dark.zenith[2] > lit.zenith[0] - dark.zenith[0], 'a cold light');
   const d = new DynamicSkies({}, {}, () => 0.1);
   const frame = () => d.tick({ minuteOfDay: 1300, classicMinutes: BASE + 1300, weather: 'thunder', seconds: 0, dt: 1 / 60, playerPos: [0, 0, 0] });
   const before = frame();
   assert.equal(d.onAmbientEffect([0, 0, 0]), true);
   const during = frame();
-  assert.ok(d.lightningLight && luminance(during.zenith) > luminance(before.zenith), 'the frame of a flash: the sky lit');
+  assert.ok(d.lightningLight && linearLuminance(during.zenith) > linearLuminance(before.zenith), 'the frame of a flash: the sky lit');
 });
 
 test('DS1 pixel snow: the sliders\' numbers - sizes over 100,000 (fractions of the view), the count in thousands', () => {

@@ -140,7 +140,7 @@ export function riderless(
 /** Where a rider sits: the centre of his mask's lowest RIDER_SEAT_ROWS rows (his seat, not his swinging arm), or null
  *  for an empty mask. */
 export const RIDER_SEAT_ROWS = 8;
-export function seatOf(/** @type {Uint8Array} */ mask, /** @type {number} */ wide) {
+export function riderSeatOf(/** @type {Uint8Array} */ mask, /** @type {number} */ wide) {
   let low = -1;
   for (let i = mask.length - 1; i >= 0 && low < 0; i--) if (mask[i]) low = Math.floor(i / wide);
   if (low < 0) return null;
@@ -558,8 +558,8 @@ export async function ownHorsePicture(
   const mask = own && first && !saneMask(own, first, record.width) ? first : own;
   let bob = [0, 0];
   if (first && mask && mask !== first) {
-    const seat = seatOf(mask, record.width),
-      seatThen = seatOf(first, record.width);
+    const seat = riderSeatOf(mask, record.width),
+      seatThen = riderSeatOf(first, record.width);
     if (seat && seatThen) bob = [0, seat[1] - seatThen[1]];
   }
   const height = named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT;

@@ -264,8 +264,8 @@
   {
     "name": "OWK-2-the-body-keeps-its-head",
     "file": "src/systems/roleplayRealism/rrKeepers.js",
-    "old": "for (const rect of spec.clear ?? []) inside(rect, (p) => (out[p] = 0));",
-    "new": "for (const rect of spec.clear ?? []) inside(rect, (p) => (out[p] = out[p]));",
+    "old": "  for (const rect of spec.clear ?? []) inside(rect, (index) => (out[index] = 0));",
+    "new": "  for (const rect of spec.clear ?? []) inside(rect, (index) => (out[index] = out[index]));",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "OWK-4-a-swap-past-its-rect",
     "file": "src/systems/roleplayRealism/rrKeepers.js",
-    "old": "inside(swap.rect, (p) => {",
-    "new": "inside([-99, -99, 999, 999], (p) => {",
+    "old": "    inside(swap.rect, (index) => {",
+    "new": "    inside([-99, -99, 999, 999], (index) => {",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "OWK-5-the-shade-lost",
     "file": "src/systems/roleplayRealism/rrKeepers.js",
-    "old": "out[p] = (swap.to << 4) | Math.min(15, (out[p] & 15) + (swap.darker ?? 0));",
-    "new": "out[p] = (swap.to << 4) | Math.min(15, swap.darker ?? 0);",
+    "old": "      if (out[index] && RAMP_OF(out[index]) === swap.from)\n        out[index] = (swap.to << 4) | Math.min(15, (out[index] & 15) + (swap.darker ?? 0));",
+    "new": "      if (out[index] && RAMP_OF(out[index]) === swap.from) out[index] = (swap.to << 4) | Math.min(15, swap.darker ?? 0);",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "OWK-6-darker-past-the-ramp",
     "file": "src/systems/roleplayRealism/rrKeepers.js",
-    "old": "out[p] = (swap.to << 4) | Math.min(15, (out[p] & 15) + (swap.darker ?? 0));",
-    "new": "out[p] = (swap.to << 4) | ((out[p] & 15) + (swap.darker ?? 0)) & 15;",
+    "old": "        out[index] = (swap.to << 4) | Math.min(15, (out[index] & 15) + (swap.darker ?? 0));",
+    "new": "        out[index] = (swap.to << 4) | (((out[index] & 15) + (swap.darker ?? 0)) & 15);",
     "tests": [
       "test/systems/rr2_realism.test.js"
     ],

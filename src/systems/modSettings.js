@@ -1930,7 +1930,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.shieldWidget.Modules.Animation.description',
-            'Animation: the shield is raised and lowered frame by frame instead of sliding (art by WilhelmBlack).',
+            'Animation: the shield is raised and lowered frame by frame instead of sliding.',
           );
         },
       }),

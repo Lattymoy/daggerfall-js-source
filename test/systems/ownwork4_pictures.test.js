@@ -10,7 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 
-import { createPainter, RAMP, ellipse, rect, stroke, poly, bayer, shadeOf, textWidth, GLYPHS } from '../../src/art/ownPainter.js';
+import { createPainter, RAMP, ellipse, rect, stroke, poly, ditherAt, rampShade, textWidth, PAINTED_LETTERS } from '../../src/art/ownPainter.js';
 import { FORAGING_ART } from '../../src/systems/foraging/foragingArt.js';
 import { TORCH_ART, TORCH_OVER, FLAME_FRAMES, dousedCandle } from '../../src/systems/handheldTorchesArt.js';
 import { FISH_ART } from '../../src/systems/deepWater/fishArt.js';
@@ -38,10 +38,10 @@ test('OWN-WORK4 painter: a shape fills the pixels whose centres it holds, lit fr
   const lum = (x, y) => at(d, x, y)[0];
   assert.ok(lum(2, 2) > lum(6, 6), 'the upper left is the lit side');
   assert.equal(at(d, 0, 0)[3], 0, 'a corner outside the disc stays clear');
-  assert.equal(bayer(0, 0), 0.5 / 16);
-  assert.equal(bayer(1, 0), 8.5 / 16);
-  assert.deepEqual(shadeOf(RAMP.grey, 0.5, 0, 0), RAMP.grey[2], 'half light, the lowest threshold: the step below');
-  assert.deepEqual(shadeOf(RAMP.grey, 0.5, 0, 3), RAMP.grey[3], 'the highest threshold: the step above');
+  assert.equal(ditherAt(0, 0), 0.5 / 16);
+  assert.equal(ditherAt(1, 0), 8.5 / 16);
+  assert.deepEqual(rampShade(RAMP.grey, 0.5, 0, 0), RAMP.grey[2], 'half light, the lowest threshold: the step below');
+  assert.deepEqual(rampShade(RAMP.grey, 0.5, 0, 3), RAMP.grey[3], 'the highest threshold: the step above');
   assert.ok(stroke([[0, 0], [10, 0]], 2).has(5, 1.9) && !stroke([[0, 0], [10, 0]], 2).has(5, 2.1), 'a rod of radius 2');
   assert.ok(poly([[0, 0], [4, 0], [0, 4]]).has(1, 1) && !poly([[0, 0], [4, 0], [0, 4]]).has(3, 3), 'a triangle');
 });
@@ -61,7 +61,7 @@ test('OWN-WORK4 painter: the rim is drawn toward the dark, `space` places shapes
   assert.deepEqual([at(s, 1, 0)[3], at(s, 2, 0)[3]], [255, 0], 'four units wide in an eight-unit space: half the picture');
   assert.equal(textWidth('MAP'), 17);
   assert.equal(textWidth('x'), 3);
-  for (const [ch, g] of Object.entries(GLYPHS)) if (ch !== ' ') assert.equal(g.length, 7, `${ch}: seven rows`);
+  for (const [ch, g] of Object.entries(PAINTED_LETTERS)) if (ch !== ' ') assert.equal(g.length, 7, `${ch}: seven rows`);
   const t = createPainter(7, 8);
   t.text('I', 0, 0, [255, 0, 0], { shadow: [0, 0, 255] });
   assert.deepEqual([at(t, 1, 3), at(t, 2, 4)], [[255, 0, 0, 255], [0, 0, 255, 255]], 'the letter, its shadow one down and right');

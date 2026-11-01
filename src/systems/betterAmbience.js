@@ -733,7 +733,7 @@ export function createBetterAmbience({
   function rainTarget() {
     const street = audio.clipLevel?.(AMBIENT_RAIN_LOOP);
     const levels = rainLayers().map((n) => audio.clipLevel?.(baSoundKey(n)));
-    const mine = levels[0] == null ? levels[0] : Math.hypot(...levels.map((l) => l ?? 0)); // the layers' power, summed
+    const mine = levels[0] == null ? levels[0] : Math.hypot(...levels.map((layerLevel) => layerLevel ?? 0)); // the layers' power, summed
     const match = street > 0 && mine > 0 ? street / mine : 1;
     return rainLevel() * match * (rainKind === 'interior' ? INDOOR_RAIN_GAIN : 1);
   }

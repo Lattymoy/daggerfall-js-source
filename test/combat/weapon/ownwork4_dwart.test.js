@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  METAL_RAMPS, rampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintFrame, paintIcon, scale2x, unspeckle, FULLER, GROOVE_PART,
+  METAL_RAMPS, metalRampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintWeaponFrame, paintIcon, scale2x, unspeckle, FULLER, GROOVE_PART,
   parseOwnName, createOwnWeaponArt, FULLER_SHADE,
 } from '../../../src/combat/diverseWeapons/diverseWeaponsArt.js';
 import { LOOKS, OWN_FILES, shapeOf, ICON_RECORDS, DIVERSE_WEAPONS_METALS } from '../../../src/combat/diverseWeapons/diverseWeaponsIndex.js';
@@ -51,8 +51,8 @@ test('OWN-WORK4 law: our metal ramps as designed, and a swatch shade lands on it
   });
   for (const m of DIVERSE_WEAPONS_METALS) assert.ok(METAL_RAMPS[m], `${m}: a law of its own`);
   const r = METAL_RAMPS.Daedric;
-  assert.deepEqual(rampAt(r, 0), r[0]); assert.deepEqual(rampAt(r, 0.5), r[1]); assert.deepEqual(rampAt(r, 1), r[2]);
-  assert.deepEqual(rampAt([[0, 0, 0], [100, 100, 100], [200, 0, 0]], 0.75), [150, 50, 50], 'the light half between middle and light');
+  assert.deepEqual(metalRampAt(r, 0), r[0]); assert.deepEqual(metalRampAt(r, 0.5), r[1]); assert.deepEqual(metalRampAt(r, 1), r[2]);
+  assert.deepEqual(metalRampAt([[0, 0, 0], [100, 100, 100], [200, 0, 0]], 0.75), [150, 50, 50], 'the light half between middle and light');
   const lut = metalLut(PAL, r);
   assert.equal(lut.length, 16);
   assert.deepEqual(lut[0], r[0], 'the darkest shade: the shadow');
@@ -179,7 +179,7 @@ test('OWN-WORK4 AUDIT: a fuller is a groove - its wall on the light\'s side in s
   // the blade points up, so the light (upper left) falls on its left: the left wall is the shadowed one
   assert.deepEqual([17, 18, 19, 20, 21, 22, 23].map((x) => fuller[40 * W + x]),
     [0, GROOVE_PART.wall, GROOVE_PART.wall, GROOVE_PART.floor, GROOVE_PART.lit, GROOVE_PART.lit, 0]);
-  const pic = paintFrame({ width: W, height: H, data: src }, PAL, 'LONGSWORD', 'Iron');
+  const pic = paintWeaponFrame({ width: W, height: H, data: src }, PAL, 'LONGSWORD', 'Iron');
   const lum = (x) => { const o = (40 * W + x) * 4; return pic.data[o] + pic.data[o + 1] + pic.data[o + 2]; };
   assert.ok(lum(18) < lum(20) && lum(20) < lum(16) && lum(16) < lum(22), `shadow ${lum(18)} < floor ${lum(20)} < blade ${lum(16)} < lit wall ${lum(22)}`);
   assert.ok(FULLER.FLOOR < FULLER.GROOVE && FULLER.GROOVE < 0.5, 'a groove narrower than half the blade');
@@ -189,12 +189,12 @@ test('OWN-WORK4 colour: the frame painted - clear and the mask clear, the metal 
   const bm = { width: 4, height: 1, data: new Uint8Array([0, 0xff, 0x7f, 0x30]) };
   const pic = paintIcon(bm, PAL, 'Ebony');
   assert.deepEqual([...pic.data], [0, 0, 0, 0, 0, 0, 0, 0, ...METAL_RAMPS.Ebony[2], 255, 0x30, 7, 255 - 0x30, 255]);
-  const frame = paintFrame({ width: W, height: H, data: blade() }, PAL, 'LONGSWORD', 'Iron');
+  const frame = paintWeaponFrame({ width: W, height: H, data: blade() }, PAL, 'LONGSWORD', 'Iron');
   const lut = metalLut(PAL, METAL_RAMPS.Iron);
   const groove = [...metalLut(PAL, METAL_RAMPS.Iron)[0x7a - 0x70]].map((c) => Math.round(c * FULLER_SHADE));
   assert.deepEqual([...frame.data.subarray((40 * W + 20) * 4, (40 * W + 20) * 4 + 4)], [...groove, 255], 'the longsword\'s fuller, shaded');
   assert.deepEqual([...frame.data.subarray((70 * W + 17) * 4, (70 * W + 17) * 4 + 4)], [...lut[0x72 - 0x70], 255], 'its edge, by our law');
-  const wab = paintFrame({ width: W, height: 12, data: (() => { const d = new Uint8Array(W * 12); for (let y = 2; y < 12; y++) for (let x = 18; x <= 22; x++) d[y * W + x] = 0x30 + y; return d; })() }, PAL, 'WABBAJACK', 'Iron');
+  const wab = paintWeaponFrame({ width: W, height: 12, data: (() => { const d = new Uint8Array(W * 12); for (let y = 2; y < 12; y++) for (let x = 18; x <= 22; x++) d[y * W + x] = 0x30 + y; return d; })() }, PAL, 'WABBAJACK', 'Iron');
   assert.ok(wab.data[3 + (11 * W + 20) * 4] === 255, 'a staff painted');
 });
 

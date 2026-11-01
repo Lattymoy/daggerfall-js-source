@@ -8,7 +8,7 @@ import {
   DYNAMIC_LIGHT_CURVE,
   SKY_EASE_MINUTES,
   SKY_JUMP_MINUTES,
-  weatherRow,
+  skyWeatherRow,
   easeRow,
   skyFrame,
   phasesAt,
@@ -86,7 +86,7 @@ export class DynamicSkies {
   tick(frame) {
     const minutes = frame.classicMinutes ?? 0;
     const word = this.weathers[frame.weather] ? frame.weather : 'sunny';
-    const want = weatherRow(word, this.weathers);
+    const want = skyWeatherRow(word, this.weathers);
     const dtMin = this._lastMinutes === null || minutes < this._lastMinutes ? null : minutes - this._lastMinutes;
     this._lastMinutes = minutes;
     if (this._whole || !this.row || dtMin === null || dtMin > SKY_JUMP_MINUTES) this.row = want;
