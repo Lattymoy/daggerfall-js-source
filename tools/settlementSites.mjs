@@ -1,4 +1,3 @@
-// /usr/bin/env node
 // WHERE THE SETTLEMENTS STAND. On the player's own files (the
 // map picture traced and fitted as the world host does, WOODS.WLD past the Bay's seam), each province's settlement is laid
 // out on pixel after pixel of its land that no place holds - no Arena town, capital, countryside place or lair on it or

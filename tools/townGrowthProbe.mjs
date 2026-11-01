@@ -1,4 +1,3 @@
-// /usr/bin/env node
 // A TOWN'S OUTSKIRTS IN THE RUNNING GAME. Boots the streaming world in
 // shot mode at a town (`?region=&loc=`), waits for the settlement host to stand its outskirts (window.__settlementView),
 // judges they stood with every mesh, and shoots them from the air. Needs ARENA2 (the dev server's /arena2). The shots are

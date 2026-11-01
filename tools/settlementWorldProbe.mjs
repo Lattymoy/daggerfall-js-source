@@ -1,15 +1,14 @@
-// /usr/bin/env node
 // A SETTLEMENT IN THE RUNNING GAME. Boots the streaming world in shot
 // mode, jumps to a settlement's pixel (window.__tesaJump), waits for its host to stand it (window.__settlementView), and
 // shoots it from the air and from a street; then walks to a door and presses it, and says whether the rooms opened.
 // Needs ARENA2 (the dev server's /arena2). The shots are of the player's own ground: they stay in scratch/.
-//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [row] [--out scratch/settlement-world] [--season summer]   (row: settlements.json's, 1 Sahr Waters)
+//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [row] [--out scratch/settlement-world] [--season summer] [--size 640x400]   (row: settlements.json's, 1 Sahr Waters)
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const named = process.argv.slice(2).filter((arg, i, all) => !arg.startsWith('--') && all[i - 1] !== '--out' && all[i - 1] !== '--season');   // a flag's value is no row
+const named = process.argv.slice(2).filter((arg, i, all) => !arg.startsWith('--') && !['--out', '--season', '--size'].includes(all[i - 1]));   // a flag's value is no row
 const ORDINAL = Number(named[0] ?? 1);   // a settlements.json row (1: Sahr Waters, Hammerfell)
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'scratch/settlement-world';
 const SEASON = process.argv.includes('--season') ? process.argv[process.argv.indexOf('--season') + 1] : null;   // summer, rain or winter (shared.js seasonOverride)
@@ -18,7 +17,8 @@ const server = await createServer({ server: { port: 5241, strictPort: true }, lo
 await server.listen();
 const exe = process.env.CHROMIUM ?? (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
 const browser = await chromium.launch({ headless: true, ...(exe ? { executablePath: exe } : {}), args: ['--use-gl=angle', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+const SIZE = process.argv.includes('--size') ? process.argv[process.argv.indexOf('--size') + 1].split('x').map(Number) : [1280, 800];   // a software renderer draws a whole town slowly: a smaller view is quicker
+const page = await browser.newPage({ viewport: { width: SIZE[0], height: SIZE[1] } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
 page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/status of 404/.test(t)) errors.push(`[console] ${t}`); if (/\[settlements\]/.test(t)) errors.push(`[warn] ${t}`); });
@@ -66,7 +66,7 @@ try {
   console.log(JSON.stringify({ name: s.name, buildings: s.buildings, meshes: `${s.ready}/${s.meshes}`, mid: s.mid.map((v) => +v.toFixed(1)) }));
   const shoot = async (name, x, y, z, yaw, pitch) => {
     await page.evaluate(([a, b, c, d, e]) => window.__pose(a, b, c, d, e), [x, y, z, yaw, pitch]);
-    await frames(12); await page.screenshot({ path: join(out, `${name}.png`) });
+    await frames(12); await page.screenshot({ path: join(out, `${name}.png`), timeout: 240000 });
   };
   await shoot('air', s.mid[0], s.mid[1] + 70, s.mid[2] - 110, 0, -0.5);
   await shoot('air-west', s.mid[0] - 110, s.mid[1] + 60, s.mid[2], Math.PI / 2, -0.45);
@@ -78,7 +78,7 @@ try {
   await frames(10);
   await drain();
   const before = await page.evaluate(() => window.__mode?.() ?? null);
-  await page.screenshot({ path: join(out, 'door.png') });
+  await page.screenshot({ path: join(out, 'door.png'), timeout: 240000 });
   const said = [];
   const hear = (m) => said.push(`${m.type()}: ${m.text()}`.slice(0, 200));
   page.on('console', hear);

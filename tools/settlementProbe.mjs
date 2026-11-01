@@ -1,4 +1,3 @@
-// /usr/bin/env node
 // THE GENERATOR SEEN FROM ABOVE. Lays out every archetype and writes
 // one SVG each: the ground under it, its pads by height, its links by kind, its streets, plots, buildings, doors, gates and
 // features. With ARENA2 (`ARENA2_PATH`) the ground is the Bay's own (WOODS.WLD through the terrain kernel), each archetype on
