@@ -101,13 +101,13 @@
   },
   {
     "name": "DA12-12-the-module-is-never-packed",
-    "file": "app/package.json",
-    "old": "        \"from\": \"../src/ui/menu\",\n        \"to\": \"launcher\",\n",
-    "new": "        \"from\": \"../src/ui/menu\",\n        \"to\": \"pad\",\n",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "{ from: 'src/ui/menu/menuPad.js', to: 'app/launcher/menuPad.js' }",
+    "new": "{ from: 'src/ui/menu/menuPad.js', to: 'app/pad/menuPad.js' }",
     "tests": [
       "test/tooling/da12_directplay.test.js"
     ],
-    "note": "AUDIT BR5 (re-aimed by content): the logo is packed beside the launcher too, so the record names the pad module's own entry."
+    "note": "Re-aimed by content: the pad module is staged into app/launcher/ (scripts/desktopRelease.mjs DESKTOP_STAGED) rather than packed from ../."
   },
   {
     "name": "DA12-13-unpacked-serves-a-file-that-is-not-there",
