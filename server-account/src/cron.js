@@ -229,7 +229,11 @@ export const MINUTE_JOBS = Object.freeze([
   // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: "A failed push leaves a freeze or unfreeze unapplied"): and a
   // freeze or unfreeze the relay's door did not take, pushed again with a fresh order - the sanctions' own minute, so no
   // job's share of the firing shrinks (AUDIT SCALE A2); nothing asked while no door is set
-  ['safety', async (ctx, env) => (await safetyMinute(ctx, env)) + (await retryFreezePushes(ctx, env)) + (await claudeSweep(ctx, env))],   // Claude as staff rides this job: nothing while CLAUDE_STAFF is off, else a sweep each 15 minutes (2 hours when few are online)
+  [
+    'safety',
+    async (ctx, env) =>
+      (await safetyMinute(ctx, env)) + (await retryFreezePushes(ctx, env)) + (await claudeSweep(ctx, env)),
+  ], // Claude as staff rides this job: nothing while CLAUDE_STAFF is off, else a sweep each 15 minutes (2 hours when few are online)
   [
     'motherlodes',
     async (ctx, env) => {
@@ -419,7 +423,7 @@ export const HOUR_JOBS = Object.freeze([
   ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],
   // SAFE5 (safetyClock.js): the feed's old batches, a resolved case's lines past their keeping, a case left open past its
   // own, and the reviewer's old daily counts
-  ['safety-sweep', async (ctx) => (await safetySweep(ctx)) + (await claudeKeep(ctx))],   // and Claude's suggestions past 30 days
+  ['safety-sweep', async (ctx) => (await safetySweep(ctx)) + (await claudeKeep(ctx))], // and Claude's suggestions past 30 days
   // STAFF-PANEL1: the staff audit log's rows past STAFF_AUDIT_KEEP_S -
   // its trigger refuses a delete of any newer (migration 0144)
   [
