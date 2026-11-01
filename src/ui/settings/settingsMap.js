@@ -258,6 +258,11 @@ export const CATEGORIES = Object.freeze([
     sec('encounters', 'Wilderness & encounters', [
       'feat:mod-world-of-daggerfall',
       'feat:wilderness-camps',
+      'feat:keta-camp-beacons',
+      'feat:keta-camp-map',
+      'feat:keta-camp-range',
+      'feat:keta-camp-height',
+      'feat:keta-camp-opacity',
       'feat:road-encounters',
       'feat:mod-world-events-raiding-parties',
     ]),

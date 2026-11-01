@@ -346,6 +346,11 @@ export const modDials = (vendor) =>
  *  force it, 'player' to leave it). `lane` (RF4) names the registered
  *  lane a condensed row takes its tiers/default/read/write from. */
 export const FEATURES = Object.freeze([
+  Object.freeze({id:"keta-camp-beacons",group:'world',title:"Keta's Better Campfires",note:"Beams above your placed campfires and equipment. Occluded by scenery; taller farther away.",kinds:Object.freeze(['mod']),control:Object.freeze({store:'prefs',key:"ketaCampBeacons",initial:false,online:'player'})}),
+  Object.freeze({id:"keta-camp-map",group:'world',title:"Camp markers on the Overworld",note:"Show your loaded campfires and equipment on the Overworld map.",kinds:Object.freeze(['mod']),control:Object.freeze({store:'prefs',key:"ketaCampMap",initial:false,online:'player'})}),
+  Object.freeze({id:"keta-camp-range",group:'world',title:"Camp beacon distance",note:"Maximum beacon render distance in metres.",kinds:Object.freeze(['mod']),control:Object.freeze({store:'prefs',key:"ketaCampRange",initial:500,online:'player', tiers:Object.freeze([tier(100,()=>"100"),tier(250,()=>"250"),tier(500,()=>"500"),tier(1000,()=>"1000")])})}),
+  Object.freeze({id:"keta-camp-height",group:'world',title:"Camp beacon height",note:"Maximum distant beam height in metres; nearby beams are shorter.",kinds:Object.freeze(['mod']),control:Object.freeze({store:'prefs',key:"ketaCampHeight",initial:100,online:'player', tiers:Object.freeze([tier(20,()=>"20"),tier(40,()=>"40"),tier(60,()=>"60"),tier(100,()=>"100")])})}),
+  Object.freeze({id:"keta-camp-opacity",group:'world',title:"Camp beacon opacity",note:"Maximum distant opacity; nearby beams are fainter.",kinds:Object.freeze(['mod']),control:Object.freeze({store:'prefs',key:"ketaCampOpacity",initial:.6,online:'player', tiers:Object.freeze([tier(0.15,()=>"0.15"),tier(0.3,()=>"0.3"),tier(0.45,()=>"0.45"),tier(0.6,()=>"0.6")])})}),
   // FT1 (2026-09-14): SMALLER DUNGEONS - DFU's Experimental/SmallerDungeons,
   // ported 1:1 at AUDIT 28 W4 (world/smallerDungeons.js). Mac's first
   // pick: "smaller dungeons should be a genuine enhanced feature that we
