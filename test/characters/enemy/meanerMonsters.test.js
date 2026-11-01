@@ -143,7 +143,7 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   const wt = rd('src/systems/worldTick.js');
   assert.ok(wt.indexOf('installMeanerMonsters();') < wt.indexOf('installPcaao();'), 'the dependency Awakes first');
   const m = MOD_SETTINGS.meanerMonsters;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, true);
+  assert.ok(!('author' in m), 'no author named: the game carries no credits'); assert.deepEqual(Object.keys(m.keys), ['Enabled']); assert.equal(m.keys.Enabled.default, true);
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('meanerMonsters') < Object.keys(MOD_SETTINGS).indexOf('pcaao'), 'listed before the overhaul, as it loads');
   assert.equal(MOD_SETTINGS.pcaao.keys.meanerMonsters, undefined, 'Mac: no compatibility switches between mods');
   assert.equal(MOD_SETTINGS.pcaao.keys.rolePlayRealismArchery, undefined);

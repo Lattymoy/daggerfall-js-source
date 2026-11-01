@@ -78,7 +78,7 @@ const DEPARTED = Object.freeze({ 'Compatibility.PersistentDungeonBoats': true })
 
 test('CSA-A: every shipped key is declared - its section and name joined with a dot, its kind, range, default and options as shipped, the six descriptions the mod wrote in our own words - and nothing else is, but the port\'s Enabled', () => {
   assert.equal(DEF.title, 'Come Sail Away');
-  assert.equal(DEF.author, 'RedRoryOTheGlen');
+  assert.ok(!('author' in DEF), 'no author named: the game carries no credits');
   assert.equal(DEF.keys.Enabled.default, true, 'MO1: on by default');
   const shipped = [];
   let written = 0;

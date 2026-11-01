@@ -32,8 +32,6 @@ export const UI_PACKS = Object.freeze({
     id: 'grimoire',
     title: 'GrimoireUI',
     version: manifest.ModVersion,
-    author: manifest.ModAuthor,
-    source: manifest.Source,
     dir: 'art/grimoire-ui',
     vendor: 'grimoire-ui',
     files: Object.freeze([...manifest.Files]), // vendor: its vendor/ folder (README, listing, credit)

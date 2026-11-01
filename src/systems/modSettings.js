@@ -44,14 +44,11 @@ const EOTB_VIEWS = lazyWords(
   () => t('mods.eyeOfTheBeholder.option.thirdPerson', 'ThirdPerson'),
 );
 
-/** Every vendored mod that has switches, by vendor key. Names and defaults
- *  are the mod's own; the descriptions are ours.
- *  `author` is the manifest's ModAuthor (Basic Roads: its README's),
- *  and the Mods pane puts it IN THE TITLE (Mac, 2026-09-08: "place each
- *  creator's name in the mod title").
+/** Every feature that began as a mod and has switches, by vendor key. Names and defaults are the mod's own; the
+ *  descriptions are ours. No author is named: the game carries no credits.
  *  L10N4: every key's `description` is a getter over `t('mods.<vendor>.<Key>.description', ...)` and every list of
  *  option names (or labels) a `lazyWords`, so each reads in the player's language at the moment it is read - the
- *  English is DFO's own words. Titles and authors are names, and stay as they are.
+ *  English is DFO's own words. Titles are names, and stay as they are.
  *  PLAIN-TEXT:
  *  a description that read as a note to a developer (the port's codes, "INERT", engine terms, a typo, "|| Default =
  *  True") is reworded for a player - an inert key says "Has no effect" and why. OWN-WORK4 rewrote every description still
@@ -77,7 +74,6 @@ export const MOD_SETTINGS = Object.freeze({
   // switch on it; the port's own dome draws while it is off.
   'dynamic-skies': Object.freeze({
     title: 'Dynamic Skies',
-    author: 'BadLuckBurt and carademono',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -142,7 +138,6 @@ export const MOD_SETTINGS = Object.freeze({
   // `Enabled` is the port's, as it is for every vendored mod.
   'world-tooltips': Object.freeze({
     title: 'World Tooltips',
-    author: 'jefetienne',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -170,7 +165,6 @@ export const MOD_SETTINGS = Object.freeze({
   // on when it is listed - so `Enabled` is the port's alone (MO1: on by default), and its description is written here.
   'readied-spellcasting-hands': Object.freeze({
     title: 'Readied Spellcasting Hands',
-    author: 'jefetienne',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -182,7 +176,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'seasons-iliac-bay': Object.freeze({
     title: 'Seasons of the Iliac Bay',
-    author: 'RosyTheRascal',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -201,7 +194,6 @@ export const MOD_SETTINGS = Object.freeze({
   // changes how the trees are drawn, never where they stand.
   'low-poly-trees': Object.freeze({
     title: 'Low Poly Trees',
-    author: 'SquidKamer',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -221,7 +213,6 @@ export const MOD_SETTINGS = Object.freeze({
   // paint and the maps and journeys read it, off they do not.
   'roads-hazelnut': Object.freeze({
     title: 'Basic Roads',
-    author: 'Hazelnut',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -257,7 +248,6 @@ export const MOD_SETTINGS = Object.freeze({
   // hangs it off the Start state), so a flip reaches the next world.
   'world-of-daggerfall': Object.freeze({
     title: 'World of Daggerfall',
-    author: 'Kamer',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -289,7 +279,6 @@ export const MOD_SETTINGS = Object.freeze({
   // one switch.
   'warm-ashes-ships': Object.freeze({
     title: 'Warm Ashes - Ships',
-    author: 'Kamer',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -307,7 +296,6 @@ export const MOD_SETTINGS = Object.freeze({
   // this port). No modsettings of its own - one script - so one switch.
   'world-events-raiding-parties': Object.freeze({
     title: 'World Events - Raiding Parties',
-    author: 'Kamer',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -325,7 +313,6 @@ export const MOD_SETTINGS = Object.freeze({
   // its own - six tools, five foods, a quest pack - so one switch.
   'foraging': Object.freeze({
     title: 'Foraging',
-    author: 'Harbinger451',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -350,7 +337,6 @@ export const MOD_SETTINGS = Object.freeze({
   // the 0..1 sliders, a quarter on the swim multiplier (its floor).
   'iliac-puddle-no-more': Object.freeze({
     title: 'Iliac Puddle No More',
-    author: 'jet082',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -636,7 +622,6 @@ export const MOD_SETTINGS = Object.freeze({
   // sea to open (oceanHoles.js reads that switch, as DFU asks ModManager).
   'ocean-holes': Object.freeze({
     title: 'There’s a Hole in the Bottom of the Ocean',
-    author: 'jet082',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -750,7 +735,6 @@ export const MOD_SETTINGS = Object.freeze({
   // (systems/inputActions.js MOD_ACTIONS) with the slice that reads it. Plus the port's `Enabled`.
   'come-sail-away': Object.freeze({
     title: 'Come Sail Away',
-    author: 'RedRoryOTheGlen',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1223,7 +1207,6 @@ export const MOD_SETTINGS = Object.freeze({
   // Awakes after it in DFU.
   'meanerMonsters': Object.freeze({
     title: 'Meaner Monsters',
-    author: 'Ralzar',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1247,7 +1230,6 @@ export const MOD_SETTINGS = Object.freeze({
   // reads the other mod's own switch, as DFU asks ModManager.
   'pcaao': Object.freeze({
     title: 'Physical Combat And Armor Overhaul',
-    author: 'Kirk.O',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1337,7 +1319,6 @@ export const MOD_SETTINGS = Object.freeze({
   // Realism, and its two overrides register last.
   'unleveledLoot': Object.freeze({
     title: 'Unleveled Loot',
-    author: 'Ralzar',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1397,7 +1378,6 @@ export const MOD_SETTINGS = Object.freeze({
   // switch says so too.
   'diverse-weapons': Object.freeze({
     title: 'Diverse Weapons',
-    author: 'RealAKP',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1428,7 +1408,6 @@ export const MOD_SETTINGS = Object.freeze({
   // fourteen custom items and the template patches ride it.
   'roleplay-realism-items': Object.freeze({
     title: 'Roleplay & Realism: Items',
-    author: 'Hazelnut & Ralzar',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1539,7 +1518,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'roleplay-realism': Object.freeze({
     title: 'Roleplay & Realism',
-    author: 'Hazelnut',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -1774,7 +1752,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'shield-widget': Object.freeze({
     title: 'Shield Widget',
-    author: 'RedRoryOTheGlen',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -2180,7 +2157,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'weapon-widget': Object.freeze({
     title: 'Weapon Widget',
-    author: 'RedRoryOTheGlen',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -2612,7 +2588,6 @@ export const MOD_SETTINGS = Object.freeze({
   // the port's own (OWN-WORK4 rewrote the ones the mod wrote).
   'handheld-torches': Object.freeze({
     title: 'Handheld Torches',
-    author: 'RedRoryOTheGlen',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -3255,7 +3230,6 @@ export const MOD_SETTINGS = Object.freeze({
   // are standing still or riding a horse at 14x.
   'ambient-text': Object.freeze({
     title: 'Ambient Text',
-    author: 'Regnier',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -3313,7 +3287,6 @@ export const MOD_SETTINGS = Object.freeze({
   // the bundle, each marked at its key.
   'eye-of-the-beholder': Object.freeze({
     title: 'Eye Of The Beholder',
-    author: 'RedRoryOTheGlen',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -3941,7 +3914,6 @@ export const MOD_SETTINGS = Object.freeze({
   // about.
   'immersive-footsteps': Object.freeze({
     title: 'Immersive Footsteps',
-    author: 'Kirk.O',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -4089,7 +4061,6 @@ export const MOD_SETTINGS = Object.freeze({
   // description for carry the port's words (the pin requires one).
   'better-ambience': Object.freeze({
     title: 'Better Ambience',
-    author: 'Joshua Steinhauer',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -4347,7 +4318,6 @@ export const MOD_SETTINGS = Object.freeze({
     // The archive names no author (no LICENCE, no script header, an
     // empty `.omwaddon` author field). Its row in Own-Work.md carries the open record; until Mac fills it in,
     // the pane says what is true rather than inventing a name.
-    author: 'Nexus Morrowind 56569',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -4458,7 +4428,6 @@ export const MOD_SETTINGS = Object.freeze({
   // `colorKeyRgba` below reads either.
   'travel-options': Object.freeze({
     title: 'Travel Options',
-    author: 'Hazelnut',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -5046,7 +5015,6 @@ export const MOD_SETTINGS = Object.freeze({
   // static constructors read four of them once a session (the bible's page records it).
   'immersive-travel': Object.freeze({
     title: 'Immersive Travel',
-    author: 'kkgobkk',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -5133,7 +5101,6 @@ export const MOD_SETTINGS = Object.freeze({
   // port never reads is a switch that does nothing.
   'physical-items': Object.freeze({
     title: 'Physical Items',
-    author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -5587,7 +5554,6 @@ export const MOD_SETTINGS = Object.freeze({
   // (systems/heatHaze.js, systems/windfall.js, systems/snowfall.js say how).
   'heat-haze': Object.freeze({
     title: 'Heat Haze',
-    author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -5642,7 +5608,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'windfall': Object.freeze({
     title: 'Windfall',
-    author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -6075,7 +6040,6 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   'snowfall': Object.freeze({
     title: 'Snowfall',
-    author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -6390,7 +6354,6 @@ export const MOD_SETTINGS = Object.freeze({
   // its clear writes `None`, which disables one.
   'horse-cart-and-cargo': Object.freeze({
     title: 'Horse Cart and Cargo',
-    author: 'demifiend000',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -6492,7 +6455,6 @@ export const MOD_SETTINGS = Object.freeze({
   // `Enabled` is the port's.
   'project-legacy': Object.freeze({
     title: 'Project Legacy',
-    author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
@@ -6546,7 +6508,6 @@ export const MOD_SETTINGS = Object.freeze({
     get title() {
       return t('mods.daggerfallEnemyExpansion.title', 'Daggerfall Enemy Expansion');
     }, // the manifest's ModTitle
-    author: 'Kamer & Kab',
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,

@@ -1001,7 +1001,7 @@ test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s
 test('LPT1 the mod\'s row: Low Poly Trees, SquidKamer, on by default - a switch that takes effect when the world next loads', () => {
   const m = MOD_SETTINGS['low-poly-trees'];
   assert.equal(m.title, 'Low Poly Trees');
-  assert.equal(m.author, 'SquidKamer');
+  assert.ok(!('author' in m), 'no author named: the game carries no credits');
   assert.equal(m.keys.Enabled.default, true);
   assert.match(read('src/systems/features.js'), /modFeature\('low-poly-trees', \(\) => t\('features\.effect\.worldLoads', 'Takes effect when the world next loads\.'\), 'sight'\)/);
 });

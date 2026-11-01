@@ -40,7 +40,7 @@ test('DW1: the flag is the mod’s Enabled switch, on by default (MO1); the pres
   _resetModSettings();
   const v = MOD_SETTINGS['diverse-weapons'];
   assert.ok(v, 'the vendor is declared');
-  assert.equal(v.title, 'Diverse Weapons'); assert.equal(v.author, 'RealAKP');
+  assert.equal(v.title, 'Diverse Weapons'); assert.ok(!('author' in v), 'no author named: the game carries no credits');
   assert.deepEqual(Object.keys(v.keys), ['Enabled', 'WeaponWidgetPreset'], 'the mod has no settings of its own: the flag, and the port’s reading of its readme');
   assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'FPSWeapon.moddedWeaponHUDAnimsEnabled, as DiverseWeaponsMain.Start sets it');
   assert.equal(diverseWeaponsPresetOn(), false, 'DISC16-B: the preset off, as at DW1 - the weapons move with Weapon Widget\'s own defaults, as before the mod');

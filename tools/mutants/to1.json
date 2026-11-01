@@ -627,8 +627,8 @@
   {
     "name": "travel-options-off-by-default",
     "file": "src/systems/modSettings.js",
-    "old": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
-    "new": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "old": "    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "new": "    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

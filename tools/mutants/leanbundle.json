@@ -1,0 +1,38 @@
+[
+  {
+    "name": "LEAN-qrc-comments-dropped-too",
+    "file": "scripts/leanBundle.mjs",
+    "old": "    if (section !== 'qrc' && line.trim().startsWith('-')) continue;",
+    "new": "    if (line.trim().startsWith('-')) continue;",
+    "tests": [
+      "test/tooling/leanbundle.test.js"
+    ]
+  },
+  {
+    "name": "LEAN-manifest-keeps-its-page",
+    "file": "scripts/leanBundle.mjs",
+    "old": "const MANIFEST_NAMES = ['ModAuthor', 'ModContactInfo', 'Source'];",
+    "new": "const MANIFEST_NAMES = ['ModAuthor', 'ModContactInfo'];",
+    "tests": [
+      "test/tooling/leanbundle.test.js"
+    ]
+  },
+  {
+    "name": "LEAN-workers-unlean",
+    "file": "vite.config.js",
+    "old": "  worker: { plugins: () => [leanBundlePlugin()] },",
+    "new": "",
+    "tests": [
+      "test/tooling/leanbundle.test.js"
+    ]
+  },
+  {
+    "name": "LEAN-table-notes-kept",
+    "file": "scripts/leanBundle.mjs",
+    "old": "  for (const [from, to] of NOTE_SWAPS) lean = lean.split(from).join(to);",
+    "new": "",
+    "tests": [
+      "test/tooling/leanbundle.test.js"
+    ]
+  }
+]

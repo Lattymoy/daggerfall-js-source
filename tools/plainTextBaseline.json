@@ -1579,7 +1579,7 @@
   "src/systems/midiOut.js": 22,
   "src/systems/mineAct.js": 27,
   "src/systems/modSaveData.js": 5,
-  "src/systems/modSettings.js": 112,
+  "src/systems/modSettings.js": 109,
   "src/systems/music.js": 24,
   "src/systems/musicReplacement.js": 31,
   "src/systems/mysticism.js": 186,

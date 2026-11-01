@@ -210,7 +210,7 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomMaterial'\)\?\.\(playerLevel, rolls\)/); assert.match(rd('src/combat/enemyEquipment.js'), /formulaOverride\('randomArmorMaterial'\)\?\.\(playerLevel, rolls\)/);
   // the pane
   const m = MOD_SETTINGS.unleveledLoot;
-  assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);
+  assert.ok(!('author' in m), 'no author named: the game carries no credits'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);
   // The shipped modsettings' one section, MaterialSwitching, written out when
   // vendor/unleveledLoot left the tree - ten MultipleChoiceKeys named for the materials, each offering all ten,
   // each Value its own index, all ten with the one description

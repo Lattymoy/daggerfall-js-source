@@ -950,8 +950,8 @@
   {
     "name": "STUDIO1-plugin-unwired",
     "file": "vite.config.js",
-    "old": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles()],",
-    "new": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles()].concat(studioArtIndex ? [] : []),",
+    "old": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles(), leanBundlePlugin()],",
+    "new": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles(), leanBundlePlugin()].concat(studioArtIndex ? [] : []),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

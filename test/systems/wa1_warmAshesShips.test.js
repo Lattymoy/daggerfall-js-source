@@ -349,7 +349,7 @@ test('WA1 the host: the events where DFU raises them, the coroutine\'s clock, th
 test('WA1 the switch, the lane and the record: one Enabled on by default, the player\'s own online, the permission RECORD OPEN', () => {
   _resetModSettings();
   const def = MOD_SETTINGS[WARM_ASHES_VENDOR];
-  assert.equal(def.author, 'Kamer');
+  assert.ok(!('author' in def), 'no author named: the game carries no credits');
   assert.deepEqual(Object.keys(def.keys), ['Enabled']);
   assert.equal(def.keys.Enabled.default, true);
   assert.equal(warmAshesOn(), true);

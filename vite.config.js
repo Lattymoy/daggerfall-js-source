@@ -6,6 +6,7 @@ import { studioArtIndex } from './scripts/studioArtIndex.mjs';   // STUDIO1: the
 import { firstVisitPinsPlugin } from './scripts/firstVisitPins.mjs';   // FIRST-VISIT: the kept answers' pins, computed by the build and the dev server
 import { noImportedTopLevelAwait } from './scripts/noTopLevelAwait.mjs';   // WEBKIT-TLA (AUDIT FB1029g TLA-1): no imported chunk awaits at its top level
 import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5: the assets' reads held under Windows' open-file limit (EMFILE)
+import { leanBundlePlugin } from './scripts/leanBundle.mjs';
 
 limitOpenFiles();
 
@@ -131,8 +132,8 @@ function buildTagMeta() {
   };
 }
 
-// CREDITS-OUT (2026-11-01): the notices the MIT and OFL licences require travel with every copy of the build as plain
-// files - LICENSE (ours, the MIT works we ship or ported) and Silkscreen's OFL. Nothing in the game shows or links them.
+// The notices the MIT and OFL licences require travel with every copy of the build as plain files - LICENSE (ours, the
+// MIT works we ship or ported) and Silkscreen's OFL. Nothing in the game shows or links them.
 function licenceFiles() {
   return {
     name: 'licence-files',
@@ -323,5 +324,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait(), licenceFiles(), leanBundlePlugin()],
+  // the workers' bundles are built apart and carry the same lean text
+  worker: { plugins: () => [leanBundlePlugin()] },
 });

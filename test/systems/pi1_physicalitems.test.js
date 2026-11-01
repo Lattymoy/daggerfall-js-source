@@ -52,7 +52,8 @@ const sword = () => createWeapon(120, 0, () => 0.5);
 
 test('PI1 the record: the manifest\'s title and author, and every key the port reads restated under the vendor in the file\'s order with the author\'s words, ranges and defaults - the Interaction section alone not declared', () => {
   // the shipped manifest's ModTitle and ModAuthor (0.1.29, GUID 8764ae71-a464-4a5e-b646-fbc464670137)
-  assert.deepEqual([MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].title, MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].author], ['Physical Items', 'demifiend000']);
+  assert.equal(MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].title, 'Physical Items');
+  assert.ok(!('author' in MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR]), 'no author named: the game carries no credits');
   const keys = MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].keys;
   assert.deepEqual(Object.keys(keys).filter((k) => k !== 'Enabled'), SHIPPED.map(([n]) => n));
   // PLAIN-TEXT: the author's lines spoke of artwork dimensions, detection volumes and a slider's midpoint; each is said plainly for a player - their words, exactly

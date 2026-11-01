@@ -2,8 +2,8 @@
   {
     "name": "CREDITS-OUT-licences-plugin-unregistered",
     "file": "vite.config.js",
-    "old": "noImportedTopLevelAwait(), licenceFiles()]",
-    "new": "noImportedTopLevelAwait()]",
+    "old": "noImportedTopLevelAwait(), licenceFiles(), leanBundlePlugin()]",
+    "new": "noImportedTopLevelAwait(), leanBundlePlugin()]",
     "tests": [
       "test/systems/credits.test.js"
     ]
@@ -33,15 +33,6 @@
     "new": "    get title() { return t('features.mod.title', '{title}', { title: `${mod.title} by ${mod.author}` }); },",
     "tests": [
       "test/systems/ft9_mods.test.js"
-    ]
-  },
-  {
-    "name": "CREDITS-OUT-found-by-author",
-    "file": "src/systems/features.js",
-    "old": "mod?.title, c.vendor].filter(Boolean)",
-    "new": "mod?.title, mod?.author, c.vendor].filter(Boolean)",
-    "tests": [
-      "test/systems/ft18_features.test.js"
     ]
   },
   {

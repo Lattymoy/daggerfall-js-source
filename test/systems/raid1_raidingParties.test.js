@@ -470,7 +470,7 @@ test('RAID1 the save record: RaidSaveData\'s own fields and the port\'s two; a r
 
 test('RAID1 the lane, the row, the record: the switch on by default, the room\'s online (RAID2); a world row; the permission record in the vendor README', () => {
   const mod = MOD_SETTINGS[RAIDING_PARTIES_VENDOR];
-  assert.equal(mod.author, 'Kamer');
+  assert.ok(!('author' in mod), 'no author named: the game carries no credits');
   assert.equal(mod.keys.Enabled.default, true);
   assert.deepEqual(Object.keys(mod.keys), ['Enabled'], 'no modsettings of its own');
   assert.ok(!ONLINE_PLAYERS_OWN_MODS.includes(RAIDING_PARTIES_VENDOR), 'RAID2: online the raids are the world\'s');

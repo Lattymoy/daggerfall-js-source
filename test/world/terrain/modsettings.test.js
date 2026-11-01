@@ -184,20 +184,12 @@ function syntheticWoods(W, H) {
   return bytes;
 }
 
-test('every mod keeps its creator on record - the manifest\'s ModAuthor, and the README\'s where a mod ships none - and no title shows it (CREDITS-OUT, 2026-11-01)', () => {
-  assert.equal(MOD_SETTINGS['dynamic-skies'].author, 'BadLuckBurt and carademono', 'OWN-WORK4: Dynamic Skies 2.3.4\'s ModAuthor, written out when vendor/dynamic-skies was retired');
-  assert.equal(MOD_SETTINGS['seasons-iliac-bay'].author, 'RosyTheRascal', 'OWN-WORK1: Seasons of the Iliac Bay 1.1\'s ModAuthor, written out when vendor/seasons-iliac-bay was retired');
-  // BR3: MO1's law, swept rather than spot-checked. It was stated mod by
-  // mod and Basic Roads was simply left out of the sweep, so the one mod
-  // without the switch was the one nobody asserted about.
+test('every mod switch is on by default and no mod names an author - the game carries no credits; the tile\'s title is the mod\'s name alone', () => {
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) {
     assert.ok('Enabled' in mod.keys, `${vendor} has no Enabled switch - a player cannot turn it off`);
     assert.equal(mod.keys.Enabled.default, true, `${vendor} is not on by default (MO1)`);
+    assert.ok(!('author' in mod), `${vendor}: no author named`);
   }
-  assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut', 'OWN-WORK2: Basic Roads\' author, written out when vendor/roads-hazelnut was retired');
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);
-  // CREDITS-OUT (the owner: "No more credits"): Mac's 2026-09-08 by-line is retired - the tile's title is the mod's
-  // name alone, built once in features.js modFeature; the author stays a record, read by no screen.
   assert.match(readFileSync('src/systems/features.js', 'utf8'), /get title\(\) \{ return t\('features\.mod\.title', '\{title\}', \{ title: mod\.title \}\); \},/,
     'the title is the name alone');
 });

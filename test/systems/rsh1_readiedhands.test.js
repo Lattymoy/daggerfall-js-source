@@ -108,7 +108,7 @@ test('RSH1: a CasterOnly spell raises nothing, and the switch takes them away at
 test('RSH1: the rig reads the readied hands under the cast hands\' own two lane gates, after the cast\'s draw, and every host hands it the engine\'s readied() (mutants: the Morrowind arm or the Beholder drawing them too, a host left out)', () => {
   const rig = read('src/combat/weapon/weaponRig.js').toString();
   const at = rig.indexOf('if (c && !fpArm.active() && !eotbHidesSpellHands()) {');
-  const end = rig.indexOf('// PROF1', at);
+  const end = rig.indexOf('// AN ACT\'S TOOL IN THE HAND.', at);
   const block = rig.slice(at, end);
   assert.ok(at > 0 && end > at);
   assert.ok(block.indexOf('drawSpellCastHands(renderer, c, spellArtFor(fpsSpellCasting.element)') < block.indexOf('readiedHandsFrame('), 'the cast first, then the readied hands');
@@ -137,7 +137,7 @@ test('RSH1: the mod\'s one condition, its frame and the cast\'s layout, as its s
 
 test('RSH1: registered as every vendored mod is - its switch on by default, its tile in Combat, its licence notice, the player\'s own online (mutants: any one left out)', () => {
   const mod = MOD_SETTINGS['readied-spellcasting-hands'];
-  assert.equal(mod.author, 'jefetienne');
+  assert.ok(!('author' in mod), 'no author named: the game carries no credits');
   assert.equal(mod.keys.Enabled.default, true, 'MO1: on by default');
   assert.deepEqual(Object.keys(mod.keys), ['Enabled'], 'the mod ships no settings - the switch is the port\'s alone');
   const row = featureForControl('mods', 'Enabled', 'readied-spellcasting-hands');

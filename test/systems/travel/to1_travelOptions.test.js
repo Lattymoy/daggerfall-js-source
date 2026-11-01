@@ -91,7 +91,7 @@ const read = (rel) => readFileSync(new URL(rel, root), 'utf8');
 
 test('TO1: the settings - our own table, key for key (OWN-WORK3; the keys are Travel Options 1.11\'s, a saved setting\'s name; RATE-LAW: less its TimeAcceleration section)', () => {
   const ours = MOD_SETTINGS[TRAVEL_OPTIONS_VENDOR].keys;
-  assert.equal(MOD_SETTINGS[TRAVEL_OPTIONS_VENDOR].author, 'Hazelnut');
+  assert.ok(!('author' in MOD_SETTINGS[TRAVEL_OPTIONS_VENDOR]), 'no author named: the game carries no credits');
   assert.equal(Object.keys(ours)[0], 'Enabled', 'the port\'s own Enabled in front');
   const kind = (d) => (d.color ? ['color', d.default] : d.text ? ['text', d.default] : d.options ? ['choice', d.default, [...d.options]]
     : d.min !== undefined ? ['range', d.default, d.min, d.max] : ['toggle', d.default]);
