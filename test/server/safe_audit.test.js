@@ -10,7 +10,7 @@ import { mintStamp } from '../../src/net/safety/chatStamp.js';
 import { sealFeed, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';
 import { BAN_FOREVER } from '../../src/net/safety/safetyLaw.js';
 import { SAFE_LAW_PATH } from '../../src/net/wire.js';
-import { reviewLines, reviewerPrompt, linesMessage, aiDailyMax, MESSAGES_URL, MOD_AI_MAX_TOKENS, AI_REPORT_SHARE } from '../../server-account/src/modAi.js';
+import { reviewLines, linesMessage, aiDailyMax, MESSAGES_URL, MOD_AI_MAX_TOKENS, AI_REPORT_SHARE } from '../../server-account/src/modAi.js';
 import { safetyMinute, safetySweep, FEED_SPEAKERS_MAX, REVIEW_WAIT_S, RESOLVED_LINES_KEEP_S } from '../../server-account/src/safetyClock.js';
 import { discordInteraction, sendCard, md, DISCORD_API, DISCORD_USER_AGENT } from '../../server-account/src/discord.js';
 import { pushLaw } from '../../server-account/src/sanctions.js';
@@ -23,7 +23,7 @@ import { ACCEPTED } from '../../src/net/legalLaw.js';
 const subtle = globalThis.crypto.subtle;
 const RELAY = 'https://relay.example' + SAFE_LAW_PATH;
 const nowS = () => Math.floor(Date.now() / 1000);
-const ON = Object.freeze({ MOD_AI: 'on', ANTHROPIC_API_KEY: 'sk-test', MODERATOR_HANDLES: 'Asynian', RELAY_LAW_URL: RELAY, DISCORD_MOD_CHANNEL: '123456789012345678', DISCORD_BOT_TOKEN: 'bot-token', DISCORD_PUBLIC_KEY: '' });
+const ON = Object.freeze({ MOD_AI: 'on', ANTHROPIC_API_KEY: 'sk-test', MOD_AI_PROMPT: 'Test brief.\n{conduct}', MODERATOR_HANDLES: 'Asynian', RELAY_LAW_URL: RELAY, DISCORD_MOD_CHANNEL: '123456789012345678', DISCORD_BOT_TOKEN: 'bot-token', DISCORD_PUBLIC_KEY: '' });
 
 /**
  * The outside world, scripted: the Messages API answers `ai` in turn (a verdict object, 'down' a 529, 'config' a 401,
@@ -97,8 +97,6 @@ test('AUDIT SAFE AI-1: a line framing another speaker frames nobody - the lines 
   assert.deepEqual(asked.ai.map((a) => a.lines.map((l) => l.text)), [lines.map((l) => l.text), ['gg, good fight everyone']], 'the second read: the account\'s own line alone');
   assert.equal(raw(s).prepare('SELECT muted_until FROM players WHERE id = ?').get(victim.id).muted_until, null, 'nobody muted');
   assert.equal(raw(s).prepare('SELECT auto FROM mod_cases WHERE id = ?').get(filed.body.case).auto, null);
-  assert.match(reviewerPrompt(), /Judge each line by its own words/);
-  assert.match(reviewerPrompt(), /quoting, reporting or condemning abuse someone else said/, 'AI-8: the victim who quotes it is not its author');
   assert.equal(JSON.parse(linesMessage({ lines: [{ text: '<b>' }] }).slice('<chat_lines>\n'.length, -'\n</chat_lines>'.length)).lines[0].text, '<b>', 'the escape reads back the same');
 });
 
@@ -606,8 +604,6 @@ test('AUDIT SAFE DOC-8 + DOC-13 + DOC-17: a muted reporter does not count; a rep
     let blk;
     for (let i = 0; i < 61; i++) blk = await s.call('/v1/safety/block', { target: troll.id }, spam.secret);
     assert.equal(blk.status, 429, 'blocks are bounded');
-    assert.match(reviewerPrompt(), /asexuality/);
-    assert.match(reviewerPrompt(), /attention-seekers/);
     // a report past the hour no longer counts toward the mute
     const t3 = await s.registered('Later');
     const late = await heard(s, t3, 'w');

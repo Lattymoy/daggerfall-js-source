@@ -56,6 +56,11 @@ owner's explicit approval, quoted in `05-Combat/Power-Ceiling.md`. `src/systems/
 
 **LOOT-GATE** (Dudey). Public text never gives the levels, factors or chances in `src/systems/loot/lootLevelGate.js`.
 
+**PROMPT-HIDDEN** (Mac). The repository is public, so a model's prompt never lives in it. Each prompt is a Worker
+secret that the account deploy puts from a repository secret of the same name (`MOD_AI_PROMPT`, `CLAUDE_STAFF_PROMPT`).
+Without it, that model is never called. No page, test, commit or PR quotes a prompt. `test/tooling/prompthidden.test.js`
+holds the code to it.
+
 **ONE DFU MEMBER, ONE EXPORT.** Before porting a DFU class or method, grep the tree for its name and its constants. If
 two files need it, one exports and the other imports.
 

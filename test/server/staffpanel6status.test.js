@@ -278,7 +278,7 @@ test('STAFF-PANEL6-STATUS: missing data is said so - an Analytics Engine or rela
 });
 
 test('STAFF-PANEL6-STATUS: the AI reviewer failing turns health red - a failed read on an open case, or a read waiting past AI_WAIT_S; with it off, no verdict', async () => {
-  const ai = { MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k' };
+  const ai = { MOD_AI: 'shadow', ANTHROPIC_API_KEY: 'k', MOD_AI_PROMPT: 'b' };
   const s = await stand(ai);
   try {
     const p = await s.registered('Troll');

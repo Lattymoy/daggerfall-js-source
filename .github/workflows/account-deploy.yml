@@ -1052,6 +1052,9 @@ jobs:
             echo "::warning::the shop's ways to pay were not set - $(head -c 300 "$err")"
           fi
 
+      # THE BRIEFS ARE SECRETS TOO: MOD_AI_PROMPT (the reviewer's) and CLAUDE_STAFF_PROMPT (Claude as staff's), so the
+      # public repository never shows players what the models are told. Unset, each model reads nothing.
+      #
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
       # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
       # on the Worker here on EVERY deploy from the repository's own secrets, so a key changed there reaches the service
@@ -1064,19 +1067,23 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          MOD_AI_PROMPT: ${{ secrets.MOD_AI_PROMPT }}
+          CLAUDE_STAFF_PROMPT: ${{ secrets.CLAUDE_STAFF_PROMPT }}
         run: |
           set -euo pipefail
           base="${{ steps.deploy.outputs.base }}"
-          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${DISCORD_BOT_TOKEN}" ]; then
-            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set for this repository - the reviewer and the Discord queue stay off"
+          if [ -z "${ANTHROPIC_API_KEY}${DISCORD_BOT_TOKEN}${MOD_AI_PROMPT}${CLAUDE_STAFF_PROMPT}" ]; then
+            echo "none of ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN, MOD_AI_PROMPT or CLAUDE_STAFF_PROMPT is set for this repository - the Worker keeps what it has"
           else
-            jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+            jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN, MOD_AI_PROMPT, CLAUDE_STAFF_PROMPT} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
           fi
           {
             echo "### Chat safety"
             echo ""
             echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
             echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
+            echo "- the reviewer's brief: $([ -n "${MOD_AI_PROMPT}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any brief put before')"
+            echo "- Claude as staff's brief: $([ -n "${CLAUDE_STAFF_PROMPT}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any brief put before')"
             echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
