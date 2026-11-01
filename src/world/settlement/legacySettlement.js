@@ -2,7 +2,7 @@
 // A LEGACY TOWN AS A PLAN. Every building of an RMB
 // layout keeps the key BuildingDirectory.MakeBuildingKey gave it (buildingSummaries' own - never minted again here), stands
 // where RMBLayout.GetBuildingData puts it, and points at its record for its walls, doors and rooms. The ground is the one
-// flat pad today's towns stand on (blendLocationTerrain, TS2's outline). The directory is the plan read back the way the
+// flat pad today's towns stand on (blendLocationTerrain). The directory is the plan read back the way the
 // game's building lists read: a minted key's row carries no block cell, so nothing can decode one.
 import { RMB_SIDE } from '../locationLayout.js';
 import { isResidence } from '../buildingNames.js';

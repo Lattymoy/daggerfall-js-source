@@ -3,7 +3,7 @@
 // BUILDINGS. A plan is metres: a footprint, flat pads at their own heights (terraces), links between them, streets,
 // districts and buildings. A building keeps the identity every table keys on - its place's map id and a building key -
 // and a key minted for a new building lies in a band no RMB key reaches, so nothing decodes it into a block cell.
-// Pure and unwired: no host, save or wire reads it yet. Not a DFU member (DFU's towns are RMB grids). Ledger A.
+// Pure: the generator, the publication and every tool check a plan by it. Not a DFU member (DFU's towns are RMB grids).
 import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';

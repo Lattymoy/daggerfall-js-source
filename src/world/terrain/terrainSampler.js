@@ -44,9 +44,9 @@ export const STREAMING_TERRAIN_SCALE = 1.25;
  *  stands its large map by WOODS.WLD's law of the small (world/tamriel/tamrielGround.js largeOfByte), where it stood a
  *  swell about 4.5: a record before it is moved by its ground's own move (world/landforms.js groundMovedField). 4: FB1028,
  *  a town's blend (townGroundMovedField). 5: ACROSS-EDGE, the meets (townMeetMovedField). 6: a settlement's
- *  carve (settlementMovedField). Not the row's law: a build without the row reads a record as it did. */
+ *  carve (settlementStand.js settlementMovedAt). Not the row's law: a build without the row reads a record as it did. */
 export const GROUND_FRAME_LAW = 6;
-/** the frame's law from which a record stood the ground a settlement's pads carved (settlementMovedField). */
+/** the frame's law from which a record stood the ground a settlement's pads carved (settlementMovedAt). */
 export const PADS_FRAME_LAW = 6;
 /** ACROSS-EDGE (FB1029): the frame's law from which a record stood the ground the towns' meets raised. */
 export const MEET_FRAME_LAW = 5;

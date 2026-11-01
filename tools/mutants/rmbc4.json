@@ -677,5 +677,164 @@
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
+  },
+  {
+    "name": "FEATURES-statue-away",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "const toward = gate ? [gate[0] - at[0], gate[1] - at[1]] : [0, -1]",
+    "new": "const toward = gate ? [at[0] - gate[0], at[1] - gate[1]] : [0, -1]",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-well-dry",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "    cap(mesh, WATER, 12, 0.95, 0.45);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-stalls-four",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "{ length: 5 }",
+    "new": "{ length: 4 }",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-dock-posts-sparse",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "for (let along = 0; along <= length; along += 3)",
+    "new": "for (let along = 0; along <= length; along += 6)",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-rail-low-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "for (const share of [0.4, 0.85])",
+    "new": "for (const share of [0.85])",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-corner-twice",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "if (step === steps && (closed || i < runs - 1)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-field-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "    } else if (feature.kind === 'field' && at) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-authored-fence-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "    } else if (feature.kind === 'fence' && feature.path) rails(mesh, plan, datum, feature.path, false);",
+    "new": "    }",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "FEATURES-rim-datum",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "  return datum + (nearest?.y ?? 0);",
+    "new": "  return datum;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "ROW-unhearted",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2)",
+    "new": "null",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "ROW-garden-kept",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  if (centre?.garden) features.splice(features.indexOf(centre.garden), 1);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "ROW-houses-ignored",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": " || !proposed.every((house) => clear(house.fp))",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js",
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "HOST-features-unkept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    _models.set(made.featuresId, made.features);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "HOST-features-unstyled",
+    "file": "src/scenes/settlementHost.js",
+    "old": "featuresModel(plan, L.datum, style)",
+    "new": "featuresModel(plan, L.datum)",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "HOST-src-stale",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    town.src = entry.settlement;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "HOST-yards-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    for (const k of town.homeKeys) town.homeFrames?.delete(k);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "TREES-district-seed-unread",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (rngOf(cell.j)(13, cell.k, cell.j, slot) >= 0.5) continue;",
+    "new": "      if (rngOf(-1)(13, cell.k, cell.j, slot) >= 0.5) continue;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js",
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
   }
 ]

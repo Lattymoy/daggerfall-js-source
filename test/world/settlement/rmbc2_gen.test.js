@@ -21,7 +21,7 @@ const gen = (archetype, style, o = {}) => generateSettlement({
   env: o.env ?? SYNTHETIC[archetype], ...o,
 });
 
-test('RMBC2 the data: a style for every theatre (the Bay and the nine provinces), and the six archetypes (mutant: a theatre\'s style dropped)', () => {
+test('RMBC2 the data: a style for every theatre (the Bay and the nine provinces), and the seven archetypes (mutant: a theatre\'s style dropped)', () => {
   assert.deepEqual(Object.keys(SETTLEMENT_STYLES).sort(), [...THEATRE_KEYS].sort());
   assert.equal(styleOfTheatre(0), SETTLEMENT_STYLES.IliacBay);
   assert.equal(styleOfTheatre(2), SETTLEMENT_STYLES.Hammerfell);

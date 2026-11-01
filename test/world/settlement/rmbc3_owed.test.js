@@ -133,3 +133,39 @@ test('OWED only a pixel\'s first build rides its debt; a rebuild pays it, its ow
   assert.match(read('scenes/groundFrameHost.js'), /padsOwedBuilt\(\(key\) => built\.has\(key\)\);/);
   assert.match(read('scenes/shipBoardHost.js'), /\|\| landform \|\| !\(t\.restore\?\.groundFrame >= RECORD_GROUND_STAMP\.groundFrame\)\)\) \{/, 'a deck of an older frame stood again with the row off');
 });
+
+test('OWED a new world forgets the last one\'s save: its saved debt and the save it read; a save read again after it is read afresh; a pixel built when its save loads is never owed (mutants: the saved debt kept, the read save kept, the built pixel owed)', () => {
+  clearPadsOwed();
+  const save = { padsOwed: ['4,4', '5,5'] };
+  padsOwedBuilt((key) => key === '5,5');
+  padsOwedFrom(save);
+  assert.deepEqual(padsOwed(), ['4,4'], 'its built pixel paid as its records re-stand');
+  assert.ok(savedPadsOwed('5,5'), 'though its records were written without the carve');
+  clearPadsOwed();
+  assert.ok(!savedPadsOwed('4,4') && !savedPadsOwed('5,5'), 'the old save\'s debt gone with its world');
+  padsOwedFrom(save);
+  assert.deepEqual(padsOwed(), ['4,4', '5,5'], 'the same save read again in the new world, nothing built in it yet');
+  clearPadsOwed();
+});
+
+test('OWED the frame\'s law past the law and with the Landforms row on: a save stamped before the carve law rides it everywhere; the row on, the carve rides as it does off (mutants: an old envelope\'s law unread, the row\'s branch unridden)', () => {
+  const state = { compensation: [0, 0, 0], localFromWorld: (x, z) => [x, z] };
+  for (const landform of [false, true]) {
+    const law = recordFrame({ landform, liftAt: () => 0, heightAt: () => NaN, state, bayAt: () => false, padsMovedAt: () => -2.5, owesAt: () => false, readOwed: () => {} });
+    assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, { groundFrame: PADS_FRAME_LAW - 1, padsOwed: [] }), 101 - 2.5, `row ${landform}: an old save owes its carve wherever it stood`);
+    assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, { groundFrame: PADS_FRAME_LAW, padsOwed: [] }), 101, `row ${landform}: a new one only where it owed it`);
+  }
+});
+
+test('OWED the frame host reads the build\'s move at its own pixel\'s place, cell by cell: an origin a pixel off, a field that differs east and north (mutants: the translation, the cell, the axes)', () => {
+  setTamrielFit(null);
+  const row = SETTLEMENT_ROWS[1], [px, py] = settlementPixel(row), key = `${px},${py}`, D = HEIGHTMAP_DIMENSION, cell = TERRAIN_SIZE / (D - 1);
+  const { frame, built } = world([px - 1, py + 1]);
+  const moved = Float32Array.from({ length: D * D }, (_, i) => Math.floor(i / D) + 1000 * (i % D));
+  built.set(key, { settlement: { moved } });
+  const at = (x, y) => frame.padsMovedAt(TERRAIN_SIZE + x * cell, TERRAIN_SIZE + y * cell);
+  assert.ok(Math.abs(at(3, 7) - (3 + 7000) * STREAMING_TERRAIN_SCALE) < 1e-3, 'its sample three east, seven north');
+  assert.ok(Math.abs(at(7, 3) - (7 + 3000) * STREAMING_TERRAIN_SCALE) < 1e-3, 'and the other way about');
+  assert.equal(frame.padsMovedAt(3 * cell, 7 * cell), 0, 'the pixel west of it stands no settlement');
+  clearPadsOwed();
+});

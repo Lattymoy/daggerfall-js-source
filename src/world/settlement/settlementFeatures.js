@@ -12,7 +12,7 @@ import { SETTLEMENT_STYLES } from './settlementStyles.js';
 import { FORT_WALL, FORT_TOWER, MARKET_RING, DOCK_HALF } from './settlementLimits.js';
 
 const TIMBER = art(CAPITAL_ART.timber), CLOTH = art(CAPITAL_ART.cloth), WATER = art(CAPITAL_ART.water), LEAVES = art(CAPITAL_ART.leaves);
-const MARBLE = art(CAPITAL_ART.marble), BRONZE = art(CAPITAL_ART.bronze), SOIL = art(CAPITAL_ART.dark);
+const BRONZE = art(CAPITAL_ART.bronze), SOIL = art(CAPITAL_ART.dark);
 export { FORT_WALL, FORT_TOWER } from './settlementLimits.js';
 /** A garden's and a fence's rails: how high, and a post every so many metres. */
 export const FENCE = Object.freeze({ h: 0.9, post: 2.4 });
@@ -143,7 +143,7 @@ export function featuresModel(plan, datum, styleKey = 'IliacBay') {
   for (const feature of plan.features ?? []) {
     const at = feature.at, floor = at ? (feature.y === undefined ? groundAt(plan, datum, at) : datum + feature.y) : 0;   // one off every pad brings its own ground
     if (feature.kind === 'well') well(mesh, stone, roofArt, at[0], floor, at[1]);
-    else if (feature.kind === 'fountain') fountain(mesh, style.ground === 'marble' ? MARBLE : stone, at[0], floor, at[1]);
+    else if (feature.kind === 'fountain') fountain(mesh, stone, at[0], floor, at[1]);
     else if (feature.kind === 'statue') {
       const toward = gate ? [gate[0] - at[0], gate[1] - at[1]] : [0, -1], length = Math.hypot(toward[0], toward[1]) || 1;
       statue(mesh, stone, at[0], floor, at[1], [toward[0] / length, toward[1] / length], Math.floor(draw(feature.id, 3) * 4));

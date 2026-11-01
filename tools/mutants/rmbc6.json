@@ -47,8 +47,8 @@
   {
     "name": "RMBC6-well-in-core",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "  const centre = cells.has('plaza') && !L.core ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own",
-    "new": "  const centre = cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own",
+    "old": "  const centre = A.centreFeature === 'none' ? null :",
+    "new": "  const centre = false ? null :",
     "tests": [
       "test/world/settlement/rmbc6_growth.test.js"
     ]

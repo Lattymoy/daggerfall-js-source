@@ -397,5 +397,77 @@
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
+  },
+  {
+    "name": "OWED-clear-saved-kept",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "  saved = new Set();\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-clear-read-kept",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "  readFrom = null;\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "OWED-built-owed",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "for (const key of list) if (!builtNow(key)) owed.add(key);",
+    "new": "for (const key of list) owed.add(key);",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FRAME-old-envelope",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "const owes = !(frame >= PADS_FRAME_LAW) || (!!stamp && !!owesAt?.(x, z));",
+    "new": "const owes = (!stamp && !(frame >= PADS_FRAME_LAW)) || (!!stamp && !!owesAt?.(x, z));",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FRAME-landform-unridden",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    y += pads;   // a settlement's carve\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FRAME-translation",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell)",
+    "new": "settlementMovedAt(stood.settlement, [0, 0, 0], x, z, heightCell)",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FRAME-cell",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell)",
+    "new": "settlementMovedAt(stood.settlement, host.state.pixelTranslation(px, py), x, z, heightCell * 2)",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "FRAME-axes",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "  const at = (a, b) => field[a * dim + b];",
+    "new": "  const at = (a, b) => field[b * dim + a];",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
   }
 ]

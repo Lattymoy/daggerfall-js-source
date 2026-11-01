@@ -1,4 +1,3 @@
-// /usr/bin/env node
 // A REVISION ASKED OF WHAT PLAYERS HOLD. Lays
 // every published settlement and every grown town a protected key names on the player's own ground, dressed by this
 // tree's generator, and refuses (exit 1) where a protected key would move or go: a published row through its ledger, a
@@ -97,7 +96,7 @@ async function main() {
     const tilemap = new Uint8Array(128 * 128), rect = setLocationTiles(loc, world.maps, world.blocks, tilemap);
     const g = generatePixelTerrain({ woods, px: pixel.x, py: pixel.y, stride: 1, tilemap, locationRect: rect, hasLocation: true, climateType: CLIMATES.Woodlands, landform: true, roads, growth: growthJobAt(loc, pixel.x, pixel.y) });
     const plan = g.settlement?.growth ? dressSettlement(g.settlement.input, g.settlement.layout).plan : { buildings: [] };
-    for (const k of protectedGone(plan, keys, before[place] ?? [])) refused.push(`${loc.name} (${place}): protected key ${k} - its building is gone, changed or moved (RD-19)`);
+    for (const k of protectedGone(plan, keys, before[place] ?? [])) refused.push(`${loc.name} (${place}): protected key ${k} - its building is gone, changed or moved`);
     dump[place] = kept(plan);
   }
   if (arg('--dump')) writeFileSync(arg('--dump'), `${JSON.stringify(dump)}\n`);

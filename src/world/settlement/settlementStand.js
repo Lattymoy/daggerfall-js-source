@@ -1,7 +1,7 @@
 // @ts-check
 // A SETTLEMENT ON ITS PIXEL, IN THE TERRAIN WORKER.
 // A pixel no location stands on and a settlement does: its layout made on the pixel's own natural ground (the samples
-// after the roads, before any carve), its pads carved into that ground, and the layout and the trees' clearing handed back
+// with no road cut in, before any carve), its pads carved into that ground, and the layout and the trees' clearing handed back
 // with the pixel. Called by world/terrain/terrainGen.js generatePixelTerrain. Worker-safe: world/ alone.
 import { settlementOnPixel, settlementInput } from './settlementPlaces.js';
 import { layoutSettlement, yardTrees } from './settlementLayout.js';

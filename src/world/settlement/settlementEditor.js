@@ -1,9 +1,10 @@
 // @ts-check
-// THE EDITOR'S SEAM. What the WORLD 2.0 editor asks of a
+// THE EDITOR'S SEAM. What the world editor asks of a
 // settlement: a published row's controls changed within their bounds (`params`) and its structure fixed (`fix`), one
 // district dressed again from a seed of its own while every other keeps its buildings and keys, and what changed between
 // two plans. The ledger keeps every key an anchor still holds and refuses a protected one's loss. Pure.
 import { dressSettlement } from './settlementGen.js';
+import { dhypot } from './exactMath.js';
 
 /** The controls a row may set, each its least and most; the layout holds a ring to three sectors at least. */
 export const PARAM_BOUNDS = Object.freeze({ size: [0.5, 2], density: [0.5, 2], bands: [1, 8], sectors: [2, 16], open: [0, 0.9] });
@@ -29,7 +30,7 @@ export function editSettlementRow(row, patch) {
     const wanted = patch.fix;
     if (!FIX_LAYOUTS.includes(wanted?.layout)) problems.push(`layout '${wanted?.layout}' is not one of ${FIX_LAYOUTS.join(', ')}`);
     else if (wanted.centre && !(wanted.centre.length === 2 && wanted.centre.every(Number.isFinite))) problems.push('centre is not two numbers');
-    else if (wanted.shore && !(Math.abs(Math.hypot(wanted.shore.dir?.[0], wanted.shore.dir?.[1]) - 1) < 1e-6 && wanted.shore.at > 0)) problems.push('shore is not a unit direction and a distance');
+    else if (wanted.shore && !(Math.abs(dhypot(wanted.shore.dir?.[0], wanted.shore.dir?.[1]) - 1) < 1e-6 && wanted.shore.at > 0)) problems.push('shore is not a unit direction and a distance');
     else fix = wanted;
   }
   return problems.length ? { row, problems } : { row: { ...row, params, fix }, problems };

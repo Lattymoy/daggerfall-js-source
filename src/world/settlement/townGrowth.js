@@ -1,7 +1,8 @@
 // @ts-check
 // A TOWN GROWS. Every city, town and
 // village keeps its legacy core whole - its blocks, its buildings and their keys - and its outskirts are laid out
-// round it in rings on the land its pixel leaves: never on a road, the town's own ground, a camp or water, never within
+// round it in rings on the land its pixel leaves: never on the town's own ground, a camp or water (a road crosses a cell,
+// its plots beside it), never within
 // GROWTH_MARGIN of the pixel's edge, so the carve and its ease meet no neighbour. Worker-safe (world/ alone): the terrain
 // worker lays the outskirts out and carves them; the host dresses the same layout from the same input.
 import { hash32 } from '../blockHash.js';
@@ -121,7 +122,7 @@ export function standTownGrowth(px, py, samples, job, rect, bars) {
   };
   const metres = Float64Array.from(samples, (sample) => sample * UNIT_METRES);
   carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum, keep, SEA_M);
-  // the carve as a record's frame reads it (landforms.js settlementMovedField's units): kernel units, x * 129 + y
+  // the carve as a record's frame reads it (settlementStand.js settlementMovedAt's units): kernel units, x * 129 + y
   const moved = new Float32Array(samples.length);
   for (let i = 0; i < samples.length; i++) {
     const now = Math.fround(metres[i] / UNIT_METRES);

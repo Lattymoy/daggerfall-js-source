@@ -4,7 +4,7 @@
 // In the settlements' own lane past the Bay (Hammerfell's ground). Pins mutation-checked (tools/mutants/rmbc3.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dsin, dcos, datan2, dhypot } from '../../../src/world/settlement/exactMath.js';
 import { generateSettlement, dressSettlement, layoutSettlement, SETTLEMENT_GENERATOR_VERSION } from '../../../src/world/settlement/settlementGen.js';
 import { settlementPrint } from '../../../src/world/settlement/settlementContract.js';
@@ -24,8 +24,10 @@ test('RMBC3 exact math: within 2e-15 of Math across turns either way, the quarte
   assert.deepEqual([datan2(0, 0), datan2(0, -1), datan2(-1, 0), datan2(1, 0)], [0, Math.PI, -Math.PI / 2, Math.PI / 2]);
 });
 
-test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (mutant: one put back)', () => {
-  for (const f of ['settlementGen.js', 'settlementLayout.js', 'settlementGeometry.js', 'settlementContract.js', 'settlementGround.js']) {
+test('RMBC3 nothing that lays a plan, checks it or carves its ground reads an engine\'s Math.sin, cos, atan2 or hypot: every settlement module but the meshes and the exact maths itself (mutant: one put back)', () => {
+  const meshes = ['exactMath.js', 'settlementFeatures.js', 'settlementModels.js'], all = readdirSync(new URL('../../../src/world/settlement/', import.meta.url)).filter((f) => f.endsWith('.js'));
+  assert.ok(all.includes('townGrowth.js') && all.includes('settlementStand.js') && all.includes('settlementIds.js') && all.length > 15);
+  for (const f of all.filter((name) => !meshes.includes(name))) {
     assert.doesNotMatch(readFileSync(new URL(`../../../src/world/settlement/${f}`, import.meta.url), 'utf8'), /Math\.(sin|cos|tan|atan2?|hypot|exp|pow|log)\(/, f);
   }
 });
@@ -33,7 +35,7 @@ test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (muta
 test('RMBC3 golden prints: three plans bit for bit at generator version 6 (mutant: any change to the layout)', () => {
   assert.equal(SETTLEMENT_GENERATOR_VERSION, 6);
   const print = (archetype) => settlementPrint(generateSettlement({ place: PLACE, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: 'Hammerfell', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] }).plan);
-  assert.deepEqual([print('fort'), print('river'), print('wetland')], [2338176510, 4227296580, 983697820]);
+  assert.deepEqual([print('fort'), print('river'), print('wetland')], [2338176510, 354672837, 983697820]);
 });
 
 test('RMBC3 one layout, two parts: the worker\'s layout dressed is the whole generator\'s plan; its dressing draws on the seed too (mutants: either part unseeded)', () => {

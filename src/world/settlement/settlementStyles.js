@@ -44,7 +44,8 @@ const archetype = (/** @type {Archetype} */ a) => Object.freeze(a);
 /** @param {string} type @param {'plaza'|'gate'|'any'} [near] @param {string} [guild] @returns {Service} */
 const S = (type, near = 'any', guild = undefined) => Object.freeze({ type, near, ...(guild ? { guild } : {}) });
 
-/** The kinds of settlement the engine lays out (the WORLD 2.0 specification's Phase 3 five, and a plain village). */
+/** The kinds of settlement the engine lays out: an oasis, a mining settlement, a fort, a river town, a wetland, a plain
+ *  village, and a town's outskirts. */
 export const SETTLEMENT_ARCHETYPES = Object.freeze({
   oasis: archetype({ frame: 'ring', centre: 'low', size: [62, 80], bands: 3, sectors: [7, 9], plaza: 16, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.45,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza'), S('Temple', 'plaza'), S('Alchemist', 'plaza')], centreFeature: 'well' }),

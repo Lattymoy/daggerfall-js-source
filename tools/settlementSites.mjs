@@ -4,7 +4,7 @@
 // out on pixel after pixel of its land that no place holds - no Arena town, capital, countryside place or lair on it or
 // beside it - and the best one whose fit is ok is kept. The row written publishes inputs alone: the pixel as a point of
 // the picture, the site, the structure the ground chose (fixed, so every client lays the same cells) and the key ledger.
-// Nothing derived from the player's ground is written (Port-Doctrine).
+// Nothing derived from the player's ground is written.
 //  ARENA2_PATH=... node tools/settlementSites.mjs [--write] [--svg scratch/settlement-sites]
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -45,7 +45,7 @@ export const SETTLEMENT_TARGETS = Object.freeze([
   { province: 'Valenwood', archetype: 'village', style: 'Valenwood', name: 'Thorn Canopy', type: LOCATION_TYPES.TownVillage },
   { province: 'Elsweyr', archetype: 'village', style: 'Elsweyr', name: 'Tasha\'s Bend', type: LOCATION_TYPES.TownVillage },
   { province: 'BlackMarsh', archetype: 'wetland', style: 'BlackMarsh', name: 'Hatchwater', type: LOCATION_TYPES.TownVillage },
-  // the water a river town needs is the sea's until the WORLD 2.0 hydrology stands Cyrodiil's rivers as water: a village else
+  // the water a river town needs is the sea's until Cyrodiil's rivers stand as water: a village else
   { province: 'Imperial', archetype: 'river', style: 'Imperial', name: 'Corrol Ford', type: LOCATION_TYPES.TownHamlet, else: 'village' },
 ]);
 const SITE = Object.freeze({ east: 409.6, north: 409.6, radius: 90 });

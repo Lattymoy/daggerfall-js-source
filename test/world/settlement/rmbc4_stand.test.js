@@ -99,7 +99,8 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   const added = [], removed = [], drawn = [];
   const collider = { addMesh: (k) => added.push(k), removeBucket: (k) => removed.push(k) };
   const pipeline = { getGpuMesh: (id) => Promise.resolve({ id }) };
-  let entries = [P], feetAt = null;
+  const firstYards = new Map();
+  let entries = [{ ...P, homeFrames: firstYards }], feetAt = null;
   const host = createSettlementHost({ renderer: { drawMesh: (m) => drawn.push(m.id) }, pipeline, collider: () => collider, built: () => entries, translation: (px, py, out = [0, 0, 0]) => { out[0] = 10; out[1] = 2; out[2] = -5; return out; }, feet: () => feetAt });
   feetAt = [plan.buildings[0].at[0] + 10, 0, plan.buildings[0].at[1] - 5];   // a body inside a wall: the collider waits
   host.frame();
@@ -121,11 +122,18 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   // built again in place, the entry swapped with no frame between: the same plan files its yards on the new entry,
   // another is stood again (mutants: the swap unread, the yards left on the old entry)
   const was = host.planAt(1084, 241), yards = new Map(), wasIds = host.idsAt(1084, 241), wasGround = customModelFor(wasIds.ground);
-  assert.ok(wasGround?.positions.length > 0, 'its ground built through the family');
+  assert.ok(wasGround?.positions.length > 0 && customModelFor(wasIds.features)?.positions.length > 0, 'its ground and its features built through the family');
+  assert.ok(firstYards.size > 0, 'its yards filed on its entry');
   entries = [{ ...P, settlement: { ...P.settlement }, homeFrames: yards }];
   host.frame();
   assert.equal(host.planAt(1084, 241), was, 'the same plan stands on');
   assert.ok(yards.size > 0 && [...yards.keys()].every((k) => plan.buildings.some((b) => b.key === k)), 'its yards on the live entry');
+  assert.equal(firstYards.size, 0, 'and gone from the old one');
+  const swapped = entries[0].settlement, layoutOf = swapped.layout;
+  let reads = 0;
+  Object.defineProperty(swapped, 'layout', { get: () => { reads++; return layoutOf; } });
+  host.frame();
+  assert.equal(reads, 0, 'the swap read once: the live entry its own from then on');
   entries = [{ ...P, settlement: { ordinal: ROW.ordinal, layout: layoutSettlement({ ...input, seed: input.seed + 1 }, env) }, homeFrames: new Map() }];
   host.frame();
   assert.notEqual(host.planAt(1084, 241), was, 'another plan stood again');
@@ -142,7 +150,8 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null, 0), null, 'no row');
   assert.equal(standSettlement(P, null, -1), null, 'no run');
   const sand = art(CAPITAL_ART.sandstone);   // the host paves in the row's style (mutant: the style unpassed)
-  assert.ok(standSettlement(P, null, 0).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));
+  const styled = standSettlement(P, null, 0);
+  assert.ok([styled.ground, styled.features].every((model) => model.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1])), 'its ground and its features');
 });
 
 test('RMBC4 the wiring (by source): the world builds, frames, draws, drops and asks the host; a settlement door\'s record answers the door; the pixel carries its layout (mutants: each seam)', () => {

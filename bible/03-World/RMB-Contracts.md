@@ -133,6 +133,8 @@ number. `generateSettlement` is both parts at once. A layout passed as plain rec
 
 The square's feature (`centreSpot`) stands at its preferred bearing and distance, else the nearest spot that keeps its
 body on the square, off the keep's mound and clear of every way onto it; a market's ring draws in on a small square.
+A row town's heart (`rowSquare`) stands on the open plot nearest the middle of its arc, a nearer band's first, its
+garden given up and its body clear of every house and way.
 A yard tree (`yardTrees`) keeps off its lane, a road through its cell (`ROAD_CLEAR`, 4 m) and every way between pads
 (`TREE_CLEAR`, 1 m). None stands on a deck, nor in a walled town's outer band.
 

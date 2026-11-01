@@ -12,7 +12,7 @@ import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementCon
 import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 import { FORT_WALL, FORT_TOWER, FEATURE_CLEAR, MARKET_RING, featureReach } from './settlementLimits.js';
-import { distanceToSegment } from './settlementGeometry.js';
+import { distanceToSegment, pointInRing, edgeDistance } from './settlementGeometry.js';
 import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX, districtDraw, yardTrees, onRoad } from './settlementLayout.js';
 
 export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement, yardTrees, onRoad } from './settlementLayout.js';
@@ -138,8 +138,10 @@ export function dressSettlement(input, L, { check = true } = {}) {
   });
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
-  const centre = cells.has('plaza') && !L.core ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : null;   // A core is the town's own
-  if (centre) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: centre.at, ...(centre.size === undefined ? {} : { size: centre.size }) });
+  // the outskirts' heart is their town; a row town's is an open plot near its middle
+  const centre = A.centreFeature === 'none' ? null : cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : ring ? null : rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2);
+  if (centre?.garden) features.splice(features.indexOf(centre.garden), 1);
+  if (centre) features.push({ id: 'centre', kind: A.centreFeature, pad: centre.pad ?? 'plaza', at: centre.at, ...(centre.size === undefined ? {} : { size: centre.size }) });
   for (const t of yardTrees(input, L)) features.push({ id: t.id, kind: 'tree', pad: t.pad, at: t.at });
   for (const w of L.walls) features.push({ id: w.id, kind: 'wall', path: w.path, ground: w.ground });
   for (const t of L.towers) features.push({ id: t.id, kind: 'tower', at: t.at, y: t.y });
@@ -203,6 +205,24 @@ function centreSpot(kind, frame, layout, bearing, distance) {
         if (ways.every((link) => distanceToSegment(at, link.a, link.b) >= reach + link.width / 2 + FEATURE_CLEAR)) return { at, size };
       }
     }
+  }
+  return null;
+}
+
+/**
+ * A row town's heart: the open plot nearest the middle of its arc, a nearer band's before a further one's, its feature in
+ * the plot's middle where its body keeps clear of every house, every way and its pad's rim. Null where none does.
+ * @param {string} kind @param {ReturnType<typeof polarFrame>} frame @param {ReturnType<typeof layoutSettlement>} layout
+ * @param {any[]} features its gardens among them @param {Array<{ fp: Pt[] }>} proposed @param {number} middle
+ */
+export function rowSquare(kind, frame, layout, features, proposed, middle) {
+  const reach = featureReach({ kind }), room = reach + FEATURE_CLEAR, pads = new Map(layout.pads.map((pad) => [pad.id, pad])), band = new Map(layout.cells.map((cell) => [cell.id, cell.k]));
+  const apart = (/** @type {Pt} */ at) => { const turn = compassBearing(at[0] - frame.c[0], at[1] - frame.c[1]) - middle; return Math.abs(datan2(dsin(turn), dcos(turn))); };
+  const open = features.filter((feature) => feature.kind === 'garden').sort((x, y) => band.get(x.pad) - band.get(y.pad) || apart(x.at) - apart(y.at) || (x.id < y.id ? -1 : 1));
+  for (const garden of open) {
+    const at = garden.at, clear = (/** @type {readonly Pt[]} */ ring) => !pointInRing(at, ring) && edgeDistance(at, ring) >= room;
+    if (edgeDistance(at, pads.get(garden.pad).poly) < room || !proposed.every((house) => clear(house.fp))) continue;
+    if (layout.links.every((link) => distanceToSegment(at, link.a, link.b) >= room + link.width / 2)) return { at, pad: garden.pad, garden };
   }
   return null;
 }

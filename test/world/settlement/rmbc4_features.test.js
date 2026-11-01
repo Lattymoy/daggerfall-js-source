@@ -8,7 +8,8 @@ import { featuresModel, FORT_WALL, FORT_TOWER, FENCE } from '../../../src/world/
 import { MARKET_RING, featureReach } from '../../../src/world/settlement/settlementLimits.js';
 import { validateSettlement } from '../../../src/world/settlement/settlementContract.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
-import { generateSettlement, yardTrees, layoutSettlement } from '../../../src/world/settlement/settlementGen.js';
+import { generateSettlement, yardTrees, layoutSettlement, rowSquare } from '../../../src/world/settlement/settlementGen.js';
+import { polarFrame } from '../../../src/world/settlement/settlementLayout.js';
 import { DOCK_REACH, DOCK_OUT } from '../../../src/world/settlement/settlementLayout.js';
 import { settlementTreeFlats, liveTreesOf, YARD_TREE_FALLBACK } from '../../../src/world/settlement/settlementStand.js';
 import { TREE_RECORDS } from '../../../src/world/terrain/terrainNature.js';
@@ -189,4 +190,81 @@ test('FEATURES no yard tree on a deck, nor in a walled town\'s outer band where 
   assert.ok(trees.length > 5 && trees.every((t) => !outer.has(t.pad)), 'clear of the wall');
   const open = make('village', 'IliacBay');
   assert.ok(yardTrees(open.input, open.layout).some((t) => open.layout.cells.find((c) => c.id === t.pad).k === open.layout.reachOf[open.layout.cells.find((c) => c.id === t.pad).j]), 'an open village\'s outer band has its trees');
+});
+
+test('FEATURES a row town\'s heart: its feature on the open plot nearest the middle of its arc, the garden there given up, no house moved; a river town\'s fountain in its style\'s marble (mutants: the row unhearted, the garden kept, the marble)', () => {
+  for (const [archetype, style, kind] of [['river', 'IliacBay', 'fountain'], ['mining', 'Skyrim', 'well']]) {
+    const { input, plan } = make(archetype, style);
+    const centre = plan.features.find((f) => f.id === 'centre');
+    assert.ok(centre && centre.kind === kind, `${archetype}: its ${kind}`);
+    const plot = plan.plots.find((p) => pointInRing(centre.at, p.poly));
+    assert.ok(plot && !plan.buildings.some((b) => b.anchor === plot.id) && !plan.features.some((f) => f.id === `g${plot.id}`), 'an open plot, its garden given up');
+    assert.deepEqual(validateSettlement(plan).filter((p) => p.code === 'feature-blocks'), []);
+    const open = generateSettlement({ ...input, published: [] }).plan.buildings.map((b) => b.anchor);
+    assert.deepEqual(plan.buildings.map((b) => b.anchor), open, 'every house where it was');
+  }
+  const river = make('river', 'IliacBay').plan, fountain = { ...river, features: [river.features.find((f) => f.id === 'centre')] };
+  assert.ok(records(featuresModel(fountain, 10, 'Sumurset')).has(key(art(CAPITAL_ART.marble))) && !records(featuresModel(fountain, 10, 'IliacBay')).has(key(art(CAPITAL_ART.marble))), 'marble where its style is');
+});
+
+test('FEATURES the details: a statue turned to the way in, water in a well, a market\'s five awnings, a dock\'s posts down into the water, rails at their two heights with one post at each corner, an authored field\'s rows and fence\'s rails (mutants: the facing, the water, the stalls, the posts, the rails, the corners, the field, the fence)', () => {
+  const fort = make('fort', 'HighRock').plan, statue = fort.features.find((f) => f.kind === 'statue'), gate = fort.gates[0].at, B = art(CAPITAL_ART.bronze);
+  const lean = (at) => {
+    const m = featuresModel({ ...fort, gates: [{ ...fort.gates[0], at }], features: [statue] }, 0, 'HighRock'), way = [gate[0] - statue.at[0], gate[1] - statue.at[1]], length = Math.hypot(...way);
+    let sum = 0, n = 0;
+    for (const sm of m.subMeshes) if (sm.textureArchive === B[0] && sm.textureRecord === B[1]) for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i++) { const v = m.indices[i]; sum += ((m.positions[v * 3] - statue.at[0]) * way[0] + (m.positions[v * 3 + 2] - statue.at[1]) * way[1]) / length; n++; }
+    return sum / n;
+  };
+  assert.ok(lean(gate) > 0.01 && lean([2 * statue.at[0] - gate[0], 2 * statue.at[1] - gate[1]]) < -0.01, 'its figure turned toward the gate');
+  const oasis = make('oasis').plan, well = oasis.features.find((f) => f.kind === 'well');
+  assert.ok(records(featuresModel({ ...oasis, features: [well] }, 0, 'Hammerfell')).has(key(art(CAPITAL_ART.water))), 'water in it');
+  const wet = make('wetland', 'BlackMarsh').plan, market = featuresModel({ ...wet, features: [wet.features.find((f) => f.kind === 'market')] }, 0, 'BlackMarsh');
+  const C = art(CAPITAL_ART.cloth), cloth = market.subMeshes.filter((sm) => sm.textureArchive === C[0] && sm.textureRecord === C[1]).reduce((n, sm) => n + sm.primitiveCount, 0);
+  assert.equal(cloth, 5 * 12, 'five awnings, a box each');
+  const river = make('river', 'Sumurset').plan, dock = river.features.find((f) => f.kind === 'dock'), deck = padAt(river.pads, dock.path[0]).y + 0.1;
+  const dm = featuresModel({ ...river, features: [dock] }, 0, 'Sumurset'), length = Math.hypot(dock.path[1][0] - dock.path[0][0], dock.path[1][1] - dock.path[0][1]);
+  let deep = 0;
+  for (let i = 1; i < dm.positions.length; i += 3) if (Math.abs(dm.positions[i] - (deck - 3.2)) < 1e-3) deep++;
+  assert.equal(deep, (Math.floor(length / 3) + 1) * 2 * 18, 'a post each side every 3 m, 3.2 m down from the deck (a box\'s face, 18 corners of its triangles)');
+  // an authored plan's field and fence, and a garden's rails: two rails over the ground, one post at a corner
+  const square = [[10, 10], [22, 10], [22, 18], [10, 18]], pad = { id: 'p', poly: [[0, 0], [40, 0], [40, 40], [0, 40]], y: 2 };
+  const authored = (features) => featuresModel({ pads: [pad], plots: [{ id: 'yard', pad: 'p', poly: square }], features }, 0, 'IliacBay');
+  const field = authored([{ id: 'f', kind: 'field', pad: 'p', at: [30, 30] }]), fence = authored([{ id: 'r', kind: 'fence', path: [[2, 2], [2, 12]] }]);
+  assert.ok(field.indices.length > 0 && near(field, [30, 30], 6.01).length === field.positions.length / 3, 'its rows within its square');
+  assert.ok(fence.indices.length > 0 && near(fence, [2, 7], 5.2).length === fence.positions.length / 3, 'its rails along its path');
+  const railYs = new Set();
+  for (let i = 1; i < fence.positions.length; i += 3) railYs.add(Math.round((fence.positions[i] - 2) * 100) / 100);
+  const beyond = authored([{ id: 'r', kind: 'fence', path: [[44, 2], [44, 12]] }]);
+  let lowest = Infinity;
+  for (let i = 1; i < beyond.positions.length; i += 3) lowest = Math.min(lowest, beyond.positions[i]);
+  assert.ok(Math.abs(lowest - 2) < 1e-4, 'off every pad, its posts on the nearest one\'s ground');
+  for (const share of [0.4, 0.85]) assert.ok(railYs.has(Math.round((share * FENCE.h + 0.05) * 100) / 100), `a rail at ${share} of its height`);
+  const garden = authored([{ id: 'gyard', kind: 'garden', pad: 'p', at: [16, 14] }]);
+  let tops = 0;
+  for (let i = 1; i < garden.positions.length; i += 3) if (Math.abs(garden.positions[i] - (2 + FENCE.h)) < 1e-4) tops++;
+  const posts = square.reduce((n, p, i) => n + Math.max(1, Math.round(Math.hypot(square[(i + 1) % 4][0] - p[0], square[(i + 1) % 4][1] - p[1]) / FENCE.post)), 0);
+  assert.equal(tops, posts * 18, 'a post\'s top each, none twice at a corner');
+});
+
+test('FEATURES a row town\'s heart keeps clear of a house: the open plot nearest its middle passed over where a house stands within the feature\'s reach (mutant: the houses unread)', () => {
+  const frame = polarFrame([0, 0]), pad = { id: 'c1.0', poly: [[-30, 0], [30, 0], [30, 40], [-30, 40]], y: 0 };
+  const layout = /** @type {any} */ ({ pads: [pad], cells: [{ id: 'c1.0', k: 1 }], links: [] });
+  const gardens = [{ id: 'gA', kind: 'garden', pad: 'c1.0', at: [0, 20] }, { id: 'gB', kind: 'garden', pad: 'c1.0', at: [12, 20] }];
+  assert.equal(rowSquare('fountain', frame, layout, gardens, [], 0)?.garden.id, 'gA', 'the nearer its middle');
+  const house = { fp: [[-3, 22], [3, 22], [3, 30], [-3, 30]] };
+  assert.equal(rowSquare('fountain', frame, layout, gardens, [house], 0)?.garden.id, 'gB', 'a house within its reach: the next');
+});
+
+test('FEATURES a district drawn again draws its own yard trees again and no other\'s (mutant: the district\'s seed unread)', () => {
+  const { input, layout } = make('village', 'IliacBay'), sector = (t) => layout.cells.find((c) => c.id === t.pad).j;
+  const was = yardTrees(input, layout);
+  const changed = new Set(), kept = new Set();
+  for (let j = 0; j < layout.sectors; j++) {
+    const again = yardTrees({ ...input, districtSeeds: { [`d${j}`]: 0x5eed + j } }, layout);
+    const ids = (list, own) => list.filter((t) => (sector(t) === j) === own).map((t) => t.id).join();
+    if (ids(again, true) !== ids(was, true)) changed.add(j);
+    if (ids(again, false) === ids(was, false)) kept.add(j);
+  }
+  assert.ok(changed.size >= layout.sectors / 2, `${changed.size} of ${layout.sectors} districts drawn afresh`);
+  assert.equal(kept.size, layout.sectors, 'every other district\'s trees kept');
 });

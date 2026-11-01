@@ -1,5 +1,5 @@
 // A TOWN GROWS. Every city, town and village keeps its
-// legacy core whole and grows outskirts in rings round it, on the land its pixel leaves - never on a road, its own ground,
+// legacy core whole and grows outskirts in rings round it, on the land its pixel leaves - never on its own ground,
 // a camp or water, never near its pixel's edge - carved round a core the carve never touches; the host dresses the same
 // layout from the input the worker handed back, in a model run of its own. A Bay village and a Hammerfell town beside it
 // (TAMRIEL-WIDE). Pins mutation-checked (tools/mutants/rmbc6.json).
