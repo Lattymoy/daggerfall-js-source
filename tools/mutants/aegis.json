@@ -292,7 +292,7 @@
   {
     "name": "AEGIS-the-symbols-never-drawn",
     "file": "src/render/auraRing.js",
-    "old": "          if (look.glyphs && !closed) {",
+    "old": "          if (look.glyphs && !closed && w.mounted !== true) {",
     "new": "          if (false) {",
     "tests": [
       "test/net/aegis.test.js"

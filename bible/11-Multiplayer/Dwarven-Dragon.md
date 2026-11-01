@@ -97,7 +97,8 @@ player sees "Its core still turns. The Dwarven Dragon is yours." and the item go
 A third mount beside horse and cart:
 
 - summoned from the transport window, the summon key or the Stable page; it flies in from `DRAGON_COME_FROM_M` behind
-  and waits `DRAGON_WAIT_BACK_M` behind its rider; it may be named and sent away;
+  and waits `DRAGON_WAIT_BACK_M` behind its rider; it may be named and sent away; off its back it is drawn at its
+  sprite's own size, the size it is ridden at (`DRAGON_KEEP_SCALE`), never the boss's `DRAGON_SCALE`;
 - saddlebags of `DRAGON_BAGS_KG`, saved with the character and read by the judge as a held list;
 - upkeep is horse care's (`src/systems/steedCare.js`): it drinks Dwarven Oil alone, sold at every Stable; flight and
   gallop spend its breath, and a winded dragon glides down;
@@ -157,6 +158,8 @@ Daggerfall has no other players, no world boss and no flying mount; none of this
 - `test/systems/travel/dragon6_flight.test.js` - the flown journey
 
 ## Open
+
+- Under the Overworld a peer's ridden dragon is grown with the traveller and a waiting tamed dragon is not.
 
 - Guest accounts cost nothing to make, and the cell budget is an account's, so many guests can still sweep the cells;
   the hub's count is lost when it sleeps. Put to the owner.

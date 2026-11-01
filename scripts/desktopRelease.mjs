@@ -59,24 +59,50 @@
 //   node scripts/desktopRelease.mjs seed <dist> <file>    DA13: the bundled copy's index (VERSION, DFO_SHELL)
 //   node scripts/desktopRelease.mjs pack <dist> <dir>     DA13: the game's pack and manifest (VERSION, DFO_UPDATE, DFO_SHELL)
 //   node scripts/desktopRelease.mjs delta <prev> <next> [<prev-tag>]  DA13: exit 1 on an update that is no longer per file
+//   node scripts/desktopRelease.mjs stage                 the shell's files from the repo's tree, copied inside app/
+//   node scripts/desktopRelease.mjs unstage               and taken out again after a local build
 import {
   closeSync,
   copyFileSync,
+  cpSync,
   mkdirSync,
   openSync,
   readdirSync,
   readFileSync,
+  rmSync,
   statSync,
   writeFileSync,
   writeSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { isMain } from '../tools/lib/isMain.mjs';
 
 const require = createRequire(import.meta.url);
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** The files the shell packs from the repo's own tree, staged inside app/ before electron-builder runs: its asarUnpack
+ *  (the private server's runtime binary) holds every packed file to the app's own folder, and a file set read from
+ *  `../` fails the build. Each lands where the shell reads it, so the archive's layout is unchanged. */
+export const DESKTOP_STAGED = Object.freeze([
+  Object.freeze({ from: 'src/ui/menu/menuPad.js', to: 'app/launcher/menuPad.js' }),
+  Object.freeze({ from: 'src/assets/branding/dfo-online.png', to: 'app/launcher/dfo-online.png' }),
+  Object.freeze({ from: 'dist', to: 'app/dist' }),
+]);
+
+/** Copy DESKTOP_STAGED into app/ under `root`, each place emptied first so nothing stale rides along. */
+export function stageShell(root = ROOT) {
+  unstageShell(root);
+  for (const { from, to } of DESKTOP_STAGED) cpSync(join(root, from), join(root, to), { recursive: true });
+}
+
+/** Take the staged copies out of app/ again, so a local build leaves no second copy in the tree. */
+export function unstageShell(root = ROOT) {
+  for (const { to } of DESKTOP_STAGED) rmSync(join(root, to), { recursive: true, force: true });
+}
 const { DOWNLOAD_FILES, LEGACY_DOWNLOAD_FILES, RELEASES_URL } = require('../app/lib/downloads.cjs');
 const { parseReleaseTag } = require('../app/lib/updateCheck.cjs');
 const {
@@ -374,11 +400,14 @@ export function pullRequestNotesSince(
 
 /**
  * What the shell is made of, as paths from the repository's root: app/ whole, and every file its build takes from
- * outside it (app/package.json's `build.icon`, and each `build.files` set copied in from `../` - its filter's names),
- * the game's own `../dist` excepted: that is what the channel carries. Derived from the build config, so a file the
- * shell starts to pack from elsewhere is part of its id without anyone remembering to say so.
+ * outside it (app/package.json's `build.icon`, each `build.files` set copied in from `../` - its filter's names - and
+ * each file `staged` copies into app/ first), the game's own dist excepted: that is what the channel carries. Derived
+ * from the build config and the stage, so a file the shell starts to pack from elsewhere is part of its id.
  */
-export function shellInputs(pkg = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8'))) {
+export function shellInputs(
+  pkg = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8')),
+  staged = DESKTOP_STAGED,
+) {
   const out = ['app'];
   const fromApp = (p) => join('app', p).split('\\').join('/');
   if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));
@@ -386,6 +415,7 @@ export function shellInputs(pkg = JSON.parse(readFileSync(new URL('../app/packag
     if (typeof f !== 'object' || !f.from?.startsWith('../') || f.from === '../dist') continue;
     for (const name of f.filter ?? []) out.push(fromApp(join(f.from, name)));
   }
+  for (const { from } of staged) if (from !== 'dist' && !out.includes(from)) out.push(from);
   return out;
 }
 
@@ -504,6 +534,16 @@ function main(argv) {
   const [cmd, a, b] = argv;
   if (cmd === 'shell') {
     console.log(shellId());
+    return 0;
+  }
+  if (cmd === 'stage') {
+    stageShell();
+    console.log(`staged inside app/: ${DESKTOP_STAGED.map((s) => s.to).join(', ')}`);
+    return 0;
+  }
+  if (cmd === 'unstage') {
+    unstageShell();
+    console.log('the staged copies taken out of app/');
     return 0;
   }
   if (cmd === 'seed') {

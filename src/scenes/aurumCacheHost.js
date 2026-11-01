@@ -1,10 +1,9 @@
 // @ts-check
-// AURUM-CACHES (2026-10-30, the owner: "Also Aurum caches"; bible/06-Systems/Aurum.md section 3a): AN AURUM COFFER IN A
-// DUNGEON. The dungeon host stands one in every dungeon (CACHES-ONCE: net/aurumCacheLaw.js), beside one of its treasure
-// piles picked by the cache's hash, so every client stands it in one place. Pressed, it asks the account service
-// (accountAurumCache) and opens on its yes; one this account emptied stands open on every visit. Online and signed in.
-// THE FOUR HOSTS: scenes/dungeonContext.js stands it and its takeLoot presses it, worldModes.js's and dungeon.js's loot
-// arms carry the key there; world.js and exterior.js (the street) stand none. Not a DFU member. Ledger A (AURUM-CACHES).
+// AN AURUM COFFER IN A DUNGEON. The dungeon host stands one in every dungeon (net/aurumCacheLaw.js), beside one of its
+// treasure piles picked by the cache's hash, so every client stands it in one place. Pressed, it asks the account
+// service (accountAurumCache) and opens on its yes; one this account emptied stands open until the UTC week turns
+// (Monday). Online and signed in. THE FOUR HOSTS: scenes/dungeonContext.js stands it and its takeLoot presses it,
+// worldModes.js's and dungeon.js's loot arms carry the key there; world.js and exterior.js (the street) stand none.
 import { aurumCacheDungeonKey, aurumCacheIdOk, aurumCacheSpotOf, aurumCacheAurumOf } from '../net/aurumCacheLaw.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE, registerAurumCofferArt } from '../world/aurumCofferArt.js';
 import { AURUM_COFFER_MODELS } from '../world/chestModel.js';
@@ -14,7 +13,9 @@ import { accountAurumCache, accountRefusalText, storedSession } from '../net/acc
 import { cacheProofFor } from '../net/cacheProof.js';
 import { appStorage } from '../systems/appStorage.js';
 import { isOnlinePage } from '../systems/online/onlineLane.js';
-import { isHallMapId } from '../net/wire.js';
+import { isHallMapId, wallMsForClassicMinutes } from '../net/wire.js';
+import { aurumWeekOf } from '../net/aurumLaw.js';
+import { sharedClockOn, worldMinutes } from '../systems/worldTick.js';
 import { dungeonIdOf } from './dungeonIdentity.js';
 import { madeLevelOf } from '../systems/madeLevel.js';
 import { dungeonTier } from '../systems/dungeon/dungeonTier.js';
@@ -51,9 +52,17 @@ const MESH_ONLY = Object.freeze({ only: Object.freeze([MESH]) });
 const NOT_MESH = Object.freeze({ skip: Object.freeze([MESH]) });
 const DOWN = Object.freeze([0, -1, 0]), UP = Object.freeze([0, 1, 0]);
 const EIGHT = Object.freeze(Array.from({ length: 8 }, (_, k) => Object.freeze([Math.sin((k * Math.PI) / 4), 0, Math.cos((k * Math.PI) / 4)])));
-/** Where this device keeps the caches each account emptied (`{ [account]: [id, ...] }`) - a hint for the coffer it
- *  stands; the service's word is the claim's answer. Every one is kept (CACHES-ONCE: a cache is emptied once ever). */
+/** Where this device keeps the caches each account emptied this UTC week (`{ [account]: ['<id>:<week>', ...] }`) - a
+ *  hint for the coffer it stands; the service's word is the claim's answer. A past week's entry is dropped. */
 export const AURUM_CACHE_STORE = 'dagger:aurumCaches';
+/** The week a coffer is kept for, on the shared clock while one stands so every device refills it at one instant. */
+const cofferWeekNow = () => aurumWeekOf(Math.floor((sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now()) / 1000));
+/** A kept entry's id, if the entry is this week's: `<id>:<week>`. Pure. */
+function keptThisWeek(/** @type {unknown} */ entry, /** @type {number} */ week) {
+  if (typeof entry !== 'string') return null;
+  const at = entry.lastIndexOf(':'), id = entry.slice(0, at);
+  return at > 0 && entry.slice(at + 1) === String(week) && aurumCacheIdOk(id) ? id : null;
+}
 const NO_TARGETS = Object.freeze([]);
 
 /** The coffer's words. */
@@ -62,7 +71,7 @@ export const AURUM_CACHE_TEXT = Object.freeze({
   emptyName: () => t('aurumCache.emptyName', 'Aurum Coffer (empty)'),
   here: () => t('aurumCache.here', 'An Aurum coffer is hidden in this dungeon.'),
   found: (/** @type {number} */ n) => t('aurumCache.found', '+{n, number} Aurum', { n }),
-  empty: () => t('aurumCache.empty', 'The coffer is empty.'),
+  empty: () => t('aurumCache.empty', 'The coffer is empty. It fills again on Monday.'),
 });
 
 /**
@@ -146,10 +155,10 @@ export function aurumCofferYaw(/** @type {{ pos: number[] }[]} */ piles, /** @ty
   return near ? (Math.atan2(foot[0] - near.pos[0], foot[2] - near.pos[2]) * 180) / Math.PI : 0;
 }
 
-/** The ids an account emptied, as this device keeps them. */
-function keptIds(/** @type {any} */ storage, /** @type {string} */ account) {
+/** The ids an account emptied this week, as this device keeps them. */
+function keptIds(/** @type {any} */ storage, /** @type {string} */ account, /** @type {number} */ week) {
   const v = noteOf(storage)[account];
-  return Array.isArray(v) ? v.filter(aurumCacheIdOk) : [];
+  return Array.isArray(v) ? v.map((e) => keptThisWeek(e, week)).filter((id) => id !== null) : [];
 }
 /** The device's note as a plain object - a corrupt one (an array, a number, cut JSON) starts again empty (AUDIT lane 3 F6). */
 function noteOf(/** @type {any} */ storage) {
@@ -157,12 +166,12 @@ function noteOf(/** @type {any} */ storage) {
   try { v = JSON.parse(storage?.getItem?.(AURUM_CACHE_STORE) ?? '{}'); } catch { /* cut or not JSON: start again */ }
   return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
 }
-/** Keep an emptied id for an account, dropping any that is no cache's (a day's id or mark from before CACHES-ONCE). */
-function keepId(/** @type {any} */ storage, /** @type {string} */ account, /** @type {string} */ id) {
+/** Keep an id emptied this week for an account, dropping every entry that is not this week's. */
+function keepId(/** @type {any} */ storage, /** @type {string} */ account, /** @type {string} */ id, /** @type {number} */ week) {
   try {
-    const all = noteOf(storage);
-    for (const k of Object.keys(all)) all[k] = (Array.isArray(all[k]) ? all[k] : []).filter(aurumCacheIdOk);
-    if (!all[account]?.includes(id)) (all[account] ??= []).push(id);
+    const all = noteOf(storage), entry = `${id}:${week}`;
+    for (const k of Object.keys(all)) all[k] = (Array.isArray(all[k]) ? all[k] : []).filter((e) => keptThisWeek(e, week) !== null);
+    if (!all[account]?.includes(entry)) (all[account] ??= []).push(entry);
     storage?.setItem?.(AURUM_CACHE_STORE, JSON.stringify(all));
   } catch { /* a full or blocked store keeps nothing: the service's word still opens it */ }
 }
@@ -179,7 +188,7 @@ export function _resetAurumCaches() { _closed = false; _last = null; }
  * STAND THE DUNGEON'S COFFER in a dungeon context, if it holds one: its billboard (the context owns it and frees it
  * with the level), its activation target and its name on the plaque, and a line that it is here. Answers the coffer -
  * `{ id, foot, open, press(key) }` - or null. The context's takeLoot presses it (its `aurum` arm). `deps` are the tests'
- * and the probes': `online`, `session`, `claim`, `storage`, `audio`, `lateSay` (a line the level is gone for).
+ * and the probes': `online`, `session`, `claim`, `storage`, `audio`, `lateSay` (said once the level is gone), `week`.
  * @param {any} ctx the context's api (dungeonContext.js) @param {any} loc its location @param {any[]} piles its treasure piles
  * @param {any} [deps]
  */
@@ -189,11 +198,12 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
   const session = deps.session ?? (() => storedSession(storage));
   const audio = deps.audio ?? defaultAudio;
   const lateSay = deps.lateSay ?? ((/** @type {string} */ line) => setMidScreenText(line));
+  const weekNow = deps.week ?? cofferWeekNow;
   const me = session();
   if (_closed || !online() || !me?.id || me.kind === 'guest') return null;
   const id = aurumCachePlaceOf(loc);   // CACHES-ONCE: a cache's id is its dungeon's place key
   if (!id) return null;
-  const kept = keptIds(storage, me.id);
+  const kept = keptIds(storage, me.id, weekNow());
   const foot = aurumCacheFoot(piles, aurumCacheSpotOf(id), ctx.collider);
   if (!foot) return null;
   const claim = deps.claim ?? accountAurumCache({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage }).claim;
@@ -234,7 +244,7 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
     Promise.resolve().then(() => claim(id, cacheProofFor(id), me.id)).catch(() => ({ ok: false, error: 'server' })).then((/** @type {any} */ r) => {
       asking = false;
       // AUDIT-STOREFRONT III D5: what the ledger now holds is kept before the level's end is read
-      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);
+      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, weekNow());
       const found = () => AURUM_CACHE_TEXT.found(Number.isSafeInteger(r.data?.aurum) ? r.data.aurum : aurumCacheAurumOf(id));
       if (gone) { if (r?.ok) lateSay(found()); return; }
       if (r?.ok) {

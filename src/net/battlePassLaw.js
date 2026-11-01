@@ -10,12 +10,12 @@
 const DAY_MS = 86_400_000;
 const stage = (/** @type {string} */ key, /** @type {number} */ fromMs) => Object.freeze({ key, fromMs, toMs: fromMs + 20 * DAY_MS });
 const S1_FROM = Date.UTC(2026, 10, 10);
-/** THE SEASONS, one a row: its id (a ledger ref's head), its first and end instant (UTC ms; the end is not inside) and its
- *  three stages of twenty days - the world's (scenes/seasonHost.js) and the challenges'. Its tracks open at its first
- *  instant and never close. */
+/** THE SEASONS, one a row: its id (a ledger ref's head), its first and end instant (UTC ms; the end is not inside), when
+ *  its tracks start selling (`tracksFromMs`, never closing) and its three stages of twenty days - the world's
+ *  (scenes/seasonHost.js) and the challenges'. Season One's tracks sell before its world begins (the owner). */
 export const PASS_SEASONS = Object.freeze([
   Object.freeze({
-    id: 's1', fromMs: S1_FROM, toMs: S1_FROM + 60 * DAY_MS,
+    id: 's1', fromMs: S1_FROM, toMs: S1_FROM + 60 * DAY_MS, tracksFromMs: Date.UTC(2026, 10, 1),
     stages: Object.freeze([stage('tremor', S1_FROM), stage('halls', S1_FROM + 20 * DAY_MS), stage('heart', S1_FROM + 40 * DAY_MS)]),
   }),
 ]);
@@ -34,8 +34,8 @@ export function passStageAt(/** @type {any} */ season, /** @type {number} */ now
 }
 /** Whether a season runs at `nowMs` (inside its days): its challenges count and its world stands. */
 export const passOpen = (/** @type {any} */ season, /** @type {number} */ nowMs) => !!season && Number.isFinite(nowMs) && nowMs >= season.fromMs && nowMs < season.toMs;
-/** Whether a season's tracks sell at `nowMs`: from its first instant, for good (the owner: "Never expire"). */
-export const passTracksOpen = (/** @type {any} */ season, /** @type {number} */ nowMs) => !!season && Number.isFinite(nowMs) && nowMs >= season.fromMs;
+/** Whether a season's tracks sell at `nowMs`: from its `tracksFromMs`, for good (the owner: "Never expire"). */
+export const passTracksOpen = (/** @type {any} */ season, /** @type {number} */ nowMs) => !!season && Number.isFinite(nowMs) && nowMs >= season.tracksFromMs;
 
 // ═══ THE FINDS: AURUM A DEED EARNS ═══════════════════════════════════════════════════════════════════════════════════
 /** The Aurum a deed finds, by its source - a foe by its kind (systems/pass/passClient.js passFoeSource), an act by its
@@ -52,8 +52,9 @@ export const PASS_CONSTRUCT_MOBILES = Object.freeze([289, 270, 290]);
 /** A UTC day's bounds an account: the asks heard, and the Aurum its finds may earn. */
 export const PASS_DAY_ASKS = 2000;
 export const PASS_DAY_AURUM = 100;
-/** When finds start paying (ms): Season One's first instant. They never stop - Aurum is the account's, not a season's. */
-export const PASS_FINDS_FROM_MS = S1_FROM;
+/** When finds start paying (ms): with Season One's tracks, before its world. They never stop - Aurum is the account's,
+ *  not a season's. */
+export const PASS_FINDS_FROM_MS = PASS_SEASONS[0].tracksFromMs;
 /** A find's Aurum: the source's under what is left of the day's bound (`dayAurum` found already today). Pure. */
 export function passFindAurum(/** @type {string} */ source, /** @type {number} */ dayAurum) {
   if (!isPassSource(source)) return 0;

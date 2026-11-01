@@ -120,7 +120,7 @@ test('THANKS-POST the spurs\' shader RUN: a prism\'s three colours - amethyst, a
   const fs = armoryPrograms(ARMORY_PIECE_INDEX.crystalspurs)[0][1];
   assert.match(fs, /const int uPiece = 11;/);
   const at = (vP, { t = 3, facing = 1, part = 0 } = {}) => {
-    const f = glslFunctions(fs, { vP, vS: [facing, 0.1, 0, 0], vWorld: [0, 1, 0], uMesh: 0, uPart: part, uTime: t, uSeed: 0, uKindle: 1, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 1, 3], uFace: 1, uScale: 1, uSize: 0, uGain: 1, uMirror: 1, uInk: [0, 0, 0], uField: [0, 0, 0] });
+    const f = glslFunctions(fs, { vArm: vP, vS: [facing, 0.1, 0, 0], vWorld: [0, 1, 0], uMesh: 0, uPart: part, uTime: t, uSeed: 0, uKindle: 1, uFogMode: 0, uFogDensity: 0, uFogRange: [0, 1], uCamPos: [0, 1, 3], uFace: 1, uScale: 1, uSize: 0, uGain: 1, uMirror: 1, uInk: [0, 0, 0], uField: [0, 0, 0] });
     f.main();
     return f.globals.o;
   };
