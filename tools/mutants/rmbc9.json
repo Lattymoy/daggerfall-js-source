@@ -99,5 +99,23 @@
     "tests": [
       "test/world/settlement/rmbc9_editor.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-editor-centre",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "else if (wanted.centre && !(wanted.centre.length === 2 && wanted.centre.every(Number.isFinite))) problems.push('centre is not two numbers');",
+    "new": "else if (false) problems.push('centre is not two numbers');",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-editor-shore-at",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "&& wanted.shore.at > 0))",
+    "new": "))",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
   }
 ]

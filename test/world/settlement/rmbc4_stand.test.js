@@ -17,6 +17,7 @@ import { DOOR_TYPE } from '../../../src/world/meshReader.js';
 import { BUILDING_TYPES as T } from '../../../src/world/buildingNames.js';
 import { IMPERIAL_DOOR_MODEL } from '../../../src/world/imperialFabricBuildings.js';
 import { art, CAPITAL_ART } from '../../../src/world/capitalShapes.js';
+import { customModelFor } from '../../../src/world/customModels.js';
 import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
 
 const ROW = SETTLEMENT_ROWS.find((r) => r.province === 'Hammerfell');
@@ -116,10 +117,26 @@ test('RMBC4 the host: stands what a built pixel holds, draws it, files it with t
   assert.ok(Math.abs(doors[0].door.matrix[12] - (plan.buildings[0].entrances[0].at[0] + 10)) < 1e-3, 'the door in the scene');
   assert.ok(doors[0].dfBlock.rmbBlock.subRecords[0].interior.made, 'its rooms, made when asked');
   assert.equal(host.planAt(1084, 241).buildings.length, plan.buildings.length);
+  // built again in place, the entry swapped with no frame between: the same plan files its yards on the new entry,
+  // another is stood again (mutants: the swap unread, the yards left on the old entry)
+  const was = host.planAt(1084, 241), yards = new Map(), wasGround = customModelFor(groundModelId(ROW.ordinal));
+  assert.ok(wasGround?.positions.length > 0, 'its ground built through the family');
+  entries = [{ ...P, settlement: { ...P.settlement }, homeFrames: yards }];
+  host.frame();
+  assert.equal(host.planAt(1084, 241), was, 'the same plan stands on');
+  assert.ok(yards.size > 0 && [...yards.keys()].every((k) => plan.buildings.some((b) => b.key === k)), 'its yards on the live entry');
+  entries = [{ ...P, settlement: { ordinal: ROW.ordinal, layout: layoutSettlement({ ...input, seed: input.seed + 1 }, env) }, homeFrames: new Map() }];
+  host.frame();
+  assert.notEqual(host.planAt(1084, 241), was, 'another plan stood again');
+  assert.ok(customModelFor(groundModelId(ROW.ordinal)) !== wasGround, 'its run\'s ids built again, never the old plan\'s kept model');
+  assert.equal(yards.size, 0, 'the old entry\'s yards let go');
+  assert.equal(host.count(), 1);
+  const before = removed.length;
   entries = [];
   host.frame();
   assert.equal(host.count(), 0);
-  assert.deepEqual(removed.slice(-1), ['settlement:1084,241']);
+  assert.deepEqual(removed.slice(before), ['settlement:1084,241'], 'taken down: its bucket removed once');
+  assert.equal(customModelFor(groundModelId(ROW.ordinal)), null, 'and its models gone');
   assert.equal(standSettlement({ px: 0, py: 0, settlement: { ordinal: 99, layout: L } }, null), null);
   const sand = art(CAPITAL_ART.sandstone);   // the host paves in the row's style (mutant: the style unpassed)
   assert.ok(standSettlement(P, null).ground.subMeshes.some((m) => m.textureArchive === sand[0] && m.textureRecord === sand[1]));

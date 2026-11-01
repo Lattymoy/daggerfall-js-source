@@ -5,10 +5,10 @@
 // (tools/mutants/rmbc6.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { coreEdge, roadReach, TAU } from '../../../src/world/settlement/settlementLayout.js';
+import { coreEdge, roadReach, layoutSettlement, TAU } from '../../../src/world/settlement/settlementLayout.js';
 import { onRoad, dressSettlement } from '../../../src/world/settlement/settlementGen.js';
-import { townGrowthJob, standTownGrowth, roadsOut } from '../../../src/world/settlement/townGrowth.js';
-import { SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
+import { townGrowthJob, standTownGrowth, roadsOut, growthInput } from '../../../src/world/settlement/townGrowth.js';
+import { SAMPLE_M, sampleEnv } from '../../../src/world/settlement/settlementStand.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
 
 const M = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, D = 129, T = 128;
@@ -98,4 +98,48 @@ test('ORGANIC a town grows along its roads: more buildings within a twelfth of a
   for (const b of plan.buildings) assert.deepEqual([b.key, b.footprint, b.storeys], [blindAt.get(b.anchor)?.key, blindAt.get(b.anchor)?.footprint, blindAt.get(b.anchor)?.storeys], `${b.anchor} as it was`);
   const roadE = 56.5 * SAMPLE_M;
   assert.ok(plan.buildings.some((b) => b.at[0] < roadE - 5) && plan.buildings.some((b) => b.at[0] > roadE + 5), 'on both sides of it');
+});
+
+test('ORGANIC the details: ends ragged but never bare where roads lead; a core\'s sectors at most 24, a ring\'s 16; a road\'s bearings within a turn; a district for each built sector, from its inner edge (mutants: the ragged end, the cap, the wrap, the district skip, its inner radius)', () => {
+  const flat = new Float32Array(D * D).fill(60 / M), rect = { xMin: 48, xMax: 80, yMin: 48, yMax: 80 };
+  let full = 0, all = 0;
+  for (let id = 6000; id < 6010; id++) {
+    const job = townGrowthJob({ mapTableData: { mapId: id, locationType: 2 }, name: 'R' }, 'IliacBay', 17);
+    const L = layoutSettlement(growthInput(job, 200, 200, rect, 60, Array.from({ length: 24 }, (_, i) => i * 15)), sampleEnv(flat));
+    for (const r of L.reachOf) { all++; if (r === L.bands) full++; assert.ok(r >= 1, 'a road\'s sector keeps a band'); }
+  }
+  assert.ok(full / all > 0.3 && full / all < 0.8, `${full} of ${all} road sectors their whole depth: ragged, not stubby`);
+  const job = townGrowthJob({ mapTableData: { mapId: 6001, locationType: 2 }, name: 'R' }, 'IliacBay', 17);
+  assert.equal(layoutSettlement({ ...growthInput(job, 200, 200, rect, 60), params: { sectors: 40, bands: 3 } }, sampleEnv(flat)).sectors, 24);
+  assert.equal(layoutSettlement({ place: 9, origin: { px: 200, py: 200, east: 0, north: 0 }, seed: 1, archetype: 'fort', style: 'HighRock', site: { east: 400, north: 400, radius: 90 }, params: { sectors: 40 } }, sampleEnv(flat)).sectors, 16);
+  const g = town((P) => { for (let y = 0; y < T; y++) P[y * T + 56] = 1; }, 'Hammerfell', 7002, 2);
+  for (const c of g.layout.cells) for (const u of c.road ?? []) assert.ok(u >= 0 && u < TAU, `${c.id}'s road at ${u}`);
+  const { plan } = dressSettlement(g.input, g.layout), L = g.layout;
+  const built = L.reachOf.map((r, j) => [r, j]).filter(([r]) => r >= 1).map(([, j]) => `d${j}`);
+  assert.deepEqual(plan.districts.map((d) => d.id).sort(), built.sort(), 'a district for each sector with a band');
+  for (const d of plan.districts) {
+    const j = Number(d.id.slice(1)), near = Math.min(...d.poly.map(([e, n]) => Math.hypot(e - L.c[0], n - L.c[1])));
+    assert.ok(Math.abs(near - L.radii[j][0]) < 1, `${d.id} from its sector's inner edge: ${near} for ${L.radii[j][0]}`);
+  }
+});
+
+test('ORGANIC the road circle and the bare town: a spur ending inside a street past the corners is no road out; a town whose land is all barred grows none (mutants: the circle\'s radius, the empty town)', () => {
+  const half = 60, c = [64 * SAMPLE_M, 64 * SAMPLE_M];
+  const spur = (to) => { const P = new Uint8Array(T * T); for (let r = 0; r <= to; r += 1) P[Math.floor((c[1] + r * Math.SQRT1_2) / SAMPLE_M) * T + Math.floor((c[0] + r * Math.SQRT1_2) / SAMPLE_M)] = 1; return P; };
+  assert.deepEqual(roadsOut(spur(half * Math.SQRT2 + 4), c, half), [], 'a spur short of the circle');
+  assert.equal(roadsOut(spur(half * Math.SQRT2 + 30), c, half).length, 1, 'one past it');
+  const s = new Float32Array(D * D).fill(60 / M), rect = { xMin: 56, xMax: 72, yMin: 56, yMax: 72 };
+  const job = townGrowthJob({ mapTableData: { mapId: 7003, locationType: 2 }, name: 'Sunk' }, 'IliacBay', 17);
+  assert.equal(standTownGrowth(200, 200, s, job, rect, { tilemap: new Uint8Array(T * T) }), null, 'all water: no outskirts');
+});
+
+test('ORGANIC a house stands a margin off its road: no wall within a metre and a half of a road tile, at a crossroads of a High Rock town (mutant: the margin)', () => {
+  const g = town((P) => { for (let i = 0; i < T; i++) { P[i * T + 70] = 1; P[52 * T + i] = 1; } }, 'HighRock', 7006, 3);
+  const tiles = [];
+  for (let i = 0; i < T; i++) tiles.push([70, i], [i, 52]);
+  const gap = ([e, n]) => Math.min(...tiles.map(([x, y]) => Math.hypot(Math.max(x * SAMPLE_M - e, 0, e - (x + 1) * SAMPLE_M), Math.max(y * SAMPLE_M - n, 0, n - (y + 1) * SAMPLE_M))));
+  const { plan } = dressSettlement(g.input, g.layout);
+  assert.ok(plan.buildings.length > 10);
+  const clear = Math.min(...plan.buildings.flatMap((b) => b.footprint.map(gap)));
+  assert.ok(clear > 1.5, `every wall a margin off the road: ${clear} m`);
 });

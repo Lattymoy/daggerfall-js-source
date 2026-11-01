@@ -139,19 +139,3 @@ export function growthClearing(locationRect, settlement) {
   return { xMin: Math.min(locationRect.xMin, grown.xMin), xMax: Math.max(locationRect.xMax, grown.xMax), yMin: Math.min(locationRect.yMin, grown.yMin), yMax: Math.max(locationRect.yMax, grown.yMax) };
 }
 
-/**
- * How far a grown town's carve moved the ground at a scene point, metres - its build's own `moved` field, read
- * between its samples; 0 where its pixel is not built or did not grow (a record there re-stands when it is).
- * @param {any} settlement a built pixel's @param {number[]} origin its translation @param {number} x @param {number} z
- * @param {number} cell a sample's spacing in scene units
- */
-export function grownMovedAt(settlement, origin, x, z, cell) {
-  const field = settlement?.growth ? settlement.moved : null;
-  if (!field) return 0;
-  const dim = HEIGHTMAP_DIMENSION, cellX = (x - origin[0]) / cell, cellY = (z - origin[2]) / cell;
-  if (!(cellX >= 0 && cellY >= 0 && cellX <= dim - 1 && cellY <= dim - 1)) return 0;
-  const x0 = Math.min(dim - 2, Math.floor(cellX)), y0 = Math.min(dim - 2, Math.floor(cellY)), partX = cellX - x0, partY = cellY - y0;
-  const at = (a, b) => field[a * dim + b];
-  const height = (at(x0, y0) * (1 - partX) + at(x0 + 1, y0) * partX) * (1 - partY) + (at(x0, y0 + 1) * (1 - partX) + at(x0 + 1, y0 + 1) * partX) * partY;
-  return height * STREAMING_TERRAIN_SCALE;
-}

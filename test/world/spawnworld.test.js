@@ -10,6 +10,8 @@ import { join } from 'node:path';
 
 import { CLIMATES } from '../../src/formats/mapsTables.js';
 import { createSpawnGroundPlace } from '../../src/world/spawnGroundPlace.js';
+import { SETTLEMENT_ROWS, settlementOnPixel } from '../../src/world/settlement/settlementPlaces.js';
+import { setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import {
   spawnsDungeon, spawnedMapId, synthesizeDungeonLocation, isEliteSpawn, pickTemplate, pathFreePixel, createSpawnLedger,
   WORLD_SALT, ELITE_NAME_PREFIX, GENERAL_TTL_MINUTES,
@@ -24,7 +26,6 @@ import { roomKeyFor } from '../../src/net/online.js';
 import { discoverLocation, hasDiscoveredLocationId, restoreDiscovery, snapshotDiscovery, discoveryKeyOf } from '../../src/systems/discovery.js';
 import { hasDock, nearDock, DOCK_PIXEL_IDS } from '../../src/systems/immersiveTravel.js';
 import { hostText } from '../hostText.mjs';
-import { settlementOnPixel } from '../../src/world/settlement/settlementPlaces.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -81,6 +82,12 @@ test('SPAWN-WORLD the spawn law past the Bay (world/spawnGroundPlace.js): the sa
   assert.deepEqual([plain.mapTableData.mapId, plain.spawned, plain.elite, plain.name], [worldLaneMapId(SPAWN_WORLD_LANE, sx, sy), true, false, `Old Crypt (${sx},${sy})`]);
   assert.deepEqual([elite.elite, elite.name], [true, `${ELITE_NAME_PREFIX}Old Crypt (${ex},${ey})`], 'the Elite tier past the Bay, by the same roll');
   assert.equal(law({ placeAt: (x, y) => x === sx && y === sy }).spawnAt(sx, sy), null, 'a place past the Bay stands first');
+  const r0 = SETTLEMENT_ROWS[0];   // a fit that sets a settlement on the rolled pixel: the roll never takes it, nor shapes its ground
+  setTamrielFit({ ox: r0.at[0] * 18.75 - (sx + 0.5), oy: r0.at[1] * 18.75 - (sy + 0.5), ppu: 18.75 });
+  try {
+    assert.equal(settlementOnPixel(sx, sy), r0);
+    assert.deepEqual([law().spawnAt(sx, sy), law().groundLocationAt(sx, sy, null)], [null, null], 'a settlement past the Bay stands first');
+  } finally { setTamrielFit(null); }
   const [bx, by] = rolledAt(500, 250);
   assert.equal(law({ placeAt: () => true }).spawnAt(bx, by).mapTableData.mapId, spawnedMapId(WORLD_SALT, bx, by), 'on the Bay the places are the index\'s (`stood`) - the gate is past the Bay\'s alone, and the Bay\'s id its own');
   // the Eltheric Ocean's box past the Veil: its isles stand their own places

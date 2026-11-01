@@ -53,7 +53,7 @@ test('RMBC2 deterministic: the same inputs lay out the same plan, another seed a
   const a = gen('fort', 'HighRock'), b = gen('fort', 'HighRock');
   assert.equal(settlementPrint(a.plan), settlementPrint(b.plan));
   assert.notEqual(settlementPrint(gen('fort', 'HighRock', { seed: 2 }).plan), settlementPrint(a.plan));
-  assert.ok(a.plan.pads.every((p) => p.poly.every(([e, n]) => Math.round(e * 100) === e * 100 || Math.abs(e * 100 - Math.round(e * 100)) < 1e-6)), 'points on the centimetre');
+  assert.ok(a.plan.pads.every((p) => p.poly.every((pt) => pt.every((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-6))), 'points on the centimetre, east and north');
 });
 
 test('RMBC2 the terraces follow the land: the hill fort rises, each step between cut terraces is a terrace at most, each link climbable (mutants: the terrace cap, the pull)', () => {
@@ -95,12 +95,14 @@ test('RMBC2 regenerated: with its ledger the same plan keeps every key; denser p
   const was = new Map(first.plan.buildings.map((b) => [b.anchor, b.key]));
   for (const b of dense.plan.buildings) if (was.has(b.anchor)) assert.equal(b.key, was.get(b.anchor), b.anchor);
   assert.ok(dense.plan.buildings.some((b) => !was.has(b.anchor) && b.key >= first.ledger.next), 'a new anchor mints past the ledger');
-  const gone = first.plan.buildings.find((b) => !dense.plan.buildings.some((d) => d.anchor === b.anchor));
-  if (gone) {
-    const guarded = gen('village', 'Hammerfell', { env: SYNTHETIC.village, ledger: first.ledger, params: { density: 1.6 }, protectedKeys: [gone.key], published: first.plan.buildings });
-    assert.equal(guarded.report.ok, false);
-    assert.deepEqual(guarded.report.conflicts.map((c) => [c.code, c.key]), [['protected-removed', gone.key]]);
-  }
+  // sparser plots: an anchor goes, its key retired; protected, it is refused (mutant: the protected keys unread)
+  const sparse = gen('village', 'Hammerfell', { env: SYNTHETIC.village, ledger: first.ledger, params: { density: 0.6 } });
+  const gone = first.plan.buildings.find((b) => !sparse.plan.buildings.some((d) => d.anchor === b.anchor));
+  assert.ok(gone, 'a sparser town drops an anchor');
+  assert.ok(sparse.ledger.retired.includes(gone.key) && !Object.values(sparse.ledger.keys).includes(gone.key), 'retired, never kept');
+  const guarded = gen('village', 'Hammerfell', { env: SYNTHETIC.village, ledger: first.ledger, params: { density: 0.6 }, protectedKeys: [gone.key], published: first.plan.buildings });
+  assert.equal(guarded.report.ok, false);
+  assert.deepEqual(guarded.report.conflicts.map((c) => [c.code, c.key]), [['protected-removed', gone.key]]);
 });
 
 test('RMBC2 services: each archetype keeps its own; a temple serves its style\'s divine, a guild hall its guild; the fort\'s keep stands on its mound in the square (mutants: the service pass, the temple\'s divine)', () => {

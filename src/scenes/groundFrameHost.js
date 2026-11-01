@@ -28,7 +28,7 @@ import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 T
 import { setLocationTiles } from '../world/terrain/terrainTiles.js';
 import { inWorldGrid } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the lift on the world's grid
 import { inBay } from '../world/tamriel/tamrielFrame.js';
-import { grownMovedAt } from '../world/settlement/townGrowth.js';   // a grown town's carve, as its build handed it back
+import { settlementMovedAt } from '../world/settlement/settlementStand.js';   // a settlement's carve, as its build handed it back
 
 /** The map pixel under a scene point of the stream's frame (`state`: its origin and its compensation). */
 export function framePixelAt(state, x, z) {
@@ -235,22 +235,23 @@ export function createGroundFrame(host) {
     const t = host.state.pixelTranslation(px, py);
     return moved ? moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
   };
-  /** how far a settlement's carve moved DFU's own ground at a scene point under a
-   *  record written before it, world units (world/landforms.js settlementMovedField); none on a pixel a location holds. */
+  /** How far a settlement's carve moved the ground at a scene point under a record written before it, world units: a built
+   *  pixel's own carve, exact; else a published settlement's laid out here the kernel's way (world/landforms.js
+   *  settlementMovedField). A grown town's carve is its build's alone: its roads, camps and tiles are the kernel's to read. */
   const _padsMoved = new Map();
   const padsMovedAt = (x, z) => {
     const [px, py] = framePixelAt(host.state, x, z);
     if (!host.woods || !inWorldGrid(px, py)) return 0;
-    if (liftRectAt(px, py)) return grownMovedAt(built.get(`${px},${py}`)?.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);
-    const key = `${px},${py}`;
+    const origin = host.state.pixelTranslation(px, py), stood = built.get(`${px},${py}`)?.settlement;
+    if (stood?.moved || liftRectAt(px, py)) return settlementMovedAt(stood, origin, x, z, heightCell);
+    const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${beyondSites.generation()}`;
     let moved = _padsMoved.get(key);
     if (moved !== undefined) _padsMoved.delete(key);
     else {
       if (_padsMoved.size >= LIFT_FIELDS_KEPT) _padsMoved.delete(_padsMoved.keys().next().value);   // the longest unasked goes
-      moved = settlementMovedField(host.woods, px, py);
+      moved = settlementMovedField(host.woods, px, py, HEIGHTMAP_DIMENSION, landformsHere(), landformsHere({ bare: true }));
     }
     _padsMoved.set(key, moved);
-    const origin = host.state.pixelTranslation(px, py);
     return moved ? moved((x - origin[0]) / heightCell, (z - origin[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
   };
   /** The stream's frame, read live (a load's teleport makes a new origin). */

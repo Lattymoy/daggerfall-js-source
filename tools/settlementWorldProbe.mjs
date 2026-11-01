@@ -3,7 +3,7 @@
 // mode, jumps to a settlement's pixel (window.__tesaJump), waits for its host to stand it (window.__settlementView), and
 // shoots it from the air and from a street; then walks to a door and presses it, and says whether the rooms opened.
 // Needs ARENA2 (the dev server's /arena2). The shots are of the player's own ground: they stay in scratch/.
-//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [px py] [--out scratch/settlement-world]
+//  ARENA2_PATH=... node tools/settlementWorldProbe.mjs [row] [--out scratch/settlement-world]   (row: settlements.json's, 1 Sahr Waters)
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync, existsSync } from 'node:fs';
@@ -36,7 +36,7 @@ const drain = async () => {
 };
 /** A verdict against the game: said, and the exit code set. */
 const fail = (why) => { console.log('FAIL:', why); process.exitCode = 1; };
-const until = async (fn, cap = 240000) => { const t0 = Date.now(); for (;;) { const v = await page.evaluate(fn).catch(() => null); if (v) return v; if (Date.now() - t0 > cap) return null; await frames(1, 10000); } };
+const until = async (fn, cap = 240000, arg = undefined) => { const t0 = Date.now(); for (;;) { const v = await page.evaluate(fn, arg).catch(() => null); if (v) return v; if (Date.now() - t0 > cap) return null; await frames(1, 10000); } };
 try {
   await page.goto('http://localhost:5241/play/?world&nomenu&class=0&novideo&shot&play&tod=12:00');
   await until(() => (window.__frame ?? 0) > 5 && typeof window.__tesaJump === 'function', 300000);
@@ -52,7 +52,8 @@ try {
   console.log('booted; the game fits', JSON.stringify(where.fit), '- jumping to', where.name, 'at', px, py);
   await page.evaluate(([x, y]) => window.__tesaJump(x, y), [px, py]);
   let last = '';
-  const view = await until(() => { const v = window.__settlementView?.(); return v?.length && v[0].ready >= v[0].meshes ? v : null; }, 600000).catch(() => null)
+  // the row's own town: a grown town beside it stands in the same view
+  const view = await until((name) => { const v = window.__settlementView?.()?.filter((x) => x.name === name); return v?.length && v[0].ready >= v[0].meshes ? v : null; }, 600000, where.name).catch(() => null)
     ?? null;
   if (!view) {
     last = await page.evaluate(() => JSON.stringify({ hook: typeof window.__settlementView, view: window.__settlementView?.() ?? null, at: window.__currentPixel?.() })).catch((e) => e.message);

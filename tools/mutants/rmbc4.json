@@ -74,8 +74,8 @@
   {
     "name": "RMBC4-stand-gone",
     "file": "src/scenes/settlementHost.js",
-    "old": "          if (!stood.has(key)) stand(p, key);\n        }",
-    "new": "          }",
+    "old": "          if (!s) stand(p, key);\n          else if",
+    "new": "          if (!s) continue;\n          else if",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
@@ -167,6 +167,69 @@
     "file": "src/scenes/settlementHost.js",
     "old": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c])), style), pieces, climateBase: townLookBase(style) ?? 300 };",
     "new": "  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(style) ?? 300 };",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-spawn-on-settlement",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "(placeAt(px, py) || settlementOnPixel(px, py))",
+    "new": "placeAt(px, py)",
+    "tests": [
+      "test/world/spawnworld.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-rebuild-unread",
+    "file": "src/scenes/settlementHost.js",
+    "old": "          else if (s.src !== p.settlement || s.homeFrames !== (p.homeFrames ?? null)) restand(s, p);\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-rebuild-plan-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    if (s.src !== p.settlement && !same(s.src, p.settlement)) { takeDown(s); stand(p, s.key); return; }\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-rebuild-yards-left",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    s.homeKeys = [];\n    fileHomeFrames(s, p.homeFrames);\n",
+    "new": "    s.homeKeys = [];\n",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-takedown-bucket-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    collider()?.removeBucket?.(`settlement:${s.key}`);\n    // its ids come again",
+    "new": "    // its ids come again",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-kept-model-unforgotten",
+    "file": "src/scenes/settlementHost.js",
+    "old": "{ _models.delete(id); forgetFamilyModel(id); }",
+    "new": "{ _models.delete(id); }",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-model-undeleted",
+    "file": "src/scenes/settlementHost.js",
+    "old": "{ _models.delete(id); forgetFamilyModel(id); }",
+    "new": "{ forgetFamilyModel(id); }",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]

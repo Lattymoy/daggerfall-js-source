@@ -70,8 +70,8 @@ export const GROUND_PRINT_BEYOND = Object.freeze([
 ]);
 /** FB1028: the town read, its outline a 4 x 4 grid of blocks, its ground a hillside rising 20 bytes a pixel east. */
 export const GROUND_PRINT_TOWN = Object.freeze([420, 270]);
-/** the grown village read - the town's 4 x 4 blocks on gentler ground - and its growth job. */
-export const GROUND_PRINT_GROWN = Object.freeze([440, 300]);
+/** the grown village read - the town's 4 x 4 blocks on gentler ground, the network's road through it - and its growth job. */
+export const GROUND_PRINT_GROWN = Object.freeze([300, 250]);
 export const PRINT_GROWTH = townGrowthJob(
   { mapTableData: { mapId: 270420, locationType: 2 }, name: 'Print' },
   'IliacBay',
@@ -205,6 +205,8 @@ export function groundPrint() {
   });
   cells[`Grown@${gx},${gy}`] = printed(grown.samples);
   const grownSettlement = grown.settlement;
+  // its outskirts follow their road, so a change to how they do moves the law
+  if (!grownSettlement?.input.roads.length || !grownSettlement.layout.cells.some((c) => c.road?.length)) throw new Error('the grown village has no road through it');
   // FB1029 ACROSS-EDGE: a town on a cliff over its sea, and the sea north of it its meet raises
   const [mx, my] = GROUND_PRINT_MEET,
     cliff = new WoodsFile();

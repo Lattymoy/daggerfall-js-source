@@ -345,8 +345,9 @@ export function coreEdge(half, from, to) {
   return corner <= to ? half * Math.SQRT2 : Math.max(at(from), at(to));
 }
 
-/** Each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth,
- *  one a sixth of a turn off any road none; with no road, about a band all round. Written into `reachOf`. */
+/** Each sector's reach by how squarely it faces a road out of the town - a road's sector its whole depth, one a
+ *  sixth of a turn off any road none but for its draw (about one in eight a band); with no road, about a band all
+ *  round. Written into `reachOf`. */
 export function roadReach(reachOf, edges, roads, bands, rng) {
   const ways = roads.map((deg) => (deg * Math.PI) / 180);
   for (let j = 0; j < edges.length; j++) {

@@ -97,6 +97,8 @@ export function unregisterCustomModel(id) {
   _models.delete(Number(id));
   _aliases.delete(Number(id));
 }
+/** A family's kept model for `id` let go, so the id's next ask builds it again: a family that reuses its ids. */
+export const forgetFamilyModel = (id) => void familyOf(Number(id))?.cache.delete(Number(id));
 
 // WD3 (2026-10-01): A MODEL THAT IS A CLASSIC ONE WITH OTHER PICTURES ON IT. Beautiful Villages' and Beautiful Cities'
 // eighteen beds (42069-42086) are Daggerfall's own three beds (41000-41002) under blankets of six colours; the bundle's

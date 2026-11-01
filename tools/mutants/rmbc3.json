@@ -162,5 +162,32 @@
       "test/net/fb1017f_groundgate.test.js"
     ],
     "why": "the settlements carved the ground and the law stayed at FB1029's"
+  },
+  {
+    "name": "AUDIT-moved-plain-ground",
+    "file": "src/world/landforms.js",
+    "old": "standSettlementGround(px, py, generateSamples(woods, px, py, hDim, landforms), () => generateSamples(woods, px, py, hDim, bare))",
+    "new": "standSettlementGround(px, py, generateSamples(woods, px, py, hDim, null), () => generateSamples(woods, px, py, hDim, null))",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-moved-unfilled",
+    "file": "src/world/settlement/settlementStand.js",
+    "old": "{ moved[i] = (v - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = v; }",
+    "new": "{ samples[i] = v; }",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-built-carve-unread",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "if (stood?.moved || liftRectAt(px, py))",
+    "new": "if (liftRectAt(px, py))",
+    "tests": [
+      "test/world/settlement/rmbc3_ground.test.js"
+    ]
   }
 ]

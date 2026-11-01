@@ -1709,7 +1709,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
    *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
    *  the Bay before LIFT_FRAME_LAW stood on (scenes/groundFrameHost.js) - RELIEF-PEAKS: with no ranges, which it never stood. */
-  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges
+  const landformsHere = ({ before = false, bare = false } = {}) => (landform ? createLandforms({ woods, roads: bare ? null : terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges; `bare` the land with no road, a settlement's layout's
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();

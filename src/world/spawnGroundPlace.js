@@ -18,6 +18,7 @@ import { CLIMATES } from '../formats/mapsTables.js';
 import { inEther } from './ethericSea.js';
 import { spawnsDungeon, pathFreePixel, WORLD_SALT } from './spawnedDungeons.js';
 import { wildInside } from '../systems/wild/wildZone.js'; // AUDIT RELEASE R3-7: the zone's mask is the host's (zoneMask) - main's wildMaskOf, the Bay's zone off the maps, is gone with WW-C2
+import { settlementOnPixel } from './settlement/settlementPlaces.js';
 import { inBay } from './tamriel/tamrielFrame.js'; // SPAWN-WORLD: past the Bay a place stands first
 
 /**
@@ -81,7 +82,7 @@ export function createSpawnGroundPlace(handles) {
     if (clocks && spawnGone(px, py)) return null;
     const roads = terrainGen.roads();
     if (roads && !pathFreePixel(roads, px, py)) return null;
-    if (!inBay(px, py) && placeAt(px, py)) return null;
+    if (!inBay(px, py) && (placeAt(px, py) || settlementOnPixel(px, py))) return null;   // a settlement's pixel is its own, online too
     return cloneAt(px, py);
   }
 

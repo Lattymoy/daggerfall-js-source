@@ -6,16 +6,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { townGrowthJob, growthInput, growthBlocked, standTownGrowth, growthClearing, grownMovedAt, GROWTH_MARGIN, GROWTH_TYPES } from '../../../src/world/settlement/townGrowth.js';
+import { townGrowthJob, growthInput, growthBlocked, standTownGrowth, growthClearing, GROWTH_MARGIN, GROWTH_TYPES } from '../../../src/world/settlement/townGrowth.js';
 import { growthJobAt } from '../../../src/world/settlement/townGrowthJob.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
 import { validateSettlement, keyBandOf } from '../../../src/world/settlement/settlementContract.js';
 import { pointInRing, edgeDistance } from '../../../src/world/settlement/settlementGeometry.js';
 import { PAD_REACH, GROUND_EASE } from '../../../src/world/settlement/settlementGround.js';
-import { SAMPLE_M } from '../../../src/world/settlement/settlementStand.js';
+import { SAMPLE_M, settlementMovedAt } from '../../../src/world/settlement/settlementStand.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
 import { SETTLEMENT_ARCHETYPES } from '../../../src/world/settlement/settlementStyles.js';
-import { standSettlement, GROWTH_SLOT_FIRST } from '../../../src/scenes/settlementHost.js';
+import { standSettlement, nextGrowthSlot, GROWTH_SLOT_FIRST, GROWTH_SLOTS } from '../../../src/scenes/settlementHost.js';
 import { buildingModelId, groundModelId } from '../../../src/world/settlement/settlementModels.js';
 import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
 
@@ -84,6 +84,14 @@ test('RMBC6 barred ground: no cell on the town\'s own ground, a camp or water, n
     const [a, b1, c, d] = b.footprint, e = (a[0] * (1 - t) + b1[0] * t) * (1 - s) + (d[0] * (1 - t) + c[0] * t) * s, n = (a[1] * (1 - t) + b1[1] * t) * (1 - s) + (d[1] * (1 - t) + c[1] * t) * s;
     assert.ok(!road(e, n), `${b.anchor} on the road`);
   }
+  // a road north 60 runs through its sectors off their lanes: still no building on it
+  const off = new Uint8Array(T * T);
+  for (let x = 0; x < T; x++) off[60 * T + x] = 1;
+  const g60 = standTownGrowth(200, 200, ground(0, rect), village(5003, 'IliacBay'), rect, { paths: off, mask, tilemap, camps }), road60 = growthBlocked({ paths: off });
+  for (const b of dressSettlement(g60.input, g60.layout).plan.buildings) for (let t = 0; t <= 1; t += 0.125) for (let s = 0; s <= 1; s += 0.125) {
+    const [a, b1, c, d] = b.footprint, e = (a[0] * (1 - t) + b1[0] * t) * (1 - s) + (d[0] * (1 - t) + c[0] * t) * s, n = (a[1] * (1 - t) + b1[1] * t) * (1 - s) + (d[1] * (1 - t) + c[1] * t) * s;
+    assert.ok(!road60(e, n), `${b.anchor} on the road north 60`);
+  }
   const crossed = g.layout.cells.filter((c) => c.road?.length);
   assert.ok(crossed.length > 0, 'the road crosses cells it keeps');
   assert.ok(plan.buildings.some((b) => crossed.some((c) => c.id === b.pad)), 'and houses stand beside it in them');
@@ -132,14 +140,16 @@ test('RMBC6 the carve: the core and the town\'s own ground never move, nor the p
   const out = g.layout.pads.find((p) => !p.legacy && p.base === 'cut'), [oe, on] = out.poly.reduce(([a, b], [e, n]) => [a + e / out.poly.length, b + n / out.poly.length], [0, 0]);
   assert.equal(settlementGroundAt(g.layout.pads, g.layout.datum, oe, on, 123), g.layout.datum + out.y - 0.2, 'an outskirts pad its paving\'s ground');
   const k = g.moved.findIndex((v) => Math.abs(v) > 0.5), kx = Math.floor(k / D), ky = k % D, cell = SAMPLE_M;
-  assert.ok(Math.abs(grownMovedAt(g, [0, 0, 0], kx * cell, ky * cell, cell) - g.moved[k] * STREAMING_TERRAIN_SCALE) < 1e-4, 'read where it moved, metres');
-  assert.equal(grownMovedAt({ growth: false, moved: g.moved }, [0, 0, 0], kx * cell, ky * cell, cell), 0);
+  assert.ok(Math.abs(settlementMovedAt(g, [0, 0, 0], kx * cell, ky * cell, cell) - g.moved[k] * STREAMING_TERRAIN_SCALE) < 1e-4, 'read where it moved, metres');
+  assert.deepEqual([settlementMovedAt(null, [0, 0, 0], kx * cell, ky * cell, cell), settlementMovedAt(g, [0, 0, 0], -cell, ky * cell, cell)], [0, 0], 'none stood, or off its pixel');
   const clear = growthClearing({ ...rect, shape: {} }, g);
-  assert.ok(clear.xMin <= g.rect.xMin && clear.xMax >= g.rect.xMax && clear.yMin <= rect.yMin && !('shape' in clear), 'the trees clear town and outskirts as one');
+  const span = (a, b) => ({ xMin: Math.min(a.xMin, b.xMin), xMax: Math.max(a.xMax, b.xMax), yMin: Math.min(a.yMin, b.yMin), yMax: Math.max(a.yMax, b.yMax) });
+  assert.deepEqual(clear, span(rect, g.rect), 'the trees clear town and outskirts as one, every side');
+  assert.ok(g.rect.yMin < rect.yMin && g.rect.yMax > rect.yMax && g.rect.xMin < rect.xMin && g.rect.xMax > rect.xMax, 'the outskirts past the town on every side');
   assert.equal(growthClearing(rect, null), rect);
 });
 
-test('RMBC6 one layout, every client: the same job, rect and ground lay the same plan twice, and the host dresses it in a run of its own (mutants: the slot\'s run, the growth\'s input)', () => {
+test('RMBC6 one layout, every client: the same job, rect and ground lay the same plan twice, and the host dresses it in a run of its own (mutants: the slot\'s run, the growth\'s input, the slots\' wrap)', () => {
   const rect = rectOf(2), job = village(5005, 'HighRock', 62);
   const a = standTownGrowth(200, 200, ground(0.02, rect), job, rect, {}), b = standTownGrowth(200, 200, ground(0.02, rect), job, rect, {});
   assert.deepEqual(a.layout, b.layout);
@@ -150,7 +160,10 @@ test('RMBC6 one layout, every client: the same job, rect and ground lay the same
   assert.equal(made.groundId, groundModelId(GROWTH_SLOT_FIRST + 3));
   assert.equal(made.pieces[0].id, buildingModelId(GROWTH_SLOT_FIRST + 3, 0));
   assert.deepEqual([made.pieces[0].record.townMapId, made.pieces[0].record.townName, made.pieces[0].record.regionIndex], [5005, 'Testford', 62], 'its doors are its town\'s');
-  assert.equal(standSettlement({ px: 200, py: 200, settlement: a }, null, 3), null, 'a grown town never takes a published row\'s run');
+  assert.ok(standSettlement({ px: 200, py: 200, settlement: a }, null, 3) === null, 'a grown town never takes a published row\'s run');
+  const first = nextGrowthSlot();   // the slots go round: each in its band, the first again after every other
+  for (let i = 1; i < GROWTH_SLOTS; i++) { const s = nextGrowthSlot(); assert.ok(s >= GROWTH_SLOT_FIRST && s < GROWTH_SLOT_FIRST + GROWTH_SLOTS && s !== first); }
+  assert.equal(nextGrowthSlot(), first);
 });
 
 test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the build hands it its town, the trees clear both, the frame reads the carve (mutants: each seam)', () => {
@@ -159,6 +172,6 @@ test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the bu
   assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps \}\) : null\) : standSettlementGround\(px, py, samples, bare\);/);
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
-  assert.match(read('scenes/groundFrameHost.js'), /if \(liftRectAt\(px, py\)\) return grownMovedAt\(built\.get\(`\$\{px\},\$\{py\}`\)\?\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/);
+  assert.match(read('scenes/groundFrameHost.js'), /if \(stood\?\.moved \|\| liftRectAt\(px, py\)\) return settlementMovedAt\(stood, origin, x, z, heightCell\);/);
   assert.match(read('scenes/settlementHost.js'), /standSettlement\(p, blocksFile\(\), p\.settlement\.growth \? nextGrowthSlot\(\) : -1\)/);
 });

@@ -17,7 +17,7 @@ const before = dressSettlement(input, L);
 const districtOf = (/** @type {string} */ anchor) => `d${anchor.split('.')[1]}`;
 const target = districtOf(before.plan.buildings.find((b) => /^c\d+\.\d+\.p\d+$/.test(b.anchor)).anchor);
 
-test('RMBC9 a row\'s controls and structure: a patch inside the bounds applies, one outside them is refused whole (mutants: a bound, the layout check)', () => {
+test('RMBC9 a row\'s controls and structure: a patch inside the bounds applies, one outside them is refused whole (mutants: a bound, the layout check, the centre check, the shore\'s distance)', () => {
   const ok = editSettlementRow(ROW, { params: { density: 1.4, bands: 3 } });
   assert.deepEqual(ok.problems, []);
   assert.deepEqual([ok.row.params.density, ok.row.params.bands], [1.4, 3]);
@@ -31,6 +31,9 @@ test('RMBC9 a row\'s controls and structure: a patch inside the bounds applies, 
   assert.deepEqual(bad.problems.length, 2);
   assert.deepEqual(editSettlementRow(ROW, { fix: { layout: 'ring', centre: [400, 410] } }).row.fix, { layout: 'ring', centre: [400, 410] });
   assert.equal(editSettlementRow(ROW, { fix: { layout: 'row', shore: { dir: [1, 1], at: 30 } } }).problems.length, 1, 'a shore\'s direction is a unit');
+  assert.equal(editSettlementRow(ROW, { fix: { layout: 'row', shore: { dir: [1, 0], at: 0 } } }).problems.length, 1, 'and its distance past the centre');
+  assert.deepEqual(editSettlementRow(ROW, { fix: { layout: 'row', shore: { dir: [1, 0], at: 30 } } }).problems, [], 'a shore that is both');
+  assert.equal(editSettlementRow(ROW, { fix: { layout: 'ring', centre: [400, 'north'] } }).problems.length, 1, 'a centre is two numbers');
 });
 
 test('RMBC9 one district dressed again, every district of a Bay fort and a Hammerfell oasis: it changes, and every other keeps its buildings, keys, kinds, access and heights (mutants: the district\'s draw, a plot drawn by its global number, the services kept, a displaced service on a fresh plot, a height by its global number)', () => {

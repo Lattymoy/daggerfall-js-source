@@ -5,7 +5,7 @@
 // two plans. The ledger keeps every key an anchor still holds and refuses a protected one's loss. Pure.
 import { dressSettlement } from './settlementGen.js';
 
-/** The controls a row may set, each its least and most (settlementLayout.js reads them so). */
+/** The controls a row may set, each its least and most; the layout holds a ring to three sectors at least. */
 export const PARAM_BOUNDS = Object.freeze({ size: [0.5, 2], density: [0.5, 2], bands: [1, 8], sectors: [2, 16], open: [0, 0.9] });
 /** The structures a row may fix. */
 export const FIX_LAYOUTS = Object.freeze(['ring', 'row']);

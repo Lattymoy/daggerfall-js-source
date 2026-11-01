@@ -6,7 +6,7 @@
 // filed with the collider, and its doors handed to the modes with each building's record and its generated rooms.
 // THE FOUR HOSTS: scenes/world.js WIRED; scenes/worldModes.js WIRED through world.js's doorTargets and
 // buildingDataForDoor (no line of its own); scenes/exterior.js and scenes/dungeonContext.js FLAGGED: they stream no pixel.
-import { registerCustomModelFamily } from '../world/customModels.js';
+import { registerCustomModelFamily, forgetFamilyModel } from '../world/customModels.js';
 import { installFabricDoors } from '../world/imperialFabricBuildings.js';   // the doors' models: the Imperial City installs them only when it builds
 import { SETTLEMENT_ROWS, settlementInput } from '../world/settlement/settlementPlaces.js';
 import { dressSettlement } from '../world/settlement/settlementGen.js';
@@ -90,7 +90,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     const src = s.hold ?? pipeline;
     if (s.meshes.has(id) || !src?.getGpuMesh) return;
     s.meshes.set(id, null);
-    Promise.resolve(src.getGpuMesh(id)).then((g) => { if (stood.get(s.key) === s) s.meshes.set(id, g ?? null); }, () => {});
+    Promise.resolve(src.getGpuMesh(id)).then((g) => s.meshes.set(id, g ?? null), () => {});   // one taken down meanwhile is no one's
   };
   function stand(p, key) {
     const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);
@@ -99,19 +99,30 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     for (const x of made.pieces) _models.set(x.id, x.piece.model);
     // Its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
     const hold = pipeline?.holdPlace?.('settlement', key) ?? null;
-    const s = { key, px: p.px, py: p.py, ...made, hold, meshes: new Map(), colAt: null, scene: null, homeFrames: null, homeKeys: [] };
+    const s = { key, px: p.px, py: p.py, src: p.settlement, ...made, hold, meshes: new Map(), colAt: null, scene: null, homeFrames: null, homeKeys: [] };
     fileHomeFrames(s, p.homeFrames);   // Its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
     mesh(s, s.groundId);
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }
+  }
+  /** A pixel built again in place swaps its entry with no frame between: the same plan files its yards on the new entry,
+   *  another (roads landed under a grown town) is taken down and stood again. */
+  function restand(s, p) {
+    const same = (a, b) => JSON.stringify(a.layout) === JSON.stringify(b.layout) && JSON.stringify(a.input ?? null) === JSON.stringify(b.input ?? null);
+    if (s.src !== p.settlement && !same(s.src, p.settlement)) { takeDown(s); stand(p, s.key); return; }
+    s.src = p.settlement;
+    if (s.homeFrames === (p.homeFrames ?? null)) return;
+    for (const k of s.homeKeys) s.homeFrames?.delete(k);
+    s.homeKeys = [];
+    fileHomeFrames(s, p.homeFrames);
   }
   function takeDown(s) {
     stood.delete(s.key);
     s.hold?.release?.();
     for (const k of s.homeKeys) s.homeFrames?.delete(k);
     collider()?.removeBucket?.(`settlement:${s.key}`);
-    _models.delete(s.groundId);
-    for (const x of s.pieces) _models.delete(x.id);
+    // its ids come again (a row's run, a slot round again): their kept models go with it
+    for (const id of [s.groundId, ...s.pieces.map((x) => x.id)]) { _models.delete(id); forgetFamilyModel(id); }
   }
   /** Its scene matrices and doors, made again when the floating origin moves. */
   function scene(s) {
@@ -156,7 +167,9 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
           if (!p?.settlement) continue;
           const key = `${p.px},${p.py}`;
           live.add(key);
-          if (!stood.has(key)) stand(p, key);
+          const s = stood.get(key);
+          if (!s) stand(p, key);
+          else if (s.src !== p.settlement || s.homeFrames !== (p.homeFrames ?? null)) restand(s, p);
         }
         for (const s of [...stood.values()]) if (!live.has(s.key)) takeDown(s);
         for (const s of stood.values()) standCollider(s);

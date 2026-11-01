@@ -28,7 +28,7 @@ export function sampleEnv(samples) {
 /**
  * Lay out the pixel's settlement and carve its ground into `samples` in place; null where none stands.
  * @param {number} px @param {number} py @param {Float32Array} samples @param {(() => Float32Array)|null} [bare] the land with no road
- * @returns {{ mapId: number, ordinal: number, layout: ReturnType<typeof layoutSettlement>, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
+ * @returns {{ mapId: number, ordinal: number, layout: ReturnType<typeof layoutSettlement>, moved: Float32Array, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
  */
 export function standSettlementGround(px, py, samples, bare = null) {
   const row = settlementOnPixel(px, py);
@@ -39,9 +39,27 @@ export function standSettlementGround(px, py, samples, bare = null) {
   const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples));
   const metres = Float64Array.from(samples, (s) => s * M);
   carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum);
-  for (let i = 0; i < samples.length; i++) { const v = Math.fround(metres[i] / M); if (v !== samples[i]) samples[i] = v; }
+  const moved = new Float32Array(samples.length);   // what the carve moved each sample, as a grown town's: a record's move
+  for (let i = 0; i < samples.length; i++) { const v = Math.fround(metres[i] / M); if (v !== samples[i]) { moved[i] = (v - samples[i]) * MAX_TERRAIN_HEIGHT; samples[i] = v; } }
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const p of layout.pads) for (const [e, n] of p.poly) { x0 = Math.min(x0, e); x1 = Math.max(x1, e); y0 = Math.min(y0, n); y1 = Math.max(y1, n); }
   const tile = (m) => Math.max(1, Math.min(127, Math.round(m / SAMPLE_M)));
-  return { mapId: input.place, ordinal: row.ordinal, layout, rect: { xMin: tile(x0), xMax: tile(x1), yMin: tile(y0), yMax: tile(y1) } };
+  return { mapId: input.place, ordinal: row.ordinal, layout, moved, rect: { xMin: tile(x0), xMax: tile(x1), yMin: tile(y0), yMax: tile(y1) } };
+}
+
+/**
+ * How far a built pixel's settlement carve moved the ground at a scene point, metres - its build's own `moved` field,
+ * read between its samples; 0 off the pixel or where none stands.
+ * @param {any} settlement a built pixel's @param {number[]} origin its translation @param {number} x @param {number} z
+ * @param {number} cell a sample's spacing in scene units
+ */
+export function settlementMovedAt(settlement, origin, x, z, cell) {
+  const field = settlement?.moved;
+  if (!field) return 0;
+  const dim = HEIGHTMAP_DIMENSION, cellX = (x - origin[0]) / cell, cellY = (z - origin[2]) / cell;
+  if (!(cellX >= 0 && cellY >= 0 && cellX <= dim - 1 && cellY <= dim - 1)) return 0;
+  const x0 = Math.min(dim - 2, Math.floor(cellX)), y0 = Math.min(dim - 2, Math.floor(cellY)), partX = cellX - x0, partY = cellY - y0;
+  const at = (a, b) => field[a * dim + b];
+  const height = (at(x0, y0) * (1 - partX) + at(x0 + 1, y0) * partX) * (1 - partY) + (at(x0, y0 + 1) * (1 - partX) + at(x0 + 1, y0 + 1) * partX) * partY;
+  return height * STREAMING_TERRAIN_SCALE;
 }

@@ -1,159 +1,53 @@
-# Settlement 2.0 - the RMB contracts (RMB-CONTRACTS)
+# Settlements - plans, the generator and the towns that grow
 
-Opened 2026-10-31. The owner, handing over the settlement half of the WORLD 2.0 specification ("World Generation 2.0,
-Settlement System 2.0 & World Editor", section 6): *"we are going to develop a modern replacement for the current system
-that will allow us to procedurally generate settlements with different heights, not block based layouts, and with
-freedom of new buildings, among many other things."* The specification's terrain, climate and editor halves are another
-arc. This page is the settlements', and it starts with the contracts every later slice builds on.
+A settlement is a plan in metres, not a grid of RMB blocks. Its ground is flat pads at their own heights joined by
+grade steps, stairs, ramps and bridges, and its buildings stand on those pads. A plan may mix sources: DFU's own
+buildings from their RMB records, buildings the generator makes, and authored ones. Every city, town and village grows
+outskirts round its legacy core, and nine settlements of the generator's own stand past the Bay, one in each province.
 
-RMBC0 is the audit and the decision records. RMBC1 is the contract: the plan, the key bands, the ground pads, the key
-ledger and the legacy adapter. RMBC2 is the generator: six archetypes in every theatre's style, laid out on their ground.
-Both are pure and unwired: no host, save, wire or service reads them yet, so no player sees a change.
+The owner set the aim: settlements made procedurally, with heights, not block layouts, and free to hold new buildings.
+The owner's rules: every town grows, and it grows along its roads, not in planned rings. Both are departures from DFU,
+whose towns are flat RMB grids that end at their rect and have no stairs between levels.
 
-## Decision records
+The code is `src/world/settlement/`. Every module there is pure and `@ts-check`, and the layout's modules are
+worker-safe (`world/` and `formats/` alone).
 
-Each is dated, says what was decided and why, and names what it costs.
+## Identity: a place and a building key
 
-- **RD-1 (2026-10-31) A settlement is a plan; RMB is one source of its buildings.** A plan is metres: a footprint, flat
-  pads at their own heights, links between them, streets, districts and buildings. A legacy town is a plan whose
-  buildings point at their RMB records. A procedural or authored one points at models, prefabs or generated walls. One
-  settlement may mix all three (the specification's 6.1). Cost: until the hosts read plans, the RMB layout stays the one
-  that stands.
-- **RD-2 (2026-10-31) Identity stays a place and a building key.** Sixteen account tables, the relay's interior rooms,
-  deeds, recall anchors and quest sites key on `(map_id, building_key)`. A new id type would migrate every one. A new
-  building takes a key from a minted band, `0x800000` to `0xFFFFFF`: past every RMB key, under `BUILDING_KEY_0`, so
-  `homeBuildingKeyOk` and `isWorldRoom` take it unchanged. A minted key is never decoded into a block cell. Cost: about
-  8.4 million minted keys a place. The Imperial City fabric's plot keys are hashes that reach into the band, so a slice
-  of the Imperial City cannot mint until its homes take ledger keys.
-- **RD-3 (2026-10-31) A new building's key is kept, not derived.** The fabric derives a key from a hash of its plot, so a
-  generator change gives every building a new key and orphans what players own there. The ledger mints a key once for a
-  plot's anchor (the generator's or author's stable name for it) and keeps it through every regeneration. An anchor that
-  goes retires its key, which is never minted again. Cost: the ledger is data that ships with the plan.
-- **RD-4 (2026-10-31) Heights are pads.** The ground is a set of flat pads that do not overlap, each at a height over the
-  settlement's datum, joined by links (grade, stairs, ramp, bridge) with pitch limits. A building stands on one pad with
-  its whole footprint on it, so it cannot float or sink. Flat pads keep floors level and the terrain carve simple. Cost:
-  a sloped street is a ramp link between pads, not a sloped pad. A pad on a plane is a later contract version if a town
-  needs one.
-- **RD-5 (2026-10-31) The datum is the terrain's; wiring it is a new ground frame.** Plan heights are over the datum the
-  terrain gives a town today (the mean of the land under its outline). Pads change the ground under saved records, so the
-  slice that wires them raises `GROUND_FRAME_LAW` and adds a moved field, as TOWN-SHAPES did. Cost: none until then.
-- **RD-6 (2026-10-31) Protected property blocks a plan.** The ledger refuses to retire or move a key the account service
-  protects (a home, a hall, a rental, a recall). Rejection is the default, as the specification's 8.3 asks. Cost: a
-  publisher asks the service for the protected keys first.
-- **RD-7 (2026-10-31) One check, both ends.** `validateSettlement` is pure, so the client, a tool and the account service
-  run the same law. Each problem has a code, what it names and a plain reason. A plan carries its contract version, and
-  `settlementPrint` (FNV-1a of its canonical form) is what two clients on one revision compare.
-- **RD-8 (2026-10-31) One place a pixel stays.** The registry's law is the game's location index, and every pixel lookup
-  reads it. A place inside a settlement (a farm, a shrine, a quarter) is one of its plan's sites, named by the place and
-  its own id, so travel, quests and the editor can address it without a registry change. A farm out in the country takes
-  its own pixel's place, as the countryside's places do today. The owner gave this call to the arc ("You have
-  autonomy"). Cost: two settlements cannot share a pixel.
-- **RD-9 (2026-10-31) An occupied town is never replaced; it grows.** A town that holds homes keeps every legacy building
-  and its key. Generated buildings take its open ground (TS3's dropped cells, the land past its walls) in a mixed plan,
-  as the specification's 6.1 allows. Generated settlements go first where no home stands (its Phase 6). The ledger's
-  protected keys hold it. Cost: the clone towns past the Bay keep their borrowed layouts until a mixed plan grows them.
-- **RD-10 (2026-10-31, revised at RMBC3) Inputs are published; every client lays out.** RMBC2 decided a plan would be
-  made once and served as data. RMBC3 found the ground past the Bay is traced from the player's own map picture
-  (TMAP00I0.IMG, `03-World/Tamriel.md`), so a plan's heights are derived from game data and cannot ship. A settlement is
-  published as its inputs alone (RD-16), and each client lays it out on its own ground with arithmetic every engine
-  rounds alike (RD-13). Cost: the layout runs on every client, in its terrain worker.
-- **RD-11 (2026-10-31) Two layouts, one geometry; the land decides.** A ring town wraps a square; a row town follows an
-  arc round a hillside or along a shore. Both are cut in one polar frame, so one set of cells, links and plots serves
-  both, and a straight row is an arc of a large circle. An archetype names its layout, or `auto` reads the ground: a hill
-  is a ring on its top, a slope a row along it, flat ground a ring. A third layout (a branching street tree, a planned
-  grid) adds cells, not contract. Cost: the first towns are rings and arcs.
-- **RD-12 (2026-10-31) A site that does not suit says so.** The generator reports its fit: the buildings it stood and its
-  deepest cut. A site too wet or too steep for the archetype answers `ok: false`, so the slice that places settlements
-  picks another site instead of shipping a poor town. Cost: none.
-- **RD-13 (2026-10-31) The same answer on every engine.** `Math.sin`, `cos`, `atan2` and `hypot` may differ in their last
-  bit between browsers. `exactMath.js` builds them from `+`, `-`, `*`, `/` and `Math.sqrt`, which IEEE 754 rounds
-  exactly, in a fixed order, to about 1e-15. The generator reads no other. Golden prints pin three plans bit for bit; a
-  change that moves one is a new `SETTLEMENT_GENERATOR_VERSION`. Cost: a few slower trigonometric calls a layout.
-- **RD-14 (2026-10-31) Pads are geometry; the terrain sits under them.** The terrain's vertices are 6.4 m apart, coarser
-  than a street, so terraces drawn by the terrain alone would slope across every rim. A pad is drawn and walked as its
-  own paving or deck. The terrain is carved to stand under every cut pad within one cell's diagonal, so no triangle rises
-  through, and eases back to the land over 28 m. Cost: a retaining wall's face is a model, not terrain.
-- **RD-15 (2026-10-31) The worker lays it out; the host dresses it.** The layout (sites, cells, terraces) is split from
-  the dressing (streets, plots, buildings, keys). The terrain worker runs the layout on the pixel's natural ground,
-  carves, and hands the layout back with the pixel; the main thread dresses that same layout. Ground and buildings come
-  from one computation. Cost: the layout's modules must stay worker-safe (`world/` and `formats/` alone).
-- **RD-16 (2026-10-31) One settlement a province, on land no place holds.** `settlements.json` publishes nine, one in
-  each province past the Bay, each searched by `tools/settlementSites.mjs` on the player's own files: the province's
-  land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that is `ok`. A row fixes
-  the structure its ground chose (layout, centre, shore) and its key ledger, so every client lays the same cells. Its map
-  ids are their own lane, `0x342`. A location on the pixel always wins (RD-9). Cost: Cyrodiil's rivers are not yet water,
-  so its settlement is a village until the WORLD 2.0 hydrology stands them.
-- **RD-17 (2026-10-31) Buildings past RMB, from the fabric's kit.** A building is the Imperial City fabric's mesher over
-  its footprint (`buildPlot`), in its style's walls and roof; its door is the fabric's door model on its front wall; its
-  rooms are the fabric's generated interior, filed under its place and key. Nothing is written as an RMB block. Its door
-  hands the game a record carrying its minted key. Cost: the fabric's kit shapes every settlement until its own exists.
-- **RD-18 (2026-10-31) Every town grows; its core stays.** The owner, 2026-10-31: "Every single thing needs to be
-  finished". Every city, town and village, the Bay's included, becomes a mixed plan (RD-1, RD-9). Its legacy core keeps
-  every block, building and key, at its own height. Outskirts ring it on the land its pixel leaves: no road, no ground of
-  the town's own, no camp, no water, nothing within 40 m of the pixel's edge. A departure from DFU, whose towns end at
-  their rect. Cost: a steep town grows little, and a city that fills its pixel grows nothing.
-- **RD-19 (2026-10-31, revised at RMBC7) A grown town's keys are its anchors' own.** Its outskirts are laid out on every
-  client from the town's map id, its rect and its ground. Each building's key is a hash of its place and its plot's
-  anchor in the minted band (`anchorLedger`), so no ledger ships for 15,000 towns and a plot added or dropped moves no
-  other key. RMBC6 minted them in plot order, which moved every later key. A protected key (RD-6) blocks a generator
-  change that would drop its anchor. Cost: a generator change asks the account service's protected keys first.
-- **RD-20 (2026-10-31) The plans ride the ground's law.** A door's room is keyed by its place and building key, and the
-  relay's ground gate already turns away a build on another ground in every room that rides it. So the ground's print
-  reads two dressed plans' prints (`Plans`), and a change to a door's key moves `GROUND_LAW` as a change to the ground
-  does. No plan law of its own, no new door on the relay. Cost: a dressing change costs a relay version.
-- **RD-21 (2026-10-31) A town grows along its roads.** The owner, 2026-10-31: "Ensure the Crescent layout with more
-  organic". A ring of equal bands round a square read as a planned crescent. A grown town's sectors now start at its
-  square's own edge along their span, and reach out as squarely as they face a road leaving it: a road's sector its whole
-  depth, a sixth of a turn off any road none. A road keeps the cells it crosses and takes only its plots, so houses line
-  it. Ends are left ragged. Cost: a town with no road grows a thin, broken belt.
+A building is still known by its place's map id and a building key. Sixteen account tables, the relay's interior rooms,
+deeds, recall anchors and quest sites key on that pair, so a new building takes a key the old law already accepts.
 
-## RMBC0 - what stands (AUDITED, 2026-10-31)
+| Band | Keys | Who mints |
+|---|---|---|
+| RMB | under `RMB_KEY_LIMIT` (`0x80000`), and `BUILDING_KEY_0` | `makeBuildingKey`, from a block and a record |
+| Minted | `MINTED_KEY_MIN` (`0x800000`) to `MINTED_KEY_MAX` (`0xFFFFFF`) | the key ledger, for an anchor |
+| Neither | the rest (the merchant yards' `YARD_KEY_BASE` among them) | refused as a building's key |
 
-Read cold in three lanes: the legacy pipeline, the settlements built without RMB, and where the ground, the atlas and
-the homes meet a town.
+`keyBandOf` names a key's band. `rmbPartsOfKey` decodes an RMB key and answers null for a minted one, so no minted key
+is ever read as a block cell. `RMB_KEY_LIMIT` is the same edge as `imperialHomes.js` `FABRIC_HOME_KEY_MIN`, and a pin
+holds the two equal. The Imperial City fabric's plot keys are hashes that reach into the minted band, so the Imperial
+City cannot mint until its homes take ledger keys.
 
-### A building's identity is its place in the grid
+### The key ledger
 
-`systems/talk/talkTopics.js` `makeBuildingKey` (DFU's `BuildingDirectory.MakeBuildingKey`) packs a building's block
-column, block row and record index into one key, 8 bits each, and writes key 0 as `BUILDING_KEY_0` (1 << 24). Every
-RMB key is under `0x80000`. The key is minted on demand in several walks (`buildingSummaries`, the talk's lists,
-`scenes/pixelBuild.js`, quest places, the fabric) and never stored with the layout.
+A new building's key is kept, never derived from its geometry: a generator change would otherwise give every building a
+new key and orphan what players own. `settlementIds.js` `reconcileBuildingIds` gives a plan's new buildings their keys.
+An anchor (the generator's stable name for a plot, such as `c1.4.p2`) keeps its key. A new anchor takes the ledger's
+next key. An anchor that is gone retires its key, and the next key only goes up, so a retired key is never minted again.
+Legacy buildings pass through untouched. `ledgerProblems` refuses a ledger that lies about what it minted.
 
-What only needs a unique key under 1 << 24, scoped by the town's map id: the account service's `homes` and the fifteen
-other tables with a `building_key` (decor, rooms, votes, offers, the festival's, the hall's decor, patron sales),
-interior scene names, the relay's interior rooms, recall anchors, discovery, rentals and repairs. What decodes the key back into a block and a record, and so
-breaks for a building with no record: quest cast markers, the curated-marker mend, the interior layout and its people,
-`yardCellLaw.js` `yardCellOf` (and the yard tables, keyed by that cell), `homeListingLaw.js` `homeKeyCell`, the arena check, the town's name draw (order-dependent
-over blocks) and the door and building hit-tests in `pixelBuild.js`. Those decoders are the migration surface: RMBC3
-moves them onto the plan.
+The ledger's conflicts: `protected-removed` (a protected key would retire), `protected-moved` (a protected building's
+pad, point, yaw, lift or footprint changed), `protected-retyped` (a protected home would become another kind of
+building or lose its private access), `anchor-dup`, `keys-spent` and `ledger`.
 
-### The ground is one height
+A grown town ships no ledger. `anchorLedger` hashes each anchor with its place into the minted band, so every client
+mints the same keys and a plot added or dropped moves no other key. Two anchors on one hash (about one town in 5,000)
+probe forward in sorted order, so the later one's key depends on the earlier; `protectedGone` refuses a protected key
+that changes hands.
 
-A town's ground is flattened to one height: `terrain/terrainTiles.js` `blendLocationTerrain` over the location's
-rectangle, or `blendShapedTerrain` over TOWN-SHAPES' outline, each to the mean of the land under it. Buildings stand at
-the block's origin height. The only relief is Solitude's, by hand: `solitudeRelief.js` and `tamrielCapitals.js`
-`capitalBlockLift`, which lift a whole block onto a tier. Saved heights carry `terrainSampler.js` `GROUND_FRAME_LAW`
-(5), and a change to town ground re-stands old records through a moved field.
+## The plan
 
-### The grid's limits
-
-A location is one map pixel and at most eight by eight blocks of 102.4 m. A block holds at most 32 building records
-and turns a building about one axis. One place stands on a pixel (`worldPlaces.js`, the game's own law). Towns past the
-Bay are Bay layouts cloned under a new id (`arenaLocations.js` `synthesizeArenaLocation`); TS3's outline may drop a
-cell but never moves a building, because homes are keyed by position.
-
-### The one building without a block
-
-The Imperial City's fabric (`imperialFabric.js`, `imperialFabricBuildings.js`) is the only generator that makes
-buildings without a Daggerfall block: plots as quads, storeys that step, generated rooms. It still writes each cell as
-an RMB block (`withFabricBuildings`), so a building has two identities (its RMB key and its plot hash), 255 buildings a
-cell at most, and flat ground. It is the precedent RMBC4 reads first.
-
-## RMBC1 - the contract (BUILT, 2026-10-31)
-
-Four modules in `src/world/settlement/`, each pure and `@ts-check`.
-
-### The plan (`settlementContract.js`)
+`settlementContract.js` holds the plan's shape and its check.
 
 | Field | What it holds |
 |---|---|
@@ -164,222 +58,199 @@ Four modules in `src/world/settlement/`, each pure and `@ts-check`.
 | `origin` | A world pixel (bounded by `worldPixelOk`) and metres east and north of its south-west corner. |
 | `footprint` | A ring of points in metres: any shape, not a grid. |
 | `pads`, `links`, `gates` | The ground: flat pads at heights over the datum, the ways between them, and where the roads come in. |
-| `streets`, `districts` | Streets by rank (main, side, alley, path) on one pad each; districts by purpose. |
+| `streets`, `districts`, `plots` | Streets by rank (main, side, alley, path) on one pad each; districts by purpose; a building's ground or open land. |
+| `features` | A closed set of kinds (`FEATURE_KINDS`: a well, a market, a tree, a garden, a wall, a dock and others), each on its pad or in the footprint. |
 | `buildings` | Key, anchor, pad, point, yaw, lift, footprint, storeys, exterior and interior assets, doors, type, faction, quality, name seed, access. |
 
-`groundAt` answers the pad and height under a point. `floorOf` is a building's pad height plus its lift.
-
-### The key bands
-
-| Band | Keys | Who mints |
-|---|---|---|
-| RMB | under `RMB_KEY_LIMIT` (`0x80000`), and `BUILDING_KEY_0` | `makeBuildingKey`, from a block and a record |
-| Minted | `MINTED_KEY_MIN` (`0x800000`) to `MINTED_KEY_MAX` (`0xFFFFFF`) | the key ledger, for an anchor |
-| Neither | the rest (the merchant yards' `YARD_KEY_BASE` among them) | refused as a building's key |
-
-`keyBandOf` names the band. `rmbPartsOfKey` decodes an RMB key and answers null for a minted one. `RMB_KEY_LIMIT` is
-the same edge as `imperialHomes.js` `FABRIC_HOME_KEY_MIN`, and a pin holds the two equal.
+Heights are pads. A pad is flat and pads do not cross each other's rims, but one may stand wholly inside another (a
+raised square, a keep's mound), and the smaller is the ground where it stands (`padAt`). A pad's `base` is `cut` (the
+terrain is cut and filled to it) or `raised` (a deck on posts). A building stands on one pad with its whole footprint,
+so it cannot float or sink. A sloped street is a ramp between pads, never a sloped pad. `groundAt` answers the pad and
+height under a point; `floorOf` is a building's pad height plus its lift.
 
 ### What the check refuses
 
-`validateSettlement` answers every problem at once. A plan of another contract version is refused alone. The codes:
-`source`, `place`, `origin` and `poly` for the frame and the rings; `id-dup` for any id twice; `outside` for a pad or a
-building past the footprint; `pad-overlap` (ground has one height); `link`, `link-end` and `link-steep` (a grade link
-rises at most `STEP_MAX`, 0.4 m; stairs 0.75 and ramps and bridges 0.25 of their run); `street` and `street-off-pad`;
-`key-band` (a legacy building keeps its RMB key, a new one is minted); `anchor`, `asset` and `access`; `off-pad` (a
-footprint over its pad's rim would float or sink); `overlap` (touching is not overlap: row houses share a wall);
-`no-entrance`; `entrance-off-wall`; `entrance-blocked` (no ground within a step of the floor 0.8 m outside the door);
-and `unreachable` (no way from a gate to the door's pad).
+`validateSettlement` is pure, so the client, a tool and the account service run the same law. It answers every problem
+at once, each with a code, what it names and a plain reason. A plan of another contract version is refused alone
+(`contract`). The frame and rings: `source`, `place`, `origin`, `poly`. Ids: `id-dup`. The ground: `pad` (an unknown
+base), `pad-missing` (a link, plot or building on a pad the plan lacks), `pad-overlap`, `outside` (past the footprint),
+`link`, `link-end` and `link-steep` (a grade step rises at most `STEP_MAX`, 0.4 m; stairs 0.75 and ramps and bridges
+0.25 of their run), `gate` (a gate off its pad). Streets: `street`, `street-off-pad`. Features: `feature`.
 
-A legacy building with no footprint is its record's: its walls and doors are not read. These limits are ours. DFU's
-towns are flat and have no stairs between levels.
+Buildings: `transform` (no point, yaw or lift of 0 or more), `key-band` (a legacy building keeps its RMB key, a new one
+is minted), `anchor`, `asset`, `access`, `off-pad`, `off-plot`, `overlap` (touching is not overlap: row houses share a
+wall), `no-entrance`, `entrance` (a door with no point or facing), `entrance-off-wall`, `entrance-blocked` (no ground
+within a step of the floor 0.8 m outside the door) and `unreachable` (no way from a gate to the door's pad). Geometry
+is tested to 2 cm: a point and a line each rounded to the centimetre stand up to 1.4 cm apart. A legacy building with
+no footprint is its record's, and its walls and doors are not read. `settlementPrint` (FNV-1a of the plan's canonical
+form) is what two clients compare.
 
-### The key ledger (`settlementIds.js`)
+### DFU's towns as plans
 
-`reconcileBuildingIds(ledger, proposed, { protectedKeys, published })` gives a plan's new buildings their keys. An
-anchor in the ledger keeps its key. A new anchor takes the ledger's next key. An anchor that is gone retires its key,
-and the next key only goes up, so a retired key is never minted again, even for its own name. A protected key is never
-retired (`protected-removed`), and a protected building whose pad, point, yaw, lift or footprint changed is a
-`protected-moved` conflict. Two buildings on one anchor and a spent band are refused. Legacy buildings pass through
-untouched. `ledgerProblems` refuses a ledger that lies about what it minted.
+`legacySettlement.js` `legacySettlementOf` turns an RMB layout and its `buildingSummaries` into a plan: one flat pad
+over the grid, every building with the key the walk minted, at its block's origin plus `RMBLayout.GetBuildingData`'s
+position, its record as its exterior and, where the record has a room, its interior. A house is private. `directoryOf`
+reads the plan back as the game's building lists read it. On the player's own files the city of Daggerfall is 647
+buildings over 64 blocks, 632 with rooms, and its clone under a Hammerfell town's id keeps every key.
 
-### The legacy adapter (`legacySettlement.js`)
+## The generator
 
-`legacySettlementOf` turns an RMB layout and its `buildingSummaries` into a plan: one flat pad over the grid, every
-building with the key the walk minted, at its block's origin plus `RMBLayout.GetBuildingData`'s position, with its
-record as its exterior and, where the record has a room, its interior. A house is private. `directoryOf` reads the plan
-back as the game's building lists read it, with each building's floor on its pad; a minted key's row carries no block
-cell. On the player's own files the city of Daggerfall is 647 buildings over 64 blocks, 632 with rooms, and its clone
-under a Hammerfell town's id keeps every key.
-
-## RMBC2 - the generator (BUILT, 2026-10-31)
-
-`src/world/settlement/settlementStyles.js` is the data. A style for every theatre (`THEATRE_KEYS`: the Bay and the nine
-provinces) gives its buildings' storeys and roof, a plot's frontage and depth, the gap between neighbours (0 a terraced
-row), its street and lane, its deck (Valenwood's 4 m platforms and Black Marsh's 1.4 m stilts, 0 elsewhere), its terrace
+`settlementStyles.js` is the data. A style for every theatre (`THEATRE_KEYS`: the Bay and the nine provinces) gives its
+storeys and roof, its walls', roof's and terraces' pictures (`ground`: sandstone in Hammerfell and Elsweyr, Nord stone in
+Skyrim, moss stone in the Bay, flags in Cyrodiil), a plot's frontage and depth, the gap between neighbours (0 a terraced
+row), its street and lane, its deck (Valenwood's 4 m platforms, Black Marsh's 1.4 m stilts, 0 elsewhere), its terrace
 step and its temple's divine. An archetype gives its layout, centre, size, bands and sectors, gates, walls, keep, docks,
-wealth, services and the feature at its heart. The six are the specification's Phase 3 five (an oasis village, a mining
-settlement, a fortified mountain town, a river trade settlement, a wetland village on decks) and a plain village.
+wealth, services and the feature at its heart: an oasis village, a mining settlement, a fortified mountain town, a river
+trade settlement, a wetland village on decks, a plain village, and the outskirts round a town.
 
-`src/world/settlement/settlementGen.js` `generateSettlement` reads the ground through `env.heightAt` (and `waterAt`) and
-lays out a plan in the specification's stages. A, the site: the layout and its centre (a fort on the highest point, an
-oasis round the lowest, a river town's quay on the shore, found by the weighted middle of the water near it). B, the
-cells: sectors round or along the frame, bands of street, plots and yard. C, the terraces: each cell's pad starts at its
-natural height and neighbours are pulled together until every step is climbable by its link, a step between cut
-terraces never past the style's terrace. A deck never sinks within `DECK_CLEAR` of its ground and moves four times as
-readily as cut ground.
+`settlementLayout.js` `layoutSettlement` lays out stages A to C from the ground (`env.heightAt`, `waterAt`). A, the
+site: a fort on the highest point, an oasis round the lowest, a river town's quay on the shore. B, the cells: a ring
+town wraps a square and a row town follows an arc round a hillside or along a shore, both cut in one polar frame, so one
+set of cells, links and plots serves both; `auto` reads the ground (a hill a ring, a slope a row). C, the terraces: each
+cell's pad starts at its natural height and neighbours are pulled together until every step is climbable by its link,
+a step between cut terraces never past the style's terrace. A deck never sinks within `DECK_CLEAR` (0.6 m) of its
+ground and moves four times as readily as cut ground.
 
-D, the streets and lanes; E, the plots, a frontage at a time; F, a building on each plot big enough, its front wall and
-back corners clear of the chords that bend round the arc, its door to its street; the services take the plots that suit
-them, the temple its style's divine and the fort's keep its mound, a pad standing in the square. G, the features: the
-heart's well or market, yard trees, open plots as gardens, a fort's walls and towers broken at its gate, a river town's
-docks. Keys come from the ledger. Regenerated with its ledger, a plan keeps every key; with new parameters it keeps the
-anchors that still stand. The editor's controls are `params`: size, density, bands, sectors and the share left open.
+`settlementGen.js` `dressSettlement` dresses a layout with stages D to G: streets and lanes; plots, a frontage at a time,
+each numbered by its split so a plot dropped renames none; a building on each plot big enough, its door to its street,
+its storeys its own plot's draw; the services on the plots that suit them (the temple its style's divine, the fort's
+keep its mound); and the features. Each district draws from its own seed (`districtSeeds`) and each plot by its cell and
+number. `generateSettlement` is both parts at once. A layout passed as plain records dresses to the same plan.
 
-### What RMBC2 added to the contract
+The generator reports its fit: the buildings it stood and its deepest cut. A site too wet or too steep for its archetype
+answers `ok: false`. Swept over six archetypes, ten styles, six grounds and three seeds, every plan keeps the contract;
+on a marsh only the styles that build on decks stand a town. `tools/settlementProbe.mjs` draws each archetype from
+above, on synthetic ground or, with ARENA2, on a pixel of the Bay that suits it. Its pictures stay in `scratch/`.
 
-A pad may stand wholly inside another (a raised square, a keep's mound), and the smaller is the ground where it stands
-(`padAt`); pads that cross each other's rims are refused. A pad's `base` is `cut` (the terrain is cut and filled to it)
-or `raised` (it stands on posts). `plots` are a building's ground or open land, and a building keeps to its own
-(`off-plot`). `features` are a closed set of kinds standing on their pad or inside the footprint. Nothing has been
-published, so these are part of contract version 1; RMBC6 freezes it. The geometry's tolerance rose from 1 cm to 2 cm:
-a point and a line each rounded to the centimetre stand up to 1.4 cm apart, and a shared wall read as a crossing.
+The generator reads no `Math.sin`, `cos`, `atan2` or `hypot`, which may differ in their last bit between browsers.
+`exactMath.js` builds them from `+`, `-`, `*`, `/` and `Math.sqrt`, which IEEE 754 rounds exactly, in a fixed order.
+Golden prints in `rmbc3_exact.test.js` hold three plans bit for bit; a change that moves one is a new
+`SETTLEMENT_GENERATOR_VERSION` (4).
 
-### Seen and measured
+## Every town grows
 
-Swept over six archetypes, ten styles, six grounds (a hill, a steep and a gentle slope, flat land, a shore, a marsh) and
-three seeds, 1,080 plans: every one keeps the contract. The fit tells the land apart. The wetland stands on all six; the
-mine needs a slope and the fort a hill; on the marsh only the styles that build on decks stand a town. The largest plan
-(a fort of about 120 buildings) takes 0.3 s. `tools/settlementProbe.mjs` draws each archetype from above. With ARENA2 it
-stands each one on a pixel of the Bay's own ground that suits it, the river town on a coast found in WOODS.WLD, and all
-six keep the contract and fit. The pictures stay in `scratch/` (a render of the player's ground is game data).
+`townGrowth.js` `townGrowthJob` takes a city, town or village (MAPS types 0 to 2), on the Bay and past it, never a
+capital over several pixels. `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and
+region (`townGrowthJob.js` `growthJobAt`). The town's core keeps every block, building and key at its own height: it is
+the layout's plaza, `legacy`, fixed at the town's ground, and the terrace solve never moves it.
 
-## RMBC3 - the ground (BUILT, 2026-10-31)
+The outskirts take the land the pixel leaves. A cell is dropped on barred ground (`growthBlocked`: the town's ground
+mask, a water tile, a World of Daggerfall camp) or within `GROWTH_MARGIN` (40 m) of the pixel's edge, so the carve meets
+no neighbour. A cell whose cut would pass `CUT_STEPS_MAX` terraces is dropped. A link the solve leaves too steep (a deck
+held over its ground beside a core that never moves) loses its outer end. What then no longer reaches the core goes.
+A city takes four bands, a town or village three, at 0.7 density with 40% of plots left open.
 
-`exactMath.js` makes the generator exact on every engine (RD-13). The generator is split (RD-15): `settlementLayout.js`
-lays out stages A to C, worker-safe, and `settlementGen.js` dresses a layout with stages D to G; a layout passed as plain
-records dresses to the same plan, pinned. `settlementGround.js` carves (RD-14). `settlementStand.js` is the worker's
-step: on a pixel no location holds and a settlement does (`settlementOnPixel`), `terrainGen.js` `generatePixelTerrain`
-lays the settlement out on its natural samples after the roads and the sites, carves its pads in, keeps its trees off
-its ground (the nature's clearing rect) and returns `settlement` with the pixel. `pixelBuild.js` puts it on the built
-entry. The worker's graph is still `world/` and `formats/` alone, 86 modules (`tamriel2.test.js`).
+### Along its roads
 
-The ground moved, so the frame's law did too: `GROUND_FRAME_LAW` 6 and `PADS_FRAME_LAW` 6 (`terrainSampler.js`). A record
-written before stands where the carve put the ground: `landforms.js` `settlementMovedField` and `groundFrameHost.js`
-`padsMovedAt`, none on a pixel a location holds. Six pins of the old law moved with it. The wire's `GROUND_LAW` is 6 and
-the relay `world303`, so a ground room refuses the old ground. The ground's print reads Sahr Waters' pixel
-(`tools/groundPrint.mjs`): a lost carve moves it 2.6 m and fails `fb1017f_groundgate.test.js`.
+A town grows along its roads, never in even rings. `coreEdge` starts each sector at the square's own edge along its
+span, a street out and a setback of up to 6 m, and a core takes 16 to 22 narrower sectors (at most 24) so the inner
+line follows the square. `roadsOut` reads the bearings the town's roads leave by: each run of path tiles on a circle a
+street past the square's corners is one road, at its middle. `roadReach` gives each sector a depth by how squarely it
+faces one: a road's sector its whole depth, never less than a band; one a sixth of a turn off any road about none.
 
-## RMBC4 - the buildings stood (BUILT, 2026-10-31)
+A road is a soft bar. It keeps the cells it crosses (`roadAcross` records where in each it runs, its bearings within a
+turn), and the dressing's `onRoad` leaves unbuilt the plots it would cross, widened by 3 m, so houses line it either
+side. An end is left ragged: past the first band each band may stop a sector, more often the further out. A town with
+no road grows a thin, broken belt; a steep town grows little; a city that fills its pixel grows nothing.
 
-`settlementModels.js` makes a dressed settlement models (RD-17): `groundModel` paves each cut pad at its height with a
-retaining wall down its rim, decks each raised pad on posts, and lays each link as a stair, ramp or bridge between its
-pads' heights; `buildingPiece` stands a building with `buildPlot` in its style's walls, roof and pitch (now a style's
-data), its front its street's, its door the fabric's door model turned to face its street; `buildingInterior` is its
-rooms (`fabricBuildingInterior`, which now takes a `cacheKey`, so a settlement's building never files under an
-Imperial plot's hash); `buildingRecord` is what its door hands the game. Their model ids run from 7,600,000, 4,096 a
-settlement, past the Imperial City's.
+## The ground
 
-`scenes/settlementHost.js` is the streaming world's pool on the yards' shape. It installs the model family once, dresses
-each built pixel's layout, asks the pipeline for the meshes, draws them at the pixel's translation, files the ground and
-the buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with
-its record (`settlement`) and its rooms (a `dfBlock` of its own, never a BLOCKS.BSA record). `world.js` wires it in
-fifteen logical lines, each a getter on the host's own state, and bootWorld's ceiling rose by those 15
-(`hostceiling.test.js`). The host's `frame` warns its own throw, so the world calls it bare. `buildingDataForDoor`
-answers a door with no location pixel by a copy of the record it carries.
+The terrain's vertices are 6.4 m apart, coarser than a street, so a pad is drawn and walked as its own paving or deck,
+and the terrain sits under it. `settlementGround.js` `carveSettlementGround` holds the terrain under every cut pad
+within `PAD_REACH` (one cell's diagonal), so no triangle rises through, and eases back to the land over `GROUND_EASE`
+(28 m). A raised pad and a legacy pad ask nothing of the ground. A grown town's carve keeps its core and its town's own
+ground (`keep`): a sample is kept when any of the four tiles round it is the town's.
 
-Seen in the game (`tools/settlementWorldProbe.mjs`, ARENA2, the dev server): the player jumped to Sahr Waters' pixel,
-which stood 37 buildings, every mesh ready. At a shop's door the eye found it, the shopkeeper's greeting opened, and when
-it closed the player stood inside The Adventurer's Market with its keeper behind the counter. The first runs found one
-fault, a frozen record the transition wrote on, and `buildingDataForDoor` now hands over a copy. Pictures stay in
-`scratch/`: a render of the game's data is the game's data.
+The terrain worker lays the settlement out and the main thread dresses it. On a pixel no location holds and a published
+settlement does, `settlementStand.js` `standSettlementGround` lays it out on the pixel's land with no road cut into it
+(`bare`), so no network setting moves its plan, and carves it into the ground as it is. On a town's pixel
+`standTownGrowth` does the same with the town's rect, its roads' tiles, camps and water. Each hands back its layout, its
+trees' clearing and `moved`, what the carve moved each sample. `pixelBuild.js` puts it on the built entry.
 
-## RMBC5 - the sites (BUILT, 2026-10-31)
+### A record written before the carve
 
-`settlementPlaces.js` reads `settlements.json` (RD-16): each row's pixel is its picture point under the fit now, so a
-settlement keeps to its land whatever the fit; none stands on the Bay. `tamrielPlacesHost.js` registers them after the
-places past the Bay, so a town of theirs keeps its pixel; they carry no location index, so no raid picks one. The nine:
-Corvel Keep (High Rock, a fort), Sahr Waters (Hammerfell, an oasis), Kolvar's Cut (Skyrim, a mine), Velas Rest
-(Morrowind), Aleth Quay (Sumurset, a river town on its shore), Thorn Canopy (Valenwood, on decks), Tasha's Bend
-(Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford (Cyrodiil). A seed the search tried laid a pad 3 cm
-past its footprint: the outline now keeps the farther of two near points, and a sweep of 2,400 plans keeps the contract.
+The carve moved the ground under saved records, so the record frame's law is 6 (`terrainSampler.js` `GROUND_FRAME_LAW`
+and `PADS_FRAME_LAW`). A record written under an older law re-stands by the carve's move there (`groundFrameHost.js`
+`padsMovedAt`). On a built pixel that is the build's own `moved`, exact (`settlementMovedAt`). On a published
+settlement's pixel not built yet, `landforms.js` `settlementMovedField` lays it out the kernel's way on the shaped
+ground (the host's `landformsHere`, and `landformsHere({ bare: true })` for the layout), within a float's noise of the
+kernel.
 
-## RMBC6 - every town grows (BUILT, 2026-10-31)
+A grown town's pixel not built yet answers 0: its carve reads the roads, camps and tiles only the kernel's job holds, so
+no main-thread copy can match it. A record there that loads before its pixel streams in keeps its old height. That is
+a camp or a pile written before law 6 on land the outskirts now cover.
 
-`townGrowth.js` (RD-18, RD-19): `townGrowthJob` takes a city, town or village (MAPS types 0 to 2, never a capital over
-several pixels); `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and region
-(`townGrowthJob.js`). The layout's core mode rings the town's square: the square is the plaza's cell, `legacy`, fixed at
-the town's ground, and the terrace solve never moves it. A cell on barred ground (`growthBlocked`: a path tile, the
-town's ground mask, a water tile, a World of Daggerfall camp) or past the bounds is dropped; reach starts at the core,
-which carries the plan's gate. A cell whose cut would pass the archetype's limit is dropped, and what then reaches the
-core is kept. The `outskirts` archetype is one band, two round a city, with half its plots left open.
+## Standing in the world
 
-The carve skips the core and the town's mask (`carveSettlementGround`'s `keep`), and a legacy pad asks nothing of its
-ground. The kernel returns the carve with the pixel (`moved`), and `groundFrameHost.js` `padsMovedAt` reads it on a
-grown town's pixel (`grownMovedAt`). The trees clear the town and its outskirts as one rect (`growthClearing`). The host
-dresses the outskirts from the input the worker handed back, in a model run taken in turn from 16 to 511, and holds
-their meshes through the pipeline's place hold. The ground's print reads a grown village (`Grown@440,300`): a lost carve
-moves it 14.1 m. `GROUND_LAW` 6 holds it, because law 6 has not shipped.
+`settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
+style's ground, with a retaining wall down its rim, decks each raised pad on posts, and lays each link as a stair, ramp
+or bridge. `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,
+roof and pitch, its door the fabric's door model turned to its street. `buildingInterior` is its rooms
+(`fabricBuildingInterior`, filed under its place and key with a `cacheKey` of its own). `buildingRecord` is what its
+door hands the game. Model ids run from `SETTLEMENT_MODEL_BASE` (7,600,000), 4,096 a run: a published row's run is its
+ordinal, a grown town takes runs 16 to 511 in turn (`nextGrowthSlot`).
 
-Seen in the game (`tools/townGrowthProbe.mjs`, ARENA2): Arkbridge, a village of the Daggerfall region, stood 28 outskirts
-buildings with every mesh, no page error. From the air its core stands as it always did, and the ring wraps it where no
-road, water or town ground bars a cell. That first ring read as a crescent: about 5 m of street at the core's corners and
-45 m at its sides, every sector as deep as the next. RD-21 grew it along the roads instead.
+`scenes/settlementHost.js` is the streaming world's pool, on the yards' shape. It dresses each built pixel's layout,
+asks the pipeline for the meshes through a place hold, draws them at the pixel's translation, files the ground and the
+buildings in one collider bucket (held back while feet stand inside a wall), and hands each door to the modes with its
+record and its rooms (a `dfBlock` of its own, never a BLOCKS.BSA record). A pixel built again in place swaps its entry
+with no frame between: the same plan files its yards on the new entry, and another plan is taken down and stood again.
+Taking a settlement down lets go of its models, the model family's kept copies too (`forgetFamilyModel`), so a run's
+ids come back built from the new plan.
 
-ORGANIC (RD-21): `coreEdge` starts each sector at the square's edge along its span (a corner inside the span counts),
-a street out and a setback of up to 6 m; a core takes 16 to 22 narrower sectors so its inner line follows the square.
-`roadsOut` reads the bearings a town's roads leave by, each run of path tiles on a circle past its corners one road at
-its middle; `roadReach` gives each sector a depth by how squarely it faces one. A road is a soft bar: `roadAcross`
-keeps where in a cell it runs, and the dressing's `onRoad` leaves those plots unbuilt. A sector stops early more often
-the further out it reaches. `SETTLEMENT_GENERATOR_VERSION` is 3; published plans are unchanged but for their version.
+A generated house is a home as a block's is: `homeCandidate` and `homePurchasable` take its record, `homeOnlinePrice`
+prices it by its own ground and its town's size (`townBlocks`), and its door asks its town's homes when hovered. The
+host files each house's yard frame on its pixel's `homeFrames` (`fileHomeFrames`). `pixelBuild.js` names a settlement
+pixel's homes by its place and its province's region (`settlementHomeTown`, `settlementHomeRegion`). A listing's cell, a
+yard's cell and the arena's all take a minted key without decoding a block from it. No quest stands in a generated
+house.
 
-## RMBC7 - publication and the online check (BUILT, 2026-10-31)
+The spawn law (`spawnGroundPlace.js` `spawnAt`) keeps a published settlement's pixel from the online dungeon roll, so
+the Overworld and the ground never shape it for a dungeon that does not stand. `buildingDataForDoor` answers a
+door with no location pixel by a copy of the record it carries. `tools/settlementWorldProbe.mjs` and
+`tools/townGrowthProbe.mjs` jump to a settlement in the running game, shoot it and walk through a door.
 
-The online check is the ground's (RD-20): `tools/groundPrint.mjs` reads Sahr Waters' plan and the grown village's, and a
-setback moved by 10 cm fails `fb1017f_groundgate.test.js` at `Plans`. A grown town dresses with `keys: 'anchored'`
-(RD-19). `settlementPublish.js` reads a town's protected keys from its homes' answer (`protectedOfTown`; the account
-service's `/v1/homes/town`, every home's and hall's key), a published row's revision through its ledger
-(`revisionConflicts`: a protected building removed or moved), and a grown town's (`protectedGone`).
-`tools/settlementRevise.mjs` lays every published row and every grown town a protected key names on the player's ground
-and exits 1 on a refusal; `--dump` and `--published` carry the plans across a generator change, and `--write` records the
-ledgers. It reads the archives' road network: a town Basic Roads' download crosses otherwise lays other cells in the game
-(Arkbridge: 28 buildings there, 32 in the tool), so the game's own check is the print.
+## The published settlements
 
-## RMBC8 - homes in a settlement (BUILT, 2026-10-31)
+`settlements.json` publishes nine settlements, one in each province past the Bay: Corvel Keep (High Rock, a fort), Sahr
+Waters (Hammerfell, an oasis), Kolvar's Cut (Skyrim, a mine), Velas Rest (Morrowind), Aleth Quay (Sumurset, a river town),
+Thorn Canopy (Valenwood, on decks), Tasha's Bend (Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford
+(Cyrodiil, a village until Cyrodiil's rivers are water). `tools/settlementSites.mjs` searched each on the player's own
+files: the province's land, no Arena town, capital, countryside place or lair on its pixel or beside it, and a fit that
+is `ok`.
 
-A generated house's door record is read by the home law as a block's is: `homeCandidate` and `homePurchasable` take it,
-`homeOnlinePrice` prices it by its own ground (`footprintM2`) and its town's size (`townBlocks`: a grown town's blocks,
-`townGrowthJob`'s `blocks`), and the door asks its town's homes when hovered (`worldModes.js` `ensure(homeTownOf(bd))`).
-Every check the account service's claim makes passes for a minted key in a settlement's lane: the map id, the key, a
-province's region, no listing row, no arena cell.
+A row publishes its inputs alone, never its heights: the ground past the Bay is traced from the player's own map
+picture, so each client lays the settlement out on its own ground. A row fixes the structure its ground chose (layout,
+centre, the way its shore lies) and its key ledger, so every client lays the same cells. A published shore keeps its way
+and reads its distance from the ground. `settlementPlaces.js` sets each row's pixel from its picture point under the fit
+now; none stands on the Bay, and a location on the pixel always wins. Their map ids are their own lane,
+`SETTLEMENT_LANE` (`0x342`). `tamrielPlacesHost.js` registers them after the places past the Bay.
 
-RMBC0's decoders were read again: a listing's cell, a yard's cell and
-the arena's all take a minted key without decoding a block from it; its yard cell is 32,768 or more, past every RMB cell.
-The host files each house's yard frame on its pixel's `homeFrames` (`fileHomeFrames`) and takes it back with the town;
-`pixelBuild.js` names a settlement pixel's homes by its place and its province's region (`settlementHomeTown`,
-`settlementHomeRegion`). Quest markers and an interior's people ask no minted key: no quest stands in a generated house.
+## Publication and protected property
 
-## RMBC9 - the editor's seam (BUILT, 2026-10-31)
+A door's room is keyed by its place and building key, so the plans ride the ground's law: `tools/groundPrint.mjs` reads
+Sahr Waters' dressed plan and a grown village's (`Plans`), on a pixel the synthetic network's road crosses, and a change
+that moves a door's key fails `fb1017f_groundgate.test.js` until `GROUND_LAW` moves. `GROUND_LAW` is 6 and the relay
+`world304`: the relay refuses a ground room's hello from the old ground while `groundGate` is on, so the site deploys
+before the relay.
 
-`settlementEditor.js` is what the WORLD 2.0 editor asks: `editSettlementRow` changes a row's controls within
-`PARAM_BOUNDS` and fixes its structure, or refuses the patch whole; `regenerateDistrict` dresses one district from a
-seed of its own (`districtSeeds`), and every other district keeps its buildings, keys and types, a service its published
-plot (`published`); a protected key's loss is refused; `planDiff` names what was added, removed, moved and retyped. The
-generator draws each district from its own seed and each plot by its cell and number, so `SETTLEMENT_GENERATOR_VERSION`
-is 2 and the golden prints and the published ledgers moved with it (`tools/settlementRevise.mjs --write`; nothing had
-shipped). The editor itself is the WORLD 2.0 arc's.
+Protected property blocks a plan. `settlementPublish.js` `protectedOfTown` reads a town's protected keys from the
+account service's `/v1/homes/town` answer (every home's and hall's key). `revisionConflicts` checks a published row's
+revision through its ledger. `protectedGone` names a grown town's protected minted key that its new plan no longer
+holds, or holds for another anchor, kind, access or stand. `tools/settlementRevise.mjs` lays every published row and
+every grown town a protected key names on the player's ground and exits 1 on a refusal or a row that no longer fits;
+`--dump` and `--published` carry the plans across a generator change, and `--write` records the published ledgers.
 
-The revision found Aleth Quay standing empty: main's merge had moved its shore from 174 m to 146 m along the
-published way, so its quay stood 28 m into the water and every cell was wet. A published shore now keeps its way and
-reads its distance from the ground every client stands (16 cells there). A published row is laid out on its pixel's
-land with no road cut into it (`standSettlementGround`'s `bare`), so no network setting moves its plan.
-`tools/settlementRevise.mjs` now refuses a row that no longer fits its ground.
+## The editor's seam
 
-## Next slices
+`settlementEditor.js` is what the world editor asks. `editSettlementRow` changes a row's controls within `PARAM_BOUNDS`
+(size, density, bands, sectors and the share left open) and fixes its structure (`ring` or `row`, a centre, a shore), or
+refuses the patch whole. `regenerateDistrict` dresses one district from a seed of its own, and every other district keeps
+its buildings, keys, kinds, access and heights. A service keeps the plot it was published on while that plot stands;
+one whose plot is gone takes a plot drawn afresh (a new anchor, or one in a district drawn again) before another
+district's house. `planDiff` names what was added, removed, moved and retyped.
 
-- **A street tree**: RD-11's third layout for a settlement of its own (a branching street, not a ring or an arc).
-
-## THE FOUR HOSTS (Home.md)
+## THE FOUR HOSTS
 
 `scenes/world.js` WIRED: the host built, framed, drawn and dropped, its doors in `doorTargets`, its records answered by
 `buildingDataForDoor`. `scenes/worldModes.js` WIRED through those two seams, with no line of its own: a settlement's
@@ -388,23 +259,23 @@ stands no settlement. `scenes/dungeonContext.js` FLAGGED: a dungeon stands no st
 
 ## The whole of Tamriel
 
-A plan is keyed by its place's map id from the registry and its origin is bounded by `worldPixelOk`. Nothing reads
-MAPS.BSA's rows. Every pin holds a Hammerfell case beside the Bay's: a terraced village in the contract's tests, a
-Hammerfell town's lane in the ledger's, and the Daggerfall city's layout cloned under a Hammerfell id in the corpus.
-The generator has a style for every theatre and is pinned in each, past the Bay and on it. The published settlements
-stand one in each of the nine provinces; the Bay's ground is left to DFU's places (RD-9).
+A plan is keyed by its place's map id from the registry, and its origin is bounded by `worldPixelOk`. Nothing reads
+MAPS.BSA's rows. The generator has a style for every theatre. Every city, town and village grows, the Bay's and every
+province's alike. The published settlements stand one in each province; the Bay's ground is left to DFU's places.
+The pins hold cases past the Bay: Hammerfell's in the contract, the stand, the ledger, the publication and the editor;
+High Rock, Skyrim, Valenwood and Hammerfell towns beside the Bay's in the growth; Daggerfall's city cloned under a
+Hammerfell id in the corpus.
 
-## Pins and mutants
+## Pins
 
-`test/world/settlement/`: `rmbc1_contract.test.js` (12), `rmbc1_ids.test.js` (7), `rmbc1_legacy.test.js` (3),
-`rmbc1_legacy_corpus.test.js` (1, on ARENA2), `rmbc2_contract.test.js` (5) and `rmbc2_gen.test.js` (12).
-`tools/mutants/rmbc1.json`: 51 mutants, 51 dead. The first run left two alive, a self-crossing ring with an area and an
-edge across a notch, and the geometry pin was added for both. `tools/mutants/rmbc2.json`: 34 mutants, 34 dead. Its
-first run left the deck's floor alive (no pin pulled a deck toward its ground), and a town whose gate stands on the low
-side now does; the split's run left the dressing's seed alive, and a pin now dresses one layout with two seeds.
-`rmbc3_exact.test.js` (4), `rmbc3_ground.test.js` (6) and `rmbc4_stand.test.js` (7) pin RMBC3 to RMBC5;
-`tools/mutants/rmbc3.json` and `rmbc4.json` hold their mutants; `RMBC3-print-blind` is killed by the ground gate.
+`test/world/settlement/`: `rmbc1_contract.test.js`, `rmbc1_ids.test.js`, `rmbc1_legacy.test.js`,
+`rmbc1_legacy_corpus.test.js` (on ARENA2), `rmbc2_contract.test.js`, `rmbc2_gen.test.js`, `rmbc3_exact.test.js`,
+`rmbc3_ground.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
+`rmbc8_homes.test.js` and `rmbc9_editor.test.js`; the spawn guard in `spawnworld.test.js`. Their mutants are
+`tools/mutants/rmbc1.json` to `rmbc9.json`; `node tools/mutate.mjs tools/mutants/rmbc*.json` runs them.
 
-## Port-Ledger
+## Not yet
 
-Section A, RMB-CONTRACTS: the port's own. DFU's settlements are RMB grids.
+- A third layout, a branching street tree, for a settlement of its own.
+- Cyrodiil's rivers as water, so Corrol Ford can stand as a river town.
+- A grown town's carve for a record on a pixel not built yet (above).

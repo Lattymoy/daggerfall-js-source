@@ -38,8 +38,8 @@
   {
     "name": "RMBC8-frames-kept",
     "file": "src/scenes/settlementHost.js",
-    "old": "    for (const k of s.homeKeys) s.homeFrames?.delete(k);",
-    "new": "",
+    "old": "    s.hold?.release?.();\n    for (const k of s.homeKeys) s.homeFrames?.delete(k);",
+    "new": "    s.hold?.release?.();",
     "tests": [
       "test/world/settlement/rmbc8_homes.test.js"
     ]
