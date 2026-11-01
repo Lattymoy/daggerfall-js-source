@@ -1,7 +1,7 @@
 // @ts-check
 // A TOWN GROWS. Every city, town and
 // village keeps its legacy core whole - its blocks, its buildings and their keys - and its outskirts are laid out
-// round it in rings on the land its pixel leaves: never on the town's own ground, a camp or water (a road crosses a cell,
+// round it along its roads on the land its pixel leaves: never on the town's own ground, a camp or water (a road crosses a cell,
 // its plots beside it), never within
 // GROWTH_MARGIN of the pixel's edge, so the carve and its ease meet no neighbour. Worker-safe (world/ alone): the terrain
 // worker lays the outskirts out and carves them; the host dresses the same layout from the same input.

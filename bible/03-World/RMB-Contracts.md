@@ -130,7 +130,8 @@ The layout stands what needs the ground. A fort's walls (`fortWalls`) run just o
 sector's run a hand past its outermost rim; round a taller sector they step out on the shorter side, where no cell
 stands. A tower projects at every corner, its eave clear of the rim, and two flank each gate; beside a gate's lane the
 step and its tower keep to the walled side, so the way out is clear. A run breaks over water
-and a tower there is not built; each foot is the ground the carve leaves (`ground`, `y`). A river town's docks
+and a tower there is not built; each foot is the ground the carve leaves (`ground`, `y`), a stretch at a time where
+the ground climbs past the wall. A river town's docks
 (`docksOut`) run from a quay that stands out to the water and `DOCK_OUT` (8 m) past its edge; a dock that finds no
 water within `DOCK_REACH` (40 m) is not built.
 
@@ -140,10 +141,10 @@ its storeys its own plot's draw; the services on the plots that suit them (the t
 keep its mound); and the features. Each district draws from its own seed (`districtSeeds`) and each plot by its cell and
 number. `generateSettlement` is both parts at once. A layout passed as plain records dresses to the same plan.
 
-The square's feature (`centreSpot`) stands at its preferred bearing and distance, else the nearest spot that keeps its
-body on the square, off the keep's mound and clear of every way onto it; a market's ring draws in on a small square.
+The square's feature (`centreSpot`) stands at its preferred bearing and distance, else at the first spot that keeps its
+body on the square, every bearing tried at each distance a metre further in and then further out, off the keep's mound and clear of every way onto it; a market's ring draws in on a small square.
 A row town's heart (`rowSquare`) stands on the open plot nearest the middle of its arc, a nearer band's first, its
-garden given up and its body clear of every house and way.
+garden given up, its body within its plot and clear of every house and way.
 A yard tree (`yardTrees`) keeps off its lane, a road through its cell (`ROAD_CLEAR`, 4 m) and every way between pads
 (`TREE_CLEAR`, 1 m). None stands on a deck, nor in a walled town's outer band.
 
@@ -226,7 +227,8 @@ deck too.
 ## Standing in the world
 
 `settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
-style's ground, with a retaining wall down its rim, and decks each raised pad on posts. A link is drawn where it is
+style's ground, with a retaining wall down its rim, and decks each raised pad on a post at every third corner, down
+past its lowest ground. A link is drawn where it is
 walked: from its higher pad's rim, where it leaves that pad, back onto its lower pad by its rise at its kind's pitch
 (`flightOf`, `flightRun`), so it tops out level with the terrace and no ledge stands at the edge. A stair is drawn as
 its steps (`flight`), each riser at most `FLIGHT_STEP` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade
@@ -332,7 +334,8 @@ A plan is keyed by its place's map id from the registry, and its origin is bound
 reads its own location's MAPS row (`townGrowthJob`); a published settlement reads none. The generator has a style for every theatre. Every city, town and village grows, the Bay's and every
 province's alike. The published settlements stand one in each province; the Bay's ground is left to DFU's places.
 The pins hold cases past the Bay: Hammerfell's in the contract, the stand, the ledger, the publication and the editor;
-High Rock, Skyrim, Valenwood and Hammerfell towns beside the Bay's in the growth; Daggerfall's city cloned under a
+Hammerfell and Valenwood towns on a pixel past the Bay in the growth, and towns in High Rock's and Skyrim's styles
+on the Bay's; Daggerfall's city cloned under a
 Hammerfell id in the corpus.
 
 ## Pins
@@ -340,10 +343,13 @@ Hammerfell id in the corpus.
 `test/world/settlement/`: `rmbc1_contract.test.js`, `rmbc1_ids.test.js`, `rmbc1_legacy.test.js`,
 `rmbc1_legacy_corpus.test.js` (on ARENA2), `rmbc2_contract.test.js`, `rmbc2_gen.test.js`, `rmbc3_exact.test.js`,
 `rmbc3_ground.test.js`, `rmbc3_owed.test.js`, `rmbc4_features.test.js`, `rmbc4_stand.test.js`, `rmbc6_growth.test.js`, `rmbc6_organic.test.js`, `rmbc7_publish.test.js`,
-`rmbc8_homes.test.js` and `rmbc9_editor.test.js`; the spawn guard in `spawnworld.test.js`. Their mutants are
-`tools/mutants/rmbc1.json` to `rmbc9.json`; `node tools/mutate.mjs tools/mutants/rmbc*.json` runs them.
+`rmbc8_homes.test.js` and `rmbc9_editor.test.js`; the spawn guard in `spawnworld.test.js`. Their mutants are in
+`tools/mutants/rmbc*.json` (eight lists); `node tools/mutate.mjs tools/mutants/rmbc*.json` runs them.
 
 ## Not yet
 
 - A third layout, a branching street tree, for a settlement of its own.
 - Cyrodiil's rivers as water, so Corrol Ford can stand as a river town.
+- Offline, a save made with the Landforms row on and loaded with it off (or the other way) reads a record on a
+  settlement's carved ground without the carve's difference between the two rows, up to metres in a town's outskirts:
+  the lift field (`landformLiftField`) carries no carve. Online the row is always on.

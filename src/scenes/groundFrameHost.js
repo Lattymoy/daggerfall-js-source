@@ -48,7 +48,7 @@ export function framePixelAt(state, x, z) {
  * `movedAt` DFU's own ground's before 3, `townMovedAt` a town's blend's before 4, `meetMovedAt` the meets' before 5, `padsMovedAt` a settlement's carve before 6.
  * @param {{ landform: boolean, liftAt: (x: number, z: number, o?: { before?: boolean }) => number,
  *   heightAt: (x: number, z: number) => number, state: any, bayAt: (x: number, z: number) => boolean,
- *   movedAt?: ?((x: number, z: number) => number), townMovedAt?: ?((x: number, z: number) => number), meetMovedAt?: ?((x: number, z: number) => number), padsMovedAt?: ?((x: number, z: number) => number) }} o
+ *   movedAt?: ?((x: number, z: number) => number), townMovedAt?: ?((x: number, z: number) => number), meetMovedAt?: ?((x: number, z: number) => number), padsMovedAt?: ?((x: number, z: number) => number), owesAt?: ?((x: number, z: number) => boolean), readOwed?: ?((stamp: any) => void) }} o - owesAt: the loaded save owes a point's carve; readOwed: hands the ledger the save
  */
 export function recordFrame({ landform, liftAt, heightAt, state, bayAt, movedAt = null, townMovedAt = null, meetMovedAt = null, padsMovedAt = null, owesAt = null, readOwed = null }) {
   const landformLiftAt = liftAt;

@@ -229,6 +229,7 @@ test('ORGANIC a yard tree keeps off a road through its cell, its lane and every 
       let u = Math.atan2(t.at[0] - L.c[0], t.at[1] - L.c[1]);
       while (u < cell.u0 - 1e-6) u += TAU;
       assert.ok((u - cell.u0) * v >= L.gap / 2 + L.wl + 1 - 0.02, `${sectors}: ${t.id} off its lane`);
+      assert.ok((cell.u1 - u) * v >= L.gap / 2 + 1 - 0.02, `${sectors}: ${t.id} off the next sector`);
     }
   }
 });

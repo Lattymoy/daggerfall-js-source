@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateSettlement, groundAt, padAt, MINTED_KEY_MIN, SETTLEMENT_CONTRACT_VERSION, FEATURE_KINDS, PAD_BASES } from '../../../src/world/settlement/settlementContract.js';
 import { arenaPlaceId } from '../../../src/world/arenaLocations.js';
+import { ringsOverlap, padFinder } from '../../../src/world/settlement/settlementGeometry.js';
 
 const sq = (x0, z0, x1, z1) => [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
 const K = MINTED_KEY_MIN;
@@ -105,4 +106,15 @@ test('RMBC2 a link\'s body keeps off a building and a third pad; its flight, dra
     p.links.push({ id: 'up', kind: 'stairs', from: 'ledge', to: 'top', a: [71, 16], b: [74, 16], width: 1.5 });
   });
   assert.ok(validateSettlement(ledge).some((x) => x.code === 'link-steep' && /^flight /.test(x.why)), 'two metres of ledge for a two-metre rise');
+});
+
+test('RMBC2 the box first never hides an overlap: two houses sharing 0.3 m of ground overlap; a point a centimetre past a pad\'s edge is on it, as the contract reads an edge (mutants: a shrunk box, the edge\'s margin unread)', () => {
+  assert.equal(ringsOverlap(sq(0, 0, 10, 10), sq(9.7, 2, 20, 8)), true, 'a sliver shared');
+  assert.equal(ringsOverlap(sq(0, 0, 10, 10), sq(10, 2, 20, 8)), false, 'a wall shared is no overlap');
+  const find = padFinder([{ id: 'square', poly: sq(0, 0, 100, 100) }, { id: 'dais', poly: sq(40, 40, 60, 60) }]);
+  assert.equal(find([100.01, 50])?.id, 'square', 'a centimetre past its edge');
+  assert.equal(find([60.01, 50])?.id, 'dais', 'within the edge\'s two centimetres: the dais');
+  assert.equal(find([60.03, 50])?.id, 'square', 'past them: the square under it');
+  assert.equal(find([59.99, 50])?.id, 'dais');
+  assert.equal(find([100.05, 50]), null);
 });

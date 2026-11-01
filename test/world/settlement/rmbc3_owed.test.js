@@ -21,13 +21,13 @@ test('OWED the ledger: a pixel owed until paid, listed sorted for a save; a save
   assert.equal(payPads('20,5'), true);
   assert.equal(payPads('20,5'), false, 'paid once');
   assert.equal(padsOwedAt('-3,7'), true);
-  const save = { padsOwed: ['1,2', 'x', 7, '3,4'] };
+  const save = { padsOwed: ['1,2', 'x', 7, '3,4', '1297,-241'] };   // Corvel Keep's pixel is past the Bay's north edge
   padsOwedFrom(save);
-  assert.deepEqual(padsOwed(), ['1,2', '3,4'], 'the save\'s own debt, whatever stood before it');
+  assert.deepEqual(padsOwed(), ['1,2', '1297,-241', '3,4'], 'the save\'s own debt, whatever stood before it, a pixel past the Bay\'s edge too');
   assert.equal(savedPadsOwed('1,2') && !savedPadsOwed('-3,7'), true);
   owePads('9,9');   // owed while the same save re-stands: a second read of it keeps it
   padsOwedFrom(save);
-  assert.deepEqual(padsOwed(), ['1,2', '3,4', '9,9']);
+  assert.deepEqual(padsOwed(), ['1,2', '1297,-241', '3,4', '9,9']);
   padsOwedFrom({ groundFrame: 6 });
   assert.deepEqual(padsOwed(), [], 'a save that owes nothing');
   clearPadsOwed();

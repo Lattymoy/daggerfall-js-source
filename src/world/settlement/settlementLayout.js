@@ -24,6 +24,8 @@ export const DECK_CLEAR = 0.6;
 /** A row town's arc: the radius of the circle it follows, metres - a hillside's bend, and a shore's gentler one. */
 export const ROW_RADIUS = Object.freeze([140, 320]);
 export const SHORE_RADIUS = Object.freeze([600, 1200]);
+/** Two wall lines closer than this, metres, stand as one (no hairline step between them). */
+const HAIRLINE = 0.1;
 /** The least two neighbouring bands' streets overlap for a link between them, metres: a walker's way. */
 export const ALONG_LEAST = 1.5;
 /** How far a link's two ends stand from the rim they cross, metres. */
@@ -126,7 +128,7 @@ export function splits(rng, n, total, salt) {
 
 /**
  * Stages A to C. roads: the bearings roads arrive from (degrees clockwise from north); params: the editor's controls -
- * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. * core a legacy town's rectangle (half its sides east and north, its ground's height, the street round the town inside it) in the plaza's place; bounds where a cell may stand;
+ * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground; core a legacy town's rectangle (half its sides east and north, its ground's height, the street round the town inside it) in the plaza's place; bounds where a cell may stand;
  * env.blockedAt the ground no cell may take.
  * @param {SettlementInput} input @param {SiteEnv} env
  */
@@ -259,6 +261,7 @@ export function layoutSettlement(input, env) {
     const hs = samples.map(([e, n]) => env.heightAt(e, n)), dry = hs.filter((_, i) => !env.waterAt?.(samples[i][0], samples[i][1]));
     c.natural = (dry.length ? dry : hs).reduce((s, x) => s + x, 0) / (dry.length || hs.length);   // its dry ground's: a pad never under the water it meets
     c.top = Math.max(...hs);
+    c.low = Math.min(...hs);   // a deck's posts reach its lowest ground
     c.wet = 1 - dry.length / samples.length;
     c.raised = islands;
     c.h = islands ? c.top + deck : c.natural;
@@ -303,7 +306,7 @@ export function layoutSettlement(input, env) {
       b = frame.toW(t.u0 + inset(along, reachU), along);
     } else {
       // a core's a metre inside its town's edge that way, on the town's own level ground
-      const town = (/** @type {number} */ bearing) => rectEdge(/** @type {NonNullable<typeof core>} */ (core).half.map((side) => side - (core?.clear ?? 0) - 1), bearing);
+      const town = (/** @type {number} */ bearing) => rectEdge(/** @type {NonNullable<typeof core>} */ (core).half.map((side) => Math.max(0.5, side - (core?.clear ?? 0) - 1)), bearing);
       const inner = f.core ? town(edges[t.j][0]) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);
       // its lane's inset where the next sector's pads begin beside it (a square's, a core's edge, or its inner band's), clear all along
       const beside = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half, edges[t.j][0]) : f.k === 0 ? t.a : Math.min(inner, t.a);
@@ -369,7 +372,7 @@ export function layoutSettlement(input, env) {
     version: SETTLEMENT_GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
     islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks, ...walls, docks,
     core: core ? { centre: core.centre, half: core.half } : null,
-    cells: [...cells.values()].map((c) => ({ ...(c.road?.length ? { road: c.road } : {}), id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
+    cells: [...cells.values()].map((c) => ({ ...(c.road?.length ? { road: c.road } : {}), id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, low: c.low, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
   };
 }
 
@@ -410,7 +413,7 @@ function fortWalls(frame, cells, { edges, grids, sectors, gateSectors }, env, pa
     const turn = (FORT_WALL.thick / 2 + FEATURE_CLEAR) / Math.min(line(j), line(next));
     // beside a gate: its step on the walled side; as tall or taller, no step and its run stops short of the way
     if (byGate(j)) return rim[j] < rim[next] ? -turn : -(FORT_WALL.thick / 2 + FEATURE_CLEAR) / line(j);
-    if (rim[j] === rim[next]) return 0;
+    if (Math.abs(rim[j] - rim[next]) < HAIRLINE) return 0;
     return rim[j] < rim[next] ? -turn : turn;
   };
   const ground = (/** @type {Pt} */ point) => { const natural = env.heightAt(point[0], point[1]); return (settlementGroundAt(pads, datum, point[0], point[1], natural) ?? natural) - datum; };
@@ -426,16 +429,21 @@ function fortWalls(frame, cells, { edges, grids, sectors, gateSectors }, env, pa
     }
     if (!walled(j)) continue;
     const to = edges[j][1] + off(j), path = along(frame, grids[j], from, to, line(j));
-    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side
-    if (has(next) && line(next) !== line(j) && !(byGate(j) && rim[j] >= rim[next])) path.push(frame.toW(to, line(next)));
+    if (has(prev) && !walled(prev) && Math.abs(line(prev) - line(j)) >= HAIRLINE) path.unshift(frame.toW(from, line(prev)));   // a gate's side
+    if (has(next) && Math.abs(line(next) - line(j)) >= HAIRLINE && !(byGate(j) && rim[j] >= rim[next])) path.push(frame.toW(to, line(next)));
     let run = { path: [path[0]], ground: /** @type {number[]} */ ([]) }, n = 0;
     const close = () => { if (run.ground.length) walls.push({ id: `wall${j}.${n++}`, path: run.path, ground: run.ground }); };
     for (let i = 0; i + 1 < path.length; i++) {
       const [a, b] = [path[i], path[i + 1]], steps = Math.max(1, Math.ceil(dhypot(b[0] - a[0], b[1] - a[1]) / 2));
       const points = Array.from({ length: steps + 1 }, (_, k) => /** @type {Pt} */ ([a[0] + ((b[0] - a[0]) * k) / steps, a[1] + ((b[1] - a[1]) * k) / steps]));
       if (points.some(wet)) { close(); run = { path: [b], ground: [] }; continue; }
+      const heights = points.map(ground);
+      if (Math.max(...heights) - Math.min(...heights) > FORT_WALL.h - 2) {   // ground climbing past the wall: a run each sample's stretch
+        for (let k = 1; k < points.length; k++) { run.path.push(points[k]); run.ground.push(cm(Math.min(heights[k - 1], heights[k]))); }
+        continue;
+      }
       run.path.push(b);
-      run.ground.push(cm(Math.min(...points.map(ground))));
+      run.ground.push(cm(Math.min(...heights)));
     }
     close();
   }

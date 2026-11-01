@@ -20,6 +20,10 @@ import { IMPERIAL_DOOR_MODEL } from '../../../src/world/imperialFabricBuildings.
 import { art, CAPITAL_ART } from '../../../src/world/capitalShapes.js';
 import { customModelFor } from '../../../src/world/customModels.js';
 import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
+import { standTownGrowth, townGrowthJob } from '../../../src/world/settlement/townGrowth.js';
+import { generateSettlement } from '../../../src/world/settlement/settlementGen.js';
+import { MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
+
 
 const ROW = SETTLEMENT_ROWS.find((r) => r.province === 'Hammerfell');
 const env = SYNTHETIC.oasis;
@@ -316,4 +320,45 @@ test('RMBC4 every flight tops out level with its higher pad at its rim and lands
     }
     assert.ok(flights > 10, `${archetype}: ${flights} flights`);
   }
+});
+
+test('RMBC4 a flight\'s steps each span their own stretch, risers face down it, both its sides are skirted; a ramp is skirted both sides; a core is never paved; a deck stands on a post at every third corner (mutants: one tread the whole run, the risers turned, a side bare, the core paved, the posts)', () => {
+  const pads = [{ id: 'low', poly: [[0, 0], [20, 0], [20, 20], [0, 20]], y: 0, base: 'cut' }, { id: 'high', poly: [[0, 20], [20, 20], [20, 44], [0, 44]], y: 2.7, base: 'cut' }];
+  const model = (kind) => groundModel({ pads, links: [{ id: 'l0', kind, from: 'low', to: 'high', a: [10, 17], b: [10, 23], width: 3 }] }, 0, new Map());
+  const stairs = model('stairs'), treads = new Map(), normals = { riserUp: 0, riserDown: 0, left: 0, right: 0 };
+  for (let i = 0; i < stairs.positions.length; i += 3) {
+    const [x, y, z] = [stairs.positions[i], stairs.positions[i + 1], stairs.positions[i + 2]], [nx, ny, nz] = [stairs.normals[i], stairs.normals[i + 1], stairs.normals[i + 2]];
+    if (Math.abs(x - 10) > 1.6 || z < 10 || z > 20.01) continue;
+    if (ny > 0.999 && y > 0.01) { const span = treads.get(y.toFixed(3)) ?? [Infinity, -Infinity]; treads.set(y.toFixed(3), [Math.min(span[0], z), Math.max(span[1], z)]); }
+    if (Math.abs(nz) > 0.999) normals[nz < 0 ? 'riserDown' : 'riserUp']++;
+    if (Math.abs(nx) > 0.999) normals[nx < 0 ? 'left' : 'right']++;
+  }
+  const steps = Math.ceil(2.7 / FLIGHT_STEP), run = 2.7 / 0.75;
+  assert.equal(treads.size, steps);
+  for (const [, [from, to]] of treads) assert.ok(Math.abs(to - from - run / steps) < 1e-3, `a tread its own ${(run / steps).toFixed(2)} m, not ${(to - from).toFixed(2)}`);
+  assert.ok(normals.riserDown > 0 && normals.riserUp === 0, 'its risers face down the flight, toward its foot');
+  assert.ok(normals.left > 0 && normals.right > 0, 'both its sides skirted');
+  const ramp = model('ramp');
+  let sides = 0;
+  for (let i = 0; i < ramp.normals.length; i += 3) if (Math.abs(ramp.normals[i]) > 0.999 && Math.abs(ramp.positions[i] - 10) < 1.6 && ramp.positions[i + 2] > 16 && ramp.positions[i + 2] < 24) sides |= ramp.normals[i] < 0 ? 1 : 2;   // its own sides, not the pads' walls
+  assert.equal(sides, 3, 'a ramp skirted both sides');
+  // a grown town's core is its town's own ground: never paved
+  const s = new Float32Array(129 * 129).fill(60 / (MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)), rect = { xMin: 56, xMax: 72, yMin: 56, yMax: 72 };
+  const grown = standTownGrowth(200, 200, s, townGrowthJob({ mapTableData: { mapId: 7301, locationType: 2 }, name: 'Paveless' }, 'IliacBay', 17), rect, {});
+  const { half, centre } = grown.layout.core, g = groundModel(dressSettlement(grown.input, grown.layout).plan, grown.layout.datum, new Map(grown.layout.cells.map((c) => [c.id, c])));
+  const at = (k) => [g.positions[k * 3], g.positions[k * 3 + 2]];
+  for (let i = 0; i < g.indices.length; i += 3) {
+    const [p, q, r] = [g.indices[i], g.indices[i + 1], g.indices[i + 2]].map(at);
+    if (g.normals[g.indices[i] * 3 + 1] < 0.999) continue;
+    assert.ok(!pointInRing(centre, [p, q, r]), 'nothing paved over the middle of the core: its town\'s own ground');
+  }
+  // a deck on a post at every third corner, each down to its ground
+  const wet = generateSettlement({ place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype: 'wetland', style: 'BlackMarsh', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC.wetland });
+  const wl = layoutSettlement({ place: 9, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype: 'wetland', style: 'BlackMarsh', site: { east: 400, north: 400, radius: 90 } }, SYNTHETIC.wetland);
+  const deck = wet.plan.pads.find((p) => p.base === 'raised'), cell = wl.cells.find((c) => c.id === deck.id), foot = cell.low - 0.5;
+  const dm = groundModel({ ...wet.plan, pads: [deck], links: [] }, wl.datum, new Map([[deck.id, cell]]));
+  let bottoms = 0;
+  for (let i = 1; i < dm.positions.length; i += 3) if (Math.abs(dm.positions[i] - foot) < 1e-3) bottoms++;
+  assert.equal(bottoms, Math.ceil(deck.poly.length / 3) * 18, 'a post at every third corner, down past its lowest ground');
+  assert.ok(cell.low <= cell.natural && wl.datum + deck.y - foot > 0.5, 'the deck over it');
 });

@@ -563,7 +563,7 @@
   {
     "name": "WALLS-gate-side-open",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n",
+    "old": "    if (has(prev) && !walled(prev) && Math.abs(line(prev) - line(j)) >= HAIRLINE) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
@@ -762,7 +762,7 @@
   {
     "name": "ROW-unhearted",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2)",
+    "old": "rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2, new Map(plots.map((plot) => [plot.id, plot])))",
     "new": "null",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
@@ -1097,8 +1097,8 @@
   {
     "name": "GATE-step-across",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (has(next) && line(next) !== line(j) && !(byGate(j) && rim[j] >= rim[next])) path.push(frame.toW(to, line(next)));",
-    "new": "    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
+    "old": " && !(byGate(j) && rim[j] >= rim[next])",
+    "new": "",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -1110,6 +1110,228 @@
     "new": ") {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "STAIRS-tread-whole-run",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "const from = i / steps, to = (i + 1) / steps,",
+    "new": "const from = 0, to = 1,",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "STAIRS-risers-turned",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "facing = rise > 0 ? -1 : 1;",
+    "new": "facing = rise > 0 ? 1 : -1;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "STAIRS-one-side",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "    for (const across of [-1, 1]) mesh.quad(PAVING,",
+    "new": "    for (const across of [-1]) mesh.quad(PAVING,",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "RAMP-one-side",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "([[p[0], p[3], -1], [p[1], p[2], 1]])",
+    "new": "([[p[0], p[3], -1]])",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "CORE-paved",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "    if (pad.legacy) continue;   // A core's ground is its town's own tiles\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "DECK-posts-one",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "if (i % 3 === 0) mb.box(PLANK",
+    "new": "if (i === 0) mb.box(PLANK",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "DECK-posts-datum-twice",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "foot = (cell?.low ?? cell?.natural ?? y) - 0.5;",
+    "new": "foot = datum + (cell?.natural ?? y - datum) - 1;",
+    "tests": [
+      "test/world/settlement/rmbc4_stand.test.js"
+    ]
+  },
+  {
+    "name": "GEOM-box-shrunk",
+    "file": "src/world/settlement/settlementGeometry.js",
+    "old": "const boxA = ringBox(a), boxB = ringBox(b);",
+    "new": "const boxA = ringBox(a, -0.5), boxB = ringBox(b, -0.5);",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js",
+      "test/world/settlement/rmbc1_contract.test.js"
+    ]
+  },
+  {
+    "name": "GEOM-finder-edge-unread",
+    "file": "src/world/settlement/settlementGeometry.js",
+    "old": "box: ringBox(pad.poly, GEOM_EPS),",
+    "new": "box: ringBox(pad.poly),",
+    "tests": [
+      "test/world/settlement/rmbc2_contract.test.js"
+    ]
+  },
+  {
+    "name": "OWED-negative-pixel-dropped",
+    "file": "src/world/settlement/settlementOwed.js",
+    "old": "/^-?\\d+,-?\\d+$/",
+    "new": "/^\\d+,\\d+$/",
+    "tests": [
+      "test/world/settlement/rmbc3_owed.test.js"
+    ]
+  },
+  {
+    "name": "SOLIDS-walls-gone",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "        out.push([[start[0] - sideEast, start[1] - sideNorth],",
+    "new": "        void ([[start[0] - sideEast, start[1] - sideNorth],",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "SOLIDS-eave-unread",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "roundRing(at, FORT_TOWER.r + FORT_TOWER.eave, 16)",
+    "new": "roundRing(at, FORT_TOWER.r, 16)",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "SOLIDS-market-default-ring",
+    "file": "src/world/settlement/settlementFeatures.js",
+    "old": "for (const stall of stallsOf(at, feature.id, feature.size)) out.push",
+    "new": "for (const stall of stallsOf(at, feature.id)) out.push",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TOWER-centre-only",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (!ring.some(wet)) towers.push(",
+    "new": "      if (!wet(at)) towers.push(",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALL-ends-only",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "steps = Math.max(1, Math.ceil(dhypot(b[0] - a[0], b[1] - a[1]) / 2));",
+    "new": "steps = 1;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "DOCK-past-far-bank",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    while (end > edge - DOCK_OUT && wet(bearing, end - 1)) end--;",
+    "new": "    while (end > edge - DOCK_OUT) end--;",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "ROW-rim-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "if (edgeDistance(at, pads.get(garden.pad).poly) < room || (plot && edgeDistance(at, plot.poly) < reach) || !proposed.every",
+    "new": "if ((plot && edgeDistance(at, plot.poly) < reach) || !proposed.every",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "ROW-way-thin",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": ">= room + link.width / 2)) return { at, pad: garden.pad, garden };",
+    "new": ">= link.width / 2)) return { at, pad: garden.pad, garden };",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "TREES-next-sector",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": " || (cell.u1 - bearing) * radius < side",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ],
+    "equivalent": true,
+    "why": "a slot three quarters along a cell stands within a metre and a canal of its sector's far edge only on a sector a few metres wide, which no layout lays"
+  },
+  {
+    "name": "WALL-climb-one-foot",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "      if (Math.max(...heights) - Math.min(...heights) > FORT_WALL.h - 2) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "WALL-hairline-step",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "    if (has(next) && Math.abs(line(next) - line(j)) >= HAIRLINE && !(byGate(j)",
+    "new": "    if (has(next) && Math.abs(line(next) - line(j)) > 0 && !(byGate(j)",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
+    ]
+  },
+  {
+    "name": "CORE-narrow-inset",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "Math.max(0.5, side - (core?.clear ?? 0) - 1)",
+    "new": "side - (core?.clear ?? 0) - 1",
+    "tests": [
+      "test/world/settlement/rmbc6_organic.test.js"
+    ],
+    "equivalent": true,
+    "why": "a town narrower than its street on a side is no location: every rect is a block or more across"
+  },
+  {
+    "name": "CENTRE-inward-only",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "    for (let step = start + 1; step <= most; step += 1) out.push(step);   // then outward, toward the rim\n",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js",
+      "test/world/settlement/rmbc2_gen.test.js"
+    ]
+  },
+  {
+    "name": "ROW-plot-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": " || (plot && edgeDistance(at, plot.poly) < reach)",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc4_features.test.js"
     ]
   }
 ]

@@ -466,7 +466,7 @@
   {
     "name": "CORE-link-outside",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "(core).half.map((side) => side - (core?.clear ?? 0) - 1), bearing);",
+    "old": "(core).half.map((side) => Math.max(0.5, side - (core?.clear ?? 0) - 1)), bearing);",
     "new": "(core).half, bearing);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"

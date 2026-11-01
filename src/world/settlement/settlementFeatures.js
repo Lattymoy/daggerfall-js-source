@@ -2,8 +2,8 @@
 // A DRESSED SETTLEMENT'S FEATURES AS ONE MODEL, in its style's own stone and timber: the well, fountain, market or statue at
 // its heart, a fort's walls and towers, a river town's docks, a garden's fence and beds, a field's rows and a fence's rails.
 // Its yard trees are not here: they are the pixel's nature (settlementStand.js settlementTreeFlats), the land's own trees in
-// every season. Each stands on its pad's top; a run along the rim on the ground under each end, its foot sunk into the
-// terrain. Models in the pixel's frame (x east, y up, z north, metres). Pure.
+// every season. Each stands on its pad's top; a fort's run and tower just outside its cells on the ground the carve
+// leaves there (`ground`, `y`), their feet sunk into the terrain. Models in the pixel's frame (x east, y up, z north, metres). Pure.
 import { MeshBuilder } from '../detStandIns.js';
 import { art, CAPITAL_ART, taper, cap, ring, wallRun, merlons, roundTower, gableRoof, robedFigure, translated } from '../capitalShapes.js';
 import { hash32 } from '../blockHash.js';

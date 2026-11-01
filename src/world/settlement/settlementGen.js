@@ -139,7 +139,7 @@ export function dressSettlement(input, L, { check = true } = {}) {
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
   // the outskirts' heart is their town; a row town's is an open plot near its middle
-  const centre = A.centreFeature === 'none' ? null : cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : ring ? null : rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2);
+  const centre = A.centreFeature === 'none' ? null : cells.has('plaza') ? centreSpot(A.centreFeature, frame, L, uStart + 0.3, Math.min(inner * 0.7, inner - 2)) : ring ? null : rowSquare(A.centreFeature, frame, L, features, proposed, uStart + uSpan / 2, new Map(plots.map((plot) => [plot.id, plot])));
   if (centre?.garden) features.splice(features.indexOf(centre.garden), 1);
   if (centre) features.push({ id: 'centre', kind: A.centreFeature, pad: centre.pad ?? 'plaza', at: centre.at, ...(centre.size === undefined ? {} : { size: centre.size }) });
   for (const t of yardTrees(input, L)) features.push({ id: t.id, kind: 'tree', pad: t.pad, at: t.at });
@@ -190,16 +190,18 @@ export function dressSettlement(input, L, { check = true } = {}) {
  * none fits. @param {string} kind @param {ReturnType<typeof polarFrame>} frame @param {ReturnType<typeof layoutSettlement>} layout
  * @param {number} bearing @param {number} distance
  */
-function centreSpot(kind, frame, layout, bearing, distance) {
+export function centreSpot(kind, frame, layout, bearing, distance) {
   const plaza = layout.cells.find((cell) => cell.id === 'plaza'), mound = layout.cells.find((cell) => cell.id === 'mound');
   const rim = Math.min(...plaza.poly.map((corner, i) => distanceToSegment(frame.c, corner, plaza.poly[(i + 1) % plaza.poly.length])));   // its chords' nearest
   const ways = layout.links.filter((link) => link.from === 'plaza' || link.to === 'plaza');
   for (const size of kind === 'market' ? [MARKET_RING, MARKET_RING * 0.85, MARKET_RING * 0.7] : [undefined]) {
     const reach = featureReach({ kind, size }), least = mound ? mound.b + reach + FEATURE_CLEAR : 0, most = rim - reach - FEATURE_CLEAR;
     if (most < least) continue;
-    const out = [];
-    for (let step = clampWithin(distance, least, most); step > least; step -= 1) out.push(step);
-    for (const away of [...out, least]) {
+    const out = [], start = clampWithin(distance, least, most);
+    for (let step = start; step > least; step -= 1) out.push(step);
+    out.push(least);
+    for (let step = start + 1; step <= most; step += 1) out.push(step);   // then outward, toward the rim
+    for (const away of out) {
       for (let k = 0; k < (away > 0 ? 48 : 1); k++) {
         const at = frame.toW(bearing + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (TAU / 48), away);
         if (ways.every((link) => distanceToSegment(at, link.a, link.b) >= reach + link.width / 2 + FEATURE_CLEAR)) return { at, size };
@@ -213,15 +215,16 @@ function centreSpot(kind, frame, layout, bearing, distance) {
  * A row town's heart: the open plot nearest the middle of its arc, a nearer band's before a further one's, its feature in
  * the plot's middle where its body keeps clear of every house, every way and its pad's rim. Null where none does.
  * @param {string} kind @param {ReturnType<typeof polarFrame>} frame @param {ReturnType<typeof layoutSettlement>} layout
- * @param {any[]} features its gardens among them @param {Array<{ fp: Pt[] }>} proposed @param {number} middle
+ * @param {any[]} features its gardens among them @param {Array<{ fp: Pt[] }>} proposed @param {number} middle @param {Map<string, any>|null} [plots]
  */
-export function rowSquare(kind, frame, layout, features, proposed, middle) {
+export function rowSquare(kind, frame, layout, features, proposed, middle, plots = null) {
   const reach = featureReach({ kind }), room = reach + FEATURE_CLEAR, pads = new Map(layout.pads.map((pad) => [pad.id, pad])), band = new Map(layout.cells.map((cell) => [cell.id, cell.k]));
   const apart = (/** @type {Pt} */ at) => { const turn = compassBearing(at[0] - frame.c[0], at[1] - frame.c[1]) - middle; return Math.abs(datan2(dsin(turn), dcos(turn))); };
   const open = features.filter((feature) => feature.kind === 'garden').sort((x, y) => band.get(x.pad) - band.get(y.pad) || apart(x.at) - apart(y.at) || (x.id < y.id ? -1 : 1));
   for (const garden of open) {
     const at = garden.at, clear = (/** @type {readonly Pt[]} */ ring) => !pointInRing(at, ring) && edgeDistance(at, ring) >= room;
-    if (edgeDistance(at, pads.get(garden.pad).poly) < room || !proposed.every((house) => clear(house.fp))) continue;
+    const plot = plots?.get(garden.id.slice(1));
+    if (edgeDistance(at, pads.get(garden.pad).poly) < room || (plot && edgeDistance(at, plot.poly) < reach) || !proposed.every((house) => clear(house.fp))) continue;   // its body on its own plot
     if (layout.links.every((link) => distanceToSegment(at, link.a, link.b) >= room + link.width / 2)) return { at, pad: garden.pad, garden };
   }
   return null;

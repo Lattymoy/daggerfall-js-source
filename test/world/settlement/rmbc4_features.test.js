@@ -4,11 +4,11 @@
 // dressing's own points. A Hammerfell settlement and a Bay one. Pins mutation-checked (tools/mutants/rmbc4.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuresModel, FORT_WALL, FORT_TOWER, FENCE } from '../../../src/world/settlement/settlementFeatures.js';
+import { featuresModel, featureSolids, stallsOf, FORT_WALL, FORT_TOWER, FENCE } from '../../../src/world/settlement/settlementFeatures.js';
 import { MARKET_RING, featureReach } from '../../../src/world/settlement/settlementLimits.js';
 import { validateSettlement } from '../../../src/world/settlement/settlementContract.js';
 import { settlementGroundAt } from '../../../src/world/settlement/settlementGround.js';
-import { generateSettlement, yardTrees, layoutSettlement, rowSquare } from '../../../src/world/settlement/settlementGen.js';
+import { generateSettlement, yardTrees, layoutSettlement, rowSquare, centreSpot } from '../../../src/world/settlement/settlementGen.js';
 import { polarFrame } from '../../../src/world/settlement/settlementLayout.js';
 import { DOCK_REACH, DOCK_OUT } from '../../../src/world/settlement/settlementLayout.js';
 import { settlementTreeFlats, liveTreesOf, YARD_TREE_FALLBACK } from '../../../src/world/settlement/settlementStand.js';
@@ -253,6 +253,11 @@ test('FEATURES a row town\'s heart keeps clear of a house: the open plot nearest
   assert.equal(rowSquare('fountain', frame, layout, gardens, [], 0)?.garden.id, 'gA', 'the nearer its middle');
   const house = { fp: [[-3, 22], [3, 22], [3, 30], [-3, 30]] };
   assert.equal(rowSquare('fountain', frame, layout, gardens, [house], 0)?.garden.id, 'gB', 'a house within its reach: the next');
+  assert.equal(rowSquare('fountain', frame, layout, [{ id: 'g0', kind: 'garden', pad: 'c1.0', at: [0, 1] }, ...gardens], [], 0)?.garden.id, 'gA', 'one by its pad\'s rim passed over');
+  const way = { ...layout, links: [{ id: 'l0', a: [-6, 22], b: [6, 22], width: 2 }] };
+  assert.equal(rowSquare('fountain', frame, way, gardens, [], 0)?.garden.id, 'gB', 'a way two metres off: within its body\'s reach and half the way');
+  const plots = new Map([['A', { id: 'A', poly: [[-1.5, 14], [1.5, 14], [1.5, 26], [-1.5, 26]] }], ['B', { id: 'B', poly: [[6, 14], [18, 14], [18, 26], [6, 26]] }]]);
+  assert.equal(rowSquare('fountain', frame, layout, gardens, [], 0, plots)?.garden.id, 'gB', 'a plot too narrow for its body passed over');
 });
 
 test('FEATURES a district drawn again draws its own yard trees again and no other\'s (mutant: the district\'s seed unread)', () => {
@@ -285,4 +290,62 @@ test('FEATURES a fort\'s gate opens clear: no tower and no wall within a metre o
     }
   }
   assert.ok(gates > 30, `${gates} gates`);
+});
+
+test('FEATURES the solids a body may not stand in: a fort\'s every wall run, a tower out to its eave, a market\'s stalls on its own ring (mutants: the walls, the eave, the ring)', () => {
+  const { plan } = make('fort', 'HighRock'), solids = featureSolids(plan), wall = plan.features.find((f) => f.kind === 'wall'), tower = plan.features.find((f) => f.kind === 'tower');
+  const middle = [(wall.path[0][0] + wall.path[1][0]) / 2, (wall.path[0][1] + wall.path[1][1]) / 2];
+  assert.ok(solids.some((ring) => pointInRing(middle, ring)), 'its wall\'s run');
+  const out = [tower.at[0] - make('fort', 'HighRock').layout.c[0], tower.at[1] - make('fort', 'HighRock').layout.c[1]], far = Math.hypot(...out);
+  const eave = [tower.at[0] + (out[0] / far) * (FORT_TOWER.r + FORT_TOWER.eave - 0.1), tower.at[1] + (out[1] / far) * (FORT_TOWER.r + FORT_TOWER.eave - 0.1)];   // out past its wall
+  assert.ok(solids.some((ring) => pointInRing(eave, ring)), 'its tower to its eave');
+  const market = { ...plan, features: [{ id: 'm', kind: 'market', pad: 'plaza', at: [0, 0], size: 3.5 }] };
+  for (const stall of stallsOf([0, 0], 'm', 3.5)) assert.ok(featureSolids(market).some((ring) => pointInRing(stall, ring)), 'a stall on its drawn-in ring');
+});
+
+test('FEATURES the ground under the coast and the walls as it is: a tower whose ring the shore cuts is not built; a run\'s foot is its lowest ground, a dip mid-run too; a dock stops at a narrow river\'s far bank (mutants: the tower\'s centre alone, a run\'s ends alone, the far bank)', () => {
+  const dry = make('fort', 'HighRock'), towers = dry.plan.features.filter((f) => f.kind === 'tower'), t = towers[1];
+  const away = [t.at[0] - dry.layout.c[0], t.at[1] - dry.layout.c[1]], length = Math.hypot(...away), pool = [t.at[0] + (away[0] / length) * 3.2, t.at[1] + (away[1] / length) * 3.2];
+  const wetAt = (e, n) => Math.hypot(e - pool[0], n - pool[1]) < 1.5, coast = { heightAt: (e, n) => (wetAt(e, n) ? 30 : SYNTHETIC.fort.heightAt(e, n)), waterAt: wetAt };
+  const cut = generateSettlement({ ...dry.input, env: coast }).plan;
+  assert.ok(!wetAt(...t.at) && !cut.features.some((f) => f.id === t.id), 'the tower its pool reaches into, gone');
+  // a trench under a deck fort's wall run, its middle: the land's own ground, no carve holding it
+  const decks = make('fort', 'Valenwood'), wall = decks.plan.features.find((f) => f.kind === 'wall' && f.path.length > 2), [a, b] = [wall.path[1], wall.path[2]], mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const trench = { heightAt: (e, n) => SYNTHETIC.fort.heightAt(e, n) - (Math.hypot(e - mid[0], n - mid[1]) < 1.2 ? 2.5 : 0) };
+  const dipped = generateSettlement({ ...decks.input, env: trench }).plan.features.find((f) => f.id === wall.id);
+  assert.ok(dipped.ground[1] < wall.ground[1] - 1.5, `its foot down into the trench: ${dipped.ground[1]} for ${wall.ground[1]}`);
+  // a river five metres wide, land beyond it
+  const riverAt = (e, n) => n < 357.5 && n > 352.5, narrow = { heightAt: (e, n) => (riverAt(e, n) ? 30 : 36 + 0.002 * n), waterAt: riverAt };
+  const docks = generateSettlement({ ...make('river', 'Sumurset').input, env: narrow }).plan.features.filter((f) => f.kind === 'dock');
+  assert.ok(docks.length > 0 && docks.every((d) => riverAt(...d.path[1])), 'every dock ends over the river, none on its far bank');
+});
+
+test('FEATURES a wall run never buried by the ground it climbs: on a steep slope each stretch takes its own foot; no hairline step between two wall lines (mutants: one foot a run, the hairline)', () => {
+  const steep = { heightAt: (e, n) => 40 + 0.75 * (e - 400) + 0.2 * (n - 400) };
+  const input = { ...make('fort', 'Valenwood').input, env: steep }, { plan } = generateSettlement(input), datum = layoutSettlement(input, steep).datum;
+  const walls = plan.features.filter((f) => f.kind === 'wall');
+  assert.ok(walls.length > 0);
+  for (const w of walls) for (let i = 0; i + 1 < w.path.length; i++) {
+    const [a, b] = [w.path[i], w.path[i + 1]], length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    assert.ok(length >= 0.1, `${w.id} run ${i}: no hairline (${length.toFixed(3)} m)`);
+    let top = -Infinity;
+    for (let k = 0; k <= 20; k++) {
+      const [e, n] = [a[0] + ((b[0] - a[0]) * k) / 20, a[1] + ((b[1] - a[1]) * k) / 20], natural = steep.heightAt(e, n);
+      top = Math.max(top, settlementGroundAt(plan.pads, datum, e, n, natural) ?? natural);   // the ground as the carve leaves it
+    }
+    assert.ok(top - (datum + w.ground[i]) <= FORT_WALL.h - 1, `${w.id} run ${i}: its top over the ground it climbs`);
+  }
+});
+
+test('FEATURES no fort draws a hairline step where two sectors\' wall lines nearly meet; a square\'s feature looks outward from its preferred distance when every spot inward is taken (mutants: the hairline, the inward search alone)', () => {
+  let runs = 0;
+  for (let seed = 1; seed <= 60; seed++) {
+    const { plan } = generateSettlement({ ...make('fort', 'HighRock').input, seed });
+    for (const w of plan.features.filter((f) => f.kind === 'wall')) for (let i = 0; i + 1 < w.path.length; i++, runs++) assert.ok(Math.hypot(w.path[i + 1][0] - w.path[i][0], w.path[i + 1][1] - w.path[i][1]) >= 0.1, `seed ${seed}: ${w.id} run ${i}`);
+  }
+  assert.ok(runs > 1000);
+  const frame = polarFrame([0, 0]), ring = Array.from({ length: 32 }, (_, i) => frame.toW((i / 32) * 2 * Math.PI, 30));
+  const spokes = Array.from({ length: 24 }, (_, i) => ({ id: `l${i}`, from: 'plaza', to: `c${i}`, a: [0, 0], b: frame.toW((i / 24) * 2 * Math.PI, 12), width: 1 }));
+  const spot = centreSpot('well', frame, /** @type {any} */ ({ cells: [{ id: 'plaza', poly: ring }], links: spokes }), 0.13, 5);
+  assert.ok(spot && Math.hypot(...spot.at) > 12, `outward past the spokes: ${spot && Math.hypot(...spot.at)}`);
 });

@@ -59,7 +59,7 @@ export const SETTLEMENT_ARCHETYPES = Object.freeze({
     services: [S('Tavern', 'plaza'), S('GeneralStore', 'plaza'), S('Temple')], centreFeature: 'market' }),
   village: archetype({ frame: 'auto', centre: 'site', size: [48, 64], bands: 2, sectors: [6, 8], plaza: 14, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.4,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza')], centreFeature: 'well' }),
-  // A town's outskirts - rings round its legacy core (the plaza's place, `core`), never alone
+  // A town's outskirts - round its legacy core (the plaza's place, `core`), along its roads, never alone
   outskirts: archetype({ frame: 'ring', centre: 'site', size: [0, 0], bands: 3, sectors: [16, 22], plaza: 0, gates: 0, islands: false, wall: false, keep: false, docks: false, wealth: 0.35,
     services: [S('Tavern', 'plaza')], centreFeature: 'none', core: true }),
 });

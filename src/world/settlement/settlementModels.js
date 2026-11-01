@@ -24,7 +24,7 @@ export const SETTLEMENT_MODEL_RUN = 4096;
 /** A settlement's ground's model id, and a building's. */
 export const groundModelId = (/** @type {number} */ ordinal) => SETTLEMENT_MODEL_BASE + ordinal * SETTLEMENT_MODEL_RUN;
 export const buildingModelId = (/** @type {number} */ ordinal, /** @type {number} */ i) => groundModelId(ordinal) + 1 + i;
-/** Its features' model id: the run's last, past every building a plan can stand (the contract's checks keep fewer). */
+/** Its features' model id: the run's last, past every building a plan can stand (the host stands none with more). */
 export const featuresModelId = (/** @type {number} */ ordinal) => groundModelId(ordinal) + SETTLEMENT_MODEL_RUN - 1;
 export const isSettlementModelId = (/** @type {number} */ id) => id >= SETTLEMENT_MODEL_BASE && id < SETTLEMENT_MODEL_BASE + 512 * SETTLEMENT_MODEL_RUN;
 /** How far a retaining wall reaches down from its pad, and a deck's rim, metres. */
@@ -72,7 +72,7 @@ function outward(ring, i) {
 
 /**
  * The ground's model: paving and retaining walls, decks and posts, stairs, ramps and bridges.
- * @param {import('./settlementContract.js').SettlementPlan} plan @param {number} datum @param {Map<string, { natural: number }>} cells
+ * @param {import('./settlementContract.js').SettlementPlan} plan @param {number} datum @param {Map<string, { natural: number, low?: number }>} cells
  * @param {string} [style] its style's key: its terraces' paving (settlementStyles.js `ground`)
  */
 export function groundModel(plan, datum, cells, style = 'IliacBay') {
@@ -88,7 +88,7 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
     const low = raised ? y - DECK_RIM : y - WALL_DROP;
     pad.poly.forEach((a, i) => wall(mb, raised ? PLANK : WALL, a, pad.poly[(i + 1) % pad.poly.length], low, y, outward(pad.poly, i)));
     if (raised) {
-      const foot = datum + (cells.get(pad.id)?.natural ?? y - datum) - 1;
+      const cell = cells.get(pad.id), foot = (cell?.low ?? cell?.natural ?? y) - 0.5;   // the deck's lowest ground, metres as its heights are
       pad.poly.forEach((p, i) => { if (i % 3 === 0) mb.box(PLANK, [p[0], (foot + y) / 2, p[1]], [0.3, Math.max(0.5, y - foot), 0.3], 1); });
     }
   }
