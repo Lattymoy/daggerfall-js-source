@@ -21,7 +21,8 @@ const SIZE = process.argv.includes('--size') ? process.argv[process.argv.indexOf
 const page = await browser.newPage({ viewport: { width: SIZE[0], height: SIZE[1] } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message)));
-page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/status of 404/.test(t)) errors.push(`[console] ${t}`); if (/\[settlements\]/.test(t)) errors.push(`[warn] ${t}`); });
+let traced = null;   // the picture's trace landed (the Bay fitted to it) or failed: a settlement's pixel is the fit's
+page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/status of 404/.test(t)) errors.push(`[console] ${t}`); if (/\[settlements\]/.test(t)) errors.push(`[warn] ${t}`); if (/\[tamriel\] (the picture traced|.*authored continent stands)/.test(t)) traced = t; });
 // a frame count read through a navigation (the boot may reload once): a destroyed context answers 0 and the wait goes on
 const frameNow = () => page.evaluate(() => window.__frame ?? 0).catch(() => 0);
 const frames = async (n, cap = 60000) => {
@@ -44,6 +45,8 @@ try {
   await until(() => (window.__frame ?? 0) > 5 && typeof window.__tesaJump === 'function', 300000);
   await page.mouse.click(640, 400);
   await drain();
+  for (let t0 = Date.now(); !traced && Date.now() - t0 < 240000;) await frames(5, 10000);
+  console.log('trace:', traced ?? 'never landed - the authored fit stands');
   // the settlement's pixel under the game's own fit (the same modules the game runs, through the dev server)
   const where = await page.evaluate(async (o) => {
     const places = await import('/src/world/settlement/settlementPlaces.js'), frame = await import('/src/world/tamriel/tamrielFrame.js');

@@ -304,8 +304,8 @@ house.
 
 The spawn law (`spawnGroundPlace.js` `spawnAt`) keeps a published settlement's pixel from the online dungeon roll, so
 the Overworld and the ground never shape it for a dungeon that does not stand. `buildingDataForDoor` answers a
-door with no location pixel by a copy of the record it carries. `tools/settlementWorldProbe.mjs` jumps to a published
-settlement in the running game, shoots it and walks through a door; `tools/townGrowthProbe.mjs` shoots a grown town.
+door with no location pixel by a copy of the record it carries. `tools/settlementWorldProbe.mjs` waits for the picture's trace
+to fit the Bay, jumps to a published settlement in the running game, shoots it and walks through a door; `tools/townGrowthProbe.mjs` shoots a grown town.
 
 ## The published settlements
 
