@@ -42,12 +42,82 @@ def interior(ids):
     return same & (ids > 0)
 
 
+def srgb(c):
+    c = np.clip(c, 0, 1)
+    return np.where(c <= 0.0031308, c * 12.92, 1.055 * c ** (1 / 2.4) - 0.055) * 255
+
+
+def gather(fighter, cloud, frames, spec, ref, names, tmp):
+    """Each frame's pixels by material: (material index a pixel, ours linear, reference linear)."""
+    ids_all, ours_all, theirs_all = [], [], []
+    for r, rec, f in frames:
+        work = forge.render_frame(fighter, rec['anim'], rec['view'], f, tmp)
+        pic, _ = forge.crop(work, rec['canvas'], rec['place'])
+        ids = material_map(cloud, rec, f, rec['place'])
+        cw, ch = rec['canvas']
+        hexes = ref['records'][r]['rgb'][f]
+        df = np.frombuffer(bytes.fromhex(hexes), dtype=np.uint8).reshape(ch, cw, 3)
+        dfa = np.array([c != '0' for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
+        keep = interior(ids) & dfa & (pic[..., 3] > 0)
+        ids_all.append(ids[keep])
+        ours_all.append(linear(pic[keep][:, :3]))
+        theirs_all.append(linear(df[keep]))
+    return np.concatenate(ids_all), np.concatenate(ours_all), np.concatenate(theirs_all)
+
+
+def residual(ids, ours, theirs):
+    """The colour left over once each material takes its best scale a channel: mean absolute difference, 0-255."""
+    out = np.zeros_like(ours)
+    for m in np.unique(ids):
+        k = ids == m
+        o, t = ours[k], theirs[k]
+        sc = np.clip((o * t).sum(axis=0) / np.maximum((o * o).sum(axis=0), 1e-9), 0.2, 5.0)
+        out[k] = o * sc
+    return float(np.abs(srgb(out) - srgb(theirs)).mean())
+
+
+def fit_light(fighter, cloud, spec, ref, names, tmp, iters):
+    frames = [(r, spec['records'][r], 0) for r in (0, 2, 4, 5, 7, 9, 15, 17, 19, 22)]
+    keys = [('key', 0), ('key', 1), ('key', 2), ('key', 3), ('fill', 3), ('top', 3), ('world', None)]
+    steps = np.array([0.25, 0.25, 0.25, 1.0, 0.3, 0.4, 0.3])
+
+    def light_of(x):
+        L = json.loads(json.dumps(stage.LIGHT))
+        for (k, i), v in zip(keys, x):
+            if i is None:
+                L[k] = float(max(v, 0.0))
+            else:
+                L[k][i] = float(max(v, 0.0) if i == 3 else v)
+        return L
+
+    def value(x):
+        stage.set_lights(light_of(x))
+        return residual(*gather(fighter, cloud, frames, spec, ref, names, tmp))
+    x = np.array([stage.LIGHT[k][i] if i is not None else stage.LIGHT[k] for k, i in keys], dtype=np.float64)
+    rng = np.random.default_rng(5)
+    best = first = value(x)
+    sigma = steps.copy()
+    for it in range(iters):
+        c = x + rng.normal(size=len(x)) * sigma
+        v = value(c)
+        if v < best:
+            x, best = c, v
+            sigma = np.minimum(sigma * 1.3, steps * 2)
+        else:
+            sigma = np.maximum(sigma * 0.9, steps * 0.05)
+        print(f'light {it}: {best:.2f}', flush=True)
+    print(f'light: {first:.2f} -> {best:.2f}', flush=True)
+    stage.set_lights(light_of(x))
+    return light_of(x)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--spec', required=True)
     ap.add_argument('--ref', required=True)
     ap.add_argument('--rounds', type=int, default=3)
     ap.add_argument('--samples', type=int, default=32)
+    ap.add_argument('--light', type=int, default=0, help='first fit the lights for this many tries')
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     spec = json.load(open(args.spec))
     ref = json.load(open(args.ref))
@@ -57,6 +127,8 @@ def main():
     tints = {k: list(v) for k, v in materials.TINT.items()}
     shape.load_shape(args.spec.replace('.json', '-shape.json'))
     stage.PX_PER_M *= shape.SHAPE['scale']
+    light_path = args.spec.replace('.json', '-light.json')
+    stage.load_light(light_path)
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)
     fighter = forge.Fighter()
@@ -66,6 +138,10 @@ def main():
     cloud.set_shape(shape.SHAPE)
     cloud.scale = 1.0   # the stage's pixels a metre already carry it
     tmp = os.path.join(tempfile.mkdtemp(), 'c.png')
+    if args.light:
+        L = fit_light(fighter, cloud, spec, ref, names, tmp, args.light)
+        with open(light_path, 'w') as fh:
+            fh.write(json.dumps(L, indent=1) + '\n')
     frames = [(r, rec, 0) for r, rec in enumerate(spec['records'])]
     for rnd in range(args.rounds):
         ours = {n: [] for n in names}
@@ -75,9 +151,7 @@ def main():
             pic, _ = forge.crop(work, rec['canvas'], rec['place'])
             ids = material_map(cloud, rec, f, rec['place'])
             cw, ch = rec['canvas']
-            hexes = ref['records'][r]['rgb'][f]
-            df = np.array([[int(hexes[i:i + 2], 16), int(hexes[i + 2:i + 4], 16), int(hexes[i + 4:i + 6], 16)]
-                           for i in range(0, len(hexes), 6)]).reshape(ch, cw, 3)
+            df = np.frombuffer(bytes.fromhex(ref['records'][r]['rgb'][f]), dtype=np.uint8).reshape(ch, cw, 3)
             dfa = np.array([c != '0' for c in ref['records'][r]['frames'][f]]).reshape(ch, cw)
             keep = interior(ids) & dfa & (pic[..., 3] > 0)
             for k, n in enumerate(names):

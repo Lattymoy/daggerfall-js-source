@@ -149,6 +149,7 @@ def main():
     poses.load_fit(args.spec.replace('.json', '-fit.json'))
     shape.load_shape(args.spec.replace('.json', '-shape.json'))
     materials.load_tint(args.spec.replace('.json', '-colour.json'))
+    stage.load_light(args.spec.replace('.json', '-light.json'))
     stage.PX_PER_M *= shape.SHAPE['scale']
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)

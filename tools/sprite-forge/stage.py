@@ -2,7 +2,9 @@
 
 The lights ride the camera, so every view is lit from the viewer's upper left as the classic sprites are. The
 camera is orthographic at a fixed pixels-per-metre, so a body is one size in every record."""
+import json
 import math
+import os
 import struct
 import zlib
 
@@ -14,6 +16,24 @@ PX_PER_M = 62.0      # the classic medium fighter stands about 112 px tall in hi
 ELEVATION = 8.0      # degrees the camera looks down
 WORK_W, WORK_H = 220, 190
 ROOT_PX = (WORK_W // 2, WORK_H - 12)   # where the ground under the body lands in a work render
+# the lights, each (direction it shines toward, strength), and the ambient's strength; colour.py --light fits them
+LIGHT = {'key': [0.75, 0.85, -0.9, 5.0], 'fill': [-1.0, 0.6, -0.2, 0.5], 'top': [0.1, 0.2, -1.0, 1.2], 'world': 1.0}
+
+
+def load_light(path):
+    if os.path.exists(path):
+        LIGHT.update(json.load(open(path)))
+
+
+def set_lights(light=None):
+    """Aim and set the stage's lights (after setup)."""
+    light = light or LIGHT
+    for name in ('key', 'fill', 'top'):
+        ob = bpy.data.objects[name]
+        x, y, z, e = light[name]
+        ob.rotation_euler = Vector((x, y, z)).to_track_quat('-Z', 'Y').to_euler()
+        ob.data.energy = e
+    bpy.context.scene.world.node_tree.nodes['Background'].inputs['Strength'].default_value = light['world']
 
 
 def setup(samples=64):
@@ -62,9 +82,9 @@ def setup(samples=64):
         ob.rotation_euler = Vector(toward).to_track_quat('-Z', 'Y').to_euler()
         return ob
     # key from the viewer's upper left, a cool fill from the right, a faint top light for the helm's crown
-    sun('key', (0.75, 0.85, -0.9), 5.0)
-    sun('fill', (-1.0, 0.6, -0.2), 0.5)
-    sun('top', (0.1, 0.2, -1.0), 1.2)
+    for name in ('key', 'fill', 'top'):
+        sun(name, LIGHT[name][:3], LIGHT[name][3])
+    set_lights()
     return cam
 
 
