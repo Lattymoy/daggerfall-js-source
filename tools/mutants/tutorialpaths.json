@@ -1,0 +1,20 @@
+[
+  {
+    "name": "TUT-survival-sent-to-features",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Casual or Hard, set under Settings > Gameplay. On Boons,",
+    "new": "Casual or Hard, set under Settings > Features. On Boons,",
+    "tests": [
+      "test/ui/tutorialpaths.test.js"
+    ]
+  },
+  {
+    "name": "TUT-marks-sent-to-features",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Settings > Interface sets how exact the marks are.",
+    "new": "Settings > Features sets how exact the marks are.",
+    "tests": [
+      "test/ui/tutorialpaths.test.js"
+    ]
+  }
+]

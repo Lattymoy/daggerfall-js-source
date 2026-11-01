@@ -103,7 +103,7 @@ export const TUTORIALS = Object.freeze([
       '{QuickSave} saves your game at once and {QuickLoad} loads that save. Save often.',
     ],
     points: [
-      'Every feature DFO adds can be turned off under Settings > Features.',
+      'Every feature DFO adds can be turned off in Settings.',
       'Online, the world goes on while the menu is open.',
     ],
   }),
@@ -401,7 +401,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'quest-guide', group: 'quests', title: 'Tracking Quests', trigger: 'When you first track a quest.',
     body: [
-      'A quest you follow is shown at the top right, and its goal is marked on your compass and map. Settings > Features sets how exact the marks are.',
+      'A quest you follow is shown at the top right, and its goal is marked on your compass and map. Settings > Interface sets how exact the marks are.',
     ],
   }),
   page({
@@ -495,7 +495,7 @@ export const TUTORIALS = Object.freeze([
     id: 'survival', group: 'livelihood', title: 'Hunger and Cold', trigger: 'When a need first shows on your screen.',
     body: [
       'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',
-      'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',
+      'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Gameplay. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',
     ],
   }),
 

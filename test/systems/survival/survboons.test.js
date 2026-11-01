@@ -431,7 +431,7 @@ test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows i
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.deepEqual(page.body, [
     'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand; VOICE1: plain words
-    'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1)
+    'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Gameplay. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1); the tab survival is on
   ]);
   // CREDITS-OUT (2026-11-01): the credits' tier sentence left with ui/credits.js
 });

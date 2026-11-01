@@ -210,7 +210,7 @@ export const OVERHAUL_PANELS = Object.freeze([
         blurb: 'The original game\u2019s own sounds, for a retro feel.',
       }),
       preset('enhanced', 'Enhanced', 'enhanced', SOUND_ROWS, {
-        by: 'DFO Online and Immersive Footsteps',
+        by: OUR_NAME,
         blurb: 'New and improved sounds and ambience.',
       }),
     ]),

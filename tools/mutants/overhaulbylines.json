@@ -1,0 +1,11 @@
+[
+  {
+    "name": "OVH-sound-credited-to-immersive-footsteps",
+    "file": "src/systems/overhauls.js",
+    "old": "        by: OUR_NAME,\n        blurb: 'New and improved sounds and ambience.',",
+    "new": "        by: 'DFO Online and Immersive Footsteps',\n        blurb: 'New and improved sounds and ambience.',",
+    "tests": [
+      "test/ui/overhaulbylines.test.js"
+    ]
+  }
+]

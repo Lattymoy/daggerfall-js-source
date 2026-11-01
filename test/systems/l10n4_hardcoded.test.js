@@ -484,7 +484,7 @@ const HARDCODED = {
   'src/systems/naval/treasureCharts.js': 1,
   'src/systems/online/onlineHomes.js': 61,
   'src/systems/online/onlineLane.js': 1,
-  'src/systems/overhauls.js': 23,
+  'src/systems/overhauls.js': 22,
   'src/systems/party/partyArrival.js': 3,
   'src/systems/party/partyMap.js': 1,
   'src/systems/party/partyRestLaw.js': 3,
