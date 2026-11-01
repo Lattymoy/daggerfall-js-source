@@ -442,8 +442,8 @@
   {
     "name": "LAYERED-WEAPONS-chain-thin",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "    const c = samplePicture(C.img, x, y, n, at, 0.3);",
-    "new": "    const c = samplePicture(C.img, x, y, n, at);",
+    "old": "  const offs = offsetsOf(0.3);   // a chain is round: a px wide at the least, from any side",
+    "new": "  const offs = offsetsOf(0);   // a chain is round: a px wide at the least, from any side",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -462,8 +462,8 @@
   {
     "name": "LAYERED-WEAPONS-no-spread",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "  const offs = spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0];",
-    "new": "  const offs = [0];",
+    "old": "export const offsetsOf = (spread) => (spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0]);",
+    "new": "export const offsetsOf = (spread) => [0];",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1498,5 +1498,45 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a drawn shape seen flat where the frame turns it edge on"
+  },
+  {
+    "name": "LAYERED-SAMPLE-no-widening",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    at(x + (cx ? 1 + spread : -spread), y + cy, _pt);",
+    "new": "    at(x + (cx ? 1 : 0), y + cy, _pt);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js"
+    ],
+    "why": "a px whose offset samples reach past a gap is skipped, and its colour lost"
+  },
+  {
+    "name": "LAYERED-SAMPLE-faint-opaque",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "row += c[(y * W + x) * 4 + 3] > 127 ? 1 : 0;",
+    "new": "row += c[(y * W + x) * 4 + 3] > 126 ? 1 : 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js"
+    ],
+    "why": "the skip reads a texel the sampler calls clear as a hit"
+  },
+  {
+    "name": "LAYERED-SAMPLE-corners-not-rounded-out",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "Math.round(x0 - 1e-6)",
+    "new": "Math.round(x0 + 0.6)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js"
+    ],
+    "why": "a px whose samples round onto the box's edge is skipped"
+  },
+  {
+    "name": "LAYERED-SAMPLE-infinite-skipped",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!Number.isFinite(x0 + x1 + y0 + y1)) return false;   // a corner off the map: sampled as ever\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_sample.test.js"
+    ],
+    "why": "a map off to infinity is skipped where it was sampled"
   }
 ]

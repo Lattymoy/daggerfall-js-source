@@ -720,21 +720,63 @@ export function dropSpecks(out, was) {
   return out;
 }
 
+/** The offsets across the screen a sample is also read at, `spread` px either side (samplePicture's): made once a draw. */
+export const offsetsOf = (spread) => (spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0]);
+/** samplePicture's point and colour, refilled each call: a crowd's frames are composed on the page's own thread, and
+ *  a weapon reads up to 720 samples a px. */
+const _pt = [0, 0], _rgb = [0, 0, 0];
 /** Sample a held picture over one px: the mean colour of its opaque samples where a third of them are, else null.
- *  `at(x, y)` answers the picture's point for a sample of the composed picture; a sample `spread` px either side across
- *  the screen counts as its own (a thing thinner than the picture draws it). */
-function samplePicture(img, x, y, n, at, spread = 0) {
+ *  `at(x, y, o)` writes the picture's point for a sample of the composed picture into `o`; a sample at each of `offs`
+ *  across the screen counts as its own (a thing thinner than the picture draws it). The colour answered is shared:
+ *  read it before the next call. */
+export function samplePicture(img, x, y, n, at, offs) {
   let k = 0, R = 0, G = 0, B = 0;
-  const offs = spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0];
-  for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) for (const o of offs) {
-    const [px, py] = at(x + (sx + 0.5) / n + o, y + (sy + 0.5) / n), X = Math.round(px), Y = Math.round(py);
-    if (X < 0 || Y < 0 || X >= img.width || Y >= img.height) continue;
-    const q = (Y * img.width + X) * 4;
-    if (img.colors[q + 3] <= 127) continue;
-    k++; R += img.colors[q]; G += img.colors[q + 1]; B += img.colors[q + 2];
+  const W = img.width, H = img.height, c = img.colors;
+  for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) for (let j = 0; j < offs.length; j++) {
+    at(x + (sx + 0.5) / n + offs[j], y + (sy + 0.5) / n, _pt);
+    const X = Math.round(_pt[0]), Y = Math.round(_pt[1]);
+    if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+    const q = (Y * W + X) * 4;
+    if (c[q + 3] <= 127) continue;
+    k++; R += c[q]; G += c[q + 1]; B += c[q + 2];
     break;
   }
-  return k * 3 >= n * n ? [R / k, G / k, B / k] : null;
+  if (!(k * 3 >= n * n)) return null;
+  _rgb[0] = R / k; _rgb[1] = G / k; _rgb[2] = B / k;
+  return _rgb;
+}
+
+/** A picture's opaque texels (alpha over 127, samplePicture's) summed from its top left, made once a picture. */
+const _opaque = new WeakMap();
+function opaqueSums(img) {
+  let t = _opaque.get(img);
+  if (t) return t;
+  const W = img.width, H = img.height, c = img.colors, S = W + 1;
+  t = new Int32Array(S * (H + 1));
+  for (let y = 0; y < H; y++) {
+    let row = 0;
+    for (let x = 0; x < W; x++) { row += c[(y * W + x) * 4 + 3] > 127 ? 1 : 0; t[(y + 1) * S + x + 1] = t[y * S + x + 1] + row; }
+  }
+  _opaque.set(img, t);
+  return t;
+}
+/** Whether every sample samplePicture takes for px (x, y) misses the picture, so it answers null. Only for an `at`
+ *  that is affine: then every sample lies inside the box of the px's corners (widened by `spread` across), and a box
+ *  holding no opaque texel holds no hit. Most of a thin weapon's box is open air, and a px there skips its samples. */
+export function footprintEmpty(img, x, y, at, spread) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let cy = 0; cy < 2; cy++) for (let cx = 0; cx < 2; cx++) {
+    at(x + (cx ? 1 + spread : -spread), y + cy, _pt);
+    if (_pt[0] < x0) x0 = _pt[0]; if (_pt[0] > x1) x1 = _pt[0];
+    if (_pt[1] < y0) y0 = _pt[1]; if (_pt[1] > y1) y1 = _pt[1];
+  }
+  if (!Number.isFinite(x0 + x1 + y0 + y1)) return false;   // a corner off the map: sampled as ever
+  const W = img.width, H = img.height;
+  const X0 = Math.max(0, Math.round(x0 - 1e-6)), X1 = Math.min(W - 1, Math.round(x1 + 1e-6));
+  const Y0 = Math.max(0, Math.round(y0 - 1e-6)), Y1 = Math.min(H - 1, Math.round(y1 + 1e-6));
+  if (!(X0 <= X1 && Y0 <= Y1)) return true;
+  const t = opaqueSums(img), S = W + 1;
+  return t[(Y1 + 1) * S + X1 + 1] - t[Y0 * S + X1 + 1] - t[(Y1 + 1) * S + X0] + t[Y0 * S + X0] === 0;
 }
 
 /**
@@ -751,14 +793,16 @@ function drawPicture(out, P, L, shown, img = P.img) {
   const x0 = Math.max(0, Math.floor(Math.min(ends[0][0], ends[1][0]) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(ends[0][0], ends[1][0]) + wide));
   const y0 = Math.max(0, Math.floor(Math.min(ends[0][1], ends[1][1]) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(ends[0][1], ends[1][1]) + wide));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(L.along, L.across))));   // half a picture px apart, or closer
-  const at = (x, y) => {
+  const at = (x, y, o) => {
     const ex = x - L.qx, ey = y - L.qy, s = (ex * L.ux + ey * L.uy) / L.along, v = ((ex * L.nx + ey * L.ny) / L.across) * sg;
-    return [P.gx + P.ux * s + P.rx * v, P.gy + P.uy * s + P.ry * v];
+    o[0] = P.gx + P.ux * s + P.rx * v; o[1] = P.gy + P.uy * s + P.ry * v;
   };
+  const offs = offsetsOf(0.25);   // a handle a picture px wide keeps a px on screen
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], (x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
-    const c = samplePicture(img, x, y, n, at, 0.25);   // a handle a picture px wide keeps a px on screen
+    if (footprintEmpty(img, x, y, at, 0.25)) continue;
+    const c = samplePicture(img, x, y, n, at, offs);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -807,14 +851,16 @@ function drawChain(out, P, L, shown, g = [0, 1]) {
   const x0 = Math.max(0, Math.floor(Math.min(hx, ex) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(hx, ex) + wide));
   const y0 = Math.max(0, Math.floor(Math.min(hy, ey) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(hy, ey) + wide));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(k, ka))));
-  const at = (x, y) => {
+  const at = (x, y, o) => {
     const c = ((x - hx) * gx + (y - hy) * gy) / ka + (C.lead ?? 0), v = ((x - hx) * gy - (y - hy) * gx) / k;
-    return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v];
+    o[0] = C.x + C.dx * c - C.dy * v; o[1] = C.y + C.dy * c + C.dx * v;
   };
+  const offs = offsetsOf(0.3);   // a chain is round: a px wide at the least, from any side
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], proj)) continue;
-    const c = samplePicture(C.img, x, y, n, at, 0.3);   // a chain is round: a px wide at the least, from any side
+    if (footprintEmpty(C.img, x, y, at, 0.3)) continue;
+    const c = samplePicture(C.img, x, y, n, at, offs);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -833,14 +879,15 @@ function drawBowPicture(out, bow, P, view, tips) {
   const y0 = Math.max(0, Math.floor(hy - reach * up - 1)), y1 = Math.min(h - 1, Math.ceil(hy + reach * up + 1));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / (cm * Math.abs(bx)))));
   const spread = Math.max(0.3, cm * Math.sqrt(1 - bx * bx));   // the limb's own width out of the bow's plane: edge on, a line
-  const at = (x, y) => {
+  const at = (x, y, o) => {
     const s = (hy - y) / (cm * up), r = (x - hx - s * cm * lean) / (cm * bx), sl = Math.abs(s) * P.long;   // the longer limb, both ways
-    return [P.gx + P.ux * sl + P.rx * r, P.gy + P.uy * sl + P.ry * r];
+    o[0] = P.gx + P.ux * sl + P.rx * r; o[1] = P.gy + P.uy * sl + P.ry * r;
   };
+  const offs = offsetsOf(spread);
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (bowHidden(d[i + 3], before, x + 0.5 - hx, y + 0.5 - hy)) continue;
-    const c = samplePicture(P.img, x, y, n, at, spread);
+    const c = samplePicture(P.img, x, y, n, at, offs);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }

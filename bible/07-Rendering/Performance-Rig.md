@@ -33,14 +33,22 @@ frame is `Performance-Exterior.md`.
   (`Performance-Priority.md`). A player the cap leaves undrawn takes their own foes and companions with them
   (`src/net/gate/gateCrowd.js` `crowdKinHidden`).
 
+### Layered bodies in a crowd
+
+A layered body's frames are composed on the page's own thread, some 55 a look, and a drawn weapon's swing in every view
+besides (`Eye-Of-The-Beholder.md`). A crowd of armed players, as at a boss fight, is the heaviest case. The held weapon
+is drawn by sampling its picture under each px of its box (`src/player/eyeOfTheBeholder/layeredWeapon.js`
+`samplePicture`), and the sampler allocates nothing. A px whose footprint holds no opaque texel of the picture is
+skipped (`footprintEmpty`): the map from the screen to a blade or a chain is affine, so the box of the px's corners holds
+every sample. A bow's map folds at its grip, so a bow is sampled whole. The picture is the same to the byte.
+
 ### Boss fights
 
 A telegraph's quad is laid over only the ground its shape can draw on (`src/render/gate/gateTelegraph.js`), and a boss's
 moving lights keep their identity, so their shadow cubes are not redrawn as new lights each frame
 (`src/render/lightId.js`, `Enhanced-Lighting-Arc.md`).
 
-The Deadlands' sky round the Burning Court is the court's heaviest pixel work. It reads its noise only where the noise
-can show: no cloud deck at or under the horizon, where the deck has faded out, and no ridge above its highest crest
+The Deadlands' sky round the Burning Court reads its noise only where the noise can show: no cloud deck at or under the horizon, where the deck has faded out, and no ridge above its highest crest
 unless one of its towers stands there (`src/render/deadlands.js`). The picture is the same to the bit.
 
 ### Ships in port
@@ -73,4 +81,5 @@ still animation clip is posed once and a rope's bones are read off the frame's o
 - `test/systems/comeSailAway/perfsails3.test.js`, `test/systems/comeSailAway/perfsails4.test.js` - ships in port
 - `test/net/gate/fb1013e_aoeperf.test.js` - the boss's telegraphs
 - `test/world/gate/wb6a_deadlands.test.js` - the Deadlands' sky, its skipped noise
+- `test/player/eyeOfTheBeholder/layered_sample.test.js` - a held picture's sampling and the px it skips
 - `tools/peerLab.mjs` - a crowd of peers, measured
