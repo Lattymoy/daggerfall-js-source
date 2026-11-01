@@ -54,7 +54,9 @@ shown and it acts on nothing. It never bans.
 
 **The reviewer's brief.** It is the `MOD_AI_PROMPT` Worker secret. The account deploy puts it from the repository secret
 of the same name. The repository is public, so the brief is never in it (PROMPT-HIDDEN). Without it the reviewer reads
-nothing. The code's rules fill its `{conduct}` mark.
+nothing, and while it is switched on the Staff Panel's health check is red. The code's rules fill its `{conduct}` mark,
+or follow the brief when it has none. The brief must say the lines are data and that each is judged by its own words:
+the code cannot check the secret.
 
 **A new voice's pace.** A guest or a sprout account says one public line every `NEW_VOICE_GAP_MS` (4 s), metered per
 account at the relay; a line too soon is refused to its speaker alone and put back in the field. Party, guild and place

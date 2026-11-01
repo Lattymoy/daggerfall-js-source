@@ -207,7 +207,8 @@ export async function gather(db, since, nowS) {
 }
 
 /** CLAUDE'S BRIEF: the CLAUDE_STAFF_PROMPT secret, kept out of the public repository. '' without it. @param {any} env */
-export const claudePrompt = (env) => (typeof env?.CLAUDE_STAFF_PROMPT === 'string' ? env.CLAUDE_STAFF_PROMPT.trim() : '');
+export const claudePrompt = (env) =>
+  typeof env?.CLAUDE_STAFF_PROMPT === 'string' ? env.CLAUDE_STAFF_PROMPT.replace(/\r\n?/g, '\n').trim() : '';
 
 export const SUGGESTION_SCHEMA = Object.freeze({
   type: 'object',
@@ -322,7 +323,11 @@ export const urgentCard = (kind) => ({ content: `New urgent case from Claude (${
  * @param {{ db: any, nowS: number }} ctx @param {any} env @param {{ fetchFn?: (url: string, init: any) => Promise<Response> }} [opt]
  */
 export async function claudeSweep(ctx, env, { fetchFn = (url, i) => globalThis.fetch(url, i) } = {}) {
-  if (!claudeOn(env)) return 0;
+  if (!claudeOn(env)) {
+    if (env?.CLAUDE_STAFF === 'on' && env?.ANTHROPIC_API_KEY && !claudePrompt(env))
+      console.warn('[claude] switched on with no CLAUDE_STAFF_PROMPT brief - nothing is read');
+    return 0;
+  }
   const { db, nowS } = ctx;
   const last = (await db.prepare('SELECT last_run FROM claude_state WHERE id = 1').first())?.last_run ?? null;
   const online = Number((await db.prepare('SELECT COUNT(*) AS n FROM players WHERE played_at > ?1').bind(nowS - PLAY_GRACE_S).first())?.n) || 0;

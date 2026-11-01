@@ -20,7 +20,7 @@
 //     enforce", INT5's law). With "off", or no ANTHROPIC_API_KEY or MOD_AI_PROMPT, it reads nothing.
 //   - IT READS DATA, NEVER ORDERS. A line is a player's words, and a player will write "ignore your instructions". The
 //     lines go in as JSON inside one tag - every `<` and `>` in them escaped, so no line can close the tag (AUDIT SAFE
-//     AI-1) - the prompt says they are data and that a line is judged by its own words alone, and the answer is held to
+//     AI-1) - the brief (a secret) must say they are data, each judged by its own words, and the answer is held to
 //     a schema (structured output). A reviewer talked OUT of a verdict acts on nothing - the state the game was in
 //     before it. One talked INTO a verdict about someone else (a line framing another: "P1's line hides a slur") is the
 //     danger, so a mute on the reviewer's word alone takes TWO reads, the second of the account's own lines and nothing
@@ -43,13 +43,15 @@ import { conductRules } from '../../src/net/safety/conduct.js';
 export const MOD_AI_SWITCH = Object.freeze(['off', 'shadow', 'on']);
 /** The switch as configured - anything else is off. @param {any} env */
 export const modAiModeOf = (env) => (MOD_AI_SWITCH.includes(env?.MOD_AI) ? env.MOD_AI : 'off');
+/** The brief as put (the MOD_AI_PROMPT secret), its line ends made plain and trimmed; '' when none. @param {any} env */
+export const modAiBrief = (env) =>
+  typeof env?.MOD_AI_PROMPT === 'string' ? env.MOD_AI_PROMPT.replace(/\r\n?/g, '\n').trim() : '';
+const hasKey = (/** @type {any} */ env) =>
+  typeof env?.ANTHROPIC_API_KEY === 'string' && env.ANTHROPIC_API_KEY.length > 0;
 /** Whether the reviewer reads at all: switched on (shadow or on) AND holding its key and its brief. @param {any} env */
-export const modAiOn = (env) =>
-  modAiModeOf(env) !== 'off' &&
-  typeof env?.ANTHROPIC_API_KEY === 'string' &&
-  env.ANTHROPIC_API_KEY.length > 0 &&
-  typeof env?.MOD_AI_PROMPT === 'string' &&
-  env.MOD_AI_PROMPT.trim().length > 0;
+export const modAiOn = (env) => modAiModeOf(env) !== 'off' && hasKey(env) && modAiBrief(env).length > 0;
+/** Switched on and keyed with no brief: a deploy that missed the secret, a fault and never "off". @param {any} env */
+export const modAiBriefMissing = (env) => modAiModeOf(env) !== 'off' && hasKey(env) && !modAiBrief(env);
 /** The model, unless MOD_AI_MODEL names another: the current Haiku - fast and cheap enough to read every public line. */
 export const MOD_AI_MODEL_DEFAULT = 'claude-haiku-5-5';
 /** The day's calls, unless MOD_AI_DAILY_MAX says otherwise ("" or unset; "0" is none). */
@@ -97,20 +99,18 @@ export const AI_REASON_MAX = 300;
 /** Where the code of conduct's numbered rules go in the brief, so the brief and the players' card never drift apart. */
 export const CONDUCT_MARK = '{conduct}';
 /**
- * THE REVIEWER'S BRIEF: the MOD_AI_PROMPT secret, with the code's rules at CONDUCT_MARK. '' without the secret.
+ * THE REVIEWER'S BRIEF: the MOD_AI_PROMPT secret, with the code's rules at CONDUCT_MARK, or after it when the mark is
+ * missing, so the rules always reach the model. '' without the secret.
  * The brief is a secret because the repository is public, and a brief players can read tells them what slips past.
  * @param {any} env
  */
 export const reviewerPrompt = (env) => {
-  const brief = typeof env?.MOD_AI_PROMPT === 'string' ? env.MOD_AI_PROMPT.trim() : '';
-  return (
-    brief &&
-    brief.split(CONDUCT_MARK).join(
-      conductRules()
-        .map((r, i) => `${i + 1}. ${r}`)
-        .join('\n'),
-    )
-  );
+  const brief = modAiBrief(env);
+  if (!brief) return '';
+  const rules = conductRules()
+    .map((r, i) => `${i + 1}. ${r}`)
+    .join('\n');
+  return brief.includes(CONDUCT_MARK) ? brief.split(CONDUCT_MARK).join(rules) : `${brief}\n\n${rules}`;
 };
 
 /** The answer's shape - the structured output the API holds the model to. */

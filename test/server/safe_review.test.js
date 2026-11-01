@@ -86,6 +86,9 @@ test('SAFE5 WHAT A VERDICT MAY SAY: a flag outside the lines, of a category the 
   assert.equal(modAiOn({ MOD_AI: 'on', ANTHROPIC_API_KEY: 'sk-test' }), false, 'no brief, no reviewer');
   assert.equal(modAiOn({ MOD_AI: 'on', ANTHROPIC_API_KEY: 'sk-test', MOD_AI_PROMPT: ' \n' }), false);
   assert.equal(reviewerPrompt({}), '', 'the code holds no brief of its own');
+  const unmarked = reviewerPrompt({ MOD_AI_PROMPT: 'No mark here.\r\nSecond line.' });
+  assert.ok(unmarked.startsWith('No mark here.\nSecond line.\n\n1. '), 'Windows line ends made plain; the rules follow a brief with no mark');
+  for (const rule of conductRules()) assert.ok(unmarked.includes(rule), 'the rules reach the model either way');
   const quiet = outside([]);
   assert.deepEqual(await reviewLines(s.env.DB, { ...s.env, MOD_AI_PROMPT: '' }, quiet.fetchFn, { lines, nowS: nowS() }), { error: 'ai-off' });
   assert.equal(quiet.asked.ai.length, 0, 'no brief, no call');

@@ -206,6 +206,7 @@ test('sweep: a report case reads its lines as data, and a prompt-injection line 
   assert.ok(!msg.slice(6, -7).includes('</'), 'a line cannot close the tag');
   assert.ok(!msg.includes('Troll'));
   assert.equal(claudePrompt(t.s.env), BRIEF);
+  assert.equal(claudePrompt({ CLAUDE_STAFF_PROMPT: ' a\r\nb ' }), 'a\nb', 'Windows line ends made plain');
   assert.equal(api.api()[0].body.system[0].text, BRIEF, 'the brief is the secret, as put');
   const row = t.raw.prepare('SELECT * FROM claude_suggestions').get();
   assert.equal(row.kind, 'report');

@@ -23,9 +23,10 @@ everything since the last run. The last run is one row in `claude_state`.
 **The brief.** The prompt is the `CLAUDE_STAFF_PROMPT` Worker secret. The account deploy puts it from the repository
 secret of the same name. The repository is public, so the prompt is never in it (PROMPT-HIDDEN).
 
-**What the model sees.** Players' words go in as JSON inside one tag, with every `<` and `>` escaped, and the prompt says they
-are data. Accounts are labelled P1, P2 and so on; no name or id is sent. A call the API never answered is given back. The
-day's calls are capped by `CLAUDE_STAFF_DAILY_MAX` and counted in `mod_ai_days` under the key `<day>:claude`.
+**What the model sees.** Players' words go in as JSON inside one tag, with every `<` and `>` escaped. The brief must say
+they are data; the code cannot check the secret, so whoever writes it keeps that line in. Accounts are labelled P1, P2 and
+so on; no name or id is sent. A call the API never answered is given back. The day's calls are capped by
+`CLAUDE_STAFF_DAILY_MAX` and counted in `mod_ai_days` under the key `<day>:claude`.
 
 **Hands off.** When a subject has an open case that a staff member holds with a live claim, or an active freeze, the sweep
 writes no suggestion for that subject, sends no Discord card for it and leaves the case alone.

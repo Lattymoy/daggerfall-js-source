@@ -183,7 +183,7 @@ export function systemPrompt({ code, table, glossary = {}, template = '' }) {
   const terms = Object.entries(glossary);
   const on = { icu: src?.kind === 'icu', dfu: src?.kind !== 'icu', glossary: terms.length > 0 };
   const lines = String(template)
-    .split('\n')
+    .split(/\r?\n/)
     .flatMap((line) => {
       const m = /^(icu|dfu|glossary)\|/.exec(line);
       if (!m) return [line];
@@ -269,7 +269,7 @@ export async function translateTable({
   retranslate = false,
   dryRun = false,
   log = () => {},
-  template = promptTemplate(),
+  template = promptTemplate({ root }),
 }) {
   const src = SOURCES[table];
   if (!src) throw new Error(`no source for ${table} (known: ${Object.keys(SOURCES).join(', ')})`);
@@ -294,7 +294,7 @@ export async function translateTable({
     owed: owed.length,
     rejected: [],
   };
-  if (!String(template).trim()) throw new Error(`no brief: set TRANSLATE_PROMPT or write ${PROMPT_FILE}`);
+  const noBrief = `no brief: set TRANSLATE_PROMPT or write ${PROMPT_FILE}`;
   const system = systemPrompt({
     code,
     table,
@@ -303,10 +303,11 @@ export async function translateTable({
   });
   const groups = batchesOf(owed, batch);
   if (dryRun) {
-    log(system);
+    log(system || noBrief);
     groups.forEach((g, i) => log(`batch ${i + 1}/${groups.length}: ${g.length} rows (${g[0]} .. ${g.at(-1)})`));
     return account;
   }
+  if (groups.length && !system) throw new Error(noBrief);
   const meta = plan.meta;
   const drafted = new Map();
   const runOne = async (keys) => {

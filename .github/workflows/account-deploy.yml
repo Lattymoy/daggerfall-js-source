@@ -1053,7 +1053,9 @@ jobs:
           fi
 
       # THE BRIEFS ARE SECRETS TOO: MOD_AI_PROMPT (the reviewer's) and CLAUDE_STAFF_PROMPT (Claude as staff's), so the
-      # public repository never shows players what the models are told. Unset, each model reads nothing.
+      # public repository never shows players what the models are told. Unset, each model reads nothing, so a Worker
+      # left without one is a warning. Cloudflare holds a secret to 5 KB: a longer brief is not put, the others still
+      # are, and the step fails after its summary.
       #
       # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
       # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
@@ -1072,20 +1074,46 @@ jobs:
         run: |
           set -euo pipefail
           base="${{ steps.deploy.outputs.base }}"
+          long=""
+          for name in MOD_AI_PROMPT CLAUDE_STAFF_PROMPT; do
+            if [ "$(printf '%s' "${!name}" | wc -c)" -gt 5120 ]; then
+              echo "::error::$name is over the 5 KB Cloudflare allows a secret - it is not put; shorten it"
+              long="$long $name"
+              export "$name="
+            fi
+          done
           if [ -z "${ANTHROPIC_API_KEY}${DISCORD_BOT_TOKEN}${MOD_AI_PROMPT}${CLAUDE_STAFF_PROMPT}" ]; then
             echo "none of ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN, MOD_AI_PROMPT or CLAUDE_STAFF_PROMPT is set for this repository - the Worker keeps what it has"
           else
             jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN, MOD_AI_PROMPT, CLAUDE_STAFF_PROMPT} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
           fi
+          missing=""
+          if have=$($WRANGLER secret list --format json 2>/dev/null) && printf '%s' "$have" | jq -e 'type == "array"' >/dev/null; then
+            for name in MOD_AI_PROMPT CLAUDE_STAFF_PROMPT; do
+              printf '%s' "$have" | jq -e --arg n "$name" 'map(.name) | index($n)' >/dev/null || missing="$missing $name"
+            done
+          else
+            echo "::warning::the Worker's secrets could not be listed - whether each brief is there is unknown"
+          fi
+          if [ -n "$missing" ]; then
+            echo "::warning::the Worker has no$missing - that model reads nothing until the repository secret is added"
+          fi
+          brief() {
+            case " $long $missing " in
+              *" $1 "*) [[ " $long " == *" $1 "* ]] && echo 'over 5 KB - not put' || echo 'not on the Worker - that model reads nothing' ;;
+              *) [ -n "${!1}" ] && echo put || echo 'not among the repository secrets - the Worker keeps the one it has' ;;
+            esac
+          }
           {
             echo "### Chat safety"
             echo ""
             echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
             echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
-            echo "- the reviewer's brief: $([ -n "${MOD_AI_PROMPT}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any brief put before')"
-            echo "- Claude as staff's brief: $([ -n "${CLAUDE_STAFF_PROMPT}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any brief put before')"
+            echo "- the reviewer's brief: $(brief MOD_AI_PROMPT)"
+            echo "- Claude as staff's brief: $(brief CLAUDE_STAFF_PROMPT)"
             echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          [ -z "$long" ]
 
       # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
       # verified this way since U60 and the relay's since SRV-N/CI, for

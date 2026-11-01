@@ -110,6 +110,10 @@ test('L10N6b a dry run prints the prompt and the batches and sends and writes no
   assert.match(lines[0], /Japanese \(日本語, ja\)/);
   assert.match(lines[1], /batch 1\/1: 2 rows/);
   assert.equal(existsSync(join(root, 'locales/ja')), false);
+  const bare = [];
+  await translateTable({ code: 'ja', table: 'Port_Strings', root, model: () => { throw new Error('sent'); }, dryRun: true, log: (s) => bare.push(s), template: '' });
+  assert.match(bare[0], /no brief: set TRANSLATE_PROMPT/, 'a dry run shows the batches without a brief, and says it is missing');
+  assert.match(bare[1], /batch 1\/1: 2 rows/);
 });
 
 test('L10N6b the request: the Messages API with the key, the version header, the system prompt cached, the tool forced; a rate limit waited out; any other failure said', async () => {
@@ -155,6 +159,12 @@ test('L10N6b the command line, the sources, the prompt\'s rules; and the in-sess
   assert.equal(systemPrompt({ code: 'fr', table: 'Port_Strings' }), '', 'the tool holds no brief of its own');
   assert.equal(promptTemplate({ env: { TRANSLATE_PROMPT: 'from env' }, root: scratch() }), 'from env');
   assert.equal(promptTemplate({ env: {}, root: scratch() }), '', `nothing set and no ${PROMPT_FILE}`);
+  const own = scratch();
+  mkdirSync(join(own, '.prompts'), { recursive: true });
+  writeFileSync(join(own, PROMPT_FILE), 'from the file');
+  assert.equal(promptTemplate({ env: {}, root: own }), 'from the file', 'the brief is read under the root asked for');
+  const crlf = TEMPLATE.replace(/\n/g, '\r\n');
+  assert.equal(systemPrompt({ code: 'fr', table: 'Port_Strings', template: crlf }), systemPrompt({ code: 'fr', table: 'Port_Strings', template: TEMPLATE }), 'a brief saved with Windows line ends reads the same');
   const en = new Map(parseStringTableCsv(rd('locales/en/Port_Strings.csv')));
   const langs = readdirSync(new URL('../../locales/', import.meta.url), { withFileTypes: true }).filter((d) => d.isDirectory() && d.name !== 'en').map((d) => d.name);
   assert.equal(langs.length, 25);
