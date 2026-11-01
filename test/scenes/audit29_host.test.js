@@ -294,8 +294,8 @@ test('AUDIT 29: the hosts by source - the seams the audit moved', () => {
   assert.match(d, /if \(!Number\.isFinite\(down\)\) continue;/);
   assert.match(d, /isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| !Number\.isSafeInteger/);   // ARENA2: nor the arena's floor
   // C8: nature's rect - a WoD site's too
-  assert.match(src('src/scenes/herbHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);
-  assert.match(src('src/scenes/mineHost.js'), /locationRect: entry\.locationRect \?\? entry\.wodSite \?\? null/);
+  assert.match(src('src/scenes/herbHost.js'), /locationRect: settlementClearing\(entry\) \?\? entry\.locationRect \?\? entry\.wodSite \?\? null/);   // a settlement's ground first, then the location's, then a WoD site's
+  assert.match(src('src/scenes/mineHost.js'), /locationRect: settlementClearing\(entry\) \?\? entry\.locationRect \?\? entry\.wodSite \?\? null/);   // a settlement's ground first, then the location's, then a WoD site's
   // C1: the host's sight, handed in
   assert.match(w, /clear: \(from, to, underground, interior = false\) => \{/);   // PIN MOVED (INDOOR-SKIN): and a building's walls
   // B3 + B4: the fee on the first answer; the kept withdrawals settled on every good read and on the Stores page

@@ -8,7 +8,7 @@ import { HOME_KEY_MAX, homeBuildingKeyOk } from '../../net/homeLaw.js';
 import { worldPixelOk } from '../../net/wire.js';
 import { fnv1a } from '../../formats/fnv1a.js';
 import { dsin, dcos, dhypot } from './exactMath.js';
-import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt, padFinder, distanceToSegment, segmentDistance, segmentRingDistance } from './settlementGeometry.js';
+import { ringOk, ringWithin, ringsOverlap, inOrOn, pointInRing, edgeDistance, ringArea2, padAt, padFinder, distanceToSegment, segmentGap, segmentRingDistance } from './settlementGeometry.js';
 export { padAt };
 
 /** Raised when the plan's shape changes, so a reader can refuse a plan it does not know. */
@@ -280,7 +280,7 @@ export function validateSettlement(plan) {
       const [from, to] = [feature.path[i], feature.path[i + 1]];
       const hit = walled.find((b) => segmentRingDistance(from, to, /** @type {Pt[]} */ (b.footprint)) < half);
       if (hit) { bad('feature-blocks', at, `building ${hit.key}`); break; }
-      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street
+      const way = feature.kind === 'wall' && runs.find((link) => segmentGap(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street
       if (way) { bad('feature-blocks', at, `way ${way.id}`); break; }
     }
   }

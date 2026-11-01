@@ -146,8 +146,8 @@
   {
     "name": "RMBC2-landing-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (g && islands && deck > STEP_MAX && g.wet <= 0.5) {",
-    "new": "    if (false) {",
+    "old": "    if (g && islands && deck > STEP_MAX && g.wet <= 0.5) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on its dry ground; a deck where that is under half",
+    "new": "    if (false) { g.raised = false; g.h = g.natural; }   // a raised town's gate is a landing on its dry ground; a deck where that is under half",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "CONTRACT-wall-ways-free",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
-    "new": "      const way = false && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentGap(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "new": "      const way = false && runs.find((link) => segmentGap(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CONTRACT-dock-ways-held",
     "file": "src/world/settlement/settlementContract.js",
-    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
-    "new": "      const way = runs.find((link) => segmentDistance(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "old": "      const way = feature.kind === 'wall' && runs.find((link) => segmentGap(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
+    "new": "      const way = runs.find((link) => segmentGap(from, to, link.a, link.b) < half + link.width / 2);   // a dock leaves from its quay's street",
     "tests": [
       "test/world/settlement/rmbc2_contract.test.js"
     ]

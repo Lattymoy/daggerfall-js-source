@@ -62,7 +62,7 @@ export function segmentsCross(a, b, c, d) {
 }
 
 /** Distance between two segments: 0 where they cross. @param {Pt} start @param {Pt} end @param {Pt} from @param {Pt} to */
-export function segmentDistance(start, end, from, to) {
+export function segmentGap(start, end, from, to) {
   if (segmentsCross(start, end, from, to)) return 0;
   return Math.min(distanceToSegment(start, from, to), distanceToSegment(end, from, to), distanceToSegment(from, start, end), distanceToSegment(to, start, end));
 }
@@ -70,7 +70,7 @@ export function segmentDistance(start, end, from, to) {
 /** Distance from a segment to a ring: 0 where it reaches inside or across it. @param {Pt} start @param {Pt} end @param {readonly Pt[]} ring */
 export function segmentRingDistance(start, end, ring) {
   if (pointInRing(start, ring) || pointInRing(end, ring)) return 0;
-  return Math.min(...ring.map((corner, i) => segmentDistance(start, end, corner, ring[(i + 1) % ring.length])));
+  return Math.min(...ring.map((corner, i) => segmentGap(start, end, corner, ring[(i + 1) % ring.length])));
 }
 
 /** A ring a plan can use: three or more finite points, an area, and no edge meeting another but its neighbours. @param {unknown} ring */

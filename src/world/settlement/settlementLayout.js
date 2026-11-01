@@ -9,6 +9,7 @@ import { dsin, dcos, datan2, dhypot } from './exactMath.js';
 import { STEP_MAX, PITCH_MAX, FORT_WALL, FORT_TOWER, FEATURE_REACH, FEATURE_CLEAR, TREE_CLEAR } from './settlementLimits.js';
 import { settlementGroundAt } from './settlementGround.js';
 import { distanceToSegment } from './settlementGeometry.js';
+import { wrapAngle } from '../mat4.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 
 export const GENERATOR_ID = 'rmbc-terrace';
@@ -485,8 +486,8 @@ export function yardTrees(input, layout) {
 /** whether a road's bearing (a cell's `road`, in [0, a turn)) falls within a plot's span widened by `margin`.
  *  @param {readonly number[]} road @param {number} start @param {number} end @param {number} margin */
 export function onRoad(road, start, end, margin) {
-  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;
-  return false;
+  const middle = (start + end) / 2, half = (end - start) / 2 + margin;
+  return road.some((bearing) => Math.abs(wrapAngle(bearing - middle)) <= half);
 }
 
 /** The cells round a fixed core whose cut passes `limit`, dropped; then the outer end of a link the solve left too

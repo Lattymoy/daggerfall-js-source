@@ -108,14 +108,14 @@ export function groundModel(plan, datum, cells, style = 'IliacBay') {
 }
 
 /** A stair's most rise a step, metres: well under the walker's step (its collider's stepOffset, 0.5). */
-export const STAIR_RISE = 0.18;
+export const FLIGHT_STEP = 0.18;
 /**
  * A stair as its steps: from its lower pad's end a riser and a tread at a time, each tread level, each riser facing down
  * the flight, each step's sides skirted below it. @param {any} mesh @param {any} link @param {number} fromY @param {number} toY
  * @param {number} dirE @param {number} dirN @param {number} len @param {number[]} side half its width across, east and north
  */
 function flight(mesh, link, fromY, toY, dirE, dirN, len, side) {
-  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / STAIR_RISE)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;
+  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / FLIGHT_STEP)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;
   const at = (/** @type {number} */ share, /** @type {number} */ height, /** @type {number} */ across) => [link.a[0] + dirE * len * share + side[0] * across, height, link.a[1] + dirN * len * share + side[1] * across];
   const wide = link.width / TILE, tread = len / steps, sideLen = Math.hypot(side[0], side[1]) || 1;
   for (let i = 0; i < steps; i++) {

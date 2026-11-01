@@ -216,7 +216,7 @@ deck too.
 
 `settlementModels.js` makes a dressed settlement into models. `groundModel` paves each cut pad at its height in its
 style's ground, with a retaining wall down its rim, and decks each raised pad on posts. A stair is drawn as its steps
-(`flight`), each riser at most `STAIR_RISE` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade are paved
+(`flight`), each riser at most `FLIGHT_STEP` (0.18 m), well under the walker's 0.5 m step; a ramp and a grade are paved
 slopes and a bridge a planked one, each skirted down its sides.
 
 `buildingPiece` stands a building with the Imperial City fabric's mesher (`buildPlot`) in its style's walls,

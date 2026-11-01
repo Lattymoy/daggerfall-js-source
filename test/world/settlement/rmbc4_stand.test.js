@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP, STAIR_RISE } from '../../../src/world/settlement/settlementModels.js';
+import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, featuresModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP, FLIGHT_STEP } from '../../../src/world/settlement/settlementModels.js';
 import { standSettlement, createSettlementHost, slotsFree } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
@@ -209,17 +209,17 @@ test('RMBC4 the host\'s costs: one settlement stood a frame; its collider filed 
   assert.ok(dressSettlement(input, broken).report.problems.length > 0 && dressSettlement(input, broken, { check: false }).report.problems.length === 0, 'the check skipped, not its plan');
 });
 
-test('RMBC4 a stair is its steps: from one pad\'s height to the other\'s, every tread level, every riser at most STAIR_RISE and well under the walker\'s step; a ramp stays a slope (mutants: one step, the tread\'s height, the riser\'s)', () => {
+test('RMBC4 a stair is its steps: from one pad\'s height to the other\'s, every tread level, every riser at most FLIGHT_STEP and well under the walker\'s step; a ramp stays a slope (mutants: one step, the tread\'s height, the riser\'s)', () => {
   const pads = [{ id: 'low', poly: [[0, 0], [20, 0], [20, 20], [0, 20]], y: 0, base: 'cut' }, { id: 'high', poly: [[0, 24], [20, 24], [20, 44], [0, 44]], y: 2.7, base: 'cut' }];
   const flightOf = (kind) => groundModel({ pads, links: [{ id: 'l0', kind, from: 'low', to: 'high', a: [10, 18], b: [10, 26], width: 3 }] }, 10, new Map());
   const stairs = flightOf('stairs'), ys = new Set(), levels = [];
   for (let i = 0; i < stairs.positions.length; i += 3) if (stairs.normals[i + 1] > 0.999 && Math.abs(stairs.positions[i] - 10) < 1.6 && stairs.positions[i + 2] > 18 - 1e-6 && stairs.positions[i + 2] < 26 + 1e-6) ys.add(Math.round(stairs.positions[i + 1] * 1000) / 1000);   // the treads
   for (const y of ys) if (y >= 10 - 1e-6) levels.push(y);
   levels.sort((x, y) => x - y);
-  const steps = Math.ceil((12.7 - 10) / STAIR_RISE);   // its two pads' heights apart, as the flight reads them
+  const steps = Math.ceil((12.7 - 10) / FLIGHT_STEP);   // its two pads' heights apart, as the flight reads them
   assert.equal(levels.length, steps, `${steps} treads, a riser under each`);
   assert.ok(Math.abs(levels[0] - (10 + (12.7 - 10) / steps)) < 1e-3 && levels.at(-1) === 12.7, 'one riser up off the low pad, the last tread the high one\'s height');
-  for (let i = 1; i < levels.length; i++) assert.ok(levels[i] - levels[i - 1] <= STAIR_RISE + 1e-3 && STAIR_RISE < 0.5 / 2, 'a riser the walker takes in its stride');
+  for (let i = 1; i < levels.length; i++) assert.ok(levels[i] - levels[i - 1] <= FLIGHT_STEP + 1e-3 && FLIGHT_STEP < 0.5 / 2, 'a riser the walker takes in its stride');
   const ramp = flightOf('ramp'), rampYs = new Set();
   for (let i = 1; i < ramp.positions.length; i += 3) if (ramp.positions[i] >= 10 - 1e-6) rampYs.add(Math.round(ramp.positions[i] * 1000) / 1000);
   assert.ok(rampYs.size <= 6, 'a ramp: its two ends and its skirts');

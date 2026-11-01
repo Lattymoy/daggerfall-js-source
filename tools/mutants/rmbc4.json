@@ -518,8 +518,8 @@
   {
     "name": "WALLS-foot-uncarved",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "return (settlementGroundAt(pads, datum, point[0], point[1], natural) ?? natural) - datum; };",
-    "new": "return natural - datum; };",
+    "old": "  const ground = (/** @type {Pt} */ point) => { const natural = env.heightAt(point[0], point[1]); return (settlementGroundAt(pads, datum, point[0], point[1], natural) ?? natural) - datum; };",
+    "new": "  const ground = (/** @type {Pt} */ point) => { const natural = env.heightAt(point[0], point[1]); return natural - datum; };",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "TOWERS-lower-corner",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      const at = frame.toW(from, Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);",
-    "new": "      const at = frame.toW(from, Math.min(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);",
+    "old": "      const at = frame.toW(from, Math.max(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);   // its eave past the rim too",
+    "new": "      const at = frame.toW(from, Math.min(rim[j], rim[prev]) + FEATURE_REACH.tower + FEATURE_CLEAR);   // its eave past the rim too",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "WALLS-gate-side-open",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n",
-    "new": "",
+    "old": "    if (has(prev) && !walled(prev) && line(prev) !== line(j)) path.unshift(frame.toW(from, line(prev)));   // a gate's side\n    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
+    "new": "    if (has(next) && line(next) !== line(j)) path.push(frame.toW(to, line(next)));",
     "tests": [
       "test/world/settlement/rmbc4_features.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "TREES-on-the-road",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": " || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;",
-    "new": ") continue;",
+    "old": "      if ((bearing - cell.u0) * radius < lane || (cell.u1 - bearing) * radius < side || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;",
+    "new": "      if ((bearing - cell.u0) * radius < lane || (cell.u1 - bearing) * radius < side) continue;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "TREES-in-the-lane",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      if ((bearing - cell.u0) * radius < lane || ",
-    "new": "      if (",
+    "old": "      if ((bearing - cell.u0) * radius < lane || (cell.u1 - bearing) * radius < side || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;",
+    "new": "      if ((cell.u1 - bearing) * radius < side || (cell.road && onRoad(cell.road, bearing, bearing, frame.du(ROAD_CLEAR, radius)))) continue;",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "TREES-on-the-ways",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "      if (!layout.links.some((link) => distanceToSegment(at, link.a, link.b) < link.width / 2 + TREE_CLEAR)) out.push(",
-    "new": "      if (true) out.push(",
+    "old": "      if (!layout.links.some((link) => distanceToSegment(at, link.a, link.b) < link.width / 2 + TREE_CLEAR)) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at });",
+    "new": "      if (true) out.push({ id: `t${cell.id}.${slot}`, pad: cell.id, at });",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -840,7 +840,7 @@
   {
     "name": "STAIRS-one-step",
     "file": "src/world/settlement/settlementModels.js",
-    "old": "  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / STAIR_RISE)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;",
+    "old": "  const steps = Math.max(2, Math.ceil(Math.abs(toY - fromY) / FLIGHT_STEP)), rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;",
     "new": "  const steps = 2, rise = (toY - fromY) / steps, facing = rise > 0 ? -1 : 1;",
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"

@@ -210,8 +210,8 @@
   {
     "name": "ORGANIC-corner-unread",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (at + Math.ceil((from - at) / TAU) * TAU <= to) return dhypot(half[0], half[1]);",
-    "new": "if (false) return dhypot(half[0], half[1]);",
+    "old": "  for (const at of [corner, TAU / 2 - corner, TAU / 2 + corner, TAU - corner]) if (at + Math.ceil((from - at) / TAU) * TAU <= to) return dhypot(half[0], half[1]);",
+    "new": "  for (const at of [corner, TAU / 2 - corner, TAU / 2 + corner, TAU - corner]) if (false) return dhypot(half[0], half[1]);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "ORGANIC-wrap-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "  for (const bearing of road) for (const turn of [-TAU, 0, TAU, 2 * TAU]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
-    "new": "  for (const bearing of road) for (const turn of [0]) if (bearing + turn >= start - margin && bearing + turn <= end + margin) return true;",
+    "old": "Math.abs(wrapAngle(bearing - middle)) <= half",
+    "new": "Math.abs(bearing - middle) <= half",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "AUDIT-core-cap",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "ring ? 3 : 2, core ? 24 : 16);",
-    "new": "ring ? 3 : 2, core ? 16 : 16);",
+    "old": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) * across : size / 28)), ring ? 3 : 2, core ? 24 : 16);   // a core's narrower, to hug it",
+    "new": "  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) * across : size / 28)), ring ? 3 : 2, core ? 16 : 16);   // a core's narrower, to hug it",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "CORE-link-outside",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": ".half.map((side) => side - (core?.clear ?? 0) - 1), lu)",
-    "new": ".half, lu)",
+    "old": "      const start = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half.map((side) => side - (core?.clear ?? 0) - 1), lu) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);",
+    "new": "      const start = f.core ? rectEdge(/** @type {NonNullable<typeof core>} */ (core).half, lu) : f.b - (w.kind === 'plaza' ? Math.min(LINK_REACH, f.b / 2) : LINK_REACH);",
     "tests": [
       "test/world/settlement/rmbc6_organic.test.js"
     ]
