@@ -820,6 +820,11 @@ city templates past the Bay and Riften (each fabric planned on its whole grid, a
 wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell that a piece of the wall touches
 (`townFabricStand.js:"const under = wall"`, townWallCells grown a cell's half diagonal): none now.
 
+OWN-WORK3 (2026-10-31): the 88 stood on Beautiful Cities' blocks. On Daggerfall's own, the same measure finds 116 of the
+407 templates, 4,625 m2, nearly all of it paving under a gate; one template (240) has a yard's fence along a length, 0.2
+m2. Three of the pin's five no longer lay any, so it holds 26, 42, 128 and 380 under a gate and 240 along a length.
+Through the stand none of the five lays a cell the wall touches, nor a face within 4 cm of the wall's.
+
 **Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
 two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides
 at 22 walls. With section 16's mitres and grown towers, the model of every fifth Bay city holds 10.6 per cent more

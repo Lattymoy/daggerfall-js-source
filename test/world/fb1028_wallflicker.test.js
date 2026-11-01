@@ -410,7 +410,9 @@ test('WALL-FLICKER with ARENA2: the fabric of a city past the Bay keeps off its 
   };
   walls.setTownWallPaths(() => ({ roads: ROADS_EVERY_WAY, tracks: 0, curved: true }));
   try {
-    for (const j of [26, 200, 220, 320, 380]) {
+    // PIN MOVED (OWN-WORK3): the five were found on Beautiful Cities' blocks (26, 200, 220, 320, 380). On Daggerfall's own,
+    // 116 of the 407 lay faces in their wall's: four that pave under a gate, and 240, the one whose yard fences along a length
+    for (const [j, least] of [[26, 1], [42, 1], [128, 1], [380, 1], [240, 0.1]]) {
       const loc = sweepClone(sw, 'city-state', j), wall = walls.townWallOf(loc), ed = loc.exterior.exteriorData, m = townWallModel(wall.pieces, classic);
       // planned on its whole grid, as the stand planned it before (no cell of its wall's off): faces in the wall's
       const at = new Map(sweepBlocks(sw, loc).map((b) => [b.y * ed.width + b.x, b]));
@@ -419,7 +421,7 @@ test('WALL-FLICKER with ARENA2: the fabric of a city past the Bay keeps off its 
       let r = steps.next();
       while (!r.done) r = steps.next();
       const was = across(m, townFabricModel(r.value, 'imperial', { cobbles: true, classicModel: classic }));
-      assert.ok(was > 1, `#${j}, its whole grid: ${was.toFixed(2)} m2 of its faces in the wall's`);
+      assert.ok(was > least, `#${j}, its whole grid: ${was.toFixed(2)} m2 of its faces in the wall's`);
       // through the stand: off every cell its wall touches
       const { plan } = await sweepPlan(sw, loc, null, null), touched = walls.townWallCells(wall, ed.width, ed.height, 1.6 * Math.SQRT1_2);
       assert.ok(plan.kind.every((k, i) => !touched[i] || k === 0), `#${j}: nothing laid where its wall stands`);

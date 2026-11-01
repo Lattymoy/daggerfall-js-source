@@ -233,7 +233,7 @@ const HARDCODED = {
   'src/render/orderedDither.js': 1,
   'src/render/partyPingDraw.js': 2,   // PARTY-PING: the route's two shaders - GLSL the scan reads as prose (`in vec3`), weaponGlowGlsl.js's same line
   'src/render/partyPingLabels.js': 1,   // PARTY-PING: the pin's SVG, markup the scan reads as prose
-  'src/render/precipitation.js': 6,
+  'src/render/precipitation.js': 9,   // OWN-AUDIT: BETTER_FALL's shader (GLSL the scan reads as prose) and Better Rain's two setting keys
   'src/render/rainCurtains.js': 1,
   'src/render/realWindows.js': 11,
   'src/render/redMountainFire.js': 3,   // RED-MOUNTAIN: its shaders' sources, as every pass's - no word a player reads
@@ -467,7 +467,7 @@ const HARDCODED = {
   'src/systems/map/mapWaypoints.js': 6,
   'src/systems/masterSkills.js': 52,
   'src/systems/merchantYards.js': 9,
-  'src/systems/modSettings.js': 235,   // OWN-WORK3: the town packs' settings left with them
+  'src/systems/modSettings.js': 233,   // OWN-WORK3: the town packs' settings left with them
   'src/systems/musicSheetRow.js': 1,   // MUSIC-BOX: the row's name, its catalogue column - each sheet carries its own name through t()
   'src/systems/mysticism.js': 1,
   'src/systems/naval/captainLedger.js': 15,
@@ -549,7 +549,7 @@ const HARDCODED = {
   'src/systems/sigil/sigilSets.js': 126,   // PIN MOVED (AUDIT HORIZONTAL D6): +1, SET-CATCHUP's pace English inside the set's English stage line until the sets' batch routes the line whole; SEA-SET: +9, the Eltheric Tidemail's name, prince, role, tiers and their words, as every set's; WITCH1: the Wyrd's Raiment - its name, its prince, its three tiers' names and lines (+9), as every set's; STAR7: +8, the Starspun Weave's name, role, tiers and their words, as every set's
   'src/systems/smithItems.js': 26,
   'src/systems/snowfall.js': 12,
-  'src/systems/snowfallRuntime.js': 10,
+  'src/systems/snowfallRuntime.js': 9,
   'src/systems/spell/spellEffects.js': 29,
   'src/systems/staleChunk.js': 6,
   'src/systems/starfall/starglass.js': 1,   // AUDIT STAR I1: Starfall Glass's name - an item's canonical name is its row's, as the Soul Cake's and the Weir Key's
