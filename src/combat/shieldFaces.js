@@ -63,13 +63,13 @@ function faceLight(x, y, centreX, centreY, k, squash, turn) {
  * (`size`, the widget's own table). The frames turn the shield out of the way: down and to the left, squared off
  * toward its edge. The forearm holds it from below, so the bottom edge is painted and the top one is clear. It is
  * lit from the painter's light - a face of wood planks or sheened metal, a bevelled rim, a domed boss with its
- * shadow, and studs that catch the light.
+ * shadow, and studs that catch the light. With a `queue` its calls are queued for paintSteps (art/ownPainter.js).
  */
-export function paintShieldFace(index, size) {
+export function paintShieldFace(index, size, queue = null) {
   const face = shieldFaceOf(index);
   if (!face || !size) return null;
   const { width, height } = size;
-  const painter = createPainter(width, height);
+  const painter = createPainter(width, height, { queue });
   const shape = OUTLINE[face.kind];
   const paint = SHIELD_PAINTS[face.group];
   const turn = face.frame / (SHIELD_FRAMES - 1);

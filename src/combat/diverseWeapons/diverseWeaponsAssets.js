@@ -173,12 +173,19 @@ export async function diverseWeaponsImage(
   return _own.get(name);
 }
 
+/** How many times a frame whose build threw is built again on later asks before it is a miss for the session. */
+export const OWN_BUILD_TRIES = 3;
+const _tries = new Map(); // name -> builds that threw
+
 /** Our frame of `name`, or null - said once - where the player's files will not build it: the classic frame draws. */
 async function ownImage(name, art) {
   try {
     const pic = await art.frame(name);
     return pic ? toScreenOrder(pic) : null;
   } catch (e) {
+    const tries = (_tries.get(name) ?? 0) + 1;
+    _tries.set(name, tries);
+    if (tries < OWN_BUILD_TRIES) _own.delete(name); // a read refused mid-load: the next ask builds it again
     console.warn(`[diverse weapons] ${name} would not build from the player's files:`, e?.message ?? e);
     return null;
   }
@@ -188,6 +195,7 @@ async function ownImage(name, art) {
 export function setDiverseWeaponsArt(art) {
   _art = art ?? null;
   _own = new Map();
+  _tries.clear();
 }
 
 /** The attached arms: the player's bundle, then a loose PNG of the name. */
@@ -250,4 +258,5 @@ async function dfmodWeaponImage(name) {
 export function _resetDiverseWeaponsImages() {
   forgetBundle();
   _own = new Map();
+  _tries.clear();
 }

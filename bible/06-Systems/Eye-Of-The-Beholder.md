@@ -92,7 +92,8 @@ shift, so a swing keeps its ready stance's place and its lunge as drawn. A sheet
 figure is scaled to it. `tools/eotbAnchors.mjs` writes `src/player/eyeOfTheBeholder/eotbAnchors.json` from ARENA2,
 and `spriteOffset` takes the frame. Turning, the body's line moves 0.6 cm on average (10.5 at most); changing state,
 0.2 cm. `Animation.GlobalOffsetScale`, with `FineGlobalOffsetScale`, scales each sprite's sideways and upward shift
-(`src/player/eyeOfTheBeholder/eotbBody.js` `place`): 1 is the art's own.
+(`src/player/eyeOfTheBeholder/eotbBody.js` `place`): 1 is the art's own. The shift is in the picture's pixels, so it
+also grows with `Animation.BillboardScale`; the profile's sprite (`src/ui/profileBody.js` `spriteBodyOf`) takes both.
 
 ## Rules
 

@@ -1,7 +1,6 @@
-// THE GROUND'S HUE AND EDGES (bible/07-Rendering/Vanilla-Enhanced.md "The ground"): a classic ground record's stray
-// hues - violet in the Alik'r's sand, pink, yellow and teal in the snow - are taken away by our rules, each texel's light
-// kept, and an upscale of the ground is crisp at the record's own scale. Made-up records pin the law; with ARENA2 the
-// player's own desert and winter records show it.
+// The ground's hue and edges: a classic ground record's stray hues - violet in the Alik'r's sand, pink, yellow and teal
+// in the snow - are taken away by our rules, each texel's light kept, and an upscale of the ground is crisp at the
+// record's own scale. Made-up records pin the law; with ARENA2 the player's own desert and winter records show it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -86,6 +85,13 @@ test('the ground\'s hue: a stray violet in the sand takes the sand\'s hue and ke
   assert.equal(violets(g), 0);
   assert.deepEqual([...g.data.slice(4 * (12 * 16 + 3), 4 * (12 * 16 + 3) + 4)], [236, 190, 132, 255], 'the pale tan kept');
   assert.equal(H(g.data), '2f978016dcdc0e97');
+  // our desert and our snow take it first: a violet in dark dirt (no dune graded over it), and one where the snow lies thin
+  const dirt = made(16, 16, (x, y) => (x === 7 && y === 7 ? VIOLET : x === 3 && y === 3 ? [176, 130, 80, 255] : [70 + ((x + y) % 3) * 4, 52 + ((x + y) % 3) * 3, 34, 255]));
+  const tan = 4 * (3 * 16 + 3);
+  assert.deepEqual([...R.groundHue(dirt).data.slice(tan, tan + 4)], [176, 130, 80, 255], 'a tan in dark dirt: the dirt\'s hue, stronger - kept');
+  assert.deepEqual([violets(dirt), violets(R.desert(dirt, { seed: 9 }))], [1, 0], 'the desert\'s dirt');
+  const edge = made(16, 16, (x, y) => (x < 6 ? [214, 214, 222, 255] : x === 7 && y === 8 ? VIOLET : [110 + (y % 2) * 4, 104, 96, 255]));
+  assert.deepEqual([violets(edge), violets(R.snow(edge, { seed: 2 }))], [1, 0], 'the snow\'s thin edge');
 });
 
 test('the snow\'s grain is light and shade, never hue: on a winter record every snowy texel takes the snow\'s hue - the pink, the yellow and the teal gone - its light kept; the dark ground beside it as it was; off the winter law only a stray hue moves (mutants: the snow law dropped; the snow\'s hue not the mean of its neighbours)', () => {

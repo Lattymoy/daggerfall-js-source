@@ -37,7 +37,8 @@ WebAudio code.
   Sail Away's are made at runtime by our seeded synth (`src/audio/synth/`, `src/systems/windfall/windfallSynth.js`,
   `src/systems/comeSailAway/csaSynth/`), at each clip's name, length and rate. Each is set by its loudness
   (`src/audio/synth/dsp.js` `loudnessOf`) against Daggerfall's own sounds. A long bed is layered loops of different
-  lengths (`src/audio/layeredLoop.js`), so it comes round only after hours.
+  lengths (`src/audio/layeredLoop.js`), so it comes round only after hours. The bed starts once it is made, and
+  each other layer joins as soon as it is made; no layer is started twice.
 
 ### Music (`src/systems/music.js`, `src/systems/song/`)
 

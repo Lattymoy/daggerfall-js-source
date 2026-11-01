@@ -342,7 +342,7 @@
  "src/combat/rigMuzzle.js": 1,
  "src/combat/rriEnemyEquipment.js": 11,
  "src/combat/shieldWidget.js": 8,
- "src/combat/shieldWidgetAssets.js": 3,
+ "src/combat/shieldWidgetAssets.js": 2,
  "src/combat/siegeCombat.js": 11,
  "src/combat/spineAim.js": 3,
  "src/combat/swingLaw.js": 8,

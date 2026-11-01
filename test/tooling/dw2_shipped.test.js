@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   hasDiverseWeaponsSprite, DIVERSE_WEAPONS_SPRITE_COUNT, diverseWeaponsImage, setDiverseWeaponsSources,
-  clearDiverseWeaponsSources, _resetDiverseWeaponsImages,
+  clearDiverseWeaponsSources, _resetDiverseWeaponsImages, OWN_BUILD_TRIES,
 } from '../../src/combat/diverseWeapons/diverseWeaponsAssets.js';
 import {
   DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, LOOKS, OWN_FILES, MELEE_SHAPE, BOW_SHAPE, shapeOf,
@@ -94,7 +94,7 @@ test('DW2 / OWN-WORK4 index: the decoder over every grammar - a metal, the bare 
   assert.equal(hasDiverseWeaponsSprite(''), false); assert.equal(hasDiverseWeaponsSprite(null), false);
 });
 
-test('DW2 / OWN-WORK4 door: our arm executed - built through the reader in screen order, once a name; a name outside the set never reaches it; off answers nothing; a failed build is a miss said once; an attached copy wins', async () => {
+test('DW2 / OWN-WORK4 door: our arm executed - built through the reader in screen order, once a name; a name outside the set never reaches it; off answers nothing; a failed build is asked again, a bounded number of times; an attached copy wins', async () => {
   _resetDiverseWeaponsImages(); clearDiverseWeaponsSources();
   const asked = [];
   const art = { frame: async (n) => { asked.push(n); if (/_6-/.test(n)) throw new Error('WEAPON04.CIF: missing'); return { width: 1, height: 2, data: new Uint8Array([1, 2, 3, 255, 4, 5, 6, 255]) }; } };
@@ -110,17 +110,16 @@ test('DW2 / OWN-WORK4 door: our arm executed - built through the reader in scree
     assert.equal(await diverseWeaponsImage('WEAPON04.CIF_0-0_Iron', { art, enabled: true }), null, 'not in the set');
     assert.equal(await diverseWeaponsImage('LONGSWORD.CIF_1-0_Iron', { art, enabled: false }), null, 'the switch off: the classic frame');
     assert.equal(asked.length, 1, 'neither reached the reader');
-    assert.equal(await diverseWeaponsImage('LONGSWORD.CIF_6-0_Iron', { art, enabled: true }), null);
-    assert.equal(await diverseWeaponsImage('LONGSWORD.CIF_6-0_Iron', { art, enabled: true }), null);
-    assert.equal(asked.length, 2, 'a failed build is cached');
-    assert.equal(warned.length, 1); assert.match(warned[0], /LONGSWORD\.CIF_6-0_Iron would not build from the player's files: WEAPON04\.CIF: missing/);
+    for (let i = 0; i < OWN_BUILD_TRIES + 2; i++) assert.equal(await diverseWeaponsImage('LONGSWORD.CIF_6-0_Iron', { art, enabled: true }), null);
+    assert.equal(asked.length, 1 + OWN_BUILD_TRIES, 'a failed build is asked again on a later ask, its tries and no more (test/combat/weapon/dw_ownretry.test.js)');
+    assert.equal(warned.length, OWN_BUILD_TRIES); assert.match(warned[0], /LONGSWORD\.CIF_6-0_Iron would not build from the player's files: WEAPON04\.CIF: missing/);
     // the player's own copy of the mod answers first
     _resetDiverseWeaponsImages();
     const loose = writePng({ width: 1, height: 1, data: new Uint8Array([9, 9, 9, 255]) });
     setDiverseWeaponsSources(['LONGSWORD.CIF_0-0_Iron.png'], async () => loose);
     const got = await diverseWeaponsImage('LONGSWORD.CIF_0-0_Iron', { art, enabled: true, decode: async (b) => readPng(b) });
     assert.deepEqual([got.width, got.height, [...got.colors]], [1, 1, [9, 9, 9, 255]], 'the player\'s own file wins');
-    assert.equal(asked.length, 2, 'and ours was not built');
+    assert.equal(asked.length, 1 + OWN_BUILD_TRIES, 'and ours was not built');
   } finally { console.warn = warn; clearDiverseWeaponsSources(); _resetDiverseWeaponsImages(); }
 });
 

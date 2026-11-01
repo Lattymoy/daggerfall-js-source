@@ -19,8 +19,8 @@ function eye(painter, x, y, radius, rim = RAMP.white) {
   );
 }
 
-function butterflyfish() {
-  const painter = createPainter(64, 64, { space: [89, 64] });
+function butterflyfish(queue = null) {
+  const painter = createPainter(64, 64, { space: [89, 64], queue });
   const body = ellipse(50, 33, 25, 21);
   painter.fill(
     poly([
@@ -83,8 +83,8 @@ function butterflyfish() {
   return painter.picture();
 }
 
-function bass() {
-  const painter = createPainter(64, 32, { space: [73, 32] });
+function bass(queue = null) {
+  const painter = createPainter(64, 32, { space: [73, 32], queue });
   const body = union(ellipse(34, 17, 27, 10), ellipse(22, 16, 16, 10.5));
   painter.fill(
     poly([
@@ -157,8 +157,8 @@ function bass() {
   return painter.picture();
 }
 
-function rockfish() {
-  const painter = createPainter(32, 16, { space: [44, 16] });
+function rockfish(queue = null) {
+  const painter = createPainter(32, 16, { space: [44, 16], queue });
   const body = union(ellipse(21, 8.5, 16, 5.6), ellipse(13, 8, 10, 6));
   painter.fill(
     poly([
@@ -196,8 +196,8 @@ function rockfish() {
   return painter.picture();
 }
 
-function carp() {
-  const painter = createPainter(32, 32, { space: [52, 32] });
+function carp(queue = null) {
+  const painter = createPainter(32, 32, { space: [52, 32], queue });
   const body = ellipse(25, 17, 20, 11);
   painter.fill(
     poly([
@@ -249,8 +249,8 @@ function carp() {
   return painter.picture();
 }
 
-function mackerel() {
-  const painter = createPainter(32, 16, { space: [36, 16] });
+function mackerel(queue = null) {
+  const painter = createPainter(32, 16, { space: [36, 16], queue });
   const body = union(ellipse(16, 8, 13, 4.4), ellipse(10, 8, 8, 4.6));
   painter.fill(
     poly([
@@ -280,8 +280,8 @@ function mackerel() {
   return painter.picture();
 }
 
-function angelfish() {
-  const painter = createPainter(32, 64, { space: [40, 64] });
+function angelfish(queue = null) {
+  const painter = createPainter(32, 64, { space: [40, 64], queue });
   painter.fill(
     poly([
       [11, 22],
@@ -341,8 +341,8 @@ function angelfish() {
   return painter.picture();
 }
 
-function grouper() {
-  const painter = createPainter(32, 32, { space: [55, 32] });
+function grouper(queue = null) {
+  const painter = createPainter(32, 32, { space: [55, 32], queue });
   const body = union(ellipse(28, 17, 23, 11), ellipse(16, 17, 14, 12));
   painter.fill(
     poly([
@@ -402,5 +402,6 @@ export const FISH_ART = Object.freeze({
   white_zebra_angelfish: angelfish,
   finulon: grouper,
 });
-/** Our picture of the species named `name`, top-down RGBA - or null where it is none of the seven. */
-export const fishPicture = (name) => (Object.hasOwn(FISH_ART, name) ? FISH_ART[name]() : null);
+/** Our picture of the species named `name`, top-down RGBA - or null where it is none of the seven. With a `queue`
+ *  the painting is queued for paintSteps (art/ownPainter.js), its pixels laid as they run. */
+export const fishPicture = (name, queue = null) => (Object.hasOwn(FISH_ART, name) ? FISH_ART[name](queue) : null);

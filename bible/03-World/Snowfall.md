@@ -11,9 +11,10 @@ meets it outdoors in any snowy province on the enhanced sky.
 - **Winter ground.** Our snow rule over the player's own TEXTURE.103, .303 and .403, or over the summer record where
   the data has none (`src/systems/ownTextures/ownTextureRules.js` `snow`): snow laid by slope and exposure, crept
   downwind, shaded cold. It keeps half the record's own grain (a quarter over a summer record), so a field is not a
-  flat white, and sifts into a paving's joints only near the drift's edge. It is a pack in the texture door, beside
-  Vanilla Enhanced (`src/systems/vanillaEnhanced/vanillaEnhancedPack.js` `ENVIRONMENT_PACK_MODS`), on by default with a
-  switch on the Replacement packs card, loaded after Vanilla Enhanced's Base.
+  flat white, and sifts into a paving's joints only near the drift's edge. The grain is light and shade, never hue:
+  where the snow lies thin the record shows with its stray hues gone (`groundHue`). It is a pack in the texture door,
+  beside Vanilla Enhanced (`src/systems/vanillaEnhanced/vanillaEnhancedPack.js` `ENVIRONMENT_PACK_MODS`), on by
+  default with a switch on the Replacement packs card, loaded after Vanilla Enhanced's Base.
 - **The masks and the albedo** are that law's coverage (`snowMask`) and our own noise (`snowAlbedo`). The albedo is
   read twice, the second read turned and at 1 / phi^2 of the scale, so a field never shows the 4 m tile.
 - **The model.** `src/systems/snowfall.js` is the mod's model whole, read off its 1.0.5 assembly:
@@ -84,8 +85,8 @@ The mod is `DynamicSnow.dll`. Departures:
 - `src/systems/ownTextures/ownTextureRules.js` - the winter ground, the masks and the albedo
 - `test/systems/snowfall1_model.test.js` - the model against traces of the mod's own C# compiled under .NET; the
   coverage hash is over our masks (`test/snowMasks.mjs`)
-- `test/systems/ownwork4_textures.test.js` - the winter ground; `test/systems/ownaudit_keys.test.js` - the authored
-  footprints
+- `test/systems/ownwork4_textures.test.js` - the winter ground; `test/systems/groundhue.test.js` - its hue;
+  `test/systems/ownaudit_keys.test.js` - the authored footprints
 - `test/render/snowfall1_runtime.test.js` - the runtime
 - `test/render/bayleftground_snow.test.js` - the snow past the Bay
 - `test/systems/audit_environs.test.js` - cost and integration

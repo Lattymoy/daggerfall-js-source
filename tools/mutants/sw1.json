@@ -79,8 +79,8 @@
   {
     "name": "SW4-1-the-shield-door-flips-the-png",
     "file": "src/combat/shieldWidgetAssets.js",
-    "old": "        return picture ? toScreenOrder(picture) : null;",
-    "new": "        return picture ? toColor32(picture) : null;",
+    "old": "resolve(picture ? toScreenOrder(picture) : null)",
+    "new": "resolve(picture ? toColor32(picture) : null)",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ]

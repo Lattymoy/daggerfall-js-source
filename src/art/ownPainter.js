@@ -130,8 +130,9 @@ export const minus = (a, b) => ({ box: a.box, has: (x, y) => a.has(x, y) && !b.h
 export const and = (a, b) => ({ box: a.box, has: (x, y) => a.has(x, y) && b.has(x, y), tone: a.tone });
 
 /** A picture `width` x `height`, top-down RGBA, clear. Shapes are placed in `space` units (the picture's own pixels by
- *  default): a picture Unity's import stretched is drawn in the shape it shows and sampled at its own size. */
-export function createPainter(width, height, { space = [width, height] } = {}) {
+ *  default): a picture Unity's import stretched is drawn in the shape it shows and sampled at its own size. With a
+ *  `queue`, each fill, set, outline and text is pushed there to be run later (paintSteps) instead of now. */
+export function createPainter(width, height, { space = [width, height], queue = null } = {}) {
   const data = new Uint8Array(width * height * 4);
   const scaleX = space[0] / width, scaleY = space[1] / height;
   const at = (x, y) => (y * width + x) * 4;
@@ -139,10 +140,10 @@ export function createPainter(width, height, { space = [width, height] } = {}) {
   /** Paint `shape` with `paint` - a ramp (dark to light), one colour, or ({ x, y, px, py, t }) => colour. Options:
    *  `bias` and `gain` move and stretch the light, `seed` and `rough` grain it, `over` paints only where already
    *  painted, `under` only where clear, `clip` only inside another shape, `flat` lays no dither. */
-  function fill(shape, paint, { bias = 0, gain = 1, seed = 0, rough = 0, over = false, under = false, clip = null, flat = false } = {}) {
+  function fill(shape, paint, { bias = 0, gain = 1, seed = 0, rough = 0, over = false, under = false, clip = null, flat = false } = {}, rowFrom = 0, rowTo = height - 1) {
     const [x0, y0, x1, y1] = shape.box;
-    const px0 = Math.max(0, Math.floor(x0 / scaleX)), py0 = Math.max(0, Math.floor(y0 / scaleY));
-    const px1 = Math.min(width - 1, Math.ceil(x1 / scaleX)), py1 = Math.min(height - 1, Math.ceil(y1 / scaleY));
+    const px0 = Math.max(0, Math.floor(x0 / scaleX)), py0 = Math.max(rowFrom, Math.floor(y0 / scaleY));
+    const px1 = Math.min(width - 1, Math.ceil(x1 / scaleX)), py1 = Math.min(rowTo, height - 1, Math.ceil(y1 / scaleY));
     for (let py = py0; py <= py1; py++) {
       for (let px = px0; px <= px1; px++) {
         const x = (px + 0.5) * scaleX, y = (py + 0.5) * scaleY;
@@ -174,10 +175,10 @@ export function createPainter(width, height, { space = [width, height] } = {}) {
    *  its own colour kept - Daggerfall's sprites end in a shadowed edge, never a bright one. */
   function outline({ dark = [16, 11, 8], keep = 0.3, edges = true } = {}) {
     const rim = [];
+    const out = (neighbourX, neighbourY) => (neighbourX < 0 || neighbourY < 0 || neighbourX >= width || neighbourY >= height ? edges : !opaque(neighbourX, neighbourY));
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         if (!opaque(x, y)) continue;
-        const out = (neighbourX, neighbourY) => (neighbourX < 0 || neighbourY < 0 || neighbourX >= width || neighbourY >= height ? edges : !opaque(neighbourX, neighbourY));
         if (out(x - 1, y) || out(x + 1, y) || out(x, y - 1) || out(x, y + 1)) rim.push(at(x, y));
       }
     }
@@ -197,7 +198,33 @@ export function createPainter(width, height, { space = [width, height] } = {}) {
     if (shadow) draw(px + 1, py + 1, shadow);
     draw(px, py, colour);
   }
-  return { width, height, data, fill, set, get, outline, text, picture: () => ({ width, height, data }) };
+  const later = (/** @type {(...args: any[]) => void} */ call) =>
+    queue ? (/** @type {any[]} */ ...args) => void queue.push(() => call(...args)) : call;
+  /** A fill queued a band of QUEUE_ROWS rows a call: each pixel reads only itself, so the bands paint what one fill does. */
+  const fillLater = (shape, paint, options) => {
+    const top = Math.max(0, Math.floor(shape.box[1] / scaleY)), bottom = Math.min(height - 1, Math.ceil(shape.box[3] / scaleY));
+    for (let from = top; from <= bottom; from += QUEUE_ROWS) queue.push(() => fill(shape, paint, options, from, from + QUEUE_ROWS - 1));
+  };
+  return {
+    width, height, data, fill: queue ? fillLater : fill, set: later(set), get, outline: later(outline), text: later(text),
+    picture: () => ({ width, height, data }),
+  };
+}
+
+/** The rows a queued fill paints a call (createPainter's `queue`). */
+export const QUEUE_ROWS = 8;
+
+/** A recipe's picture painted a call at a time: `recipe(queue)` builds its painter over `queue` and answers its
+ *  picture, whose pixels each step of this generator lays, one queued call a step (systems/idleWork.js runs them). */
+export function* paintSteps(/** @type {(queue: Array<() => void>) => any} */ recipe) {
+  /** @type {Array<() => void>} */
+  const queue = [];
+  const picture = recipe(queue);
+  for (let i = 0; i < queue.length; i++) {
+    queue[i]();
+    yield;
+  }
+  return picture;
 }
 
 /** How many pixels `str` takes in our letters (the gap after the last one not counted). */

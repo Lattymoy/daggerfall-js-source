@@ -74,8 +74,8 @@
   {
     "name": "PROFILE-SLOTS-the-sprites-offset-unmirrored",
     "file": "src/ui/profileBody.js",
-    "old": "    shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1),",
-    "new": "    shift: xml.x / xml.scale,",
+    "old": "    shift: (xml.x / xml.scale) * shiftBy * (s.mirror ? -1 : 1),",
+    "new": "    shift: (xml.x / xml.scale) * shiftBy,",
     "tests": [
       "test/ui/profileslots.test.js"
     ],

@@ -53,7 +53,7 @@ export function createCsaAudio(host) {
               distanceModel: 'inverse',
               rolloffFactor: 0,
             }),
-          ); // null until every layer is made: asked again next frame
+          ); // null until the bed is made: asked again next frame; a layer made later joins
           if (!ch.handle) continue;
           ch.handle.move(pos);
           const d = Math.hypot(pos[0] - ear[0], pos[1] - ear[1], pos[2] - ear[2]);

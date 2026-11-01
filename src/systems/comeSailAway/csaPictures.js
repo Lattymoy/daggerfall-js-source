@@ -120,6 +120,10 @@ export function foamPicture() {
   return img;
 }
 
+/** The surf's rows down a paint, and the rows between two of them. */
+export const WAVE_FRONTS = 5;
+export const WAVE_FRONT_SPACING = WAVE_SIZE / WAVE_FRONTS;
+
 /** The crest's broken edge: teeth a crest, up to WAVE_TOOTH rows deep. */
 export const WAVE_TEETH = 28;
 export const WAVE_TOOTH = 2;
@@ -133,13 +137,14 @@ export function wavePaint(paintIndex) {
   const size = WAVE_SIZE,
     img = picture(size, size);
   const die = mulberry32(0x3a7e);
-  const fronts = Array.from({ length: 5 }, (_, n) => ({
-    y0: Math.floor((n + 0.5) * (size / 5)) % size,
+  // one front, laid WAVE_FRONTS times down the paint: it repeats at their spacing, so a loop scrolled by it has no seam
+  const front = {
     waves: [1, 2, 3].map((harmonic) => [harmonic, (die() * 2 - 1) * (10 / harmonic), die() * Math.PI * 2]),
     face: 34 + Math.floor(die() * 14),
     crest: 9 + Math.floor(die() * 6),
     churn: die() * Math.PI * 2,
-  }));
+  };
+  const fronts = Array.from({ length: WAVE_FRONTS }, (_, n) => ({ ...front, y0: (n + 0.5) * WAVE_FRONT_SPACING }));
   for (const front of fronts)
     for (let x = 0; x < size; x++) {
       const frontY =
@@ -167,12 +172,15 @@ export function wavePaint(paintIndex) {
 }
 
 /** The 32 frames' recipes, in the shape render/comeSailAwayRender.js setWaveFrames reads: frame i shows paint i % 2
- *  scrolled 9 rows a step, its foam laid from a point that walks along with it. */
+ *  scrolled a step every two frames, its foam laid from a point that walks along with it. A loop scrolls the paint by
+ *  one front's spacing and walks the foam one tile, so its last frame steps into its first as any frame into the next. */
 export function waveSpecs() {
+  const scrollStep = WAVE_FRONT_SPACING / (WAVE_FRAME_COUNT / 2),
+    tileStep = FOAM_SIZE / WAVE_FRAME_COUNT;
   return Array.from({ length: WAVE_FRAME_COUNT }, (_, i) => ({
     paint: i % 2,
-    scroll: (WAVE_SIZE - 9 * Math.floor(i / 2)) % WAVE_SIZE,
-    tile: [0, (((FOAM_SIZE - 3 * i) % FOAM_SIZE) + FOAM_SIZE) % FOAM_SIZE],
+    scroll: (WAVE_SIZE - scrollStep * Math.floor(i / 2)) % WAVE_SIZE,
+    tile: [0, (((FOAM_SIZE - tileStep * i) % FOAM_SIZE) + FOAM_SIZE) % FOAM_SIZE],
     size: [WAVE_SIZE, WAVE_SIZE],
   }));
 }

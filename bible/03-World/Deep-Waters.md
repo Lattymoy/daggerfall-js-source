@@ -35,7 +35,8 @@ Holes (`Ocean-Holes.md`).
 - **The fish's pictures** are ours (`src/systems/deepWater/fishArt.js`, by `src/art/ownPainter.js`), each under the
   texture name its species reads and at the power-of-two size the sea samples. A fish is drawn in the shape it shows,
   so `restoreIconAspect` gives its icon that shape. The sea's billboards take them through
-  `createFishPictures({ picture })`, the icons through `installDeepWatersFishIcons`.
+  `createFishPictures({ picture })`, painted in the page's idle slices (`src/systems/idleWork.js`); a species spawns
+  once its picture is up. The icons come through `installDeepWatersFishIcons`.
 - **Foes** (`src/world/underwater/underwaterEnemies.js`, `src/scenes/deepWater/deepWatersEncounters.js`). Eleven types
   by depth band, from Slaughterfish in the shallows to the Lich past 0.85 of the depth, a rare boss in the deep, and
   treasure guards.

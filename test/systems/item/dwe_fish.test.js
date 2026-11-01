@@ -442,6 +442,8 @@ test('DW-E3: the fish pictures load once each, edge-cleaned, bottom-up; a specie
   const warn = console.warn; console.warn = () => {};
   try {
     pics.start(); pics.start();
+    assert.equal(made.length, 0, 'none painted in the frame that starts them');
+    await new Promise((res) => setTimeout(res, 5));   // the idle queue's turn (systems/idleWork.js: node runs a job whole on the next task)
     for (let i = 0; i < 10; i++) await null;
   } finally { console.warn = warn; }
   assert.equal(made.length, 6, 'six pictures, once');

@@ -964,9 +964,11 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);
     const right = [cy, 0, -sy], fwd = [sy, 0, cy];
     // Animation.GlobalOffsetScale (+ Fine) scales the XML's shift - `get_scaleOffset`, which
-    // the assembly declares and never calls
-    const x = xml.x / xml.scale * cfg.offsetScale * (shown.mirror ? -1 : 1);
-    const yOff = xml.y / xml.scale * cfg.offsetScale;
+    // the assembly declares and never calls; the shift is measured in the picture's pixels, so it grows with the
+    // picture (BillboardScale, as spriteSize sizes it)
+    const shift = cfg.offsetScale * cfg.scale;
+    const x = xml.x / xml.scale * shift * (shown.mirror ? -1 : 1);
+    const yOff = xml.y / xml.scale * shift;
     let y;
     if (last.onExteriorWater) y = yOff - size.h * 0.5;
     else if (last.crouching) y = yOff + size.h * 0.5 - h;

@@ -40,7 +40,8 @@ the Mods pane.
 ## Rules
 
 - Our own set (OWN-WORK, the owner): built from the player's files, no outside author's pixel read. It answers only
-  while the mod is on.
+  while the mod is on. A frame whose build threw is built again on a later ask, up to `OWN_BUILD_TRIES`; a frame the
+  files lack is a miss at once.
 - The preset is off by default, so the frames move with Weapon Widget's own defaults (Mac).
 - A drawn copy wearing a Wardrobe look is no artifact: it swings the look's file (`04-Characters/Wardrobe.md`).
 

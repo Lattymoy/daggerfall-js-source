@@ -206,6 +206,13 @@ void main() {
   outColor.rgb = hazeSky(outColor.rgb, dir);   // BANTHA1: the jungle's haze toward the horizon, after the grades
 }`;
 
+/** Each moon's state key and its three uniforms, named once: the draw spells no string a frame. */
+const MOON_UNIFORMS = Object.freeze(
+  ['Masser', 'Secunda'].map((name) =>
+    Object.freeze({ key: name.toLowerCase(), at: `u${name}`, light: `u${name}Light`, color: `u${name}Color` }),
+  ),
+);
+
 /** BOOT-COMPILE: the pass's one program, as its constructor builds it: what the boot starts ahead of the build
  *  (render/bootPrograms.js). */
 export const DYNAMIC_SKIES_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, FS]]));
@@ -308,10 +315,10 @@ export class DynamicSkiesRenderer {
     gl.uniform3fv(u.uSunDisc, s.sunDisc); gl.uniform1f(u.uSunCos, s.sunCos);
     gl.uniform1f(u.uNight, s.night); gl.uniform3fv(u.uStarPole, s.starPole);
     gl.uniform1f(u.uStarTurn, s.starTurn); gl.uniform1f(u.uTwinkle, s.twinkle % 3600);
-    for (const [key, name] of [['masser', 'Masser'], ['secunda', 'Secunda']]) {
-      const m = s[key];
-      gl.uniform4f(u[`u${name}`], m.dir[0], m.dir[1], m.dir[2], m.radius);
-      gl.uniform3fv(u[`u${name}Light`], m.light); gl.uniform3fv(u[`u${name}Color`], m.color);
+    for (let i = 0; i < MOON_UNIFORMS.length; i++) {
+      const moon = MOON_UNIFORMS[i], m = s[moon.key];
+      gl.uniform4f(u[moon.at], m.dir[0], m.dir[1], m.dir[2], m.radius);
+      gl.uniform3fv(u[moon.light], m.light); gl.uniform3fv(u[moon.color], m.color);
     }
     // DS2: the volumetric clouds over this pass - its two layers are handed opacity 0 and skip; the state keeps its own
     const low = s.cloudLow, high = s.cloudHigh;

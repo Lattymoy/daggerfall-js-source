@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CHARACTER_SLOTS, SLOTS_STAGE_PX, slotWorn, slotsShown, characterSlotName, characterSlots } from '../../src/ui/characterSlots.js';
 import { STAGE_FRAME, stageCamera, stageTopOf, stageCameraOfBones, proxyMesh, STAGE_PROXY, STAGE_BONES } from '../../src/render/characterStage.js';
-import { profileSpriteLook, spriteScaleOf, spriteBodyOf, profileBodies, mwHeadOf, PROFILE_BODY_KINDS } from '../../src/ui/profileBody.js';
+import { profileSpriteLook, spriteScaleOf, spriteOffsetScaleOf, spriteBodyOf, profileBodies, mwHeadOf, PROFILE_BODY_KINDS } from '../../src/ui/profileBody.js';
 import { armoryHeadTip, armoryDraws, ARMORY_HEAD, ARMORY_RANGE_M } from '../../src/render/armoryPass.js';
 import { createAuraHost } from '../../src/scenes/auraHost.js';
 import { newPose, poseAtRest, poseFromBones, POSE_AT, REST_POINTS, ARMORY_BONES } from '../../src/render/armoryPose.js';
@@ -161,6 +161,18 @@ test('PROFILE-SLOTS the head pieces\' tips: the crown\'s flames and the halo\'s 
   const tipH = /** @type {number} */ (armoryHeadTip(halo));
   assert.ok(tipH > crownPt + ARMORY_HEAD.eternalhalo.lift && tipH < crownPt + 0.2, `the halo over the crown, its motes with it (${(tipH - crownPt).toFixed(3)} m)`);
   assert.ok(armoryHeadTip({ ...crown, at: [0, 2, 0] }) - tipC > 1.99, 'the wearer\'s feet carry it');
+});
+
+test('the profile\'s sprite stands as the world stands it at any scale: its shift scaled with the picture (BillboardScale) and by GlobalOffsetScale, both read off the settings as the body reads them', async () => {
+  assert.equal(spriteOffsetScaleOf({ 'Animation.GlobalOffsetScale': 1.5, 'Animation.FineGlobalOffsetScale': 0.25 }), 1.75);
+  assert.equal(spriteOffsetScaleOf({}), 1);
+  const px = { width: 40, height: 100, colors: new Uint32Array(4000) };
+  const at = (o) => spriteBodyOf({ onFoot: 0 }, { decode: async () => px, urlOf: () => 'x.png', ...o });
+  const one = await at({}), big = await at({ scale: 2, offset: 1.5 });
+  assert.ok(one.shift !== 0 && one.base !== undefined);
+  assert.equal(Number(big.mpp.toFixed(9)), Number((one.mpp * 2).toFixed(9)), 'the picture twice the size');
+  assert.equal(Number(big.shift.toFixed(9)), Number((one.shift * 3).toFixed(9)), 'its shift with it, and by the offset scale');
+  assert.equal(Number(big.base.toFixed(9)), Number((one.base * 3).toFixed(9)));
 });
 
 test('PROFILE-SLOTS the bodies: Morrowind\'s where a rig stands (drawn by the stage\'s camera, its head the world\'s), the sprite the world draws - its skin or its layered gear - at the world\'s size and place (mutants: the sprite\'s offset unmirrored; the Morrowind body asked with no camera)', async () => {

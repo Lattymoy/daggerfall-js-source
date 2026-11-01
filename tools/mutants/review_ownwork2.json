@@ -1,0 +1,191 @@
+[
+  {
+    "name": "REVIEW2-shield-painted-whole",
+    "file": "src/combat/shieldWidgetAssets.js",
+    "old": "    const steps = paintSteps((queue) => paintShieldFace(index, shieldWidgetSize(index), queue));",
+    "new": "    const steps = paintSteps(() => paintShieldFace(index, shieldWidgetSize(index)));",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-shield-ask-not-first",
+    "file": "src/combat/shieldWidgetAssets.js",
+    "old": "  (_work ?? idleWork()).hurry(index);",
+    "new": "  void (_work ?? idleWork()).pending;",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-shield-warm-one-tier",
+    "file": "src/combat/shieldWidgetAssets.js",
+    "old": "paintSlot(first + ((tier + k) % SHIELD_TIERS) * perTier + frame)",
+    "new": "paintSlot(first + (tier % SHIELD_TIERS) * perTier + frame)",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-widget-never-warms",
+    "file": "src/combat/shieldWidget.js",
+    "old": "    textures?.warm?.(w.indexCurrent);",
+    "new": "    void textures?.warm;",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-painter-fill-one-call",
+    "file": "src/art/ownPainter.js",
+    "old": "fill: queue ? fillLater : fill,",
+    "new": "fill: later(fill),",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-idle-forced-slice-runs-all",
+    "file": "src/systems/idleWork.js",
+    "old": "    while (jobs.length && (forced ? now() < until : deadline.timeRemaining() > IDLE_SPARE_MS));",
+    "new": "    while (jobs.length && (forced ? true : deadline.timeRemaining() > IDLE_SPARE_MS));",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-idle-hurry-to-back",
+    "file": "src/systems/idleWork.js",
+    "old": "      if (at > 0) jobs.unshift(...jobs.splice(at, 1));",
+    "new": "      if (at > 0) jobs.push(...jobs.splice(at, 1));",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-fish-painted-whole",
+    "file": "src/scenes/deepWater/deepWatersFish.js",
+    "old": "paintSteps((queue) => picture(s.textureName, queue))",
+    "new": "paintSteps(() => picture(s.textureName))",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-sky-draw-allocates",
+    "file": "src/render/dynamicSkiesRenderer.js",
+    "old": "      const moon = MOON_UNIFORMS[i], m = s[moon.key];",
+    "new": "      const moon = { ...MOON_UNIFORMS[i] }, m = s[moon.key];",
+    "tests": [
+      "test/render/skydrawalloc.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-waves-scroll-off-spacing",
+    "file": "src/systems/comeSailAway/csaPictures.js",
+    "old": "  const scrollStep = WAVE_FRONT_SPACING / (WAVE_FRAME_COUNT / 2),",
+    "new": "  const scrollStep = 9,",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-waves-tile-off-height",
+    "file": "src/systems/comeSailAway/csaPictures.js",
+    "old": "    tileStep = FOAM_SIZE / WAVE_FRAME_COUNT;",
+    "new": "    tileStep = 3;",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-waves-fronts-differ",
+    "file": "src/systems/comeSailAway/csaPictures.js",
+    "old": "({ ...front, y0: (n + 0.5) * WAVE_FRONT_SPACING })",
+    "new": "({ ...front, face: front.face + n, y0: (n + 0.5) * WAVE_FRONT_SPACING })",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-dw-failed-build-kept",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "    if (tries < OWN_BUILD_TRIES) _own.delete(name);",
+    "new": "    if (tries < 0) _own.delete(name);",
+    "tests": [
+      "test/combat/weapon/dw_ownretry.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-dw-retries-unbounded",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "    if (tries < OWN_BUILD_TRIES) _own.delete(name);",
+    "new": "    if (tries < Infinity) _own.delete(name);",
+    "tests": [
+      "test/combat/weapon/dw_ownretry.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-loop-layer-started-again",
+    "file": "src/audio/layeredLoop.js",
+    "old": "    waiting = waiting.filter((key) => {",
+    "new": "    waiting.filter((key) => {",
+    "tests": [
+      "test/systems/comeSailAway/csa_own_assets.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-loop-layer-never-joins",
+    "file": "src/audio/layeredLoop.js",
+    "old": "  const join = () => {\n    if (!waiting.length) return;",
+    "new": "  const join = () => {\n    if (waiting.length) return;",
+    "tests": [
+      "test/systems/comeSailAway/csa_own_assets.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-loop-no-bed-handed-out",
+    "file": "src/audio/layeredLoop.js",
+    "old": "  if (!bed) return null;",
+    "new": "  if (!bed && keys.length > 9) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_own_assets.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-eotb-shift-unscaled",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    const shift = cfg.offsetScale * cfg.scale;",
+    "new": "    const shift = cfg.offsetScale;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-profile-shift-unscaled",
+    "file": "src/ui/profileBody.js",
+    "old": "    shiftBy = k * offset;",
+    "new": "    shiftBy = offset;",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-idle-forced-slice-one-step",
+    "file": "src/systems/idleWork.js",
+    "old": "      until = forced ? now() + FORCED_SLICE_MS : 0;",
+    "new": "      until = forced ? now() : 0;",
+    "tests": [
+      "test/combat/shieldidle.test.js"
+    ]
+  },
+  {
+    "name": "REVIEW2-dw-reset-keeps-tries",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "  _own = new Map();\n  _tries.clear();\n}\n\n/** The attached arms",
+    "new": "  _own = new Map();\n}\n\n/** The attached arms",
+    "tests": [
+      "test/combat/weapon/dw_ownretry.test.js"
+    ]
+  }
+]

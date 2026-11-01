@@ -693,12 +693,11 @@ function boxMean(field, width, height, radius) {
 }
 
 /**
- * THE ALIK'R'S SAND. A record of the desert's ground at its own size: where the ground is sand (a warm tan, light enough,
- * over its 5 x 5 - so a pale speck in dark dirt is no dune), it is graded toward a pale dune sand that keeps the record's
- * own light and dark (its pebbles and mottles darker sand), and rippled by the wind - crests a few texels apart, bent by
- * a slow noise, whole cycles across the tile so it repeats. Water and green stay the record's, and on a road record so
- * does the paving - darker over its 7 x 7, on a flank (`road` 'flank': 47, 55) only on its paved, lower-right half. The
- * record's stray hues (its violet) are taken away first (groundHue).
+ * THE ALIK'R'S SAND. A record of the desert's ground at its own size, its violet taken away (groundHue): where it is
+ * sand (a warm tan, light enough, over its 5 x 5 - so a pale speck in dark dirt is no dune), it is graded toward a pale
+ * dune sand that keeps the record's own light and dark, and rippled by the wind - crests a few texels apart, bent by a
+ * slow noise, whole cycles across the tile so it repeats. Water and green stay the record's, and on a road record so
+ * does the paving - darker over its 7 x 7, on a flank (`road` 'flank': 47, 55) only on its paved, lower-right half.
  * @param {Rgba} src @param {{ seed: number, road?: false | 'full' | 'flank' }} o @returns {Rgba}
  */
 export function desert(src, { seed, road = false }) {

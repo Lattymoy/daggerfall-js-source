@@ -20,6 +20,13 @@ texture mod, shipped or attached, obeys.
   (`src/systems/ownTextures/ownTextureRules.js`): the Base an edge-aware upscale (`upscaleEdgeAware`, a cubic held
   inside its four nearest texels), our grain and a gentle grade (`enhance`); Masked Roads the same, the paving's own
   stones raised and lit (`road`); Snowless Swamps' winter its summer record.
+- A terrain set's record is ground (`ground` in its spec; a winter set's, 103, 303 and 403, `'winter'`). Before the
+  upscale its stray hues go (`groundHue`): a texel of a hue under 3% of the record, off its 5 x 5's median, keeps its
+  light and takes that hue, so the Alik'r's violet and the snow's pink, yellow and teal specks never grow into blots.
+  On a winter set every snowy texel takes the snowy texels' mean hue round it: its grain is light and shade only. Its
+  edges are made crisp at the record's own scale (`crispInRange`), held inside the four nearest record texels, and a
+  grain goes down to one texel, so the ground at 256 is as crisp as the classic record where a record texel is a
+  pixel.
 - `src/systems/vanillaEnhanced/vanillaEnhancedPack.js` registers the packs in the texture-mod door
   (`src/systems/dfmodTextures.js` `setShippedDfmods`), beside the environment packs (Sands of the Alik'r, Snowfall).
   The rule runs in the pack's worker (`vanillaEnhancedDecodeWorker.js`), and a page with none builds on its own thread,
@@ -95,6 +102,7 @@ Departures:
 - `test/systems/ve4_vanillaEnhancedShipped.test.js` - the packs' builds, shadowing, the index slice by slice, the
   client, add-ons; mutants `tools/mutants/ve4.json`
 - `test/systems/ownwork4_textures.test.js` - the rules; mutants `tools/mutants/ownwork4_textures.json`
+- `test/systems/groundhue.test.js` - the ground's hue and edges; mutants `tools/mutants/groundhue.json`
 - `tools/overhaulsProbe.mjs` - the card in Chromium
 
 ## Open

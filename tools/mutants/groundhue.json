@@ -1,0 +1,128 @@
+[
+  {
+    "name": "GH-stray-law-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const stray = shareOf(i) < STRAY_HUE.share;",
+    "new": "      const stray = false;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-strength-counted-as-hue",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  return along < 0 ? full : Math.hypot(a0 - along * b0, a1 - along * b1, a2 - along * b2);",
+    "new": "  return full;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-light-not-kept",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "        const value = light[i] + own + amount * (target[channel] - own);",
+    "new": "        const value = 128 + own + amount * (target[channel] - own);",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-snow-law-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      const snowy = snow ? smooth(150, 170, light[i]) : 0;",
+    "new": "      const snowy = 0;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-snow-hue-not-its-neighbours",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "        target = sum.map((value) => value / weight);",
+    "new": "        target = sum.map(() => 0);",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-enhance-hue-law-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  const own = ground ? groundHue(src, { snow: ground === 'winter' }) : src;",
+    "new": "  const own = src;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-enhance-crisp-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  const sharp = factor > 1.01 ? (ground ? crispInRange(up, own, 1.5, wrap) : sharpenInRange(up, 0.55, wrap)) : up;",
+    "new": "  const sharp = factor > 1.01 ? sharpenInRange(up, 0.55, wrap) : up;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-crisp-past-its-range",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      crisp = crisp < lo ? lo : crisp > hi ? hi : crisp;\n",
+    "new": "",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-fine-grain-dropped",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  if (ground && factor > 1.01) addDetail(",
+    "new": "  if (false) addDetail(",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-desert-keeps-its-violet",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  const srcData = groundHue(src).data;",
+    "new": "  const srcData = src.data;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-snow-thin-edge-keeps-its-hue",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "  const tinted = groundHue(src, { snow: !fromSummer }).data;",
+    "new": "  const tinted = srcData;",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-apply-drops-the-ground",
+    "file": "src/systems/ownTextures/ownTextureRules.js",
+    "old": "      return enhance(src, spec.w, spec.h, { wrap: !!spec.wrap, seed: spec.seed, ground: spec.ground ?? false });",
+    "new": "      return enhance(src, spec.w, spec.h, { wrap: !!spec.wrap, seed: spec.seed });",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-spec-ground-unsaid",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "const groundOf = (archive) => (isTerrainSet(archive) ? { ground: archive >= 100 && archive % 100 === 3 ? 'winter' : true } : {});",
+    "new": "const groundOf = () => ({});",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  },
+  {
+    "name": "GH-spec-winter-unsaid",
+    "file": "src/systems/ownTextures/ownTexturePacks.js",
+    "old": "{ ground: archive >= 100 && archive % 100 === 3 ? 'winter' : true }",
+    "new": "{ ground: true }",
+    "tests": [
+      "test/systems/groundhue.test.js"
+    ]
+  }
+]

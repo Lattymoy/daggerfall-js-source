@@ -433,6 +433,29 @@ test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, su
   assert.equal(Number(armed.state().placed[1].toFixed(6)), Number((ownY * 2.5).toFixed(6)), 'the upward shift scaled with it (the law\'s: the lowest foot on the ground)');
 });
 
+test('the measured shift lands at any billboard scale: Animation.BillboardScale (and its Fine) scales the shift with the picture, so the centre line stands on the spot and the feet on the ground drawn twice the size as at the art\'s own', async (t) => {
+  setModSetting(MOD, 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
+  const ownX = spriteOffset(ARCHIVE_FOOT, 18).x, ownY = spriteOffset(ARCHIVE_FOOT, 18).y;
+  assert.ok(ownX !== 0 && ownY !== 0);
+  const placedAt = async () => {
+    const { b } = await liveBody();
+    ticks(b, 12, still({ sheathed: false, cameraPos: [-1.4, 1.5, -1.4] }));
+    b.draw(null, { eye: [-1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+    await new Promise((res) => setTimeout(res, 2));
+    b.draw(null, { eye: [-1.4, 1.5, -1.4], feet: [0, 0, 0], yaw: 0 });
+    assert.equal(b.state().shown.orientation, 5, 'record 18 straight');
+    return b.state().placed.map((v) => Number(v.toFixed(6)));
+  };
+  const one = await placedAt();
+  assert.deepEqual([one[0], one[1]], [Number(ownX.toFixed(6)), Number(ownY.toFixed(6))], 'at scale 1: the art\'s own');
+  setModSetting(MOD, 'Animation.BillboardScale', 2);
+  setModSetting(MOD, 'Animation.FineBillboardScale', 0.5);
+  t.after(() => { setModSetting(MOD, 'Animation.BillboardScale', 1); setModSetting(MOD, 'Animation.FineBillboardScale', 0); });
+  const big = await placedAt();
+  assert.deepEqual([big[0], big[1]], [Number((ownX * 2.5).toFixed(6)), Number((ownY * 2.5).toFixed(6))], 'two and a half times the picture: two and a half times its shift');
+});
+
 test('EOTB-IL: the first-person billboard - active while FirstPersonBillboard is not None, a quarter metre behind, the front record, mirrored when Visible', async () => {
   const { b, r } = await liveBody({}, { third: false });   // toggle(true, fp=true): ToggleOffset(false) with the setting on
   assert.equal(b.state().FP, true);

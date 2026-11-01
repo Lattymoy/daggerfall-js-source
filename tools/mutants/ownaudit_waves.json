@@ -2,8 +2,8 @@
   {
     "name": "OWNAUDIT-waves-front-moved",
     "file": "src/systems/comeSailAway/csaPictures.js",
-    "old": "    y0: Math.floor((n + 0.5) * (size / 5)) % size,",
-    "new": "    y0: Math.floor((n + 0.5 + paintIndex * 0.5) * (size / 5)) % size,",
+    "old": "(_, n) => ({ ...front, y0: (n + 0.5) * WAVE_FRONT_SPACING }));",
+    "new": "(_, n) => ({ ...front, y0: (n + 0.5 + paintIndex * 0.5) * WAVE_FRONT_SPACING }));",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]

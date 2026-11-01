@@ -327,11 +327,10 @@ test('SW1: the FPS-models seam is recorded and not carried', () => {
 
 import {
   shieldTextureFileName, shieldWidgetSize, shieldWidgetImage, SHIELD_ARCHIVE_SIZES,
-  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, SHIELD_WIDGET_PRESETS,
+  SHIELD_WIDGET_MOD, SHIELD_ARCHIVES,
 } from '../../src/combat/shieldWidgetAssets.js';
 import { paintShieldFace, shieldFaceOf, SHIELD_KINDS, SHIELD_PAINTS, litBy } from '../../src/combat/shieldFaces.js';
 import { RAMP } from '../../src/art/ownPainter.js';
-import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 
 test('OWN-WORK4: the 600 sprites are our own paintings - every slot painted in code at the size the registry promises, a 1-bit cutout, one slot one picture; the mod\'s folder is gone', () => {
   assert.equal(existsSync('vendor/shield-widget'), false, 'no picture of the mod is carried');
@@ -403,7 +402,7 @@ test('SW4: all 600 sprites are the right way up through the door - the arm runs 
 test('SW4: the shield door keeps the painting’s rows, as the port’s other two screen sprites do', () => {
   const door = readFileSync('src/combat/shieldWidgetAssets.js', 'utf8');
   assert.match(door, /import \{ toScreenOrder \} from '\.\.\/formats\/color32Order\.js';/);
-  assert.match(door, /return picture \? toScreenOrder\(picture\) : null;/);
+  assert.match(door, /resolve\(picture \? toScreenOrder\(picture\) : null\)/);   // painted in idle slices, handed over through the same door
   assert.equal((door.match(/toColor32/g) ?? []).length, 1, 'named once, in the comment that says why it is not used');
 });
 
@@ -423,17 +422,6 @@ test('SW1: a flat index spells TextureReplacement’s own name, and every size i
   assert.deepEqual(shieldWidgetSize(599), SHIELD_ARCHIVE_SIZES[112363]);
   assert.equal(shieldWidgetSize(-1), null);
   assert.equal(shieldWidgetSize(SHIELD_TEXTURE_COUNT), null);
-});
-
-test('OWN-WORK4: our presets - each sets one section to its defaults, or moves every slider of it half the way toward one end of its range', () => {
-  const keys = MOD_SETTINGS['shield-widget'].keys;
-  assert.equal(SHIELD_WIDGET_PRESETS.length, 9);
-  for (const { title, values } of SHIELD_WIDGET_PRESETS) {
-    const sliders = Object.entries(values).filter(([, v]) => typeof v === 'number');
-    for (const [k, v] of Object.entries(values)) assert.ok(keys[k], `${title}: ${k} is a setting`);
-    const steps = sliders.map(([k, v]) => { const d = keys[k]; return v === d.default ? 0 : (v - d.default) / ((v > d.default ? d.max : d.min) - d.default); });
-    assert.ok(steps.every((x) => x === 0) || steps.every((x) => Math.abs(x - 0.5) < 1e-9), `${title}: ${steps}`);
-  }
 });
 
 test('SW1: a widget whose door answers no size draws nothing', () => {

@@ -285,7 +285,7 @@ let _widgetSteps = 0;
 /**
  * The component. `deps`:
  *   settings()      the fields (readShieldWidgetSettings), re-read per frame
- *   textures        size(index) -> { width, height } | null - the sprite sheet
+ *   textures        size(index) -> { width, height } | null - the sprite sheet; warm(index), its slots painted ahead
  *                   (combat/shieldWidgetAssets.js), or null before it loads
  *   audio           playOneShot(clip, volume, pitch) - PlayImpactSound
  *   rolls           Random.value, for Random.Range(0, 9)
@@ -592,6 +592,7 @@ export function createShieldWidget({
     w.conditionPrevious = item?.conditionPercentage ?? 0;
     w.indexCurrent = shieldTextureIndex(item, w.s.conditionThresholdUpper, w.s.conditionThresholdLower);
     w.shieldTexture = w.indexCurrent + w.frameCurrent;
+    textures?.warm?.(w.indexCurrent); // its frames painted in idle time, before they are drawn (the port's)
   }
 
   // ---- HitShield (IL 0x00-0x293) ----

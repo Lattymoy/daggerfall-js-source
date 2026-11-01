@@ -16,7 +16,9 @@ our own, under the mod's names, places, rates and lengths (OWN-WORK, the owner);
   (`OWN_BOAT_ARCHIVE`). The galley's top deck and the carrack's poop and forecastle are climbed by ladders.
 - **Our pictures** (`src/systems/comeSailAway/csaPictures.js`): the wind arrow, the splash and the breakers. The 32
   breaker frames alternate two paints, eight a second; both lay the same fronts and only the crests' teeth trade
-  places, so the foam churns as the frames turn (`wavePaint`). The breakers lie over our own foam.
+  places, so the foam churns as the frames turn (`wavePaint`). The breakers lie over our own foam. A paint is one
+  front laid five times (`WAVE_FRONTS`), and a loop scrolls it one front's spacing and walks the foam one tile
+  (`waveSpecs`), so the last frame steps into the first as any frame into the next.
 - **Our sounds** (`src/systems/comeSailAway/csaSynth/`): the five clips at the mod's rates and lengths. Each of the two
   loops is three layers (`CSA_LAYERS`, `src/audio/layeredLoop.js`): the bed, and each kind of event on its own loop,
   29, 41 and 37 s at rest and 31, 43 and 47 s under way, so they come round together only after 12 and 17 hours. The

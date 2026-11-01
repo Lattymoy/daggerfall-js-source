@@ -168,7 +168,7 @@ test('OWN-WORK4: the five clips Start loads - each at its rate, the strokes as l
   assert.match(readFileSync(new URL('../../../src/scenes/csaAudio.js', import.meta.url), 'utf8'), /ch\.handle \?\?= layeredLoop\(csaLayersOf\(src\.clip\)\.map\(csaClipKey\), \(key\) =>\n\s*audio\.loop3d\(key, pos, 0, \{/);
 });
 
-test('OWN-WORK4 audit: a layered loop is one handle over its layers - every layer started, moved, levelled and stopped together; none left playing while one cannot start (mutants: the partial layers left running; a layer not moved)', () => {
+test('OWN-WORK4 audit: a layered loop is one handle over its layers - every layer moved, levelled and stopped together; the bed starts once, each other layer joins when it can start, and none is ever started twice or stopped to wait for another (mutants: a layer started again each frame; a late layer never joined; a loop with no bed handed out)', () => {
   const made = [];
   const start = (key) => (key === 'missing' ? null : { key, stopped: false, v: null, p: null, stop() { this.stopped = true; }, setVolume(v) { this.v = v; }, move(p) { this.p = p; } });
   const loop = layeredLoop(['a', 'b', 'c'], (k) => { const h = start(k); made.push(h); return h; });
@@ -177,9 +177,22 @@ test('OWN-WORK4 audit: a layered loop is one handle over its layers - every laye
   assert.deepEqual(made.map((h) => [h.p, h.v]), [[[1, 2, 3], 0.4], [[1, 2, 3], 0.4], [[1, 2, 3], 0.4]]);
   loop.stop();
   assert.deepEqual(made.map((h) => h.stopped), [true, true, true]);
-  const partial = [];
-  assert.equal(layeredLoop(['a', 'missing', 'c'], (k) => { const h = start(k); partial.push(h); return h; }), null);
-  assert.deepEqual(partial.map((h) => h?.stopped ?? null), [true, null], 'the layer made before the miss is stopped, the rest never started');
+  assert.equal(layeredLoop(['missing', 'a'], start), null, 'no bed yet: no handle, nothing started');
+  // a layer still being made: the bed plays, the layer joins the frame it can start, and nothing restarts
+  let ready = false;
+  const starts = [];
+  const late = layeredLoop(['bed', 'slaps'], (k) => { if (k === 'slaps' && !ready) return null; const h = start(k); starts.push(h); return h; });
+  assert.equal(late.layers, 1, 'the bed alone');
+  for (let f = 0; f < 10; f++) {
+    if (f === 6) ready = true;
+    late.move([f, 0, 0]); late.setVolume(0.25);
+  }
+  assert.deepEqual(starts.map((h) => h.key), ['bed', 'slaps'], 'each started once');
+  assert.equal(late.layers, 2);
+  assert.ok(starts.every((h) => !h.stopped), 'none stopped while it waited');
+  assert.deepEqual([starts[1].p, starts[1].v], [[9, 0, 0], 0.25], 'the joined layer moved and levelled with the rest');
+  late.stop();
+  assert.ok(starts.every((h) => h.stopped));
   assert.equal(layersPeriod([{ samples: 30, rate: 10 }, { samples: 40, rate: 10 }]), 12, 'lcm(3 s, 4 s)');
   assert.equal(layersPeriod([{ samples: 29 * 32000, rate: 32000 }, { samples: 41 * 16000, rate: 16000 }, { samples: 37 * 11025, rate: 11025 }]), 29 * 41 * 37);
 });

@@ -149,6 +149,25 @@ test('CSA-F / OWN-WORK4: InitializeWaveTextures finds thirty-two frames (112395_
   assert.deepEqual(wavePaint(1).data, wavePaint(1).data, 'painted the same every time');
 });
 
+test('the breakers loop without a seam: each paint repeats at its fronts\' spacing, and the last frame steps into the first as every frame steps into the next - in the paint\'s scroll (by that spacing) and in the foam\'s tile (by its height)', () => {
+  const spacing = WAVE_SIZE / 5, row = WAVE_SIZE * 4;
+  for (const k of [0, 1]) {
+    const p = wavePaint(k);
+    for (let y = 0; y < WAVE_SIZE; y++) {
+      const a = p.data.subarray(y * row, (y + 1) * row), b = p.data.subarray(((y + spacing) % WAVE_SIZE) * row, (((y + spacing) % WAVE_SIZE) + 1) * row);
+      assert.ok(a.every((v, i) => v === b[i]), `paint ${k}: row ${y} is row ${(y + spacing) % WAVE_SIZE}`);
+    }
+  }
+  const specs = waveSpecs(), n = specs.length, mod = (v, m) => ((v % m) + m) % m;
+  const scrollStep = (i) => mod(specs[i].scroll - specs[(i + 1) % n].scroll, spacing);
+  const tileStep = (i) => mod(specs[i].tile[1] - specs[(i + 1) % n].tile[1], FOAM_SIZE);
+  for (let i = 0; i < n; i++) {
+    assert.equal(scrollStep(i), scrollStep(i % 2), `frame ${i} to ${(i + 1) % n}: the scroll's step`);
+    assert.equal(tileStep(i), tileStep(0), `frame ${i} to ${(i + 1) % n}: the foam's step`);
+  }
+  assert.ok(scrollStep(0) + scrollStep(1) > 0 && tileStep(0) > 0, 'and both move');
+});
+
 test('OWN-AUDIT: the frames alternate the two paints, so both lay the same fronts - the faces row for row - and only the crests\' teeth trade places (mutants: a paint\'s fronts moved, the teeth alike)', () => {
   const [a, b] = [wavePaint(0), wavePaint(1)];
   const isKey = (d, i) => d[i] === 255 && d[i + 1] === 0 && d[i + 2] === 255 && d[i + 3] === 255;

@@ -123,7 +123,7 @@ test('BA1: the Mods pane entry is the shipped modsettings.json - six sections, t
   const manifest = SHIPPED_MANIFEST;
   assert.equal(manifest.GUID, BETTER_AMBIENCE_MOD.guid); assert.equal(manifest.GUID, BETTER_AMBIENCE_GUID, 'the GUID Immersive Footsteps asks ModManager for');
   assert.equal(manifest.ModTitle, BETTER_AMBIENCE_MOD.title); assert.equal(manifest.ModVersion, BETTER_AMBIENCE_MOD.version); assert.equal(manifest.ModAuthor, BETTER_AMBIENCE_MOD.author);
-  assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
+  assert.equal(m.title, manifest.ModTitle); assert.ok(!('author' in m), 'no author named: the game carries no credits');
   assert.equal(manifest.scripts, 16, 'the sixteen sources the manifest names');
   assert.equal(manifest.clips, 51, 'the 51 clips the manifest names, 29 of them asked for - each now a clip of ours');
   const PORT_DEFAULT = Object.freeze({ 'Better Footsteps.enable': false, 'Dungeon Lighting.enableFogAmbientEffect': false });   // the two departures (modSettings.js says why; BA2 the second)

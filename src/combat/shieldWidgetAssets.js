@@ -9,8 +9,10 @@
 // through toScreenOrder, never toColor32, which would flip them.
 
 import { toScreenOrder } from '../formats/color32Order.js';
-import { paintShieldFace } from './shieldFaces.js';
-import { SHIELD_TEXTURE_COUNT, shieldTextureName } from './shieldWidget.js';
+import { paintSteps } from '../art/ownPainter.js';
+import { idleWork } from '../systems/idleWork.js';
+import { paintShieldFace, SHIELD_GROUPS, SHIELD_TIERS } from './shieldFaces.js';
+import { SHIELD_TEXTURE_COUNT, SHIELD_FRAMES, shieldTextureName } from './shieldWidget.js';
 
 export const SHIELD_WIDGET_MOD = Object.freeze({
   guid: 'e59d8114-e9a2-4e8e-84e8-4666475dbb9f',
@@ -44,66 +46,57 @@ export function shieldWidgetSize(index) {
 }
 
 const _images = new Map(); // flat index -> Promise<image | null>
+let _work = null; // the idle queue the slots are painted on (systems/idleWork.js): the page's, or a test's
 
-/** One sprite - `{ width, height, colors }` RGBA in the port's color32 shape, which is what `renderer.uploadTexture`
- *  reads (TEX1). The rows stay as the painting has them, a SCREEN quad's (HT3's law). Painted once per index. */
-export function shieldWidgetImage(index) {
-  if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return Promise.resolve(null);
+/** Slot `index` queued for painting in the page's idle slices, once. */
+function paintSlot(index) {
   if (!_images.has(index)) {
+    const steps = paintSteps((queue) => paintShieldFace(index, shieldWidgetSize(index), queue));
     _images.set(
       index,
-      (async () => {
-        const picture = paintShieldFace(index, shieldWidgetSize(index));
-        return picture ? toScreenOrder(picture) : null;
-      })(),
+      new Promise((resolve) =>
+        (_work ?? idleWork()).add(index, steps, (picture) => resolve(picture ? toScreenOrder(picture) : null)),
+      ),
     );
   }
   return _images.get(index);
 }
 
+/** One sprite - `{ width, height, colors }` RGBA in the port's color32 shape, which is what `renderer.uploadTexture`
+ *  reads (TEX1). The rows stay as the painting has them, a SCREEN quad's (HT3's law). Painted once per index, a few
+ *  milliseconds at a time in the page's idle slices and never in the frame that asks: until it is ready the widget
+ *  draws nothing (weaponRig.js shieldTextureFor). An ask puts its slot first. */
+export function shieldWidgetImage(index) {
+  if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return Promise.resolve(null);
+  const picture = paintSlot(index);
+  (_work ?? idleWork()).hurry(index);
+  return picture;
+}
+
+/** A shield's slots warmed before they are drawn - its record's frames, then its other wear tiers' (a blow can batter
+ *  it mid-fight) - from any one of them. The widget asks it as it takes a shield. */
+export function warmShieldSlots(index) {
+  if (!(index >= 0 && index < SHIELD_TEXTURE_COUNT)) return;
+  const perTier = SHIELD_GROUPS * SHIELD_FRAMES;
+  const tier = Math.floor(shieldTextureName(index).record / SHIELD_GROUPS);
+  const first = index - (index % SHIELD_FRAMES) - tier * perTier;
+  for (let k = 0; k < SHIELD_TIERS; k++)
+    for (let frame = 0; frame < SHIELD_FRAMES; frame++)
+      paintSlot(first + ((tier + k) % SHIELD_TIERS) * perTier + frame);
+}
+
+/** Test seam: the idle queue the slots are painted on, the painted ones forgotten. */
+export function _setShieldPaintWorkForTests(work = null) {
+  _work = work;
+  _images.clear();
+}
+
 /** The widget's `textures` dep. */
-export const shieldWidgetTextures = Object.freeze({ size: shieldWidgetSize, image: shieldWidgetImage });
+export const shieldWidgetTextures = Object.freeze({
+  size: shieldWidgetSize,
+  image: shieldWidgetImage,
+  warm: warmShieldSlots,
+});
 
 /** The four archives, for a probe or a pin. */
 export const SHIELD_ARCHIVES = Object.freeze(Object.keys(SHIELD_ARCHIVE_SIZES).map(Number));
-
-/** OWN-WORK4: our presets, in this store's keys (modSettings.js 'shield-widget'), by one rule: each sets one section
- *  to its defaults, or moves every slider of it half the way from its default toward one end of its range. */
-export const SHIELD_WIDGET_PRESETS = Object.freeze([
-  { title: 'Position - Default', values: { 'Shield.OffsetHorizontal': 0.5, 'Shield.OffsetVertical': 0.5 } },
-  { title: 'Position - Low', values: { 'Shield.OffsetHorizontal': -0.25, 'Shield.OffsetVertical': -0.25 } },
-  { title: 'Position - High', values: { 'Shield.OffsetHorizontal': 0.75, 'Shield.OffsetVertical': 0.75 } },
-  { title: 'Bob - Default', values: { 'Modules.Bob': true, 'Bob.SizeX': 1, 'Bob.SizeY': 1 } },
-  { title: 'Bob - Wide', values: { 'Modules.Bob': true, 'Bob.SizeX': 1.5, 'Bob.SizeY': 0.5 } },
-  { title: 'Bob - Tall', values: { 'Modules.Bob': true, 'Bob.SizeX': 0.5, 'Bob.SizeY': 1.5 } },
-  {
-    title: 'Inertia - Default',
-    values: {
-      'Modules.Inertia': true,
-      'Inertia.Scale': 1,
-      'Inertia.Speed': 1,
-      'Inertia.ForwardDepth': 1,
-      'Inertia.ForwardSpeed': 1,
-    },
-  },
-  {
-    title: 'Inertia - Light',
-    values: {
-      'Modules.Inertia': true,
-      'Inertia.Scale': 0.5,
-      'Inertia.Speed': 1.5,
-      'Inertia.ForwardDepth': 0.5,
-      'Inertia.ForwardSpeed': 1.5,
-    },
-  },
-  {
-    title: 'Inertia - Heavy',
-    values: {
-      'Modules.Inertia': true,
-      'Inertia.Scale': 1.5,
-      'Inertia.Speed': 0.5,
-      'Inertia.ForwardDepth': 1.5,
-      'Inertia.ForwardSpeed': 0.5,
-    },
-  },
-]);

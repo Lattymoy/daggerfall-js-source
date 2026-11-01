@@ -147,8 +147,8 @@
   {
     "name": "OWNAUDIT-keys-offset-unscaled",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const x = xml.x / xml.scale * cfg.offsetScale * (shown.mirror ? -1 : 1);",
-    "new": "    const x = xml.x / xml.scale * (shown.mirror ? -1 : 1);",
+    "old": "    const shift = cfg.offsetScale * cfg.scale;",
+    "new": "    const shift = cfg.scale;",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ]

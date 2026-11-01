@@ -44,13 +44,16 @@ export const mwHeadOf = (/** @type {any} */ arm) =>
 /** The billboard scale the player chose (eotbBody.js look()'s `scale`). Pure. */
 export const spriteScaleOf = (/** @type {Record<string, any>} */ settings = {}) =>
   (settings['Animation.BillboardScale'] ?? 1) + (settings['Animation.FineBillboardScale'] ?? 0);
+/** The shift's own scale the player chose (eotbBody.js look()'s `offsetScale`). Pure. */
+export const spriteOffsetScaleOf = (/** @type {Record<string, any>} */ settings = {}) =>
+  (settings['Animation.GlobalOffsetScale'] ?? 1) + (settings['Animation.FineGlobalOffsetScale'] ?? 0);
 
 /** The sprite the world draws standing, front on (the idle table's orientation `view`, 0), as the stage takes it: its picture's
  *  color32 rows bottom first, its metres a pixel, its foot over the feet and its offset across - eotbBody.js place()'s
  *  law. Null where the bundle has no picture for it. */
 export async function spriteBodyOf(
   /** @type {any} */ look,
-  { scale = 1, view = 0, decode = decodeSprite, urlOf = eotbSpriteUrl } = {},
+  { scale = 1, offset = 1, view = 0, decode = decodeSprite, urlOf = eotbSpriteUrl } = {},
 ) {
   const s = spriteFor('Idle', view, 0, look);
   const url = s ? urlOf(s.key) : null;
@@ -58,15 +61,17 @@ export async function spriteBodyOf(
   const px = await decode(url);
   if (!px?.width || !px?.height || !px.colors) return null;
   const xml = spriteOffset(s.archive, s.record);
-  const size = spriteSize(px.width, px.height, { scale: scale > 0 ? scale : 1 }, xml.scale);
+  const k = scale > 0 ? scale : 1,
+    shiftBy = k * offset; // the measured shift grows with the picture, as eotbBody.js place() grows it
+  const size = spriteSize(px.width, px.height, { scale: k }, xml.scale);
   return {
     kind: 'sprite',
     width: px.width,
     height: px.height,
     colors: px.colors,
     mpp: size.h / px.height,
-    base: xml.y / xml.scale,
-    shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1),
+    base: (xml.y / xml.scale) * shiftBy,
+    shift: (xml.x / xml.scale) * shiftBy * (s.mirror ? -1 : 1),
     key: s.key,
     view: s.view ?? 0,
     art: spriteArtScale(s.archive, s.record),
@@ -97,7 +102,7 @@ export function profileBodies({
     lookKey(/** @type {string} */ kind) {
       if (kind === 'mw') return 'mw';
       const s = settingsNow();
-      return `${JSON.stringify(profileSpriteLook(who() ?? {}, s))}@${spriteScaleOf(s)}`;
+      return `${JSON.stringify(profileSpriteLook(who() ?? {}, s))}@${spriteScaleOf(s)}x${spriteOffsetScaleOf(s)}`;
     },
     async of(/** @type {string} */ kind, { width = 320, height = 420 } = {}) {
       if (kind === 'mw') {
@@ -119,7 +124,10 @@ export function profileBodies({
       }
       const s = settingsNow();
       try {
-        return await spriteBodyOf(profileSpriteLook(who() ?? {}, s), { scale: spriteScaleOf(s) });
+        return await spriteBodyOf(profileSpriteLook(who() ?? {}, s), {
+          scale: spriteScaleOf(s),
+          offset: spriteOffsetScaleOf(s),
+        });
       } catch {
         return null;
       }

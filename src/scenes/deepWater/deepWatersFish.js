@@ -26,6 +26,8 @@ import { PassiveFish, rangeFloat, fishBillboardSize, PASSIVE_FISH_SPECIES } from
 import { createFishSpawner, createEncounterPulse, FISH_ATTEMPTS_PER_PIXEL_PER_TICK } from './deepWatersEncounters.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../../player/activate.js';
 import { noteAct } from '../../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
+import { paintSteps } from '../../art/ownPainter.js';
+import { idleWork } from '../../systems/idleWork.js';
 
 /** The mod's cut-out for a fish (SpawnPassiveFish's `_Cutoff` 0.1, which ConfigureUnderwaterDecorationMaterial copies). */
 export const FISH_CUTOFF = 0.1;
@@ -287,17 +289,17 @@ export function createDeepWatersFish({
 }
 
 /**
- * LoadFishTexture's pictures: each species' own (OWN-WORK4: ours, systems/deepWater/fishArt.js), made once,
- * edge-cleaned (the fish's underwater material is made from its billboard
- * material by CopyTextureAndTransform, which cleans it), rows turned to
- * the GPU's bottom-up, on the GPU as a one-layer array. A species whose
- * picture never comes never spawns (the mod's warning, once).
+ * LoadFishTexture's pictures: each species' own (OWN-WORK4: ours, systems/deepWater/fishArt.js), made once in the
+ * page's idle slices (`work`, systems/idleWork.js), never in the frame that starts them; edge-cleaned
+ * (CopyTextureAndTransform cleans the billboard material it copies), rows turned bottom-up, on the GPU as a one-layer
+ * array. A species spawns once its picture is up (the mod's warning, once, for one that never comes).
  * @param {object} deps
- * @param {(name: string) => ({width: number, height: number, data: Uint8Array} | null | Promise<any>)} deps.picture - top-down RGBA
+ * @param {(name: string, queue?: Array<() => void>) => ({width: number, height: number, data: Uint8Array} | null | Promise<any>)} deps.picture - top-down RGBA; with a queue, its painter's calls queued there
  * @param {(img: object) => boolean} deps.clean - GetEdgeCleanedTexture's flood (underwaterDecorations.clearEdgeBlackPixels)
  * @param {(frames: object[]) => ?{tex: any, frames: number}} deps.createTexture
+ * @param {{ add: (key: any, steps: Iterator<any, any>, done: (value: any, error?: any) => void) => void } | null} [deps.work]
  */
-export function createFishPictures({ picture, clean, createTexture }) {
+export function createFishPictures({ picture, clean, createTexture, work = null }) {
   const textures = new Map();
   const failed = new Set();
   let started = false;
@@ -305,8 +307,15 @@ export function createFishPictures({ picture, clean, createTexture }) {
     if (started) return;
     started = true;
     for (const s of PASSIVE_FISH_SPECIES) {
+      const painted = new Promise((resolve, reject) =>
+        (work ?? idleWork()).add(
+          s,
+          paintSteps((queue) => picture(s.textureName, queue)),
+          (img, e) => (e ? reject(e) : resolve(img)),
+        ),
+      );
       (async () => {
-        const img = await picture(s.textureName);
+        const img = await painted;
         if (!img) throw new Error('no picture');
         const rows = new Uint8Array(img.width * img.height * 4);
         for (let y = 0; y < img.height; y++)

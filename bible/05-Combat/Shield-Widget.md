@@ -10,13 +10,16 @@ face is our own painting; the release's provenance is in `01-Overview/Own-Work.m
 - **The component** (`src/combat/shieldWidget.js`), owned by the weapon rig, draws the shield as a screen quad in its
   pose (`SHIELD_POSE`: Hide, Off-screen, Corner, Ready) for each state: sheathed, attacking, casting.
 - **The faces** (`src/combat/shieldFaces.js` `paintShieldFace`, through `src/combat/shieldWidgetAssets.js`): 600 slots
-  (`SHIELD_TEXTURE_COUNT`), each painted in code the first time the widget asks for it. The archive is the shield's kind
+  (`SHIELD_TEXTURE_COUNT`), each painted in code ahead of its first draw (below). The archive is the shield's kind
   (`SHIELD_ARCHIVE_FIRST` 112360: Buckler, Round, Kite, Tower, at the mod's four sizes); the record is one of ten
   material groups plus one of three wear tiers; the frame (`SHIELD_FRAMES`, 5) runs from the guard to the shield turned
   out of the way. `shieldTextureIndex` picks one. Each face takes the painter's light: a bevelled rim, a boss that casts
   its shadow, studs that glint, metal with a sheen, and the leather group's face in planks of wood. The forearm runs off
   the bottom edge and the top edge stays clear. The condition tier changes live as the shield is hit (`HitShield`), so
   it batters in the fight.
+- **Painted ahead** (`src/combat/shieldWidgetAssets.js` `warmShieldSlots`, `src/systems/idleWork.js`): a slot is
+  painted a few milliseconds at a time in the page's idle slices, never in the frame that asks. The widget warms a
+  shield's frames and its other wear tiers as it takes the shield; until a frame is painted nothing draws.
 - **Blocks and recoil.** A hit on a part the shield covers (`isPartShielded`) drives the block and the recoil; parry
   sounds are DFU's clips (`PARRY_CLIP_FIRST`). The parts a shield covers are its own template's numbers, whatever look
   the Wardrobe dresses it in (`coverTemplate`).
@@ -27,8 +30,8 @@ face is our own painting; the release's provenance is in `01-Overview/Own-Work.m
   the other two.
 - **Under the Morrowind arms** the shield sprite does not draw.
 - **Settings** (`readShieldWidgetSettings`; restated flat in `src/systems/modSettings.js` under `shield-widget`): the
-  mod's eight sections, 36 keys, its defaults, plus our `Enabled` (on). Our presets (`SHIELD_WIDGET_PRESETS`) follow
-  one rule: a section at its defaults, or every slider of it half the way toward one end of its range.
+  mod's eight sections, 36 keys, its defaults, plus our `Enabled` (on). The mod's presets were picks in DFU's mod
+  settings window; the game has no such window, so it carries no presets.
 - **Off the screen, nothing.** `draw` emits nothing for a rect wholly past the screen's edge; `drawRect` still answers
   it, the gate ladder's own verdict.
 
@@ -48,7 +51,7 @@ DFU draws no first-person shield; the mod adds one. The port follows its IL meth
 ## Code and tests
 
 - `src/combat/shieldWidget.js` - the component
-- `src/combat/shieldFaces.js` - our faces; `src/combat/shieldWidgetAssets.js` - the face door and the presets
+- `src/combat/shieldFaces.js` - our faces; `src/combat/shieldWidgetAssets.js` - the face door
 - `test/combat/sw1_shield_widget.test.js` - the component, the gate ladder, the key, all 600 faces the right way up
 
 ## Open
