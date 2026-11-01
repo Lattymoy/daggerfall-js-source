@@ -290,8 +290,8 @@
   {
     "name": "CP-sea-carved",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : peerBoats.includes(boat) ? boat.figurehead : 0);",
-    "new": "  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : boat.figurehead);",
+    "old": "peerBoats.includes(boat) ? boat.figurehead : 0)",
+    "new": "boat.figurehead)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CP-frame-swapped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (carved) one(carved.mesh, multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM ??= new Float32Array(16)), paint);   // her own matrix: the shadow pass keeps it",
-    "new": "      if (carved) one(carved.mesh, multiply(carved.matrix, frame ?? worldOf(boat.MeshObject), boat._figureM ??= new Float32Array(16)), paint);   // her own matrix: the shadow pass keeps it",
+    "old": "multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM",
+    "new": "multiply(carved.matrix, frame ?? worldOf(boat.MeshObject), boat._figureM",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "CP-paint-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat))) : null;   // FIGUREHEAD: her carving, in her trim paint",
-    "new": "      const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, 0)) : null;   // FIGUREHEAD: her carving, in her trim paint",
+    "old": "carvingPaint(boat.hull, liveryCodeOf(boat))",
+    "new": "carvingPaint(boat.hull, 0)",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CP-hidden-drawn",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat))) : null;   // FIGUREHEAD: her carving, in her trim paint",
-    "new": "      const carved = boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat))) : null;   // FIGUREHEAD: her carving, in her trim paint",
+    "old": "const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(",
+    "new": "const carved = boat.MeshObject?.activeSelf ? figureheads.drawFor(",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "CP-mine-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : peerBoats.includes(boat) ? boat.figurehead : 0);",
-    "new": "  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? 0 : peerBoats.includes(boat) ? boat.figurehead : 0);",
+    "old": "figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) :",
+    "new": "figureheadOfCode(mineBoats.has(boat) ? 0 :",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

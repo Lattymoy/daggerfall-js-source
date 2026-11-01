@@ -384,8 +384,8 @@
   {
     "name": "AUDIT-INSTALL-L5-3-a-mac-is-sent-to-steam",
     "file": "app/lib/launcherState.cjs",
-    "old": "    if (platform === 'darwin') {",
-    "new": "    if (false) {",
+    "old": "    if (platform === 'darwin') {\n      return {\n        title: 'Where is Daggerfall?',",
+    "new": "    if (false) {\n      return {\n        title: 'Where is Daggerfall?',",
     "tests": ["test/tooling/audit_install.test.js"]
   },
   {

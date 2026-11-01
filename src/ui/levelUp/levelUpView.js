@@ -200,7 +200,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
     return t('levelup.blurb.personality', 'Better prices, friendlier townspeople and better odds in court.');
   },
   // player/motor.js:"this.speed = walkSpeed" walkSpeed(stats.speed) is how fast you move;
-  // combat/weapon/weaponRig.js:"const playerWeapon" reads liveStat speed for the swing.
+  // combat/weapon/weaponRig.js:"const playerWeapon = new PlayerWeapon" reads liveStat speed for the swing.
   get speed() {
     return t('levelup.blurb.speed', 'Makes you move and swing your weapon faster.');
   },

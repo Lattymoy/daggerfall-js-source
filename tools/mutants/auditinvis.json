@@ -20,8 +20,8 @@
   {
     "name": "AINV-B-hidden-owner-wagon-drawn",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world - RPT1026-EVENTS GATE-WAY: save on an event's gate's ground",
-    "new": "    if (!p?.wagon || !p.shownWagon || p.offGround) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world - RPT1026-EVENTS GATE-WAY: save on an event's gate's ground",
+    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;",
+    "new": "    if (!p?.wagon || !p.shownWagon || p.offGround) return null;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AINV-B-parked-wagon-hidden-too",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world - RPT1026-EVENTS GATE-WAY: save on an event's gate's ground",
-    "new": "    if (!p?.wagon || !p.shownWagon || (p.hidden) || p.offGround) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world - RPT1026-EVENTS GATE-WAY: save on an event's gate's ground",
+    "old": "    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;",
+    "new": "    if (!p?.wagon || !p.shownWagon || (p.hidden) || p.offGround) return null;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AINV-B-horse-plain",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (b) { poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner, h.position)); if (owner) b.conceal = conceal; }   // In its owner's look",
-    "new": "      if (b) { poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner, h.position)); }   // In its owner's look",
+    "old": "if (owner) b.conceal = conceal; }",
+    "new": "}",
     "tests": [
       "test/systems/disc20.test.js"
     ]

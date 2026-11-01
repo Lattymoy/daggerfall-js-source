@@ -2,8 +2,8 @@
   {
     "name": "RC-the-mills-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            late.add(key, BODY.positions, BODY.indices, local,",
-    "new": "            collider.addMesh(key, BODY.positions, BODY.indices, local,",
+    "old": "            late.add(key, BODY.positions, BODY.indices, local,\n",
+    "new": "            collider.addMesh(key, BODY.positions, BODY.indices, local,\n",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RC-the-towns-models-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,",
-    "new": "          if (isSolidModel(placed.modelIdNum)) collider.addMesh(gateKey, cpu.positions, cpu.indices, local,",
+    "old": "          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,\n",
+    "new": "          if (isSolidModel(placed.modelIdNum)) collider.addMesh(gateKey, cpu.positions, cpu.indices, local,\n",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "RC-the-wod-pieces-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
-    "new": "        collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
+    "old": "late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });",
+    "new": "collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "RC-the-holds-camp-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
-    "new": "          collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
+    "old": "late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });",
+    "new": "collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]

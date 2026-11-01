@@ -164,8 +164,8 @@
   {
     "name": "FESTIVAL-STAGE-host-temples",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern) }) : null;",
-    "new": "    const festivalAnchors = pixelBoardSplit ? festivalBannerAnchors({ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Temple) }) : null;",
+    "old": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern)",
+    "new": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Temple)",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]

@@ -227,7 +227,7 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');
-  assert.match(a, /depthOn\(P\); \/\/ EL5\/EL6/); assert.match(a, /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue; \/\/ OWN-AUDIT: a shadowless light keeps its glare\. MAC-T1/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone; OWN-AUDIT: the hand\'s byte alone)');
+  assert.match(a, /depthOn\(P\);/); assert.match(a, /if \(f\.carried && f\.carried\[i\] === CARRIED_IN_HAND\) continue;/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone; OWN-AUDIT: the hand\'s byte alone)');
   assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
   assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');   // AUDIT 68 S16-v-replay-origin-alloc: and its zero origin

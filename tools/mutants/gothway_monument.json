@@ -92,8 +92,8 @@
   {
     "name": "GOTHWAY-MONUMENT-found-after-the-yards",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
-    "new": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, null, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "old": "townPlacesFor(dfLocation, lefaySpot, climate?.people",
+    "new": "townPlacesFor(dfLocation, null, climate?.people",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GOTHWAY-MONUMENT-stood-in-a-far-view",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      lefaySpot = farView ? null : monumentSpotOf(dfLocation, loc);",
-    "new": "      lefaySpot = monumentSpotOf(dfLocation, loc);",
+    "old": "lefaySpot = farView ? null : monumentSpotOf(dfLocation, loc);",
+    "new": "lefaySpot = monumentSpotOf(dfLocation, loc);",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

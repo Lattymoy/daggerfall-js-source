@@ -462,8 +462,8 @@
   {
     "name": "U3S-the-model-unmerged",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (cpuF.normals && cpuF.uvs) { addStatic(cpuF, local, false); entry._batched = true; }\n          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
-    "new": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
+    "old": "          if (cpuF.normals && cpuF.uvs) { addStatic(cpuF, local, false); entry._batched = true; }\n",
+    "new": "",
     "tests": [
       "test/world/urban/urban3_stand.test.js"
     ]

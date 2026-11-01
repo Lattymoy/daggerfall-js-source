@@ -49,8 +49,8 @@
   {
     "name": "ONE-STROKE-a-peer-draws-the-first-stroke-whatever-the-count",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  Object.freeze({ field: 'an', table: 'AttackMelee', frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n), tick: (frames) => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frames.length) }),",
-    "new": "  Object.freeze({ field: 'an', table: 'AttackMelee', frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), 0), tick: (frames) => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frames.length) }),",
+    "old": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n),",
+    "new": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), 0),",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "ONE-STROKE-a-peer-plays-both-strokes",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  Object.freeze({ field: 'an', table: 'AttackMelee', frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n), tick: (frames) => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frames.length) }),",
-    "new": "  Object.freeze({ field: 'an', table: 'AttackMelee', frames: () => forwardFrames(frameCount('AttackMelee')), tick: (frames) => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frames.length) }),",
+    "old": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n),",
+    "new": "frames: () => forwardFrames(frameCount('AttackMelee')),",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]

@@ -1,10 +1,9 @@
-// RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
-// other skin the reporter tried did). The
-// Eye of the Beholder mod's set 10 draws its spell sheets (records 45-59) with the woman 80 pixels hood to boot, where
-// her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the art itself,
-// sized through the real door (eotbSprite.js spriteOffset + spriteSize) every caller that draws the body uses.
-// OWN-AUDIT: the author's XML is gone; the scale and the shift are our law's (eotbAnchor.js).
-// NO-BETHESDA2: set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
+// A SPELL NEVER SHRINKS THE FIGHTER MAGE (FEMALE) SKIN in third person. The Eye of the Beholder mod's set 10 draws its
+// spell sheets (records 45-59) with the woman 80 pixels hood to boot, where her idle is 110, and its XML scaled them
+// 1.0, a quarter short. Measured on the art itself, sized through the real door (eotbSprite.js spriteOffset +
+// spriteSize) every caller that draws the body uses. The scale and the shift are our law's (eotbAnchor.js), not the
+// author's XML.
+// Set 10's idle and spell sheets are Daggerfall's own TEXTURE.475 records, rebuilt from the
 // player's ARENA2 (tools/lib/eotbPictures.mjs), so the measure runs where ARENA2_PATH is set; the scale table runs in CI.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

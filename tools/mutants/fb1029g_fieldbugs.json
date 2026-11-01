@@ -266,8 +266,8 @@
   {
     "name": "NOTICE-PANEL-the-board-stood-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
-    "new": "          if (false) { pixelBoards.push({ box, local }); continue; }",
+    "old": "if (isBulletinBoard(placed.modelIdNum)) { pixelBoards.push({ box, local }); continue; }",
+    "new": "if (false) { pixelBoards.push({ box, local }); continue; }",
     "tests": [
       "test/systems/bulletinboard.test.js"
     ],

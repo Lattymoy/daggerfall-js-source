@@ -124,8 +124,8 @@
   {
     "name": "PASSAGE-IN-mark-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;   // a mended leg's own point is the kernel's sea",
-    "new": "    const read = null;   // a mended leg's own point is the kernel's sea",
+    "old": "    const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;",
+    "new": "    const read = null;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "PASSAGE-IN-dry-leg-sailed",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }\n    r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;",
-    "new": "    r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;",
+    "old": "    if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }\n",
+    "new": "",
     "why": "AUDIT FB1021d PS-1: a pixel with no water built aimed at its middle - land",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"

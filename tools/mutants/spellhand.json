@@ -128,8 +128,8 @@
   {
     "name": "SPELLHAND-shown-leg",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if ((spellArmed() || fpsSpellCasting.isPlayingAnim) && !_spellHand) v = false;   // HasReadySpell / IsPlayingAnim (SPELL-HAND: not while the spell is in the free hand - the weapon stays up beside it)",
-    "new": "    if ((spellArmed() || fpsSpellCasting.isPlayingAnim)) v = false;   // HasReadySpell / IsPlayingAnim (SPELL-HAND: not while the spell is in the free hand - the weapon stays up beside it)",
+    "old": "    if ((spellArmed() || fpsSpellCasting.isPlayingAnim) && !_spellHand) v = false;",
+    "new": "    if ((spellArmed() || fpsSpellCasting.isPlayingAnim)) v = false;",
     "tests": [
       "test/combat/spellhand.test.js",
       "test/combat/fpsspellcasting.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "SPELLHAND-swing-refused",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !spellArmed() && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "(!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending())",
+    "new": "!spellArmed() && !armCasting() && !(_spellHand && castPending())",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SPELLHAND-swing-under-the-cast",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "!(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing",
+    "new": "!(_spellHand && castPending()) && !climbing",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SPELLHAND-both-hands",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        const castHands = (art, f) => (side ? drawSpellHand(renderer, c, art, f, { side, tint: fpTint, guard: fpsSpellCasting.isPlayingAnim ? 0 : _spellGuard.hand }) : drawSpellCastHands(renderer, c, art, f, { tint: fpTint }));",
-    "new": "        const castHands = (art, f) => (false ? drawSpellHand(renderer, c, art, f, { side, tint: fpTint, guard: fpsSpellCasting.isPlayingAnim ? 0 : _spellGuard.hand }) : drawSpellCastHands(renderer, c, art, f, { tint: fpTint }));",
+    "old": "const castHands = (art, f) => (side ? drawSpellHand(",
+    "new": "const castHands = (art, f) => (false ? drawSpellHand(",
     "tests": [
       "test/combat/spellhand.test.js",
       "test/combat/fpsspellcasting.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "SPELLHAND-sprite-unlowered",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
-    "new": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
+    "old": "offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });",
+    "new": "offsetHeight, glow: heldGlowNow() });",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SPELLHAND-shield-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    right: handDesc(playerWeapon.handItem('R')), left: playerWeapon.holdingShield ? SHIELD_DESC : handDesc(playerWeapon.handItem('L')),",
-    "new": "    right: handDesc(playerWeapon.handItem('R')), left: handDesc(playerWeapon.handItem('L')),",
+    "old": "left: playerWeapon.holdingShield ? SHIELD_DESC : handDesc(playerWeapon.handItem('L')),",
+    "new": "left: handDesc(playerWeapon.handItem('L')),",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "SPELLHAND-swing-over-the-arms-cast",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "(!spellArmed() || _spellHand) && !armCasting() && !(_spellHand",
+    "new": "(!spellArmed() || _spellHand) && !(_spellHand",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SPELLHAND-arm-blow-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
-    "new": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || techniqueFlying();",
+    "old": " || _heldHit || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
+    "new": " || _heldHit || techniqueFlying();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]

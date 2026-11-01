@@ -281,8 +281,8 @@
   {
     "name": "PL-mine-unshown",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : peerBoats.includes(boat) ? boat.plaqueName || null : null);",
-    "new": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? null : peerBoats.includes(boat) ? boat.plaqueName || null : null);",
+    "old": "(mineBoats.has(boat) ? plaqueOf?.(boat) ?? null :",
+    "new": "(mineBoats.has(boat) ? null :",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "PL-sea-shown",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : peerBoats.includes(boat) ? boat.plaqueName || null : null);",
-    "new": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : boat.plaqueName || null);",
+    "old": "peerBoats.includes(boat) ? boat.plaqueName || null : null);",
+    "new": "boat.plaqueName || null);",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "PL-peer-unshown",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : peerBoats.includes(boat) ? boat.plaqueName || null : null);",
-    "new": "  const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : null);",
+    "old": "peerBoats.includes(boat) ? boat.plaqueName || null : null);",
+    "new": "null);",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "PL-wrong-frame",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (shown) for (const mesh of plaques.meshesFor(boat, shown)) one(mesh, frame ?? worldOf(boat.MeshObject), paint);",
-    "new": "      if (shown) for (const mesh of plaques.meshesFor(boat, shown)) one(mesh, worldOf(boat.GameObject), paint);",
+    "old": "one(mesh, frame ?? worldOf(boat.MeshObject), paint);",
+    "new": "one(mesh, worldOf(boat.GameObject), paint);",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "PL-font-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      plaqueLoad = Promise.resolve().then(() => plaqueFont()).then((b) => { plaqueLetters = fntLetters(new FntFile().load(b)); },",
-    "new": "      plaqueLoad = Promise.resolve().then(() => plaqueFont()).then((b) => { plaqueLetters = BLOCK_LETTERS; },",
+    "old": "plaqueLetters = fntLetters(new FntFile().load(b)); },",
+    "new": "plaqueLetters = BLOCK_LETTERS; },",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "PL-no-fallback",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        (e) => { log?.warn?.('[plaque] FONT0003.FNT will not load - her name is cut in block letters', e); plaqueLetters = BLOCK_LETTERS; });",
-    "new": "        (e) => { log?.warn?.('[plaque] FONT0003.FNT will not load - her name is cut in block letters', e); });",
+    "old": "her name is cut in block letters', e); plaqueLetters = BLOCK_LETTERS; });",
+    "new": "her name is cut in block letters', e); });",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]

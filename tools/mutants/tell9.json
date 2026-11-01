@@ -344,8 +344,8 @@
   {
     "name": "TELL9-part-gone",
     "file": "src/systems/features.js",
-    "old": "      parts: Object.freeze([Object.freeze({ key: 'telegraphContrast', label: 'Telegraph contrast' })]),\n    }),",
-    "new": "    }),",
+    "old": "      parts: Object.freeze([Object.freeze({ key: 'telegraphContrast', label: 'Telegraph contrast' })]),\n",
+    "new": "",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "TELL9-contrast-forced-online",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' })]),",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: false, online: true })]),",
+    "old": "key: 'telegraphContrast', initial: false, online: 'player' }",
+    "new": "key: 'telegraphContrast', initial: false, online: true }",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "TELL9-contrast-on-default",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: false, online: 'player' })]),",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'telegraphContrast', initial: true, online: 'player' })]),",
+    "old": "key: 'telegraphContrast', initial: false, online: 'player' }",
+    "new": "key: 'telegraphContrast', initial: true, online: 'player' }",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "PEACE-WAY-sails-unscaled",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "* hurt) * rigOf(b)) * peace());",
-    "new": "* hurt) * rigOf(b)));",
+    "old": "  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * badTack(b)) * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());   // The bad tack's share",
+    "new": "  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * badTack(b)) * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)));   // OWN-AUDIT: the bad tack's share",
     "tests": [
       "test/systems/comeSailAway/peaceway.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "RETROUI-muzzle-in-layer",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect",
-    "new": "    const drawn = { rect: { ...rect, x: rect.x, y: rect.y }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect",
+    "old": "const drawn = { rect: { ...rect, x: rx, y: ry },",
+    "new": "const drawn = { rect: { ...rect, x: rect.x, y: rect.y },",
     "tests": [
       "test/systems/fb1003_retroui.test.js"
     ]

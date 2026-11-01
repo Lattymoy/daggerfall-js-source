@@ -212,8 +212,8 @@
   {
     "name": "NPC-MARKS-row-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'npcMarks', initial: true, online: 'player' }),",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'npcMarks', initial: false, online: 'player' }),",
+    "old": "key: 'npcMarks', initial: true,",
+    "new": "key: 'npcMarks', initial: false,",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]

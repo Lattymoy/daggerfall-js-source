@@ -226,7 +226,7 @@ test('HOST-7: the queue - a snow\'s turn is a skin, never a rebuild; a key rebui
 
 test('HOST-7: the build logs what a re-skin reads - a wild flat\'s season asked once it is known to stand (a flat the verge refused turns no pixel), the merge\'s models, the mills, and the record on the snow lane alone; the sea\'s floor wears the lane\'s ground, never the pixel\'s season (mutants: the season asked before the verge; the seafloor by the pixel)', () => {
   const pb = readFileSync('src/scenes/pixelBuild.js', 'utf8');
-  const loop = pb.slice(pb.indexOf('    for (const f of nature) {'), pb.indexOf('    // WOD4: THE CAMP AT PRIVATEER\'S HOLD'));
+  const loop = pb.slice(pb.indexOf('    for (const f of nature) {'), pb.indexOf('    let privateersHold = null;'));
   assert.ok(loop.indexOf('vergeClear(vergeNet') < loop.indexOf('snowRec.flat('), 'the verge first');
   assert.match(pb, /addFlat\(archive, f\.record, f\.x, f\.y, f\.z, \{ wild: base, tree \}\);/);
   assert.match(pb, /models\.push\(\{ gpu: parts\.body, local, _box: box, _order: -1, _mill: true \}\);/);

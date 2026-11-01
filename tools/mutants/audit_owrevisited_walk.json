@@ -74,8 +74,8 @@
   {
     "name": "AOWR-L2-1-place-line-ends-at-road",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, path: finalPath(r, rectCentre(rect), true), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // Up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle); ROAD-SMOOTH: the same body's walk",
-    "new": "          { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles, lane: routeLane(r, r.legs.length - 1), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // Up the road into the place (AUDIT OW-REVISITED L2-1: and on to its middle); ROAD-SMOOTH: the same body's walk",
+    "old": "path: finalPath(r, rectCentre(rect), true), cornerTurn",
+    "new": "lane: routeLane(r, r.legs.length - 1), cornerTurn",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AOWR-L2-2-spot-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        { path: finalPath(r, r.point, false), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // A spot's last road run walked on the road, then off it",
-    "new": "        { cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk });   // A spot's last road run walked on the road, then off it",
+    "old": "        { path: finalPath(r, r.point, false), cornerTurn",
+    "new": "        { cornerTurn",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AOWR-L2-3-corner-skipped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);   // round the corner it came in beside",
-    "new": "     // round the corner it came in beside",
+    "old": "  if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);",
+    "new": "",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AOWR-L2-3-exit-corner-skipped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);   // round the corner it leaves beside",
-    "new": "     // round the corner it leaves beside",
+    "old": "  if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);",
+    "new": "",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AOWR-L1-9-town-not-asked-again",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }   // Left, the town is asked again if walked back into",
-    "new": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } }   // Left, the town is asked again if walked back into",
+    "old": " else st.route.streetFor = null; }",
+    "new": " }",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AOWR-L1-6-sea-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
-    "new": "    if (!r.townAt || !deps.townWay || leg?.ring || r.streetFor === key) return null;",
+    "old": "leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
+    "new": "leg?.ring || r.streetFor === key) return null;",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]

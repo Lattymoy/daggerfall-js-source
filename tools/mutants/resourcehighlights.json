@@ -182,8 +182,8 @@
   {
     "name": "RESHL-row-default-both",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'resourceHighlights', initial: 'glint', online: 'player', tiers: Object.freeze([tier('glint', () => t('features.resourceHighlights.glint', 'Glint')), tier('outline', () => t('features.resourceHighlights.outline', 'Outline')), tier('both', () => t('features.resourceHighlights.both', 'Both'))]) }),   // render/nodeGlint.js RESOURCE_HIGHLIGHT_PREF, RESOURCE_HIGHLIGHTS",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'resourceHighlights', initial: 'both', online: 'player', tiers: Object.freeze([tier('glint', () => t('features.resourceHighlights.glint', 'Glint')), tier('outline', () => t('features.resourceHighlights.outline', 'Outline')), tier('both', () => t('features.resourceHighlights.both', 'Both'))]) }),   // render/nodeGlint.js RESOURCE_HIGHLIGHT_PREF, RESOURCE_HIGHLIGHTS",
+    "old": "key: 'resourceHighlights', initial: 'glint',",
+    "new": "key: 'resourceHighlights', initial: 'both',",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]

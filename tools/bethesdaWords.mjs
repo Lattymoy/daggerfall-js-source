@@ -1,8 +1,8 @@
 // /usr/bin/env node
-// THE RATCHET ON BETHESDA'S WORDS. Daggerfall Unity's MIT data
-// carries Daggerfall's own text. This counts what the game still reads of it: DFU's quest
-// scripts read with DFU's messages, those messages, and Internal_RSC.csv's rows (TEXT.RSC). The counts are held to
-// tools/bethesdaWordsBaseline.json, which only goes down (test/tooling/bethesdawords.test.js).
+// THE RATCHET ON BETHESDA'S WORDS. Daggerfall Unity's MIT data carries Daggerfall's own text. This counts what the
+// game still reads of it: DFU's quest scripts read with DFU's messages, those messages, and Internal_RSC.csv's
+// rows (TEXT.RSC). The counts are held to tools/bethesdaWordsBaseline.json, which only goes down
+// (test/tooling/bethesdawords.test.js).
 //   node tools/bethesdaWords.mjs           report what is past the baseline, and what could be lowered
 //   node tools/bethesdaWords.mjs --lower   rewrite the baseline to today's counts (never raises one)
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';

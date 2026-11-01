@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-UPDATE-T4-the-steps-sign-alone",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const stepPt = (v) => (pointy(v) ? v : { x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS });",
-    "new": "    const stepPt = (v) => (pointy(v) ? v : { x: mid.x + Math.sign(v[0]) * MP_WORLD_UNITS, z: mid.z - Math.sign(v[1]) * MP_WORLD_UNITS });",
+    "old": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS }",
+    "new": "{ x: mid.x + Math.sign(v[0]) * MP_WORLD_UNITS, z: mid.z - Math.sign(v[1]) * MP_WORLD_UNITS }",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-UPDATE-T6-the-steps-z-flipped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const stepPt = (v) => (pointy(v) ? v : { x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS });",
-    "new": "    const stepPt = (v) => (pointy(v) ? v : { x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z + v[1] * MP_WORLD_UNITS });",
+    "old": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS }",
+    "new": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z + v[1] * MP_WORLD_UNITS }",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],
@@ -788,8 +788,8 @@
   {
     "name": "AUDIT-UPDATE-II-B4-the-middle-unasked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (pickNearPlaceMiddle(p, { minX: L.xMin, maxX: L.xMax, minZ: L.zMin, maxZ: L.zMax, cx: (L.xMin + L.xMax) / 2, cz: (L.zMin + L.zMax) / 2 })) return p;\n  return { ...p, ...spotOffTown(L, rects.locationBorderRect, p) };",
-    "new": "  return { ...p, ...spotOffTown(L, rects.locationBorderRect, p) };",
+    "old": "  if (pickNearPlaceMiddle(p, { minX: L.xMin, maxX: L.xMax, minZ: L.zMin, maxZ: L.zMax, cx: (L.xMin + L.xMax) / 2, cz: (L.zMin + L.zMax) / 2 })) return p;\n",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_town_round.test.js"
     ],

@@ -210,8 +210,8 @@
   {
     "name": "FOREST1-host-gate-clear",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // And the jungle's, whatever the woods' switch",
-    "new": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // And the jungle's, whatever the woods' switch",
+    "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n",
+    "new": "",
     "tests": [
       "test/systems/forest1.test.js"
     ]

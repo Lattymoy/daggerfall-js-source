@@ -227,8 +227,8 @@
   {
     "name": "PFOLK-the-pool's-folk-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          folk: folkOfLocation(dfLocation),   // Past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
-    "new": "          folk: null,   // Past the Bay each walker one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "old": "          folk: folkOfLocation(dfLocation),",
+    "new": "          folk: null,",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

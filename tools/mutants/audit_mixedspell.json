@@ -103,8 +103,8 @@
   {
     "name": "AUDITMS-L2-3-torch-stow-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    lead: playerWeapon.leadHand, leftBusy: playerWeapon.leftBusy && !torchStowsForSpell(),",
-    "new": "    lead: playerWeapon.leadHand, leftBusy: playerWeapon.leftBusy,",
+    "old": "leftBusy: playerWeapon.leftBusy && !torchStowsForSpell(),",
+    "new": "leftBusy: playerWeapon.leftBusy,",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDITMS-L4-5-climb-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const spellHandFits = () => !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !_climbing && !!spellHandHands();",
-    "new": "  const spellHandFits = () => !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !!spellHandHands();",
+    "old": "(entity?.equipCountdown ?? 0) <= 0 && !_climbing && !!spellHandHands();",
+    "new": "(entity?.equipCountdown ?? 0) <= 0 && !!spellHandHands();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDITMS-L2-4-cast-leg-raises",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const spellHandNow = () => spellHandFits() && (castPlaying() ? _castOneHand : spellArmed());",
-    "new": "  const spellHandNow = () => spellHandFits() && (spellArmed() || castPlaying());",
+    "old": "const spellHandNow = () => spellHandFits() && (castPlaying() ? _castOneHand : spellArmed());",
+    "new": "const spellHandNow = () => spellHandFits() && (spellArmed() || castPlaying());",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AUDITMS-L4-7-leap-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
-    "new": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy());",
+    "old": " || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
+    "new": " || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy());",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDITMS-L4-1-gate-blind-to-the-press",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "!armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim",
+    "new": "!armCasting() && !fpsSpellCasting.isPlayingAnim",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "AUDITMS-L3-4-arm-cast-spell-hand-only",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !(_spellHand && armCasting()) && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "(!spellArmed() || _spellHand) && !armCasting() && ",
+    "new": "(!spellArmed() || _spellHand) && !(_spellHand && armCasting()) && ",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDITMS-L2-5-guard-on-the-cast",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        const castHands = (art, f) => (side ? drawSpellHand(renderer, c, art, f, { side, tint: fpTint, guard: fpsSpellCasting.isPlayingAnim ? 0 : _spellGuard.hand }) : drawSpellCastHands(renderer, c, art, f, { tint: fpTint }));",
-    "new": "        const castHands = (art, f) => (side ? drawSpellHand(renderer, c, art, f, { side, tint: fpTint, guard: _spellGuard.hand }) : drawSpellCastHands(renderer, c, art, f, { tint: fpTint }));",
+    "old": "guard: fpsSpellCasting.isPlayingAnim ? 0 : _spellGuard.hand })",
+    "new": "guard: _spellGuard.hand })",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDITMS-L2-1-side-only-while-drawing",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
-    "new": "    const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : widgetOn() && widget.drawing() ? !!widget.flipHorizontal : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
+    "old": "widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();",
+    "new": "widgetOn() && widget.drawing() ? !!widget.flipHorizontal : handedFlip();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDITMS-L4-8-dry-gun-silent",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (dry && !_dryGunSaid) setMidScreenText(t('combat.noPellets', 'You have no pellets.'));\n      _dryGunSaid = dry;",
-    "new": "      _dryGunSaid = dry;",
+    "old": "      if (dry && !_dryGunSaid) setMidScreenText(t('combat.noPellets', 'You have no pellets.'));\n",
+    "new": "",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDITMS-L4-8-dry-gun-said-every-frame",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      _dryGunSaid = dry;\n      return;",
-    "new": "      return;",
+    "old": "      _dryGunSaid = dry;\n",
+    "new": "",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUDITMS-L3-6-muzzle-the-rights",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');   // A pair's shot from the hand that fired it",
-    "new": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle('R');   // A pair's shot from the hand that fired it",
+    "old": "fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R')",
+    "new": "fpArm.weaponMuzzle('R')",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDITMS-L4-10-probe-door-blind-to-the-cast",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (castPlaying() || (_spellHand && castPending())) return;   // Nor a blow while a cast plays or one pressed waits - the hands take turns, as the latch's door (canAttack)",
-    "new": "      if (false) return;   // Nor a blow while a cast plays or one pressed waits - the hands take turns, as the latch's door (canAttack)",
+    "old": "      if (castPlaying() || (_spellHand && castPending())) return;",
+    "new": "      if (false) return;",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUDITMS-L4-3-swing-hand-untold",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    swing.n = (swing.n + 1) & 0xffff; swing.strike = strike; swing.hand = pairUp() ? playerWeapon.strike?.hand ?? null : null;",
-    "new": "    swing.n = (swing.n + 1) & 0xffff; swing.strike = strike; swing.hand = null;",
+    "old": "swing.hand = pairUp() ? playerWeapon.strike?.hand ?? null : null;",
+    "new": "swing.hand = null;",
     "tests": [
       "test/net/mac7.test.js"
     ]
@@ -720,8 +720,8 @@
   {
     "name": "AUDITMS-L5-mixed-branch-no-slide",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (c && pistolsUp() && playerWeapon.mixedPair && pairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (shown() || gunSliding)) {",
-    "new": "      if (c && pistolsUp() && playerWeapon.mixedPair && pairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && shown()) {",
+    "old": "playerWeapon.mixedPair && pairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && (shown() || gunSliding)) {",
+    "new": "playerWeapon.mixedPair && pairUp() && !eotbHidesWeapon() && !fpArm.active() && !sheetWindowUp() && shown()) {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -729,8 +729,8 @@
   {
     "name": "AUDITMS-L5-mixed-branch-no-climb",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height), running: false };",
-    "new": "        const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight(), running: false };",
+    "old": "tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height), running: false };",
+    "new": "tint: fpTint, offsetHeight: weaponOffsetHeight(), running: false };",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -738,8 +738,8 @@
   {
     "name": "AUDITMS-L5-share-mixed-pumps",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const share = !playerWeapon.gunPair && !playerWeapon.mixedPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;   // A pair's gun pumps nothing over the whole viewmodel - its blade swings through the reload",
-    "new": "      const share = !playerWeapon.gunPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;   // A pair's gun pumps nothing over the whole viewmodel - its blade swings through the reload",
+    "old": "const share = !playerWeapon.gunPair && !playerWeapon.mixedPair && g.state === 'Cooling'",
+    "new": "const share = !playerWeapon.gunPair && g.state === 'Cooling'",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -747,8 +747,8 @@
   {
     "name": "AUDITMS-L5-spellhand-under-equip",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const spellHandFits = () => !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !_climbing && !!spellHandHands();",
-    "new": "  const spellHandFits = () => !playerWeapon.sheathed && !_climbing && !!spellHandHands();",
+    "old": "!playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && !_climbing && !!spellHandHands();",
+    "new": "!playerWeapon.sheathed && !_climbing && !!spellHandHands();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -756,8 +756,8 @@
   {
     "name": "AUDITMS-L5-handsBusy-held-hit",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
-    "new": "  const handsBusy = () => playerWeapon.machine.state !== 'Idle' || ((fpArm.active() || fpArm.thirdActive()) && !!fpArm.shotBusy()) || techniqueFlying();",
+    "old": "const handsBusy = () => playerWeapon.machine.state !== 'Idle' || _heldHit || (",
+    "new": "const handsBusy = () => playerWeapon.machine.state !== 'Idle' || (",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -765,8 +765,8 @@
   {
     "name": "AUDITMS-L5-spellside-widget-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
-    "new": "    const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
+    "old": ": widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();",
+    "new": ": handedFlip();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -774,8 +774,8 @@
   {
     "name": "AUDITMS-L5-spellside-pistol-unread",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
-    "new": "    const weaponLeft = widgetOn() && widget.applies() ? !!widget.flipHorizontal : handedFlip();   // The clone's flip whenever it has the weapon - through a Hide frame too",
+    "old": "const weaponLeft = pistolsUp() ? pistols.flipOf(p, p.lead, handedFlip()) : widgetOn()",
+    "new": "const weaponLeft = widgetOn()",
     "equivalent": true,
     "why": "Dead code by the pistol lane's own law: the spell hand needs the other hand free, so the pistol is a lone one, and a lone pistol's flipFor answers the Handedness side (AUDIT PISTOL-PORT B7) - handedFlip(), the leg this mutant falls to. Kept so the side stays the pistol lane's if that law moves.",
     "tests": [
@@ -785,8 +785,8 @@
   {
     "name": "AUDITMS-L5-widget-clone-unlowered",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint, _spellGuard.weapon > 0 ? { transform: (r) => ({ ...r, y: r.y + guardDrop(_spellGuard.weapon, r.h) }) } : undefined)) return;",
-    "new": "      if (widgetOn() && c && widget.draw(renderer, c, fpTint, undefined)) return;",
+    "old": "widget.draw(renderer, c, fpTint, _spellGuard.weapon > 0 ? { transform: (r) => ({ ...r, y: r.y + guardDrop(_spellGuard.weapon, r.h) }) } : undefined)",
+    "new": "widget.draw(renderer, c, fpTint, undefined)",
     "tests": [
       "test/combat/spellhand.test.js"
     ]
@@ -918,8 +918,8 @@
   {
     "name": "AUDITMS-L5-wall-gun-hung",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "          if (art?.anchor && art.unionBox && _climbLower < 0.5) drawThunderlock(art, c, fpTint, gh);",
-    "new": "          if (art?.anchor && art.unionBox) drawThunderlock(art, c, fpTint, gh);",
+    "old": "if (art?.anchor && art.unionBox && _climbLower < 0.5) drawThunderlock(art, c, fpTint, gh);",
+    "new": "if (art?.anchor && art.unionBox) drawThunderlock(art, c, fpTint, gh);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

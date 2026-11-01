@@ -1,6 +1,5 @@
 // @ts-check
-// LIGHT-ID (2026-10-14, Mac: "Engine fix (Recommended)" - FIELD BUGS 2026-10-13e AOE-PERF's follow-up, the boss's lights'
-// shadows): A LIGHT IS SOMEBODY'S LIGHT. Design and record: bible/07-Rendering/Enhanced-Lighting-Arc.md LIGHT-ID.
+// A LIGHT IS SOMEBODY'S LIGHT.
 //
 // The frame's light list was a place and a range a light - four floats - so the shadow pass could tell one light from
 // another only by WHERE it stood (SC1's sticky slots, DISC15's lo slots). A light that moved (the gate boss's glow at his
@@ -42,8 +41,8 @@ let _seq = 0;
 
 /** No identity: an anonymous list's (a test's raw vec4s, the empty list) - the pass names such a light by its place. */
 export const NO_LIGHT_ID = 0;
-/** MAC-T1's carried mask, a byte a light: the light in the player's hand (no shadow map, no contact march, no glare),
- *  and OWN-AUDIT's light that casts no shadow and keeps its glare (a burning foe's, Handheld Torches' EmissionShadows
+/** The carried mask, a byte a light: the light in the player's hand (no shadow map, no contact march, no glare),
+ *  and a light that casts no shadow and keeps its glare (a burning foe's, Handheld Torches' EmissionShadows
  *  off). The shadow pass skips any non-zero byte; the glare skips the hand's alone. */
 export const CARRIED_IN_HAND = 1;
 export const CARRIED_SHADOWLESS = 2;

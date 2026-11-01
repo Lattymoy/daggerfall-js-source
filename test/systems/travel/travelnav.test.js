@@ -1,4 +1,5 @@
-// THE WALK GOES ROUND, AND STOPS SHORT.
+// THE WALK GOES ROUND,
+// AND STOPS SHORT.
 //
 // Travel Options' autopilot beelines: one bearing, latched a pixel at a
 // time, and a force pushed along it at up to a hundred times walking pace -

@@ -2,8 +2,8 @@
   {
     "name": "PD-a-set-a-frame",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    _dyeBudget = HORSE_DYE_PICTURES; _frameNo++; trimLooks();   // HORSE_DYE_PICTURES dyed a frame; COATS1: the looks long undrawn let go",
-    "new": "    _dyeBudget = Infinity; _frameNo++; trimLooks();   // HORSE_DYE_PICTURES dyed a frame; COATS1: the looks long undrawn let go",
+    "old": "    _dyeBudget = HORSE_DYE_PICTURES; _frameNo++; trimLooks();",
+    "new": "    _dyeBudget = Infinity; _frameNo++; trimLooks();",
     "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
@@ -30,22 +30,22 @@
   {
     "name": "PD-walk-set-let-go-whole",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const k of [..._walkPx.keys()].slice(0, up.walks)) { const [v, f] = k.split('#').map(Number); renderer?.evictTexture?.(`${HORSE_ARCHIVE}_${horseWalkRecord(v, f, c)}`); }",
-    "new": "    for (const k of [..._walkPx.keys()]) { const [v, f] = k.split('#').map(Number); renderer?.evictTexture?.(`${HORSE_ARCHIVE}_${horseWalkRecord(v, f, c)}`); }",
+    "old": "    for (const k of [..._walkPx.keys()].slice(0, up.walks)) {",
+    "new": "    for (const k of [..._walkPx.keys()]) {",
     "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-views-kept",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const v of [..._stillPx.keys()].slice(0, up.views)) renderer?.evictTexture?.(`${HORSE_ARCHIVE}_${horseStillRecord(v, c)}`);",
-    "new": "    for (const v of [..._stillPx.keys()].slice(0, 0)) renderer?.evictTexture?.(`${HORSE_ARCHIVE}_${horseStillRecord(v, c)}`);",
+    "old": "    for (const v of [..._stillPx.keys()].slice(0, up.views)) renderer?.evictTexture",
+    "new": "    for (const v of [..._stillPx.keys()].slice(0, 0)) renderer?.evictTexture",
     "tests": ["test/systems/horse/perfdye.test.js"]
   },
   {
     "name": "PD-walk-before-the-views",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const still = up.views >= _stillPx.size;",
-    "new": "    const still = up.views >= 0;",
+    "old": "    const still = up.views >= _stillPx.size;\n",
+    "new": "    const still = up.views >= 0;\n",
     "tests": ["test/systems/horse/perfdye.test.js"]
   }
 ]

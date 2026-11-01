@@ -292,8 +292,8 @@
   {
     "name": "ICS-build-places-in-one",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n        // And its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
-    "new": "        // And its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/",
+    "old": "        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());\n",
+    "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "ICS-build-pieces-unflooded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n        population = livingWorldOn() ? new LivingTown(nav, {",
-    "new": "        population = livingWorldOn() ? new LivingTown(nav, {",
+    "old": "        await stepsBreathing(componentsSteps(nav), () => breather.breathe());\n",
+    "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ICS-journey-pending-taken-for-none",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }   // The host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
-    "new": "   // The host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
+    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }",
+    "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ICS-build-layout-whole",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const loc = await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());   // The pack's own switch; IC-STUTTER: a block a step",
-    "new": "      const loc = stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));   // The pack's own switch; IC-STUTTER: a block a step",
+    "old": "await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());",
+    "new": "stepsDone(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

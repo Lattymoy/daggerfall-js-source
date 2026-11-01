@@ -92,8 +92,8 @@
   {
     "name": "TB-the-host-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads",
-    "new": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: null, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads",
+    "old": "breathe: () => breather.breathe(), ground: townGround, paths });",
+    "new": "breathe: () => breather.breathe(), ground: null, paths });",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TB2-the-host-roads-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads",
-    "new": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths: null });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads",
+    "old": "ground: townGround, paths });   // URBANIZER U3",
+    "new": "ground: townGround, paths: null });   // URBANIZER U3",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]

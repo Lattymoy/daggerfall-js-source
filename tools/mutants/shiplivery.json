@@ -303,8 +303,8 @@
   {
     "name": "SLPOOL-unpainted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));   // Her paint over the host's remap; GUILD-SHOP: her sails' arms",
-    "new": "      const paint = drawRemap;   // Her paint over the host's remap; GUILD-SHOP: her sails' arms",
+    "old": "const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));",
+    "new": "const paint = drawRemap;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "SLPOOL-peer-by-ledger",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;\n    const rec = liveryOf?.(boat) ?? null;",
-    "new": "    const rec = liveryOf?.(boat) ?? null;",
+    "old": "    if (!mineBoats.has(boat)) return boat.livery | 0;\n",
+    "new": "",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "SLPOOL-mine-unmarked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
-    "new": "    boats.push(boat);   // CSA-J (the audit): in the scene before it is built - a SpawnBoat that throws half way (a variant past the hull's) leaves its half-built hull standing, as the C#'s GameObject does",
+    "old": "    boats.push(boat); mineBoats.add(boat);",
+    "new": "    boats.push(boat);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "DPPOOL-mine-unfitted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (models) { fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); fitBoats(peerBoats, (b) => b.fittings, _fitDeps); }",
-    "new": "    if (models) { fitBoats(peerBoats, (b) => b.fittings, _fitDeps); }",
+    "old": "fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); ",
+    "new": "",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "DPPOOL-peer-unfitted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (models) { fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); fitBoats(peerBoats, (b) => b.fittings, _fitDeps); }",
-    "new": "    if (models) { fitBoats(boats, (b) => fittingsOf?.(b), _fitDeps); }",
+    "old": " fitBoats(peerBoats, (b) => b.fittings, _fitDeps);",
+    "new": "",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1194,8 +1194,8 @@
   {
     "name": "SLPOOL-code-stale",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (boat._liveryRec !== rec || boat._liveryCode == null) { boat._liveryRec = rec; boat._liveryCode = liveryCode(rec); }",
-    "new": "    if (boat._liveryCode == null) { boat._liveryRec = rec; boat._liveryCode = liveryCode(rec); }",
+    "old": "    if (boat._liveryRec !== rec || boat._liveryCode == null) {",
+    "new": "    if (boat._liveryCode == null) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

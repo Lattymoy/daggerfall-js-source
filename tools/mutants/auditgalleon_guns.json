@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-GN-G4-the-pool-never-says",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (m) { setGalleonStanding(m.galleon); setShipStanding(4, m.carrack); setShipStanding(1, m.largeBoat); }   // Each hull's numbers are the hull that stands",
-    "new": "      if (m) { setShipStanding(4, m.carrack); setShipStanding(1, m.largeBoat); }   // Each hull's numbers are the hull that stands",
+    "old": "setGalleonStanding(m.galleon); ",
+    "new": "",
     "tests": [
       "test/systems/naval/auditgalleon_guns.test.js"
     ]

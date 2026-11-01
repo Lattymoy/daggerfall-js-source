@@ -299,8 +299,8 @@
   {
     "name": "SD20E-T16-the-slip-back",
     "file": "src/systems/features.js",
-    "old": "      + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '",
-    "new": "      + 'visit. Smaller dungeons wins when both are on, this over medium. A quest keeps the size it '",
+    "old": "+ 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '",
+    "new": "+ 'visit. Smaller dungeons wins when both are on, this over medium. A quest keeps the size it '",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD20E-T16-the-quest-unsaid",
     "file": "src/systems/features.js",
-    "old": "      + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. A quest keeps the size it '\n      + 'was set up at. Online it is always on.',",
-    "new": "      + 'visit. If Smaller dungeons is on too, it wins; this row wins over Medium dungeons. '\n      + 'Online it is always on.',",
+    "old": "this row wins over Medium dungeons. A quest keeps the size it '\n      + 'was set up at. Online it is always on.',",
+    "new": "this row wins over Medium dungeons. '\n      + 'Online it is always on.',",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD20E-T16-switching",
     "file": "src/systems/features.js",
-    "old": "    note: 'In a dungeon, selecting Info mode makes the levers, doors and containers near you and in sight glow for '",
-    "new": "    note: 'In a dungeon, switching to Info mode makes the levers, doors and containers near you and in sight glow for '",
+    "old": "In a dungeon, selecting Info mode makes",
+    "new": "In a dungeon, switching to Info mode makes",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

@@ -56,8 +56,8 @@
   {
     "name": "TS10-host-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;",
-    "new": "    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround), dfLocation) : null;",
+    "old": "townWalkShut(dfLocation, townGround, paths)",
+    "new": "townWalkShut(dfLocation, townGround)",
     "tests": [
       "test/world/townpaths.test.js"
     ]

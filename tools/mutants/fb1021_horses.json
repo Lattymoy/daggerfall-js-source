@@ -83,8 +83,8 @@
   {
     "name": "HORSE-VIEW-pool-step-posing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner, h.position), pose: false });",
-    "new": "      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner, h.position) });",
+    "old": "look: lookOfOwner(owner, h.position), pose: false });",
+    "new": "look: lookOfOwner(owner, h.position) });",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "HORSE-VIEW-pool-fresh-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const e of _h3d.values()) if (e.frame === _frameNo && !e.conceal && rig.draw(e.horse, canvas, { proj, view, eye, up, fresh: e.out })) n++;   // One posed out of the last view caught up as it comes into this one",
-    "new": "    for (const e of _h3d.values()) if (e.frame === _frameNo && !e.conceal && rig.draw(e.horse, canvas, { proj, view, eye, up })) n++;   // One posed out of the last view caught up as it comes into this one",
+    "old": "rig.draw(e.horse, canvas, { proj, view, eye, up, fresh: e.out })",
+    "new": "rig.draw(e.horse, canvas, { proj, view, eye, up })",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "HORSE-VIEW-pool-veiled-fresh-unhanded",
     "file": "src/scenes/horseCartPool.js",
-    "old": "        if (rig.draw(e.horse, c.canvas, { proj: c.proj, view: c.view, eye: c.eye, up: c.up, conceal: e.conceal, fresh: e.out })) n++;",
-    "new": "        if (rig.draw(e.horse, c.canvas, { proj: c.proj, view: c.view, eye: c.eye, up: c.up, conceal: e.conceal })) n++;",
+    "old": "conceal: e.conceal, fresh: e.out })",
+    "new": "conceal: e.conceal })",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "HORSE-VIEW-AUDIT-pool-lens-never-read-off-the-pass",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: lensOf(proj) } : null;   // The lens once a pass (h3dPoseDue's)",
-    "new": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: 1 } : null;   // The lens once a pass (h3dPoseDue's)",
+    "old": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: lensOf(proj) } : null;",
+    "new": "    _cam3d = rig ? { canvas, proj, view, eye, up, lens: 1 } : null;",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]

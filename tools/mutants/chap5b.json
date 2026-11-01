@@ -313,8 +313,8 @@
   {
     "name": "CHAP5B-HOST-OFFLINE",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,   // This town's own pixel",
-    "new": "          chapterOf: (faction) => livingChapterOf(faction, px, py),   // This town's own pixel",
+    "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
+    "new": "chapterOf: (faction) => livingChapterOf(faction, px, py),",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]

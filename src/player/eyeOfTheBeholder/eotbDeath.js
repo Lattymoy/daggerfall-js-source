@@ -1,10 +1,9 @@
 // @ts-check
-// OWN-WORK4 (2026-10-31; the owner: "Our goal is no latching onto other mod authors or needing permissions. A proper
-// 1 to 1 recreation for everything"): THE BODY'S DEATH, OURS. Eye Of The Beholder 2.1's death table (records 10-14,
-// two frames, the five views) was the author's own drawing on 166 of its sprites. Ours is built from the player's
-// ARENA2: the first frame is Daggerfall's own record of the set's class struck (its TEXTURE's records 10-14, the
-// werewolf's and the wereboar's too), the second that same picture laid on the ground by our code, a shadow of our
-// painter's under it. The keys, the frames and the views are the mod's.
+// THE BODY'S DEATH, OURS. Eye Of The Beholder 2.1's death table (records 10-14, two frames, the five views) was the
+// author's own drawing on 166 of its sprites. Ours is built from the player's ARENA2: the first frame is Daggerfall's
+// own record of the set's class struck (its TEXTURE's records 10-14, the werewolf's and the wereboar's too), the second
+// that same picture laid on the ground by our code, a shadow of our painter's under it. The keys, the frames and the
+// views are the mod's.
 import { createPainter, ellipse } from '../../art/ownPainter.js';
 
 /** The death table's records and frames, and the sets whose death is drawn so (the on-foot sixteen, the two lycans). */

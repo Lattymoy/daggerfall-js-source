@@ -119,8 +119,8 @@
   {
     "name": "WAGONS1-the-kind-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  const myKind = () => validWagonKind(wagonKind?.()) ?? 'cart';",
-    "new": "  const myKind = () => 'cart';",
+    "old": "const myKind = () => validWagonKind(wagonKind?.()) ?? 'cart';",
+    "new": "const myKind = () => 'cart';",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WAGONS1-the-hitch-the-mods-for-every-kind",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    return bakedWagon && !_baked.get(k)?.failed ? wagonHitchOf(k) : HITCHED_HORSE_LOCAL_Z;",
-    "new": "    return HITCHED_HORSE_LOCAL_Z;",
+    "old": "return bakedWagon && !_baked.get(k)?.failed ? wagonHitchOf(k) : HITCHED_HORSE_LOCAL_Z;",
+    "new": "return HITCHED_HORSE_LOCAL_Z;",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WAGONS1-the-tilt-unread",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      const pitch = hitched ? parts.hitchPitch ?? 0 : 0;",
-    "new": "      const pitch = 0;",
+    "old": "const pitch = hitched ? parts.hitchPitch ?? 0 : 0;",
+    "new": "const pitch = 0;",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WAGONS1-the-row-on-every-wagon",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  const withCaravanRow = (named, parked = true) => (parked && enterCaravan && WAGON_KINDS[myKind()]?.enterable ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTER_ROW, label: CARAVAN_TEXT.enter }] } : named);",
-    "new": "  const withCaravanRow = (named, parked = true) => (parked && enterCaravan ? { ...named, actions: [...(named.actions ?? []), { id: CARAVAN_ENTER_ROW, label: CARAVAN_TEXT.enter }] } : named);",
+    "old": "(parked && enterCaravan && WAGON_KINDS[myKind()]?.enterable ?",
+    "new": "(parked && enterCaravan ?",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]

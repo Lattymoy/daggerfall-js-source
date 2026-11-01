@@ -61,9 +61,9 @@ function faceLight(x, y, centreX, centreY, k, squash, turn) {
 /**
  * Our painting of one slot, `{ width, height, data }` top-down RGBA with a 1-bit cutout, at its archive's size
  * (`size`, the widget's own table). The frames turn the shield out of the way: down and to the left, squared off
- * toward its edge. The forearm holds it from below, so the bottom edge is painted and the top one is clear. OWN-WORK4
- * AUDIT: lit from the painter's light - a face of wood planks or sheened metal, a bevelled rim, a domed boss with
- * its shadow, and studs that catch the light.
+ * toward its edge. The forearm holds it from below, so the bottom edge is painted and the top one is clear. It is
+ * lit from the painter's light - a face of wood planks or sheened metal, a bevelled rim, a domed boss with its
+ * shadow, and studs that catch the light.
  */
 export function paintShieldFace(index, size) {
   const face = shieldFaceOf(index);

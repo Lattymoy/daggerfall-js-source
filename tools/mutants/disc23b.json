@@ -47,8 +47,8 @@
   {
     "name": "D23B-walker-other-set",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: set });   // A flinch keeps the weapon",
-    "new": "      const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: 0 });   // A flinch keeps the weapon",
+    "old": ": { onFoot: set });",
+    "new": ": { onFoot: 0 });",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D23B-walker-under-body",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D23B-walker-rides",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.wb || pose.dd || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "D23B-walker-beast",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.dd || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.dd || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "D23B-walker-dying",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
-    "new": "      if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || skip(peer.id)) continue;",
+    "old": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || pose.dd || skip(peer.id)) continue;",
+    "new": "if (!pose || (!Number.isInteger(set) && !lgBody) || pose.rd || pose.wb || skip(peer.id)) continue;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "D23B-first-sight-swings",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (r.last) {",
-    "new": "      {",
+    "old": "      if (r.last) {\n        for (const o of WALK_ONE_SHOTS) {",
+    "new": "      {\n        for (const o of WALK_ONE_SHOTS) {",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "D23B-clip-never-ends",
     "file": "src/net/peer/peerRiders.js",
-    "old": "          if (++r.shot.i >= r.shot.frames.length) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; } else r.frame = r.shot.frames[r.shot.i];",
-    "new": "          if (++r.shot.i >= r.shot.frames.length) { r.shot.i = 0; } else r.frame = r.shot.frames[r.shot.i];",
+    "old": "if (++r.shot.i >= r.shot.frames.length) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; }",
+    "new": "if (++r.shot.i >= r.shot.frames.length) { r.shot.i = 0; }",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "D23B-no-stance",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });   // On the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one",
-    "new": "  const standing = (pose) => chooseTable({ stopped: !peerMoving(pose) });   // On the wall, standing - a shimmy is no walk; PEER-ACTS: the act's hands at one",
+    "old": "const standing = (pose) => chooseTable({ stopped: !peerMoving(pose), ...walkerHands(pose) });",
+    "new": "const standing = (pose) => chooseTable({ stopped: !peerMoving(pose) });",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "D23B2-back-on-the-tile",
     "file": "src/systems/features.js",
-    "old": "  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
-    "new": "  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
+    "old": "  // are drawn. Everything else stays in the mod's own pane.\n  // KB1: its two keys (SwitchShoulder, ToggleInput) are Controls' ShoulderSwitch and AutoPerspective.\n  // DISC23-B (Scratchie on Discord: \"the game is not allowing us to choose between the different index slots\"): the two\n  // sprite sliders are NOT here. \"The mod's own pane\" went with FT14's Mods pane, so they were on no screen at all and\n  // every player was the first set - and who you are drawn as is not a feature's dial: Mac put it on the PLAYER'S\n  // PROFILE (\"a choosable skin system in the menu player profile system itself instead of it being hidden in the\n  // feature menu\") - ui/skinCard.js, the picture of every set, in the window the door's profile mark opens.\n  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
+    "new": "  // are drawn. Everything else stays in the mod's own pane. KB1: its two keys (SwitchShoulder, ToggleInput) are\n  // Controls' ShoulderSwitch and AutoPerspective. DISC23-B (Scratchie on Discord: \"the game is not allowing us to\n  // choose between the different index slots\"): the two sprite sliders are NOT here. \"The mod's own pane\" went with\n  // FT14's Mods pane, so they were on no screen at all and every player was the first set - and who you are drawn as is\n  // not a feature's dial: Mac put it on the PLAYER'S PROFILE (\"a choosable skin system in the menu player profile\n  // system itself instead of it being hidden in the feature menu\") - ui/skinCard.js, the picture of every set, in the\n  // window the door's profile mark opens.\n  'eye-of-the-beholder': Object.freeze(['Graphics.OnFoot', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]

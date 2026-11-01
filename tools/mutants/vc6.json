@@ -83,8 +83,8 @@
   {
     "name": "VC6a-the-variation-is-dropped-from-the-eased-profile",
     "file": "src/render/volumetricClouds.js",
-    "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // `vary` eases with the rest",
-    "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];   // `vary` eases with the rest",
+    "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];",
+    "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];",
     "tests": [
       "test/render/volumetricClouds.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "VC6b-the-tint-turns-the-exposure-up-instead-of-the-hue",
     "file": "src/render/volumetricClouds.js",
-    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
-    "new": "vec3 hue(vec3 c) { return c * 2.0; }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
+    "new": "vec3 hue(vec3 c) { return c * 2.0; }",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "VC6d-the-band-gate-is-taken-on-the-clamped-height-so-it-never-fires",
     "file": "src/render/volumetricClouds.js",
-    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);",
-    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);",
+    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n",
+    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "VC6d-the-march-never-strides-over-empty-air",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }   // VC7c: a stride only on a zero that holds for one",
-    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }   // VC7c: a stride only on a zero that holds for one",
+    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }",
+    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "VC6b-a-colour-with-no-light-in-it-lends-a-BLACK-tint",
     "file": "src/render/volumetricClouds.js",
-    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
-    "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing",
+    "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
+    "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }",
     "tests": [
       "test/render/vc6_clouds.test.js"
     ]

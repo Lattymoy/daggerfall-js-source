@@ -111,7 +111,7 @@ test('OWN-AUDIT ANCHOR: eotbAnchors.json is what the law measures on the player\
   assert.ok(ANCHORS_PATH.startsWith(join(ROOT, 'src')));
 });
 
-// THE JITTER: where each picture's body stands in the world, in centimetres. Measured on 2026-11-01 under the author's
+// THE JITTER: where each picture's body stands in the world, in centimetres. Measured under the author's
 // retired table, the body jumped 38.4 cm on average turning from facing to facing and 5.8 cm changing state; under ours
 // 0.7 and 0.3. The art's own motion inside a canvas (a lunge, a walk) is kept, so it is the same under both.
 test('OWN-AUDIT ANCHOR: the body stays on its spot facing to facing and state to state (the jitter, measured)', { skip: !A2 && 'ARENA2_PATH not set' }, async () => {

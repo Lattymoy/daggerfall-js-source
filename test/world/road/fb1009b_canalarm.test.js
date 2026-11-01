@@ -1,13 +1,12 @@
-// FIELD BUGS 2026-10-09b - CANAL-ARM, the Discord's "River/Stream Creation Turned Some Roads into Canals": "Noticing that
-// a lot of towns that usually have straight dirt roads to them now have canals?"
+// A TOWN'S STRAIGHT DIRT ROAD IS NEVER A CANAL: an arm a path shares with a river or a stream is the path's.
 //
 // Basic Roads' arrays shared a compass arm between a path and a river or a stream at 32 arms of 30 pixels. The painter
 // paints the water before the track, so a shared arm was water from the pixel's centre to its edge where the dirt track
 // ran; LANDFORM3 cuts the painted water into the land and the room's rivers are on, so each was a straight sunken
 // channel - a canal - up to the town. Each such arm is the path's (world/roadsProducer.js waterOffPaths): the painter,
 // the channel's cut and the maps read the arrays, so all three agree, and a crossing (no shared arm) is a ford as it was.
-// PIN MOVED: his arrays are retired; the law is pinned on a network of the test's own, and the
-// Bay's own network is watered as it is built. `01-Overview/bugs/Field-Bugs-2026-10-09b.md`.
+// His arrays are retired: the law is pinned on a network of the test's own, and the Bay's own network is watered as
+// it is built.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

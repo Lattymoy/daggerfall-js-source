@@ -365,8 +365,8 @@
   {
     "name": "ARENAFIX-EOTB-PLACING",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (state.feet && was && !(last.forward || last.strafe) && Math.hypot(state.feet[0] - was[0], state.feet[2] - was[2]) > PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));",
-    "new": "      if (state.feet && was && !(last.forward || last.strafe) && Math.hypot(state.feet[0] - was[0], state.feet[2] - was[2]) > PLACE_JUMP_M) { /* kept */ }",
+    "old": "> PLACE_JUMP_M) faceYaw(Math.atan2(cam.forward[0], cam.forward[2]));",
+    "new": "> PLACE_JUMP_M) { /* kept */ }",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]

@@ -4,10 +4,10 @@
 // eviction - pinned against a C# reference that runs the decompiled method bodies themselves (the session's harness:
 // the mod's own sources on .NET 8, its float arithmetic and its DeflateStream): nine trace hashes, float bits and all,
 // one LCG run through them in order, so the sections below run in the reference's order and share its generator.
-// bible/03-World/Snowfall.md is the record. OWN-WORK4: the mod's own masks are retired; the masks are ours
-// (test/snowMasks.mjs: our snow law over a made-up winter set). The two sections that read a mask - the coverage and
-// Basic Roads' berm - pin OUR values now, the port's law over our masks; the reference ran the mod's. The other seven
-// are still the reference's own.
+// bible/03-World/Snowfall.md is the record.
+// OWN-WORK4: the mod's own masks are retired; the masks are ours (test/snowMasks.mjs: our snow law over a
+// made-up winter set). The two sections that read a mask - the coverage and Basic Roads' berm - pin OUR values now, the
+// port's law over our masks; the reference ran the mod's. The other seven are still the reference's own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';

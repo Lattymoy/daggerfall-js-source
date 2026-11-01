@@ -11,8 +11,8 @@
   {
     "name": "OW4-skin-dyed",
     "file": "src/player/classSkinArt.js",
-    "old": "export const SLOT_OF_RAMP = Object.freeze({ 2: SKIN, 4: SKIN, 5: METAL, 6: CLOTH, 7: METAL, 8: CLOTH, 10: DRAPE, 12: DRAPE });",
-    "new": "export const SLOT_OF_RAMP = Object.freeze({ 2: CLOTH, 4: SKIN, 5: METAL, 6: CLOTH, 7: METAL, 8: CLOTH, 10: DRAPE, 12: DRAPE });",
+    "old": "export const SLOT_OF_RAMP = Object.freeze({ 2: SKIN, 4: SKIN,",
+    "new": "export const SLOT_OF_RAMP = Object.freeze({ 2: CLOTH, 4: SKIN,",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OW4-belt-on-bare-skin",
     "file": "src/player/classSkinArt.js",
-    "old": "    band((x, y) => Math.abs(y - waist) <= half && Math.abs(x - centreX) <= 0.17 * height, scheme.belt, garment);",
-    "new": "    band((x, y) => Math.abs(y - waist) <= half && Math.abs(x - centreX) <= 0.17 * height, scheme.belt);",
+    "old": "scheme.belt, garment);",
+    "new": "scheme.belt);",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OW4-hem-one-row",
     "file": "src/player/classSkinArt.js",
-    "old": "      if (below(x, y + 1) || below(x, y + 2) || beside(x - 1, y) || beside(x + 1, y)) put(i, rampBlend(ramp, 0.35 + 0.65 * tone[i]));",
-    "new": "      if (below(x, y + 1) || beside(x - 1, y) || beside(x + 1, y)) put(i, rampBlend(ramp, 0.35 + 0.65 * tone[i]));",
+    "old": "if (below(x, y + 1) || below(x, y + 2) ||",
+    "new": "if (below(x, y + 1) ||",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWNAUDIT-garment-unworn",
     "file": "src/player/classSkinArt.js",
-    "old": "  if (bare && scheme.garment) paintGarment(scheme.garment, torsoOf(reg, tables, width, rows, { loin: outer, view }), reg, tables, view, width, put);",
-    "new": "  if (false) paintGarment(scheme.garment, torsoOf(reg, tables, width, rows, { loin: outer, view }), reg, tables, view, width, put);",
+    "old": "  if (bare && scheme.garment) paintGarment(",
+    "new": "  if (false) paintGarment(",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OWNAUDIT-every-sheet-bare",
     "file": "src/player/classSkinArt.js",
-    "old": "  return paintClassFrame(classic, tables, CLASS_LOOKS[skin.name], { outer: OUTER_SLOT[skin.from], view: record % 5, height, bare: BARE_SHEETS.includes(skin.from) });",
-    "new": "  return paintClassFrame(classic, tables, CLASS_LOOKS[skin.name], { outer: OUTER_SLOT[skin.from], view: record % 5, height, bare: true });",
+    "old": "bare: BARE_SHEETS.includes(skin.from) });",
+    "new": "bare: true });",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OWNAUDIT-arms-clothed",
     "file": "src/player/classSkinArt.js",
-    "old": "export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14], 1: [0.1, 0.125], 2: [0.08, 0.1], 3: [0.1, 0.125], 4: [0.11, 0.14] });",
-    "new": "export const TORSO_HALF = Object.freeze({ 0: [0.2, 0.24], 1: [0.1, 0.125], 2: [0.08, 0.1], 3: [0.1, 0.125], 4: [0.11, 0.14] });",
+    "old": "export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14],",
+    "new": "export const TORSO_HALF = Object.freeze({ 0: [0.2, 0.24],",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OWNAUDIT-garments-alike",
     "file": "src/player/classSkinArt.js",
-    "old": "  'Dark Brotherhood': look({ outer: RAMP.black, inner: RAMP.black, metal: RAMP.black, sash: RAMP.red, sign: { glyph: 'hand', colour: hex('#c0281c') }, garment: { kind: 'wrap', ramp: WRAP, edge: RAMP.grey, hem: RAMP.black } }),",
-    "new": "  'Dark Brotherhood': look({ outer: RAMP.black, inner: RAMP.black, metal: RAMP.black, sash: RAMP.red, sign: { glyph: 'hand', colour: hex('#c0281c') }, garment: { kind: 'harness', ramp: RAMP.leather, edge: RAMP.grey, hem: RAMP.black } }),",
+    "old": "garment: { kind: 'wrap', ramp: WRAP,",
+    "new": "garment: { kind: 'harness', ramp: RAMP.leather,",
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]

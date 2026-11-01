@@ -183,8 +183,8 @@
   {
     "name": "TESA2-no-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      arenaSlot: dfLocation?.arena ?? null,",
-    "new": "      arenaSlot: null,",
+    "old": "      arenaSlot: dfLocation?.arena ?? null,\n",
+    "new": "      arenaSlot: null,\n",
     "tests": [
       "test/tesa2_arena.test.js"
     ]

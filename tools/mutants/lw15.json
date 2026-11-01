@@ -518,8 +518,8 @@
   {
     "name": "LW15-host-own",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,   // Its patrons' errands, its traders' doors",
-    "new": "          patronsOf: () => null,   // Its patrons' errands, its traders' doors",
+    "old": "patronsOf: () => _livingPatrons.get(livingTown.mapId >>> 0) ?? null,",
+    "new": "patronsOf: () => null,",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]

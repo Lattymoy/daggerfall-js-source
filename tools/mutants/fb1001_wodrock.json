@@ -128,8 +128,8 @@
   {
     "name": "WODROCK-the-host-batches-the-model-as-it-was",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix, m.modelId);   // A piece stretched 4x or more draws its planes unfolded at its pebble's own texel density (world/worldOfDaggerfall/wodRockUv.js) - new UVs only, its positions and indices the model's own arrays; a camp or a house is the same object",
-    "new": "        const cpu = cpuModels.get(m.modelId);   // A piece stretched 4x or more draws its planes unfolded at its pebble's own texel density (world/worldOfDaggerfall/wodRockUv.js) - new UVs only, its positions and indices the model's own arrays; a camp or a house is the same object",
+    "old": "        const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix, m.modelId);",
+    "new": "        const cpu = cpuModels.get(m.modelId);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]

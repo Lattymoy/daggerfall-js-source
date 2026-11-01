@@ -12,16 +12,15 @@ import DERIVED_ICONS from './derivedIcons.json' with { type: 'json' };
  *  10, the pole), so they register WITHOUT `standIn` and the pipeline swaps only these two records. */
 export const VENDOR_TENT_FILES = Object.freeze(['50_7-0', '67_10-0']);
 /** The pictures that are Daggerfall's own records alone - the tent's two (TEXTURE.050
- *  record 7, TEXTURE.067 record 10; derivedIcons.json). OWN-WORK4 took out the mouldy bread, whose spec carried the
- *  author's mould, and OWN-AUDIT the mouldy cooked fish, which was the plain fish. Or null. */
+ *  record 7, TEXTURE.067 record 10; derivedIcons.json). Not the mouldy bread nor the mouldy cooked fish: each of
+ *  those is our rot over the fresh food (OWN_ICONS). Or null. */
 export const derivedIconSpec = (name) => (Object.hasOwn(DERIVED_ICONS, name) ? DERIVED_ICONS[name] : null);
 const own = (spec) => Object.freeze({ ...spec, ...(spec.from ? { from: Object.freeze(spec.from) } : {}) });
 const FOOD = (archive, from) => [
   [`${archive}_0-0`, own({ from, pal: 'PAL.PAL', seed: archive * 10, mouldy: true })],
   [`${archive}_1-0`, own({ from, pal: 'PAL.PAL', seed: archive })],
 ];
-/** OUR OWN PICTURES (NO-BETHESDA3, the rotten cooked fish; OWN-WORK4 the rest - the owner: "A proper 1 to 1 recreation
- *  for everything"). A spoiled face is our rot (rotPicture.js, our seed; `mouldy` the first stage) over the fresh
+/** OUR OWN PICTURES. A spoiled face is our rot (rotPicture.js, our seed; `mouldy` the first stage) over the fresh
  *  food - the player's own picture of it (`from`, in PAL.PAL) or one we paint (`paint`, survivalArt.js). Raw meat
  *  and the waterskin are painted whole. No pixel of the retired release is read. */
 export const OWN_ICONS = Object.freeze(

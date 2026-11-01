@@ -1,6 +1,5 @@
-// OUR OWN ROT, drawn over the player's
-// own picture of the fresh food. No pixel of a mod's picture is read: the colour is drawn toward a sick green-grey,
-// the rim darkened, and mould grown in soft patches where a seeded pattern of ours, the rim and the hollows put it. Pure: a top-down RGBA picture in, a new one out, and a clear pixel stays clear (0,0,0,0).
+// OUR OWN ROT, drawn over the player's own picture of the fresh food. No pixel of a mod's picture is read: the colour is drawn toward a sick green-grey, the rim darkened, and mould grown in soft patches
+// where a seeded pattern of ours, the rim and the hollows put it. Pure: a top-down RGBA picture in, a new one out, and a clear pixel stays clear (0,0,0,0).
 
 /** The sick green-grey a pixel's light is drawn toward (a share of its luminance per channel), and how far. */
 export const ROT_TINT = Object.freeze([0.84, 1, 0.66]);
@@ -89,7 +88,7 @@ export function mouldField(pic, seed) {
 export const MOULDY = Object.freeze({ mix: 0.3, cover: 0.38 });
 
 /** The food, rotten: `pic` is the fresh food's picture (top-down RGBA), `seed` our pattern's; `mix` sets how far the
- *  tint goes and `cover` the share of the food the mould takes (MOULDY for the first stage). OWN-AUDIT:
+ *  tint goes and `cover` the share of the food the mould takes (MOULDY for the first stage). The
  *  mould is soft patches in grey-green and white, lit by the food's own shading and never brighter than its highlight. */
 export function rotPicture(pic, { seed = 1, mix = ROT_MIX, cover = MOULD_COVER } = {}) {
   const { width: w, height } = pic;

@@ -22,8 +22,8 @@
   {
     "name": "RAINFPS-cover-ramp-from-cloudy",
     "file": "src/render/volumetricClouds.js",
-    "old": "  const lo = WEATHER_SKY.sunny.cover, hi = WEATHER_SKY.cloudy.cover;",
-    "new": "  const lo = WEATHER_SKY.cloudy.cover, hi = WEATHER_SKY.overcast.cover;",
+    "old": "const lo = WEATHER_SKY.sunny.cover, hi = WEATHER_SKY.cloudy.cover;",
+    "new": "const lo = WEATHER_SKY.cloudy.cover, hi = WEATHER_SKY.overcast.cover;",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "RAINFPS-cells-ignored",
     "file": "src/render/volumetricClouds.js",
-    "old": "  return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));",
-    "new": "  return (1 + t * t * (3 - 2 * t));",
+    "old": "return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));",
+    "new": "return (1 + t * t * (3 - 2 * t));",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "RAINFPS-negative-cells-count",
     "file": "src/render/volumetricClouds.js",
-    "old": "  return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * Math.max(0, cells | 0));",
-    "new": "  return (1 + t * t * (3 - 2 * t)) * (1 + CELL_SWEEP_COST * (cells | 0));",
+    "old": "(1 + CELL_SWEEP_COST * Math.max(0, cells | 0))",
+    "new": "(1 + CELL_SWEEP_COST * (cells | 0))",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "RAINFPS-rounded-up",
     "file": "src/render/volumetricClouds.js",
-    "old": "  const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
-    "new": "  const k = Math.max(0, Math.ceil(Math.log2(sweepCost(cover, cells))));",
+    "old": "const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
+    "new": "const k = Math.max(0, Math.ceil(Math.log2(sweepCost(cover, cells))));",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "RAINFPS-rounded-down",
     "file": "src/render/volumetricClouds.js",
-    "old": "  const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
-    "new": "  const k = Math.max(0, Math.floor(Math.log2(sweepCost(cover, cells))));",
+    "old": "const k = Math.max(0, Math.round(Math.log2(sweepCost(cover, cells))));",
+    "new": "const k = Math.max(0, Math.floor(Math.log2(sweepCost(cover, cells))));",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "RAINFPS-uncapped",
     "file": "src/render/volumetricClouds.js",
-    "old": "  return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);",
-    "new": "  return SWEEP_FRAMES * 2 ** k;",
+    "old": "return Math.min(SWEEP_FRAMES_MAX, SWEEP_FRAMES * 2 ** k);",
+    "new": "return SWEEP_FRAMES * 2 ** k;",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "RAINFPS-the-shadow-pace-every-frame",
     "file": "src/render/volumetricClouds.js",
-    "old": "      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;   // The sky's pace, at the shadow sweep's own start",
-    "new": "      this.shadowPace = this.pace;   // The sky's pace, at the shadow sweep's own start",
+    "old": "      if (!this.shadowFull && this.shadowStripe === 0) this.shadowPace = this.pace;",
+    "new": "      this.shadowPace = this.pace;",
     "tests": [
       "test/render/rainfps.test.js",
       "test/render/volumetricClouds.test.js"

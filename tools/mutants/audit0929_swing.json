@@ -11,8 +11,8 @@
   {
     "name": "AUDIT0929-S1-the-count-unsaid",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    swingN: swing.n,   // The blow the machine is in (MAC7 #1's count) - one sprite swing a blow",
-    "new": "    /* no count */   // The blow the machine is in (MAC7 #1's count) - one sprite swing a blow",
+    "old": "    swingN: swing.n,",
+    "new": "    /* no count */",
     "tests": [
       "test/systems/audit0929_swing.test.js"
     ]

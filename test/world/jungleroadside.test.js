@@ -577,7 +577,7 @@ test('JUNGLE-ROADSIDE the build stands each pair whole, a tree\'s half at its ow
 
   const pb = text('src/scenes/pixelBuild.js');
   assert.match(pb, /const pairs = keptPairs\(roadside, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\);/, 'kept by the gate\'s clearing and the rocks, as every flat');
-  const fallback = pb.slice(pb.indexOf('    if (!jungleOk) {\n      for (const t of pairs.flatMap('), pb.indexOf('    // WOD4: THE CAMP AT PRIVATEER\'S HOLD'));
+  const fallback = pb.slice(pb.indexOf('    if (!jungleOk) {\n      for (const t of pairs.flatMap('), pb.indexOf('    let privateersHold = null;'));
   assert.match(fallback, /addFlat\(archive, t\.record, t\.x, walkGroundAt\(samples, t\.x, t\.z\), t\.z, \{ wild: JUNGLE_ARCHIVE \}\);/, 'the door unloaded, its Tree records at their own ground');
   assert.doesNotMatch(fallback, /pixelTrees|tree:/, 'never Logging\'s, whatever the door (AUDIT JUNGLE-ROADSIDE GAME-2)');
   assert.doesNotMatch(pb, /f\.pair\b/, 'no pair among the flats');

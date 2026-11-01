@@ -243,8 +243,8 @@
   {
     "name": "GRASSLIT2-host-normals-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      groundNormals: labGrass && stride === 1 ? normals : null,   // The near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)",
-    "new": "      groundNormals: null,   // The near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)",
+    "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
+    "new": "groundNormals: null,",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-GRASSLIT2-B1-normals-ungated",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      groundNormals: labGrass && stride === 1 ? normals : null,   // The near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)",
-    "new": "      groundNormals: stride === 1 ? normals : null,   // The near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)",
+    "old": "groundNormals: labGrass && stride === 1 ? normals : null,",
+    "new": "groundNormals: stride === 1 ? normals : null,",
     "tests": [
       "test/render/grasslit2.test.js"
     ]

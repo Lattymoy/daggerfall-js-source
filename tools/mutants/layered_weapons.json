@@ -172,8 +172,8 @@
   {
     "name": "LAYERED-WEAPONS-body-unread",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    heldWeapon: s.heldWeapon ?? null,   // The item in the hand in use (weaponRig's eotbState)",
-    "new": "    heldWeapon: null,   // The item in the hand in use (weaponRig's eotbState)",
+    "old": "    heldWeapon: s.heldWeapon ?? null,",
+    "new": "    heldWeapon: null,",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -592,8 +592,8 @@
   {
     "name": "LAYERED-GLOW-mine-whole-sprite",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
-    "new": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
+    "old": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record,",
+    "new": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, batch.record,",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
@@ -602,8 +602,8 @@
   {
     "name": "LAYERED-GLOW-mine-empty-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
-    "new": "      if (look) glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));",
+    "old": "      if (look && held !== '') glowList.push(",
+    "new": "      if (look) glowList.push(",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
@@ -612,8 +612,8 @@
   {
     "name": "LAYERED-GLOW-peer-whole-sprite",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (held !== '') glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, held ?? r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));",
-    "new": "    if (held !== '') glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));",
+    "old": "r.batch.archive, held ?? r.batch.record, look,",
+    "new": "r.batch.archive, r.batch.record, look,",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
@@ -622,8 +622,8 @@
   {
     "name": "LAYERED-GLOW-peer-no-held",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.heldOff = up.heldOff ?? null; r.pair = s.pair ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // Its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture",
-    "new": "      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = null; r.heldOff = up.heldOff ?? null; r.pair = s.pair ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // Its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture",
+    "old": "r.held = up.held ?? null;",
+    "new": "r.held = null;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
@@ -652,8 +652,8 @@
   {
     "name": "LAYERED-GLOW-peers-kept",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      for (const key of l.keys) { tex.delete(key); renderer?.evictTexture?.(key.replace(':', '_')); evictHeld(renderer, key.replace(':', '_')); }   // the cache's `archive:rec` is the renderer's `archive_rec`; LAYERED-GLOW: and its weapon's picture",
-    "new": "      for (const key of l.keys) { tex.delete(key); renderer?.evictTexture?.(key.replace(':', '_')) }   // the cache's `archive:rec` is the renderer's `archive_rec`; LAYERED-GLOW: and its weapon's picture",
+    "old": "; evictHeld(renderer, key.replace(':', '_')); }",
+    "new": " }",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
@@ -702,8 +702,8 @@
   {
     "name": "LAYERED-WEAPONS-flip-own-look",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
-    "new": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p.slice(4).join(':').replace(/!\\d\\d?$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
+    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}`",
+    "new": "`${p[0]}:${p[1]}:${p[2]}:${p.slice(4).join(':').replace(/!\\d\\d?$/, '')}`",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ],
@@ -822,8 +822,8 @@
   {
     "name": "LAYERED-DUAL-peer-one-hand",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  const held = h?.dual ? layeredHands({ pairRight: h.right, pairLeft: h.left, pairStrike: pose?.ah ? 'L' : 'R' }) : { weapon: walkerWeapon(look, pose) };",
-    "new": "  const held = false ? layeredHands({ pairRight: h.right, pairLeft: h.left, pairStrike: pose?.ah ? 'L' : 'R' }) : { weapon: walkerWeapon(look, pose) };",
+    "old": "  const held = h?.dual ? layeredHands(",
+    "new": "  const held = false ? layeredHands(",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "LAYERED-DUAL-release-pair",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      return layered && archive === s.archive && [lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? ''))) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));",
-    "new": "      return layered && archive === s.archive && [lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? ''))) && hands.has(held);",
+    "old": "(b === undefined ? hands.has(held) : pair.has(a) && pair.has(b))",
+    "new": "hands.has(held)",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1072,8 +1072,8 @@
   {
     "name": "SPELL-BURST-walker-element",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}), ...(pose && !pose.wd ? { sheathed: true } : {}) };   // Its shield on its back",
-    "new": "  return { ...held, cast: 4, ...(h?.spellHand ? { spellHand: true } : {}), ...(pose && !pose.wd ? { sheathed: true } : {}) };   // Its shield on its back",
+    "old": "cast: Number.isInteger(pose?.ce) ? pose.ce : 4",
+    "new": "cast: 4",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1212,8 +1212,8 @@
   {
     "name": "AUDIT-cast-own-look",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
-    "new": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4]}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
+    "old": "${p[4].replace(/!\\d\\d?$/, '')}",
+    "new": "${p[4]}",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1222,8 +1222,8 @@
   {
     "name": "AUDIT-body-hands-live",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run', hands: cfg.wornArmour ? layeredHands(last) : null };",
-    "new": "    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run', hands: null };",
+    "old": "hands: cfg.wornArmour ? layeredHands(last) : null",
+    "new": "hands: null",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1232,8 +1232,8 @@
   {
     "name": "AUDIT-peer-hands-live",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...(r.shot?.hands ?? walkerHeld(peer.look, pose)) } : null;",
-    "new": "      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...walkerHeld(peer.look, pose) } : null;",
+    "old": "...(r.shot?.hands ?? walkerHeld(peer.look, pose))",
+    "new": "...walkerHeld(peer.look, pose)",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1302,8 +1302,8 @@
   {
     "name": "AUDIT-glow-lead-only",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      const lineItem = batchPair === 'L' ? last.pairLeft : batchPair === 'R' ? last.pairRight : handItemNow();",
-    "new": "      const lineItem = handItemNow();",
+    "old": "const lineItem = batchPair === 'L' ? last.pairLeft : batchPair === 'R' ? last.pairRight : handItemNow();",
+    "new": "const lineItem = handItemNow();",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1312,8 +1312,8 @@
   {
     "name": "AUDIT-peer-glow-lead-only",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "    const look = peerWeaponGlow(false ? null : holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "old": "peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) :",
+    "new": "peerWeaponGlow(false ? null :",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1402,8 +1402,8 @@
   {
     "name": "SHEETS-provisional-unseen",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  return { ...worldOrderColors(image, { owned: true }), held, ...(image.shield ? { shield: image.shield } : {}), ...(image.provisional ? { provisional: true } : {}) };   // AUDIT: drawn before its weapon's picture came; LAYERED-SHIELD: its shield's px",
-    "new": "  return { ...worldOrderColors(image, { owned: true }), held, ...(image.shield ? { shield: image.shield } : {}) };   // AUDIT: drawn before its weapon's picture came; LAYERED-SHIELD: its shield's px",
+    "old": ", ...(image.provisional ? { provisional: true } : {}) };",
+    "new": " };",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1412,8 +1412,8 @@
   {
     "name": "SHEETS-body-retry-never",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (have && !(have instanceof Promise) && have.retryAt != null && clock() >= have.retryAt) { tex.delete(cacheKey(s)); decoded.delete(s.key); evictHeld(renderer, cacheKey(s).replace(':', '_')); have = undefined; }",
-    "new": "    if (have && !(have instanceof Promise) && have.retryAt != null && false) { tex.delete(cacheKey(s)); decoded.delete(s.key); evictHeld(renderer, cacheKey(s).replace(':', '_')); have = undefined; }",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(cacheKey(s));",
+    "new": "have.retryAt != null && false) { tex.delete(cacheKey(s));",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1422,8 +1422,8 @@
   {
     "name": "SHEETS-peer-retry-never",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (have && !(have instanceof Promise) && have.retryAt != null && clock() >= have.retryAt) { tex.delete(k); pixels.delete(s.key); evictHeld(renderer, k.replace(':', '_')); have = undefined; }",
-    "new": "    if (have && !(have instanceof Promise) && have.retryAt != null && false) { tex.delete(k); pixels.delete(s.key); evictHeld(renderer, k.replace(':', '_')); have = undefined; }",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(k);",
+    "new": "have.retryAt != null && false) { tex.delete(k);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1432,8 +1432,8 @@
   {
     "name": "SHEETS-tool-unheld",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    layeredTool: layeredTool(),   // AUDIT: a gathering act's tool, for the layered body's hands",
-    "new": "    layeredTool: null,   // AUDIT: a gathering act's tool, for the layered body's hands",
+    "old": "    layeredTool: layeredTool(),   // AUDIT",
+    "new": "    layeredTool: null,   // AUDIT",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1442,8 +1442,8 @@
   {
     "name": "SHEETS-tool-sheathed",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    stateCurrent = chooseTable({ ...last, sheathed: last.sheathed && !last.toolInHand, readyStance: cfg.readyStance });   // AUDIT: a gathering act's tool held ready (layered: tick)",
-    "new": "    stateCurrent = chooseTable({ ...last, sheathed: last.sheathed, readyStance: cfg.readyStance });   // AUDIT: a gathering act's tool held ready (layered: tick)",
+    "old": "sheathed: last.sheathed && !last.toolInHand, readyStance",
+    "new": "sheathed: last.sheathed, readyStance",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1452,8 +1452,8 @@
   {
     "name": "SHEETS-tool-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();",
-    "new": "      const drawn = grow === 1 && !FP && !last.sheathed && !last.riding && !last.transformed && !died && !last.died && !material();",
+    "old": "!last.sheathed && !last.toolInHand && !last.riding",
+    "new": "!last.sheathed && !last.riding",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1462,8 +1462,8 @@
   {
     "name": "SHEETS-cast-evicted",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      const [worn, cast] = String(code).split('@'), held = cast?.replace(/!\\d\\d?$/, ''), [a, b] = String(held).split('+');   // A pair's, either way round; AUDIT: a cast's frames with its hands",
-    "new": "      const [worn, cast] = String(code).split('@'), held = cast, [a, b] = String(held).split('+');   // A pair's, either way round; AUDIT: a cast's frames with its hands",
+    "old": "held = cast?.replace(/!\\d\\d?$/, '')",
+    "new": "held = cast",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -1472,8 +1472,8 @@
   {
     "name": "SHEETS-tool-on-skins",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (cfg.wornArmour && last.layeredTool) last = { ...last, ...last.layeredTool };",
-    "new": "      if (last.layeredTool) last = { ...last, ...last.layeredTool };",
+    "old": "if (cfg.wornArmour && last.layeredTool) last =",
+    "new": "if (last.layeredTool) last =",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],

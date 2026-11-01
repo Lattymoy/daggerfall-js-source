@@ -144,7 +144,7 @@ test('OWN-WORK2 the Bay\'s network on the player\'s map: four whole planes, ever
   let wet = 0;
   for (let i = 0; i < net.roads.length; i++) if ((net.roads[i] | net.tracks[i]) && woods.getHeightMapValue(i % MAP_W, Math.floor(i / MAP_W)) <= WATER_BYTE) wet++;
   assert.equal(wet, 0, 'no road or track on the sea');
-  // measured 2026-10-31 on the freeware's data; a change to the law moves them, and this pin with it
+  // measured on the freeware's data; a change to the law moves them, and this pin with it
   assert.deepEqual([count(net.roads), count(net.tracks), count(net.rivers), count(net.streams)], [14965, 28059, 1549, 3036]);
   assert.deepEqual([net.stats.roadNodes, net.stats.gates, net.stats.trackNodes, net.stats.unrouted, net.stats.islands], [1632, 22, 6411, 31, 24], 'the towns and the 22 ways out, the villages; the pairs the sea parts');
 });

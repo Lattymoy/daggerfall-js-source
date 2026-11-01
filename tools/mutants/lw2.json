@@ -241,8 +241,8 @@
   {
     "name": "LW2-door-cell-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "                door, pixelKey: key, dfBlock: b.dfBlock, blockX: b.x, blockY: b.y,   // The block's grid cell, so a door names its building (makeBuildingKey)",
-    "new": "                door, pixelKey: key, dfBlock: b.dfBlock,   // The block's grid cell, so a door names its building (makeBuildingKey)",
+    "old": "                door, pixelKey: key, dfBlock: b.dfBlock, blockX: b.x, blockY: b.y,",
+    "new": "                door, pixelKey: key, dfBlock: b.dfBlock,",
     "tests": [
       "test/systems/livingWorld/lw2_livingTown.test.js"
     ]

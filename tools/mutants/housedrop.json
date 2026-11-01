@@ -119,8 +119,8 @@
   {
     "name": "HOUSE-rig-drops-word",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const handheld = createHandheldTorches({ audio, say, torches, dropRefusal });   // The host's word against a light on its floor",
-    "new": "  const handheld = createHandheldTorches({ audio, say, torches });   // The host's word against a light on its floor",
+    "old": "createHandheldTorches({ audio, say, torches, dropRefusal });",
+    "new": "createHandheldTorches({ audio, say, torches });",
     "tests": [
       "test/systems/housedrop.test.js"
     ]

@@ -12,8 +12,8 @@
   {
     "name": "DA8-2-a-timeout-cuts-off-a-download-the-player-can-see",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (u.status === 'checking') u.status = 'offline';",
-    "new": "      if (u.status === 'checking' || u.status === 'downloading') u.status = 'offline';",
+    "old": "    case 'check-timeout':\n      if (u.status === 'checking') u.status = 'offline';\n",
+    "new": "    case 'check-timeout':\n      if (u.status === 'checking' || u.status === 'downloading') u.status = 'offline';\n",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "DA8-4-play-now-is-the-default-and-enter-skips-the-update",
     "file": "app/lib/launcherState.cjs",
-    "old": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating' }];",
-    "new": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating', primary: true }];",
+    "old": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating' }];\n",
+    "new": "    if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating', primary: true }];\n",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "DA8-5-an-installer-that-never-starts-strands-the-player",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (u.status === 'installing') u.status = 'stuck';\n      break;",
-    "new": "      break;",
+    "old": "      if (u.status === 'installing') u.status = 'stuck';\n",
+    "new": "",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "DA8-7-a-found-folder-is-taken-silently",
     "file": "app/lib/launcherState.cjs",
-    "old": "        st.status = st.found.length ? 'found' : 'none';",
-    "new": "        st.status = st.found.length ? 'ready' : 'none';",
+    "old": "        st.status = st.found.length ? 'found' : 'none';\n",
+    "new": "        st.status = st.found.length ? 'ready' : 'none';\n",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "DA8-9-the-player-reads-the-list-of-pull-requests",
     "file": "app/lib/launcherState.cjs",
-    "old": "  return (cut < 0 ? text : text.slice(0, cut)).trim();",
-    "new": "  return text.trim();",
+    "old": "  return (cut < 0 ? text : text.slice(0, cut)).trim();\n",
+    "new": "  return text.trim();\n",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ]

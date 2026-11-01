@@ -705,8 +705,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-build-keeping-a-lone-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const pairs = keptPairs(roadside, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z));",
-    "new": "    const pairs = roadside;",
+    "old": "const pairs = keptPairs(roadside, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z));",
+    "new": "const pairs = roadside;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -714,8 +714,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-tree-loggings",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
-    "new": "        addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE, tree: { id: pixelTrees.length } });",
+    "old": "addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
+    "new": "addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE, tree: { id: pixelTrees.length } });",
     "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ground's one law, walkGroundAt (the walker's and the flora's), where it read surfaceHeightAt.",
     "tests": [
       "test/world/jungleroadside.test.js"
@@ -724,8 +724,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-tree-in-the-species-near-set",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const near = g.spanned ? g.centers.map((c) => !g.spanned.has(c)) : null;",
-    "new": "      const near = null;",
+    "old": "const near = g.spanned ? g.centers.map((c) => !g.spanned.has(c)) : null;",
+    "new": "const near = null;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-tree-never-giving-way-to-its-half",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      batch.lptProto = g.spans ? [far, ...g.spans] : far;   // And to its pair trees' halves",
-    "new": "      batch.lptProto = far;   // And to its pair trees' halves",
+    "old": "batch.lptProto = g.spans ? [far, ...g.spans] : far;",
+    "new": "batch.lptProto = far;",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

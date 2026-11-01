@@ -1,10 +1,10 @@
 // @ts-check
-// THE SNOW SURFACE, OUR OWN (OWN-WORK4; the vertex law our design, OWN-WORK4 AUDIT,
-// bible/03-World/Snowfall.md). One program draws the runtime's three tiers (the window, the ring, the blanket). A
-// vertex stands on the ground, raised by the snow's depth times its coverage and what the tracks left (a narrow track
-// kept by the deepest press across its cell), eased out at the tier's edges; the ring lands on the blanket three
-// quarters into its band. The fragment is our albedo read twice, a path trodden grey, a track packed darker and colder
-// - in the ground's own fragment program in place of the tile (snowTerrainFs), so the snow takes the ground's light.
+// THE SNOW SURFACE, OUR OWN (the vertex law our design). One program draws the runtime's three tiers (the window, the
+// ring, the blanket). A vertex stands on the ground, raised by the snow's depth times its coverage and what the tracks
+// left (a narrow track kept by the deepest press across its cell), eased out at the tier's edges; the ring lands on the
+// blanket three quarters into its band. The fragment is our albedo read twice, a path trodden grey, a track packed
+// darker and colder - in the ground's own fragment program in place of the tile (snowTerrainFs), so the snow takes the
+// ground's light.
 import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-9: the ground's own snow, where this snow lies
 
 /** The attribute locations of a snow mesh: position, normal, the grid's uv, three contexts, the blanket's target. */
@@ -21,7 +21,7 @@ export const SNOW_ATTR = Object.freeze({
 /** The texture units the snow's five pictures take - above every unit the world programs reserve (0-15). */
 export const SNOW_UNITS = Object.freeze({ dynamic: 16, static: 17, context: 18, far: 19, albedo: 20 });
 /** AUDIT ENVIRONS G2: the snow's polygon offset - one resolvable step and half its slope nearer the eye than the
- *  ground it lies on (OWN-WORK4 AUDIT: our values), so a snow surface standing at the ground's own height - a contact
+ *  ground it lies on (our values), so a snow surface standing at the ground's own height - a contact
  *  ramp's first texel, a faded rim - is the snow's and not a speckle of both. Under the sea's film
  *  (render/waterSurface.js WATER_LAYER_UNITS), a layer of the one stack. */
 export const SNOW_LAYER = Object.freeze({ factor: -0.5, units: -1 });

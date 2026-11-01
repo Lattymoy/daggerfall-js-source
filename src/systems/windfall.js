@@ -1,7 +1,7 @@
 // WINDFALL 1.0.0 (demifiend000; its files left the tree at OWN-WORK4), ported off its assembly: WindNaturalPlanner and
 // WindRecordWeights whole, and WindMod's state - its settings, the day's context and plan, the presentation state, the
 // gusts and the profile the flora sway by, its save record and its console command. Pure: the hosts hand it the frame,
-// the renderer draws what it answers (render/ renderer.js BB_VS's Windfall law), and systems/windfallEffects.js is
+// the renderer draws what it answers (render/renderer.js BB_VS's Windfall law), and systems/windfallEffects.js is
 // WindEnvironmentEffects (the sound and the leaves) it drives.
 //
 // THE LAW (WindMod.TryUpdateEnvironmentalState, every frame):

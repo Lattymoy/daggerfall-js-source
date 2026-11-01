@@ -154,8 +154,8 @@
   {
     "name": "BR5-setting-names-the-game",
     "file": "src/systems/features.js",
-    "old": "      + 'Off spreads the trees evenly, like the original.'); },",
-    "new": "      + 'Off spreads the trees evenly, as Daggerfall does.'); },",
+    "old": "+ 'Off spreads the trees evenly, like the original.'); },",
+    "new": "+ 'Off spreads the trees evenly, as Daggerfall does.'); },",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "BR5-overhaul-by-the-game",
     "file": "src/systems/overhauls.js",
-    "old": "      textureOption('classic', 'Classic', {\n        by: 'The original game',",
-    "new": "      textureOption('classic', 'Classic', {\n        by: 'Daggerfall',",
+    "old": "by: 'The original game',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
+    "new": "by: 'Daggerfall',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
     "tests": [
       "test/ui/brand.test.js"
     ],

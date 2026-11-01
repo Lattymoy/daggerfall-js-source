@@ -74,8 +74,8 @@
   {
     "name": "AR2-the-body-asks-with-the-speed-alone",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const animTime = getMeleeWeaponAnimTime(last.liveSpeed, last.animCtx);",
-    "new": "    const animTime = getMeleeWeaponAnimTime(last.liveSpeed);",
+    "old": "getMeleeWeaponAnimTime(last.liveSpeed, last.animCtx)",
+    "new": "getMeleeWeaponAnimTime(last.liveSpeed)",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AR2-the-body-drops-the-weapon",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    animCtx: s.animCtx ?? null,   // The weapon the swing clock is asked about (weaponRig's eotbState)",
-    "new": "    animCtx: null,   // The weapon the swing clock is asked about (weaponRig's eotbState)",
+    "old": "    animCtx: s.animCtx ?? null,",
+    "new": "    animCtx: null,",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AR2-the-rig-hands-the-body-no-weapon",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    animCtx: playerWeapon.animCtx(),\n    concealment: entity ? concealmentFlags(entity) : null,",
-    "new": "    concealment: entity ? concealmentFlags(entity) : null,",
+    "old": "    animCtx: playerWeapon.animCtx(),\n",
+    "new": "",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AR4-the-rig-freezes-its-speed-after-construction",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);   // The hand in use (the striking one). AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone",
-    "new": "  playerWeapon.liveSpeed = playerWeapon.liveSpeed;\n  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);   // The hand in use (the striking one). AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone",
+    "old": "  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
+    "new": "  playerWeapon.liveSpeed = playerWeapon.liveSpeed;\n  playerWeapon.animCtx = () => playerWeapon.swingCtx(entity);",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AR4-the-rig-blind-to-speed-on-the-real-rig",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const playerWeapon = new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) });   // The swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did",
-    "new": "  const playerWeapon = new PlayerWeapon({});   // The swing clock reads the live Speed (FPSWeapon.cs:431/549-556), as the body and the widget already did",
+    "old": "new PlayerWeapon({ liveSpeed: () => (entity ? liveStat(entity, 'speed') : 50) })",
+    "new": "new PlayerWeapon({})",
     "tests": [
       "test/systems/auditdisc28_arrest.test.js"
     ]

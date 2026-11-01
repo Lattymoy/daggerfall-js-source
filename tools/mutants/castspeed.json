@@ -76,8 +76,8 @@
   {
     "name": "CASTSPEED-classic-lane-no-rate",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const started = fpsSpellCasting.playOneShot(element, onRelease, armHolds ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : { rate });",
-    "new": "      const started = fpsSpellCasting.playOneShot(element, onRelease, armHolds ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : {});",
+    "old": "fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : { rate });",
+    "new": "fpArm.takeCastRelease() || !fpArm.castInFlight(), rate } : {});",
     "tests": [
       "test/systems/castspeed.test.js"
     ]

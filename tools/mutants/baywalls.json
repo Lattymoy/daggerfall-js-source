@@ -300,8 +300,8 @@
   {
     "name": "TB-the-walk-unshared",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
-    "new": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, null, () => breather.breathe()) : null;   // On the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "old": "loc, yardShut, () => breather.breathe())",
+    "new": "loc, null, () => breather.breathe())",
     "tests": [
       "test/world/baywalls.test.js"
     ],

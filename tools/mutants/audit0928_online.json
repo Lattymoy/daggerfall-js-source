@@ -175,8 +175,8 @@
   {
     "name": "A0928-O4-flats-plain",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        b.conceal = boat.conceal ?? null;   // A concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
-    "new": "        b.conceal = null;   // A concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
+    "old": "        b.conceal = boat.conceal ?? null;",
+    "new": "        b.conceal = null;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "A0928-R5-draw-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const walkOf = (boat) => { const w = walks.get(boat); return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };",
-    "new": "  const walkOf = (boat) => { const w = walks.get(boat); return walkBoat(boat, -1); };",
+    "old": "return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };",
+    "new": "return walkBoat(boat, -1); };",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "A0928-R5-flat-scale-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        if (!kept) { const s = n.lossyScaleOf(m, _flatScale); e.sx = Math.abs(s[0]); e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
-    "new": "        if (!kept) { const s = n.lossyScale; e.sx = Math.abs(s[0]); e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
+    "old": "const s = n.lossyScaleOf(m, _flatScale);",
+    "new": "const s = n.lossyScale;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

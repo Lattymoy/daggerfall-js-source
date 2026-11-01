@@ -137,8 +137,8 @@
   {
     "name": "WEREWOLF1-per-frame-door-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setWerewolf(wolf, { skin: wolfSkin });",
-    "new": "",
+    "old": "        fpArm.setWerewolf(wolf, { skin: wolfSkin });\n",
+    "new": "\n",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WEREWOLF1-identity-without-the-form",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    && !!have.werewolf === want.werewolf && !!have.vampire === want.vampire;   // WEREWOLF1; PORTRAIT3D: and the curse's face",
-    "new": "    && !!have.vampire === want.vampire;   // WEREWOLF1; PORTRAIT3D: and the curse's face",
+    "old": "    && !!have.werewolf === want.werewolf && !!have.vampire === want.vampire;   // WEREWOLF1",
+    "new": "    && !!have.vampire === want.vampire;   // WEREWOLF1",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WEREWOLF1-MERGE-the-standing-wolf-stood-aside",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);",
-    "new": "    fpArm.setStandIn?.(beast ? true : wolf);",
+    "old": "fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);",
+    "new": "fpArm.setStandIn?.(beast ? true : wolf);",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ],
@@ -237,8 +237,8 @@
   {
     "name": "WEREWOLF1-MERGE-the-wrong-beast-kept",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);",
-    "new": "    fpArm.setStandIn?.(beast ? !wolf : wolf);",
+    "old": "beast ? !(wolf && isMwWerewolf(entity)) : wolf",
+    "new": "beast ? !wolf : wolf",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "WEREWOLF1-MERGE-the-wolf-kept-for-the-person",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);",
-    "new": "    fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : false);",
+    "old": "beast ? !(wolf && isMwWerewolf(entity)) : wolf)",
+    "new": "beast ? !(wolf && isMwWerewolf(entity)) : false)",
     "tests": [
       "test/net/peer/werewolf1.test.js"
     ]

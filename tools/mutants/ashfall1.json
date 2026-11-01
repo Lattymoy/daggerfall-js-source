@@ -209,8 +209,8 @@
   {
     "name": "ASH-the-pall-untinted",
     "file": "src/render/volumetricClouds.js",
-    "old": "export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]), ashfall: Object.freeze([0.66, 0.60, 0.56]) });",
-    "new": "export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46])});",
+    "old": ", ashfall: Object.freeze([0.66, 0.60, 0.56]) });",
+    "new": "});",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

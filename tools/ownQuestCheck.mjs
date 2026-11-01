@@ -1,8 +1,6 @@
 // /usr/bin/env node
-// OWN-WORDS1 (2026-10-31; the owner, asked whether quest text should come from the player's ARENA2: "We plan on moving
-// away from arena so whatever works for future proofing"). A quest in DFO's own words is src/systems/quest/own/NAME.txt,
-// read in place of DFU's file of its name: DFU's QBN verbatim, our own messages. This holds each one to DFU's logic, so
-// a rewrite can never break a quest.
+// A quest in DFO's own words is src/systems/quest/own/NAME.txt, read in place of DFU's file of its name: DFU's QBN
+// verbatim, our own messages. This holds each one to DFU's logic, so a rewrite can never break a quest.
 //   node tools/ownQuestCheck.mjs [NAME ...]        check every own quest, or the named ones
 //   node tools/ownQuestCheck.mjs --scaffold NAME   start one: DFU's header and QBN, each message's id and what it keeps
 //   node tools/ownQuestCheck.mjs --wrap NAME       wrap each message's lines to the width of DFU's message

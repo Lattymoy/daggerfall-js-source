@@ -101,8 +101,8 @@
   {
     "name": "WEATHER3d-bolt-aimed-flat",
     "file": "src/render/volumetricClouds.js",
-    "old": "  return { dir: [dx / len, BOLT_HEIGHT / len, dz / len], cos: Math.cos(half), strength: Math.max(0, Math.min(1, strength)) };",
-    "new": "  return { dir: [dx / flat, 0, dz / flat], cos: Math.cos(half), strength: Math.max(0, Math.min(1, strength)) };",
+    "old": "  return { dir: [dx / len, BOLT_HEIGHT / len, dz / len]",
+    "new": "  return { dir: [dx / flat, 0, dz / flat]",
     "tests": [
       "test/systems/weather3d_distantstorms.test.js"
     ]

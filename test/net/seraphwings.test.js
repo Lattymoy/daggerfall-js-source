@@ -489,8 +489,7 @@ test('SERAPH-WINGS on the back of an Eye of the Beholder sprite: its bones read 
   assert.match(mv, /const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);\n\s*spriteFigure = drawn \? eotbFigure\(\) : null;\n\s*spriteFacing = drawn \? eotbFacing\(\) : null;\n\s*return drawn;/);   // SPRITE-FACE (PIN MOVED): and its facing
   assert.match(mv, /export function mwViewSpriteFigure\(\) \{\n\s*return eotbLane\(\) \? spriteFigure : null;\n\s*\}/);
   const pr = src('src/net/peer/peerRiders.js');
-  assert.match(pr, /figureOf: layer\.figureOf,   \/\/ SERAPH-WINGS/);
-  assert.match(pr, /figureOf: layer\.figureOf,   \/\/ AUDIT 3 \(SERAPH-WINGS\): a beast's on foot/);
+  assert.equal(pr.match(/figureOf: layer\.figureOf,/g)?.length, 2, 'the walkers and the beasts both hand the figure over');
   assert.match(pr, /r\.px > 0 && r\.form !== 'rider' \? \{ base: \(r\.xml\.y \/ r\.xml\.scale\) \* \(r\.g \?\? 1\), mpp: r\.size\.h \/ r\.px, beast: r\.form === 'beast', marks: r\.marks \?\? null, shift: \(r\.xml\.x \/ r\.xml\.scale\) \* \(r\.mirror \? -1 : 1\) \* \(r\.g \?\? 1\) \} : null/);
   assert.match(pr, /r\.px = up\.h; r\.form = mode\?\.riding \? 'rider' : mode\?\.transformed \? 'beast' : 'walker';/);
   // a rider with no bones: from over the saddle - the motor's own saddle

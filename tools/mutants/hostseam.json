@@ -56,8 +56,8 @@
   {
     "name": "BLOOD1-HOSTSPLIT2-a-bucket-the-build-lays-allocating-per-call",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });\n        }",
-    "new": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });\n          collider.addMesh(key + ':f', cpuF.positions, cpuF.indices, local, onFloatingFrame(host.state, () => host.state.pixelTranslation(px, py)));\n        }",
+    "old": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
+    "new": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });\n          collider.addMesh(key + ':f', cpuF.positions, cpuF.indices, local, onFloatingFrame(host.state, () => host.state.pixelTranslation(px, py)));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WATER-NEXT-m8-HOSTSPLIT2-the-build-dries-its-own-puddles",
     "file": "src/scenes/pixelBuild.js",
-    "old": "  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {\n    breather.reset();",
-    "new": "  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {\n    dryPuddles([]);\n    breather.reset();",
+    "old": "  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {\n",
+    "new": "  async function buildPixelNow(px, py, { roadsRetry = false } = {}) {\n    dryPuddles([]);\n",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

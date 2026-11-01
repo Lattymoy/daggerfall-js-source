@@ -100,8 +100,8 @@
   {
     "name": "D5-TORCH-BIND-toggle-key-uncurated",
     "file": "src/systems/features.js",
-    "old": "  'handheld-torches': Object.freeze([",
-    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',",
+    "old": "  'handheld-torches': Object.freeze([\n    'Handling.RelaxedTwoHandedWeapons',",
+    "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',\n    'Handling.RelaxedTwoHandedWeapons',",
     "tests": [
       "test/systems/discord5.test.js"
     ]

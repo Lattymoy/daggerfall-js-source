@@ -2,24 +2,24 @@
   {
     "name": "DA10-1-the-launcher-leaves-by-itself-when-nothing-is-left-to-decide",
     "file": "app/lib/launcherState.cjs",
-    "old": "  if (s.launch === 'requested') return 'launch';",
-    "new": "  if (s.launch === 'requested' || s.update.status === 'current') return 'launch';",
+    "old": "  if (s.launch === 'requested') return 'launch';\n",
+    "new": "  if (s.launch === 'requested' || s.update.status === 'current') return 'launch';\n",
     "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "DA8's splash again: the front door shuts before the player has read a line of it."
   },
   {
     "name": "DA10-2-play-goes-through-while-an-update-is-being-decided",
     "file": "app/lib/launcherState.cjs",
-    "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);",
-    "new": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status);",
+    "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);\n",
+    "new": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status);\n",
     "tests": ["test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js"],
     "note": "A player who presses Play in the first second launches the build before the last one - DA8's whole reason."
   },
   {
     "name": "DA10-3-play-without-game-files",
     "file": "app/lib/launcherState.cjs",
-    "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);",
-    "new": "const canPlay = (s) => !s.launch && !UPDATE_HOLDS.has(s.update.status);",
+    "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);\n",
+    "new": "const canPlay = (s) => !s.launch && !UPDATE_HOLDS.has(s.update.status);\n",
     "tests": ["test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js"]
   },
   {
@@ -33,43 +33,43 @@
   {
     "name": "DA10-5-an-update-found-after-play-hijacks-the-handover",
     "file": "app/lib/launcherState.cjs",
-    "old": "    case 'check-available':\n      if (s.launch || !MAY_FIND.has(u.status)) break;",
-    "new": "    case 'check-available':\n      if (!MAY_FIND.has(u.status)) break;",
+    "old": "      if (s.launch || !MAY_FIND.has(u.status)) break;\n      u.version = ev.version ?? null;\n      if (s.transport",
+    "new": "      if (!MAY_FIND.has(u.status)) break;\n      u.version = ev.version ?? null;\n      if (s.transport",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-6-a-launcher-left-open-never-hears-a-late-answer",
     "file": "app/lib/launcherState.cjs",
-    "old": "const MAY_FIND = new Set(['checking', 'offline', 'current', 'failed', 'notice']);",
-    "new": "const MAY_FIND = new Set(['checking', 'notice']);",
+    "old": "const MAY_FIND = new Set(['checking', 'offline', 'current', 'failed', 'notice']);\n",
+    "new": "const MAY_FIND = new Set(['checking', 'notice']);\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-7-new-marks-the-version-played-before",
     "file": "app/lib/launcherState.cjs",
-    "old": "    if (last ? cmpV(v, last) > 0 : s.returning && c === 0) return 'new';",
-    "new": "    if (last ? cmpV(v, last) >= 0 : s.returning && c === 0) return 'new';",
+    "old": "    if (last ? cmpV(v, last) > 0 : s.returning && c === 0) return 'new';\n",
+    "new": "    if (last ? cmpV(v, last) >= 0 : s.returning && c === 0) return 'new';\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-8-an-update-on-its-way-is-not-marked",
     "file": "app/lib/launcherState.cjs",
-    "old": "    if (c > 0) return 'update';\n    if (last ? cmpV(v, last) > 0 : s.returning && c === 0) return 'new';",
-    "new": "    if (last ? cmpV(v, last) > 0 : s.returning && c === 0) return 'new';",
+    "old": "    if (c > 0) return 'update';\n",
+    "new": "",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-9-placeholder-releases-flood-the-news",
     "file": "app/lib/launcherState.cjs",
-    "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));",
-    "new": "  const said = items.filter((n) => n.text);",
+    "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));\n",
+    "new": "  const said = items.filter((n) => n.text);\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-10-the-players-own-version-is-hidden-when-its-notes-are-bare",
     "file": "app/lib/launcherState.cjs",
-    "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));",
-    "new": "  const said = items.filter((n) => n.text && !isPlaceholder(n.text));",
+    "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));\n",
+    "new": "  const said = items.filter((n) => n.text && !isPlaceholder(n.text));\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
@@ -98,15 +98,15 @@
   {
     "name": "DA10-14-a-failed-fetch-blanks-the-kept-news",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (s.news.status === 'loading') s.news.status = 'failed';",
-    "new": "      if (s.news.status === 'loading') { s.news.status = 'failed'; s.news.items = []; }",
+    "old": "      if (s.news.status === 'loading') s.news.status = 'failed';\n",
+    "new": "      if (s.news.status === 'loading') { s.news.status = 'failed'; s.news.items = []; }\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-15-news-json-is-read-on-trust",
     "file": "app/lib/launcherState.cjs",
-    "old": "    .filter((n) => n && parseVersion(n.version) && typeof n.text === 'string')",
-    "new": "    .filter((n) => n)",
+    "old": "    .filter((n) => n && parseVersion(n.version) && typeof n.text === 'string')\n",
+    "new": "    .filter((n) => n)\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
@@ -212,36 +212,36 @@
   {
     "name": "DA10-30-a-returning-player-is-not-told-the-build-is-new",
     "file": "app/lib/launcherState.cjs",
-    "old": "  return last ? cmpV(cur, last) > 0 : s.returning;",
-    "new": "  return last ? cmpV(cur, last) > 0 : false;",
+    "old": "  return last ? cmpV(cur, last) > 0 : s.returning;\n",
+    "new": "  return last ? cmpV(cur, last) > 0 : false;\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-31-a-reinstalled-older-copy-reads-as-updated",
     "file": "app/lib/launcherState.cjs",
-    "old": "  return last ? cmpV(cur, last) > 0 : s.returning;",
-    "new": "  return last ? cmpV(cur, last) !== 0 : s.returning;",
+    "old": "  return last ? cmpV(cur, last) > 0 : s.returning;\n",
+    "new": "  return last ? cmpV(cur, last) !== 0 : s.returning;\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-32-checks-off-says-the-news-is-loading",
     "file": "app/lib/launcherState.cjs",
-    "old": "    news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },",
-    "new": "    news: { status: 'loading', items: Array.isArray(news) ? news : [] },",
+    "old": "    news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },\n",
+    "new": "    news: { status: 'loading', items: Array.isArray(news) ? news : [] },\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-33-the-switch-re-asks-an-answered-check",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (u.status === 'skipped') u.status = 'checking';",
-    "new": "      u.status = 'checking';",
+    "old": "      if (u.status === 'skipped') u.status = 'checking';\n",
+    "new": "      u.status = 'checking';\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-34-a-folder-picked-after-play-moves-the-game",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (ev.dir && !s.launch) {",
-    "new": "      if (ev.dir) {",
+    "old": "      if (ev.dir && !s.launch) {\n        st.status = 'ready';",
+    "new": "      if (ev.dir) {\n        st.status = 'ready';",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
@@ -268,8 +268,8 @@
   {
     "name": "DA10-38-play-without-updating-plays-without-files",
     "file": "app/lib/launcherState.cjs",
-    "old": "        if (canPlay(s)) s.launch = 'requested';",
-    "new": "        s.launch = 'requested';",
+    "old": "        if (canPlay(s)) s.launch = 'requested';\n",
+    "new": "        s.launch = 'requested';\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {

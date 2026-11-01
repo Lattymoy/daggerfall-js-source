@@ -201,8 +201,8 @@
   {
     "name": "GHOSTFENCE-the-fence-on-the-bay",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (!onTheBay(px, py)) standGhostfence({ px, py, pkey, key, samples, renderer, addStatic, unionBox, late, translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
-    "new": "    if (onTheBay(px, py)) standGhostfence({ px, py, pkey, key, samples, renderer, addStatic, unionBox, late, translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
+    "old": "    if (!onTheBay(px, py)) standGhostfence({",
+    "new": "    if (onTheBay(px, py)) standGhostfence({",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "LAVA-CLEAR-the-landmarks-uncleared",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const landStood = lands ? standLandProps(px, py, fire ? clearedLandProps(fire, landProps) : landProps, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) : null;",
-    "new": "    const landStood = lands ? standLandProps(px, py, landProps, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) : null;",
+    "old": "standLandProps(px, py, fire ? clearedLandProps(fire, landProps) : landProps, ",
+    "new": "standLandProps(px, py, landProps, ",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

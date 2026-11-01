@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-riders-rows-unturned",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "    if (his) for (let k = i; k < i + run; k++) { const x = k % w; out[(h - 1 - (k - x) / w) * w + x] = 1; }   // the bake's rows top first",
-    "new": "    if (his) for (let k = i; k < i + run; k++) { const x = k % w; out[k] = 1; }   // the bake's rows top first",
+    "old": "out[(h - 1 - (k - x) / w) * w + x] = 1; }",
+    "new": "out[k] = 1; }",
     "tests": [
       "test/player/eyeOfTheBeholder/eotbriders.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-riders-size-unchecked",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  if (w !== width || h !== height) return null;\n  const bin = globalThis.atob(m.slice(at + 1)), out = new Uint8Array(w * h);",
-    "new": "  const bin = globalThis.atob(m.slice(at + 1)), out = new Uint8Array(w * h);",
+    "old": "  if (w !== width || h !== height) return null;\n",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/eotbriders.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-view-unsaid",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "export const lookedPixels = (s, image, riders = null) => (s?.horse ? recolorHorse(image, s.horse, { spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }) : image);",
-    "new": "export const lookedPixels = (s, image, riders = null) => (s?.horse ? recolorHorse(image, s.horse, { spare: riderSpareOf(riders, s.key, image.width, image.height) }) : image);",
+    "old": "spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }",
+    "new": "spare: riderSpareOf(riders, s.key, image.width, image.height) }",
     "tests": [
       "test/player/eyeOfTheBeholder/eotbriders.test.js"
     ]

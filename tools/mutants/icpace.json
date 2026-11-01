@@ -47,8 +47,8 @@
   {
     "name": "ICP-street-pace-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })), pace: way.pace ?? TOWN_PACE_MAX } : null;   // Its town's pace",
-    "new": "    return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })), pace: TOWN_PACE_MAX } : null;   // Its town's pace",
+    "old": "pace: way.pace ?? TOWN_PACE_MAX } : null;",
+    "new": "pace: TOWN_PACE_MAX } : null;",
     "tests": [
       "test/systems/travel/icpace.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ICP-rate-a-town",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
-    "new": "    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
+    "new": "    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true))",
     "tests": [
       "test/systems/travel/icpace.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ICP-city-unbounded",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
-    "new": "    const rate = street ? Math.min(st.route.street.pace > TOWN_PACE_MAX ? Infinity : TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
+    "new": "    const rate = street ? Math.min(st.route.street.pace > TOWN_PACE_MAX ? Infinity : TOWN_PACE_MAX, travelRateOf(true))",
     "tests": [
       "test/systems/travel/icpace.test.js"
     ]

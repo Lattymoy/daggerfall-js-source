@@ -13,9 +13,9 @@ import * as introCue from '../../src/ui/intro/introCue.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 import { retiredKeys } from '../ownWork.mjs';   // The keys Own-Work.md records as retired
 
-// CREDITS-OUT. CR1's credits sweep is now a PROVENANCE sweep: nothing is vendored without a README that records
-// where it came from and on what terms, and the notices a licence requires travel in LICENSE and the build - never
-// on a screen.
+// CREDITS-OUT. CR1's credits sweep is now a PROVENANCE sweep: nothing
+// is vendored without a README that records where it came from and on what terms, and the notices a licence
+// requires travel in LICENSE and the build - never on a screen.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => hostText(p);

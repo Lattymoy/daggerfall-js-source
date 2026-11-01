@@ -110,8 +110,8 @@
   {
     "name": "OWN4-desert-road-unread",
     "file": "src/systems/ownTextures/ownTexturePacks.js",
-    "old": "        ...(roadOf(record) && { road: roadOf(record) }),\n      };",
-    "new": "      };",
+    "old": "        seed,\n        ...(roadOf(record) && { road: roadOf(record) }),\n",
+    "new": "        seed,\n",
     "tests": [
       "test/systems/ownwork4_textures.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "OWN4-snow-albedo-second-dropped",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  vec3 albedo = mix(${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')}, second, ${f(SNOW_ALBEDO_SECOND.share)}) * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
-    "new": "  vec3 albedo = mix(${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')}, second, 0.0) * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);",
+    "old": "second, ${f(SNOW_ALBEDO_SECOND.share)})",
+    "new": "second, 0.0)",
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]

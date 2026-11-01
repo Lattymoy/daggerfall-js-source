@@ -414,8 +414,8 @@
   {
     "name": "PERF-EXT23-the-world-host-does-not-hand-the-spheres-over",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const staticBatch = staticMerged ? renderer.createMesh(staticMerged, { bounds: staticMerged.bounds }) : null;",
-    "new": "    const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;",
+    "old": "renderer.createMesh(staticMerged, { bounds: staticMerged.bounds })",
+    "new": "renderer.createMesh(staticMerged)",
     "tests": [
       "test/render/publishtail.test.js",
       "test/world/perf4.test.js"

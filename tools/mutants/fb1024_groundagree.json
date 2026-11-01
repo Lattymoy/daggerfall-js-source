@@ -2,8 +2,8 @@
   {
     "name": "GROUND-AGREE-the-build-shapes-the-stood",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);",
-    "new": "    const groundLocation = dfLocation;",
+    "old": "const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);",
+    "new": "const groundLocation = dfLocation;",
     "tests": [
       "test/scenes/fb1024_groundagree.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GROUND-AGREE-the-rect-the-stood's",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);",
-    "new": "    if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);",
+    "old": "if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);",
+    "new": "if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);",
     "tests": [
       "test/scenes/fb1024_groundagree.test.js",
       "test/world/terrain/terrainworker.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "GROUND-AGREE-the-pick-the-stood's",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          mapPixelX: px, mapPixelY: py, hasLocation: !!groundLocation,",
-    "new": "          mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,",
+    "old": "mapPixelX: px, mapPixelY: py, hasLocation: !!groundLocation,",
+    "new": "mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,",
     "tests": [
       "test/scenes/fb1024_groundagree.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "GROUND-AGREE-the-blend-the-stood's",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,",
-    "new": "      px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,",
+    "old": "locationRect, hasLocation: !!groundLocation, climateType: climateBase,",
+    "new": "locationRect, hasLocation: !!dfLocation, climateType: climateBase,",
     "tests": [
       "test/scenes/fb1024_groundagree.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "GATE-AGREE-the-clearing-decides-the-pick",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));   // A camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js)",
-    "new": "        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));   // A camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js)",
+    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
+    "new": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "GATE-AGREE-a-held-pick-stands",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const stood = wodPicks.filter((_, i) => !wodHeld[i]);",
-    "new": "      const stood = wodPicks.filter(() => true);",
+    "old": "const stood = wodPicks.filter((_, i) => !wodHeld[i]);",
+    "new": "const stood = wodPicks.filter(() => true);",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "GATE-AGREE-held-picks-off-the-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests || jungle ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,   // The jungle keeps a site's own pieces' ground as the woods do",
-    "new": "      wod: wodPicks ? { picks: wodPicks.filter((_, i) => !wodHeld[i]).map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests || jungle ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,   // The jungle keeps a site's own pieces' ground as the woods do",
+    "old": "wod: wodPicks ? { picks: wodPicks.map(",
+    "new": "wod: wodPicks ? { picks: wodPicks.filter((_, i) => !wodHeld[i]).map(",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]

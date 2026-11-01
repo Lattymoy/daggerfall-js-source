@@ -38,8 +38,8 @@
   {
     "name": "BOW-LAW-a-shot-over-the-held-one",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
-    "new": "    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && fpArm.shotBusy();",
+    "old": "(fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
+    "new": "fpArm.shotBusy();",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]

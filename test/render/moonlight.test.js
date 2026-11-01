@@ -109,11 +109,14 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   assert.ok(r.includes('this._moonScale = 0;\n    this._moonColor'), 'constructor default is no moon');
   // the seam: only the enhanced sky has moon state to answer with
   const shared = readFileSync('src/scenes/shared.js', 'utf8');
-  // The mod's moons feed the same term (dynamicMoons); the dome's arm and the classic null are as they were. AUDIT 65 MC-3: the
-  // mod's arm is the BRIDGE's own export now, not a second copy of its body - dynamicMoonlight carries the null guard, so the arm
-  // a future host forgets lives in one place. PIN MOVED: the term's body is the controller's `moonNow`, which the lit fog asks too
-  // (systems/weather/nightFog.js) PIN MOVED: and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with
-  // none) PIN MOVED: at a view out's clock minute (`moonlight(minute)`)
+  // The mod's moons feed the same term (dynamicMoons); the dome's
+  // arm and the classic null are as they were.
+  // AUDIT 65 MC-3: the mod's arm is the BRIDGE's own export now, not a
+  // second copy of its body - dynamicMoonlight carries the null guard,
+  // so the arm a future host forgets lives in one place.
+  // PIN MOVED: the term's body is the controller's `moonNow`, which the lit fog asks too (systems/weather/nightFog.js)
+  // PIN MOVED: and the aurora's light added to it (scenes/auroraHost.js withAuroraLight - null with none)
+  // PIN MOVED: at a view out's clock minute (`moonlight(minute)`)
   assert.match(shared, /const moonNow = \(minute\) => withAuroraLight\(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\), aurora\?\.light\(minute\) \?\? null\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
   assert.match(shared, /moonlight\(minute\) \{ return moonNow\(minute\); \},/, 'and the world light asks the same term');

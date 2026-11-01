@@ -1,6 +1,7 @@
 // WINDFALL 1.0.0 (demifiend000), ported off its assembly (OWN-WORK4: its files left the tree; the settings it shipped are a literal below). THE MODEL: WindNaturalPlanner,
 // WindRecordWeights and WindMod's state machine, pinned against a C# reference that runs the decompiled method bodies themselves (the session's harness: WindCore.cs, the planner's
-// and the weights' own sources, System.Random) - two trace hashes and a table hash, float bits and all. bible/07-Rendering/Windfall.md is the record.
+// and the weights' own sources, System.Random) - two trace hashes and a table hash, float bits and all.
+// bible/07-Rendering/Windfall.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';

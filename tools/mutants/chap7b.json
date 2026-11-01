@@ -256,8 +256,8 @@
   {
     "name": "CHAP7B-WORLD-TYPES",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
-    "new": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
+    "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
+    "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "CHAP7B-WORLD-FACTION",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
-    "new": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
+    "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
+    "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "CHAP7B-WORLD-BUILT",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line",
-    "new": "      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line",
+    "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n",
+    "new": "",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

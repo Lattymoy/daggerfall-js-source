@@ -119,8 +119,8 @@
   {
     "name": "OTW-pace-unheld",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
-    "new": "    const rate = street ? travelRateOf(true) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // The street's own town's pace",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
+    "new": "    const rate = street ? travelRateOf(true) : st.walk",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OTW-asked-again-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
-    "new": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.()) return null;",
+    "old": "|| deps.atSea?.() || r.streetFor === key) return null;",
+    "new": "|| deps.atSea?.()) return null;",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OTW-town-walked-into-unheard",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }   // Left, the town is asked again if walked back into",
-    "new": "   // Left, the town is asked again if walked back into",
+    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OTW-ring-walked-through",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
-    "new": "    if (!r.townAt || !deps.townWay || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
+    "old": "if (!r.townAt || !deps.townWay || leg?.ring ||",
+    "new": "if (!r.townAt || !deps.townWay ||",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OTW-place-walked-across",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;   // in the place it is bound for: arrived, not walked across",
-    "new": "   // in the place it is bound for: arrived, not walked across",
+    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "OTO-shut-unmarked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.shut) st.shutStop = true;   // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
-    "new": "   // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
+    "old": "    if (way?.shut) st.shutStop = true;",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]

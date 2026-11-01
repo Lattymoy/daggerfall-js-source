@@ -120,8 +120,8 @@
   {
     "name": "corpse-latch-never-lowers",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (last.died) return;",
-    "new": "      return;",
+    "old": "    if (died) {\n      if (last.died) return;\n      initialize();",
+    "new": "    if (died) {\n      return;\n      initialize();",
     "tests": [
       "test/scenes/deathloop1.test.js",
       "test/player/eyeOfTheBeholder/eotb_audit2.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "corpse-latch-lowers-even-while-dead",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (last.died) return;\n      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
-    "new": "      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
+    "old": "      if (last.died) return;\n      initialize();",
+    "new": "      initialize();",
     "tests": [
       "test/scenes/deathloop1.test.js",
       "test/player/eyeOfTheBeholder/eotb_audit2.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "corpse-latch-lowered-without-reinit",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
-    "new": "      died = false;",
+    "old": "      if (last.died) return;\n      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation",
+    "new": "      if (last.died) return;\n      died = false;",
     "tests": [
       "test/scenes/deathloop1.test.js",
       "test/player/eyeOfTheBeholder/eotb_audit2.test.js"

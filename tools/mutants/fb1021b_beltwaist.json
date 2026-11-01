@@ -42,8 +42,8 @@
   {
     "name": "BELT-WAIST-last-light-pack-first",
     "file": "src/systems/handheldTorches.js",
-    "old": "      if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern))",
-    "new": "      if (false)",
+    "old": "      if (w.lastLightTemplateIndex === T.Lantern && contains('UselessItems2', T.Lantern)) setLight(lanternFirst());",
+    "new": "      if (false)\n        setLight(lanternFirst());",
     "tests": [
       "test/systems/fb1021b_beltwaist.test.js"
     ],

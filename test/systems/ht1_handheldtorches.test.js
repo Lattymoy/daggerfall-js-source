@@ -134,12 +134,14 @@ test('HT1: the Mods pane entry is the release\'s modsettings.json (OWN-WORK4: pi
   // pinned below ("no vendored mod ships a key the port has already
   // spent") so the next mod folded in cannot repeat it quietly.
   //
-  // The THIRD one, and the same class as HT4 exactly one key over. The mod ships F for the ignite/douse toggle and DFU
-  // leaves F free; SOC5 spends it on the port's own SocialInteract, so the shipped default would light a torch on the
-  // same press that opens the F-menu on a player - and online forces every vendored mod on, so it would do it for
-  // everyone by default. O is free in DFU's defaults, in this mod's other two keys and in every other vendored mod. The
-  // class pin below is what caught it. HT5: and Bob - the widget ships its Bob on, so the torch hand's follows (the
-  // third departure, stated in the table).
+  // The THIRD one, and the same class as HT4 exactly one key over. The mod
+  // ships F for the ignite/douse toggle and DFU leaves F free; SOC5 spends
+  // it on the port's own SocialInteract, so the shipped default would light
+  // a torch on the same press that opens the F-menu on a player - and online
+  // forces every vendored mod on, so it would do it for everyone by default.
+  // O is free in DFU's defaults, in this mod's other two keys and in every
+  // other vendored mod. The class pin below is what caught it.
+  // HT5: and Bob - the widget ships its Bob on, so the torch hand's follows (the third departure, stated in the table).
   //
   // The FOURTH, and the first that is not about a key. The mod ships
   // `OnStow = Drop` and HT6 recorded what that means now that the hand
@@ -861,7 +863,7 @@ test('HT1: the rig runs the component beside the widget - one per rig, the pool 
   assert.match(rig, /actionDown = null, torches = \(\) => null, sheetWindowUp = \(\) => false(?:, dropRefusal = \(\) => null)?(?:, actTool = \(\) => null)?(?:, technique = null)? \}\)/, 'KB1: the registry\'s held read (it was the raw key set) and the pool - the two deps the hosts feed, and MAP-WEAPON\'s third - defaulted so a host that never heard of it draws what it always drew');
   assert.match(rig, /if \(!_torchesOn && _handheldWasOn\) handheld\.dispose\(\);/, 'AUDIT 66 F8: the switch off is a teardown - update() runs only while the mod is on, so the burning loop could not stop itself');
   assert.match(rig, /dispose\(\) \{ handheld\.dispose\(\); _handheldWasOn = false; \}/, 'AUDIT 66 F8: and the host has a door to call');
-  assert.match(rig, /handheld,\s*\/\/ HT1/);
+  assert.match(rig, /\n\s*handheld,\s/);
   assert.match(rd('src/systems/lycanthropy.js'), /export const isTransformedLycanthrope = \(entity\) => isTransformedNow\(entity\);/);
   assert.match(rd('src/systems/playerTorch.js'), /const o = lanternAtWaist\(entity\?\.lightSource\) \? \(_waistOverride \?\? LANTERN_HIP\) : \(_offsetOverride \?\? TORCH_OFFSET\);/);   // A lantern at the waist lights from the hip
   assert.match(rd('src/systems/features.js'), /modFeature\('handheld-torches', \(\) => t\('features\.effect\.atOnce', 'Takes effect at once\.'\), '\w+'\)/);
@@ -960,8 +962,8 @@ test('HT4 (re-aimed by KB1): no action ships on a key another action, DFU\'s wor
 // HT5. The mod ships its motion modules off and leaves matching them to
 // the weapon's to the player; the port ships Weapon Widget's Bob ON, so
 // the torch hand stood still beside a swaying weapon. The three modules
-// the two mods share ship with the SAME answer here - one walk, two hands
-// - and the mod's own file is untouched.
+// the two mods share ship with the SAME answer here - one walk, two
+// hands - and the mod's own file is untouched.
 test('HT5: the torch hand moves as the weapon does - every motion module the two mods share ships with the same default (mutant: one hand\u2019s module flipped alone)', async () => {
   const { MOD_SETTINGS } = await import('../../src/systems/modSettings.js');
   const torchKeys = MOD_SETTINGS['handheld-torches'].keys;

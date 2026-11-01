@@ -560,8 +560,8 @@
   {
     "name": "G-96-no-bodies",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (grahtStood) coverItems.push(...grahtStood.bodies);",
-    "new": "    if (grahtStood) void 0;",
+    "old": "if (grahtStood) coverItems.push(...grahtStood.bodies);",
+    "new": "if (grahtStood) void 0;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "G-97-unkept",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const grahtStood = jungle?.graht?.stand(px, py, graht, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) ?? null;",
-    "new": "    const grahtStood = jungle?.graht?.stand(px, py, graht, (x, z) => true) ?? null;",
+    "old": "(x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) ?? null;",
+    "new": "(x, z) => true) ?? null;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]

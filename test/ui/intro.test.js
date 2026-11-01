@@ -15,12 +15,11 @@ const read = (p) => readFileSync(new URL('../../' + p, import.meta.url));
 const INTRO2_THEME_SHA256 = '6954cf4c01f2a32e098a08c4ae4edb81b00823573076fd1c74c2f9c5ac24c8ec';
 
 test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; timing cannot drift behind a replacement track', () => {
-  // BR4 shipped Mac's earlier cut as he supplied it (real alpha; INTRO2's JPEG had a black backing to screen away).
-  // BR5: his DFO Online logo, its 800 x 600 file cut to the 526 x 322 its paint covers - every pixel inside his,
-  // unchanged, and none outside with any alpha. BR6: his dragon mark - its 2000 x 1434 file cut to the 1680 x 1410
-  // its paint covers, then scaled to 1232 x 1034 at his word (the same 56:47; 785 KB where the cut was 1.28 MB).
-  // BR7: his wordmark - its 1678 x 937 file cut to the 1635 x 928 its paint covers, then scaled to 1232 x 699 as
-  // BR6 was (822 KB).
+  // BR4 shipped Mac's earlier cut as he supplied it (real alpha; INTRO2's JPEG had a black backing to screen away). BR5: his DFO
+  // Online logo, its 800 x 600 file cut to the 526 x 322 its paint covers - every pixel inside his, unchanged, and none outside with
+  // any alpha. BR6: his dragon mark - its 2000 x 1434 file cut to the 1680 x 1410 its paint covers, then scaled to 1232 x 1034 at his
+  // word (the same 56:47; 785 KB where the cut was 1.28 MB). BR7: his wordmark - its 1678 x 937 file cut to the 1635 x 928 its paint
+  // covers, then scaled to 1232 x 699 as BR6 was (822 KB).
   assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), '14ef7beef2912014c3a12cdf6fa64f867fd6aeab4ec5345e209434704be5c654');
   const track = read('src/assets/intro/theme.mp3');
   assert.equal(createHash('sha256').update(track).digest('hex'), 'c8eb0eccf3265244c0f4424d26efee835d40cccf4e11a66744ec4b284d8392e3');

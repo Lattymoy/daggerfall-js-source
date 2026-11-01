@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-NAV2-F39-classic-collider-skipped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const g = c.type === 'BoxCollider' ? boxColliderTriangles(c) : c.classicModel != null ? (cpu?.positions && cpu.indices ? cpu : null)",
-    "new": "      const g = c.type === 'BoxCollider' ? boxColliderTriangles(c) : c.classicModel != null ? null",
+    "old": "c.classicModel != null ? (cpu?.positions && cpu.indices ? cpu : null)",
+    "new": "c.classicModel != null ? null",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]

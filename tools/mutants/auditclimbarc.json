@@ -463,8 +463,8 @@
   {
     "name": "N2-the-beast-walks-on-the-wall",
     "file": "src/net/peer/peerRiders.js",
-    "old": "export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !peerMoving(pose), sheathed: !pose?.wd });   // A beast on the wall walks no stride",
-    "new": "export const beastTable = (pose) => chooseTable({ transformed: true, riding: !!pose?.rd, stopped: !pose?.mv, sheathed: !pose?.wd });   // A beast on the wall walks no stride",
+    "old": "stopped: !peerMoving(pose), sheathed: !pose?.wd });",
+    "new": "stopped: !pose?.mv, sheathed: !pose?.wd });",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]

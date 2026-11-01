@@ -117,8 +117,8 @@
   {
     "name": "DEX-MEANER-the-newcomer-one-level-short",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "  if (level <= NEWCOMER_LEVEL) { if (blow > dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, true); }",
-    "new": "  if (level < NEWCOMER_LEVEL) { if (blow > dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, true); }",
+    "old": "  if (level <= NEWCOMER_LEVEL) {",
+    "new": "  if (level < NEWCOMER_LEVEL) {",
     "why": "a level-4 foe raised as a veteran's: the bear and the spider leave the newcomer's rule",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"
@@ -127,8 +127,8 @@
   {
     "name": "DEX-MEANER-the-touch-ignored",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "    if (!casts && !touch && blow < dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, false);",
-    "new": "    if (!casts && blow < dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, false);",
+    "old": "    if (!casts && !touch && blow < dmg) damage",
+    "new": "    if (!casts && blow < dmg) damage",
     "why": "a drain's or a spell touch's blow raised: the nymph drains four times its fatigue",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "DEX-MEANER-the-caster-ignored",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "    if (!casts && !touch && blow < dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, false);",
-    "new": "    if (!touch && blow < dmg) damage = toMean(row.minDamage, row.maxDamage, dmg, false);",
+    "old": "    if (!casts && !touch && blow < dmg) damage",
+    "new": "    if (!touch && blow < dmg) damage",
     "why": "a caster's blow raised as a fighter's",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "DEX-MEANER-a-row-not-the-rule-s",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "  [7, 3, 17, null, null],       // Orc, level 5: 1-6 (the blow)",
-    "new": "  [7, 3, 16, null, null],       // Orc, level 5: 1-6 (the blow)",
+    "old": "  [7, 3, 17, null, null],",
+    "new": "  [7, 3, 16, null, null],",
     "why": "the orc's line written by hand: a row the rule does not make",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "DEX-MEANER-the-courts-runs-uneven",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "export const courtTable = (kinds) => Array.from({ length: 20 }, (_, i) => kinds[Math.floor((i * kinds.length) / 20)]);",
-    "new": "export const courtTable = (kinds) => Array.from({ length: 20 }, (_, i) => kinds[Math.round((i * kinds.length) / 20) % kinds.length]);",
+    "old": "kinds[Math.floor((i * kinds.length) / 20)]",
+    "new": "kinds[Math.round((i * kinds.length) / 20) % kinds.length]",
     "why": "the runs uneven, the master wrapped to the first slot",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"
@@ -187,8 +187,8 @@
   {
     "name": "DEX-MEANER-a-court-out-of-order",
     "file": "src/systems/enemyExpansion/dexMeaner.js",
-    "old": "  ['Court_Crypt_Hungry', 0, [0, 277, 15, 19, 287, 273]],           // the dead that feed",
-    "new": "  ['Court_Crypt_Hungry', 0, [0, 277, 15, 287, 19, 273]],           // the dead that feed",
+    "old": "['Court_Crypt_Hungry', 0, [0, 277, 15, 19, 287, 273]]",
+    "new": "['Court_Crypt_Hungry', 0, [0, 277, 15, 287, 19, 273]]",
     "why": "a court's dire ghoul seated before a mummy of lower level",
     "tests": [
       "test/systems/enemyExpansion/dexmeaner.test.js"

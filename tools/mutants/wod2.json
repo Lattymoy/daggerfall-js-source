@@ -192,8 +192,8 @@
   {
     "name": "WOD-SEA-TEST-the-location-region-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          regionIndex: maps.getRegionIndexAt(px, py),   // The PIXEL's region (the sea's 31), never the location's",
-    "new": "          regionIndex: dfLocation ? dfLocation.regionIndex : -1,   // The PIXEL's region (the sea's 31), never the location's",
+    "old": "          regionIndex: maps.getRegionIndexAt(px, py),",
+    "new": "          regionIndex: dfLocation ? dfLocation.regionIndex : -1,",
     "tests": [
       "test/world/terrain/wod2_loader.test.js",
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"

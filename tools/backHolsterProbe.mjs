@@ -1,12 +1,11 @@
-// The weapon on a sprite's back in the REAL renderer, from all
-// eight views, on a skin's idle (112364) and on Layered Gearing's (male, leather). Each weapon's picture is read from the
-// player's ARENA2 (ARENA2_PATH) and stood up by the game's own law. Each view is drawn with and without the weapon; what
-// changed must lean to the right shoulder from behind, stand upright from the side and hide behind the body in front.
-// From the side no pixel of it lies over the body. Under the Shadow Cloak (the real aura pass, hung at the painted body
-// as the aura host hangs it) the cape's mass is behind the body, and after the redraw no weapon pixel is tinted.
-// BACK-HOLSTER GLOW: a shock and the Brand glow on the claymore on its back, and round the whole sprite drawn - seen
-// from the back, hidden with the weapon from the front, animated, over the cape. --shots writes sheets of the crops -
-// a render of game data, so never into the repo.
+// The weapon on a sprite's back in the REAL renderer, from all eight views, on a skin's idle (112364) and on Layered
+// Gearing's (male, leather). Each weapon's picture is read from the player's ARENA2 (ARENA2_PATH) and stood up by the
+// game's own law. Each view is drawn with and without the weapon; what changed must lean to the right shoulder from
+// behind, stand upright from the side and hide behind the body in front. From the side no pixel of it lies over the body.
+// Under the Shadow Cloak (the real aura pass, hung at the painted body as the aura host hangs it) the cape's mass is
+// behind the body, and after the redraw no weapon pixel is tinted. BACK-HOLSTER GLOW: a shock and the Brand glow on the
+// claymore on its back, and round the whole sprite drawn - seen from the back, hidden with the weapon from the front,
+// animated, over the cape. --shots writes sheets of the crops - a render of game data, so never into the repo.
 //     ARENA2_PATH=... node tools/backHolsterProbe.mjs [--shots DIR]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';

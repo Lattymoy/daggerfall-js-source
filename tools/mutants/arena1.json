@@ -131,8 +131,8 @@
   {
     "name": "ARENA1-CLIMATE-SWAPPED",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate",
-    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);   // AUDIT PRECIP HOST-7: kept in the table's recipe under its climate",
+    "old": "          if (!climateFree) await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
+    "new": "          await remapSubMeshes(gpu.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);",
     "tests": [
       "test/world/arena/arena1_model.test.js"
     ]

@@ -112,8 +112,8 @@
   {
     "name": "AP-A1-arm-gate-on-idle-alone",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    return !!m.ranged && (m.state === 'Idle' || !!playerWeapon.pistols) && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
-    "new": "    return !!m.ranged && m.state === 'Idle' && (fpArm.active() || fpArm.thirdActive()) && (fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
+    "old": "(m.state === 'Idle' || !!playerWeapon.pistols)",
+    "new": "m.state === 'Idle'",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AP-A5-pellets-one-at-a-time",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    return ammoCountFor(entity.items, gun) <= playerWeapon.pistolShotsDue() + (_heldHit ? 1 : 0);",
-    "new": "    return ammoCountFor(entity.items, gun) <= 0;",
+    "old": "<= playerWeapon.pistolShotsDue() + (_heldHit ? 1 : 0);",
+    "new": "<= 0;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AP-A5-click-door-ungated",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
-    "new": "      if (armCannotDraw()) return;   // Nor a shot the Morrowind arm cannot draw yet; AUDIT PISTOL-PORT A5: nor one with no Pellet left for it (MIXED-PAIR: the pair's dry gun gives its pull to the blade - gunReady)",
+    "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;",
+    "new": "      if (armCannotDraw()) return;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AP-A5-gesture-door-ungated",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool();   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": " && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);",
+    "new": " && !actTool();",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "AP-D11-no-room-kick",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        betterAmbience.weaponKick?.(feel.roomShake);\n        _tlFlashClock = 0; _tlShotAt = m.now;",
-    "new": "        _tlFlashClock = 0; _tlShotAt = m.now;",
+    "old": "        audio.playOneShot(sfx.fire, feel.sfxVolume, gunPitch(undefined, feel));\n        betterAmbience.weaponKick?.(feel.roomShake);\n        _tlFlashClock = 0;",
+    "new": "        audio.playOneShot(sfx.fire, feel.sfxVolume, gunPitch(undefined, feel));\n        _tlFlashClock = 0;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "AP-D11-rigs-stepped-right-handed",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        feel, switches: readWidgetSettings(), frame, leftHanded: handedFlip(), sheathed: !!playerWeapon.sheathed,",
-    "new": "        feel, switches: readWidgetSettings(), frame, leftHanded: false, sheathed: !!playerWeapon.sheathed,",
+    "old": "feel, switches: readWidgetSettings(), frame, leftHanded: handedFlip(),",
+    "new": "feel, switches: readWidgetSettings(), frame, leftHanded: false,",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AP-D11-picture-mirrored-by-hand",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const flip = hand ? pistols.flipOf(playerWeapon.pistols, hand, handedFlip()) : handedFlip();",
-    "new": "    const flip = hand ? hand === 'L' : handedFlip();",
+    "old": "const flip = hand ? pistols.flipOf(playerWeapon.pistols, hand, handedFlip()) : handedFlip();",
+    "new": "const flip = hand ? hand === 'L' : handedFlip();",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "AP-ARM-clacks-off-the-machine-alone",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (!_heldHit) pistols.voice(p, feel, (k, gain) => audio.playOneShot(sfx[k], feel.sfxVolume * gain, gunPitch(undefined, feel)));",
-    "new": "      if (true) pistols.voice(p, feel, (k, gain) => audio.playOneShot(sfx[k], feel.sfxVolume * gain, gunPitch(undefined, feel)));",
+    "old": "      if (!_heldHit) pistols.voice(",
+    "new": "      if (true) pistols.voice(",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "AP-D12-arm-off-last-alone",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const h = p.hands().includes(p.last) ? p.last : p.lead, g = p[h];   // A pistol still held - a pair broken leaves `last` in the pack",
-    "new": "      const h = p.last ?? p.lead, g = p[h];   // A pistol still held - a pair broken leaves `last` in the pack",
+    "old": "const h = p.hands().includes(p.last) ? p.last : p.lead, g = p[h];",
+    "new": "const h = p.last ?? p.lead, g = p[h];",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]

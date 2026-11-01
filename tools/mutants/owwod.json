@@ -122,8 +122,8 @@
   {
     "name": "OW-TOWN-RING-no-corners",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    for (let i = (a + step + 8) % 8; i !== b; i = (i + step + 8) % 8) if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);",
-    "new": "    for (let i = (a + step + 8) % 8; i !== b; i = (i + step + 8) % 8) if (false) out.push(at[RING_ORDER[i]]);",
+    "old": "if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);",
+    "new": "if (false) out.push(at[RING_ORDER[i]]);",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "OW-TOWN-RING-resume-skips",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (cur && !cur.ring && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;   // standing on it: the next (OW-TOWN-RING: not a ring's point - the whole ring stands in the town's pixel, and skipping one cut across the town)",
-    "new": "    if (cur && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;   // standing on it: the next (OW-TOWN-RING: not a ring's point - the whole ring stands in the town's pixel, and skipping one cut across the town)",
+    "old": "    if (cur && !cur.ring && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;",
+    "new": "    if (cur && cur.x === mp.x && cur.y === mp.y) best = r.i + 1;",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "OW-TOWN-RING-ring-as-join",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // A ring's point is no join",
-    "new": "    if (r.legs[best]?.at && best + 1 < r.legs.length) best++;   // A ring's point is no join",
+    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;",
+    "new": "    if (r.legs[best]?.at && best + 1 < r.legs.length) best++;",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],

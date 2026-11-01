@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-TESA-A2-5-streets-region",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // Past the Bay the province's people, never the Bay region's",
-    "new": "          nameBank: getNameBankOfRegion(dfLocation.regionIndex),   // Past the Bay the province's people, never the Bay region's",
+    "old": "nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),",
+    "new": "nameBank: getNameBankOfRegion(dfLocation.regionIndex),",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-TESA-A2-3-living-alias",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        const livingTown = livingTownAt(px, py) ?? {",
-    "new": "        const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
+    "old": "const livingTown = livingTownAt(px, py) ?? {",
+    "new": "const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
     "tests": [
       "test/audit_tesa.test.js"
     ],

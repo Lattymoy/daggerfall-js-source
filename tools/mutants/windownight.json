@@ -134,8 +134,8 @@
   {
     "name": "WINDOW-NIGHT-default-off-on",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'on', online: 'player' })]),",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'day', online: 'player' })]),",
+    "old": "key: 'windowLight', initial: 'on', online: 'player' }",
+    "new": "key: 'windowLight', initial: 'day', online: 'player' }",
     "tests": [
       "test/render/windownight.test.js"
     ],

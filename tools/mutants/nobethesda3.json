@@ -12,8 +12,8 @@
   {
     "name": "NB3-the-tool-writes-an-archive-for-a-file",
     "file": "tools/classicDerive.mjs",
-    "old": "  const spec = deriveSpec(best.file ? [best.record, best.frame] : [best.archive, best.record, best.frame], pic, best.rgba, best.at);",
-    "new": "  const spec = deriveSpec([best.archive, best.record, best.frame], pic, best.rgba, best.at);",
+    "old": "deriveSpec(best.file ? [best.record, best.frame] : [best.archive, best.record, best.frame]",
+    "new": "deriveSpec([best.archive, best.record, best.frame]",
     "tests": [
       "test/formats/classicpictures.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "NB3-a-file-spec-is-read-as-a-texture",
     "file": "src/formats/classicPictures.js",
-    "old": "    return buildDerivedPicture(spec, spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) : (a, r, f) => picture(a, r, f, pal));",
-    "new": "    return buildDerivedPicture(spec, spec.rci ? (r, f) => cifRciPicture(spec.rci, r, f, pal) : (a, r, f) => picture(a, r, f, pal));",
+    "old": "spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) :",
+    "new": "spec.rci ? (r, f) => cifRciPicture(spec.rci, r, f, pal) :",
     "tests": [
       "test/formats/classicpictures.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "NB3-the-rotten-fish-reads-another-record",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "    ...FOOD(536, [211, 10, 0]),   // The mouldy cooked fish is our mould too, not the plain fish",
-    "new": "    ...FOOD(536, [211, 9, 0]),   // The mouldy cooked fish is our mould too, not the plain fish",
+    "old": "    ...FOOD(536, [211, 10, 0]),",
+    "new": "    ...FOOD(536, [211, 9, 0]),",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "NB3-rot-keeps-the-hue",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "      data[i * 4 + channel] = Math.min(255, Math.round((src[i * 4 + channel] * (1 - mix) + lum * ROT_TINT[channel] * mix) * rim));",
-    "new": "      data[i * 4 + channel] = Math.min(255, Math.round((src[i * 4 + channel] * (1 - mix) + lum * mix) * rim));",
+    "old": "lum * ROT_TINT[channel] * mix",
+    "new": "lum * mix",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "NB3-mould-ignores-the-rim",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "    density[i] = (0.6 * coarse[i] + 0.4 * fine[i]) * (1 - MOULD_EDGE + MOULD_EDGE * rim) + MOULD_HOLLOW * hollow + MOULD_GRAIN * (next() - 0.5);",
-    "new": "    density[i] = (0.6 * coarse[i] + 0.4 * fine[i]) * 1 + MOULD_HOLLOW * hollow + MOULD_GRAIN * (next() - 0.5);",
+    "old": "* (1 - MOULD_EDGE + MOULD_EDGE * rim)",
+    "new": "* 1",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "NB3-mould-ignores-the-seed",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "  const depth = rimDepth(pic), next = rng(seed), cell = Math.max(2, Math.round(Math.min(w, height) / 4));",
-    "new": "  const depth = rimDepth(pic), next = rng(1), cell = Math.max(2, Math.round(Math.min(w, height) / 4));",
+    "old": "const depth = rimDepth(pic), next = rng(seed),",
+    "new": "const depth = rimDepth(pic), next = rng(1),",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "NB3-mould-ignores-the-cover",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "  const edge = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * (1 - cover)))];",
-    "new": "  const edge = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9))];",
+    "old": "sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * (1 - cover)))]",
+    "new": "sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.9))]",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "NB3-the-mouldy-fish-is-the-plain-fish",
     "file": "src/systems/survival/itemIcons.js",
-    "old": "    ...FOOD(536, [211, 10, 0]),   // The mouldy cooked fish is our mould too, not the plain fish",
-    "new": "    FOOD(536, [211, 10, 0])[1],   // The mouldy cooked fish is our mould too, not the plain fish",
+    "old": "    ...FOOD(536, [211, 10, 0]),",
+    "new": "    FOOD(536, [211, 10, 0])[1],",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js",
       "test/systems/surv2_items.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "NB3-mould-ignores-the-hollows",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "    density[i] = (0.6 * coarse[i] + 0.4 * fine[i]) * (1 - MOULD_EDGE + MOULD_EDGE * rim) + MOULD_HOLLOW * hollow + MOULD_GRAIN * (next() - 0.5);",
-    "new": "    density[i] = (0.6 * coarse[i] + 0.4 * fine[i]) * (1 - MOULD_EDGE + MOULD_EDGE * rim) + 0 * hollow + MOULD_GRAIN * (next() - 0.5);",
+    "old": "+ MOULD_HOLLOW * hollow +",
+    "new": "+ 0 * hollow +",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "NB3-mould-over-the-highlight",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "    while (lumAt(data, i) > light) data[i * 4 + brightest()]--;\n  }",
-    "new": "  }",
+    "old": "    while (lumAt(data, i) > light) data[i * 4 + brightest()]--;\n",
+    "new": "",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "NB3-mould-unshaded",
     "file": "src/systems/survival/rotPicture.js",
-    "old": "    const want = lum + (light - lum) * (0.3 + 0.7 * white) * Math.sqrt(lum / (light || 1));",
-    "new": "    const want = lum + (light - lum) * (0.3 + 0.7 * white) * 1;",
+    "old": "* Math.sqrt(lum / (light || 1));",
+    "new": "* 1;",
     "tests": [
       "test/systems/survival/nobethesda3_rotfish.test.js"
     ],

@@ -379,8 +379,8 @@
   {
     "name": "AUDIT-CHAP5-C5-GATE",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })",
-    "new": "    const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(dfLocation.exterior?.buildings ?? [], locBlocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })",
+    "old": "const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(",
+    "new": "const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "BACK-HOLSTER-on-the-back-while-drawn",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const item = activeFlag && !died && !last.died && !last.transformed && last.sheathed ? handItemNow() : null;",
-    "new": "    const item = activeFlag && !died && !last.died && !last.transformed ? handItemNow() : null;",
+    "old": "!last.transformed && last.sheathed ? handItemNow()",
+    "new": "!last.transformed ? handItemNow()",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BACK-HOLSTER-a-giant-carries-it",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (grow === 1) drawHolster(camRight); else dropHolster();   // The weapon on the back, after the body (OW-BIG's rule too)",
-    "new": "      drawHolster(camRight);   // The weapon on the back, after the body (OW-BIG's rule too)",
+    "old": "if (grow === 1) drawHolster(camRight); else dropHolster();",
+    "new": "drawHolster(camRight);",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BACK-HOLSTER-a-walker-wd-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const item = pose && !pose.wd ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;",
-    "new": "    const item = pose ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;",
+    "old": "const item = pose && !pose.wd ?",
+    "new": "const item = pose ?",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BACK-HOLSTER-the-walkers-never-drawn",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    for (let i = 0; i < slung.length; i++) rr.drawBillboards(slung[i].list, slung[i].right, slung[i].up);   // And the weapons on their backs",
-    "new": "    void slung;   // And the weapons on their backs",
+    "old": "    for (let i = 0; i < slung.length; i++) rr.drawBillboards(slung[i].list, slung[i].right, slung[i].up);",
+    "new": "    void slung;",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BACK-HOLSTER-a-walker-gone-its-batch-kept",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (r?.holster) dropSpriteHolster(r.holster, renderer);   // And the weapon on its back",
-    "new": "    void r;   // And the weapon on its back",
+    "old": "    if (r?.holster) dropSpriteHolster(r.holster, renderer);",
+    "new": "    void r;",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BACK-HOLSTER-the-origin-shift-misses-it",
     "file": "src/net/peer/peerRiders.js",
-    "old": "        for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // The lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon",
-    "new": "        for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]) if (o) { o[0] += offset[0]; o[1] += offset[1]; o[2] += offset[2]; }   // The lantern and the pace's last feet follow the origin too; BACK-HOLSTER: the weapon",
+    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
+    "new": "r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BACK-HOLSTER-OVER-my-own-never-said",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    backList.push(holster);",
-    "new": "",
+    "old": "    backList.push(holster);\n",
+    "new": "\n",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BACK-HOLSTER-OVER-the-walkers-never-say",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    holstersDrawn: () => slung,   // BACK-HOLSTER, OVER THE AURA: this frame's weapons on the walkers' backs",
-    "new": "    holstersDrawn: () => [],   // BACK-HOLSTER, OVER THE AURA: this frame's weapons on the walkers' backs",
+    "old": "    holstersDrawn: () => slung,",
+    "new": "    holstersDrawn: () => [],",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-A6-made-every-frame",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;   // Made only to hang",
-    "new": "    const l = r.holster ?? createSpriteHolster(peer.id);   // Made only to hang",
+    "old": "const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;",
+    "new": "const l = r.holster ?? createSpriteHolster(peer.id);",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]

@@ -194,8 +194,8 @@
   {
     "name": "PARK-kept-my-own",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (e.id === (selfId?.() ?? null)) return false;\n    const slot = `${room}|${e.k}`;",
-    "new": "    const slot = `${room}|${e.k}`;",
+    "old": "    if (e.id === (selfId?.() ?? null)) return false;\n    const slot",
+    "new": "    const slot",
     "tests": [
       "test/net/hcc_park.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "PARK-D5-never-ages",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room) || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
-    "new": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room)) { _kept.delete(slot); touched.add(e.k); }",
+    "old": " || (nowMs !== null && nowMs >= e.expires)) {",
+    "new": ") {",
     "tests": [
       "test/net/hcc_park.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "PARK-prune-nothing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    for (const [slot, e] of [..._kept]) if (!held.has(e.room) || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
-    "new": "    for (const [slot, e] of [..._kept]) if (false || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }",
+    "old": "if (!held.has(e.room) || (nowMs",
+    "new": "if (false || (nowMs",
     "tests": [
       "test/net/hcc_park.test.js"
     ]

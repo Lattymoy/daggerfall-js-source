@@ -400,8 +400,8 @@
   {
     "name": "DW-E3-mackerel-dart-hold",
     "file": "src/world/passiveFish.js",
-    "old": "    0.9,\n    1.8,",
-    "new": "    0.9,\n    1.9,",
+    "old": "    FISH_NAMES[9005],\n    46,\n    15,\n    0.8,\n    2.2666667,\n    'mackerel',\n    1.1,\n    1.1,\n    5,\n    12,\n    B.Any,\n    0.1,\n    1,\n    0.8,\n    1.2,\n    0.9,\n    1.8,\n",
+    "new": "    FISH_NAMES[9005],\n    46,\n    15,\n    0.8,\n    2.2666667,\n    'mackerel',\n    1.1,\n    1.1,\n    5,\n    12,\n    B.Any,\n    0.1,\n    1,\n    0.8,\n    1.2,\n    0.9,\n    1.9,\n",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]

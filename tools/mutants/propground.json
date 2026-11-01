@@ -354,8 +354,8 @@
   {
     "name": "PG-a-flat-unlifted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y + lift;",
-    "new": "          const fy = hillY !== null ? blockY + seatNatureFlat(hillSeat, flat.x, flat.z, hillY) : flat.archive === natureArchive ? locLocal[1] + flat.y + off : blockY + flat.y;",
+    "old": "locLocal[1] + flat.y + off : blockY + flat.y + lift;",
+    "new": "locLocal[1] + flat.y + off : blockY + flat.y;",
     "tests": [
       "test/world/urban/propground.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "PG-a-staticnpc-unlifted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),   // On the street its fabric lays",
-    "new": "            y: blockY + npc.y,   // On the street its fabric lays",
+    "old": "            y: blockY + npc.y + fabricLift(fabric, b.originX + npc.x, b.originZ + npc.z),",
+    "new": "            y: blockY + npc.y,",
     "tests": [
       "test/world/urban/propground.test.js"
     ]

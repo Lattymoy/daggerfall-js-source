@@ -57,8 +57,8 @@
   {
     "name": "MT-row-ships-off",
     "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),   // the player's own: what THEIR map looks like",
-    "new": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: false, online: 'player' }),   // the player's own: what THEIR map looks like",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: false, online: 'player' }),",
     "tests": [
       "test/ui/map/maptoggle.test.js"
     ]

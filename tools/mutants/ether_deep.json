@@ -201,8 +201,8 @@
   {
     "name": "ED-world-near-held",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;   // The mod's bathymetry is the Bay's - ETHER-DEEP: and the Eltheric's own; the host's promote is the one gate, for every arm (scenes/deepWater/deepWatersHost.js), and answers nothing past the map",
-    "new": "    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;   // The mod's bathymetry is the Bay's - ETHER-DEEP: and the Eltheric's own; the host's promote is the one gate, for every arm (scenes/deepWater/deepWatersHost.js), and answers nothing past the map",
+    "old": "    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
+    "new": "    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
     "tests": [
       "test/world/tamriel2.test.js"
     ]

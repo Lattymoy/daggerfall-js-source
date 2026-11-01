@@ -65,8 +65,8 @@
   {
     "name": "PERF-EXT10-8-a-host-writes-a-field-the-factory-never-minted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h);   // The flora lean with the wind, nothing else does",
-    "new": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h); batch._flora = true;   // The flora lean with the wind, nothing else does",
+    "old": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h);",
+    "new": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h); batch._flora = true;",
     "tests": [
       "test/render/perfextb.test.js"
     ]

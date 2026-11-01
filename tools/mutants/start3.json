@@ -29,8 +29,8 @@
   {
     "name": "START3-site-unread",
     "file": "src/ui/travel/travelMapWindow.js",
-    "old": "  if (site?.worldPixel) return pastBayOnMap();\n  const pixel = pixelOf(maps, regionName, name);",
-    "new": "  const pixel = pixelOf(maps, regionName, name);",
+    "old": "  if (site?.worldPixel) return pastBayOnMap();\n",
+    "new": "",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]

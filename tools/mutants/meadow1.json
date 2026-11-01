@@ -273,8 +273,8 @@
   {
     "name": "MEADOW1-the-row-offers-no-meadow",
     "file": "src/systems/features.js",
-    "old": "        tiers: Object.freeze([tier('meadow', () => t('features.grass.style.meadow', 'Meadow')), tier('pixel', () => t('features.grass.style.pixel', 'Pixel')), tier('smooth', () => t('features.grass.style.smooth', 'Smooth'))]) })]),",
-    "new": "        tiers: Object.freeze([tier('pixel', () => t('features.grass.style.pixel', 'Pixel')), tier('smooth', () => t('features.grass.style.smooth', 'Smooth'))]) })]),",
+    "old": "tiers: Object.freeze([tier('meadow', () => t('features.grass.style.meadow', 'Meadow')), tier('pixel', () => t('features.grass.style.pixel', 'Pixel')), tier('smooth', () => t('features.grass.style.smooth', 'Smooth'))])",
+    "new": "tiers: Object.freeze([tier('pixel', () => t('features.grass.style.pixel', 'Pixel')), tier('smooth', () => t('features.grass.style.smooth', 'Smooth'))])",
     "tests": [
       "test/render/grasspx.test.js"
     ]

@@ -230,8 +230,8 @@ test('AUDIT-EL F16/F18/F19: the eye measures the scene with itself divided out o
   const a = read('src/render/airPass.js');
   assert.match(a, /acc \+= clamp\(log2\(max\(dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\) \/ prev, 1e-9\)\), /, 'F16: divided by the eye (LA-POST4: each tap\'s log held to the encoded range)');
   assert.match(a, /for \(int y = 0; y < 4; y\+\+\) \{\n\s+for \(int x = 0; x < 4; x\+\+\) \{/, 'F16: sixteen taps per texel');
-  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{\n\s*this\.f = null;\n\s*this\.prevValid = false;\n\s*return;\n\s*\} \/\/ AUDIT-EL F18/);
-  assert.match(a, /if \(!\(W > 0 && H > 0\)\) return null; \/\/ AUDIT-EL F18/);
+  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{\n\s*this\.f = null;\n\s*this\.prevValid = false;\n\s*return;\n\s*\}/);
+  assert.match(a, /if \(!\(W > 0 && H > 0\)\) return null;/);
   assert.match(read('src/render/renderer.js'), /this\._restoreWorldViewport\(\);\n\s+this\.markForeignPass\(\);   \/\/ AUDIT-EL F19/);
   // a zero-size world viewport at beginFrame draws nothing and binds no frame
   setFrameTarget(null);   // the module-wide target another test's unresolved frame left

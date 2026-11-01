@@ -230,8 +230,8 @@
   {
     "name": "STUDIO1-the-wagon-held-painted",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (late) renderer.releaseTexture?.(WAGON_ARCHIVE, rec);\n      renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, opts);",
-    "new": "      renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, opts);",
+    "old": "      if (late) renderer.releaseTexture?.(WAGON_ARCHIVE, rec);\n",
+    "new": "",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]

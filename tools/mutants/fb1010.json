@@ -146,8 +146,8 @@
   {
     "name": "RFOLK-world-host-climate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          race: walkerRace(climate?.people, dfLocation.regionIndex),",
-    "new": "          race: walkerRace(climate?.people, null),",
+    "old": "race: walkerRace(climate?.people, dfLocation.regionIndex),",
+    "new": "race: walkerRace(climate?.people, null),",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]

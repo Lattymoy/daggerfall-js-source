@@ -97,7 +97,7 @@ import { diffuseAt, emissiveAt } from '../formats/morrowind/mwNifMesh.js';   // 
 import { fpLightingOn } from './fpsWeapon.js';   // MAC-P: the first-person lighting switch, shared with the classic sprite it stands in for
 import { createParticleSystem, packParticleQuads, particleDrawState, affineOfTransform, affineMul, affineApply, affineScale } from '../formats/morrowind/mwParticles.js';   // MAC-Q: the torch's flame, and any other particle system a part carries
 import { boneSourcesFor, resolveHolsterParts, holsterPartPaths, holsterHidden, HOLSTER_SLOTS } from '../systems/weaponSheathing.js';   // WS1
-import { ownScabbardBytes } from '../systems/ownSheathing.js';   // OWN-WORK4: our own scabbard where the player's data has none
+import { ownScabbardBytes } from '../systems/ownSheathing.js';   // Our own scabbard where the player's data has none
 import { fitCloakOver, fitStowedGear, followCloak, HIP_PITCH_LIMIT, CLOAK_PUSH_LIMIT, SLUNG_MOVE_LIMIT } from '../formats/morrowind/mwCloakFit.js';   // MW-CLOAK1: the cloak over what the body wears, stowed gear against it; AUDIT MW-CLOAK: and going with it
 import { isCloakSlot, ownCloakFor, isOutfitSlot } from '../characters/ownModels/ownClothingModels.js';   // MW-CLOAK1; AUDIT MW-CLOAK: and its picture; AUDIT MW-FOLK1: an outfit's add, by its label
 import { injectSkeletonNodes } from '../formats/morrowind/mwSkin.js';   // WS1: the dry injection the holster's bone probe runs

@@ -112,8 +112,8 @@
   {
     "name": "INVISLOOK-veil-never-lifted",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (r.batch) r.batch.conceal = r.veil;",
-    "new": "    if (r.batch && r.veil) r.batch.conceal = r.veil;",
+    "old": "    if (r.batch) r.batch.conceal = r.veil;\n",
+    "new": "    if (r.batch && r.veil) r.batch.conceal = r.veil;\n",
     "tests": [
       "test/net/invislook.test.js"
     ]

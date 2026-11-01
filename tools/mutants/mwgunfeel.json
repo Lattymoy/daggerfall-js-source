@@ -56,8 +56,8 @@
   {
     "name": "MW-GUN-FEEL-the-open-on-the-machine-clock",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    if (_tlShotAt < 0 || m.now < tlReloadFrom(m) - 1e-9) return;",
-    "new": "",
+    "old": "    if (_tlShotAt < 0 || m.now < tlReloadFrom(m) - 1e-9) return;\n",
+    "new": "\n",
     "tests": [
       "test/combat/mwgunfeel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MW-GUN-FEEL-the-classic-open-withheld",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "  const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? THUNDERLOCK_NUM_FRAMES.StrikeDown) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS));",
-    "new": "  const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? THUNDERLOCK_NUM_FRAMES.StrikeDown) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS) + 0.5);",
+    "old": "* (m.tick ?? GUN_TICK_SECONDS));\n",
+    "new": "* (m.tick ?? GUN_TICK_SECONDS) + 0.5);\n",
     "tests": [
       "test/combat/mwgunfeel.test.js"
     ]

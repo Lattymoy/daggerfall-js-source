@@ -58,9 +58,8 @@ function dripsInto(out, rate, { from, to, count, gain = 0.3, seed }) {
   }
 }
 
-/** How loud each is made. A loop by its RMS, at the mod's own loops' -24 dBFS at the helm (
- *  SEA-AIR, AUDIT SOUNDSCAPE S6: the sea's beds were set under that); a stroke by its loudness (dsp.js loudnessOf) near
- *  DAGGER.SND's large splash heard at 0.7 (-15.5). */
+/** How loud each is made. A loop by its RMS, at the mod's own loops' -24 dBFS at the helm (the sea's beds are set
+ *  under that); a stroke by its loudness (dsp.js loudnessOf) near DAGGER.SND's large splash heard at 0.7 (-15.5). */
 export const CSA_CLIP_LEVEL = Object.freeze({ loopRmsDb: -24, strokeLoudness: -17 });
 /** Each layer's share of its loop's power, in dB: the balance the one-loop mix had (the events 11 to 23 dB under). */
 export const CSA_LAYER_SHARE_DB = Object.freeze({

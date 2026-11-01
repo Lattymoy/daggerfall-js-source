@@ -353,7 +353,7 @@ test('IC-STUTTER THE HOST - the town\'s places awaited a step at a time through 
   assert.match(pb, /if \(livingWorldOn\(\)\) livingOf\.places = await livingTownPlaces\(nav, livingOf, \(\) => breather\.breathe\(\)\);/);
   assert.match(pb, /population = livingWorldOn\(\) \? new LivingTown\(nav, \{\n\s+\.\.\.livingOf,/);
   assert.match(pb, /await stepsBreathing\(componentsSteps\(nav\), \(\) => breather\.breathe\(\)\);/);
-  assert.match(pb, /\{ enhancedWater: waterSwitchOn\(\) \}\);\n\s+await breather\.breathe\(\);   \/\/ IC-STUTTER: a block of the walkers' grid a breath/, 'the walkers\' grid a block a breath');
+  assert.match(pb, /\{ enhancedWater: waterSwitchOn\(\) \}\);\n\s+await breather\.breathe\(\);/, 'the walkers\' grid a block a breath');
   assert.match(read('src/systems/livingWorld/livingTown.js'), /this\.places = o\.places \?\? townPlaces\(nav, o\.doors, o\.buildings, livingPlacesWay\(o\)\);/);
 });
 

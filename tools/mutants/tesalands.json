@@ -191,8 +191,8 @@
   {
     "name": "TL-neighbours-the-pixels",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    return climateNeighbourIn(px, py, x, y) ? landSetOf(x, y, archive) : landSetOf(px, py, archive);",
-    "new": "    return landSetOf(px, py, archive);",
+    "old": "return climateNeighbourIn(px, py, x, y) ? landSetOf(x, y, archive) : landSetOf(px, py, archive);",
+    "new": "return landSetOf(px, py, archive);",
     "tests": [
       "test/world/tesalands_ground.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "TL-bodies-unfiled",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (landStood) coverItems.push(...landStood.bodies);",
-    "new": "    if (landStood) void landStood.bodies;",
+    "old": "if (landStood) coverItems.push(...landStood.bodies);",
+    "new": "if (landStood) void landStood.bodies;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "TL-feet-the-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const offLand = landFeetOff(landStood?.set.props, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
-    "new": "    const offLand = landFeetOff(landProps, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
+    "old": "const offLand = landFeetOff(landStood?.set.props, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
+    "new": "const offLand = landFeetOff(landProps, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]

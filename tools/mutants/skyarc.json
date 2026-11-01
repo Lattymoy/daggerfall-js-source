@@ -22,8 +22,8 @@
   {
     "name": "SKY-ARC-the-veil-by-the-entry",
     "file": "src/render/volumetricClouds.js",
-    "old": "    sum += d * vec2(1.0, veilFade(t));",
-    "new": "    sum += d * vec2(1.0, veilFade(a));",
+    "old": "sum += d * vec2(1.0, veilFade(t));",
+    "new": "sum += d * vec2(1.0, veilFade(a));",
     "tests": [
       "test/render/vc7d_cirrus.test.js",
       "test/systems/weather/vc7c_curtains.test.js"

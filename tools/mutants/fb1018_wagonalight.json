@@ -92,8 +92,8 @@
   {
     "name": "WAGON-ALIGHT-carries-following-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  function carriesCompanions() { const k = shown()?.wagon?.kind; return k === HCC_WIRE_KIND.Trailing || k === HCC_WIRE_KIND.Following; }",
-    "new": "  function carriesCompanions() { const k = shown()?.wagon?.kind; return k === HCC_WIRE_KIND.Trailing; }",
+    "old": "return k === HCC_WIRE_KIND.Trailing || k === HCC_WIRE_KIND.Following; }",
+    "new": "return k === HCC_WIRE_KIND.Trailing; }",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],

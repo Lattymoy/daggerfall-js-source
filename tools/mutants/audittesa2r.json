@@ -11,8 +11,8 @@
   {
     "name": "AUDITTESA2R-R8-a-road-unstepped",
     "file": "src/world/road/roadNetwork.js",
-    "old": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n    yield;   // AUDIT TESA II R8: a step\n  }",
-    "new": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n  }",
+    "old": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n    yield;   // AUDIT TESA II R8: a step\n",
+    "new": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]

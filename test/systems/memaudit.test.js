@@ -1,7 +1,8 @@
-// What a place, a map pixel, a menu or a session online left standing after its life. Each pin drives the module that
-// owned the leak; where the owner is a host's or a window's wiring (setMode, the menu's account card and foot, the item
-// menu's timer, the classic sky's bound) it reads that one line. Each names its mutants (tools/mutants/memaudit.json).
-// AUDIT MEM-AUDIT widened them.
+// What a place, a map pixel, a menu or a session online left
+// standing after its life.
+// Each pin drives the module that owned the leak; where the owner is a host's or a window's wiring (setMode, the menu's
+// account card and foot, the item menu's timer, the classic sky's bound) it reads that one line. Each names its mutants
+// (tools/mutants/memaudit.json). AUDIT MEM-AUDIT widened them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

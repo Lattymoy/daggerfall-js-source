@@ -2,16 +2,16 @@
   {
     "name": "FLAIL-BACK-not-wired-body",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadBackPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {",
-    "new": "export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {",
+    "old": "loadHolster = loadBackPicture,",
+    "new": "loadHolster = loadHolsterPicture,",
     "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
     "why": "my flail on my back as the doll stands it"
   },
   {
     "name": "FLAIL-BACK-not-wired-walkers",
     "file": "src/net/peer/peerRiders.js",
-    "old": "export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, clock = () => Date.now(), loadLantern = loadLanternArt, loadHolster = loadBackPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture } = {}) {",
-    "new": "export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, clock = () => Date.now(), loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, loadBackShield = loadShieldPicture } = {}) {",
+    "old": "loadHolster = loadBackPicture,",
+    "new": "loadHolster = loadHolsterPicture,",
     "tests": ["test/player/eyeOfTheBeholder/holster_flail.test.js"],
     "why": "a walker's flail on its back as the doll stands it"
   },

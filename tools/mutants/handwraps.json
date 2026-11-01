@@ -294,8 +294,8 @@
   {
     "name": "HANDWRAPS-rig",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));   // The fists wear the wraps' glow; ARMORY-FISTS: bare, the kit's weapon piece\n        // THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame read that swaps the weapon now hands the rig its\n        // worn list; setWorn's fast path is one key compare, and a change - a cloak equipped, a gauntlet dropped -\n        // rebuilds the body in those clothes. D29-D31 dressed the BUILD; this dresses the GAME. WEREWOLF1: the form\n        // was handed over above, ahead of the gate; the wolf keeps this table for the way back.",
-    "new": "   // The fists wear the wraps' glow; ARMORY-FISTS: bare, the kit's weapon piece\n        // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame\n        // read that swaps the weapon now hands the rig its worn list;\n        // setWorn's fast path is one key compare, and a change - a\n        // cloak equipped, a gauntlet dropped - rebuilds the body in\n        // those clothes. D29-D31 dressed the BUILD; this dresses the\n        // GAME.\n        // WEREWOLF1: the form was handed over above, ahead of the gate; the wolf keeps this table for the way back.",
+    "old": "        fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));   // The fists wear the wraps' glow; ARMORY-FISTS: bare, the kit's weapon piece\n        // THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame",
+    "new": "   // The fists wear the wraps' glow; ARMORY-FISTS: bare, the kit's weapon piece\n        // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -534,8 +534,8 @@
   {
     "name": "HANDWRAPS-run-held",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const held = (s) => slots?.[s] && !isHandWraps(slots[s]);   // The wraps leave the hands empty",
-    "new": "    const held = (s) => slots?.[s];   // The wraps leave the hands empty",
+    "old": "const held = (s) => slots?.[s] && !isHandWraps(slots[s]);",
+    "new": "const held = (s) => slots?.[s];",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

@@ -38,8 +38,8 @@
   {
     "name": "CREDITS-OUT-found-by-author",
     "file": "src/systems/features.js",
-    "old": "    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, c.vendor].filter(Boolean).join(' \\n '));",
-    "new": "    ...(c.parts ?? []).map((pt) => pt.label), mod?.title, mod?.author, c.vendor].filter(Boolean).join(' \\n '));",
+    "old": "mod?.title, c.vendor].filter(Boolean)",
+    "new": "mod?.title, mod?.author, c.vendor].filter(Boolean)",
     "tests": [
       "test/systems/ft18_features.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CREDITS-OUT-kind-names-dfu",
     "file": "src/systems/features.js",
-    "old": "    get label() { return t('features.kind.classic', 'Classic Option'); },",
-    "new": "    get label() { return t('features.kind.classic', 'DFU Classic'); },",
+    "old": "t('features.kind.classic', 'Classic Option')",
+    "new": "t('features.kind.classic', 'DFU Classic')",
     "tests": [
       "test/systems/features.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CREDITS-OUT-launcher-names-dfu",
     "file": "app/lib/launcherState.cjs",
-    "old": "  dfu: 'from another install',   // Found through another game's settings, not named",
-    "new": "  dfu: 'from Daggerfall Unity',   // Found through another game's settings, not named",
+    "old": "  dfu: 'from another install',",
+    "new": "  dfu: 'from Daggerfall Unity',",
     "tests": [
       "test/tooling/audit_install2.test.js"
     ]

@@ -439,8 +439,8 @@
   {
     "name": "RW1-ships-rooms-only",
     "file": "src/systems/features.js",
-    "old": "      store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
-    "new": "      store: 'prefs', key: 'realWindows', initial: 'rooms', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // render/realWindows.js realWindowsMode reads it",
+    "old": "key: 'realWindows', initial: 'full',",
+    "new": "key: 'realWindows', initial: 'rooms',",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]

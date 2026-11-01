@@ -234,8 +234,8 @@
   {
     "name": "FB1022D-PEER-ART-walkers-looks-unkept",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const code = spriteLookOf(s);",
-    "new": "    const code = s.horse;",
+    "old": "    const code = spriteLookOf(s);\n",
+    "new": "    const code = s.horse;\n",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "FB1022D-PEER-ART-record-kept-in-look",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
-    "new": "  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[3]}:${p[4].replace(/!\\d\\d?$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`, `!ks`) the same look",
+    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d\\d?$/, '')}`",
+    "new": "`${p[0]}:${p[1]}:${p[2]}:${p[3]}:${p[4].replace(/!\\d\\d?$/, '')}`",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "FB1022D-PEER-ART-drawn-sprite-trusted",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (have && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has && !renderer.textures.has(k.replace(':', '_'))) { tex.delete(k); have = undefined; }",
-    "new": "    if (have && !(have instanceof Promise) && !('failedAt' in have) && false) { tex.delete(k); have = undefined; }",
+    "old": "&& renderer?.textures?.has && !renderer.textures.has(k.replace(':', '_'))) { tex.delete(k); have = undefined; }",
+    "new": "&& false) { tex.delete(k); have = undefined; }",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "FB1022D-PEER-ART-my-body-trusted",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (have && !(have instanceof Promise) && renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }",
-    "new": "    if (have && !(have instanceof Promise) && false) { tex.delete(cacheKey(s)); have = undefined; }",
+    "old": "&& renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }",
+    "new": "&& false) { tex.delete(cacheKey(s)); have = undefined; }",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "FB1022D-AUDIT-D1-never-swept",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    store.sweep();   // AUDIT FB1022d D1: the frame's looks all drawn - the walkers' (synced before this) and the riders'\n  }",
-    "new": "  }",
+    "old": "    store.sweep();   // AUDIT FB1022d D1: the frame's looks all drawn - the walkers' (synced before this) and the riders'\n",
+    "new": "",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "FB1022D-AUDIT-D1-last-frame-unguarded",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const now = clock(), idle = (l) => was - l.frame >= 2 && now - l.used > RIDER_LOOK_IDLE_MS;",
-    "new": "    const now = clock(), idle = (l) => now - l.used > RIDER_LOOK_IDLE_MS;",
+    "old": "idle = (l) => was - l.frame >= 2 && now - l.used > RIDER_LOOK_IDLE_MS;",
+    "new": "idle = (l) => now - l.used > RIDER_LOOK_IDLE_MS;",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "FB1022D-AUDIT-D1-idle-unread",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const now = clock(), idle = (l) => was - l.frame >= 2 && now - l.used > RIDER_LOOK_IDLE_MS;",
-    "new": "    const now = clock(), idle = (l) => was - l.frame >= 2;",
+    "old": "idle = (l) => was - l.frame >= 2 && now - l.used > RIDER_LOOK_IDLE_MS;",
+    "new": "idle = (l) => was - l.frame >= 2;",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "FB1022D-AUDIT-D3-no-idle-filter",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const old = [...looks].filter(([, l]) => idle(l)).sort((a, b) => a[1].used - b[1].used);",
-    "new": "    const old = [...looks].filter(() => true).sort((a, b) => a[1].used - b[1].used);",
+    "old": ".filter(([, l]) => idle(l))",
+    "new": ".filter(() => true)",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -487,8 +487,8 @@
   {
     "name": "FB1022D-AUDIT-D3-newest-idle-first",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const old = [...looks].filter(([, l]) => idle(l)).sort((a, b) => a[1].used - b[1].used);",
-    "new": "    const old = [...looks].filter(([, l]) => idle(l)).sort((a, b) => b[1].used - a[1].used);",
+    "old": ".sort((a, b) => a[1].used - b[1].used);\n    for (const [code, l] of old",
+    "new": ".sort((a, b) => b[1].used - a[1].used);\n    for (const [code, l] of old",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js",
       "test/systems/horse/coats1_horsecoats.test.js"
@@ -497,8 +497,8 @@
   {
     "name": "FB1022D-AUDIT-D3-pixels-one-short",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // The longest unasked goes",
-    "new": "    if (pixels.size >= RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // The longest unasked goes",
+    "old": "if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete",
+    "new": "if (pixels.size >= RIDER_PIXELS_KEPT) pixels.delete",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "FB1022D-AUDIT-D3-recheck-worn-armour-only",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (have && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has && !renderer.textures.has(k.replace(':', '_'))) { tex.delete(k); have = undefined; }",
-    "new": "    if (have && isLayeredKey(s.key) && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has && !renderer.textures.has(k.replace(':', '_'))) { tex.delete(k); have = undefined; }",
+    "old": "if (have && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has",
+    "new": "if (have && isLayeredKey(s.key) && !(have instanceof Promise) && !('failedAt' in have) && renderer?.textures?.has",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "FB1022D-AUDIT-D3-body-recheck-worn-armour-only",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (have && !(have instanceof Promise) && renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }",
-    "new": "    if (have && isLayeredKey(s.key) && !(have instanceof Promise) && renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }",
+    "old": "if (have && !(have instanceof Promise) && renderer.textures?.has",
+    "new": "if (have && isLayeredKey(s.key) && !(have instanceof Promise) && renderer.textures?.has",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "FB1022D-AUDIT-D4-released-before-the-new-is-up",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      const up = ensure(s);\n      if (up) {\n        releaseOutfits(s, lk);   // The new outfit up - the last one goes",
-    "new": "      releaseOutfits(s, lk);\n      const up = ensure(s);\n      if (up) {\n        void 0;   // The new outfit up - the last one goes",
+    "old": "      const up = ensure(s);\n      if (up) {\n        releaseOutfits(s, lk);",
+    "new": "      releaseOutfits(s, lk);\n      const up = ensure(s);\n      if (up) {\n        void 0;",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "FB1022D-AUDIT-D4-cloak-plain-frames-released",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      return layered && archive === s.archive && [lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? ''))) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));",
-    "new": "      return layered && archive === s.archive && [lk.outfit].some((o) => worn === o || worn === slung(String(o ?? ''))) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));",
+    "old": "[lk.outfit, plain].some((o) => worn === o || worn === slung(String(o ?? '')))",
+    "new": "[lk.outfit].some((o) => worn === o || worn === slung(String(o ?? '')))",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "FB1022D-AUDIT-D4-decoded-kept",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (p && !stands(LAYERED_ARCHIVE[p[1]], p[4])) decoded.delete(k);\n    }",
-    "new": "    }",
+    "old": "      if (p && !stands(LAYERED_ARCHIVE[p[1]], p[4])) decoded.delete(k);\n",
+    "new": "",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "FB1022D-AUDIT-D4-in-flight-put-back",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      p.then((img) => { if (decoded.get(key) === p) decoded.set(key, img); }, () => { if (decoded.get(key) === p) decoded.delete(key); });   // Let go in flight, gone",
-    "new": "      p.then((img) => { decoded.set(key, img); }, () => { if (decoded.get(key) === p) decoded.delete(key); });   // Let go in flight, gone",
+    "old": "p.then((img) => { if (decoded.get(key) === p) decoded.set(key, img); }",
+    "new": "p.then((img) => { decoded.set(key, img); }",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "FB1022D-AUDIT-D4-skin-off-keeps-outfits",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    if (!layered && lk.outfit) return;",
-    "new": "    if (!layered) return;",
+    "old": "    if (!layered && lk.outfit) return;\n",
+    "new": "    if (!layered) return;\n",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]

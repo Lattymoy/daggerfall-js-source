@@ -95,8 +95,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });   // The data door, for a screen painted from its own picker",
-    "new": "  const packed = null;   // The data door, for a screen painted from its own picker"
+    "old": "  const packed = await packImgTexture(renderer, name, { fetchBytes, palette });",
+    "new": "  const packed = null;"
   },
   {
     "name": "OVH-renderer-alpha-flag-dropped-at-upload",
@@ -167,7 +167,7 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "    const packUrl = _packFailed.has(record) ? null : packCifRciUrl('BUTTONS.RCI', record, 0);",
-    "new": "    const packUrl = null;"
+    "old": "const packUrl = _packFailed.has(record) ? null : packCifRciUrl('BUTTONS.RCI', record, 0);",
+    "new": "const packUrl = null;"
   }
 ]

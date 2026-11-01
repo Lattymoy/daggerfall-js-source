@@ -322,8 +322,8 @@
   {
     "name": "PORTRAIT3D-the-frame-never-asks",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        fpArm.setVampire?.(!!liveVampirism(entity));   // And the vampire's head the moment the curse takes, the face at the cure",
-    "new": "        void liveVampirism;   // And the vampire's head the moment the curse takes, the face at the cure",
+    "old": "        fpArm.setVampire?.(!!liveVampirism(entity));",
+    "new": "        void liveVampirism;",
     "tests": [
       "test/ui/portrait3d.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "PORTRAIT3D-any-curse-stands",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    && !!have.werewolf === want.werewolf && !!have.vampire === want.vampire;   // WEREWOLF1; PORTRAIT3D: and the curse's face",
-    "new": "    && !!have.werewolf === want.werewolf;   // WEREWOLF1; PORTRAIT3D: and the curse's face",
+    "old": " && !!have.vampire === want.vampire;   // WEREWOLF1",
+    "new": ";   // WEREWOLF1",
     "tests": [
       "test/ui/portrait3d.test.js"
     ],

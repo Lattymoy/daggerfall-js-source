@@ -69,9 +69,11 @@ test('BR1: every surface the player reads carries the one name', () => {
   const landing = read('index.html');
   assert.match(landing, new RegExp(`<title>${NAME}</title>`), 'the landing page\'s title');
   assert.match(landing, new RegExp(`<meta property="og:title" content="${NAME}" />`), 'and what a link preview shows');
-  // The landing page's wordmark was TYPE - one word over a tracked sub-line - after BR2's one day as an uploaded
-  // logo. AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's logo again, the game's own file,
-  // named by its alt. BR6: the dragon mark, at its own 1232 x 1034. BR7: the wordmark, 1232 x 699.
+  // The landing page's wordmark was TYPE - one word
+  // over a tracked sub-line - after BR2's one day as an uploaded logo.
+  // AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's
+  // logo again, the game's own file, named by its alt.
+  // BR6: the dragon mark, at its own 1232 x 1034. BR7: the wordmark, 1232 x 699.
   assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="1232" height="699" /></h1>`), 'the wordmark');
   assert.equal((landing.match(/<img\s/g) ?? []).length, 1, 'and it is the one image on the page');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency

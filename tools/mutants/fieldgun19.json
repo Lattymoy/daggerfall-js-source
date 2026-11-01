@@ -12,8 +12,8 @@
   {
     "name": "FIELD-GUN19-2-the-strips-top-edge-is-dropped",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP",
-    "new": "    up: (1 - (py / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP",
+    "old": "    up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,",
+    "new": "    up: (1 - (py / r.h) * 2) * tanY * forward,",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "FIELD-GUN19-3-the-rig-stops-parking-the-world-strip",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, viewport: renderer.worldViewportRect ?? null, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect",
-    "new": "    const drawn = { rect: { ...rect, x: rx, y: ry }, canvasW: real.width, canvasH: real.height, muzzle: art.muzzle ?? null, flip, aspect: renderer.worldProjAspect ?? null };   // And the lens's aspect",
+    "old": "viewport: renderer.worldViewportRect ?? null, aspect:",
+    "new": "aspect:",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],

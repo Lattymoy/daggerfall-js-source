@@ -624,8 +624,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-weapon-back-under-the-hands",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      _climbLower = climbLowerStep(_climbLower, climbing || (handsLane && climbHands.showing()), dt);",
-    "new": "      _climbLower = climbLowerStep(_climbLower, climbing, dt);",
+    "old": "_climbLower = climbLowerStep(_climbLower, climbing || (handsLane && climbHands.showing()), dt);",
+    "new": "_climbLower = climbLowerStep(_climbLower, climbing, dt);",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"
@@ -634,8 +634,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-hands-over-the-weapon",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const handsClimb = handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null;",
-    "new": "      const handsClimb = handsLane && !castTakesHands ? (camNow?.climb ?? null) : null;",
+    "old": "handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null",
+    "new": "handsLane && !castTakesHands ? (camNow?.climb ?? null) : null",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-hands-on-every-lane",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
-    "new": "      const handsLane = true;",
+    "old": "const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
+    "new": "const handsLane = true;",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"
@@ -654,8 +654,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-hands-under-the-third-person-body",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
-    "new": "      const handsLane = !fpArm.active() && !eotbHidesWeapon();",
+    "old": "const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
+    "new": "const handsLane = !fpArm.active() && !eotbHidesWeapon();",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"
@@ -664,8 +664,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-drawn-under-the-map",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (c && !paralyzed && !spellHandsDrawn && !fpArm.active() && !eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(c, { tint: fpTint });",
-    "new": "      if (c && !paralyzed && !spellHandsDrawn && !fpArm.active() && !eotbHidesWeapon()) climbHands.draw(c, { tint: fpTint });",
+    "old": "!eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(c, { tint: fpTint });",
+    "new": "!eotbHidesWeapon()) climbHands.draw(c, { tint: fpTint });",
     "tests": [
       "test/player/climb/climbhands.test.js",
       "test/player/climb/auditclimbhands.test.js"

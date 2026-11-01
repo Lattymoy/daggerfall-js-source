@@ -65,8 +65,8 @@
   {
     "name": "f4-composer-caps",
     "file": "src/scenes/magicCandle.js",
-    "old": "  const keep = (base.length / 4) * 4;",
-    "new": "  const keep = Math.min(16 - live.length, base.length / 4) * 4;",
+    "old": "  const keep = (base.length / 4) * 4;\n",
+    "new": "  const keep = Math.min(16 - live.length, base.length / 4) * 4;\n",
     "tests": [
       "test/render/audit_el.test.js"
     ]

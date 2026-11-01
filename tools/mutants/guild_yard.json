@@ -139,8 +139,8 @@
   {
     "name": "GUILD-YARD-the-build-asks-no-keeper",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (homeRow && (homeLook || homeRow.mine || homeRow.keeper)) {",
-    "new": "          if (homeRow && (homeLook || homeRow.mine)) {",
+    "old": "(homeLook || homeRow.mine || homeRow.keeper)) {",
+    "new": "(homeLook || homeRow.mine)) {",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

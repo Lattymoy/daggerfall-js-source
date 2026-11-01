@@ -539,7 +539,7 @@ test('GRAHT1: the wiring - the jungle host builds it on the canopy\'s zones (?gr
   assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets \} = await terrainGen\.generate\(/);   // PIN MOVED (FB1029 ACROSS-EDGE): the pixel's town meets answered last. PIN MOVED (ROAD-LOOK): the pixel's bridges answered beside its roads
   assert.match(pb, /const grahtStood = jungle\?\.graht\?\.stand\(px, py, graht, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) \?\? null;\n\s+if \(grahtStood\) coverItems\.push\(\.\.\.grahtStood\.bodies\);/);
   assert.ok(pb.indexOf('if (grahtStood) coverItems.push(...grahtStood.bodies);') < pb.indexOf('collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);'), 'filed with the pixel\'s cover');
-  assert.match(pb, /\n\s+grahtOaks: grahtStood\?\.set \?\? null,   \/\/ GRAHT1: its graht-oaks/, 'the built entry carries them');   // PIN MOVED (TESA-LANDS' merge): the seat's call carries the same words now, so the entry's own line
+  assert.match(pb, /\n\s+grahtOaks: grahtStood\?\.set \?\? null,/, 'the built entry carries them');   // PIN MOVED (TESA-LANDS' merge): the seat's call carries the same words now, so the entry's own line
   const tg = read('src/world/terrain/terrainGen.js');
   assert.match(tg, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(/);
   assert.match(tg, /net: roads, canopy: jungle\.canopy \?\? null \} : null \}\);/);

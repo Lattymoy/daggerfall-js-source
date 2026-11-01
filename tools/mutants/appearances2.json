@@ -299,8 +299,8 @@
   {
     "name": "APPEARANCES2-preview-renderer-never-bound",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    _armRenderer = renderer ?? null;   // The preview body's",
-    "new": "    void _armRenderer;   // The preview body's",
+    "old": "    _armRenderer = renderer ?? null;",
+    "new": "    void _armRenderer;",
     "tests": [
       "test/ui/appearances2_preview.test.js"
     ]

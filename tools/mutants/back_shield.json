@@ -112,8 +112,8 @@
   {
     "name": "BACK-SHIELD-walker-never-sheathed",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}), ...(pose && !pose.wd ? { sheathed: true } : {}) };   // Its shield on its back",
-    "new": "  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}) };   // Its shield on its back",
+    "old": ", ...(pose && !pose.wd ? { sheathed: true } : {}) };",
+    "new": " };",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "BACK-SHIELD-mine-never",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (grow === 1) drawBackShield(camRight); else dropBackShield();   // And a sheathed shield, over the weapon",
-    "new": "      dropBackShield();   // And a sheathed shield, over the weapon",
+    "old": "      if (grow === 1) drawBackShield(camRight); else dropBackShield();",
+    "new": "      dropBackShield();",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "BACK-SHIELD-mine-drawn-too",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const lk = cfg.wornArmour && activeFlag && !died && !last.died && !last.transformed && last.sheathed ? lookNow() : null;",
-    "new": "    const lk = cfg.wornArmour && activeFlag && !died && !last.died && !last.transformed ? lookNow() : null;",
+    "old": "!last.transformed && last.sheathed ? lookNow() : null;",
+    "new": "!last.transformed ? lookNow() : null;",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "BACK-SHIELD-skins-given",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    const lk = cfg.wornArmour && activeFlag && !died && !last.died && !last.transformed && last.sheathed ? lookNow() : null;",
-    "new": "    const lk = activeFlag && !died && !last.died && !last.transformed && last.sheathed ? lookNow() : null;",
+    "old": "const lk = cfg.wornArmour && activeFlag &&",
+    "new": "const lk = activeFlag &&",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "BACK-SHIELD-never-listed",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "    backList.push(backShield);\n    return true;",
-    "new": "    return true;",
+    "old": "    backList.push(backShield);\n",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "BACK-SHIELD-walkers-never",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn, feet, view, eye, right);",
-    "new": "      slingBackShield(r, peer, null, worn, feet, view, eye, right);",
+    "old": "slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn,",
+    "new": "slingBackShield(r, peer, null, worn,",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "BACK-SHIELD-walker-slung-drawn",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const code = pose && !pose.wd ? outfitPieces(worn.outfit)?.shield : null;",
-    "new": "    const code = pose ? outfitPieces(worn.outfit)?.shield : null;",
+    "old": "const code = pose && !pose.wd ? outfitPieces(worn.outfit)?.shield : null;",
+    "new": "const code = pose ? outfitPieces(worn.outfit)?.shield : null;",
     "tests": [
       "test/player/eyeOfTheBeholder/backshield.test.js"
     ],

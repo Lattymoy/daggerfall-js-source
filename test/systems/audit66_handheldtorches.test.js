@@ -221,8 +221,10 @@ test('AUDIT 66 F4/F6/F5/F11: the four host lifetimes - the interior sweep runs w
 test('AUDIT 66 F7: a dropped torch loses the click to a door, a board and a static NPC as it loses it to a pile - the ray\'s nearest hit takes it, in both exterior hosts', () => {
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = rd(host);
-    // The fix moved from two hand-written copies into one law. The host now feeds the door's distance to the race and reads
-    // the answer; the LAW itself is tested below, against the module. PIN MOVED: the door goes in as its pick, reach and all
+    // The fix moved from two hand-written copies into one law.
+    // The host now feeds the door's distance to the race and reads the
+    // answer; the LAW itself is tested below, against the module.
+    // PIN MOVED: the door goes in as its pick, reach and all
     // (`door:`); the race reads its distance off it - still one pick of the door set a press
     assert.match(src, /door: modes\.exteriorActivationHit\(cam\.pos, useFwd\),/, `${host}: the door's pick goes into the race`);
     assert.match(src, /const _torchNearest = _race\.torchWins;/, `${host}: and the torch arm reads the race's answer`);

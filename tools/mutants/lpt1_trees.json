@@ -301,8 +301,8 @@
   {
     "name": "LPT1-B1-no-flat-height",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's",
-    "new": "        batch.farH = undefined;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's",
+    "old": "        batch.farH = plain.h;",
+    "new": "        batch.farH = undefined;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "LPT1-B5-handles-never-held",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes",
-    "new": "        lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes",
+    "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);",
+    "new": "        lptHandles.push(far);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -924,8 +924,8 @@
   {
     "name": "LPT1-every-flat-wild",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
-    "new": "          wild[i] = 0;",
+    "old": "wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
+    "new": "wild[i] = 0;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]
@@ -979,8 +979,8 @@
   {
     "name": "LPT1-cover-at-the-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));",
-    "new": "        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));",
+    "old": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain,",
+    "new": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size,",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js",
       "test/scenes/tact1.test.js"
@@ -989,8 +989,8 @@
   {
     "name": "LPT1-sway-of-the-tree",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);",
-    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);",
+    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);\n        _lptSway",
+    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);\n        _lptSway",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

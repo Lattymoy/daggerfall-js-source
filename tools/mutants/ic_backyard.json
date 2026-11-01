@@ -122,8 +122,8 @@
   {
     "name": "IC-BACKYARD-the-frames-block-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
-    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum) });   // Its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "old": ", block: b.blockName, record: placed.recordIndex });",
+    "new": " });",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],

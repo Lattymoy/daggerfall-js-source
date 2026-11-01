@@ -344,8 +344,8 @@
   {
     "name": "WARDEN-held-team-stands",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (held?.lone) { _teamWalk.delete(owner); return []; }\n    const mine = owner === '';",
-    "new": "    const mine = owner === '';",
+    "old": "    if (held?.lone) { _teamWalk.delete(owner); return []; }\n",
+    "new": "",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WARDEN-kept-unmoved",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const v = e.r == null ? null : validHccRecord(thrown ? thrownRecord(e.r) : e.r);",
-    "new": "    const v = e.r == null ? null : validHccRecord(e.r);",
+    "old": "validHccRecord(thrown ? thrownRecord(e.r) : e.r);",
+    "new": "validHccRecord(e.r);",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WARDEN-word-unsaid",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
-    "new": "    if (false) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
+    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});",
+    "new": "    if (false) Object.assign(r, wardenWord?.(a) ?? {});",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "WARDEN-lone-horse-stamped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
-    "new": "    Object.assign(r, wardenWord?.(a) ?? {});   // A parked wagon's town, its road and where the watch would throw it",
+    "old": "    if (r.w) Object.assign(r, wardenWord?.(a) ?? {});",
+    "new": "    Object.assign(r, wardenWord?.(a) ?? {});",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]

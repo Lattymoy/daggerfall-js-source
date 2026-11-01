@@ -1,7 +1,7 @@
-// AUDIT VE P1 - THE SHIPPED PACK'S PICTURES, MADE OFF THE MAIN THREAD.
-// OWN-WORK4: a pack's picture is built here - the page posts the player's classic record and its spec, and
-// this runs our rule (systems/ownTextures/ownTextureRules.js applyOwnRule), the same pixels the page's fallback makes.
-// FIRST-VISIT: a served PNG is decoded and fitted here (mipFitSize, resampleRgba). The pixels come back moved.
+// THE SHIPPED PACK'S PICTURES, MADE OFF THE MAIN THREAD. A pack's picture is built here - the page posts the player's
+// classic record and its spec, and this runs our rule (systems/ownTextures/ownTextureRules.js applyOwnRule), the same
+// pixels the page's fallback makes. A served PNG is decoded and fitted here (mipFitSize, resampleRgba). The pixels come
+// back moved.
 //
 // Protocol: in `{ id, url, maxSize }` (a PNG to decode and fit) or `{ id, build, source }` (a spec and its classic
 // record); out `{ id, width, height, data }` (data transferred) or `{ id, error, unsupported }` - `unsupported` when this

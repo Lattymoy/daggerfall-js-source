@@ -52,8 +52,8 @@
   {
     "name": "NATUREPIC-world-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);",
-    "new": "      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: null, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);",
+    "old": "      // on the install so a later season never reads an earlier one's upload.\n      // LPT1: A FLAT LOW POLY TREES HAS A TREE FOR stands as that tree's far picture - the batch sized for the tallest\n      // tree it stands, each flat's own scale on its corner - and as the tree itself near the eye (the pixel's\n      // `lowPolyTrees` set). Its cover, its sway, its forest and the far rings' rule are the flat's own (the season's,\n      // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a\n      // yard's)\n      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);",
+    "new": "      // on the install so a later season never reads an earlier one's upload. LPT1: A FLAT LOW POLY TREES HAS A TREE\n      // FOR stands as that tree's far picture - the batch sized for the tallest tree it stands, each flat's own scale\n      // on its corner - and as the tree itself near the eye (the pixel's `lowPolyTrees` set). Its cover, its sway, its\n      // forest and the far rings' rule are the flat's own (the season's, while one stands). AUDIT 05b A12: the choice\n      // is every host's one (world/naturePicture.js - a location's, a yard's)\n      const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: null, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);",
     "tests": [
       "test/world/naturepicture.test.js"
     ],

@@ -1287,8 +1287,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G1-carried-the-wrong-way",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
-    "new": "      const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
+    "old": "const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
+    "new": "const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1332,8 +1332,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);   // The pixel's own key; behind, the player on the view swapped out rides it unheld",
-    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);   // The pixel's own key; behind, the player on the view swapped out rides it unheld",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
+    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);",
     "tests": [
       "test/scenes/bootorder.test.js",
       "test/world/terrain/auditlandforms.test.js"

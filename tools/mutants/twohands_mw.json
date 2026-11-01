@@ -614,8 +614,8 @@
   {
     "name": "TWOHANDSMW-AUDIT2-lantern-takes-a-hand",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "    && (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());",
-    "new": "    && (fpArm.ready() ? true : handheldOn());",
+    "old": "&& (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());",
+    "new": "&& (fpArm.ready() ? true : handheldOn());",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "TWOHANDSMW-AUDIT2-H-refused-between-fists",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon && playerWeapon.currentLeftHandWeapon) && playerWeapon.handsMode !== HANDS_MODE.Fists) return false;",
-    "new": "      if (bindWorn && fpArm.ready() && !(playerWeapon.currentRightHandWeapon && playerWeapon.currentLeftHandWeapon)) return false;",
+    "old": " && playerWeapon.handsMode !== HANDS_MODE.Fists) return false;",
+    "new": ") return false;",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]

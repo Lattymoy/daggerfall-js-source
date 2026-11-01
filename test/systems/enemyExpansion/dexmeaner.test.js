@@ -1,8 +1,7 @@
-// OUR MEANER MONSTERS BESIDE DAGGERFALL ENEMY EXPANSION (src/systems/enemyExpansion/
-// dexMeaner.js). They took the place of Ralzar's MUDEX 1.0.1, which
-// MUDEX1 carried from 2026-10-20: two tables in DEX's own formats, read by DEX's reader after its own when Meaner
-// Monsters is on beside it. Every monster row is proved to be the rule's answer over DEX's row, the courts are held to
-// their laws, and Meaner Monsters still stands aside beside DEX. Each law with its mutant (tools/mutants/dexmeaner.json).
+// OUR MEANER MONSTERS BESIDE DAGGERFALL ENEMY EXPANSION (src/systems/enemyExpansion/dexMeaner.js), in place of Ralzar's
+// MUDEX 1.0.1: two tables in DEX's own formats, read by DEX's reader after its own when Meaner Monsters is on beside
+// it. Every monster row is proved to be the rule's answer over DEX's row, the courts are held to their laws, and Meaner
+// Monsters still stands aside beside DEX. Each law with its mutant (tools/mutants/dexmeaner.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {

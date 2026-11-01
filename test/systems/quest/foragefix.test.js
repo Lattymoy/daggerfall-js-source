@@ -1,8 +1,7 @@
-// The quest and list mends RUN - each pinned on
-// the port's own quest machine and list manager. OWN-WORK3: our quests carry the mends, and the build's
-// logic is our file with them taken out (foragingAsBuilt.mjs). These fail
-// unless the mended quest does what the author meant, and the build's still
-// shows the fault it mends.
+// The quest and list mends RUN - each pinned on the port's own quest machine and list manager.
+// OWN-WORK3: our quests carry the mends, and the build's logic is our file with them taken out
+// (foragingAsBuilt.mjs). These fail unless the mended quest does what the author meant, and the build's
+// still shows the fault it mends.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

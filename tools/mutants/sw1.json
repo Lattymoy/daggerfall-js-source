@@ -88,8 +88,8 @@
   {
     "name": "OWW-SW-a-quad-past-the-screen",
     "file": "src/combat/shieldWidget.js",
-    "old": "    if (!r || typeof paint !== 'function' || offScreen(r)) return false;",
-    "new": "    if (!r || typeof paint !== 'function') return false;",
+    "old": "if (!r || typeof paint !== 'function' || offScreen(r)) return false;",
+    "new": "if (!r || typeof paint !== 'function') return false;",
     "tests": [
       "test/combat/sw1_shield_widget.test.js",
       "test/combat/spellhand.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "OWW-SF-2-the-bevel-turned",
     "file": "src/combat/shieldFaces.js",
-    "old": "    const len = Math.hypot(localX, localY) || 1, out = ridge.has(x, y) ? -1 : 1;",
-    "new": "    const len = Math.hypot(localX, localY) || 1, out = ridge.has(x, y) ? 1 : -1;",
+    "old": "out = ridge.has(x, y) ? -1 : 1;",
+    "new": "out = ridge.has(x, y) ? 1 : -1;",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "OWW-SF-6-no-planks",
     "file": "src/combat/shieldFaces.js",
-    "old": "  if (face.group === 0) {",
-    "new": "  if (face.group === -1) {",
+    "old": "if (face.group === 0) {",
+    "new": "if (face.group === -1) {",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ],

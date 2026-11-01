@@ -547,8 +547,8 @@
   {
     "name": "CSA-H-pool-variant",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    setBoatVariant(boat, variant, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });",
-    "new": "    setBoatVariant(boat, 0, { models, player: () => ({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), billboardSize: billboardSizeOf, modelBounds: modelBoundsOf });",
+    "old": "    setBoatVariant(boat, variant, { models,",
+    "new": "    setBoatVariant(boat, 0, { models,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]

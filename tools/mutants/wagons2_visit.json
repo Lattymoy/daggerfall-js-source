@@ -201,8 +201,8 @@
   {
     "name": "WAGONS2-VISIT-the-row-on-every-caravan",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  const caravanVisitRows = (owner) => { const t = visit?.may ? visitTarget(owner) : null; return t && visit.may(t) ? [{ id: CARAVAN_VISIT_ROW, label: CARAVAN_TEXT.enter }] : []; };",
-    "new": "  const caravanVisitRows = (owner) => { const t = visit?.may ? visitTarget(owner) : null; return t ? [{ id: CARAVAN_VISIT_ROW, label: CARAVAN_TEXT.enter }] : []; };",
+    "old": "return t && visit.may(t) ? [{ id: CARAVAN_VISIT_ROW",
+    "new": "return t ? [{ id: CARAVAN_VISIT_ROW",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "WAGONS2-VISIT-a-caravan-with-no-record-opening",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (!kept) return null;",
-    "new": "    if (!kept) kept = { k: '0'.repeat(24), name: '' };",
+    "old": "    if (!kept) return null;\n    const door = caravanDoorAt(",
+    "new": "    if (!kept) kept = { k: '0'.repeat(24), name: '' };\n    const door = caravanDoorAt(",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "WAGONS2-VISIT-the-doors-word-never-parked",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (r.w && rec.we) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }   // Who may enter it, the cell's to keep while its owner is away",
-    "new": "    if (false) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }   // Who may enter it, the cell's to keep while its owner is away",
+    "old": "    if (r.w && rec.we) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }",
+    "new": "    if (false) { r.we = rec.we; if (rec.wg) r.wg = rec.wg; }",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-records-cell-dropped",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    return { ...door, k: kept.k, owner: name, entry: w.entry ?? 'private', guild: w.guild ?? null, look: w.look ?? null, at: [...p.wire.w.position], cell: kept.room ?? null };",
-    "new": "    return { ...door, k: kept.k, owner: name, entry: w.entry ?? 'private', guild: w.guild ?? null, look: w.look ?? null, at: [...p.wire.w.position], cell: null };",
+    "old": "cell: kept.room ?? null };",
+    "new": "cell: null };",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-a-stale-ids-name",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const name = kept.name || peerName(p.ownerId ?? owner) || p.ownerName || null;",
-    "new": "    const name = peerName(p.ownerId ?? owner) || kept.name || p.ownerName || null;",
+    "old": "const name = kept.name || peerName(p.ownerId ?? owner) || p.ownerName || null;",
+    "new": "const name = peerName(p.ownerId ?? owner) || kept.name || p.ownerName || null;",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

@@ -265,8 +265,8 @@
   {
     "name": "the-marker-centre-ignores-its-scale",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];",
-    "new": "          const centre = [s.base[0], s.base[1] + h / 2, s.base[2]];",
+    "old": "s.base[1] + (h * s.scaleY) / 2",
+    "new": "s.base[1] + h / 2",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]

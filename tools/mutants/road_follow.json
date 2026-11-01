@@ -68,8 +68,8 @@
   {
     "name": "RF-the-line-not-copied",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const legs = (plan.legs ?? []).map((l) => ({ x: l.x, y: l.y, kind: l.kind ?? 'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring ? { ring: true } : {}), ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));   // The painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
-    "new": "    const legs = (plan.legs ?? []).map((l) => ({ x: l.x, y: l.y, kind: l.kind ?? 'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring ? { ring: true } : {}) }));   // The painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
+    "old": ", ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));",
+    "new": " }));",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "RF-the-lane-s-points-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const path = lane?.pts ?? null;   // On the curves past the Bay",
-    "new": "    const path = null;   // On the curves past the Bay",
+    "old": "    const path = lane?.pts ?? null;",
+    "new": "    const path = null;",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "RF-the-leg-s-end-square-at-the-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
-    "new": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legMiddle(leg)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
+    "old": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legMiddle(leg)) : rectOf(",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "RF-the-rejoin-on-the-chord",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;   // The nearest point of the curves it walks",
-    "new": "    const near = null;   // The nearest point of the curves it walks",
+    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;",
+    "new": "    const near = null;",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]

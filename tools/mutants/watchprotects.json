@@ -352,8 +352,8 @@
   {
     "name": "WATCH-PROTECTS-host-dangers",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          dangers: () => host.livingDangers(px, py, locOrigin),   // The monsters its people run from",
-    "new": "          dangers: () => null,   // The monsters its people run from",
+    "old": "          dangers: () => host.livingDangers(px, py, locOrigin),",
+    "new": "          dangers: () => null,",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

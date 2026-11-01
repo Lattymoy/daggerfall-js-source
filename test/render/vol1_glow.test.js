@@ -73,7 +73,7 @@ test('VOL1: the march by source - the air pass builds the glow from the lane\'s 
   assert.match(a, /\} catch \(e\) \{\n\s*this\.programs\.vol = null;\n\s*this\.programs\.volTone = null;/, 'a shader the GL refuses costs the glow alone');
   assert.match(a, /const prepared = !!this\.f && this\.fresh;\n\s*if \(prepared\) this\._images\(\);\n\s*else \{\n\s*this\._blank\(quad\);\n\s*this\.measured = false;\n\s*\}\n\s*this\.fresh = false;/, 'AUDIT VOL1: the images for a frame the pass was PREPARED for alone - a menu\'s frame gets black images (the last world frame\'s glow was painted over it)');
   assert.match(a, /for \(const t of \[T\.bloom, T\.shaft, T\.volOut\]\) \{\n\s*quad\(this\.programs\.box, t\);\n\s*gl\.clear\(gl\.COLOR_BUFFER_BIT\);\n\s*\}/, 'the three the resolve adds, black');
-  assert.match(a, /this\.fresh = true; \/\/ AUDIT VOL1/, 'set at prepare');
+  assert.match(a, /this\.fresh = true;/, 'set at prepare');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ airDecode\(texture\(uVol, t\)\.rgb\);   \/\/ AUDIT VOL1/, 'the eye adapts to the glow it will see');
   assert.match(a, /vec3 glow = vec3\(0\.0\)\$\{glow \? ' \+ airDecode\(texture\(uVol, vUV\)\.rgb\)' : ''\};/, 'and the bright pass blooms a halo\'s core (PERF-EXT31: the bright pass built with the glow, for a frame that marched it; LA-POST1: added to each quarter it thresholds)');
   assert.match(a, /vec3 c = airDecode\(texture\(uFrame, uv\)\.rgb\) \+ glow;/, 'LA-POST1: the glow joins the frame before the threshold');

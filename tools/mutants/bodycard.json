@@ -8,7 +8,7 @@
     "tests": ["test/systems/bodycard.test.js"],
     "note": "The Billboard Look takes the travel view's leaned bodies level too: its lean is the view's, not the body's." },
   { "name": "BODY-CARD-on-by-default", "file": "src/systems/features.js",
-    "old": "    control: Object.freeze({ store: 'prefs', key: 'mwBillboardLook', initial: false, online: 'player' }),", "new": "    control: Object.freeze({ store: 'prefs', key: 'mwBillboardLook', initial: true, online: 'player' }),",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'mwBillboardLook', initial: false, online: 'player' }),", "new": "control: Object.freeze({ store: 'prefs', key: 'mwBillboardLook', initial: true, online: 'player' }),",
     "tests": ["test/systems/bodycard.test.js", "test/world/bodylean.test.js"],
     "note": "Every body upright out of the box - BODY-LEAN's report back for every player who never asked for it." },
   { "name": "BODY-CARD-another-key", "file": "src/render/characterSprite.js",

@@ -284,9 +284,12 @@ test('SURV2: by source - the pipeline stands a vendor archive in, the weight law
   assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: corpseFoodOn \}\);/, 'the corpse\'s food is off with the one switch - offline');
   // The one switch reads a TIER now - on is anything but Off, and a value that is no tier reads as the default
   assert.match(read('src/systems/survival/switch.js'), /export const survivalTier = \(\) => tierOfStored\(getPref\(SURVIVAL_PREF\)\);\nexport const survivalOn = \(\) => survivalTier\(\) !== SURVIVAL_OFF;/);
-  // `online: true` became `'player'`. Climates & Calories is a MOD ROW under Ralzar's name and it was the last one still
-  // locked online, kept there only because the port wrote the system itself and so carries it on the prefs shelf - a
-  // distinction no player can see. What this pin owns is unchanged: the row declares the key and the default, once.
+  // `online: true` became `'player'`. Climates & Calories is a MOD ROW
+  // under Ralzar's name and it was the last one still locked online,
+  // kept there only because the port wrote the system itself and so
+  // carries it on the prefs shelf - a distinction no player can see.
+  // What this pin owns is unchanged:
+  // the row declares the key and the default, once.
   // SURV-TIERS: the default is a tier now - on - and the player still owns the switch, Off included. BOONS-DEFAULT: Boons
   assert.match(read('src/systems/features.js'), /key: 'survival', initial: 'boons', online: 'player',/, 'the row owns the key and the default: on (Boons), and the player owns the switch');
 });

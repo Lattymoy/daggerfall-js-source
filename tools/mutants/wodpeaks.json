@@ -89,8 +89,8 @@
   {
     "name": "ROCKSEAT-never",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, (box[0] + box[3]) / 2)), Math.max(0, Math.min(TERRAIN_SIZE, (box[2] + box[5]) / 2)))) { const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
-    "new": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, (box[0] + box[3]) / 2)), Math.max(0, Math.min(TERRAIN_SIZE, (box[2] + box[5]) / 2)))) { void rockSeatDrop; }",
+    "old": "{ const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
+    "new": "{ void rockSeatDrop; }",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ]
@@ -98,8 +98,8 @@
   {
     "name": "ROCKSEAT-stacked-too",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, (box[0] + box[3]) / 2)), Math.max(0, Math.min(TERRAIN_SIZE, (box[2] + box[5]) / 2)))) { const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
-    "new": "        if (rockPick(m.pick) || box[1] < surfaceHeightAt(samples, Math.max(0, Math.min(TERRAIN_SIZE, (box[0] + box[3]) / 2)), Math.max(0, Math.min(TERRAIN_SIZE, (box[2] + box[5]) / 2)))) { const dy = rockSeatDrop(lowestGroundUnder(samples, box), box[1]); if (dy < 0) { m.matrix[13] += dy; box[1] += dy; box[4] += dy; } }",
+    "old": "        if (rockPick(m.pick) && box[1] < surfaceHeightAt(",
+    "new": "        if (rockPick(m.pick) || box[1] < surfaceHeightAt(",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ]

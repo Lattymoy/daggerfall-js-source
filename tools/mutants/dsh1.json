@@ -114,8 +114,8 @@
  {
   "name": "DSH1-the-two-early-outs-disagree-so-the-lid-seams-where-one-takes-over",
   "file": "src/render/volumetricClouds.js",
-  "old": "  if (t0 >= FAR_M) { float a = farA(len); outColor = underCurtains(uHorizonColor * a, 1.0 - a, cam, dir); return; }",
-  "new": "  if (t0 >= FAR_M) { outColor = underCurtains(uHorizonColor, 1.0, cam, dir); return; }",
+  "old": "if (t0 >= FAR_M) { float a = farA(len); outColor = underCurtains(uHorizonColor * a, 1.0 - a, cam, dir); return; }",
+  "new": "if (t0 >= FAR_M) { outColor = underCurtains(uHorizonColor, 1.0, cam, dir); return; }",
   "tests": ["test/render/dsh1_horizon.test.js", "test/render/audit_precip_sky.test.js"]
  },
  {

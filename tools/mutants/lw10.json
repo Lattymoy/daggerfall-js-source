@@ -263,8 +263,8 @@
   {
     "name": "LW10-WAGONS1-pool-hitch",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    presentation: { wagonParts, horseArt, hitchOf: () => hitchOf(myKind()), onChanged: () => onChanged?.(), drawWagon, drawWagonSeen, poseHorse: poseHorseBatch, partsOf, hitchOfKind: hitchOf },   // The road's teams by the one verdict",
-    "new": "    presentation: { wagonParts, horseArt, hitchOf: () => hitchOf(myKind()), onChanged: () => onChanged?.(), drawWagon, drawWagonSeen, poseHorse: poseHorseBatch, partsOf, hitchOfKind: () => hitchOf(myKind()) },   // The road's teams by the one verdict",
+    "old": "partsOf, hitchOfKind: hitchOf },",
+    "new": "partsOf, hitchOfKind: () => hitchOf(myKind()) },",
     "tests": [
       "test/systems/livingWorld/lw10_wagons.test.js"
     ]

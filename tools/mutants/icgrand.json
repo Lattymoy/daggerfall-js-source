@@ -256,8 +256,8 @@
   {
     "name": "IC-GRAND-far-slice-yards",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const yardTown = !farView && isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));",
-    "new": "      const yardTown = isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));",
+    "old": "const yardTown = !farView && isYardTown(dfLocation)",
+    "new": "const yardTown = isYardTown(dfLocation)",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "IC-GRAND-prebuild-blocks-in-one-task",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }\n    if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);",
-    "new": "    if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);",
+    "old": "    if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }\n",
+    "new": "",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]

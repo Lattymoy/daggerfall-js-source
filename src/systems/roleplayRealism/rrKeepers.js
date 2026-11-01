@@ -1,9 +1,8 @@
-// OWN-WORK4 AUDIT (2026-11-01; the coordinator: "better than the removed packs in every way"): THE VARIANT KEEPERS,
-// OUR RULE OVER THE PLAYER'S OWN PEOPLE. Each keeper is put together from Daggerfall's tavern and shop folk (TEXTURE.182
-// in the player's ARENA2): one record's body, another's head, a cloth swapped to another of the palette's ramps, a prop
-// from a third. RR_KEEPERS is the data; no pixel of any hand but Daggerfall's is in it. Each picture keeps the aspect
-// of the classic keeper it stands in for (RR_KEEPER_OF), at the height Daggerfall drew these folk, so it is shown at
-// that keeper's size (rrVariants.js RR_NPC_XML_SCALE) with Daggerfall's own shading.
+// THE VARIANT KEEPERS, OUR RULE OVER THE PLAYER'S OWN PEOPLE. Each keeper is put together from Daggerfall's tavern and
+// shop folk (TEXTURE.182 in the player's ARENA2): one record's body, another's head, a cloth swapped to another of the
+// palette's ramps, a prop from a third. RR_KEEPERS is the data; no pixel of any hand but Daggerfall's is in it. Each
+// picture keeps the aspect of the classic keeper it stands in for (RR_KEEPER_OF), at the height Daggerfall drew these
+// folk, so it is shown at that keeper's size (rrVariants.js RR_NPC_XML_SCALE) with Daggerfall's own shading.
 
 /** The palette's ramps are its rows of sixteen, light to dark; 0 is clear and 255 the mask. */
 const RAMP_OF = (i) => i >> 4;

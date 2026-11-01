@@ -1086,8 +1086,8 @@
   {
     "name": "EVENTS2-a-kind-without-its-chip",
     "file": "src/systems/features.js",
-    "old": "      parts: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return EVENT_KINDS[kind].label; } }))),",
-    "new": "      parts: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return EVENT_KINDS[kind].label; } }))),",
+    "old": "parts: Object.freeze(EVENT_KIND_ORDER.map((kind) =>",
+    "new": "parts: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) =>",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1095,8 +1095,8 @@
   {
     "name": "EVENTS2-a-kind-undeclared",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),",
-    "new": "      also: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),",
+    "old": "also: Object.freeze(EVENT_KIND_ORDER.map((kind) =>",
+    "new": "also: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) =>",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1104,8 +1104,8 @@
   {
     "name": "EVENTS2-a-kind-off-by-default",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),",
-    "new": "      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: false, online: 'player' }))),",
+    "old": "key: eventKindPref(kind), initial: true, online: 'player'",
+    "new": "key: eventKindPref(kind), initial: false, online: 'player'",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1113,8 +1113,8 @@
   {
     "name": "EVENTS2-a-kind-forced-online",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),",
-    "new": "      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: true }))),",
+    "old": "key: eventKindPref(kind), initial: true, online: 'player'",
+    "new": "key: eventKindPref(kind), initial: true, online: true",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1122,8 +1122,8 @@
   {
     "name": "EVENTS2-the-chip-unnamed",
     "file": "src/systems/features.js",
-    "old": "      parts: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return EVENT_KINDS[kind].label; } }))),",
-    "new": "      parts: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return kind; } }))),",
+    "old": "get label() { return EVENT_KINDS[kind].label; }",
+    "new": "get label() { return kind; }",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1131,8 +1131,8 @@
   {
     "name": "EVENTS2-the-festival-a-row",
     "file": "src/systems/features.js",
-    "old": "  festival: Object.freeze({ row: false, single: true, get label() { return t('events.kind.festival', 'Witches\\' Festival'); } }),",
-    "new": "  festival: Object.freeze({ row: true, single: true, get label() { return t('events.kind.festival', 'Witches\\' Festival'); } }),",
+    "old": "festival: Object.freeze({ row: false, single: true,",
+    "new": "festival: Object.freeze({ row: true, single: true,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -1140,8 +1140,8 @@
   {
     "name": "EVENTS2-a-star-single",
     "file": "src/systems/features.js",
-    "old": "  star: Object.freeze({ row: true, single: false, get label() { return t('events.kind.star', 'Starfall'); } }),",
-    "new": "  star: Object.freeze({ row: true, single: true, get label() { return t('events.kind.star', 'Starfall'); } }),",
+    "old": "star: Object.freeze({ row: true, single: false,",
+    "new": "star: Object.freeze({ row: true, single: true,",
     "tests": [
       "test/systems/events1_board.test.js"
     ]

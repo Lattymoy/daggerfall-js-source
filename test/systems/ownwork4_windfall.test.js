@@ -1,7 +1,6 @@
 // WINDFALL's SOUNDS AND PICTURES, OUR OWN. Windfall 1.0.0 (demifiend000) keeps its
 // names, rates, frame counts and sizes; the clips are made by our synthesizer (systems/windfall/windfallSynth.js) and
 // the pictures by our painter (systems/windfall/windfallPictures.js), each from a seed. vendor/windfall left the tree.
-// bible/07-Rendering/Windfall.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';

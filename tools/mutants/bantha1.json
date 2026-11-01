@@ -635,8 +635,8 @@
   {
     "name": "AUDIT-BANTHA1-the-far-picture-at-the-emergents-size",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      const own = Float32Array.from(g.own), scales = Float32Array.from(g.own, (v) => v / JUNGLE_SCALE_MAX);",
-    "new": "      const own = Float32Array.from(g.own), scales = Float32Array.from(g.own, (v) => v);",
+    "old": "scales = Float32Array.from(g.own, (v) => v / JUNGLE_SCALE_MAX);",
+    "new": "scales = Float32Array.from(g.own, (v) => v);",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-BANTHA1-the-jungles-sway-unshared",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, batch.sway));",
-    "new": "",
+    "old": "      _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, batch.sway));\n",
+    "new": "\n",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUDIT-BANTHA1-the-jungles-windfall-unshared",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, batch.windfall));",
-    "new": "",
+    "old": "      _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, batch.windfall));\n",
+    "new": "\n",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -662,8 +662,8 @@
   {
     "name": "AUDIT-BANTHA1-the-fallback-not-loggings",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        forestGroups.set(gk, { batch, centers: g.centers, size });",
-    "new": "",
+    "old": "        forestGroups.set(gk, { batch, centers: g.centers, size });\n",
+    "new": "\n",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -924,8 +924,8 @@
   {
     "name": "AUDIT-BANTHA1-PERF-5-the-young-to-the-horizon",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      batch.farH = g.young ? 0 : proto.size.h;",
-    "new": "      batch.farH = proto.size.h;",
+    "old": "batch.farH = g.young ? 0 : proto.size.h;",
+    "new": "batch.farH = proto.size.h;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

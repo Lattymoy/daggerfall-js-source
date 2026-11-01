@@ -47,8 +47,8 @@
   {
     "name": "DISC13-D-shipPorts-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion', 'shipPorts']),   // The boat's own switch, where a player can find it",
-    "new": "  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion']),   // The boat's own switch, where a player can find it",
+    "old": "'underworldExpulsion', 'shipPorts']",
+    "new": "'underworldExpulsion']",
     "tests": [
       "test/systems/disc13.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC13-A-world-hands-the-torch-the-stepped-feet",
     "file": "src/scenes/world.js",
-    "old": "playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw)",
-    "new": "playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw)",
+    "old": "        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...(passSeason?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the broadsides' flashes and the burning decks beside the Thunderlock's own flash - the brightest things for a frame, cut last by the cap",
+    "new": "        magic?.candleLight(), _dwFogP?.under ? null : playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...(passSeason?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does; NAV-B the broadsides' flashes and the burning decks beside the Thunderlock's own flash - the brightest things for a frame, cut last by the cap",
     "tests": [
       "test/systems/disc13.test.js"
     ]

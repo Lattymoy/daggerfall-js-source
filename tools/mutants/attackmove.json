@@ -2,8 +2,8 @@
   {
     "name": "ATTACK-MOVE-turn-paints-stance",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);\n      else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
-    "new": "      updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "old": "if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);\n      else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "new": "updateBillboardDelayed(frameCurrent, o, stateCurrent);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ATTACK-MOVE-queued-stance-fires",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (isAnimating && p.table !== isAnimating.table) continue;",
-    "new": "      ",
+    "old": "if (isAnimating && p.table !== isAnimating.table) continue;",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ATTACK-TURN-turn-paints-walk-frame",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (isAnimating) updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);",
-    "new": "      if (isAnimating) updateBillboard(frameCurrent, o, isAnimating.table);",
+    "old": "updateBillboard(shown?.table === isAnimating.table ? shown.frame : frameCurrent, o, isAnimating.table);",
+    "new": "updateBillboard(frameCurrent, o, isAnimating.table);",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ATTACK-WARM-not-wired",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      if (renderer && cfg.wornArmour) warmLayered();   // A weapon or piece changed - its clips composed before a blow",
-    "new": "   // A weapon or piece changed - its clips composed before a blow",
+    "old": "      if (renderer && cfg.wornArmour) warmLayered();",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "ATTACK-WARM-walker-sheathed-warms",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    const sig = look.sheathed ? null : warmSigOf(look);",
-    "new": "    const sig = warmSigOf(look);",
+    "old": "const sig = look.sheathed ? null : warmSigOf(look);",
+    "new": "const sig = warmSigOf(look);",
     "tests": [
       "test/net/layered_peers.test.js"
     ],

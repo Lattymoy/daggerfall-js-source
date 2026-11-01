@@ -47,8 +47,8 @@
   {
     "name": "MWSHOTPACE-rig-hands-no-end",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate)) && (fpArm.active() || fpArm.thirdActive());",
-    "new": "      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate)) && (fpArm.active() || fpArm.thirdActive());",
+    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate))",
+    "new": "fpArm.castSpell(rangeType, rate, castReleaseS(rate))",
     "tests": [
       "test/formats/morrowind/fparm.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MW-DRAW-PACE-the-rig-hands-nothing",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);   // A held draw's loose on the classic clock",
-    "new": "        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release(null);   // A held draw's loose on the classic clock",
+    "old": "fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);",
+    "new": "fpArm.release(null);",
     "tests": [
       "test/combat/mwpace1.test.js",
       "test/combat/weapon/weaponrig.test.js",

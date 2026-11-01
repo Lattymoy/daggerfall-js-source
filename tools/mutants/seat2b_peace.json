@@ -575,8 +575,8 @@
   {
     "name": "SEAT2b2-to-message-list-alone",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    hasPort: (mapId) => hasPortFor(mapId),   // SEAT2b part two: or a members' Harbour at a seat - \"a Travel Options port for members\" (travelPorts.js)",
-    "new": "    hasPort: (mapId) => hasPortFor(mapId) && false,   // SEAT2b part two: or a members' Harbour at a seat - \"a Travel Options port for members\" (travelPorts.js)",
+    "old": "hasPort: (mapId) => hasPortFor(mapId),",
+    "new": "hasPort: (mapId) => hasPortFor(mapId) && false,",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]

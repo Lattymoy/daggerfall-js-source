@@ -175,7 +175,7 @@ test('VC6b: the march\'s three low-sun terms are weighted by how low the sun is,
   assert.match(read('src/render/volumetricClouds.js'), /gl\.uniform3fv\(u\.uSkyTint, s\.zenith\);/, 'from the dome\'s own zenith - one palette, two readers');
   // and the controller hands the light the SLAB it falls on, or the dip
   // would be the default 2300 m for a storm's 4200 m tops as well
-  assert.match(read('src/render/volumetricClouds.js'), /const light = cloudLight\(s, p\);   \/\/ VC6b:/, 'the eased profile, not nothing');
+  assert.match(read('src/render/volumetricClouds.js'), /const light = cloudLight\(s, p\);/, 'the eased profile, not nothing');
   // the underside, by its own pin: a low sun lights it
   assert.match(MARCH_FS, /float sideLit = mix\(h, 0\.25 \* h \+ 0\.75, low\);   \/\/ VC6b: top-lit by day, whole-lit at dusk/);
   // the SHADOW march takes none of it: a shadow is a transmittance, and

@@ -12,8 +12,8 @@
   {
     "name": "OWN-WORDS1-header-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "  if (fields(own.header).join('\\n') !== fields(dfu.header).join('\\n')) problems.push('the header\\'s fields (Messages:, Quest:, DisplayName:) differ from DFU\\'s');",
-    "new": "  if (false) problems.push('the header\\'s fields (Messages:, Quest:, DisplayName:) differ from DFU\\'s');",
+    "old": "  if (fields(own.header).join('\\n') !== fields(dfu.header).join('\\n'))",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "OWN-WORDS1-credit-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "  if (!own.header.includes(OWN_CREDIT)) problems.push('the header has no OWN-WORDS credit line (OWN_CREDIT)');",
-    "new": "  if (false) problems.push('the header has no OWN-WORDS credit line (OWN_CREDIT)');",
+    "old": "  if (!own.header.includes(OWN_CREDIT))",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "OWN-WORDS1-ids-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "  if (missing.length) problems.push(`messages missing: ${missing.join(', ')}`);",
-    "new": "  if (false) problems.push(`messages missing: ${missing.join(', ')}`);",
+    "old": "  if (missing.length) problems.push",
+    "new": "  if (false) problems.push",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "OWN-WORDS1-layout-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "    if (o.layout !== d.layout) problems.push(`${at}: layout ${o.layout}, DFU's is ${d.layout} (keep <ce> where DFU centres, and only there)`);",
-    "new": "    if (false) problems.push(`${at}: layout ${o.layout}, DFU's is ${d.layout} (keep <ce> where DFU centres, and only there)`);",
+    "old": "    if (o.layout !== d.layout)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "OWN-WORDS1-variants-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "    if (o.variants.length !== d.variants.length) problems.push(`${at}: ${o.variants.length} variants, DFU's has ${d.variants.length} (<--->)`);",
-    "new": "    if (false) problems.push(`${at}: ${o.variants.length} variants, DFU's has ${d.variants.length} (<--->)`);",
+    "old": "    if (o.variants.length !== d.variants.length)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OWN-WORDS1-pronouns-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "    if (!sameSet(o.pairs, d.pairs)) problems.push(`${at}: a pronoun or %di reads someone else - DFU's: ${[...d.pairs].join('; ') || 'none'}; ours: ${[...o.pairs].join('; ') || 'none'}`);",
-    "new": "    if (false) problems.push(`${at}: a pronoun or %di reads someone else - DFU's: ${[...d.pairs].join('; ') || 'none'}; ours: ${[...o.pairs].join('; ') || 'none'}`);",
+    "old": "    if (!sameSet(o.pairs, d.pairs))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OWN-WORDS1-last-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "    if (!sameSet(o.last, d.last)) problems.push(`${at}: the journal's way points elsewhere - DFU's: ${[...d.last].join('; ')}; ours: ${[...o.last].join('; ')}`);",
-    "new": "    if (false) problems.push(`${at}: the journal's way points elsewhere - DFU's: ${[...d.last].join('; ')}; ours: ${[...o.last].join('; ')}`);",
+    "old": "    if (!sameSet(o.last, d.last))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "OWN-WORDS1-runs-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "        if (runs.has(run)) { problems.push(`${at}: keeps DFU's words \"${run}\"`); break; }",
-    "new": "        if (false) { problems.push(`${at}: keeps DFU's words \"${run}\"`); break; }",
+    "old": "        if (runs.has(run)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "OWN-WORDS1-plain-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "      if (breach) problems.push(`${at}: past PLAIN-TEXT - ${breach.words} words (40 at most), a sentence of ${breach.sentence} (25 at most)${breach.padding.length ? `, padding ${breach.padding.join(' ')}` : ''}`);",
-    "new": "      if (false) problems.push(`${at}: past PLAIN-TEXT - ${breach.words} words (40 at most), a sentence of ${breach.sentence} (25 at most)${breach.padding.length ? `, padding ${breach.padding.join(' ')}` : ''}`);",
+    "old": "      if (breach) problems.push",
+    "new": "      if (false) problems.push",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "OWN-WORDS1-width-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "      for (const l of v.lines) if (lineText(l).length > width) problems.push(`${at}: a line of ${lineText(l).length} characters (${width} at most): \"${lineText(l)}\"`);",
-    "new": "      for (const l of v.lines) if (false) problems.push(`${at}: a line of ${lineText(l).length} characters (${width} at most): \"${lineText(l)}\"`);",
+    "old": "      for (const l of v.lines) if (lineText(l).length > width)",
+    "new": "      for (const l of v.lines) if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "OWN-WORDS1-bay-unread",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "      if (!bayOwn && BAY_NAMES.test(said)) problems.push(`${at}: names the Bay's own places (\"${BAY_NAMES.exec(said)[0]}\") - TAMRIEL-WIDE, or a -- BAY-OWN: header line with why`);",
-    "new": "      if (false) problems.push(`${at}: names the Bay's own places (\"${BAY_NAMES.exec(said)[0]}\") - TAMRIEL-WIDE, or a -- BAY-OWN: header line with why`);",
+    "old": "      if (!bayOwn && BAY_NAMES.test(said))",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "OWN-WORDS1-signature-merged",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "      if (t.slice(4).trim().split(/\\s+/).every((w) => getMacro(w).type !== MACRO_TYPES.None)) { end(); out.push(`<ce> ${t.slice(4).trim()}`); continue; }",
-    "new": "      if (false) { end(); out.push(`<ce> ${t.slice(4).trim()}`); continue; }",
+    "old": "      if (t.slice(4).trim().split(/\\s+/).every((w) => getMacro(w).type !== MACRO_TYPES.None)) {",
+    "new": "      if (false) {",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "OWN-WORDS1-lead-uncounted",
     "file": "tools/ownQuestCheck.mjs",
-    "old": "      const room = () => w - (para.kind === 'ce' ? 0 : lines.length ? Math.min(1, para.lead.length) : para.lead.length);",
-    "new": "      const room = () => w - (para.kind === 'ce' ? 0 : 0);",
+    "old": "lines.length ? Math.min(1, para.lead.length) : para.lead.length",
+    "new": "0",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "OWN-WORDS1-ratchet-rise-let-through",
     "file": "tools/bethesdaWords.mjs",
-    "old": "    if ((now[p] ?? 0) > (base[p] ?? 0)) over.push(`${p}: ${now[p]} (allowed ${base[p] ?? 0})`);",
-    "new": "    if (false) over.push(`${p}: ${now[p]} (allowed ${base[p] ?? 0})`);",
+    "old": "    if ((now[p] ?? 0) > (base[p] ?? 0)) over.push",
+    "new": "    if (false) over.push",
     "tests": [
       "test/tooling/bethesdawords.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "OWN-WORDS1-ratchet-fall-unread",
     "file": "tools/bethesdaWords.mjs",
-    "old": "    else if ((now[p] ?? 0) < (base[p] ?? 0)) stale.push(`${p}: ${now[p]} (baseline ${base[p]})`);",
-    "new": "    else if (false) stale.push(`${p}: ${now[p]} (baseline ${base[p]})`);",
+    "old": "    else if ((now[p] ?? 0) < (base[p] ?? 0)) stale.push",
+    "new": "    else if (false) stale.push",
     "tests": [
       "test/tooling/bethesdawords.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "OWN-WORDS1-ratchet-raised",
     "file": "tools/bethesdaWords.mjs",
-    "old": "export const lowered = (base, now) => Object.fromEntries(PARTS.map((p) => [p, Math.min(base[p] ?? 0, now[p] ?? 0)]));",
-    "new": "export const lowered = (base, now) => Object.fromEntries(PARTS.map((p) => [p, now[p] ?? 0]));",
+    "old": "Math.min(base[p] ?? 0, now[p] ?? 0)",
+    "new": "now[p] ?? 0",
     "tests": [
       "test/tooling/bethesdawords.test.js"
     ],

@@ -6,8 +6,8 @@
 // nothing of the chest from behind the card (THE CARD LAW). AUDIT ARMORY: and THE MORROWIND BODY - retail's own skeleton
 // (test/fixtures/mw/retailRig.mjs) read by the game's own reader (fpArm armBonesInBody, what thirdBones and a peer's
 // bonesOf answer), a mannequin on its bones for the eye, the pieces on its pose. Its mesh is Bethesda's and never ships;
-// the bones are what the pieces hang on. NO-BETHESDA2: the sprite is Daggerfall's own TEXTURE.481, built from the player's
-// ARENA2 (tools/lib/eotbPictures.mjs).
+// the bones are what the pieces hang on.
+// NO-BETHESDA2: the sprite is Daggerfall's own TEXTURE.481, built from the player's ARENA2 (tools/lib/eotbPictures.mjs).
 //
 //     ARENA2_PATH=<arena2> node tools/armoryProbe.mjs [--shots <dir>]
 import { chromium } from 'playwright';

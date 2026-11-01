@@ -1038,8 +1038,8 @@
   {
     "name": "GF2-PEERACTS-the-walkers-blow-lost",
     "file": "src/net/peer/peerRiders.js",
-    "old": "      if (acted) {",
-    "new": "      if (false) {",
+    "old": "      if (acted) {\n        const o = ",
+    "new": "      if (false) {\n        const o = ",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]

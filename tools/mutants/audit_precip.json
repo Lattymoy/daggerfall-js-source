@@ -543,8 +543,8 @@
   {
     "name": "AUDIT-PRECIP-SKY-BAND-the-rest-unlaid",
     "file": "src/render/volumetricClouds.js",
-    "old": "  { float a = farA(rest); col += T * uHorizonColor * a; T *= 1.0 - a; }   // SKY-BAND: the slab past the walk",
-    "new": "  { }   // SKY-BAND: the slab past the walk",
+    "old": "  { float a = farA(rest); col += T * uHorizonColor * a; T *= 1.0 - a; }",
+    "new": "  { }",
     "tests": [
       "test/render/audit_precip_sky.test.js",
       "test/render/vc7d_cirrus.test.js"
@@ -618,8 +618,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-homes-left",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      for (const [m, map] of homes) { m._home.seq++; m.texRemap = map; }   // an ask of refreshHomeLooks under way is the old season's: spent",
-    "new": "   // an ask of refreshHomeLooks under way is the old season's: spent",
+    "old": "      for (const [m, map] of homes) { m._home.seq++; m.texRemap = map; }",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-felled-tree-stood-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        sinkFelled({ groups: made.forestGroups }, sunk, renderer);   // A felled tree lies felled in its new picture",
-    "new": "   // A felled tree lies felled in its new picture",
+    "old": "        sinkFelled({ groups: made.forestGroups }, sunk, renderer);",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-jungle-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        for (const [k, g] of p.forest.groups) if (!sk.forest.has(k)) forestGroups.set(k, g);   // the jungle's stand as they stood",
-    "new": "   // the jungle's stand as they stood",
+    "old": "        for (const [k, g] of p.forest.groups) if (!sk.forest.has(k)) forestGroups.set(k, g);",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -663,8 +663,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-old-handles-kept",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        for (const h of was) lowPolyTrees?.release(h);   // AUDIT LPT B5: the new ones held first",
-    "new": "   // AUDIT LPT B5: the new ones held first",
+    "old": "        for (const h of was) lowPolyTrees?.release(h);",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -672,8 +672,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-catch-up-skipped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (table !== p.texRemap) table = await reskinRemap(p.texRemap, law, lawOf, pipeline, table);   // what the standing table was asked meanwhile (a yard's, a farm's) - nothing is awaited past it",
-    "new": "   // what the standing table was asked meanwhile (a yard's, a farm's) - nothing is awaited past it",
+    "old": "      if (table !== p.texRemap) table = await reskinRemap(p.texRemap, law, lawOf, pipeline, table);",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -754,8 +754,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-season-unchanged",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      p.season = pixelSeason;\n      p._snow = rec.done(sk.usesSeason);",
-    "new": "      p._snow = rec.done(sk.usesSeason);",
+    "old": "      p.season = pixelSeason;\n",
+    "new": "",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "AUDIT-PRECIP-SKY-2-the-back-unfaded",
     "file": "src/render/volumetricClouds.js",
-    "old": "    tauB += inB.x; tintB += tint * (inB.x - inB.y) + uHorizonColor * inB.y; tSum += inB.x * 0.5 * (max(ta, tSplit) + tb);",
-    "new": "    tauB += inB.x; tintB += tint * inB.x; tSum += inB.x * 0.5 * (max(ta, tSplit) + tb);",
+    "old": "tauB += inB.x; tintB += tint * (inB.x - inB.y) + uHorizonColor * inB.y;",
+    "new": "tauB += inB.x; tintB += tint * inB.x;",
     "tests": [
       "test/render/audit_precip_sky.test.js"
     ]
@@ -853,8 +853,8 @@
   {
     "name": "AUDIT-PRECIP-SKY-POP-a-snow-front-its-own-warm-side",
     "file": "src/render/volumetricClouds.js",
-    "old": "    const warm = c.raw === 'snow' ? 'rain' : c.raw, k = Math.min(1, Math.max(0, c.snow));",
-    "new": "    const warm = c.raw, k = Math.min(1, Math.max(0, c.snow));",
+    "old": "const warm = c.raw === 'snow' ? 'rain' : c.raw, k = Math.min(1, Math.max(0, c.snow));",
+    "new": "const warm = c.raw, k = Math.min(1, Math.max(0, c.snow));",
     "tests": [
       "test/render/audit_precip_sky.test.js"
     ]

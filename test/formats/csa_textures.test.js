@@ -1,6 +1,6 @@
-// THE TILED PICTURE COME SAIL AWAY'S BREAKERS ARE COMPOSED BY: composeTiledPicture and its derive
-// (formats/derivedTexture.js), over pictures made here. OWN-WORK4: the mod's own pictures are retired - ours are painted (systems/comeSailAway/csaPictures.js, pinned by
-// test/systems/comeSailAway/csa_own_assets.test.js), and the extractor's block search and indexed PNG went with them.
+// THE TILED PICTURE COME SAIL AWAY'S BREAKERS ARE COMPOSED BY: composeTiledPicture and its derive (formats/derivedTexture.js), over pictures made here. OWN-WORK4: the
+// mod's own pictures are retired - ours are painted (systems/comeSailAway/csaPictures.js, pinned by test/systems/comeSailAway/csa_own_assets.test.js), and the
+// extractor's block search and indexed PNG went with them.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

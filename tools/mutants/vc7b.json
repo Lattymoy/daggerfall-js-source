@@ -29,8 +29,8 @@
   {
     "name": "VC7b-ground-straight-down",
     "file": "src/render/airPass.js",
-    "old": "    vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);",
-    "new": "    vec2 g = p.xz;",
+    "old": "vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);",
+    "new": "vec2 g = p.xz;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "VC7b-ground-wrong-way",
     "file": "src/render/airPass.js",
-    "old": "    vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);",
-    "new": "    vec2 g = p.xz + uLightDir.xz * (h / uLightDir.y);",
+    "old": "vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);",
+    "new": "vec2 g = p.xz + uLightDir.xz * (h / uLightDir.y);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "VC7b-no-extinction",
     "file": "src/render/airPass.js",
-    "old": "    lit += cloudShadowNearest(g) * exp(-sigma * t);",
-    "new": "    lit += cloudShadowNearest(g);",
+    "old": "lit += cloudShadowNearest(g) * exp(-sigma * t);",
+    "new": "lit += cloudShadowNearest(g);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "VC7b-shadow-at-the-eye",
     "file": "src/render/airPass.js",
-    "old": "    lit += cloudShadowNearest(g) * exp(-sigma * t);",
-    "new": "    lit += cloudShadowNearest(uEye.xz) * exp(-sigma * t);",
+    "old": "lit += cloudShadowNearest(g) * exp(-sigma * t);",
+    "new": "lit += cloudShadowNearest(uEye.xz) * exp(-sigma * t);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VC7b-unjittered",
     "file": "src/render/airPass.js",
-    "old": "  float t = dt * bayer4(gl_FragCoord.xy);",
-    "new": "  float t = dt * 0.5;",
+    "old": "float t = dt * bayer4(gl_FragCoord.xy);",
+    "new": "float t = dt * 0.5;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "VC7b-reach-ignores-the-surface",
     "file": "src/render/airPass.js",
-    "old": "  float reach = min(viewDist(depthAt(vUV)) * vlen, uHaze.z);",
-    "new": "  float reach = uHaze.z;",
+    "old": "float reach = min(viewDist(depthAt(vUV)) * vlen, uHaze.z);",
+    "new": "float reach = uHaze.z;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "VC7b-phase-unnormalised",
     "file": "src/render/airPass.js",
-    "old": "  return mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)}) / (4.0 * PI);",
-    "new": "  return mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)});",
+    "old": "return mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)}) / (4.0 * PI);",
+    "new": "return mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)});",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "VC7b-shader-gate-ignores-the-deck",
     "file": "src/render/airPass.js",
-    "old": "  if (sigma <= 0.0 || uLightDir.y <= 0.05 || uCloudShadowRect.w <= 0.0) return vec3(0.0);",
-    "new": "  if (sigma <= 0.0 || uLightDir.y <= 0.05) return vec3(0.0);",
+    "old": "if (sigma <= 0.0 || uLightDir.y <= 0.05 || uCloudShadowRect.w <= 0.0) return vec3(0.0);",
+    "new": "if (sigma <= 0.0 || uLightDir.y <= 0.05) return vec3(0.0);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "VC7b-pass-gate-ignores-the-door",
     "file": "src/render/airPass.js",
-    "old": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
-    "new": "    const haze = up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
+    "old": "const haze = this.hazeOn && up && deck?.rect",
+    "new": "const haze = up && deck?.rect",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "VC7b-pass-gate-ignores-the-deck-amount",
     "file": "src/render/airPass.js",
-    "old": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
-    "new": "    const haze = this.hazeOn && up && deck?.rect && f.lightDir[1] > 0.05 && f.haze > 0;",
+    "old": "deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05",
+    "new": "deck?.rect && f.lightDir[1] > 0.05",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "VC7b-pass-gate-ignores-the-low-sun",
     "file": "src/render/airPass.js",
-    "old": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
-    "new": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.haze > 0;",
+    "old": "deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
+    "new": "deck.rect[3] > 0 && f.haze > 0;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "VC7b-pass-gate-ignores-the-fog",
     "file": "src/render/airPass.js",
-    "old": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05 && f.haze > 0;",
-    "new": "    const haze = this.hazeOn && up && deck?.rect && deck.rect[3] > 0 && f.lightDir[1] > 0.05;",
+    "old": "f.lightDir[1] > 0.05 && f.haze > 0;",
+    "new": "f.lightDir[1] > 0.05;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "VC7b-haze-unblurred",
     "file": "src/render/airPass.js",
-    "old": "      quad(S, haze ? T.shaftRaw : T.shaft); // The march's jitter wants the tile's average; the beams alone do not",
-    "new": "      quad(S, T.shaft); // The march's jitter wants the tile's average; the beams alone do not",
+    "old": "quad(S, haze ? T.shaftRaw : T.shaft);",
+    "new": "quad(S, T.shaft);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "VC7b-haze-never-uploaded",
     "file": "src/render/airPass.js",
-    "old": "      this._haze[0] = haze ? f.haze : 0;",
-    "new": "      this._haze[0] = 0;",
+    "old": "this._haze[0] = haze ? f.haze : 0;",
+    "new": "this._haze[0] = 0;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "VC7b-haze-leaks-past-its-gate",
     "file": "src/render/airPass.js",
-    "old": "      this._haze[0] = haze ? f.haze : 0;",
-    "new": "      this._haze[0] = f.haze;",
+    "old": "this._haze[0] = haze ? f.haze : 0;",
+    "new": "this._haze[0] = f.haze;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "VC7b-sky-map-always-on",
     "file": "src/render/airPass.js",
-    "old": "      gl.uniform1f(S.uCloudSkyOn, deck?.sky ? 1 : 0);",
-    "new": "      gl.uniform1f(S.uCloudSkyOn, 1);",
+    "old": "gl.uniform1f(S.uCloudSkyOn, deck?.sky ? 1 : 0);",
+    "new": "gl.uniform1f(S.uCloudSkyOn, 1);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "VC7b-sky-map-never-on",
     "file": "src/render/airPass.js",
-    "old": "      gl.uniform1f(S.uCloudSkyOn, deck?.sky ? 1 : 0);",
-    "new": "      gl.uniform1f(S.uCloudSkyOn, 0);",
+    "old": "gl.uniform1f(S.uCloudSkyOn, deck?.sky ? 1 : 0);",
+    "new": "gl.uniform1f(S.uCloudSkyOn, 0);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "VC7b-sky-map-on-the-shadow-unit",
     "file": "src/render/airPass.js",
-    "old": "      gl.uniform1i(S.uCloudSky, 2);",
-    "new": "      gl.uniform1i(S.uCloudSky, 1);",
+    "old": "gl.uniform1i(S.uCloudSky, 2);",
+    "new": "gl.uniform1i(S.uCloudSky, 1);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "VC7b-mask-ignores-the-sky-map",
     "file": "src/render/airPass.js",
-    "old": "  return sky * near > 0.0 ? sky * near * skyThrough(uv) : 0.0;   // VC7b: the sky map read only where the tap can count",
-    "new": "  return sky * near;   // VC7b: the sky map read only where the tap can count",
+    "old": "return sky * near > 0.0 ? sky * near * skyThrough(uv) : 0.0;",
+    "new": "return sky * near;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "VC7b-sky-map-azimuth-swapped",
     "file": "src/render/airPass.js",
-    "old": "  return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;   // AUDIT-VC7 (G3): read in the mask's loop",
-    "new": "  return textureLod(uCloudSky, vec2(atan(d.z, d.x) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;   // AUDIT-VC7 (G3): read in the mask's loop",
+    "old": "return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;",
+    "new": "return textureLod(uCloudSky, vec2(atan(d.z, d.x) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "VC7b-sky-map-reads-colour",
     "file": "src/render/airPass.js",
-    "old": "  return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;   // AUDIT-VC7 (G3): read in the mask's loop",
-    "new": "  return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).r;   // AUDIT-VC7 (G3): read in the mask's loop",
+    "old": "return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;",
+    "new": "return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).r;",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "VC7b-vc6c-gate-linear",
     "file": "src/render/airPass.js",
-    "old": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
-    "new": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through);",
+    "old": "return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
+    "new": "return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through);",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "VC7b-sky-before-a-sweep",
     "file": "src/render/volumetricClouds.js",
-    "old": "    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.sweeps > 0 ? this.map.tex : null };",
-    "new": "    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.map.tex };",
+    "old": "sky: this.sweeps > 0 ? this.map.tex : null };",
+    "new": "sky: this.map.tex };",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "VC7b-no-sky-on-the-deck",
     "file": "src/render/volumetricClouds.js",
-    "old": "    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.sweeps > 0 ? this.map.tex : null };",
-    "new": "    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: null };",
+    "old": "sky: this.sweeps > 0 ? this.map.tex : null };",
+    "new": "sky: null };",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]

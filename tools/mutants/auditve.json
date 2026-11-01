@@ -70,8 +70,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "    } catch (e) {\n      if (!e?.unsupported) throw e;\n      _decodeHere = true; // this browser's workers cannot decode: this thread's, for good - its builds stay there",
-    "new": "    } catch (e) {\n      throw e;\n      _decodeHere = true; // this browser's workers cannot decode: this thread's, for good - its builds stay there"
+    "old": "      if (!e?.unsupported) throw e;\n      _decodeHere = true;",
+    "new": "      throw e;\n      _decodeHere = true;"
   },
   {
     "name": "AUDITVE-dead-worker-asked",
@@ -419,8 +419,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  const lanes = decodeWorkers();\n  if (lanes) {",
-    "new": "  const lanes = decodeWorkers();\n  if (false) {"
+    "old": "  const lanes = decodeWorkers();\n  if (lanes) {\n    try {\n      return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);",
+    "new": "  const lanes = decodeWorkers();\n  if (false) {\n    try {\n      return await askWorker(lanes, { build: got.spec, source: got.src }, [got.src.data.buffer]);"
   },
   {
     "name": "AUDITVE-build-dead-worker-not-falling-back",
@@ -428,7 +428,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "    } catch (e) {\n      if (!e?.unsupported) throw e;\n      _workers = false; // the workers are gone: this thread builds from here on",
-    "new": "    } catch (e) {\n      throw e;\n      _workers = false; // the workers are gone: this thread builds from here on"
+    "old": "      if (!e?.unsupported) throw e;\n      _workers = false;",
+    "new": "      throw e;\n      _workers = false;"
   }
 ]

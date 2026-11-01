@@ -74,8 +74,8 @@
   {
     "name": "S2-horse-drawn-as-the-class",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
-    "new": "  const skin = !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "old": "const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "new": "const skin = !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "S2-beast-drawn-as-the-class",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "  const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
-    "new": "  const skin = !table.endsWith('Horse') ? classSkinOf(look.onFoot) : null;",
+    "old": "const skin = !table.endsWith('Horse') && !table.endsWith('Lycan') ? classSkinOf(look.onFoot) : null;",
+    "new": "const skin = !table.endsWith('Horse') ? classSkinOf(look.onFoot) : null;",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "S2-class-never-mirrored",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}`, view: st.record - STATE_TABLES[table].base };",
-    "new": "    return { archive: skin.archive, record, frame: f, mirror: false, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}`, view: st.record - STATE_TABLES[table].base };",
+    "old": "return { archive: skin.archive, record, frame: f, mirror, key:",
+    "new": "return { archive: skin.archive, record, frame: f, mirror: false, key:",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "S2-mirror-shares-the-cache",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}${mirror ? 'm' : ''}`, view: st.record - STATE_TABLES[table].base };",
-    "new": "    return { archive: skin.archive, record, frame: f, mirror, key: spriteKey(skin.archive, record, f), rec: `${record}-${f}`, view: st.record - STATE_TABLES[table].base };",
+    "old": "rec: `${record}-${f}${mirror ? 'm' : ''}`, view:",
+    "new": "rec: `${record}-${f}`, view:",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "S2-wrong-orientation-offset",
     "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
-    "old": "    const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);",
-    "new": "    const record = classRecord(skin, table, 0);",
+    "old": "const record = classRecord(skin, table, st.record - STATE_TABLES[table].base);",
+    "new": "const record = classRecord(skin, table, 0);",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]

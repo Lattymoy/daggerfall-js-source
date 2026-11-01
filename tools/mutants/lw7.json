@@ -741,8 +741,8 @@
   {
     "name": "LW7-host-town-options",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          holderOf: (res, day) => (host.legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // One of the watch another hand cut down",
-    "new": "          deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // One of the watch another hand cut down",
+    "old": "          holderOf: (res, day) => (host.legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
+    "new": "          deadAt: livingDeadAt, slay: livingSlay,",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ],

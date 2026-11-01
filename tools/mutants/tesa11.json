@@ -303,8 +303,8 @@
   {
     "name": "TESA11-host-flatten-unsent",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      flattenAt: dfLocation?.capital?.flattenAt ?? null,   // A capital over several pixels flattened to its centre's ground",
-    "new": "      flattenAt: null,   // A capital over several pixels flattened to its centre's ground",
+    "old": "      flattenAt: dfLocation?.capital?.flattenAt ?? null,",
+    "new": "      flattenAt: null,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]

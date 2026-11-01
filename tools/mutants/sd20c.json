@@ -191,8 +191,8 @@
   {
     "name": "SD20C-V8-the-clouds-ungraded",
     "file": "src/render/volumetricClouds.js",
-    "old": "  vec3 cloud = op > 1e-4 ? brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op : c.rgb;   // AUDIT SD III (V8): the brass air's after the dread's",
-    "new": "  vec3 cloud = op > 1e-4 ? dreadGrade(c.rgb / op, uDread) * op : c.rgb;   // AUDIT SD III (V8): the brass air's after the dread's",
+    "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op : c.rgb;",
+    "new": "dreadGrade(c.rgb / op, uDread) * op : c.rgb;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

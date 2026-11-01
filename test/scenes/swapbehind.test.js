@@ -174,7 +174,7 @@ test('IC-SWAP-BEHIND THE HOSTS - every rebuild of a standing pixel goes through 
   assert.match(pb, /const pkey = `\$\{px\},\$\{py\}`, key = swap\.keyFor\(px, py\), pipeline = holdPixel\(key\),/);
   assert.match(pb, /swap\.publish\(px, py, key, made, \{/);
   assert.match(pb, /\(key === pkey \? buildingDoors : \(made\.doors \?\?= \[\]\)\)\.push\(\{/);
-  assert.match(pb, /swap\.mark\(px, py\);   \/\/ IC-SWAP-BEHIND: built again behind the roadless view/);
+  assert.match(pb, /swap\.mark\(px, py\);/);
   assert.match(pb, /if \(key === pkey && isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py,/, 'a view swapped in for one that stood never eases in from the ring\'s tint');
   const build = pb.slice(pb.indexOf('async function buildPixelNow('), pb.indexOf('async function reskinPixelNow('));
   assert.ok(build.length > 10000, 'the build\'s own body');

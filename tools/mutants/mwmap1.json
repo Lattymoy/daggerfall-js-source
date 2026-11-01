@@ -2,8 +2,8 @@
   {
     "name": "MWMAP1-the-holder-snapshots-the-rig",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "export function sheetHolderOf(rig) {",
-    "new": "export function sheetHolderOf(rigFn) {\n  const first = rigFn(); const rig = () => first;",
+    "old": "export function sheetHolderOf(rig) {\n  return {",
+    "new": "export function sheetHolderOf(rigFn) {\n  const first = rigFn(); const rig = () => first;\n  return {",
     "tests": [
       "test/ui/town/mwmap1.test.js"
     ]

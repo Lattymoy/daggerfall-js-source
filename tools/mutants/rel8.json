@@ -160,8 +160,8 @@
   {
     "name": "REL8-news-ignores-the-name",
     "file": "app/lib/launcherState.cjs",
-    "old": "    .map((r) => ({ v: parseReleaseTag(r.tag_name), date: typeof r.published_at === 'string' ? r.published_at : '', text: playerNotes(r.body), update: updateOfName(r.name) }))",
-    "new": "    .map((r) => ({ v: parseReleaseTag(r.tag_name), date: typeof r.published_at === 'string' ? r.published_at : '', text: playerNotes(r.body), update: null }))",
+    "old": "text: playerNotes(r.body), update: updateOfName(r.name) }))",
+    "new": "text: playerNotes(r.body), update: null }))",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "REL8-cache-keeps-anything",
     "file": "app/lib/launcherState.cjs",
-    "old": "    .map((n) => ({ version: String(n.version).trim(), date: typeof n.date === 'string' ? n.date : '', text: n.text, ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }))",
-    "new": "    .map((n) => ({ version: String(n.version).trim(), date: typeof n.date === 'string' ? n.date : '', text: n.text, ...(n.update ? { update: n.update } : {}) }))",
+    "old": "text: n.text, ...(UPDATE_NUMBER_RE.test(n.update) ? { update: n.update } : {}) }))",
+    "new": "text: n.text, ...(n.update ? { update: n.update } : {}) }))",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]

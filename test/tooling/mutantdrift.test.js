@@ -132,14 +132,10 @@ test('AUDIT QS6 F7: every mutant record still names source that is there - a rec
 // LEGIBLE 3's carry put eleven of them on one site each (a formatted line stands once), and they came off.
 // The map can only shrink.
 const CARRIED_AIM = new Map([
-  ['disc13.json::DISC13-A-world-hands-the-torch-the-stepped-feet', 2],
   ['disc13.json::DISC13-A-worldModes-hands-the-flash-the-stepped-feet', 2],
   ['weather3a.json::WEATHER3a-births-ignore-the-hour', 2],
   ['auditsoc.json::B9-any-tab-speaks-for-the-seat', 2],
   ['auditsoc.json::B8-panel-clock-never-ticks', 2],
-  ['auditwod.json::WOD6-quickload-no-onload', 2],
-  ['blood1.json::BLOOD1a-the-decal-pass-turns-the-depth-test-off', 3],
-  ['hcc.json::HCC-disabled-still-shows', 2],
   ['soc1.json::S32-room-budget-missing', 2],
 ]);
 

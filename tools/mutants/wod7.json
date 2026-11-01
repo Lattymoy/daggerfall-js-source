@@ -322,8 +322,8 @@
   {
     "name": "WOD7-oid-index-unminted",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
-    "new": "          const n = 0;",
+    "old": "const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
+    "new": "const n = 0;",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]

@@ -1,9 +1,7 @@
-// STOREFRONT, AUDIT LANE 5: A BRASS FISSURE KEEPS OFF THE ROADS.
-// Seven of the season's 344 fissures stood within 12 m of a road's or a track's band on the player's map - one a Heart
-// Fissure, 1.2.43.0 by Rhaniriza - their solid slabs across it. A draw whose heart reaches the Bay's network (the room's,
-// Basic Roads forced on online) is passed over as a draw too near a fissure is (systems/pass/seasonWorld.js), the same on
-// every machine; the host stands none before it has read the roads. tools/mutants/storefront_seasonaudit.json. OWN-WORK2:
-// the network is the port's own (test/bayRoads.mjs); the counts the audit measured on Basic Roads' arrays moved with it.
+// A BRASS FISSURE KEEPS OFF THE ROADS: its solid slabs would stand across one. A draw whose heart reaches the Bay's
+// network (the room's, Basic Roads forced on online) is passed over as a draw too near a fissure is
+// (systems/pass/seasonWorld.js), the same on every machine; the host stands none before it has read the roads. The
+// network is the port's own (test/bayRoads.mjs). The mutants are tools/mutants/storefront_seasonaudit.json.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +20,7 @@ import { HEART_T, SCAN, settle } from '../../scenes/seasonRig.mjs';
 /** A network of the test's own: a road east-west along every seventh row. */
 const NET = { roads: new Uint8Array(500_000), tracks: new Uint8Array(500_000) };
 for (let i = 0; i < NET.roads.length; i++) if (Math.floor(i / 1000) % 7 === 0) NET.roads[i] = 0x22;
-const NEAR_BAY = 5, HEARTS_BAY = 1;   // Measured on the freeware's map, 2026-10-31
+const NEAR_BAY = 5, HEARTS_BAY = 1;   // Measured on the freeware's map
 const onRoad = (net, f) => pointNearPath(net, f.px, f.py, f.spot[0] * UNITS_PER_METRE, f.spot[1] * UNITS_PER_METRE, FISSURE_ROAD_M * UNITS_PER_METRE);
 
 test('AUDIT LANE 5 (10): a fissure\'s draw that reaches a road is passed over - none stands on one, the rest where they stood, the same every run (mutants: the roads unread; the margin dropped)', () => {
@@ -64,7 +62,7 @@ test('AUDIT LANE 5 (10): on the player\'s map, none of the season\'s fissures wi
       }
     }
   }
-  // the audit measured seven on Basic Roads' arrays, one a Heart Fissure (1.2.43.0); the Bay's own network, 2026-10-31:
+  // the draws and the hearts on the Bay's own network:
   assert.deepEqual([near, heartsMoved], [NEAR_BAY, HEARTS_BAY], 'the draws a road crosses, and the hearts among them');
 });
 

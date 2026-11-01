@@ -345,8 +345,8 @@
   {
     "name": "EVENT1-composite-premultiplied",
     "file": "src/render/volumetricClouds.js",
-    "old": "  vec3 cloud = op > 1e-4 ? brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op : c.rgb;   // AUDIT SD III (V8): the brass air's after the dread's",
-    "new": "  vec3 cloud = op > 1e-4 ? brassGrade(dreadGrade(c.rgb, uDread), uBrass) : c.rgb;   // AUDIT SD III (V8): the brass air's after the dread's",
+    "old": "brassGrade(dreadGrade(c.rgb / op, uDread), uBrass) * op",
+    "new": "brassGrade(dreadGrade(c.rgb, uDread), uBrass)",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]

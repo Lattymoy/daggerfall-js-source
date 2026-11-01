@@ -1,13 +1,13 @@
-// RPT1026-WORLD CAUSEWAY (a private report, 2026-10-26, Tulune's Grayidge-Westwall road: on the bridge the guide turned
-// off it and left the traveller stuck in the water): A ROAD OVER THE WATER IS THE ROAD'S. Hazelnut's road crosses
+// A ROAD OVER THE WATER IS THE ROAD'S, so the guide keeps to Tulune's Grayidge-Westwall bridge and never leaves the
+// traveller stuck in the water. Hazelnut's road crosses
 // the inlet between Grayidge (72, 133) and Westwall (72, 130) at (72, 131), a pixel whose WOODS byte is at the beach
 // line - and his painter paves it, a strip of road tiles across the water (world/road/roadPainter.js ROAD_TILES). The
 // Overworld's step law refused every step into the sea, his road's too, so the route left the road at (72, 132) and went
 // by (73, 131), across the inlet's east arm. Through the real planner (systems/travel/travelRoute.js planRoute) on his
 // vendored bytes, the ground the host hands it (world.js tvRouteGround: routeGround over the player's WOODS.WLD and
 // MAPS.BSA), and the tiles the terrain kernel paints there (world/terrain/terrainGen.js generatePixelTerrain).
-// OWN-WORK2: his arrays are retired and the Bay's own network lays no road on the sea. The law stands - a
-// road over the water is the road's - and is pinned on a road of the test's own over the same inlet.
+// His arrays are retired and the Bay's own network lays no road on the sea, so the law - a road over the water is
+// the road's - is pinned on a road of the test's own over the same inlet.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';

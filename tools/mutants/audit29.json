@@ -446,8 +446,8 @@
   {
     "name": "AUDIT29-D2-the-rig-swings-behind-the-tool",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
-    "new": "      const canAttack = !playerWeapon.sheathed && (entity?.equipCountdown ?? 0) <= 0 && (!spellArmed() || _spellHand) && !armCasting() && !(_spellHand && castPending()) && !fpsSpellCasting.isPlayingAnim && !climbing && (!pelletsOwed() || playerWeapon.mixedPair);   // No swing behind a gathering act's tool; AUDIT PISTOL-PORT A5: nor a shot with no Pellet left for it (MIXED-PAIR: the pair's gun refuses its own pull - gunReady - and its blade takes it)",
+    "old": "&& !fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);",
+    "new": "&& !fpsSpellCasting.isPlayingAnim && !climbing && (!pelletsOwed() || playerWeapon.mixedPair);",
     "tests": [
       "test/scenes/audit29_host.test.js"
     ]

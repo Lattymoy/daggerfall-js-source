@@ -1,5 +1,5 @@
 // THE WEEK BUTTON, OUR OWN, painted by our painter (art/ownPainter.js). The keepers are our rule over the
-// player's own people now (rrKeepers.js, OWN-WORK4 AUDIT).
+// player's own people (rrKeepers.js).
 import { createPainter, RAMP, rect, textWidth, NARROW } from '../../art/ownPainter.js';
 
 /** The training window's week button (BUTTONS.RCI record 21, RR_WEEK_BUTTON): carved stone at a classic button's 32 x 16,

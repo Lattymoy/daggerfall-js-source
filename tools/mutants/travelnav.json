@@ -254,8 +254,8 @@
   {
     "name": "TN-resume-without-edge-arrival",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });",
-    "new": "      travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: false });",
+    "old": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });",
+    "new": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: false });",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "TN-switch-not-read-at-the-step",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer && !deps.atSea?.()) {   // Afloat, the helm's own hand steers (systems/seaHelm.js), not the walk's",
-    "new": "      if (st.autopilot && drive && !drive.arrived && deps.steer && !deps.atSea?.()) {   // Afloat, the helm's own hand steers (systems/seaHelm.js), not the walk's",
+    "old": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer && !deps.atSea?.()) {",
+    "new": "      if (st.autopilot && drive && !drive.arrived && deps.steer && !deps.atSea?.()) {",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "TN-stop-words-swapped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
-    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck);",
+    "old": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked",
+    "new": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "TN-stop-leaves-a-panelless-journey-running",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          if (st.autopilot) interruptTravel();\n          return { drive, handled: true, stopped: stop };",
-    "new": "          return { drive, handled: true, stopped: stop };",
+    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);\n          if (st.autopilot) interruptTravel();",
+    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "TN-switch-off-the-tile",
     "file": "src/systems/features.js",
-    "old": "    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',",
-    "new": "    'GeneralOptions.FirstPersonTravel',",
+    "old": "    'GeneralOptions.LocationPause',\n    'GeneralOptions.AvoidObstacles', 'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
+    "new": "    'GeneralOptions.LocationPause',\n    'GeneralOptions.FirstPersonTravel',\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]

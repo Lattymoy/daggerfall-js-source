@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-CAPECARD-A3-a-riders-face-no-card",
     "file": "src/net/peer/peerRiders.js",
-    "old": "  const f = r.face ?? (r.face = { yaw: null, turn: 0, card: true });   // A flat card - a rider, with no figure to read, hangs behind it (a walker's figure wins)",
-    "new": "  const f = r.face ?? (r.face = { yaw: null, turn: 0, card: false });   // A flat card - a rider, with no figure to read, hangs behind it (a walker's figure wins)",
+    "old": "(r.face = { yaw: null, turn: 0, card: true })",
+    "new": "(r.face = { yaw: null, turn: 0, card: false })",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]

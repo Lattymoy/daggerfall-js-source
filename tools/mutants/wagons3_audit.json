@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WAGONS3-B1-the-stepped-pose",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);",
-    "new": "    const m = wagonMatrix(w.position, w.rotation);",
+    "old": "const m = wagonMatrix(f?.at ?? w.position, f?.rotation ?? w.rotation);",
+    "new": "const m = wagonMatrix(w.position, w.rotation);",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WAGONS3-B2-the-seatless-frame-a-saddle",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  const benchKind = () => enabled && !!driverSeatFor(myKind());",
-    "new": "  const benchKind = () => false;",
+    "old": "const benchKind = () => enabled && !!driverSeatFor(myKind());",
+    "new": "const benchKind = () => false;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WAGONS3-B2-the-mod-off-a-bench",
     "file": "src/scenes/horseCartPool.js",
-    "old": "  const benchKind = () => enabled && !!driverSeatFor(myKind());",
-    "new": "  const benchKind = () => !!driverSeatFor(myKind());",
+    "old": "const benchKind = () => enabled && !!driverSeatFor(myKind());",
+    "new": "const benchKind = () => !!driverSeatFor(myKind());",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-WAGONS3-T1-in-at-contact",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r - CAPSULE_BOX_SKIN;",
-    "new": "    const b = usableBounds(parts.bounds), r = c.radius ?? 0.35, h = Math.max(2 * r, c.height ?? 1.8), reach = r + CAPSULE_BOX_SKIN;",
+    "old": "reach = r - CAPSULE_BOX_SKIN;",
+    "new": "reach = r + CAPSULE_BOX_SKIN;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-WAGONS3-T2-the-phantom-mate",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      for (const x of mine && pair && (horses?.() ?? 1) < 2 ? sides.slice(0, 1) : sides) {",
-    "new": "      for (const x of sides) {",
+    "old": "for (const x of mine && pair && (horses?.() ?? 1) < 2 ? sides.slice(0, 1) : sides) {",
+    "new": "for (const x of sides) {",
     "tests": [
       "test/player/wagons3.test.js"
     ]

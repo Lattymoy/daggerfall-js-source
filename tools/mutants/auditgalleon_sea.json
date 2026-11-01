@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-GN-T4b-her-pictures-never-registered",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        art.register(addVendorTextures);\n        pipeline?.markClassicArt?.(art.archive);",
-    "new": "        pipeline?.markClassicArt?.(art.archive);",
+    "old": "        art.register(addVendorTextures);\n",
+    "new": "",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-GN-T4b-her-glow-not-a-replacement",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
-    "new": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow));",
+    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
+    "new": "toColor32(glow));",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]

@@ -363,8 +363,8 @@
   {
     "name": "WOD6-quickload-no-onload",
     "file": "src/scenes/world.js",
-    "old": "        { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }\n",
-    "new": "",
+    "old": "        { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }\n      } else if (String(extras.locationKey ?? '').startsWith('dungeon:')) {",
+    "new": "      } else if (String(extras.locationKey ?? '').startsWith('dungeon:')) {",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]

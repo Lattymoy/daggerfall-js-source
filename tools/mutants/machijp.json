@@ -123,8 +123,8 @@
   {
     "name": "MAC-I-the-weapon-sprite-drops-the-tint",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
-    "new": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, m.state, m.frame, { offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow() });   // Lowered for the climb (0: OnGUI's own offset); WEAPON-GLOW1: the element's outline, the held weapon's own",
+    "old": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop",
+    "new": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { offsetHeight: offsetHeight - spellDrop",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]

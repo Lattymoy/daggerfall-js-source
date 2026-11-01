@@ -2,8 +2,8 @@
   {
     "name": "PR-WAGON1-their-wagon-holds-the-ray",
     "file": "src/scenes/horseCartPool.js",
-    "old": "        out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(theirs.box, pm)), obb: { m: pm, box: theirs.box }, distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
-    "new": "        out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(theirs.box, pm)), obb: { m: pm, box: theirs.box }, distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n      }\n      // AUDIT HCC O9",
+    "new": "ACTIVATION_REACH, noSurface: true });\n      }\n      // AUDIT HCC O9",
     "tests": [
       "test/player/prwagon1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PR-WAGON1-their-horse-holds-the-ray",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: teamAabb(owner, { ...p.horse, position: p.shownHorse }), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
-    "new": "      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: teamAabb(owner, { ...p.horse, position: p.shownHorse }), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "old": "ACTIVATION_REACH, noSurface: true, yields: true });\n    }\n    return out;",
+    "new": "ACTIVATION_REACH, noSurface: true });\n    }\n    return out;",
     "tests": [
       "test/player/prwagon1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PR-WAGON1-their-wagon-a-wall-again",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      turnPeer(p);   // Its wheels and bogie, off the pose drawn here",
-    "new": "      if (p.wagon?.kind === HCC_WIRE_KIND.Deployed && _parts) p.bucketKey = standBox(`hccWagon:${owner}`, wagonMatrix(p.wagon.position, p.wagon.rotation), p.bucketKey);\n      turnPeer(p);   // Its wheels and bogie, off the pose drawn here",
+    "old": "      else if (p.wagon) { p.hitch = null; p.shownUp = null; p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }\n",
+    "new": "      else if (p.wagon) { p.hitch = null; p.shownUp = null; p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }\n      if (p.wagon?.kind === HCC_WIRE_KIND.Deployed && _parts) p.bucketKey = standBox(`hccWagon:${owner}`, wagonMatrix(p.wagon.position, p.wagon.rotation), p.bucketKey);\n",
     "tests": [
       "test/player/prwagon1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-BRANCH-0925-PRW1-A-their-wagon-met-at-the-square-box",
     "file": "src/scenes/horseCartPool.js",
-    "old": "        out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(theirs.box, pm)), obb: { m: pm, box: theirs.box }, distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
-    "new": "        out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(theirs.box, pm)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "old": "obb: { m: pm, box: theirs.box }, ",
+    "new": "",
     "tests": [
       "test/player/prwagon1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-BRANCH-0925-P1-my-following-wagon-yields",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
-    "new": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "old": "reach: ACTIVATION_REACH, noSurface: true });\n    }\n    if (s?.horse)",
+    "new": "reach: ACTIVATION_REACH, noSurface: true, yields: true });\n    }\n    if (s?.horse)",
     "tests": [
       "test/player/prwagon1.test.js",
       "test/systems/horse/hcc_pool.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-BRANCH-0925-P1-my-parked-wagon-yields",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (s.wagon.kind === HCC_WIRE_KIND.Deployed) out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });",
-    "new": "      if (s.wagon.kind === HCC_WIRE_KIND.Deployed) out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, yields: true });",
+    "old": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });",
+    "new": "out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, yields: true });",
     "tests": [
       "test/player/prwagon1.test.js",
       "test/systems/horse/hcc_pool.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-BRANCH-0925-P1-my-horse-yields",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    if (s?.horse) out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
-    "new": "    if (s?.horse) out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
+    "old": "out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });",
+    "new": "out.push({ key: KEY_HORSE, aabb: teamAabb('', s.horse), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true, yields: true });",
     "tests": [
       "test/player/prwagon1.test.js",
       "test/systems/horse/hcc_pool.test.js"

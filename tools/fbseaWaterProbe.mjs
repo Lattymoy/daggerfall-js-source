@@ -1,7 +1,7 @@
-// FIELD BUGS 2026-09-29 (the sea) #4 - "Water flickers from a distance". A synthetic coast drawn by the port's own
+// WATER THAT FLICKERS FROM A DISTANCE. A synthetic coast drawn by the port's own
 // passes on a real GL pipeline (SwiftShader): Iliac Puddle No More's floor and surface top (render/deepWatersRender.js)
 // and Come Sail Away's waves (render/comeSailAwayRender.js, its mesh from systems/comeSailAway/comeSailAwayWaves.js buildWaveMesh,
-// OWN-WORK4: our own two paints, systems/comeSailAway/csaPictures.js), under the world's lens (0.2 to 6000). The camera bobs by
+// our own two paints, systems/comeSailAway/csaPictures.js), under the world's lens (0.2 to 6000). The camera bobs by
 // centimetres, as a deck carries it; a pixel whose colour changes between two bobs of a still scene is a flicker.
 //     node tools/fbseaWaterProbe.mjs [--solid] [--time]   (--solid: the waves painted flat - their depth alone, no texels;
 //                                                          --time: the frame's cost, the strip over half the screen)

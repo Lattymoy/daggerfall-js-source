@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-SEA-PATHS-PL-1-sea-legs-never-ask",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };",
-    "new": "    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: undefined };",
+    "old": "edgeArrival: atSea ? true : undefined };",
+    "new": "edgeArrival: undefined };",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "AUDIT-SEA-PATHS-O4-a-mended-leg-at-its-window",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' && leg.at ? rectOf(leg.at.x - SEA_LEG_SIZE / 2, leg.at.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)   // a leg round the kernel's land (seaLegsMend.js)\n      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
-    "new": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
+    "old": "      : leg.kind === 'sea' && leg.at ? rectOf(leg.at.x - SEA_LEG_SIZE / 2, leg.at.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)   // a leg round the kernel's land (seaLegsMend.js)\n",
+    "new": "",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]

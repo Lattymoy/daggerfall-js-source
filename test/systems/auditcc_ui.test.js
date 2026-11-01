@@ -388,7 +388,7 @@ test('AUDIT C&C S6 (decision D4): AN UNIDENTIFIED PIECE\'S COMPARISON IS AS ITS 
 test('AUDIT C&C S8, S13: THE WORDS SAY WHAT IS SO - the Features comment says Boons\' neglect costs nothing (the drink still swings the attributes in Boons: "nothing taken" was false); the first-need page opens on the first need of any kind and says where the tiles stand (the left edge, not beside the bars), in TUT1\'s sixty words', () => {
   // The credit that said it left with ui/credits.js
   const features = read('src/systems/features.js');
-  assert.match(features, /\/\/ \(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus\),/);
+  assert.match(features, /On Boons neglect costs nothing/);
   assert.doesNotMatch(features, /nothing taken, a need met/);
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.equal(page.trigger, 'When a need first shows on your screen.');

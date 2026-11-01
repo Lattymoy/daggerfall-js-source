@@ -103,8 +103,8 @@
   {
     "name": "SEA-SQUARE-launch-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;   // Past the Bay about the pixel's byte",
-    "new": "    const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o;   // Past the Bay about the pixel's byte",
+    "old": "const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;",
+    "new": "const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o;",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "SEA-SQUARE-rect-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
-    "new": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE) : leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE);   // A curve's apex",
+    "old": "rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
+    "new": "rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "SEA-SQUARE-rebuilt-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);   // The squares its mark is read on",
-    "new": "    const m = legMiddle(leg); return deps.seaWaterAt(m.x, m.z) !== null;   // The squares its mark is read on",
+    "old": "return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);",
+    "new": "const m = legMiddle(leg); return deps.seaWaterAt(m.x, m.z) !== null;",
     "tests": [
       "test/world/worldWide/fb1028b_seasquare.test.js"
     ],
