@@ -98,7 +98,7 @@ test('OVH2: the pack is worn only over the classic skin, never under a probe\'s 
 test('OVH2: the pack\'s index is the vendored listing, and every file it names ships under public/art/grimoire-ui/ - IMG by name, BUTTONS.RCI by record with the case folded as DFU\'s Windows lookup does, the save window\'s textures by DFU\'s camelCase name, the two SDF faces by their FNT (mutants: the case fold dropped; a listed file missing)', () => {
   const g = UI_PACKS.grimoire;
   assert.equal(g.files.length, manifest.Files.length);
-  assert.equal(g.author, 'LordSquacquerone');
+  assert.ok(!('author' in g) && !('source' in g), 'the pack record names no author and no download page');
   const idx = packIndex(g);
   assert.equal(idx.img.size, 93);
   assert.equal(idx.cifRci.size, 38, 'BUTTONS.RCI 0-37');
