@@ -5,6 +5,7 @@ Rotations are degrees about the joint's rest axes (+X left, +Y back, +Z up): a t
 a knee bends on +X, an elbow on -X, the trunk leans forward on +X; a left limb spreads out on -Y, a right on +Y.
 Points given in body space are in the root's frame: the ground under the body, facing -Y."""
 import json
+import math
 import os
 
 from mathutils import Matrix, Vector
@@ -12,8 +13,8 @@ from mathutils import Matrix, Vector
 from rig import Pose, solve_arm
 
 # A frame's fitted adjustment (fit.py): joint rotations added to its keys ('rot'), the body's turn ('turn'), the axe
-# grip and haft ('grip', 'haft', body space), the attack's fist and axe head on screen ('fist', 'head'). Keyed
-# '<anim>:<view>:<frame>'.
+# grip and haft ('grip', 'haft', body space), the attack's fist and axe head on screen ('fist', 'head'), the axe's
+# roll about its haft in degrees ('roll'). Keyed '<anim>:<view>:<frame>'.
 FIT = {}
 _adj = {}
 
@@ -80,7 +81,10 @@ def axe_at(pose, grip_at, haft, blade_up, left_at=None, pole_r=(-1, 0.3, -0.5), 
         hv = Vector(haft).normalized()
         grip(pose, 'L', Vector(grip_at) + hv * left_at, haft, pole_l, knuckles_l)
     rot = root_matrix(pose).to_3x3()
-    return frame_matrix(at_w, haft_w, rot @ Vector(blade_up))
+    blade = rot @ Vector(blade_up)
+    if _adj.get('roll'):
+        blade = Matrix.Rotation(math.radians(_adj['roll']), 3, haft_w) @ blade
+    return frame_matrix(at_w, haft_w, blade)
 
 
 def stance(rot, yaw):

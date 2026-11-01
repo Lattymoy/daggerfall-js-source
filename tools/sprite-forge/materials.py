@@ -1,5 +1,29 @@
-"""The forge's materials. Patterns read object space, so a scale or a lamella rides its part and never swims."""
+"""The forge's materials. Patterns read each mesh's rest position, so a scale or a lamella rides its part and never
+swims. `TINT` holds the fitted colour of each (fit.py --colour): a factor a channel, laid on every colour it holds."""
+import json
+import os
+
 import bpy
+
+TINT = {}
+
+
+def load_tint(path):
+    TINT.clear()
+    if os.path.exists(path):
+        TINT.update(json.load(open(path)))
+
+
+def tint(m, f):
+    """Multiply every colour material `m` holds (its base colour, its ramps' stops) by the factors `f`."""
+    def mul(c):
+        return (c[0] * f[0], c[1] * f[1], c[2] * f[2], c[3])
+    for n in m.node_tree.nodes:
+        if n.type == 'BSDF_PRINCIPLED' and not n.inputs['Base Color'].is_linked:
+            n.inputs['Base Color'].default_value = mul(n.inputs['Base Color'].default_value)
+        if n.type == 'VALTORGB':
+            for e in n.color_ramp.elements:
+                e.color = mul(e.color)
 
 
 def _principled(name, rgb, metal=0.0, rough=0.5, spec=0.5):
@@ -112,7 +136,15 @@ def speckle(name, dark, light, scale=30.0, at=0.5, rough=0.4):
 
 
 def palette():
-    """Every material the medium fighter wears, by role."""
+    """Every material the medium fighter wears, by role, in its fitted colour."""
+    mats = _palette()
+    for name, f in TINT.items():
+        if name in mats:
+            tint(mats[name], f)
+    return mats
+
+
+def _palette():
     return {
         'skin': plain('skin', (0.42, 0.13, 0.03), rough=0.5, spec=0.4),
         'silver': plain('silver', (0.62, 0.62, 0.64), metal=0.55, rough=0.32),

@@ -20,7 +20,10 @@ from mathutils import Vector  # noqa: E402
 
 import model  # noqa: E402
 import poses  # noqa: E402
+import shape  # noqa: E402
 import stage  # noqa: E402
+from body import coords  # noqa: E402
+import materials  # noqa: E402
 from materials import palette  # noqa: E402
 
 VIEW_YAW = [0.0, -45.0, -90.0, -135.0, -180.0]   # record k of an animation: the body turned to the viewer's left
@@ -33,6 +36,19 @@ class Fighter:
         self.axe = model.build_axe(self.M)
         self.bow = model.build_bow(self.M)
         self.extra = []
+        self.shaped()
+
+    def shaped(self):
+        """Lay the fitted proportions (shape.py) on every mesh."""
+        for sk in self.skins:
+            sk.rest = shape.transform(sk.ob.name, sk.rest)
+            sk.me.vertices.foreach_set('co', sk.rest.ravel())
+            sk.me.update()
+        rigid = [ob for ob, _ in self.parts] + self.axe
+        for ob in rigid:
+            p = shape.transform(ob.name, coords(ob.data))
+            ob.data.vertices.foreach_set('co', p.ravel())
+            ob.data.update()
 
     def show(self, obs, on):
         for ob in obs:
@@ -131,6 +147,9 @@ def main():
     args = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else sys.argv[1:])
     spec = json.load(open(args.spec))
     poses.load_fit(args.spec.replace('.json', '-fit.json'))
+    shape.load_shape(args.spec.replace('.json', '-shape.json'))
+    materials.load_tint(args.spec.replace('.json', '-colour.json'))
+    stage.PX_PER_M *= shape.SHAPE['scale']
     bpy.ops.wm.read_factory_settings(use_empty=True)
     stage.setup(args.samples)
     fighter = Fighter()

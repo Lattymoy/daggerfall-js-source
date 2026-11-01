@@ -134,7 +134,7 @@ test('F7: the fit holds one adjustment a frame the spec names - joint turns, the
   const want = spec.records.flatMap((rec) => Array.from({ length: rec.frames }, (_, f) => `${rec.anim}:${rec.view}:${f}`));
   assert.deepEqual(Object.keys(fit).sort(), [...new Set(want)].sort());
   for (const [key, adj] of Object.entries(fit)) {
-    for (const kind of Object.keys(adj)) assert.ok(['rot', 'turn', 'grip', 'haft', 'fist', 'head'].includes(kind), `${key}: ${kind}`);
+    for (const kind of Object.keys(adj)) assert.ok(['rot', 'turn', 'roll', 'grip', 'haft', 'fist', 'head'].includes(kind), `${key}: ${kind}`);
     if ('turn' in adj) assert.ok(Math.abs(adj.turn) <= 90, `${key}: turn ${adj.turn}`);
     for (const [joint, r] of Object.entries(adj.rot ?? {})) {
       assert.equal(r.length, 3, `${key} ${joint}`);
