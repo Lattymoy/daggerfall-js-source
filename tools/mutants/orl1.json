@@ -41,7 +41,7 @@
     "name": "rollover-loses-the-excess",
     "file": "src/systems/oblivionLeveling.js",
     "old": "    entity.levelRollUp = (entity.levelRollUp ?? 0) + rollUp;",
-    "new": "    entity.levelRollUp = (entity.levelRollUp ?? 0);",
+    "new": "    entity.levelRollUp = entity.levelRollUp ?? 0;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "big-rollover-does-not-leave-the-bar-full",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = LEVELUP_TOTAL;",
-    "new": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = 0;",
+    "old": "    entity.levelProgress = LEVELUP_TOTAL;",
+    "new": "    entity.levelProgress = 0;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -143,7 +143,7 @@
   {
     "name": "luck-is-priced-like-anything-else",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  return (attrKey === LUCK && s.allowLuckIncrease) ? s.luckIncreaseCost : 1;",
+    "old": "  return attrKey === LUCK && s.allowLuckIncrease ? s.luckIncreaseCost : 1;",
     "new": "  return 1;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
@@ -152,7 +152,7 @@
   {
     "name": "luck-switch-off-does-not-cap-it",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  return (attrKey === LUCK && !s.allowLuckIncrease) ? 1 : ATTRIBUTE_INCREASE_LIMIT;",
+    "old": "  return attrKey === LUCK && !s.allowLuckIncrease ? 1 : ATTRIBUTE_INCREASE_LIMIT;",
     "new": "  return ATTRIBUTE_INCREASE_LIMIT;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "commit-without-an-owed-level",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {\n  if (!entity.readyToLevelUp) return false;",
-    "new": "export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {",
+    "old": "  if (!entity.readyToLevelUp) return false;\n  // LEVEL-45 (systems/levelCap.js): a level latched before the cap is no level at the cap",
+    "new": "  // LEVEL-45 (systems/levelCap.js): a level latched before the cap is no level at the cap",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -271,7 +271,7 @@
   {
     "name": "commit-skips-the-health-roll",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "old": "  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + 0;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
@@ -280,8 +280,8 @@
   {
     "name": "commit-jumps-the-level",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.level += 1;\n  refreshOnlineLayer(entity, { keepHealth: true });",
-    "new": "  entity.level += 2;\n  refreshOnlineLayer(entity, { keepHealth: true });",
+    "old": "  entity.level += 1;",
+    "new": "  entity.level += 2;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "commit-leaves-the-flag-set",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.readyToLevelUp = false;\n  entity.pendingLevel = null;\n  return true;\n}",
-    "new": "  entity.pendingLevel = null;\n  return true;\n}",
+    "old": "  entity.readyToLevelUp = false;\n  entity.pendingLevel = null;",
+    "new": "  entity.pendingLevel = null;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "the-headless-arm-takes-the-dfu-pool",
     "file": "src/systems/advancement.js",
-    "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
-    "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
+    "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);",
+    "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "the-question-defaults-to-the-mod",
     "file": "src/ui/levelingChoice.js",
-    "old": "      id: LEVELING_CLASSIC,\n      title: 'Classic',",
-    "new": "      id: LEVELING_VIRTUE,\n      title: 'Classic',",
+    "old": "      id: LEVELING_CLASSIC,",
+    "new": "      id: LEVELING_VIRTUE,",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ],
@@ -417,8 +417,8 @@
   {
     "name": "the-question-loses-the-raw-key-codes",
     "file": "src/ui/levelingChoice.js",
-    "old": "    confirm: 'confirm', Enter: 'confirm', NumpadEnter: 'confirm', KeyE: 'confirm',",
-    "new": "    confirm: 'confirm',",
+    "old": "    Enter: 'confirm',\n    NumpadEnter: 'confirm',\n    KeyE: 'confirm',\n    'char:1': 'one',",
+    "new": "    'char:1': 'one',",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/audit17f.test.js"
@@ -427,8 +427,8 @@
   {
     "name": "an-unknown-key-answers-the-question",
     "file": "src/ui/levelingChoice.js",
-    "old": "      default: break;   // every other key is inert: this screen has no way out but an answer",
-    "new": "      default: this.answer(this.options[this.cursor].id); break;",
+    "old": "        break; // every other key is inert: this screen has no way out but an answer",
+    "new": "        this.answer(this.options[this.cursor].id);\n        break;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "the-health-roll-reads-the-wrong-stat",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
-    "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "old": "    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "new": "    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "the-questions-up-arm-is-dropped",
     "file": "src/ui/levelingChoice.js",
-    "old": "    up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',",
-    "new": "    down: 'down', ArrowDown: 'down',",
+    "old": "    up: 'up',\n    ArrowUp: 'up',\n    down: 'down',",
+    "new": "    down: 'down',",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/legacychoice.test.js"
@@ -566,8 +566,8 @@
   {
     "name": "the-tile-ships-a-placeholder-note",
     "file": "src/systems/modSettings.js",
-    "old": "        get description() {\n          return t('mods.oblivionRemasterLeveling.Enabled.description', 'Level up like Oblivion Remastered: every skill you raise fills a 100-point bar, and each level gives '\n            + 'you virtues to spend on the attributes you choose. New characters are asked which system they want.');\n        },",
-    "new": "        get description() { return t('mods.oblivionRemasterLeveling.Enabled.description', 'TODO'); },",
+    "old": "          return t(\n            'mods.oblivionRemasterLeveling.Enabled.description',\n            'Level up like Oblivion Remastered: every skill you raise fills a 100-point bar, and each level gives ' +\n              'you virtues to spend on the attributes you choose. New characters are asked which system they want.',\n          );",
+    "new": "          return t('mods.oblivionRemasterLeveling.Enabled.description', 'TODO');",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "an-already-raised-row-costs-a-fresh-slot",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "      slot: taken > 0 ? 0 : 1,   // an already-open row costs no new slot",
-    "new": "      slot: 1,   // an already-open row costs no new slot",
+    "old": "      slot: taken > 0 ? 0 : 1, // an already-open row costs no new slot",
+    "new": "      slot: 1, // an already-open row costs no new slot",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "the-plan-is-not-walked-back-out",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; n -= rows[i].slot; }",
-    "new": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; }",
+    "old": "      n -= rows[i].slot;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "health-rolls-on-the-endurance-just-bought",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
-    "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);",
+    "old": "  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
+    "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -676,8 +676,8 @@
   {
     "name": "the-plan-takes-the-fewest-rows-instead-of-the-most-points",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
-    "new": "          if (nb[n2][cc] < 0) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
+    "old": "          if (have + d > nb[n2][cc]) {",
+    "new": "          if (nb[n2][cc] < 0) {",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -685,8 +685,8 @@
   {
     "name": "the-purse-is-picked-without-looking-at-what-it-buys",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }",
-    "new": "    for (let i = 0; i <= slots; i++) if (best[i][c] >= 0) { pts = best[i][c]; n = i; break; }",
+    "old": "      if (best[i][c] > pts) {\n        pts = best[i][c];\n        n = i;",
+    "new": "      if (best[i][c] >= 0) {\n        pts = best[i][c];\n        n = i;\n        break;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -694,8 +694,8 @@
   {
     "name": "the-question-paints-from-the-canvas-origin-again",
     "file": "src/ui/levelingChoice.js",
-    "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
-    "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
+    "old": "    const at = (text, x, y, colour) => drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
+    "new": "    const at = (text, x, y, colour) => drawText(renderer, font, text, x * s, y * s, s, colour);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "the-question-centres-on-the-canvas-instead-of-the-game-area",
     "file": "src/ui/levelingChoice.js",
-    "old": "      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
-    "new": "      at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
+    "old": "    const centre = (text, y, colour) => at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
+    "new": "    const centre = (text, y, colour) => at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "the-option-hit-box-goes-back-to-a-literal-height",
     "file": "src/ui/levelingChoice.js",
-    "old": "  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
-    "new": "  CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
+    "old": "export const choiceHeight = (opt) => CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
+    "new": "export const choiceHeight = (opt) => CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "the-question-swallows-the-click-again",
     "file": "src/ui/levelingChoice.js",
-    "old": "    const i = choiceAtNative(vx, vy, this.options, this.tops);\n    if (i < 0) return false;",
-    "new": "    const i = -1;\n    if (i < 0) return false;",
+    "old": "    if (this._fired || this._faced) return false;\n    const i = choiceAtNative(vx, vy, this.options, this.tops);",
+    "new": "    if (this._fired || this._faced) return false;\n    const i = -1;",
     "tests": [
       "test/systems/orl1_leveling.test.js",
       "test/systems/legacychoice.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "both-digits-answer-with-the-same-system",
     "file": "src/ui/levelingChoice.js",
-    "old": "      case 'two': this.pickIndex(1, false); break;",
-    "new": "      case 'two': this.pickIndex(0, false); break;",
+    "old": "        this.pickIndex(1, false);",
+    "new": "        this.pickIndex(0, false);",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "an-owed-level-is-offered-once-and-never-again",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
-    "new": "  if (entity.readyToLevelUp) return false;\n  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
+    "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;",
+    "new": "  if (entity.readyToLevelUp) return false;\n  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]

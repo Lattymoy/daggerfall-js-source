@@ -1,601 +1,85 @@
-# Loot Rarity - the port's own item ladder (LR1-LR3, 2026-09-14)
+# Loot Rarity
 
-Mac: "So next I want to talk about building on unleveled loot. My goal
-is to transform things into a diablo style system with rarity ... I
-really want this the best that it can be ... Make this the most
-detailed and best that it can be."
+The rarity ladder grades found weapons, armour, jewellery and garments into tiers with affixes a player can compare. The
+player meets it as coloured names and rows, affix lines on the item card, a chime when a body holds a Rare or better,
+and Unidentified pieces that the Identify spell or the Mages Guild reveals. It is the `loot-rarity` feature row (pref
+`lootRarity`), on by default and forced on online. Off, no field is written and loot is Daggerfall Unity's.
 
-ENHANCED - the port's departure from Daggerfall's rules, built in
-house, one row on the Features home (`loot-rarity`, over the pref
-`lootRarity`). **ON by default** (LR5, 2026-09-15, Mac: *"I want to
-mod on by default"*). It shipped OFF beside the enhanced AI on the
-reasoning that a row changing the RULES waits to be asked for; Mac's
-call is that the ladder is the port's own game and should be what a
-player meets. The online lane forces it on with every other
-enhancement (OL1), as it always did. Off, not one field is written and
-not one read moves - so the 1:1 lane is one press away, not lost.
+## How it works
 
-One module: `src/systems/loot/lootRarity.js`. One pin file:
-`test/systems/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
-and `SOURCE_MULT`, per mille.
+### The ladder
 
-## The ladder
+`RARITIES` in `src/systems/loot/lootRarity.js` holds the tiers: Common, Magic, Rare, Legendary, Aetheric, Artifact and
+Gilded. Rolls reach Common to Legendary. Aetheric and Gilded come from their own systems
+(`bible/11-Multiplayer/Sigil-Sets.md`, `bible/06-Systems/Gilded.md`); Artifacts are DFU's own.
 
-Five tiers, three of which Daggerfall already had:
+- **Magic**: one or two affixes, or any enchanted item (a DFU magic item, a made or bound one).
+- **Rare**: three or four affixes, a name its lines give, and one DFU catalogue enchantment (`RARE_FLAVOURS`).
+- **Legendary**: a fixed record from `LEGENDARIES` with its name, affixes, enchantment and lore
+  (`bible/06-Systems/Loot-Arc.md`).
 
-| tier | what it is | how it comes to be |
-| --- | --- | --- |
-| Common | a plain item | DFU's own mint, untouched |
-| Magic | one or two affixes; or one of DFU's own MAGIC.DEF items | a roll on an eligible item; or derived from any enchanted item |
-| Rare | three or four affixes, a name its lines give (a suffix always, a prefix where a line gives one - AFFIX-LINES, below), ONE of DFU's own catalogue enchantments | a roll |
-| Legendary | a fixed record: a name a player learns, a set affix signature, its own DFU enchantment, a line of lore | a roll, from `LEGENDARIES` (ten records over the three groups; thirty since LOOT3, `Loot-Arc.md`) |
-| Artifact | DFU's artifacts, untouched | DFU's own; the ceiling |
+There is one ladder: `rarityOf` reads a rolled item's own field, an artifact as an artifact, any enchanted item as
+Magic, the rest as Common. DFU's own magic-item roll still runs; its items are Magic and never roll again.
 
-THE CEILING HOLDS (POWER-CEILING, 2026-10-27; `05-Combat/Power-Ceiling.md`). The ladder
-is seven rungs now - Aetheric (SET6) and Gilded (GILDED1) came above the Legendary - and
-it stays seven: a new rung, a band above the Legendary, or a line past the Legendary
-band's top needs the owner's word, quoted on that page. `validAffix` is the per-line law;
-`test/combat/powerceiling_walk.test.js` walks every record and minted item against it.
+**Eligible**: a weapon that is not an arrow, armour, jewellery or a garment, that can be worn (`src/systems/equip.js`
+`wearableItem`). Never a quest item, an artifact, an enchanted item, an item that already rolled, or a foe's worn kit:
+`rollCorpseLoot` rolls what a foe carries, not what it swings.
 
-REPLACE, DON'T LAYER (decided, 2026-09-14). With the switch on there is
-one ladder: `rarityOf(item)` answers a rolled item's own field, an
-artifact as the ceiling, any enchanted item (a MAGIC.DEF drop, a made
-item, a soul-bound one) as Magic, and the rest as Common. DFU's own
-magic-item roll (the loot matrices' MI column) still runs, and its
-products ARE Magic-tier items; the port never re-rolls them. A DFU
-magic item is not eligible to roll a second tier.
+### The odds
 
-Eligible: a weapon that is not an arrow, a piece of armour, a piece of
-jewellery - and since LOOT14 a garment, on a pool of its own
-(`Loot-II-Arc.md` section 6). Never a quest item, an artifact, an item already enchanted,
-an item that already rolled (one roll per item, ever - LR4), or a worn
-one. A FOE's list carries its worn kit too (`hostCombat.equipEnemy`
-pushes every equipped piece into `entity.items` and onto the equip
-table, writing no `equipSlot`), so the hosts go through
-`rollCorpseLoot`, which rolls the items NOT on the foe's table: the
-loot it carries, never the sword it swings (LR4 - the audit found the
-first cut rolling the kit, and a Daedra Lord would have struck with a
-Legendary).
+`rollRarity` draws once in a thousand against three thresholds from `rarityChances`. Each threshold is
+`base + perTier x tier` (`RARITY_WEIGHTS`), times the source's kind (`SOURCE_MULT`: a pile 1.3, a boss 2.5) and the
+player's Luck (`luckMult`, from half at Luck 0 to half again at 100), never over its cap.
 
-## The source sets the odds, never the player
+- A corpse's tier is the dead thing's level. A boss is any Daedra, or a monster of `BOSS_LEVEL` or more.
+- A dungeon pile's tier is the dungeon kind's (`DUNGEON_RARITY_TIER`); a tavern's or guild's pile is
+  `INTERIOR_RARITY_TIER`.
+- The level gate scales the Rare and Legendary thresholds for a young character (`src/systems/loot/lootLevelGate.js`).
 
-Unleveled Loot's whole point is that the world does not scale to you,
-and the ladder keeps that law. (LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE). The source's thresholds are
-still computed as below; the gate only scales the Rare and Legendary ones, never Magic.) `rollRarity(source)` draws once in
-[0, 1000) against three thresholds - Legendary first, then Rare, then
-Magic - computed by `rarityChances` from:
+### Affixes
 
-- **the source's tier** - a corpse: the dead thing's own level
-  (ENEMY_BASICS; a class enemy has none there and its entity level
-  stands in); a treasure pile: the DUNGEON's kind, graded 0..21 by
-  `DUNGEON_RARITY_TIER` (the port's own grading of DFRegion's nineteen
-  DungeonTypes by how deadly their monster tables run - Volcanic Caves
-  and Dragon's Den at 18, a Cemetery at 3); a tavern's or a guild's
-  pile: `INTERIOR_RARITY_TIER` (4);
-- **the source's kind** - a pile pays 1.3x a corpse; a BOSS (any
-  Daedra, or a monster of level 18 or over) pays 2.5x;
-- **luck** - the player's live luck, a MULTIPLIER since LOOT13
-  (`Loot-II-Arc.md` section 5): 1% of every threshold a point over 50,
-  1% less a point under, from half at 0 to half again at 100
-  (`luckMult`). It was 2 per mille a point ADDED, which was the whole of
-  a Legendary's threshold: a rat at Luck 65 out-dropped a tier-8 corpse.
+`AFFIX_KINDS` lists the kinds, each with the groups it lands on, its name word and a band per tier (`AFFIX_RANGES`).
+The core six are damage, armour, carrying weight, attribute, resistance and skill; the Loot arcs add more. No kind
+repeats on an item. The first pick leans to the group's own number; later picks are drawn over the lines still open.
+Armour leans by family (`ARMOR_LEAN`): leather, chain and plate weigh different lines, at the same bands.
 
-Each threshold is `base + perTier * tier`, times the kind and the luck,
-never over its cap:
+Affixes are folded onto the wearer by `affixFold`, one of the entity's modifier folds (`src/systems/entityMods.js`),
+at every equip change and load.
 
-| tier | base | per tier | cap |
-| --- | --- | --- | --- |
-| Magic | 100 | 15 | 600 |
-| Rare | 15 | 6 | 260 |
-| Legendary | 1 | 1.2 | 45 |
+### Names, identify and worth
 
-So a rat at level 1 (corpse, tier 1) gives 11.5% Magic, 2.1% Rare,
-0.2% Legendary; a Daedra Lord (boss, tier 21) at luck 80 sits at the
-caps: 60% / 26% / 4.5%. A Daedra Lord's corpse in a Volcanic Cave can
-drop a Legendary at character level 3; a rat never does much.
+A Magic name takes one word or two, a Rare's follows its lines (`Sentinel's Cuirass of the Bear`), a Legendary has its
+record's name without the material prefix; the metal stays on the card's sub-line. A Rare or Legendary carries a DFU
+enchantment, so DFU's own identify law makes it drop Unidentified; its affixes work all the same. A rolled item is worth
+its base plus `AFFIX_WORTH` per affix point, plus `RARE_ENCHANT_WORTH` for an enchantment.
 
-## Affixes are numbers the player can read
+### Where it shows
 
-DFU's enchantment catalogue is spell-shaped (Cast When Strikes, Regens
-Health) - fine flavour, weak as a comparison loop. The port's affixes
-are the numbers a Diablo player compares two swords by. Six kinds
-(`AFFIX_KINDS`), each with the groups it may land on, the slot its
-word takes in the name, and a banded range per tier (`AFFIX_RANGES`):
+The classic scroller tints a cell by tier; the enhanced pack, card and pile plaque colour the name by `RARITIES`. The
+tooltip lists the tier, each affix and the enchantment. A body with a Rare or better rings the enchanter's chime.
+`rarity`, `affixes` and `legendary` ride the item record in the save and on the wire.
 
-| kind | on | slot | Magic | Rare | Legendary | read at |
-| --- | --- | --- | --- | --- | --- | --- |
-| damage (%) | weapons | prefix | 5-12 | 10-25 | 20-40 | the weapon's own roll in `calculateAttackDamage`, before the swing's mods |
-| armor | armour | prefix | 3-6 | 6-12 | 12-20 | points OFF a blow's chance to land ON THE PARTS THE PIECE COVERS (`equip.armorBodyParts`: a shield its SHIELD_PARTS, a piece its slot's part - as the material's armour value lands) - the hit formula's armour term (FormulaHelper.cs:1158's slot), PCAAO's own read too, and the paperdoll's per-part numbers. LR4: the first cut was entity-wide, and seven Rare pieces made the player unhittable |
-| weight (%) | armour, jewellery | prefix | 10-20 | 20-35 | 35-50 | `entityMaxEncumbrance`, the same multiplier IncreasedWeightAllowance rides |
-| stat | all | suffix | 2-5 | 5-10 | 10-15 | `liveStat` - an attribute, by name |
-| resist (%) | armour, jewellery | suffix | 10-20 | 20-35 | 35-50 | `savingThrow`, per element the spell carries, in the biography's slot - the rolled lines together counted to 45 an element since LOOT12 (`Loot-II-Arc.md` section 4: two Rares at +25 had made a body immune) |
-| skill | all | suffix | 5-10 | 10-20 | 20-30 | `skillValue` - a skill, by id |
+## Rules
 
-Magic rolls one or two, Rare three or four, a Legendary its record's. No
-kind repeats on an item; a kind with a parameter never repeats a
-parameter. The first pick leans to the group's own number half the time
-(a weapon's damage, a piece of armour's armour). Every other pick is
-drawn over the LINES still open, not the kinds (AFFIX-LINES, 2026-10-25,
-below): a kind weighs the lines it may still give - an attribute's free
-attributes, a skill's free skills, carrying capacity its one - in ONE
-roll, as the even draw took (LOOT1's law), so a seeded stream keeps its
-count. The name follows the lines; no slot is forced.
+- On by default; the ladder is the game's own (Mac).
+- Replace, don't layer: one ladder over DFU's magic items, never a second roll on them.
+- LOOT-GATE (Dudey): Rare and Legendary are held back by the roller's level; its numbers are never published.
+- Shops and quest rewards do not roll (Mac).
+- One roll per item, ever.
+- No new rung, no band above the Legendary, no line past the Legendary band's top without the owner's word
+  (`bible/05-Combat/Power-Ceiling.md`).
 
-THE FOLD (RF1). Affixes ride an `affixes` list on the item and are
-folded onto the wearer by `affixFold`, ONE of the entity's modifier
-folds (`systems/entityMods.js`, registered under `LOOT_RARITY_FOLD`):
-`computeEntityMods` runs every fold and sums the channels onto
-`entity._mods` at every equip change (equip.js's listener list,
-`addEquipChangeListener`, beside the enchantment hook; and the save's
-`rebuildEquipState`, which runs the listeners so a load reads right
-before any magic round) and at every magic round (worldTick, after
-the enchant fold), which is where a switch press is felt on a worn
-set. DFU's formulas read one accessor per channel there
-(`entityArmorMod` on the struck part, `entityWeightMult`,
-`entityResistMod`, `weaponDamageMods`), and the leaves `statMods.js`
-and `skills.js` read the field, import-free; with the switch off the
-fold answers empty and every channel reads the enchantment's alone. A
-weapon's damage affix is not folded - it is the weapon's own,
-registered as a weapon-damage modifier and read off the item in hand. A malformed record (LR4: `validAffix` - a known
-kind, the kind's param or none, an integer value from 1 to the kind's
-Legendary ceiling) folds nothing and prints nothing; the wire's
-validator refuses a list carrying one, as it refuses a string
-`enchantments`.
+## Daggerfall Unity
 
-NOT ENTRIES IN `item.enchantments` (decided). That list is FallExe's
-closed enum; a foreign type in it would make every DFU reader of the
-list (the value sum, the item maker, the payload dispatcher's
-unknown-key abort) affix-aware. Two lists, one wearer.
+DFU has no rarity. Its magic items (`ItemBuilder`, `MAGIC.DEF`) become the Magic tier untouched; Rares and Legendaries
+use its enchantment catalogue, so `IsIdentified` and `ResolveItemName` work unchanged. Affixes are read where DFU reads
+the same quantity: the weapon roll in `calculateAttackDamage`, armour in the hit formula, resistances in `savingThrow`.
 
-## Names
+## Code and tests
 
-- Magic: one word - `Soldier's Shortsword`, `Buckler of the Hare` (two
-  where its two lines take a prefix and a suffix).
-- Rare: as its lines fall - `Sentinel's Cuirass of the Bear`, or
-  `Cuirass of the Bear` where no line is a prefix (AFFIX-LINES: a Rare
-  was held to both parts, and that hold was half of the bug below). The words are the
-  affix's (`AFFIX_KINDS[kind].word`), banded by tier: strength's
-  suffix runs `of the Ox` / `of the Bear` / `of the Titan`. The
-  prefixes are possessives so the long name reads after DFU's material
-  prefix: `Ebony Sentinel's Cuirass of the Bear`.
-- Legendary: the record's own - `Wyrmbane`, `Nightwhisper`,
-  `Graveward`, `Stormcaller's Bow`, `The Warden`, `Titanheart`, `Aegis
-  of Dawn`, `Foxglove`, `King's Mark`, `Archmage's Loop`. A Legendary
-  is named like an artifact: `itemLongName` returns it without the
-  material prefix (one gated arm on ResolveItemLongName's early return).
-  MAT-SHOW: the metal is not gone. A Rare or better piece of armour or
-  a weapon still puts it on `itemNameParts().material`, the same dim
-  sub-line a plain sword uses (`itemInfo.js:"if (!material || withholdsMaterialPrefix(item) || namesItsMetal(item, material)) return name;"`;
-  AUDIT PISTOLET C9: an item whose own name already says its metal - the Dwarven Pistolet, the Dwarven Thunderlock -
-  takes no second, a Magic's or a Rare's too: "Soldier's Dwarven Pistolet", PISTOLET-NAMES).
-  The long name stays `Wyrmbane`, not `Dwarven Wyrmbane`. An artifact
-  still says nothing of its metal. Handed down by Project Legacy it stays
-  its own name under the house, `Hlaalu's Wyrmbane`, the metal still on
-  the sub-line (`itemInfo.js:"const whole = parts.material && !bare ?"`).
-  The container's material menu finds a piece only by a metal its card
-  says (`itemInfo.js:"export const itemSaysMaterial ="`), so it never picks
-  out an unidentified Magic piece or an artifact by its metal.
-
-## Identify is Daggerfall's own
-
-A Rare or Legendary carries a real DFU enchantment (a Rare's one
-flavour from `RARE_FLAVOURS` by group - a weapon strikes or drinks, a
-piece of armour or jewellery holds; a Legendary its record's), so DFU's
-own IsIdentified law (`tradeModes.itemIsIdentified`: an enchanted item
-is unidentified until identified) makes it drop UNIDENTIFIED with no
-new mechanism: it reads as its bare template with no affix lines
-(`ResolveItemName`'s early return), the tooltip says the
-tier and "Unidentified", and the Identify spell or the Mages Guild's
-service reveals it. MAT-SHOW: a Rare or better piece of armour or a
-weapon still says its metal on that sub-line while it is unidentified.
-A piece below Rare, and an artifact, keep the withhold. A Magic-tier
-item with only numeric affixes has no enchantment and reads at once.
-The affixes WORK while unidentified - DFU's enchantments do too.
-
-The enhanced pack names through `resolveItemName` now (it showed
-`item.name` raw before, which named a magic item before the Identify
-spell had - a departure from ItemHelper.cs:265-292 that the classic
-skin never made); so does the pile plaque.
-
-## Where it shows
-
-- The native scroller tints the cell by tier (`itemBackgroundColour`,
-  after DFU's own three: a quest item keeps its green) and the tooltip
-  lists the tier, every affix, and the enchantment's catalogue name -
-  a Legendary's lore last - one row each.
-- The enhanced pack's rows and the picked card's heading wear
-  `data-rarity`; the sheet colours the name (Magic `#6f9ee8`, Rare
-  `#e4c34f`, Legendary `#e07a2e`, Artifact `#b57bee` - the four hexes
-  are pinned against `RARITIES`); the card lists the lines.
-- The pile plaque's rows wear the same attribute.
-- The paperdoll's armour numbers carry an armour affix (beside
-  Strengthens Armor's channel).
-- THE DROP CHIME (LR3): a body carrying a Rare or better rings the
-  enchanter's chime (SoundClips.MakeItem) at the corpse beside the body
-  fall, on all three corpse hosts. Silent off, for Common or Magic.
-
-## Value
-
-A rolled item is worth its base (ItemBuilder's own arithmetic) plus
-`AFFIX_WORTH` per point of each affix, plus a flat
-`RARE_ENCHANT_WORTH` (600) for a Rare's or Legendary's enchantment -
-not DFU's per-effect cost table, which prices a made item's whole
-budget; a drop is not made.
-
-## The hosts (four-hosts law)
-
-Every list a host mints rolls at its source, right after DFU's own
-extras: a foe's through the ONE enemy-loot seam
-(`hostCombat.spawnEnemyLoot`, RF2 - the dungeon's two spawn arms, the
-exterior foes off their injectable stream, the watch, each one call),
-the dungeon's treasure piles (`dungeonContext.js` - a pile at
-`dungeonRarityTier(dungeonType)`), a tavern's or a guild's treasure
-markers (`interiorContext.js`, the host handing its luck in). Shops
-and quest rewards do NOT roll (decided): a shelf is DFU's economy and
-a quest's item is the quest's.
-
-## The save and the wire
-
-`rarity`, `affixes`, `legendary` ride the item record whole (the
-snapshot copies items as they are); `affixes` joins
-`LOOT_ARRAY_FIELDS`, so a peer's string there is refused as a string
-`enchantments` is (AUDIT WORLD4 B1). An older save carries neither
-field and reads Common.
-
-The Loot arc II (`Loot-II-Arc.md`) adds four fields, each declared in
-`systems/item/itemFields.js` and absent on every piece that has none - so
-an older save and an older peer read as before: `cursed` (LOOT16, a
-cursed find's drawback - `validCurse`), `honed` (LOOT17, the hones a
-piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
-and `socket` (LOOT20, 'empty' or the gem set in it - `validSocket`; a
-set gem's line rides `affixes` marked with its gem). A known curse is
-read on the tier line ("Cursed Rare"), as the Exalted is: a variant of
-its rung, never a rung of its own (the arc's law 7). GEM1
-(`Gem-Sockets.md`) adds `sockets` - the socket list, one to three
-values a piece, 'empty' or the gem set in each - and keeps `socket`
-declared, read as a list of one; `validSocket` refuses both on one
-piece.
-
-## The Test Room door
-
-"The loot ladder" (`test=loot`): the Nord Warrior with a Magic and a
-Rare of ten bases and every Legendary in the pack, the switch turned on
-for the session - the colours, the lines, the unidentified names and
-the folds on the paperdoll, without a dungeon.
-
-## LR4 - THE AUDIT (2026-09-14, Mac: "Lets do an audit on this system")
-
-An adversarial read of the module and every seam, by a second agent,
-with node probes. Findings and what changed:
-
-1. **BUG - foes fought with rolled gear.** The eligibility guard read
-   `equipSlot`, which `equipEnemy` never writes; every corpse roll ran
-   over the foe's worn kit, so a boss could swing a Legendary at the
-   player (its damage affix on its blow, its Strikes enchantment on
-   every hit) and wear a Rare's armour. Fixed: `rollCorpseLoot` rolls
-   the items not on the foe's equip table; the four host sites go
-   through it; the pin exercises the real mechanism (a table with no
-   `equipSlot`).
-2. **GAP - a forged affix crashed a tooltip or the magic round.** The
-   wire typed `affixes` as an array and no more; a `{id:'stat'}` with
-   no attribute threw in `affixLabel`, a `null` threw in the fold, a
-   `+1e9` armour made the wearer unhittable. Fixed: `validAffix`, the
-   validator refusing, every reader skipping.
-3. **GAP - armour was entity-wide** (finding 14 of the report): a flat
-   subtraction on every part, so seven pieces stacked to the 3% floor.
-   Fixed: per part, on the parts the piece covers, on the doll too.
-4. **GAP - a Magic could roll again** (no `rarity` in the guard); latent
-   since every door is one-shot. Fixed.
-5. **GAP - FeatherWeight was a dead line on a drop** (its payload fires
-   at the item maker alone). Off the armour pool; the pin refuses any
-   Enchanted-only payload in every pool and record.
-6. **NIT - the enhanced row named an unidentified item's material.**
-   Hidden until identified now, as `%mat` is.
-7. **NIT - `rarityOf` read a MAGIC.DEF row with every effect filtered
-   out as Common** while eligibility refused it. It is Magic.
-8. **NIT - the test LCG could answer exactly 1.** `/0x800000`.
-9. Watch item, not changed: a Rare's CastWhenHeld flavour bills its
-   classic casting cost in condition on first equip (DFU's own law,
-   `assignHeldSpell`); the held spells in the jewellery pool cost
-   ~120-160 classic points against an amulet's 800 or a ring's 1200
-   hit points, and the armour pool's are cheaper still, so no drop
-   breaks on the spot - but the port mints pairings MAGIC.DEF never
-   did, so the bill is worth a look in play.
-10. Verified sound: every flavour and record param against the
-    registry rows; the identify flow; stacking (never for these
-    groups); the save and the wire; the fold's every writer; the
-    sign of PCAAO's read; the names on bows and shields.
-
-## Recorded, not built
-
-- Shops and quest rewards stay DFU's (above).
-- The loot pile billboard is not tinted: the billboard batch carries
-  no per-instance colour; the plaque and the chime are the cues.
-- No "smart loot" for the character's class, by design: the source
-  decides, not the player.
-- Enemies wear DFU's own kit, not rolled gear: `rollCorpseLoot` skips
-  everything on the foe's equip table.
-- On a dungeon reload the saved list overwrites `f.entity.items` while
-  the equip slots keep the load-time re-roll (a pre-existing split the
-  audit noticed; the roll never touches the slots, so it is inert here).
-
-## AUDIT-LR (2026-09-15) - THE MOD READ END TO END, OFFLINE AND ONLINE
-
-Mac: *"Can you audit the loot rarity mod and ensure its working
-properly for both offline and online"*. The ladder was read from the
-switch to the wire and exercised by EXECUTION - probes over the real
-doors, not a reading of the source. **The verdict is that it works in
-both lanes.** What the audit established, and the one thing it found
-missing:
-
-### Offline, sound
-
-- **The switch.** `lootRarity` is a prefs row (`initial: false` at the
-  time of the audit; LR5 has since flipped it to `true`), and the load
-  order that makes the online forcing possible is guaranteed
-  by the import graph, not by luck: `uiPrefs.js` itself imports
-  `features.js`, whose load runs `declareOnlinePrefs`, and
-  `lootRarity.js` reaches the pref only through `getPref`. There is no
-  window in which a read could miss the lane's answer.
-- **The roll.** 3,720 spawns across all 62 `ENEMY_BASICS` rows, 7,362
-  worn pieces among them: **zero worn pieces rolled a tier**, 655 loot
-  pieces did. LR4's corpse-door law holds under load, and it holds for
-  the right reason - `equipEnemy` returns early for a monster with no
-  equipment variant, so `entity.equip` is genuinely absent rather than
-  an empty table hiding a miss.
-- **The four hosts are five.** The interior pool is not a separate
-  host: `worldModes` mounts buildings' foes through the same
-  `createExteriorFoes` factory, so a tavern's cellar rat comes down the
-  one seam (`spawnEnemyLoot`) with the roll already on it.
-- **The fold.** Every armour, weapon and jewellery template crossed
-  with every affix kind its group allows and every param that kind
-  names: no throw, no NaN, no body part out of range, and every Armor
-  template has at least one part for an armour affix to land on - the
-  case where a piece could carry `+armor` that folds nowhere does not
-  exist.
-- **Identify.** An unidentified Rare or Legendary reads as its bare
-  template through `itemLongName` - `"Staff"`, no material - while
-  `item.name` still holds `"Warrior's Staff of the Silver Tongue"`.
-  The rolled name does not leak through any display path.
-
-### Online, sound
-
-- **Forced on.** With `?online` on the page and the player's own pref
-  set to `false`, `getPref('lootRarity')` still answers `true` and
-  `lootRarityOn()` is true. OL1 holds.
-- **Two doors, not one.** A rolled item crosses the wire as a room's
-  word about a container (WORLD4/WORLD6a `lootRecords` -> the frame ->
-  `applyLoot`) and as an owner's grant off a puppet's body
-  (WORLD6b-iii(c) `grantCorpse` -> `applyHit` -> `takeCorpseLoot`).
-  Both were exercised: tier, every affix with its param and value, the
-  rolled name, the DFU flavour, the Legendary's record id and the
-  affix-inflated price all survive intact, and the landed item folds on
-  whoever wears it.
-- **The price is not stripped.** AUDIT WORLD6a B1's `max(value,
-  itemBaseValue)` is a FLOOR, so an affix-bought price is honest and
-  stands; it is not a clamp that would have quietly reduced every Rare
-  to its template's worth on the way across.
-- **The divergence question answers itself.** Two clients in one
-  dungeon roll the same corpse independently (the roll is
-  `Math.random`, not the shared day's stream), but WORLD4's
-  claim-on-OPEN means the first reader's list becomes the room's and
-  every other client adopts it - so the rolls differing is not a
-  desync, it is the design.
-- **A forged grant is refused at the door**, per item, so the list
-  narrows rather than landing a `+1e9` armour in a peer's pack.
-- **The chime already rings for a peer**: `exteriorFoes` B10 plays it
-  over the granted list, so a player who takes from a body they did not
-  own still hears a Rare land.
-
-### The finding, paid
-
-**The online half was UNPINNED.** Every law above held when exercised,
-but the suite's only wire pin was that `affixes` is a declared array
-field and that a string there is refused. Nothing would have caught a
-tier, an affix list, a Legendary's record or an affix-bought price lost
-on the way across, in either door. Four pins now cover both doors by
-execution (`test/systems/lr1_lootrarity.test.js`, AUDIT-LR), and two mutants
-were run and killed: the value floor turned into a ceiling, and the
-affix list's check removed.
-
-### Two notes for Mac, not defects
-
-- **Offline the mod is invisible until the player finds the switch.**
-  `initial: false` was deliberate and consistent - the rows that change
-  RULES (this, enhanced AI) ship off, the rows that change LOOK
-  (enhanced water, combat visuals) ship on. Raised as a decision to
-  revisit rather than a bug, and **Mac took it: LR5 below.**
-- **A skill affix may name any of the 35 skills**, so a warhammer can
-  roll `+20 Impish`. It is within the design and it works; it reads
-  oddly beside `+35% damage`. A weighting toward the group's own
-  combat skills would be a tuning slice, not a fix.
-
-## LR5 (2026-09-15) - THE LADDER IS ON
-
-Mac, on the audit's first note: *"I want to mod on by default"*.
-
-`initial: false` becomes `initial: true` on the `loot-rarity` row, and
-that is the whole change - RF4's one declaration means the shelf
-(`PREF_DEFAULTS`), the Features home's control and the online lane's
-answer all follow from the row without a second edit. The lane already
-forced it on, so **online is unchanged**; what changes is the offline
-lane, where every new player now meets the ladder instead of having to
-go and find it.
-
-It is a departure from the departure's own reasoning, recorded as such:
-the rule was that a row changing the RULES ships off (the enhanced AI
-still does) and a row changing the LOOK ships on. Mac's call is that
-this row is not an accessory to Daggerfall's loot but the port's own
-game, and that a player should meet it. The 1:1 lane is not lost - one
-press and not one field is written, not one read moves.
-
-**What the flip actually moved.** The suite found exactly one live
-consequence beyond the default itself, and it is correct rather than a
-regression: an ARTIFACT's scroller tooltip now carries a tier line
-under its name (`Mysterious Tome` / `Artifact`), because DFU's
-artifacts are the ladder's ceiling and `rarityLines` names it. D7's own
-law is the NAME arm (`Books && !IsArtifact`), so that pin now reads the
-first line for the name and pins the ladder's line beside it, rather
-than switching the ladder off to keep an old answer.
-
-**AND THE REASON IT WOULD NOT HAVE WORKED.** Auditing the flip found a
-latent defect in the prefs shelf itself: `savePrefs` wrote `_prefs`
-whole, and `_prefs` is `{ ...PREF_DEFAULTS, ...stored }`, so the first
-`setPref` of ANY key materialised EVERY default into a player's
-storage. Mac's own shelf therefore carries `lootRarity: false`, and the
-flip alone would have done nothing for him - or for any existing
-player - and the switch would have looked broken. Fixed at the root
-(the shelf persists overrides, not defaults) with a one-time stamped
-adoption for the shelves already written: PREF1, recorded in
-`10-UI/Features-Arc.md` and pinned in `test/systems/pref1_shelf.test.js`.
-
-**The trap this had to avoid.** `test/systems/lr1_lootrarity.test.js` drives
-its OFF half through a helper that was a bare `_resetForTests()`. With
-the row shipping ON, that helper stops meaning "off" - every "off is
-DFU exactly" pin in the file would have gone on testing the ON path, in
-silence, and passing. The helper presses the switch off explicitly now.
-
-## RARITY-WEAR (FIELD BUGS 2026-10-01) - NO SLOT, NO TIER
-
-Cruor's King's Mark came out a Wand and could not be worn (`01-Overview/bugs/Field-Bugs-2026-10-01.md` part four #4). A
-Legendary record names the piece a maker minted and never picks the base; the Gate's spoils and a town's thanks drew a
-jewel over all eight Jewellery templates (`systems/gate/gateSpoils.js` spoilsBase), and the eighth, the Wand, has no slot
-(GetJewelleryEquipSlot's None). Every affix and a Held enchantment read worn pieces alone, so one jewel in eight was a
-tier read by nothing. Now `systems/equip.js` wearableItem (GetEquipSlot on an empty table) is the one law: the ladder
-grades no piece it refuses (`rarityEligible`), the spoils' base is made again on one, and a save's rolled wands load as
-the Amulet - the same weight and condition (`repairRarityBases`, `RARITY_HOME`). The Jewellery records still name no
-templates: a King's Mark lands on any wearable jewel. `test/systems/fb1001_wand.test.js`.
-
-## HELD-BASE (FIELD BUGS 2026-10-18f) - DFU'S OWN MAGIC, ON A PIECE A SLOT TAKES
-
-RARITY-WEAR's last sentence, "DFU's own wands (MAGIC.DEF's, Use a cast) ... stay wands", was not yet true: DFU's
-CreateRegularMagicItem (ItemBuilder.cs:555-582, `loot.js` createRegularMagicItem) draws a magic item's base off the
-template's group byte and never asks what its power needs. Group 0 holds the religious items and the Jewellery, group 1
-the Jewellery, and no slot takes a religious item or the Wand (`equip.js` wearableItem). MAGIC.DEF's Enhances Skill, Cast
-When Held and Absorbs Spells rows are read on a worn piece alone, so "%it of Venom Spitting" landed on a Holy Tome or a
-Wand one draw in six (9 in 56) and the ten Cast When Held and Absorbs Spells rows on a Wand one in forty - a power that
-never once reached its holder. Now a piece whose powers need wearing (`powersNeedWearing`: live rows, none answering the
-Used payload - `enchantments.js` worksUnworn) has its base drawn again, as DFU draws again over an Arrow, up to
-MAGIC_BASE_DRAWS (64) and then armour; a draw that was wearable is the draw it was, and a Used cast keeps any base (a
-Leaping Wand, a Silent Holy Tome). A piece already held keeps its base: a load that moved it would move its print
-(`templateIndex:material`, `server-account/src/judge.js` ledgerPrintOf), which the realm ledger reads as forged
-(`ledger.js` ledgerStep) - AUDIT FB1018f L1-1 took out the save repair this first carried; such pieces are not mended
-(decided - Mac, 2026-10-19: "Stop with the decisions for me"). RARITY-WEAR's own 140-to-133 repair above moved the print the same way for a Wand the service held
-through it (a vault's, a market's), and the next checkpoint read it as forged: the ledger now takes that one move as
-the piece (`lootRarity.js` rehomedPrint, RARITY_HOMED_FROM). A piece with a Used cast and a worn power takes a wearable
-base too. Over 600 days of a quality-10 guild shelf, 52 of 4,200 pieces were
-such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/systems/loot/fb1018f_heldbase.test.js`.
-
-## AFFIX-LINES (2026-10-25) - A LINE IS DRAWN OVER THE LINES, NOT THE KINDS
-
-A player, SaberGGaming: carrying capacity on four Rare pieces in five, found and crafted alike; the owner: "No band
-aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });"`),
-no bias in the stream - the law made it, twice over. A pick drew a KIND at even weight and then its param
-(`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));"`,
-the old law's `pick`): carrying capacity is one line, the attributes eight, the resistances five and the skills 35, so
-it came up as often as all eight attributes together. And a Rare's LAST pick was held to whichever name slot its lines
-left empty (`lootRarity.js:"if (!byLines && tier === 'rare' && i === count - 1) {"`) - a jewel's one numeric prefix IS
-carrying capacity, so every Rare jewel carried it.
-
-THE LAW NOW (`lootRarity.js` pickByLines, kindLines, drawWeight): every number line a door draws - the roll's, an
-Exalted's (exaltLegendary), a curse's (cursePiece) and a reforge's (reforgeAffix) - is drawn over the lines its pool may
-still give, a kind weighed by its free params (or one, for a kind without; a kind that DOES something one while it has
-a flavour left, so the proc pass's even draw is the same draw). ONE roll a pick, its place in [0, 1) landing on a line,
-as `pick` took (LOOT1's law): every mint draws as many rolls as it did, and only which line a pick lands on moved. The
-first pick's lean to the group's own number (LOOT1) stands. A Rare is no longer held to a slot: its name is the words
-its lines give (`nameAround`), a suffix always (no group has three numeric prefixes to give) and a prefix where a line
-gives one.
-
-THE RECORDS (`net/productRecord.js` MINT_V_LINES, the CRAFT-PROCS precedent): a craft stamps mint version 2 on its
-record (acct187 - acct182 on its branch, renumbered at the merge); a record of 1 or none mints the piece it always did - each pick even over the kinds, a Rare held to
-both parts (`rollAffixes` `byLines` false). 18,048 pieces of every rolled recipe at versions 0 and 1 mint byte for byte
-as main's mint did. Every loot door draws the new law; a seeded door's pieces (a gate's spoils, a hoard) move with it,
-their draw count kept.
-
-THE NUMBERS, 10,000 seeded rolls a row (the share of pieces carrying the kind; the share of all lines):
-
-| piece | tier | carrying capacity, old law | now | the group's own number, old | now | skills' share of the lines, now |
-| --- | --- | --- | --- | --- | --- | --- |
-| a ring (lines: weight 1, stat 8, resist 5, skill 35) | Magic | 35.1% | 3.2% | - | - | 70.8% |
-| a ring | Rare | 100.0% | 7.1% | - | - | 71.2% |
-| a cuirass (armor 1, weight 1, stat 8, resist 5, skill 35) | Magic | 20.7% | 2.1% | armour 64.1% | 51.6% | 46.8% |
-| a cuirass | Rare | 57.9% | 6.0% | armour 82.0% | 53.4% | 60.7% |
-| a longsword (damage 1, stat 8, skill 35) | Magic | - | - | damage 72.0% | 51.8% | 53.3% |
-| a longsword | Rare | - | - | damage 100.0% | 53.9% | 69.1% |
-
-Every kind but the group's own number sits at its line share or under it; a jewel's at it exactly (no lean). THE COST,
-said plainly: a Rare weapon is no longer sure of its damage line (100% was the slot rule's - damage is a weapon's one
-numeric prefix) and holds it about half the time, by the first pick's lean; and the skills, 35 lines of a group's 44 to
-50, fill most of a piece's lines. The owner's law is the lines' share, and this is it.
-
-Pinned: `test/systems/affixlines_reforge.test.js` (the distribution over 10,000 mints a piece, one roll a pick under
-either law, the mint version, the Exalted's, curse's and reforge's draws at their lines' shares); `lr1_lootrarity` (a
-Rare named as its lines fall, the old law's both parts), `fb1013e_craftprocs` (the last pass pinned at its own version),
-`auditloot2` (A6's fixture, A7's sample), the seeded spoils and the hoard (`fb1003b_aethericmaker`'s Gatecleaver seed 17 -> 2, `serpentset`'s golden to seed 6 - seed 2's amulet was "Porter's"), `loot14_wardrobe`'s goldens and the fixed streams of `disc29_rarity`, `auditcc_ui` and `fb0929d_accompare` moved with it. `tools/mutants/affixlines.json` (36, all dead); every record whose pins moved judged again - 490, 485 dead, 5 equivalent as recorded (craft4's four, and loot9's LOOT9-carried-kind-again: a carried kind without params weighs no line in the draw), none alive.
-
-## MAKER-RARE (FIELD BUGS 2026-10-26) - THE ITEM MAKER TAKES A RARE
-
-The owner: "You cant enchant masterwork/rare armor". A Rare's flavour is one of DFU's catalogue enchantments, so DFU's
-item maker - which lists no enchanted item (AddFilteredItem) - kept every Rare off its list, found or a Masterwork. Now
-an identified Rare whose rows are the ladder's own (its group's flavour, a curse's drawback) is taken with them kept at
-the head of the maker's lists and costing none of its points, the maker's own rows after them costing as ever
-(`enchanting.js` rareKeeps, keptEnchantments). An unidentified Rare stays out - the maker would identify it for nothing
-- a Legendary keeps DFU's refusal with the artifacts, and with the ladder switched off the maker is DFU's, as a garment
-and a Masterwork are DFU's off (AUDIT LOOT II A9). The temple's lift takes the curse's own row, never one the maker laid: a bound soul's forced set may
-hold the drawback's very kind (`lootCurse.js` liftCurse; AUDIT MAKER-RARE A1). A departure (Port-Ledger A, THE ITEM MAKER
-TAKES A RARE); the record and its audit are `01-Overview/bugs/Field-Bugs-2026-10-26.md`.
-`test/systems/fb1026_makerrare.test.js`.
-
-## ARMOR-LEAN (2026-10-26) - LEATHER, CHAIN AND PLATE ROLL THEIR OWN LINES
-
-A player: "can we make differences regarding stat distribution for all types when stats are rolled on them". Before
-this, a piece of armour's family moved its armour rating, weight, worth and condition (`armorMaterials.js` and the
-item builder's tables) and nothing on the ladder: a Rare chain cuirass and a Rare plate one drew from one pool at one
-weight. THE LAW NOW (`lootRarity.js` ARMOR_LEAN, armorLean): the bands stay every piece's - a Rare is a Rare - and the
-family weighs WHICH lines it draws, by the class's NativeMaterialValue (the family the equip gate refuses by, so a
-Roleplay & Realism mail hauberk is chain and a brigandine or fur jerkin leather):
-
-| family | first line its armour | kinds after (x its lines) | attributes lean to | resistances lean to |
-| --- | --- | --- | --- | --- |
-| Leather | 35% | armour 0.5, carrying 2, attributes 1.5, resist 0.75 | Agility, Speed x3; Luck x1.5; Strength, Endurance x0.5 | Poison x2, Frost x1.5 |
-| Chain | 50% (as before) | resist 2 | Endurance x2; Agility, Willpower x1.5 | Magic x2; Fire, Frost x1.5; Shock x0.5 |
-| Plate | 65% | armour 3, carrying 2, attributes 1.25, resist 0.75 | Strength, Endurance x3; Agility, Speed x0.4 | Fire x2, Frost x1.5; Shock x0.5, Magic x0.75 |
-
-SKILLS ARE EVERY FAMILY'S ALIKE (the player: "plate shouldnt have weapon skills more often keep that for every type"):
-no family weighs the skill kind, and which skill a skill line names is LOOT1's body kin for all three.
-
-A weighting, never a fence: every line a piece of armour could roll, every family still can. It reaches the roll
-(rollAffixes), a curse's reward line and a reforge's - drawWeight and the stat and resistance param (leanedParam). An Exalted Legendary's line keeps A7's even param draw (`auditloot2`); its kind still weighs by
-the family. ONE roll a draw, as LOOT1 and AFFIX-LINES hold: a piece rolls as many lines as its seed gave it, and a line
-landing on another kind draws what that kind draws, so a seeded door holding armour moves as AFFIX-LINES' did.
-
-THE NUMBERS, 20,000 seeded Rare cuirasses a row (share of all lines; the attributes' share of the stat lines):
-
-| family | armour first | armour | carrying | attributes | resist | skills | Agility+Speed | Strength+Endurance |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| even (before) | 51% | 15% | 2% | 14% | 9% | 60% | 25% | 25% |
-| Leather | 35% | 11% | 3% | 20% | 6% | 59% | 51% | 9% |
-| Chain | 51% | 15% | 2% | 13% | 16% | 55% | 25% | 29% |
-| Plate | 67% | 20% | 3% | 16% | 6% | 55% | 8% | 54% |
-
-THE RECORDS (`net/productRecord.js` MINT_V_ARMOR_LEAN): a craft stamped mint version 3 (JEWEL-KIN, FIELD BUGS
-2026-10-26d: a craft is stamped with the version its client names, 4 from that build - and a client that names none,
-this release's among them, 2, the newest law every build reads alike, so its armour leaves the family lean until it
-updates - `craftMintVersion`, AUDIT FB1026d II D3); a record of 2 or less mints the
-piece it always did (`rollAffixes` `lean` false), so no crafted piece changes when the market or a temper mints it
-again. Pinned: `test/systems/loot/armorlean.test.js`; `affixlines_reforge` (the lines' law measured with the lean off,
-the first pick's share at the family's, versions 2 and 3); `tools/mutants/armorlean.json` (7, all dead).
-
-DAEDRIC-SALE (2026-10-26, the same player: "tune down daedric selling price by 50%"): a counter pays half for Daedric
-gear - weapons, plate and shields - at `tradeModes.js` counterValueOf, the one value every selling arm reads; a gem set
-in the piece sells whole, and what a shop ASKS stands. A patron at a hired trader is no counter: patronWorth
-(`net/patronLaw.js`) reads the piece's whole worth and is untouched. A departure from DFU's Sell arms (Port-Ledger A,
-A COUNTER PAYS HALF FOR DAEDRIC GEAR).
-
-## MASTER-ART (2026-10-27) - A CRAFTED LEGENDARY
-
-A crafter at Master makes a Legendary of no record: three lines of its group's pool, chosen, their values rolled in the
-Legendary band by the account service (`AFFIX_RANGES`' `legendary` column, never past its top). It carries no record's
-name, no DFU enchantment and no power, so the codex and the powers stay the drops'. The item law knows it by its
-provenance and its shape; the judge holds its lines to its record. The item maker refuses every Legendary now, this one
-too. The record is `06-Systems/Professions-Arc.md` section 57.
+- `src/systems/loot/lootRarity.js` - the ladder, the odds, affixes, names, worth, the fold
+- `src/systems/loot/lootLevelGate.js` - the level gate
+- `src/scenes/hostCombat.js` `spawnEnemyLoot` - the one enemy-loot seam that rolls a body
+- `test/systems/lr1_lootrarity.test.js` - the ladder's laws
+- `test/combat/powerceiling_walk.test.js` - every record and minted item within the ceiling
+- `test/systems/fb1001_wand.test.js` - no slot, no tier

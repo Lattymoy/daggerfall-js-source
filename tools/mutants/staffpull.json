@@ -12,7 +12,7 @@
   {
     "name": "STAFF-PULL-frozen-pulled",
     "file": "server/src/staffTeleport.js",
-    "old": "if (Number(b.fz) > Math.floor(now / 1000)) { result(ws, m.nonce, { error: 'frozen' }); return; }",
+    "old": "  if (Number(b.fz) > Math.floor(now / 1000)) {\n    result(ws, m.nonce, { error: 'frozen' });\n    return;\n  }",
     "new": "",
     "why": "a frozen player is moved out of the freeze",
     "tests": [
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PULL-stranger-lands",
     "file": "server/src/staffTeleport.js",
-    "old": "if (!p || !p.pull || p.target !== ws || p.id !== a.id) return;",
-    "new": "if (!p || !p.pull) return;",
+    "old": "  if (!p || !p.pull || p.target !== ws || p.id !== a.id) return;",
+    "new": "  if (!p || !p.pull) return;",
     "why": "any socket answers another player's pull",
     "tests": [
       "test/net/staffpull.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PULL-capture-answers-pull",
     "file": "server/src/staffTeleport.js",
-    "old": "if (!p || p.pull || p.target !== ws || p.id !== a.id) return;",
-    "new": "if (!p || p.target !== ws || p.id !== a.id) return;",
+    "old": "  if (!p || p.pull || p.target !== ws || p.id !== a.id) return;",
+    "new": "  if (!p || p.target !== ws || p.id !== a.id) return;",
     "why": "a capture answer passes as a landing",
     "tests": [
       "test/net/staffpull.test.js"
@@ -52,7 +52,7 @@
   {
     "name": "STAFF-PULL-land-when-dead",
     "file": "src/scenes/staffPullHost.js",
-    "old": "if (!alive()) throw new Error('cancelled');",
+    "old": "        if (!alive()) throw new Error('cancelled');",
     "new": "",
     "why": "a death during the load still places",
     "tests": [

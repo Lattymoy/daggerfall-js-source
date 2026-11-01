@@ -17,8 +17,12 @@ export const ARMORY_LINES = Object.freeze(['dagonfire', 'eternal', 'guild', 'cry
  *  THANKS-POST: the crystal line is a gift, never sold (net/giftLaw.js). */
 export const ARMORY_SOURCE = Object.freeze({ dagonfire: 'broker', eternal: 'shop', guild: 'guild', crystal: 'gift' });
 
-const piece = (/** @type {string} */ key, /** @type {string} */ slot, /** @type {string} */ code, /** @type {string} */ line) =>
-  Object.freeze({ key, slot, code, line, source: ARMORY_SOURCE[/** @type {keyof typeof ARMORY_SOURCE} */ (line)] });
+const piece = (
+  /** @type {string} */ key,
+  /** @type {string} */ slot,
+  /** @type {string} */ code,
+  /** @type {string} */ line,
+) => Object.freeze({ key, slot, code, line, source: ARMORY_SOURCE[/** @type {keyof typeof ARMORY_SOURCE} */ (line)] });
 /** EVERY PIECE, in the catalogue's order. `code` is the piece's character in a kit, one a slot, never reused or
  *  renumbered: a stored kit names it. What is held is the Broker's insignia (insignia.js) and the shop's wares (shopLaw.js). */
 export const ARMORY_PIECES = Object.freeze([
@@ -32,8 +36,8 @@ export const ARMORY_PIECES = Object.freeze([
   piece('eternalarmlets', 'arms', 'b', 'eternal'),
   piece('eternalgreaves', 'legs', 'b', 'eternal'),
   piece('eternaledge', 'weapon', 'b', 'eternal'),
-  piece('insigniaarmlet', 'arms', 'c', 'guild'),   // GUILD-SHOP: the guild's arms on one upper arm
-  piece('crystalspurs', 'arms', 'd', 'crystal'),   // THANKS-POST: small crystal spurs along both arms, the update's gift
+  piece('insigniaarmlet', 'arms', 'c', 'guild'), // GUILD-SHOP: the guild's arms on one upper arm
+  piece('crystalspurs', 'arms', 'd', 'crystal'), // THANKS-POST: small crystal spurs along both arms, the update's gift
 ]);
 /** Every piece's key. */
 export const ARMORY_KEYS = Object.freeze(ARMORY_PIECES.map((p) => p.key));
@@ -42,23 +46,39 @@ export const armoryLinePieces = (/** @type {unknown} */ line) => ARMORY_PIECES.f
 /** A SET, sold whole (the owner: "The store set should be $20"): its key, and the line whose every piece it gives. */
 export const ARMORY_SETS = Object.freeze({ eternalset: 'eternal' });
 /** The pieces a ware of the armory gives, by its key: a piece itself, or a set's every piece; none for anything else. */
-export const armoryWarePieces = (/** @type {unknown} */ key) => (armoryPieceOf(key) ? [/** @type {string} */ (key)]
-  : typeof key === 'string' && Object.hasOwn(ARMORY_SETS, key) ? armoryLinePieces(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key) : []);
+export const armoryWarePieces = (/** @type {unknown} */ key) =>
+  armoryPieceOf(key)
+    ? [/** @type {string} */ (key)]
+    : typeof key === 'string' && Object.hasOwn(ARMORY_SETS, key)
+      ? armoryLinePieces(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key)
+      : [];
 /** The kit that wears a line's every piece (`bbbbb` for the Eternal line), or null for no line. Pure. */
 export const armoryLineKit = (/** @type {unknown} */ line) => armoryKitOf(armoryLinePieces(line).map((p) => p.key));
 /** A piece's name in English - the service's lines and the shop's receipt (the client's own words: ui/armoryText.js). */
 export const ARMORY_NAME = Object.freeze({
-  burningcrown: 'Crown of the Burning Door', emberheart: 'Ember Heart', ashbound: 'Ashbound Bracers', cinderstride: 'Cinderstride',
-  breachbrand: 'Brand of the Breach', eternalhalo: 'Eternal Halo', eternalsigil: 'Eternal Sigil', eternalarmlets: 'Eternal Armlets',
-  eternalgreaves: 'Eternal Greaves', eternaledge: 'Eternal Edge', insigniaarmlet: 'Insignia Armlet', crystalspurs: 'Crystal Spurs',
+  burningcrown: 'Crown of the Burning Door',
+  emberheart: 'Ember Heart',
+  ashbound: 'Ashbound Bracers',
+  cinderstride: 'Cinderstride',
+  breachbrand: 'Brand of the Breach',
+  eternalhalo: 'Eternal Halo',
+  eternalsigil: 'Eternal Sigil',
+  eternalarmlets: 'Eternal Armlets',
+  eternalgreaves: 'Eternal Greaves',
+  eternaledge: 'Eternal Edge',
+  insigniaarmlet: 'Insignia Armlet',
+  crystalspurs: 'Crystal Spurs',
   eternalset: 'The Eternal Set',
 });
 
 /** A piece by its key, or null. */
-export const armoryPieceOf = (/** @type {unknown} */ key) => (typeof key === 'string' ? ARMORY_PIECES.find((p) => p.key === key) ?? null : null);
+export const armoryPieceOf = (/** @type {unknown} */ key) =>
+  typeof key === 'string' ? (ARMORY_PIECES.find((p) => p.key === key) ?? null) : null;
 /** The piece a slot's character names in a kit, or null (empty, or no piece of that slot). */
 export const armoryPieceAt = (/** @type {string} */ slot, /** @type {unknown} */ code) =>
-  (typeof code === 'string' && code !== ARMORY_EMPTY ? ARMORY_PIECES.find((p) => p.slot === slot && p.code === code) ?? null : null);
+  typeof code === 'string' && code !== ARMORY_EMPTY
+    ? (ARMORY_PIECES.find((p) => p.slot === slot && p.code === code) ?? null)
+    : null;
 
 /** THE KIT A TOKEN CARRIES (`ak`): five characters, a slot each in ARMORY_SLOTS' order, `0` for an empty slot - never all
  *  empty (no kit is no claim, so a player wearing none mints the bytes they always did). Pure. */
@@ -77,7 +97,9 @@ export function armoryKitOk(/** @type {unknown} */ kit) {
 export function armoryKitPieces(/** @type {unknown} */ kit) {
   const ok = armoryKitOk(kit);
   /** @type {Record<string, string|null>} */ const out = {};
-  ARMORY_SLOTS.forEach((s, i) => { out[s] = ok ? armoryPieceAt(s, /** @type {string} */ (kit)[i])?.key ?? null : null; });
+  ARMORY_SLOTS.forEach((s, i) => {
+    out[s] = ok ? (armoryPieceAt(s, /** @type {string} */ (kit)[i])?.key ?? null) : null;
+  });
   return out;
 }
 /** The kit that wears these pieces (`{ slot: key }`, or a list of keys) - a key in the wrong slot or none at all is left

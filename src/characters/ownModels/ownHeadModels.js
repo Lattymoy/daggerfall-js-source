@@ -22,15 +22,27 @@ const PART = Object.freeze({ head: 0, hair: 1 });
  *  third-person part - its id the shipped mesh's name. Exactly the record a BODY of that id, mesh, race and part reads
  *  as - nothing the build could tell from the data's (test/tooling/mwheads1.test.js holds each to bodyParts' reading).
  *  @param {string} race @param {boolean} female @param {'head'|'hair'} slot @param {string} id */
-const record = (race, female, slot, id) => Object.freeze({
-  id, model: `${id}.nif`, race, part: PART[slot], female, playable: true, skin: true, vampire: false, bodyKind: 0, slot, firstPerson: false,
-});
+const record = (race, female, slot, id) =>
+  Object.freeze({
+    id,
+    model: `${id}.nif`,
+    race,
+    part: PART[slot],
+    female,
+    playable: true,
+    skin: true,
+    vampire: false,
+    bodyKind: 0,
+    slot,
+    firstPerson: false,
+  });
 
 /** @param {string} race @param {boolean} female @param {string[]} heads @param {string[]} hairs */
-const pools = (race, female, heads, hairs) => Object.freeze({
-  heads: Object.freeze(heads.map((id) => record(race, female, 'head', id))),
-  hairs: Object.freeze(hairs.map((id) => record(race, female, 'hair', id))),
-});
+const pools = (race, female, heads, hairs) =>
+  Object.freeze({
+    heads: Object.freeze(heads.map((id) => record(race, female, 'head', id))),
+    hairs: Object.freeze(hairs.map((id) => record(race, female, 'hair', id))),
+  });
 
 /**
  * The port's own heads and hairs, by race (a RACE record's id, lowercased - BODY records name it so) and sex, each pool
@@ -40,7 +52,12 @@ const pools = (race, female, heads, hairs) => Object.freeze({
  */
 export const OWN_HEADS = Object.freeze({
   breton: Object.freeze({
-    male: pools('breton', false, ['breton_m_head_h04', 'breton_m_head_h0411', 'breton_m_head_h0423'], ['breton_m_hair_01', 'breton_m_hair_0111', 'breton_m_hair_widow']),
+    male: pools(
+      'breton',
+      false,
+      ['breton_m_head_h04', 'breton_m_head_h0411', 'breton_m_head_h0423'],
+      ['breton_m_hair_01', 'breton_m_hair_0111', 'breton_m_hair_widow'],
+    ),
   }),
 });
 
@@ -55,7 +72,8 @@ export function ownFacePools(race, female) {
 
 /** Every mesh path the port's own heads and hairs name - the coverage walk's (each ships, test/tooling/mwheads1.test.js). The
  *  build asks a pool's own, through facePools' `has`. */
-export const ownHeadModelPaths = () => Object.values(OWN_HEADS)
-  .flatMap((bySex) => Object.values(bySex))
-  .flatMap((p) => [...p.heads, ...p.hairs])
-  .map((r) => `meshes/${r.model}`);
+export const ownHeadModelPaths = () =>
+  Object.values(OWN_HEADS)
+    .flatMap((bySex) => Object.values(bySex))
+    .flatMap((p) => [...p.heads, ...p.hairs])
+    .map((r) => `meshes/${r.model}`);

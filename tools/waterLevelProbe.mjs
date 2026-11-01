@@ -1,11 +1,11 @@
-// WATER-LEVEL (bible/07-Rendering/Water-Arc.md WATER-LEVEL): THE WATER'S LEVEL, PHOTOGRAPHED IN THE REAL GAME - THE
+// THE WATER'S LEVEL, PHOTOGRAPHED IN THE REAL GAME - THE
 // REVERT's lesson ("a look change wants a shot from the real game before it lands, not a probe number"). Boots the
 // streaming world headless on SwiftShader with the player's ARENA2 (tools/waterLookProbe.mjs's way), Basic Roads' rivers
 // on, and photographs the water each body law draws: Daggerfall's moat and the Bay river beside it, Sentinel's palace
 // pool and harbour, a river and a lake of Cyrodiil, and a lake of World 2.0's hammerfell-test. Each scene finds its own
 // water in the built pixels, so the same run shoots the same places before and after a change.
 //
-//   ARENA2_PATH=... node tools/waterLevelProbe.mjs /tmp/waterlevel/before [scene ...]
+//  ARENA2_PATH=... node tools/waterLevelProbe.mjs /tmp/waterlevel/before [scene ...]
 //
 // Scenes: daggerfall, sentinel, harbour, cyrodiil, cyrodiillake, wg2 (all by default). Renders of game data are game data (Port-Doctrine):
 // write them outside the tree. Fails on a page error or a shader that would not build.

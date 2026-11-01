@@ -26,10 +26,14 @@ export function handleDecode(m, post) {
     const bytes = m.bytes instanceof Uint8Array ? m.bytes : new Uint8Array(m.bytes);
     const image = decodeTextureImage(m.path, bytes, m.levels == null ? undefined : { levels: m.levels });
     // every level's pixels cross by transfer: the decoder mints a fresh buffer per level
-    post({ t: 'image', id: m.id, image }, image.mips.map((l) => l.rgba.buffer));
+    post(
+      { t: 'image', id: m.id, image },
+      image.mips.map((l) => l.rgba.buffer),
+    );
   } catch (e) {
     post({ t: 'error', id: m.id, message: e?.message ?? String(e) });
   }
 }
 
-globalThis.onmessage = (ev) => handleDecode(ev.data ?? {}, (msg, transfer) => globalThis.postMessage(msg, transfer ?? []));
+globalThis.onmessage = (ev) =>
+  handleDecode(ev.data ?? {}, (msg, transfer) => globalThis.postMessage(msg, transfer ?? []));

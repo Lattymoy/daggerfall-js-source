@@ -719,7 +719,14 @@ export const FEATURES = Object.freeze([
       + 'out through them. Rooms only is lighter on your machine; Off is the classic flat glass.',
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]) }),   // RW1: render/realWindows.js realWindowsMode reads it
+    control: Object.freeze({
+      store: 'prefs', key: 'realWindows', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['rooms', 'Rooms only'], ['off', 'Off']]),   // RW1: render/realWindows.js realWindowsMode reads it
+      // WINDOW-NIGHT (Discord, a player: "I still want to see outside but not be blasted by the light"): the light the glass
+      // throws (WL1), a part of its own - Day only and Off keep the view out and the rooms (realWindows.js windowLightMode)
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windowLight', initial: 'on', online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'windowLight', get label() { return t('features.realWindows.light', 'Window light'); },
+        tiers: Object.freeze([tier('on', () => t('features.realWindows.light.on', 'On')), tier('day', () => t('features.realWindows.light.day', 'Day only')), tier('off', OFF)]) })]),
+    }),
   }),
   // PERF-SCALE (2026-09-25, two players via Mac: "One user is reporting fps issues in the exterior but fine in the
   // interior ... GPU is NVIDIA GeForce RTX 4060 Ti", "me too my friend.. don't know why. I got a RX6600"): THE
@@ -887,6 +894,18 @@ export const FEATURES = Object.freeze([
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
+  }),
+  // AMBIENT-LIFE (2026-10-31, bible/07-Rendering/Ambient-Life.md): the birds, bats and small animals outdoors - a look,
+  // nothing the room shares, so each player's own online. Kill door `?wildlife=off` (scenes/ambientLifeHost.js).
+  Object.freeze({
+    id: 'wildlife',
+    group: 'sight',
+    get title() { return t('features.wildlife.title', 'Wildlife'); },
+    get note() { return t('features.wildlife.note', 'Birds, bats and small animals live outdoors. Flocks cross the sky, birds sit on roofs and fly off '
+      + 'as you come near, and small animals run from your feet.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'ambientLife', initial: true, online: 'player' }),   // AMBIENT-LIFE: scenes/ambientLifeHost.js wildlifeDensity
   }),
   // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
   // lighting (first person)" and "morrowind's first person view also

@@ -2,8 +2,8 @@
   {
     "name": "CLIMBHANDS2-spread-as-before",
     "file": "src/combat/climbHands.js",
-    "old": "  GRIP_APART: 93,",
-    "new": "  GRIP_APART: 52,",
+    "old": "  GRIP_APART: 93, // each fist's centre from the screen's middle - the 3D body's wrists on the lip (POSE.HANDS_APART,",
+    "new": "  GRIP_APART: 52, // each fist's centre from the screen's middle - the 3D body's wrists on the lip (POSE.HANDS_APART,",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "CLIMBHANDS2-grip-on-the-sleeve",
     "file": "src/combat/climbHands.js",
-    "old": "  GRIP_AT: 0.35,",
-    "new": "  GRIP_AT: 0.75,",
+    "old": "  GRIP_AT: 0.35, // the grip: the point of a fist held on the wall, its share of the drawn height down from the top",
+    "new": "  GRIP_AT: 0.75, // the grip: the point of a fist held on the wall, its share of the drawn height down from the top",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -24,8 +24,8 @@
   {
     "name": "CLIMBHANDS2-fists-on-the-screen",
     "file": "src/combat/climbHands.js",
-    "old": "const pinned = this.faceYaw != null && Number.isFinite(view.yaw);",
-    "new": "const pinned = false;",
+    "old": "    const pinned = this.faceYaw != null && Number.isFinite(view.yaw);",
+    "new": "    const pinned = false;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -35,8 +35,8 @@
   {
     "name": "CLIMBHANDS2-depth-turned-the-wrong-way",
     "file": "src/combat/climbHands.js",
-    "old": "const z = a * Math.sin(turn) + Math.cos(turn);",
-    "new": "const z = -a * Math.sin(turn) + Math.cos(turn);",
+    "old": "  const z = a * Math.sin(turn) + Math.cos(turn); // its depth along the turned view",
+    "new": "  const z = -a * Math.sin(turn) + Math.cos(turn); // its depth along the turned view",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -46,8 +46,8 @@
   {
     "name": "CLIMBHANDS2-across-the-wrong-way",
     "file": "src/combat/climbHands.js",
-    "old": "((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX)",
-    "new": "((a * Math.cos(turn) + Math.sin(turn)) / z / lens.tanX)",
+    "old": "    lens.cx + ((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX) * lens.hx,",
+    "new": "    lens.cx + ((a * Math.cos(turn) + Math.sin(turn)) / z / lens.tanX) * lens.hx,",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -57,8 +57,8 @@
   {
     "name": "CLIMBHANDS2-pitch-the-wrong-way",
     "file": "src/combat/climbHands.js",
-    "old": "const up = Math.atan2(b, z) - pitch;",
-    "new": "const up = Math.atan2(b, z) + pitch;",
+    "old": "  const up = Math.atan2(b, z) - pitch; // its height off the view's own level",
+    "new": "  const up = Math.atan2(b, z) + pitch; // its height off the view's own level",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -68,8 +68,8 @@
   {
     "name": "CLIMBHANDS2-a-look-down-slides-sideways",
     "file": "src/combat/climbHands.js",
-    "old": "((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX)",
-    "new": "((a * Math.cos(turn) - Math.sin(turn)) / (z * Math.cos(pitch) + b * Math.sin(pitch)) / lens.tanX)",
+    "old": "    lens.cx + ((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX) * lens.hx,",
+    "new": "    lens.cx +\n      ((a * Math.cos(turn) - Math.sin(turn)) / (z * Math.cos(pitch) + b * Math.sin(pitch)) / lens.tanX) * lens.hx,",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -79,8 +79,8 @@
   {
     "name": "CLIMBHANDS2-behind-the-eye-drawn",
     "file": "src/combat/climbHands.js",
-    "old": "if (!(z > 1e-3)) return null;",
-    "new": "if (!(z > -1e9)) return null;",
+    "old": "  if (!(z > 1e-3)) return null;",
+    "new": "  if (!(z > -1e9)) return null;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -90,8 +90,8 @@
   {
     "name": "CLIMBHANDS2-gone-hands-resurface",
     "file": "src/combat/climbHands.js",
-    "old": "Math.max(at[1] - gripY, -HANDS.BOTTOM_SLACK)",
-    "new": "(at[1] - gripY)",
+    "old": "      let y = NATIVE_H - gh + HANDS.BOTTOM_SLACK + this.drawn[s][1] + Math.max(at[1] - gripY, -HANDS.BOTTOM_SLACK);",
+    "new": "      let y = NATIVE_H - gh + HANDS.BOTTOM_SLACK + this.drawn[s][1] + (at[1] - gripY);",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -101,8 +101,8 @@
   {
     "name": "CLIMBHANDS2-pinned-to-the-wall-not-the-body",
     "file": "src/combat/climbHands.js",
-    "old": "this.faceYaw = Number.isFinite(c.yaw) ? c.yaw : wall ? wallYawOf(wall) : null;",
-    "new": "this.faceYaw = wall ? wallYawOf(wall) : null;",
+    "old": "    this.faceYaw = Number.isFinite(c.yaw) ? c.yaw : wall ? wallYawOf(wall) : null;",
+    "new": "    this.faceYaw = wall ? wallYawOf(wall) : null;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -112,8 +112,8 @@
   {
     "name": "CLIMBHANDS2-both-hands-let-go",
     "file": "src/combat/climbHands.js",
-    "old": "const t = s === this.side ? this.look : 0;",
-    "new": "const t = this.look;",
+    "old": "      const t = s === this.side ? this.look : 0;",
+    "new": "      const t = this.look;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -123,8 +123,8 @@
   {
     "name": "CLIMBHANDS2-the-wrong-hand-lets-go",
     "file": "src/combat/climbHands.js",
-    "old": "const t = s === this.side ? this.look : 0;",
-    "new": "const t = s !== this.side ? this.look : 0;",
+    "old": "      const t = s === this.side ? this.look : 0;",
+    "new": "      const t = s !== this.side ? this.look : 0;",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -134,8 +134,8 @@
   {
     "name": "CLIMBHANDS2-lens-forgets-the-bar",
     "file": "src/combat/climbHands.js",
-    "old": "cy: (r.y - at.y + r.h / 2 + offsetHeight) / sy",
-    "new": "cy: (r.y - at.y + r.h / 2) / sy",
+    "old": "    cy: (r.y - at.y + r.h / 2 + offsetHeight) / sy,",
+    "new": "    cy: (r.y - at.y + r.h / 2) / sy,",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -145,8 +145,8 @@
   {
     "name": "CLIMBHANDS2-lens-forgets-the-pillarbox",
     "file": "src/combat/climbHands.js",
-    "old": "cx: (r.x - at.x + r.w / 2) / sx",
-    "new": "cx: (r.x + r.w / 2) / sx",
+    "old": "    cx: (r.x - at.x + r.w / 2) / sx,",
+    "new": "    cx: (r.x + r.w / 2) / sx,",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",
@@ -156,8 +156,8 @@
   {
     "name": "CLIMBHANDS2-lens-forgets-the-projection-aspect",
     "file": "src/combat/climbHands.js",
-    "old": "tanX: tanY * (aspect > 0 ? aspect : r.w / r.h), tanY,",
-    "new": "tanX: tanY * (r.w / r.h), tanY,",
+    "old": "    tanX: tanY * (aspect > 0 ? aspect : r.w / r.h),",
+    "new": "    tanX: tanY * (r.w / r.h),",
     "tests": [
       "test/combat/climbhands2.test.js",
       "test/player/climb/climbhands.test.js",

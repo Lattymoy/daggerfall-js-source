@@ -2,7 +2,7 @@
   {
     "name": "AUDWB-C1-the-sea-by-climate-alone",
     "file": "src/systems/gate/gateSite.js",
-    "old": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
+    "old": "export const gateSeaPixel = (climate, byte) =>\n  climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
     "new": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "AUDWB-C1-the-sea-edge-off-by-one",
     "file": "src/systems/gate/gateSite.js",
-    "old": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
-    "new": "export const gateSeaPixel = (climate, byte) => climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE < SCALED_OCEAN_ELEVATION;",
+    "old": "  climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE <= SCALED_OCEAN_ELEVATION;",
+    "new": "  climate === CLIMATES.Ocean || byte * BASE_HEIGHT_SCALE < SCALED_OCEAN_ELEVATION;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "AUDWB-C1-the-coast-value-a-province",
     "file": "src/systems/gate/gateSite.js",
-    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;",
-    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105 || pol === 64;",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
+    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105 || pol === 64; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ],
@@ -50,8 +50,8 @@
   {
     "name": "AUDWB-C7-a-slice-that-stops-at-the-first-row",
     "file": "src/systems/gate/gateSite.js",
-    "old": "      do { row(); y++; } while (y < H - 1 && more());",
-    "new": "      do { row(); y++; } while (y < H - 2 && more());",
+    "old": "      } while (y < H - 1 && more());",
+    "new": "      } while (y < H - 2 && more());",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "AUDWB-C7-a-slice-that-skips-a-row",
     "file": "src/systems/gate/gateSite.js",
-    "old": "      do { row(); y++; } while (y < H - 1 && more());",
-    "new": "      do { row(); y += 1 + (more() ? 0 : 0); y++; } while (y < H - 1 && more());",
+    "old": "        y++;",
+    "new": "        y += 1 + (more() ? 0 : 0);\n        y++;",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "AUDWB-C4-the-omen-before-the-clock",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (!ready()) { readyAt = null; settled = false; current = null; return null; }",
-    "new": "      if (!ready() && false) { readyAt = null; settled = false; current = null; return null; }",
+    "old": "      if (!ready()) {",
+    "new": "      if (!ready() && false) {",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "AUDWB-C4-no-settle",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "        if (now() - readyAt < settleMs) { current = null; return null; }",
-    "new": "        if (now() - readyAt < 0) { current = null; return null; }",
+    "old": "        if (now() - readyAt < settleMs) {",
+    "new": "        if (now() - readyAt < 0) {",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDWB-C4-a-link-lost-keeps-the-settle",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (!ready()) { readyAt = null; settled = false; current = null; return null; }",
-    "new": "      if (!ready()) { readyAt = null; current = null; return null; }",
+    "old": "        settled = false;\n        current = null;",
+    "new": "        current = null;",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "AUDWB-C6-the-rate-unclamped",
     "file": "src/render/gate/gatePass.js",
-    "old": "export const gateSpinRate = (open) => MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * Math.max(0, Math.min(1, open));",
-    "new": "export const gateSpinRate = (open) => MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * open;",
+    "old": "  MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * Math.max(0, Math.min(1, open));",
+    "new": "  MEMBRANE_TURN_SEALED_HZ + (MEMBRANE_TURN_OPEN_HZ - MEMBRANE_TURN_SEALED_HZ) * open;",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]

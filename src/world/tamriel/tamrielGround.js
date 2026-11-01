@@ -37,7 +37,7 @@ import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-
 import { perlinNoise } from '../perlin.js';   // RELIEF-PEAKS: the large map before it (largeMapBefore), for the records written on it
 import { inEtherLaw } from '../ethericSea.js';   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
 import { landLayer } from '../land/landLayer.js';   // FOUNDATION F4: the land's rows, asked before the law
-import { gen2Byte, gen2Climate } from '../gen2/gen2Ground.js';   // WG2: the published regions' ground, asked before the law
+import { gen2Byte, gen2Climate } from '../gen2/gen2Ground.js';   // The published regions' ground, asked before the law
 import { BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, cubicInterpolator } from '../terrain/terrainSampler.js';   // RELIEF-PEAKS: the kernel's own two terms
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
@@ -132,7 +132,7 @@ export function tamrielHeightByte(x, y) {
   let byte = rumareMouthPixel(x, y) ? 0 : authoredHeightByte(px, py, (groundHash(x, y) - 0.5) * 4);   // RUMARE-WATER: the mouth's pixels the sea's
   const basin = byte > SHORE_BYTE ? rumareBasin(x, y) : 0;
   if (basin > 0) byte = Math.round(byte - (byte - SHORE_BYTE) * basin);
-  byte = gen2Byte(x, y, byte) ?? byte;   // WG2 (bible/03-World/World-2-Canon.md): a published region's ground over the law
+  byte = gen2Byte(x, y, byte) ?? byte;   // A published region's ground over the law
   byte = landLayer().heightAt(x, y) ?? byte;   // FOUNDATION F4: a row of the land's (world/land/landLayer.js) over the law
   if (_bytes.size >= GROUND_CACHE_MAX) _bytes.clear();
   _bytes.set(k, byte);

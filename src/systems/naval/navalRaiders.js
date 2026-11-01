@@ -23,7 +23,7 @@
 
 import { SHIP_CLASSES } from './navalShips.js';
 import { seededRng } from '../seaRaiders.js';
-import { chaseYields } from '../travel/travelBands.js';   // TV7b: a chase two players share, kept by the lower id - one law
+import { chaseYields } from '../travel/travelBands.js'; // TV7b: a chase two players share, kept by the lower id - one law
 
 /** A raider within this of the player (m) is stood as a ship; one stood goes past RAIDER_DROP_M unless it fights. */
 export const RAIDER_STAND_M = 1200;
@@ -41,11 +41,15 @@ const CLASS_SALT = 0x5ea1c1a5;
  * seed - never the flagship (the small raid's crew, WAQ_SHIP_SMALLRAID, not the flagship's WAQ_SHIP_ATTACK_PIRATE).
  */
 export function raiderClassOf(seed, level) {
-  const pool = SHIP_CLASSES.filter((c) => c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0));
+  const pool = SHIP_CLASSES.filter(
+    (c) => c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0),
+  );
   const list = pool.length ? pool : SHIP_CLASSES.filter((c) => c.faction === 'pirate' && !c.flagship).slice(0, 1);
   const total = list.reduce((s, c) => s + c.weight, 0);
   let x = seededRng((seed ^ CLASS_SALT) >>> 0)() * total;
-  for (const c of list) { if ((x -= c.weight) < 0) return c; }
+  for (const c of list) {
+    if ((x -= c.weight) < 0) return c;
+  }
   return list[list.length - 1];
 }
 
@@ -71,14 +75,24 @@ export function raiderPlan({ raiders, me, myId, stood, peers, spent, held = new 
     // yields into the stronger's puppet, the same hull, never one gone from view. Else she leaves only out of sight -
     // past the drop range and fighting no one: struck (to be boarded), spent (sheering off) or her life over (sailing
     // on), she is still a ship on the water, never one that vanishes in view
-    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) { drop.push(id); continue; }
+    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) {
+      drop.push(id);
+      continue;
+    }
     if (!s.engaged && flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);
   }
   const keep = [...stood.keys()].filter((id) => !drop.includes(id));
   // AUDIT NAV1 (online): a raider already on the water in my sea as another's - whoever's id - is hers: standing a
   // second copy of her seed beside it (a higher id's copy took her over) would put two of her in my sea
   const candidates = raiders
-    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)
+    .filter(
+      (r) =>
+        !stood.has(r.id) &&
+        !spent.has(r.id) &&
+        !held.has(r.id) &&
+        !peers.has(r.seed) &&
+        flat(r.pos, me) <= RAIDER_STAND_M,
+    )
     .sort((a, b) => flat(a.pos, me) - flat(b.pos, me));
   const stand = candidates.slice(0, Math.max(0, RAIDER_SHIPS_MAX - keep.length)).map((r) => r.id);
   return { stand, drop };

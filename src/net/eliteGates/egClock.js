@@ -22,7 +22,14 @@ export const EG_CLOCK_EVERY_MS = 30_000;
 export const EG_CLOCK_RTT_MAX_MS = 5000;
 
 /** A breach's shared clock, new: no samples, its first burst due at once. */
-export const egClockNew = () => ({ seq: 0, sent: /** @type {Map<number, number>} */ (new Map()), samples: /** @type {number[]} */ ([]), rtts: /** @type {number[]} */ ([]), burst: 0, nextAt: 0 });
+export const egClockNew = () => ({
+  seq: 0,
+  sent: /** @type {Map<number, number>} */ (new Map()),
+  samples: /** @type {number[]} */ ([]),
+  rtts: /** @type {number[]} */ ([]),
+  burst: 0,
+  nextAt: 0,
+});
 /**
  * The ping due at `wall` (this machine's clock, ms): its number, or null. A burst of EG_CLOCK_SAMPLES pings
  * EG_CLOCK_SPACING_MS apart, then the next burst EG_CLOCK_EVERY_MS on. The ping's send time is kept against its number.
@@ -34,7 +41,10 @@ export function egClockDue(C, wall) {
   C.seq = (C.seq + 1) & 0x7fffffff;
   C.sent.set(C.seq, wall);
   C.burst++;
-  if (C.burst >= EG_CLOCK_SAMPLES) { C.burst = 0; C.nextAt = wall + EG_CLOCK_EVERY_MS; } else C.nextAt = wall + EG_CLOCK_SPACING_MS;
+  if (C.burst >= EG_CLOCK_SAMPLES) {
+    C.burst = 0;
+    C.nextAt = wall + EG_CLOCK_EVERY_MS;
+  } else C.nextAt = wall + EG_CLOCK_SPACING_MS;
   return C.seq;
 }
 /**
@@ -54,7 +64,11 @@ export function egClockHeard(C, c, now, wall) {
   if (C.rtts.length > EG_CLOCK_SAMPLES) C.rtts.shift();
   return true;
 }
-const median = (a) => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[n >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+const median = (a) => {
+  const s = [...a].sort((x, y) => x - y),
+    n = s.length;
+  return n % 2 ? s[n >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2;
+};
 /** The offset to add to this machine's wall clock for the relay's (ms): the median of the samples, null before any. */
 export const egClockOffset = (C) => (C.samples.length ? median(C.samples) : null);
 /** The one-way delay this clock measured (ms, whole): half the median round trip - said with each ping, so the room places

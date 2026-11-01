@@ -33,16 +33,16 @@
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
 import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';
-import { snowCoreGlsl } from './snowCoverGlsl.js';   // AUDIT PRECIP GROUND-5: the ground's snow, for a puddle's mask under it
-import { PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
+import { snowCoreGlsl } from './snowCoverGlsl.js'; // AUDIT PRECIP GROUND-5: the ground's snow, for a puddle's mask under it
+import { PUDDLE_RECORDS } from '../world/puddleMask.js'; // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
-import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
+import { getPref } from '../systems/uiPrefs.js'; // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
-import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
-import { SEA_LOOK_GLSL, SEA_HAZE_BAND } from './horizonHaze.js';   // FAR-SEA1: the sea takes the far ring's haze; AUDIT FAR-SEA1 C12: and the open sea's light is one text with the ring's sea
+import { FOG_GLSL } from './fogGlsl.js'; // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
+import { SEA_LOOK_GLSL, SEA_HAZE_BAND } from './horizonHaze.js'; // FAR-SEA1: the sea takes the far ring's haze; AUDIT FAR-SEA1 C12: and the open sea's light is one text with the ring's sea
 import { pageParam } from '../systems/pageQuery.js';
-import { EDGE_NOISE_GLSL } from './roadEdgeGlsl.js';   // COAST-LOOK: the edges' lattice noise, its one text
-import { groundWanderGlsl, groundKindsGlsl } from './groundEdgeGlsl.js';   // COAST-LOOK: the shore's wander and the transitions' table, the ground's own (the sheet, the sand and the silt on one line)
+import { EDGE_NOISE_GLSL } from './roadEdgeGlsl.js'; // COAST-LOOK: the edges' lattice noise, its one text
+import { groundWanderGlsl, groundKindsGlsl } from './groundEdgeGlsl.js'; // COAST-LOOK: the shore's wander and the transitions' table, the ground's own (the sheet, the sand and the silt on one line)
 import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/water/waterRipples.js';
 
 /** FT6 (2026-09-14, the Features arc): THE SWITCH, ONE HOME. Both
@@ -53,7 +53,7 @@ import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/water/waterRipples.js';
  *  still asks tilemapRectHasWater beside it - that is the town's, not
  *  the switch's. */
 export function waterSwitchOn(search = globalThis.location?.search ?? '') {
-  return isEnhanced() && !!getPref('enhancedWater') && pageParam('water', search) !== 'off';   // PERF-URL
+  return isEnhanced() && !!getPref('enhancedWater') && pageParam('water', search) !== 'off'; // PERF-URL
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -98,7 +98,7 @@ export const WATER_LIFT = 0.08;
  *  multiplier, so the tile's own palette colour reads as the body of the
  *  water and not as a floor seen through it. MAC2: darkened from
  *  0.62/0.78/0.86 - the body is the water's depth now, not its floor. */
-export const WATER_TINT = Object.freeze([0.36, 0.50, 0.60]);
+export const WATER_TINT = Object.freeze([0.36, 0.5, 0.6]);
 /** Schlick's F0 for water (n = 1.33). */
 export const WATER_F0 = 0.02;
 /** Half-width of the shore feather, in coverage (0.5 is the diagonal). */
@@ -121,7 +121,8 @@ export const DEFAULT_SKY_HORIZON = Object.freeze([0.66, 0.78, 0.92]);
  *  answered yes for every non-square town (AUDIT 65 MC-6: the one gate -
  *  the whole-map twin it replaced had no caller left and is retired). */
 export function tilemapRectHasWater(bytes, dim, width, height, table = WATER_DRAW_MASK_TABLE) {
-  const w = Math.min(width, dim), h = Math.min(height, dim);
+  const w = Math.min(width, dim),
+    h = Math.min(height, dim);
   for (let y = 0; y < h; y++) {
     const row = y * dim;
     for (let x = 0; x < w; x++) if (table[bytes[row + x]]) return true;
@@ -148,10 +149,14 @@ export function windStrength01(wind) {
 export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, still = false } = {}) {
   const t = still ? 0 : seconds;
   const s = windStrength01(wind);
-  let dx = 0.7, dz = Math.sqrt(1 - 0.49);   // a unit direction: the wind the sea takes when none is known
+  let dx = 0.7,
+    dz = Math.sqrt(1 - 0.49); // a unit direction: the wind the sea takes when none is known
   if (wind) {
     const m = Math.hypot(wind[0] ?? 0, wind[1] ?? 0);
-    if (m > 1e-9) { dx = wind[0] / m; dz = wind[1] / m; }
+    if (m > 1e-9) {
+      dx = wind[0] / m;
+      dz = wind[1] / m;
+    }
   }
   return {
     time: t,
@@ -160,7 +165,7 @@ export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, 
     rain: Math.min(1, Math.max(0, rain || 0)),
     zenith: sky?.zenith ?? DEFAULT_SKY_ZENITH,
     horizon: sky?.horizon ?? DEFAULT_SKY_HORIZON,
-    aurora: sky?.aurora?.tex ?? null,   // SKYRIM-AURORA: the dome map's texture, or null
+    aurora: sky?.aurora?.tex ?? null, // SKYRIM-AURORA: the dome map's texture, or null
     // AUDIT WATER-NEXT m6: no `scroll` and no `opacity` - WATER-NEXT 2's sheet scrolls no texel and has no one opacity
     // (the body swallows light by its depth; MAC2's "darker and not as see through" is the deep water's now), and
     // WATER_OPACITY, forwarded here and pinned as the surface's floor, was a law nothing drew
@@ -168,7 +173,7 @@ export function waterUniforms({ seconds = 0, wind = null, rain = 0, sky = null, 
     tint: WATER_TINT,
     f0: WATER_F0,
     shoreSoft: SHORE_SOFTNESS,
-    swell: swellAmplitude(s),   // WATER-NEXT 2: the sheet's swell, the wind's
+    swell: swellAmplitude(s), // WATER-NEXT 2: the sheet's swell, the wind's
     absorb: WATER_ABSORB,
   };
 }
@@ -202,15 +207,22 @@ export const SWELL_DEPTH = 2.5;
  *  eye (a pixel is 819.2 across), before a strided ring's cells grow as long as the shortest train. */
 export const SWELL_REACH = Object.freeze([300, 600]);
 /** The swell's height for a wind strength 0..1. */
-export const swellAmplitude = (windStrength01) => SWELL_CALM + (SWELL_GALE - SWELL_CALM) * Math.min(1, Math.max(0, windStrength01));
+export const swellAmplitude = (windStrength01) =>
+  SWELL_CALM + (SWELL_GALE - SWELL_CALM) * Math.min(1, Math.max(0, windStrength01));
 
 /** The swell at a world point, the shader's own sum: [height, d/dx, d/dz]. `windDir` a unit [x, z]. */
 export function swellAt(x, z, t, windDir, amplitude) {
-  let h = 0, gx = 0, gz = 0;
+  let h = 0,
+    gx = 0,
+    gz = 0;
   for (const [ang, len, share] of SWELL_TRAINS) {
-    const c = Math.cos(ang), s = Math.sin(ang);
-    const dx = c * windDir[0] - s * windDir[1], dz = s * windDir[0] + c * windDir[1];
-    const k = (2 * Math.PI) / len, w = Math.sqrt(SWELL_G * k), a = amplitude * share;
+    const c = Math.cos(ang),
+      s = Math.sin(ang);
+    const dx = c * windDir[0] - s * windDir[1],
+      dz = s * windDir[0] + c * windDir[1];
+    const k = (2 * Math.PI) / len,
+      w = Math.sqrt(SWELL_G * k),
+      a = amplitude * share;
     const ph = k * (dx * x + dz * z) - w * t;
     h += a * Math.sin(ph);
     gx += a * k * Math.cos(ph) * dx;
@@ -224,11 +236,13 @@ export const SWELL_GLSL = `
 vec3 swellAt(vec2 p, float t, vec2 wind, float amp) {
   vec3 r = vec3(0.0);
 ${SWELL_TRAINS.map(([ang, len, share]) => {
-    const k = (2 * Math.PI) / len, w = Math.sqrt(SWELL_G * k), f = (v) => `(${v.toFixed(6)})`;
-    return `  { vec2 d = vec2(${f(Math.cos(ang))} * wind.x - ${f(Math.sin(ang))} * wind.y, ${f(Math.sin(ang))} * wind.x + ${f(Math.cos(ang))} * wind.y);
+  const k = (2 * Math.PI) / len,
+    w = Math.sqrt(SWELL_G * k),
+    f = (v) => `(${v.toFixed(6)})`;
+  return `  { vec2 d = vec2(${f(Math.cos(ang))} * wind.x - ${f(Math.sin(ang))} * wind.y, ${f(Math.sin(ang))} * wind.x + ${f(Math.cos(ang))} * wind.y);
     float ph = ${k.toFixed(6)} * dot(d, p) - ${w.toFixed(6)} * t; float a = amp * ${share.toFixed(4)};
     r += vec3(a * sin(ph), (a * ${k.toFixed(6)} * cos(ph)) * d); }`;
-  }).join('\n')}
+}).join('\n')}
   return r;
 }`;
 
@@ -241,7 +255,7 @@ ${SWELL_TRAINS.map(([ang, len, share]) => {
 // ═══════════════════════════════════════════════════════════════════
 
 /** Beer-Lambert's absorption, per unit of path, red, green, blue. */
-export const WATER_ABSORB = Object.freeze([0.55, 0.30, 0.22]);
+export const WATER_ABSORB = Object.freeze([0.55, 0.3, 0.22]);
 /** How far the refracted look is pushed by the waves' slope, in screen fractions at a unit of depth. */
 export const REFRACT_STRENGTH = 0.035;
 /** The path, in units, past which the water is taken as deep everywhere it cannot measure itself (the open sea
@@ -273,7 +287,7 @@ export const WATER_SCENE_DEPTH_UNIT = 6;
 export const AURORA_SKY_UNIT = 25;
 /** SKYRIM-AURORA: where the aurora's dome map (render/auroraPass.js AURORA_DOME_FS) holds direction R - its azimuth from the
  *  north toward the east across, its height up. Here, beside its reader, so the boot's graph takes no new file. */
-export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0) * 0.15915494 + 0.5, R.y); }`;   // atan(0, 0) is undefined: straight up, any azimuth
+export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0) * 0.15915494 + 0.5, R.y); }`; // atan(0, 0) is undefined: straight up, any azimuth
 /** SKYRIM-AURORA: the least share of the aurora the water reflects - its Fresnel where that is more. Calm water at night
  *  shows the curtains as it shows a lamp's glint; the bare Fresnel, a few hundredths looking down, hid them. */
 export const AURORA_MIRROR = 0.3;
@@ -332,7 +346,10 @@ void main() {
  * moon's and the lamps' glints, the fog. Without a copy (the classic lane's frame), the blend does the same sum: the
  * ground under the sheet is drawn, and the sheet's alpha is how much of it the water hides.
  */
-export const waterSurfaceFs = (cloudShadowGlsl, shadowGlsl = '') => `#version 300 es   // EL7: with SHADOW_GLSL the water receives the lane's sun shadow
+export const waterSurfaceFs = (
+  cloudShadowGlsl,
+  shadowGlsl = '',
+) => `#version 300 es   // EL7: with SHADOW_GLSL the water receives the lane's sun shadow
 precision highp float;
 precision highp int;   // WATER-NEXT 2: uOpen is the vertex stage's too - an int's precision must agree across the two
 precision highp usampler2D;

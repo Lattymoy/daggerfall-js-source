@@ -6,7 +6,7 @@
 //
 // A FREEZE (the relay's `{t:'frozen', until}`, at every hello while it stands and when an order lands): the motor held as
 // paralysis holds it and no blow delivered (characters/playerEntity.js setStaffFrozen), the "Frozen by staff" screen
-// (ui/freezeScreen.js), and the Staff tab on the bar - the only chat this player can use while it stands (mob, 04:23Z).
+// (ui/freezeScreen.js), and the Staff tab on the bar - the only chat this player can use while it stands.
 // This screen is the player's alone: a game that ignores it is still held by the relay and the service.
 //
 // THE STAFF CHAT: every line lives in the account service (/v1/staff-chat/read and /send); the hub carries only a NUDGE
@@ -15,7 +15,7 @@
 // The thread's first answer carries the server's Discord invite (DISCORD_INVITE_URL on the service), said on the tab
 // as a line with a Copy button (ui/chatPanel.js `copy`).
 //
-// OFFLINE ONLY until mob tries it live.
+// Offline only, not tried live yet.
 // ═══════════════════════════════════════════════════════════════════
 
 import { t } from '../systems/textManager.js';
@@ -26,7 +26,17 @@ import { accountRefusalText } from './accountClient.js';
 export const STAFF_TAB = 'staff';
 /** The tab's row (net/chat.js CHAT_TABS's shape), added to the log by the chat (ChatLog.addTab): a private thread with
  *  staff, off the bar until staff froze the player or opened a talk, and then the only tab a frozen player can use. */
-export const STAFF_TAB_ROW = Object.freeze({ id: STAFF_TAB, label: 'Staff', room: null, link: false, get hint() { return t('net.chat.staffHint', 'Only you and the game staff'); }, hidden: true, peekAll: true });
+export const STAFF_TAB_ROW = Object.freeze({
+  id: STAFF_TAB,
+  label: 'Staff',
+  room: null,
+  link: false,
+  get hint() {
+    return t('net.chat.staffHint', 'Only you and the game staff');
+  },
+  hidden: true,
+  peekAll: true,
+});
 /** The thread read again this often while the Staff tab is on the bar, ms - a nudge lost on the way is late, never lost. */
 export const STAFF_POLL_MS = 30_000;
 
@@ -35,16 +45,22 @@ export const STAFF_POLL_MS = 30_000;
  *  it again"). */
 const copied = new WeakSet();
 /** A staff message's copy landed on `log`'s Staff tab: the tab on the bar, and kept there. @param {Log} log */
-export const staffCopyShown = (log) => { copied.add(log); log.setShown(STAFF_TAB, true); };
+export const staffCopyShown = (log) => {
+  copied.add(log);
+  log.setShown(STAFF_TAB, true);
+};
 
 export const frozenTitleText = () => t('net.freeze.title', 'Frozen by staff');
-export const frozenBodyText = () => t('net.freeze.body', 'You can only look around. Talk to staff in the Staff tab of the chat.');
+export const frozenBodyText = () =>
+  t('net.freeze.body', 'You can only look around. Talk to staff in the Staff tab of the chat.');
 /** @param {number} until epoch seconds */
 export const frozenUntilText = (until) => t('net.freeze.until', 'Frozen {until}.', { until: untilText(until) });
 /** @param {unknown} reason */
-export const frozenReasonText = (reason) => t('net.freeze.reason', 'Reason: {reason}', { reason: String(reason ?? '') });
+export const frozenReasonText = (reason) =>
+  t('net.freeze.reason', 'Reason: {reason}', { reason: String(reason ?? '') });
 export const frozenLiftedText = () => t('net.freeze.lifted', 'Staff lifted your freeze. You can move again.');
-export const frozenChatText = () => t('net.freeze.chatShut', 'While you are frozen you can only talk to staff, in the Staff tab.');
+export const frozenChatText = () =>
+  t('net.freeze.chatShut', 'While you are frozen you can only talk to staff, in the Staff tab.');
 /** @param {string} url */
 export const staffInviteText = (url) => t('net.freeze.invite', 'Our Discord: {url}', { url });
 export const staffNameText = () => t('net.freeze.staff', 'Staff');
@@ -65,10 +81,15 @@ export const inviteOf = (v) => (typeof v === 'string' && v.length <= 200 && /^ht
  */
 export function createStaffChat({ log, read, send, nudge, onFrozen, me = () => '', now = () => Date.now() }) {
   log.addTab?.(STAFF_TAB_ROW);
-  let until = 0, reason = /** @type {string|null} */ (null), invite = /** @type {string|null} */ (null);
-  let last = 0, open = false, readAt = -Infinity;
+  let until = 0,
+    reason = /** @type {string|null} */ (null),
+    invite = /** @type {string|null} */ (null);
+  let last = 0,
+    open = false,
+    readAt = -Infinity;
   /** @type {Promise<void>|null} */
-  let reading = null, again = false;
+  let reading = null,
+    again = false;
   /** The relay's `frozen` words heard: a read begun before the latest is older than it (STAFF-PANEL5-FREEZE-FIX). */
   let heard = 0;
   const frozen = () => until > now() / 1000;
@@ -77,7 +98,10 @@ export function createStaffChat({ log, read, send, nudge, onFrozen, me = () => '
   const system = (/** @type {string} */ text, extra = {}) => log.push(STAFF_TAB, { text, system: true, ...extra });
   /** One read at a time; one asked meanwhile runs after it (a nudge is a reason to read, never a line). */
   const refresh = () => {
-    if (reading) { again = true; return reading; }
+    if (reading) {
+      again = true;
+      return reading;
+    }
     readAt = now();
     const word = heard;
     reading = (async () => {
@@ -94,17 +118,28 @@ export function createStaffChat({ log, read, send, nudge, onFrozen, me = () => '
           until = f ? f.until : 0;
         }
         const url = inviteOf(d.invite);
-        if (url && url !== invite) { invite = url; system(staffInviteText(url), { copy: url }); }
+        if (url && url !== invite) {
+          invite = url;
+          system(staffInviteText(url), { copy: url });
+        }
         for (const l of Array.isArray(d.lines) ? d.lines : []) {
           if (!Number.isSafeInteger(l?.id) || l.id <= last || typeof l.text !== 'string') continue;
           last = l.id;
-          log.push(STAFF_TAB, l.staff ? { id: 'staff', name: staffNameText(), text: l.text, at: l.at * 1000 } : { id: 'me', name: me(), text: l.text, at: l.at * 1000, mine: true });
+          log.push(
+            STAFF_TAB,
+            l.staff
+              ? { id: 'staff', name: staffNameText(), text: l.text, at: l.at * 1000 }
+              : { id: 'me', name: me(), text: l.text, at: l.at * 1000, mine: true },
+          );
         }
         shown();
         paint();
       } finally {
         reading = null;
-        if (again) { again = false; refresh(); }
+        if (again) {
+          again = false;
+          refresh();
+        }
       }
     })();
     return reading;
@@ -122,24 +157,33 @@ export function createStaffChat({ log, read, send, nudge, onFrozen, me = () => '
       if (!frozen()) reason = null;
       paint();
       shown();
-      if (frozen() && !was) { log.select?.(STAFF_TAB); refresh(); }
-      else if (!frozen() && was) system(frozenLiftedText());
+      if (frozen() && !was) {
+        log.select?.(STAFF_TAB);
+        refresh();
+      } else if (!frozen() && was) system(frozenLiftedText());
     },
     /** A nudge: my thread has a line to read. */
-    heardNudge() { refresh(); },
+    heardNudge() {
+      refresh();
+    },
     /** A line typed on the Staff tab: the service stores it first, then the hub is nudged. Answers true - the line
      *  left the field; a refusal is said on the tab. @param {string} text */
     say(text) {
       (async () => {
         const r = await send(text);
-        if (!r?.ok) { system(accountRefusalText(r?.error ?? 'server')); return; }
+        if (!r?.ok) {
+          system(accountRefusalText(r?.error ?? 'server'));
+          return;
+        }
         if (Number.isSafeInteger(r.data?.line?.id)) nudge(r.data.line.id);
         await refresh();
       })();
       return true;
     },
     /** The host's frame: the slow read while the tab is on the bar. @param {number} [at] */
-    tick(at = now()) { if ((frozen() || open) && at - readAt >= STAFF_POLL_MS) refresh(); },
+    tick(at = now()) {
+      if ((frozen() || open) && at - readAt >= STAFF_POLL_MS) refresh();
+    },
     refresh,
   };
 }

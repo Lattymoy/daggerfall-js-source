@@ -14,10 +14,10 @@ import { computeCombatStats, signed } from '../combat/combatStats.js';
 import { dollArmour, overallArmour, tenth, PART_NAMES } from './armourCard.js';
 import { SKILL_NAMES, SKILLS } from '../systems/skills.js';
 import { itemLongName } from '../systems/item/itemInfo.js';
-import { PIXEL_STACK } from './pixelifyFive.js';   // the Enhanced Plus face: Pixelify Sans, its 5 from Silkscreen
-import { temperatureStatRows, boonStatRows } from './temperatureCard.js';   // TEMP-UI: the felt temperature's parts; AUDIT SURV-BOONS C13: and the boons
-import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js';   // STATS-RESIST: the saving throw's own law
-import { t, localizedText } from '../systems/textManager.js';   // L10N4: the card's words in the player's language; the attributes are DFU's own
+import { PIXEL_STACK } from './pixelifyFive.js'; // the Enhanced Plus face: Pixelify Sans, its 5 from Silkscreen
+import { temperatureStatRows, boonStatRows } from './temperatureCard.js'; // TEMP-UI: the felt temperature's parts; AUDIT SURV-BOONS C13: and the boons
+import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js'; // STATS-RESIST: the saving throw's own law
+import { t, localizedText } from '../systems/textManager.js'; // L10N4: the card's words in the player's language; the attributes are DFU's own
 
 const FLIP_MS = 900;
 // THE TURN, one set of numbers for the keyframes and for FIREFOX-FLIP's face swap below: the first leg runs to FLIP_MID
@@ -30,16 +30,25 @@ const FLIP_EASE = Object.freeze([0.3, 0.7, 0.25, 1]);
 /** The moment the turning card is edge-on (ms into the turn): where the first leg's eased rotation crosses 90 degrees
  *  - the cubic-bezier solved for its output, then read back as time. Both directions cross at the same moment. */
 export function flipEdgeMs(ms = FLIP_MS, [x1, y1, x2, y2] = FLIP_EASE, mid = FLIP_MID, past = FLIP_PAST) {
-  const ax = 1 - 3 * x2 + 3 * x1, bx = 3 * x2 - 6 * x1, cx = 3 * x1;
-  const ay = 1 - 3 * y2 + 3 * y1, by = 3 * y2 - 6 * y1, cy = 3 * y1;
+  const ax = 1 - 3 * x2 + 3 * x1,
+    bx = 3 * x2 - 6 * x1,
+    cx = 3 * x1;
+  const ay = 1 - 3 * y2 + 3 * y1,
+    by = 3 * y2 - 6 * y1,
+    cy = 3 * y1;
   const want = 90 / (90 + past);
-  let lo = 0, hi = 1;
-  for (let i = 0; i < 40; i++) { const s = (lo + hi) / 2; if (((ay * s + by) * s + cy) * s < want) lo = s; else hi = s; }
+  let lo = 0,
+    hi = 1;
+  for (let i = 0; i < 40; i++) {
+    const s = (lo + hi) / 2;
+    if (((ay * s + by) * s + cy) * s < want) lo = s;
+    else hi = s;
+  }
   return Math.round(ms * mid * ((ax * lo + bx) * lo + cx) * lo);
 }
 export const FLIP_EDGE_MS = flipEdgeMs();
-let flipped = false;      // survives repaints of the pack
-let foeIdx = 0;           // which reference foe the page scores against
+let flipped = false; // survives repaints of the pack
+let foeIdx = 0; // which reference foe the page scores against
 
 const el = (tag, cls = null, text = null) => {
   const n = document.createElement(tag);
@@ -76,7 +85,9 @@ function row(k, v, title = null) {
 export function buildStatsPage(entity, repaint, opts = {}) {
   const page = el('div', 'sf-page');
   let s;
-  try { s = computeCombatStats(entity, opts); } catch (e) {
+  try {
+    s = computeCombatStats(entity, opts);
+  } catch (e) {
     console.warn('[statsCard] the numbers could not be computed', e);
     page.append(el('p', 'sf-err', t('stats.error', 'The stats could not be calculated for this character.')));
     return page;
@@ -91,8 +102,19 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   const hd = el('header', 'sf-head sf-rise');
   hd.style.setProperty('--i', '0');
   hd.append(el('h3', null, t('stats.title', 'Combat Stats')));
-  const weaponLine = s.weapon ? (safeName(s.weapon) || t('stats.weapon', 'Weapon')) : t('stats.bareHands', 'Bare hands');
-  hd.append(el('p', null, t('stats.head', '{weapon} \u00b7 {skill} {pct}% \u00b7 Level {level}', { weapon: weaponLine, skill: skillName, pct: s.skill, level: s.level })));
+  const weaponLine = s.weapon ? safeName(s.weapon) || t('stats.weapon', 'Weapon') : t('stats.bareHands', 'Bare hands');
+  hd.append(
+    el(
+      'p',
+      null,
+      t('stats.head', '{weapon} \u00b7 {skill} {pct}% \u00b7 Level {level}', {
+        weapon: weaponLine,
+        skill: skillName,
+        pct: s.skill,
+        level: s.level,
+      }),
+    ),
+  );
   page.append(hd);
 
   // the foe chips
@@ -103,31 +125,79 @@ export function buildStatsPage(entity, repaint, opts = {}) {
     const b = el('button', `sf-chip${i === foeIdx ? ' on' : ''}`, f.label);
     b.type = 'button';
     b.title = f.tip;
-    b.onclick = (e) => { e.stopPropagation(); foeIdx = i; repaint(); };
+    b.onclick = (e) => {
+      e.stopPropagation();
+      foeIdx = i;
+      repaint();
+    };
     chips.append(b);
   });
   page.append(chips);
 
   // the five headline tiles
   const tiles = el('div', 'sf-tiles');
-  const dmgSub = s.crit.kind === 'damage' ? t('stats.damage.subCrit', 'avg {avg} \u00b7 crit {min}\u2013{max}', { avg: one(d.avg), min: d.critMin, max: d.critMax })
-    : t('stats.damage.sub', 'average {avg}', { avg: one(d.avg) });
-  tiles.append(
-    tile(t('stats.damage', 'Damage'), d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`, dmgSub,
-      t('stats.damage.tip', 'Damage per hit with a sideways swing, before the foe\u2019s armor. The table below shows the other swings.'), 2),
-    tile(t('stats.hitChance', 'Hit chance'), pct(head.hit), t('stats.hitChance.vs', 'vs {foe}', { foe: foe.label.toLowerCase() }),
-      t('stats.hitChance.tip', 'The chance a swing lands, averaged over where it hits and your chance of a critical.'), 3),
-    tile(t('stats.critical', 'Critical'), pct(s.crit.chance), s.crit.kind === 'damage'
-      ? t('stats.critical.subDamage', '+{hit} hit \u00b7 \u00d7{mult} dmg', { hit: s.crit.hitBonus, mult: s.crit.damageMult.toFixed(2) })
-      : t('stats.critical.sub', '+{hit} to hit', { hit: s.crit.hitBonus }),
+  const dmgSub =
     s.crit.kind === 'damage'
-      ? t('stats.critical.tipDamage', 'Critical Strike roll: a success adds to your chance to hit and multiplies the damage.')
-      : t('stats.critical.tip', 'Critical Strike roll: a success adds to your chance to hit.'), 4),
-    tile(t('stats.backstab', 'Backstab'), pct(s.backstab.chance), s.backstab.chance
-      ? t('stats.backstab.sub', '\u00d7{mult} from behind', { mult: s.backstab.multiplier }) : t('stats.backstab.needsSkill', 'needs skill 2+'),
-    t('stats.backstab.tip', 'When the foe faces away, your Backstabbing skill is your chance to deal triple damage. It also adds to your chance to hit.'), 5),
-    tile(t('stats.perSwing', 'Per swing'), one(head.perSwing), t('stats.perSwing.sub', 'expected damage'),
-      t('stats.perSwing.tip', 'Hit chance times damage, criticals included: what an average swing is worth.'), 6),
+      ? t('stats.damage.subCrit', 'avg {avg} \u00b7 crit {min}\u2013{max}', {
+          avg: one(d.avg),
+          min: d.critMin,
+          max: d.critMax,
+        })
+      : t('stats.damage.sub', 'average {avg}', { avg: one(d.avg) });
+  tiles.append(
+    tile(
+      t('stats.damage', 'Damage'),
+      d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`,
+      dmgSub,
+      t(
+        'stats.damage.tip',
+        'Damage per hit with a sideways swing, before the foe\u2019s armor. The table below shows the other swings.',
+      ),
+      2,
+    ),
+    tile(
+      t('stats.hitChance', 'Hit chance'),
+      pct(head.hit),
+      t('stats.hitChance.vs', 'vs {foe}', { foe: foe.label.toLowerCase() }),
+      t('stats.hitChance.tip', 'The chance a swing lands, averaged over where it hits and your chance of a critical.'),
+      3,
+    ),
+    tile(
+      t('stats.critical', 'Critical'),
+      pct(s.crit.chance),
+      s.crit.kind === 'damage'
+        ? t('stats.critical.subDamage', '+{hit} hit \u00b7 \u00d7{mult} dmg', {
+            hit: s.crit.hitBonus,
+            mult: s.crit.damageMult.toFixed(2),
+          })
+        : t('stats.critical.sub', '+{hit} to hit', { hit: s.crit.hitBonus }),
+      s.crit.kind === 'damage'
+        ? t(
+            'stats.critical.tipDamage',
+            'Critical Strike roll: a success adds to your chance to hit and multiplies the damage.',
+          )
+        : t('stats.critical.tip', 'Critical Strike roll: a success adds to your chance to hit.'),
+      4,
+    ),
+    tile(
+      t('stats.backstab', 'Backstab'),
+      pct(s.backstab.chance),
+      s.backstab.chance
+        ? t('stats.backstab.sub', '\u00d7{mult} from behind', { mult: s.backstab.multiplier })
+        : t('stats.backstab.needsSkill', 'needs skill 2+'),
+      t(
+        'stats.backstab.tip',
+        'When the foe faces away, your Backstabbing skill is your chance to deal triple damage. It also adds to your chance to hit.',
+      ),
+      5,
+    ),
+    tile(
+      t('stats.perSwing', 'Per swing'),
+      one(head.perSwing),
+      t('stats.perSwing.sub', 'expected damage'),
+      t('stats.perSwing.tip', 'Hit chance times damage, criticals included: what an average swing is worth.'),
+      6,
+    ),
   );
   page.append(tiles);
 
@@ -135,14 +205,24 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   const sw = section(s.isBow ? t('stats.swings.shot', 'The shot') : t('stats.swings.title', 'Swing directions'), 7);
   const tbl = el('div', 'sf-tbl');
   const th = el('div', 'sf-tr sf-th');
-  ['', t('stats.damage', 'Damage'), t('stats.swings.hit', 'Hit'), t('stats.perSwing', 'Per swing')].forEach((w) => th.append(el('span', null, w)));
+  ['', t('stats.damage', 'Damage'), t('stats.swings.hit', 'Hit'), t('stats.perSwing', 'Per swing')].forEach((w) =>
+    th.append(el('span', null, w)),
+  );
   tbl.append(th);
   s.swings.forEach((w) => {
     const m = w.byFoe[foeIdx];
     const tr = el('div', `sf-tr${w.key === s.headlineKey ? ' on' : ''}`);
-    const mods = t('stats.swings.mods', '{dmg} dmg, {hit}% hit', { dmg: signed(w.mods.damage), hit: signed(w.mods.toHit) });
+    const mods = t('stats.swings.mods', '{dmg} dmg, {hit}% hit', {
+      dmg: signed(w.mods.damage),
+      hit: signed(w.mods.toHit),
+    });
     tr.title = t('stats.swings.rowTip', '{swing}: {mods}', { swing: w.label, mods });
-    tr.append(el('span', 'sf-name', w.label), el('span', null, `${m.dmg.min}\u2013${m.dmg.max}`), el('span', null, pct(m.hit)), el('span', null, one(m.perSwing)));
+    tr.append(
+      el('span', 'sf-name', w.label),
+      el('span', null, `${m.dmg.min}\u2013${m.dmg.max}`),
+      el('span', null, pct(m.hit)),
+      el('span', null, one(m.perSwing)),
+    );
     tbl.append(tr);
   });
   sw.append(tbl);
@@ -151,34 +231,119 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   // how the damage and the hit are built
   const build = section(t('stats.breakdown', 'Breakdown'), 8);
   const p = d.parts;
-  build.append(row(s.weapon ? t('stats.breakdown.weaponRoll', 'Weapon roll') : t('stats.breakdown.fists', 'Fists'), `${p.roll[0]}\u2013${p.roll[1]}`, t('stats.breakdown.rollTip', 'The damage range your weapon (or Hand-to-Hand) rolls, with its own modifiers.')));
+  build.append(
+    row(
+      s.weapon ? t('stats.breakdown.weaponRoll', 'Weapon roll') : t('stats.breakdown.fists', 'Fists'),
+      `${p.roll[0]}\u2013${p.roll[1]}`,
+      t('stats.breakdown.rollTip', 'The damage range your weapon (or Hand-to-Hand) rolls, with its own modifiers.'),
+    ),
+  );
   if (p.matMod) build.append(row(t('stats.breakdown.material', 'Material'), signed(p.matMod)));
-  build.append(row(localizedText('strength', 'Strength'), p.twoHanded && s.core === 'overhaul' ? t('stats.breakdown.twoHanded', '{mod} (two-handed)', { mod: signed(p.strMod) }) : signed(p.strMod), t('stats.breakdown.strengthTip', 'Your Strength\u2019s damage modifier.')));
-  if (p.prof) build.append(row(t('stats.breakdown.proficiency', 'Proficiency'), signed(p.prof), t('stats.breakdown.proficiencyTip', 'Your career\u2019s expertise with this weapon.')));
-  if (p.racial) build.append(row(t('stats.breakdown.race', 'Race'), signed(p.racial), t('stats.breakdown.raceTip', 'Your race\u2019s bonus with this kind of attack.')));
+  build.append(
+    row(
+      localizedText('strength', 'Strength'),
+      p.twoHanded && s.core === 'overhaul'
+        ? t('stats.breakdown.twoHanded', '{mod} (two-handed)', { mod: signed(p.strMod) })
+        : signed(p.strMod),
+      t('stats.breakdown.strengthTip', 'Your Strength\u2019s damage modifier.'),
+    ),
+  );
+  if (p.prof)
+    build.append(
+      row(
+        t('stats.breakdown.proficiency', 'Proficiency'),
+        signed(p.prof),
+        t('stats.breakdown.proficiencyTip', 'Your career\u2019s expertise with this weapon.'),
+      ),
+    );
+  if (p.racial)
+    build.append(
+      row(
+        t('stats.breakdown.race', 'Race'),
+        signed(p.racial),
+        t('stats.breakdown.raceTip', 'Your race\u2019s bonus with this kind of attack.'),
+      ),
+    );
   const terms = head.terms;
-  build.append(row(t('stats.breakdown.attack', 'Attack (skill, gear, swing)'), signedPct(terms.base), t('stats.breakdown.attackTip', 'Your weapon skill and every bonus to hit, before the foe is counted.')));
-  build.append(row(t('stats.breakdown.foeArmour', 'Foe\u2019s armour'), signedPct(Math.round(terms.armour)), t('stats.breakdown.foeArmourTip', 'Its armor value on the part you strike, averaged over where blows land.')));
+  build.append(
+    row(
+      t('stats.breakdown.attack', 'Attack (skill, gear, swing)'),
+      signedPct(terms.base),
+      t('stats.breakdown.attackTip', 'Your weapon skill and every bonus to hit, before the foe is counted.'),
+    ),
+  );
+  build.append(
+    row(
+      t('stats.breakdown.foeArmour', 'Foe\u2019s armour'),
+      signedPct(Math.round(terms.armour)),
+      t('stats.breakdown.foeArmourTip', 'Its armor value on the part you strike, averaged over where blows land.'),
+    ),
+  );
   build.append(row(t('stats.breakdown.foeDodging', 'Foe\u2019s dodging'), signedPct(-terms.dodge)));
-  build.append(row(t('stats.breakdown.adjustments', 'Attributes & adjustments'), signedPct(terms.other + terms.dodge), t('stats.breakdown.adjustmentsTip', 'Your Agility and Luck (and Speed) against the foe\u2019s, plus enchantments, adrenaline and fixed adjustments.')));
-  build.append(row(t('stats.breakdown.total', '= Hit chance'), pct(head.hit), t('stats.breakdown.totalTip', 'The four lines above added together, then kept between 3% and 97%.')));
+  build.append(
+    row(
+      t('stats.breakdown.adjustments', 'Attributes & adjustments'),
+      signedPct(terms.other + terms.dodge),
+      t(
+        'stats.breakdown.adjustmentsTip',
+        'Your Agility and Luck (and Speed) against the foe\u2019s, plus enchantments, adrenaline and fixed adjustments.',
+      ),
+    ),
+  );
+  build.append(
+    row(
+      t('stats.breakdown.total', '= Hit chance'),
+      pct(head.hit),
+      t('stats.breakdown.totalTip', 'The four lines above added together, then kept between 3% and 97%.'),
+    ),
+  );
   page.append(build);
 
   // defence
   const def = section(t('stats.defence', 'Defence'), 9);
   const parts = dollArmour(entity);
-  def.append(row(t('stats.defence.armour', 'Armour'), one(tenth(overallArmour(parts))), t('stats.defence.armourTip', 'The armor a blow meets on average (the number on the paperdoll).')));
+  def.append(
+    row(
+      t('stats.defence.armour', 'Armour'),
+      one(tenth(overallArmour(parts))),
+      t('stats.defence.armourTip', 'The armor a blow meets on average (the number on the paperdoll).'),
+    ),
+  );
   const pills = el('div', 'sf-pills');
   parts.forEach((v, i) => {
     const pl = el('span', `sf-pill${v ? '' : ' nil'}`);
-    pl.append(el('i', null, PART_NAMES[i].replace(/^(Left|Right) /, (m) => m[0] + '. ')), el('b', null, String(v)));
+    pl.append(
+      el(
+        'i',
+        null,
+        PART_NAMES[i].replace(/^(Left|Right) /, (m) => m[0] + '. '),
+      ),
+      el('b', null, String(v)),
+    );
     pl.title = t('stats.defence.partTip', '{part}: armour {value}', { part: PART_NAMES[i], value: v });
     pills.append(pl);
   });
   def.append(pills);
-  def.append(row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`, s.core === 'overhaul' ? t('stats.defence.dodgeTipOverhaul', 'Takes half its value off an attacker\u2019s chance to hit you.') : t('stats.defence.dodgeTip', 'Takes a quarter of its value off an attacker\u2019s chance to hit you.')));
-  if (s.avoidHit) def.append(row(t('stats.defence.biography', 'Biography'), t('stats.defence.toBeHit', '{mod} to be hit', { mod: signed(-s.avoidHit) }), t('stats.defence.biographyTip', 'From your biography answers, such as "Fighting without magic".')));
-  def.append(row(localizedText('health', 'Health'), `${Math.round(s.derived.health)} / ${Math.round(s.derived.maxHealth)}`));
+  def.append(
+    row(
+      SKILL_NAMES[SKILLS.Dodging],
+      `${s.dodging}%`,
+      s.core === 'overhaul'
+        ? t('stats.defence.dodgeTipOverhaul', 'Takes half its value off an attacker\u2019s chance to hit you.')
+        : t('stats.defence.dodgeTip', 'Takes a quarter of its value off an attacker\u2019s chance to hit you.'),
+    ),
+  );
+  if (s.avoidHit)
+    def.append(
+      row(
+        t('stats.defence.biography', 'Biography'),
+        t('stats.defence.toBeHit', '{mod} to be hit', { mod: signed(-s.avoidHit) }),
+        t('stats.defence.biographyTip', 'From your biography answers, such as "Fighting without magic".'),
+      ),
+    );
+  def.append(
+    row(localizedText('health', 'Health'), `${Math.round(s.derived.health)} / ${Math.round(s.derived.maxHealth)}`),
+  );
   page.append(def);
 
   // STATS-RESIST (the owner: "Resistances on the stat screen please"): each kind of harm's chance to be shrugged off -
@@ -189,11 +354,14 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   for (const r of resistanceRows(entity)) {
     const pl = el('span', `sf-pill${r.immune ? ' imm' : r.total >= 60 ? ' up' : r.total <= 25 ? ' down' : ''}`);
     pl.append(el('i', null, r.label), el('b', null, r.immune ? 'Immune' : `${r.total}%`));
-    pl.title = r.immune ? `${r.label}: immune` : `${r.label}: ${r.save}% to resist${r.ward ? `, and a ${r.ward}% chance to block it outright first` : ''}`;
+    pl.title = r.immune
+      ? `${r.label}: immune`
+      : `${r.label}: ${r.save}% to resist${r.ward ? `, and a ${r.ward}% chance to block it outright first` : ''}`;
     pillsR.append(pl);
   }
   rs.append(pillsR);
-  rs.title = 'Your chance to resist each kind of harm, from your race, class, biography, gear and Willpower (1 point per 10).';
+  rs.title =
+    'Your chance to resist each kind of harm, from your race, class, biography, gear and Willpower (1 point per 10).';
   page.append(rs);
 
   // attributes
@@ -202,7 +370,10 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   s.attributes.forEach((a) => {
     const c = el('div', 'sf-attr');
     const shown = a.value === a.base ? String(a.value) : `${a.value} (${a.base})`;
-    c.append(el('span', 'sf-ak', localizedText(a.key, cap(a.key))), el('span', `sf-av${a.value > a.base ? ' up' : a.value < a.base ? ' down' : ''}`, shown));
+    c.append(
+      el('span', 'sf-ak', localizedText(a.key, cap(a.key))),
+      el('span', `sf-av${a.value > a.base ? ' up' : a.value < a.base ? ' down' : ''}`, shown),
+    );
     if (a.effect) c.append(el('span', 'sf-ae', a.effect));
     grid.append(c);
   });
@@ -212,7 +383,12 @@ export function buildStatsPage(entity, repaint, opts = {}) {
 
   // skills
   const sk = section(t('stats.skills', 'Skills in play'), 12);
-  sk.append(row(skillName, `${s.skill}%`), row(SKILL_NAMES[SKILLS.CriticalStrike], `${s.crit.skill}%`), row(SKILL_NAMES[SKILLS.Backstabbing], `${s.backstab.skill}%`), row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`));
+  sk.append(
+    row(skillName, `${s.skill}%`),
+    row(SKILL_NAMES[SKILLS.CriticalStrike], `${s.crit.skill}%`),
+    row(SKILL_NAMES[SKILLS.Backstabbing], `${s.backstab.skill}%`),
+    row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`),
+  );
   page.append(sk);
 
   // TEMP-UI (2026-10-12, the owner: "allowing players to see their personal temperature in their inventory"): THE FELT
@@ -235,25 +411,49 @@ export function buildStatsPage(entity, repaint, opts = {}) {
     page.append(bn);
   }
 
-  const foot = el('p', 'sf-foot sf-rise', s.core === 'overhaul'
-    ? t('stats.rules.overhaul', 'Rules: Physical Combat And Armor Overhaul. Damage is before the foe\u2019s armor reduces it.')
-    : t('stats.rules.classic', 'Rules: the original game\u2019s combat formulas. Damage is before any armor effects.'));
-  foot.style.setProperty('--i', '15');   // TEMP-UI: after the Temperature and Boons sections
+  const foot = el(
+    'p',
+    'sf-foot sf-rise',
+    s.core === 'overhaul'
+      ? t(
+          'stats.rules.overhaul',
+          'Rules: Physical Combat And Armor Overhaul. Damage is before the foe\u2019s armor reduces it.',
+        )
+      : t(
+          'stats.rules.classic',
+          'Rules: the original game\u2019s combat formulas. Damage is before any armor effects.',
+        ),
+  );
+  foot.style.setProperty('--i', '15'); // TEMP-UI: after the Temperature and Boons sections
   page.append(foot);
   return page;
 }
-function safeName(item) { try { return itemLongName(item); } catch { return item?.name ?? ''; } }
+function safeName(item) {
+  try {
+    return itemLongName(item);
+  } catch {
+    return item?.name ?? '';
+  }
+}
 /** STATS-RESIST: the seven harms a saving throw is asked against, each `{ label, save, ward, total, immune }` - `total`
  *  the chance it is turned away at all (the ward first, then the throw). */
 export const RESIST_ROWS = Object.freeze([
-  ['Fire', ELEMENTS.Fire, EFFECT_FLAGS.Fire], ['Frost', ELEMENTS.Frost, EFFECT_FLAGS.Frost], ['Shock', ELEMENTS.Shock, EFFECT_FLAGS.Shock],
-  ['Magic', ELEMENTS.Magic, EFFECT_FLAGS.Magic], ['Poison', ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Poison],
-  ['Disease', ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Disease], ['Paralysis', ELEMENTS.Magic, EFFECT_FLAGS.Paralysis],
+  ['Fire', ELEMENTS.Fire, EFFECT_FLAGS.Fire],
+  ['Frost', ELEMENTS.Frost, EFFECT_FLAGS.Frost],
+  ['Shock', ELEMENTS.Shock, EFFECT_FLAGS.Shock],
+  ['Magic', ELEMENTS.Magic, EFFECT_FLAGS.Magic],
+  ['Poison', ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Poison],
+  ['Disease', ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Disease],
+  ['Paralysis', ELEMENTS.Magic, EFFECT_FLAGS.Paralysis],
 ]);
 export function resistanceRows(entity) {
   return RESIST_ROWS.map(([label, element, flag]) => {
     let sc = { immune: false, chance: 50 };
-    try { sc = savingChance(element, flag, entity); } catch { /* a half-built character: the base */ }
+    try {
+      sc = savingChance(element, flag, entity);
+    } catch {
+      /* a half-built character: the base */
+    }
     const ward = Math.max(0, Math.min(100, Math.round(elementalResistanceChance(entity, element) || 0)));
     const total = sc.immune ? 100 : Math.round(100 - (100 - ward) * (1 - sc.chance / 100));
     return { label, save: sc.chance, ward, total, immune: sc.immune || ward >= 100 };
@@ -283,12 +483,21 @@ export function statFlip(front, entity, usingRightHand = () => true) {
     btn.setAttribute('aria-pressed', String(flipped));
     root.append(inner, btn);
 
-    const paintBack = () => { scroll.replaceChildren(buildStatsPage(entity, paintBack, { usingRightHand: usingRightHand() })); };
+    const paintBack = () => {
+      scroll.replaceChildren(buildStatsPage(entity, paintBack, { usingRightHand: usingRightHand() }));
+    };
     const setFaces = () => {
-      fFace.inert = flipped; bFace.inert = !flipped;
-      fFace.setAttribute('aria-hidden', String(flipped)); bFace.setAttribute('aria-hidden', String(!flipped));
+      fFace.inert = flipped;
+      bFace.inert = !flipped;
+      fFace.setAttribute('aria-hidden', String(flipped));
+      bFace.setAttribute('aria-hidden', String(!flipped));
       btn.textContent = flipped ? t('stats.flip.paperdoll', 'Paperdoll') : t('stats.flip.stats', 'Stats');
-      btn.setAttribute('aria-label', flipped ? t('stats.flip.toFront', 'Turn the card back to the paperdoll') : t('stats.flip.toBack', 'Turn the card over to show your combat stats'));
+      btn.setAttribute(
+        'aria-label',
+        flipped
+          ? t('stats.flip.toFront', 'Turn the card back to the paperdoll')
+          : t('stats.flip.toBack', 'Turn the card over to show your combat stats'),
+      );
       btn.setAttribute('aria-pressed', String(flipped));
     };
     if (flipped) paintBack();
@@ -296,17 +505,24 @@ export function statFlip(front, entity, usingRightHand = () => true) {
 
     let busy = false;
     btn.onclick = (e) => {
-      e?.stopPropagation?.(); e?.preventDefault?.();   // a synthetic press (a key, a test) may carry neither
+      e?.stopPropagation?.();
+      e?.preventDefault?.(); // a synthetic press (a key, a test) may carry neither
       if (busy) return;
       busy = true;
       flipped = !flipped;
-      if (flipped) { paintBack(); scroll.scrollTop = 0; }
+      if (flipped) {
+        paintBack();
+        scroll.scrollTop = 0;
+      }
       root.classList.remove('to-back', 'to-front');
-      void root.offsetWidth;   // restart the animation if it ran before
+      void root.offsetWidth; // restart the animation if it ran before
       root.classList.add(flipped ? 'to-back' : 'to-front');
       root.classList.toggle('is-back', flipped);
       setFaces();
-      setTimeout(() => { busy = false; root.classList.remove('to-back', 'to-front'); }, FLIP_MS);
+      setTimeout(() => {
+        busy = false;
+        root.classList.remove('to-back', 'to-front');
+      }, FLIP_MS);
     };
     btn.addEventListener('pointerdown', (e) => e.stopPropagation());
     return root;

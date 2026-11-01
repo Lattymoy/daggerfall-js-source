@@ -30,7 +30,7 @@ import { unpackNature } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the trace, for the fallback kernel
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { dropGroundCache } from '../tamriel/tamrielGround.js';
-import { gen2Install, gen2Shipped } from '../gen2/gen2Ground.js';   // WG2: the published regions, on both threads
+import { gen2Install, gen2Shipped } from '../gen2/gen2Ground.js';   // The published regions, on both threads
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and the promotion's grid, on either thread
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { packArenaRoads, mergeArenaRoads, arenaRoadsLayer, setArenaRoads as installArenaRoads } from '../arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
@@ -162,14 +162,14 @@ export class TerrainGenClient {
    *  whose lands they stand (world/landforms.js landformSites, landformClimates) - kept here for the same-thread kernel,
    *  COPIES posted to the worker (the RA1 law). Handed once as the world mounts, before its first job, so no pixel is
    *  ever cut without them; null clears either. */
-  /** TAMRIEL3: the picture's own land and the Bay's fit on it (world/tamriel/tamrielLand.js, world/tamriel/tamrielFrame.js) - set
+  /** The picture's own land and the Bay's fit on it (world/tamriel/tamrielLand.js, world/tamriel/tamrielFrame.js) - set
    *  HERE for the fallback kernel (the modules' own state) and posted to the worker, which sets its own copies the
    *  same way; the ground's cache dropped on both. `trace` null puts the authored shape back. `wg2`: the published
    *  regions' bakes (world/gen2/gen2Ground.js), installed on both. */
   setTamriel({ trace = null, fit = null, wg2 = [] } = {}) {
     setTamrielTrace(trace);
     setTamrielFit(fit);
-    gen2Install(wg2, fit);   // WG2: the published regions' bakes, read against this fit (bible/03-World/World-2-Canon.md)
+    gen2Install(wg2, fit);   // The published regions' bakes, read against this fit
     dropGroundCache();
     this.groundEpoch++;   // FLORA-GROUND: the continent's ground, its relief with it
     if (!this._worker) { setWatersInk(lawWatersInk().ink); return; }   // MAP-WATERS: no worker, this thread's own law

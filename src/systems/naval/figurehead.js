@@ -9,7 +9,17 @@
 import { liveryPartsOf, PAINT_MAX } from './shipLivery.js';
 
 /** The carvings, index 1 up (0 is none - her stem as built). */
-export const FIGUREHEADS = Object.freeze([null, 'dragon', 'serpent', 'lion', 'eagle', 'wolf', 'maiden', 'horse', 'dreugh']);
+export const FIGUREHEADS = Object.freeze([
+  null,
+  'dragon',
+  'serpent',
+  'lion',
+  'eagle',
+  'wolf',
+  'maiden',
+  'horse',
+  'dreugh',
+]);
 /** The most a carving's number is. */
 export const FIGUREHEAD_MAX = FIGUREHEADS.length - 1;
 
@@ -24,7 +34,8 @@ export const figureheadHull = (hull) => hull === 1 || hull === 2 || hull === 3 |
  */
 export function figureheadOf(raw, hull) {
   if (raw == null) return 0;
-  if (!Number.isInteger(raw) || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX) return null;
+  if (!Number.isInteger(raw) || /** @type {number} */ (raw) < 0 || /** @type {number} */ (raw) > FIGUREHEAD_MAX)
+    return null;
   return hull != null && !figureheadHull(hull) ? 0 : /** @type {number} */ (raw);
 }
 /** The word's number as a carving: a number the door refuses is none, never a reason to drop the word. */

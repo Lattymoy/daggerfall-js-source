@@ -84,16 +84,20 @@ const f = Math.fround;
 
 const CRC_TABLE = (() => {
   const t = new Uint32Array(256);
-  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
   return t;
 })();
 const utf8 = new TextEncoder();
 /** Unity's binding path hash: CRC32 of the path's UTF-8 bytes. */
 export function pathHash(path) {
   const bytes = utf8.encode(path);
-  let c = 0xFFFFFFFF;
+  let c = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
+  return (c ^ 0xffffffff) >>> 0;
 }
 
 // ── the clips ────────────────────────────────────────────────────────────────
@@ -103,10 +107,18 @@ export function sampleComponent(comp, t, clip = null) {
   if ('constant' in comp) return comp.constant;
   if (comp.streamed) {
     const keys = comp.streamed;
-    let lo = 0, hi = keys.length - 1, k = 0;
-    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid][0] <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; }
+    let lo = 0,
+      hi = keys.length - 1,
+      k = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (keys[mid][0] <= t) {
+        k = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
     const [t0, a, b, c, d] = keys[k];
-    if (a === 0 && b === 0 && c === 0) return d;   // a flat segment (Unity's sentinel at -infinity among them)
+    if (a === 0 && b === 0 && c === 0) return d; // a flat segment (Unity's sentinel at -infinity among them)
     const dt = f(t - t0);
     return f(f(f(f(f(f(a * dt) + b) * dt) + c) * dt) + d);
   }
@@ -135,7 +147,10 @@ export function clipTime(clip, normalizedTime) {
 
 /** Quaternion.Euler(x, y, z) in degrees - Z, then X, then Y. */
 export function quatEuler(x, y, z) {
-  return quatMultiply(quatAngleAxis(y, [0, 1, 0]), quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(z, [0, 0, 1])));
+  return quatMultiply(
+    quatAngleAxis(y, [0, 1, 0]),
+    quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(z, [0, 0, 1])),
+  );
 }
 
 const ATTR = Object.freeze({ position: 'position', rotation: 'rotation', euler: 'rotation', scale: 'scale' });
@@ -147,14 +162,21 @@ export function blendPoses(props, poses, weights) {
   const out = new Array(props.length);
   for (let i = 0; i < props.length; i++) {
     if (props[i].attr === 'rotation') {
-      let x = 0, y = 0, z = 0, w = 0, ref = null;
+      let x = 0,
+        y = 0,
+        z = 0,
+        w = 0,
+        ref = null;
       for (let k = 0; k < poses.length; k++) {
         const wt = weights[k];
         if (!(wt > 0)) continue;
         const q = poses[k][i];
         ref ??= q;
-        const s = (ref[0] * q[0] + ref[1] * q[1] + ref[2] * q[2] + ref[3] * q[3]) < 0 ? -wt : wt;
-        x += q[0] * s; y += q[1] * s; z += q[2] * s; w += q[3] * s;
+        const s = ref[0] * q[0] + ref[1] * q[1] + ref[2] * q[2] + ref[3] * q[3] < 0 ? -wt : wt;
+        x += q[0] * s;
+        y += q[1] * s;
+        z += q[2] * s;
+        w += q[3] * s;
       }
       const l = Math.hypot(x, y, z, w);
       out[i] = l > 0 ? [x / l, y / l, z / l, w / l] : [...props[i].def];
@@ -165,7 +187,9 @@ export function blendPoses(props, poses, weights) {
         const wt = weights[k];
         if (!(wt > 0)) continue;
         const p = poses[k][i];
-        v[0] += p[0] * wt; v[1] += p[1] * wt; v[2] += p[2] * wt;
+        v[0] += p[0] * wt;
+        v[1] += p[1] * wt;
+        v[2] += p[2] * wt;
         any = true;
       }
       out[i] = any ? v : [...props[i].def];
@@ -179,13 +203,21 @@ export function weights1D(thresholds, v) {
   const n = thresholds.length;
   const w = new Array(n).fill(0);
   if (n === 0) return w;
-  if (n === 1 || v <= thresholds[0]) { w[0] = 1; return w; }
-  if (v >= thresholds[n - 1]) { w[n - 1] = 1; return w; }
+  if (n === 1 || v <= thresholds[0]) {
+    w[0] = 1;
+    return w;
+  }
+  if (v >= thresholds[n - 1]) {
+    w[n - 1] = 1;
+    return w;
+  }
   for (let i = 0; i < n - 1; i++) {
-    const a = thresholds[i], b = thresholds[i + 1];
+    const a = thresholds[i],
+      b = thresholds[i + 1];
     if (v >= a && v <= b) {
       const u = b > a ? (v - a) / (b - a) : 0;
-      w[i] = 1 - u; w[i + 1] = u;
+      w[i] = 1 - u;
+      w[i + 1] = u;
       return w;
     }
   }
@@ -198,7 +230,10 @@ export function weights2DDirectional(positions, x, y) {
   const w = new Array(n).fill(0);
   const centre = positions.findIndex((p) => p[0] === 0 && p[1] === 0);
   if (x === 0 && y === 0) {
-    if (centre >= 0) { w[centre] = 1; return w; }
+    if (centre >= 0) {
+      w[centre] = 1;
+      return w;
+    }
     for (let i = 0; i < n; i++) w[i] = 1 / n;
     return w;
   }
@@ -206,35 +241,59 @@ export function weights2DDirectional(positions, x, y) {
   for (let i = 0; i < n; i++) if (i !== centre) around.push({ i, a: Math.atan2(positions[i][1], positions[i][0]) });
   around.sort((p, q) => p.a - q.a);
   const ang = Math.atan2(y, x);
-  let A = null, B = null;
-  if (around.length === 1) { A = around[0]; }
-  else {
+  let A = null,
+    B = null;
+  if (around.length === 1) {
+    A = around[0];
+  } else {
     for (let k = 0; k < around.length; k++) {
-      const p = around[k], q = around[(k + 1) % around.length];
-      let lo = p.a, hi = q.a;
+      const p = around[k],
+        q = around[(k + 1) % around.length];
+      let lo = p.a,
+        hi = q.a;
       if (k === around.length - 1) hi += 2 * Math.PI;
       let t = ang;
       if (t < lo) t += 2 * Math.PI;
-      if (t >= lo && t <= hi) { A = p; B = q; break; }
+      if (t >= lo && t <= hi) {
+        A = p;
+        B = q;
+        break;
+      }
     }
   }
   if (!A) return w;
-  if (!B) {   // one direction only: its share by projection, the rest the centre's
+  if (!B) {
+    // one direction only: its share by projection, the rest the centre's
     const pa = positions[A.i];
     const s = Math.max(0, (x * pa[0] + y * pa[1]) / (pa[0] * pa[0] + pa[1] * pa[1]));
     const a = Math.min(1, s);
-    w[A.i] = a; if (centre >= 0) w[centre] = 1 - a; else w[A.i] = 1;
+    w[A.i] = a;
+    if (centre >= 0) w[centre] = 1 - a;
+    else w[A.i] = 1;
     return w;
   }
-  const pa = positions[A.i], pb = positions[B.i];
+  const pa = positions[A.i],
+    pb = positions[B.i];
   const det = pa[0] * pb[1] - pa[1] * pb[0];
   let a, b;
-  if (Math.abs(det) < 1e-12) { a = 1; b = 0; }
-  else { a = (x * pb[1] - y * pb[0]) / det; b = (pa[0] * y - pa[1] * x) / det; }
-  a = Math.max(0, a); b = Math.max(0, b);
+  if (Math.abs(det) < 1e-12) {
+    a = 1;
+    b = 0;
+  } else {
+    a = (x * pb[1] - y * pb[0]) / det;
+    b = (pa[0] * y - pa[1] * x) / det;
+  }
+  a = Math.max(0, a);
+  b = Math.max(0, b);
   const sum = a + b;
-  if (sum > 1 || centre < 0) { w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1); return w; }
-  w[A.i] = a; w[B.i] = b; w[centre] = 1 - sum;
+  if (sum > 1 || centre < 0) {
+    w[A.i] = a / (sum || 1);
+    w[B.i] = b / (sum || 1);
+    return w;
+  }
+  w[A.i] = a;
+  w[B.i] = b;
+  w[centre] = 1 - sum;
   return w;
 }
 
@@ -246,7 +305,7 @@ export function resolveController(animation, ref) {
   const controller = animation.controllers?.[override ? override.base : ref];
   if (!controller) return null;
   const swap = new Map(override?.clips ?? []);
-  const clipOf = (name) => (name == null ? null : animation.clips?.[swap.get(name) ?? name] ?? null);
+  const clipOf = (name) => (name == null ? null : (animation.clips?.[swap.get(name) ?? name] ?? null));
   return { name: ref, controller, clipOf };
 }
 
@@ -273,7 +332,10 @@ export function createAnimator(node, component, animation) {
   if (resolved && (resolved.controller.layers?.length ?? 0) > 1) throw new Error(`${ref}: one layer is restated`);
   const states = layer0?.states ?? [];
   const stateByName = new Map();
-  for (const s of states) { stateByName.set(s.name, s); if (s.fullPath) stateByName.set(s.fullPath, s); }
+  for (const s of states) {
+    stateByName.set(s.name, s);
+    if (s.fullPath) stateByName.set(s.fullPath, s);
+  }
   const clipOf = resolved?.clipOf ?? (() => null);
 
   // the bindings: every property some clip of the controller animates, on a node under this one
@@ -286,7 +348,7 @@ export function createAnimator(node, component, animation) {
       for (const cv of clip?.curves ?? []) {
         const target = nodeByHash.get(cv.path);
         const attr = ATTR[cv.attribute];
-        if (!target || !attr) continue;   // a curve naming no node here animates nothing, as in Unity
+        if (!target || !attr) continue; // a curve naming no node here animates nothing, as in Unity
         const key = `${cv.path}:${attr}`;
         if (propIndex.has(key)) continue;
         propIndex.set(key, props.length);
@@ -298,13 +360,20 @@ export function createAnimator(node, component, animation) {
   const params = new Map();
   const resetParams = () => {
     params.clear();
-    for (const p of resolved?.controller.params ?? []) params.set(p.name, { type: p.type, value: p.type === 'Bool' || p.type === 'Trigger' ? !!p.default : Number(p.default) });
+    for (const p of resolved?.controller.params ?? [])
+      params.set(p.name, {
+        type: p.type,
+        value: p.type === 'Bool' || p.type === 'Trigger' ? !!p.default : Number(p.default),
+      });
   };
   resetParams();
 
   /** @type {any} */
   const a = {
-    node, component, controllerName: ref, props,
+    node,
+    component,
+    controllerName: ref,
+    props,
     _internals: null,
     /** @type {null | { state: any, time: number }} */ current: null,
     /** @type {null | { state: any, time: number }} */ next: null,
@@ -314,10 +383,22 @@ export function createAnimator(node, component, animation) {
     wasEnabled: false,
     lastPose: null,
 
-    GetBool(name) { const p = params.get(name); return p ? !!p.value : false; },
-    SetBool(name, v) { const p = params.get(name); if (p) p.value = !!v; },
-    GetFloat(name) { const p = params.get(name); return p ? Number(p.value) : 0; },
-    SetFloat(name, v) { const p = params.get(name); if (p) p.value = f(v); },
+    GetBool(name) {
+      const p = params.get(name);
+      return p ? !!p.value : false;
+    },
+    SetBool(name, v) {
+      const p = params.get(name);
+      if (p) p.value = !!v;
+    },
+    GetFloat(name) {
+      const p = params.get(name);
+      return p ? Number(p.value) : 0;
+    },
+    SetFloat(name, v) {
+      const p = params.get(name);
+      if (p) p.value = f(v);
+    },
     /** Animator.CrossFade(stateName, normalizedTransitionDuration) - the default layer and offset. */
     CrossFade(stateName, normalizedTransitionDuration) {
       const s = stateByName.get(stateName) ?? stateByName.get(`${layer0?.name}.${stateName}`) ?? null;
@@ -335,11 +416,19 @@ export function createAnimator(node, component, animation) {
       a.pending = { state: s, duration: 0, play: true, time: normalizedTime };
     },
     /** The state playing, or fading in (Animator.GetCurrentAnimatorStateInfo / GetNextAnimatorStateInfo). */
-    get stateName() { return a.current?.state.name ?? layer0?.defaultState ?? null; },
-    get nextStateName() { return a.next?.state.name ?? null; },
-    get enabled() { return component?.m_Enabled !== 0 && component?.m_Enabled !== false; },
+    get stateName() {
+      return a.current?.state.name ?? layer0?.defaultState ?? null;
+    },
+    get nextStateName() {
+      return a.next?.state.name ?? null;
+    },
+    get enabled() {
+      return component?.m_Enabled !== 0 && component?.m_Enabled !== false;
+    },
     /** The Animator's frame. */
-    update(dt) { animatorUpdate(a, dt); },
+    update(dt) {
+      animatorUpdate(a, dt);
+    },
   };
 
   const motionLength = (state) => {
@@ -352,12 +441,15 @@ export function createAnimator(node, component, animation) {
     if (node0.clip != null || !node0.children?.length) return clipLength(clipOf(node0.clip));
     const w = treeWeights(m, at);
     let len = 0;
-    node0.children.forEach((c, k) => { if (w[k] > 0) len += w[k] * treeLength(m, c); });
+    node0.children.forEach((c, k) => {
+      if (w[k] > 0) len += w[k] * treeLength(m, c);
+    });
     return len;
   };
   const treeWeights = (m, at) => {
     const node0 = m[at];
-    if (node0.type === 1) return weights2DDirectional(node0.positions, a.GetFloat(node0.param), a.GetFloat(node0.paramY));
+    if (node0.type === 1)
+      return weights2DDirectional(node0.positions, a.GetFloat(node0.param), a.GetFloat(node0.paramY));
     return weights1D(node0.thresholds, a.GetFloat(node0.param));
   };
   // PERF-SAILS4 (2026-10-14, the owner's client online in a port: a ship's animators 0.31 ms of the frame, every one of
@@ -367,7 +459,7 @@ export function createAnimator(node, component, animation) {
   // any time. Its bindings are kept in its curves' order (a later curve on one property is the one that stands, as
   // before), and a constant clip's pose is made at its first ask after the props are bound (their `def`, read once) and
   // handed out as made - its readers (the write, the blend, a transition's snapshot) read it and never write it.
-  const clipBinds = new Map();   // clip -> { binds: [property index, curve, euler?] in its curves' order, constant, pose }
+  const clipBinds = new Map(); // clip -> { binds: [property index, curve, euler?] in its curves' order, constant, pose }
   const bindsOf = (clip) => {
     let b = clipBinds.get(clip);
     if (!b) {
@@ -400,25 +492,38 @@ export function createAnimator(node, component, animation) {
     const node0 = m[at];
     if (node0.clip != null || !node0.children?.length) return leafPose(clipOf(node0.clip), normalizedTime);
     const w = treeWeights(m, at);
-    const poses = [], ws = [];
-    node0.children.forEach((c, k) => { if (w[k] > 0) { poses.push(treePose(m, c, normalizedTime)); ws.push(w[k]); } });
+    const poses = [],
+      ws = [];
+    node0.children.forEach((c, k) => {
+      if (w[k] > 0) {
+        poses.push(treePose(m, c, normalizedTime));
+        ws.push(w[k]);
+      }
+    });
     return poses.length ? blendPoses(props, poses, ws) : props.map((p) => [...p.def]);
   };
-  const statePose = (entry) => (entry.state.motion?.length ? treePose(entry.state.motion, 0, entry.time) : props.map((p) => [...p.def]));
+  const statePose = (entry) =>
+    entry.state.motion?.length ? treePose(entry.state.motion, 0, entry.time) : props.map((p) => [...p.def]);
   /** CSA-G: every leaf clip a state's motion plays, with its weight through the tree (none weighed at nothing). */
   const leafClips = (m, at = 0, w = 1, out = []) => {
     const node0 = m?.[at];
     if (!node0) return out;
-    if (node0.clip != null || !node0.children?.length) { out.push([clipOf(node0.clip), w]); return out; }
+    if (node0.clip != null || !node0.children?.length) {
+      out.push([clipOf(node0.clip), w]);
+      return out;
+    }
     const tw = treeWeights(m, at);
-    node0.children.forEach((c, k) => { if (tw[k] > 0) leafClips(m, c, w * tw[k], out); });
+    node0.children.forEach((c, k) => {
+      if (tw[k] > 0) leafClips(m, c, w * tw[k], out);
+    });
     return out;
   };
   /** CSA-G: the events an entry's clips passed this frame, from `from` to `to` in its normalized time, in time order. */
   const eventsCrossed = (entry, from, to, closedStart) => {
     const out = [];
     if (!(to > from) && !(closedStart && to === from)) return out;
-    for (const [clip] of leafClips(entry.state.motion)) {   // none weighed at nought: the walk leaves them out
+    for (const [clip] of leafClips(entry.state.motion)) {
+      // none weighed at nought: the walk leaves them out
       const len = clipLength(clip);
       if (!(len > 0) || !clip.events?.length) continue;
       for (const ev of clip.events) {
@@ -435,19 +540,27 @@ export function createAnimator(node, component, animation) {
   };
   const speedOf = (state) => (state.speed ?? 1) * (state.speedParam ? a.GetFloat(state.speedParam) : 1);
 
-  const conditionsHold = (t) => (t.conditions ?? []).every((c) => {
-    const p = params.get(c.param);
-    if (!p) return false;
-    switch (c.mode) {
-      case 'If': return !!p.value;
-      case 'IfNot': return !p.value;
-      case 'Greater': return Number(p.value) > c.threshold;
-      case 'Less': return Number(p.value) < c.threshold;
-      case 'Equals': return Number(p.value) === c.threshold;
-      case 'NotEqual': return Number(p.value) !== c.threshold;
-      default: return false;
-    }
-  });
+  const conditionsHold = (t) =>
+    (t.conditions ?? []).every((c) => {
+      const p = params.get(c.param);
+      if (!p) return false;
+      switch (c.mode) {
+        case 'If':
+          return !!p.value;
+        case 'IfNot':
+          return !p.value;
+        case 'Greater':
+          return Number(p.value) > c.threshold;
+        case 'Less':
+          return Number(p.value) < c.threshold;
+        case 'Equals':
+          return Number(p.value) === c.threshold;
+        case 'NotEqual':
+          return Number(p.value) !== c.threshold;
+        default:
+          return false;
+      }
+    });
   // the exit time crossed this frame: below one on every loop (the first k + exit past `before`), else once
   const exitCrossed = (exit, before, after) => {
     if (exit < 1) {
@@ -458,23 +571,45 @@ export function createAnimator(node, component, animation) {
     return before < exit && exit <= after;
   };
 
-  a._internals = { motionLength, statePose, speedOf, conditionsHold, exitCrossed, stateByName, layer0, resetParams, eventsCrossed };
+  a._internals = {
+    motionLength,
+    statePose,
+    speedOf,
+    conditionsHold,
+    exitCrossed,
+    stateByName,
+    layer0,
+    resetParams,
+    eventsCrossed,
+  };
   return a;
 }
 
 /** One Animator frame: bind on first enable, take a CrossFade asked since, advance, transition, evaluate, write. */
 function animatorUpdate(a, dt) {
   const on = a.enabled && a.node.activeInHierarchy && a._internals.layer0;
-  if (!on) { a.wasEnabled = false; a.pending = null; return; }
+  if (!on) {
+    a.wasEnabled = false;
+    a.pending = null;
+    return;
+  }
   const I = a._internals;
   if (!a.bound) {
-    for (const p of a.props) p.def = p.attr === 'position' ? [...p.node.localPosition] : p.attr === 'rotation' ? [...p.node.localRotation] : [...p.node.localScale];
+    for (const p of a.props)
+      p.def =
+        p.attr === 'position'
+          ? [...p.node.localPosition]
+          : p.attr === 'rotation'
+            ? [...p.node.localRotation]
+            : [...p.node.localScale];
     a.bound = true;
   }
-  if (!a.wasEnabled) {   // enabled (again): the default state at 0, the parameters at their defaults
+  if (!a.wasEnabled) {
+    // enabled (again): the default state at 0, the parameters at their defaults
     const def = I.stateByName.get(I.layer0.defaultState) ?? I.layer0.states[0] ?? null;
     a.current = def ? { state: def, time: 0, fresh: true } : null;
-    a.next = null; a.transition = null;
+    a.next = null;
+    a.transition = null;
     if (a.lastPose) I.resetParams();
     a.wasEnabled = true;
   }
@@ -485,7 +620,11 @@ function animatorUpdate(a, dt) {
     const { state, duration, play, time } = a.pending;
     a.pending = null;
     const playing = a.transition ? a.next.state : a.current.state;
-    if (play) { a.current = { state, time: time ?? 0, fresh: true }; a.next = null; a.transition = null; }   // Play: no blend
+    if (play) {
+      a.current = { state, time: time ?? 0, fresh: true };
+      a.next = null;
+      a.transition = null;
+    } // Play: no blend
     else if (state !== playing) {
       const srcLen = I.motionLength(a.current.state);
       const snapshot = a.transition ? (a.lastPose ?? I.statePose(a.current)) : null;
@@ -508,13 +647,19 @@ function animatorUpdate(a, dt) {
   for (const [entry, from] of fired) {
     const crossed = I.eventsCrossed(entry, from, entry.time, !!entry.fresh);
     entry.fresh = false;
-    for (const { ev } of crossed) for (const comp of a.node.components ?? []) if (typeof comp?.[ev.functionName] === 'function') comp[ev.functionName](ev);
+    for (const { ev } of crossed)
+      for (const comp of a.node.components ?? [])
+        if (typeof comp?.[ev.functionName] === 'function') comp[ev.functionName](ev);
   }
 
   // the transitions
   if (a.transition) {
     a.transition.elapsed += dt;
-    if (a.transition.elapsed >= a.transition.duration) { a.current = a.next; a.next = null; a.transition = null; }
+    if (a.transition.elapsed >= a.transition.duration) {
+      a.current = a.next;
+      a.next = null;
+      a.transition = null;
+    }
   } else {
     for (const t of a.current.state.transitions ?? []) {
       if (!I.conditionsHold(t)) continue;
@@ -524,7 +669,11 @@ function animatorUpdate(a, dt) {
       const srcLen = I.motionLength(a.current.state);
       a.next = { state: to, time: t.offset ?? 0, fresh: true };
       a.transition = { duration: t.hasFixedDuration ? t.duration : t.duration * srcLen, elapsed: 0, snapshot: null };
-      if (!(a.transition.duration > 0)) { a.current = a.next; a.next = null; a.transition = null; }
+      if (!(a.transition.duration > 0)) {
+        a.current = a.next;
+        a.next = null;
+        a.transition = null;
+      }
       break;
     }
   }

@@ -29,187 +29,441 @@
 // COMBAT and WORLD (most of what the mods change), and GRAPHICS, which is DFU's Video page and every row that draws.
 
 export const CATEGORIES = Object.freeze([
-  tab("graphics", "Graphics", [
-    sec("quality", "Quality", [
-      "preset:graphics"]),
-    sec("display", "Display", [
-      "Video/FieldOfView", "feat:render-scale", "Video/TargetFrameRate", "Video/VSync", "port:graphicsBackend", "port:showFps", "Video/Fullscreen",
-      "Video/ExclusiveFullscreen", "Video/ResolutionWidth", "Video/ResolutionHeight", "Video/QualityLevel", "Video/RunInBackground"]),
-    sec("distance", "View distance & detail", [
-      "feat:land-view-distance", "Experimental/TerrainDistance", "feat:ground-sharpness", "feat:cloud-quality", "feat:real-windows",
-      "Experimental/TerrainHeightmapPixelError", "Experimental/AssetCacheThreshold"]),
-    sec("light", "Lighting & brightness", [
-      "feat:enhanced-lighting", "feat:modded-lighting", "feat:first-person-lighting", "Enhancements/DungeonAmbientLightScale",
-      "Enhancements/NightAmbientLightScale", "Enhancements/PlayerTorchLightScale", "Spells/EnableSpellLighting", "Spells/EnableSpellShadows",
-      "Video/AmbientLitInteriors"]),
-    sec("sky", "Sky, water & weather", [
-      "feat:enhanced-environments", "feat:enhanced-water", "feat:water-quality", "feat:armory-others", "feat:killfx-others", "feat:mod-heat-haze", "feat:mod-snowfall"]),
-    sec("plants", "Plants, trees & wind", [
-      "feat:grass", "feat:wind", "feat:mod-windfall", "feat:mod-low-poly-trees", "feat:mod-seasons-iliac-bay"]),
-    sec("looks", "Textures & looks", [
-      "link:overhauls", "feat:dungeon-wall-style", "Video/RandomDungeonTextures", "Video/MainFilterMode", "GUI/GUIFilterMode", "GUI/VideoFilterMode",
-      "Video/EnableTextureArrays", "GUI/AccelerateUICopyTexture"]),
-    sec("retro", "Retro look", [
-      "Video/RetroRenderingMode", "Video/PostProcessingInRetroMode", "Video/UseMipMapsInRetroMode", "Video/RetroModeAspectCorrection",
-      "Video/PalettizationLUTShift"]),
-    sec("shadows", "Daggerfall Unity's shadows", [
-      "Video/DungeonLightShadows", "Video/InteriorLightShadows", "Video/ExteriorLightShadows", "Video/MobileNPCShadows",
-      "Video/GeneralBillboardShadows", "Video/NatureBillboardShadows", "Video/DungeonShadowDistance", "Video/InteriorShadowDistance",
-      "Video/ExteriorShadowDistance", "Video/ShadowResolutionMode"]),
-    sec("effects", "Post effects", [
-      "Effects/AntialiasingMethod", "Effects/AntialiasingFXAAFastMode", "Effects/AntialiasingSMAAQuality", "Effects/AntialiasingTAASharpness",
-      "Effects/AmbientOcclusionEnable", "Effects/AmbientOcclusionMethod", "Effects/AmbientOcclusionIntensity", "Effects/AmbientOcclusionThickness",
-      "Effects/AmbientOcclusionRadius", "Effects/AmbientOcclusionQuality", "Effects/BloomEnable", "Effects/BloomIntensity", "Effects/BloomThreshold",
-      "Effects/BloomDiffusion", "Effects/BloomFastMode", "Effects/DepthOfFieldEnable", "Effects/DepthOfFieldFocusDistance", "Effects/DepthOfFieldAperture",
-      "Effects/DepthOfFieldFocalLength", "Effects/DepthOfFieldMaxBlurSize", "Effects/DitherEnable", "Effects/ColorBoostEnable", "Effects/ColorBoostRadius",
-      "Effects/ColorBoostIntensity", "Effects/ColorBoostDungeonScale", "Effects/ColorBoostExteriorScale", "Effects/ColorBoostInteriorScale",
-      "Effects/ColorBoostDungeonFalloff"]),
+  tab('graphics', 'Graphics', [
+    sec('quality', 'Quality', ['preset:graphics']),
+    sec('display', 'Display', [
+      'Video/FieldOfView',
+      'feat:render-scale',
+      'Video/TargetFrameRate',
+      'Video/VSync',
+      'port:graphicsBackend',
+      'port:showFps',
+      'Video/Fullscreen',
+      'Video/ExclusiveFullscreen',
+      'Video/ResolutionWidth',
+      'Video/ResolutionHeight',
+      'Video/QualityLevel',
+      'Video/RunInBackground',
+    ]),
+    sec('distance', 'View distance & detail', [
+      'feat:land-view-distance',
+      'Experimental/TerrainDistance',
+      'feat:ground-sharpness',
+      'feat:cloud-quality',
+      'feat:real-windows',
+      'Experimental/TerrainHeightmapPixelError',
+      'Experimental/AssetCacheThreshold',
+    ]),
+    sec('light', 'Lighting & brightness', [
+      'feat:enhanced-lighting',
+      'feat:modded-lighting',
+      'feat:first-person-lighting',
+      'Enhancements/DungeonAmbientLightScale',
+      'Enhancements/NightAmbientLightScale',
+      'Enhancements/PlayerTorchLightScale',
+      'Spells/EnableSpellLighting',
+      'Spells/EnableSpellShadows',
+      'Video/AmbientLitInteriors',
+    ]),
+    sec('sky', 'Sky, water & weather', [
+      'feat:enhanced-environments',
+      'feat:enhanced-water',
+      'feat:water-quality',
+      'feat:armory-others',
+      'feat:killfx-others',
+      'feat:mod-heat-haze',
+      'feat:mod-snowfall',
+    ]),
+    sec('plants', 'Plants, wind & wildlife', [
+      'feat:grass',
+      'feat:wind',
+      'feat:mod-windfall',
+      'feat:wildlife',
+      'feat:mod-low-poly-trees',
+      'feat:mod-seasons-iliac-bay',
+    ]),
+    sec('looks', 'Textures & looks', [
+      'link:overhauls',
+      'feat:dungeon-wall-style',
+      'Video/RandomDungeonTextures',
+      'Video/MainFilterMode',
+      'GUI/GUIFilterMode',
+      'GUI/VideoFilterMode',
+      'Video/EnableTextureArrays',
+      'GUI/AccelerateUICopyTexture',
+    ]),
+    sec('retro', 'Retro look', [
+      'Video/RetroRenderingMode',
+      'Video/PostProcessingInRetroMode',
+      'Video/UseMipMapsInRetroMode',
+      'Video/RetroModeAspectCorrection',
+      'Video/PalettizationLUTShift',
+    ]),
+    sec('shadows', "Daggerfall Unity's shadows", [
+      'Video/DungeonLightShadows',
+      'Video/InteriorLightShadows',
+      'Video/ExteriorLightShadows',
+      'Video/MobileNPCShadows',
+      'Video/GeneralBillboardShadows',
+      'Video/NatureBillboardShadows',
+      'Video/DungeonShadowDistance',
+      'Video/InteriorShadowDistance',
+      'Video/ExteriorShadowDistance',
+      'Video/ShadowResolutionMode',
+    ]),
+    sec('effects', 'Post effects', [
+      'Effects/AntialiasingMethod',
+      'Effects/AntialiasingFXAAFastMode',
+      'Effects/AntialiasingSMAAQuality',
+      'Effects/AntialiasingTAASharpness',
+      'Effects/AmbientOcclusionEnable',
+      'Effects/AmbientOcclusionMethod',
+      'Effects/AmbientOcclusionIntensity',
+      'Effects/AmbientOcclusionThickness',
+      'Effects/AmbientOcclusionRadius',
+      'Effects/AmbientOcclusionQuality',
+      'Effects/BloomEnable',
+      'Effects/BloomIntensity',
+      'Effects/BloomThreshold',
+      'Effects/BloomDiffusion',
+      'Effects/BloomFastMode',
+      'Effects/DepthOfFieldEnable',
+      'Effects/DepthOfFieldFocusDistance',
+      'Effects/DepthOfFieldAperture',
+      'Effects/DepthOfFieldFocalLength',
+      'Effects/DepthOfFieldMaxBlurSize',
+      'Effects/DitherEnable',
+      'Effects/ColorBoostEnable',
+      'Effects/ColorBoostRadius',
+      'Effects/ColorBoostIntensity',
+      'Effects/ColorBoostDungeonScale',
+      'Effects/ColorBoostExteriorScale',
+      'Effects/ColorBoostInteriorScale',
+      'Effects/ColorBoostDungeonFalloff',
+    ]),
   ]),
-  tab("gameplay", "Gameplay", [
-    sec("general", "General", [
-      "Enhancements/LoiterLimitInHours", "Controls/InstantRepairs", "Controls/AllowMagicRepairs", "ChildGuard/PlayerNudity"]),
-    sec("quests", "Quests", [
-      "port:questRepair", "feat:questlines", "feat:nearby-quests", "feat:choose-guild-jobs", "Enhancements/GuildQuestListBox", "GUI/CanDropQuestItems",
-      "GUI/QuestRumorWeight", "GUI/EnableQuestDebugger"]),
-    sec("dungeons", "Dungeons", [
-      "feat:smaller-dungeons", "Experimental/SmallerDungeons", "feat:medium-dungeons", "feat:world-dungeon-sizes", "feat:dungeon-encounters", "feat:varied-dungeon-monsters",
-      "Enhancements/AlternateRandomEnemySelection"]),
-    sec("loot", "Loot & items", [
-      "feat:quick-loot", "feat:loot-rarity", "feat:mod-unleveledloot", "feat:mod-roleplay-realism-items", "feat:mod-physical-items"]),
-    sec("light", "Your light", [
-      "feat:torches-from-items", "Enhancements/PlayerTorchFromItems", "feat:mod-handheld-torches"]),
-    sec("character", "Character & survival", [
-      "feat:mod-oblivion-remaster-leveling", "feat:mod-project-legacy", "feat:mod-climates-calories", "feat:mod-roleplay-realism"]),
-    sec("moving", "Climbing & gathering", [
-      "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:resource-highlights", "feat:mod-foraging"]),
-    sec("start", "Starting a new game", [
-      "Startup/StartInDungeon", "Startup/StartCellX", "Startup/StartCellY"]),
-    sec("camera", "Camera", [
-      "feat:mw-shoulder-camera", "feat:mod-eye-of-the-beholder"]),
-    sec("others", "Other players", [
-      "card:peerSprites"]),
-    sec("advanced", "Advanced", [
-      "Enhancements/LypyL_GameConsole"]),
+  tab('gameplay', 'Gameplay', [
+    sec('general', 'General', [
+      'Enhancements/LoiterLimitInHours',
+      'Controls/InstantRepairs',
+      'Controls/AllowMagicRepairs',
+      'ChildGuard/PlayerNudity',
+    ]),
+    sec('quests', 'Quests', [
+      'port:questRepair',
+      'feat:questlines',
+      'feat:nearby-quests',
+      'feat:choose-guild-jobs',
+      'Enhancements/GuildQuestListBox',
+      'GUI/CanDropQuestItems',
+      'GUI/QuestRumorWeight',
+      'GUI/EnableQuestDebugger',
+    ]),
+    sec('dungeons', 'Dungeons', [
+      'feat:smaller-dungeons',
+      'Experimental/SmallerDungeons',
+      'feat:medium-dungeons',
+      'feat:world-dungeon-sizes',
+      'feat:dungeon-encounters',
+      'feat:varied-dungeon-monsters',
+      'Enhancements/AlternateRandomEnemySelection',
+    ]),
+    sec('loot', 'Loot & items', [
+      'feat:quick-loot',
+      'feat:loot-rarity',
+      'feat:mod-unleveledloot',
+      'feat:mod-roleplay-realism-items',
+      'feat:mod-physical-items',
+    ]),
+    sec('light', 'Your light', [
+      'feat:torches-from-items',
+      'Enhancements/PlayerTorchFromItems',
+      'feat:mod-handheld-torches',
+    ]),
+    sec('character', 'Character & survival', [
+      'feat:mod-oblivion-remaster-leveling',
+      'feat:mod-project-legacy',
+      'feat:mod-climates-calories',
+      'feat:mod-roleplay-realism',
+    ]),
+    sec('moving', 'Climbing & gathering', [
+      'feat:enhanced-climbing',
+      'Enhancements/AdvancedClimbing',
+      'feat:resource-highlights',
+      'feat:mod-foraging',
+    ]),
+    sec('start', 'Starting a new game', ['Startup/StartInDungeon', 'Startup/StartCellX', 'Startup/StartCellY']),
+    sec('camera', 'Camera', ['feat:mw-shoulder-camera', 'feat:mod-eye-of-the-beholder']),
+    sec('others', 'Other players', ['card:peerSprites']),
+    sec('advanced', 'Advanced', ['Enhancements/LypyL_GameConsole']),
   ]),
-  tab("combat", "Combat", [
-    sec("enemies", "Enemies", [
-      "feat:enhanced-ai", "Enhancements/EnhancedCombatAI", "feat:mod-meanermonsters", "feat:mod-daggerfall-enemy-expansion", "feat:enemy-infighting", "Enhancements/EnemyInfighting"]),
-    sec("rules", "Rules & armour", [
-      "feat:mod-pcaao", "MeleeAttacks/MeleeAttackFriendlyProtection", "MeleeAttacks/MeleeAttackDetection"]),
-    sec("weapons", "Weapons in hand", [
-      "feat:weapon-glow", "feat:mod-weapon-widget", "feat:mod-shield-widget", "feat:mod-readied-spellcasting-hands", "feat:mod-diverse-weapons", "feat:bows-left-hand", "Enhancements/BowLeftHandWithSwitching"]),
-    sec("morrowind", "With Morrowind data", [
-      "feat:mod-weapon-sheathing", "feat:steel-helm", "feat:beast-footwear", "feat:beast-helmets", "feat:mw-spell-effects", "feat:mw-body-motion", "feat:mw-npc-bodies", "feat:mw-billboard-look", "feat:mw-model-detail", "feat:npc-marks"]),
-    sec("aftermath", "Seeing & bleeding", [
-      "feat:enhanced-combat-visuals", "feat:blood"]),
-    sec("sea", "At sea", [
-      "feat:naval-combat"]),
+  tab('combat', 'Combat', [
+    sec('enemies', 'Enemies', [
+      'feat:enhanced-ai',
+      'Enhancements/EnhancedCombatAI',
+      'feat:mod-meanermonsters',
+      'feat:mod-daggerfall-enemy-expansion',
+      'feat:enemy-infighting',
+      'Enhancements/EnemyInfighting',
+    ]),
+    sec('rules', 'Rules & armour', [
+      'feat:mod-pcaao',
+      'MeleeAttacks/MeleeAttackFriendlyProtection',
+      'MeleeAttacks/MeleeAttackDetection',
+    ]),
+    sec('weapons', 'Weapons in hand', [
+      'feat:weapon-glow',
+      'feat:mod-weapon-widget',
+      'feat:mod-shield-widget',
+      'feat:mod-readied-spellcasting-hands',
+      'feat:mod-diverse-weapons',
+      'feat:bows-left-hand',
+      'Enhancements/BowLeftHandWithSwitching',
+    ]),
+    sec('morrowind', 'With Morrowind data', [
+      'feat:mod-weapon-sheathing',
+      'feat:steel-helm',
+      'feat:beast-footwear',
+      'feat:beast-helmets',
+      'feat:mw-spell-effects',
+      'feat:mw-body-motion',
+      'feat:mw-npc-bodies',
+      'feat:mw-billboard-look',
+      'feat:mw-model-detail',
+      'feat:npc-marks',
+    ]),
+    sec('aftermath', 'Seeing & bleeding', ['feat:enhanced-combat-visuals', 'feat:blood']),
+    sec('sea', 'At sea', ['feat:naval-combat']),
   ]),
-  tab("world", "World", [
-    sec("land", "Land", [
-      "feat:tamriel-land", "feat:landforms", "feat:real-forests", "feat:bantha-jungle", "feat:tamriel-lands", "feat:climate-blend", "feat:road-verges", "feat:mod-roads-hazelnut"]),
-    sec("weather", "Weather & ambience", [
-      "feat:weather-events", "feat:mod-better-ambience"]),
-    sec("towns", "Towns & people", [
-      "feat:living-world", "feat:mod-beautiful-villages", "feat:mod-beautiful-cities", "feat:mod-windmills-kamer", "feat:mod-kings-gambit", "feat:town-watch"]),
-    sec("encounters", "Wilderness & encounters", [
-      "feat:mod-world-of-daggerfall", "feat:wilderness-camps", "feat:road-encounters", "feat:mod-world-events-raiding-parties"]),
-    sec("travel", "Travel", [
-      "feat:mod-travel-options", "feat:mod-immersive-travel", "feat:mod-horse-cart-and-cargo", "feat:horse-care", "feat:wagon-upkeep"]),
-    sec("sea", "The sea & ships", [
-      "feat:mod-come-sail-away", "feat:mod-warm-ashes-ships", "feat:mod-iliac-puddle-no-more", "feat:mod-ocean-holes"]),
+  tab('world', 'World', [
+    sec('land', 'Land', [
+      'feat:tamriel-land',
+      'feat:landforms',
+      'feat:real-forests',
+      'feat:bantha-jungle',
+      'feat:tamriel-lands',
+      'feat:climate-blend',
+      'feat:road-verges',
+      'feat:mod-roads-hazelnut',
+    ]),
+    sec('weather', 'Weather & ambience', ['feat:weather-events', 'feat:mod-better-ambience']),
+    sec('towns', 'Towns & people', [
+      'feat:living-world',
+      'feat:mod-beautiful-villages',
+      'feat:mod-beautiful-cities',
+      'feat:mod-windmills-kamer',
+      'feat:mod-kings-gambit',
+      'feat:town-watch',
+    ]),
+    sec('encounters', 'Wilderness & encounters', [
+      'feat:mod-world-of-daggerfall',
+      'feat:wilderness-camps',
+      'feat:road-encounters',
+      'feat:mod-world-events-raiding-parties',
+    ]),
+    sec('travel', 'Travel', [
+      'feat:mod-travel-options',
+      'feat:mod-immersive-travel',
+      'feat:mod-horse-cart-and-cargo',
+      'feat:horse-care',
+      'feat:wagon-upkeep',
+    ]),
+    sec('sea', 'The sea & ships', [
+      'feat:mod-come-sail-away',
+      'feat:mod-warm-ashes-ships',
+      'feat:mod-iliac-puddle-no-more',
+      'feat:mod-ocean-holes',
+    ]),
   ]),
-  tab("interface", "Interface", [
+  tab('interface', 'Interface', [
     // L10N1b: the language the game's words are shown in, and under it a Daggerfall Unity translation pack (L10N3b)
-    sec("language", "Language", ["port:language"]),
-    sec("shop", "Shop", ["port:shopHidden"]),   // SHOP-HIDE
-    sec("hud", "HUD", [
-      "port:hudScale", "port:hudLock", "port:hudBars", "port:hudReset", "feat:calm-hud", "port:foeBarStyle", "feat:quick-slots", "GUI/Crosshair",
-      "GUI/EnableVitalsIndicators", "GUI/InteractionModeIcon", "GUI/EnableArrowCounter", "GUI/IconsPositioningScheme", "feat:near-death-warning",
-      "Enhancements/NearDeathWarning"]),
-    sec("messages", "Messages & prompts", [
-      "feat:event-board", "feat:mod-world-tooltips", "feat:mod-ambient-text", "GUI/ShowQuestJournalClocksAsCountdown", "GUI/DungeonExitWagonPrompt",
-      "GUI/IllegalRestWarning", "GUI/DisableEnemyDeathAlert"]),
-    sec("quests", "Quest help", [
-      "feat:quest-herald", "feat:quest-tracker", "feat:quest-marks", "feat:quest-guidance"]),
-    sec("dungeons", "Dungeon help", [
-      "feat:dungeon-sense", "feat:dungeon-echoes", "feat:dungeon-way-out"]),
-    sec("maps", "Maps", [
-      "port:mapScale", "feat:enhanced-map", "feat:dungeon-map-3d", "feat:tamriel-map", "GUI/TravelMapLocationsOutline", "GUI/EnableGeographicBackgrounds"]),
-    sec("townmap", "Town map", [
-      "Map/ExteriorMapDefaultZoomLevel", "Map/ExteriorMapResetZoomLevelOnNewLocation", "Map/AutomapTempleColor", "Map/AutomapShopColor",
-      "Map/AutomapTavernColor", "Map/AutomapHouseColor"]),
-    sec("dungeonmap", "Dungeon map", [
-      "Map/AutomapNumberOfDungeons", "Map/AutomapDisableMicroMap", "Map/AutomapRememberSliceLevel", "Map/AutomapAlwaysMaxOutSliceLevel",
-      "Map/DungeonMicMapQoL", "Map/DunMicMapInnerColor", "Map/DunMicMapBorderColor"]),
-    sec("windows", "Inventory, talk & shops", [
-      "GUI/HelmAndShieldMaterialDisplay", "GUI/EnableInventoryInfoPanel", "GUI/EnableEnhancedItemLists",
-      "GUI/EnableModernConversationStyleInTalkWindow", "GUI/ShopQualityPresentation", "GUI/ShopQualityHUDDelay"]),
-    sec("sheet", "Character sheet", [
-      "port:standingAll"]),
-    sec("tooltips", "Tooltips", [
-      "GUI/EnableToolTips", "GUI/ToolTipDelayInSeconds", "GUI/ToolTipTextColor", "GUI/ToolTipBackgroundColor"]),
-    sec("start", "Starting up & loading", [
-      "port:skipStartVideo", "port:autoUpdates", "feat:loading-screen", "GUI/ShowOptionsAtStart", "GUI/HideLoginName"]),
+    sec('language', 'Language', ['port:language']),
+    sec('shop', 'Shop', ['port:shopHidden']), // SHOP-HIDE
+    sec('hud', 'HUD', [
+      'port:hudScale',
+      'port:hudLock',
+      'port:hudBars',
+      'port:hudReset',
+      'feat:calm-hud',
+      'port:foeBarStyle',
+      'feat:quick-slots',
+      'GUI/Crosshair',
+      'GUI/EnableVitalsIndicators',
+      'GUI/InteractionModeIcon',
+      'GUI/EnableArrowCounter',
+      'GUI/IconsPositioningScheme',
+      'feat:near-death-warning',
+      'Enhancements/NearDeathWarning',
+    ]),
+    sec('messages', 'Messages & prompts', [
+      'feat:event-board',
+      'feat:mod-world-tooltips',
+      'feat:mod-ambient-text',
+      'GUI/ShowQuestJournalClocksAsCountdown',
+      'GUI/DungeonExitWagonPrompt',
+      'GUI/IllegalRestWarning',
+      'GUI/DisableEnemyDeathAlert',
+    ]),
+    sec('quests', 'Quest help', ['feat:quest-herald', 'feat:quest-tracker', 'feat:quest-marks', 'feat:quest-guidance']),
+    sec('dungeons', 'Dungeon help', ['feat:dungeon-sense', 'feat:dungeon-echoes', 'feat:dungeon-way-out']),
+    sec('maps', 'Maps', [
+      'port:mapScale',
+      'feat:enhanced-map',
+      'feat:dungeon-map-3d',
+      'feat:tamriel-map',
+      'GUI/TravelMapLocationsOutline',
+      'GUI/EnableGeographicBackgrounds',
+    ]),
+    sec('townmap', 'Town map', [
+      'Map/ExteriorMapDefaultZoomLevel',
+      'Map/ExteriorMapResetZoomLevelOnNewLocation',
+      'Map/AutomapTempleColor',
+      'Map/AutomapShopColor',
+      'Map/AutomapTavernColor',
+      'Map/AutomapHouseColor',
+    ]),
+    sec('dungeonmap', 'Dungeon map', [
+      'Map/AutomapNumberOfDungeons',
+      'Map/AutomapDisableMicroMap',
+      'Map/AutomapRememberSliceLevel',
+      'Map/AutomapAlwaysMaxOutSliceLevel',
+      'Map/DungeonMicMapQoL',
+      'Map/DunMicMapInnerColor',
+      'Map/DunMicMapBorderColor',
+    ]),
+    sec('windows', 'Inventory, talk & shops', [
+      'GUI/HelmAndShieldMaterialDisplay',
+      'GUI/EnableInventoryInfoPanel',
+      'GUI/EnableEnhancedItemLists',
+      'GUI/EnableModernConversationStyleInTalkWindow',
+      'GUI/ShopQualityPresentation',
+      'GUI/ShopQualityHUDDelay',
+    ]),
+    sec('sheet', 'Character sheet', ['port:standingAll']),
+    sec('tooltips', 'Tooltips', [
+      'GUI/EnableToolTips',
+      'GUI/ToolTipDelayInSeconds',
+      'GUI/ToolTipTextColor',
+      'GUI/ToolTipBackgroundColor',
+    ]),
+    sec('start', 'Starting up & loading', [
+      'port:skipStartVideo',
+      'port:autoUpdates',
+      'feat:loading-screen',
+      'GUI/ShowOptionsAtStart',
+      'GUI/HideLoginName',
+    ]),
   ]),
-  tab("audio", "Audio", [
-    sec("volume", "Volume", [
-      "Controls/SoundVolume", "Controls/MusicVolume", "port:monsterVolume", "port:companionVolume", "port:horseVolume", "port:animalVolume"]),
-    sec("music", "Music", [
-      "Audio/AlternateMusic", "Audio/SoundFont", "port:midiOut"]),
-    sec("sounds", "Sounds", [
-      "feat:enhanced-sounds", "feat:mod-immersive-footsteps", "feat:combat-voices", "Enhancements/CombatVoices", "card:nightSounds"]),
+  tab('audio', 'Audio', [
+    sec('volume', 'Volume', [
+      'Controls/SoundVolume',
+      'Controls/MusicVolume',
+      'port:monsterVolume',
+      'port:companionVolume',
+      'port:horseVolume',
+      'port:animalVolume',
+    ]),
+    sec('music', 'Music', ['Audio/AlternateMusic', 'Audio/SoundFont', 'port:midiOut']),
+    sec('sounds', 'Sounds', [
+      'feat:enhanced-sounds',
+      'feat:mod-immersive-footsteps',
+      'feat:combat-voices',
+      'Enhancements/CombatVoices',
+      'card:nightSounds',
+    ]),
   ]),
-  tab("controls", "Controls", [
-    sec("look", "Mouse & looking", [
-      "Controls/MouseLookSensitivity", "Controls/InvertMouseVertical", "Controls/MouseLookSmoothingFactor"]),
-    sec("attack", "Attacking", [
-      "Controls/WeaponSwingMode", "Controls/WeaponSensitivity", "Controls/WeaponAttackThreshold", "Controls/BowDrawback", "Controls/Handedness"]),
-    sec("move", "Moving", [
-      "Controls/ToggleSneak", "Controls/MovementAcceleration"]),
-    sec("controller", "Game controller", [
-      "port:padCursorAssist", "Controls/EnableController", "Controls/JoystickLookSensitivity", "Controls/JoystickCursorSensitivity",
-      "Controls/JoystickMovementThreshold", "Controls/JoystickDeadzone"]),
-    sec("touch", "Touchscreen", [
-      "port:touchLookSensitivity", "port:touchAnalogStick", "port:touchStickAnchor", "port:touchGyroLook", "port:touchGyroSensitivity",
-      "port:touchHaptics", "port:touchButton1", "port:touchButton2", "port:touchButton3", "port:touchFullscreen"]),
-    sec("bindings", "Key bindings", [
-      "bindings"]),
+  tab('controls', 'Controls', [
+    sec('look', 'Mouse & looking', [
+      'Controls/MouseLookSensitivity',
+      'Controls/InvertMouseVertical',
+      'Controls/MouseLookSmoothingFactor',
+    ]),
+    sec('attack', 'Attacking', [
+      'Controls/WeaponSwingMode',
+      'Controls/WeaponSensitivity',
+      'Controls/WeaponAttackThreshold',
+      'Controls/BowDrawback',
+      'Controls/Handedness',
+    ]),
+    sec('move', 'Moving', ['Controls/ToggleSneak', 'Controls/MovementAcceleration']),
+    sec('controller', 'Game controller', [
+      'port:padCursorAssist',
+      'Controls/EnableController',
+      'Controls/JoystickLookSensitivity',
+      'Controls/JoystickCursorSensitivity',
+      'Controls/JoystickMovementThreshold',
+      'Controls/JoystickDeadzone',
+    ]),
+    sec('touch', 'Touchscreen', [
+      'port:touchLookSensitivity',
+      'port:touchAnalogStick',
+      'port:touchStickAnchor',
+      'port:touchGyroLook',
+      'port:touchGyroSensitivity',
+      'port:touchHaptics',
+      'port:touchButton1',
+      'port:touchButton2',
+      'port:touchButton3',
+      'port:touchFullscreen',
+    ]),
+    sec('bindings', 'Key bindings', ['bindings']),
   ]),
-  tab("accessibility", "Accessibility", [
-    sec("motion", "Motion", [
-      "Controls/HeadBobbing", "Controls/CameraRecoilStrength", "port:techniqueMotion", "port:peerSpellShake", "port:reducedMotion", "Effects/MotionBlurEnable", "Effects/MotionBlurShutterAngle",
-      "Effects/MotionBlurSampleCount", "Effects/VignetteEnable", "Effects/VignetteIntensity", "Effects/VignetteSmoothness", "Effects/VignetteRoundness",
-      "Effects/VignetteRounded"]),
-    sec("reading", "Readability", [
-      "GUI/SwapHealthAndFatigueColors", "GUI/DimAlphaStrength", "GUI/SDFFontRendering"]),
-    sec("danger", "Danger shapes", [
-      "port:dangerPalette", "port:telegraphFill"]),
-    sec("largehud", "Large status bar", [
-      "GUI/LargeHUD", "GUI/LargeHUDDocked", "GUI/LargeHUDUndockedScale", "GUI/LargeHUDUndockedAlignment", "GUI/LargeHUDUndockedOffsetWeapon",
-      "GUI/LargeHUDOffsetHorse"]),
+  tab('accessibility', 'Accessibility', [
+    sec('motion', 'Motion', [
+      'Controls/HeadBobbing',
+      'Controls/CameraRecoilStrength',
+      'port:techniqueMotion',
+      'port:peerSpellShake',
+      'port:reducedMotion',
+      'Effects/MotionBlurEnable',
+      'Effects/MotionBlurShutterAngle',
+      'Effects/MotionBlurSampleCount',
+      'Effects/VignetteEnable',
+      'Effects/VignetteIntensity',
+      'Effects/VignetteSmoothness',
+      'Effects/VignetteRoundness',
+      'Effects/VignetteRounded',
+    ]),
+    sec('reading', 'Readability', ['GUI/SwapHealthAndFatigueColors', 'GUI/DimAlphaStrength', 'GUI/SDFFontRendering']),
+    sec('danger', 'Danger shapes', ['port:dangerPalette', 'port:telegraphFill']),
+    sec('largehud', 'Large status bar', [
+      'GUI/LargeHUD',
+      'GUI/LargeHUDDocked',
+      'GUI/LargeHUDUndockedScale',
+      'GUI/LargeHUDUndockedAlignment',
+      'GUI/LargeHUDUndockedOffsetWeapon',
+      'GUI/LargeHUDOffsetHorse',
+    ]),
   ]),
-  tab("mods", "Mods & files", [
-    sec("files", "Your files", [
-      "card:morrowind", "card:packs"]),
-    sec("dfu", "Daggerfall Unity's mod system", [
-      "Enhancements/LypyL_ModSystem", "Enhancements/AssetInjection", "Enhancements/CompressModdedTextures", "Experimental/CustomBooksImport",
-      "Daggerfall/MyDaggerfallPath", "Daggerfall/MyDaggerfallUnitySavePath", "Daggerfall/MyDaggerfallUnityScreenshotsPath"]),
-    sec("index", "Every mod", [
-      "mods-index"]),
+  tab('mods', 'Mods & files', [
+    sec('files', 'Your files', ['card:morrowind', 'card:packs']),
+    sec('dfu', "Daggerfall Unity's mod system", [
+      'Enhancements/LypyL_ModSystem',
+      'Enhancements/AssetInjection',
+      'Enhancements/CompressModdedTextures',
+      'Experimental/CustomBooksImport',
+      'Daggerfall/MyDaggerfallPath',
+      'Daggerfall/MyDaggerfallUnitySavePath',
+      'Daggerfall/MyDaggerfallUnityScreenshotsPath',
+    ]),
+    sec('index', 'Every mod', ['mods-index']),
   ]),
 ]);
 
-function tab(id, title, sections) { return Object.freeze({ id, title, sections: Object.freeze(sections) }); }
-function sec(id, title, items) { return Object.freeze({ id, title, items: Object.freeze(items) }); }
+function tab(id, title, sections) {
+  return Object.freeze({ id, title, sections: Object.freeze(sections) });
+}
+function sec(id, title, items) {
+  return Object.freeze({ id, title, items: Object.freeze(items) });
+}
 
 export const CATEGORY_IDS = Object.freeze(CATEGORIES.map((c) => c.id));
 
 /** An item that is one of DFU's settings (a "Section/Key") rather than one of the screen's own pieces. */
-export const isSettingItem = (item) => !/^[a-z-]+:/.test(item) && item.includes('/') || false;
+export const isSettingItem = (item) => (!/^[a-z-]+:/.test(item) && item.includes('/')) || false;
 
-const _of = new Map();      // DFU key -> { cat, order }
-const _where = new Map();   // item -> { tab, section }
+const _of = new Map(); // DFU key -> { cat, order }
+const _where = new Map(); // item -> { tab, section }
 for (const t of CATEGORIES) {
   let n = 0;
   for (const s of t.sections) {
@@ -226,7 +480,8 @@ export const categoryOf = (key) => _of.get(key)?.cat ?? null;
 /** A key's position within its tab, for stable ordering. */
 export const orderOf = (key) => _of.get(key)?.order ?? -1;
 /** The DFU keys of one tab, in screen order. */
-export const keysOf = (catId) => (CATEGORIES.find((c) => c.id === catId)?.sections ?? []).flatMap((s) => s.items.filter(isSettingItem));
+export const keysOf = (catId) =>
+  (CATEGORIES.find((c) => c.id === catId)?.sections ?? []).flatMap((s) => s.items.filter(isSettingItem));
 /** Where an item stands - `{ tab, section }` - or null. */
 export const whereIs = (item) => _where.get(item) ?? null;
 /** ORG2: the words for where an item lives - "Settings › World › Travel" - for every message that sends a player to

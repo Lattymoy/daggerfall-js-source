@@ -9,12 +9,12 @@
 // alone, exactly as inventoryDoor.js's is for the pack.
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from './native/nativeTrade.js';
-import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: the trade window's inherited refusal
-import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { racialSuppressInventory } from '../systems/lycanthropy.js'; // DISC10-E L3: the trade window's inherited refusal
+import { messageBox } from '../systems/notify.js'; // DISC10-E L3: DaggerfallUI.MessageBox
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export { preloadTradeArt };
 
@@ -39,8 +39,11 @@ export function createTradeWindow(hooks = {}) {
   // stores). The line is said and nothing is built; the caller mounts
   // nothing (ui/inventoryDoor.js has the full note).
   const sup = racialSuppressInventory(hooks.entity);
-  if (sup) { messageBox(sup.text); return null; }
-  noteFirstUse('shops');   // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)
+  if (sup) {
+    messageBox(sup.text);
+    return null;
+  }
+  noteFirstUse('shops'); // TUT1: a counter that opens (AUDIT TUT1: not the beast's refusal)
   if (isEnhanced() && typeof document !== 'undefined') {
     return enhancedTradeOverlay(hooks);
   }
@@ -73,7 +76,7 @@ function enhancedTradeOverlay(hooks) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
   };
   unregister = registerOverlay(close);
 
@@ -89,15 +92,31 @@ function enhancedTradeOverlay(hooks) {
   hooks.onExit = close;
   const overlay = {
     isChoiceWindow: true,
-    hooks,   // NOTE (found wiring X6): onClose is never called; see the doc comment above
-    get done() { return fired; },
-    input() { /* the view's own capture keydown owns the keyboard */ },
-    click() { /* the view is a fixed opaque div; pointers never get here */ },
-    wheel() { /* the view scrolls itself */ },
-    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this screen moves on a clock */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
+    hooks, // NOTE (found wiring X6): onClose is never called; see the doc comment above
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the view's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the view is a fixed opaque div; pointers never get here */
+    },
+    wheel() {
+      /* the view scrolls itself */
+    },
+    hover() {
+      /* the view has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this screen moves on a clock */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
   };
   // BOX-ON-TOP: the view hears every key on the window before any host does; while a box stands over the counter (a
   // tutorial page, the magicka refusal) the keys are the box's - Enter would run the counter's action again, Escape
@@ -109,7 +128,13 @@ function enhancedTradeOverlay(hooks) {
     mount: ({ mountEnhancedTrade }) => {
       view = mountEnhancedTrade(host, hooks);
     },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'trade',
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      host.remove();
+      fired = true;
+    },
+    label: 'trade',
   });
 
   return overlay;

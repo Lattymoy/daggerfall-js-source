@@ -441,13 +441,13 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(wm, /setRrHostSeams\(\{ spawnFoe: \(mobileType, opts\) => standInteriorLooseFoe\(mobileType, opts\) \}\);/);
   assert.match(rd('src/combat/formulas.js'), /chanceToHitMod \+= _overrides\.get\('calculateWeaponToHit'\)\?\.\(weapon\) \?\? \(WEAPON_MATERIAL_MODIFIER\[weapon\.material\] \?\? 0\) \* 10;/);
   assert.match(rd('src/combat/formulas.js'), /if \(_overrides\.get\('applyConditionDamageThroughPhysicalHit'\)\?\.\(item, owner, damage, \{ say, rolls \}\) === true\) return;/);   // BALANCE1: the override is handed the rolls, for the wear scale's rounding
-  assert.match(rd('src/player/climbing.js'), /const chance = climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\? climbingChance\(/);
+  assert.match(rd('src/player/climbing.js'), /const chance =\n\s*climbingChanceOverride\(base, \{ \.\.\.i, say: this\.deps\.say \?\? null \}\) \?\?\n\s*climbingChance\(/);
   assert.match(rd('src/combat/weapon/weaponRig.js'), /const poseProbe = \(\) => \(\{ \.\.\.weaponPoseOf\(playerWeapon\), weaponType: weaponTypeForItem\(playerWeapon\.weapon\) \}\);/, 'the pair through its one law (HARD2c)');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /setWeaponPoseProbe\(poseProbe\);/, 'AUDIT 68 S09-rig-globals-last-built: re-claimed by the stepping rig');
   assert.match(rd('src/player/mountRig.js'), /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\)/);
   assert.match(rd('src/systems/worldTick.js'), /for \(const fn of _roundHooks\.values\(\)\) fn\(entity, \{ nowMinutes: r \+ 1, sinks, say \}\);/);
   assert.match(rd('src/systems/guild/guilds.js'), /return guild\?\.neverExpels && !underworldRuleOf\(guild\) && newRank < 0 \? 0 : newRank;/);
-  assert.match(rd('src/systems/guild/guildServiceFlow.js'), /const rows = moved\.lines \? moved\.lines\.map\(\(t\) => \(\{ text: t\.replaceAll\('%pcn', entity\?\.name \?\? ''\), center: true \}\)\) : undefined;/);
+  assert.match(rd('src/systems/guild/guildServiceFlow.js'), /const rows = moved\.lines\n\s*\? moved\.lines\.map\(\(t\) => \(\{ text: t\.replaceAll\('%pcn', entity\?\.name \?\? ''\), center: true \}\)\)\n\s*: undefined;/);
   const inst = rd('src/systems/roleplayRealism/rrInstall.js');
   for (const s of ["registerFormulaOverride('adjustWeaponHitChanceMod'", "registerMagicRoundHook('roleplay-realism-encumbrance'", "registerEntityFold('roleplay-realism-encumbrance'", 'setShipAvailable((q) => rrShipAvailable(q))', 'setUnderworldRule(', 'setGuildExpelledHook(', 'registerClimbingChanceOverride(', 'registerMeleeWeaponAnimTime(', "registerFormulaOverride('calculateWeaponToHit'", "registerFormulaOverride('applyConditionDamageThroughPhysicalHit'", "if (rrModule('enemyAppearance')) applyEnemyAppearance(ENEMY_BASICS);", "overridePotionRecipes(rrModule('purificationPotion') ? RR_POTION_RECIPES : []);", "registerFormulaOverride('damageModifier'", 'registerMaxBankLoan(']) assert.ok(inst.includes(s), s);
 });

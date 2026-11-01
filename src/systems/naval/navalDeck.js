@@ -48,10 +48,10 @@
 // leash lets a body stand on (DK1, DK3), never her walk; and the leash keeps a body to its piece's floor nearest the one
 // it last stood on (`keep`, DK2: her open piece holds two levels in a cell since D-wall).
 
-import { STEP_OFFSET } from '../../player/motor.js';   // AUDIT NAV2 F34: the motors' own step
+import { STEP_OFFSET } from '../../player/motor.js'; // AUDIT NAV2 F34: the motors' own step
 
 export const DECK_CELL = 0.5;
-export const DECK_FLAT = Math.cos(30 * Math.PI / 180);
+export const DECK_FLAT = Math.cos((30 * Math.PI) / 180);
 export const DECK_HEADROOM = 1.7;
 export const DECK_STEP = 0.4;
 export const DECK_INSET = 1;
@@ -77,7 +77,14 @@ const LEVEL_BIN = 0.25;
 /** A near-vertical face (|n.y| under this share of its length) has no height at a point: a wall, a mast's side. */
 const WALL_NY = 0.05;
 /** AUDIT GN-D5: a cell's four side neighbours `[di, dk]`, in the order the walk's own 3 x 3 sweep meets them. */
-const SIDE_STEPS = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]].map((s) => Object.freeze(s)));
+const SIDE_STEPS = Object.freeze(
+  [
+    [0, -1],
+    [-1, 0],
+    [1, 0],
+    [0, 1],
+  ].map((s) => Object.freeze(s)),
+);
 
 /**
  * A world point into a deck's frame: through the inverse of her mesh node's world matrix `m` (column-major, affine),
@@ -85,11 +92,23 @@ const SIDE_STEPS = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]].map((s) => O
  * @param {ArrayLike<number>} m @param {ArrayLike<number>} p @param {number[]} [out]
  */
 export function intoDeck(m, p, out = [0, 0, 0]) {
-  const a00 = m[0], a10 = m[1], a20 = m[2], a01 = m[4], a11 = m[5], a21 = m[6], a02 = m[8], a12 = m[9], a22 = m[10];
-  const c00 = a11 * a22 - a12 * a21, c01 = a12 * a20 - a10 * a22, c02 = a10 * a21 - a11 * a20;
+  const a00 = m[0],
+    a10 = m[1],
+    a20 = m[2],
+    a01 = m[4],
+    a11 = m[5],
+    a21 = m[6],
+    a02 = m[8],
+    a12 = m[9],
+    a22 = m[10];
+  const c00 = a11 * a22 - a12 * a21,
+    c01 = a12 * a20 - a10 * a22,
+    c02 = a10 * a21 - a11 * a20;
   const det = a00 * c00 + a01 * c01 + a02 * c02;
   const k = det ? 1 / det : 0;
-  const x = p[0] - m[12], y = p[1] - m[13], z = p[2] - m[14];
+  const x = p[0] - m[12],
+    y = p[1] - m[13],
+    z = p[2] - m[14];
   out[0] = (c00 * x + (a02 * a21 - a01 * a22) * y + (a01 * a12 - a02 * a11) * z) * k;
   out[1] = (c01 * x + (a00 * a22 - a02 * a20) * y + (a02 * a10 - a00 * a12) * z) * k;
   out[2] = (c02 * x + (a01 * a20 - a00 * a21) * y + (a00 * a11 - a01 * a10) * z) * k;
@@ -101,7 +120,9 @@ export function intoDeck(m, p, out = [0, 0, 0]) {
  * @param {ArrayLike<number>} m @param {ArrayLike<number>} q @param {number[]} [out]
  */
 export function outOfDeck(m, q, out = [0, 0, 0]) {
-  const x = q[0], y = q[1], z = q[2];
+  const x = q[0],
+    y = q[1],
+    z = q[2];
   out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
   out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
@@ -119,7 +140,8 @@ export function outOfDeck(m, q, out = [0, 0, 0]) {
 export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET } = {}) {
   const nx = Math.max(1, Math.ceil((extent.maxX - extent.minX) / cell));
   const nz = Math.max(1, Math.ceil((extent.maxZ - extent.minZ) / cell));
-  const minX = extent.minX, minZ = extent.minZ;
+  const minX = extent.minX,
+    minZ = extent.minZ;
   /** @type {number[][]} every surface's height under each cell's centre */
   const surf = Array.from({ length: nx * nz }, () => []);
   /** @type {number[][]} of those, the flat ones' */
@@ -137,12 +159,15 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   const lids = Array.from({ length: nx * nz }, () => []);
   /** @type {number[][]} GALLEON (2026-10-01): the flat faces' heights at the midpoint of the side each cell shares with
    *  its +x neighbour (`midX`) and its +z neighbour (`midZ`) - the tread between two cells' centres (`linked`) */
-  const midX = Array.from({ length: nx * nz }, () => []), midZ = Array.from({ length: nx * nz }, () => []);
+  const midX = Array.from({ length: nx * nz }, () => []),
+    midZ = Array.from({ length: nx * nz }, () => []);
   /** A flat face's height at every grid point `(ox, oz)` cells off each cell's corner within it (`ni` x `nk` of them),
    *  into `into` - the centres' own barycentric reading. */
   const flatAt = (into, ox, oz, ni, nk, ax, ay, az, bx, by, bz, cx, cy, cz, det) => {
-    const i0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - minX) / cell - ox)), i1 = Math.min(ni - 1, Math.ceil((Math.max(ax, bx, cx) - minX) / cell - ox));
-    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell - oz)), k1 = Math.min(nk - 1, Math.ceil((Math.max(az, bz, cz) - minZ) / cell - oz));
+    const i0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - minX) / cell - ox)),
+      i1 = Math.min(ni - 1, Math.ceil((Math.max(ax, bx, cx) - minX) / cell - ox));
+    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell - oz)),
+      k1 = Math.min(nk - 1, Math.ceil((Math.max(az, bz, cz) - minZ) / cell - oz));
     for (let k = k0; k <= k1; k++) {
       const z = minZ + (k + oz) * cell;
       for (let i = i0; i <= i1; i++) {
@@ -177,12 +202,21 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   const cutTo = (src, n, dst, axis, v, sign) => {
     let m = 0;
     for (let q = 0; q < n; q++) {
-      const p = q * 3, r = q + 1 < n ? p + 3 : 0;
-      const dp = sign * (src[p + axis] - v), dr = sign * (src[r + axis] - v);
-      if (dp >= 0) { dst[m] = src[p]; dst[m + 1] = src[p + 1]; dst[m + 2] = src[p + 2]; m += 3; }
+      const p = q * 3,
+        r = q + 1 < n ? p + 3 : 0;
+      const dp = sign * (src[p + axis] - v),
+        dr = sign * (src[r + axis] - v);
+      if (dp >= 0) {
+        dst[m] = src[p];
+        dst[m + 1] = src[p + 1];
+        dst[m + 2] = src[p + 2];
+        m += 3;
+      }
       if ((dp > 0 && dr < 0) || (dp < 0 && dr > 0)) {
         const t = dp / (dp - dr);
-        dst[m] = src[p] + (src[r] - src[p]) * t; dst[m + 1] = src[p + 1] + (src[r + 1] - src[p + 1]) * t; dst[m + 2] = src[p + 2] + (src[r + 2] - src[p + 2]) * t;
+        dst[m] = src[p] + (src[r] - src[p]) * t;
+        dst[m + 1] = src[p + 1] + (src[r + 1] - src[p + 1]) * t;
+        dst[m + 2] = src[p + 2] + (src[r + 2] - src[p + 2]) * t;
         m += 3;
       }
     }
@@ -192,35 +226,77 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
    *  stands over, its own [bottom, top] there. */
   const wallFace = (into, ax, ay, az, bx, by, bz, cx, cy, cz) => {
     const [T, R, U, C, D] = CUT;
-    T[0] = ax; T[1] = ay; T[2] = az; T[3] = bx; T[4] = by; T[5] = bz; T[6] = cx; T[7] = cy; T[8] = cz;
-    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)), k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));
+    T[0] = ax;
+    T[1] = ay;
+    T[2] = az;
+    T[3] = bx;
+    T[4] = by;
+    T[5] = bz;
+    T[6] = cx;
+    T[7] = cy;
+    T[8] = cz;
+    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)),
+      k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));
     for (let k = k0; k <= k1; k++) {
-      const z0 = minZ + k * cell, z1 = z0 + cell;
+      const z0 = minZ + k * cell,
+        z1 = z0 + cell;
       const n = cutTo(R, cutTo(T, 3, R, 2, z0, 1), U, 2, z1, -1);
       if (n < 1) continue;
-      let lo = Infinity, hi = -Infinity;
-      for (let q = 0; q < n * 3; q += 3) { if (U[q] < lo) lo = U[q]; if (U[q] > hi) hi = U[q]; }
-      const i0 = Math.max(0, Math.floor((lo - minX) / cell)), i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));
+      let lo = Infinity,
+        hi = -Infinity;
+      for (let q = 0; q < n * 3; q += 3) {
+        if (U[q] < lo) lo = U[q];
+        if (U[q] > hi) hi = U[q];
+      }
+      const i0 = Math.max(0, Math.floor((lo - minX) / cell)),
+        i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));
       for (let i = i0; i <= i1; i++) {
-        const x0 = minX + i * cell, x1 = x0 + cell;
+        const x0 = minX + i * cell,
+          x1 = x0 + cell;
         const m = cutTo(C, cutTo(U, n, C, 0, x0, 1), D, 0, x1, -1);
         if (m < 1) continue;
-        let bottom = Infinity, top = -Infinity;
-        for (let q = 1; q < m * 3; q += 3) { if (D[q] < bottom) bottom = D[q]; if (D[q] > top) top = D[q]; }
+        let bottom = Infinity,
+          top = -Infinity;
+        for (let q = 1; q < m * 3; q += 3) {
+          if (D[q] < bottom) bottom = D[q];
+          if (D[q] > top) top = D[q];
+        }
         into[k * nx + i].push(bottom, top);
       }
     }
   };
   for (const m of meshes) {
-    const p = m.positions, ix = m.indices, moves = !!m.moves;
+    const p = m.positions,
+      ix = m.indices,
+      moves = !!m.moves;
     for (let t = 0; t + 2 < ix.length; t += 3) {
-      const a = ix[t] * 3, b = ix[t + 1] * 3, c = ix[t + 2] * 3;
-      const ax = p[a], ay = p[a + 1], az = p[a + 2], bx = p[b], by = p[b + 1], bz = p[b + 2], cx = p[c], cy = p[c + 1], cz = p[c + 2];
-      const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az;
-      const nX = uy * vz - uz * vy, nY = uz * vx - ux * vz, nZ = ux * vy - uy * vx;
+      const a = ix[t] * 3,
+        b = ix[t + 1] * 3,
+        c = ix[t + 2] * 3;
+      const ax = p[a],
+        ay = p[a + 1],
+        az = p[a + 2],
+        bx = p[b],
+        by = p[b + 1],
+        bz = p[b + 2],
+        cx = p[c],
+        cy = p[c + 1],
+        cz = p[c + 2];
+      const ux = bx - ax,
+        uy = by - ay,
+        uz = bz - az,
+        vx = cx - ax,
+        vy = cy - ay,
+        vz = cz - az;
+      const nX = uy * vz - uz * vy,
+        nY = uz * vx - ux * vz,
+        nZ = ux * vy - uy * vx;
       const len = Math.hypot(nX, nY, nZ);
       if (!(len > 1e-12)) continue;
-      if (Math.abs(nY) < WALL_NY * len) { wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz); continue; }
+      if (Math.abs(nY) < WALL_NY * len) {
+        wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz);
+        continue;
+      }
       // AUDIT GN-D7: A PART THAT OPENS IS NO FLOOR. A hatch's cover, a door - a part the mod's Door Controller swings
       // (`moves`: the pool's, a collider with a DoorTrigger under it) - stands in her deck as the walls it raises shut
       // (a door's leaf across its doorway: her great cabin stays a room of its own) and never as a floor: shut, the
@@ -230,8 +306,10 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
       // its faces looking up as it stands shut are its `lids` - what standing aboard reads, and the leash; never her walk
       const isFlat = Math.abs(nY) >= DECK_FLAT * len;
       if (moves && !(isFlat && nY > 0)) continue;
-      const i0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - minX) / cell - 0.5)), i1 = Math.min(nx - 1, Math.ceil((Math.max(ax, bx, cx) - minX) / cell - 0.5));
-      const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell - 0.5)), k1 = Math.min(nz - 1, Math.ceil((Math.max(az, bz, cz) - minZ) / cell - 0.5));
+      const i0 = Math.max(0, Math.floor((Math.min(ax, bx, cx) - minX) / cell - 0.5)),
+        i1 = Math.min(nx - 1, Math.ceil((Math.max(ax, bx, cx) - minX) / cell - 0.5));
+      const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell - 0.5)),
+        k1 = Math.min(nz - 1, Math.ceil((Math.max(az, bz, cz) - minZ) / cell - 0.5));
       const det = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
       if (Math.abs(det) < 1e-12) continue;
       for (let k = k0; k <= k1; k++) {
@@ -243,9 +321,15 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
           const l3 = 1 - l1 - l2;
           if (l1 < -1e-9 || l2 < -1e-9 || l3 < -1e-9) continue;
           const y = l1 * ay + l2 * by + l3 * cy;
-          if (moves) { lids[k * nx + i].push(y); continue; }
+          if (moves) {
+            lids[k * nx + i].push(y);
+            continue;
+          }
           surf[k * nx + i].push(y);
-          if (isFlat) { flat[k * nx + i].push(y); if (nY > 0) upFlat[k * nx + i].push(y); }
+          if (isFlat) {
+            flat[k * nx + i].push(y);
+            if (nY > 0) upFlat[k * nx + i].push(y);
+          }
         }
       }
       // AUDIT GN-D8: a TREAD is a face looking up - the flat class reads |n.y|, so a tread's underside (or a beam's)
@@ -269,7 +353,16 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
     const d = Math.abs(h1 - h2);
     if (d <= DECK_JOIN) return true;
     if (!(d <= FLIGHT_JOIN)) return false;
-    const mid = n - j === 1 && n % nx ? midX[j] : j - n === 1 && j % nx ? midX[n] : n - j === nx ? midZ[j] : j - n === nx ? midZ[n] : null;
+    const mid =
+      n - j === 1 && n % nx
+        ? midX[j]
+        : j - n === 1 && j % nx
+          ? midX[n]
+          : n - j === nx
+            ? midZ[j]
+            : j - n === nx
+              ? midZ[n]
+              : null;
     if (mid) for (const m of mid) if (Math.abs(m - h1) <= DECK_JOIN && Math.abs(m - h2) <= DECK_JOIN) return true;
     return false;
   };
@@ -278,7 +371,10 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   // no wall to it). AUDIT GN2-DK3: a door's leaf a wall to it as any (her great cabin a room of its own) - and a floor
   // a leaf alone walls, looking up, a doorway's (`doors`)
   /** Whether a wall of `w` (a cell's `walls` or `leaves`) rises more than a tread off floor `y` within a head's height. */
-  const rises = (w, y) => { for (let q = 0; q < w.length; q += 2) if (w[q + 1] > y + DECK_STEP && w[q] < y + DECK_HEADROOM) return true; return false; };
+  const rises = (w, y) => {
+    for (let q = 0; q < w.length; q += 2) if (w[q + 1] > y + DECK_STEP && w[q] < y + DECK_HEADROOM) return true;
+    return false;
+  };
   /** @type {number[][]} */
   const doors = Array.from({ length: nx * nz }, () => []);
   /** @type {number[][]} */
@@ -286,28 +382,50 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
     const out = [];
     for (const y of flat[j]) {
       let clear = true;
-      for (const o of all) if (o > y + 1e-3 && o < y + DECK_HEADROOM) { clear = false; break; }
+      for (const o of all)
+        if (o > y + 1e-3 && o < y + DECK_HEADROOM) {
+          clear = false;
+          break;
+        }
       if (!clear || rises(walls[j], y)) continue;
-      if (rises(leaves[j], y)) { if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3)) doors[j].push(y); continue; }
+      if (rises(leaves[j], y)) {
+        if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3))
+          doors[j].push(y);
+        continue;
+      }
       if (!out.some((q) => Math.abs(q - y) < 1e-3)) out.push(y);
     }
     return out.sort((q, r) => r - q);
   });
   // the main deck: the level most floors stand at
   const bins = new Map();
-  for (const c of cand) for (const y of c) { const b = Math.round(y / LEVEL_BIN); bins.set(b, (bins.get(b) ?? 0) + 1); }
-  let mainBin = null, most = 0;
-  for (const [b, n] of bins) if (n > most || (n === most && mainBin != null && b > mainBin)) { most = n; mainBin = b; }
+  for (const c of cand)
+    for (const y of c) {
+      const b = Math.round(y / LEVEL_BIN);
+      bins.set(b, (bins.get(b) ?? 0) + 1);
+    }
+  let mainBin = null,
+    most = 0;
+  for (const [b, n] of bins)
+    if (n > most || (n === most && mainBin != null && b > mainBin)) {
+      most = n;
+      mainBin = b;
+    }
   const N = nx * nz;
   const y = new Float32Array(N).fill(NaN);
   if (mainBin == null) return deckOf({ cell, minX, minZ, nx, nz, y });
   const main = mainBin * LEVEL_BIN;
   // AUDIT NAV2 F34: every floor at her main deck or over it a node, as many a cell as stand in it (a floor keeps a
   // head's room over it, so no two in one cell lie within a step of each other) - `lv` their levels, a cell's from `at`
-  const at = new Int32Array(N + 1), lv = [];
-  for (let j = 0; j < N; j++) { at[j] = lv.length; for (let q = cand[j].length - 1; q >= 0; q--) if (cand[j][q] >= main - LEVEL_BIN) lv.push(cand[j][q]); }
+  const at = new Int32Array(N + 1),
+    lv = [];
+  for (let j = 0; j < N; j++) {
+    at[j] = lv.length;
+    for (let q = cand[j].length - 1; q >= 0; q--) if (cand[j][q] >= main - LEVEL_BIN) lv.push(cand[j][q]);
+  }
   at[N] = lv.length;
-  const M = lv.length, nodeCell = new Int32Array(M);
+  const M = lv.length,
+    nodeCell = new Int32Array(M);
   for (let j = 0; j < N; j++) for (let a = at[j]; a < at[j + 1]; a++) nodeCell[a] = j;
   /** The live node of cell `c` a step of the motors' from `h` (DECK_JOIN), -1 for none - GALLEON: or, asked from the
    *  cell `from` beside it (a side's neighbour), a flight's tread from it (`linked`). */
@@ -330,7 +448,8 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
       if (s <= floor + DECK_STEP || s > floor + DECK_BENCH || !flat[c].includes(s)) return false;
       seat = true;
     }
-    for (let pass = 0; pass < 2; pass++) {   // her walls, and a leaf's (AUDIT GN2-DK3: kept apart, a wall as any)
+    for (let pass = 0; pass < 2; pass++) {
+      // her walls, and a leaf's (AUDIT GN2-DK3: kept apart, a wall as any)
       const w = pass ? leaves[c] : walls[c];
       for (let q = 0; q < w.length; q += 2) {
         if (!(w[q + 1] > floor + DECK_STEP && w[q] < floor + DECK_HEADROOM)) continue;
@@ -348,8 +467,12 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
       const edge = [];
       for (let a = 0; a < M; a++) {
         if (!live[a]) continue;
-        const j = nodeCell[a], i = j % nx, k = (j - i) / nx, h = lv[a];
-        const off = (ii, kk) => ii < 0 || kk < 0 || ii >= nx || kk >= nz || (joined(kk * nx + ii, h, live, j) < 0 && !bench(kk * nx + ii, h));
+        const j = nodeCell[a],
+          i = j % nx,
+          k = (j - i) / nx,
+          h = lv[a];
+        const off = (ii, kk) =>
+          ii < 0 || kk < 0 || ii >= nx || kk >= nz || (joined(kk * nx + ii, h, live, j) < 0 && !bench(kk * nx + ii, h));
         if (off(i - 1, k) || off(i + 1, k) || off(i, k - 1) || off(i, k + 1)) edge.push(a);
       }
       for (const a of edge) live[a] = 0;
@@ -360,23 +483,31 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   const pieced = (live) => {
     // her pieces: the floors a walk's own steps join (`path`'s: within DECK_JOIN, no corner cut past an edge) - a cabin
     // under her poop or half deck, a passage walled off, is no open deck to stand a muster on or walk
-    const piece = new Int32Array(M).fill(-1), sizes = [];
+    const piece = new Int32Array(M).fill(-1),
+      sizes = [];
     for (let a0 = 0; a0 < M; a0++) {
       if (!live[a0] || piece[a0] >= 0) continue;
-      const id = sizes.length, queue = [a0];
+      const id = sizes.length,
+        queue = [a0];
       piece[a0] = id;
       for (let q = 0; q < queue.length; q++) {
-        const a = queue[q], j = nodeCell[a], i = j % nx, k = (j - i) / nx, h = lv[a];
-        for (let dk = -1; dk <= 1; dk++) for (let di = -1; di <= 1; di++) {
-          if (!di && !dk) continue;
-          const ii = i + di, kk = k + dk;
-          if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
-          const b = joined(kk * nx + ii, h, live, di && dk ? -1 : j);
-          if (b < 0 || piece[b] >= 0) continue;
-          if (di && dk && (joined(k * nx + ii, h, live, j) < 0 || joined(kk * nx + i, h, live, j) < 0)) continue;
-          piece[b] = id;
-          queue.push(b);
-        }
+        const a = queue[q],
+          j = nodeCell[a],
+          i = j % nx,
+          k = (j - i) / nx,
+          h = lv[a];
+        for (let dk = -1; dk <= 1; dk++)
+          for (let di = -1; di <= 1; di++) {
+            if (!di && !dk) continue;
+            const ii = i + di,
+              kk = k + dk;
+            if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+            const b = joined(kk * nx + ii, h, live, di && dk ? -1 : j);
+            if (b < 0 || piece[b] >= 0) continue;
+            if (di && dk && (joined(k * nx + ii, h, live, j) < 0 || joined(kk * nx + i, h, live, j) < 0)) continue;
+            piece[b] = id;
+            queue.push(b);
+          }
       }
       sizes.push(queue.length);
     }
@@ -397,12 +528,16 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
     const high = main + FLIGHT_OVER;
     const sizes = new Int32Array(M);
     for (let a = 0; a < M; a++) if (s0.live[a]) sizes[s0.piece[a]]++;
-    const raised = new Uint8Array(M), from = new Uint8Array(M);
+    const raised = new Uint8Array(M),
+      from = new Uint8Array(M);
     let any = false;
     for (let a = 0; a < M; a++) {
       if (!s0.live[a]) continue;
       if (s0.piece[a] === s0.open) from[a] = 1;
-      else if (lv[a] > high && sizes[s0.piece[a]] >= FLIGHT_CELLS) { raised[a] = 1; any = true; }
+      else if (lv[a] > high && sizes[s0.piece[a]] >= FLIGHT_CELLS) {
+        raised[a] = 1;
+        any = true;
+      }
     }
     if (!any) return s0;
     let s = s0;
@@ -410,30 +545,51 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
       /** Whether node `b` the inset took stands beside one kept (not `by`, the way's own last) that ends no way up - a
        *  kept flight's, a stair's. */
       const beside = (b, by) => {
-        const j = nodeCell[b], i = j % nx, k = (j - i) / nx;
-        for (const [ii, kk] of [[i - 1, k], [i + 1, k], [i, k - 1], [i, k + 1]]) {
+        const j = nodeCell[b],
+          i = j % nx,
+          k = (j - i) / nx;
+        for (const [ii, kk] of [
+          [i - 1, k],
+          [i + 1, k],
+          [i, k - 1],
+          [i, k + 1],
+        ]) {
           if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
           const c = joined(kk * nx + ii, lv[b], s.live, j);
           if (c >= 0 && c !== by && !from[c] && !raised[c]) return true;
         }
         return false;
       };
-      const back = new Int32Array(M).fill(-2), queue = [];
-      for (let a = 0; a < M; a++) if (from[a]) { back[a] = -1; queue.push(a); }
+      const back = new Int32Array(M).fill(-2),
+        queue = [];
+      for (let a = 0; a < M; a++)
+        if (from[a]) {
+          back[a] = -1;
+          queue.push(a);
+        }
       let reached = -1;
       for (let q = 0; q < queue.length && reached < 0; q++) {
-        const a = queue[q], j = nodeCell[a], i = j % nx, k = (j - i) / nx, h = lv[a];
+        const a = queue[q],
+          j = nodeCell[a],
+          i = j % nx,
+          k = (j - i) / nx,
+          h = lv[a];
         // AUDIT GN-D5: SIDE STEPS ALONE. A way kept is its own nodes alone - a diagonal step in it (its corners joined
         // in the bare deck, never revived) joined nothing once the way stood: a flight turning on its landing was kept
         // as six nodes of no piece's, its raised deck still apart. Square steps only, in the walk's own order - every
         // real hull's way was square already (the bakes unchanged)
         for (const [di, dk] of SIDE_STEPS) {
-          const ii = i + di, kk = k + dk;
+          const ii = i + di,
+            kk = k + dk;
           if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
           const b = joined(kk * nx + ii, h, all, j);
           if (b < 0 || back[b] !== -2) continue;
           if (s.live[b]) {
-            if (raised[b] && !from[a]) { back[b] = a; reached = b; break; }
+            if (raised[b] && !from[a]) {
+              back[b] = a;
+              reached = b;
+              break;
+            }
             continue;
           }
           if (beside(b, a)) continue;
@@ -458,7 +614,11 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   // F34: every other floor kept beside it with its piece - 0 her open deck's (the deck under her stair), from 1 her
   // others (her poop, her cabins, the room under her forecastle)
   const top = new Int32Array(N).fill(-1);
-  for (let a = 0; a < M; a++) if (s.live[a] && s.piece[a] === s.open) { y[nodeCell[a]] = lv[a]; top[nodeCell[a]] = a; }
+  for (let a = 0; a < M; a++)
+    if (s.live[a] && s.piece[a] === s.open) {
+      y[nodeCell[a]] = lv[a];
+      top[nodeCell[a]] = a;
+    }
   // AUDIT GN-D-wall: HER OPEN DECK IS ONE WALK. Her open piece joins her floors at every level, her walk (`path`) the
   // grid's own alone - so a cell whose open floor lies under the piece's own higher floor all round it stood in her
   // open deck apart from every walk: once her forecastle's bulkhead walled its opening by its lintel alone (1.8 m and
@@ -468,35 +628,50 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   // piece 0: the leash's, as her deck under her stair is), never a cell of the walk - every hull's walk reached every
   // cell of hers before, and does again
   {
-    const comp = new Int32Array(N).fill(-1), sizes = [];
+    const comp = new Int32Array(N).fill(-1),
+      sizes = [];
     for (let j0 = 0; j0 < N; j0++) {
       if (Number.isNaN(y[j0]) || comp[j0] >= 0) continue;
-      const c = sizes.length, stack = [j0];
+      const c = sizes.length,
+        stack = [j0];
       let n = 0;
       comp[j0] = c;
       while (stack.length) {
-        const j = /** @type {number} */ (stack.pop()), i = j % nx;
+        const j = /** @type {number} */ (stack.pop()),
+          i = j % nx;
         n++;
         for (let q = 0; q < 4; q++) {
           const b = q === 0 ? (i > 0 ? j - 1 : -1) : q === 1 ? (i < nx - 1 ? j + 1 : -1) : q === 2 ? j - nx : j + nx;
           if (b < 0 || b >= N || comp[b] >= 0 || Number.isNaN(y[b]) || !linked(j, b, y[j], y[b])) continue;
-          comp[b] = c; stack.push(b);
+          comp[b] = c;
+          stack.push(b);
         }
       }
       sizes.push(n);
     }
     let big = 0;
     for (let c = 1; c < sizes.length; c++) if (sizes[c] > sizes[big]) big = c;
-    for (let j = 0; j < N; j++) if (comp[j] >= 0 && comp[j] !== big) { y[j] = NaN; top[j] = -1; }
+    for (let j = 0; j < N; j++)
+      if (comp[j] >= 0 && comp[j] !== big) {
+        y[j] = NaN;
+        top[j] = -1;
+      }
   }
-  const moreAt = new Int32Array(N + 1), moreY = [], morePiece = [], ids = new Map();
+  const moreAt = new Int32Array(N + 1),
+    moreY = [],
+    morePiece = [],
+    ids = new Map();
   for (let j = 0; j < N; j++) {
     moreAt[j] = moreY.length;
     for (let a = at[j]; a < at[j + 1]; a++) {
       if (!s.live[a] || a === top[j]) continue;
       let p = 0;
-      if (s.piece[a] !== s.open) { p = ids.get(s.piece[a]) ?? ids.size + 1; ids.set(s.piece[a], p); }
-      moreY.push(lv[a]); morePiece.push(p);
+      if (s.piece[a] !== s.open) {
+        p = ids.get(s.piece[a]) ?? ids.size + 1;
+        ids.set(s.piece[a], p);
+      }
+      moreY.push(lv[a]);
+      morePiece.push(p);
     }
   }
   moreAt[N] = moreY.length;
@@ -508,11 +683,17 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   // under the old marking over her new cut alone), the Carrack's 1.51%, the Large Galley's 3.00% - and looking up, 0.00%,
   // 0.39% and 1.48%, every point a body stands on under her main deck aboard as before. Her deck reads both (a mesh
   // wound either way - the suites' little ships are wound down - and every hull's deck is the same either way)
-  const floorAt = new Int32Array(N + 1), floorY = [];
+  const floorAt = new Int32Array(N + 1),
+    floorY = [];
   for (let j = 0; j < N; j++) {
     floorAt[j] = floorY.length;
     const up = upFlat[j];
-    for (const q of cand[j]) for (let n = 0; n < up.length; n++) if (Math.abs(up[n] - q) < 1e-3) { floorY.push(q); break; }
+    for (const q of cand[j])
+      for (let n = 0; n < up.length; n++)
+        if (Math.abs(up[n] - q) < 1e-3) {
+          floorY.push(q);
+          break;
+        }
   }
   floorAt[N] = floorY.length;
   // AUDIT GN2-DK1/DK3: HER PARTS THAT OPEN, AJAR - floors beside her deck and never of it (D7: her walk, her spots and
@@ -526,10 +707,15 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   // part's state (her Animator's, each boat's), so a lid stands as it stands shut: over an open hatchway a body is a
   // lid's for the frames it falls a step (DECK_STEP) and the leash's after. Every hull's deck the bake it was (y, more,
   // floors, flights); the bake 1-2.5 ms dearer a hull (the least of 30: the galleon's 6.4 -> 7.5, the Carrack's 7.5 -> 9)
-  const ajarAt = new Int32Array(N + 1), ajarY = [];
+  const ajarAt = new Int32Array(N + 1),
+    ajarY = [];
   {
     const sets = Array.from({ length: N }, () => []);
-    const add = (j, h) => { if (sets[j].some((q) => Math.abs(q - h) < 1e-3)) return false; sets[j].push(h); return true; };
+    const add = (j, h) => {
+      if (sets[j].some((q) => Math.abs(q - h) < 1e-3)) return false;
+      sets[j].push(h);
+      return true;
+    };
     let front = [];
     for (let j = 0; j < N; j++) {
       for (const h of lids[j]) if (add(j, h)) front.push(j, h);
@@ -538,17 +724,26 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
     for (let pass = 0; pass < inset && front.length; pass++) {
       const next = [];
       for (let q = 0; q < front.length; q += 2) {
-        const j = front[q], h = front[q + 1], i = j % nx, k = (j - i) / nx;
-        for (let dk = -1; dk <= 1; dk++) for (let di = -1; di <= 1; di++) {
-          const ii = i + di, kk = k + dk;
-          if ((!di && !dk) || ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
-          const c = kk * nx + ii;
-          for (let a = at[c]; a < at[c + 1]; a++) if (!s.live[a] && Math.abs(lv[a] - h) <= DECK_JOIN && add(c, lv[a])) next.push(c, lv[a]);
-        }
+        const j = front[q],
+          h = front[q + 1],
+          i = j % nx,
+          k = (j - i) / nx;
+        for (let dk = -1; dk <= 1; dk++)
+          for (let di = -1; di <= 1; di++) {
+            const ii = i + di,
+              kk = k + dk;
+            if ((!di && !dk) || ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+            const c = kk * nx + ii;
+            for (let a = at[c]; a < at[c + 1]; a++)
+              if (!s.live[a] && Math.abs(lv[a] - h) <= DECK_JOIN && add(c, lv[a])) next.push(c, lv[a]);
+          }
       }
       front = next;
     }
-    for (let j = 0; j < N; j++) { ajarAt[j] = ajarY.length; for (const h of sets[j]) ajarY.push(h); }
+    for (let j = 0; j < N; j++) {
+      ajarAt[j] = ajarY.length;
+      for (const h of sets[j]) ajarY.push(h);
+    }
     ajarAt[N] = ajarY.length;
   }
   // GALLEON: her open deck's flights, for the walk - each side two of its cells share that only a tread joins (past
@@ -556,10 +751,23 @@ export function buildDeck(meshes, extent, { cell = DECK_CELL, inset = DECK_INSET
   let flights = null;
   for (let j = 0; j < N; j++) {
     if (Number.isNaN(y[j])) continue;
-    if ((j + 1) % nx && Math.abs(y[j + 1] - y[j]) > DECK_JOIN && linked(j, j + 1, y[j], y[j + 1])) (flights ??= new Uint8Array(N))[j] |= 1;
-    if (j + nx < N && Math.abs(y[j + nx] - y[j]) > DECK_JOIN && linked(j, j + nx, y[j], y[j + nx])) (flights ??= new Uint8Array(N))[j] |= 2;
+    if ((j + 1) % nx && Math.abs(y[j + 1] - y[j]) > DECK_JOIN && linked(j, j + 1, y[j], y[j + 1]))
+      (flights ??= new Uint8Array(N))[j] |= 1;
+    if (j + nx < N && Math.abs(y[j + nx] - y[j]) > DECK_JOIN && linked(j, j + nx, y[j], y[j + nx]))
+      (flights ??= new Uint8Array(N))[j] |= 2;
   }
-  return deckOf({ cell, minX, minZ, nx, nz, y, more: { at: moreAt, y: Float32Array.from(moreY), piece: Int32Array.from(morePiece) }, floors: { at: floorAt, y: Float32Array.from(floorY) }, flights, ajar: { at: ajarAt, y: Float32Array.from(ajarY) } });
+  return deckOf({
+    cell,
+    minX,
+    minZ,
+    nx,
+    nz,
+    y,
+    more: { at: moreAt, y: Float32Array.from(moreY), piece: Int32Array.from(morePiece) },
+    floors: { at: floorAt, y: Float32Array.from(floorY) },
+    flights,
+    ajar: { at: ajarAt, y: Float32Array.from(ajarY) },
+  });
 }
 
 const _levels = new WeakMap();
@@ -592,21 +800,36 @@ const NO_SPOTS = Object.freeze([]);
  */
 export function deckOf(g) {
   const { cell, minX, minZ, nx, nz, y } = g;
-  const more = g.more ?? null, floors = g.floors ?? null, flights = g.flights ?? null, ajar = g.ajar ?? null;
+  const more = g.more ?? null,
+    floors = g.floors ?? null,
+    flights = g.flights ?? null,
+    ajar = g.ajar ?? null;
   /** GALLEON: whether a walk steps from cell `j` to `n` beside it - within DECK_JOIN, or (a side's neighbour) over a
    *  flight's tread (`flights`). */
   const steps = (j, n) => {
     const d = Math.abs(y[n] - y[j]);
     if (d <= DECK_JOIN) return true;
     if (!flights || !(d <= FLIGHT_JOIN)) return false;
-    return n - j === 1 ? (n % nx !== 0 && (flights[j] & 1) !== 0) : j - n === 1 ? (j % nx !== 0 && (flights[n] & 1) !== 0)
-      : n - j === nx ? (flights[j] & 2) !== 0 : j - n === nx ? (flights[n] & 2) !== 0 : false;
+    return n - j === 1
+      ? n % nx !== 0 && (flights[j] & 1) !== 0
+      : j - n === 1
+        ? j % nx !== 0 && (flights[n] & 1) !== 0
+        : n - j === nx
+          ? (flights[j] & 2) !== 0
+          : j - n === nx
+            ? (flights[n] & 2) !== 0
+            : false;
   };
   const cellOf = (x, z) => {
-    const i = Math.floor((x - minX) / cell), k = Math.floor((z - minZ) / cell);
+    const i = Math.floor((x - minX) / cell),
+      k = Math.floor((z - minZ) / cell);
     return i < 0 || k < 0 || i >= nx || k >= nz ? -1 : k * nx + i;
   };
-  const centre = (j) => { const i = j % nx, k = (j - i) / nx; return [minX + (i + 0.5) * cell, y[j], minZ + (k + 0.5) * cell]; };
+  const centre = (j) => {
+    const i = j % nx,
+      k = (j - i) / nx;
+    return [minX + (i + 0.5) * cell, y[j], minZ + (k + 0.5) * cell];
+  };
   /** AUDIT NAV2 F34: piece `p`'s floor in cell `j` - her open deck's own (0), else one of `more` - or NaN. */
   const levelOf = (j, p) => {
     if (p <= 0) return y[j];
@@ -616,12 +839,17 @@ export function deckOf(g) {
   /** AUDIT GN2-DK2: of piece `p`'s floors in cell `j` the one nearest `h` - her open deck's (0) its top floor and those
    *  of it under that (`more`'s, her deck under her stair), every piece's for -1 - or NaN. */
   const floorNear = (j, p, h) => {
-    let best = p > 0 ? NaN : y[j], d = Number.isNaN(best) ? Infinity : Math.abs(best - h);
-    if (more) for (let n = more.at[j]; n < more.at[j + 1]; n++) {
-      if (p >= 0 && more.piece[n] !== p) continue;
-      const e = Math.abs(more.y[n] - h);
-      if (e < d) { d = e; best = more.y[n]; }
-    }
+    let best = p > 0 ? NaN : y[j],
+      d = Number.isNaN(best) ? Infinity : Math.abs(best - h);
+    if (more)
+      for (let n = more.at[j]; n < more.at[j + 1]; n++) {
+        if (p >= 0 && more.piece[n] !== p) continue;
+        const e = Math.abs(more.y[n] - h);
+        if (e < d) {
+          d = e;
+          best = more.y[n];
+        }
+      }
     return best;
   };
   let pieces = 1;
@@ -633,28 +861,51 @@ export function deckOf(g) {
    *  lookout's bow; a landing over her rail her main deck's own floor, DECK_FLOOR), never a raised deck. AUDIT GN2-DK2:
    *  `ringNear`, of the piece's floors in a cell the one nearest the level (`floorNear` - her deck under her stair too,
    *  every piece's for -1), that floor `ringH` (the leash's, `keep`). */
-  let ringBest = -1, ringD = Infinity, qx = 0, qz = 0, ringPiece = 0, ringLevel = NaN, ringBand = DECK_STEP, ringNear = false, ringH = NaN;
+  let ringBest = -1,
+    ringD = Infinity,
+    qx = 0,
+    qz = 0,
+    ringPiece = 0,
+    ringLevel = NaN,
+    ringBand = DECK_STEP,
+    ringNear = false,
+    ringH = NaN;
   const visit = (i, k) => {
     if (i < 0 || k < 0 || i >= nx || k >= nz) return;
     const j = k * nx + i;
     const h = ringNear ? floorNear(j, ringPiece, ringLevel) : ringPiece ? levelOf(j, ringPiece) : y[j];
-    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return;   // (no level asked: NaN, never over)
-    const x0 = minX + i * cell, z0 = minZ + k * cell;
+    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return; // (no level asked: NaN, never over)
+    const x0 = minX + i * cell,
+      z0 = minZ + k * cell;
     const dx = qx < x0 ? x0 - qx : qx > x0 + cell ? qx - x0 - cell : 0;
     const dz = qz < z0 ? z0 - qz : qz > z0 + cell ? qz - z0 - cell : 0;
     const d = dx * dx + dz * dz;
-    if (d < ringD) { ringD = d; ringBest = j; ringH = h; }
+    if (d < ringD) {
+      ringD = d;
+      ringBest = j;
+      ringH = h;
+    }
   };
   const nearestCell = (x, z, p = 0, level = NaN, band = DECK_STEP, near = false) => {
     if (!count || p >= pieces) return -1;
-    ringBest = -1; ringD = Infinity; qx = x; qz = z; ringPiece = near ? p : p > 0 ? p : 0; ringLevel = level ?? NaN; ringBand = band; ringNear = near;
+    ringBest = -1;
+    ringD = Infinity;
+    qx = x;
+    qz = z;
+    ringPiece = near ? p : p > 0 ? p : 0;
+    ringLevel = level ?? NaN;
+    ringBand = band;
+    ringNear = near;
     const ci = Math.min(nx - 1, Math.max(0, Math.floor((x - minX) / cell)));
     const ck = Math.min(nz - 1, Math.max(0, Math.floor((z - minZ) / cell)));
     const far = Math.max(ci, nx - 1 - ci, ck, nz - 1 - ck);
     for (let r = 0; r <= far; r++) {
       for (let k = ck - r; k <= ck + r; k++) {
         if (k === ck - r || k === ck + r) for (let i = ci - r; i <= ci + r; i++) visit(i, k);
-        else { visit(ci - r, k); visit(ci + r, k); }
+        else {
+          visit(ci - r, k);
+          visit(ci + r, k);
+        }
       }
       if (ringBest >= 0 && ringD <= (r * cell) ** 2) break;
     }
@@ -662,8 +913,11 @@ export function deckOf(g) {
   };
   /** `(x, z)` brought into cell `j`'s square, a hair inside it, at piece `piece`'s floor there - into `out`. */
   const squareOf = (j, x, z, out, piece) => {
-    const i = j % nx, k = (j - i) / nx, e = cell * 1e-3;
-    const x0 = minX + i * cell, z0 = minZ + k * cell;
+    const i = j % nx,
+      k = (j - i) / nx,
+      e = cell * 1e-3;
+    const x0 = minX + i * cell,
+      z0 = minZ + k * cell;
     out[0] = Math.min(x0 + cell - e, Math.max(x0 + e, x));
     out[1] = piece > 0 ? levelOf(j, piece) : y[j];
     out[2] = Math.min(z0 + cell - e, Math.max(z0 + e, z));
@@ -673,68 +927,120 @@ export function deckOf(g) {
    *  sample steps over the corner two blocked cells share), and at a corner it passes through both cells beside it too
    *  (the walk's own corner rule), stepping no more than DECK_JOIN from one cell to the next (GALLEON: or up a flight). */
   const lineOnDeck = (p0, p1) => {
-    let i = Math.floor((p0[0] - minX) / cell), k = Math.floor((p0[2] - minZ) / cell);
-    const i1 = Math.floor((p1[0] - minX) / cell), k1 = Math.floor((p1[2] - minZ) / cell);
+    let i = Math.floor((p0[0] - minX) / cell),
+      k = Math.floor((p0[2] - minZ) / cell);
+    const i1 = Math.floor((p1[0] - minX) / cell),
+      k1 = Math.floor((p1[2] - minZ) / cell);
     if (i < 0 || k < 0 || i >= nx || k >= nz || Number.isNaN(y[k * nx + i])) return false;
-    const dx = p1[0] - p0[0], dz = p1[2] - p0[2], si = Math.sign(dx), sk = Math.sign(dz);
-    const tdx = si ? cell / Math.abs(dx) : Infinity, tdz = sk ? cell / Math.abs(dz) : Infinity;
+    const dx = p1[0] - p0[0],
+      dz = p1[2] - p0[2],
+      si = Math.sign(dx),
+      sk = Math.sign(dz);
+    const tdx = si ? cell / Math.abs(dx) : Infinity,
+      tdz = sk ? cell / Math.abs(dz) : Infinity;
     let tx = si ? (minX + (si > 0 ? i + 1 : i) * cell - p0[0]) / dx : Infinity;
     let tz = sk ? (minZ + (sk > 0 ? k + 1 : k) * cell - p0[2]) / dz : Infinity;
     let was = k * nx + i;
-    const on = (ii, kk) => ii >= 0 && kk >= 0 && ii < nx && kk < nz && !Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);
+    const on = (ii, kk) =>
+      ii >= 0 && kk >= 0 && ii < nx && kk < nz && !Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);
     for (let n = Math.abs(i1 - i) + Math.abs(k1 - k); (i !== i1 || k !== k1) && n >= 0; n--) {
-      if (Math.abs(tx - tz) < 1e-9) {   // through a corner
+      if (Math.abs(tx - tz) < 1e-9) {
+        // through a corner
         if (!on(i + si, k) || !on(i, k + sk)) return false;
-        i += si; k += sk; tx += tdx; tz += tdz;
-      } else if (tx < tz) { i += si; tx += tdx; } else { k += sk; tz += tdz; }
+        i += si;
+        k += sk;
+        tx += tdx;
+        tz += tdz;
+      } else if (tx < tz) {
+        i += si;
+        tx += tdx;
+      } else {
+        k += sk;
+        tz += tdz;
+      }
       if (!on(i, k)) return false;
       was = k * nx + i;
     }
     return i === i1 && k === k1;
   };
   // the walk's scratch, made once a deck: a cell's cost and step back are this walk's while `seen` holds its stamp
-  const cost = new Float64Array(y.length), from = new Int32Array(y.length), seen = new Uint32Array(y.length), shut = new Uint32Array(y.length);
-  const heapF = [], heapJ = [];
+  const cost = new Float64Array(y.length),
+    from = new Int32Array(y.length),
+    seen = new Uint32Array(y.length),
+    shut = new Uint32Array(y.length);
+  const heapF = [],
+    heapJ = [];
   let stamp = 0;
   const heapPush = (f, j) => {
     let n = heapF.length;
-    heapF.push(f); heapJ.push(j);
+    heapF.push(f);
+    heapJ.push(j);
     while (n > 0) {
       const up = (n - 1) >> 1;
       if (heapF[up] <= f) break;
-      heapF[n] = heapF[up]; heapJ[n] = heapJ[up]; n = up;
+      heapF[n] = heapF[up];
+      heapJ[n] = heapJ[up];
+      n = up;
     }
-    heapF[n] = f; heapJ[n] = j;
+    heapF[n] = f;
+    heapJ[n] = j;
   };
   const heapPop = () => {
-    const top = heapJ[0], lastF = heapF.pop(), lastJ = heapJ.pop();
+    const top = heapJ[0],
+      lastF = heapF.pop(),
+      lastJ = heapJ.pop();
     const len = heapF.length;
     if (len) {
       let n = 0;
       for (;;) {
-        const l = 2 * n + 1, r = l + 1;
-        let m = n, mf = lastF;
-        if (l < len && heapF[l] < mf) { m = l; mf = heapF[l]; }
-        if (r < len && heapF[r] < mf) { m = r; mf = heapF[r]; }
+        const l = 2 * n + 1,
+          r = l + 1;
+        let m = n,
+          mf = lastF;
+        if (l < len && heapF[l] < mf) {
+          m = l;
+          mf = heapF[l];
+        }
+        if (r < len && heapF[r] < mf) {
+          m = r;
+          mf = heapF[r];
+        }
         if (m === n) break;
-        heapF[n] = heapF[m]; heapJ[n] = heapJ[m]; n = m;
+        heapF[n] = heapF[m];
+        heapJ[n] = heapJ[m];
+        n = m;
       }
-      heapF[n] = lastF; heapJ[n] = lastJ;
+      heapF[n] = lastF;
+      heapJ[n] = lastJ;
     }
     return top;
   };
-  let count = 0, sx = 0, sz = 0;
-  for (let j = 0; j < y.length; j++) if (!Number.isNaN(y[j])) { count++; const c = centre(j); sx += c[0]; sz += c[2]; }
+  let count = 0,
+    sx = 0,
+    sz = 0;
+  for (let j = 0; j < y.length; j++)
+    if (!Number.isNaN(y[j])) {
+      count++;
+      const c = centre(j);
+      sx += c[0];
+      sz += c[2];
+    }
   /** AUDIT NAV2 F58: the spots made, a count's once (frozen); her cells' centres laid out once for them. AUDIT GN-D9:
    *  and a count's at a level (`spotsAt`, by the level) - each looked up before anything is filtered or laid out. */
-  const spotsMade = new Map(), spotsAt = new Map();
-  let spotCells = null, spotX = null, spotZ = null;
+  const spotsMade = new Map(),
+    spotsAt = new Map();
+  let spotCells = null,
+    spotX = null,
+    spotZ = null;
   const deck = {
     ...g,
     /** How many cells are deck. */
     count,
     /** Whether `(x, z)` (her frame) stands on deck. */
-    walkable(x, z) { const j = cellOf(x, z); return j >= 0 && !Number.isNaN(y[j]); },
+    walkable(x, z) {
+      const j = cellOf(x, z);
+      return j >= 0 && !Number.isNaN(y[j]);
+    },
     /** The deck's height under `(x, z)`, or NaN off it. AUDIT NAV2 F34: of every piece's floors there the one nearest
      *  `h` when it is asked (a body's own height - her deck under her stair, the tread over it, her poop over her
      *  cabin); her open deck's own when it is not. AUDIT GN-D1: of `piece`'s floors alone when one is asked (0 her open
@@ -749,7 +1055,7 @@ export function deckOf(g) {
     heightAt(x, z, h, piece) {
       const j = cellOf(x, z);
       if (j < 0) return NaN;
-      const p = piece == null ? -1 : Math.max(0, piece);   // -1: every piece's
+      const p = piece == null ? -1 : Math.max(0, piece); // -1: every piece's
       if (h == null || !more) return p > 0 ? NaN : y[j];
       return floorNear(j, p, h);
     },
@@ -760,8 +1066,16 @@ export function deckOf(g) {
     pieceAt(x, z, h, band = Infinity) {
       const j = cellOf(x, z);
       if (j < 0) return -1;
-      let best = Number.isNaN(y[j]) ? -1 : 0, d = best < 0 ? Infinity : Math.abs(y[j] - h);
-      if (more) for (let n = more.at[j]; n < more.at[j + 1]; n++) { const e = Math.abs(more.y[n] - h); if (e < d) { d = e; best = more.piece[n]; } }
+      let best = Number.isNaN(y[j]) ? -1 : 0,
+        d = best < 0 ? Infinity : Math.abs(y[j] - h);
+      if (more)
+        for (let n = more.at[j]; n < more.at[j + 1]; n++) {
+          const e = Math.abs(more.y[n] - h);
+          if (e < d) {
+            d = e;
+            best = more.piece[n];
+          }
+        }
       return d <= band ? best : -1;
     },
     /** AUDIT GN2-DK1/DK3: of the floors her parts that open stand over or in under `(x, z)` (`ajar`: a shut cover's top,
@@ -770,8 +1084,15 @@ export function deckOf(g) {
     ajarAt(x, z, h) {
       const j = ajar ? cellOf(x, z) : -1;
       if (j < 0) return NaN;
-      let best = NaN, d = Infinity;
-      for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) { const e = Math.abs(ajar.y[n] - h); if (e < d) { d = e; best = ajar.y[n]; } }
+      let best = NaN,
+        d = Infinity;
+      for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) {
+        const e = Math.abs(ajar.y[n] - h);
+        if (e < d) {
+          d = e;
+          best = ajar.y[n];
+        }
+      }
       return best;
     },
     /**
@@ -788,10 +1109,22 @@ export function deckOf(g) {
      * @param {number} x @param {number} z @param {number} ref @param {number} [piece] @param {number[]} [out]
      */
     keep(x, z, ref, piece = 0, out = [0, 0, 0]) {
-      const p = piece < 0 ? -1 : piece, c = cellOf(x, z), own = c < 0 ? NaN : floorNear(c, p, ref);
-      if (Math.abs(own - ref) <= FLIGHT_JOIN) { out[0] = x; out[1] = own; out[2] = z; return out; }
+      const p = piece < 0 ? -1 : piece,
+        c = cellOf(x, z),
+        own = c < 0 ? NaN : floorNear(c, p, ref);
+      if (Math.abs(own - ref) <= FLIGHT_JOIN) {
+        out[0] = x;
+        out[1] = own;
+        out[2] = z;
+        return out;
+      }
       const j = nearestCell(x, z, p, ref, FLIGHT_JOIN, true);
-      if (j >= 0) { const h = ringH; squareOf(j, x, z, out, 0); out[1] = h; return out; }
+      if (j >= 0) {
+        const h = ringH;
+        squareOf(j, x, z, out, 0);
+        out[1] = h;
+        return out;
+      }
       return deck.clamp(x, z, out, Math.max(0, p));
     },
     /**
@@ -802,18 +1135,30 @@ export function deckOf(g) {
      * @param {number} x @param {number} z @param {number} h @param {number} [reach]
      */
     under(x, z, h, reach = 0) {
-      const r = Math.ceil(reach / cell), ci = Math.floor((x - minX) / cell), ck = Math.floor((z - minZ) / cell);
-      const lo = h - DECK_HEADROOM, hi = h + DECK_STEP, rr = reach * reach;
+      const r = Math.ceil(reach / cell),
+        ci = Math.floor((x - minX) / cell),
+        ck = Math.floor((z - minZ) / cell);
+      const lo = h - DECK_HEADROOM,
+        hi = h + DECK_STEP,
+        rr = reach * reach;
       for (let k = Math.max(0, ck - r); k <= Math.min(nz - 1, ck + r); k++) {
         for (let i = Math.max(0, ci - r); i <= Math.min(nx - 1, ci + r); i++) {
-          const x0 = minX + i * cell, z0 = minZ + k * cell;
-          const dx = x < x0 ? x0 - x : x > x0 + cell ? x - x0 - cell : 0, dz = z < z0 ? z0 - z : z > z0 + cell ? z - z0 - cell : 0;
+          const x0 = minX + i * cell,
+            z0 = minZ + k * cell;
+          const dx = x < x0 ? x0 - x : x > x0 + cell ? x - x0 - cell : 0,
+            dz = z < z0 ? z0 - z : z > z0 + cell ? z - z0 - cell : 0;
           if (dx * dx + dz * dz > rr) continue;
           const j = k * nx + i;
-          if (ajar) for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true;   // AUDIT GN2-DK1: a shut cover stood on
-          if (floors) { for (let n = floors.at[j]; n < floors.at[j + 1]; n++) if (floors.y[n] >= lo && floors.y[n] <= hi) return true; continue; }
+          if (ajar)
+            for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true; // AUDIT GN2-DK1: a shut cover stood on
+          if (floors) {
+            for (let n = floors.at[j]; n < floors.at[j + 1]; n++)
+              if (floors.y[n] >= lo && floors.y[n] <= hi) return true;
+            continue;
+          }
           if (y[j] >= lo && y[j] <= hi) return true;
-          if (more) for (let n = more.at[j]; n < more.at[j + 1]; n++) if (more.y[n] >= lo && more.y[n] <= hi) return true;
+          if (more)
+            for (let n = more.at[j]; n < more.at[j + 1]; n++) if (more.y[n] >= lo && more.y[n] <= hi) return true;
         }
       }
       return false;
@@ -857,15 +1202,26 @@ export function deckOf(g) {
     land(x, z, h, out = [0, 0, 0]) {
       if (!count) return null;
       const on = deck.heightAt(x, z, h);
-      if (Math.abs(on - h) <= DECK_STEP) { out[0] = x; out[1] = on; out[2] = z; return out; }
-      const lv = mainLevel(deck), k = Math.floor((z - minZ) / cell);
-      let j = -1, best = Infinity;
+      if (Math.abs(on - h) <= DECK_STEP) {
+        out[0] = x;
+        out[1] = on;
+        out[2] = z;
+        return out;
+      }
+      const lv = mainLevel(deck),
+        k = Math.floor((z - minZ) / cell);
+      let j = -1,
+        best = Infinity;
       if (k >= 0 && k < nz) {
         for (let i = 0; i < nx; i++) {
-          const c = k * nx + i, x0 = minX + i * cell;
-          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue;   // (NaN off her deck: never within)
+          const c = k * nx + i,
+            x0 = minX + i * cell;
+          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue; // (NaN off her deck: never within)
           const dx = x < x0 ? x0 - x : x > x0 + cell ? x - x0 - cell : 0;
-          if (dx < best) { best = dx; j = c; }
+          if (dx < best) {
+            best = dx;
+            j = c;
+          }
         }
       }
       if (j < 0) j = nearestCell(x, z, 0, lv, DECK_FLOOR);
@@ -889,10 +1245,14 @@ export function deckOf(g) {
           const k = pass ? k0 + r : k0 - r;
           if (k < 0 || k >= nz) continue;
           for (let n = 0; n < nx; n++) {
-            const i = side > 0 ? nx - 1 - n : n, j = k * nx + i, x = minX + (i + 0.5) * cell;
-            if (x * side < 0) break;   // past her centreline: this row has no rail on `side`
-            if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue;   // (no level asked: NaN, never over)
-            out[0] = x; out[1] = y[j]; out[2] = minZ + (k + 0.5) * cell;
+            const i = side > 0 ? nx - 1 - n : n,
+              j = k * nx + i,
+              x = minX + (i + 0.5) * cell;
+            if (x * side < 0) break; // past her centreline: this row has no rail on `side`
+            if (Number.isNaN(y[j]) || Math.abs(y[j] - level) > DECK_STEP) continue; // (no level asked: NaN, never over)
+            out[0] = x;
+            out[1] = y[j];
+            out[2] = minZ + (k + 0.5) * cell;
             return out;
           }
         }
@@ -910,52 +1270,90 @@ export function deckOf(g) {
       // AUDIT GN-D9: THE CACHE FIRST - a cached call at a level filtered her every cell before it looked (130-170 us and
       // 30-70 KB on the new galleon and the Carrack, each crew stood and each muster; 0.1 us now); a level's spots are
       // kept by the level, one that keeps her every cell sharing her whole deck's
-      const kept = level == null ? spotsMade : spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level);
+      const kept = level == null ? spotsMade : (spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level));
       let made = kept.get(n);
       if (made) return made;
       if (!spotCells) {
-        spotCells = new Int32Array(count); spotX = new Float64Array(count); spotZ = new Float64Array(count);
+        spotCells = new Int32Array(count);
+        spotX = new Float64Array(count);
+        spotZ = new Float64Array(count);
         for (let j = 0, q = 0; j < y.length; j++) {
           if (Number.isNaN(y[j])) continue;
-          const i = j % nx, k = (j - i) / nx;
-          spotCells[q] = j; spotX[q] = minX + (i + 0.5) * cell; spotZ[q] = minZ + (k + 0.5) * cell; q++;
+          const i = j % nx,
+            k = (j - i) / nx;
+          spotCells[q] = j;
+          spotX[q] = minX + (i + 0.5) * cell;
+          spotZ[q] = minZ + (k + 0.5) * cell;
+          q++;
         }
       }
       // GALLEON (2026-10-01): `level` asked, her cells within DECK_STEP of it alone - her main deck's, her hands' work
       // (crewLife.js), never her castle's roof up its flights; every cell of hers within it, her whole deck's spots
-      let cells = spotCells, xs = spotX, zs = spotZ, m = count;
+      let cells = spotCells,
+        xs = spotX,
+        zs = spotZ,
+        m = count;
       if (level != null) {
         const keep = [];
         for (let q = 0; q < count; q++) if (Math.abs(y[spotCells[q]] - level) <= DECK_STEP) keep.push(q);
-        if (!keep.length) { kept.set(n, NO_SPOTS); return NO_SPOTS; }
+        if (!keep.length) {
+          kept.set(n, NO_SPOTS);
+          return NO_SPOTS;
+        }
         if (keep.length < count) {
           m = keep.length;
-          cells = Int32Array.from(keep, (q) => spotCells[q]); xs = Float64Array.from(keep, (q) => spotX[q]); zs = Float64Array.from(keep, (q) => spotZ[q]);
+          cells = Int32Array.from(keep, (q) => spotCells[q]);
+          xs = Float64Array.from(keep, (q) => spotX[q]);
+          zs = Float64Array.from(keep, (q) => spotZ[q]);
         }
       }
-      if (m === count && kept !== spotsMade) {   // the level keeps her every cell: her whole deck's spots, one array
+      if (m === count && kept !== spotsMade) {
+        // the level keeps her every cell: her whole deck's spots, one array
         made = spotsMade.get(n);
-        if (made) { kept.set(n, made); return made; }
+        if (made) {
+          kept.set(n, made);
+          return made;
+        }
       }
       let first;
       if (m === count) first = deck.nearest(sx / count, sz / count);
       else {
-        let cx = 0, cz = 0;
-        for (let q = 0; q < m; q++) { cx += xs[q]; cz += zs[q]; }
-        cx /= m; cz /= m;
-        let b = 0, bd = Infinity;
-        for (let q = 0; q < m; q++) { const d = (xs[q] - cx) ** 2 + (zs[q] - cz) ** 2; if (d < bd) { bd = d; b = q; } }
+        let cx = 0,
+          cz = 0;
+        for (let q = 0; q < m; q++) {
+          cx += xs[q];
+          cz += zs[q];
+        }
+        cx /= m;
+        cz /= m;
+        let b = 0,
+          bd = Infinity;
+        for (let q = 0; q < m; q++) {
+          const d = (xs[q] - cx) ** 2 + (zs[q] - cz) ** 2;
+          if (d < bd) {
+            bd = d;
+            b = q;
+          }
+        }
         first = centre(cells[b]);
       }
       const out = [Object.freeze(first)];
       const far = new Float64Array(m).fill(Infinity);
       while (out.length < Math.min(n, m)) {
-        const last = out[out.length - 1], lx = last[0], lz = last[2];
-        let best = -1, bestD = -1;
+        const last = out[out.length - 1],
+          lx = last[0],
+          lz = last[2];
+        let best = -1,
+          bestD = -1;
         for (let q = 0; q < m; q++) {
-          const dx = xs[q] - lx, dz = zs[q] - lz, d = dx * dx + dz * dz;
+          const dx = xs[q] - lx,
+            dz = zs[q] - lz,
+            d = dx * dx + dz * dz;
           if (d < far[q]) far[q] = d;
-          if (far[q] > bestD) { bestD = far[q]; best = q; }
+          if (far[q] > bestD) {
+            bestD = far[q];
+            best = q;
+          }
         }
         if (bestD <= 0) break;
         out.push(Object.freeze(centre(cells[best])));
@@ -972,34 +1370,57 @@ export function deckOf(g) {
      * corners cut where the straight line between two stays on deck; null when no walk joins them.
      */
     path(a, b) {
-      const s = deck.nearest(a[0], a[1]), e = deck.nearest(b[0], b[1]);
+      const s = deck.nearest(a[0], a[1]),
+        e = deck.nearest(b[0], b[1]);
       if (!s || !e) return null;
-      const js = cellOf(s[0], s[2]), je = cellOf(e[0], e[2]);
+      const js = cellOf(s[0], s[2]),
+        je = cellOf(e[0], e[2]);
       stamp = (stamp + 1) >>> 0 || 1;
-      if (stamp === 1) { seen.fill(0); shut.fill(0); }
-      heapF.length = 0; heapJ.length = 0;
-      const ex = e[0], ez = e[2];
+      if (stamp === 1) {
+        seen.fill(0);
+        shut.fill(0);
+      }
+      heapF.length = 0;
+      heapJ.length = 0;
+      const ex = e[0],
+        ez = e[2];
       // AUDIT NAV2 F61: the straight line home a square root of its own - Math.hypot's care for overflow is 1.6x the cost,
       // on metres of deck it guards nothing
-      const h = (j) => { const i = j % nx, k = (j - i) / nx, dx = minX + (i + 0.5) * cell - ex, dz = minZ + (k + 0.5) * cell - ez; return Math.sqrt(dx * dx + dz * dz); };
-      cost[js] = 0; from[js] = -1; seen[js] = stamp;
+      const h = (j) => {
+        const i = j % nx,
+          k = (j - i) / nx,
+          dx = minX + (i + 0.5) * cell - ex,
+          dz = minZ + (k + 0.5) * cell - ez;
+        return Math.sqrt(dx * dx + dz * dz);
+      };
+      cost[js] = 0;
+      from[js] = -1;
+      seen[js] = stamp;
       heapPush(h(js), js);
       while (heapF.length) {
         const j = heapPop();
         if (shut[j] === stamp) continue;
         shut[j] = stamp;
         if (j === je) break;
-        const i = j % nx, k = (j - i) / nx;
-        for (let dk = -1; dk <= 1; dk++) for (let di = -1; di <= 1; di++) {
-          if (!di && !dk) continue;
-          const ii = i + di, kk = k + dk;
-          if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
-          const n = kk * nx + ii;
-          if (shut[n] === stamp || Number.isNaN(y[n]) || !steps(j, n)) continue;
-          if (di && dk && !(steps(j, k * nx + ii) && steps(j, kk * nx + i))) continue;   // no corner cut past the edge (AUDIT NAV2 F34: nor past a drop - a stair's tread beside the deck it climbs from)
-          const c = cost[j] + (di && dk ? Math.SQRT2 : 1) * cell;
-          if (seen[n] !== stamp || c < cost[n]) { seen[n] = stamp; cost[n] = c; from[n] = j; heapPush(c + h(n), n); }
-        }
+        const i = j % nx,
+          k = (j - i) / nx;
+        for (let dk = -1; dk <= 1; dk++)
+          for (let di = -1; di <= 1; di++) {
+            if (!di && !dk) continue;
+            const ii = i + di,
+              kk = k + dk;
+            if (ii < 0 || kk < 0 || ii >= nx || kk >= nz) continue;
+            const n = kk * nx + ii;
+            if (shut[n] === stamp || Number.isNaN(y[n]) || !steps(j, n)) continue;
+            if (di && dk && !(steps(j, k * nx + ii) && steps(j, kk * nx + i))) continue; // no corner cut past the edge (AUDIT NAV2 F34: nor past a drop - a stair's tread beside the deck it climbs from)
+            const c = cost[j] + (di && dk ? Math.SQRT2 : 1) * cell;
+            if (seen[n] !== stamp || c < cost[n]) {
+              seen[n] = stamp;
+              cost[n] = c;
+              from[n] = j;
+              heapPush(c + h(n), n);
+            }
+          }
       }
       if (shut[je] !== stamp) return null;
       const cells = [];

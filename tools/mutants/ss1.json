@@ -22,8 +22,8 @@
     "name": "SS1-a-record-unbinding-its-row",
     "file": "src/systems/item/itemBound.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - a binding of its nature is isBoundByNature now (isBound adds the realm lock)",
-    "old": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
-    "new": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || (item?.bound !== false && templateByIndex(item?.templateIndex)?.bound === true);",
+    "old": "  item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "new": "  item?.bound === true || (item?.bound !== false && templateByIndex(item?.templateIndex)?.bound === true);",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -32,8 +32,8 @@
     "name": "SS1-the-table-takes-a-bound-piece",
     "file": "src/systems/tradePack.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the refusal's words are boundTradeText(item)",
-    "old": "  if (isBound(item)) return boundTradeText(item);   // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n",
-    "new": "",
+    "old": "  if (isBound(item)) return boundTradeText(item); // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
+    "new": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "SS1-a-peers-bound-lot-taken",
     "file": "src/systems/tradePack.js",
-    "old": "unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },",
-    "new": "unwire(records) { const items = wholeLot(records); return items; },",
+    "old": "      return items && !items.some(isBound) ? items : null;",
+    "new": "      return items;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ],
@@ -223,7 +223,7 @@
   {
     "name": "SS3-a-peers-list-keeps-a-bound-piece",
     "file": "src/systems/item/itemBound.js",
-    "old": "export const unbound = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !isBound(it)) : list);",
+    "old": "export const unbound = (/** @type {any[] | null} */ list) =>\n  Array.isArray(list) ? list.filter((it) => !isBound(it)) : list;",
     "new": "export const unbound = (/** @type {any[] | null} */ list) => list;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "SS3-a-buildings-container-lands-a-bound-piece",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    const items = peerHanded(validLootList(rec.r));",
-    "new": "    const items = validLootList(rec.r);",
+    "old": "    const items = peerHanded(validLootList(rec.r)); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
+    "new": "    const items = validLootList(rec.r); // SS3: a shelf or a container is the room's - a bound piece in one never lands; HACKED-GOLD: nor a letter of credit, a peer's gold",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -269,7 +269,7 @@
     "name": "SS4-the-mark-ignored",
     "file": "src/systems/item/itemBound.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - a binding of its nature is isBoundByNature now (isBound adds the realm lock)",
-    "old": "export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
+    "old": "export const isBoundByNature = (/** @type {any} */ item) =>\n  item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;",
     "new": "export const isBoundByNature = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.bound === true;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
@@ -287,8 +287,8 @@
   {
     "name": "SS4-the-broker-card-silent",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE));",
-    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE));",
+    "old": "      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
+    "new": "      if (isBound(o.item) && false) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -423,7 +423,7 @@
   {
     "name": "SS5-the-enhanced-card-without-dismantle",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
     "new": "  if (false) {",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "SS5-the-card-dismantling-a-worn-ware",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0) {",
-    "new": "  if (side === 'local' && dismantleStones(picked) > 0) {",
+    "old": "  if (side === 'local' && !line.equipped && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
+    "new": "  if (side === 'local' && dismantleStones(picked) > 0 && !isRealmLocked(picked)) {",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "SS5-the-lock-unsaid",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };",
-    "new": "const refusedFor = (why) => { notice = null; refresh(); render(); };",
+    "old": "  const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : why === 'realm' ? realmLockedText(name) : null; refresh(); render(); };",
+    "new": "  const refusedFor = (why) => { notice = null; refresh(); render(); };",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

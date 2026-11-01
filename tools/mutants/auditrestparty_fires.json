@@ -1,148 +1,148 @@
 [
- {
-  "name": "AUDITRESTPARTY-C2-the-entrance-fire-beside-a-brazier",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  const clear = pool.filter((c) => clearOf(c.pos, existing, DFIRE.entranceM));",
-  "new": "  const clear = pool;",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C2-the-fallbacks-ask-nothing",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  const first = near(inReach.length ? inReach : clear.filter((c) => c.start)) ?? near(clear);",
-  "new": "  const first = near(inReach.length ? inReach : pool.filter((c) => c.start)) ?? near(pool);",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C2-a-brazier-nearer-the-door-than-the-pick-is-not-the-doors",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  const reach = Math.max(SQ(DFIRE.entranceM), first ? d2(first.pos, from) : Infinity);",
-  "new": "  const reach = SQ(DFIRE.entranceM);",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C5-a-brazier-by-the-door-is-one-more-than-N",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  const want = doorFire ? count - 1 : count;",
-  "new": "  const want = count;",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C3-one-ray-reads-a-tread-as-a-floor",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "    if (!levelRound(probe, pos)) continue;   // AUDIT REST-PARTY C3: no stair, no ramp, no ledge\n",
-  "new": "",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C3-any-height-round-it-is-level",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": " || !(Math.abs(g.y - pos[1]) <= DFIRE.levelM)) return false;",
-  "new": ") return false;",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C3-the-ring-takes-a-tilted-face",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "    if (!g || !(g.ny > DFIRE.flatNy) || ",
-  "new": "    if (!g || ",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C3-a-25-degree-slope-is-flat",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  flatNy: 0.99,",
-  "new": "  flatNy: 0.9,",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C3-the-ring-shrinks-to-the-tread",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "  levelR: 0.5,",
-  "new": "  levelR: 0.05,",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C4-the-lift-is-a-floor",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": " && hit.key === DUNGEON_BUCKET ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
-  "new": " ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C4-the-floor-ray-reads-through-the-lift",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "      const hit = collider.raycastHit(from, [0, -1, 0], DFIRE.floorM + 1);",
-  "new": "      const hit = collider.raycastHit(from, [0, -1, 0], DFIRE.floorM + 1, ONLY_DUNGEON);",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C6-every-door-face-is-an-exit",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": "    ...(b?.layout?.exitDoors ?? []).filter(isDungeonExitDoor).map((d) => at(b, d)),",
-  "new": "    ...(b?.layout?.exitDoors ?? []).map((d) => at(b, d)),",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C6-a-layout-fire-at-its-centre",
-  "file": "src/world/dungeon/dungeonFires.js",
-  "old": ".map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]);",
-  "new": ".map((h) => [h.x, h.y, h.z]);",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ],
-  "note": "AUDIT REST-PARTY C7 (PIN MOVED): the law reads lawFoot first."
- },
- {
-  "name": "AUDITRESTPARTY-C6-the-probe-hangs-the-lift-in-the-dungeon",
-  "file": "tools/dungeonFireProbe.mjs",
-  "old": "cls === 'move' || cls === 'specialDoor' ? `act:${bi}:${p.position}` : 'dungeon'",
-  "new": "'dungeon'",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C6-the-probe-reads-a-fire-at-its-centre",
-  "file": "tools/dungeonFireProbe.mjs",
-  "old": "foot: size ? f.y - size.h / 2 : undefined,",
-  "new": "foot: undefined,",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ]
- },
- {
-  "name": "AUDITRESTPARTY-C6-the-probe-keeps-clear-of-every-door-face",
-  "file": "tools/dungeonFireProbe.mjs",
-  "old": "  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const plan",
-  "new": "  const { existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const doors = blocks.flatMap((b) => (b.layout.exitDoors ?? []).map((d) => [d.matrix[12] + b.originX, d.matrix[13], d.matrix[14] + b.originZ]));\n  const plan",
-  "tests": [
-   "test/world/auditrestparty_fires.test.js"
-  ],
-  "note": "AUDIT REST II (PIN MOVED): the tool's report is the law's one call now (dungeonFirePlan - F2/F5/F6), so the line after the inputs is the plan; re-aimed by content, every door face read as an exit."
- }
+  {
+    "name": "AUDITRESTPARTY-C2-the-entrance-fire-beside-a-brazier",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const clear = pool.filter((c) => clearOf(c.pos, existing, DFIRE.entranceM));",
+    "new": "  const clear = pool;",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C2-the-fallbacks-ask-nothing",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const first = near(inReach.length ? inReach : clear.filter((c) => c.start)) ?? near(clear);",
+    "new": "  const first = near(inReach.length ? inReach : pool.filter((c) => c.start)) ?? near(pool);",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C2-a-brazier-nearer-the-door-than-the-pick-is-not-the-doors",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const reach = Math.max(SQ(DFIRE.entranceM), first ? d2(first.pos, from) : Infinity);",
+    "new": "  const reach = SQ(DFIRE.entranceM);",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C5-a-brazier-by-the-door-is-one-more-than-N",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const want = doorFire ? count - 1 : count;",
+    "new": "  const want = count;",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C3-one-ray-reads-a-tread-as-a-floor",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (!levelRound(probe, pos)) continue; // AUDIT REST-PARTY C3: no stair, no ramp, no ledge\n    if (!probe?.room?.(pos)) continue;",
+    "new": "    if (!probe?.room?.(pos)) continue;",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C3-any-height-round-it-is-level",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (!g || !(g.ny > DFIRE.flatNy) || !(Math.abs(g.y - pos[1]) <= DFIRE.levelM)) return false;",
+    "new": "    if (!g || !(g.ny > DFIRE.flatNy)) return false;",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C3-the-ring-takes-a-tilted-face",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    if (!g || !(g.ny > DFIRE.flatNy) || !(Math.abs(g.y - pos[1]) <= DFIRE.levelM)) return false;",
+    "new": "    if (!g || !(Math.abs(g.y - pos[1]) <= DFIRE.levelM)) return false;",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C3-a-25-degree-slope-is-flat",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  flatNy: 0.99, // ...and flat: no stair, no ramp (AUDIT REST-PARTY C3: 0.9 passed a 25.8 degree slope)",
+    "new": "  flatNy: 0.9, // ...and flat: no stair, no ramp (AUDIT REST-PARTY C3: 0.9 passed a 25.8 degree slope)",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C3-the-ring-shrinks-to-the-tread",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  levelR: 0.5, // AUDIT REST-PARTY C3: ...and level all round - the floor sampled this far out on eight bearings",
+    "new": "  levelR: 0.05, // AUDIT REST-PARTY C3: ...and level all round - the floor sampled this far out on eight bearings",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C4-the-lift-is-a-floor",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === DUNGEON_BUCKET",
+    "new": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C4-the-floor-ray-reads-through-the-lift",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "      const hit = collider.raycastHit(from, [0, -1, 0], DFIRE.floorM + 1);",
+    "new": "      const hit = collider.raycastHit(from, [0, -1, 0], DFIRE.floorM + 1, ONLY_DUNGEON);",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C6-every-door-face-is-an-exit",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "    ...(b?.layout?.exitDoors ?? []).filter(isDungeonExitDoor).map((d) => at(b, d)),",
+    "new": "    ...(b?.layout?.exitDoors ?? []).map((d) => at(b, d)),",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C6-a-layout-fire-at-its-centre",
+    "file": "src/world/dungeon/dungeonFires.js",
+    "old": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
+    "new": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ],
+    "note": "AUDIT REST-PARTY C7 (PIN MOVED): the law reads lawFoot first."
+  },
+  {
+    "name": "AUDITRESTPARTY-C6-the-probe-hangs-the-lift-in-the-dungeon",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "      col.addMesh(\n        cls === 'move' || cls === 'specialDoor' ? `act:${bi}:${p.position}` : 'dungeon',\n        m.positions,\n        m.indices,\n        multiply(om, p.matrix),\n      );",
+    "new": "      col.addMesh('dungeon', m.positions, m.indices, multiply(om, p.matrix));",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C6-the-probe-reads-a-fire-at-its-centre",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "        return {\n          x: f.x + b.originX,\n          y: f.y,\n          z: f.z + b.originZ,\n          foot: size ? f.y - size.h / 2 : undefined,\n          w: size?.w,\n          h: size?.h,\n        };",
+    "new": "        return { x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: undefined, w: size?.w, h: size?.h };",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRESTPARTY-C6-the-probe-keeps-clear-of-every-door-face",
+    "file": "tools/dungeonFireProbe.mjs",
+    "old": "  const { doors, existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));",
+    "new": "  const { existing } = fireLayoutInputs(blocks, layoutHearths(blocks, sizeOf));\n  const doors = blocks.flatMap((b) =>\n    (b.layout.exitDoors ?? []).map((d) => [d.matrix[12] + b.originX, d.matrix[13], d.matrix[14] + b.originZ]),\n  );",
+    "tests": [
+      "test/world/auditrestparty_fires.test.js"
+    ],
+    "note": "AUDIT REST II (PIN MOVED): the tool's report is the law's one call now (dungeonFirePlan - F2/F5/F6), so the line after the inputs is the plan; re-aimed by content, every door face read as an exit."
+  }
 ]

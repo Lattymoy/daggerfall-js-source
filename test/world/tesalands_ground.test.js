@@ -200,7 +200,11 @@ test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none o
     if (land.flora) {
       const f = land.flora;
       assert.ok(f.woods >= 0 && f.woods < 1, `${key}'s woods`);
-      for (const [a, r, w] of [...f.trees, ...f.cover]) assert.ok([500, 501, 502, 503, 504, 506, 508, 510].includes(a) && r >= 1 && r <= 31 && w > 0, `${key}'s pick ${a}:${r} (a summer nature archive's: the second audit - the winter ones, 505, 507 and 509, had passed)`);
+      for (const [a, r, w] of [...f.trees, ...f.cover]) {
+        const classic = [500, 501, 502, 503, 504, 506, 508, 510].includes(a) && r >= 1 && r <= 31;
+        const skyrim = a === 38362 && r >= 0 && r <= 36;   // SKYRIM_FLORA_ARCHIVE: record = catalog index
+        assert.ok((classic || skyrim) && w > 0, `${key}'s pick ${a}:${r} (a summer nature archive's: the second audit - the winter ones, 505, 507 and 509, had passed)`);
+      }
       assert.ok(f.trees.length + f.cover.length > 0);
     }
     const kinds = land.props.map((p) => p.kind);

@@ -155,8 +155,8 @@
   {
     "name": "LW5b-trouble-land",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (trip.sea) return seaTrouble(trip, world);   // LW5b",
-    "new": "  void seaTrouble;   // LW5b",
+    "old": "  if (trip.sea) return seaTrouble(trip, world); // LW5b: a crossing meets none of the land's foes",
+    "new": "  void seaTrouble; // LW5b: a crossing meets none of the land's foes",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW5b-lost-unfated",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  const dead = trip.party.filter((m) => world.dies?.(m, trip)).map((m) => m.id);\n  if (!dead.length) return null;\n  const rng = lwRng(textSeed(trip.id), TROU, 0x736561);",
-    "new": "  const dead = trip.party.filter((m) => world.dies?.(m, trip)).map((m) => m.id);\n  const rng = lwRng(textSeed(trip.id), TROU, 0x736561);",
+    "old": "  if (!dead.length) return null;\n  const rng = lwRng(textSeed(trip.id), TROU, 0x736561); // 'sea'",
+    "new": "  const rng = lwRng(textSeed(trip.id), TROU, 0x736561); // 'sea'",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW5b-sea-fallen",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })",
-    "new": "({ res: byId.get(id), t: enc.t0, s: 0, atSea: false })",
+    "old": "      fallen: enc.dead.map((id) => ({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })).filter((f) => f.res),",
+    "new": "      fallen: enc.dead.map((id) => ({ res: byId.get(id), t: enc.t0, s: 0, atSea: false })).filter((f) => f.res),",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LW5b-sea-turned",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": ".filter((f) => f.res), turned: false };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
-    "new": ".filter((f) => f.res), turned: true };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
+    "old": "      fallen: enc.dead.map((id) => ({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })).filter((f) => f.res),\n      turned: false,",
+    "new": "      fallen: enc.dead.map((id) => ({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })).filter((f) => f.res),\n      turned: true,",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LW5b-sea-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "      : item.sea ? SEA_NEWS[",
-    "new": "      : false ? SEA_NEWS[",
+    "old": "                      : item.sea",
+    "new": "                      : false",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LW5b-host-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "to = townOfPort(l.a.id === id ? l.b.id : l.a.id);",
-    "new": "to = townOfPort(id);",
+    "old": "              to = townOfPort(l.a.id === id ? l.b.id : l.a.id);",
+    "new": "              to = townOfPort(id);",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]

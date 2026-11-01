@@ -26,7 +26,9 @@ export function createCraftWritHost({ player, session, checkpoint, saved, book }
    *  own (`w.pieces`), in pack order. */
   const piecesOf = (/** @type {any} */ w) => {
     const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);
-    return (player()?.items ?? []).filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product)).map((it) => String(it.provenance));
+    return (player()?.items ?? [])
+      .filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))
+      .map((it) => String(it.provenance));
   };
   return {
     /**
@@ -61,28 +63,40 @@ export function createCraftWritHost({ player, session, checkpoint, saved, book }
       const pick = craftGoodsPick(pack, w, pieces);
       if (!pick) return { ok: false, error: w.kind === 'potion' ? 'craft-goods-gone' : 'craft-pieces' };
       // AUDIT CRAFT-WRITS C9: the records out from the last index first, and back from the first - each where it stood
-      const took = pick.map(({ at, n }) => ({ rec: pack[at], at, n, whole: recordCount(pack[at]) <= n })).sort((a, b) => b.at - a.at);
+      const took = pick
+        .map(({ at, n }) => ({ rec: pack[at], at, n, whole: recordCount(pack[at]) <= n }))
+        .sort((a, b) => b.at - a.at);
       const here = () => player() === p && p.items === pack;
       let out = false;
       const takeOut = () => {
         for (const t of took) {
-          if (t.whole) { const i = pack.indexOf(t.rec); if (i >= 0) pack.splice(i, 1); } else t.rec.stackCount = recordCount(t.rec) - t.n;
+          if (t.whole) {
+            const i = pack.indexOf(t.rec);
+            if (i >= 0) pack.splice(i, 1);
+          } else t.rec.stackCount = recordCount(t.rec) - t.n;
         }
         out = true;
       };
       const putBack = () => {
         if (!out) return;
         for (const t of [...took].reverse()) {
-          if (t.whole) { if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec); } else t.rec.stackCount = recordCount(t.rec) + t.n;
+          if (t.whole) {
+            if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec);
+          } else t.rec.stackCount = recordCount(t.rec) + t.n;
         }
         out = false;
       };
       let r;
       try {
         r = await realmGoldAct({
-          session: s, checkpoint: () => { if (here()) checkpoint(); },
+          session: s,
+          checkpoint: () => {
+            if (here()) checkpoint();
+          },
           reserve: () => putBack,
-          apply: (/** @type {any} */ a) => { if (a.data?.repeat && a.data?.realm == null) putBack(); },   // C1
+          apply: (/** @type {any} */ a) => {
+            if (a.data?.repeat && a.data?.realm == null) putBack();
+          }, // C1
           call: (at) => {
             if (!here()) return Promise.resolve({ ok: false, error: 'elsewhere', elsewhere: true });
             if (!out) takeOut();
@@ -90,7 +104,7 @@ export function createCraftWritHost({ player, session, checkpoint, saved, book }
           },
         });
       } catch (e) {
-        putBack();   // C9: a throw before the service was asked (the book gone) - the goods were never the record's
+        putBack(); // C9: a throw before the service was asked (the book gone) - the goods were never the record's
         console.warn('[craft writ] the delivery would not ask', e);
         return { ok: false, error: 'offline' };
       }

@@ -151,7 +151,7 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(m, /const at = shelf\.items\.indexOf\(it\);\s*if \(at < 0\) return undefined;/, 'a row the shelf no longer holds buys nothing');
   assert.match(m, /if \(shelf\) interiorLootOpen\(interiorCtx, 'shelf:0', win, _intShared, \{ fresh \}\);/, 'the merchant\'s sell screen');
   assert.match(m, /if \(mode === 'interior'\) interiorLootFrame\(interiorCtx, _intShared, \{ now: performance\.now\(\), open: \(w\) => interiorWindows\.containsWindow\(w\) \}\);/, 'the close is the frame\'s settle');
-  assert.match(pure, /export function interiorLootFrame\(ctx, bag, \{ now = 0, open = \(\) => true \} = \{\}\) \{\s*if \(!bag\?\.locationKey\) return;\s*const win = bag\.openWin;\s*if \(win && !\(String\(bag\.openKey\)\.startsWith\('container:'\) && bag\.room\?\.live\(\)\) && !\(open\(win\) && !win\.done\)\) \{\s*const k = bag\.openKey;\s*bag\.openKey = null; bag\.openWin = null;\s*publishWhole\(ctx, k, bag\);\s*\}/, 'gone from the STACK, not from the slot (AUDIT WORLD6a A3)');
+  assert.match(pure, /export function interiorLootFrame\(ctx, bag, \{ now = 0, open = \(\) => true \} = \{\}\) \{\n\s*if \(!bag\?\.locationKey\) return;\n\s*const win = bag\.openWin;\n\s*if \(win && !\(String\(bag\.openKey\)\.startsWith\('container:'\) && bag\.room\?\.live\(\)\) && !\(open\(win\) && !win\.done\)\) \{\n\s*const k = bag\.openKey;\n\s*bag\.openKey = null;\n\s*bag\.openWin = null;\n\s*publishWhole\(ctx, k, bag\);\n\s*\}/, 'gone from the STACK, not from the slot (AUDIT WORLD6a A3)');
   assert.match(pure, /if \(claim && bag\.seen\.has\(canon\)\) return false;[\s\S]{0,400}?if \(first\) bag\.net\?\.claimed\?\.\(\);/, 'a claim speaks once; the memory is due on a first claim');
   assert.equal((m.match(/host\.onInteriorLeave\?\.\(\);/g) ?? []).length, 2, 'the two teardowns, no third');
   assert.match(m, /cacheInteriorScene\(\);\s*interiorLootLeave\(interiorCtx, _intShared\);[^\n]*\n\s*host\.onInteriorLeave\?\.\(\);   \/\/ WORLD6a[^\n]*\n\s*teardownQuestFlats\(\);/, 'the exit: after the cache, before the teardown (and the cupboards hear of the leave first - OUTDOOR-LOOT D-1)');
@@ -166,5 +166,4 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.equal((w.match(/modes\?\.placeActionRecords\?\./g) ?? []).length, 2, 'the act and the flush');
   assert.match(w, /onInteriorLeave: \(\) => \{ const n = handOverRoomFoes\(\);[^\n]*worldPublish\(performance\.now\(\), true\); \},/);   // QUEST-PARTY phase 3b: my foes to those who stay, then the memory
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /Dungeons and buildings are shared: enemies, doors, levers and opened chests are the same for everyone and stay that way\. In towns and the wilds, everyone nearby sees the same monsters and can fight them, and they can hurt you too\./);
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## WORLD6 \(2026-09-14\)/, 'the record');
 });

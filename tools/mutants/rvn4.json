@@ -11,8 +11,8 @@
   {
     "name": "RVN4-rank-4-share-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 });",
-    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.3, 5: 0.4 });",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.3, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN4-blows-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  BLOWS: 1.2,                   // its blows (damageScale)",
-    "new": "  BLOWS: 1.1,                   // its blows (damageScale)",
+    "old": "  BLOWS: 1.2, // its blows (damageScale)",
+    "new": "  BLOWS: 1.1, // its blows (damageScale)",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN4-phase-two-chains-one",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "chainMax: PHASE_TWO.CHAIN_MAX, iron:",
-    "new": "chainMax: 1, iron:",
+    "old": "    chainMax: PHASE_TWO.CHAIN_MAX,",
+    "new": "    chainMax: 1,",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN4-twice-a-stand",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (!id || f._lastStood || f.puppet",
-    "new": "  if (!id || f.puppet",
+    "old": "  if (!id || f._lastStood || f.puppet || f.companion != null || fateHeld(f) || !revenantOn()) return false;",
+    "new": "  if (!id || f.puppet || f.companion != null || fateHeld(f) || !revenantOn()) return false;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "RVN4-the-health-unset",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  e.health = Math.max(1, Math.round((e.maxHealth || 1) * (r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank))));",
+    "old": "  e.health = Math.max(\n    1,\n    Math.round(\n      (e.maxHealth || 1) * (r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank)),\n    ),\n  );",
     "new": "  e.health = 1;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "RVN4-no-roar",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  f.roaring = { at: now, until: now + LAST_STAND_ROAR * 1000 };\n",
-    "new": "",
+    "old": "  f.roaring = { at: now, until: now + LAST_STAND_ROAR * 1000 };\n  // no brain to roar with (the switch off): its motor held and its swing raised for the roar (the pool lets it go)",
+    "new": "  // no brain to roar with (the switch off): its motor held and its swing raised for the roar (the pool lets it go)",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN4-no-motor-hold",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }",
-    "new": "{ f.ai._blowHold = true; f._roarHeld = true; }",
+    "old": "    f.ai.roarUntil = clock + LAST_STAND_ROAR;\n    f.ai._blowHold = true;",
+    "new": "    f.ai._blowHold = true;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN4-the-swing-unraised",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }",
-    "new": "{ f.ai.roarUntil = clock + LAST_STAND_ROAR; }",
+    "old": "    f.ai._blowHold = true;\n    f._roarHeld = true;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN4-phase-two-unstood",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  e.revenant = { ...e.revenant, p2: phaseTwo() };\n",
-    "new": "",
+    "old": "    e.revenant = { ...e.revenant, p2: phaseTwo() };\n    e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * PHASE_TWO.BLOWS;",
+    "new": "    e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * PHASE_TWO.BLOWS;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN4-the-blows-unscaled",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "* PHASE_TWO.BLOWS;",
-    "new": "* 1;",
+    "old": "    e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * PHASE_TWO.BLOWS;",
+    "new": "    e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * 1;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN4-the-speed-unstood",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (e.stats) e.stats.speed = (e.stats.speed ?? 0) + PHASE_TWO.SPEED;\n",
-    "new": "",
+    "old": "    if (e.stats) e.stats.speed = (e.stats.speed ?? 0) + PHASE_TWO.SPEED;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN4-the-swing-kept",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "    if (f._roarHeld) { f._roarHeld = false; if (f.ai) f.ai._blowHold = 'cancel'; }",
-    "new": "    if (f._roarHeld) { f._roarHeld = false; }",
+    "old": "      if (f.ai) f.ai._blowHold = 'cancel';\n    } // its raised swing let go, striking nothing",
+    "new": "    } // its raised swing let go, striking nothing",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN4-windup-unread",
     "file": "src/ai/tells.js",
-    "old": "  if (ent?.revenant?.p2?.windup > 0) w *= ent.revenant.p2.windup;   // RVN4: phase two's quicker wind-ups\n",
-    "new": "",
+    "old": "  if (ent?.revenant?.p2?.windup > 0) w *= ent.revenant.p2.windup; // Phase two's quicker wind-ups\n  if (guard === 'iron') w += TELL.IRON_EXTRA;",
+    "new": "  if (guard === 'iron') w += TELL.IRON_EXTRA;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RVN4-cooldown-unread",
     "file": "src/ai/tells.js",
-    "old": "* (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1);   // RVN4: phase two's x0.7",
-    "new": ";   // RVN4: phase two's x0.7",
+    "old": "  return (\n    (lo + (hi - lo) * roll) *\n    (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) *\n    (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1)\n  ); // Phase two's x0.7",
+    "new": "  return (lo + (hi - lo) * roll) * (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1); // Phase two's x0.7",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RVN4-iron-unread",
     "file": "src/ai/tells.js",
-    "old": ", ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0);   // RVN4: phase two's half",
-    "new": ");   // RVN4: phase two's half",
+    "old": "    ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0,\n  ); // Phase two's half",
+    "new": "  ); // Phase two's half",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RVN4-the-brain-chains-one",
     "file": "src/ai/tactics.js",
-    "old": "(b.chain ?? 0) < chainMax(ent) && chains(",
-    "new": "(b.chain ?? 0) < 1 && chains(",
+    "old": "    (b.chain ?? 0) < chainMax(ent) &&",
+    "new": "    (b.chain ?? 0) < 1 &&",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "RVN4-no-ring",
     "file": "src/ai/tactics.js",
-    "old": "  if (!s || s.puppet || !ent || !tacticsSwitchOn()) return false;\n  if (s.blow)",
-    "new": "  if (true) return false;\n  if (s.blow)",
+    "old": "  if (!s || s.puppet || !ent || !tacticsSwitchOn()) return false;",
+    "new": "  if (true) return false;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RVN4-the-ring-not-iron",
     "file": "src/ai/tactics.js",
-    "old": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds)",
-    "new": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'poise', seconds)",
+    "old": "  const b = fitBlowToGround(makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds), ai.collider);",
+    "new": "  const b = fitBlowToGround(makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'poise', seconds), ai.collider);",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RVN4-the-ring-its-own-length",
     "file": "src/ai/tactics.js",
-    "old": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds)",
-    "new": "makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron')",
+    "old": "  const b = fitBlowToGround(makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron', seconds), ai.collider);",
+    "new": "  const b = fitBlowToGround(makeBlow('ring', ai.feet, ai.yaw, now, IRON_COLOR, 'iron'), ai.collider);",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ],
@@ -440,8 +440,8 @@
   {
     "name": "RVN4-the-page-at-rank-2",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "((r?.rank | 0) >= LAST_STAND_RANK ?",
-    "new": "((r?.rank | 0) >= 2 ?",
+    "old": "  (r?.rank | 0) >= LAST_STAND_RANK",
+    "new": "  (r?.rank | 0) >= 2",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]

@@ -35,7 +35,9 @@ import { flatBatchAabb, localAabb, transformedAabb } from '../render/frustum.js'
 import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { footGroundAt, footRectsAt, modelFootParts } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs, tamrielLandsOn } from './shared.js';
-import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
+import { landGroundSet, landsNine } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
+import { SKYRIM_FLORA_ARCHIVE, SKYRIM_HANGING_RECORDS } from '../world/tamriel/skyrimFlora.js';   // Skyrim crossed plants + hanging moss
+import { isSkyrimMossRock, standSkyrimFlora } from '../world/tamriel/skyrimFloraMesh.js';
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
 import { climateNeighbourIn } from '../world/tamriel/tamrielGround.js';
 import { getLocationTerrainTileOrigin, setLocationTiles, WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
@@ -169,7 +171,7 @@ export function createPixelBuild(host) {
    *   uploadRecordFrame: Function, flatAnims: any, unionBox: (b: number[]) => void }} g
    * @param {{ batches: any[], forestGroups: Map<string, any>, coverItems: any[], lptHandles: any[], lptGroups: any[] }} out
    */
-  async function standFlatGroups(g, { batches, forestGroups, coverItems, lptHandles, lptGroups }) {
+  async function standFlatGroups(g, { batches, forestGroups, coverItems, lptHandles, lptGroups, skyrimPlants, hangHosts }) {
     let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
     // FB1020c TRUNK-FIT: THE PIXEL'S SOLID THINGS, measured before any tree is stood - a fountain, a well, a crate, a statue:
     // PROP-BODIES' own bodies (world/propBodies.js flatBody, each foot off its own picture) of every flat of no nature
@@ -199,6 +201,17 @@ export function createPixelBuild(host) {
       // while one stands). AUDIT 05b A12: the choice is every host's one (world/naturePicture.js - a location's, a yard's)
       const { sib, proto: lpt, far, plain, key: rkey } = await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record);
       coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands
+      // Skyrim ground plants are three crossed cards (not a camera billboard); trees/rocks host hanging moss
+      if (archive === SKYRIM_FLORA_ARCHIVE) {
+        skyrimPlants.push({ record, centers, size: plain });
+        if (isCoverFlat(archive, record, plain)) coverItems.push(...centers.flatMap((center) => coverProxies(center, plain, { tree: false })));
+        continue;
+      }
+      const base = g.natureBase(archive) ?? archive;
+      const asTree = g.natureSet.has(archive) && isTreeRecord(base, record);
+      if (g.natureSet.has(archive) && (asTree || isSkyrimMossRock(base, record))) {
+        for (const center of centers) hangHosts.push({ c: center, h: plain.h, tree: asTree });
+      }
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
@@ -282,7 +295,7 @@ export function createPixelBuild(host) {
     // IC-GRAND's perf pass (bible/03-World/Arena-Provinces.md IC-GRAND): a family capital's slice's blocks read a breath
     // at a time - each taken from the city's worker or made, on the world-data door (world/capitalModels.js) - before
     // setLocationTiles reads its sixty-four in one task (1.1-1.8 s of one frame in the game, measured)
-    if (capitalViewOf(dfLocation) || dfLocation?.settle2) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }   // WG2-TOWNS: a World 2.0 town's made a breath at a time too
+    if (capitalViewOf(dfLocation) || dfLocation?.settle2) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }   // A World 2.0 town's made a breath at a time too
     if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);
     if (locationRect) locationRect.gateRoads = townGateRoads(groundLocation, maps, blocks);   // GATE-ROADS: its gates for the kernel to lay their roads (world/townGates.js)
     if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)
@@ -334,7 +347,7 @@ export function createPixelBuild(host) {
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
     const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
-      flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground; WG2-TOWNS: a World 2.0 town on its own
+      flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,   // A capital over several pixels flattened to its centre's ground; WG2-TOWNS: a World 2.0 town on its own
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
@@ -416,7 +429,7 @@ export function createPixelBuild(host) {
     const bed = hostBed({ positions, normals }, carved);
     const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
-    // WATER-LEVEL: the water's sheet at its level, carved with the bed - null for a pixel without water, which never enters the pass
+    // The water's sheet at its level, carved with the bed - null for a pixel without water, which never enters the pass
     const water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;
     made.terrain = terrain; made.water = water;   // BUILD-FAIL1
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
@@ -1232,8 +1245,24 @@ export function createPixelBuild(host) {
     // AUDIT PRECIP HOST-7: the groups stood by the one function a re-skin stands them by (standFlatGroups, above)
     const { groups, wild: wildFlats, places } = groupFlats(flatLog, flatLog.map((f) => [f.archive, f.record]));
     placeTrees(flatLog, flatLog.map((f) => f.archive), places);
+    const skyrimPlants = [], hangHosts = [];
     await standFlatGroups({ px, py, groups, wild: wildFlats, natureSet, natureBase, tilemap, paths, vergeNet, uploadRecord, uploadRecordFrame, flatAnims, unionBox },
-      { batches, forestGroups, coverItems, lptHandles, lptGroups });
+      { batches, forestGroups, coverItems, lptHandles, lptGroups, skyrimPlants, hangHosts });
+    // Crossed ground plants; HangingMoss only in the Reach (from trees, rock flats, spires)
+    const skyrimReach = landsNine(px, py)[4]?.key === 'skyrimReach';
+    if (skyrimPlants.length || (skyrimReach && (hangHosts.length || landStood?.set.props?.length))) {
+      // Hanging records are never cover picks, so standFlatGroups never uploads them
+      if (skyrimReach && SKYRIM_HANGING_RECORDS.length) {
+        const hangTex = await getTexture(SKYRIM_FLORA_ARCHIVE);
+        for (const hangRecord of SKYRIM_HANGING_RECORDS) {
+          if (hangRecord < hangTex.recordCount) uploadRecord(SKYRIM_FLORA_ARCHIVE, hangRecord);
+        }
+      }
+      standSkyrimFlora(skyrimPlants, skyrimReach ? hangHosts : [], skyrimReach ? landStood?.set.props : null, px, py, {
+        addStatic: (mesh, at, own) => addStatic(mesh, at, own),
+        unionBox,
+      });
+    }
     const groupBatches = batches.slice(), groupForest = new Set(forestGroups.keys()), groupCover = coverItems.length;
     // BANTHA1: THE JUNGLE'S TREES STAND - a species a batch of its far picture (the owner's tree drawn once from the
     // side, systems/jungleTreesAssets.js), each tree's own scale on its corner, and its 3D tree near the eye (the pixel's
@@ -1694,7 +1723,8 @@ export function createPixelBuild(host) {
     const flatsTurn = pics.some((pic, j) => pic[0] !== sk.log[j].archive || pic[1] !== sk.log[j].record);
     const law = `climate:${p.townClimate}.${pixelSeason}`, turns = remapLawOf(p.texRemap) !== law;
     const lawOf = (c) => (a, r) => applyClimate(a, r, c, pixelSeason);
-    const made = { mesh: undefined, batches: [], forestGroups: new Map(), coverItems: [], lptHandles: [], lptGroups: [] };
+    // hangHosts / skyrimPlants: standFlatGroups pushes into them; without them a snow re-skin throws on every nature tree
+    const made = { mesh: undefined, batches: [], forestGroups: new Map(), coverItems: [], lptHandles: [], lptGroups: [], skyrimPlants: [], hangHosts: [] };
     let traded = false;
     try {
       // THE BUILDINGS' SEASON: the table, the merge drawn through it, the homes' looks, the mills' bodies

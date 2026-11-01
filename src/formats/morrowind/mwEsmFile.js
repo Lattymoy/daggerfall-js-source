@@ -74,8 +74,21 @@ function* subrecords(bytes) {
 const subString = (data) => new EsmStream(data).zstring(data.byteLength);
 
 export const MW_BODY_PARTS = Object.freeze([
-  'head', 'hair', 'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm',
-  'upperarm', 'foot', 'ankle', 'knee', 'upperleg', 'clavicle', 'tail',
+  'head',
+  'hair',
+  'neck',
+  'chest',
+  'groin',
+  'hand',
+  'wrist',
+  'forearm',
+  'upperarm',
+  'foot',
+  'ankle',
+  'knee',
+  'upperleg',
+  'clavicle',
+  'tail',
 ]);
 export const BODY_TYPE = Object.freeze({ skin: 0, clothing: 1, armor: 2 });
 
@@ -126,8 +139,17 @@ export const NPC_FLAG = Object.freeze({ female: 0x01, essential: 0x02, respawn: 
 
 function decodeNpc(rec) {
   const out = {
-    id: null, name: null, model: null, race: null, cls: null, faction: null,
-    head: null, hair: null, female: false, autocalc: false, level: 0,
+    id: null,
+    name: null,
+    model: null,
+    race: null,
+    cls: null,
+    faction: null,
+    head: null,
+    hair: null,
+    female: false,
+    autocalc: false,
+    level: 0,
   };
   for (const sub of subrecords(rec.data)) {
     if (sub.type === 'NAME') out.id = subString(sub.data).toLowerCase();

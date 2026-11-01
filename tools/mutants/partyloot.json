@@ -111,8 +111,8 @@
   {
     "name": "PARTY-LOOT-take-counts-only-rise",
     "file": "src/systems/roomLoot.js",
-    "old": "  for (const [i, n] of w.c ?? []) { const was = st.counts.get(i); if (was === undefined || n < was) { st.counts.set(i, n); changed = true; } }",
-    "new": "  for (const [i, n] of w.c ?? []) { st.counts.set(i, n); changed = true; }",
+    "old": "    const was = st.counts.get(i);\n    if (was === undefined || n < was) {\n      st.counts.set(i, n);\n      changed = true;\n    }",
+    "new": "    st.counts.set(i, n);\n    changed = true;",
     "tests": [
       "test/systems/partyloot.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "PARTY-LOOT-room-scope-never-raised",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  if (_roomRoll > 0) return true;   // PARTY-LOOT: while a room's base rolls, every mod is the room's whole (asTheRoom, below)\n",
-    "new": "",
+    "old": "  if (_roomRoll > 0) return true; // PARTY-LOOT: while a room's base rolls, every mod is the room's whole (asTheRoom, below)\n  const whole = Object.hasOwn(ONLINE_WHOLE_MODS, vendor) ? ONLINE_WHOLE_MODS[vendor] : null;",
+    "new": "  const whole = Object.hasOwn(ONLINE_WHOLE_MODS, vendor) ? ONLINE_WHOLE_MODS[vendor] : null;",
     "tests": [
       "test/systems/partyloot.test.js"
     ]
@@ -256,7 +256,7 @@
     "name": "PARTY-LOOT-ARB-a-pending-take-shows",
     "file": "src/systems/roomLoot.js",
     "old": "    const left = (state.counts.get(i) ?? (counted ? /** @type {number} */ (full[i]) : 1)) - (places.get(i) ?? 0);",
-    "new": "    const left = (state.counts.get(i) ?? (counted ? /** @type {number} */ (full[i]) : 1));",
+    "new": "    const left = state.counts.get(i) ?? (counted ? /** @type {number} */ (full[i]) : 1);",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

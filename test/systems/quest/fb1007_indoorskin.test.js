@@ -27,6 +27,7 @@ import { setForagingHost } from '../../../src/systems/foraging/foragingInstall.j
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { Foe } from '../../../src/systems/quest/foe.js';
 import { MOBILE_TYPES } from '../../../src/characters/mobile/mobileTypes.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -228,11 +229,11 @@ test('INDOOR-SKIN: in a building the street\'s pixels stand no node - a wilderne
 });
 
 test('INDOOR-SKIN wiring, the four hosts: the streaming world lists a building\'s bodies from its own pool and opens their loot by its door, its gathering host live indoors through the building\'s walls; the building\'s ladder, plaque, rig and swing are the professions\' as the dungeon\'s are; the dungeon stays wired; the fixed city stands no professions (FLAGGED)', () => {
-  const w = src('src/scenes/world.js');
-  assert.match(w, /huntBodies = \(\) => bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\);/, 'world.js: the bodies by the mode\'s pool');
-  assert.match(w, /const openHuntLoot = \(key\) => \(modeNow\(\) === 'interior' \? modes\?\.openInteriorBody\?\.\(key\)\n/, 'world.js: a building\'s body searched through the building\'s door');
-  assert.match(w, /activeInterior: \(\) => walkMode && modeNow\(\) === 'interior' && !modes\?\.overlayHeld && !townTalk\.overlayActive && !modes\?\.deathUp\?\.\(\) && !modes\?\.transitioning,/, 'world.js: the gathering host live in a building');
-  assert.match(w, /const c = underground \? modes\?\.dungeonCtx\?\.collider : interior \? modes\?\.interiorCollider : collider;/, 'world.js: a building\'s walls');
+  const w = hostText('src/scenes/world.js');
+  assert.match(w, /huntBodies = \(\) => bodiesHere\(host\.modeNow\(\), \{ street: exteriorFoes, dungeon: host\.modes\?\.dungeonCtx, interior: host\.modes\?\.interiorFoes \}, bodyStamps\);/, 'world.js: the bodies by the mode\'s pool');
+  assert.match(w, /const openHuntLoot = \(key\) => \(host\.modeNow\(\) === 'interior' \? host\.modes\?\.openInteriorBody\?\.\(key\)\n/, 'world.js: a building\'s body searched through the building\'s door');
+  assert.match(w, /activeInterior: \(\) => walkMode && host\.modeNow\(\) === 'interior' && !host\.modes\?\.overlayHeld && !townTalk\.overlayActive && !host\.modes\?\.deathUp\?\.\(\) && !host\.modes\?\.transitioning,/, 'world.js: the gathering host live in a building');
+  assert.match(w, /const c = underground \? host\.modes\?\.dungeonCtx\?\.collider : interior \? host\.modes\?\.interiorCollider : collider;/, 'world.js: a building\'s walls');
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /function makeInteriorFoes\(ctx\) \{[\s\S]{0,4000}?createExteriorFoes\(/, 'worldModes.js: a building\'s pool is the street\'s factory (the pins above drive it)');
   assert.match(m, /get interiorFoes\(\) \{ return interiorFoes; \},/, 'worldModes.js: the building\'s pool handed out');

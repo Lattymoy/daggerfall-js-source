@@ -247,8 +247,8 @@
   {
     "name": "SD11b-L7M2-seen-anywhere",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
-    "new": "if (p) { p.seenAt = now; restoreShare(f, p); }",
+    "old": "    if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) {",
+    "new": "    if (p) {",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SD11b-L6F24-every-seat-counted",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "n: Object.values(f.players).filter((p) => !p.retired).length",
-    "new": "n: Object.keys(f.players).length",
+    "old": "    n: Object.values(f.players).filter((p) => !p.retired).length,",
+    "new": "    n: Object.keys(f.players).length,",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "SD11b-L7H2-the-rights-unasked",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }",
-    "new": "  if (false) { orreryWaited(R, who, now); return { wait: true }; }",
+    "old": "  if (R && !orreryMayTurn(R, who, now)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "SD11b-L7H2-law-company-forgotten",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;",
-    "new": "if (k !== who) return false;",
+    "old": "  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;",
+    "new": "  for (const [k, v] of Object.entries(R.by)) if (k !== who) return false;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "SD11b-L7H2-law-the-menders-lashed",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": ".filter(([, net]) => net >= 0)",
-    "new": ".filter(() => true)",
+    "old": "    .filter(([, net]) => net >= 0)",
+    "new": "    .filter(() => true)",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

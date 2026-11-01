@@ -2,8 +2,8 @@
   {
     "name": "AUDITTESA2G-G1-the-bake-masks-the-sea-again",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "    cells[j * w + i] = curve[",
-    "new": "    if (!trace.land[Math.floor(py) * tw + Math.floor(px)]) continue;\n    cells[j * w + i] = curve[",
+    "old": "      cells[j * w + i] = curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))];",
+    "new": "      if (!trace.land[Math.floor(py) * tw + Math.floor(px)]) continue;\n      cells[j * w + i] = curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))];",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "AUDITTESA2G-G2-a-lost-relief-rejects-the-trace",
     "file": "src/ui/tamrielTrace.js",
-    "old": "trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));",
+    "old": "trace.relief = await loadRelief(trace).catch((e) => { console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e); return null; });",
     "new": "trace.relief = await loadRelief(trace);",
     "tests": [
       "test/world/tamrielrelief.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "AUDITTESA2G-G2-the-bake-reads-its-own-output",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false })",
-    "new": "preloadTamrielTrace({ fetchBytes, palette: pal, niben: false })",
+    "old": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
+    "new": "  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, niben: false }); // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITTESA2G-G3-the-snowpack-s-points-kept",
     "file": "src/systems/weather/snowpack.js",
-    "old": "    this._groundVersion = v;\n    this.reset();",
-    "new": "    this._groundVersion = v;",
+    "old": "    this.reset();\n    this._births = (px, py) => this.climateAt(px, py);",
+    "new": "    this._births = (px, py) => this.climateAt(px, py);",
     "tests": [
       "test/systems/weather/audittesa2g_air.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITTESA2G-G3-the-births-kept",
     "file": "src/systems/weather/snowpack.js",
-    "old": "    this.reset();\n    this._births = (px, py) => this.climateAt(px, py);",
-    "new": "    this.reset();",
+    "old": "    this._births = (px, py) => this.climateAt(px, py);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/weather/audittesa2g_air.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDITTESA2G-G4-the-ease-from-the-centres",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "Math.max(0, /** @type {number} */ (coastDepthAt(px, py))) / RELIEF_COAST_REACH",
-    "new": "Math.max(0, /** @type {number} */ (coastDepthAt(px, py)) + 0.5) / RELIEF_COAST_REACH",
+    "old": "    const ease = Math.min(1, Math.max(0, /** @type {number} */ (coastDepthAt(px, py))) / RELIEF_COAST_REACH);   // SMOOTH-LAND: off the smooth waterline (the law's own distance)",
+    "new": "    const ease = Math.min(1, Math.max(0, /** @type {number} */ (coastDepthAt(px, py)) + 0.5) / RELIEF_COAST_REACH);   // SMOOTH-LAND: off the smooth waterline (the law's own distance)",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDITTESA2G-G12-no-inland-floor",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease)",
-    "new": "SHORE_BYTE",
+    "old": "    return Math.max(Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease), Math.min(255, Math.round(h)));   // never under the shore, nor inland under the floor",
+    "new": "    return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));   // never under the shore, nor inland under the floor",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "AUDITTESA2G-R1-the-blend-unfloored",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "    return own > 0 ? Math.max(SHORE_BYTE, b) : b;",
-    "new": "    return b;",
+    "old": "    return own > 0 ? Math.max(SHORE_BYTE, b) : b;   // AUDIT TESA II R1: the trace's land over the beach line in the blend too (an edge at sea had blended it under)",
+    "new": "    return b;   // AUDIT TESA II R1: the trace's land over the beach line in the blend too (an edge at sea had blended it under)",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "AUDITTESA2G-Z8-the-clamp-back",
     "file": "src/world/landforms.js",
-    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];\n",
-    "new": "",
+    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];\n  return LAND_OF_CLIMATE[climates[(y < 0 ? 0 : y >= MAP_H ? MAP_H - 1 : y) * MAP_W + (x < 0 ? 0 : x >= MAP_W ? MAP_W - 1 : x)]];",
+    "new": "  return LAND_OF_CLIMATE[climates[(y < 0 ? 0 : y >= MAP_H ? MAP_H - 1 : y) * MAP_W + (x < 0 ? 0 : x >= MAP_W ? MAP_W - 1 : x)]];",
     "tests": [
       "test/world/audittesa2g_landforms.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "AUDITTESA2G-Z8-the-seam-band-the-zone-s",
     "file": "src/world/landforms.js",
-    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return",
-    "new": "  if (bayEdgeDistance(x, y) > 0) return",
+    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];",
+    "new": "  if (bayEdgeDistance(x, y) > 0) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];",
     "tests": [
       "test/world/audittesa2g_landforms.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "AUDITTESA2G-F6-the-trace-unasked",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
-    "new": "  return !!tamrielBiomeAt(px, py) && ",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUDITTESA2G-F6-the-sea-a-band-s",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
-    "new": "  return !!tamrielTrace() && ",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "AUDITTESA2G-F6-arena-s-places-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !arenaPlaceOnPixel(px, py)",
-    "new": "",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "AUDITTESA2G-F6-the-capitals-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !capitalOnPixel(px, py)",
-    "new": "",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !placeAt(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "AUDITTESA2G-F6-the-host-s-roll-unread",
     "file": "src/systems/tamrielFauna.js",
-    "old": " && !placeAt(px, py);",
-    "new": ";",
+    "old": "  return (\n    !!tamrielTrace() &&\n    !!tamrielBiomeAt(px, py) &&\n    !arenaPlaceOnPixel(px, py) &&\n    !capitalOnPixel(px, py) &&\n    !placeAt(px, py)\n  );",
+    "new": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py);",
     "tests": [
       "test/systems/audittesa2g_bands.test.js"
     ]

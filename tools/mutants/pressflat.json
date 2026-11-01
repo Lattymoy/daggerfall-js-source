@@ -2,8 +2,8 @@
   {
     "name": "PRESS-FLAT-imbue-leans",
     "file": "src/systems/reforge.js",
-    "old": "    applyRarity(item, tier, rolls, null, { flat: true });",
-    "new": "    applyRarity(item, tier, rolls);",
+    "old": "    applyRarity(item, tier, rolls, null, { flat: true }); // PRESS-FLAT: a bought roll leans nowhere - no skill to the item's own, no damage first",
+    "new": "    applyRarity(item, tier, rolls); // PRESS-FLAT: a bought roll leans nowhere - no skill to the item's own, no damage first",
     "tests": [
       "test/systems/loot/pressflat.test.js"
     ]

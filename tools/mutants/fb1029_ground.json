@@ -1,51 +1,509 @@
 [
-  {"name": "ROAD-DRY-unwired", "file": "src/world/terrain/terrainGen.js", "old": "    if (!arena) {   // ROAD-DRY", "new": "    if (false) {   // ROAD-DRY", "tests": ["test/world/fb1029_ground.test.js", "test/systems/travel/rpt1026_world_causeway.test.js", "test/net/fb1017f_groundgate.test.js"], "why": "the report: the paving at the sea's own height, Deep Waters' water over the road"},
-  {"name": "ROAD-DRY-classic-unlifted", "file": "src/world/terrain/terrainGen.js", "old": "for (const S of classic ? [samples, classic] : [samples]) dryRoadHeights(", "new": "for (const S of [samples]) dryRoadHeights(", "tests": ["test/world/fb1029_ground.test.js", "test/systems/travel/rpt1026_world_causeway.test.js"], "why": "DFU's own samples (the tiles, the beach, the nature) left under the line"},
-  {"name": "ROAD-DRY-rotation-read", "file": "src/world/road/roadDry.js", "old": "!PAVING.has(tilemap[i] & 0x3f)", "new": "!PAVING.has(tilemap[i])", "tests": ["test/world/fb1029_ground.test.js", "test/systems/travel/rpt1026_world_causeway.test.js"], "why": "a turned or flipped paving tile read as no paving"},
-  {"name": "ROAD-DRY-paths-unread", "file": "src/world/road/roadDry.js", "old": "if (!paths[i] || !PAVING", "new": "if (!PAVING", "tests": ["test/world/fb1029_ground.test.js"], "why": "a stamped paving tile the painter never wrote lifted"},
-  {"name": "ROAD-DRY-rect-unread", "file": "src/world/road/roadDry.js", "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "the road through a location's rect lifted over its blend"},
-  {"name": "ROAD-DRY-ring-unread", "file": "src/world/road/roadDry.js", "old": "      if (rect?.ring?.[i]) continue;\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "the town's road ring lifted, which smoothRoadHeights keeps off"},
-  {"name": "ROAD-DRY-lowers", "file": "src/world/road/roadDry.js", "old": "if (samples[k] < CAPITAL_LAND) { samples[k] = CAPITAL_LAND; n++; }", "new": "{ samples[k] = CAPITAL_LAND; n++; }", "tests": ["test/world/fb1029_ground.test.js"], "why": "ground over the line lowered to it"},
-  {"name": "ROAD-DRY-edge-corners", "file": "src/world/road/roadDry.js", "old": " if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);", "new": " lift(cx * hDim + cy);", "tests": ["test/world/fb1029_ground.test.js"], "why": "an edge sample lifted by one pixel's paint alone - a seam"},
-  {"name": "ROAD-DRY-edges-unread", "file": "src/world/road/roadDry.js", "old": "  for (const k of crossings ? ARM_EDGE : []) {", "new": "  for (const k of []) {", "tests": ["test/world/fb1029_ground.test.js", "test/systems/travel/rpt1026_world_causeway.test.js"], "why": "the arm's edge samples left: two tiles of water at the shared edge"},
-  {"name": "ROAD-DRY-one-sided", "file": "src/world/road/roadDry.js", "old": " && !!(byteAt(px + dx, py + dy) & back)", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a crossing read off this pixel's byte alone - a seam where the neighbour draws none"},
-  {"name": "ROAD-DRY-bay-unread", "file": "src/world/road/roadDry.js", "old": "onBay(px + dx, py + dy) && ", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a crossing into a neighbour off the Bay, which paints no paving"},
-  {"name": "MEET-unwired", "file": "src/world/terrain/terrainGen.js", "old": "  const meets = about?.length ? townMeetsAbout(about, { woods, landforms, px, py, own: { samples, classic } }) : null;", "new": "  const meets = null;", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js", "test/net/fb1017f_groundgate.test.js"], "why": "the report: Kalunnunu's quays at a cliff over the sea"},
-  {"name": "MEET-classic-unmet", "file": "src/world/terrain/terrainGen.js", "old": "    if (classic) applyTownMeets(classic, px, py, [...(meetsOf(meets, null) ?? []), ...(landforms ? meetsOf(meets, landforms) ?? [] : [])]);\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "the tiles and the beach read DFU's own ground unmet"},
-  {"name": "MEET-ghost-unmet", "file": "src/world/terrain/terrainGen.js", "old": "  const ghost = meets?.length ? (x, y) => meetLiftAt(px, py, meets, x, y, raw(x, y)) : raw;", "new": "  const ghost = raw;", "tests": ["test/world/fb1029_ground.test.js"], "why": "the edge normals read the neighbour's unmet ground"},
-  {"name": "MEET-level-after", "file": "src/world/terrain/terrainGen.js", "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(unmet?.samples ?? samples)[0];", "new": "    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];", "tests": ["test/world/fb1029_ground.test.js"], "why": "a location's level read on the met ground: it moved"},
-  {"name": "MEET-town-level-after", "file": "src/world/terrain/terrainGen.js", "old": "HEIGHTMAP_DIMENSION, ground ?? samples, false, unmet?.samples);", "new": "HEIGHTMAP_DIMENSION, ground ?? samples, false, null);", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "the town's own level read on the met ground (Kalunnunu 0.5 m)"},
-  {"name": "MEET-mask-after", "file": "src/world/terrain/terrainGen.js", "old": "const ground = locationRect?.shape ? (unmet ? unmet.classic ?? unmet.samples : Float32Array.from(classic ?? samples)) : null;", "new": "const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "the town's outline read on the met ground: its mask grew (Naresa's 16 m step)"},
-  {"name": "MEET-promotion-unmet", "file": "src/world/terrain/terrainGen.js", "old": "export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples, meets: p.meets ?? null });", "new": "export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples });", "tests": ["test/world/fb1029_ground.test.js"], "why": "a promoted pixel's ghost rows unmet"},
-  {"name": "MEET-cone-steep", "file": "src/world/terrain/townMeet.js", "old": "const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;", "new": "const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)), i = x * hDim + y;", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "the cone twice the grade"},
-  {"name": "MEET-cone-lowers", "file": "src/world/terrain/townMeet.js", "old": "for (let i = 0; any && i < up.length; i++) if (up[i] > S[i]) {", "new": "for (let i = 0; any && i < up.length; i++) if (up[i] > 0) {", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "ground over the cone lowered to it"},
-  {"name": "MEET-beyond-moved", "file": "src/world/terrain/townMeet.js", "old": "edges[side] = moved && !beyond ? { R, E } : null;", "new": "edges[side] = moved ? { R, E } : null;", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "a side no cone of MEET_REACH meets raised in part (Chesterbrugh's 427 m in its sea)"},
-  {"name": "MEET-least-unread", "file": "src/world/terrain/townMeet.js", "old": "R[k] = want - e > least ? Math.fround(want) : e;", "new": "R[k] = want > e ? Math.fround(want) : e;", "tests": ["test/world/fb1029_ground.test.js"], "why": "an edge a hair under the town's need raised"},
-  {"name": "MEET-point-law-parted", "file": "src/world/terrain/townMeet.js", "old": "const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2); if (c > up) up = c;", "new": "const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky)); if (c > up) up = c;", "tests": ["test/world/fb1029_ground.test.js"], "why": "the point law (ghost rows, records) parted from the field's"},
-  {"name": "MEET-reach-3x3", "file": "src/world/terrain/townMeet.js", "old": "if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;", "new": "if (!meet) continue;", "tests": ["test/world/fb1029_ground.test.js"], "equivalent": true, "why": "belt and braces: MEET_REACH (120) is short of a pixel (128), so no cone from a town two pixels off reaches a sample; the 3 x 3 test only spares the walk"},
-  {"name": "MEET-cache-world", "file": "src/world/terrain/townMeet.js", "old": "const sameGround = (had, woods, lf) => had.woods === woods &&", "new": "const sameGround = (had, woods, lf) => true &&", "tests": ["test/world/fb1029_ground.test.js"], "why": "a meet read on another world kept"},
-  {"name": "MEET-lift-unmet", "file": "src/world/landforms.js", "old": "      applyTownMeets(shaped, px, py, meetsOf(met, true), hDim);\n      applyTownMeets(classic, px, py, meetsOf(met, false), hDim);\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record's lift in a town's pixel misses the meets"},
-  {"name": "MEET-lift-wild-unmet", "file": "src/world/landforms.js", "old": "lifted = (m, x, y, v) => (met ? meetLiftAt(px, py, m, x, y, v, hDim) : v);", "new": "lifted = (m, x, y, v) => v;", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record's lift in the met sea misses the meets"},
-  {"name": "MEET-lift-level-after", "file": "src/world/landforms.js", "old": "hDim, unmet?.classic ?? classic, true, unmet?.field);", "new": "hDim, unmet?.classic ?? classic, true, null);", "tests": ["test/world/fb1029_ground.test.js"], "why": "the lift's level read on the met field"},
-  {"name": "MEET-moved-unread", "file": "src/world/landforms.js", "old": "  if (!applyTownMeets(now, px, py, meetsOf(met, false), hDim)) return null;", "new": "  return null;", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record before law 5 not moved"},
-  {"name": "MEET-move-dropped", "file": "src/scenes/groundFrameHost.js", "old": "    y += meet;   // ACROSS-EDGE: the meets' move\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record before law 5 under the met ground, the row on"},
-  {"name": "MEET-move-dropped-off", "file": "src/scenes/groundFrameHost.js", "old": "return y + relief + town(y + relief) + meet;", "new": "return y + relief + town(y + relief);", "tests": ["test/world/fb1029_ground.test.js"], "why": "the same, the row off"},
-  {"name": "MEET-move-stamped", "file": "src/scenes/groundFrameHost.js", "old": "const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;", "new": "const meet = meetMovedAt && Number.isFinite(y) ? meetMovedAt(x, z) : 0;", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record stamped 5 moved again"},
-  {"name": "MEET-town-test-met", "file": "src/scenes/groundFrameHost.js", "old": "(landform ? landformLiftAt(x, z) : 0) - meet;", "new": "(landform ? landformLiftAt(x, z) : 0);", "tests": ["test/world/fb1029_ground.test.js"], "why": "a record before 4 tested on the met ground: the town's move doubled or lost"},
-  {"name": "MEET-frame-lift-unasked", "file": "src/scenes/groundFrameHost.js", "old": "landformsHere({ before }), about);", "new": "landformsHere({ before }));", "tests": ["test/world/fb1029_ground.test.js", "test/world/terrain/bayleftground_frame.test.js"], "why": "the records' lift asks no meets"},
-  {"name": "MEET-frame-move-unhanded", "file": "src/scenes/groundFrameHost.js", "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });", "new": "movedAt: groundMovedAt, townMovedAt });", "tests": ["test/world/reliefpeaks.test.js"], "why": "the meets' move not handed to the frame"},
-  {"name": "MEET-bake-unmet", "file": "src/world/deepWater/deepWatersBake.js", "old": "    if (meets) applyTownMeets(S, mapPixelX, mapPixelY, meets);\n", "new": "", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "the bake's sea under the met ground"},
-  {"name": "MEET-bake-sea-unsampled", "file": "src/world/deepWater/deepWatersBake.js", "old": "export const meetClass = (c, met) => (c === PIXEL_SEA && met ? PIXEL_MIXED : c);", "new": "export const meetClass = (c, met) => c;", "tests": ["test/world/fb1029_ground.test.js"], "why": "a sea pixel a meet raises read as all sea"},
-  {"name": "MEET-bake-any-shape", "file": "src/world/deepWater/deepWatersBake.js", "old": "r?.meets && r.shape ? generateSamples(woods, x, y) : null", "new": "r?.shape ? generateSamples(woods, x, y) : null", "tests": ["test/world/fb1029_ground_real.test.js"], "why": "a location the stream never meets met by the bake"},
-  {"name": "MEET-bake-rows-unflagged", "file": "src/world/deepWater/deepWatersClient.js", "old": "...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])", "new": "...(r.shape ? [r.shape] : [])", "tests": ["test/world/fb1029_ground.test.js", "test/world/fb1029_ground_real.test.js"], "why": "the bake's rows name no town"},
-  {"name": "MEET-bake-key", "file": "src/world/deepWater/deepWatersBakeCache.js", "old": "    if (r[6]) { h ^= 0x6d; h = Math.imul(h, 0x01000193); }   // ACROSS-EDGE: a town the meets read\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a bake kept before the meets read again"},
-  {"name": "MEET-bake-lookup", "file": "src/world/deepWater/deepWatersBakeCache.js", "old": ", ...(r[6] ? { meets: true } : {})", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "the rows' flag unread"},
-  {"name": "MEET-worker-twice", "file": "src/world/deepWater/deepWatersWorker.js", "old": "buildGlobal(woods, { locationRectAt, meetsAt })", "new": "buildGlobal(woods, { locationRectAt })", "tests": ["test/world/fb1029_ground.test.js"], "why": "each town's meet read twice on the worker"},
-  {"name": "MEET-types-unread", "file": "src/scenes/townMeetsHost.js", "old": "MEET_TYPES.has(loc.mapTableData?.locationType)", "new": "true", "tests": ["test/world/fb1029_ground.test.js"], "why": "a dungeon or a temple met"},
-  {"name": "MEET-spawn-met", "file": "src/scenes/townMeetsHost.js", "old": " && !loc.spawned", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a spawned dungeon's clone met"},
-  {"name": "MEET-capital-met", "file": "src/scenes/townMeetsHost.js", "old": " && !loc.capital", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a capital met (its own relief or sea law stands it)"},
-  {"name": "MEET-bay-unread", "file": "src/scenes/townMeetsHost.js", "old": "      if (!inBay(x, y)) continue;\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a pixel off the Bay asked"},
-  {"name": "MEET-job-unasked", "file": "src/scenes/pixelBuild.js", "old": "about: townMeets?.about(px, py, meetsTown(groundLocation) ? locationRect?.shape : null) ?? null,", "new": "about: null,", "tests": ["test/world/fb1029_ground.test.js", "test/systems/landform.test.js"], "why": "the stream's job asks no towns"},
-  {"name": "MEET-job-unpublished", "file": "src/scenes/pixelBuild.js", "old": "      meets: meets ?? null,   // ACROSS-EDGE: the meets its ground took - its ghost rows' at a restride\n", "new": "", "tests": ["test/world/fb1029_ground.test.js"], "why": "a restride of a built pixel loses its meets"},
-  {"name": "MEET-classic-plain-alone", "file": "src/world/terrain/terrainGen.js", "old": "if (classic) applyTownMeets(classic, px, py, [...(meetsOf(meets, null) ?? []), ...(landforms ? meetsOf(meets, landforms) ?? [] : [])]);", "new": "if (classic) applyTownMeets(classic, px, py, meetsOf(meets, null));", "tests": ["test/world/fb1029_ground.test.js"], "why": "AUDIT FB1029 D-S2: a town met on the shaped ground alone leaves water tiles on the ground its meet raised (Ageliret)"}
+  {
+    "name": "ROAD-DRY-unwired",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (!arena) {   // ROAD-DRY: the Bay's paving over the sea stands dry, its arms across the edges as their neighbours stand them",
+    "new": "    if (false) {   // ROAD-DRY: the Bay's paving over the sea stands dry, its arms across the edges as their neighbours stand them",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/systems/travel/rpt1026_world_causeway.test.js",
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the report: the paving at the sea's own height, Deep Waters' water over the road"
+  },
+  {
+    "name": "ROAD-DRY-classic-unlifted",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "      for (const S of classic ? [samples, classic] : [samples]) dryRoadHeights(S, tilemap, paths, 129, hasLocation ? locationRect : null, crossings);",
+    "new": "      for (const S of [samples]) dryRoadHeights(S, tilemap, paths, 129, hasLocation ? locationRect : null, crossings);",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "why": "DFU's own samples (the tiles, the beach, the nature) left under the line"
+  },
+  {
+    "name": "ROAD-DRY-rotation-read",
+    "file": "src/world/road/roadDry.js",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!paths[i] || !PAVING.has(tilemap[i])) continue;",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "why": "a turned or flipped paving tile read as no paving"
+  },
+  {
+    "name": "ROAD-DRY-paths-unread",
+    "file": "src/world/road/roadDry.js",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a stamped paving tile the painter never wrote lifted"
+  },
+  {
+    "name": "ROAD-DRY-rect-unread",
+    "file": "src/world/road/roadDry.js",
+    "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n      if (rect?.ring?.[i]) continue;",
+    "new": "      if (rect?.ring?.[i]) continue;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the road through a location's rect lifted over its blend"
+  },
+  {
+    "name": "ROAD-DRY-ring-unread",
+    "file": "src/world/road/roadDry.js",
+    "old": "      if (rect?.ring?.[i]) continue;\n      for (const [cx, cy] of [",
+    "new": "      for (const [cx, cy] of [",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the town's road ring lifted, which smoothRoadHeights keeps off"
+  },
+  {
+    "name": "ROAD-DRY-lowers",
+    "file": "src/world/road/roadDry.js",
+    "old": "    if (samples[k] < CAPITAL_LAND) {",
+    "new": "    {",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "ground over the line lowered to it"
+  },
+  {
+    "name": "ROAD-DRY-edge-corners",
+    "file": "src/world/road/roadDry.js",
+    "old": "        if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);",
+    "new": "        lift(cx * hDim + cy);",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "an edge sample lifted by one pixel's paint alone - a seam"
+  },
+  {
+    "name": "ROAD-DRY-edges-unread",
+    "file": "src/world/road/roadDry.js",
+    "old": "  for (const k of crossings ? ARM_EDGE : []) {",
+    "new": "  for (const k of []) {",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "why": "the arm's edge samples left: two tiles of water at the shared edge"
+  },
+  {
+    "name": "ROAD-DRY-one-sided",
+    "file": "src/world/road/roadDry.js",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit);",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a crossing read off this pixel's byte alone - a seam where the neighbour draws none"
+  },
+  {
+    "name": "ROAD-DRY-bay-unread",
+    "file": "src/world/road/roadDry.js",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a crossing into a neighbour off the Bay, which paints no paving"
+  },
+  {
+    "name": "MEET-unwired",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const meets = about?.length ? townMeetsAbout(about, { woods, landforms, px, py, own: { samples, classic } }) : null;",
+    "new": "  const meets = null;",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js",
+      "test/net/fb1017f_groundgate.test.js"
+    ],
+    "why": "the report: Kalunnunu's quays at a cliff over the sea"
+  },
+  {
+    "name": "MEET-classic-unmet",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (classic) applyTownMeets(classic, px, py, [...(meetsOf(meets, null) ?? []), ...(landforms ? meetsOf(meets, landforms) ?? [] : [])]);\n  }",
+    "new": "  }",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the tiles and the beach read DFU's own ground unmet"
+  },
+  {
+    "name": "MEET-ghost-unmet",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const ghost = meets?.length ? (x, y) => meetLiftAt(px, py, meets, x, y, raw(x, y)) : raw;   // ACROSS-EDGE: the ghost rows the neighbours' met ground",
+    "new": "  const ghost = raw;   // ACROSS-EDGE: the ghost rows the neighbours' met ground",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the edge normals read the neighbour's unmet ground"
+  },
+  {
+    "name": "MEET-level-after",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(unmet?.samples ?? samples)[0];",
+    "new": "    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a location's level read on the met ground: it moved"
+  },
+  {
+    "name": "MEET-town-level-after",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples, false, unmet?.samples);",
+    "new": "    avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples, false, null);",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "the town's own level read on the met ground (Kalunnunu 0.5 m)"
+  },
+  {
+    "name": "MEET-mask-after",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    const ground = locationRect?.shape ? (unmet ? unmet.classic ?? unmet.samples : Float32Array.from(classic ?? samples)) : null;",
+    "new": "    const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "the town's outline read on the met ground: its mask grew (Naresa's 16 m step)"
+  },
+  {
+    "name": "MEET-promotion-unmet",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples, meets: p.meets ?? null });",
+    "new": "export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples });",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a promoted pixel's ghost rows unmet"
+  },
+  {
+    "name": "MEET-cone-steep",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "        const c = r - g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
+    "new": "        const c = r - 2 * g * Math.sqrt((x - kx) * (x - kx) + (y - ky) * (y - ky)),",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "the cone twice the grade"
+  },
+  {
+    "name": "MEET-cone-lowers",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "    if (up[i] > S[i]) {",
+    "new": "    if (up[i] > 0) {",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "ground over the cone lowered to it"
+  },
+  {
+    "name": "MEET-beyond-moved",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "    edges[side] = moved && !beyond ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
+    "new": "    edges[side] = moved ? { R, E } : null; // a side the next pixel cannot meet whole moves nothing",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "a side no cone of MEET_REACH meets raised in part (Chesterbrugh's 427 m in its sea)"
+  },
+  {
+    "name": "MEET-least-unread",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "      R[k] = want - e > least ? Math.fround(want) : e;",
+    "new": "      R[k] = want > e ? Math.fround(want) : e;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "an edge a hair under the town's need raised"
+  },
+  {
+    "name": "MEET-point-law-parted",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "    const c = r - g * Math.sqrt((x - kx) ** 2 + (y - ky) ** 2);",
+    "new": "    const c = r - g * (Math.abs(x - kx) + Math.abs(y - ky));",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the point law (ghost rows, records) parted from the field's"
+  },
+  {
+    "name": "MEET-reach-3x3",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "    if (!meet || Math.abs(qx - px) > 1 || Math.abs(qy - py) > 1) continue;",
+    "new": "    if (!meet) continue;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt and braces: MEET_REACH (120) is short of a pixel (128), so no cone from a town two pixels off reaches a sample; the 3 x 3 test only spares the walk"
+  },
+  {
+    "name": "MEET-cache-world",
+    "file": "src/world/terrain/townMeet.js",
+    "old": "  had.woods === woods &&",
+    "new": "  true &&",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a meet read on another world kept"
+  },
+  {
+    "name": "MEET-lift-unmet",
+    "file": "src/world/landforms.js",
+    "old": "      applyTownMeets(shaped, px, py, meetsOf(met, true), hDim);\n      applyTownMeets(classic, px, py, meetsOf(met, false), hDim);\n      for (let i = 0; i < field.length; i++) field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT;",
+    "new": "      for (let i = 0; i < field.length; i++) field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record's lift in a town's pixel misses the meets"
+  },
+  {
+    "name": "MEET-lift-wild-unmet",
+    "file": "src/world/landforms.js",
+    "old": "    const ms = meetsOf(met, true), mp = meetsOf(met, false), lifted = (m, x, y, v) => (met ? meetLiftAt(px, py, m, x, y, v, hDim) : v);",
+    "new": "    const ms = meetsOf(met, true), mp = meetsOf(met, false), lifted = (m, x, y, v) => v;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record's lift in the met sea misses the meets"
+  },
+  {
+    "name": "MEET-lift-level-after",
+    "file": "src/world/landforms.js",
+    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground",
+    "new": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, null);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the lift's level read on the met field"
+  },
+  {
+    "name": "MEET-moved-unread",
+    "file": "src/world/landforms.js",
+    "old": "  if (!applyTownMeets(now, px, py, meetsOf(met, false), hDim)) return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record before law 5 not moved"
+  },
+  {
+    "name": "MEET-move-dropped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    y += meet;   // ACROSS-EDGE: the meets' move\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record before law 5 under the met ground, the row on"
+  },
+  {
+    "name": "MEET-move-dropped-off",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "return y + relief + town(y + relief) + meet;",
+    "new": "return y + relief + town(y + relief);",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the same, the row off"
+  },
+  {
+    "name": "MEET-move-stamped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;",
+    "new": "const meet = meetMovedAt && Number.isFinite(y) ? meetMovedAt(x, z) : 0;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record stamped 5 moved again"
+  },
+  {
+    "name": "MEET-town-test-met",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "(landform ? landformLiftAt(x, z) : 0) - meet;",
+    "new": "(landform ? landformLiftAt(x, z) : 0);",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a record before 4 tested on the met ground: the town's move doubled or lost"
+  },
+  {
+    "name": "MEET-frame-lift-unasked",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "landformsHere({ before }), about);",
+    "new": "landformsHere({ before }));",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/terrain/bayleftground_frame.test.js"
+    ],
+    "why": "the records' lift asks no meets"
+  },
+  {
+    "name": "MEET-frame-move-unhanded",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
+    "new": "movedAt: groundMovedAt, townMovedAt });",
+    "tests": [
+      "test/world/reliefpeaks.test.js"
+    ],
+    "why": "the meets' move not handed to the frame"
+  },
+  {
+    "name": "MEET-bake-unmet",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (meets) applyTownMeets(S, mapPixelX, mapPixelY, meets);\n    const [avg] = calcAvgMaxHeight(unmet ?? S);",
+    "new": "    const [avg] = calcAvgMaxHeight(unmet ?? S);",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "the bake's sea under the met ground"
+  },
+  {
+    "name": "MEET-bake-sea-unsampled",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "export const meetClass = (c, met) => (c === PIXEL_SEA && met ? PIXEL_MIXED : c);",
+    "new": "export const meetClass = (c, met) => c;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a sea pixel a meet raises read as all sea"
+  },
+  {
+    "name": "MEET-bake-any-shape",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "        S = r?.meets && r.shape ? generateSamples(woods, x, y) : null;",
+    "new": "        S = r?.shape ? generateSamples(woods, x, y) : null;",
+    "tests": [
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "a location the stream never meets met by the bake"
+  },
+  {
+    "name": "MEET-bake-rows-unflagged",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])]);",
+    "new": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape] : [])]);",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/world/fb1029_ground_real.test.js"
+    ],
+    "why": "the bake's rows name no town"
+  },
+  {
+    "name": "MEET-bake-key",
+    "file": "src/world/deepWater/deepWatersBakeCache.js",
+    "old": "    if (r[6]) {\n      h ^= 0x6d;\n      h = Math.imul(h, 0x01000193);\n    } // ACROSS-EDGE: a town the meets read\n  }",
+    "new": "  }",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a bake kept before the meets read again"
+  },
+  {
+    "name": "MEET-bake-lookup",
+    "file": "src/world/deepWater/deepWatersBakeCache.js",
+    "old": "    m.set(r[0], {\n      xMin: r[1],\n      xMax: r[2],\n      yMin: r[3],\n      yMax: r[4],\n      ...(r[5] ? { shape: r[5] } : {}),\n      ...(r[6] ? { meets: true } : {}),\n    });",
+    "new": "    m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}) });",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "the rows' flag unread"
+  },
+  {
+    "name": "MEET-worker-twice",
+    "file": "src/world/deepWater/deepWatersWorker.js",
+    "old": "    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt, meetsAt }) });",
+    "new": "    const g = await cachedBake({ key, build: () => buildGlobal(woods, { locationRectAt }) });",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "each town's meet read twice on the worker"
+  },
+  {
+    "name": "MEET-types-unread",
+    "file": "src/scenes/townMeetsHost.js",
+    "old": "export const meetsTown = (loc) =>\n  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "export const meetsTown = (loc) => !!loc?.exterior?.exteriorData && true && !loc.spawned && !loc.capital;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a dungeon or a temple met"
+  },
+  {
+    "name": "MEET-spawn-met",
+    "file": "src/scenes/townMeetsHost.js",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.capital;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a spawned dungeon's clone met"
+  },
+  {
+    "name": "MEET-capital-met",
+    "file": "src/scenes/townMeetsHost.js",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a capital met (its own relief or sea law stands it)"
+  },
+  {
+    "name": "MEET-bay-unread",
+    "file": "src/scenes/townMeetsHost.js",
+    "old": "        if (!inBay(x, y)) continue;\n        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
+    "new": "        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a pixel off the Bay asked"
+  },
+  {
+    "name": "MEET-job-unasked",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      about: townMeets?.about(px, py, meetsTown(groundLocation) ? locationRect?.shape : null) ?? null,   // ACROSS-EDGE: the towns of its 3 x 3 its ground meets",
+    "new": "      about: null,   // ACROSS-EDGE: the towns of its 3 x 3 its ground meets",
+    "tests": [
+      "test/world/fb1029_ground.test.js",
+      "test/systems/landform.test.js"
+    ],
+    "why": "the stream's job asks no towns"
+  },
+  {
+    "name": "MEET-job-unpublished",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      meets: meets ?? null,   // ACROSS-EDGE: the meets its ground took - its ghost rows' at a restride\n      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,",
+    "new": "      px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "a restride of a built pixel loses its meets"
+  },
+  {
+    "name": "MEET-classic-plain-alone",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    if (classic) applyTownMeets(classic, px, py, [...(meetsOf(meets, null) ?? []), ...(landforms ? meetsOf(meets, landforms) ?? [] : [])]);",
+    "new": "    if (classic) applyTownMeets(classic, px, py, meetsOf(meets, null));",
+    "tests": [
+      "test/world/fb1029_ground.test.js"
+    ],
+    "why": "AUDIT FB1029 D-S2: a town met on the shaped ground alone leaves water tiles on the ground its meet raised (Ageliret)"
+  }
 ]

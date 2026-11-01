@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createDelveHost, delveStandsNone, delveKindsFor, delveKeySite, chestYaw, DELVE_PREF, DELVE_KEY, DELVE_NEAR_M, DELVE_AWAY_SAY_MS } from '../../../src/scenes/delve/delveHost.js';
 import { createHoldFoes, holdStandPlaces, holdDowned, HOLD_RANK_STEP_M, HOLD_STAND_TRIES, HOLD_RESTAND_MS } from '../../../src/scenes/delve/delveHold.js';
-import { plateLooks, shownPlate, createPlateSteps, PLATE_LOOK, PLATE_WRONG_MS, DELVE_SOUNDS } from '../../../src/scenes/delve/delveLitany.js';
+import { plateLooks, shownPlate, PLATE_LOOK, PLATE_WRONG_MS, DELVE_SOUNDS } from '../../../src/scenes/delve/delveLitany.js';
 import { siteShapes, siteFloor, chestMatrix, createDelvePieces, delveChestBucket, DELVE_COLORS, DELVE_CHEST_MODEL, DELVE_DRAW_M } from '../../../src/scenes/delve/delvePieces.js';
 import { DP, holdGates, litanyPlates, newDelveLedger, foldDelveWord, HOLD_GATHER_MS, HOLD_BREATH_MS, HOLD_CAPTAIN_MIN_MS, HOLD_CAPTAIN_MAX_MS, litanyShowMs, DELVE_KIND_NAMES } from '../../../src/net/delve/delveLaw.js';
 import { siteKinds } from '../../../src/world/dungeon/delveSites.js';
@@ -22,7 +22,7 @@ import { setPref as setUiPref } from '../../../src/systems/uiPrefs.js';
 import { Collider } from '../../../src/player/collider.js';
 import { RDB_SIDE } from '../../../src/world/rdbLayout.js';
 import { setPref, _resetForTests } from '../../../src/systems/uiPrefs.js';
-import { midScreenText } from '../../../src/ui/midScreenText.js';
+import { midScreenText, setMidScreenText } from '../../../src/ui/midScreenText.js';
 import { PRIVATEERS_HOLD_MAP_ID } from '../../../src/world/dungeon/dungeonTextures.js';
 import { KT_SHIP_LOCATION_ID } from '../../../src/world/ketch/ketchShip.js';
 import { ARENA_FLOOR_LOCATION_ID } from '../../../src/world/arena/arenaFloor.js';
@@ -176,7 +176,7 @@ test('DLV2 THE HOLD\'S CAPTAIN AND ITS ENDS: an elite with the ledger\'s traits;
   assert.equal(read(S2).wc, 1);
 });
 
-test('DLV2 THE LITANY SEEN: the order shown a plate a second, the lit lit as worked, all lit when won, a wrong plate red for 0.7 s; a step said once as a plate is stepped onto (mutants: the shown step; the lit count; the wrong\'s span; a step said every frame)', () => {
+test('DLV2 THE LITANY SEEN: the order shown a plate a second, the lit lit as worked, all lit when won, a wrong plate red for 0.7 s (mutants: the shown step; the lit count; the wrong\'s span)', () => {
   const s = site({ kind: 'litany' });
   const led = newDelveLedger(s, 'me', 1, 0);
   assert.deepEqual(plateLooks(null, 4), [0, 0, 0, 0]);
@@ -208,10 +208,6 @@ test('DLV2 THE LITANY SEEN: the order shown a plate a second, the lit lit as wor
   const kept = [9, 9, 9, 9, 9, 9];
   assert.equal(plateLooks(null, 4, null, kept), kept, 'filled in place');
   assert.deepEqual(kept, [0, 0, 0, 0], 'to its count');
-  const steps = createPlateSteps();
-  assert.deepEqual([steps.at(-1), steps.at(2), steps.at(2), steps.at(2), steps.at(-1), steps.at(2), steps.at(3)], [-1, 2, -1, -1, -1, 2, 3]);
-  steps.reset();
-  assert.equal(steps.at(3), 3, 'reset: the plate stood on is said again');
   assert.deepEqual([1, 2, 4].map((n) => DELVE_SOUNDS.chime(n).pitch.toFixed(2)), ['0.90', '1.02', '1.26'], 'the chime rises with the numeral');
 });
 
@@ -276,7 +272,7 @@ test('DLV2 THE PIECES: the chest stands once, in the mesh list and the collider 
   assert.equal(glCalls, 0, 'nothing compiled or built at the teardown');
   P.standChest(1, [0, 0, 0], 0); await flush();
   assert.equal(draws.length, 0, 'nothing stands after it');
-  assert.match(rd('src/scenes/delve/delvePieces.js'), /fog\.mode = renderer\._fogMode; fog\.density = renderer\._fogDensity; fog\.range = renderer\._fogRange;[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n {8}for \(const sh of shapes\) \{ pass\.draw\(sh, proj, view, eye, s, fog, centre, null, floor\);/, 'the frame\'s fog, as nodeGlow.js passes it');
+  assert.match(rd('src/scenes/delve/delvePieces.js'), /fog\.mode = renderer\._fogMode;\n\s*fog\.density = renderer\._fogDensity;\n\s*fog\.range = renderer\._fogRange;\n\s*fog\.color = renderer\._fogColor;\n\s*fog\.camPos = renderer\._camPos;\n\s*let drew = false;\n\s*for \(const \{ site, shapes \} of list\) \{\n\s*const \{ centre, floor \} = frameOf\(site\);\n\s*for \(const sh of shapes\) \{\n\s*pass\.draw\(sh, proj, view, eye, s, fog, centre, null, floor\);/, 'the frame\'s fog, as nodeGlow.js passes it');
 });
 
 test('DLV2 THE KEY AND THE NONE: a vault\'s key its site; no site in a dungeon the row turns off, a made level, an arena\'s sand, an Abyss Hollow or Privateer\'s Hold (mutants: the row unread; the Hollow stood; the Hold stood)', () => {
@@ -378,15 +374,17 @@ test('DLV2 THE HOLD, WON IN A ROOM: the plan on the collider, the near line, the
   assert.equal(midScreenText.text, 'The ward holds. The vault is open.');
   assert.equal(D.namer('delve:vault:0').title, 'Vault');
   const mace = { name: 'Silver Mace', group: 'Weapons', templateIndex: 121 };
+  const vault = host.contents('delve:vault:0');
+  assert.deepEqual([vault.length, vault[1], vault[0].isIdentified, vault[2].group], [3, mace, true, 'Currency'], 'DELVE-VAULT: a known piece, the pile\'s own roll, then gold');
   assert.equal(host.press('delve:vault:0'), 1);
-  assert.deepEqual(D.opened, [[mace]]);
+  assert.deepEqual(D.opened, [vault]);
   assert.equal(host.press('delve:vault:0', 'info'), 1);
   assert.equal(D.said.at(-1), 'Vault', 'Info mode names it');
-  assert.deepEqual(host.contents('delve:vault:0'), [mace], 'the plaque lists a won vault');
+  assert.deepEqual(host.contents('delve:vault:0'), vault, 'the plaque lists a won vault');
   assert.equal(host.contents('delve:vault:9'), null);
   // the save: the won site and its vault, under this plan alone
   const snap = host.snapshot();
-  assert.deepEqual(snap.won, [{ i: 0, items: [mace] }]);
+  assert.deepEqual(snap.won, [{ i: 0, items: vault }]);
   // through the save's own envelope (systems/save/save.js - it keeps only the options it names): inside the world record
   const env = JSON.parse(JSON.stringify(snapshotPlayer({ items: [], stats: {} }, { world: { foes: [], delve: snap } })));
   assert.deepEqual(restorePlayer({ items: [], stats: {} }, env).world.delve, snap, 'the vaults come back from a real save');
@@ -407,12 +405,13 @@ test('DLV2 THE HOLD, WON IN A ROOM: the plan on the collider, the near line, the
   setUiPref('quickLoot', true);
   try {
     const frame = resolveHover({ key: 'delve:vault:0', distance: 1, reach: 2 }, { name: (k) => D.namer(k), contents: (k) => host.contents(k) });
-    assert.equal(frame.kind, 'items'); assert.equal(frame.title, 'Vault'); assert.deepEqual(frame.rows.map((r) => r.name), ['Silver Mace']);
+    assert.equal(frame.kind, 'items'); assert.equal(frame.title, 'Vault'); assert.deepEqual(frame.rows.map((r) => r.name), [vault[0].name, 'Silver Mace', 'Gold Pieces']);
     foldQuickLoot(frame);
     assert.equal(quickLootArm('QuickLootAll'), true);
     assert.equal(host.press('delve:vault:0'), 1);
   } finally { resetQuickLoot(); _resetForTests(); }
-  assert.deepEqual(D.me.items.map((i) => i.name), ['Silver Mace']);
+  assert.deepEqual(D.me.items.map((i) => i.name), [vault[0].name, 'Silver Mace']);
+  assert.equal(D.me.goldPieces, vault[2].stackCount, 'the gold to the purse');
   assert.deepEqual(host.contents('delve:vault:0'), [], 'taken out of the vault');
   assert.equal(D.opened.length, 2, 'no window opened');
   host.destroy();
@@ -521,7 +520,23 @@ test('DLV2 THE LITANY, WON IN A ROOM: the order shown, a wrong plate shown again
   assert.equal(host.state()[0].won, true);
   assert.equal(midScreenText.text, 'All the plates are lit. The vault is open.');
   assert.equal(D.stood.length, 0, 'a regular Litany wakes no foe');
-  assert.equal(host.state()[0].vault, 1);
+  assert.equal(host.state()[0].vault, 3, 'the piece, the pile and the gold');
+});
+
+test('LITANY-STAND OFFLINE: a player who walks onto the first plate while the order shows has it lit as the work begins; one who stays on a wrong plate hears it once, not again after the order is shown again (mutants: no plate said; judged every word)', async () => {
+  _resetForTests();
+  const D = dungeonOf(seedFor('litany')), { host } = D, s = host.sites[0];
+  const plates = litanyPlates(s), order = newDelveLedger(s, 'me', seedFor('litany'), 0).order;
+  host.frame(0.1, [s.x, s.y, s.z]);
+  for (let k = 0; k < litanyShowMs(4) / 100; k++) host.frame(0.1, plates[order[0]]);
+  assert.deepEqual([host.state()[0].p, host.state()[0].next], [DP.work, 1], 'lit as the work begins');
+  host.frame(0.1, plates[order[2]]);
+  assert.equal(midScreenText.text, 'Wrong plate. Watch again.');
+  let wrongs = 0;
+  setMidScreenText('');
+  for (let k = 0; k < litanyShowMs(4) / 100 + 20; k++) { host.frame(0.1, plates[order[2]]); if (midScreenText.text === 'Wrong plate. Watch again.') { wrongs++; setMidScreenText(''); } }
+  assert.deepEqual([wrongs, host.state()[0].p], [0, DP.work], 'stood on through the order shown again: no second wrong');
+  host.destroy();
 });
 
 test('DLV2 NONE STOOD: online (until DLV3), the row off, or a dungeon of none - no plan, no frame, no chest, no mark, no press, no list (mutants: online stood; a chest stood online)', async () => {
@@ -557,5 +572,5 @@ test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api and befo
   for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) assert.match(rd(h), /key\.startsWith\('search:'\) \|\| key\.startsWith\('delve:'\)/, `${h}'s press arm`);
   assert.match(rd('src/systems/worldHover.js'), /'spoil:', 'delve:'\]\);/);
   assert.match(rd('src/systems/dungeon/dungeonSense.js'), /'srch:', 'delve:'\]\);/);
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:world-dungeon-sizes", "feat:dungeon-encounters"/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'feat:world-dungeon-sizes',\n\s*'feat:dungeon-encounters'/);
 });

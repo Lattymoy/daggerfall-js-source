@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 PHASE 3 (bible/03-World/World-2-Arc.md): THE PROTOTYPE SETTLEMENTS the specification names, each on its
+// WG2 PHASE 3: THE PROTOTYPE SETTLEMENTS the specification names, each on its
 // prototype region's ground - an oasis village at Tava Wells, a mining settlement on the Dragontails' ore, a fortified
 // town on the high ground, a river trade settlement on the valley's river (all Redguard), and an Argonian stilt village
 // in Black Marsh. Seeds, centres and ordinals are authored; everything else the generator makes from the land.

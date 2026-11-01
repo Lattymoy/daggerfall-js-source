@@ -30,9 +30,12 @@ for (const [k, v] of Object.entries(cur)) {
 }
 console.log(`ASSERT: C3 parity holds for ${Object.keys(cur).length} keys; re-extracted ${Object.keys(out).length}`);
 
-const body = JSON.stringify(out, null, 1).replace(/"([a-zA-Z][a-zA-Z0-9]*)":/g, "'$1':").replace(/"/g, "'");
-writeFileSync(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url),
-`// Enemy visual/behaviour/entity basics (Characters C3, re-extracted
+const body = JSON.stringify(out, null, 1)
+  .replace(/"([a-zA-Z][a-zA-Z0-9]*)":/g, "'$1':")
+  .replace(/"/g, "'");
+writeFileSync(
+  new URL('../src/characters/enemy/enemyBasics.js', import.meta.url),
+  `// Enemy visual/behaviour/entity basics (Characters C3, re-extracted
 // E3a with combat fields). Generated from DFU's EnemyBasics.cs
 // Enemies table (MIT, Daggerfall Workshop): textures + Behaviour
 // (C3, byte-identical parity asserted at generation) + affinity,
@@ -54,5 +57,6 @@ export const ENEMY_BASICS = (${body});
  *  classic rows would build another. */
 const deepFreeze = (o) => { for (const v of Object.values(o)) if (v && typeof v === 'object') deepFreeze(v); return Object.freeze(o); };
 export const VANILLA_ENEMY_BASICS = deepFreeze(structuredClone(ENEMY_BASICS));
-`);
+`,
+);
 console.log('written');

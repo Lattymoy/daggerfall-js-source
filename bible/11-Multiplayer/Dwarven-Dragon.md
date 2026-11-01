@@ -1,487 +1,166 @@
-# The Dwarven Dragon - a world boss in the sky, and a mount for the few who bind one (DRAGON)
-
-> Design page, written 2026-10-29 before the code, and the record of each slice as it lands (section 12). The code's
-> comments cite this page by section number; where the page and a pin disagree, the pin is what runs.
-
-## What the owner asked for
-
-The owner, 2026-10-29, after PR #1359 brought the Dwarven Dragon in as a staff monster and an Admin's ride:
-
-> *"1. Other players should see you ride obviously 2. The dragon itself will be part of a new rare random world
-> encounter, a sort of world boss when found anywhere in the world. This needs to be an extremely hard encounter with
-> Telegraph and unique attack patterns, different movement and aerial integration. 3. On death, the dragon falls and
-> is deactivated on the ground. Dropping loot and one super rare chance of taming.*
-
-> *4. If tamed, the dragon becomes a players mount they can summon, just like their horse/carriage. With the ability to
-> name, use as storage and upkeep using the same horse care system 5. This should increase overworld travel speed, fly
-> in the air and negate road travel 6. The dragon in non overworld view should be able to walk and fly if the player chooses. Simply jumping and
-> holding should enable flight 7. Rare chance of a "shiny" varient to spawn with different colors. This needs to be
-> extremely detailed and a brand new addition to our world"*
-
-Asked four questions, the owner chose each recommended answer the same day:
-
-- **Online only.** The relay runs the fight and signs each kill, as it does the gate's, the serpent's and the Ketch's.
-  The account service rolls the tame, so no client can mint a dragon. Offline there is no dragon fight.
-- **Hidden, seen in the sky.** No chat line and no map ring. A dragon comes down at a random wild place near a town,
-  anywhere in the world, a few times a day. It circles high and is seen and heard from far off; a player who comes
-  near is told once.
-- **Tame 1 in 100, shiny 1 in 20.** Each player who dealt damage has a 1 in 100 chance to tame it, at most one dragon
-  a character. One dragon in 20 is the shiny. A tamed shiny keeps its colours.
-- **The mount's pace.** On the ground it walks and gallops as a horse does. In the air it flies 25 m/s. On the travel
-  map it is twice as fast as a horse and flies straight over water and mountains.
-
-The mount's pace is faster than any player's pace today. THE CEILING HOLDS asks the owner's quoted word for a stronger
-number (`05-Combat/Power-Ceiling.md` section 9); the answer above is that word, and section 9 quotes it.
-
-Daggerfall has no other players, no world boss and no flying mount, so none of this is a DFU member. Its Ledger A row
-is DRAGON.
-
-## 1. The lore - canon, and the port's own
-
-**Canon**: the Rourken, the Dwemer clan that went west to Hammerfell; the Dwemer gone in a day, their constructs still
-at their tasks; aetherium, the Dwemer's blue crystal. **The port's own**, said as such: the Rourken built clockwork
-dragons as outriders for their sky-ketches (`11-Multiplayer/Sky-Ketch.md` section 1). The Mzunthar's still fly the
-patrols they were last given. A dragon comes down where the land's buried brass calls it, circles while its governor
-judges what it found, and fights what comes near. Imrah Bel-Tavir's reading, never the canon's: the same lodestone law
-that keeps the Mzunthar over the Bay. One dragon in twenty runs on an aetherium heart instead of a brass coil. Sailors
-call it **Aetherbright**: its plates are the blue of the crystal, its wings the violet of its light.
-
-## 2. When and where - the relay's secret, told once it lands
-
-DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code"): the rolls were a
-public salt's, so anyone could count every dragon to come. Every roll now takes a watch's omen `{w, s}` (DRAGON-LAW,
-net/dragon/dragonLaw.js), its seed `s` HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js).
-
-- **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). Each watch's omen draws whether a
-  dragon comes down: one watch in three (`DRAGON_WATCH_ONE_IN`), about eight a day. *When* is public - a quarter past;
-  *whether* and *where* are not.
-- **Told once it lands.** A client asks (`ask`) for this watch and the last once its landing is past
-  (`dragonSeedTold`), down whatever room it stands in; the relay answers `omen` each time, never for a watch to come.
-  No secret, no dragon. Rotating `GATE_SIGNING_KEY` moves every dragon, one standing now too.
-- **Its life.** It comes down at `DRAGON_LAND_AT_MS` into the watch, stays until slain or `DRAGON_STAY_MS` (40 minutes)
-  later, then climbs away. So at most one true dragon stands at once, worldwide.
-- **The shiny.** The omen draws one dragon in `DRAGON_SHINY_ONE_IN` (20) as Aetherbright. The fight, its receipt and the
-  account's row carry it.
-- **Where.** The omen picks a theatre among those that stand (`dragonLaneOf`) and a number of its own (`dragonSiteDay`),
-  and the gate's site law finds the pixel over the world's own data (`systems/dragon/dragonSite.js`). The relay never
-  reads the map: it holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a watch, at a
-  pixel's centre on its theatre's side of the Bay's edge (`dragonSiteOk`; no province's border is the relay's). A
-  forged site within that stands a fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
-
-No line in chat and no ring on the map. The dragon is found by being seen.
-
-## 3. Seen in the sky - before anyone fights it
-
-From its landing until a player comes within `DRAGON_ADMIT_R` (600 m), the dragon roosts in the air: it circles its
-site at `ROOST_ALT` (70 m) on a path that is a function of the clock and its omen (`net/dragon/dragonBody.js`), so every
-screen told the omen draws it in the same place with no frame sent.
-
-- **Drawn** to `DRAGON_SIGHT_R` (4 km), in the view's own fog, as the Dwarven Dragon's own sprite at `DRAGON_SCALE`
-  (1.6 - a wingspan near 19 m), its idle frames in the air.
-- **Heard**: a roar once in every `DRAGON_ROAR_MS` (40 s) of the clock, placed at it, carrying `DRAGON_ROAR_R` (3 km).
-- **Told once**, after a player has been within `DRAGON_NOTICE_R` (1.5 km) of a roosting dragon for
-  `DRAGON_NOTICE_WAIT_MS` (6 s): *"A dragon circles in the sky to the north-east."* (the way from the player to it, a
-  whole phrase of its own in each language: `dragon.way.*`, never an English compass word inside a translation). The wait is longer than the cell's pace for its whole state, so a dragon its cell says slain is never told.
-
-## 4. The fight - who runs it
-
-The serpent's model (`11-Multiplayer/Sea-Serpent.md` section 6): the fight lives in the CELL ROOM its site stands in,
-never a room of its own. The brain (`net/dragon/dragonBrain.js`) is pure law, plugged into the boss seam
-(`net/bossSeam.js` `DRAGON_SEAM`), stepped on the cell's alarm every `DRAGON_TICK_MS` (250), checkpointed every two
-seconds, and forgotten two hours after it ends.
-
-- **The join** (`in`): the watch, the site, the brain's law `bv`, the level (never above the token's `cl`). Refused:
-  an older law (*reload*); another watch or a watch with no dragon (*the dragon is gone*); a site its dragon could not
-  stand at (*gone*); a pose past `DRAGON_ADMIT_R` (*too far*); a site in another cell (junk); a dragon slain or gone.
-- **Every word names its fight** (`id`, the watch and the site), so a client folds its own alone (the serpent's AUDIT
-  SERPENT 2 F1 law).
-- **The numbers** are the gate's level-claim law: a fighter brings `DRAGON_TTK_S` (720; 200 before DRAGON-HARDER) seconds of
-  `dpsRef(lv) = 5 + lv` to its health, at the fight's fraction for a late one, and may deal by a bucket refilled at
-  three times the reference a second, fifteen deep, no blow over twelve. A share leaves the health when its fighter is
-  gone from the fight for 45 s.
-- **A blow is believed** only from a pose within `DRAGON_ENGAGE_R` (300 m) of its body, and a melee blow only within
-  reach of it on the ground (section 6).
-
-## 5. Its mind - the air and the ground
-
-The Dwarven Dragon fights in two places, and the fight is reading which one it is in:
-
-- **ALOFT.** It flies an orbit about its site at `CIRCLE_ALT` (30 m), banking, 55 m out, at
-  `FLY_V` (18 m/s). Melee cannot reach it. Arrows and spells can. Its blows from the air are lanes and discs.
-- **GROUNDED.** After a Crash Landing it stands on the ground for `GROUNDED_MS` (12 s; 16 s in the third phase),
-  walking at `WALK_V` (3.4 m/s) toward its target. Melee lands, and every blow on it lands at `GROUNDED_X` (1.3) - the
-  Wellhead Wyrm's law (`11-Multiplayer/Elite-Gates.md`, `wyrm`). It leaves the ground by a Takeoff Gust.
-
-It never strays past `ARENA_R` (140 m) of its site. Threat picks its target as the gate's does: the most threat 60% of
-the time, a random fighter otherwise. It never uses one blow more than twice running. At 66% and 33% it roars, stands
-warded for `DRAGON_SHIELD_MS` (3 s), and climbs into its next phase.
-
-## 6. Its blows - every one telegraphed
-
-Every blow is a shape on the ground (the Spire's stamps, `net/eliteGates/egShape.js`), laid by the relay with its
-wind-up and judged on each struck player's own feet at the landing (co-op's law, `egBlowVerdict`). Each wind-up is
-held to the Spire's floor: long enough to run out of its shape from its middle. A share is of the struck player's own
-maximum health.
-
-| blow | where | shape | wind-up | hits for | phase |
-|---|---|---|---|---|---|
-| **Strafing Run** | aloft | a lane 70 m long, 6 m wide, along its dive | 1.6 s | 25% shock | 1+ |
-| **Cannon Volley** | aloft | a 4 m disc under each of up to five fighters | 2.0 s | 22% shock | 1+ |
-| **Scalding Breath** | aloft, hovering | a cone 70°, 20 m, under its hover | 1.8 s | 30% fire | 1+ |
-| **Crash Landing** | aloft to ground | a disc 9 m where it lands | 2.2 s | 35% weight | 1+ |
-| **Claw Rake** | grounded | a cone 110°, 9 m, before it | 1.3 s | 30% weight | 1+ |
-| **Tail Sweep** | grounded | a cone 150°, 10 m, behind it | 1.4 s | 25% weight | 1+ |
-| **Takeoff Gust** | ground to aloft | a disc 11 m about it | 2.1 s | 20% weight | 1+ |
-| **Overpressure** | aloft | a ring safe within 6 m of the point under it, to 32 m | 2.4 s | 40% fire | 2+ |
-| **Shrapnel Rain** | aloft | eight 4 m discs about the fighters | 2.2 s | 25% weight | 3 |
-
-(The wind-ups here are the floors' answers at THE ESCAPE BUILD's run; the brain clamps each through `egBlowOf`, so the
-table and the pins agree.) In the third phase every wind-up is cut by a fifth, never below its floor. Shock and fire
-honour the player's resistances through the game's own saving throw.
-
-**On the ground** each shape is drawn where it lands, draped over the land's own heights (section 9). **On it** the
-sprite holds its attack frame through the wind-up and glows the blow's colour; each blow has its wind-up sound.
-
-## 7. The fall - deactivated on the ground
-
-At nought the cell stamps the kill once (`fell`, with its three best dealers and the damage chart) and signs each
-earner's receipt. On every screen the dragon falls from where it was, straight down to the ground under it, and lands
-with its body's thud. Then it lies **deactivated** for `DRAGON_REMAINS_MS` (10 minutes): its idle frame on the ground,
-washed dark, its glow out. Its cell says its state every five seconds to anyone who comes near while it lies, and answers
-a late `in` with it, so nobody sees the roosting dragon circling over a slain one. The spoils burst from it (section 8).
-
-**Earned**: a fighter that dealt `DRAGON_DEALT_SHARE` (2.5%) of its own share is a **dealer**; one that stood within
-150 m of it for a quarter of the fight is a **stander**. A dealer's party shares its kill as a stander's, as the
-serpent's does.
-
-## 8. The spoils and the tame
-
-**The receipt** (`net/dragon/dragonReceipt.js`, version `z1`): Ed25519 under the relay's one key, refused by every other
-verifier and theirs by this one. Its claims: `q` the watch, `b` the dragon (0 brass, 1 Aetherbright), `s` the account,
-`c` the hoard's seed, `x` dealt or stood, `l` the level, `m` the relay's body count, `i` issued, `e` a week on.
-
-**The claim** (`server-account/src/dragons.js` `claimDragon`, route `/v1/dragon/claim`, migration `0194_dragon.sql`, acct222).
-The device carries the receipt (`net/dragon/dragonClaims.js`) with the character that fought and a claim id of its own.
-The service counts one kill a (watch, account) in `dragon_kills`, and gives the hoard to the claim whose id writes the
-watch's `dragon_spoils` row, so a second browser is answered no. A guest is given its hoard and nothing else. The kill is
-the questline act `dragon-slain`. No Renown and no silver: the dragon pays its hoard and its tame.
-
-**The hoard** (`systems/dragon/dragonSpoils.js`, rolled on the receipt's seed, never past the character's level), within the
-ceiling's seven rungs: gold, `DRAGON_GOLD_PER_LEVEL` (180) a level, a fifth either way; a dealer one piece Rare or better
-(Legendary 15% of the time) and one Magic or better; a stander the Magic-or-better piece and 60% of the gold. Every piece
-takes the ladder's last pass, the sockets' and the technique's. It goes straight into the pack (`scenes/dragonRewards.js`,
-the serpent's spoils pool under the dragon's own keys), and a crash hands it back at the next stand-up.
-
-**The tame.** The service draws from its own randomness, never the receipt's seed (the serpent's honours law), 1 in
-`DRAGON_TAME_ONE_IN` (100), for a dealer's first write, for a character that holds no dragon (`dragon_mounts`, UNIQUE
-account and character). The draw writes the mount's row by THIS claim's kill row alone, in one batch. Every answer while
-the row stands names the tame, so a lost answer is told again. The device keeps it (`dragon4.tamed`) until it is bound.
-
-**Binding it** (DRAGON5). A tamed player sees *"Its core still turns. The Dwarven Dragon is yours."* Its item - **the
-Dwarven Dragon**, in the Transportation group - goes into the pack at the claim's answer, or at the character's next
-stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
-
-**The title** (WYRM-RIDER, 2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"). An account
-that holds a tamed brass dragon (a `dragon_mounts` row, look 0) holds **Wyrm Rider**; one that holds an Aetherbright
-(look 1) holds **Aether Rider**. The earliest tame of each look (by its time, then its id) also holds **First Wyrm
-Rider** or **First Aether Rider**. A developer's tame is never a First (the owner: "DONT COUNT ADMINS"). They are
-derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
-signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
-name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
-(`ui/titleFlame.js` TITLE_PLATE and plateCss).
-
-## 9. What a player sees and hears
-
-- **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,
-  its walk while it moves, its attack frames at a landing, its hurt frame when a share of its health goes, and the
-  Aetherbright's palette when it is the shiny (section 11). Aloft it stands at its altitude
-  over the land under it.
-- **At rest in the air it hovers** (DRAGON-HOVER, 2026-10-29, the owner: "we need a fly animation for the dragon when it
-  idle"): records 20-24, eight frames a facing, the wings beating and the body bobbing, on the mobile's RangedAttack1
-  table (it has no ranged blow). The world's dragon hovers while aloft and still; another screen draws a resting dragon
-  rider so (`characters/dwarvenDragonId.js` `dragonHoverFrame`). Grounded, it stands on its idle.
-- **The telegraphs** are the gate's renderer (`render/gate/gateTelegraph.js`) laid on a grid draped over the land's
-  heights, so a shape on a hillside follows the hill instead of cutting through it.
-- **The bar** is the gate's boss bar in brass: its name (*the Dwarven Dragon*, or *the Aetherbright Dragon*), its
-  health with the two phase marks, ALOFT or GROUNDED with the seconds left on the ground, the blow it winds up and
-  **MOVE** when one is laid on me, and the time until it climbs away in its last five minutes.
-- **Its voice** is the game's own: the Iron Atronach's sounds pitched down for its size, a Dragonling's roar pitched
-  an octave down for its roar, and the ground's shock under its landings.
-
-## 10. The mount
-
-A tamed dragon is a third mount beside the horse and the cart (`06-Systems/Horse-Care.md`,
-`06-Systems/Horse-Cart-And-Cargo.md`):
-
-- **Summoned** like the horse: the transport window's **Dragon** row (it mounts the dragon when it waits within reach),
-  the summon key (when the dragon was the last mount, or there is no horse and no wagon), or the Stable page's **Call**.
-  It flies in from 320 m behind its spot and 120 m up and lands 7 m behind the player (`systems/dragon/dragonKeep.js`).
-  Dismounted, it waits 7 m behind where the rider stopped; **Send away** sends it climbing off until it is called.
-- **Named** from the Stable page or by activating it in Info mode, its name over it to every player near.
-- **Storage**: saddlebags of `DRAGON_BAGS_KG` (1,000 kg - between the Small Cart and the Open Wagon), a storage beside
-  the pack, opened by activating it (Steal mode or the plaque's row) or from the Stable page while mounted or within 9 m
-  of it. They save with the character, and the judge, the id ledger and customs read them as a held list.
-- **Upkeep** is horse care's own law (`systems/steedCare.js`): its four stats from its seed (its tame id's last four hex),
-  its bond and hunger on its item (`horseBond`, `horseFed`), its breath, in the player's tier (Off, Boons, Hard). It
-  drinks **Dwarven Oil** alone, sold at every Stable (online behind `DWARVEN_OIL_ONLINE`, on since DRAGON-ON), 24 hours of it a
-  flask, from the pack, then its saddlebags. Waiting or away it hunts: hungry at worst, never starving. On the ground it
-  walks, and gallops on its breath; flight spends its breath too. A winded dragon will not gallop or take off, and one
-  winded in the air glides down to land.
-- **Walk or fly.** On the ground it is ridden as a horse (`player/motor.js` ride base 375). **Hold jump** for
-  `TAKEOFF_HOLD_S` (0.4 s) to take off. In the air it flies 25 m/s where the player looks; jump climbs, crouch dives,
-  and it lands when it meets the ground. It flies outdoors only: a door dismounts as a horse's does. Off it in the air
-  (a flag's dismount, Foot picked) the rider is set down, sinking to the ground with no fall (`DRAGON_SET_DOWN_SINK`).
-  Its takeoff is its roar an octave down, its landing the body's thud.
-- **Seen by others**: the pose's ride is `POSE_RIDE.Dragon` (3), its look `rc` (1 the Aetherbright), so every other
-  screen draws the rider as the dragon, in the air where it flies.
-- **On the travel map**: `transportModifier` 64, twice the horse's 128 (`systems/travel/travel.js`), and every pixel
-  flown at that rate, sea and mountain alike, in a straight line - no ship, no fare, no storm's sea.
-- **On the Overworld** (online, where a journey over land is walked, not jumped): a journey begun on the dragon is one
-  straight `air` leg (`systems/dragon/dragonJourney.js`) at the road's rate wherever it goes. The ride takes off and
-  holds `DRAGON_CRUISE_M` (60 m) over the ground or the sea under it, and comes down at the end. No peak refuses it
-  and no shore stops it.
-- **Kept**: it cannot be dropped, sold, traded or lost to a death, the Wild included. The account service holds every
-  dragon item to its `dragon_mounts` row (the judge's provenance law), so a dragon no tame made is a finding. The
-  service's rows are the record (`/v1/dragon/tames`); a device's list is a copy, joined to them before a bind.
-
-## 11. The Aetherbright - the shiny
-
-The dragon's pictures are indexed PNGs, so the Aetherbright is the same pixels under another palette: archive 1801,
-whose pictures are 1800's with their PLTE chunk rewritten at load (characters/dwarvenDragonShiny.js). The brass goes
-the blue of aetherium and the wings the violet of its light. No new picture ships. A tamed Aetherbright keeps its
-colours, under the player and on every other screen.
-
-## 12. The slices
-
-| slice | what | relay | service |
-|---|---|---|---|
-| **DRAGON0** | room in `bootWorld` for the wiring, by a move (`01-Overview/Host-Split.md`) | no | no |
-| **DRAGON1** | the ride seen: one relay gate in `net/wire.js` beside `POSE_RIDE`, the Dragon ride and its look, every screen drawing the rider as the dragon | yes | no |
-| **DRAGON2** | the law, the body, the brain, the receipt; the cell's fight; the `dragon` frame | yes | no |
-| **DRAGON3** | the client: the roost in the sky, the fight, the telegraphs draped, the bar, its voice, my blows on it, its blows on me, the fall and the remains | no | no |
-| **DRAGON4** | the hoard and the tame: the claim, the service's rows and draw, the hoard in the pack (the binding and the judge's provenance are DRAGON5's) | no | yes |
-| **DRAGON5** | the mount: its item, the transport mode, the flight, the saddle, summon, name, bags, care and oil | no | yes (item law) |
-| **DRAGON6** | the travel map: the dragon's rate, straight over sea and land | no | no |
-| **DRAGON7** | the Aetherbright: the palette, the roll, its look kept | no | no |
-
-The relay changes land in ONE version (world288 - every byte of the relay's bundle is hashed; world281, world283, world284,
-world285, world286 then world287, until the merges of main renumbered it past world281 to world287), and the service's in one (acct222 -
-acct211 when this page was written, renumbered past KEEP-MARK, SHED-REPLICA, the PvP rework's acct213-acct215, CRAFT-SET's
-acct216, AUDIT TAMRIEL-WIDE's acct217, INSURE-ALL's acct218, YARD-CELL's acct219, UNION-CHILDREN's acct220 and
-HEARTH-SIBLING's acct221). Each slice: pins in `test/`, a mutant record, its record here.
-
-## 13. The record, slice by slice
-
-**DRAGON1 - the ride seen (2026-10-29).** PR #1359 kept a copy of the ride's relay gate (world276) in
-`systems/staffDragon.js`, and the wire's half sat on #1360, which never merged. Main's relay reached world280 with no dragon
-in its pose law and clamped `rd` 3 to the cart, so other players saw an Admin on a cart. The gate now lives in
-`net/wire.js` beside `POSE_RIDE` (`DRAGON_RIDE_RELAY_MIN` 288, `relaySupportsDragonRide`), and `net/remotePlayers.js` stands
-a dragon's rider as the Dwarven Dragon, with no hooves and no Morrowind body. Pinned by `test/net/dragonride_wire.test.js`
-(the gate and the law agree at this wire's own version); `tools/mutants/dragon1.json`, 6 dead.
-
-**DRAGON2 - the fight's law and the relay's half (2026-10-29, world288).** `net/dragon/dragonLaw.js` (the watch, the look,
-the site's roll), `net/dragon/dragonBody.js` (the plan's legs), `net/dragon/dragonBrain.js` (the fight), `net/dragon/dragonReceipt.js`
-(`z1`), `net/bossRef.js` judgeDragon and `net/bossSeam.js` DRAGON_SEAM; the `dragon` frame in `net/wire.js`; the relay's half in
-`server/src/dragonFights.js`, which `server/src/index.js` calls from its dispatch, its hub route and hello, its alarm (the
-serpent's beat and the dragon's as one) and its trail. Pinned by `test/net/dragon/dragon2_law.test.js` (11) and
-`test/net/dragon/dragon2_relay.test.js` (4); `tools/mutants/dragon2.json`, 35 dead. PIN MOVED: the serpent's alarm line
-(`test/net/serpent/serpent1_relay.test.js`).
-
-Its follow-up: a replace meant for the dragon's refusal codes had also rewritten the serpent's *it is already slain*
-(`SERPENT_NO_WORDS`), so the client dropped that refusal. It is restored, and the SD9a bundle pin moved
-(`test/net/superDungeon/sd9a_receipt.test.js`).
-
-**DRAGON3 - the client (2026-10-29, world288).** `scenes/dragonHost.js` is the dragon on this screen: its sky,
-the sighting, the `in`, its blows draped and judged on my feet, my shafts, spells and swings out to its cell, the bar's
-model, its voice, its fall and its remains. Beside it: `net/dragon/dragonLink.js` (the fold, this site's words alone),
-`systems/dragon/dragonSite.js`, `systems/dragon/dragonWords.js`, `ui/dragonBar.js` (brass) and
-`render/dragon/dragonTelegraph.js` (the gate's pass on a grid over the land). `net/online.js` carries the frame;
-`scenes/world.js` wires it within the room DRAGON0 freed (bootWorld 35,247). The relay now tells a fallen dragon's state
-while its remains lie (`DRAGON_REMAINS_MS` moved to the law). Pinned by `test/net/dragon/dragon3_client.test.js` (7),
-`test/scenes/dragon3_host.test.js` (7) and `test/net/dragon/dragon3_relay.test.js` (1); `tools/mutants/dragon3.json`, 27
-dead. PINS MOVED: the serpent's marks (`serpent4`), its spell door (`fb1019f_bossdot`), NAV-H's enemies near (`nav_h_host`).
-
-**DRAGON4 - the hoard and the tame (2026-10-29, acct222, migration 0194; acct213 and 0192 on its branch, renumbered past the PvP rework, CRAFT-SET, AUDIT TAMRIEL-WIDE, INSURE-ALL, YARD-CELL, UNION-CHILDREN and HEARTH-SIBLING at the merges of main).** `server-account/src/dragons.js` `claimDragon` behind
-`/v1/dragon/claim`: one kill a (watch, account), the hoard to the device that wrote its row, the tame drawn by the
-service for a dealer's first write, one a character, named at every answer while its row stands. On the device:
-`net/dragon/dragonClaims.js` (the carrier), `systems/dragon/dragonSpoils.js` (the hoard), `scenes/dragonRewards.js` (the
-hoard into the pack, the tame kept), made by the dragon's host on three world bindings (bootWorld 35,256). The questline
-act `dragon-slain`; the hoard in the honest producers' sweep (`test/honestItems.mjs`). Pinned by
-`test/net/dragon/dragon4_service.test.js` (3) and `test/net/dragon/dragon4_claims.test.js` (4); `tools/mutants/dragon4.json`,
-20 dead. PINS MOVED: the account version's (acct217) and their ten mutant records, the questline acts' count, the
-schema's tables, the sweep's producers (92).
-
-Its words in the thirteen finished languages, drafted in-session (`tools/l10nInSession.mjs`). The sighting's way is now
-a phrase of its own (`dragon.way.*`), so no language reads an English compass word inside its sentence (a test in
-`dragon3_client.test.js`). A bad character is refused with the serpent's `renown-character`. The world frame's arrows
-moved to a closure of their own (`frameArrows`, PERF-V8), bootWorld 35,258.
-
-**DRAGON5a - the mount: its item, its ride and its flight (2026-10-29).** `systems/dragon/dragonMount.js`: the Dwarven
-Dragon (template 1820), a Transportation piece bound to the pack and worth nothing to the measure, its picture the
-dragon's own idle front. The item law's `dragon` finding (ITEM_LAW_VERSION 15) and the judge's `dragon-tame`
-(`judge.js` judgeDragons: the tame's row, this account and character, held once). `TRANSPORT_MODES.Dragon` is riding but
-never a horse ride (`isHorseRide`): no sprite, hooves or voices, and the saddle over the view (`player/dragonSaddle.js`,
-the Admin's ride's too). The flight (`systems/dragon/dragonFlight.js`, `player/dragonRide.js` on the motor's ride step
-and sink): jump held 0.4 s, 25 m/s aloft, the ground lands it, a fall caught after DRAGON_CATCH_S (1.2 s). Both pickers'
-Dragon row; the pose's ride and look. Pinned by `test/net/dragon/dragon5_mount.test.js` (9); `tools/mutants/dragon5.json`,
-26 dead.
-
-PINS MOVED by DRAGON5a: the item law at 15 (seven pins, LAW_SERVICE's 15 acct217's, and its seven mutant records),
-the modes and groups (`tr1`, `int1`), the rig's horse-only lines (eight pins, `horsevoice`), the levitation term
-(`staff1`, `audit_seats_client`), the footsteps (`if1`), the pose (`hcc_park`, `coats1`).
-
-Two calls of its own. The tame binds at the claim's answer or the next stand-up, not at the remains: the answer comes
-seconds after the kill, so a walk back added nothing. And DRAGON_MOUNT_ONLINE is off for this release (REST6's law,
-SHIP BEFORE ANYONE CAN SEE ONE): the tame waits on the device and in its row, and a later release turns it on. The
-classic window's Dragon row is drawn under DFU's art, a departure (MOVE00I0 has four rows).
-
-**AUDIT DRAGON (2026-10-29, the owner: "Can we audit everything and ensure perfection").** An independent review of the
-whole arc found fifteen, each fixed at its root. The relay: the fight's gate is the ride's number (it stood at 281 and
-opened the frame to relays that close on it); a fight whose shares all retired stands where the last left (the gate's
-`idle`); the ground counts from the landing (`ma`, on the state word too); the Strafing Run's sweep rides the wire; a
-kill whose receipts failed is tried again; the hub sweeps its receipts and bounds its cache. The client: the sky made
-whole in `scenes/dragonHost.js` (`createDragonSky`, bootWorld 35,258); a rider set down, never dropped; the flight
-heard; an Aetherbright rider washed blue on every screen; the tamed line honest while the mount waits.
-
-The service: its tames read back (`/v1/dragon/tames`), so none is lost with a device's storage, and the dragons slain on
-both cards - the Inspect card the count alone (`dragonSlainOf`), never a stranger's tames. The pass against this page found `05-Combat/Power-Ceiling.md` section 9 without the owner's word on the
-pace; it is quoted. The serpent's beat shared the kill's retry gap; SERPENT-RETRY fixed it (`Sea-Serpent.md` 19). Pinned by
-`test/net/dragon/dragonaudit_relay.test.js` (6), `dragonaudit_account.test.js` (4), `dragonaudit_client.test.js` (1) and
-tests in `dragon5_mount` and `dragon3_host`; `tools/mutants/dragonaudit.json`. world284 re-hashed in place.
-
-**THE MERGE OF MAIN AT 566057d51 (2026-10-29, #1386 AUDIT TAMRIEL-WIDE).** Main took world284 and acct217, so the dragon
-is world285 and acct218; migration 0193 stands. `DRAGON_RIDE_RELAY_MIN` is 285 (main's world284 still clamps `rd` 3),
-and the fight's gate with it. Item law 15 names acct218 (`tech1_roster` LAW_SERVICE). bootWorld measures 35,250: main
-took eight lines out. PINS MOVED: the relay's and the service's versions (sixty files, each note before main's), the
-ride's and the fight's gates (`dragonride_wire`, `dragon2_law`), and ten mutant records on the version lines.
-
-**CI ON DRAGON5a (2026-10-29).** The realm's trade law did not know the Dwarven Dragon is bound
-(`net/realm/realmTradeLaw.js` BOUND_TEMPLATES, now with 1820), so the service would have moved one between two realm
-characters; only the client refused it. And the flight's test reset took staffDragon's name; it is `_resetDragonFlight`
-(audit24's one home). PINS MOVED: AUDIT REALM F1's rows and registrars; five mutant records on the bound list, and
-`DRAGON5-the-realm-trades-a-dragon` dead.
-
-**THE MERGE OF MAIN AT bd748f03c (2026-10-29, #1419 INSURE-ALL).** Main took acct218, so the service is acct219; the
-relay stays world285 and migration 0193 stands. Item law 15 names acct219. PINS MOVED: the account version's (twenty
-files, the dragon's note before INSURE-ALL's), the service's history check (`auditscale2_acct`), and eleven mutant
-records on the version lines.
-
-**THE MERGE OF MAIN AT 45342d9fa (2026-10-29, #1416 CAPE-TOGGLE).** Main took world285, so the relay is world286 (the
-merged bundle's hash, 11fe794e); acct219 and migration 0193 stand. `DRAGON_RIDE_RELAY_MIN` is 286 (CAPE-TOGGLE's
-world285 still clamps `rd` 3), and the fight's gate with it. PINS MOVED: the relay version's (fifty files, the dragon's
-note before CAPE-TOGGLE's), CAPE-TOGGLE's own (`capetoggle`), the gates' refusals (`dragonride_wire`, `dragon2_law`),
-and three mutant records on the version lines.
-
-**THE MERGE OF MAIN AT c72b366b5 (2026-10-29, #1424 TRAVIS-FOLD and #1431 FB1029).** Main took world286 (FB1029 GROUND),
-acct219 (YARD-CELL YC3, migration 0193) and acct220 (UNION-CHILDREN), so the dragon is world287 and acct221, and its
-migration is 0194. `DRAGON_RIDE_RELAY_MIN` is 287 (main's world286 still clamps `rd` 3), and the fight's gate with it.
-Item law 15 names acct221. bootWorld measures 35,228: main took four lines out. PINS MOVED: both versions' (each note
-before main's), the service's tables and history (`accountworker`, `auditscale2_acct`), the gates' refusals, and the
-mutant records on the version lines.
-
-**THE MERGE OF MAIN AT 043338ef6 (2026-10-29, #1428 AUDIT FB1029d).** No version moved. bootWorld measures 35,230: main's
-deck seam put two lines in. PINS MOVED: the host's ceiling and its mutant record.
-
-**DRAGON5b ABOARD (2026-10-29).** Reading main's deck seam against the keep found the keep's own gap: it refused a call
-aboard by `deps.aboard`, which the host never passed, so a dragon could be called onto a ship. The host now passes it -
-Daggerfall's ship, a Come Sail Away deck (the pair's rule, AUDIT FB1029d B1) or a sea ship's - and bootWorld measures
-35,232. Pinned in `dragon5b_keep`; `DRAGON5b-a-call-onto-a-ship` and `DRAGON5b-the-host-never-says-aboard` dead.
-
-**CI ON THE MERGES (2026-10-29).** Two of DRAGON5b's own, which the stopped local suite never reached. The keep's
-places were `KEEP`, a name `scenes/dataSource.js` already declares (audit24's one home); they are `DRAGON_WHERE`. And
-the foes module's setter joined the line PORTAL1 pins; it stands on its own line, the module's way, and that line is
-main's again. Its dispatch sat between SURV3's camps and the frame's end; it reads beside EG-F's now. OL2's word on
-the fare moved with PARTY-TRAVEL's bag, so its pin reads the host whole (`hostText`).
-
-**THE MERGE OF MAIN AT d9e485583 (2026-10-29, #1436 FIELD BUGS 2026-10-29e).** Main took acct221 (HEARTH-SIBLING and
-FAMILY-REMOVE, no migration), so the service is acct222; the relay stays world287 and migration 0194 stands. Item law 15
-names acct222. bootWorld measures 35,233: main's KEYS-BLUR put one line in. PINS MOVED: the account version's (each note
-before main's), the service's history check (`auditscale2_acct`), `tech1_roster`'s law, and ten mutant records on the
-version lines.
-
-**THE MERGE OF MAIN AT f2e1fe700 (2026-10-29, #1437 FRONTS, #1426, #1427).** Main took world287 (FRONTS), so the relay is
-world288 (rehashed: main's bundle and the dragon's five modules); acct222 and migration 0194 stand. `DRAGON_RIDE_RELAY_MIN`
-is 288 (FRONTS' world287 still clamps `rd` 3), and the fight's gate with it. bootWorld measures 35,236: main put three
-lines in. PINS MOVED: the relay version's (each note before main's), the relay graph, the gates' refusals
-(`dragonride_wire`, `dragon2_law`), the host's ceiling, and the mutant records on those lines.
-
-**DRAGON-ON (2026-10-29, the owner, after #1396 merged: "you didnt add the actual dragon riding?").** `DRAGON_MOUNT_ONLINE`
-and `DWARVEN_OIL_ONLINE` are on: a tame binds into its character's pack at the stand-up, the transport window rides it,
-and every Stable sells the oil online. REST6's law held both off for #1396's release; on before it ships, a stale client
-(a tab open across the deploy, a desktop app not yet updated) drops the dragon. Its tame row stands, so a current
-client's next stand-up binds it again (`scenes/dragonRewards.js` recall, bind), with a fresh bond and hunger; its
-saddlebags' load is lost. PINS MOVED: the two switches, the bind's off case (`dragon5_mount`), the tamed line
-(`dragonaudit_account`), the online stock (`dragon5c_care`, `merchantyards1`); two mutants whose gate stands open now
-mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-waiting-line-with-the-ride-on`).
-
-**DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill wtf").** A fighter's share was 200 seconds
-of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
-fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
-twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
-the rarest world boss the longest fight. Relay world293, world289, world290, world291 then world292 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
-version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
-
-**DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code").**
-Every roll was `gateHash(DRAGON_SALT, w, k)`, the salt in the client, so the source counted each dragon to come, its
-province and its pixel. The rolls take a watch's omen now (section 2): the relay's seed, told at its landing, never
-before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it
-must, to draw it - but never a watch ahead, and a forged site still stands a fight of its own (section 2).
-`DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 293 (292 until DELVE II took it), past the
-ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
-records re-aimed onto the omen, dead.
-
-**AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
-read DRAGON-HARDER and DRAGON-HIDDEN cold. The relay holds a forged site to a pixel's centre on its omen's side of the
-Bay's edge (`dragonSiteOk`), and a cell waking lets go of an unslain fight an older law made. An `ask` goes down whatever
-room the player stands in - a siege's battle and a tourney drew no dragon - and is answered each time, asked again after
-two seconds, so a lost answer or a clock ahead of the relay's costs no watch. The tests' omen names its look and theatre:
-a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world293, re-hashed in place.
-
-Pinned by `test/net/dragon/dragonhiddenaudit.test.js` (8); `tools/mutants/dragonhiddenaudit.json`, 17 dead. PINS MOVED:
-`dragonhidden`'s answer (each time, not once a socket - `DRAGON-HIDDEN-told-twice` retired with the code) and its ask
-(no cell); `dragon3_host`'s two `online.js` lines; `DRAGON3-the-hub-says-every-word` re-aimed by content. The two records
-`dragonhidden`'s titles named and nobody wrote are added: `dragonhidden.json` 12, dead.
-
-**DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
-and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC
-again. Archive 1801 is 1800's ninety files so turned; no picture ships. One home for a look's pictures
-(`dwarvenDragonId.js` dragonArchiveOf): the boss draws from it, in the sky too before a fight is mine (it was brass there
-until its state came); a peer's rider stands in a bundle of its own (`remotePlayers.js` `_mobileFor`'s skin); the tamed
-mount's pack picture and its rider's saddle are its look's. The wash is gone. Pinned by
-`test/net/dragon/dragon7_aetherbright.test.js` (7); `tools/mutants/dragon7.json`, 11 dead. PINS MOVED: the picture count
-and the shipped files (`dwarvenDragon`, `doctrine`), the registry's words (`l10n4_hardcoded`), the audit's wash
-(`dragonaudit_client`).
-
-**DRAGON5b - the keep (2026-10-29).** `systems/dragon/dragonKeep.js` is the tamed dragon's keep on the character
-(`playerEntity.dragonKeep`, saved by `systems/save/save.js`): ridden, waiting at a native spot, or away; its name; its
-saddlebags; whether it was the last mount. `scenes/dragonKeepHost.js`, made by the dragon's sky host, sees the mount and
-the dismount on the motor's step, draws it waiting and flying in or out, answers its press and plaque (raced with the
-mounts, `player/activationRace.js`), and puts its word on my foes frame (`dk`, `net/dragon/dragonKeepWire.js` - no relay
-change). The transport window, the summon key and the Stable page ask its door. Pinned by
-`test/net/dragon/dragon5b_keep.test.js` (10); `tools/mutants/dragon5b.json`, 25 dead.
-
-PINS MOVED (DRAGON5b): the race's rows (`hard2_activationrace`), the foes frame's test (`hcc_hosts`); fourteen records
-re-aimed by content. ROOM: PARTY-TRAVEL's fare bag moved out of `bootWorld` first (`01-Overview/Host-Split.md`).
-
-**DRAGON5c - its care (2026-10-29).** Horse care's law takes the dragon: `steedCare.js` reads its seed off its tame id
-(`dragonMount.js` dragonSeedOf), feeds it Dwarven Oil alone (`eatsFood`; the oil's row `upkeepItemRows.js` 1712, a Glass
-Bottle's picture) and keeps it by `tendSteed`, tendHorses' body made one steed's. `upkeepRuntime.js` keeps its breath -
-spent by a gallop, or by flight (`dragonRide.js` dragonAloft) - and answers its gallop gate, walk, pace, HUD bar, card and
-feed; its winded word reaches the flight (`setDragonWindedSource`), which then neither takes off nor cruises, and glides.
-The item law takes its bond and food on it. Pinned by `test/net/dragon/dragon5c_care.test.js` (7);
-`tools/mutants/dragon5c.json`, 20 dead.
-
-PINS MOVED (DRAGON5c): the upkeep block (`steed1_horsecare`), the Stable's stock (`merchantyards1`), the hosts' gallop
-(`steed1_horsecare`); ten records re-aimed by content; the oil's row name counted English (`l10n4_hardcoded`).
-
-**DRAGON6 - the journey flown (2026-10-29).** The travel map prices a dragon owner's trip at `DRAGON_TRANSPORT_MODIFIER`
-(64), every pixel at the land's unhindered charge, sea and peaks too: no fare, no Storm Season. Online a map's pick is the
-Overworld's walked journey (OW-ONLY), so there the dragon flies: mounted, the host plans `dragonFlightPlan` - one `air`
-leg, no road, no boat - and the peaks' refusal stands aside. `travelOptions.js` runs a flown leg at the road's rate, its
-ocean stop passes it, and each frame sets the ride's cruise (`setDragonCruise`); the motor's fly hold (`cruiseHold`)
-keeps it at 60 m, then brings it down. Pinned by `test/systems/travel/dragon6_flight.test.js` (6);
-`tools/mutants/dragon6.json`, 15 dead.
-
-PINS MOVED (DRAGON6): the host's plans and peaks (`fb0929d_toroads`, `tv6_dungeons`, `ows2_crossing`, `tv2_click_to_move`,
-`ow_wod`), the road's rate (`tvsmooth1`), the ocean fare's cite (`audit26_streaming2`); ten records re-aimed by content
-(ow2, ow3j, ow4d, ows2, ratelaw, tide3).
+# The Dwarven Dragon
+
+A Rourken clockwork dragon: a rare world boss that circles in the sky, a staff monster an Admin may ride, and a mount
+for the few players who tame one. A player meets it by seeing it - a dragon over the wilds near a town, heard from
+far off - then fights it in two phases of the air and the ground. It falls deactivated, drops a hoard, and one dealer
+in a hundred binds it as a flying mount.
+
+## How it works
+
+**When** (`src/net/dragon/dragonLaw.js`). The real clock is cut into watches of `DRAGON_WATCH_MS`. A watch holds
+`DRAGON_CELLS_A_WATCH` omens, each seed its own HMAC of the relay's `GATE_SIGNING_KEY` (`src/net/dragon/dragonSeed.js`
+`dragonOmenSeeds`), so the source cannot predict a dragon and one omen told says nothing of another. One omen in
+`DRAGON_WATCH_ONE_IN` brings a dragon down, where its cell has ground. An omen within two cells of an earlier one is
+dropped (`dragonCandidates`), so up to four may stand at once, three cells apart at least. The landing is a random second
+in the watch's first `DRAGON_LAND_SPAN_MS` (`dragonLandOf`). The dragon stays until slain or `DRAGON_STAY_MS`, then
+climbs away. One in `DRAGON_SHINY_ONE_IN` is the Aetherbright.
+
+**Where.** Each omen picks one of the relay's world cells in the continent's frame (`dragonCellOf`, `DRAGON_CELLS`), a
+box the relay knows with no map. The client finds the site in that cell over the world's own data
+(`src/systems/dragon/dragonSite.js` `dragonSiteOf`): the Bay's gate scan's ground where the cell has any, else, past the
+Bay, the gate's ground over the towns about it (`src/scenes/gate/gateLanes.js` `groundIn`, read in idle slices once the
+countryside stands and the land is laid). The omen's own roll picks one pixel (`dragonSitePick`). A cell with no ground
+brings no dragon. The relay holds a fight at the site a join names, at most `DRAGON_SITES_MAX` a dragon, at a pixel's
+centre in its omen's cell (`dragonSiteOk`, `dragonCandidateOf`). No chat line, no map ring.
+
+**Told near its cell** (`server/src/dragonFights.js`). A client asks for this watch's omens and the last's, down
+whatever room it stands in. The relay judges a pose in a cell room (within the socket's cover) or in a battle; a private
+room's pose is never judged. A socket not yet stood `DRAGON_TELL_DWELL_MS` in the cell of its pose hears nothing. One
+that has is told a landed dragon's omen within `DRAGON_TELL_PX` of its cell, and null otherwise, no sooner than a quiet
+watch's time (`dragonQuietAt`). A join from a socket not yet stood is dropped too. The client asks again once outside a told omen's reach, and after
+a null from another pixel, or from the same one after `DRAGON_NONE_AGAIN_MS` (`src/scenes/dragonHost.js`).
+
+**The budget.** An account is judged in at most `DRAGON_JUDGED_CELLS_MAX` cells a watch, all its sockets together,
+counted on the hub (`dragonJudgeInternal`). An ask is charged every cell its pose could be told of (`dragonReachCells`),
+a join its site's cell. A fight's words reach a passer-by only once its account is granted the fight's cell.
+
+**Seen in the sky** (`src/scenes/dragonHost.js`). Until a player comes within `DRAGON_ADMIT_R`, the dragon circles its
+site at `ROOST_ALT` on a path that is a function of the clock and omen (`src/net/dragon/dragonBody.js`), so every screen
+draws it in the same place with no frame sent. It is drawn to `DRAGON_SIGHT_R` at `DRAGON_SCALE`, roars every
+`DRAGON_ROAR_MS` (heard to `DRAGON_ROAR_R`), and a player within `DRAGON_NOTICE_R` for `DRAGON_NOTICE_WAIT_MS` is told
+once which way it circles, a whole phrase per language (`dragon.way.*`).
+
+**The fight** (`src/net/dragon/dragonBrain.js`). The fight lives in the cell room its site stands in, as the serpent's
+does, plugged into the boss seam (`src/net/bossSeam.js`), stepped every `DRAGON_TICK_MS` and checkpointed every
+`DRAGON_CHECKPOINT_MS`. A join is refused for an old law (`DRAGON_BRAIN_MIN`), a gone dragon, a bad site, or a pose past
+`DRAGON_ADMIT_R`. Each fighter brings `DRAGON_TTK_S` seconds of the gate's reference damage to its health and deals
+through the gate's bucket; a fighter gone `DRAGON_ABSENT_RETIRE_MS` takes their share away. A blow counts only from
+within `DRAGON_ENGAGE_R`, and melee only when it is grounded.
+
+- **Aloft** it orbits at `CIRCLE_ALT`, flying `FLY_V`. Melee cannot reach it; arrows and spells can.
+- **Grounded** after a Crash Landing, for `GROUNDED_MS`, walking at `WALK_V`; every blow on it lands at `GROUNDED_X`.
+  It leaves by a Takeoff Gust.
+
+It never strays past `DRAGON_ARENA_R` of its site. Threat picks its target as the gate's does; no blow more than
+`DRAGON_REPEAT_MAX` times running. At 66% and 33% it roars, is warded for `DRAGON_SHIELD_MS` and enters its next phase.
+
+**Its blows** (`DRAGON_BLOWS`). Each is a shape on the ground from the Spire's stamps
+(`src/net/eliteGates/egShape.js`), laid with its wind-up and judged on each player's own feet. A hit is a share of the
+struck player's maximum health; shock and fire take the player's saving throw.
+
+| blow | where | wind-up | share | phase |
+|---|---|---|---|---|
+| Strafing Run | aloft, a lane | 1.6 s | 25% shock | 1 |
+| Cannon Volley | aloft, a disc under each of up to five | 2.0 s | 22% shock | 1 |
+| Scalding Breath | aloft hovering, a cone | 1.8 s | 30% fire | 1 |
+| Crash Landing | aloft to ground, a disc | 2.2 s | 35% | 1 |
+| Claw Rake | grounded, a cone before it | 1.3 s | 30% | 1 |
+| Tail Sweep | grounded, a cone behind it | 1.4 s | 25% | 1 |
+| Takeoff Gust | ground to aloft, a disc | 2.1 s | 20% | 1 |
+| Overpressure | aloft, a ring safe near its centre | 2.4 s | 40% fire | 2 |
+| Shrapnel Rain | aloft, discs about the fighters | 2.2 s | 25% | 3 |
+
+Each wind-up is clamped through `egBlowOf` to the Spire's floor; the third phase cuts wind-ups by a fifth, never below
+it. Telegraphs are the gate's renderer (`src/render/gate/gateTelegraph.js`) draped over the land's heights. The bar is
+the gate's in brass: name, health and phase marks, ALOFT or GROUNDED, the blow winding up, and **MOVE** when one is on
+me.
+
+**The fall.** At nought the cell stamps the kill once and signs each earner's receipt. The dragon falls straight down
+and lies deactivated for `DRAGON_REMAINS_MS`. A dealer dealt `DRAGON_DEALT_SHARE` of their share; a stander stood within
+`DRAGON_STAND_R` for `DRAGON_STOOD_SHARE` of the fight. A dealer's party counts as standers.
+
+**Spoils and the tame.** The receipt is `z1` (`src/net/dragon/dragonReceipt.js`), Ed25519 under the relay's key. It
+signs its dragon's place (`p`, its cell's number, `dragonPlaceOf`), so each dragon of a watch is its own kill and a
+forged site in its cell pays once. The hub keeps an account's receipts of its newest watch, one a place. The
+device carries it (`src/net/dragon/dragonClaims.js`) to `/v1/dragon/claim` (`server-account/src/dragons.js`
+`claimDragon`), which counts one kill a (watch, place, account) and gives the hoard to the one claim that writes that
+dragon's row. A receipt with no place counts one a watch, and a placed receipt is refused where an older service
+counted its watch after it was minted.
+
+The hoard (`src/systems/dragon/dragonSpoils.js`) is rolled on the receipt's seed, never past the character's level:
+`DRAGON_GOLD_PER_LEVEL` gold a level, and Magic-or-better and Rare-or-better pieces for a dealer, less for a stander.
+The tame is the service's own draw, 1 in `DRAGON_TAME_ONE_IN`, for a dealer whose character holds no dragon. A tamed
+player sees "Its core still turns. The Dwarven Dragon is yours." and the item goes into the pack
+(`src/scenes/dragonRewards.js`).
+
+**The mount** (`src/systems/dragon/dragonMount.js`, `src/systems/dragon/dragonKeep.js`, `src/player/dragonRide.js`).
+A third mount beside horse and cart:
+
+- summoned from the transport window, the summon key or the Stable page; it flies in from `DRAGON_COME_FROM_M` behind
+  and waits `DRAGON_WAIT_BACK_M` behind its rider; it may be named and sent away; off its back it is drawn at its
+  sprite's own size, the size it is ridden at (`DRAGON_KEEP_SCALE`), never the boss's `DRAGON_SCALE`;
+- saddlebags of `DRAGON_BAGS_KG`, saved with the character and read by the judge as a held list;
+- upkeep is horse care's (`src/systems/steedCare.js`): it drinks Dwarven Oil alone, sold at every Stable; flight and
+  gallop spend its breath, and a winded dragon glides down;
+- ridden on the ground as a horse; hold jump `TAKEOFF_HOLD_S` to fly at `DRAGON_FLY_SPEED`, outdoors only
+  (`src/systems/dragon/dragonFlight.js`);
+- on the travel map at `DRAGON_TRANSPORT_MODIFIER`, straight over sea and peaks; on the Overworld one `air` leg at
+  `DRAGON_CRUISE_M` (`src/systems/dragon/dragonJourney.js`);
+- never dropped, sold, traded or lost to a death; the service holds every dragon item to its tame's row.
+
+Others see a rider as the dragon: the pose's ride is `POSE_RIDE.Dragon`, its look `rc` (1 the Aetherbright). Tamers
+hold the Wyrm Rider or Aether Rider title, and the first of each look the First title (`src/net/huntLaw.js`
+`DRAGON_TITLES`); a developer's tame is never a First.
+
+**The Aetherbright** (`src/characters/dwarvenDragonShiny.js`). Archive 1801 is archive 1800's pictures with their palette
+turned to aetherium's blue and violet at load; no new picture ships. A tamed Aetherbright keeps its colours.
+
+**The staff dragon** (`src/characters/dwarvenDragon.js`). Kind 512, archive 1800 under `public/art/dwarven-dragon/`, the
+Iron Atronach's career made a boss. No encounter table names it: staff bring it to a staff event. An Admin with the
+`DRAGON_GLYPHS` rides it with `/dragon` (`src/systems/staffDragon.js`): flight at `DRAGON_FLY_MULT` times levitation's
+pace, the saddle drawn by `src/scenes/staffDragonHost.js`, and cannons that take `DRAGON_BOLT_DAMAGE` off the first
+monster they meet - never a player, party mate or court boss. `/dragon blue` and `/dragon brass` pick the look.
+
+## Rules
+
+- Online only: the relay runs the fight and signs each kill; the account service rolls the tame (the owner).
+- Hidden and seen in the sky: no chat line, no map ring, a few times a day anywhere in the world (the owner).
+- Tame 1 in 100 per dealer, one dragon a character; shiny 1 in 20, kept when tamed (the owner).
+- The mount walks and gallops as a horse, flies 25 m/s, and travels twice a horse's pace on the map, straight over water
+  and mountains (the owner). This pace is the owner's word past the power ceiling (`05-Combat/Power-Ceiling.md`).
+- The spawn must not be predictable from the source (the owner): every roll is the relay's seed, told after landing.
+- Cell-scoped (the owner): an omen is told only to a player near its cell, never to every screen.
+- A budget of cells an account is judged in each watch, kept on the hub (the owner).
+- Each dragon pays its own kill: a second dragon in one watch pays too (the owner).
+- A tamer's title is worn on a metal name plate (the owner); developers' tames never count as a First (the owner).
+- First Wyrm Rider is granted by name (the owner): `server-account/wrangler.toml` `FIRST_WYRM_RIDER_HANDLES` holds the
+  account, read by `server-account/src/titles.js` `isNamedFirstWyrm`. While the list names anyone, only it names the
+  First. First Aether Rider stays derived from the earliest tame.
+- Lore: the Rourken and aetherium are canon; the clockwork dragons as sky-ketch outriders are the port's own.
+
+## Daggerfall Unity
+
+Daggerfall has no other players, no world boss and no flying mount; none of this is a DFU member.
+
+## Code and tests
+
+- `src/net/dragon/` - law, seed, body, brain, receipt, claims, the keep's wire word
+- `src/systems/dragon/` - site, spoils, mount, keep, flight, journey, words
+- `src/scenes/dragonHost.js`, `src/scenes/dragonKeepHost.js`, `src/scenes/dragonRewards.js` - the dragon on screen, the
+  keep, the hoard
+- `server/src/dragonFights.js` - the relay's half: the tell, the budget, the fight, the receipts
+- `server-account/src/dragons.js` - claim, hoard, tame
+- `src/systems/staffDragon.js`, `src/scenes/staffDragonHost.js` - the Admin's ride
+- `test/net/dragon/` - law, relay, client, claims, service, mount, keep, care, Aetherbright, hidden omens, audits
+- `test/net/dragon/dragoncell.test.js`, `dragonbudget.test.js`, `dragoneach.test.js` - the cell's tell, the budget, a
+  kill a dragon
+- `test/net/dragonride_wire.test.js` - the ride's relay gate and pose law
+- `test/systems/travel/dragon6_flight.test.js` - the flown journey
+
+## Open
+
+- Under the Overworld a peer's ridden dragon is grown with the traveller and a waiting tamed dragon is not.
+
+- Guest accounts cost nothing to make, and the cell budget is an account's, so many guests can still sweep the cells;
+  the hub's count is lost when it sleeps. Put to the owner.
+- A forger told an omen whose cell has no ground can fight a dragon no honest screen sees. Put to the owner.

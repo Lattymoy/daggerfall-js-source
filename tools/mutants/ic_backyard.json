@@ -2,8 +2,8 @@
   {
     "name": "IC-BACKYARD-one-front-unasked",
     "file": "src/world/imperialBackyards.js",
-    "old": "(p.out & 15) !== 1 << e) return null;",
-    "new": "!(p.out & (1 << e))) return null;",
+    "old": "  if (!p || !Array.isArray(at) || !Number.isInteger(e) || (p.out & 15) !== 1 << e) return null; // a street front, and one",
+    "new": "  if (!p || !Array.isArray(at) || !Number.isInteger(e) || !(p.out & (1 << e))) return null; // a street front, and one",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "IC-BACKYARD-the-edges-unwalked",
     "file": "src/world/imperialBackyards.js",
-    "old": "    for (let i = 0; i <= m; i++) if (!open(a + ((c - a) * i) / m, b + ((d - b) * i) / m)) return false;\n",
-    "new": "",
+    "old": "    for (let i = 0; i <= m; i++) if (!open(a + ((c - a) * i) / m, b + ((d - b) * i) / m)) return false;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "IC-BACKYARD-the-reach-unread",
     "file": "src/world/imperialBackyards.js",
-    "old": "    if (!(Math.hypot(x - at[0], z - at[1]) <= reach)) return false;\n",
-    "new": "",
+    "old": "    if (!(Math.hypot(x - at[0], z - at[1]) <= reach)) return false;\n    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;",
+    "new": "    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "IC-BACKYARD-the-yard-unturned",
     "file": "src/world/imperialBackyards.js",
-    "old": "const turn = Math.atan2(-t[1], t[0]), cs",
-    "new": "const turn = 0, cs",
+    "old": "  const turn = Math.atan2(-t[1], t[0]),",
+    "new": "  const turn = 0,",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "IC-BACKYARD-the-door-for-the-origin",
     "file": "src/world/imperialBackyards.js",
-    "old": "fabricBackyard(b, fabricRecordOrigin(cell.r, cell.c, b))",
-    "new": "fabricBackyard(b)",
+    "old": "  const y = b ? Object.freeze(fabricBackyard(b, fabricRecordOrigin(cell.r, cell.c, b))) : null;",
+    "new": "  const y = b ? Object.freeze(fabricBackyard(b)) : null;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "IC-BACKYARD-the-frames-block-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": ", block: b.blockName, record: placed.recordIndex });",
-    "new": " });",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum) });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-ICB-T1-its-own-side-counted",
     "file": "src/world/imperialBackyards.js",
-    "old": "if (q.back || !q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;",
-    "new": "if (q.back) continue;",
+    "old": "        if (q.back || !q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;",
+    "new": "        if (q.back) continue;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-ICB-T1-a-back-range-a-rival",
     "file": "src/world/imperialBackyards.js",
-    "old": "if (q.back || !q.q.some(",
-    "new": "if (!q.q.some(",
+    "old": "        if (q.back || !q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;",
+    "new": "        if (!q.q.some((v) => (v[0] - A[0]) * n[0] + (v[1] - A[1]) * n[1] > BACKYARD.front)) continue;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-ICB-T3-the-gap-dropped",
     "file": "src/world/imperialBackyards.js",
-    "old": "mine = v + side;",
-    "new": "mine = v;",
+    "old": "      mine = v + side;",
+    "new": "      mine = v;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-ICB-P5-the-roofs-unread",
     "file": "src/world/imperialBackyards.js",
-    "old": "    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;\n",
-    "new": "",
+    "old": "    if (roofs.some((w) => Math.abs(x - w[0]) < WELL_ROOF[0] && Math.abs(z - w[1]) < WELL_ROOF[1])) return false;\n    for (const o of rivals) {",
+    "new": "    for (const o of rivals) {",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-ICB-T2-the-reach-halved",
     "file": "src/world/imperialBackyards.js",
-    "old": "reach: 36, front: 1",
-    "new": "reach: 18, front: 1",
+    "old": "export const BACKYARD = Object.freeze({ step: 0.5, walk: 0.05, side: 0.4, back: 0.3, min: 2, reach: 36, front: 1 });",
+    "new": "export const BACKYARD = Object.freeze({ step: 0.5, walk: 0.05, side: 0.4, back: 0.3, min: 2, reach: 18, front: 1 });",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-ICB-T2-the-first-rectangle-kept",
     "file": "src/world/imperialBackyards.js",
-    "old": "if (w >= min && d - back >= min && a > area)",
-    "new": "if (w >= min && d - back >= min && !best)",
+    "old": "      if (w >= min && d - back >= min && a > area) {",
+    "new": "      if (w >= min && d - back >= min && !best) {",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-ICB-L1-the-rivals-near-the-wall",
     "file": "src/world/imperialBackyards.js",
-    "old": "const far = 2 * reach + side,",
-    "new": "const far = reach,",
+    "old": "  const far = 2 * reach + side,",
+    "new": "  const far = reach,",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-ICB-L2-the-pieces-by-their-block",
     "file": "src/world/imperialFabric.js",
-    "old": "reaches = (a, b, pad) => whole || segRect(a, b, x0, z0, x1, z1) <= pad;",
-    "new": "reaches = () => whole;",
+    "old": "        reaches = (a, b, pad) => whole || segRect(a, b, x0, z0, x1, z1) <= pad;",
+    "new": "        reaches = () => whole;",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-ICB-L3-the-court-on-its-chords",
     "file": "src/world/imperialFabric.js",
-    "old": "L.courts.push(blk.lawn);",
-    "new": "L.courts.push(blk.court);",
+    "old": "      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.lawn); // AUDIT IC-BACKYARD L3: laid out to its ring",
+    "new": "      if (blk.court && nearCell(blk.lawn) && own(blk.court)) L.courts.push(blk.court); // AUDIT IC-BACKYARD L3: laid out to its ring",
     "tests": [
       "test/world/worldWide/ic_backyard.test.js"
     ],

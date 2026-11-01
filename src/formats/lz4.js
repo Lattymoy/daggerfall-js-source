@@ -42,7 +42,7 @@ export function lz4BlockDecompress(src, outSize) {
     }
     if (ip + litLen > n || op + litLen > outSize) throw new Error('lz4: literals run past a buffer');
     for (let i = 0; i < litLen; i++) out[op++] = src[ip++];
-    if (ip >= n) break;   // the last sequence carries literals only
+    if (ip >= n) break; // the last sequence carries literals only
     if (ip + 2 > n) throw new Error('lz4: truncated match offset');
     const offset = src[ip] | (src[ip + 1] << 8);
     ip += 2;

@@ -11,8 +11,8 @@
   {
     "name": "PERF-ON4-the-online-lane-needle-moved",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
-    "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly', 'shot',",
+    "old": "  'shot',\n  'fly',",
+    "new": "  'fly',\n  'shot',",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PERF-ON4-the-plugin-passing-a-missed-needle",
     "file": "tools/frameProbe.mjs",
-    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
-    "new": "      if (n > 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "old": "      if (n !== 1)",
+    "new": "      if (n > 1)",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-ON4-the-plugin-passing-a-doubled-needle",
     "file": "tools/frameProbe.mjs",
-    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
-    "new": "      if (n < 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "old": "      if (n !== 1)",
+    "new": "      if (n < 1)",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "PERF-ON4-the-edit-keeping-shot-refused",
     "file": "tools/onlineFrameProbe.mjs",
-    "old": "'export const ONLINE_REFUSED_FLAGS = Object.freeze([']] },",
-    "new": "'export const ONLINE_REFUSED_FLAGS = Object.freeze([\\'shot\\', ']] },",
+    "old": "        'export const ONLINE_REFUSED_FLAGS = Object.freeze([\\n',",
+    "new": "        \"export const ONLINE_REFUSED_FLAGS = Object.freeze([\\n  'shot',\\n\",",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],
@@ -59,8 +59,8 @@
   {
     "name": "PERF-ON4-the-base-taking-another-host",
     "file": "tools/onlineFrameProbe.mjs",
-    "old": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.1:\\\\d+)$/.test(v)\"]] },",
-    "new": "http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.\\\\d:\\\\d+)$/.test(v)\"]] },",
+    "old": "    edits: [['/^https:\\\\/\\\\/\\\\S+$/.test(v)', '/^(https:\\\\/\\\\/\\\\S+|http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.1:\\\\d+)$/.test(v)']],",
+    "new": "    edits: [['/^https:\\\\/\\\\/\\\\S+$/.test(v)', '/^(https:\\\\/\\\\/\\\\S+|http:\\\\/\\\\/127\\\\.0\\\\.0\\\\.\\\\d:\\\\d+)$/.test(v)']],",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],
@@ -89,8 +89,8 @@
   {
     "name": "PERF-ON4-the-hook-without-the-way-book",
     "file": "tools/onlineFrameProbe.mjs",
-    "old": "status: online ? online.status : null, ways: livingWays.size, frame:",
-    "new": "status: online ? online.status : null, frame:",
+    "old": "    window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, ways: livingWays.size, frame: window.__frame | 0 });",
+    "new": "    window.__probeOnline = () => ({ peers: online ? online.drawable().length : null, status: online ? online.status : null, frame: window.__frame | 0 });",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],

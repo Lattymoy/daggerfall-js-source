@@ -74,8 +74,8 @@
   {
     "name": "TESA2-no-base",
     "file": "src/world/arenaLocations.js",
-    "old": "(ARENA_PLACE_BASE + ordinal(place))",
-    "new": "(ordinal(place))",
+    "old": "export const arenaPlaceId = (place) => ((ARENA_PLACE_SALT << 20) | (ARENA_PLACE_BASE + ordinal(place))) >>> 0;",
+    "new": "export const arenaPlaceId = (place) => ((ARENA_PLACE_SALT << 20) | ordinal(place)) >>> 0;",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA2-a-clone-cloned",
     "file": "src/world/arenaLocations.js",
-    "old": "!l.spawned && !l.ether && !l.arena && !isMain(idOf(l))",
-    "new": "!l.spawned && !l.ether && !isMain(idOf(l))",
+    "old": "    .filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l))); // TS7",
+    "new": "    .filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !isMain(idOf(l))); // TS7",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TESA2-the-rows-unordered",
     "file": "src/world/arenaLocations.js",
-    "old": "&& !l.hasDungeon).sort((a, b) => idOf(a) - idOf(b));",
-    "new": "&& !l.hasDungeon);",
+    "old": "    out[kind] = list\n      .filter((l) => l.mapTableData?.locationType === type && !l.hasDungeon)\n      .sort((a, b) => idOf(a) - idOf(b));",
+    "new": "    out[kind] = list.filter((l) => l.mapTableData?.locationType === type && !l.hasDungeon);",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TESA2-the-province-unhashed",
     "file": "src/world/arenaLocations.js",
-    "old": "hash32(ARENA_PLACE_SALT, place.provinceIndex, place.id, 3)",
-    "new": "hash32(ARENA_PLACE_SALT, place.id, 3)",
+    "old": "  return list?.length ? list[hash32(ARENA_PLACE_SALT, place.provinceIndex, place.id, 3) % list.length] : null;",
+    "new": "  return list?.length ? list[hash32(ARENA_PLACE_SALT, place.id, 3) % list.length] : null;",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TESA2-a-harbour-kept",
     "file": "src/world/arenaLocations.js",
-    "old": "locationId: mapId, mapId, portTownAndUnknown: place.port ? 1 : 0 },",
-    "new": "locationId: mapId, mapId },",
+    "old": "      exteriorData: {\n        ...template.exterior?.exteriorData,\n        locationId: mapId,\n        mapId,\n        portTownAndUnknown: place.port ? 1 : 0,\n      },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId },",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TESA2-the-dungeon-header-the-template-s",
     "file": "src/world/arenaLocations.js",
-    "old": "header: { ...template.dungeon?.recordElement?.header, locationId: mapId } } };",
-    "new": "header: { ...template.dungeon?.recordElement?.header } } };",
+    "old": "      recordElement: {\n        ...template.dungeon?.recordElement,\n        header: { ...template.dungeon?.recordElement?.header, locationId: mapId },\n      },",
+    "new": "      recordElement: { ...template.dungeon?.recordElement, header: { ...template.dungeon?.recordElement?.header } },",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TESA2-the-pixel-transposed",
     "file": "src/world/arenaLocations.js",
-    "old": "mapPixelToLongitudeLatitude(place.bx, place.by)",
-    "new": "mapPixelToLongitudeLatitude(place.by, place.bx)",
+    "old": "  const ll = mapPixelToLongitudeLatitude(place.bx, place.by);",
+    "new": "  const ll = mapPixelToLongitudeLatitude(place.by, place.bx);",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TESA2-no-arm",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
-    "new": "\n",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "",
     "tests": [
       "test/tesa2_arena.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "TESA2-the-index-keeps-it",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (place && had.arena.provinceIndex === place.provinceIndex && had.arena.id === place.id && had.arena.port === !!place.port) return had;",
-    "new": "      return had;",
+    "old": "      if (place && had.arena.provinceIndex === place.provinceIndex && had.arena.id === place.id && had.arena.port === !!place.port) return had;   // TESA6: a city made a port is cloned again",
+    "new": "      return had;   // TESA6: a city made a port is cloned again",
     "tests": [
       "test/tesa2_arena.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "TESA2-no-key",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      arenaSlot: dfLocation?.arena ?? null,\n",
-    "new": "      arenaSlot: null,\n",
+    "old": "      arenaSlot: dfLocation?.arena ?? null,",
+    "new": "      arenaSlot: null,",
     "tests": [
       "test/tesa2_arena.test.js"
     ]

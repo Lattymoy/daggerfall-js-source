@@ -22,8 +22,8 @@
   {
     "name": "WB13b-two-subtitles",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "  gate: (boss, epithet) => `${boss} comes ${epithet} tonight`,",
-    "new": "  gate: (boss, epithet) => `Beyond the breach ${boss} waits, ${epithet}`,",
+    "old": "  gate: (boss, epithet) => `${boss} comes ${epithet} tonight`, // WB13b: one subtitle near the gate and inside",
+    "new": "  gate: (boss, epithet) => `Beyond the breach ${boss} waits, ${epithet}`, // WB13b: one subtitle near the gate and inside",
     "tests": [
       "test/net/gate/wb13b_words.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "WB13b-a-dash-aside-back",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "${top?.length ? `, struck down by",
-    "new": "${top?.length ? ` - struck down by",
+    "old": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
+    "new": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? ` - struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
     "tests": [
       "test/net/gate/wb13b_words.test.js",
       "test/systems/gate/wb12a_breach_words.test.js"
@@ -98,8 +98,8 @@
   {
     "name": "WB13b-a-number-in-words",
     "file": "src/net/gate/gateMods.js",
-    "old": "text: 'His blows and his ground deal 25% more',",
-    "new": "text: 'His blows and his ground take a quarter more',",
+    "old": "  Object.freeze({ id: 'vengeful', name: 'Vengeful', text: 'His blows and his ground deal 25% more', dmg: 1.25 }),",
+    "new": "  Object.freeze({ id: 'vengeful', name: 'Vengeful', text: 'His blows and his ground take a quarter more', dmg: 1.25 }),",
     "tests": [
       "test/net/gate/wb13b_words.test.js",
       "test/net/gate/wb9a_gate_marks_seen.test.js"

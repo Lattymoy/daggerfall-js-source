@@ -470,8 +470,8 @@
   {
     "name": "TESA7-host-arena-last",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
-    "new": "|| host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/tesa7_country.test.js"
     ],
@@ -480,8 +480,8 @@
   {
     "name": "TESA7-host-no-country",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
-    "new": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/tesa7_country.test.js"
     ],
@@ -508,8 +508,8 @@
   {
     "name": "TESA7-host-bank-clamp",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
-    "new": "countryName(pick.type, getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
+    "old": "    return { pick, regionIndex, name: countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py)) };",
+    "new": "    return { pick, regionIndex, name: countryName(pick.type, getNameBankOfRegion(regionIndex), countryNameSeed(px, py)) };",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "TESA7-host-not-deleted",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      host._locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
-    "new": "    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
+    "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;\n      host._locIndexGen += 1;\n      locationIndex.delete(key);\n    }",
+    "new": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;\n    }",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "TESA7-host-not-indexed",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);",
-    "new": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;",
+    "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);\n    return loc;\n  }",
+    "new": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round\n    host._locIndexGen += 1;\n    return loc;\n  }",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "TESA7-host-politic",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex,",
-    "new": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex,",
+    "old": "    const made = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) });",
+    "new": "    const made = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) });",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "TESA7-host-rates-dry",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "(x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y)))));",
-    "new": "() => false));",
+    "old": "  const bayLandNow = () => (_pastBay.bayLand ??= bayLand((x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)), (x, y, c) => isWaterPixel(c, filedHeight(x, y, host.woods.getHeightMapValue(x, y)))));   // AUDIT FOUNDATION II L1: the Bay as it came",
+    "new": "  const bayLandNow = () => (_pastBay.bayLand ??= bayLand((x, y) => filedClimate(x, y, maps.getClimateIndex(x, y)), () => false));   // AUDIT FOUNDATION II L1: the Bay as it came",
     "tests": [
       "test/tesa7_country.test.js"
     ]

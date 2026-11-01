@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-BODY-MOTION-race-build-ignored",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "unitsPerM: MW_UNITS_PER_METER / (input.weight || 1),",
-    "new": "unitsPerM: MW_UNITS_PER_METER,",
+    "old": "    unitsPerM: MW_UNITS_PER_METER / (input.weight || 1),",
+    "new": "    unitsPerM: MW_UNITS_PER_METER,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -14,8 +14,8 @@
   {
     "name": "AUDIT-BODY-MOTION-race-height-ignored-in-the-word",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "legM: body ? (body.leg * (input.height || 1)) / MW_UNITS_PER_METER : 1,",
-    "new": "legM: body ? body.leg / MW_UNITS_PER_METER : 1,",
+    "old": "    legM: body ? (body.leg * (input.height || 1)) / MW_UNITS_PER_METER : 1,",
+    "new": "    legM: body ? body.leg / MW_UNITS_PER_METER : 1,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -26,8 +26,8 @@
   {
     "name": "AUDIT-BODY-MOTION-family-never-reaches-the-gait",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "yaw: input.yaw, grounded: input.grounded, kind: input.kind,",
-    "new": "yaw: input.yaw, grounded: input.grounded, kind: 'male',",
+    "old": "    kind: input.kind,",
+    "new": "    kind: 'male',",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-BODY-MOTION-beast-only-its-foot",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "beast: Object.freeze({ bob: 1.25, lift: 1.15, lean: 1.2, height: 0.985, hipTilt: 1.25, footBias: -6 }),",
-    "new": "beast: Object.freeze({ footBias: -6 }),",
+    "old": "  beast: Object.freeze({ bob: 1.25, lift: 1.15, lean: 1.2, height: 0.985, hipTilt: 1.25, footBias: -6 }),",
+    "new": "  beast: Object.freeze({ footBias: -6 }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -62,7 +62,7 @@
   {
     "name": "AUDIT-BODY-MOTION-steer-no-hysteresis",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "  if (s.back) { if (offDeg < STEER.back - STEER.hyst) s.back = false; } else if (offDeg > STEER.back + STEER.hyst) s.back = true;",
+    "old": "  if (s.back) {\n    if (offDeg < STEER.back - STEER.hyst) s.back = false;\n  } else if (offDeg > STEER.back + STEER.hyst) s.back = true;",
     "new": "  s.back = offDeg > STEER.back;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-BODY-MOTION-backpedal-unclamped",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    ? -clamp(wrapAngle(s.th - Math.PI) * STEER.backShare, -STEER.backMax * RAD, STEER.backMax * RAD)",
-    "new": "    ? -wrapAngle(s.th - Math.PI)",
+    "old": "      ? -clamp(wrapAngle(s.th - Math.PI) * STEER.backShare, -STEER.backMax * RAD, STEER.backMax * RAD)",
+    "new": "      ? -wrapAngle(s.th - Math.PI)",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-BODY-MOTION-bank-out-of-the-turn",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "clamp(s.yawRate * s.speed * 0.022, -0.2, 0.2)",
-    "new": "clamp(-s.yawRate * s.speed * 0.022, -0.2, 0.2)",
+    "old": "  s.bank = ease(s.bank, clamp(s.yawRate * s.speed * 0.022, -0.2, 0.2) * s.move, GAIT_EASE.lean, dt);",
+    "new": "  s.bank = ease(s.bank, clamp(-s.yawRate * s.speed * 0.022, -0.2, 0.2) * s.move, GAIT_EASE.lean, dt);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-BODY-MOTION-heel-strike-toes-down",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "if (q < P.flat[0]) return P.heel * (1 - smooth(q / P.flat[0]));",
-    "new": "if (q < P.flat[0]) return -P.heel * (1 - smooth(q / P.flat[0]));",
+    "old": "  if (q < P.flat[0]) return P.heel * (1 - smooth(q / P.flat[0]));",
+    "new": "  if (q < P.flat[0]) return -P.heel * (1 - smooth(q / P.flat[0]));",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -134,8 +134,8 @@
   {
     "name": "AUDIT-BODY-MOTION-hips-never-sway",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "const sway = P.sway * L * move;",
-    "new": "const sway = 0;",
+    "old": "  const sway = P.sway * L * move;",
+    "new": "  const sway = 0;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -170,8 +170,8 @@
   {
     "name": "AUDIT-BODY-MOTION-fists-no-guard",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "idle: { R: row(34, 20, 118, 12, 0, { fist: true }), L: row(48, 18, 104, 10, 0, { fist: true }) },",
-    "new": "idle: { R: row(3, 7, 10, 4, 0, { fist: true }), L: row(3, 7, 10, 4, 0, { fist: true }) },",
+    "old": "    idle: { R: row(34, 20, 118, 12, 0, { fist: true }), L: row(48, 18, 104, 10, 0, { fist: true }) },",
+    "new": "    idle: { R: row(3, 7, 10, 4, 0, { fist: true }), L: row(3, 7, 10, 4, 0, { fist: true }) },",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-BODY-MOTION-staff-head-down",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "idle: { R: row(18, 10, 50, 34, 0, { blade: dir(-0.55, 0.42, 0.72), edge: dir(0, 1, 0) }),",
-    "new": "idle: { R: row(18, 10, 50, 34, 0, { blade: dir(-0.55, 0.42, -0.72), edge: dir(0, 1, 0) }),",
+    "old": "      R: row(18, 10, 50, 34, 0, { blade: dir(-0.55, 0.42, 0.72), edge: dir(0, 1, 0) }),",
+    "new": "      R: row(18, 10, 50, 34, 0, { blade: dir(-0.55, 0.42, -0.72), edge: dir(0, 1, 0) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -194,7 +194,7 @@
   {
     "name": "AUDIT-BODY-MOTION-pair-no-run-lean",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "      const runLean = lerp(CARRY[clsFrom]?.runLean ?? 0, CARRY[cls]?.runLean ?? 0, clsFrom ? clsMix : 1) * gp.run * gp.move * RAD;",
+    "old": "      const runLean =\n        lerp(CARRY[clsFrom]?.runLean ?? 0, CARRY[cls]?.runLean ?? 0, clsFrom ? clsMix : 1) * gp.run * gp.move * RAD;",
     "new": "      const runLean = 0;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
@@ -206,8 +206,8 @@
   {
     "name": "AUDIT-BODY-MOTION-class-ease-skipped",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "clsMix = ease(clsMix, 1, MOTION_EASE.cls, dt);",
-    "new": "clsMix = 1;",
+    "old": "      clsMix = ease(clsMix, 1, MOTION_EASE.cls, dt);",
+    "new": "      clsMix = 1;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-BODY-MOTION-stance-feet-unsplit",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "    const a = CARRY[clsFrom]?.stand ?? null, b = CARRY[cls]?.stand ?? null, t = clsFrom ? clsMix : 1;",
-    "new": "    const a = null, b = null, t = 1;",
+    "old": "    const a = CARRY[clsFrom]?.stand ?? null,\n      b = CARRY[cls]?.stand ?? null,\n      t = clsFrom ? clsMix : 1;",
+    "new": "    const a = null,\n      b = null,\n      t = 1;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-BODY-MOTION-staff-blow-haft-dropped",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "if (bp.family === 'two' && TWO_HAND_GRIP[cls] != null && req.frame) {",
-    "new": "if (bp.family === 'two' && cls === 'two' && req.frame) {",
+    "old": "  if (bp.family === 'two' && TWO_HAND_GRIP[cls] != null && req.frame) {",
+    "new": "  if (bp.family === 'two' && cls === 'two' && req.frame) {",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-BODY-MOTION-blow-no-weight-shift",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "at: add(gp.hip.at, [0, bp ? bp.shift * L * wind : 0, bp ? -bp.drop * L * wind : 0]),",
-    "new": "at: gp.hip.at,",
+    "old": "          at: add(gp.hip.at, [0, bp ? bp.shift * L * wind : 0, bp ? -bp.drop * L * wind : 0]),",
+    "new": "          at: gp.hip.at,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-BODY-MOTION-blow-free-arm-limp",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "} else if (bp.family === 'one' && cls === 'one' && bp.off) {",
-    "new": "} else if (false) {",
+    "old": "  } else if (bp.family === 'one' && cls === 'one' && bp.off) {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-BODY-MOTION-chop-edge-trailing",
     "file": "src/characters/bodyMotion/melee.js",
-    "old": "k(0.5, { grip: [0.12, 0.62, 0.02], blade: [0, 0.86, -0.5], edge: [0, -0.5, -0.86],",
-    "new": "k(0.5, { grip: [0.12, 0.62, 0.02], blade: [0, 0.86, -0.5], edge: [0, 0.5, 0.86],",
+    "old": "        edge: [0, -0.5, -0.86],",
+    "new": "        edge: [0, 0.5, 0.86],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -338,8 +338,8 @@
   {
     "name": "AUDIT-BODY-MOTION-knee-backward",
     "file": "src/characters/bodyMotion/bodySolve.js",
-    "old": "const pole = norm(add([toe[0], toe[1], 0], [out * 0.12, 0, 0.02]));",
-    "new": "const pole = norm(add([-toe[0], -toe[1], 0], [out * 0.12, 0, 0.02]));",
+    "old": "  const pole = norm(add([toe[0], toe[1], 0], [out * 0.12, 0, 0.02]));",
+    "new": "  const pole = norm(add([-toe[0], -toe[1], 0], [out * 0.12, 0, 0.02]));",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-BODY-MOTION-clavicles-left-to-the-clip",
     "file": "src/characters/bodyMotion/bodySolve.js",
-    "old": "for (const ref of [bones.neck, bones.L.clavicle, bones.R.clavicle]) {",
-    "new": "for (const ref of []) {",
+    "old": "    for (const ref of [bones.neck, bones.L.clavicle, bones.R.clavicle]) {",
+    "new": "    for (const ref of []) {",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -374,8 +374,8 @@
   {
     "name": "AUDIT-BODY-MOTION-busy-ignored",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
-    "new": "const free = !!input.on && input.grounded !== false && !input.swimming && !input.levitating;",
+    "old": "      const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
+    "new": "      const free = !!input.on && input.grounded !== false && !input.swimming && !input.levitating;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -386,8 +386,8 @@
   {
     "name": "AUDIT-BODY-MOTION-air-ignored",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
-    "new": "const free = !!input.on && !input.busy && !input.swimming && !input.levitating;",
+    "old": "      const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
+    "new": "      const free = !!input.on && !input.busy && !input.swimming && !input.levitating;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-BODY-MOTION-water-levitation-ignored",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
-    "new": "const free = !!input.on && !input.busy && input.grounded !== false;",
+    "old": "      const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
+    "new": "      const free = !!input.on && !input.busy && input.grounded !== false;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-BODY-MOTION-saddle-not-busy",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "cam?.seat || cam?.saddle ? 'seat' : null;",
-    "new": "cam?.seat ? 'seat' : null;",
+    "old": "  const busy = dead\n    ? 'dead'\n    : hit\n      ? 'hit'\n      : climb > 0.02 || cam?.climb\n        ? 'climb'\n        : cam?.seat || cam?.saddle\n          ? 'seat'\n          : null;",
+    "new": "  const busy = dead ? 'dead' : hit ? 'hit' : climb > 0.02 || cam?.climb ? 'climb' : cam?.seat ? 'seat' : null;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-BODY-MOTION-rifle-arms-taken",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const hands = !input.equip && !input.rifle && cls !== 'clip';",
-    "new": "const hands = !input.equip && cls !== 'clip';",
+    "old": "      const hands = !input.equip && !input.rifle && cls !== 'clip';",
+    "new": "      const hands = !input.equip && cls !== 'clip';",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-BODY-MOTION-bow-takes-the-whole-body",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
-    "new": "const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating && carryClassOf(input) !== 'clip';",
+    "old": "      const free = !!input.on && !input.busy && input.grounded !== false && !input.swimming && !input.levitating;",
+    "new": "      const free =\n        !!input.on &&\n        !input.busy &&\n        input.grounded !== false &&\n        !input.swimming &&\n        !input.levitating &&\n        carryClassOf(input) !== 'clip';",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js",
       "test/characters/bodyMotion/bodymotion_carry.test.js",

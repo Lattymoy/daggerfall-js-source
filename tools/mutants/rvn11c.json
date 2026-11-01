@@ -2,8 +2,8 @@
   {
     "name": "RVN11c-line-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25,",
-    "new": "export const BETRAY = Object.freeze({ AT: 11, HEALTH: 0.25,",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "export const BETRAY = Object.freeze({ AT: 11, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RVN11c-health-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25,",
-    "new": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.3,",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.3, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN11c-kind-added",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
-    "new": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal', 'arrogant']) });",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "export const BETRAY = Object.freeze({\n  AT: 10,\n  HEALTH: 0.25,\n  KINDS: Object.freeze(['unhinged', 'craven', 'brutal', 'arrogant']),\n});",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN11c-kind-lost",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
-    "new": "KINDS: Object.freeze(['unhinged', 'craven']) });",
+    "old": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven', 'brutal']) });",
+    "new": "export const BETRAY = Object.freeze({ AT: 10, HEALTH: 0.25, KINDS: Object.freeze(['unhinged', 'craven']) });",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN11c-unsworn",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT",
-    "new": "export const mayBetray = (r) => !!r && r.companion?.loyalty < BETRAY.AT",
+    "old": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT && BETRAY.KINDS.includes(r.personality);",
+    "new": "export const mayBetray = (r) => !!r && r.companion?.loyalty < BETRAY.AT && BETRAY.KINDS.includes(r.personality);",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN11c-line-inclusive",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "r.companion?.loyalty < BETRAY.AT &&",
-    "new": "r.companion?.loyalty <= BETRAY.AT &&",
+    "old": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty < BETRAY.AT && BETRAY.KINDS.includes(r.personality);",
+    "new": "export const mayBetray = (r) => !!r?.sworn && r.companion?.loyalty <= BETRAY.AT && BETRAY.KINDS.includes(r.personality);",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN11c-quarter-inclusive",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
-    "new": "after > (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "old": "  if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "new": "  if (!entity?.isPlayer || entity.peer || !(after > 0) || after > (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN11c-death-turns",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "if (!entity?.isPlayer || entity.peer || !(after > 0) || after >=",
-    "new": "if (!entity?.isPlayer || entity.peer || after >=",
+    "old": "  if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "new": "  if (!entity?.isPlayer || entity.peer || after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN11c-peer-turns",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "if (!entity?.isPlayer || entity.peer || !(after > 0)",
-    "new": "if (!entity?.isPlayer || !(after > 0)",
+    "old": "  if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
+    "new": "  if (!entity?.isPlayer || !(after > 0) || after >= (entity.maxHealth || 1) * BETRAY.HEALTH) return null;",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN11c-host-untold",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (t) tell('betray', t);\n",
-    "new": "",
+    "old": "  if (t) tell('betray', t);\n  return t;",
+    "new": "  return t;",
     "tests": [
       "test/systems/rvn11c_betray.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "RVN11c-unwired",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "registerPlayerHurtListener('sworn-betrayal', (entity, { after } = /** @type {any} */ ({})) => { betrayalStep(entity, after); });",
+    "old": "registerPlayerHurtListener('sworn-betrayal', (entity, { after } = /** @type {any} */ ({})) => {\n  betrayalStep(entity, after);\n});",
     "new": "",
     "tests": [
       "test/systems/rvn11c_betray.test.js"

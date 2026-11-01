@@ -11,8 +11,8 @@
   {
     "name": "LANDFORM4-reach-short",
     "file": "src/world/landforms.js",
-    "old": "site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
-    "new": "site: Object.freeze({ reach: 24, per: 3, most: 124, grid: 8 }),",
+    "old": "  site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
+    "new": "  site: Object.freeze({ reach: 24, per: 3, most: 124, grid: 8 }),",
     "tests": [
       "test/world/terrain/landform45.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LANDFORM4-reach-past-the-neighbour",
     "file": "src/world/landforms.js",
-    "old": "site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
-    "new": "site: Object.freeze({ reach: 40, per: 3, most: 160, grid: 8 }),",
+    "old": "  site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
+    "new": "  site: Object.freeze({ reach: 40, per: 3, most: 160, grid: 8 }),",
     "tests": [
       "test/world/terrain/landform45.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LANDFORM4-near-misses-a-neighbour-site",
     "file": "src/world/landforms.js",
-    "old": "s.x1 + s.reach > ox && s.x0 - s.reach < ox + span",
-    "new": "s.x1 > ox && s.x0 - s.reach < ox + span",
+    "old": "  const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);",
+    "new": "  const near = around.filter((s) => s.x1 > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);",
     "tests": [
       "test/world/terrain/landform45.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "LANDFORM5-coast-too-short",
     "file": "src/world/landforms.js",
-    "old": "coast: 1.25, region",
-    "new": "coast: 0.8, region",
+    "old": "  hills: Object.freeze({ uplandAt: 700, coast: 1.25, region: 2400, warp: 80, warpScale: 520, scales: Object.freeze([300, 125, 50]), weights: Object.freeze([1, 0.36, 0.1]) }),",
+    "new": "  hills: Object.freeze({ uplandAt: 700, coast: 0.8, region: 2400, warp: 80, warpScale: 520, scales: Object.freeze([300, 125, 50]), weights: Object.freeze([1, 0.36, 0.1]) }),",
     "tests": [
       "test/world/terrain/landform45.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "LANDFORM5-hills-under-the-knee-too",
     "file": "src/world/landforms.js",
-    "old": "  if (!(e > 0)) return 0;\n  const fx = gx / HILL_NODE",
-    "new": "  if (!(e > -20)) return 0;\n  const fx = gx / HILL_NODE",
+    "old": "  if (!(e > 0)) return 0;",
+    "new": "  if (!(e > -20)) return 0;",
     "tests": [
       "test/world/terrain/landform45.test.js",
       "test/systems/landform.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "LANDFORM5-road-ignores-the-hills",
     "file": "src/world/landforms.js",
-    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(",
-    "new": "      prof[k] = macro > 1e9 ? landAt(",
+    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;",
+    "new": "      prof[k] = macro > 1e9 ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;",
     "tests": [
       "test/world/terrain/landform45.test.js"
     ]

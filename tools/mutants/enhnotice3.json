@@ -83,8 +83,8 @@
   {
     "name": "ENH-NOTICE3-a-skin-fork-in-the-door",
     "file": "src/systems/notify.js",
-    "old": "import { ActionTextBox } from '../ui/actionText.js';",
-    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nvoid isEnhanced;",
+    "old": "import { ActionTextBox } from '../ui/actionText.js';\n",
+    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nvoid isEnhanced;\n",
     "tests": [
       "test/scenes/enhnotice3_hosts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ENH-NOTICE3-P4-priority-sort-reversed",
     "file": "src/systems/notify.js",
-    "old": ".sort((a, b) => ((b.p.priority ?? 0) - (a.p.priority ?? 0)) || (b.i - a.i))",
-    "new": ".sort((a, b) => ((a.p.priority ?? 0) - (b.p.priority ?? 0)) || (b.i - a.i))",
+    "old": "    .sort((a, b) => (b.p.priority ?? 0) - (a.p.priority ?? 0) || b.i - a.i)",
+    "new": "    .sort((a, b) => (a.p.priority ?? 0) - (b.p.priority ?? 0) || b.i - a.i)",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ENH-NOTICE3-P4-recency-tiebreak-reversed",
     "file": "src/systems/notify.js",
-    "old": "|| (b.i - a.i))",
-    "new": "|| (a.i - b.i))",
+    "old": "    .sort((a, b) => (b.p.priority ?? 0) - (a.p.priority ?? 0) || b.i - a.i)",
+    "new": "    .sort((a, b) => (b.p.priority ?? 0) - (a.p.priority ?? 0) || a.i - b.i)",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ENH-NOTICE3-P4-active-filter-dropped",
     "file": "src/systems/notify.js",
-    "old": ".filter(({ p }) => p.active?.() !== false)",
-    "new": ".filter(() => true)",
+    "old": "    .filter(({ p }) => p.active?.() !== false)",
+    "new": "    .filter(() => true)",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ENH-NOTICE3-P4-hud-fallback-dropped",
     "file": "src/systems/notify.js",
-    "old": "  hudText(rows.map(rowText).join(' '));\n  const inert",
-    "new": "  const inert",
+    "old": "  hudText(rows.map(rowText).join(' '));\n  const inert = { addNext: () => inert, done: true, mounted: false, window: null };",
+    "new": "  const inert = { addNext: () => inert, done: true, mounted: false, window: null };",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ENH-NOTICE3-P4-addNext-a-no-op",
     "file": "src/systems/notify.js",
-    "old": "    addNext(next) { win.addNext(toRows(next)); return handle; },",
-    "new": "    addNext(next) { return handle; },",
+    "old": "      win.addNext(toRows(next));\n      return handle;",
+    "new": "      return handle;",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ENH-NOTICE3-P4-box-built-without-its-options",
     "file": "src/systems/notify.js",
-    "old": "const win = new ActionTextBox(rows, { highlightColor, previousWindow });",
-    "new": "const win = new ActionTextBox(rows);",
+    "old": "  const win = new ActionTextBox(rows, { highlightColor, previousWindow });",
+    "new": "  const win = new ActionTextBox(rows);",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ENH-NOTICE3-P4-toRows-keeps-an-empty-array",
     "file": "src/systems/notify.js",
-    "old": "if (Array.isArray(text)) return text.length ? text : [''];",
-    "new": "if (Array.isArray(text)) return text;",
+    "old": "  if (Array.isArray(text)) return text.length ? text : [''];",
+    "new": "  if (Array.isArray(text)) return text;",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ENH-NOTICE3-P4-toRows-does-not-split-on-newlines",
     "file": "src/systems/notify.js",
-    "old": "return String(text).split('\\n');",
-    "new": "return [String(text)];",
+    "old": "  return String(text).split('\\n');",
+    "new": "  return [String(text)];",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ENH-NOTICE3-P4-hudText-claims-a-queue-nobody-took",
     "file": "src/systems/notify.js",
-    "old": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return false;",
-    "new": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return true;",
+    "old": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return false;\n}",
+    "new": "    if (p.hudText(String(text ?? ''), delay)) return true;\n  }\n  return true;\n}",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ENH-NOTICE3-P4-a-skin-fork-in-the-door",
     "file": "src/systems/notify.js",
-    "old": "import { ActionTextBox } from '../ui/actionText.js';",
-    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nconst _face = () => isEnhanced();",
+    "old": "import { ActionTextBox } from '../ui/actionText.js';\n",
+    "new": "import { ActionTextBox } from '../ui/actionText.js';\nimport { isEnhanced } from './uiSkin.js';\nconst _face = () => isEnhanced();\n",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-survivor-a-mountless-host-ends-the-ladder",
     "file": "src/systems/notify.js",
-    "old": "    if (typeof p.mount !== 'function') continue;   // a host with a PopupText and no slot passes the window on",
-    "new": "    if (typeof p.mount !== 'function') break;   // a host with a PopupText and no slot passes the window on",
+    "old": "    if (typeof p.mount !== 'function') continue; // a host with a PopupText and no slot passes the window on",
+    "new": "    if (typeof p.mount !== 'function') break; // a host with a PopupText and no slot passes the window on",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "TAV-yes-no-decision-routed-to-the-panel",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "noticeHold(noticeOwner, box.buttons ? null : box.rows)",
-    "new": "noticeHold(noticeOwner, box.rows)",
+    "old": "  const onPanel = noticeHold(noticeOwner, box.buttons ? null : box.rows);",
+    "new": "  const onPanel = noticeHold(noticeOwner, box.rows);",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "TAV-scrim-is-not-the-click",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    scrim.onclick = dismiss;\n",
-    "new": "",
+    "old": "    scrim.onclick = dismiss;\n    return scrim;",
+    "new": "    return scrim;",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "TAV-no-release-when-the-box-clears",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  } else noticeRelease(noticeOwner);",
-    "new": "  } else if (false) noticeRelease(noticeOwner);",
+    "old": "  } else noticeRelease(noticeOwner); // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:\"if (drawMessageBox(renderer, m, font, this._box))\")",
+    "new": "  } else if (false) noticeRelease(noticeOwner); // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:\"if (drawMessageBox(renderer, m, font, this._box))\")",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "WAIT-panel-painted-once-and-left-stale",
     "file": "src/ui/waitWindow.js",
-    "old": "    const rows = [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
-    "new": "    const rows = this._rowsOnce ??= [{ text: this.busy, center: true }, { text: this.dots, center: true }];",
+    "old": "    const rows = [\n      { text: this.busy, center: true },\n      { text: this.dots, center: true },\n    ];",
+    "new": "    const rows = (this._rowsOnce ??= [\n      { text: this.busy, center: true },\n      { text: this.dots, center: true },\n    ]);",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "TAV-dismiss-does-not-repaint",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();\n  render();",
-    "new": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();",
+    "old": "  cb?.();\n  render();\n}",
+    "new": "  cb?.();\n}",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -771,8 +771,8 @@
   {
     "name": "AUDIT4-A1-the-enhanced-arm-paints-both-faces",
     "file": "src/ui/hud/hudText.js",
-    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;",
-    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;\n    }",
+    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n    }",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "AUDIT4-A6-the-next-pop-delay-never-reset",
     "file": "src/ui/hud/hudText.js",
-    "old": "      this.lines.shift();\n      this.nextPopDelay = HUD_TEXT_POP_DELAY;",
-    "new": "      this.lines.shift();",
+    "old": "      this.nextPopDelay = HUD_TEXT_POP_DELAY;\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -846,8 +846,8 @@
   {
     "name": "AUDIT4-B1-the-scrim-window-sized",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    scrim.className = 'sb-ask sb-screen';\n",
-    "new": "",
+    "old": "    scrim.className = 'sb-ask sb-screen';\n    scrim.onclick = dismiss;",
+    "new": "    scrim.onclick = dismiss;",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -855,8 +855,8 @@
   {
     "name": "AUDIT4-B1-the-scrim-on-the-window",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);",
-    "new": "    win.append(scrim);",
+    "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim); // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)",
+    "new": "    win.append(scrim); // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -910,7 +910,7 @@
   {
     "name": "WAIT-parchment-drawn-under-the-panel",
     "file": "src/ui/waitWindow.js",
-    "old": "    if (noticeFrame(this, rows, { hint: false })) { this._box = null; return; }",
+    "old": "    if (noticeFrame(this, rows, { hint: false })) {\n      this._box = null;\n      return;\n    }",
     "new": "    noticeFrame(this, rows, { hint: false });",
     "tests": [
       "test/systems/quest/forage4_wait.test.js"

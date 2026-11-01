@@ -7,7 +7,13 @@
 // scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors) and scenes/dungeonContext.js (dungeons) wire
 // nothing: the party frame is the streaming host's alone, and interiors and dungeons run inside it.
 
-import { createMentorPresence, refreshMentor, refreshPupil, mentorPowerScale, MENTOR_NEAR_METRES } from '../systems/mentorMode.js';
+import {
+  createMentorPresence,
+  refreshMentor,
+  refreshPupil,
+  mentorPowerScale,
+  MENTOR_NEAR_METRES,
+} from '../systems/mentorMode.js';
 import { mentorStatusText, mentorEndedText, pupilStatusText } from '../systems/mentorText.js';
 import { setFirmamentMentorScale } from '../systems/firmamentLive.js';
 
@@ -16,10 +22,23 @@ import { setFirmamentMentorScale } from '../systems/firmamentLive.js';
 export function createMentorHost(deps) {
   const presence = createMentorPresence();
   /** A line in the active chat tab - none before the chat stands (the sheet says it too). */
-  const say = (text) => { const log = deps.chat?.(); try { if (text && log) log.push(log.active, { text, system: true }); } catch { /* the chat is the host's */ } };
+  const say = (text) => {
+    const log = deps.chat?.();
+    try {
+      if (text && log) log.push(log.active, { text, system: true });
+    } catch {
+      /* the chat is the host's */
+    }
+  };
 
   /** A party member is asked whether they fight, only while a change waits (presence.levels). */
-  const fighting = () => { try { return !!deps.fighting(); } catch { return false; } };
+  const fighting = () => {
+    try {
+      return !!deps.fighting();
+    } catch {
+      return false;
+    }
+  };
   /** The party members beside me this frame, with their real levels (their pose's `cl`). */
   function nearPartners(mates) {
     if (!mates.length) return [];
@@ -39,7 +58,7 @@ export function createMentorHost(deps) {
     const me = deps.player();
     if (!me) return;
     const social = deps.social();
-    if (!social?.party) presence.reset();   // leaving the party is a deliberate act: I am myself again the same frame
+    if (!social?.party) presence.reset(); // leaving the party is a deliberate act: I am myself again the same frame
     const mates = social?.party ? social.others() : [];
     const member = (acct) => mates.some((m) => m.acct === acct);
     const levels = presence.levels(nearPartners(mates), nowMs, { fighting, member });

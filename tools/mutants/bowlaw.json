@@ -1,7 +1,47 @@
 [
-  {"name": "BOW-LAW-dfus-line-always", "file": "src/characters/weaponStates.js", "old": "  if (!ctx?.entity) return getBowCooldownTime(liveSpeed);\n  const w = _swingReader?.(ctx) ?? null;", "new": "  return getBowCooldownTime(liveSpeed);\n  const w = _swingReader?.(ctx) ?? null;", "tests": ["test/combat/bowlaw.test.js"]},
-  {"name": "BOW-LAW-unpaced", "file": "src/characters/weaponStates.js", "old": "  const frame = paced(swingFrameSeconds(liveSpeed, { heft: w ? swingHeft(w.weight, w.strength) : 1, handling: swingHandling(ctx.weaponType, !!w?.twoHanded) }), ctx, w);", "new": "  const frame = swingFrameSeconds(liveSpeed, { heft: w ? swingHeft(w.weight, w.strength) : 1, handling: swingHandling(ctx.weaponType, !!w?.twoHanded) });", "tests": ["test/combat/bowlaw.test.js"]},
-  {"name": "BOW-LAW-the-draw-not-taken", "file": "src/characters/weaponStates.js", "old": "  return Math.max(0, MELEE_NUM_FRAMES.StrikeDown * frame - (BOW_NUM_FRAMES.StrikeUp + HIT_FRAME_BOW) * CLASSIC_UPDATE_INTERVAL);", "new": "  return Math.max(0, MELEE_NUM_FRAMES.StrikeDown * frame);", "tests": ["test/combat/bowlaw.test.js"]},
-  {"name": "BOW-LAW-the-machine-unwired", "file": "src/combat/playerWeapon.js", "old": "      : t === WEAPON_TYPES.Bow ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null) : null;", "new": "      : null;", "tests": ["test/combat/balArchery.test.js"]},
-  {"name": "BOW-LAW-a-shot-over-the-held-one", "file": "src/combat/weapon/weaponRig.js", "old": "(fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));", "new": "fpArm.shotBusy();", "tests": ["test/systems/fb1009g_bowclock.test.js"]}
+  {
+    "name": "BOW-LAW-dfus-line-always",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (!ctx?.entity) return getBowCooldownTime(liveSpeed);",
+    "new": "  return getBowCooldownTime(liveSpeed);",
+    "tests": [
+      "test/combat/bowlaw.test.js"
+    ]
+  },
+  {
+    "name": "BOW-LAW-unpaced",
+    "file": "src/characters/weaponStates.js",
+    "old": "  const frame = paced(\n    swingFrameSeconds(liveSpeed, {\n      heft: w ? swingHeft(w.weight, w.strength) : 1,\n      handling: swingHandling(ctx.weaponType, !!w?.twoHanded),\n    }),\n    ctx,\n    w,\n  );",
+    "new": "  const frame = swingFrameSeconds(liveSpeed, {\n    heft: w ? swingHeft(w.weight, w.strength) : 1,\n    handling: swingHandling(ctx.weaponType, !!w?.twoHanded),\n  });",
+    "tests": [
+      "test/combat/bowlaw.test.js"
+    ]
+  },
+  {
+    "name": "BOW-LAW-the-draw-not-taken",
+    "file": "src/characters/weaponStates.js",
+    "old": "  return Math.max(\n    0,\n    MELEE_NUM_FRAMES.StrikeDown * frame - (BOW_NUM_FRAMES.StrikeUp + HIT_FRAME_BOW) * CLASSIC_UPDATE_INTERVAL,\n  );",
+    "new": "  return Math.max(0, MELEE_NUM_FRAMES.StrikeDown * frame);",
+    "tests": [
+      "test/combat/bowlaw.test.js"
+    ]
+  },
+  {
+    "name": "BOW-LAW-the-machine-unwired",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this.machine.cooldown = thunderlock\n      ? thunderlockReloadSeconds(this.liveSpeed)\n      : t === WEAPON_TYPES.Bow\n        ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null)\n        : null;",
+    "new": "    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed) : null;",
+    "tests": [
+      "test/combat/balArchery.test.js"
+    ]
+  },
+  {
+    "name": "BOW-LAW-a-shot-over-the-held-one",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "(fpArm.shotBusy() || (_heldHit && !playerWeapon.pistols));",
+    "new": "fpArm.shotBusy();",
+    "tests": [
+      "test/systems/fb1009g_bowclock.test.js"
+    ]
+  }
 ]

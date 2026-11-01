@@ -20,7 +20,7 @@
   {
     "name": "DW-D-forge-never-submerges",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "    audio.submerged = headUnderwater(centreOf(p), oceanY);   // IsPlayerHeadUnderwater",
+    "old": "    audio.submerged = headUnderwater(centreOf(p), oceanY); // IsPlayerHeadUnderwater",
     "new": "    audio.submerged = false;",
     "tests": [
       "test/scenes/dwd_swim.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "DW-D-restore-keeps-the-forged-level",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "  function restore(p, now) {\n    clearAudio();",
-    "new": "  function restore(p, now) {",
+    "old": "  function restore(p, now) {\n    clearAudio();\n    p.isPlayerSwimming = false;",
+    "new": "  function restore(p, now) {\n    p.isPlayerSwimming = false;",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DW-D-post-phase-restore-leaves-levitate-swimming",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "    p.isPlayerSwimming = false;\n    p.swimming = false;\n    swim.forged = false;",
-    "new": "    p.isPlayerSwimming = false;\n    swim.forged = false;",
+    "old": "    p.swimming = false;\n    swim.forged = false;",
+    "new": "    swim.forged = false;",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DW-D-surface-keeps-the-forced-crouch",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "    if (!headClearOfSurface(centreOf(p), oceanY) || descend) return;\n    p.forcedSwimCrouch = false;",
-    "new": "    if (!headClearOfSurface(centreOf(p), oceanY) || descend) return;",
+    "old": "    p.forcedSwimCrouch = false;\n    if ((p.isInWaterTile || p.heightAction === 'sink') && p.heightAction !== 'unsink') p.forceUnsink();",
+    "new": "    if ((p.isInWaterTile || p.heightAction === 'sink') && p.heightAction !== 'unsink') p.forceUnsink();",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DW-D-shore-exit-ignores-the-load-grace",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "|| heldUnder(p)) && !f.loadGrace && d.swimming",
-    "new": "|| heldUnder(p)) && d.swimming",
+    "old": "        !f.loadGrace &&\n        d.swimming &&",
+    "new": "        d.swimming &&",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DW-D-stroke-charges-the-floor-cost",
     "file": "src/scenes/deepWater/deepWatersSwimMove.js",
-    "old": "        const cost = f.entity ? strokeFatigueCost(maxFatigue(f.entity)) : 0;",
-    "new": "        const cost = strokeFatigueCost(f.entity?.maxFatigue ?? 0);",
+    "old": "        const cost = f.entity ? strokeFatigueCost(maxFatigue(f.entity)) : 0; // raw units: MaxFatigue is (STR + END) x 64",
+    "new": "        const cost = strokeFatigueCost(f.entity?.maxFatigue ?? 0); // raw units: MaxFatigue is (STR + END) x 64",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DW-D-multiplier-in-the-grace",
     "file": "src/scenes/deepWater/deepWatersSwimMove.js",
-    "old": "      if (!f.anySwimming || f.loadGrace) { p.swimSpeedScale = 1; reset(); return; }",
-    "new": "      if (!f.anySwimming) { p.swimSpeedScale = 1; reset(); return; }",
+    "old": "      if (!f.anySwimming || f.loadGrace) {",
+    "new": "      if (!f.anySwimming) {",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "DW-D-water-breathing-ignores-the-rule",
     "file": "src/systems/breath.js",
-    "old": "export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);",
+    "old": "export const isWaterBreathing = (entity) =>\n  hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);",
     "new": "export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing');",
     "tests": [
       "test/scenes/dwd_swim.test.js"
@@ -200,7 +200,7 @@
   {
     "name": "DW-D-load-grace-stuck-location-never-dropped",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "  if (realSeconds - lastLocationLoadAt > LOCATION_LOAD_STUCK_SECONDS) { locationLoads = 0; return false; }",
+    "old": "  if (realSeconds - lastLocationLoadAt > LOCATION_LOAD_STUCK_SECONDS) {\n    locationLoads = 0;\n    return false;\n  }",
     "new": "",
     "tests": [
       "test/scenes/dwd_swim.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "DW-D-spike-never-released-inside",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "      lastDecision = null;\n      releaseSpikeGuard(p);\n      if (swim.forged) restore(p, now);",
-    "new": "      lastDecision = null;\n      if (swim.forged) restore(p, now);",
+    "old": "      releaseSpikeGuard(p);\n      if (swim.forged) restore(p, now);",
+    "new": "      if (swim.forged) restore(p, now);",
     "tests": [
       "test/scenes/dwd_swim.test.js"
     ]

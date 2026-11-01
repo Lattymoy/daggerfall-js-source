@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-TESA-A3-1-shore-unrouted",
     "file": "src/world/tamrielRoads.js",
-    "old": "    water[(n.y - gy) * MAP_W + (n.x - gx)] = 0;\n",
-    "new": "",
+    "old": "    water[(n.y - gy) * MAP_W + (n.x - gx)] = 0;\n    locations.push({ x: n.x - gx, y: n.y - gy, type: n.type });",
+    "new": "    locations.push({ x: n.x - gx, y: n.y - gy, type: n.type });",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-TESA-A2-5-streets-region",
     "file": "src/scenes/pixelBuild.js",
-    "old": "nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),",
-    "new": "nameBank: getNameBankOfRegion(dfLocation.regionIndex),",
+    "old": "          nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's",
+    "new": "          nameBank: getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDIT-TESA-A2-4-farthest",
     "file": "src/systems/deathRespawn.js",
-    "old": "      if (d2 >= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
-    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
+    "old": "      if (d2 >= bestDist) continue;",
+    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;",
     "tests": [
       "test/audit_tesa.test.js",
       "test/systems/audittesa2p_laws.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-TESA-A2-4-a-dungeon-a-town",
     "file": "src/systems/deathRespawn.js",
-    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
-    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
+    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));",
+    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];",
     "tests": [
       "test/audit_tesa.test.js",
       "test/systems/audittesa2p_laws.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "AUDIT-TESA-A4-F2-capital-cloned-over",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    if (had?.capital) return capitalLocationAt(px, py);",
-    "new": "    if (false) return capitalLocationAt(px, py);",
+    "old": "    if (had?.capital) return capitalLocationAt(px, py);   // AUDIT-TESA A4-F2: a capital's pixel is the capital's - never cloned over",
+    "new": "    if (false) return capitalLocationAt(px, py);   // AUDIT-TESA A4-F2: a capital's pixel is the capital's - never cloned over",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-TESA-A4-F2-harbour-arena-first",
     "file": "src/scenes/harbourHost.js",
-    "old": "const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null;",
-    "new": "const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null;",
+    "old": "      const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null; // AUDIT-TESA A4-F2: a capital's own",
+    "new": "      const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null; // AUDIT-TESA A4-F2: a capital's own",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-TESA-A2-3-living-alias",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const livingTown = livingTownAt(px, py) ?? {",
-    "new": "const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
+    "old": "        const livingTown = livingTownAt(px, py) ?? {",
+    "new": "        const livingTown = livingTownAt(px % 1000, py % 500) ?? {",
     "tests": [
       "test/audit_tesa.test.js"
     ],
@@ -303,7 +303,7 @@
   {
     "name": "AUDIT-TESA-A2-3-port-alias",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? (mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null) : null;",
     "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
     "tests": [
       "test/audit_tesa.test.js",
@@ -415,8 +415,8 @@
   {
     "name": "AUDIT-TESA-A6-3-walks-in-houses",
     "file": "src/world/capitalHelstrom.js",
-    "old": "len = C.z1 - C.z0 + 1, zc",
-    "new": "len = C.z1 - C.z0 + 8, zc",
+    "old": "    len = C.z1 - C.z0 + 1,",
+    "new": "    len = C.z1 - C.z0 + 8,",
     "tests": [
       "test/audit_tesa.test.js"
     ]

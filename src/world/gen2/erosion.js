@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 EROSION (bible/03-World/World-2-Arc.md, Phase 2; offline only - a client never runs it, WG-4). Stream power with
+// WG2 EROSION (Phase 2; offline only - a client never runs it, WG-4). Stream power with
 // an implicit step (Braun and Willett 2013, n = 1): a river cuts in proportion to the square root of the rain it
 // gathers and its slope, softer rock faster; what it cuts is carried down and laid where the slope can no longer carry
 // it (fans and flood plains); a slope steeper than its rock can stand slides (thermal erosion). The region's edge holds

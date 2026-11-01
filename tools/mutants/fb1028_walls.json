@@ -156,8 +156,8 @@
   {
     "name": "FB1028-the-ground-unread",
     "file": "src/world/road/gateRoads.js",
-    "old": "if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i))",
-    "new": "if (paths[i] && !inside[i] && isArmTile(tilemap, i))",
+    "old": "    if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i)) {",
+    "new": "    if (paths[i] && !inside[i] && isArmTile(tilemap, i)) {",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "FB1028-the-stub-left",
     "file": "src/world/road/gateRoads.js",
-    "old": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) { cut[j] = 1; stack.push(j); }",
-    "new": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) cut[j] = 0;",
+    "old": "      ) {\n        cut[j] = 1;\n        stack.push(j);\n      }",
+    "new": "      )\n        cut[j] = 0;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "FB1028-the-ground-unhanded",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);",
-    "new": "layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);",
+    "old": "    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads, locationRect.mask);   // FB1028: on its ground",
+    "new": "    if (hasLocation && locationRect?.gateRoads) layGateRoads(tilemap, paths, tileData, locationRect.gateRoads);   // FB1028: on its ground",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -201,7 +201,7 @@
   {
     "name": "FB1028-inside-never-handed",
     "file": "src/world/townGates.js",
-    "old": "  return dfLocation.outline?.bay ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) } : { ...town, yard };",
+    "old": "  return dfLocation.outline?.bay\n    ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) }\n    : { ...town, yard };",
     "new": "  return { ...town, yard };",
     "tests": [
       "test/world/fb1028_walls.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "FB1028-inside-past-the-bay",
     "file": "src/world/townGates.js",
-    "old": "  return dfLocation.outline?.bay ? { ...town, yard, inside",
-    "new": "  return true ? { ...town, yard, inside",
+    "old": "  return dfLocation.outline?.bay\n    ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) }\n    : { ...town, yard };",
+    "new": "  return true ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) } : { ...town, yard };",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "FB1028-yards-read-the-new-roads",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);",
-    "new": "yardPaths = null;",
+    "old": "    if (hasLocation && locationRect?.gateRoads) yardPaths = yardRoads(tilemap, paths, tileData, locationRect.gateRoads);   // FB1028 YARDS: #1184's roads",
+    "new": "    if (hasLocation && locationRect?.gateRoads) yardPaths = null;   // FB1028 YARDS: #1184's roads",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "FB1028-yards-the-walkers-shut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "loc, yardShut, () => breather.breathe())",
-    "new": "loc, walkShut, () => breather.breathe())",
+    "old": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "new": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "AUDIT-FB1028-B5-the-growth-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
-    "new": "g.blocked[y * W + x]",
+    "old": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x])))\n        return false;",
+    "new": "      if (x < 0 || y < 0 || x >= W || y >= g.height || g.blocked[y * W + x]) return false;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-FB1028-B5-the-growth-under-its-own",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
-    "new": "(g.blocked[y * W + x] && !gained?.[y * W + x])",
+    "old": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x])))\n        return false;",
+    "new": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && !gained?.[y * W + x])) return false;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDIT-FB1028-YARDS-the-walkers-shut-not-carried",
     "file": "src/scenes/pixelBuild.js",
-    "old": "dfLocation), walkShut, dfLocation) : null;",
-    "new": "dfLocation), null, dfLocation) : null;",
+    "old": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
+    "new": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), null, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "FB1028-Y1-the-keep-reads-1184s-things",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways);",
-    "new": "townGroundSteps(yl, measures, now, ways);",
+    "old": "  const g = yield* townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways); // FB1028 YARDS Y1: the gates' things as they stand",
+    "new": "  const g = yield* townGroundSteps(yl, measures, now, ways); // FB1028 YARDS Y1: the gates' things as they stand",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "FB1028-Y1-the-things-move-read-as-any-closed",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  if (was) gained = g.blocked.map(",
-    "new": "  if (false) gained = g.blocked.map(",
+    "old": "  if (was) gained = g.blocked.map((v, i) => ((v && !was.blocked[i]) || gained?.[i] ? 1 : 0));",
+    "new": "  if (false) gained = g.blocked.map((v, i) => ((v && !was.blocked[i]) || gained?.[i] ? 1 : 0));",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "FB1028-Y1-the-shared-block-measured-twice",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "now.push(b === yl.blocks[i] ? was[i] : one(b));",
-    "new": "now.push(one(b));",
+    "old": "    now.push(b === yl.blocks[i] ? was[i] : one(b));",
+    "new": "    now.push(one(b));",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "FB1028-Y2-the-edge-band-read",
     "file": "src/world/terrain/townBlendBefore.js",
-    "old": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
-    "new": "if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "old": "      mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
+    "new": "      mask[i] =\n        shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(x < 4 || wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -410,8 +410,8 @@
   {
     "name": "FB1028-Y2-the-yards-on-todays-mask",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "yardGround = townGroundMaskBefore(locationRect.shapeWas ?? locationRect.shape, ground, HEIGHTMAP_DIMENSION);",
-    "new": "yardGround = mask;",
+    "old": "      yardGround = townGroundMaskBefore(locationRect.shapeWas ?? locationRect.shape, ground, HEIGHTMAP_DIMENSION);   // FB1028 YARDS Y2",
+    "new": "      yardGround = mask;   // FB1028 YARDS Y2",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "FB1028-Y2-the-ring-kept",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
-    "new": "if (false) out[i] = 0;",
+    "old": "  for (let i = 0; i < out.length; i++) if (ring[i] && yardGround[i]) out[i] = 0;",
+    "new": "  for (let i = 0; i < out.length; i++) if (false) out[i] = 0;",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -430,8 +430,8 @@
   {
     "name": "FB1028-Y2-the-ring-cleared-off-the-ground",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (ring[i] && yardGround[i]) out[i] = 0;",
-    "new": "if (ring[i]) out[i] = 0;",
+    "old": "  for (let i = 0; i < out.length; i++) if (ring[i] && yardGround[i]) out[i] = 0;",
+    "new": "  for (let i = 0; i < out.length; i++) if (ring[i]) out[i] = 0;",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -440,8 +440,8 @@
   {
     "name": "FB1028-Y2-the-paths-unswapped",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (yardGround && locationRect?.ring) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
-    "new": "    if (false) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);",
+    "old": "    if (yardGround && locationRect?.ring) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);   // FB1028 YARDS Y2",
+    "new": "    if (false) yardPaths = ringAsWas(yardPaths ?? paths, locationRect.ring, yardGround);   // FB1028 YARDS Y2",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "FB1028-Y2-the-crops-kept",
     "file": "src/scenes/pixelBuild.js",
-    "old": "locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);",
-    "new": "locationRect.shapeWas = locationRect.shape;",
+    "old": "    if (locationRect?.shape) locationRect.shapeWas = shapeBefore(locationRect.shape, (groundLocation.mapTableData?.mapId ?? 0) >>> 0);   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
+    "new": "    if (locationRect?.shape) locationRect.shapeWas = locationRect.shape;   // FB1028 YARDS Y2: the outline #1184 drew, its crops none (posted: its basis is not)",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "FB1028-Y2-the-host-reads-todays-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true)",
-    "new": "townWalkShut(dfLocation, townGround, yardPaths ?? paths, true)",
+    "old": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
+    "new": "    const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls",
     "tests": [
       "test/world/fb1028_walls.test.js",
       "test/world/fb1028_yards_past.test.js"

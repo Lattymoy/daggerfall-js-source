@@ -1587,6 +1587,7 @@ function copyToOffline(row) {
     let snap = null;
     try { snap = JSON.parse(got.text); } catch { snap = null; }
     if (!snap || typeof snap !== 'object') return { ok: false, error: 'no-data' };
+    (await import('../../systems/item/knownItemsOnly.js')).dropUnknownItems(snap);   // a newer realm's items this build cannot read
     snap = offlineCopyOf(snap);   // AUDIT LIVED1 E: the world's stamps rebased onto the character's clock, the one clock offline
     snap.characterId = mintCharacterId();
     const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });
@@ -1843,7 +1844,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:"if (this._saveSettings) saveSettings();   // ConfirmExitBox"); in a browser Application.Quit means nothing,
+// (pauseWindow.js:"if (this._saveSettings) saveSettings(); // ConfirmExitBox"); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //

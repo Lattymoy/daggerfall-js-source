@@ -100,7 +100,7 @@ class VidReader {
   readCString(length) {
     const raw = this.readBytes(length);
     let end = raw.length;
-    while (end > 0 && raw[end - 1] === 0) end--;   // TrimEnd('\0')
+    while (end > 0 && raw[end - 1] === 0) end--; // TrimEnd('\0')
     return String.fromCharCode(...raw.subarray(0, end));
   }
 }
@@ -109,7 +109,7 @@ export class VidFile {
   constructor() {
     this.header = null;
     this.reader = null;
-    this.palette = null;      // Uint8Array(256*4), RGBA
+    this.palette = null; // Uint8Array(256*4), RGBA
     this._frameBuffer = null; // Uint8Array(w*h*4), RGBA
     this._audioBuffer = null; // Uint8Array, unsigned 8-bit PCM
     this._lastBlockType = VID_BLOCK_TYPES.Null;
@@ -120,17 +120,39 @@ export class VidFile {
     this._endOfFileReached = false;
   }
 
-  get frameCount() { return this.header.frameCount; }
-  get frameWidth() { return this.header.frameWidth; }
-  get frameHeight() { return this.header.frameHeight; }
-  get sampleRate() { return SAMPLE_RATE; }
-  get audioBuffer() { return this._audioBuffer; }
-  get frameBuffer() { return this._frameBuffer; }
-  get frameDelay() { return this._frameDelay; }
-  get currentBlock() { return this._currentBlock; }
-  get lastBlockType() { return this._lastBlockType; }
-  get endOfFile() { return this._endOfFileReached; }
-  get lastDelay() { return this._lastDelay; }
+  get frameCount() {
+    return this.header.frameCount;
+  }
+  get frameWidth() {
+    return this.header.frameWidth;
+  }
+  get frameHeight() {
+    return this.header.frameHeight;
+  }
+  get sampleRate() {
+    return SAMPLE_RATE;
+  }
+  get audioBuffer() {
+    return this._audioBuffer;
+  }
+  get frameBuffer() {
+    return this._frameBuffer;
+  }
+  get frameDelay() {
+    return this._frameDelay;
+  }
+  get currentBlock() {
+    return this._currentBlock;
+  }
+  get lastBlockType() {
+    return this._lastBlockType;
+  }
+  get endOfFile() {
+    return this._endOfFileReached;
+  }
+  get lastDelay() {
+    return this._lastDelay;
+  }
 
   /**
    * Open a VID file. Throws if the bytes are not a VID (DFU's ReadHeader /

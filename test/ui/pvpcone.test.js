@@ -1,4 +1,4 @@
-// PVP-CONE (the owner, 2026-10-29: "Was thinking we needed to make them not visible less u look within a angle", and
+// PVP-CONE (and
 // "Yes" to everywhere; bible/11-Multiplayer/PvP-Rework.md): another player's tag shows only within about 20 degrees of
 // the crosshair, faded in and out; my party and my foe of the last minute always show.
 import { test } from 'node:test';

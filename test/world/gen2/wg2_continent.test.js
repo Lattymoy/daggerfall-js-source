@@ -1,4 +1,4 @@
-// WG2 THE CONTINENT AND THE BASINS (bible/03-World/World-2-Canon.md, "Water"): the whole of Tamriel's drainage from the
+// WG2 THE CONTINENT AND THE BASINS ("Water"): the whole of Tamriel's drainage from the
 // canon - a region learns the rivers that enter it from past its edge, an edit learns how far downstream its water
 // reaches (and not upstream), and inside a closed basin the water runs down the real ground to its lake, so no river
 // crosses a flood's flat in a straight line. Pins mutation-checked (tools/mutants/wg2.json).

@@ -46,7 +46,23 @@ export const isEnding = (quest) => !!quest?.questComplete || (quest?.ticksToEnd 
 /** An outcome bound to the end alone - a sheet's "ended any other way" row. */
 const isCatchAll = (o) => !!o?.on && Object.keys(o.on).length === 1 && o.on.ended === true;
 
-export const BINDING_KINDS = Object.freeze(['started', 'ended', 'success', 'task', 'item', 'clock', 'clockDone', 'step', 'global', 'foeDead', 'act', 'choice', 'all', 'any', 'not']);
+export const BINDING_KINDS = Object.freeze([
+  'started',
+  'ended',
+  'success',
+  'task',
+  'item',
+  'clock',
+  'clockDone',
+  'step',
+  'global',
+  'foeDead',
+  'act',
+  'choice',
+  'all',
+  'any',
+  'not',
+]);
 
 /** A sheet may spell a symbol as the script does (`_S.02_`) or by its inner name (`S.02`) - the machine keys on the inner
  *  one (symbol.js getInnerSymbolName). */
@@ -73,12 +89,24 @@ export function holds(quest, b, probe = {}) {
   if (b.ended === true) return isEnding(quest) || !!probe.ending;
   if (b.success === true) return !!quest.questSuccess;
   if (b.task != null) return !!quest.tasks?.get?.(symName(b.task))?.getTriggerValue?.();
-  if (b.item != null) { const r = resource(quest, b.item, 'isItem'); return !!r && !!probe.carries?.(r); }
-  if (b.clock != null) { const r = resource(quest, b.clock, 'isClock'); return !!r && !!r.clockEnabled && !r.clockFinished; }
-  if (b.clockDone != null) { const r = resource(quest, b.clockDone, 'isClock'); return !!r && !!r.clockFinished; }
+  if (b.item != null) {
+    const r = resource(quest, b.item, 'isItem');
+    return !!r && !!probe.carries?.(r);
+  }
+  if (b.clock != null) {
+    const r = resource(quest, b.clock, 'isClock');
+    return !!r && !!r.clockEnabled && !r.clockFinished;
+  }
+  if (b.clockDone != null) {
+    const r = resource(quest, b.clockDone, 'isClock');
+    return !!r && !!r.clockFinished;
+  }
   if (b.step != null) return [...(quest.activeLogMessages?.values?.() ?? [])].some((e) => e?.stepID === b.step);
   if (b.global != null) return !!quest.hooks?.globalVars?.get?.(b.global);
-  if (b.foeDead != null) { const f = resource(quest, b.foeDead, 'isFoe'); return !!f && (f.killCount | 0) >= Math.max(1, f.spawnCount | 0); }
+  if (b.foeDead != null) {
+    const f = resource(quest, b.foeDead, 'isFoe');
+    return !!f && (f.killCount | 0) >= Math.max(1, f.spawnCount | 0);
+  }
   if (b.act != null) return (quest.ql?.acts?.[b.act] ?? 0) >= Math.max(1, b.n | 0);
   if (b.choice && typeof b.choice === 'object') return quest.ql?.choices?.[b.choice.branch] === b.choice.is;
   return false;
@@ -89,7 +117,8 @@ export function bindingSymbols(b, out = []) {
   if (!b || typeof b !== 'object') return out;
   for (const k of ['all', 'any']) if (Array.isArray(b[k])) for (const x of b[k]) bindingSymbols(x, out);
   if (b.not) bindingSymbols(b.not, out);
-  for (const k of ['task', 'item', 'clock', 'clockDone', 'foeDead']) if (b[k] != null) out.push({ kind: k, name: symName(b[k]) });
+  for (const k of ['task', 'item', 'clock', 'clockDone', 'foeDead'])
+    if (b[k] != null) out.push({ kind: k, name: symName(b[k]) });
   return out;
 }
 
@@ -120,8 +149,13 @@ export function readObjectives(quest, sheet, probe = {}) {
     const failed = !done && (latched(st, st?.failed, o) || (!!o.fail && holds(quest, o.fail, probe)));
     const open = done || failed || latched(st, st?.opened, o) || holds(quest, o.open ?? ALWAYS, probe);
     return {
-      id: o.id, text: o.text, state: done ? 'done' : failed ? 'failed' : open ? 'open' : 'hidden',
-      optional: !!o.optional, group: o.group ?? null, any: o.any ?? null, mark: o.mark ? symName(o.mark) : null,
+      id: o.id,
+      text: o.text,
+      state: done ? 'done' : failed ? 'failed' : open ? 'open' : 'hidden',
+      optional: !!o.optional,
+      group: o.group ?? null,
+      any: o.any ?? null,
+      mark: o.mark ? symName(o.mark) : null,
     };
   });
 }
@@ -168,10 +202,13 @@ export function observe(quest, sheet, probe0 = {}, { settle = false, ending = fa
   for (const b of sheet.branches ?? []) {
     if (st.choices[b.id]) continue;
     const c = (b.choices ?? []).find((x) => holds(quest, { task: x.sets }, probe));
-    if (c) { st.choices[b.id] = c.id; moved.chose.push({ branch: b.id, choice: c.id }); }
+    if (c) {
+      st.choices[b.id] = c.id;
+      moved.chose.push({ branch: b.id, choice: c.id });
+    }
   }
   for (const o of sheet.objectives ?? []) {
-    if (!st.opened.includes(o.id) && holds(quest, o.open ?? ALWAYS, probe)) st.opened.push(o.id);   // shown once, shown for good
+    if (!st.opened.includes(o.id) && holds(quest, o.open ?? ALWAYS, probe)) st.opened.push(o.id); // shown once, shown for good
     if (st.done.includes(o.id)) continue;
     if (holds(quest, o.done, probe)) {
       st.done.push(o.id);
@@ -188,13 +225,17 @@ export function observe(quest, sheet, probe0 = {}, { settle = false, ending = fa
     // succeeded (its GivePc): a success whose own row's binding missed is the sheet's success fallback, never a failure
     if (o?.failure && quest.questSuccess && isCatchAll(o)) o = fallbackOutcome(quest, sheet) ?? o;
     if (!o && (ending || isEnding(quest))) o = fallbackOutcome(quest, sheet);
-    if (o) { st.outcome = o.id; moved.outcome = o.id; }
+    if (o) {
+      st.outcome = o.id;
+      moved.outcome = o.id;
+    }
   }
   return moved;
 }
 
 /** The quest's outcome record, or null: the latched id's row in the sheet. */
-export const outcomeOf = (quest, sheet) => (quest?.ql?.outcome ? (sheet?.outcomes ?? []).find((o) => o.id === quest.ql.outcome) ?? null : null);
+export const outcomeOf = (quest, sheet) =>
+  quest?.ql?.outcome ? ((sheet?.outcomes ?? []).find((o) => o.id === quest.ql.outcome) ?? null) : null;
 
 // ---- the tier (section 5.1) ----
 

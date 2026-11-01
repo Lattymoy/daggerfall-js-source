@@ -74,34 +74,10 @@ export function buildRibcage(ramp = BONE_RAMP, { torso = 1, ribs = 6, gap = 0.42
     // are lit brightest, the sides fall away — the shading is what makes
     // a stack of hoops read as a cage rather than as a ladder.
     const ring = [
-      [
-        [-wx, yTop, wz],
-        [wx, yTop, wz],
-        [wx, yBot, wz],
-        [-wx, yBot, wz],
-        0.95,
-      ], // front
-      [
-        [wx, yTop, -wz],
-        [-wx, yTop, -wz],
-        [-wx, yBot, -wz],
-        [wx, yBot, -wz],
-        0.4,
-      ], // back
-      [
-        [wx, yTop, wz],
-        [wx, yTop, -wz],
-        [wx, yBot, -wz],
-        [wx, yBot, wz],
-        0.62,
-      ], // right
-      [
-        [-wx, yTop, -wz],
-        [-wx, yTop, wz],
-        [-wx, yBot, wz],
-        [-wx, yBot, -wz],
-        0.62,
-      ], // left
+      [[-wx, yTop, wz], [wx, yTop, wz], [wx, yBot, wz], [-wx, yBot, wz], 0.95], // front
+      [[wx, yTop, -wz], [-wx, yTop, -wz], [-wx, yBot, -wz], [wx, yBot, -wz], 0.4], // back
+      [[wx, yTop, wz], [wx, yTop, -wz], [wx, yBot, -wz], [wx, yBot, wz], 0.62], // right
+      [[-wx, yTop, -wz], [-wx, yTop, wz], [-wx, yBot, wz], [-wx, yBot, -wz], 0.62], // left
     ];
     for (const [a, b, c, d, shade] of ring) quad(a, b, c, d, shade);
   }

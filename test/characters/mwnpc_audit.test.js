@@ -334,8 +334,8 @@ test('AUDIT MW-NPC C5: a watchman\'s look follows his number on the wire once he
 test('AUDIT MW-NPC C6: under a window both dungeon hosts draw the flats and return before drawFoes - so every corpse flat is shown first, none left cast-only by the last frame, and only a body standing marks its own again (by source; the hosts\' order is FB1015\'s pin)', () => {
   const fb = rd('src/characters/foeBodies.js');
   const door = fb.slice(fb.indexOf('export function drawBodiesUnderWindow('));
-  const show = door.indexOf('  for (const f of foes) { const b = corpseFlat(f); if (b) b.castOnly = false; }');
-  const mark = door.indexOf("if (b) b.castOnly = lane.has('foe', idOf(f)); }");
+  const show = door.indexOf('for (const f of foes) {\n    const b = corpseFlat(f);\n    if (b) b.castOnly = false;\n  }');
+  const mark = door.indexOf("if (b) b.castOnly = lane.has('foe', idOf(f));\n  }");
   assert.ok(show > 0 && mark > show, 'every flat shown, then a standing body\'s marked');
   assert.ok(rd('src/scenes/dungeonContext.js').includes('drawBodiesUnderWindow(_npcLane, foes, _npcStood, { idOf: foeId, corpseFlat: (f) => f.corpseBatch,'));
 });

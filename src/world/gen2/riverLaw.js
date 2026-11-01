@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE RIVER'S LAW (bible/03-World/World-2-Canon.md, "Water"): a river's width and depth for what it carries, its
+// WG2 THE RIVER'S LAW ("Water"): a river's width and depth for what it carries, its
 // course made from its cells, and the nearest point of any course (a river's, a road's) - one home the bake, the
 // decoder, the sampler and the editor all read, so a course is one thing on every thread. A leaf: exact, no imports.
 

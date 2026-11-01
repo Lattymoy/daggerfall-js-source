@@ -155,6 +155,5 @@ test('F1 host: the streaming world wires it - the places host makes it over the 
   assert.match(src, /const worldAtlas = worldPlaces \? createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
   assert.match(src, /if \(worldAtlas && \(worldDataDoorOpen\(\) \|\| homeListings\(\)\.length\)\) worldAtlas\.check\(\);/);
   assert.match(src, /peek: peekAt, listings: homeListings, additions: modAdditions, stamp: \(\) => host\._locIndexGen \}\) : null;/);
-  // PIN MOVED (WG2-TOWNS): a World 2.0 town read unstood first (scenes/settle2Host.js peekAt)
   assert.match(src, /const peekAt = \(p\) => locationIndex\.get\(`\$\{p\.px\},\$\{p\.py\}`\) \?\? \(inBay\(p\.px, p\.py\) \? null : settle2\.peekAt\(p\.px, p\.py\) \?\? capitalSliceAt\(p\.px, p\.py\) \?\? arenaPeekAt\(p\.px, p\.py\)\);/, 'AUDIT FOUNDATION II A1: a capital\'s slice and an Arena place read unstood');
 });

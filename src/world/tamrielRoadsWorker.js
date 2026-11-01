@@ -29,14 +29,16 @@ import { packArenaRoads } from './arenaRoads.js';
 import { packPastBayPlaces } from './pastBayPlaces.js';
 import { MAP_W, MAP_H, drainSteps } from './road/roadNetwork.js';
 import { regionOf, tamrielRegionSteps, rollTypeAt } from './tamrielRoads.js';
-import { planTrunkLegs } from './road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL: the named roads' legs
+import { planTrunkLegs } from './road/cyrodiilRoads.js'; // VOYAGER-CYRODIIL: the named roads' legs
 import { inBay } from './tamriel/tamrielFrame.js';
 import { WATER_BYTE } from './roadsProducer.js';
-import { gen2Install } from './gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
+import { gen2Install } from './gen2/gen2Ground.js'; // The published regions
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */
 export function createRoadsWorkerState() {
-  let inputs = null, ground = null, atlas = null;
+  let inputs = null,
+    ground = null,
+    atlas = null;
   /** AUDIT TESA II R8: one build, a step at a time: its places rolled a strip of atlas tiles a step, its ground and its
    *  routes (world/tamrielRoads.js tamrielRegionSteps), then its answer and the buffers it transfers. */
   function* steps(m) {
@@ -49,11 +51,45 @@ export function createRoadsWorkerState() {
         places.push(...atlas.placesIn(region.gx, y, region.gx + MAP_W, Math.min(region.gy + MAP_H, y + ATLAS_TILE)));
         yield;
       }
-      const out = yield* tamrielRegionSteps({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt, trunks: inputs.trunkLegs });
-      const layer = packArenaRoads({ ...out, join: new Map() }), placed = packPastBayPlaces(out.places);
-      const land = out.land;   // EXACT-PIECES: the core's land's pieces, as runs (world/tamrielLandPieces.js)
-      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, land, stats: out.stats, ms: Date.now() - t0 },
-        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer, land.rowStart.buffer, land.runLen.buffer, land.runLabel.buffer, land.ring.buffer] };
+      const out = yield* tamrielRegionSteps({
+        region,
+        places,
+        nodes: inputs.nodes,
+        obstacles: inputs.obstacles,
+        gates: inputs.gates,
+        held: inputs.held ?? [],
+        heightAt: inputs.heightAt,
+        trunks: inputs.trunkLegs,
+      });
+      const layer = packArenaRoads({ ...out, join: new Map() }),
+        placed = packPastBayPlaces(out.places);
+      const land = out.land; // EXACT-PIECES: the core's land's pieces, as runs (world/tamrielLandPieces.js)
+      return {
+        msg: {
+          t: 'region',
+          id: m.id,
+          i: m.i,
+          j: m.j,
+          layer,
+          places: placed,
+          land,
+          stats: out.stats,
+          ms: Date.now() - t0,
+        },
+        xfer: [
+          layer.keys.buffer,
+          layer.roads.buffer,
+          layer.tracks.buffer,
+          layer.joinKeys.buffer,
+          layer.join.buffer,
+          placed.keys.buffer,
+          placed.types.buffer,
+          land.rowStart.buffer,
+          land.runLen.buffer,
+          land.runLabel.buffer,
+          land.ring.buffer,
+        ],
+      };
     } catch (e) {
       return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, error: e?.message ?? String(e) }, xfer: [] };
     }
@@ -67,14 +103,24 @@ export function createRoadsWorkerState() {
         if (!m.inThread) {
           setTamrielTrace(m.trace ?? null);
           setTamrielFit(m.fit ?? null);
-          gen2Install(m.wg2 ?? [], m.fit ?? null);   // WG2: the published regions with the trace
+          gen2Install(m.wg2 ?? [], m.fit ?? null); // The published regions with the trace
           dropGroundCache();
         }
         ground = groundWoods(w);
         const heightAt = (x, y) => ground.getHeightMapValue(x, y);
         // past the Bay the climate is the province's (the Bay's own pixels are never asked: they are its network's)
-        const typeAt = rollTypeAt(m.spec, { climateAt: groundClimateIndex(() => -1), heightAt, ground: createCountryGround(ground) });
-        atlas = createTamrielAtlas((x, y) => { const type = typeAt(x, y); return type === null ? null : { type, name: '' }; }, () => [0]);
+        const typeAt = rollTypeAt(m.spec, {
+          climateAt: groundClimateIndex(() => -1),
+          heightAt,
+          ground: createCountryGround(ground),
+        });
+        atlas = createTamrielAtlas(
+          (x, y) => {
+            const type = typeAt(x, y);
+            return type === null ? null : { type, name: '' };
+          },
+          () => [0],
+        );
         // VOYAGER-CYRODIIL: the named roads' legs, planned once on this ground (world/road/cyrodiilRoads.js) - a road stands
         // on land past the Bay and on no capital's pixel
         const held = new Set((m.obstacles ?? []).map((o) => `${o.x},${o.y}`));

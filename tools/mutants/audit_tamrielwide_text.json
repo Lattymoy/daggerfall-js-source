@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-TW-D3-the-title-past-the-core",
     "file": "src/ui/map/mapStrip.js",
-    "old": "continent ? t('map.sheet.tamriel', 'Tamriel') :",
-    "new": "continent ? 'Tamriel' :",
+    "old": "  return continent ? t('map.sheet.tamriel', 'Tamriel') : t('map.sheet.bay', 'The Bay');",
+    "new": "  return continent ? 'Tamriel' : t('map.sheet.bay', 'The Bay');",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-TW-D6-the-serpents-bay",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "`The sea will remember ${boss.name}'s fall.",
-    "new": "`The Bay will remember ${boss.name}'s fall.",
+    "old": "    `The sea will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
+    "new": "    `The Bay will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AUDIT-TW-D6-the-serpents-title",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "'The sea names you Coilbreaker.'",
-    "new": "'The Bay names you Coilbreaker.'",
+    "old": "  title: () => t('serpent.honour.title', 'The sea names you Coilbreaker.'), // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)",
+    "new": "  title: () => t('serpent.honour.title', 'The Bay names you Coilbreaker.'), // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -160,8 +160,8 @@
   {
     "name": "AUDIT-TW-D6-the-taverns-bay",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "every tavern in the land.'",
-    "new": "every tavern in the Bay.'",
+    "old": "    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the land.'),",
+    "new": "    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the Bay.'),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "AUDIT-TW-D6-the-seas-share",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "'The sea takes its share.'",
-    "new": "'The Bay takes its share.'",
+    "old": "    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The sea takes its share.']),",
+    "new": "    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The Bay takes its share.']),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-TW-D6-the-carrack",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'Only an Admiralty sells a carrack. The title goes to your Fleet.'",
-    "new": "'The only carrack for sale in the Bay. The title goes to your Fleet.'",
+    "old": "      words: o.admiralty.can ? 'Only an Admiralty sells a carrack. The title goes to your Fleet.' : o.admiralty.why,",
+    "new": "      words: o.admiralty.can ? 'The only carrack for sale in the Bay. The title goes to your Fleet.' : o.admiralty.why,",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-TW-D6-the-wardrobe",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "t('coll.src.world', 'Around Tamriel')",
-    "new": "t('coll.src.world', 'Around the Bay')",
+    "old": "  wordPair('world', () => t('coll.src.world', 'Around Tamriel')),",
+    "new": "  wordPair('world', () => t('coll.src.world', 'Around the Bay')),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "AUDIT-TW-D6-the-card-table",
     "file": "src/ui/gambitTableWords.js",
-    "old": "'Legendary across Tamriel. Bring your best army.'",
-    "new": "'Legendary across the Iliac Bay. Bring your best army.'",
+    "old": "      return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across Tamriel. Bring your best army.');",
+    "new": "      return t('cards.kingsGambit.tier.grandmaster.blurb', 'Legendary across the Iliac Bay. Bring your best army.');",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-TW-D6-the-raids-timer",
     "file": "src/systems/eventTimers.js",
-    "old": "`${more} more today across Tamriel`",
-    "new": "`${more} more today across the Iliac Bay`",
+    "old": "    const rest = more ? `${more} more today across Tamriel` : null;",
+    "new": "    const rest = more ? `${more} more today across the Iliac Bay` : null;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/ui/enhanced/timers1.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-TW-D6-the-raids-row",
     "file": "src/systems/modSettings.js",
-    "old": "raid towns across Tamriel for 2 hours.",
-    "new": "raid towns across the Bay for 2 hours.",
+    "old": "            'Knights, bandits or orcs raid towns across Tamriel for 2 hours. With the town guard, ' +",
+    "new": "            'Knights, bandits or orcs raid towns across the Bay for 2 hours. With the town guard, ' +",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-TW-DTEST-the-lairs-region-0",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "const { c, pick } = at, regionIndex = maps.getRegionIndexAt(px, py), dungeonType",
-    "new": "const { c, pick } = at, regionIndex = 0, dungeonType",
+    "old": "    const { c, pick } = at, regionIndex = maps.getRegionIndexAt(px, py), dungeonType = pick.template.mapTableData?.dungeonType;",
+    "new": "    const { c, pick } = at, regionIndex = 0, dungeonType = pick.template.mapTableData?.dungeonType;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ],

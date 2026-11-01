@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 PROTECTED PROPERTY (bible/03-World/World-2-Canon.md, "Protected property"): before an edit is published, every
+// WG2 PROTECTED PROPERTY ("Protected property"): before an edit is published, every
 // record a player holds against the world - a home and its decor, rooms, containers and yard, a rental, a recall anchor,
 // a quest's destination - is checked against it. A brush or a road over one's ground, a building it names moved or
 // removed, a district made again that retires it: each is a conflict, and publication is refused until a designer

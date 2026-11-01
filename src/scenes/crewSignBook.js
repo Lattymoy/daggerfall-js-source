@@ -20,7 +20,8 @@ const NONE = Object.freeze(new Set());
 /** @param {{ live?: () => boolean, character?: () => string | null, door?: any, now?: () => number }} [deps] */
 export function createCrewSignBook(deps = {}) {
   const now = () => Number(deps.now?.()) || Date.now();
-  let door = deps.door ?? null, off = false;
+  let door = deps.door ?? null,
+    off = false;
   const doorNow = () => (door ??= accountCrewSigns({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }));
   /** @type {Map<string, { slots: Set<number>, at: number, wait: Promise<void>|null }>} */
   const halls = new Map();
@@ -38,21 +39,29 @@ export function createCrewSignBook(deps = {}) {
     }
     if (!h.wait && now() - h.at >= CREW_HALL_FRESH_MS) {
       const hall = h;
-      hall.wait = doorNow().hall({ town: town >>> 0, day, character: character() }).catch(() => null).then((r) => {
-        if (r?.ok) hall.slots = new Set((r.data?.taken ?? []).filter((s) => Number.isInteger(s)));
-        else if (r?.error === 'not-found') off = true;
-        hall.at = now();   // a refused read waits as a good one does
-        hall.wait = null;
-      });
+      hall.wait = doorNow()
+        .hall({ town: town >>> 0, day, character: character() })
+        .catch(() => null)
+        .then((r) => {
+          if (r?.ok) hall.slots = new Set((r.data?.taken ?? []).filter((s) => Number.isInteger(s)));
+          else if (r?.error === 'not-found') off = true;
+          hall.at = now(); // a refused read waits as a good one does
+          hall.wait = null;
+        });
     }
     return { slots: h.slots, wait: h.wait };
   }
 
   async function sign(id) {
     if (!live()) return { ok: true, fresh: false };
-    const r = await doorNow().sign({ id, character: character() }).catch(() => null);
+    const r = await doorNow()
+      .sign({ id, character: character() })
+      .catch(() => null);
     if (r?.ok) return { ok: true, fresh: !!r.data?.fresh };
-    if (r?.error === 'not-found') { off = true; return { ok: true, fresh: false }; }
+    if (r?.error === 'not-found') {
+      off = true;
+      return { ok: true, fresh: false };
+    }
     if (r?.error === 'crew-taken') {
       const s = crewSignOf(id);
       if (s) halls.get(`${s.town}:${s.day}`)?.slots.add(s.slot);
@@ -65,7 +74,10 @@ export function createCrewSignBook(deps = {}) {
   /** Let `id` go - answers whether the service held it for this account. */
   function release(id) {
     if (!live() || !crewSignOf(id)) return Promise.resolve(false);
-    return Promise.resolve(doorNow().release({ id, character: character() })).then((r) => !!r?.ok && !!r.data?.released, () => false);
+    return Promise.resolve(doorNow().release({ id, character: character() })).then(
+      (r) => !!r?.ok && !!r.data?.released,
+      () => false,
+    );
   }
 
   return { live, taken, sign, release };

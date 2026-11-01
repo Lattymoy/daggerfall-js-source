@@ -20,8 +20,8 @@
   {
     "name": "RVN-ARTS-mend-line-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "MEND: Object.freeze({ AT: 0.5,",
-    "new": "MEND: Object.freeze({ AT: 0.6,",
+    "old": "  MEND: Object.freeze({ AT: 0.5, CHANNEL: 2.0, HEAL: 0.2 }),",
+    "new": "  MEND: Object.freeze({ AT: 0.6, CHANNEL: 2.0, HEAL: 0.2 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN-ARTS-mend-heal-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "CHANNEL: 2.0, HEAL: 0.2 }),",
-    "new": "CHANNEL: 2.0, HEAL: 0.25 }),",
+    "old": "  MEND: Object.freeze({ AT: 0.5, CHANNEL: 2.0, HEAL: 0.2 }),",
+    "new": "  MEND: Object.freeze({ AT: 0.5, CHANNEL: 2.0, HEAL: 0.25 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN-ARTS-ward-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "TAKEN: 0.65, SECONDS: 10 }),",
-    "new": "TAKEN: 0.7, SECONDS: 10 }),",
+    "old": "  WARD: Object.freeze({ AT: 0.75, CHANNEL: 1.5, TAKEN: 0.65, SECONDS: 10 }),",
+    "new": "  WARD: Object.freeze({ AT: 0.75, CHANNEL: 1.5, TAKEN: 0.7, SECONDS: 10 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN-ARTS-ward-seconds-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "TAKEN: 0.65, SECONDS: 10 }),",
-    "new": "TAKEN: 0.65, SECONDS: 12 }),",
+    "old": "  WARD: Object.freeze({ AT: 0.75, CHANNEL: 1.5, TAKEN: 0.65, SECONDS: 10 }),",
+    "new": "  WARD: Object.freeze({ AT: 0.75, CHANNEL: 1.5, TAKEN: 0.65, SECONDS: 12 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN-ARTS-cry-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "BLOWS: 1.2, SECONDS: 12 }),",
-    "new": "BLOWS: 1.25, SECONDS: 12 }),",
+    "old": "  CRY: Object.freeze({ REACH: 20, CHANNEL: 1.0, BLOWS: 1.2, SECONDS: 12 }),",
+    "new": "  CRY: Object.freeze({ REACH: 20, CHANNEL: 1.0, BLOWS: 1.25, SECONDS: 12 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN-ARTS-siphon-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SIPHON: Object.freeze({ REACH: 8.5, WINDUP: 1.3, MULT: 1.0 }),",
-    "new": "SIPHON: Object.freeze({ REACH: 8.5, WINDUP: 1.3, MULT: 1.2 }),",
+    "old": "  SIPHON: Object.freeze({ REACH: 8.5, WINDUP: 1.3, MULT: 1.0 }),",
+    "new": "  SIPHON: Object.freeze({ REACH: 8.5, WINDUP: 1.3, MULT: 1.2 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN-ARTS-barrage-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "STEP: 0.45, COUNT: 3, MULT: 0.6 }),",
-    "new": "STEP: 0.45, COUNT: 3, MULT: 0.7 }),",
+    "old": "  BARRAGE: Object.freeze({ REACH: 12, WINDUP: 1.1, STEP: 0.45, COUNT: 3, MULT: 0.6 }),",
+    "new": "  BARRAGE: Object.freeze({ REACH: 12, WINDUP: 1.1, STEP: 0.45, COUNT: 3, MULT: 0.7 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN-ARTS-barrage-one-disc",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "STEP: 0.45, COUNT: 3, MULT: 0.6 }),",
-    "new": "STEP: 0.45, COUNT: 1, MULT: 0.6 }),",
+    "old": "  BARRAGE: Object.freeze({ REACH: 12, WINDUP: 1.1, STEP: 0.45, COUNT: 3, MULT: 0.6 }),",
+    "new": "  BARRAGE: Object.freeze({ REACH: 12, WINDUP: 1.1, STEP: 0.45, COUNT: 1, MULT: 0.6 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN-ARTS-nova-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "NOVA: Object.freeze({ REACH: 3.8, WINDUP: 1.4, MULT: 1.2 }),",
-    "new": "NOVA: Object.freeze({ REACH: 3.8, WINDUP: 1.4, MULT: 1.3 }),",
+    "old": "  NOVA: Object.freeze({ REACH: 3.8, WINDUP: 1.4, MULT: 1.2 }),",
+    "new": "  NOVA: Object.freeze({ REACH: 3.8, WINDUP: 1.4, MULT: 1.3 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN-ARTS-cooldown-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "COOLDOWN: Object.freeze([14, 20]),",
-    "new": "COOLDOWN: Object.freeze([12, 20]),",
+    "old": "  COOLDOWN: Object.freeze([14, 20]),",
+    "new": "  COOLDOWN: Object.freeze([12, 20]),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN-ARTS-sworn-mend-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12,",
-    "new": "SWORN_MEND: Object.freeze({ AT: 0.5, SHARE: 0.12,",
+    "old": "  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
+    "new": "  SWORN_MEND: Object.freeze({ AT: 0.5, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN-ARTS-sworn-mend-share-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12,",
-    "new": "SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.15,",
+    "old": "  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
+    "new": "  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.15, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN-ARTS-sworn-mend-no-cooldown",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
-    "new": "PER_RANK: 0.02, COOLDOWN: 0, SIDE: 0.5 }),",
+    "old": "  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 120, SIDE: 0.5 }),",
+    "new": "  SWORN_MEND: Object.freeze({ AT: 0.4, SHARE: 0.12, PER_RANK: 0.02, COOLDOWN: 0, SIDE: 0.5 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RVN-ARTS-sworn-ward-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SWORN_WARD: Object.freeze({ BASE: 6,",
-    "new": "SWORN_WARD: Object.freeze({ BASE: 5,",
+    "old": "  SWORN_WARD: Object.freeze({ BASE: 6, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }),",
+    "new": "  SWORN_WARD: Object.freeze({ BASE: 5, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN-ARTS-sworn-cry-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 2,",
-    "new": "SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 3,",
+    "old": "  SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 2, ROUNDS: 6, COOLDOWN: 90 }),",
+    "new": "  SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }),",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN-ARTS-sworn-heal-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "SIPHON_HEAL: 1 / 4,",
-    "new": "SIPHON_HEAL: 1 / 2,",
+    "old": "    SIPHON_HEAL: 1 / 4,",
+    "new": "    SIPHON_HEAL: 1 / 2,",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN-ARTS-sworn-nova-reach-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "NOVA: 0.8, NOVA_REACH: 5,",
-    "new": "NOVA: 0.8, NOVA_REACH: 9,",
+    "old": "    NOVA_REACH: 5,",
+    "new": "    NOVA_REACH: 9,",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RVN-ARTS-sworn-reach-moved",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "NOVA_REACH: 5, REACH: 12,",
-    "new": "NOVA_REACH: 5, REACH: 14,",
+    "old": "    REACH: 12,",
+    "new": "    REACH: 14,",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN-ARTS-shared-dice",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "const rolls = idStream(id, 'art');",
-    "new": "const rolls = Math.random;",
+    "old": "  const rolls = idStream(id, 'art');",
+    "new": "  const rolls = Math.random;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN-ARTS-blow-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (!L.marks[0].landed && f.entity.health < L.hp - 1e-6) {",
-    "new": "if (false) {",
+    "old": "    if (!L.marks[0].landed && f.entity.health < L.hp - 1e-6) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN-ARTS-heal-masks-blow",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "    L.hp = f.entity.health;\n",
-    "new": "",
+    "old": "    L.hp = f.entity.health;\n    const m = L.marks[0];",
+    "new": "    const m = L.marks[0];",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RVN-ARTS-no-ground-fit",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "  fitBlowToGround(b, f.ai.collider);   // AUDIT RVN B1: on the ground it marks\n",
-    "new": "",
+    "old": "  fitBlowToGround(b, f.ai.collider); // AUDIT RVN B1: on the ground it marks\n  const key = keyFor(now);",
+    "new": "  const key = keyFor(now);",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "RVN-ARTS-stale-cut-gone",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "  if (s?.live && now - s.seen > BLOW_STALE) endLive(s, now, true);",
-    "new": "  void BLOW_STALE;",
+    "old": "  if (s?.live && now - s.seen > BLOW_STALE) endLive(s, now, true); // AUDIT RVN B4: frames it was not stepped (kneeling, held) - its marks cut, never landed late",
+    "new": "  void BLOW_STALE; // AUDIT RVN B4: frames it was not stepped (kneeling, held) - its marks cut, never landed late",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RVN-ARTS-pyre-spell-back",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "const took = Number(ctx.strike(artSpell(ART_NAMES[st.art], element(f, st.art), lvl, mult)));",
-    "new": "const took = Number(ctx.strike(pyreSpell(ART_NAMES[st.art], element(f, st.art), /** @type {any} */ (mult))));",
+    "old": "  const took = Number(ctx.strike(artSpell(ART_NAMES[st.art], element(f, st.art), lvl, mult)));",
+    "new": "  const took = Number(ctx.strike(pyreSpell(ART_NAMES[st.art], element(f, st.art), /** @type {any} */ (mult))));",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "RVN-ARTS-level-term-rounded",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "magnitudeLevelBase: 0, magnitudeLevelHigh: 0 }, ...base.effects.slice(1)]",
-    "new": "magnitudeLevelBase: 1, magnitudeLevelHigh: 1 }, ...base.effects.slice(1)]",
+    "old": "      { ...base.effects[0], magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 0, magnitudeLevelHigh: 0 },",
+    "new": "      { ...base.effects[0], magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 1, magnitudeLevelHigh: 1 },",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "RVN-ARTS-drinks-the-mean",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "Math.min(took, Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT)))",
-    "new": "Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT))",
+    "old": "    e.health = Math.min(\n      e.maxHealth || e.health,\n      e.health + Math.min(took, Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT))),\n    );",
+    "new": "    e.health = Math.min(e.maxHealth || e.health, e.health + Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT)));",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RVN-ARTS-new-stamp-overwritten",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (rev && rev === s.wardOn) rev.edge = s.wardWas;",
-    "new": "if (rev) rev.edge = s.wardWas;",
+    "old": "    if (rev && rev === s.wardOn) rev.edge = s.wardWas;",
+    "new": "    if (rev) rev.edge = s.wardWas;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "RVN-ARTS-sworn-filter-gone",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "const fair = (x, rec) => !!x?.ai?.feet && x !== rec && !x.dead && x.ai.isHostile !== false && x.entity?.team !== 'PlayerAlly';",
+    "old": "const fair = (x, rec) =>\n  !!x?.ai?.feet && x !== rec && !x.dead && x.ai.isHostile !== false && x.entity?.team !== 'PlayerAlly';",
     "new": "const fair = (x, rec) => !!x?.ai?.feet && !x.dead;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "RVN-ARTS-sworn-reach-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "flat(tgt.ai.feet, at) > S.REACH || ",
-    "new": "",
+    "old": "    if (!mine.has(tgt) || !fair(tgt, rec) || flat(tgt.ai.feet, at) > S.REACH || !sees(tgt)) return null; // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits",
+    "new": "    if (!mine.has(tgt) || !fair(tgt, rec) || !sees(tgt)) return null; // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "RVN-ARTS-sworn-wall-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "const sees = (x) => door.clear?.(at, x.ai.feet) !== false;",
-    "new": "const sees = () => true;",
+    "old": "  const sees = (x) => door.clear?.(at, x.ai.feet) !== false;",
+    "new": "  const sees = () => true;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "RVN-ARTS-sworn-rank-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "weight: (S.RANK[0] + S.RANK[1] * rank) * more,",
-    "new": "weight: more,",
+    "old": "    weight: (S.RANK[0] + S.RANK[1] * rank) * more,",
+    "new": "    weight: more,",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RVN-ARTS-sworn-words-lost",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "    say?.(art === 'warding' ? t('rvn.art.sworn.wards'",
-    "new": "    void (art === 'warding' ? t('rvn.art.sworn.wards'",
+    "old": "    say?.(\n      art === 'warding'\n        ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given })\n        : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }),\n    );",
+    "new": "    void (art === 'warding'\n      ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given })\n      : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }));",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "RVN-ARTS-shatter-skipped",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "for (const m of L.marks) if (m.key) shatterBlow(m.key, now);",
-    "new": "for (const m of L.marks) if (m.key) setLiveBlow(m.key, null);",
+    "old": "      for (const m of L.marks) if (m.key) shatterBlow(m.key, now);",
+    "new": "      for (const m of L.marks) if (m.key) setLiveBlow(m.key, null);",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "RVN-ARTS-twice-a-fight",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "  st.used[st.art] = true;\n",
-    "new": "",
+    "old": "  st.used[st.art] = true;\n  call(f, st, ctx, 'start');",
+    "new": "  call(f, st, ctx, 'start');",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "RVN-ARTS-ward-never-lifts",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (s.wardWas && (now >= s.wardUntil || rev !== s.wardOn)) {",
-    "new": "if (s.wardWas && rev !== s.wardOn) {",
+    "old": "  if (s.wardWas && (now >= s.wardUntil || rev !== s.wardOn)) {",
+    "new": "  if (s.wardWas && rev !== s.wardOn) {",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "RVN-ARTS-weakness-warded",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (cls !== edge?.weak) taken[cls]",
-    "new": "if (true) taken[cls]",
+    "old": "  for (const cls of WARD_CLASSES) if (cls !== edge?.weak) taken[cls] = Math.min(taken[cls] ?? 1, ART_LAW.WARD.TAKEN);",
+    "new": "  for (const cls of WARD_CLASSES) if (true) taken[cls] = Math.min(taken[cls] ?? 1, ART_LAW.WARD.TAKEN);",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "RVN-ARTS-adaptation-overridden",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "taken[cls] = Math.min(taken[cls] ?? 1, ART_LAW.WARD.TAKEN);",
-    "new": "taken[cls] = ART_LAW.WARD.TAKEN;",
+    "old": "  for (const cls of WARD_CLASSES) if (cls !== edge?.weak) taken[cls] = Math.min(taken[cls] ?? 1, ART_LAW.WARD.TAKEN);",
+    "new": "  for (const cls of WARD_CLASSES) if (cls !== edge?.weak) taken[cls] = ART_LAW.WARD.TAKEN;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "RVN-ARTS-band-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "x.retinueOf === rev?.id",
-    "new": "false",
+    "old": "    st.cryBand = [f, ...(ctx.foes?.() ?? []).filter((x) => x !== f && !x.dead && x.retinueOf === rev?.id && x.entity)];",
+    "new": "    st.cryBand = [f, ...(ctx.foes?.() ?? []).filter((x) => x !== f && !x.dead && false && x.entity)];",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "RVN-ARTS-cry-never-ends",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (s.cryUntil > 0 && now >= s.cryUntil) {",
-    "new": "if (false) {",
+    "old": "  if (s.cryUntil > 0 && now >= s.cryUntil) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RVN-ARTS-aim-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (m.aimed) /** @type {any} */ (b).ahead = Math.min(BLOW.pyre.range, flat(origin, feet));",
-    "new": "if (m.aimed) /** @type {any} */ (b).ahead = 0;",
+    "old": "      if (m.aimed) /** @type {any} */ (b).ahead = Math.min(BLOW.pyre.range, flat(origin, feet));",
+    "new": "      if (m.aimed) /** @type {any} */ (b).ahead = 0;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RVN-ARTS-one-at-a-time-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "  if (windupNear(feet, now)) return null;",
-    "new": "  void windupNear;",
+    "old": "  if (windupNear(feet, now)) return null; // one wind-up near me at a time - its own brain's too",
+    "new": "  void windupNear; // one wind-up near me at a time - its own brain's too",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RVN-ARTS-siphon-drinks-nothing",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (st.art === 'siphon' && took > 0) e.health = Math.min(",
-    "new": "if (false) e.health = Math.min(",
+    "old": "  if (st.art === 'siphon' && took > 0)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "RVN-ARTS-flight-gate-dropped",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (f.fleeing || f.scattering || f.yielded || f.roaring",
-    "new": "if (f.scattering || f.yielded || f.roaring",
+    "old": "  if (\n    f.fleeing ||\n    f.scattering ||\n    f.yielded ||\n    f.roaring ||\n    f.executing ||\n    f.sparing ||\n    f._knockedOut ||\n    e.team === 'PlayerAlly'\n  )",
+    "new": "  if (f.scattering || f.yielded || f.roaring || f.executing || f.sparing || f._knockedOut || e.team === 'PlayerAlly')",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "RVN-ARTS-switch-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (!mayArt(f) || !tacticsSwitchOn() || !feet)",
-    "new": "if (!mayArt(f) || !feet)",
+    "old": "  if (!mayArt(f) || !tacticsSwitchOn() || !feet) {",
+    "new": "  if (!mayArt(f) || !feet) {",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "RVN-ARTS-door-foes-unread",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (!mine.has(tgt) || !fair(tgt, rec)",
-    "new": "if (!fair(tgt, rec)",
+    "old": "    if (!mine.has(tgt) || !fair(tgt, rec) || flat(tgt.ai.feet, at) > S.REACH || !sees(tgt)) return null; // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits",
+    "new": "    if (!fair(tgt, rec) || flat(tgt.ai.feet, at) > S.REACH || !sees(tgt)) return null; // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "RVN-ARTS-third-unpaid",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "if (me) healMine(me, n * S.SIPHON_HEAL);",
-    "new": "void me;",
+    "old": "      if (me) healMine(me, n * S.SIPHON_HEAL);",
+    "new": "      void me;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "RVN-ARTS-mending-listener-blind",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "swornMendStep(entity, after, revenantsWithYou(),",
-    "new": "swornMendStep(entity, after, [],",
+    "old": "    swornMendStep(entity, after, revenantsWithYou(), (id) => swornBodyOf(id)?.health > 0, { say: popupMessage });",
+    "new": "    swornMendStep(entity, after, [], (id) => swornBodyOf(id)?.health > 0, { say: popupMessage });",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "RVN-ARTS-one-away-mends",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "(id) => swornBodyOf(id)?.health > 0, { say: popupMessage });",
-    "new": "() => true, { say: popupMessage });",
+    "old": "    swornMendStep(entity, after, revenantsWithYou(), (id) => swornBodyOf(id)?.health > 0, { say: popupMessage });",
+    "new": "    swornMendStep(entity, after, revenantsWithYou(), () => true, { say: popupMessage });",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "RVN-ARTS-layer-never-asks",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "if (r) swornArtStep(rec, r, playerDoor(), { say: popupMessage });",
-    "new": "if (r) void swornArtStep;",
+    "old": "      if (r) swornArtStep(rec, r, playerDoor(), { say: popupMessage });",
+    "new": "      if (r) void swornArtStep;",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "RVN-ARTS-rank-note-gone",
     "file": "src/systems/revenant/revenantArts.js",
-    "old": "const young = (r.rank | 0) < ART_RANK, on = tacticsSwitchOn(), from = ROMAN[ART_RANK];",
-    "new": "const young = false, on = tacticsSwitchOn(), from = ROMAN[ART_RANK];",
+    "old": "  const young = (r.rank | 0) < ART_RANK,",
+    "new": "  const young = false,",
     "tests": [
       "test/systems/revenant/rvnarts.test.js"
     ]

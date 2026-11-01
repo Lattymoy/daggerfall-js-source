@@ -2,8 +2,8 @@
   {
     "name": "TB-the-old-band-in-straight-lines",
     "file": "src/world/urban/townFabric.js",
-    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
-    "new": "    const round = Float32Array.from(carriageway, (v, i) => (v || paths.some((p) => p.some((q) => Math.hypot((q % g.W) - (i % g.W), Math.floor(q / g.W) - Math.floor(i / g.W)) <= 3.5)) ? 1 : 0));",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb); // the carriageway and its ring, by the eight ways",
+    "new": "    const round = Float32Array.from(carriageway, (v, i) =>\n      v ||\n      paths.some((p) =>\n        p.some((q) => Math.hypot((q % g.W) - (i % g.W), Math.floor(q / g.W) - Math.floor(i / g.W)) <= 3.5),\n      )\n        ? 1\n        : 0,\n    );",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TB-the-ring-by-four-ways",
     "file": "src/world/urban/townFabric.js",
-    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
-    "new": "    const round = Uint8Array.from(carriageway, (v, i) => (v || carriageway[i - 1] || carriageway[i + 1] || carriageway[i - g.W] || carriageway[i + g.W] ? 1 : 0));",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb); // the carriageway and its ring, by the eight ways",
+    "new": "    const round = Uint8Array.from(carriageway, (v, i) =>\n      v || carriageway[i - 1] || carriageway[i + 1] || carriageway[i - g.W] || carriageway[i + g.W] ? 1 : 0,\n    );",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "TB-no-ring",
     "file": "src/world/urban/townFabric.js",
-    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb); // the carriageway and its ring, by the eight ways",
     "new": "    const round = maxNear(carriageway, g.W, g.H, 0);",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "TB-the-kerb-two-deep",
     "file": "src/world/urban/townFabric.js",
-    "old": "  kerb: 1,           // its pavements' width round the carriageway",
-    "new": "  kerb: 2,           // its pavements' width round the carriageway",
+    "old": "  kerb: 1, // its pavements' width round the carriageway, by the eight ways (1.6 m either side; TOWN-BOARDS)",
+    "new": "  kerb: 2, // its pavements' width round the carriageway, by the eight ways (1.6 m either side; TOWN-BOARDS)",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TB-the-ground-unread",
     "file": "src/world/urban/townFabric.js",
-    "old": "          town[i] = !onGround || onGround(i % W, (i - (i % W)) / W) ? 1 : 0;",
-    "new": "          town[i] = 1;",
+    "old": "          town[i] = !onGround || onGround(i % W, (i - (i % W)) / W) ? 1 : 0; // TOWN-BOARDS: on the town's ground alone",
+    "new": "          town[i] = 1; // TOWN-BOARDS: on the town's ground alone",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "TB-the-stands-ground-dropped",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  const onGround = ground || under ? (x, z) => (!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
+    "old": "  const onGround =\n    ground || under ? (x, z) => (!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
     "new": "  const onGround = ground || under ? (x, z) => !under?.[z * W + x] : null;",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "TB-the-plan-kept-on-another-ground",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  if (had && had.groundKey === groundKey) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }",
-    "new": "  if (had) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }",
+    "old": "  if (had && had.groundKey === groundKey) {",
+    "new": "  if (had) {",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TB-the-old-model-left-on-the-door",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }",
-    "new": "  if (had) { _fabrics.delete(mapId); }",
+    "old": "    unregisterCustomModel(had.modelId);\n  } // its ground moved under it (the land or its roads landed): planned again",
+    "new": "  } // its ground moved under it (the land or its roads landed): planned again",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TB-the-grounds-key-blind",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "h = Math.imul(h ^ (ground && onTownTile(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;",
-    "new": "h = Math.imul(h ^ 1, 0x01000193) >>> 0;",
+    "old": "      h = Math.imul(h ^ (ground && onTownTile(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;",
+    "new": "      h = Math.imul(h ^ 1, 0x01000193) >>> 0;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TB-the-host-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "breathe: () => breather.breathe(), ground: townGround, paths });",
-    "new": "breathe: () => breather.breathe(), ground: null, paths });",
+    "old": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)",
+    "new": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: null, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "TB2-the-join-unmade",
     "file": "src/world/urban/townFabric.js",
-    "old": "        if (fill === undefined) continue;   // two buildings' or props' corners between them: no ground to join on",
+    "old": "        if (fill === undefined) continue; // two buildings' or props' corners between them: no ground to join on",
     "new": "        if (fill === undefined || true) continue;",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "TB2-the-join-through-a-building",
     "file": "src/world/urban/townFabric.js",
-    "old": "        const fill = between.find((i) => can(i) && kind[i] === K.main) ?? between.find((i) => can(i) && kind[i] === K.open);",
+    "old": "        const fill =\n          between.find((i) => can(i) && kind[i] === K.main) ?? between.find((i) => can(i) && kind[i] === K.open);",
     "new": "        const fill = between.find((i) => can(i) && kind[i] === K.main) ?? between[0];",
     "tests": [
       "test/world/urban/townboards.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "TB2-the-least-unread",
     "file": "src/world/urban/townFabric.js",
-    "old": "    const { long, meets } = reach(cells, K.main);\n    if (long) continue;\n",
-    "new": "    const { meets } = reach(cells, K.main);\n    if (true) continue;\n",
+    "old": "    const { long, meets } = reach(cells, K.main);\n    if (long) continue;",
+    "new": "    const { meets } = reach(cells, K.main);\n    if (true) continue;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TB2-the-least-a-cell-short",
     "file": "src/world/urban/townFabric.js",
-    "old": "  paveLeast: 4,",
-    "new": "  paveLeast: 3,",
+    "old": "  paveLeast: 4, // a pavement shorter than this along its longer side (6.4 m - one of Daggerfall's ground tiles, its own",
+    "new": "  paveLeast: 3, // a pavement shorter than this along its longer side (6.4 m - one of Daggerfall's ground tiles, its own",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TB2-the-roads-unread",
     "file": "src/world/urban/townFabric.js",
-    "old": "          else if (onRoad && onRoad(i % W, (i - (i % W)) / W)) road[i] = 1;",
-    "new": "          else if (false) road[i] = 1;",
+    "old": "          else if (onRoad && onRoad(i % W, (i - (i % W)) / W))",
+    "new": "          else if (false)",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TB2-the-host-roads-unwired",
     "file": "src/scenes/pixelBuild.js",
-    "old": "ground: townGround, paths });   // URBANIZER U3",
-    "new": "ground: townGround, paths: null });   // URBANIZER U3",
+    "old": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)",
+    "new": "      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths: null });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "TB2-the-islands-unread",
     "file": "src/world/urban/townFabric.js",
-    "old": "  if (!walk) return;\n  for (const cells of pieces(g, (i) => kind[i] === K.main).list) {",
-    "new": "  return;\n  for (const cells of pieces(g, (i) => kind[i] === K.main).list) {",
+    "old": "  if (!walk) return;",
+    "new": "  return;",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "TB2-an-island-walked-taken",
     "file": "src/world/urban/townFabric.js",
-    "old": "    if (cells.some((i) => walk[i])) continue;\n",
-    "new": "",
+    "old": "    if (cells.some((i) => walk[i])) continue;\n    const { long, meets } = reach(cells, K.pave);",
+    "new": "    const { long, meets } = reach(cells, K.pave);",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "TB2-a-long-island-taken",
     "file": "src/world/urban/townFabric.js",
-    "old": "    const { long, meets } = reach(cells, K.pave);\n    if (long) continue;\n",
-    "new": "    const { meets } = reach(cells, K.pave);\n",
+    "old": "    const { long, meets } = reach(cells, K.pave);\n    if (long) continue;",
+    "new": "    const { meets } = reach(cells, K.pave);",
     "tests": [
       "test/world/urban/townboards.test.js"
     ]

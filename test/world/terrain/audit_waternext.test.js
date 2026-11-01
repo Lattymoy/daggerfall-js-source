@@ -87,16 +87,15 @@ test('AUDIT WATER-NEXT P1: the bed is the kernel\'s - carved with the grid by re
   }
   // the kernel's one grid law carries it; the answer's shape is the host's
   const k = rd('src/world/terrain/terrainGen.js');
-  assert.match(k, /const halo = bed && stride === 1 && bedNearEdge\(bed\) \? bedHalo\(ghost, px, py, undefined, paintedWaterAt\(px, py\)\) : null;[^\n]*\n\s*return \{ positions: grid\.positions, normals: grid\.normals, bed: bed \? gridBed\(grid, bed, stride, halo, \{ px, py \}\) : null \};/);   // PIN MOVED (WATER-LEVEL): and the pixel, whose bodies' laws level its water
+  assert.match(k, /const halo = bed && stride === 1 && bedNearEdge\(bed\) \? bedHalo\(ghost, px, py, undefined, paintedWaterAt\(px, py\)\) : null;[^\n]*\n\s*return \{ positions: grid\.positions, normals: grid\.normals, bed: bed \? gridBed\(grid, bed, stride, halo, \{ px, py \}\) : null \};/);
   assert.match(k, /const grid = restrideGrid\(\{ woods, px, py, stride, samples, landforms, bed: bed \? tilemapBytes : null, meets: meetsOf\(meets, landforms\) \}\);/, 'the build\'s grid carves by its own TileMap');   // PIN MOVED (FB1029 ACROSS-EDGE): and its town meets
   const g = flatGrid(128, 128, 0);
   const sea = new Uint8Array(128 * 128), kb = gridBed(g, sea, 1);
-  assert.deepEqual(Object.keys(kb).sort(), ['depths', 'halo', 'normals', 'positions', 'sheet']);   // PIN MOVED (WATER-LEVEL): the sheet whole, at its level
+  assert.deepEqual(Object.keys(kb).sort(), ['depths', 'halo', 'normals', 'positions', 'sheet']);
   assert.ok(kb.depths.every((d) => d === BED_DEPTH) && kb.sheet.depths.every((d) => d === BED_DEPTH), 'open water with no bank is deep everywhere');
   assert.equal(kb.positions[1], -BED_DEPTH, 'the carved ground'); assert.equal(g.positions[1], 0, 'the grid as it stood');
   assert.equal(gridBed(g, new Uint8Array(128 * 128).fill(DRY), 1), null, 'no water, no bed');
   const wk = rd('src/world/terrain/terrainGenWorker.js');
-  // PIN MOVED (WATER-LEVEL): one list of the bed's buffers, its sheet's among them (terrainGen.js bedBuffers)
   assert.equal((wk.match(/transfer\.push\(\.\.\.bedBuffers\((?:out\.)?bed\)\);/g) || []).length, 2, 'both replies transfer the bed - none copied across the wire');
   assert.match(k, /export const bedBuffers = \(bed\) => \(bed \? \[bed\.depths\.buffer, bed\.positions\.buffer, bed\.normals\.buffer, \.\.\.sheetBuffers\(bed\.sheet\), \.\.\.\(bed\.halo \? \[bed\.halo\.bits\.buffer\] : \[\]\)\] : \[\]\);/);
   assert.match(rd('src/world/terrain/terrainGenClient.js'), /g\.resolve\(\{ positions: m\.positions, normals: m\.normals, bed: m\.bed \?\? null \}\);/, 'the promotion\'s answer keeps it');
@@ -127,7 +126,6 @@ test('AUDIT WATER-NEXT H1: Deep Waters\' cap carves the bed - a tile it repaints
   assert.match(w, /entry\._dwBytes = bytes === entry\.tilemapBytes \? null : bytes;\n\s*dwRecarve\(entry\);[^\n]*\n\s*dwClipTerrain\(entry\);\n\s*dwWaterSurface\(entry\);/, 'the cap carves, then clips, then re-indexes');
   assert.match(w, /function bedBytesOf\(p\) \{ return p\._dwBytes \?\? p\.tilemapBytes; \}/);
   const recarve = w.slice(w.indexOf('  function dwRecarve(p) {'), w.indexOf('  function hostBed(grid, bed)'));
-  // PIN MOVED (WATER-LEVEL): the whole bed again, by the TileMap that stands - the sheet levelled anew, its extent the cap's
   assert.match(recarve, /const bed = gridBed\(grid, bedBytesOf\(p\), stride, halo, p\);/);
   assert.match(recarve, /const grid = \{ positions: p\._bed\.grid, normals: p\._bed\.normals \};/, 'from the grid as it stood');
   assert.match(recarve, /renderer\.destroyMesh\(p\.terrain\);\n\s*p\.terrain = renderer\.createTerrainSurface\(bed\?\.positions \?\? grid\.positions, bed\?\.normals \?\? grid\.normals,/);
@@ -177,7 +175,7 @@ test('AUDIT WATER-NEXT F2: a seam\'s vertex is carved alike on both sides - the 
   assert.equal(tileDataAt(SCALED_OCEAN_ELEVATION, 3, 5, 10, 10), 0, 'water by its height alone');
   assert.equal(BED_HALO_TILES, 4, 'the ramp\'s three tiles and the vote\'s one');
   const k = rd('src/world/water/waterBed.js');
-  assert.match(k, /v = painted && painted\(px \+ x \/ side, py \+ 1 - z \/ side\) \? WATER : tileDataAt\(sampleHeight\(Math\.fround\(ghost\(x, z\)\)\), x - dx \* side, z \+ dz \* side, px \+ dx, py \+ dz\);/);   // PIN MOVED (WATER-LEVEL): a water the neighbour paints (World 2.0, Cyrodiil) is water to the halo
+  assert.match(k, /v =\s+painted && painted\(px \+ x \/ side, py \+ 1 - z \/ side\)\s+\? WATER\s+: tileDataAt\(sampleHeight\(Math\.fround\(ghost\(x, z\)\)\), x - dx \* side, z \+ dz \* side, px \+ dx, py \+ dz\);/);
   assert.match(k, /const dz = tz < 0 \? 1 : tz >= side \? -1 : 0;/, 'the map\'s Y runs south (terrainSampler.js ghostSampler)');
   // the march is AssignTilesJob's (TerrainHelper's): the shape the four corners' low bits, the ring their sum over four
   const LUT = createLookupTable();
@@ -233,7 +231,7 @@ function shade({ dist, waterDepth, sceneOn, scene, sun = 0, wind = 0 }) {
   const fns = glslFunctions(fs, {
     texelFetch: () => [0, 0, 0, 0], textureLod: sample, texture: sample, textureGrad: () => [0, 0, 0, 1],
     dFdx: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01), dFdy: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01),
-    vWorldPos: wp, vLocalXZ: [wp[0], wp[2]], vDepth: [waterDepth, waterDepth], vCut: -1, vGrow: 1,   // PIN MOVED (WATER-LEVEL): the depths a pair, the cut inside
+    vWorldPos: wp, vLocalXZ: [wp[0], wp[2]], vDepth: [waterDepth, waterDepth], vCut: -1, vGrow: 1,
     uTileSize: 6.4, uTileDim: 128, uOpen: 0, uOpenColor: [1, 1, 1],
     uTime: 0, uWindDir: [1, 0], uWindStrength: wind, uSwell: 0, uRain: 0,
     uLightDir: [0, 1, 0], uAmbient: [0.5, 0.5, 0.5], uSunScale: sun, uSunColor: [1, 0.95, 0.9],
@@ -326,7 +324,7 @@ test('AUDIT WATER-NEXT M1/G13/P2: a field with live rings slides with the eye an
   const rr = rd('src/render/renderer.js');
   assert.match(rr, /gl\.uniform3f\(L\.rippleRect, r\.packed\[0\], r\.packed\[1\], this\._rippleSpan\);/);
   const src = rd('src/world/water/waterRipples.js');
-  assert.match(src, /origin\[0\] = ox; origin\[1\] = oz;\n[^\n]*\n[^\n]*\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
+  assert.match(src, /origin\[0\] = ox;\n\s*origin\[1\] = oz;\n\s*\/\/ AUDIT WATER-NEXT P2: asleep, the field is still water everywhere - there is nothing to slide\. Every outdoor frame\n\s*\/\/ the eye crossed a cell in had slid two arrays of zeros \(0\.13 ms a frame walking anywhere, water or none\)\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
   assert.match(src, /for \(let z = 1; z < cells - 1; z\+\+\) \{\n\s*const sz = z \+ dz;/, 'the slide writes the inside only');
 });
 

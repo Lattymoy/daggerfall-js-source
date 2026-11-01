@@ -2,8 +2,8 @@
   {
     "name": "BEAT-LANE-angle-alone",
     "file": "src/systems/seaHelm.js",
-    "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
-    "new": "st.tack * off < -H.laneDeg",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)\n        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
+    "new": "      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
     "tests": [
       "test/systems/travel/fb1030d_beatlane.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BEAT-LANE-metres-alone",
     "file": "src/systems/seaHelm.js",
-    "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
-    "new": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)\n        st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
+    "new": "      else if (-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM) st.tack = -st.tack; // the mark swung past the eye, or she stands past the lane: go about",
     "tests": [
       "test/systems/travel/fb1030d_beatlane.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BEAT-LANE-near-side",
     "file": "src/systems/seaHelm.js",
-    "old": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
-    "new": "st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "old": "      else if (st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
+    "new": "      else if (st.tack * off < -H.laneDeg || st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM)",
     "tests": [
       "test/systems/travel/fb1030d_beatlane.test.js"
     ]

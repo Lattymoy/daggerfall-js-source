@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-points-left-black",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);",
-    "new": "",
+    "old": "      for (let j = 0; j < pts.length; j++) paint(pts[j], true);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-rein-dyed",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "body[i] = k >= POINT_BODY ? 1 : 0; }",
-    "new": "body[i] = 1; }",
+    "old": "      body[i] = k >= POINT_BODY ? 1 : 0;",
+    "new": "      body[i] = 1;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-ghosts-strands-never-paler-to-their-tips",
     "file": "src/systems/horse/mountPaint.js",
-    "old": "rampInto(out, o, MOUNT_RAMPS.spectralMane, 0.25 + 0.35 * t + 0.45 * tip);",
-    "new": "rampInto(out, o, MOUNT_RAMPS.spectralMane, 0.25 + 0.35 * t);",
+    "old": "      rampInto(out, o, MOUNT_RAMPS.spectralMane, 0.25 + 0.35 * t + 0.45 * tip);",
+    "new": "      rampInto(out, o, MOUNT_RAMPS.spectralMane, 0.25 + 0.35 * t);",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-chargers-points-cold",
     "file": "src/systems/horse/mountPaint.js",
-    "old": "rampInto(out, o, MOUNT_RAMPS.fire, 0.18 + 0.28 * t + 0.6 * tip + flick);",
-    "new": "rampInto(out, o, MOUNT_RAMPS.steel, 0.18 + 0.28 * t + 0.6 * tip + flick);",
+    "old": "      rampInto(out, o, MOUNT_RAMPS.fire, 0.18 + 0.28 * t + 0.6 * tip + flick);",
+    "new": "      rampInto(out, o, MOUNT_RAMPS.steel, 0.18 + 0.28 * t + 0.6 * tip + flick);",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-automatons-points-left-black",
     "file": "src/systems/horse/mountPaint.js",
-    "old": "      rampInto(out, o, MOUNT_RAMPS.steel, 0.15 + 0.6 * t + 0.25 * tip);",
-    "new": "",
+    "old": "      rampInto(out, o, MOUNT_RAMPS.steel, 0.15 + 0.6 * t + 0.25 * tip);\n      return 255;",
+    "new": "      return 255;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-warhorses-mane-left-black",
     "file": "src/systems/horse/mountPaint.js",
-    "old": "      rampInto(out, o, MOUNT_RAMPS.burning, 0.12 + 0.3 * t + 0.62 * tip + flick);",
-    "new": "",
+    "old": "      rampInto(out, o, MOUNT_RAMPS.burning, 0.12 + 0.3 * t + 0.62 * tip + flick);\n      return 255;",
+    "new": "      return 255;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-rider-taken-for-points",
     "file": "src/systems/horse/horseCoats.js",
-    "old": "return H[1] < POINT_SAT && H[2] < POINT_VAL; };",
-    "new": "return H[2] < POINT_VAL; };",
+    "old": "  return H[1] < POINT_SAT && H[2] < POINT_VAL;",
+    "new": "  return H[2] < POINT_VAL;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-STOREFRONT-the-chargers-legs-unburnt",
     "file": "src/systems/horse/mountPaint.js",
-    "old": "      if (p.legs && p.leg) {\n        const top = FIRE_LEGS",
-    "new": "      if (false) {\n        const top = FIRE_LEGS",
+    "old": "      if (p.legs && p.leg) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-looks-hair-never-asked",
     "file": "src/world/horseRig.js",
-    "old": "    if (hairJob?.mount !== mount) hairAsked.add(mount);\n",
-    "new": "",
+    "old": "    if (hairJob?.mount !== mount) hairAsked.add(mount);\n    return hairTex;",
+    "new": "    return hairTex;",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]
@@ -111,7 +111,7 @@
     "name": "AUDIT-STOREFRONT-the-warhorses-3d-hair-the-arts",
     "file": "src/systems/horse/horseCoats.js",
     "old": "export const dyesPoints = (/** @type {number} */ mount) => !!HORSE_MOUNTS[mount] && HORSE_MOUNTS[mount] !== 'none';",
-    "new": "export const dyesPoints = (/** @type {number} */ mount) => !!HORSE_MOUNTS[mount] && HORSE_MOUNTS[mount] !== 'none' && HORSE_MOUNTS[mount] !== 'warhorse';",
+    "new": "export const dyesPoints = (/** @type {number} */ mount) =>\n  !!HORSE_MOUNTS[mount] && HORSE_MOUNTS[mount] !== 'none' && HORSE_MOUNTS[mount] !== 'warhorse';",
     "tests": [
       "test/systems/horse/mountlook.test.js"
     ]

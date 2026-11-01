@@ -244,7 +244,7 @@ test('LOCKPICK item: counted across stacks, spent one at a time; the counter\'s 
     restockEndless(off, [lockpicks(21)]); assert.equal(off[0].stackCount, 4, 'offline it sells out until the day\'s restock');
   } finally { globalThis.location = was; }
   const SS = src('src/systems/shopStock.js');
-  assert.match(SS, /if \(shelfIndex === 0 && \(buildingType === BUILDING_TYPES\.GeneralStore \|\| buildingType === BUILDING_TYPES\.PawnShop\)\) ensureEndlessLockpicks\(items\);/,
+  assert.match(SS, /if \(shelfIndex === 0 && \(buildingType === BUILDING_TYPES\.GeneralStore \|\| buildingType === BUILDING_TYPES\.PawnShop\)\)\n\s*ensureEndlessLockpicks\(items\);/,
     'every General Store\'s and Pawn Shop\'s counter');
 });
 

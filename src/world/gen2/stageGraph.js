@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 (bible/03-World/World-2-Canon.md, "The stages"): THE STAGES AND WHAT EACH READS. World 2.0 is made in this order,
+// THE STAGES AND WHAT EACH READS. World 2.0 is made in this order,
 // each stage reading only the stages named in its `reads`. A change to one stage's output marks the stages downstream
 // of it stale over the change's rectangle grown by each stage's reach - never the whole world. Hydrology's reach is the
 // changed water's own basin, found by the caller (`basinOf`), since a river carries a change to its mouth.

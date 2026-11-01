@@ -22,29 +22,152 @@
 export const ROOM_TEXELS_PER_M = 12;
 
 /** A style's eight colours, sRGB bytes, in this order. */
-export const ROOM_COLOR_SLOTS = Object.freeze(['wall', 'wall2', 'wainscot', 'floor', 'floor2', 'ceiling', 'beam', 'furniture']);
+export const ROOM_COLOR_SLOTS = Object.freeze([
+  'wall',
+  'wall2',
+  'wainscot',
+  'floor',
+  'floor2',
+  'ceiling',
+  'beam',
+  'furniture',
+]);
 
 /** How a style lays its faces: [wall pattern, floor pattern, wainscot 0/1, beams 0/1]. Wall: 0 plaster, 1 striped
  *  paper, 2 stone blocks, 3 upright boards. Floor: 0 planks, 1 flagstones, 2 chequered tiles. */
-export const ROOM_PATTERNS = Object.freeze({ wall: Object.freeze(['plaster', 'stripes', 'stone', 'boards']), floor: Object.freeze(['planks', 'flags', 'tiles']) });
+export const ROOM_PATTERNS = Object.freeze({
+  wall: Object.freeze(['plaster', 'stripes', 'stone', 'boards']),
+  floor: Object.freeze(['planks', 'flags', 'tiles']),
+});
 
 /** The rooms. Eight, so a street of eight houses can wear eight - and the hash spreads them evenly (the pin). */
 export const ROOM_STYLES = Object.freeze([
-  Object.freeze({ name: 'plaster and oak', colors: [[182, 160, 124], [168, 146, 112], [96, 64, 40], [118, 82, 50], [104, 72, 44], [150, 128, 98], [78, 52, 32], [70, 46, 28]], pattern: [0, 0, 1, 1] }),
-  Object.freeze({ name: 'whitewash and flags', colors: [[196, 190, 172], [184, 178, 160], [120, 112, 98], [112, 108, 100], [92, 88, 82], [176, 170, 154], [96, 72, 48], [84, 58, 36]], pattern: [0, 1, 0, 1] }),
-  Object.freeze({ name: "merchant's green", colors: [[92, 112, 78], [104, 124, 88], [70, 52, 36], [126, 92, 58], [110, 80, 50], [160, 142, 110], [84, 60, 40], [64, 40, 26]], pattern: [1, 0, 1, 0] }),
-  Object.freeze({ name: 'red ochre', colors: [[150, 78, 54], [138, 70, 48], [84, 52, 34], [104, 70, 44], [90, 60, 38], [140, 112, 84], [70, 46, 30], [58, 36, 22]], pattern: [0, 2, 1, 1] }),
-  Object.freeze({ name: 'blue paper', colors: [[80, 96, 132], [104, 120, 158], [64, 48, 34], [132, 98, 64], [116, 84, 54], [172, 160, 136], [88, 64, 44], [72, 48, 30]], pattern: [1, 0, 1, 0] }),
-  Object.freeze({ name: 'stone hall', colors: [[128, 124, 116], [112, 108, 100], [90, 84, 76], [96, 92, 86], [80, 76, 70], [110, 98, 84], [70, 50, 34], [80, 56, 34]], pattern: [2, 1, 0, 1] }),
-  Object.freeze({ name: 'bare timber', colors: [[138, 104, 70], [124, 92, 60], [100, 72, 46], [110, 78, 48], [96, 68, 42], [120, 90, 60], [74, 52, 32], [66, 44, 26]], pattern: [3, 0, 0, 1] }),
-  Object.freeze({ name: 'yellow lime', colors: [[200, 176, 112], [186, 162, 100], [108, 78, 50], [140, 120, 96], [70, 60, 50], [184, 170, 140], [92, 66, 42], [76, 52, 32]], pattern: [0, 2, 1, 0] }),
+  Object.freeze({
+    name: 'plaster and oak',
+    colors: [
+      [182, 160, 124],
+      [168, 146, 112],
+      [96, 64, 40],
+      [118, 82, 50],
+      [104, 72, 44],
+      [150, 128, 98],
+      [78, 52, 32],
+      [70, 46, 28],
+    ],
+    pattern: [0, 0, 1, 1],
+  }),
+  Object.freeze({
+    name: 'whitewash and flags',
+    colors: [
+      [196, 190, 172],
+      [184, 178, 160],
+      [120, 112, 98],
+      [112, 108, 100],
+      [92, 88, 82],
+      [176, 170, 154],
+      [96, 72, 48],
+      [84, 58, 36],
+    ],
+    pattern: [0, 1, 0, 1],
+  }),
+  Object.freeze({
+    name: "merchant's green",
+    colors: [
+      [92, 112, 78],
+      [104, 124, 88],
+      [70, 52, 36],
+      [126, 92, 58],
+      [110, 80, 50],
+      [160, 142, 110],
+      [84, 60, 40],
+      [64, 40, 26],
+    ],
+    pattern: [1, 0, 1, 0],
+  }),
+  Object.freeze({
+    name: 'red ochre',
+    colors: [
+      [150, 78, 54],
+      [138, 70, 48],
+      [84, 52, 34],
+      [104, 70, 44],
+      [90, 60, 38],
+      [140, 112, 84],
+      [70, 46, 30],
+      [58, 36, 22],
+    ],
+    pattern: [0, 2, 1, 1],
+  }),
+  Object.freeze({
+    name: 'blue paper',
+    colors: [
+      [80, 96, 132],
+      [104, 120, 158],
+      [64, 48, 34],
+      [132, 98, 64],
+      [116, 84, 54],
+      [172, 160, 136],
+      [88, 64, 44],
+      [72, 48, 30],
+    ],
+    pattern: [1, 0, 1, 0],
+  }),
+  Object.freeze({
+    name: 'stone hall',
+    colors: [
+      [128, 124, 116],
+      [112, 108, 100],
+      [90, 84, 76],
+      [96, 92, 86],
+      [80, 76, 70],
+      [110, 98, 84],
+      [70, 50, 34],
+      [80, 56, 34],
+    ],
+    pattern: [2, 1, 0, 1],
+  }),
+  Object.freeze({
+    name: 'bare timber',
+    colors: [
+      [138, 104, 70],
+      [124, 92, 60],
+      [100, 72, 46],
+      [110, 78, 48],
+      [96, 68, 42],
+      [120, 90, 60],
+      [74, 52, 32],
+      [66, 44, 26],
+    ],
+    pattern: [3, 0, 0, 1],
+  }),
+  Object.freeze({
+    name: 'yellow lime',
+    colors: [
+      [200, 176, 112],
+      [186, 162, 100],
+      [108, 78, 50],
+      [140, 120, 96],
+      [70, 60, 50],
+      [184, 170, 140],
+      [92, 66, 42],
+      [76, 52, 32],
+    ],
+    pattern: [0, 2, 1, 0],
+  }),
 ]);
 
 /** What stands against a room's back wall, by index (0 is a bare wall). */
 export const ROOM_PIECES = Object.freeze(['none', 'bed', 'table', 'shelf', 'hearth', 'painting', 'wardrobe']);
 
 /** The cloth: curtains, rugs, blankets, a painting's canvas. */
-export const ROOM_FABRICS = Object.freeze([[140, 40, 36], [52, 82, 120], [168, 128, 52], [74, 104, 62], [118, 60, 110], [196, 170, 110]]);
+export const ROOM_FABRICS = Object.freeze([
+  [140, 40, 36],
+  [52, 82, 120],
+  [168, 128, 52],
+  [74, 104, 62],
+  [118, 60, 110],
+  [196, 170, 110],
+]);
 
 /** Of the rooms behind a lit night's windows, the share with a lamp burning - the rest stand dark, as a town's do. */
 export const ROOM_LIT_SHARE = 0.62;
@@ -77,29 +200,47 @@ export const ROOM_LIT_K = Math.round(ROOM_LIT_SHARE * 2 ** 24);
 export const ROOM_CURTAIN_K = Math.round(ROOM_CURTAIN_SHARE * 2 ** 16);
 /** MurmurHash3's block mix and its finish, on unsigned 32-bit words. */
 export function seedMix(h, k) {
-  k = Math.imul(k, 0xcc9e2d51); k = (k << 15) | (k >>> 17); k = Math.imul(k, 0x1b873593);
-  h ^= k; h = (h << 13) | (h >>> 19);
+  k = Math.imul(k, 0xcc9e2d51);
+  k = (k << 15) | (k >>> 17);
+  k = Math.imul(k, 0x1b873593);
+  h ^= k;
+  h = (h << 13) | (h >>> 19);
   return (Math.imul(h, 5) + 0xe6546b64) >>> 0;
 }
 export function seedFinal(h) {
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
   return h >>> 0;
 }
 /** A window's seed: the wall's normal in quarters, its plane (native units off the model's origin) and the tile. */
 export function roomSeedBits(nqx, nqy, nqz, plane, tx, ty) {
   let h = ROOM_SEED_START;
-  for (const v of [nqx + ROOM_SEED_NQ, nqy + ROOM_SEED_NQ, nqz + ROOM_SEED_NQ, plane + ROOM_SEED_BIAS, tx + ROOM_SEED_BIAS, ty + ROOM_SEED_BIAS]) h = seedMix(h, v >>> 0);
+  for (const v of [
+    nqx + ROOM_SEED_NQ,
+    nqy + ROOM_SEED_NQ,
+    nqz + ROOM_SEED_NQ,
+    plane + ROOM_SEED_BIAS,
+    tx + ROOM_SEED_BIAS,
+    ty + ROOM_SEED_BIAS,
+  ])
+    h = seedMix(h, v >>> 0);
   return seedFinal(h);
 }
 /** A night room's lamp burns when its seed's top 24 bits fall under the lit share. */
-export const roomLitAt = (h) => (h >>> 8) < ROOM_LIT_K;
+export const roomLitAt = (h) => h >>> 8 < ROOM_LIT_K;
 /** The curtains' bits, off the seed; curtains hang when their low 16 fall under the share, their inner edges (of the
  *  tile's width: the left at [0] + [1] x a byte, the right at [2] - [3] x a byte) from the two high bytes; a rug lies on
  *  the floor when the seed is odd. */
 export const curtainBitsOf = (h) => seedFinal((h ^ ROOM_CURTAIN_SALT) >>> 0);
 export const roomCurtained = (c) => (c & 0xffff) < ROOM_CURTAIN_K;
 export const ROOM_CURTAIN_EDGE = Object.freeze([0.18, 0.14, 0.82, 0.14]);
-export const curtainEdges = (c) => [ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN_EDGE[1] * (((c >>> 16) & 0xff) / 255), ROOM_CURTAIN_EDGE[2] - ROOM_CURTAIN_EDGE[3] * ((c >>> 24) / 255)];
+export const curtainEdges = (c) => [
+  ROOM_CURTAIN_EDGE[0] + ROOM_CURTAIN_EDGE[1] * (((c >>> 16) & 0xff) / 255),
+  ROOM_CURTAIN_EDGE[2] - ROOM_CURTAIN_EDGE[3] * ((c >>> 24) / 255),
+];
 export const roomRugAt = (h) => (h & 1) === 1;
 
 /** The styles' colours as one flat sRGB list (style-major, ROOM_COLOR_SLOTS within) - what the shader's table is. */

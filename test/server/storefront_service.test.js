@@ -13,13 +13,13 @@ import { standService } from '../accountDb.mjs';
 import { legacyOrder } from './legacyOrders.mjs';   // AURUM-ONLY: an item's money order, made before the switch
 import { fulfilOrder, shopCardOf, STRIPE_API } from '../../server-account/src/shop.js';
 import { shopDemand, DEMAND_DAYS_MAX } from '../../server-account/src/staffShop.js';
-import { dailyWaresAt } from '../../server-account/src/aurum.js';   // AURUM: the day's wares beside the demand
+import { dailyWaresAt, dailySaleOf } from '../../server-account/src/aurum.js';   // AURUM: the day's wares beside the demand
 import { passOf, findPass, BATTLE_PASS_STATUS, passSwitchOf } from '../../server-account/src/battlePass.js';
 import { effectsHeld, effectRefusal } from '../../server-account/src/titles.js';
 import { ECON_ROUTES } from '../../server-account/src/staffEconomy.js';
 import { ROUTES } from '../../server-account/src/service.js';
 import {
-  SHOP_WARES, shopPriceFor, shopWorth, shopHeldIds, shopOwns, shopFeaturedOf, shopFeaturedNow, shopSellable, shopOnSaleOf, SHOP_MIN_PRICE,
+  SHOP_WARES, shopPriceFor, shopWorth, shopHeldIds, shopOwns, shopFeaturedOf, shopFeaturedNow, shopSellable, shopDropped, shopOnSaleOf, SHOP_MIN_PRICE,
   shopWhenOf, SHOP_CHECKOUT_MS,
 } from '../../src/net/shopLaw.js';
 import { PASS_DAY_AURUM, PASS_DAY_ASKS, PASS_CHALLENGES, passSeasonById, passCardOf } from '../../src/net/battlePassLaw.js';
@@ -28,7 +28,7 @@ const SOLD = SHOP_WARES.filter((w) => w.alone);
 const ON = { STRIPE_SECRET_KEY: 'sk_test_sf', STRIPE_WEBHOOK_SECRET: 'whsec_sf', SHOP_ON_SALE: SOLD.map((w) => w.id).join(','), PASS_OPEN: 'on', AURUM_OPEN: 'on' };
 const S1 = passSeasonById('s1');
 const IN_TREMOR = S1.fromMs + 3 * 86_400_000 + 3_600_000;   // the first stage's fourth day
-const BEFORE = S1.fromMs - 5 * 86_400_000;
+const BEFORE = S1.tracksFromMs - 86_400_000;
 
 let sessions = 0;   // a session id Stripe never gives twice (the column is UNIQUE: a stand-in counting from one each call broke a second order)
 function stripe() {
@@ -92,7 +92,7 @@ test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an a
   assert.deepEqual(shopOnSaleOf('glyph:oblivion,aura:dominion,kill:pyre'), ['kill:pyre'], 'a bundle\'s own wares are never sold alone');
 });
 
-test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first and last UTC day, `limited` - read whole or not at all; a ware with a window is never sold before its first opens; a limited one only inside a limited window; a line that names a ware but does not read shuts its sale (mutants: a ware sold before its drop; a limited ware sold after; a bad line opening the sale)', () => {
+test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first and last UTC day, `limited` - read whole or not at all; OPEN-ALL a window that is not limited holds no sale back; a limited one only inside a limited window; a line that names a ware but does not read shuts its sale (mutants: a window holding a sale back; a limited ware sold before or after; a bad line opening the sale)', () => {
   const raw = 'kill:pyre 2026-10-30 2026-11-12\nportal:aetheric 2026-11-13 2026-11-26 limited;  bundle:portalmaster 2026-11-27 2026-12-10 limited\nnope:x 2026-11-01 2026-11-02\nkill:ashen 2026-11-05 2026-11-01\nglyph:oblivion 2026-11-01 2026-11-30\nmount:warhorse 2026-12-11 2026-12-24 forever';
   const list = shopFeaturedOf(raw);
   // AUDIT-STOREFRONT S4 (PIN MOVED: the three lines that named a ware were dropped, so their wares sold with no window at all)
@@ -101,7 +101,11 @@ test('STOREFRONT the launch windows: SHOP_FEATURED\'s lines - a ware, its first 
   assert.equal(list[0].fromMs, Date.UTC(2026, 9, 30));
   assert.equal(list[0].toMs, Date.UTC(2026, 10, 13), 'the last day inside');
   const onSale = SOLD.map((w) => w.id), at = (id, y, m, d) => shopSellable(SHOP_WARES.find((w) => w.id === id), onSale, list, Date.UTC(y, m, d, 12));
-  assert.equal(at('kill:pyre', 2026, 9, 29), false, 'before its drop');
+  assert.equal(at('kill:pyre', 2026, 9, 29), true, 'before its window: sold - a window only features it');   // PIN MOVED (OPEN-ALL): it was held back until its first window
+  assert.equal(at('portal:aetheric', 2026, 10, 12), false, 'a limited ware, before its window');
+  const told = (id, y, m, d) => shopDropped(SHOP_WARES.find((w) => w.id === id), list, Date.UTC(y, m, d, 12));
+  assert.deepEqual([told('kill:pyre', 2026, 9, 29), told('portal:aetheric', 2026, 10, 12), told('portal:aetheric', 2026, 10, 13)], [true, false, true], 'OPEN-ALL: told before its window unless limited - the daily deals draw from it too (aurum.js dailySaleOf)');
+  assert.equal(dailySaleOf({ SHOP_ON_SALE: 'kill:pyre', SHOP_FEATURED: raw }).eligible('kill:pyre', Date.UTC(2026, 9, 29) / 86_400_000), true, 'a daily deal before its window');
   assert.equal(at('kill:pyre', 2026, 9, 30), true);
   assert.equal(at('kill:pyre', 2027, 0, 1), true, 'a drop not limited stays on sale');
   assert.equal(at('portal:aetheric', 2026, 10, 20), true);
@@ -157,9 +161,9 @@ test('STOREFRONT end to end: a bundle bought by an account holding part of it - 
   assert.deepEqual(s.rowOf(me).shop_held.split(' ').sort(), ['bundle:daedricchampion', 'kill:pyre'], 'nothing written twice');
 });
 
-test('STOREFRONT end to end: a launch window on the card - a featured ware leads the carousel with its window\'s end, a limited ware off sale once its window ends; nothing featured or told before its window, and a window\'s end only beside a sale (mutants: the carousel showing a drop to come; a limited ware sold after; a drop to come on the card; an ended window still told)', async (t) => {
+test('STOREFRONT end to end: a launch window on the card - a featured ware leads the carousel with its window\'s end, a limited ware off sale once its window ends; nothing featured before its window, a limited ware not told before it, OPEN-ALL a ware not limited sold before it, and a window\'s end only beside a sale (mutants: the carousel showing a drop to come; a limited ware sold after; a drop to come on the card; an ended window still told; a window holding a sale back)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 10, 20, 12) });
-  const s = await stand({ ...ON, SHOP_ON_SALE: ON.SHOP_ON_SALE.replace('mount:spectral,', ''), SHOP_FEATURED: 'portal:aetheric 2026-11-13 2026-11-26 limited\nmount:warhorse 2026-12-11 2026-12-24\nmount:spectral 2026-11-13 2026-11-26' });
+  const s = await stand({ ...ON, SHOP_ON_SALE: ON.SHOP_ON_SALE.replace('mount:spectral,', ''), SHOP_FEATURED: 'portal:aetheric 2026-11-13 2026-11-26 limited\nmount:warhorse 2026-12-11 2026-12-24 limited\nmount:spectral 2026-11-13 2026-11-26\nmount:dawnfire 2026-12-11 2026-12-24' });   // PIN MOVED (OPEN-ALL): the warhorse limited, so a drop is still held back
   const me = await s.registered('Watcher');
   let card = (await s.account(me)).shop;
   assert.deepEqual(card.featured, ['portal:aetheric'], 'the window open now - never the warhorse to come (PASS-PANELS: no pass leads it, the pass is no ware)');
@@ -168,7 +172,9 @@ test('STOREFRONT end to end: a launch window on the card - a featured ware leads
   const aeth = card.wares.find((w) => w.id === 'portal:aetheric');
   assert.deepEqual([aeth.sale, aeth.limited, aeth.until], [true, true, Date.UTC(2026, 10, 27)]);
   // AUDIT-STOREFRONT S2 (PIN MOVED: it stood on the card unsold, and the window called it "No longer sold")
-  assert.equal(card.wares.find((w) => w.id === 'mount:warhorse'), undefined, 'not sold, nor told, before its drop');
+  assert.equal(card.wares.find((w) => w.id === 'mount:warhorse'), undefined, 'a limited ware: not sold, nor told, before its drop');
+  const dawn = card.wares.find((w) => w.id === 'mount:dawnfire');
+  assert.deepEqual([dawn?.sale, dawn?.until], [true, undefined], 'OPEN-ALL: not limited, sold before its window, which is not told');
   t.mock.timers.setTime(Date.UTC(2026, 10, 28, 12));
   card = (await s.account(me)).shop;
   assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').sale, false, 'its window ended: no longer sold');
@@ -197,7 +203,7 @@ test('STOREFRONT end to end: an effect is worn only when held - the door refuses
   assert.ok(ROUTES.has('/v1/account/effect'));
 });
 
-test('STOREFRONT the pass end to end: a guest refused, the finds shut before Season One; a find pays its source\'s Aurum under the day\'s bound and counts its stage\'s challenges, a challenge paid its Aurum once on the deed that completes it, beside the bound; the balance and the card say it all (mutants: a challenge paid twice; the day unbounded; a find\'s Aurum off the ledger)', async (t) => {
+test('STOREFRONT the pass end to end: a guest refused, the finds shut before the folios open and paying before the world; a find pays its source\'s Aurum under the day\'s bound and counts its stage\'s challenges, a challenge paid its Aurum once on the deed that completes it, beside the bound; the balance and the card say it all (mutants: a challenge paid twice; the day unbounded; a find\'s Aurum off the ledger)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: BEFORE });
   const s = await stand();
   const me = await s.registered('Player');
@@ -207,6 +213,10 @@ test('STOREFRONT the pass end to end: a guest refused, the finds shut before Sea
   assert.deepEqual(await findPass(ctx(), player(), { source: 'foe' }, ON), { error: 'closed' }, 'before the finds begin');
   assert.equal((await passOf(ctx(), player(), ON)).season, 's1', 'the season to come is shown');
   assert.deepEqual(await findPass(ctx(), { id: 'g', handle: null }, { source: 'foe' }, ON), { error: 'guest' });
+  t.mock.timers.setTime(S1.fromMs - 5 * 86_400_000);   // the folios open, the world not yet
+  const early = await s.registered('Early');
+  const pre = await findPass(ctx(), s.raw.prepare('SELECT * FROM players WHERE id = ?').get(early.id), { source: 'tavern' }, ON);
+  assert.deepEqual([pre.gained, pre.found, pre.done, pre.season], [3, 3, [], null], 'finds pay before the world; no challenge counts');
   t.mock.timers.setTime(IN_TREMOR);
   assert.deepEqual(await findPass(ctx(), player(), { source: 'nope' }, ON), { error: 'source' });
   assert.deepEqual(await findPass(ctx(), player(), { source: 'foe' }, { ...ON, PASS_OPEN: 'off' }), { error: 'closed' }, 'the switch off');

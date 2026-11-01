@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 import { fishKind, castAt, CAST_AHEAD_M } from '../../src/scenes/fishHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { feetWaterCoverage, SWIM_COVERAGE } from '../../src/player/exteriorSurface.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const NET = { items: [{ templateIndex: 1603, currentCondition: 50 }] };
@@ -71,8 +72,8 @@ test('SHORE-CAST: a cast already flying is not lost when the look swings onto th
 test('SHORE-CAST: the world host asks the swim\'s own coverage at the cast - beach dirt (record 1) is dry, the sea (record 0) wet', () => {
   assert.equal(feetWaterCoverage(1, [0.5, 0.5]) >= SWIM_COVERAGE, false, 'record 1, the beach the report stood on');
   assert.equal(feetWaterCoverage(0, [0.5, 0.5]) >= SWIM_COVERAGE, true, 'record 0, the sea');
-  const world = src('src/scenes/world.js');
-  assert.match(world, /waterAt: \(pos\) => \{ const g = groundSampleAt\(pos\); const c = g \? feetWaterCoverage\(g\.tile, g\.feet\) : null; return c == null \? null : c >= SWIM_COVERAGE; \},/);
+  const world = hostText('src/scenes/world.js');
+  assert.match(world, /waterAt: \(pos\) => \{ const g = host\.groundSampleAt\(pos\); const c = g \? feetWaterCoverage\(g\.tile, g\.feet\) : null; return c == null \? null : c >= SWIM_COVERAGE; \},/);
   assert.match(world, /const playerGroundSample = \(\) => groundSampleAt\(walkMode \? player\.pos : cam\.pos\);/);
   // AUDIT FB1005 W4: the read is AT the point it is handed - its pixel, its tile, its fraction - not at the feet
   assert.match(world, /const groundSampleAt = \(pos\) => \{\s*const wc = state\.worldCoords\(pos\);\s*const p = worldCoordToMapPixel\(wc\.x, wc\.z\);[\s\S]{0,700}return \{ tile: built_\.tilemap\[tx \+ ty \* TERRAIN_TILE_DIM\], feet: \[u - tx, v - ty\] \};/);

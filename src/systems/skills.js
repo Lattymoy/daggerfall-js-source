@@ -7,23 +7,55 @@
 // nothing - so this cannot cycle; rest.js's copy imports skills.js
 // and would).
 import { SPECIAL_ABILITY_BITS } from './specialAdvantages.js';
-import { localizedStrings, localizedText, getLocalizedTextWithReversion, TextCollections } from './textManager.js';   // L10N3d: GetSkillName's words
+import { localizedStrings, localizedText, getLocalizedTextWithReversion, TextCollections } from './textManager.js'; // L10N3d: GetSkillName's words
 // SOFTCAP1: two more leaves (neither imports anything) - the softcap's law
 // and mentor mode's overlay.
-import { effectiveSkill, overcapTallyWeight, movementTallyWeight, SKILL_SOFT_CAP, SKILL_HARD_CAP } from './skillSoftcap.js';   // MOVE-REAL: the movement skills' own weight
+import {
+  effectiveSkill,
+  overcapTallyWeight,
+  movementTallyWeight,
+  SKILL_SOFT_CAP,
+  SKILL_HARD_CAP,
+} from './skillSoftcap.js'; // MOVE-REAL: the movement skills' own weight
 import { mentoredSkill, MENTOR_PUPIL_TALLY } from './mentorMode.js';
-import { masterCappedSkill, skillCanPassCap } from './masterSkills.js';   // SOFTCAP3: Master Skills - past 100 only when on (and online)
+import { masterCappedSkill, skillCanPassCap } from './masterSkills.js'; // SOFTCAP3: Master Skills - past 100 only when on (and online)
 export { SKILL_SOFT_CAP, SKILL_HARD_CAP, effectiveSkill } from './skillSoftcap.js';
 
 export const SKILLS = Object.freeze({
-  Medical: 0, Etiquette: 1, Streetwise: 2, Jumping: 3, Orcish: 4,
-  Harpy: 5, Giantish: 6, Dragonish: 7, Nymph: 8, Daedric: 9,
-  Spriggan: 10, Centaurian: 11, Impish: 12, Lockpicking: 13,
-  Mercantile: 14, Pickpocket: 15, Stealth: 16, Swimming: 17,
-  Climbing: 18, Backstabbing: 19, Dodging: 20, Running: 21,
-  Destruction: 22, Restoration: 23, Illusion: 24, Alteration: 25,
-  Thaumaturgy: 26, Mysticism: 27, ShortBlade: 28, LongBlade: 29,
-  HandToHand: 30, Axe: 31, BluntWeapon: 32, Archery: 33,
+  Medical: 0,
+  Etiquette: 1,
+  Streetwise: 2,
+  Jumping: 3,
+  Orcish: 4,
+  Harpy: 5,
+  Giantish: 6,
+  Dragonish: 7,
+  Nymph: 8,
+  Daedric: 9,
+  Spriggan: 10,
+  Centaurian: 11,
+  Impish: 12,
+  Lockpicking: 13,
+  Mercantile: 14,
+  Pickpocket: 15,
+  Stealth: 16,
+  Swimming: 17,
+  Climbing: 18,
+  Backstabbing: 19,
+  Dodging: 20,
+  Running: 21,
+  Destruction: 22,
+  Restoration: 23,
+  Illusion: 24,
+  Alteration: 25,
+  Thaumaturgy: 26,
+  Mysticism: 27,
+  ShortBlade: 28,
+  LongBlade: 29,
+  HandToHand: 30,
+  Axe: 31,
+  BluntWeapon: 32,
+  Archery: 33,
   CriticalStrike: 34,
 });
 export const SKILL_COUNT = 35;
@@ -32,12 +64,21 @@ export const SKILL_COUNT = 35;
  *  builder's Spellsword rule (U20a) and SetEnemyCareer's flat magic
  *  skill (enemySpells) had grown byte-identical private copies. */
 export const MAGIC_SKILLS = Object.freeze([
-  SKILLS.Destruction, SKILLS.Restoration, SKILLS.Illusion,
-  SKILLS.Alteration, SKILLS.Thaumaturgy, SKILLS.Mysticism,
+  SKILLS.Destruction,
+  SKILLS.Restoration,
+  SKILLS.Illusion,
+  SKILLS.Alteration,
+  SKILLS.Thaumaturgy,
+  SKILLS.Mysticism,
 ]);
 /** The enum KEYS, index-ordered (the enum inverted once). Code
  *  identity - not what a window prints. */
-export const SKILL_KEYS = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]) => { a[v] = k; return a; }, new Array(SKILL_COUNT)));
+export const SKILL_KEYS = Object.freeze(
+  Object.entries(SKILLS).reduce((a, [k, v]) => {
+    a[v] = k;
+    return a;
+  }, new Array(SKILL_COUNT)),
+);
 
 /** U10: what a window PRINTS - TextProvider.GetSkillName's strings
  *  (Internal_Strings.csv:380-400,498): the enum key with a space
@@ -52,29 +93,83 @@ export const SKILL_KEYS = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]
  *  predates them. Pickpocket stays the port's English; DFU ships
  *  "Pickpocketing". */
 const SKILL_TEXT = localizedStrings({
-  medical: 'Medical', etiquette: 'Etiquette', streetwise: 'Streetwise', jumping: 'Jumping', orcishSkill: 'Orcish', harpy: 'Harpy',
-  giantish: 'Giantish', dragonish: 'Dragonish', nymph: 'Nymph', daedricSkill: 'Daedric', spriggan: 'Spriggan', centaurian: 'Centaurian',
-  impish: 'Impish', lockpicking: 'Lockpicking', mercantile: 'Mercantile', pickpocket: 'Pickpocket', stealth: 'Stealth',
-  swimming: 'Swimming', climbing: 'Climbing', backstabbing: 'Backstabbing', dodging: 'Dodging', running: 'Running',
-  destruction: 'Destruction', restoration: 'Restoration', illusion: 'Illusion', alteration: 'Alteration', thaumaturgy: 'Thaumaturgy',
-  mysticism: 'Mysticism', shortBlade: 'Short Blade', longBlade: 'Long Blade', handToHand: 'Hand-to-Hand', axe: 'Axe',
-  bluntWeapon: 'Blunt Weapon', archery: 'Archery', criticalStrike: 'Critical Strike',
+  medical: 'Medical',
+  etiquette: 'Etiquette',
+  streetwise: 'Streetwise',
+  jumping: 'Jumping',
+  orcishSkill: 'Orcish',
+  harpy: 'Harpy',
+  giantish: 'Giantish',
+  dragonish: 'Dragonish',
+  nymph: 'Nymph',
+  daedricSkill: 'Daedric',
+  spriggan: 'Spriggan',
+  centaurian: 'Centaurian',
+  impish: 'Impish',
+  lockpicking: 'Lockpicking',
+  mercantile: 'Mercantile',
+  pickpocket: 'Pickpocket',
+  stealth: 'Stealth',
+  swimming: 'Swimming',
+  climbing: 'Climbing',
+  backstabbing: 'Backstabbing',
+  dodging: 'Dodging',
+  running: 'Running',
+  destruction: 'Destruction',
+  restoration: 'Restoration',
+  illusion: 'Illusion',
+  alteration: 'Alteration',
+  thaumaturgy: 'Thaumaturgy',
+  mysticism: 'Mysticism',
+  shortBlade: 'Short Blade',
+  longBlade: 'Long Blade',
+  handToHand: 'Hand-to-Hand',
+  axe: 'Axe',
+  bluntWeapon: 'Blunt Weapon',
+  archery: 'Archery',
+  criticalStrike: 'Critical Strike',
 });
 const skillWord = (k) => {
-  if (k === 'Orcish') return getLocalizedTextWithReversion('orcishSkill', TextCollections.Internal, false, localizedText('orcish', 'Orcish'));
-  if (k === 'Daedric') return getLocalizedTextWithReversion('daedricSkill', TextCollections.Internal, false, localizedText('daedric', 'Daedric'));
+  if (k === 'Orcish')
+    return getLocalizedTextWithReversion(
+      'orcishSkill',
+      TextCollections.Internal,
+      false,
+      localizedText('orcish', 'Orcish'),
+    );
+  if (k === 'Daedric')
+    return getLocalizedTextWithReversion(
+      'daedricSkill',
+      TextCollections.Internal,
+      false,
+      localizedText('daedric', 'Daedric'),
+    );
   return SKILL_TEXT[k[0].toLowerCase() + k.slice(1)];
 };
-export const SKILL_NAMES = Object.freeze(SKILL_KEYS.reduce((a, k, id) => Object.defineProperty(a, id, { enumerable: true, get: () => skillWord(k) }), []));
+export const SKILL_NAMES = Object.freeze(
+  SKILL_KEYS.reduce((a, k, id) => Object.defineProperty(a, id, { enumerable: true, get: () => skillWord(k) }), []),
+);
 
 /** DaggerfallUnityItem.GetWeaponSkillUsed -> skill id, by name. */
 export const WEAPON_SKILL = Object.freeze({
-  Dagger: SKILLS.ShortBlade, Tanto: SKILLS.ShortBlade, Wakazashi: SKILLS.ShortBlade, Shortsword: SKILLS.ShortBlade,
-  Broadsword: SKILLS.LongBlade, Longsword: SKILLS.LongBlade, Saber: SKILLS.LongBlade,
-  Katana: SKILLS.LongBlade, Claymore: SKILLS.LongBlade, 'Dai-Katana': SKILLS.LongBlade,
-  'Battle Axe': SKILLS.Axe, 'War Axe': SKILLS.Axe,
-  Staff: SKILLS.BluntWeapon, Mace: SKILLS.BluntWeapon, Flail: SKILLS.BluntWeapon, Warhammer: SKILLS.BluntWeapon,
-  'Short Bow': SKILLS.Archery, 'Long Bow': SKILLS.Archery,
+  Dagger: SKILLS.ShortBlade,
+  Tanto: SKILLS.ShortBlade,
+  Wakazashi: SKILLS.ShortBlade,
+  Shortsword: SKILLS.ShortBlade,
+  Broadsword: SKILLS.LongBlade,
+  Longsword: SKILLS.LongBlade,
+  Saber: SKILLS.LongBlade,
+  Katana: SKILLS.LongBlade,
+  Claymore: SKILLS.LongBlade,
+  'Dai-Katana': SKILLS.LongBlade,
+  'Battle Axe': SKILLS.Axe,
+  'War Axe': SKILLS.Axe,
+  Staff: SKILLS.BluntWeapon,
+  Mace: SKILLS.BluntWeapon,
+  Flail: SKILLS.BluntWeapon,
+  Warhammer: SKILLS.BluntWeapon,
+  'Short Bow': SKILLS.Archery,
+  'Long Bow': SKILLS.Archery,
 });
 
 /** DaggerfallSkills.GetPermanentSkillValue (:163-186) - the STORED
@@ -118,13 +213,16 @@ export function skillValue(entity, skillId) {
       if (a.kind === 'racialOverride' && !a.ended) mod += a.skillMods?.[skillId] ?? 0;
     }
   }
-  mod += entity._mods?.skills?.[skillId] ?? 0;   // RF1: the port's modifier channels (systems/entityMods.js), a field read - this leaf stays import-free
+  mod += entity._mods?.skills?.[skillId] ?? 0; // RF1: the port's modifier channels (systems/entityMods.js), a field read - this leaf stays import-free
   // SOFTCAP1: what a FORMULA reads - the mentored permanent value (mentor
   // mode's overlay, a no-op outside it), past 100 at a quarter a point plus
   // the milestones (skillSoftcap.js effectiveSkill). Below 100 both are the
   // identity, so every DFU number there is unchanged.
   // SOFTCAP3: and Master Skills off (or offline) reads a player's skill above 100 as 100 - kept, not lost
-  return effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, permanentSkillValue(entity, skillId), skillId))) + mod;   // SOFTCAP4: only a MASTERED skill reads past 100
+  return (
+    effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, permanentSkillValue(entity, skillId), skillId))) +
+    mod
+  ); // SOFTCAP4: only a MASTERED skill reads past 100
 }
 
 /** SOFTCAP1: the effect mods skillValue adds, alone (the display reads) - enchantments, Fortify, the vampire's and
@@ -143,7 +241,10 @@ export function skillModOf(entity, skillId) {
 export function displaySkillValue(entity, skillId) {
   const o = entity.skillOverrides;
   if (o && o[skillId] != null) return o[skillId];
-  return mentoredSkill(entity, masterCappedSkill(entity, permanentSkillValue(entity, skillId), skillId)) + skillModOf(entity, skillId);
+  return (
+    mentoredSkill(entity, masterCappedSkill(entity, permanentSkillValue(entity, skillId), skillId)) +
+    skillModOf(entity, skillId)
+  );
 }
 
 /** SOFTCAP1: the REAL value (no mentor cap), plus mods - the number in
@@ -177,9 +278,12 @@ export function tallySkill(entity, skillId, amount = 1, movement = false) {
   const real = Array.isArray(entity.skills) ? (entity.skills[skillId] ?? 0) : 0;
   // SOFTCAP3: only while Master Skills is in force - off, the use is tallied as Daggerfall always did (a skill at
   // 100 simply never spends it)
-  if (real >= SKILL_SOFT_CAP && skillCanPassCap(entity, skillId)) {   // SOFTCAP4: and only for a MASTERED skill
+  if (real >= SKILL_SOFT_CAP && skillCanPassCap(entity, skillId)) {
+    // SOFTCAP4: and only for a MASTERED skill
     if (real >= SKILL_HARD_CAP) return;
-    const w = movement ? movementTallyWeight(entity, skillId, amount, real) : overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real));   // MOVE-REAL; MENTOR2
+    const w = movement
+      ? movementTallyWeight(entity, skillId, amount, real)
+      : overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real)); // MOVE-REAL; MENTOR2
     if (!(w > 0)) return;
     const frac = (entity.skillUseFrac ??= new Array(SKILL_COUNT).fill(0));
     const total = (frac[skillId] ?? 0) + w;
@@ -276,14 +380,21 @@ export function levelUpSkillSum(entity) {
   // 100, a quarter a point past it - so the long grind above 100 still
   // moves the level, slowly, instead of turning every eight-times-dearer
   // point into a full point of level progress.
-  const v = (id) => effectiveSkill(masterCappedSkill(entity, entity.skills[id], id));   // SOFTCAP3: capped at 100 while Master Skills is off
+  const v = (id) => effectiveSkill(masterCappedSkill(entity, entity.skills[id], id)); // SOFTCAP3: capped at 100 while Master Skills is off
   let sum = 0;
   for (const id of c.primarySkills) sum += v(id);
   let lowestMajor = Infinity;
-  for (const id of c.majorSkills) { const x = v(id); sum += x; if (x < lowestMajor) lowestMajor = x; }
+  for (const id of c.majorSkills) {
+    const x = v(id);
+    sum += x;
+    if (x < lowestMajor) lowestMajor = x;
+  }
   sum -= lowestMajor;
   let highestMinor = -Infinity;
-  for (const id of c.minorSkills) { const x = v(id); if (x > highestMinor) highestMinor = x; }
+  for (const id of c.minorSkills) {
+    const x = v(id);
+    if (x > highestMinor) highestMinor = x;
+  }
   return sum + highestMinor;
 }
 
@@ -317,17 +428,16 @@ export function levelUpSkillSum(entity) {
  *  AcrobatMotor's own jumpSpellMultiplier :16, added when
  *  IsEnhancedJumping :104-105 - which the port reads as the live
  *  'jumping' effect). P14. */
-export const JUMP_SPELL_MULTIPLIER = 0.6;   // AcrobatMotor.cs:16
-export const ATHLETICISM_MULTIPLIER = 0.1;            // AcrobatMotor.cs:14
-export const IMPROVED_ATHLETICISM_MULTIPLIER = 0.1;   // AcrobatMotor.cs:15
+export const JUMP_SPELL_MULTIPLIER = 0.6; // AcrobatMotor.cs:16
+export const ATHLETICISM_MULTIPLIER = 0.1; // AcrobatMotor.cs:14
+export const IMPROVED_ATHLETICISM_MULTIPLIER = 0.1; // AcrobatMotor.cs:15
 /** DaggerfallEntity.IsEnhancedJumping (:85) - raised by the Jumping
  *  effect's Start and cleared by its End (Jumping.cs:84/:94). TWO
  *  AcrobatMotor members read it: the +0.6 liftoff term below (:104-105)
  *  and CheckAirControl's mid-air steering disjunct (:145, AUDIT 64 F2),
  *  so the one activeEffects read lives here beside the formula rather
  *  than being restated at each motor construction site. */
-export const isEnhancedJumping = (entity) =>
-  !!entity?.activeEffects?.some((a) => a.kind === 'jumping');
+export const isEnhancedJumping = (entity) => !!entity?.activeEffects?.some((a) => a.kind === 'jumping');
 export function jumpSpeedMultiplier(entity) {
   let m = 1 + (skillValue(entity, SKILLS.Jumping) * 0.5) / 100;
   if (isEnhancedJumping(entity)) m += JUMP_SPELL_MULTIPLIER;

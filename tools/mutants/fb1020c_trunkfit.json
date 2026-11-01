@@ -52,8 +52,8 @@
   {
     "name": "TRUNK-FIT-bake-cards-cut-too",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "      if ((json.materials[mats[Math.min(i, mats.length - 1)]]?.cull ?? 0) === 0) return;   // a card: leaves, not a trunk\n",
-    "new": "",
+    "old": "      if ((json.materials[mats[Math.min(i, mats.length - 1)]]?.cull ?? 0) === 0) return; // a card: leaves, not a trunk\n      for (let t = at; t + 2 < at + count; t += 3) {",
+    "new": "      for (let t = at; t + 2 < at + count; t += 3) {",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TRUNK-FIT-bake-cut-a-metre-up",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "          const ya = f[a + 1] * sy, yb = f[b + 1] * sy;",
-    "new": "          const ya = f[a + 1] * sy - 1, yb = f[b + 1] * sy - 1;",
+    "old": "          const ya = f[a + 1] * sy,\n            yb = f[b + 1] * sy;",
+    "new": "          const ya = f[a + 1] * sy - 1,\n            yb = f[b + 1] * sy - 1;",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TRUNK-FIT-bake-rounded-down",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "    out[key] = Math.ceil(100 * reach) / 100;   // UP: a trunk the table holds is never short of the mesh",
-    "new": "    out[key] = Math.floor(100 * reach) / 100;   // UP: a trunk the table holds is never short of the mesh",
+    "old": "    out[key] = Math.ceil(100 * reach) / 100; // UP: a trunk the table holds is never short of the mesh",
+    "new": "    out[key] = Math.floor(100 * reach) / 100; // UP: a trunk the table holds is never short of the mesh",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "TRUNK-FIT-bake-scale-unread",
     "file": "tools/bakeLptCrowns.mjs",
-    "old": "          reach = Math.max(reach, Math.hypot((f[a] + (f[b] - f[a]) * k) * sx, (f[a + 2] + (f[b + 2] - f[a + 2]) * k) * sz));",
+    "old": "          reach = Math.max(\n            reach,\n            Math.hypot((f[a] + (f[b] - f[a]) * k) * sx, (f[a + 2] + (f[b + 2] - f[a + 2]) * k) * sz),\n          );",
     "new": "          reach = Math.max(reach, Math.hypot(f[a] + (f[b] - f[a]) * k, f[a + 2] + (f[b + 2] - f[a + 2]) * k));",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "TRUNK-FIT-host-nature-taken",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (isNatureArchive(archive)) continue;\n      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
-    "new": "      const t = await getTexture(archive);\n      if (record < t.recordCount) solids.push(",
+    "old": "      if (isNatureArchive(archive)) continue;\n      const t = await getTexture(archive);",
+    "new": "      const t = await getTexture(archive);",
     "tests": [
       "test/world/road/fb1020c_trunkfit.test.js"
     ],

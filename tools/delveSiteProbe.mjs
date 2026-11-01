@@ -16,7 +16,7 @@ import { colliderFireProbe, dungeonFirePlan, fireLayoutInputs } from '../src/wor
 import { colliderSiteProbe, delveSitePlan, delveSiteCount } from '../src/world/dungeon/delveSites.js';
 
 /** The Hold stands no site (the tutorial - Delve-II.md section 11); the caller's word, as the host's will be. */
-export const NO_SITES = Object.freeze(['Privateer\'s Hold']);
+export const NO_SITES = Object.freeze(["Privateer's Hold"]);
 
 /** One dungeon: its fires as the host stands them (its hearths' feet off the classic record - `sizeOf`, hostFlatSize), then
  *  its sites. `tally` gathers the refused spots' rules. */
@@ -48,7 +48,10 @@ export function everyDungeon(maps) {
 if (isMain(import.meta.url)) {
   const argv = process.argv.slice(2);
   const arena2 = process.env.ARENA2_PATH;
-  if (!arena2) { console.error('ARENA2_PATH is not set'); process.exit(2); }
+  if (!arena2) {
+    console.error('ARENA2_PATH is not set');
+    process.exit(2);
+  }
   const data = loadData(arena2);
   const getModel = hostModelReader(data.arch);
   const sizeOf = hostFlatSize(arena2);
@@ -58,29 +61,65 @@ if (isMain(import.meta.url)) {
   const list = argv.includes('--all')
     ? everyDungeon(data.maps).filter((_, k) => k % sn === si)
     : [[data.maps.getRegionIndex(argv[0]), null, argv[1]]];
-  const tally = {}, rows = [];
+  const tally = {},
+    rows = [];
   const t0 = Date.now();
-  let wanted = 0, stood = 0, small = 0, short = 0, empty = 0;
+  let wanted = 0,
+    stood = 0,
+    small = 0,
+    short = 0,
+    empty = 0;
   for (const [r, l, name] of list) {
     const loc = l == null ? data.maps.getLocationByName(argv[0], name) : data.maps.getLocation(r, l);
-    if (!loc?.hasDungeon) { console.log(`${name}: no dungeon`); continue; }
+    if (!loc?.hasDungeon) {
+      console.log(`${name}: no dungeon`);
+      continue;
+    }
     let out;
     try {
       const { blocks } = layoutDungeon(loc, data.blocks, getModel);
-      out = probeSites(blocks, getModel, { seed: loc.dungeon.recordElement.header.locationId, name: loc.name, tally, sizeOf });
-    } catch (e) { console.log(`${data.maps.getRegionName(loc.regionIndex)} / ${loc.name}: not measured - ${e?.message ?? e}`); continue; }
-    wanted += out.wanted; stood += out.sites.length; small += out.small;
+      out = probeSites(blocks, getModel, {
+        seed: loc.dungeon.recordElement.header.locationId,
+        name: loc.name,
+        tally,
+        sizeOf,
+      });
+    } catch (e) {
+      console.log(`${data.maps.getRegionName(loc.regionIndex)} / ${loc.name}: not measured - ${e?.message ?? e}`);
+      continue;
+    }
+    wanted += out.wanted;
+    stood += out.sites.length;
+    small += out.small;
     if (out.sites.length < out.wanted) short++;
     if (out.wanted && !out.sites.length) empty++;
-    rows.push({ region: data.maps.getRegionName(loc.regionIndex), name: loc.name, wanted: out.wanted, candidates: out.candidates, valid: out.valid, small: out.small, sites: out.sites });
+    rows.push({
+      region: data.maps.getRegionName(loc.regionIndex),
+      name: loc.name,
+      wanted: out.wanted,
+      candidates: out.candidates,
+      valid: out.valid,
+      small: out.small,
+      sites: out.sites,
+    });
     if (list.length === 1) {
-      console.log(`${rows[0].region} / ${loc.name}: wanted ${out.wanted}, candidates ${out.candidates}, valid ${out.valid}, sites ${out.sites.length} (${out.small} in a small room)`);
-      for (const s of out.sites) console.log(`  ${s.i} ${s.kind} [${s.x}, ${s.y}, ${s.z}] r ${s.r} vault [${s.vault.join(', ')}]`);
+      console.log(
+        `${rows[0].region} / ${loc.name}: wanted ${out.wanted}, candidates ${out.candidates}, valid ${out.valid}, sites ${out.sites.length} (${out.small} in a small room)`,
+      );
+      for (const s of out.sites)
+        console.log(`  ${s.i} ${s.kind} [${s.x}, ${s.y}, ${s.z}] r ${s.r} vault [${s.vault.join(', ')}]`);
     }
   }
   if (list.length > 1) {
-    const rules = (t) => Object.entries(t ?? {}).filter(([k]) => k !== 'small').sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ');
-    console.log(`${rows.length} dungeons in ${((Date.now() - t0) / 1000).toFixed(0)} s: sites wanted ${wanted}, stood ${stood} (${small} in a small room); ${short} short, ${empty} with none`);
+    const rules = (t) =>
+      Object.entries(t ?? {})
+        .filter(([k]) => k !== 'small')
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => `${k} ${v}`)
+        .join(', ');
+    console.log(
+      `${rows.length} dungeons in ${((Date.now() - t0) / 1000).toFixed(0)} s: sites wanted ${wanted}, stood ${stood} (${small} in a small room); ${short} short, ${empty} with none`,
+    );
     console.log(`refused spots by rule: ${rules(tally)}`);
     console.log(`refused in the small pass: ${rules(tally.small)}`);
   }

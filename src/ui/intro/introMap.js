@@ -38,26 +38,26 @@ export const INTRO_MAP_SEED = 0x111ac;
  */
 export const STROKES = Object.freeze([
   // The Eltheric Ocean: everything west of a north-south meridian.
-  { kind: 'west', name: 'eltheric', x: 0.150, wobble: 0.055, period: 2.3 },
+  { kind: 'west', name: 'eltheric', x: 0.15, wobble: 0.055, period: 2.3 },
   // The bay proper: a wedge east from the ocean, tapering, with a
   // rounded head. Two capsules and a disc rather than one polygon -
   // a capsule's distance field is exact and cheap, and the taper is
   // just its two radii.
-  { kind: 'capsule', name: 'mouth', x0: 0.100, y0: 0.500, x1: 0.420, y1: 0.480, r0: 0.230, r1: 0.150 },
-  { kind: 'capsule', name: 'throat', x0: 0.420, y0: 0.480, x1: 0.700, y1: 0.440, r0: 0.150, r1: 0.088 },
+  { kind: 'capsule', name: 'mouth', x0: 0.1, y0: 0.5, x1: 0.42, y1: 0.48, r0: 0.23, r1: 0.15 },
+  { kind: 'capsule', name: 'throat', x0: 0.42, y0: 0.48, x1: 0.7, y1: 0.44, r0: 0.15, r1: 0.088 },
   { kind: 'disc', name: 'head', x: 0.735, y: 0.432, r: 0.092 },
   // The two shores' bites - what makes the coast read as a coast and
   // not a taper. North first, then south.
-  { kind: 'disc', name: 'ilessan', x: 0.330, y: 0.318, r: 0.078 },
-  { kind: 'disc', name: 'tigonus', x: 0.470, y: 0.648, r: 0.070 },
-  { kind: 'capsule', name: 'abibon', x0: 0.170, y0: 0.700, x1: 0.300, y1: 0.665, r0: 0.055, r1: 0.038 },
+  { kind: 'disc', name: 'ilessan', x: 0.33, y: 0.318, r: 0.078 },
+  { kind: 'disc', name: 'tigonus', x: 0.47, y: 0.648, r: 0.07 },
+  { kind: 'capsule', name: 'abibon', x0: 0.17, y0: 0.7, x1: 0.3, y1: 0.665, r0: 0.055, r1: 0.038 },
 ]);
 
 /** The Isle of Balfiera: land put back into the middle of the bay.
  *  Its own stroke because it is subtracted from the sea AFTER every
  *  cut, which is what makes it an island rather than a peninsula the
  *  bay happens to flow round. */
-export const BALFIERA = Object.freeze({ x: 0.452, y: 0.470, r: 0.052 });
+export const BALFIERA = Object.freeze({ x: 0.452, y: 0.47, r: 0.052 });
 
 // ── NOISE ──────────────────────────────────────────────────────────
 
@@ -75,15 +75,21 @@ export function makeNoise(seed) {
   const rnd = lcg(seed);
   const g = new Float32Array(N * N);
   for (let i = 0; i < g.length; i++) g[i] = rnd();
-  const at = (x, y) => g[((y & (N - 1)) * N) + (x & (N - 1))];
+  const at = (x, y) => g[(y & (N - 1)) * N + (x & (N - 1))];
   return (x, y) => {
-    const xi = Math.floor(x), yi = Math.floor(y);
-    const xf = x - xi, yf = y - yi;
+    const xi = Math.floor(x),
+      yi = Math.floor(y);
+    const xf = x - xi,
+      yf = y - yi;
     // smoothstep, not linear - a linear lattice shows its grid as
     // diamond creases the moment it is used for a coastline.
-    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-    const a = at(xi, yi), b = at(xi + 1, yi), c = at(xi, yi + 1), d = at(xi + 1, yi + 1);
-    return (a + (b - a) * u) + ((c + (d - c) * u) - (a + (b - a) * u)) * v;
+    const u = xf * xf * (3 - 2 * xf),
+      v = yf * yf * (3 - 2 * yf);
+    const a = at(xi, yi),
+      b = at(xi + 1, yi),
+      c = at(xi, yi + 1),
+      d = at(xi + 1, yi + 1);
+    return a + (b - a) * u + (c + (d - c) * u - (a + (b - a) * u)) * v;
   };
 }
 
@@ -99,7 +105,10 @@ export function makeNoise(seed) {
  *  name and two jobs is the collision the gate exists to catch, and
  *  the answer is a name that says which job this one has. */
 export function octaveNoise(noise, x, y, oct = 5, lac = 2, gain = 0.5) {
-  let sum = 0, amp = 1, norm = 0, f = 1;
+  let sum = 0,
+    amp = 1,
+    norm = 0,
+    f = 1;
   for (let i = 0; i < oct; i++) {
     sum += amp * noise(x * f, y * f);
     norm += amp;
@@ -113,7 +122,10 @@ export function octaveNoise(noise, x, y, oct = 5, lac = 2, gain = 0.5) {
  *  puts a crease where the noise crosses its own middle, and squaring
  *  sharpens the crest without moving it. */
 export function ridged(noise, x, y, oct = 5) {
-  let sum = 0, amp = 1, norm = 0, f = 1;
+  let sum = 0,
+    amp = 1,
+    norm = 0,
+    f = 1;
   for (let i = 0; i < oct; i++) {
     const r = 1 - Math.abs(2 * noise(x * f, y * f) - 1);
     sum += amp * r * r;
@@ -132,10 +144,12 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
  *  lerps end to end). Negative inside. Exact, so the coast it carves
  *  has no seams where two strokes meet. */
 export function capsuleDist(px, py, s) {
-  const dx = s.x1 - s.x0, dy = s.y1 - s.y0;
+  const dx = s.x1 - s.x0,
+    dy = s.y1 - s.y0;
   const len2 = dx * dx + dy * dy || 1e-9;
   const t = clamp01(((px - s.x0) * dx + (py - s.y0) * dy) / len2);
-  const cx = s.x0 + dx * t, cy = s.y0 + dy * t;
+  const cx = s.x0 + dx * t,
+    cy = s.y0 + dy * t;
   return Math.hypot(px - cx, py - cy) - (s.r0 + (s.r1 - s.r0) * t);
 }
 

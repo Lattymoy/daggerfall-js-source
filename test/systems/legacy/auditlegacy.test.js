@@ -18,6 +18,8 @@ import { personChips, disarmFamilyPages } from '../../../src/ui/familyPages.js';
 import { setItemFields, mintCondition } from '../../../src/systems/item/itemTemplates.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 
+import { hostText } from '../../hostText.mjs';
+
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const mem = () => { const m = new Map(); return { get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
 const sword = () => ({ ...mintCondition(setItemFields({ group: 'Weapons', templateIndex: 120, material: 4, flags: 0, variant: 0, message: 0, stackCount: 1 })), equipSlot: 1 });
@@ -89,7 +91,7 @@ test('AUDIT LEGACY A1: an Enduring toll is paid once a death - the door and the 
 });
 
 test('AUDIT LEGACY B1: the Succession is the death\'s own screen - the DEATH-KEPT backstop and the exit autosave read it', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT TEST-PRESET): the host whole
   assert.match(src, /!\(townTalk\.overlay instanceof DeathScreen\) && !modes\?\.deathUp\?\.\(\) && !successionOpen\(\)\) presentPlayerDeath\(playerEntity\);/);
   assert.equal((src.match(/deathUp: townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\)/g) ?? []).length, 2, 'both exit autosaves');
   assert.match(src, /function openLegacySuccession\(out, past = null\) \{\n\s+if \(successionOpen\(\)\) return;/);
@@ -163,7 +165,7 @@ test('AUDIT LEGACY A4/B7: a fall waits on the record - a closed tab or a failed 
   leaveBirth(w.tab, { familyId: w.host.family.id, personId: 9, region: 'Daggerfall', loc: 'Gothway Garden', estate: 0 });
   assert.ok(readBirth(w.tab, 9));
   assert.ok(readBirth(w.tab, 9), 'still there - a failed boot retries');
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT TEST-PRESET): the host whole
   assert.match(src, /if \(!r\) \{ legacyBirthFailed\('no birth waits for this address'\); return; \}/);
   assert.match(src, /\}\)\.catch\(\(e\) => legacyBirthFailed\(e\?\.message \?\? String\(e\)\)\);/);
   // PIN MOVED (AUDIT LEGACY II A2): the birth stands only with its save - and the handoff is answered then

@@ -33,7 +33,10 @@ export const PREBUILD_POOL_MAX = 3;
 /** IC-STUTTER: how many workers make the city's pieces - the machine's cores less two (the page's thread and the browser's
  *  own), PREBUILD_POOL_MAX at most, one at least; one where no Worker stands (node, where the pins drive one).
  *  @param {number} [cores] @param {boolean} [hasWorker] */
-export function prebuildPoolSize(cores = globalThis.navigator?.hardwareConcurrency, hasWorker = typeof globalThis.Worker === 'function') {
+export function prebuildPoolSize(
+  cores = globalThis.navigator?.hardwareConcurrency,
+  hasWorker = typeof globalThis.Worker === 'function',
+) {
   if (!hasWorker) return 1;
   return Math.max(1, Math.min(PREBUILD_POOL_MAX, Math.floor(Number(cores) || 2) - 2));
 }
@@ -42,29 +45,68 @@ export function prebuildPoolSize(cores = globalThis.navigator?.hardwareConcurren
  * @param {{ makeWorker?: () => any, keep?: number, log?: { warn: Function }, workers?: number }} [o] - IC-STUTTER: `workers`
  *   the pool's size (prebuildPoolSize)
  */
-export function createImperialPrebuild({ makeWorker = defaultPrebuildWorker, keep = PREBUILD_KEEP, log = console, workers: size = prebuildPoolSize() } = {}) {
+export function createImperialPrebuild({
+  makeWorker = defaultPrebuildWorker,
+  keep = PREBUILD_KEEP,
+  log = console,
+  workers: size = prebuildPoolSize(),
+} = {}) {
   /** @type {any[]} */
   const pool = [];
   for (let i = 0; i < Math.max(1, size); i++) {
-    try { pool.push(makeWorker()); } catch (e) { if (!pool.length) log.warn('[imperial] no worker for the city\'s blocks - they are made on the page\'s thread', e); break; }
+    try {
+      pool.push(makeWorker());
+    } catch (e) {
+      if (!pool.length) log.warn("[imperial] no worker for the city's blocks - they are made on the page's thread", e);
+      break;
+    }
   }
   /** @type {Map<string, any>} */
   const held = new Map();
-  const put = (k, v) => { held.delete(k); held.set(k, v); if (held.size > keep) held.delete(/** @type {string} */ (held.keys().next().value)); };
+  const put = (k, v) => {
+    held.delete(k);
+    held.set(k, v);
+    if (held.size > keep) held.delete(/** @type {string} */ (held.keys().next().value));
+  };
   /** IC-STUTTER: the pieces asked for and not yet back, and the ones a worker could not make (the page makes those). */
-  const asked = new Set(), failed = new Set();
-  let lastWant = '', taken = 0, missed = 0;
-  const stop = () => { for (const w of pool) { try { w?.terminate?.(); } catch { /* gone */ } } pool.length = 0; held.clear(); asked.clear(); failed.clear(); };
+  const asked = new Set(),
+    failed = new Set();
+  let lastWant = '',
+    taken = 0,
+    missed = 0;
+  const stop = () => {
+    for (const w of pool) {
+      try {
+        w?.terminate?.();
+      } catch {
+        /* gone */
+      }
+    }
+    pool.length = 0;
+    held.clear();
+    asked.clear();
+    failed.clear();
+  };
   /** IC-STUTTER: the worker a slice's pieces are made on. @param {number} s */
   const ownerOf = (s) => pool[(((s | 0) % pool.length) + pool.length) % pool.length];
   for (const worker of pool) {
     worker.onmessage = (/** @type {MessageEvent} */ e) => {
       const m = e.data;
-      if (m?.t === 'block' && m.json) { put(`b:${m.name}`, m.json); asked.delete(`b:${m.name}`); }
-      else if (m?.t === 'model') { put(`m:${m.id}`, m.model ?? null); asked.delete(`m:${m.id}`); }
-      else if (m?.t === 'error' && m.key) { asked.delete(m.key); failed.add(m.key); }   // IC-STUTTER: never waited on for ever - the page makes it
+      if (m?.t === 'block' && m.json) {
+        put(`b:${m.name}`, m.json);
+        asked.delete(`b:${m.name}`);
+      } else if (m?.t === 'model') {
+        put(`m:${m.id}`, m.model ?? null);
+        asked.delete(`m:${m.id}`);
+      } else if (m?.t === 'error' && m.key) {
+        asked.delete(m.key);
+        failed.add(m.key);
+      } // IC-STUTTER: never waited on for ever - the page makes it
     };
-    worker.onerror = (/** @type {any} */ e) => { log.warn('[imperial] the city\'s worker failed - its blocks are made on the page\'s thread', e?.message ?? e); stop(); };
+    worker.onerror = (/** @type {any} */ e) => {
+      log.warn("[imperial] the city's worker failed - its blocks are made on the page's thread", e?.message ?? e);
+      stop();
+    };
   }
   const client = {
     /** The slices wanted now, in order (`[{ s, near }]`) - said to the worker when the list changes; IC-STUTTER: each
@@ -74,12 +116,20 @@ export function createImperialPrebuild({ makeWorker = defaultPrebuildWorker, kee
       const k = slices.map((w) => `${w.s}${w.near ? 'n' : 'f'}`).join(',');
       if (k === lastWant) return;
       lastWant = k;
-      for (const worker of pool) worker.postMessage({ t: 'want', slices: pool.length === 1 ? slices : slices.filter((w) => ownerOf(w.s) === worker) });
+      for (const worker of pool)
+        worker.postMessage({
+          t: 'want',
+          slices: pool.length === 1 ? slices : slices.filter((w) => ownerOf(w.s) === worker),
+        });
     },
     /** A block's JSON the worker made, handed over once - or null (the page makes it, and the worker is told). */
     takeBlock(/** @type {string} */ name) {
       const k = `b:${name}`;
-      if (!held.has(k)) { missed++; client.made(k); return null; }
+      if (!held.has(k)) {
+        missed++;
+        client.made(k);
+        return null;
+      }
       const v = held.get(k);
       held.delete(k);
       taken++;
@@ -88,14 +138,22 @@ export function createImperialPrebuild({ makeWorker = defaultPrebuildWorker, kee
     /** A model the worker made (null: none in that cell), handed over once - or undefined (the page makes it). */
     takeModel(/** @type {number} */ id) {
       const k = `m:${id}`;
-      if (!held.has(k)) { missed++; client.made(k); return undefined; }
+      if (!held.has(k)) {
+        missed++;
+        client.made(k);
+        return undefined;
+      }
       const v = held.get(k);
       held.delete(k);
       taken++;
       return v;
     },
     /** A piece the page made itself: the worker skips it. */
-    made(/** @type {string} */ key) { failed.delete(key); asked.delete(key); if (pool.length) ownerOf(pieceSlice(key) ?? 0).postMessage({ t: 'made', key }); },
+    made(/** @type {string} */ key) {
+      failed.delete(key);
+      asked.delete(key);
+      if (pool.length) ownerOf(pieceSlice(key) ?? 0).postMessage({ t: 'made', key });
+    },
     /** IC-STUTTER: whether a piece is ready for the page to take without making it - held, or one no worker could make
      *  (the page makes that one, as ever). */
     has: (/** @type {string} */ key) => held.has(key) || failed.has(key),
@@ -115,15 +173,31 @@ export function createImperialPrebuild({ makeWorker = defaultPrebuildWorker, kee
       for (const [w, ks] of by) w.postMessage({ t: 'need', keys: ks });
     },
     /** The worker let go (out of the city's reach): nothing held, nothing wanted. */
-    dispose() { stop(); lastWant = ''; if (imperialPrebuilt() === client) setImperialPrebuild(null); },
-    get held() { return held.size; },
-    get alive() { return pool.length > 0; },
+    dispose() {
+      stop();
+      lastWant = '';
+      if (imperialPrebuilt() === client) setImperialPrebuild(null);
+    },
+    get held() {
+      return held.size;
+    },
+    get alive() {
+      return pool.length > 0;
+    },
     /** IC-STUTTER: the pool's size, and the pieces asked for and not yet back. */
-    get workers() { return pool.length; },
-    get asked() { return asked.size; },
+    get workers() {
+      return pool.length;
+    },
+    get asked() {
+      return asked.size;
+    },
     /** The pieces handed over, and the ones asked before the worker made them (the probe's read). */
-    get taken() { return taken; },
-    get missed() { return missed; },
+    get taken() {
+      return taken;
+    },
+    get missed() {
+      return missed;
+    },
   };
   setImperialPrebuild(client);
   return client;

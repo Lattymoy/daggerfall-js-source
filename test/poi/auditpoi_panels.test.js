@@ -778,7 +778,7 @@ test('AUDIT POI U13 THE WORDS: counts in their plurals; glTF\'s object names sai
   const importPart = (a) => t('poi.editor.importPart', '{name}: {vertices, plural, one {{vertices, number} vertex} other {{vertices, number} vertices}}, {triangles, plural, one {{triangles, number} triangle} other {{triangles, number} triangles}}, {materials, plural, one {# material} other {# materials}}', a);
   assert.equal(importPart({ name: 'Roof', vertices: 3, triangles: 1, materials: 1 }), 'Roof: 3 vertices, 1 triangle, 1 material');
   assert.equal(importPart({ name: 'Keep', vertices: 262144, triangles: 2, materials: 4 }), 'Keep: 262,144 vertices, 2 triangles, 4 materials');
-  assert.match(src('src/ui/poi/poiEditorPanel.js'), /t\('poi\.editor\.importPart', '\{name\}: \{vertices, plural, one \{\{vertices, number\} vertex\}/);
+  assert.match(src('src/ui/poi/poiEditorPanel.js'), /t\(\n\s*'poi\.editor\.importPart',\n\s*'\{name\}: \{vertices, plural, one \{\{vertices, number\} vertex\}/);
   assert.match(src('src/ui/poi/poiEditorPanel.js'), /t\('poi\.editor\.speed', 'Eye \{speed, number\} m\/s'/);
   assert.equal(problemText({ code: 'material-count', want: 1, have: 2 }), 'Its model has 1 material; the part has 2.');
   assert.equal(gltfErrorText('missing', { what: 'accessor', index: 3 }), 'This model refers to an accessor that is not there.');

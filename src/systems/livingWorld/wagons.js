@@ -21,7 +21,7 @@
 import { laneAt, NATIVE_PER_M } from './trips.js';
 import { lwSeed, textSeed } from './seed.js';
 import { HITCHED_HORSE_LOCAL_Z, HORSE_BOX_SIZE, wheelRotationDegrees, wrapWheelAngle } from '../horse/horseCartLaw.js';
-import { MEASURED } from '../../world/wagonModels.js';   // AUDIT LW-III: the Small Cart's footprint
+import { MEASURED } from '../../world/wagonModels.js'; // AUDIT LW-III: the Small Cart's footprint
 
 /** A merchant of a town this big (blocks) trades in two wagons. */
 export const GREAT_HOUSE_BLOCKS = 36;
@@ -32,7 +32,10 @@ export const LEAD_N = 40;
 export const HITCH_N = HITCHED_HORSE_LOCAL_Z * NATIVE_PER_M;
 export const WAGON_TAIL_N = 110;
 /** The cargo's tiers (horseCartLaw.js cargoTier's percentages, CARGO_DEFINITIONS' thresholds): full, sold, bought, robbed. */
-export const CARGO_FULL = 90, CARGO_SOLD = 50, CARGO_BOUGHT = 75, CARGO_ROBBED = 25;
+export const CARGO_FULL = 90,
+  CARGO_SOLD = 50,
+  CARGO_BOUGHT = 75,
+  CARGO_ROBBED = 25;
 /** At camp the wagons stand this far beyond the ring (native), a horse this far to a wagon's side. */
 export const CAMP_PARK_N = 120;
 export const CAMP_HORSE_SIDE_N = 70;
@@ -59,7 +62,7 @@ export function teamOf(trip) {
 export function cargoOf(trip, t) {
   if (trip.robbed && t >= trip.robbed.t) return CARGO_ROBBED;
   if (t < trip.backT0) return CARGO_FULL;
-  return lwSeed(textSeed(trip.id), 0x63617267) % 2 ? CARGO_SOLD : CARGO_BOUGHT;   // 'carg'
+  return lwSeed(textSeed(trip.id), 0x63617267) % 2 ? CARGO_SOLD : CARGO_BOUGHT; // 'carg'
 }
 
 /** AUDIT LW-III (KEEP RIGHT): a party on the march walks this far (native - 2 m) to the right of the road's middle, the
@@ -77,14 +80,26 @@ export const LANE_N = 80;
  */
 export function chordBehind(at, s0, dir, dist) {
   const p0 = at(s0);
-  const far = (/** @type {number} */ k) => { const q = at(s0 - dir * k); return Math.hypot(q.x - p0.x, q.z - p0.z); };
+  const far = (/** @type {number} */ k) => {
+    const q = at(s0 - dir * k);
+    return Math.hypot(q.x - p0.x, q.z - p0.z);
+  };
   if (Math.abs(far(dist) - dist) < 1e-9) return s0 - dir * dist;
   // the FIRST point back along the path that far: a lane outside a corner runs longer than the way's own s and swings
   // round it, so a later point stands as far too - walked out from the horse in eighths, then halved twenty times
   const step = dist / 8;
-  let lo = 0, hi = step;
-  while (far(hi) < dist) { lo = hi; hi += step; if (hi > dist * 3) return s0 - dir * dist; }
-  for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2; if (far(mid) < dist) lo = mid; else hi = mid; }
+  let lo = 0,
+    hi = step;
+  while (far(hi) < dist) {
+    lo = hi;
+    hi += step;
+    if (hi > dist * 3) return s0 - dir * dist;
+  }
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    if (far(mid) < dist) lo = mid;
+    else hi = mid;
+  }
   return s0 - dir * hi;
 }
 
@@ -104,7 +119,7 @@ export function chordBehind(at, s0, dir, dist) {
 export function trainOf(trip, at, members, t, hitchN = HITCH_N, lane = 0) {
   const team = teamOf(trip);
   const back = at.phase === 'back';
-  const dir = back ? -1 : 1;   // the way it walks, along the way's own s
+  const dir = back ? -1 : 1; // the way it walks, along the way's own s
   const moving = !at.halt && !at.camp;
   const place = (/** @type {number} */ s, side = 0) => {
     const p = laneAt(trip.way, s, dir * lane + side);
@@ -119,7 +134,9 @@ export function trainOf(trip, at, members, t, hitchN = HITCH_N, lane = 0) {
   const s0 = /** @type {number} */ (at.s);
   /** @type {{ res: any, x: number, z: number, yaw: number, moving: boolean }[]} */
   const people = [];
-  van.forEach((m, i) => people.push({ res: m, ...place(s0 + dir * (van.length - i) * WALK_GAP_N, (i % 2 ? 1 : -1) * 22), moving }));
+  van.forEach((m, i) =>
+    people.push({ res: m, ...place(s0 + dir * (van.length - i) * WALK_GAP_N, (i % 2 ? 1 : -1) * 22), moving }),
+  );
   if (leader) people.push({ res: leader, ...place(s0, 30), moving });
   /** @type {HorsePlace[]} */
   const horses = [];
@@ -136,11 +153,22 @@ export function trainOf(trip, at, members, t, hitchN = HITCH_N, lane = 0) {
       const yaw = Math.hypot(horse.x - a.x, horse.z - a.z) > 1e-6 ? Math.atan2(horse.x - a.x, horse.z - a.z) : a.yaw;
       // AUDIT LW-II E8: the distance walked the way the wagon faces - home, from the far end (the mod turns its wheels by
       // travel along the wagon's forward: the way's own s, falling home, spun them backwards)
-      wagons.push({ key: `${trip.id}:w${i}`, x: a.x, z: a.z, yaw, moving, tier: cargoOf(trip, t), s: back ? trip.way.len - axle : axle, hitched: true });
+      wagons.push({
+        key: `${trip.id}:w${i}`,
+        x: a.x,
+        z: a.z,
+        yaw,
+        moving,
+        tier: cargoOf(trip, t),
+        s: back ? trip.way.len - axle : axle,
+        hitched: true,
+      });
       s = chordBehind(line, axle, dir, WAGON_TAIL_N);
     } else s -= dir * WALK_GAP_N;
   }
-  rear.forEach((m, i) => people.push({ res: m, ...place(s - dir * (i + 1) * WALK_GAP_N, (i % 2 ? 1 : -1) * 22), moving }));
+  rear.forEach((m, i) =>
+    people.push({ res: m, ...place(s - dir * (i + 1) * WALK_GAP_N, (i % 2 ? 1 : -1) * 22), moving }),
+  );
   return { people, horses, wagons };
 }
 
@@ -154,7 +182,10 @@ export function fileSpan(trip, n, hitchN = HITCH_N, gap = WALK_GAP_N) {
   const armed = (trip.party ?? []).filter((/** @type {any} */ m) => m.id !== trip.leader?.id && m.cls != null).length;
   const van = Math.ceil(armed / 2);
   const rear = Math.max(0, n - 1 - van);
-  return { ahead: van * WALK_GAP_N, behind: LEAD_N + team.wagons * (hitchN + WAGON_TAIL_N) + team.packs * WALK_GAP_N + rear * WALK_GAP_N };
+  return {
+    ahead: van * WALK_GAP_N,
+    behind: LEAD_N + team.wagons * (hitchN + WAGON_TAIL_N) + team.packs * WALK_GAP_N + rear * WALK_GAP_N,
+  };
 }
 
 /** AUDIT LW-III (ONE CAMP, ONE PARK): the park's ring is at least this far round (native - 5 m) a team at a shared camp,
@@ -180,32 +211,54 @@ export function campTeam(trip, cx, cz, r, t, slots = null) {
   /** @type {WagonPlace[]} */
   const wagons = [];
   const n = team.wagons + team.packs;
-  const all = slots ? Math.max(slots.n, n) : n, k0 = slots ? slots.k0 : 0;
+  const all = slots ? Math.max(slots.n, n) : n,
+    k0 = slots ? slots.k0 : 0;
   const d = Math.max(r + CAMP_PARK_N, slots ? (all * CAMP_TEAM_ARC_N) / (Math.PI * 2) : 0);
   for (let i = 0; i < n; i++) {
     const a = turn + ((k0 + i) / Math.max(1, all)) * Math.PI * 2;
-    const x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d;
-    const face = Math.atan2(cx - x, cz - z);   // to the fire
+    const x = cx + Math.sin(a) * d,
+      z = cz + Math.cos(a) * d;
+    const face = Math.atan2(cx - x, cz - z); // to the fire
     if (i < team.wagons) {
-      wagons.push({ key: `${trip.id}:w${i}`, x, z, yaw: face, moving: false, tier: cargoOf(trip, t), s: 0, hitched: false });
+      wagons.push({
+        key: `${trip.id}:w${i}`,
+        x,
+        z,
+        yaw: face,
+        moving: false,
+        tier: cargoOf(trip, t),
+        s: 0,
+        hitched: false,
+      });
       // AUDIT LW-III: tied ALONGSIDE, facing the fire as its wagon does - it faced out from the wagon's side (a quarter
       // turn), and its 2.6 m reached back into the cart's bed
-      horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face, moving: false });
+      horses.push({
+        key: `${trip.id}:h${i}`,
+        x: x + Math.cos(face) * CAMP_HORSE_SIDE_N,
+        z: z - Math.sin(face) * CAMP_HORSE_SIDE_N,
+        yaw: face,
+        moving: false,
+      });
     } else horses.push({ key: `${trip.id}:h${i}`, x, z, yaw: face + Math.PI / 2, moving: false });
   }
   return { horses, wagons };
 }
 
 /** A party's park turned its own way round its fire (radians, the trip's seed). @param {any} trip */
-export const campTurn = (trip) => (lwSeed(textSeed(trip.id), 0x7061726b) % 628) / 100;   // 'park'
+export const campTurn = (trip) => (lwSeed(textSeed(trip.id), 0x7061726b) % 628) / 100; // 'park'
 
 /** AUDIT LW-III (CLEAR OF THE TEAM): the road's wagon's footprint about its axle (native) - the Small Cart's
  *  (wagonModels.js MEASURED.cart: its bottom's back edge behind, its shafts' tips before, its body's half width). */
 export const CART_FOOT_N = Object.freeze({
-  back: -MEASURED.cart.bottomBack[1] * NATIVE_PER_M, front: MEASURED.cart.frontZ * NATIVE_PER_M, half: MEASURED.cart.sideX * NATIVE_PER_M,
+  back: -MEASURED.cart.bottomBack[1] * NATIVE_PER_M,
+  front: MEASURED.cart.frontZ * NATIVE_PER_M,
+  half: MEASURED.cart.sideX * NATIVE_PER_M,
 });
 /** The horse's body about its feet (native): the pool's own box (horseCartLaw.js HORSE_BOX_SIZE - 1.1 m wide, 2.6 m long). */
-export const HORSE_FOOT_N = Object.freeze({ half: (HORSE_BOX_SIZE[2] / 2) * NATIVE_PER_M, side: (HORSE_BOX_SIZE[0] / 2) * NATIVE_PER_M });
+export const HORSE_FOOT_N = Object.freeze({
+  half: (HORSE_BOX_SIZE[2] / 2) * NATIVE_PER_M,
+  side: (HORSE_BOX_SIZE[0] / 2) * NATIVE_PER_M,
+});
 /** And a body's own girth, kept off either. */
 export const BODY_CLEAR_N = 14;
 
@@ -226,16 +279,29 @@ export function clearOfTeam(x, z, team, foot = CART_FOOT_N) {
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     for (const b of boxes) {
-      const fx = Math.sin(b.c.yaw), fz = Math.cos(b.c.yaw);
-      const dx = x - b.c.x, dz = z - b.c.z;
-      const f = dx * fx + dz * fz, r = dx * fz - dz * fx;
-      const back = b.back + BODY_CLEAR_N, front = b.front + BODY_CLEAR_N, half = b.half + BODY_CLEAR_N;
+      const fx = Math.sin(b.c.yaw),
+        fz = Math.cos(b.c.yaw);
+      const dx = x - b.c.x,
+        dz = z - b.c.z;
+      const f = dx * fx + dz * fz,
+        r = dx * fz - dz * fx;
+      const back = b.back + BODY_CLEAR_N,
+        front = b.front + BODY_CLEAR_N,
+        half = b.half + BODY_CLEAR_N;
       if (f <= -back || f >= front || Math.abs(r) >= half) continue;
       // out by the nearest side
-      const out = [[front - f, 'f'], [f + back, 'b'], [half - Math.abs(r), 'r']].sort((p, q) => /** @type {number} */ (p[0]) - /** @type {number} */ (q[0]))[0][1];
-      let nf = f, nr = r;
-      if (out === 'f') nf = front; else if (out === 'b') nf = -back; else nr = (r < 0 ? -1 : 1) * half;
-      x = b.c.x + nf * fx + nr * fz; z = b.c.z + nf * fz - nr * fx;
+      const out = [
+        [front - f, 'f'],
+        [f + back, 'b'],
+        [half - Math.abs(r), 'r'],
+      ].sort((p, q) => /** @type {number} */ (p[0]) - /** @type {number} */ (q[0]))[0][1];
+      let nf = f,
+        nr = r;
+      if (out === 'f') nf = front;
+      else if (out === 'b') nf = -back;
+      else nr = (r < 0 ? -1 : 1) * half;
+      x = b.c.x + nf * fx + nr * fz;
+      z = b.c.z + nf * fz - nr * fx;
       moved = true;
     }
     if (!moved) break;

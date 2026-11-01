@@ -48,14 +48,23 @@
 // draws. Its hostile half never reads them - a hostile revenant has no oath.
 
 import { idStream, signatureFamily, SIG, pyreElement, pyreSpell } from './revenantFeud.js';
-import { makeBlow, setLiveBlow, shatterBlow, windupNear, inBlow, BLOW, BLOW_STALE, fitBlowToGround } from '../../ai/foeBlows.js';
+import {
+  makeBlow,
+  setLiveBlow,
+  shatterBlow,
+  windupNear,
+  inBlow,
+  BLOW,
+  BLOW_STALE,
+  fitBlowToGround,
+} from '../../ai/foeBlows.js';
 import { tacticsNow } from '../../ai/tacticsClock.js';
 import { tacticsSwitchOn } from '../../ai/tactics.js';
 import { revenantById, revenantEvent } from './revenant.js';
 import { healMine } from '../playerHeal.js';
-import { t } from '../textManager.js';   // L10N4: its words through the text core
-import { silenceBlocksCast } from '../mysticism.js';   // AUDIT RVN B2: a silenced revenant casts no art
-import { rvnStatsOf, rvnAwakened } from './revenantStars.js';   // RVN-STARS: its Grave's stars
+import { t } from '../textManager.js'; // L10N4: its words through the text core
+import { silenceBlocksCast } from '../mysticism.js'; // AUDIT RVN B2: a silenced revenant casts no art
+import { rvnStatsOf, rvnAwakened } from './revenantStars.js'; // RVN-STARS: its Grave's stars
 
 /** The arts. */
 export const ARTS = Object.freeze(['mending', 'warding', 'warcry', 'siphon', 'barrage', 'nova']);
@@ -72,9 +81,24 @@ export const ART_POOL = Object.freeze({
 });
 /** Its art's name, in the player's language. */
 export const ART_NAMES = Object.freeze({
-  get mending() { return t('rvn.art.name.mending', 'Mending'); }, get warding() { return t('rvn.art.name.warding', 'Ward'); },
-  get warcry() { return t('rvn.art.name.warcry', 'War Cry'); }, get siphon() { return t('rvn.art.name.siphon', 'Siphon'); },
-  get barrage() { return t('rvn.art.name.barrage', 'Barrage'); }, get nova() { return t('rvn.art.name.nova', 'Nova'); },
+  get mending() {
+    return t('rvn.art.name.mending', 'Mending');
+  },
+  get warding() {
+    return t('rvn.art.name.warding', 'Ward');
+  },
+  get warcry() {
+    return t('rvn.art.name.warcry', 'War Cry');
+  },
+  get siphon() {
+    return t('rvn.art.name.siphon', 'Siphon');
+  },
+  get barrage() {
+    return t('rvn.art.name.barrage', 'Barrage');
+  },
+  get nova() {
+    return t('rvn.art.name.nova', 'Nova');
+  },
 });
 /** The three that channel (a disc about its own feet, broken by a blow), and the three that are thrown at me. */
 export const ART_CHANNELS = Object.freeze(['mending', 'warding', 'warcry']);
@@ -93,12 +117,25 @@ export const ART_LAW = Object.freeze({
   SWORN_TAUGHT: 0.75,
   SWORN_WARD: Object.freeze({ BASE: 6, PER_RANK: 3, ROUNDS: 6, COOLDOWN: 90 }),
   SWORN_CRY: Object.freeze({ BASE: 4, PER_RANK: 2, ROUNDS: 6, COOLDOWN: 90 }),
-  SWORN_STRIKE: Object.freeze({ COOLDOWN: Object.freeze([16, 22]), SIPHON: 1.0, SIPHON_HEAL: 1 / 4, BARRAGE: 1.5, NOVA: 0.8, NOVA_REACH: 5, REACH: 12, RANK: Object.freeze([0.5, 0.1]) }),
+  SWORN_STRIKE: Object.freeze({
+    COOLDOWN: Object.freeze([16, 22]),
+    SIPHON: 1.0,
+    SIPHON_HEAL: 1 / 4,
+    BARRAGE: 1.5,
+    NOVA: 0.8,
+    NOVA_REACH: 5,
+    REACH: 12,
+    RANK: Object.freeze([0.5, 0.1]),
+  }),
 });
 /** Each art's colour on the ground - never the ember or the iron red a blow wears. */
 export const ART_COLORS = Object.freeze({
-  mending: Object.freeze([0.3, 0.9, 0.5]), warding: Object.freeze([0.35, 0.6, 1.0]), warcry: Object.freeze([1.0, 0.82, 0.25]),
-  siphon: Object.freeze([0.85, 0.15, 0.45]), barrage: Object.freeze([0.7, 0.35, 1.0]), nova: Object.freeze([0.6, 0.9, 1.0]),
+  mending: Object.freeze([0.3, 0.9, 0.5]),
+  warding: Object.freeze([0.35, 0.6, 1.0]),
+  warcry: Object.freeze([1.0, 0.82, 0.25]),
+  siphon: Object.freeze([0.85, 0.15, 0.45]),
+  barrage: Object.freeze([0.7, 0.35, 1.0]),
+  nova: Object.freeze([0.6, 0.9, 1.0]),
 });
 /** The blow classes a ward takes less of (RVN2's - adaptBlowClass). */
 const WARD_CLASSES = Object.freeze(['blade', 'blunt', 'axe', 'h2h', 'arrow']);
@@ -125,26 +162,41 @@ export const artOf = (r) => drawArt(r?.id, r?.mobileType) ?? (rvnAwakened(r) ? t
 /** RVN-STARS: A SWORN ONE'S ART IN NUMBERS, its rank's and its Grave's: Mending's share and cooldown, Ward's and War Cry's
  *  points and cooldown, its strikes' weight (x the pyre's) and their cooldown's span - the steps and the page read these. */
 export function swornArtNumbers(r) {
-  const rank = Math.max(1, Math.min(5, r?.rank | 0)), st = rvnStatsOf(r), quick = 1 - st.haste;
-  const more = (1 + st.art) * (drawArt(r?.id, r?.mobileType) ? 1 : ART_LAW.SWORN_TAUGHT);   // AUDIT RVN-STARS S7: a taught art the lesser
+  const rank = Math.max(1, Math.min(5, r?.rank | 0)),
+    st = rvnStatsOf(r),
+    quick = 1 - st.haste;
+  const more = (1 + st.art) * (drawArt(r?.id, r?.mobileType) ? 1 : ART_LAW.SWORN_TAUGHT); // AUDIT RVN-STARS S7: a taught art the lesser
   const S = ART_LAW.SWORN_STRIKE;
   return {
-    mendShare: (ART_LAW.SWORN_MEND.SHARE + ART_LAW.SWORN_MEND.PER_RANK * rank) * more, mendCooldown: ART_LAW.SWORN_MEND.COOLDOWN * quick,
-    wardPoints: Math.round((ART_LAW.SWORN_WARD.BASE + ART_LAW.SWORN_WARD.PER_RANK * rank) * more), wardCooldown: ART_LAW.SWORN_WARD.COOLDOWN * quick,
-    cryPoints: Math.round((ART_LAW.SWORN_CRY.BASE + ART_LAW.SWORN_CRY.PER_RANK * rank) * more), cryCooldown: ART_LAW.SWORN_CRY.COOLDOWN * quick,
-    weight: (S.RANK[0] + S.RANK[1] * rank) * more, strikeCooldown: [S.COOLDOWN[0] * quick, S.COOLDOWN[1] * quick],
+    mendShare: (ART_LAW.SWORN_MEND.SHARE + ART_LAW.SWORN_MEND.PER_RANK * rank) * more,
+    mendCooldown: ART_LAW.SWORN_MEND.COOLDOWN * quick,
+    wardPoints: Math.round((ART_LAW.SWORN_WARD.BASE + ART_LAW.SWORN_WARD.PER_RANK * rank) * more),
+    wardCooldown: ART_LAW.SWORN_WARD.COOLDOWN * quick,
+    cryPoints: Math.round((ART_LAW.SWORN_CRY.BASE + ART_LAW.SWORN_CRY.PER_RANK * rank) * more),
+    cryCooldown: ART_LAW.SWORN_CRY.COOLDOWN * quick,
+    weight: (S.RANK[0] + S.RANK[1] * rank) * more,
+    strikeCooldown: [S.COOLDOWN[0] * quick, S.COOLDOWN[1] * quick],
   };
 }
 /** The pyre's blast at `level`, its mean, x `mult` - the weight of a thrown art. */
-export const artMagnitude = (level, mult) => ((SIG.PYRE_BASE[0] + SIG.PYRE_BASE[1]) / 2 + SIG.PYRE_PER * Math.max(1, level | 0)) * mult;
+export const artMagnitude = (level, mult) =>
+  ((SIG.PYRE_BASE[0] + SIG.PYRE_BASE[1]) / 2 + SIG.PYRE_PER * Math.max(1, level | 0)) * mult;
 /** AUDIT RVN B3: A THROWN ART'S BLAST - the pyre's spell (revenantFeud.js pyreSpell: its element, at range, the save
  *  answering it) with its magnitude whole at `level`: the pyre's range plus its level's, x `mult`, and no per-level term
  *  for the cast to round (pyreSpell rounds SIG.PYRE_PER x `mult` - every multiple from 0.5 to 1.5 was the pyre's own
  *  level's). Its mean is artMagnitude(level, mult). */
 export function artSpell(name, element, level, mult) {
-  const lv = Math.max(1, level | 0), base = pyreSpell(name, element, /** @type {any} */ (1));   // its shape; the magnitudes are set below
-  const lo = Math.round((SIG.PYRE_BASE[0] + SIG.PYRE_PER * lv) * mult), hi = Math.round((SIG.PYRE_BASE[1] + SIG.PYRE_PER * lv) * mult);
-  return Object.freeze({ ...base, effects: [{ ...base.effects[0], magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 0, magnitudeLevelHigh: 0 }, ...base.effects.slice(1)] });
+  const lv = Math.max(1, level | 0),
+    base = pyreSpell(name, element, /** @type {any} */ (1)); // its shape; the magnitudes are set below
+  const lo = Math.round((SIG.PYRE_BASE[0] + SIG.PYRE_PER * lv) * mult),
+    hi = Math.round((SIG.PYRE_BASE[1] + SIG.PYRE_PER * lv) * mult);
+  return Object.freeze({
+    ...base,
+    effects: [
+      { ...base.effects[0], magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 0, magnitudeLevelHigh: 0 },
+      ...base.effects.slice(1),
+    ],
+  });
 }
 
 /** What its art does - the page's words, by its side. */
@@ -153,25 +205,84 @@ export function artWords(r, { sworn = !!r?.sworn } = {}) {
   if (!art) return null;
   const n = ART_NAMES[art];
   if (sworn) {
-    const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
+    const A = swornArtNumbers(r); // RVN-STARS: its rank's and its Grave's
     switch (art) {
-      case 'mending': return t('rvn.art.sworn.mendingSecs', 'Art: {n} - when you fall under {at} of your health it heals {share} of it (every {s} seconds).', { n, at: pct(ART_LAW.SWORN_MEND.AT), share: pct(A.mendShare), s: Math.round(A.mendCooldown) });   // AUDIT RVN-STARS S9: seconds, as the Ward's and the War Cry's - a minute and a half read as a minute
-      case 'warding': return t('rvn.art.sworn.warding', 'Art: {n} - as it goes into a fight it shields you for {points} (every {s} seconds).', { n, points: A.wardPoints, s: Math.round(A.wardCooldown) });
-      case 'warcry': return t('rvn.art.sworn.warcry', 'Art: {n} - as it goes into a fight your Strength rises by {points} (every {s} seconds).', { n, points: A.cryPoints, s: Math.round(A.cryCooldown) });
-      case 'siphon': return t('rvn.art.sworn.siphonShare', 'Art: {n} - now and then it draws its foe\'s life and gives you {share} of it.', { n, share: pct(ART_LAW.SWORN_STRIKE.SIPHON_HEAL) });   // AUDIT RVN D13: its share, its constant's
-      case 'barrage': return t('rvn.art.sworn.barrage', 'Art: {n} - now and then it looses a barrage on its foe.', { n });
-      default: return t('rvn.art.sworn.nova', 'Art: {n} - now and then it strikes every foe about it.', { n });
+      case 'mending':
+        return t(
+          'rvn.art.sworn.mendingSecs',
+          'Art: {n} - when you fall under {at} of your health it heals {share} of it (every {s} seconds).',
+          { n, at: pct(ART_LAW.SWORN_MEND.AT), share: pct(A.mendShare), s: Math.round(A.mendCooldown) },
+        ); // AUDIT RVN-STARS S9: seconds, as the Ward's and the War Cry's - a minute and a half read as a minute
+      case 'warding':
+        return t(
+          'rvn.art.sworn.warding',
+          'Art: {n} - as it goes into a fight it shields you for {points} (every {s} seconds).',
+          { n, points: A.wardPoints, s: Math.round(A.wardCooldown) },
+        );
+      case 'warcry':
+        return t(
+          'rvn.art.sworn.warcry',
+          'Art: {n} - as it goes into a fight your Strength rises by {points} (every {s} seconds).',
+          { n, points: A.cryPoints, s: Math.round(A.cryCooldown) },
+        );
+      case 'siphon':
+        return t(
+          'rvn.art.sworn.siphonShare',
+          "Art: {n} - now and then it draws its foe's life and gives you {share} of it.",
+          { n, share: pct(ART_LAW.SWORN_STRIKE.SIPHON_HEAL) },
+        ); // AUDIT RVN D13: its share, its constant's
+      case 'barrage':
+        return t('rvn.art.sworn.barrage', 'Art: {n} - now and then it looses a barrage on its foe.', { n });
+      default:
+        return t('rvn.art.sworn.nova', 'Art: {n} - now and then it strikes every foe about it.', { n });
     }
   }
-  const young = (r.rank | 0) < ART_RANK, on = tacticsSwitchOn(), from = ROMAN[ART_RANK];   // AUDIT RVN D13: the rank its constant's
-  const below = young ? (on ? t('rvn.art.note.fromRank', ' (from Rank {rank})', { rank: from }) : t('rvn.art.note.fromRankSwitch', ' (from Rank {rank}, with Enhanced AI)', { rank: from })) : on ? '' : t('rvn.art.note.switch', ' (with Enhanced AI)');
+  const young = (r.rank | 0) < ART_RANK,
+    on = tacticsSwitchOn(),
+    from = ROMAN[ART_RANK]; // AUDIT RVN D13: the rank its constant's
+  const below = young
+    ? on
+      ? t('rvn.art.note.fromRank', ' (from Rank {rank})', { rank: from })
+      : t('rvn.art.note.fromRankSwitch', ' (from Rank {rank}, with Enhanced AI)', { rank: from })
+    : on
+      ? ''
+      : t('rvn.art.note.switch', ' (with Enhanced AI)');
   switch (art) {
-    case 'mending': return t('rvn.art.hunt.mending', 'Art: {n} - when hurt, it gathers itself to heal. Strike it to break the spell{below}.', { n, below });
-    case 'warding': return t('rvn.art.hunt.warding', 'Art: {n} - when hurt, it raises a ward against your blows. Strike it to break the spell{below}.', { n, below });
-    case 'warcry': return t('rvn.art.hunt.warcry', 'Art: {n} - it roars as the fight begins, and it and its band strike harder. Strike it to cut the roar short{below}.', { n, below });
-    case 'siphon': return t('rvn.art.hunt.siphon', 'Art: {n} - a beam that drains your life. Step out of its line{below}.', { n, below });
-    case 'barrage': return t('rvn.art.hunt.barrageCount', 'Art: {n} - {count} blasts at your feet, one after another. Keep moving{below}.', { n, count: ART_LAW.BARRAGE.COUNT, below });
-    default: return t('rvn.art.hunt.novaRing', 'Art: {n} - a ring bursts where it stands. Step out of it, or into its center{below}.', { n, below });
+    case 'mending':
+      return t(
+        'rvn.art.hunt.mending',
+        'Art: {n} - when hurt, it gathers itself to heal. Strike it to break the spell{below}.',
+        { n, below },
+      );
+    case 'warding':
+      return t(
+        'rvn.art.hunt.warding',
+        'Art: {n} - when hurt, it raises a ward against your blows. Strike it to break the spell{below}.',
+        { n, below },
+      );
+    case 'warcry':
+      return t(
+        'rvn.art.hunt.warcry',
+        'Art: {n} - it roars as the fight begins, and it and its band strike harder. Strike it to cut the roar short{below}.',
+        { n, below },
+      );
+    case 'siphon':
+      return t('rvn.art.hunt.siphon', 'Art: {n} - a beam that drains your life. Step out of its line{below}.', {
+        n,
+        below,
+      });
+    case 'barrage':
+      return t(
+        'rvn.art.hunt.barrageCount',
+        'Art: {n} - {count} blasts at your feet, one after another. Keep moving{below}.',
+        { n, count: ART_LAW.BARRAGE.COUNT, below },
+      );
+    default:
+      return t(
+        'rvn.art.hunt.novaRing',
+        'Art: {n} - a ring bursts where it stands. Step out of it, or into its center{below}.',
+        { n, below },
+      );
   }
 }
 const pct = (x) => `${Math.round(x * 100)}%`;
@@ -188,14 +299,38 @@ const flat = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
  *  nobody else's puppet, alive, able to act (AUDIT RVN B2: a paralysed or held foe - the motor's CanAct - holds nothing,
  *  as the brain's own wind-up does) and at war with me (AUDIT RVN B11). */
 function mayArt(f) {
-  const e = f?.entity, rev = e?.revenant;
+  const e = f?.entity,
+    rev = e?.revenant;
   if (!rev?.id || rev.sworn || f.dead || f.puppet || !(e.health > 0)) return false;
-  if (f.fleeing || f.scattering || f.yielded || f.roaring || f.executing || f.sparing || f._knockedOut || e.team === 'PlayerAlly') return false;
+  if (
+    f.fleeing ||
+    f.scattering ||
+    f.yielded ||
+    f.roaring ||
+    f.executing ||
+    f.sparing ||
+    f._knockedOut ||
+    e.team === 'PlayerAlly'
+  )
+    return false;
   if (f.ai?.canAct === false || f.ai?.isHostile === false) return false;
   return (rev.rank | 0) >= ART_RANK;
 }
 /** Its art's state on the pool's record, made once a stand. */
-const stateOf = (f, art) => (f._art ??= { art, used: {}, ready: null, live: null, seen: 0, wardUntil: 0, wardWas: null, wardOn: null, cryUntil: 0, cryBand: [], called: false });
+const stateOf = (f, art) =>
+  (f._art ??= {
+    art,
+    used: {},
+    ready: null,
+    live: null,
+    seen: 0,
+    wardUntil: 0,
+    wardWas: null,
+    wardOn: null,
+    cryUntil: 0,
+    cryBand: [],
+    called: false,
+  });
 
 /**
  * THE HOSTILE ART, a frame of it (each pool's foe loop, beside the signature's - scenes/exteriorFoes.js, scenes/dungeonContext.js):
@@ -208,14 +343,24 @@ const stateOf = (f, art) => (f._art ??= { art, used: {}, ready: null, live: null
  */
 export function revenantArtFrame(f, feet, ctx) {
   const now = tacticsNow();
-  const e = f?.entity, rev = e?.revenant;
+  const e = f?.entity,
+    rev = e?.revenant;
   const s = f?._art ?? null;
-  if (s?.live && now - s.seen > BLOW_STALE) endLive(s, now, true);   // AUDIT RVN B4: frames it was not stepped (kneeling, held) - its marks cut, never landed late
-  if (s) { s.seen = now; stepTimers(f, s, now); }
-  if (!mayArt(f) || !tacticsSwitchOn() || !feet) { if (s?.live) endLive(s, now, true); return null; }
+  if (s?.live && now - s.seen > BLOW_STALE) endLive(s, now, true); // AUDIT RVN B4: frames it was not stepped (kneeling, held) - its marks cut, never landed late
+  if (s) {
+    s.seen = now;
+    stepTimers(f, s, now);
+  }
+  if (!mayArt(f) || !tacticsSwitchOn() || !feet) {
+    if (s?.live) endLive(s, now, true);
+    return null;
+  }
   const art = drawArt(rev.id, f.mobileType ?? e.mobileType);
   if (!art) return null;
-  if (art !== 'warcry' && silenceBlocksCast(e)) { if (s?.live) endLive(s, now, true); return null; }   // AUDIT RVN B2: silenced - a spell's art is cut
+  if (art !== 'warcry' && silenceBlocksCast(e)) {
+    if (s?.live) endLive(s, now, true);
+    return null;
+  } // AUDIT RVN B2: silenced - a spell's art is cut
   const st = stateOf(f, art);
   st.seen = now;
   const rolls = ctx.rolls ?? Math.random;
@@ -225,18 +370,25 @@ export function revenantArtFrame(f, feet, ctx) {
   const engaged = !!f.ai?.detected && !!f.ai?.inSight && (ctx.onMe?.() ?? true);
   if (!engaged) return null;
   if (st.ready == null) st.ready = now + U(ART_LAW.FIRST[0], ART_LAW.FIRST[1], rolls);
-  if (windupNear(feet, now)) return null;   // one wind-up near me at a time - its own brain's too
-  const d = flat(at, feet), hp = e.health / Math.max(1, e.maxHealth || 1);
+  if (windupNear(feet, now)) return null; // one wind-up near me at a time - its own brain's too
+  const d = flat(at, feet),
+    hp = e.health / Math.max(1, e.maxHealth || 1);
   const yaw = yawTo(at, feet);
-  if (art === 'mending' && !st.used.mending && hp < ART_LAW.MEND.AT) return channel(f, st, now, ART_LAW.MEND.CHANNEL, ctx);
-  if (art === 'warding' && !st.used.warding && hp < ART_LAW.WARD.AT) return channel(f, st, now, ART_LAW.WARD.CHANNEL, ctx);
-  if (art === 'warcry' && !st.used.warcry && d <= ART_LAW.CRY.REACH) return channel(f, st, now, ART_LAW.CRY.CHANNEL, ctx);
+  if (art === 'mending' && !st.used.mending && hp < ART_LAW.MEND.AT)
+    return channel(f, st, now, ART_LAW.MEND.CHANNEL, ctx);
+  if (art === 'warding' && !st.used.warding && hp < ART_LAW.WARD.AT)
+    return channel(f, st, now, ART_LAW.WARD.CHANNEL, ctx);
+  if (art === 'warcry' && !st.used.warcry && d <= ART_LAW.CRY.REACH)
+    return channel(f, st, now, ART_LAW.CRY.CHANNEL, ctx);
   if (now < st.ready) return null;
-  if (art === 'siphon' && d <= ART_LAW.SIPHON.REACH) return thrown(f, st, now, [{ kind: 'charge', origin: at, yaw, windup: ART_LAW.SIPHON.WINDUP, at: now }], ctx, feet);
-  if (art === 'nova' && d <= ART_LAW.NOVA.REACH + 1) return thrown(f, st, now, [{ kind: 'ring', origin: at, yaw, windup: ART_LAW.NOVA.WINDUP, at: now }], ctx, feet);
+  if (art === 'siphon' && d <= ART_LAW.SIPHON.REACH)
+    return thrown(f, st, now, [{ kind: 'charge', origin: at, yaw, windup: ART_LAW.SIPHON.WINDUP, at: now }], ctx, feet);
+  if (art === 'nova' && d <= ART_LAW.NOVA.REACH + 1)
+    return thrown(f, st, now, [{ kind: 'ring', origin: at, yaw, windup: ART_LAW.NOVA.WINDUP, at: now }], ctx, feet);
   if (art === 'barrage' && d <= ART_LAW.BARRAGE.REACH) {
     const marks = [];
-    for (let i = 0; i < ART_LAW.BARRAGE.COUNT; i++) marks.push({ kind: 'pyre', aimed: true, windup: ART_LAW.BARRAGE.WINDUP, at: now + i * ART_LAW.BARRAGE.STEP });
+    for (let i = 0; i < ART_LAW.BARRAGE.COUNT; i++)
+      marks.push({ kind: 'pyre', aimed: true, windup: ART_LAW.BARRAGE.WINDUP, at: now + i * ART_LAW.BARRAGE.STEP });
     return thrown(f, st, now, marks, ctx, feet);
   }
   return null;
@@ -246,7 +398,7 @@ function channel(f, st, now, seconds, ctx) {
   const b = makeBlow('pyre', f.ai.feet, f.ai.yaw ?? 0, now, ART_COLORS[st.art], 'poise', seconds);
   /** @type {any} */ (b).ahead = 0;
   /** @type {any} */ (b).art = st.art;
-  fitBlowToGround(b, f.ai.collider);   // AUDIT RVN B1: on the ground it marks
+  fitBlowToGround(b, f.ai.collider); // AUDIT RVN B1: on the ground it marks
   const key = keyFor(now);
   setLiveBlow(key, b);
   st.live = { channel: true, hp: f.entity.health, land: b.land, marks: [{ key, blow: b, landed: false, at: now }] };
@@ -274,9 +426,26 @@ function call(f, st, ctx, what) {
   if (what === 'start') {
     if (st.called) return;
     st.called = true;
-    const body = ART_CHANNELS.includes(st.art) ? t('rvn.art.call.channel', 'Strike it to break the spell!') : st.art === 'siphon' ? t('rvn.art.call.siphon', 'Step out of its line!') : st.art === 'nova' ? t('rvn.art.call.nova', 'Step away from it!') : t('rvn.art.call.barrage', 'Keep moving!');
-    ctx.say(revenantEvent('art', r, { body, line: t('rvn.art.call.line', '{given} calls on its {n}! {body}', { given: r.given, n, body }) }));
-  } else if (what === 'broken') ctx.say(revenantEvent('art', r, { body: t('rvn.art.broken.body', 'Its {n} is broken.', { n }), line: t('rvn.art.broken.line', '{given}\'s {n} is broken!', { given: r.given, n }) }));
+    const body = ART_CHANNELS.includes(st.art)
+      ? t('rvn.art.call.channel', 'Strike it to break the spell!')
+      : st.art === 'siphon'
+        ? t('rvn.art.call.siphon', 'Step out of its line!')
+        : st.art === 'nova'
+          ? t('rvn.art.call.nova', 'Step away from it!')
+          : t('rvn.art.call.barrage', 'Keep moving!');
+    ctx.say(
+      revenantEvent('art', r, {
+        body,
+        line: t('rvn.art.call.line', '{given} calls on its {n}! {body}', { given: r.given, n, body }),
+      }),
+    );
+  } else if (what === 'broken')
+    ctx.say(
+      revenantEvent('art', r, {
+        body: t('rvn.art.broken.body', 'Its {n} is broken.', { n }),
+        line: t('rvn.art.broken.line', "{given}'s {n} is broken!", { given: r.given, n }),
+      }),
+    );
 }
 /** A live art's frame: its marks kept fresh, made and landed; a channel broken by a blow. */
 function liveStep(f, st, now, ctx, feet) {
@@ -284,19 +453,22 @@ function liveStep(f, st, now, ctx, feet) {
   let out = null;
   for (const m of L.marks) {
     if (!m.blow && now >= m.at) {
-      const origin = f.ai.feet, yaw = yawTo(origin, feet);
+      const origin = f.ai.feet,
+        yaw = yawTo(origin, feet);
       const b = makeBlow(m.kind, origin, yaw, now, ART_COLORS[st.art], 'poise', m.windup);
       if (m.aimed) /** @type {any} */ (b).ahead = Math.min(BLOW.pyre.range, flat(origin, feet));
       /** @type {any} */ (b).art = st.art;
-      fitBlowToGround(b, f.ai.collider);   // AUDIT RVN B1: on the ground it marks - a stair's, a hill's
-      m.blow = b; m.key = keyFor(now);
+      fitBlowToGround(b, f.ai.collider); // AUDIT RVN B1: on the ground it marks - a stair's, a hill's
+      m.blow = b;
+      m.key = keyFor(now);
       setLiveBlow(m.key, b);
     }
     if (m.key) m.key._tac.seen = now;
   }
   if (L.channel) {
     // AUDIT RVN B10: broken by any harm since the last frame - a heal between raises the line, never hides a blow
-    if (!L.marks[0].landed && f.entity.health < L.hp - 1e-6) {   // struck: broken - its disc shatters
+    if (!L.marks[0].landed && f.entity.health < L.hp - 1e-6) {
+      // struck: broken - its disc shatters
       for (const m of L.marks) if (m.key) shatterBlow(m.key, now);
       st.live = null;
       call(f, st, ctx, 'broken');
@@ -304,12 +476,20 @@ function liveStep(f, st, now, ctx, feet) {
     }
     L.hp = f.entity.health;
     const m = L.marks[0];
-    const b = m.blow, here = f.ai.feet;
-    if (b && (b.origin[0] !== here[0] || b.origin[2] !== here[2])) {   // AUDIT RVN B9: its disc about its feet, wherever they go
-      b.origin[0] = here[0]; b.origin[1] = here[1]; b.origin[2] = here[2];
+    const b = m.blow,
+      here = f.ai.feet;
+    if (b && (b.origin[0] !== here[0] || b.origin[2] !== here[2])) {
+      // AUDIT RVN B9: its disc about its feet, wherever they go
+      b.origin[0] = here[0];
+      b.origin[1] = here[1];
+      b.origin[2] = here[2];
       fitBlowToGround(b, f.ai.collider);
     }
-    if (!m.landed && now >= m.blow.land) { m.landed = true; resolveChannel(f, st, now, ctx); out = 'landed'; }
+    if (!m.landed && now >= m.blow.land) {
+      m.landed = true;
+      resolveChannel(f, st, now, ctx);
+      out = 'landed';
+    }
   } else {
     for (const m of L.marks) {
       if (!m.blow || m.landed || now < m.blow.land) continue;
@@ -325,23 +505,34 @@ function liveStep(f, st, now, ctx, feet) {
 /** A thrown art's blast on me: through the host's door (my save answers it); a siphon drinks what it drew - the health
  *  the door took from me (AUDIT RVN B10: a blast saved, resisted, absorbed or turned back draws nothing). */
 function landOnMe(f, st, ctx) {
-  const e = f.entity, lvl = e.level ?? 1;
-  const mult = st.art === 'siphon' ? ART_LAW.SIPHON.MULT : st.art === 'barrage' ? ART_LAW.BARRAGE.MULT : ART_LAW.NOVA.MULT;
+  const e = f.entity,
+    lvl = e.level ?? 1;
+  const mult =
+    st.art === 'siphon' ? ART_LAW.SIPHON.MULT : st.art === 'barrage' ? ART_LAW.BARRAGE.MULT : ART_LAW.NOVA.MULT;
   const took = Number(ctx.strike(artSpell(ART_NAMES[st.art], element(f, st.art), lvl, mult)));
-  if (st.art === 'siphon' && took > 0) e.health = Math.min(e.maxHealth || e.health, e.health + Math.min(took, Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT))));
+  if (st.art === 'siphon' && took > 0)
+    e.health = Math.min(
+      e.maxHealth || e.health,
+      e.health + Math.min(took, Math.round(artMagnitude(lvl, ART_LAW.SIPHON.MULT))),
+    );
 }
 /** A channel whole: its heal, its ward or its cry. */
 function resolveChannel(f, st, now, ctx) {
-  const e = f.entity, rev = e.revenant;
-  if (st.art === 'mending') e.health = Math.min(e.maxHealth || e.health, e.health + Math.round((e.maxHealth || 0) * ART_LAW.MEND.HEAL));
+  const e = f.entity,
+    rev = e.revenant;
+  if (st.art === 'mending')
+    e.health = Math.min(e.maxHealth || e.health, e.health + Math.round((e.maxHealth || 0) * ART_LAW.MEND.HEAL));
   else if (st.art === 'warding' && rev?.edge && !st.wardWas) {
     st.wardWas = rev.edge;
-    st.wardOn = rev;   // AUDIT RVN B8: the stamp it warded - a stamp made since (revenantDeed) keeps its own edge
+    st.wardOn = rev; // AUDIT RVN B8: the stamp it warded - a stamp made since (revenantDeed) keeps its own edge
     rev.edge = wardEdge(rev.edge);
     st.wardUntil = now + ART_LAW.WARD.SECONDS;
   } else if (st.art === 'warcry' && st.cryUntil === 0) {
     st.cryBand = [f, ...(ctx.foes?.() ?? []).filter((x) => x !== f && !x.dead && x.retinueOf === rev?.id && x.entity)];
-    for (const x of st.cryBand) x.entity.damageScale = (Number.isFinite(x.entity.damageScale) && x.entity.damageScale > 0 ? x.entity.damageScale : 1) * ART_LAW.CRY.BLOWS;
+    for (const x of st.cryBand)
+      x.entity.damageScale =
+        (Number.isFinite(x.entity.damageScale) && x.entity.damageScale > 0 ? x.entity.damageScale : 1) *
+        ART_LAW.CRY.BLOWS;
     st.cryUntil = now + ART_LAW.CRY.SECONDS;
   }
 }
@@ -355,34 +546,87 @@ export function wardEdge(edge) {
 /** Its ward and its cry run out. */
 function stepTimers(f, s, now) {
   const rev = f?.entity?.revenant;
-  if (s.wardWas && (now >= s.wardUntil || rev !== s.wardOn)) { if (rev && rev === s.wardOn) rev.edge = s.wardWas; s.wardWas = null; s.wardOn = null; }
+  if (s.wardWas && (now >= s.wardUntil || rev !== s.wardOn)) {
+    if (rev && rev === s.wardOn) rev.edge = s.wardWas;
+    s.wardWas = null;
+    s.wardOn = null;
+  }
   if (s.cryUntil > 0 && now >= s.cryUntil) {
-    for (const x of s.cryBand) if (x.entity && Number.isFinite(x.entity.damageScale)) x.entity.damageScale /= ART_LAW.CRY.BLOWS;
-    s.cryBand = []; s.cryUntil = -1;   // spent: once a fight
+    for (const x of s.cryBand)
+      if (x.entity && Number.isFinite(x.entity.damageScale)) x.entity.damageScale /= ART_LAW.CRY.BLOWS;
+    s.cryBand = [];
+    s.cryUntil = -1; // spent: once a fight
   }
 }
 /** A live art ended - its marks out of the registry (`cut`: a foe that may throw nothing now - its marks go at once). */
 function endLive(st, now, cut) {
   if (!st.live) return;
-  for (const m of st.live.marks) if (m.key) { if (cut && m.blow && now < m.blow.land) shatterBlow(m.key, now); else setLiveBlow(m.key, null); }
+  for (const m of st.live.marks)
+    if (m.key) {
+      if (cut && m.blow && now < m.blow.land) shatterBlow(m.key, now);
+      else setLiveBlow(m.key, null);
+    }
   st.live = null;
 }
 
 // ── the sworn half ──────────────────────────────────────────────────
 /** A sworn one's art's own clock and fight, by its id. */
 const _sworn = new Map();
-const swornState = (id) => { let s = _sworn.get(id); if (!s) { s = { ready: 0, fighting: false, mendReady: 0 }; _sworn.set(id, s); } return s; };
+const swornState = (id) => {
+  let s = _sworn.get(id);
+  if (!s) {
+    s = { ready: 0, fighting: false, mendReady: 0 };
+    _sworn.set(id, s);
+  }
+  return s;
+};
 /** A Shield (Alteration's, 35/255: its magnitude the pool) for `rounds` magic rounds - one more, as Eventide's. */
 export const shieldBundle = (points, rounds) => ({
-  name: ART_NAMES.warding, rangeType: 0, element: 4, icon: 0,
-  effects: [{ type: 35, subType: 255, durationBase: rounds + 1, durationMod: 0, durationPerLevel: 1, chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
-    magnitudeBaseLow: points, magnitudeBaseHigh: points, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 }],
+  name: ART_NAMES.warding,
+  rangeType: 0,
+  element: 4,
+  icon: 0,
+  effects: [
+    {
+      type: 35,
+      subType: 255,
+      durationBase: rounds + 1,
+      durationMod: 0,
+      durationPerLevel: 1,
+      chanceBase: 0,
+      chanceMod: 0,
+      chancePerLevel: 1,
+      magnitudeBaseLow: points,
+      magnitudeBaseHigh: points,
+      magnitudeLevelBase: 0,
+      magnitudeLevelHigh: 0,
+      magnitudePerLevel: 1,
+    },
+  ],
 });
 /** Fortify Strength (9/0) by `points` for `rounds` magic rounds - one more. */
 export const mightBundle = (points, rounds) => ({
-  name: ART_NAMES.warcry, rangeType: 0, element: 4, icon: 0,
-  effects: [{ type: 9, subType: 0, durationBase: rounds + 1, durationMod: 0, durationPerLevel: 1, chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
-    magnitudeBaseLow: points, magnitudeBaseHigh: points, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 }],
+  name: ART_NAMES.warcry,
+  rangeType: 0,
+  element: 4,
+  icon: 0,
+  effects: [
+    {
+      type: 9,
+      subType: 0,
+      durationBase: rounds + 1,
+      durationMod: 0,
+      durationPerLevel: 1,
+      chanceBase: 0,
+      chanceMod: 0,
+      chancePerLevel: 1,
+      magnitudeBaseLow: points,
+      magnitudeBaseHigh: points,
+      magnitudeLevelBase: 0,
+      magnitudeLevelHigh: 0,
+      magnitudePerLevel: 1,
+    },
+  ],
 });
 
 /**
@@ -398,26 +642,36 @@ export const mightBundle = (points, rounds) => ({
  */
 export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } = {}) {
   const art = artOf(r);
-  if (!art || !r?.sworn || !door || !rec?.entity || rec.dead || rec._knockedOut || !(rec.entity.health > 0)) return null;
-  const now = tacticsNow(), s = swornState(r.id);
-  const aim = rec.ai?.target;   // AUDIT RVN B6: never `t` - the text core's own name (the ward's words threw)
+  if (!art || !r?.sworn || !door || !rec?.entity || rec.dead || rec._knockedOut || !(rec.entity.health > 0))
+    return null;
+  const now = tacticsNow(),
+    s = swornState(r.id);
+  const aim = rec.ai?.target; // AUDIT RVN B6: never `t` - the text core's own name (the ward's words threw)
   const tgt = aim?.entity && !aim.dead && aim.entity.health > 0 ? aim : null;
   const began = !!tgt && !s.fighting;
   s.fighting = !!tgt;
-  const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
+  const A = swornArtNumbers(r); // RVN-STARS: its rank's and its Grave's
   if (art === 'warding' || art === 'warcry') {
     if (!began || now < s.ready) return null;
     const ward = art === 'warding';
-    door.castOnPlayer?.(ward ? shieldBundle(A.wardPoints, ART_LAW.SWORN_WARD.ROUNDS) : mightBundle(A.cryPoints, ART_LAW.SWORN_CRY.ROUNDS));
+    door.castOnPlayer?.(
+      ward ? shieldBundle(A.wardPoints, ART_LAW.SWORN_WARD.ROUNDS) : mightBundle(A.cryPoints, ART_LAW.SWORN_CRY.ROUNDS),
+    );
     s.ready = now + (ward ? A.wardCooldown : A.cryCooldown);
-    say?.(art === 'warding' ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given }) : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }));
+    say?.(
+      art === 'warding'
+        ? t('rvn.art.sworn.wards', '{given} wards you.', { given: r.given })
+        : t('rvn.art.sworn.roars', '{given} roars, and your arm grows stronger.', { given: r.given }),
+    );
     return art;
   }
   if (art === 'mending' || !tgt) return null;
   if (began && s.ready < now) s.ready = now + U(ART_LAW.FIRST[0], ART_LAW.FIRST[1], rolls);
   if (now < s.ready) return null;
   const mine = new Set(door.foes?.() ?? []);
-  const lvl = door.player?.()?.level ?? 1, S = ART_LAW.SWORN_STRIKE, weight = A.weight;
+  const lvl = door.player?.()?.level ?? 1,
+    S = ART_LAW.SWORN_STRIKE,
+    weight = A.weight;
   const at = rec.ai?.feet;
   if (!at) return null;
   const sees = (x) => door.clear?.(at, x.ai.feet) !== false;
@@ -426,16 +680,20 @@ export function swornArtStep(rec, r, door, { rolls = Math.random, say = null } =
     if (!near.length) return null;
     for (const x of near) door.hurtFoe?.(x, Math.round(artMagnitude(lvl, S.NOVA) * weight));
   } else {
-    if (!mine.has(tgt) || !fair(tgt, rec) || flat(tgt.ai.feet, at) > S.REACH || !sees(tgt)) return null;   // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits
+    if (!mine.has(tgt) || !fair(tgt, rec) || flat(tgt.ai.feet, at) > S.REACH || !sees(tgt)) return null; // a foe MY harm may not reach (the town's defenders), at peace, far or behind a wall - its art waits
     const n = Math.round(artMagnitude(lvl, art === 'siphon' ? S.SIPHON : S.BARRAGE) * weight);
     door.hurtFoe?.(tgt, n);
-    if (art === 'siphon') { const me = door.player?.(); if (me) healMine(me, n * S.SIPHON_HEAL); }
+    if (art === 'siphon') {
+      const me = door.player?.();
+      if (me) healMine(me, n * S.SIPHON_HEAL);
+    }
   }
   s.ready = now + U(A.strikeCooldown[0], A.strikeCooldown[1], rolls);
   return art;
 }
 /** A foe a sworn one's art may strike: alive, standing somewhere, hostile, never itself nor an ally of mine. */
-const fair = (x, rec) => !!x?.ai?.feet && x !== rec && !x.dead && x.ai.isHostile !== false && x.entity?.team !== 'PlayerAlly';
+const fair = (x, rec) =>
+  !!x?.ai?.feet && x !== rec && !x.dead && x.ai.isHostile !== false && x.entity?.team !== 'PlayerAlly';
 /** AUDIT RVN-STARS S7: when the side may mend me again - one Mending in SWORN_MEND.SIDE of a Mending's cooldown, however
  *  many at my side mend. */
 let _sideMendReady = 0;
@@ -445,14 +703,15 @@ let _sideMendReady = 0;
  * mends no more for SIDE of its cooldown. `sworn` the sworn at my side. Answers the record that mended, or null.
  */
 export function swornMendStep(entity, after, sworn, standing, { say = null } = {}) {
-  if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * ART_LAW.SWORN_MEND.AT) return null;
+  if (!entity?.isPlayer || entity.peer || !(after > 0) || after >= (entity.maxHealth || 1) * ART_LAW.SWORN_MEND.AT)
+    return null;
   const now = tacticsNow();
   if (now < _sideMendReady) return null;
   for (const r of sworn ?? []) {
     if (artOf(r) !== 'mending' || !standing?.(r.id)) continue;
     const s = swornState(r.id);
     if (now < s.mendReady) continue;
-    const A = swornArtNumbers(r);   // RVN-STARS: its rank's and its Grave's
+    const A = swornArtNumbers(r); // RVN-STARS: its rank's and its Grave's
     healMine(entity, (entity.maxHealth || 0) * A.mendShare);
     s.mendReady = now + A.mendCooldown;
     _sideMendReady = now + A.mendCooldown * ART_LAW.SWORN_MEND.SIDE;
@@ -462,6 +721,14 @@ export function swornMendStep(entity, after, sworn, standing, { say = null } = {
   return null;
 }
 /** A sworn one's art clock forgotten (a load, a release) - or every one's. */
-export function forgetSwornArt(id = null) { if (id == null) { _sworn.clear(); _sideMendReady = 0; } else _sworn.delete(id); }
+export function forgetSwornArt(id = null) {
+  if (id == null) {
+    _sworn.clear();
+    _sideMendReady = 0;
+  } else _sworn.delete(id);
+}
 /** Tests only. */
-export function _resetArtsForTests() { _sworn.clear(); _sideMendReady = 0; }
+export function _resetArtsForTests() {
+  _sworn.clear();
+  _sideMendReady = 0;
+}

@@ -24,7 +24,7 @@
 // Not a DFU member: Daggerfall has no other player to hand a piece to. Ledger A.
 import { isBound } from './item/itemBound.js';
 import { isOnlinePage } from './online/onlineLane.js';
-import { REALM_LETTER_TEMPLATE } from '../net/realm/realmGoldLaw.js';   // the letter's template (systems/inventory.js LETTER_OF_CREDIT_TEMPLATE, pinned equal) - a leaf
+import { REALM_LETTER_TEMPLATE } from '../net/realm/realmGoldLaw.js'; // the letter's template (systems/inventory.js LETTER_OF_CREDIT_TEMPLATE, pinned equal) - a leaf
 
 /** A letter of credit - DFU's MiscItems Letter_of_credit, its worth its `value`. */
 export const isLetterOfCredit = (/** @type {any} */ item) => item?.templateIndex === REALM_LETTER_TEMPLATE;
@@ -35,7 +35,8 @@ export const neverPeerHanded = (/** @type {any} */ item) => isBound(item) || isL
 
 /** A list a peer handed over - or one this client says to the room - without what never rides a peer's word (null stays
  *  null: the caller's refusal). */
-export const peerHanded = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !neverPeerHanded(it)) : list);
+export const peerHanded = (/** @type {any[] | null} */ list) =>
+  Array.isArray(list) ? list.filter((it) => !neverPeerHanded(it)) : list;
 
 /** AUDIT AUTO-HOLD: A PIECE ITS READER ALREADY CARRIES never rides a peer's word to it - a second of a piece the reader
  *  holds is a copy the ledger locks, the reader's original with it, and since AUTO-HOLD a locked piece is bound (a
@@ -43,16 +44,26 @@ export const peerHanded = (/** @type {any[] | null} */ list) => (Array.isArray(l
  *  by the realm session's wiring (scenes/realmHoldHost.js - the reader's own lists' ledger keys, world/interior/interiorShared.js
  *  withoutCarried), so this leaf never loads the item law; offline, none. */
 let _carriedFilter = /** @type {((list: any[]) => any[]) | null} */ (null);
-export function setCarriedFilter(/** @type {((list: any[]) => any[]) | null} */ fn) { _carriedFilter = typeof fn === 'function' ? fn : null; }
+export function setCarriedFilter(/** @type {((list: any[]) => any[]) | null} */ fn) {
+  _carriedFilter = typeof fn === 'function' ? fn : null;
+}
 /** `list` without a piece its reader carries (null stays null). */
-export const notCarried = (/** @type {any[] | null} */ list) => (Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list);
+export const notCarried = (/** @type {any[] | null} */ list) =>
+  Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list;
 
 /** Whether a letter of credit may not be put THERE: online, any container that is not the player's own (`own` - the
  *  player's storage, the player's own pile on the ground) - a chest, a body, a cupboard is the room's once it is opened.
  *  The ground (a new pile is the dropper's), the wagon, the bag and a reward tray (DFU refuses every piece put there, in
  *  silence) are asked nothing. Offline no room shares a container: DFU's law stands. */
-export const letterRefusesPut = (/** @type {any} */ item, /** @type {{ container?: boolean, own?: boolean, online?: boolean }} */ { container = false, own = false, online = isOnlinePage() } = {}) =>
-  online && isLetterOfCredit(item) && container && !own;
+export const letterRefusesPut = (
+  /** @type {any} */ item,
+  /** @type {{ container?: boolean, own?: boolean, online?: boolean }} */ {
+    container = false,
+    own = false,
+    online = isOnlinePage(),
+  } = {},
+) => online && isLetterOfCredit(item) && container && !own;
 
 /** The refusal, in the windows' own voice (itemBound.js boundText's shape). */
-export const letterPutText = (/** @type {string} */ name) => `${name || 'A letter of credit'} stays with you online, because anyone can take from a chest or a body. Hand it over in a trade.`;
+export const letterPutText = (/** @type {string} */ name) =>
+  `${name || 'A letter of credit'} stays with you online, because anyone can take from a chest or a body. Hand it over in a trade.`;

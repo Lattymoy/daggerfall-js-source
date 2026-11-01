@@ -337,8 +337,8 @@
   {
     "name": "NAVB-B11-leave-a-plain-close",
     "file": "src/ui/naval/navalPlunderWindow.js",
-    "old": "() => exit(m.raid ? 'close' : 'leave')",
-    "new": "() => exit('close')",
+    "old": "  const close = button(m.raid ? 'Close' : 'Leave', 'dfnaval-btn dfnaval-close', () => exit(m.raid ? 'close' : 'leave'));",
+    "new": "  const close = button(m.raid ? 'Close' : 'Leave', 'dfnaval-btn dfnaval-close', () => exit('close'));",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js",
       "test/ui/naval/nav_f_ui.test.js"
@@ -456,8 +456,8 @@
   {
     "name": "NAVB-B13-the-papers-unread",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "  if (choice === 'papers') return { notoriety: -Math.min(Math.max(0, notoriety), PAPERS_NOTORIETY) };\n",
-    "new": "",
+    "old": "  if (choice === 'papers') return { notoriety: -Math.min(Math.max(0, notoriety), PAPERS_NOTORIETY) };\n  return {};",
+    "new": "  return {};",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "NAVB-B13-the-pirate-papers-unnamed",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : CHOICE_TITLES[choice] ?? choice;",
-    "new": "const title = CHOICE_TITLES[choice] ?? choice;",
+    "old": "  const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : (CHOICE_TITLES[choice] ?? choice);",
+    "new": "  const title = CHOICE_TITLES[choice] ?? choice;",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "NAVB-minor-powder-on-a-rowboat",
     "file": "src/systems/naval/navalPlunder.js",
-    "old": "    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' };   // AUDIT NAV1: a rowboat's, never \"loaded\"\n",
-    "new": "",
+    "old": "    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' }; // AUDIT NAV1: a rowboat's, never \"loaded\"\n    const topUp = barrelGuns && barrels < barrelStock;",
+    "new": "    const topUp = barrelGuns && barrels < barrelStock;",
     "tests": [
       "test/systems/naval/navaudit_boarding.test.js"
     ]

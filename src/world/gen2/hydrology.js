@@ -1,4 +1,4 @@
-// WG2 HYDROLOGY (bible/03-World/World-2-Canon.md, "Water"): rivers, lakes, falls, wetlands and the water table from
+// WG2 HYDROLOGY ("Water"): rivers, lakes, falls, wetlands and the water table from
 // the worked land and the climate. Rain less what the warmth takes runs down the drainage; a closed hollow fills to
 // where its evaporation meets its inflow - brimful and spilling in a wet land, a terminal lake or a salt flat in a
 // dry one. A river's surface never rises downstream (each cell's is at most every donor's), and its bed sits under it.

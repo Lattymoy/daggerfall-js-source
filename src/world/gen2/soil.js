@@ -1,4 +1,4 @@
-// WG2 SOILS (bible/03-World/World-2-Arc.md, Phase 2): what the ground is made of, from its rock, its slope, its water
+// WG2 SOILS (Phase 2): what the ground is made of, from its rock, its slope, its water
 // and its air (data/soils.json holds each soil's numbers). A river's flood plain is alluvium, a steep slope scree or
 // bare rock, a waterlogged flat peat or mire, a dry sandstone basin sand, the cold ground tundra; the rock's own soil
 // otherwise. `moisture` (0..1) is what a plant's roots find: the rain, the water table and the soil's hold on it.

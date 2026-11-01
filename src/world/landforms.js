@@ -144,7 +144,7 @@ import { tamrielWatersShaper } from './tamriel/tamrielWaters.js';   // CYRODIIL-
 import { redMountainReaches, redMountainLand, redMountainTopNear, redMountainSmooth, redMountainGround } from './tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano stood on the land past the Bay
 import { worldPixelKey, inWorldGrid } from './worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the sites past the Bay, by the world's key (worker-safe)
 import { tamrielRangeAt, rangeBound, rangeShaper } from './tamriel/tamrielRanges.js';   // RELIEF-PEAKS: the ranges past the Bay under the heightmap's grain, and Red Mountain (worker-safe)
-import { gen2Regions, gen2Units } from './gen2/gen2Ground.js';   // WG2: the published regions' ground (bible/03-World/World-2-Canon.md)
+import { gen2Regions, gen2Units } from './gen2/gen2Ground.js';   // The published regions' ground
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -1424,7 +1424,7 @@ function pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, hal
   // LANDFORM4: the sites a path's profile may meet (the 5x5), and the ones that reach this pixel's own box
   const around = sitesAbout(woods, sites, beyond, px, py, span, hDim, ground);
   const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);
-  const kept = new Float64Array(1), owned = !!cont && gen2Regions().length > 0;   // WG2: a published region may reach this pixel
+  const kept = new Float64Array(1), owned = !!cont && gen2Regions().length > 0;   // A published region may reach this pixel
   // BREATHTAKER3: past the Bay's seam the continent's own landforms (world/tamriel/tamrielLandforms.js) - their lattice over
   // this pixel; `whole` where every sample of it is the continent's (the Bay's hills never asked); CYRODIIL-WATERS: the
   // rivers and lakes that reach it (world/tamriel/tamrielWaters.js), carved into the land
@@ -1513,7 +1513,7 @@ function pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, hal
     const base = h + lift * fade;
     // CYRODIIL-WATERS: the rivers' and lakes' beds and valleys; RED-MOUNTAIN: the volcano (no carved water reaches it)
     const shaped = waters ? waters.carve(gx, gy, base, hh) : crater !== null ? redMountainLand(gx, gy, base, hh, crater) : base + hh;
-    // WG2 (bible/03-World/World-2-Canon.md, the seam): a published region's own ground, eased in across its edge band
+    // A published region's own ground, eased in across its edge band
     const l = owned ? gen2Units(gx / span, MAP_H + 1 - gy / span, shaped) ?? shaped : shaped;
     if (!list.length) { kept[0] = 1; return l; }
     return pullTo(list, gx, gy, l, kept);

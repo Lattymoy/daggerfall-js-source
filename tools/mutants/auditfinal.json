@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-FINAL-F2-the-picture-keyed-by-its-kind-alone",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}",
-    "new": "",
+    "old": "  const kind = item\n    ? `${hotbarEntryForItem(item)?.key ?? ''}${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}`\n    : spellIcon != null\n      ? `spell:${spellIcon}`\n      : '';",
+    "new": "  const kind = item ? `${hotbarEntryForItem(item)?.key ?? ''}` : spellIcon != null ? `spell:${spellIcon}` : '';",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-FINAL-F2-the-dye-out-of-the-bar-s-signature",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`",
-    "new": "",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set\n          // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind\n          `|${v.item && v.type !== 'spell' ? (itemDyeColor(v.item) ?? '') : ''}`,",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`, // SET5: and its set\n      // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-FINAL-F3-the-floor-asked-undyed",
     "file": "src/ui/item/itemIconColor32.js",
-    "old": "dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
-    "new": "dye: img.dye });",
+    "old": "    url = requestIcon(img.archive, img.record, { scale: 1, dye: img.dye, dyeTarget: img.dyeTarget ?? null });",
+    "new": "    url = requestIcon(img.archive, img.record, { scale: 1, dye: img.dye });",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-FINAL-F4-the-offer-drawn-for-nobody",
     "file": "src/ui/brokerWindow.js",
-    "old": "inventoryItemImage(item, wearer ?? undefined)",
-    "new": "inventoryItemImage(item)",
+    "old": "  const img = item ? inventoryItemImage(item, wearer ?? undefined) : null;",
+    "new": "  const img = item ? inventoryItemImage(item) : null;",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-FINAL-F10-the-mark-taken-only-by-a-landed-hurt",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _pending = landedBlow();\n",
-    "new": "  _pending = _blow;\n",
+    "old": "  _pending = landedBlow();",
+    "new": "  _pending = _blow;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-FINAL-F11-cleave-through-a-wall",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n",
-    "new": "",
+    "old": "    if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;\n    bestD = d;",
+    "new": "    bestD = d;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

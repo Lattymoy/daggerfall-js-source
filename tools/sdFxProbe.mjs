@@ -14,9 +14,15 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const W = 640, H = 400;
-const PAGE_NAME = 'sdfx-probe.tmp.html', PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+const W = 640,
+  H = 400;
+const PAGE_NAME = 'sdfx-probe.tmp.html',
+  PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
 import { createSdFx, SD_FX_KINDS } from '/src/scenes/superDungeon/sdFx.js';
@@ -79,18 +85,44 @@ const browser = await chromium.launch();
 try {
   await writeFile(PAGE_PATH, PAGE);
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push(m.text());
+  });
   await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  try { await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 }); } catch (e) { console.log(errs.join('\n')); throw e; }
+  try {
+    await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
+  } catch (e) {
+    console.log(errs.join('\n'));
+    throw e;
+  }
   const want = { stomp: ['stomp'], volley: ['volley'], pulse: ['pulse'], hearts: ['heartRise'], fall: ['fall'] };
   for (const [name, kinds] of Object.entries(want)) {
     const r = await page.evaluate(([n]) => window.shoot(n, 120), [name]);
-    check(`${name}: drawn by the gate's spark pass, no GL error, the frame lit`, r.drew && r.glErr === 0 && r.lit > 30, `lit ${r.lit} px, error ${r.glErr}`);
+    check(
+      `${name}: drawn by the gate's spark pass, no GL error, the frame lit`,
+      r.drew && r.glErr === 0 && r.lit > 30,
+      `lit ${r.lit} px, error ${r.glErr}`,
+    );
     const mine = r.each.filter((b) => kinds.includes(b.kind));
-    check(`${name}: every burst of it lit where the law stands it`, mine.length > 0 && mine.every((b) => b.best > 60), mine.map((b) => `${b.kind}@${b.sx},${b.sy}: ${b.best}`).join(' '));
-    if (name === 'stomp' || name === 'fall') check(`${name}: the brass's warmth (red over blue, about it)`, mine.every((b) => b.warm > 0), mine.map((b) => b.warm).join(' '));
-    if (name === 'hearts') check('hearts: their green (green over red, about them)', mine.every((b) => b.green > 0), mine.map((b) => b.green).join(' '));
+    check(
+      `${name}: every burst of it lit where the law stands it`,
+      mine.length > 0 && mine.every((b) => b.best > 60),
+      mine.map((b) => `${b.kind}@${b.sx},${b.sy}: ${b.best}`).join(' '),
+    );
+    if (name === 'stomp' || name === 'fall')
+      check(
+        `${name}: the brass's warmth (red over blue, about it)`,
+        mine.every((b) => b.warm > 0),
+        mine.map((b) => b.warm).join(' '),
+      );
+    if (name === 'hearts')
+      check(
+        'hearts: their green (green over red, about them)',
+        mine.every((b) => b.green > 0),
+        mine.map((b) => b.green).join(' '),
+      );
     if (name !== 'hearts') check(`${name}: its flash in the Hour's light`, r.lights > 0, `${r.lights}`);
   }
   check('no page error', errs.length === 0, errs.join('; '));

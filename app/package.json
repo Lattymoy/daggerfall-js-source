@@ -13,8 +13,9 @@
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "predist": "cd .. && npm run build",
-    "dist": "electron-builder"
+    "predist": "cd .. && npm run build && node scripts/desktopRelease.mjs stage",
+    "dist": "electron-builder",
+    "postdist": "cd .. && node scripts/desktopRelease.mjs unstage"
   },
   "devDependencies": {
     "electron": "^42.4.0",
@@ -41,26 +42,12 @@
       "preload.cjs",
       "launcherPreload.cjs",
       "launcher/**",
-      {
-        "from": "../src/ui/menu",
-        "to": "launcher",
-        "filter": [
-          "menuPad.js"
-        ]
-      },
-      {
-        "from": "../src/assets/branding",
-        "to": "launcher",
-        "filter": [
-          "dfo-online.png"
-        ]
-      },
       "lib/**",
+      "private/**",
       "game-seed.json",
-      {
-        "from": "../dist",
-        "to": "dist"
-      }
+      "dist/**",
+      "!**/node_modules/@img/**",
+      "!**/node_modules/sharp/**"
     ],
     "linux": {
       "target": [
@@ -93,9 +80,14 @@
         "NSDesktopFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
         "NSDocumentsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
       }
-    }
+    },
+    "asarUnpack": [
+      "**/node_modules/workerd/**",
+      "**/node_modules/@cloudflare/workerd-*/**"
+    ]
   },
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "miniflare": "4.20260730.0"
   }
 }

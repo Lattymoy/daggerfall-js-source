@@ -8,7 +8,7 @@ import { inEther } from '../world/ethericSea.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
 import { pathFreePixel, spawnsDungeon } from '../world/spawnedDungeons.js';
 import { wildInside } from '../systems/wild/wildZone.js';
-import { settle2LocationAt } from './settle2Host.js';   // WG2-TOWNS: a World 2.0 town first past the Bay
+import { settle2LocationAt } from './settle2Host.js';   // A World 2.0 town first past the Bay
 
 /** @param {any} host */
 export function createSpawnStand(host) {

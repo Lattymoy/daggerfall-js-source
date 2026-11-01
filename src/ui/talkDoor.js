@@ -35,10 +35,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js'; // PX28: Tab puts it away
 import { NativeTalkWindow, talkArtLoaded } from './native/nativeTalk.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The gate a host asks before it opens a conversation window. The
  *  classic face needs TALK01I0 and its strips; the panel reads none
@@ -54,7 +54,7 @@ export function talkDoorReady() {
  * which the panel runs inside its closing gesture (MAC1).
  */
 export function createTalkWindow(greeting, hooks) {
-  noteFirstUse('talk');   // TUT1
+  noteFirstUse('talk'); // TUT1
   const model = new NativeTalkWindow(greeting, hooks);
   // `document` for the reason the other doors give: node drives the
   // hosts headless and keeps the canvas window rather than getting a
@@ -70,11 +70,20 @@ function enhancedTalkOverlay(model, hooks) {
   let unregister = () => {};
   const teardown = () => {
     if (torn) return;
-    torn = true;   // `done` reads this: true only once the DOM is going
+    torn = true; // `done` reads this: true only once the DOM is going
     unregister();
-    try { view?.destroy?.(); } catch { /* already gone */ }
-    try { host?.remove(); } catch { /* ditto */ }
-    host = null; view = null;
+    try {
+      view?.destroy?.();
+    } catch {
+      /* already gone */
+    }
+    try {
+      host?.remove();
+    } catch {
+      /* ditto */
+    }
+    host = null;
+    view = null;
   };
   // Goodbye THROUGH THE MODEL, so the OnPop note is filed and the
   // session's onClose fires - Tab (PX28) and the mount failure both
@@ -97,15 +106,22 @@ function enhancedTalkOverlay(model, hooks) {
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTalk.js'),
-    mount: ({ mountEnhancedTalk }) => { view = mountEnhancedTalk(host, { model, onExit: teardown, relock: () => hooks.relock?.() }); },
-    alive: () => !torn, host, onDismiss: goodbye, label: 'talk',
+    mount: ({ mountEnhancedTalk }) => {
+      view = mountEnhancedTalk(host, { model, onExit: teardown, relock: () => hooks.relock?.() });
+    },
+    alive: () => !torn,
+    host,
+    onDismiss: goodbye,
+    label: 'talk',
   });
   return {
     // THE HOST CONTRACT, in the hosts' own words - the arms townTalk's
     // slot dereferences (input, click, hover, wheel, tick, draw, and
     // dispose on replacement). Same shape as ui/pauseDoor.js.
     isChoiceWindow: true,
-    get done() { return torn; },
+    get done() {
+      return torn;
+    },
     /** The host's routed code. Before the panel has mounted (one
      *  import away) the classic accelerators still work on the model. */
     input(code, e = null) {
@@ -116,14 +132,25 @@ function enhancedTalkOverlay(model, hooks) {
       // classic's Enter is goodbye and the panel's is ASK, and a key
       // that closes the conversation the frame before it appears is
       // neither; it is held.
-      else if (code !== 'Enter') { model.input(code, e); if (model.done) teardown(); }
+      else if (code !== 'Enter') {
+        model.input(code, e);
+        if (model.done) teardown();
+      }
     },
     /** Consumed: a press that reaches the canvas beside the panel is
      *  a press on the conversation, and must not grab the pointer. */
-    click() { return true; },
-    wheel() { /* the panel scrolls itself */ },
-    hover() { /* the panel has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this panel moves on a clock */ },
+    click() {
+      return true;
+    },
+    wheel() {
+      /* the panel scrolls itself */
+    },
+    hover() {
+      /* the panel has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this panel moves on a clock */
+    },
     /** Per frame: the portrait lands async, and a model closed by a
      *  route that bypassed the view (the door's own input arm) tears
      *  the DOM down here. */

@@ -2,8 +2,8 @@
   {
     "name": "RENT-REST-the-tenant-bed-unasked",
     "file": "src/systems/homeRent.js",
-    "old": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0);",
-    "new": "|| !!(home.hall && home.member));",
+    "old": "export const homeBedIsMine = (home, nowS) =>\n  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || !!(home.hall && home.member)); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "RENT-REST-the-tenancy-end-unread",
     "file": "src/systems/homeRent.js",
-    "old": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0);",
-    "new": "|| !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) >= 0);",
+    "old": "  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) >= 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RENT-REST-the-bed-outside-the-permanent-scene",
     "file": "src/systems/rest/restSession.js",
-    "old": "permanentScene: permanentScene || homeBed,",
-    "new": "permanentScene,",
+    "old": "    permanentScene: permanentScene || homeBed, // RENT-REST",
+    "new": "    permanentScene, // RENT-REST",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "RENT-REST-the-bed-no-house",
     "file": "src/systems/rest/restSession.js",
-    "old": "houseOwned: houseOwned || homeBed,",
-    "new": "houseOwned,",
+    "old": "    houseOwned: houseOwned || homeBed, // RENT-REST",
+    "new": "    houseOwned, // RENT-REST",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -64,8 +64,8 @@
   {
     "name": "RENT-RENEW-renewed-from-now",
     "file": "src/systems/homeRent.js",
-    "old": "rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
-    "new": "rentUntil(nowS, 0, d) != null);",
+    "old": "export const rentDayRows = (room, nowS) =>\n  RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
+    "new": "export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, 0, d) != null);",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -73,8 +73,8 @@
   {
     "name": "RENT-RENEW-every-day-offered",
     "file": "src/systems/homeRent.js",
-    "old": "rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
-    "new": "rentUntil(nowS, 0, d) != null || d > 0);",
+    "old": "export const rentDayRows = (room, nowS) =>\n  RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);",
+    "new": "export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, 0, d) != null || d > 0);",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -82,8 +82,8 @@
   {
     "name": "RENT-RENEW-the-room-off-the-offer-said-none-free",
     "file": "src/systems/homeRent.js",
-    "old": "r.yours && !r.listed);",
-    "new": "r.yours && r.listed);",
+    "old": "  const mine = (rooms ?? []).find((r) => r.yours && !r.listed); // `yours` the service says only while the tenancy runs (rent.js roomsOf)",
+    "new": "  const mine = (rooms ?? []).find((r) => r.yours && r.listed); // `yours` the service says only while the tenancy runs (rent.js roomsOf)",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "RENT-NUMBER-always-the-first-free",
     "file": "src/systems/homeRent.js",
-    "old": "const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
-    "new": "const number = o ? o.room : next;",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : next;",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "RENT-NUMBER-a-number-another-offer-holds",
     "file": "src/systems/homeRent.js",
-    "old": "rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
-    "new": "rentRoomOk(f.id) ? f.id : next;",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : rentRoomOk(f.id) ? f.id : next;",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "RENT-NUMBER-a-number-past-the-law",
     "file": "src/systems/homeRent.js",
-    "old": "rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
-    "new": "!held.has(f.id) ? f.id : next;",
+    "old": "    const number = o ? o.room : rentRoomOk(f.id) && !held.has(f.id) ? f.id : next;",
+    "new": "    const number = o ? o.room : !held.has(f.id) ? f.id : next;",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -255,7 +255,7 @@
   {
     "name": "HOMES-FORCE-answered-by-the-flight",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return flying;",
     "tests": [
       "test/net/fb1001_look.test.js",

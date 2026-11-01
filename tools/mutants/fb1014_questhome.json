@@ -11,8 +11,8 @@
   {
     "name": "QUEST-HOME-the-boots-word-not-kept",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    everyTown = next;\n",
-    "new": "",
+    "old": "    everyTown = next;\n    everyTownHeard = true;",
+    "new": "    everyTownHeard = true;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "QUEST-HOME-homeStands-asks-the-asked-towns-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
+    "old": "  const homeStands = (mapId, buildingKey) =>\n    !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey);",
     "tests": [
       "test/net/fb1014_questhome.test.js"
@@ -29,7 +29,7 @@
   {
     "name": "QUEST-HOME-the-towns-asked-unheard",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
+    "old": "  const homeStands = (mapId, buildingKey) =>\n    !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "tests": [
       "test/net/fb1014_questhome.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "QUEST-HOME-the-word-not-taken",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (homeBuildingKeyOk(k) && !keys.has(k)) { keys.add(k); became = true; }",
-    "new": "if (homeBuildingKeyOk(k) && !keys.has(k)) { became = true; }",
+    "old": "          keys.add(k);\n          became = true;",
+    "new": "          became = true;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "QUEST-HOME-the-reach-unmarked",
     "file": "src/systems/quest/machine.js",
-    "old": "        sd.reached = true;\n",
-    "new": "",
+    "old": "        sd.reached = true;\n        n++;",
+    "new": "        n++;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "QUEST-HOME-the-link-left-behind",
     "file": "src/systems/quest/machine.js",
-    "old": "        this._followSite(quest, resource);\n",
-    "new": "",
+    "old": "        this._followSite(quest, resource);\n        try {",
+    "new": "        try {",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "QUEST-HOME-an-order-with-no-building",
     "file": "src/net/identityToken.js",
-    "old": "return all.length > 0 && all.length <= HOME_ORDER_KEYS_MAX",
-    "new": "return all.length >= 0 && all.length <= HOME_ORDER_KEYS_MAX",
+    "old": "    all.length > 0 &&",
+    "new": "    all.length >= 0 &&",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QUEST-HOME-a-mute-carrying-a-town",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'home' && !noHome) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'home' && !noHome) return false;\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]

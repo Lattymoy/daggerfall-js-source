@@ -22,13 +22,19 @@ const server = await createServer({
   server: { port: PORT, strictPort: true, hmr: false, watch: null },
 });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') pageErrors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') pageErrors.push(m.text());
+});
 page.on('requestfailed', (r) => pageErrors.push(`requestfailed ${r.url()}`));
-page.on('response', (r) => { if (r.status() >= 400) pageErrors.push(`HTTP ${r.status()} ${r.url()}`); });
+page.on('response', (r) => {
+  if (r.status() >= 400) pageErrors.push(`HTTP ${r.status()} ${r.url()}`);
+});
 
 const out = { steps: {}, failures: [] };
 const check = (name, ok, detail) => {
@@ -38,30 +44,47 @@ const check = (name, ok, detail) => {
 };
 const shot = async (name) => {
   if (!SHOTS) return;
-  try { await page.screenshot({ path: `${SHOTS}/${name}.png`, timeout: 120000 }); }
-  catch (e) { console.log(`  [note] screenshot ${name} timed out (${e.name})`); }
+  try {
+    await page.screenshot({ path: `${SHOTS}/${name}.png`, timeout: 120000 });
+  } catch (e) {
+    console.log(`  [note] screenshot ${name} timed out (${e.name})`);
+  }
 };
-const frames = (n = 2) => page.evaluate((k) => new Promise((r) => {
-  let i = 0;
-  const step = () => (++i >= k ? r() : requestAnimationFrame(step));
-  requestAnimationFrame(step);
-}), n);
+const frames = (n = 2) =>
+  page.evaluate(
+    (k) =>
+      new Promise((r) => {
+        let i = 0;
+        const step = () => (++i >= k ? r() : requestAnimationFrame(step));
+        requestAnimationFrame(step);
+      }),
+    n,
+  );
 
 await page.goto(`http://localhost:${PORT}/play/?shot&class=0`);
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 240000 });
 
 // The shipped maker builds every record, in the page, so the probe
 // cannot drift from the real packing.
-const mkSpell = (slots, rangeType) => page.evaluate(async ([s, rt]) => {
-  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
-  return buildCustomSpell({
-    slots: s.map((x) => ({ type: x.type, subType: x.subType, settings: { ...blankEffectSettings(), ...x.settings } })),
-    rangeType: rt,
-  });
-}, [slots, rangeType]);
+const mkSpell = (slots, rangeType) =>
+  page.evaluate(
+    async ([s, rt]) => {
+      const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
+      return buildCustomSpell({
+        slots: s.map((x) => ({
+          type: x.type,
+          subType: x.subType,
+          settings: { ...blankEffectSettings(), ...x.settings },
+        })),
+        rangeType: rt,
+      });
+    },
+    [slots, rangeType],
+  );
 
 const candle = async () => JSON.parse(await page.evaluate(() => window.__candle()));
-const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? []).filter((a) => !a.ended).map((a) => a.kind));
+const kinds = () =>
+  page.evaluate(() => (window.__playerEntity.activeEffects ?? []).filter((a) => !a.ended).map((a) => a.kind));
 
 // ---- Light: the candle reaches the shader --------------------------
 {
@@ -80,7 +103,8 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
   // shader reads. An effect that lands and a light that draws are two
   // different claims and only one of them is unit-testable.
   const first = lit.first;
-  check('and it reaches the renderer, FIRST in the array',
+  check(
+    'and it reaches the renderer, FIRST in the array',
     // The tolerance is the WOBBLE, not slack: the host sets the light
     // array where it draws and the engine ticks the candle later in the
     // same frame, so the renderer holds the PREVIOUS frame's jitter.
@@ -89,9 +113,11 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
     // diameter (2 * 0.125) - which still pins the identity, because
     // nothing else in the array is within 25cm of the player's hand at
     // range exactly 15.
-    lit.light !== null && first[3] === 15
-      && Math.hypot(first[0] - lit.light.x, first[1] - lit.light.y, first[2] - lit.light.z) <= 0.25 + 1e-6,
-    { first, light: lit.light });
+    lit.light !== null &&
+      first[3] === 15 &&
+      Math.hypot(first[0] - lit.light.x, first[1] - lit.light.y, first[2] - lit.light.z) <= 0.25 + 1e-6,
+    { first, light: lit.light },
+  );
 
   await shot('02-lit');
   // it must be roughly 1.4 units from the player, in front of them
@@ -100,20 +126,25 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
     const p = window.__player.pos;
     return c ? { d: Math.hypot(c.x - p[0], c.z - p[2]), dy: c.y - p[1] } : null;
   });
-  check('at DFU\'s own arm\'s length', geom && geom.d > 1.2 && geom.d < 1.6 && geom.dy > 0.3 && geom.dy < 0.6, geom);
+  check("at DFU's own arm's length", geom && geom.d > 1.2 && geom.d < 1.6 && geom.dy > 0.3 && geom.dy < 0.6, geom);
 
   // AND IT FOLLOWS. A candle baked at the cast position would pass
   // every check above and be wrong the moment the player moved.
   const before = (await candle()).light;
-  await page.evaluate(() => { const [x, y, z] = window.__player.pos; window.__player.warp(x + 4, y, z); });
+  await page.evaluate(() => {
+    const [x, y, z] = window.__player.pos;
+    window.__player.warp(x + 4, y, z);
+  });
   await frames(4);
   const after = (await candle()).light;
-  check('the candle follows the player',
-    before && after && Math.hypot(after.x - before.x, after.z - before.z) > 2,
-    { moved: before && after ? Number(Math.hypot(after.x - before.x, after.z - before.z).toFixed(2)) : null });
+  check('the candle follows the player', before && after && Math.hypot(after.x - before.x, after.z - before.z) > 2, {
+    moved: before && after ? Number(Math.hypot(after.x - before.x, after.z - before.z).toFixed(2)) : null,
+  });
 
   // and it goes out when the effect does
-  await page.evaluate(() => { window.__playerEntity.activeEffects = []; });
+  await page.evaluate(() => {
+    window.__playerEntity.activeEffects = [];
+  });
   await frames(4);
   const outNow = await candle();
   check('and it goes out when the effect ends', outNow.light === null, { first: outNow.first });
@@ -157,10 +188,16 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
   }, spell);
   out.steps.disintegrateTarget = target;
   const after = JSON.parse(await page.evaluate(() => window.__foes())).filter((f) => !f.dead).length;
-  check('Disintegrate kills a live foe outright, in ONE landed cast',
-    killed && killed.dead === true && killed.h1 <= 0 && killed.disintegrated === 1
-      && after === before - 1 && killed.chanceFailed === 0,
-    { ...killed, before, after });
+  check(
+    'Disintegrate kills a live foe outright, in ONE landed cast',
+    killed &&
+      killed.dead === true &&
+      killed.h1 <= 0 &&
+      killed.disintegrated === 1 &&
+      after === before - 1 &&
+      killed.chanceFailed === 0,
+    { ...killed, before, after },
+  );
   // and it is a KILL, not a Destroy: the corpse is there to loot, which
   // is what separates this from X9's dispel. spawnCorpse AWAITS a
   // texture, so the corpse is not there on the frame of the kill - the
@@ -174,7 +211,7 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
       return dead.some((f) => f.corpse);
     });
   }
-  check('and it leaves a corpse (a kill, not X9\'s Destroy)', corpse === true, { corpse });
+  check("and it leaves a corpse (a kill, not X9's Destroy)", corpse === true, { corpse });
 }
 
 // ---- Spell Reflection: a foe's spell comes back at it --------------
@@ -192,11 +229,13 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
   // that way, with the reflection working perfectly).
   const bounced = await page.evaluate(async () => {
     const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
-    const live = (window.__liveFoeRecords() ?? []);
+    const live = window.__liveFoeRecords() ?? [];
     if (!live.length) return { skip: 'no foes' };
     const rec = live[0].ref;
     const hit = buildCustomSpell({
-      slots: [{ type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: 8, magnitudeBaseHigh: 8 } }],
+      slots: [
+        { type: 4, subType: 0, settings: { ...blankEffectSettings(), magnitudeBaseLow: 8, magnitudeBaseHigh: 8 } },
+      ],
       rangeType: 2,
     });
     const sinks = window.__foeSinksFor(rec);
@@ -209,14 +248,23 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
       out.casts++;
       out.reflected += r?.reflected ?? 0;
       if (window.__playerEntity.health < php) out.playerHurt++;
-      if (rec.entity.health < fh) { out.foeHurt++; out.foeDamage += fh - rec.entity.health; }
+      if (rec.entity.health < fh) {
+        out.foeHurt++;
+        out.foeDamage += fh - rec.entity.health;
+      }
     }
     return out;
   });
-  check('every cast is reflected, and none of them touches the player',
-    !bounced.skip && bounced.casts > 0 && bounced.reflected === bounced.casts && bounced.playerHurt === 0, bounced);
-  check('and the damage lands on the FOE that cast it',
-    !bounced.skip && bounced.foeHurt > 0 && bounced.foeDamage > 0, bounced);
+  check(
+    'every cast is reflected, and none of them touches the player',
+    !bounced.skip && bounced.casts > 0 && bounced.reflected === bounced.casts && bounced.playerHurt === 0,
+    bounced,
+  );
+  check(
+    'and the damage lands on the FOE that cast it',
+    !bounced.skip && bounced.foeHurt > 0 && bounced.foeDamage > 0,
+    bounced,
+  );
 }
 
 // The data set on this machine has no CURSOR.IMG (it is not in the
@@ -225,7 +273,8 @@ const kinds = () => page.evaluate(() => (window.__playerEntity.activeEffects ?? 
 // fact, not a defect, so it is named rather than silently filtered.
 const BENIGN_404 = /\/arena2\/CURSOR\.IMG|Failed to load resource/;
 const realErrors = pageErrors.filter((e) => !BENIGN_404.test(e));
-if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is absent from this ARENA2 set; the OS cursor stands in (handled)');
+if (pageErrors.length !== realErrors.length)
+  console.log('  [note] CURSOR.IMG is absent from this ARENA2 set; the OS cursor stands in (handled)');
 // ---- X11b: Create Item, end to end in a live dungeon ---------------
 {
   const spell = await mkSpell([{ type: 2, subType: 255, settings: { durationBase: 30 } }], 0);
@@ -239,7 +288,9 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
   await page.evaluate(() => window.__overlayKey('Escape'));
   await frames(2);
   const afterEsc = await page.evaluate(() => window.__overlay());
-  check('and the picker refuses to be cancelled', /ListPicker/i.test(afterEsc ?? ''), { overlay: afterEsc?.slice(0, 90) });
+  check('and the picker refuses to be cancelled', /ListPicker/i.test(afterEsc ?? ''), {
+    overlay: afterEsc?.slice(0, 90),
+  });
   // pick the Steel Longsword (row 23)
   const made = await page.evaluate(async () => {
     const o = window.__overlayWindow();
@@ -249,33 +300,48 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
     const it = items[items.length - 1];
     return { overlay: window.__overlay(), n: items.length, name: it?.name, exp: it?.timeForItemToDisappear };
   });
-  check('picking a row closes the picker and bags the item',
-    made.overlay === null && made.n === before + 1 && made.name === 'Longsword', { ...made, before });
+  check(
+    'picking a row closes the picker and bags the item',
+    made.overlay === null && made.n === before + 1 && made.name === 'Longsword',
+    { ...made, before },
+  );
   check('and it carries a lifetime, so it reads as conjured', made.exp > 0, { exp: made.exp });
 
   // AND IT VANISHES. The live per-minute tick is what removes it, so
   // this runs the REAL clock forward rather than calling the sweep.
-  const vanished = await page.evaluate(async ([expiry]) => {
-    const wt = await import('/src/systems/worldTick.js');
-    const before2 = (window.__playerEntity.items ?? []).length;
-    const clock0 = wt.worldMinutes();
-    // Push the world clock past the item's expiry, the way a rest or a
-    // journey does. The sweep still needs the host's own tick to cross
-    // a MINUTE afterwards - it lives inside DFU's `lastGameMinutes !=
-    // gameMinutes` block - and at 12x that takes up to five real
-    // seconds, so this polls rather than guessing a delay.
-    wt.setWorldMinutes(expiry + 5);
-    const t0 = performance.now();
-    let after = before2;
-    while (performance.now() - t0 < 20000) {
-      await new Promise((r) => requestAnimationFrame(r));
-      after = (window.__playerEntity.items ?? []).length;
-      if (after < before2) break;
-    }
-    return { before2, after, clock0, clockNow: Math.floor(wt.worldMinutes()), waited: Math.round(performance.now() - t0) };
-  }, [made.exp]);
-  check('and the per-minute tick sweeps it away when its time is up',
-    vanished.after === vanished.before2 - 1, vanished);
+  const vanished = await page.evaluate(
+    async ([expiry]) => {
+      const wt = await import('/src/systems/worldTick.js');
+      const before2 = (window.__playerEntity.items ?? []).length;
+      const clock0 = wt.worldMinutes();
+      // Push the world clock past the item's expiry, the way a rest or a
+      // journey does. The sweep still needs the host's own tick to cross
+      // a MINUTE afterwards - it lives inside DFU's `lastGameMinutes !=
+      // gameMinutes` block - and at 12x that takes up to five real
+      // seconds, so this polls rather than guessing a delay.
+      wt.setWorldMinutes(expiry + 5);
+      const t0 = performance.now();
+      let after = before2;
+      while (performance.now() - t0 < 20000) {
+        await new Promise((r) => requestAnimationFrame(r));
+        after = (window.__playerEntity.items ?? []).length;
+        if (after < before2) break;
+      }
+      return {
+        before2,
+        after,
+        clock0,
+        clockNow: Math.floor(wt.worldMinutes()),
+        waited: Math.round(performance.now() - t0),
+      };
+    },
+    [made.exp],
+  );
+  check(
+    'and the per-minute tick sweeps it away when its time is up',
+    vanished.after === vanished.before2 - 1,
+    vanished,
+  );
 }
 
 // ---- T1: the torch, in the dungeon it exists to light ---------------
@@ -304,8 +370,11 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
     const hit = near.find((v) => Math.hypot(v[0] - p[0], v[1] - (p[1] + 1.2), v[2] - p[2]) < 0.6);
     return { count: c.count, hit, feet: p.map((n) => Number(n.toFixed(2))) };
   });
-  check('and the torch reaches the renderer, at the player\'s hand, at the template radius',
-    !!inArray.hit && Math.abs(inArray.hit[3] - 14) < 1e-3, inArray);
+  check(
+    "and the torch reaches the renderer, at the player's hand, at the template radius",
+    !!inArray.hit && Math.abs(inArray.hit[3] - 14) < 1e-3,
+    inArray,
+  );
   // THE CAMERA HAS TO BE WHERE THE PLAYER IS. Earlier steps warped the
   // player onto a foe forty units away while the fly-cam stayed at the
   // start - so a screenshot taken here showed an unlit corridor the
@@ -346,8 +415,14 @@ if (pageErrors.length !== realErrors.length) console.log('  [note] CURSOR.IMG is
     while (performance.now() - t0 < 150000 && (e.lightSource?.currentCondition ?? -1) === start) {
       await new Promise((r) => requestAnimationFrame(r));
     }
-    return { start, now: e.lightSource?.currentCondition ?? null, waited: Math.round(performance.now() - t0),
-      state: e._torch ? { buf: Number(e._torch.tickTimeBuffer.toFixed(2)), range: Number((e._torch.range ?? 0).toFixed(2)) } : null };
+    return {
+      start,
+      now: e.lightSource?.currentCondition ?? null,
+      waited: Math.round(performance.now() - t0),
+      state: e._torch
+        ? { buf: Number(e._torch.tickTimeBuffer.toFixed(2)), range: Number((e._torch.range ?? 0).toFixed(2)) }
+        : null,
+    };
   });
   check('and it burns a point of fuel on the wall clock', burned.now === burned.start - 1, burned);
   await page.evaluate(async () => {

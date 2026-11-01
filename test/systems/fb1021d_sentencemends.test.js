@@ -131,7 +131,7 @@ test('SENTENCE-MENDS: what it is not - a Murder served from a clean name keeps i
   // and the grace standing then was granted before the arrest - so it refuses nothing there (its mutant is recorded equivalent)
   assert.ok(CHALLENGE_GRACE_MINUTES <= MINUTES_PER_DAY, 'a grace outlasts no sentence - lengthened, the prison arm\'s read is live: SENTENCE-MENDS-ownNow-unhanded is no longer equivalent');
   const s = readFileSync(join(ROOT, 'src/systems/standing.js'), 'utf8');
-  assert.match(s, /export function settleChallenge\(player, regionIndex\) \{ return mendToLine\(player, regionIndex, 'fine'\); \}/, 'the fine and the sentence share one law');
+  assert.match(s, /export function settleChallenge\(player, regionIndex\) \{\n\s*return mendToLine\(player, regionIndex, 'fine'\);\n\s*\}/, 'the fine and the sentence share one law');
 });
 
 test('SENTENCE-MENDS (AUDIT FB1021d SM-3): through the court, a Murder tried from -5 keeps REP2\'s mark (-15) - the name the prisoner came in with stood over the line, and the crime\'s own mark is the court\'s due; from the escort\'s -20, the step (mutants: the name it came in with unkept, the mark worn)', () => {

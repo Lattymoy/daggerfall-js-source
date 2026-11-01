@@ -53,7 +53,11 @@ export const ROAD_EDGE = Object.freeze({
   soft: 0.07,
   /** the wander: three octaves of value noise, each its lattice's cells a pixel's side (4 tiles, a tile, a quarter tile -
    *  a bend some 25 m long, a ragged 6 m, a broken 1.6 m) and an amplitude (share) */
-  wander: Object.freeze([Object.freeze({ cells: 32, amp: 0.12 }), Object.freeze({ cells: 128, amp: 0.06 }), Object.freeze({ cells: 512, amp: 0.05 })]),
+  wander: Object.freeze([
+    Object.freeze({ cells: 32, amp: 0.12 }),
+    Object.freeze({ cells: 128, amp: 0.06 }),
+    Object.freeze({ cells: 512, amp: 0.05 }),
+  ]),
   /** the wander's hash salt (each later octave's one more) */
   salt: 0x0d5,
 });
@@ -64,20 +68,25 @@ const DIM = 128;
 
 /** The records that carry water to the eye (WATER_DRAW_MASK_TABLE, any corner of any turn) as two 32-bit words, records
  *  0-31 and 32-63 - the shader's own constant. */
-export const ROAD_EDGE_WET = Object.freeze((() => {
-  const w = [0, 0];
-  for (let r = 0; r < 64; r++) {
-    let wet = false;
-    for (let t = 0; t < 4; t++) if (WATER_DRAW_MASK_TABLE[(r << 2) | t]) wet = true;
-    if (wet) w[r >> 5] = (w[r >> 5] | (1 << (r & 31))) >>> 0;
-  }
-  return w;
-})());
+export const ROAD_EDGE_WET = Object.freeze(
+  (() => {
+    const w = [0, 0];
+    for (let r = 0; r < 64; r++) {
+      let wet = false;
+      for (let t = 0; t < 4; t++) if (WATER_DRAW_MASK_TABLE[(r << 2) | t]) wet = true;
+      if (wet) w[r >> 5] = (w[r >> 5] | (1 << (r & 31))) >>> 0;
+    }
+    return w;
+  })(),
+);
 
 /** Is a converted tile byte (record << 2 | turn) the road's paving. */
 export const isRoadByte = (d) => d >>> 2 === ROAD_PAVING;
 /** Does a converted tile byte take part in a road's edge: a ground record, dry. */
-export const takesRoadEdge = (d) => { const r = d >>> 2; return r < GROUND_RECORD_LIMIT && ((ROAD_EDGE_WET[r >> 5] >>> (r & 31)) & 1) === 0; };
+export const takesRoadEdge = (d) => {
+  const r = d >>> 2;
+  return r < GROUND_RECORD_LIMIT && ((ROAD_EDGE_WET[r >> 5] >>> (r & 31)) & 1) === 0;
+};
 
 /** The lattice hash, the top 24 bits as [0, 1) - integer arithmetic, GLSL's uint twin bit for bit. */
 export function roadEdgeHash(ix, iy, salt) {
@@ -92,23 +101,40 @@ export function roadEdgeHash(ix, iy, salt) {
 /** Value noise on a lattice of `n` cells a pixel's side at a pixel-local point (tiles), its lattice taken modulo the
  *  pixel - so the same on a pixel's east edge as on its neighbour's west. */
 export function roadEdgeNoise(x, y, n, salt) {
-  const qx = (x * n) / DIM, qy = (y * n) / DIM, fx0 = Math.floor(qx), fy0 = Math.floor(qy);
-  const fx = qx - fx0, fy = qy - fy0, ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+  const qx = (x * n) / DIM,
+    qy = (y * n) / DIM,
+    fx0 = Math.floor(qx),
+    fy0 = Math.floor(qy);
+  const fx = qx - fx0,
+    fy = qy - fy0,
+    ux = fx * fx * (3 - 2 * fx),
+    uy = fy * fy * (3 - 2 * fy);
   const m = (i) => ((i % n) + n) % n;
-  const a = roadEdgeHash(m(fx0), m(fy0), salt), b = roadEdgeHash(m(fx0 + 1), m(fy0), salt);
-  const c = roadEdgeHash(m(fx0), m(fy0 + 1), salt), d = roadEdgeHash(m(fx0 + 1), m(fy0 + 1), salt);
-  const top = a + (b - a) * ux, bot = c + (d - c) * ux;
+  const a = roadEdgeHash(m(fx0), m(fy0), salt),
+    b = roadEdgeHash(m(fx0 + 1), m(fy0), salt);
+  const c = roadEdgeHash(m(fx0), m(fy0 + 1), salt),
+    d = roadEdgeHash(m(fx0 + 1), m(fy0 + 1), salt);
+  const top = a + (b - a) * ux,
+    bot = c + (d - c) * ux;
   return top + (bot - top) * uy;
 }
 /** The edge's wander at a pixel-local point (tiles): within +-(the amplitudes' sum). */
 export function roadEdgeWander(x, y) {
   let w = 0;
-  ROAD_EDGE.wander.forEach((o, k) => { w += o.amp * (2 * roadEdgeNoise(x, y, o.cells, ROAD_EDGE.salt + k) - 1); });
+  ROAD_EDGE.wander.forEach((o, k) => {
+    w += o.amp * (2 * roadEdgeNoise(x, y, o.cells, ROAD_EDGE.salt + k) - 1);
+  });
   return w;
 }
-const smoothstep = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+const smoothstep = (a, b, v) => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 /** A cell's weight as the other kind's picture at `d` tiles from its square: whole on the seam, none half a tile off. */
-export function nearWeight(d) { const w = Math.max(0.5 - d, 0); return (w * w) / Math.max(d * d, 1e-6); }
+export function nearWeight(d) {
+  const w = Math.max(0.5 - d, 0);
+  return (w * w) / Math.max(d * d, 1e-6);
+}
 
 /**
  * THE BLEND AT A PIXEL-LOCAL POINT (tiles, x east and y north, 0..128): the cells it draws and each one's weight, summing
@@ -118,24 +144,46 @@ export function nearWeight(d) { const w = Math.max(0.5 - d, 0); return (w * w) /
  * @returns {{ rho: number, draw: Array<[number, number, number]> }}
  */
 export function roadEdgeAt(byteAt, x, y) {
-  const cx = Math.min(DIM - 1, Math.max(0, Math.floor(x))), cy = Math.min(DIM - 1, Math.max(0, Math.floor(y)));
-  const fx = x - cx, fy = y - cy, own = byteAt(cx, cy);
+  const cx = Math.min(DIM - 1, Math.max(0, Math.floor(x))),
+    cy = Math.min(DIM - 1, Math.max(0, Math.floor(y)));
+  const fx = x - cx,
+    fy = y - cy,
+    own = byteAt(cx, cy);
   const ra = isRoadByte(own);
   const whole = { rho: ra ? 1 : 0, draw: /** @type {Array<[number, number, number]>} */ ([[cx, cy, 1]]) };
   if (!takesRoadEdge(own)) return whole;
-  const sx = fx < 0.5 ? -1 : 1, sy = fy < 0.5 ? -1 : 1;
-  const bx = cx + sx, by = cy, dcx = cx, dcy = cy + sy, ddx = cx + sx, ddy = cy + sy;
-  const db = byteAt(bx, by), dc = byteAt(dcx, dcy), dd = byteAt(ddx, ddy);
-  const rb = isRoadByte(db), rc = isRoadByte(dc), rd = isRoadByte(dd);
+  const sx = fx < 0.5 ? -1 : 1,
+    sy = fy < 0.5 ? -1 : 1;
+  const bx = cx + sx,
+    by = cy,
+    dcx = cx,
+    dcy = cy + sy,
+    ddx = cx + sx,
+    ddy = cy + sy;
+  const db = byteAt(bx, by),
+    dc = byteAt(dcx, dcy),
+    dd = byteAt(ddx, ddy);
+  const rb = isRoadByte(db),
+    rc = isRoadByte(dc),
+    rd = isRoadByte(dd);
   if (ra === rb && ra === rc && ra === rd) return whole;
   // the dual square: its corner the nearest tile corner, (kx, ky); s runs 0..1 from the cells' centres west and south of it
-  const kx = Math.floor(x + 0.5), ky = Math.floor(y + 0.5), s0 = x - (kx - 0.5), s1 = y - (ky - 0.5);
-  const wx = (c) => (c === kx ? s0 : 1 - s0), wy = (c) => (c === ky ? s1 : 1 - s1);
-  const lin = (ra ? wx(cx) * wy(cy) : 0) + (rb ? wx(bx) * wy(by) : 0) + (rc ? wx(dcx) * wy(dcy) : 0) + (rd ? wx(ddx) * wy(ddy) : 0);
+  const kx = Math.floor(x + 0.5),
+    ky = Math.floor(y + 0.5),
+    s0 = x - (kx - 0.5),
+    s1 = y - (ky - 0.5);
+  const wx = (c) => (c === kx ? s0 : 1 - s0),
+    wy = (c) => (c === ky ? s1 : 1 - s1);
+  const lin =
+    (ra ? wx(cx) * wy(cy) : 0) +
+    (rb ? wx(bx) * wy(by) : 0) +
+    (rc ? wx(dcx) * wy(dcy) : 0) +
+    (rd ? wx(ddx) * wy(ddy) : 0);
   const rho = smoothstep(0.5 - ROAD_EDGE.soft, 0.5 + ROAD_EDGE.soft, lin + roadEdgeWander(x, y));
   const mine = ra ? rho : 1 - rho;
   if (mine >= 1) return { rho, draw: whole.draw };
-  const u = Math.min(fx, 1 - fx), v = Math.min(fy, 1 - fy);
+  const u = Math.min(fx, 1 - fx),
+    v = Math.min(fy, 1 - fy);
   const gb = rb !== ra && takesRoadEdge(db) ? nearWeight(u) : 0;
   const gc = rc !== ra && takesRoadEdge(dc) ? nearWeight(v) : 0;
   const gd = rd !== ra && takesRoadEdge(dd) ? nearWeight(Math.sqrt(u * u + v * v)) : 0;

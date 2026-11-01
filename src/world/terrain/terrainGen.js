@@ -39,10 +39,10 @@ import { inBay } from '../tamriel/tamrielFrame.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
-import { streamLevelAt, paintedWaterAt } from '../water/streamLevels.js';   // WATER-LEVEL: each body's own level - the sea, World 2.0, Cyrodiil
+import { streamLevelAt, paintedWaterAt } from '../water/streamLevels.js';   // Each body's own level - the sea, World 2.0, Cyrodiil
 import { sheetBuffers } from '../water/waterLevel.js';
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
-import { paintGen2Waters } from '../gen2/gen2Ground.js';   // WG2: a published region's waters laid in as water (bible/03-World/World-2-Canon.md)
+import { paintGen2Waters } from '../gen2/gen2Ground.js';   // A published region's waters laid in as water
 import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
 import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS: a walled town's gates on their roads
@@ -65,7 +65,7 @@ import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS:
  * @param {boolean} job.hasLocation
  * @param {number} job.climateType - the pixel's climate, for nature.
  * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
- *   WOD2: the World of Daggerfall instances the main thread's
+ *   The World of Daggerfall instances the main thread's
  *   pickLocations placed on this pixel, in order; null with the mod off.
  * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the Real forests switch (null off, DFU's scatter): the
  *   climate's summer nature archive, and whether the pixel's location is a place the woods hide (a dungeon, a shrine).
@@ -82,14 +82,14 @@ import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS:
  *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
  *   and whether its location is one the woods hide; null where the jungle
  *   cannot reach or its row is off (world/terrain/jungleNature.js jungleLayout).
- *   GRAHT1: `canopy` the canopy field's 3x3 where a canopy closes near it - its graht-oaks stand.
+ *   `canopy` the canopy field's 3x3 where a canopy closes near it - its graht-oaks stand.
  * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
  * @param {?{px?: number, py?: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }, relief?: string, own?: boolean, avg?: number}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
- *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
+ *   `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
  *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
  *   too, where its canal stands; `seaEdges` its sides shared with its sea slice; `relief` (SOLITUDE-RELIEF) capitalRelief.js's key; `own` (WG2-TOWNS) no blend, the plane `avg`.
  * @param {?{blend?: boolean, archive?: number, hidden?: boolean}} [job.lands] - TESA-LANDS: the lands' row (null off) - a zone's flats past the Bay, `blend` the Blended climates row, `archive` the climate's nature archive, `hidden` a place the woods close round
@@ -151,7 +151,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   /** @type {?Uint8Array} FB1028 YARDS Y2: the town's ground as #1184 drew it (TS2's mask over the outline before its crops) */
   let yardGround = null;
-  // WG2-TOWNS (world/settle2/settle2Location.js): a World 2.0 town stands on its region's ground, pads and all - nothing
+  // A World 2.0 town stands on its region's ground, pads and all - nothing
   // blended, its plane the one its blocks laid its models from
   if (hasLocation && flattenAt?.own) avg = flattenAt.avg;
   else if (hasLocation) {
@@ -234,7 +234,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)
   if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);   // RIVER-FORDS: a road's tiles kept
-  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // WG2: a published region's rivers and lakes - a town of its own ground its water too
+  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // A published region's rivers and lakes - a town of its own ground its water too
   // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
   // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
   if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });
@@ -315,7 +315,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
 }
 
 /**
- * PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
+ * "fps issues in the exterior but
  * fine in the interior", "me too my friend.. don't know why. I got a
  * RX6600"): A PIXEL'S GRID AT A STRIDE, from its samples as the pixel
  * keeps them (post-blend, post-smoothing) and the ghost rows off the woods
@@ -323,9 +323,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * swap (STREAM1's restride) and the terrain worker's `grid` job all run
  * this one law, so a promotion built on the worker is the bytes one built
  * on the main thread is, by construction.
- * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
+ * The ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
  * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
- * AUDIT WATER-NEXT P1 (2026-10-07, Mac: "ensure ... performance is unaffected"): `bed` - the converted TileMap to carve
+ * `bed` - the converted TileMap to carve
  * the water's bed by (world/water/waterBed.js), or null for none - and the answer carries it (`bed`: the depths and the carved
  * ground, null where no vertex is under water) beside the grid as it stood. WATER-NEXT 2 carved on the host's thread at
  * every build and restride, 0.3 ms for a pixel with no water at all and a millisecond or two for a coast's; here it rides
@@ -340,11 +340,11 @@ export function restrideGrid({ woods, px, py, stride = 1, samples, landform = fa
   const grid = buildTerrainGrid(samples, stride, ghost);
   // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),
   // where its water comes near an edge
-  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py, undefined, paintedWaterAt(px, py)) : null;   // WATER-LEVEL: and the waters the neighbours paint
+  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py, undefined, paintedWaterAt(px, py)) : null;   // And the waters the neighbours paint
   return { positions: grid.positions, normals: grid.normals, bed: bed ? gridBed(grid, bed, stride, halo, { px, py }) : null };
 }
 
-/** AUDIT WATER-NEXT P1: a grid's bed as the kernel answers it - the depths, the water's sheet at its level (WATER-LEVEL:
+/** A grid's bed as the kernel answers it - the depths, the water's sheet at its level (WATER-LEVEL:
  *  `at` the pixel, whose bodies' own laws give it) and the carved ground, the grid untouched, and the seam's halo it was
  *  carved with (F2: kept by the host for a re-carve); null where no tile is water (world/water/waterBed.js waterBedOf).
  *  The host's re-carve (Deep Waters' TileMap) takes the same shape. */

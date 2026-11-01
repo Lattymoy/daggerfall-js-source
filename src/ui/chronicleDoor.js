@@ -6,7 +6,7 @@
 // (ui/quest/questJournal.js) and the history (ui/playerHistory.js) are
 // separate classic windows built at four sites between them:
 //
-//   ui/charSheetNav.js:"? () => new QuestJournalWindow"   the sheet's LOGBOOK button
+//   ui/charSheetNav.js:"? () =>"   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:"history: () => new"   the sheet's HISTORY button
 //   scenes/world.js:"on the entity; the"    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
@@ -37,11 +37,11 @@
 // they say. What differs is the drawing, and two faces drawing one
 // model differently is the whole point of having two skins.
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js'; // PX28: Tab puts it away
 import { QuestJournalWindow, questJournalArtLoaded } from './quest/questJournal.js';
 import { PlayerHistoryWindow, playerHistoryArtLoaded } from './playerHistory.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export { questJournalArtLoaded, playerHistoryArtLoaded };
 
@@ -105,7 +105,7 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  */
 export function createChronicleWindow(deps = {}) {
   const section = deps.section ?? 'notes';
-  noteFirstUse(section === 'notes' ? 'notebook' : 'quests');   // TUT1
+  noteFirstUse(section === 'notes' ? 'notebook' : 'quests'); // TUT1
   if (isEnhanced() && typeof document !== 'undefined') {
     if (!chronicleDoorReady()) return null;
     return enhancedChronicleOverlay(deps, section);
@@ -131,14 +131,23 @@ function enhancedChronicleOverlay(deps, section) {
   let host = null;
   let view = null;
   let done = false;
-  let unregister = () => {};   // PX28
+  let unregister = () => {}; // PX28
   const close = () => {
     if (done) return;
     done = true;
     unregister();
-    try { view?.destroy?.(); } catch { /* already gone */ }
-    try { host?.remove(); } catch { /* ditto */ }
-    host = null; view = null;
+    try {
+      view?.destroy?.();
+    } catch {
+      /* already gone */
+    }
+    try {
+      host?.remove();
+    } catch {
+      /* ditto */
+    }
+    host = null;
+    view = null;
     deps.onClose?.();
   };
   host = document.createElement('div');
@@ -150,8 +159,13 @@ function enhancedChronicleOverlay(deps, section) {
   // COVERED-KEYS: `owner` is the window the chronicle's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedChronicle.js'),
-    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, owner: overlay }); },
-    alive: () => !done, host, onDismiss: close, label: 'chronicle',
+    mount: ({ mountEnhancedChronicle }) => {
+      view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, owner: overlay });
+    },
+    alive: () => !done,
+    host,
+    onDismiss: close,
+    label: 'chronicle',
   });
   const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
@@ -173,13 +187,27 @@ function enhancedChronicleOverlay(deps, section) {
     // the rule was enforced by memory in three files and missed in the
     // fourth. test/ui/crash1_overlay_contract.test.js derives it now.
     isChoiceWindow: true,
-    get done() { return done; },
-    input() { /* the view's own capture keydown owns the keyboard */ },
-    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
-    wheel() { /* the view scrolls itself */ },
-    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this screen moves on a clock */ },
-    draw() { /* DOM, not canvas */ },
+    get done() {
+      return done;
+    },
+    input() {
+      /* the view's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the view is a fixed div over the canvas; pointers never get here */
+    },
+    wheel() {
+      /* the view scrolls itself */
+    },
+    hover() {
+      /* the view has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this screen moves on a clock */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
     // `close`, `dispose` and `destroy` are the hosts' three words for
     // the same act - townTalk's showOverlay frees the OUTGOING window
     // with `dispose?.()`, and without it the div outlived the object:

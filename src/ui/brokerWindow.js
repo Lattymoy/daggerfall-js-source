@@ -21,25 +21,38 @@
 // the stones, gives the piece and marks it - in that order), and the wearer whose sets the set block reads - so this
 // file draws and asks, and never touches a pack.
 import { rarityLines, rarityAttr, RARITIES } from '../systems/loot/lootRarity.js';
-import { brokerOfferState, BROKER_REFUSALS, offerSetName, brokerTurnsIn, stonesText } from '../systems/sigil/sigilBroker.js';
+import {
+  brokerOfferState,
+  BROKER_REFUSALS,
+  offerSetName,
+  brokerTurnsIn,
+  stonesText,
+} from '../systems/sigil/sigilBroker.js';
 import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { sigilCard } from './sigilCard.js';
 import { setCard, markSetFrame } from './setCard.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
-import { SLOT_BOX, screenDpr } from './iconFit.js';   // UI1: the offer's picture box
+import { SLOT_BOX, screenDpr } from './iconFit.js'; // UI1: the offer's picture box
 import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction } from './input.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
-import { rarityVarsCss, SIGIL_VARS_CSS, SIGIL_KEYFRAMES_CSS, SIGIL_BLOCK_CSS, SET_BLOCK_CSS, BROKER_CSS } from './enhanced/enhancedPlusStyle.js';
+import {
+  rarityVarsCss,
+  SIGIL_VARS_CSS,
+  SIGIL_KEYFRAMES_CSS,
+  SIGIL_BLOCK_CSS,
+  SET_BLOCK_CSS,
+  BROKER_CSS,
+} from './enhanced/enhancedPlusStyle.js';
 import { frameCss, scopeRules } from './enhanced/enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
-import { isBound, BOUND_LINE } from '../systems/item/itemBound.js';   // SS4: the wares are bound, and the card says so
-import { paintTitle, titleBadge } from './playerBadge.js';   // WB9g: the Gatebreaker's word, in its own fire
-import { EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../net/eliteGates/egPay.js';   // EG-E1: the Panoply sink's price and its nine pieces
-import { t } from '../systems/textManager.js';   // ARMORY: the Dagonfire pieces' words, in the player's language
+import { isBound, BOUND_LINE } from '../systems/item/itemBound.js'; // SS4: the wares are bound, and the card says so
+import { paintTitle, titleBadge } from './playerBadge.js'; // WB9g: the Gatebreaker's word, in its own fire
+import { EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../net/eliteGates/egPay.js'; // EG-E1: the Panoply sink's price and its nine pieces
+import { t } from '../systems/textManager.js'; // ARMORY: the Dagonfire pieces' words, in the player's language
 import { ARMORY_LOOK, armorySlotName } from './armoryText.js';
 import { armoryKitOf } from '../net/armoryLaw.js';
-import { loadAuraPreview } from './enhanced/enhancedShop.js';   // ARMORY: a piece shown on its stage, as the shop shows one
+import { loadAuraPreview } from './enhanced/enhancedShop.js'; // ARMORY: a piece shown on its stage, as the shop shows one
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -54,24 +67,33 @@ export function brokerTurnText(ms) {
   return m >= 60 ? `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`;
 }
 /** "1 Sigil Stone", "3 Sigil Stones". */
-export { stonesText };   // SS5: the law's own words now (systems/sigil/sigilBroker.js) - the dismantle says them too
+export { stonesText }; // SS5: the law's own words now (systems/sigil/sigilBroker.js) - the dismantle says them too
 /** The purse's words: the stones a sale may take, and the locked ones it may not ("3 Sigil Stones · 1 locked"). */
-export const purseText = (have, locked = 0) => (locked > 0 ? `${stonesText(have)} · ${locked} locked` : stonesText(have));
+export const purseText = (have, locked = 0) =>
+  locked > 0 ? `${stonesText(have)} · ${locked} locked` : stonesText(have);
 /** The last word of a press: the piece bought, or why not (the law's refusals and the host's own). */
-export const BROKER_SOLD = (name, price) => `Bought: ${name}, for ${stonesText(price)}.`;   // AUDIT SET U6: no article of its own - a Legendary's name brings one ("The Warden"), a Regalia piece's is a possessive
+export const BROKER_SOLD = (name, price) => `Bought: ${name}, for ${stonesText(price)}.`; // AUDIT SET U6: no article of its own - a Legendary's name brings one ("The Warden"), a Regalia piece's is a possessive
 /** How often the window re-reads the world while it stands: the turn's clock, and a stone won or dropped meanwhile. */
 export const BROKER_REPAINT_MS = 30_000;
 /** WB9g (2026-09-30, Mac: "Add a brand new title to the broker and a new addition (the aura) ... These items should be
  *  expensive and sought after"): THE INSIGNIA'S WORDS - its heading, each piece's line, and its card. */
 export const INSIGNIA_HEAD = 'Insignia';
-export const INSIGNIA_SUB = 'Account-wide. Bought once.';   // WB13b: each line says one thing
+export const INSIGNIA_SUB = 'Account-wide. Bought once.'; // WB13b: each line says one thing
 export const INSIGNIA_LINE = Object.freeze({
-  title: 'A title worn over your name',   // WB12a
-  aura: 'A ring of Dagon\'s fire at your feet',
+  title: 'A title worn over your name', // WB12a
+  aura: "A ring of Dagon's fire at your feet",
 });
 export const INSIGNIA_CARD = Object.freeze({
-  title: ['Gatebreaker', 'Worn over your name in the breach\'s fire.', 'Paid from your account\'s embers. Wear it here or on your account card.'],   // AUDIT WB12d (A4): a broken rite's ember is the account's too, and closes no breach
-  aura: ['Dagon\'s Fire', 'A ring of Dagon\'s fire at your feet, seen by every player near you.', 'Paid from your account\'s embers. Wear it here or on your account card.'],
+  title: [
+    'Gatebreaker',
+    "Worn over your name in the breach's fire.",
+    "Paid from your account's embers. Wear it here or on your account card.",
+  ], // AUDIT WB12d (A4): a broken rite's ember is the account's too, and closes no breach
+  aura: [
+    "Dagon's Fire",
+    "A ring of Dagon's fire at your feet, seen by every player near you.",
+    "Paid from your account's embers. Wear it here or on your account card.",
+  ],
 });
 /** WB9g: an insignia row's button word - why not, or what a press will do. */
 export function insigniaLabel(row, { have, busy, pending }) {
@@ -84,28 +106,46 @@ export function insigniaLabel(row, { have, busy, pending }) {
  *  BATTLEMAGE'S PANOPLY AT THE BROKER - one piece of the buyer's choosing, once an account a week, for 20 embers (the
  *  account service's - server-account/src/egEconomy.js egSink). Its heading, each piece's name and kind (section 19's
  *  table), its card, and the words of its states. */
-export const PANOPLY_HEAD = 'The Battlemage\'s Panoply';
+export const PANOPLY_HEAD = "The Battlemage's Panoply";
 export const PANOPLY_SUB = 'One a week.';
 export const PANOPLY_NAMES = Object.freeze({
-  'panoply-warhelm': 'The Battlemage\'s Warhelm', 'panoply-right-pauldron': 'The Battlemage\'s Right Pauldron',
-  'panoply-left-pauldron': 'The Battlemage\'s Left Pauldron', 'panoply-cuirass': 'The Battlemage\'s Cuirass',
-  'panoply-gauntlets': 'The Battlemage\'s Gauntlets', 'panoply-greaves': 'The Battlemage\'s Greaves', 'panoply-boots': 'The Battlemage\'s Boots',
-  'panoply-shield': 'The Spire-Shield', 'panoply-saber': 'The Spire-Saber',
+  'panoply-warhelm': "The Battlemage's Warhelm",
+  'panoply-right-pauldron': "The Battlemage's Right Pauldron",
+  'panoply-left-pauldron': "The Battlemage's Left Pauldron",
+  'panoply-cuirass': "The Battlemage's Cuirass",
+  'panoply-gauntlets': "The Battlemage's Gauntlets",
+  'panoply-greaves': "The Battlemage's Greaves",
+  'panoply-boots': "The Battlemage's Boots",
+  'panoply-shield': 'The Spire-Shield',
+  'panoply-saber': 'The Spire-Saber',
 });
 export const PANOPLY_KINDS = Object.freeze({
-  'panoply-warhelm': 'Helm', 'panoply-right-pauldron': 'Pauldron', 'panoply-left-pauldron': 'Pauldron', 'panoply-cuirass': 'Cuirass',
-  'panoply-gauntlets': 'Gauntlets', 'panoply-greaves': 'Greaves', 'panoply-boots': 'Boots', 'panoply-shield': 'Kite Shield', 'panoply-saber': 'Saber',
+  'panoply-warhelm': 'Helm',
+  'panoply-right-pauldron': 'Pauldron',
+  'panoply-left-pauldron': 'Pauldron',
+  'panoply-cuirass': 'Cuirass',
+  'panoply-gauntlets': 'Gauntlets',
+  'panoply-greaves': 'Greaves',
+  'panoply-boots': 'Boots',
+  'panoply-shield': 'Kite Shield',
+  'panoply-saber': 'Saber',
 });
 export const PANOPLY_CARD = Object.freeze([
   'The war-gear the Imperial Battlemages wore in the Spire, taken by the Kyn. A Sigil Set of Mithril.',
-  'Paid from your account\'s embers. One piece a week, of your choosing.',
+  "Paid from your account's embers. One piece a week, of your choosing.",
 ]);
 /** EG-E1: the nine rows the window draws, off the week's sale (`/v1/eg/keys`' `sink` - `{ week, piece }`; null while it is
  *  unknown): each piece's id, name and kind, whether it is this week's piece (`bought`) and whether this week's is taken
  *  (`spent`). Pure. @param {{ piece?: string|null }|null} sink */
 export function panoplyRows(sink) {
   const piece = typeof sink?.piece === 'string' ? sink.piece : null;
-  return EG_PANOPLY_IDS.map((id) => ({ id, name: PANOPLY_NAMES[id], kind: PANOPLY_KINDS[id], bought: piece === id, spent: piece !== null }));
+  return EG_PANOPLY_IDS.map((id) => ({
+    id,
+    name: PANOPLY_NAMES[id],
+    kind: PANOPLY_KINDS[id],
+    bought: piece === id,
+    spent: piece !== null,
+  }));
 }
 /** EG-E1: a Panoply row's button word - what a press does, or why not. */
 export function panoplyLabel(row, { have, pending }) {
@@ -117,7 +157,7 @@ export function panoplyLabel(row, { have, pending }) {
 /** EG-E1: a Panoply row's whole reason, where its button cannot buy. */
 export function panoplyWhy(row, have) {
   if (row.bought) return 'Bought this week';
-  if (row.spent) return 'One a week. This week\'s is bought';
+  if (row.spent) return "One a week. This week's is bought";
   return have >= EG_SINK_EMBERS ? '' : BROKER_REFUSALS.stones;
 }
 
@@ -146,9 +186,15 @@ export function refusePress(btn, reason, tell) {
   btn.onclick = (e) => {
     e?.stopPropagation?.();
     // AUDIT MENU-ORDER U4: the keys stay where the press was - a window that draws again on the word finds it by its name
-    const doc = btn.ownerDocument, held = !!doc && doc.activeElement === btn, name = btn.getAttribute('aria-label'), win = btn.closest?.('.broker-win');
+    const doc = btn.ownerDocument,
+      held = !!doc && doc.activeElement === btn,
+      name = btn.getAttribute('aria-label'),
+      win = btn.closest?.('.broker-win');
     tell(reason);
-    if (held && btn.isConnected === false && win && name) [...(win.querySelectorAll?.('[aria-disabled="true"]') ?? [])].find((b) => b.getAttribute('aria-label') === name)?.focus?.();
+    if (held && btn.isConnected === false && win && name)
+      [...(win.querySelectorAll?.('[aria-disabled="true"]') ?? [])]
+        .find((b) => b.getAttribute('aria-label') === name)
+        ?.focus?.();
   };
 }
 
@@ -163,13 +209,23 @@ export { scopeRules };
 export const BROKER_SKIN_STYLE_ID = 'broker-skin-style';
 export function brokerSkinCss() {
   return [
-    rarityVarsCss('.broker-shell '), SIGIL_VARS_CSS, SIGIL_KEYFRAMES_CSS, SIGIL_BLOCK_CSS, SET_BLOCK_CSS, BROKER_CSS,
+    rarityVarsCss('.broker-shell '),
+    SIGIL_VARS_CSS,
+    SIGIL_KEYFRAMES_CSS,
+    SIGIL_BLOCK_CSS,
+    SET_BLOCK_CSS,
+    BROKER_CSS,
     '.broker-card[data-rarity] > ul.rarity > li:first-child { color: var(--rar); letter-spacing: 0.18em; }',
     scopeRules(frameCss(), (sel) => sel.includes('broker')),
   ].join('\n');
 }
 function injectBrokerSkinStyle(doc = document) {
-  if (isEnhancedPlus() || doc.getElementById?.(BROKER_SKIN_STYLE_ID) || [...(doc.head?.children ?? [])].some((c) => c.id === BROKER_SKIN_STYLE_ID)) return;
+  if (
+    isEnhancedPlus() ||
+    doc.getElementById?.(BROKER_SKIN_STYLE_ID) ||
+    [...(doc.head?.children ?? [])].some((c) => c.id === BROKER_SKIN_STYLE_ID)
+  )
+    return;
   const st = doc.createElement('style');
   st.id = BROKER_SKIN_STYLE_ID;
   st.textContent = brokerSkinCss();
@@ -181,7 +237,15 @@ function injectBrokerSkinStyle(doc = document) {
  *  and the shop's rows ask for the player, and the offer was drawn for nobody's, a Breton man's). */
 function classicPicture(item, wearer, onReady) {
   const img = item ? inventoryItemImage(item, wearer ?? undefined) : null;
-  return img?.archive ? requestFittedIcon(img.archive, img.record, { box: SLOT_BOX.broker, dpr: screenDpr(), dye: img.dye, dyeTarget: img.dyeTarget, onReady }) : null;
+  return img?.archive
+    ? requestFittedIcon(img.archive, img.record, {
+        box: SLOT_BOX.broker,
+        dpr: screenDpr(),
+        dye: img.dye,
+        dyeTarget: img.dyeTarget,
+        onReady,
+      })
+    : null;
 }
 
 /** WB9g: a piece of the insignia's sign - the title's word in its own fire, or the aura's ring turning - the row's small
@@ -191,15 +255,17 @@ function classicPicture(item, wearer, onReady) {
 function insigniaSign(g, hero = false) {
   const sign = el('span', `insignia-sign insig-${g.kind}${hero ? ' hero' : ''}`);
   if (g.kind === 'title') {
-    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : [...g.name][0] ?? '');
+    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));
     paintTitle(word, titleBadge({ title: g.key }));
     sign.append(word);
-  } else sign.append(el('span', `aura-ring aura-${g.kind === 'armory' ? g.line ?? 'dagonfire' : g.key}`));   // ARMORY: a piece in its line's fire
+  } else sign.append(el('span', `aura-ring aura-${g.kind === 'armory' ? (g.line ?? 'dagonfire') : g.key}`)); // ARMORY: a piece in its line's fire
   return sign;
 }
 /** ARMORY: a Dagonfire piece's line in the row, and how it is kept in its card. */
-const armoryLine = (/** @type {any} */ g) => t('broker.armory.line', 'Aura Armory · {slot}', { slot: armorySlotName(g.slot) });
-const armoryKept = () => t('broker.armory.kept', 'Paid from your account’s embers. Wear it here or on your account card, in its own slot.');
+const armoryLine = (/** @type {any} */ g) =>
+  t('broker.armory.line', 'Aura Armory · {slot}', { slot: armorySlotName(g.slot) });
+const armoryKept = () =>
+  t('broker.armory.kept', 'Paid from your account’s embers. Wear it here or on your account card, in its own slot.');
 
 /**
  * Mount the window in the door's host.
@@ -231,10 +297,12 @@ export function mountBrokerWindow(host, deps) {
   const exit = () => deps.onExit?.();
   let pickedSlot = 0;
   /** WB9g: the insignia row pressed (its card shown in place of a ware's), and the one whose press is in flight */
-  let pickedInsig = null, pendingInsig = null;
+  let pickedInsig = null,
+    pendingInsig = null;
   /** EG-E1: the Panoply row pressed (its card shown - while no ware's row (`pickedSlot` -1) nor insignia's is), and the one
    *  whose sale is in flight; a Panoply sale holds every other sale, as an insignia's does (AUDIT WB9 F2) */
-  let pickedPan = null, pendingPan = null;
+  let pickedPan = null,
+    pendingPan = null;
   const outer = deps;
   deps = { ...outer, insigniaBusy: () => !!outer.insigniaBusy?.() || pendingPan !== null || !!outer.panoply?.busy?.() };
   /** The last press's word, and whether it was a sale (a refusal is read in the refusal's colour). */
@@ -266,7 +334,10 @@ export function mountBrokerWindow(host, deps) {
   const purse = el('span', 'broker-purse');
   const close = el('button', 'act broker-close', 'Close');
   close.setAttribute('type', 'button');
-  close.onclick = (e) => { e.stopPropagation(); exit(); };
+  close.onclick = (e) => {
+    e.stopPropagation();
+    exit();
+  };
   head.append(title, purse, close);
   const body = el('div', 'broker-body');
   const list = el('ul', 'broker-offers');
@@ -281,12 +352,20 @@ export function mountBrokerWindow(host, deps) {
     row.setAttribute('role', 'button');
     row.setAttribute('tabindex', '0');
     row.onclick = pick;
-    row.onkeydown = (e) => { if (e.target === row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault?.(); pick(); } };
+    row.onkeydown = (e) => {
+      if (e.target === row && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault?.();
+        pick();
+      }
+    };
   };
   /** ARMORY: THE PIECE'S STAGE in its card - one canvas, kept across the window's repaints (moved, never rebuilt), and its
    *  stage stopped when another piece is picked or the window goes. */
   let stage = /** @type {{ id: string, canvas: any, live: Promise<any> }|null} */ (null);
-  const stopStage = () => { stage?.live.then((p) => p?.stop?.()).catch(() => null); stage = null; };
+  const stopStage = () => {
+    stage?.live.then((p) => p?.stop?.()).catch(() => null);
+    stage = null;
+  };
   const pieceStage = (/** @type {any} */ g) => {
     if (stage?.id === g.id) return stage.canvas;
     stopStage();
@@ -294,7 +373,9 @@ export function mountBrokerWindow(host, deps) {
     canvas.setAttribute('aria-hidden', 'true');
     canvas.style.cssText = 'display:block;width:100%;height:220px';
     const start = deps.preview ?? loadAuraPreview;
-    const live = new Promise((res) => globalThis.requestAnimationFrame?.(() => res(null)) ?? res(null)).then(() => (stage?.canvas === canvas ? start(canvas, null, armoryKitOf([g.key])) : null)).catch(() => null);
+    const live = new Promise((res) => globalThis.requestAnimationFrame?.(() => res(null)) ?? res(null))
+      .then(() => (stage?.canvas === canvas ? start(canvas, null, armoryKitOf([g.key])) : null))
+      .catch(() => null);
     stage = { id: g.id, canvas, live };
     return canvas;
   };
@@ -304,15 +385,19 @@ export function mountBrokerWindow(host, deps) {
     const offers = deps.stock();
     const state = { items: deps.items(), bought: deps.bought(), day: deps.day() };
     const picture = deps.picture !== undefined ? deps.picture : (it) => classicPicture(it, deps.wearer, () => render());
-    sub.textContent = `New stock in ${brokerTurnText(brokerTurnsIn(deps.now()))}`;   // WB12a; WB13b: the prices say Embers
+    sub.textContent = `New stock in ${brokerTurnText(brokerTurnsIn(deps.now()))}`; // WB12a; WB13b: the prices say Embers
     noteLine.textContent = note ? note.text : '';
     noteLine.className = `broker-note${note?.ok ? ' ok' : ''}`;
-    if (!note) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute?.('hidden');
+    if (!note) noteLine.setAttribute('hidden', '');
+    else noteLine.removeAttribute?.('hidden');
     purse.textContent = purseText(brokerOfferState(null, state).have, deps.locked?.() ?? 0);
     for (const c of [...list.children]) c.remove();
     for (const o of offers) {
       const s = brokerOfferState(o, state);
-      const row = el('li', `broker-offer${o.slot === pickedSlot && !pickedInsig ? ' on' : ''}${s.ok ? '' : ` no-${s.reason}`}`);
+      const row = el(
+        'li',
+        `broker-offer${o.slot === pickedSlot && !pickedInsig ? ' on' : ''}${s.ok ? '' : ` no-${s.reason}`}`,
+      );
       row.dataset.slot = String(o.slot);
       row.setAttribute('aria-pressed', o.slot === pickedSlot ? 'true' : 'false');
       row.setAttribute('aria-label', `${nameOf(o.item)}, ${offerSetName(o)}, ${stonesText(o.price)}`);
@@ -322,30 +407,55 @@ export function mountBrokerWindow(host, deps) {
       const pic = picture?.(o.item) ?? null;
       // UI1: a fitted picture carries its own size; a seam's bare URL is drawn as the sheet sizes it
       if (pic && typeof pic === 'object') tile.append(fittedImg(pic));
-      else if (pic) { const img = el('img'); img.setAttribute('src', pic); img.setAttribute('alt', ''); tile.append(img); } else tile.textContent = nameOf(o.item).split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+      else if (pic) {
+        const img = el('img');
+        img.setAttribute('src', pic);
+        img.setAttribute('alt', '');
+        tile.append(img);
+      } else
+        tile.textContent = nameOf(o.item)
+          .split(/\s+/)
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase();
       const frame = el('span', 'broker-frame');
       if (r) frame.dataset.rarity = r;
       markSetFrame(frame, o.item);
       frame.dataset.sigil = '';
       frame.append(tile);
       const text = el('div', 'broker-offer-body');
-      text.append(el('span', 'broker-name', nameOf(o.item)), el('span', 'broker-set', `${offerSetName(o)} · ${RARITIES[r ?? 'common']?.label ?? ''}`));
+      text.append(
+        el('span', 'broker-name', nameOf(o.item)),
+        el('span', 'broker-set', `${offerSetName(o)} · ${RARITIES[r ?? 'common']?.label ?? ''}`),
+      );
       const price = el('span', 'broker-price', stonesText(o.price));
       const buy = el('button', 'act broker-buy', buyLabel(s));
       buy.setAttribute('type', 'button');
-      buy.setAttribute('aria-label', s.ok ? `Buy ${nameOf(o.item)} for ${stonesText(o.price)}` : `${nameOf(o.item)}: ${BROKER_REFUSALS[s.reason] ?? ''}`);   // U14: the button says whose
-      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', '');   // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is
+      buy.setAttribute(
+        'aria-label',
+        s.ok
+          ? `Buy ${nameOf(o.item)} for ${stonesText(o.price)}`
+          : `${nameOf(o.item)}: ${BROKER_REFUSALS[s.reason] ?? ''}`,
+      ); // U14: the button says whose
+      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', ''); // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is
       buy.onclick = (e) => {
         e.stopPropagation();
         if (pendingInsig || deps.insigniaBusy?.()) return;
         const done = deps.buy(o);
-        note = done?.ok ? { ok: true, text: BROKER_SOLD(nameOf(o.item), o.price) } : { ok: false, text: done?.text ?? BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' };
+        note = done?.ok
+          ? { ok: true, text: BROKER_SOLD(nameOf(o.item), o.price) }
+          : { ok: false, text: done?.text ?? BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' };
         pickedSlot = o.slot;
         render();
       };
-      if (!s.ok) refusePress(buy, BROKER_REFUSALS[s.reason] ?? '', refused);   // MENU-ORDER: pressed, it says why
+      if (!s.ok) refusePress(buy, BROKER_REFUSALS[s.reason] ?? '', refused); // MENU-ORDER: pressed, it says why
       row.append(frame, text, price, buy);
-      pressable(row, () => { pickedSlot = o.slot; pickedInsig = null; render({ reveal: true }); });   // U10
+      pressable(row, () => {
+        pickedSlot = o.slot;
+        pickedInsig = null;
+        render({ reveal: true });
+      }); // U10
       list.append(row);
     }
     // WB9g: THE INSIGNIA, under the day's stock - its heading, then a row a piece in the wares' own grid
@@ -355,55 +465,104 @@ export function mountBrokerWindow(host, deps) {
       head.setAttribute('role', 'presentation');
       head.append(el('span', 'broker-insignia-title', INSIGNIA_HEAD), el('span', 'broker-set', INSIGNIA_SUB));
       list.append(head);
-      const have = brokerOfferState(null, state).have, busy = !!deps.insigniaBusy?.();
+      const have = brokerOfferState(null, state).have,
+        busy = !!deps.insigniaBusy?.();
       for (const g of insig) {
-        const row = el('li', `broker-offer broker-insig${pickedInsig === g.id ? ' on' : ''}${g.owned ? ' owned' : ''}${g.worn ? ' worn' : ''}`);
+        const row = el(
+          'li',
+          `broker-offer broker-insig${pickedInsig === g.id ? ' on' : ''}${g.owned ? ' owned' : ''}${g.worn ? ' worn' : ''}`,
+        );
         row.dataset.insignia = g.id;
         row.setAttribute('aria-pressed', pickedInsig === g.id ? 'true' : 'false');
-        row.setAttribute('aria-label', `${g.name}, ${g.kind === 'title' ? 'a title' : g.kind === 'armory' ? armoryLine(g) : 'an aura'}, ${stonesText(g.price)}${g.owned ? ', owned' : ''}${g.worn ? ', worn' : ''}`);
+        row.setAttribute(
+          'aria-label',
+          `${g.name}, ${g.kind === 'title' ? 'a title' : g.kind === 'armory' ? armoryLine(g) : 'an aura'}, ${stonesText(g.price)}${g.owned ? ', owned' : ''}${g.worn ? ', worn' : ''}`,
+        );
         const frame = el('span', 'broker-frame insignia-frame');
         frame.append(insigniaSign(g));
         const text = el('div', 'broker-offer-body');
-        text.append(el('span', 'broker-name', g.name), el('span', 'broker-set', g.kind === 'armory' ? armoryLine(g) : INSIGNIA_LINE[g.kind] ?? ''));
+        text.append(
+          el('span', 'broker-name', g.name),
+          el('span', 'broker-set', g.kind === 'armory' ? armoryLine(g) : (INSIGNIA_LINE[g.kind] ?? '')),
+        );
         const price = el('span', 'broker-price', g.owned ? (g.worn ? 'Worn' : 'Owned') : stonesText(g.price));
         const btn = el('button', 'act broker-buy', insigniaLabel(g, { have, busy, pending: pendingInsig === g.id }));
         btn.setAttribute('type', 'button');
         const can = g.owned || have >= g.price;
-        if (busy || pendingInsig) btn.setAttribute('disabled', '');   // in flight: nothing pressable, and nothing to say
+        if (busy || pendingInsig) btn.setAttribute('disabled', ''); // in flight: nothing pressable, and nothing to say
         btn.onclick = (e) => {
           e.stopPropagation();
           const act = g.owned ? deps.wearInsignia : deps.buyInsignia;
           if (!act || pendingInsig) return;
-          pendingInsig = g.id; pickedInsig = g.id;
+          pendingInsig = g.id;
+          pickedInsig = g.id;
           render();
-          Promise.resolve().then(() => act(g)).then((done) => {
-            note = done?.ok ? { ok: true, text: done.text ?? '' } : { ok: false, text: done?.text ?? 'The Broker will not sell that.' };
-          }, () => { note = { ok: false, text: 'The Broker will not sell that.' }; }).finally(() => { pendingInsig = null; render(); });
+          Promise.resolve()
+            .then(() => act(g))
+            .then(
+              (done) => {
+                note = done?.ok
+                  ? { ok: true, text: done.text ?? '' }
+                  : { ok: false, text: done?.text ?? 'The Broker will not sell that.' };
+              },
+              () => {
+                note = { ok: false, text: 'The Broker will not sell that.' };
+              },
+            )
+            .finally(() => {
+              pendingInsig = null;
+              render();
+            });
         };
-        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused);   // MENU-ORDER: pressed, it says why
+        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused); // MENU-ORDER: pressed, it says why
         row.append(frame, text, price, btn);
-        pressable(row, () => { pickedInsig = g.id; render({ reveal: true }); });
+        pressable(row, () => {
+          pickedInsig = g.id;
+          render({ reveal: true });
+        });
         list.append(row);
       }
     }
     // EG-E1: THE BATTLEMAGE'S PANOPLY, under the insignia - its heading and price, then a row a piece in the wares' own grid
-    const panRows = deps.panoply?.rows;   // the sink's nine rows (EG-E1) - the host's, never a TEXT.RSC read
+    const panRows = deps.panoply?.rows; // the sink's nine rows (EG-E1) - the host's, never a TEXT.RSC read
     const pan = typeof panRows === 'function' ? panRows() : [];
-    const panPick = pickedPan && pickedSlot === -1 && !pickedInsig ? pan.find((x) => x.id === pickedPan) ?? null : null;
+    const panPick =
+      pickedPan && pickedSlot === -1 && !pickedInsig ? (pan.find((x) => x.id === pickedPan) ?? null) : null;
     if (pan.length) {
       const head = el('li', 'broker-insignia-head broker-panoply-head');
       head.setAttribute('role', 'presentation');
-      head.append(el('span', 'broker-insignia-title', PANOPLY_HEAD), el('span', 'broker-set', `${stonesText(EG_SINK_EMBERS)}. ${PANOPLY_SUB}`));
+      head.append(
+        el('span', 'broker-insignia-title', PANOPLY_HEAD),
+        el('span', 'broker-set', `${stonesText(EG_SINK_EMBERS)}. ${PANOPLY_SUB}`),
+      );
       list.append(head);
-      const have = brokerOfferState(null, state).have, busy = !!pendingInsig || !!deps.insigniaBusy?.();
+      const have = brokerOfferState(null, state).have,
+        busy = !!pendingInsig || !!deps.insigniaBusy?.();
       for (const p of pan) {
-        const row = el('li', `broker-offer broker-panoply${panPick?.id === p.id ? ' on' : ''}${p.bought ? ' owned' : ''}`);
+        const row = el(
+          'li',
+          `broker-offer broker-panoply${panPick?.id === p.id ? ' on' : ''}${p.bought ? ' owned' : ''}`,
+        );
         row.dataset.panoply = p.id;
         row.setAttribute('aria-pressed', panPick?.id === p.id ? 'true' : 'false');
-        row.setAttribute('aria-label', `${p.name}, ${stonesText(EG_SINK_EMBERS)}${p.bought ? ', bought this week' : ''}`);
+        row.setAttribute(
+          'aria-label',
+          `${p.name}, ${stonesText(EG_SINK_EMBERS)}${p.bought ? ', bought this week' : ''}`,
+        );
         // the piece's kind in its tile, as a ware with no picture is drawn (its records are the host's, never this window's)
         const frame = el('span', 'broker-frame');
-        frame.append(el('span', 'tile', String(p.kind ?? p.name).split(/\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase()));
+        frame.append(
+          el(
+            'span',
+            'tile',
+            String(p.kind ?? p.name)
+              .split(/\s+/)
+              .map((x) => x[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase(),
+          ),
+        );
         const text = el('div', 'broker-offer-body');
         text.append(el('span', 'broker-name', p.name), el('span', 'broker-set', p.kind ?? ''));
         const price = el('span', 'broker-price', p.bought ? 'Bought' : stonesText(EG_SINK_EMBERS));
@@ -415,14 +574,35 @@ export function mountBrokerWindow(host, deps) {
         btn.onclick = (e) => {
           e.stopPropagation();
           if (why || pendingPan || pendingInsig || deps.insigniaBusy?.() || !deps.panoply?.buy) return;
-          pendingPan = p.id; pickedPan = p.id; pickedSlot = -1; pickedInsig = null;
+          pendingPan = p.id;
+          pickedPan = p.id;
+          pickedSlot = -1;
+          pickedInsig = null;
           render();
-          Promise.resolve().then(() => deps.panoply?.buy(p.id)).then((done) => {
-            note = done?.ok ? { ok: true, text: done.text ?? BROKER_SOLD(p.name, EG_SINK_EMBERS) } : { ok: false, text: done?.text ?? 'The Broker will not sell that.' };
-          }, () => { note = { ok: false, text: 'The Broker will not sell that.' }; }).finally(() => { pendingPan = null; render(); });
+          Promise.resolve()
+            .then(() => deps.panoply?.buy(p.id))
+            .then(
+              (done) => {
+                note = done?.ok
+                  ? { ok: true, text: done.text ?? BROKER_SOLD(p.name, EG_SINK_EMBERS) }
+                  : { ok: false, text: done?.text ?? 'The Broker will not sell that.' };
+              },
+              () => {
+                note = { ok: false, text: 'The Broker will not sell that.' };
+              },
+            )
+            .finally(() => {
+              pendingPan = null;
+              render();
+            });
         };
         row.append(frame, text, price, btn);
-        pressable(row, () => { pickedPan = p.id; pickedSlot = -1; pickedInsig = null; render({ reveal: true }); });
+        pressable(row, () => {
+          pickedPan = p.id;
+          pickedSlot = -1;
+          pickedInsig = null;
+          render({ reveal: true });
+        });
         list.append(row);
       }
     }
@@ -430,26 +610,55 @@ export function mountBrokerWindow(host, deps) {
     card?.remove();
     card = null;
     const pickedG = pickedInsig ? insig.find((x) => x.id === pickedInsig) : null;
-    if (pickedG?.kind !== 'armory') stopStage();   // ARMORY: a stage leaves with its piece's card (it stops itself off the page)
+    if (pickedG?.kind !== 'armory') stopStage(); // ARMORY: a stage leaves with its piece's card (it stops itself off the page)
     if (pickedG) {
       // WB9g: a piece of the insignia, whole - its sign large, its name, what it is and how it is kept
       card = el('div', 'card broker-card broker-insignia-card');
       const hero = el('div', 'insignia-hero');
-      hero.append(pickedG.kind === 'armory' ? pieceStage(pickedG) : insigniaSign(pickedG, true));   // ARMORY: the piece itself, on its stage
-      const [name, what, kept] = pickedG.kind === 'armory' ? [pickedG.name, ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (pickedG.key)]?.() ?? '', armoryKept()] : INSIGNIA_CARD[pickedG.kind] ?? [pickedG.name, '', ''];
+      hero.append(pickedG.kind === 'armory' ? pieceStage(pickedG) : insigniaSign(pickedG, true)); // ARMORY: the piece itself, on its stage
+      const [name, what, kept] =
+        pickedG.kind === 'armory'
+          ? [pickedG.name, ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (pickedG.key)]?.() ?? '', armoryKept()]
+          : (INSIGNIA_CARD[pickedG.kind] ?? [pickedG.name, '', '']);
       card.append(hero, el('h3', null, name), el('p', 'insignia-what', what), el('p', 'insignia-kept', kept));
-      card.append(el('p', 'boundline', pickedG.owned ? (pickedG.worn ? 'Owned and worn.' : 'Owned.') : `${stonesText(pickedG.price)}. One per account.`));   // WB13b
+      card.append(
+        el(
+          'p',
+          'boundline',
+          pickedG.owned
+            ? pickedG.worn
+              ? 'Owned and worn.'
+              : 'Owned.'
+            : `${stonesText(pickedG.price)}. One per account.`,
+        ),
+      ); // WB13b
       body.append(card);
-      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches) card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches)
+        card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
       return;
     }
     if (panPick) {
       // EG-E1: a Panoply piece, whole - its name, what the set is, how it is paid, and the week's state
       card = el('div', 'card broker-card broker-panoply-card');
-      card.append(el('h3', null, panPick.name), el('p', 'insignia-what', PANOPLY_CARD[0]), el('p', 'insignia-kept', PANOPLY_CARD[1]));
-      card.append(el('p', 'boundline', panPick.bought ? 'Bought this week.' : panPick.spent ? 'This week\'s piece is bought. Come back next week.' : `${stonesText(EG_SINK_EMBERS)}. One a week.`));
+      card.append(
+        el('h3', null, panPick.name),
+        el('p', 'insignia-what', PANOPLY_CARD[0]),
+        el('p', 'insignia-kept', PANOPLY_CARD[1]),
+      );
+      card.append(
+        el(
+          'p',
+          'boundline',
+          panPick.bought
+            ? 'Bought this week.'
+            : panPick.spent
+              ? "This week's piece is bought. Come back next week."
+              : `${stonesText(EG_SINK_EMBERS)}. One a week.`,
+        ),
+      );
       body.append(card);
-      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches) card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches)
+        card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
       return;
     }
     const o = offers.find((x) => x.slot === pickedSlot) ?? offers[0];
@@ -459,38 +668,55 @@ export function mountBrokerWindow(host, deps) {
       if (r) card.dataset.rarity = r;
       card.append(el('h3', null, nameOf(o.item)));
       const lines = rarityLines(o.item, { sigil: false, set: false });
-      if (lines.length) { const ul = el('ul', 'rarity'); for (const l of lines) ul.append(el('li', null, l)); card.append(ul); }
+      if (lines.length) {
+        const ul = el('ul', 'rarity');
+        for (const l of lines) ul.append(el('li', null, l));
+        card.append(ul);
+      }
       const sb = sigilCard(o.item);
       if (sb) card.append(sb);
       const set = setCard(o.item, deps.wearer ?? null, nameOf);
       if (set) card.append(set);
-      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE));   // SS4: what the stones buy stays with its buyer - said before the sale
+      if (isBound(o.item)) card.append(el('p', 'boundline', BOUND_LINE)); // SS4: what the stones buy stays with its buyer - said before the sale
       body.append(card);
       // U4: on a phone the card stands under the six rows - a press brings it up, rather than leaving it off the screen
-      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches) card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+      if (reveal && globalThis.matchMedia?.('(max-width: 720px)')?.matches)
+        card.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     }
   };
   render();
   host.append(shell);
   // WB9g: the account's insignia asked once as the window opens - the rows say "Buy" until it answers, then the truth
-  if (deps.insigniaLoad) Promise.resolve().then(() => deps.insigniaLoad()).catch(() => null).then(() => render());
+  if (deps.insigniaLoad)
+    Promise.resolve()
+      .then(() => deps.insigniaLoad())
+      .catch(() => null)
+      .then(() => render());
   // EG-E1: the week's Panoply sale asked once as the window opens - the rows say "Buy" until it answers
-  if (deps.panoply?.load) Promise.resolve().then(() => deps.panoply?.load?.()).catch(() => null).then(() => render());
+  if (deps.panoply?.load)
+    Promise.resolve()
+      .then(() => deps.panoply?.load?.())
+      .catch(() => null)
+      .then(() => render());
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit(); }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      exit();
+    }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.broker-win', exit);
   const tick = setInterval(() => render(), BROKER_REPAINT_MS);
-  /** @type {any} */ (tick)?.unref?.();   // a page never waits on it (node's timers would hold a process open)
+  /** @type {any} */ (tick)?.unref?.(); // a page never waits on it (node's timers would hold a process open)
   return {
     repaint: () => render(),
     unmount() {
       if (!alive) return;
       alive = false;
       clearInterval(tick);
-      stopStage();   // ARMORY: the piece's stage with the window
+      stopStage(); // ARMORY: the piece's stage with the window
       globalThis.removeEventListener('keydown', onKey, { capture: true });
       offOutside();
       shell.remove();

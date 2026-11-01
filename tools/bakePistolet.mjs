@@ -44,16 +44,27 @@ export function bakePistolet() {
 }
 
 if (isMain(import.meta.url)) {
-  const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
+  const save = (path, bytes) => {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, bytes);
+  };
   const r = bakePistolet();
   save(OUT.mesh, r.nif);
   save(OUT.texture, r.dds);
   save(OUT.gildedMesh, r.gildedNif);
   save(OUT.gildedTexture, r.gildedDds);
-  const b = r.mesh.bounds, size = [0, 1, 2].map((k) => +(b.max[k] - b.min[k]).toFixed(2));
-  console.log(`the Dwarven Pistolet: ${r.mesh.positions.length / 3} vertices, ${r.mesh.indices.length / 3} triangles, ${r.model.islands.length} islands`);
-  console.log(`  size ${size.join(' x ')} units = ${(size[1] / MW_UNITS_PER_METRE * 100).toFixed(0)} cm long; muzzle at +${b.max[1].toFixed(1)}, butt at ${b.min[1].toFixed(1)}`);
-  for (const [k, p] of Object.entries(OUT)) console.log(`  ${p}  ${({ mesh: r.nif, texture: r.dds, gildedMesh: r.gildedNif, gildedTexture: r.gildedDds })[k].length} bytes`);
+  const b = r.mesh.bounds,
+    size = [0, 1, 2].map((k) => +(b.max[k] - b.min[k]).toFixed(2));
+  console.log(
+    `the Dwarven Pistolet: ${r.mesh.positions.length / 3} vertices, ${r.mesh.indices.length / 3} triangles, ${r.model.islands.length} islands`,
+  );
+  console.log(
+    `  size ${size.join(' x ')} units = ${((size[1] / MW_UNITS_PER_METRE) * 100).toFixed(0)} cm long; muzzle at +${b.max[1].toFixed(1)}, butt at ${b.min[1].toFixed(1)}`,
+  );
+  for (const [k, p] of Object.entries(OUT))
+    console.log(
+      `  ${p}  ${{ mesh: r.nif, texture: r.dds, gildedMesh: r.gildedNif, gildedTexture: r.gildedDds }[k].length} bytes`,
+    );
   const sheet = process.argv.find((a) => a.startsWith('--sheet='))?.slice(8);
   if (sheet) save(sheet, writePng(r.atlas));
 }

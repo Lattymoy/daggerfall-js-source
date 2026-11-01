@@ -160,7 +160,7 @@ test('OW-KIN / OW-WHO on the travel map: the rows keep their kin and Renown, a k
   // made only when its plate is under the pointer, one kept a town); SEAT-TIP's seat card is its guild lines
   assert.match(W, /seaRaidPeerChase, townEcon, state, travelViewBands,/, 'a town\'s card, made only when its plate is asked');
   assert.match(rd('src/scenes/gatherHost.js'), /color: nodeMarkCss\(g\.profession\), dist: d \/ 1000 \} \}\);/, 'a group\'s distance, km');
-  assert.match(rd('src/scenes/travelView.js'), /\.\.\.\(m\.kin \? \{ kin: m\.kin \} : \{\}\), \.\.\.\(m\.lv != null \? \{ lv: m\.lv \} : \{\}\), \.\.\.\(Number\.isFinite\(m\.dist\) \? \{ dist: m\.dist \} : \{\}\), \.\.\.\(m\.hub \? \{ hub: true \} : \{\}\), \.\.\.\(m\.tip \? \{ tip: m\.tip \} : \{\}\)/, 'every field the readout reads is carried through the view');
+  assert.match(rd('src/scenes/travelView.js'), /\.\.\.\(m\.kin \? \{ kin: m\.kin \} : \{\}\),\n\s*\.\.\.\(m\.lv != null \? \{ lv: m\.lv \} : \{\}\),\n\s*\.\.\.\(Number\.isFinite\(m\.dist\) \? \{ dist: m\.dist \} : \{\}\),\n\s*\.\.\.\(m\.hub \? \{ hub: true \} : \{\}\),\n\s*\.\.\.\(m\.tip \? \{ tip: m\.tip \} : \{\}\)/, 'every field the readout reads is carried through the view');
 });
 
 test('OW-WHO travel map legend: the legend speaks for the players the sheet draws - a kin the switches hide leaves it, and all hidden, the travellers\' row too; a press re-says it (mutants: the legend the book\'s, not the sheet\'s; the press leaves the legend stale)', async () => {
@@ -171,7 +171,7 @@ test('OW-WHO travel map legend: the legend speaks for the players the sheet draw
   globalThis.document = { createElement: mk };
   try {
     const leg = mk('div');
-    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _gates: [], _ketches: [], _bounties: [], _revenants: [], _lodes: [], _pois: [], _raids: [], _stars: [], _fissures: [], _quests: [],   // PIN MOVED (STOREFRONT): the season's Brass Fissures too; PIN MOVED (STAR6): the night's fallen stars are the window's too; PIN MOVED (FEUD's merge of main): RVN7c's lairs are the window's too; PIN MOVED (MINE-PERKS): and a Motherlode Sense's Motherlodes; PIN MOVED (POI-2): and the approved POIs' marks
+    const self = { _chrome: { legend: leg }, _party: [], _gate: null, _gates: [], _ketches: [], _bounties: [], _revenants: [], _lodes: [], _witnessed: [], _pois: [], _raids: [], _stars: [], _fissures: [], _quests: [],   // PIN MOVED (WITNESS-MAP): and the witnessed ground's pixels; PIN MOVED (STOREFRONT): the season's Brass Fissures too; PIN MOVED (STAR6): the night's fallen stars are the window's too; PIN MOVED (FEUD's merge of main): RVN7c's lairs are the window's too; PIN MOVED (MINE-PERKS): and a Motherlode Sense's Motherlodes; PIN MOVED (POI-2): and the approved POIs' marks
       _trav: [{ name: 'Fren', kin: 'friend', lv: 3 }, { name: 'Gilda', kin: 'guild', lv: 3 }],
       _top: null, _info: null, _phase: 'map', _renderKey() {} };   // PIN MOVED (KETCH-EVERYWHERE): the Sky-Ketch's rings a list, every station's (`_ketches`)
     const said = () => leg.children.filter((n) => n.className === 'hmlegtext').map((n) => n.textContent);

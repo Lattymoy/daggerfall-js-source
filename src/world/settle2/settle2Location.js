@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): A WORLD 2.0 TOWN AS THE GAME READS A PLACE - a
+// A WORLD 2.0 TOWN AS THE GAME READS A PLACE - a
 // location cloned from a template's fields (as the capitals' and the countryside's are), its grid the town's 64 blocks
 // (settle2Blocks.js), its buildings' records its directory, its map id the town's (lane 0x342), its index its own lane;
 // and its row for the world's places (world/worldWide/worldPlaces.js). Its ground is the region's: `settle2.ground` tells

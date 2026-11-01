@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 UNDO AND REDO (bible/03-World/World-2-Canon.md, "Editing"): the editor's documents are frozen values, so a step
+// WG2 UNDO AND REDO ("Editing"): the editor's documents are frozen values, so a step
 // back is the document before - nothing is undone by hand, and nothing a later step changed can leak into an earlier
 // one. A new change after an undo drops the steps that were undone. The stack keeps LIMIT steps.
 export const LIMIT = 200;

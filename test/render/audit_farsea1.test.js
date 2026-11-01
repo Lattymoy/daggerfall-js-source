@@ -42,7 +42,7 @@ function water({ d, h, L, sky, fog, fogRange, texel, openColor }) {
   const fns = glslFunctions(FS_W, {
     texelFetch: () => [0, 0, 0, 0], textureLod: sample, texture: sample, textureGrad: () => [0, 0, 0, 1],
     dFdx: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01), dFdy: (x) => (Array.isArray(x) ? x.map(() => 0.01) : 0.01),
-    vWorldPos: wp, vLocalXZ: [10.5, 10.5], vDepth: [4, 4], vCut: -1, vGrow: 1,   // PIN MOVED (WATER-LEVEL): the sheet's depths a pair, its cut beside them; no corner table
+    vWorldPos: wp, vLocalXZ: [10.5, 10.5], vDepth: [4, 4], vCut: -1, vGrow: 1,
     uTileSize: 6.4, uTileDim: 128, uOpen: 1, uOpenColor: openColor,
     uTime: 0, uWindDir: [0, 1], uWindStrength: 0, uSwell: 0, uRain: 0,
     uLightDir: L.dir, uAmbient: L.amb, uSunScale: L.sun, uSunColor: L.sunColor, uMoonDir: L.moonDir, uMoonScale: L.moon, uMoonColor: L.moonColor,

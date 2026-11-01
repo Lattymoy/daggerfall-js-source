@@ -1,320 +1,320 @@
 [
- {
-  "name": "TB-the-ring-unread",
-  "file": "src/world/townOutline.js",
-  "old": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-corner-open",
-  "file": "src/world/townOutline.js",
-  "old": "(!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK)",
-  "new": "(!border(i) ? n : TOWN_OUTLINE_BLOCK)",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-grid-unkept",
-  "file": "src/world/townOutline.js",
-  "old": "  ed.wallTook = names;",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-a-composite-taken",
-  "file": "src/world/townOutline.js",
-  "old": "const CLASSIC_WALL = /^WALLAA(0\\d|1[01])\\.RMB$/i;",
-  "new": "const CLASSIC_WALL = /^WALLAA/i;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-a-wall-inside-taken",
-  "file": "src/world/townOutline.js",
-  "old": "CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)",
-  "new": "CLASSIC_WALL.test(String(n ?? '')) : true",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-a-capital-walled",
-  "file": "src/world/townOutline.js",
-  "old": "  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false;",
-  "new": "  if (!ed?.blockNames || !blocksFile) return false;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-outline-unwalled",
-  "file": "src/world/townOutline.js",
-  "old": "walled: true, bay: true",
-  "new": "walled: false, bay: true",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-edit-unregistered",
-  "file": "src/world/townOutline.js",
-  "old": "  registerLocationEdit(wallBayCity);",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-clone-unwalled",
-  "file": "src/world/townOutline.js",
-  "old": "  dfLocation = unwalledLocation(dfLocation);   // TS7: a Bay city's template is its own ring",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-template-walled",
-  "file": "src/world/townShape.js",
-  "old": "  if (!ed?.wallTook) return loc;",
-  "new": "  return loc;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-arena-reader-walled",
-  "file": "src/world/arenaLocations.js",
-  "old": "[...(rows ?? [])].map(unwalledLocation).filter(",
-  "new": "[...(rows ?? [])].filter(",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-country-reader-walled",
-  "file": "src/world/tamrielCountry.js",
-  "old": "[...(rows ?? [])].map(unwalledLocation).filter(",
-  "new": "[...(rows ?? [])].filter(",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-capital-reader-walled",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "return [...(rows ?? [])].map(unwalledLocation).filter(",
-  "new": "return [...(rows ?? [])].filter(",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-catalogue-walled",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "for (const n of unwalledLocation(l).exterior?.exteriorData?.blockNames ?? []) {",
-  "new": "for (const n of l.exterior?.exteriorData?.blockNames ?? []) {",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-frames-unturned",
-  "file": "src/world/townWalls.js",
-  "old": "out: [-sin, cos] });",
-  "new": "out: [0, 1] });",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-frame-offset-unturned",
-  "file": "src/world/townWalls.js",
-  "old": "at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos]",
-  "new": "at: [sx + lx, sz + lz]",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-turn-unread",
-  "file": "src/world/townWalls.js",
-  "old": "YRotation: (it.r.YRotation ?? 0) + turn",
-  "new": "YRotation: it.r.YRotation ?? 0",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-marker-carried",
-  "file": "src/world/townWalls.js",
-  "old": ".filter((t) => !(t.TextureArchive === 199 && t.TextureRecord === 10))",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-extra-unread",
-  "file": "src/world/townWalls.js",
-  "old": "more = extra?.(f.name) ?? null;",
-  "new": "more = null;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-classic-unread",
-  "file": "src/world/townWalls.js",
-  "old": "const own = classicOf?.(f.name)?.rmbBlock ?? null,",
-  "new": "const own = null,",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-nearest-gate-unread",
-  "file": "src/world/townWalls.js",
-  "old": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
-  "new": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[2] - b[2] || a[1] - b[1]);",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ],
-  "note": "Re-aimed by content (AUDIT FB1028): the line names the street's gates (B2) / the wall's growth (B5)."
- },
- {
-  "name": "TB-the-group-unmoved",
-  "file": "src/world/townWalls.js",
-  "old": "      while (d < GATE_CLEAR.most && !group.every((it) => clear(it, 0, d))) d += GATE_CLEAR.step;",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-side-unread",
-  "file": "src/world/townWalls.js",
-  "old": "        const [x, z] = place([it.at[0] + da, it.at[1] + side * db]);",
-  "new": "        const [x, z] = place([it.at[0] + da, it.at[1] + db]);",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-fallback-unlaid",
-  "file": "src/world/townWalls.js",
-  "old": "const [da, db] = shift ?? nearestClear((a, b) => clear(it, a, b));",
-  "new": "const [da, db] = [0, d];",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-reach-unread",
-  "file": "src/world/townWalls.js",
-  "old": "if (cells[gz * W + gx] && Math.hypot(cx - x, cz - z) < reach) return false;",
-  "new": "if (cells[gz * W + gx] && Math.hypot(cx - x, cz - z) < 0) return false;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-houses-unblocked",
-  "file": "src/world/townWalls.js",
-  "old": "if (a[y * S + x] && a[y * S + x] !== 0xfb) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
-  "new": "if (false) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-ground-flats-blocked",
-  "file": "src/world/townWalls.js",
-  "old": "if (a[y * S + x] && a[y * S + x] !== 0xfb) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
-  "new": "if (a[y * S + x]) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-carrier-bare",
-  "file": "src/world/townWalls.js",
-  "old": "open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf)) : null);",
-  "new": "open, null);",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-lazy-wall-unmade",
-  "file": "src/world/townWalls.js",
-  "old": "  const wall = kept.of();\n  return wall ?",
-  "new": "  const wall = kept.wall;\n  return wall ?",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-carriage-switch-unread",
-  "file": "src/world/immersiveTravelGates.js",
-  "old": "  if (!_carriages?.isOn()) return null;",
-  "new": "  if (!_carriages) return null;",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-carrier-no-carriage-town",
-  "file": "src/world/immersiveTravelGates.js",
-  "old": " || isWallCarrier(n));",
-  "new": ");",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-carrier-read",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "const blockIndex = isWallCarrier(name) ? -1 : blocksFile.getBlockIndex(name);",
-  "new": "const blockIndex = blocksFile.getBlockIndex(name);",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-yards-unshut",
-  "file": "src/world/merchantYards/merchantYardSites.js",
-  "old": "  shut?.(nav);   // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)",
-  "new": "",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- },
- {
-  "name": "TB-the-walk-unshared",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "loc, yardShut, () => breather.breathe())",
-  "new": "loc, null, () => breather.breathe())",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ],
-  "note": "Re-aimed by content (IC-STUTTER): the build hands the town's places its breather too."
- },
- {
-  "name": "TB-the-places-unshut",
-  "file": "src/scenes/world.js",
-  "old": "        const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);",
-  "new": "        const g = await stepsBreathing(townGroundSteps(yl, measures, null, townYardsOf(dfLocation)), breathe);",
-  "note": "Re-aimed by content (IC-STUTTER): the ground walked a step at a time through the build's breather.",
-  "tests": [
-   "test/world/baywalls.test.js"
-  ]
- }
+  {
+    "name": "TB-the-ring-unread",
+    "file": "src/world/townOutline.js",
+    "old": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-corner-open",
+    "file": "src/world/townOutline.js",
+    "old": "  ed.blockNames = names.map((n, i) => (!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK));",
+    "new": "  ed.blockNames = names.map((n, i) => (!border(i) ? n : TOWN_OUTLINE_BLOCK));",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-grid-unkept",
+    "file": "src/world/townOutline.js",
+    "old": "  ed.wallTook = names;",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-a-composite-taken",
+    "file": "src/world/townOutline.js",
+    "old": "const CLASSIC_WALL = /^WALLAA(0\\d|1[01])\\.RMB$/i;",
+    "new": "const CLASSIC_WALL = /^WALLAA/i;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-a-wall-inside-taken",
+    "file": "src/world/townOutline.js",
+    "old": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;",
+    "new": "  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : true))) return false;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-a-capital-walled",
+    "file": "src/world/townOutline.js",
+    "old": "  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false; // a grid read again after its edit has no wall ring left: refused below",
+    "new": "  if (!ed?.blockNames || !blocksFile) return false; // a grid read again after its edit has no wall ring left: refused below",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-outline-unwalled",
+    "file": "src/world/townOutline.js",
+    "old": "  dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: true, bay: true });",
+    "new": "  dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: false, bay: true });",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-edit-unregistered",
+    "file": "src/world/townOutline.js",
+    "old": "  registerLocationEdit(wallBayCity);",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-clone-unwalled",
+    "file": "src/world/townOutline.js",
+    "old": "  dfLocation = unwalledLocation(dfLocation); // TS7: a Bay city's template is its own ring\n  const ed = dfLocation?.exterior?.exteriorData;",
+    "new": "  const ed = dfLocation?.exterior?.exteriorData;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-template-walled",
+    "file": "src/world/townShape.js",
+    "old": "  if (!ed?.wallTook) return loc;",
+    "new": "  return loc;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-arena-reader-walled",
+    "file": "src/world/arenaLocations.js",
+    "old": "  const list = [...(rows ?? [])]\n    .map(unwalledLocation)\n    .filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l))); // TS7",
+    "new": "  const list = [...(rows ?? [])].filter(\n    (l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)),\n  ); // TS7",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-country-reader-walled",
+    "file": "src/world/tamrielCountry.js",
+    "old": "[...(rows ?? [])].map(unwalledLocation).filter(",
+    "new": "[...(rows ?? [])].filter(",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-capital-reader-walled",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "return [...(rows ?? [])].map(unwalledLocation).filter(",
+    "new": "return [...(rows ?? [])].filter(",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-catalogue-walled",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "for (const n of unwalledLocation(l).exterior?.exteriorData?.blockNames ?? []) {",
+    "new": "for (const n of l.exterior?.exteriorData?.blockNames ?? []) {",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-frames-unturned",
+    "file": "src/world/townWalls.js",
+    "old": "out: [-sin, cos] });",
+    "new": "out: [0, 1] });",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-frame-offset-unturned",
+    "file": "src/world/townWalls.js",
+    "old": "at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos]",
+    "new": "at: [sx + lx, sz + lz]",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-turn-unread",
+    "file": "src/world/townWalls.js",
+    "old": "YRotation: (it.r.YRotation ?? 0) + turn",
+    "new": "YRotation: it.r.YRotation ?? 0",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-marker-carried",
+    "file": "src/world/townWalls.js",
+    "old": ".filter((t) => !(t.TextureArchive === 199 && t.TextureRecord === 10))",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-extra-unread",
+    "file": "src/world/townWalls.js",
+    "old": "more = extra?.(f.name) ?? null;",
+    "new": "more = null;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-classic-unread",
+    "file": "src/world/townWalls.js",
+    "old": "const own = classicOf?.(f.name)?.rmbBlock ?? null,",
+    "new": "const own = null,",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-nearest-gate-unread",
+    "file": "src/world/townWalls.js",
+    "old": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);",
+    "new": "pairs.sort((a, b) => street(a[1]) - street(b[1]) || a[2] - b[2] || a[1] - b[1]);",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT FB1028): the line names the street's gates (B2) / the wall's growth (B5)."
+  },
+  {
+    "name": "TB-the-group-unmoved",
+    "file": "src/world/townWalls.js",
+    "old": "      while (d < GATE_CLEAR.most && !group.every((it) => clear(it, 0, d))) d += GATE_CLEAR.step;",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-side-unread",
+    "file": "src/world/townWalls.js",
+    "old": "        const [x, z] = place([it.at[0] + da, it.at[1] + side * db]);",
+    "new": "        const [x, z] = place([it.at[0] + da, it.at[1] + db]);",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-fallback-unlaid",
+    "file": "src/world/townWalls.js",
+    "old": "const [da, db] = shift ?? nearestClear((a, b) => clear(it, a, b));",
+    "new": "const [da, db] = [0, d];",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-reach-unread",
+    "file": "src/world/townWalls.js",
+    "old": "if (cells[gz * W + gx] && Math.hypot(cx - x, cz - z) < reach) return false;",
+    "new": "if (cells[gz * W + gx] && Math.hypot(cx - x, cz - z) < 0) return false;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-houses-unblocked",
+    "file": "src/world/townWalls.js",
+    "old": "if (a[y * S + x] && a[y * S + x] !== 0xfb) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
+    "new": "if (false) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-ground-flats-blocked",
+    "file": "src/world/townWalls.js",
+    "old": "if (a[y * S + x] && a[y * S + x] !== 0xfb) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
+    "new": "if (a[y * S + x]) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-carrier-bare",
+    "file": "src/world/townWalls.js",
+    "old": "open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf)) : null);",
+    "new": "open, null);",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-lazy-wall-unmade",
+    "file": "src/world/townWalls.js",
+    "old": "  const wall = kept.of();\n  return wall ?",
+    "new": "  const wall = kept.wall;\n  return wall ?",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-carriage-switch-unread",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "  if (!_carriages?.isOn()) return null;",
+    "new": "  if (!_carriages) return null;",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-carrier-no-carriage-town",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some(\n    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),",
+    "new": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) =>\n    IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`),",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-carrier-read",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      const blockIndex = isWallCarrier(name) ? -1 : blocksFile.getBlockIndex(name);   // TS7: a wall's carrier never read here - open ground that shapes none, its wall made when it is laid out",
+    "new": "      const blockIndex = blocksFile.getBlockIndex(name);   // TS7: a wall's carrier never read here - open ground that shapes none, its wall made when it is laid out",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-yards-unshut",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  shut?.(nav); // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)",
+    "new": "",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-walk-unshared",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, yardShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "new": "      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, null, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ],
+    "note": "Re-aimed by content (IC-STUTTER): the build hands the town's places its breather too."
+  },
+  {
+    "name": "TB-the-places-unshut",
+    "file": "src/scenes/world.js",
+    "old": "        const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);",
+    "new": "        const g = await stepsBreathing(townGroundSteps(yl, measures, null, townYardsOf(dfLocation)), breathe);",
+    "note": "Re-aimed by content (IC-STUTTER): the ground walked a step at a time through the build's breather.",
+    "tests": [
+      "test/world/baywalls.test.js"
+    ]
+  }
 ]

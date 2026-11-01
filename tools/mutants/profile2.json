@@ -12,8 +12,8 @@
   {
     "name": "P2-live-character-without-race",
     "file": "src/ui/profileBadge.js",
-    "old": "if (!entity || typeof entity.race !== 'string' || !entity.race) return null;",
-    "new": "if (!entity) return null;",
+    "old": "  if (!entity || typeof entity.race !== 'string' || !entity.race) return null;",
+    "new": "  if (!entity) return null;",
     "tests": [
       "test/net/profile2_pause_profile.test.js"
     ]

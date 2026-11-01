@@ -47,8 +47,8 @@
   {
     "name": "LW4b-foe-level",
     "file": "src/scenes/roadFights.js",
-    "old": "level: enc.level, allied: false, gender: 'male' }))",
-    "new": "level: 1, allied: false, gender: 'male' }))",
+    "old": "            level: enc.level,",
+    "new": "            level: 1,",
     "tests": [
       "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW4b-ally-nameless",
     "file": "src/scenes/roadFights.js",
-    "old": "          if (rec.entity) { rec.entity.name = m.name; rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
-    "new": "          if (rec.entity) { rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
+    "old": "            rec.entity.name = m.name;\n            rec.entity.team = 'PlayerAlly';",
+    "new": "            rec.entity.team = 'PlayerAlly';",
     "tests": [
       "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW4b-fallen-unturned",
     "file": "src/scenes/roadFights.js",
-    "old": "      fell(rec.living.res, f.trip, t);   // cut down beside the player: the lives read it",
-    "new": "      void fell;   // cut down beside the player: the lives read it",
+    "old": "      fell(rec.living.res, f.trip, t); // cut down beside the player: the lives read it",
+    "new": "      void fell; // cut down beside the player: the lives read it",
     "tests": [
       "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW4b-walk-on-kept",
     "file": "src/scenes/roadFights.js",
-    "old": "        const walkedOn = f.state === 'won' && t >= f.enc.t1;",
-    "new": "        const walkedOn = false;",
+    "old": "        const walkedOn = f.state === 'won' && t >= f.enc.t1; // the halt over: the party walks on, its own again",
+    "new": "        const walkedOn = false; // the halt over: the party walks on, its own again",
     "tests": [
       "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW4b-clear-kept",
     "file": "src/scenes/roadFights.js",
-    "old": "    clear() { for (const id of [...fights.keys()]) letGo(id); },",
-    "new": "    clear() { fights.clear(); },",
+    "old": "      for (const id of [...fights.keys()]) letGo(id);",
+    "new": "      fights.clear();",
     "tests": [
       "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]

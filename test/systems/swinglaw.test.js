@@ -163,7 +163,7 @@ test('SWING-LAW: one law, every clock that times the player\'s swing - the leaf 
   assert.match(rd('src/combat/swingLaw.js'), /^installSwingLaw\(\);$/m, 'registered as the module loads - called, not a comment');
   assert.match(rd('src/combat/weapon/weaponRig.js'), /^import '\.\.\/swingLaw\.js';/m, 'the one maker of a swing\'s ctx imports it');
   assert.doesNotMatch(rd('src/scenes/shared.js'), /installSwingLaw/, 'no second home at boot');
-  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /return swingFrameSeconds\(blend, \{ heft: swingHeft\(weight, liveStrength\), handling: swingHandling\(weaponType, hands === 'Both', shortBlade\) \}\);/, 'AUDIT PRE-MERGE 0929 S3: RR\'s blend has no weight - the heft is the port\'s');
+  assert.match(rd('src/systems/roleplayRealism/rrRealism.js'), /return swingFrameSeconds\(blend, \{\n\s*heft: swingHeft\(weight, liveStrength\),\n\s*handling: swingHandling\(weaponType, hands === 'Both', shortBlade\),\n\s*\}\);/, 'AUDIT PRE-MERGE 0929 S3: RR\'s blend has no weight - the heft is the port\'s');
   assert.match(rd('src/systems/roleplayRealismItems/rriRealism.js'), /return swingFrameSeconds\(adjustedSpeed, \{ handling: swingHandling\(weaponType, twoHanded, shortBlade\) \}\);/);   // PIN MOVED (BAL10): both arms hand the short blade's handling on
   for (const [f, re] of [
     ['src/characters/weaponStates.js', /getMeleeWeaponAnimTime\(liveSpeed, animCtx\)/],   // the machine

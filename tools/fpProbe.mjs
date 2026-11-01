@@ -15,7 +15,9 @@ import { writeFileSync } from 'node:fs';
 const server = await createServer({ server: { port: 5199, strictPort: true, cors: true } });
 await server.listen();
 
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 page.on('console', (m) => console.log('[page]', m.text()));
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
@@ -87,8 +89,13 @@ const sweep = await page.evaluate(() => {
   for (const s of states) {
     for (let f = 0; f < 5; f++) {
       const r = window.__probeFrame(s, f);
-      out.push([s, f, +r.coveredFrac.toFixed(5), +r.centerFrac.toFixed(4),
-        r.bbox ? [+r.bbox.x0.toFixed(2), +r.bbox.x1.toFixed(2), +r.bbox.y0.toFixed(2), +r.bbox.y1.toFixed(2)] : null]);
+      out.push([
+        s,
+        f,
+        +r.coveredFrac.toFixed(5),
+        +r.centerFrac.toFixed(4),
+        r.bbox ? [+r.bbox.x0.toFixed(2), +r.bbox.x1.toFixed(2), +r.bbox.y0.toFixed(2), +r.bbox.y1.toFixed(2)] : null,
+      ]);
       if (s === 'Idle') break;
     }
   }
@@ -97,9 +104,15 @@ const sweep = await page.evaluate(() => {
 let fails = 0;
 for (const [s, f, cov, center, bbox] of sweep) {
   console.log('sweep', JSON.stringify([s, f, cov, center, bbox]));
-  if (cov === 0) { console.log(`FAIL: ${s} frame ${f} rendered zero viewmodel pixels`); fails++; }
+  if (cov === 0) {
+    console.log(`FAIL: ${s} frame ${f} rendered zero viewmodel pixels`);
+    fails++;
+  }
 }
-if (sweep[0][2] > 0.25) { console.log('FAIL: idle viewmodel covers >25% of the screen (body-fill regression)'); fails++; }
+if (sweep[0][2] > 0.25) {
+  console.log('FAIL: idle viewmodel covers >25% of the screen (body-fill regression)');
+  fails++;
+}
 
 const shots = [
   ['Idle', 0, 'fp-idle'],

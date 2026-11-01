@@ -2,8 +2,8 @@
   {
     "name": "STAFF-VIEW1-gate-no-glyphs",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const on = () => !!follow.panel() && staffLineActs(glyphs()).length > 0;",
-    "new": "const on = () => !!follow.panel();",
+    "old": "  const on = () => !!follow.panel() && staffLineActs(glyphs()).length > 0;",
+    "new": "  const on = () => !!follow.panel();",
     "why": "a player's page or a Dungeon Master's tagged once a panel spoke",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-VIEW1-gate-no-panel",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const on = () => !!follow.panel() && staffLineActs(glyphs()).length > 0;",
-    "new": "const on = () => staffLineActs(glyphs()).length > 0;",
+    "old": "  const on = () => !!follow.panel() && staffLineActs(glyphs()).length > 0;",
+    "new": "  const on = () => staffLineActs(glyphs()).length > 0;",
     "why": "staff tagged before any Staff Panel spoke on the page",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-VIEW1-off-hides-nothing",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!on()) { if (wasOn) { wasOn = false; layer?.hide(); if (flat?.isOpen()) flat.toggle(); } return; }",
-    "new": "if (!on()) { wasOn = false; return; }",
+    "old": "        if (wasOn) {\n          wasOn = false;\n          layer?.hide();\n          if (flat?.isOpen()) flat.toggle();\n        }",
+    "new": "        wasOn = false;",
     "why": "the view turned off leaves its tags standing",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-VIEW1-no-minute-ask",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!wasOn) { wasOn = true; ask(); } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();",
-    "new": "if (!wasOn) { wasOn = true; ask(); }",
+    "old": "      } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();",
+    "new": "      }",
     "why": "the flags never asked again while on",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-VIEW1-no-turn-on-ask",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!wasOn) { wasOn = true; ask(); } else if",
-    "new": "if (!wasOn) { wasOn = true; } else if",
+    "old": "        ask();\n      } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();",
+    "new": "      } else if (now() - askedAt >= STAFF_TAGS_ASK_MS) ask();",
     "why": "the flags not asked as the view turns on",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-VIEW1-locked-reads-room",
     "file": "src/scenes/staffViewHost.js",
-    "old": "(follow.locked() ? follow.peers() : follow.main()?.drawable?.() ?? [])",
-    "new": "(follow.main()?.drawable?.() ?? [])",
+    "old": "  const source = () => /** @type {any[]} */ (follow.locked() ? follow.peers() : (follow.main()?.drawable?.() ?? []));",
+    "new": "  const source = () => /** @type {any[]} */ (follow.main()?.drawable?.() ?? []);",
     "why": "a locked follow tags the host's own (left) room",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-VIEW1-no-distance-cut",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (r <= dist) near.push({ d, head, r });",
-    "new": "near.push({ d, head, r });",
+    "old": "        if (r <= dist) near.push({ d, head, r });",
+    "new": "        near.push({ d, head, r });",
     "why": "every player received tagged on the ground, whatever the distance",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-VIEW1-distance-unread",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const dist = follow.tags()?.dist ?? NAMEPLATE_DIST;",
-    "new": "const dist = NAMEPLATE_DIST;",
+    "old": "      const dist = follow.tags()?.dist ?? NAMEPLATE_DIST;",
+    "new": "      const dist = NAMEPLATE_DIST;",
     "why": "the panel's nameplate distance unread",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-VIEW1-no-cap",
     "file": "src/scenes/staffViewHost.js",
-    "old": "for (const { d, head } of near.slice(0, STAFF_TAGS_MAX)) {",
-    "new": "for (const { d, head } of near) {",
+    "old": "      for (const { d, head } of near.slice(0, STAFF_TAGS_MAX)) {",
+    "new": "      for (const { d, head } of near) {",
     "why": "no cap of 32",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-VIEW1-no-more",
     "file": "src/scenes/staffViewHost.js",
-    "old": "layer.render(crowded(tagged), Math.max(0, near.length - STAFF_TAGS_MAX));",
-    "new": "layer.render(crowded(tagged), 0);",
+    "old": "      layer.render(crowded(tagged), Math.max(0, near.length - STAFF_TAGS_MAX));",
+    "new": "      layer.render(crowded(tagged), 0);",
     "why": "the players past the cap unsaid",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-VIEW1-eye-own-tagged",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!p.front || p.depth < 1) continue;",
-    "new": "if (!p.front) continue;",
+    "old": "        if (!p.front || p.depth < 1) continue; // behind the eye, or the eye's own (a follow's target, whose eyes the camera is)",
+    "new": "        if (!p.front) continue; // behind the eye, or the eye's own (a follow's target, whose eyes the camera is)",
     "why": "the followed player, whose eyes the camera is, tagged over the screen",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-VIEW1-covered-shown",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (covered || !proj || !view || !eye || !(w > 0) || !(h > 0)) { layer.hide(); return; }",
-    "new": "if (!proj || !view || !eye || !(w > 0) || !(h > 0)) { layer.hide(); return; }",
+    "old": "      if (covered || !proj || !view || !eye || !(w > 0) || !(h > 0)) {",
+    "new": "      if (!proj || !view || !eye || !(w > 0) || !(h > 0)) {",
     "why": "tags drawn over a window",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-VIEW1-no-crowd",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const g = groups.find((o) => Math.hypot(o.x - p.x, o.y - p.y) <= STAFF_CROWD_PX);",
-    "new": "const g = null;",
+    "old": "    const g = groups.find((o) => Math.hypot(o.x - p.x, o.y - p.y) <= STAFF_CROWD_PX);",
+    "new": "    const g = null;",
     "why": "crowded tags never group",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-VIEW1-room-word-skipped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const own = okSub(d?.sub);",
-    "new": "const own = null;",
+    "old": "    const own = okSub(d?.sub);",
+    "new": "    const own = null;",
     "why": "the room's own word on the account skipped",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-VIEW1-book-before-links",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const s = okSub(l?.peers?.get?.(id)?.sub) ?? okSub(l?.hubOnline?.get?.(id)?.sub);",
-    "new": "const s = okSub(tv.get(id)?.sub) ?? okSub(l?.peers?.get?.(id)?.sub) ?? okSub(l?.hubOnline?.get?.(id)?.sub);",
+    "old": "      const s = okSub(l?.peers?.get?.(id)?.sub) ?? okSub(l?.hubOnline?.get?.(id)?.sub);",
+    "new": "      const s = okSub(tv.get(id)?.sub) ?? okSub(l?.peers?.get?.(id)?.sub) ?? okSub(l?.hubOnline?.get?.(id)?.sub);",
     "why": "the travellers asked before the chat links",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-VIEW1-hub-list-skipped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "?? okSub(l?.hubOnline?.get?.(id)?.sub);",
-    "new": "?? null;",
+    "old": "      const s = okSub(l?.peers?.get?.(id)?.sub) ?? okSub(l?.hubOnline?.get?.(id)?.sub);",
+    "new": "      const s = okSub(l?.peers?.get?.(id)?.sub) ?? null;",
     "why": "the hub's list of everyone unread",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-VIEW1-book-skipped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "return okSub(tv.get(id)?.sub) ?? known.get(id) ?? null;",
-    "new": "return known.get(id) ?? null;",
+    "old": "    return okSub(tv.get(id)?.sub) ?? known.get(id) ?? null;",
+    "new": "    return known.get(id) ?? null;",
     "why": "the region's travellers unread",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "STAFF-VIEW1-known-forgotten",
     "file": "src/scenes/staffViewHost.js",
-    "old": "    known.set(id, sub);\n",
-    "new": "",
+    "old": "    known.set(id, sub);\n    chosen(id, sub, name);",
+    "new": "    chosen(id, sub, name);",
     "why": "a search's account forgotten - searched again each click",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "STAFF-VIEW1-find-by-name",
     "file": "src/scenes/staffViewHost.js",
-    "old": ".find((r) => r?.id === finding.id);",
-    "new": ".find((r) => r?.name === finding.name);",
+    "old": "    const row = (Array.isArray(f.l) ? f.l : []).find((r) => r?.id === finding.id);",
+    "new": "    const row = (Array.isArray(f.l) ? f.l : []).find((r) => r?.name === finding.name);",
     "why": "a search's row matched by the name, not the socket",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "STAFF-VIEW1-stale-no-taken",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!sub && f === finding.was) return false;",
-    "new": "if (false) return false;",
+    "old": "    if (!sub && f === finding.was) return false;",
+    "new": "    if (false) return false;",
     "why": "a no from before the ask taken for the answer",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-VIEW1-stale-yes-refused",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!sub && f === finding.was) return false;",
-    "new": "if (f === finding.was) return false;",
+    "old": "    if (!sub && f === finding.was) return false;",
+    "new": "    if (f === finding.was) return false;",
     "why": "a yes the hub already gave waits for an ask",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-VIEW1-no-id-follows-name",
     "file": "src/scenes/staffViewHost.js",
-    "old": "    if (sub) { chosen(id, sub, name); return; }\n    if (!search(id, name)) say(noAccount(name));",
-    "new": "    if (sub) { chosen(id, sub, name); return; }\n    if (!search(id, name)) go(name, name);",
+    "old": "    if (!search(id, name)) say(noAccount(name));",
+    "new": "    if (!search(id, name)) go(name, name);",
     "why": "no account: followed by the name",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-VIEW1-no-id-unsaid",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!sub) { say(noAccount(name)); return true; }",
-    "new": "if (!sub) return true;",
+    "old": "    if (!sub) {\n      say(noAccount(name));\n      return true;\n    }",
+    "new": "    if (!sub) return true;",
     "why": "the hub's no unsaid",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-VIEW1-find-wait-forever",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (finding && !answered() && now() - finding.at >= STAFF_FIND_WAIT_MS) { const { name } = finding; finding = null; say(noAccount(name)); }",
-    "new": "if (finding) answered();",
+    "old": "      if (finding && !answered() && now() - finding.at >= STAFF_FIND_WAIT_MS) {\n        const { name } = finding;\n        finding = null;\n        say(noAccount(name));\n      }",
+    "new": "      if (finding) answered();",
     "why": "a search with no answer waits for ever, unsaid",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "STAFF-VIEW1-find-never-asked",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!answered()) hub.askFind(q);",
-    "new": "answered();",
+    "old": "    if (!answered()) hub.askFind(q);",
+    "new": "    answered();",
     "why": "the hub's search never asked",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "STAFF-VIEW1-find-asked-answered",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!answered()) hub.askFind(q);",
-    "new": "answered(); hub.askFind(q);",
+    "old": "    if (!answered()) hub.askFind(q);",
+    "new": "    answered();\n    hub.askFind(q);",
     "why": "the hub asked again for a name it has answered",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "STAFF-VIEW1-act-to-star",
     "file": "src/scenes/staffViewHost.js",
-    "old": "win.postMessage({ dfoStaff: 'act', act: 'follow', sub, name: (name || sub).slice(0, 64) }, origin);",
-    "new": "win.postMessage({ dfoStaff: 'act', act: 'follow', sub, name: (name || sub).slice(0, 64) }, '*');",
+    "old": "    win.postMessage({ dfoStaff: 'act', act: 'follow', sub, name: (name || sub).slice(0, 64) }, origin);",
+    "new": "    win.postMessage({ dfoStaff: 'act', act: 'follow', sub, name: (name || sub).slice(0, 64) }, '*');",
     "why": "the act posted to any origin",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "STAFF-VIEW1-act-without-follow",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!follow.follow(sub, hint)) return;",
-    "new": "follow.follow(sub, hint);",
+    "old": "    if (!follow.follow(sub, hint)) return;",
+    "new": "    follow.follow(sub, hint);",
     "why": "the card asked of the panel for a follow that did not take",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "STAFF-VIEW1-act-null-origin",
     "file": "src/scenes/staffViewHost.js",
-    "old": "!origin || origin === 'null' ||",
-    "new": "!origin ||",
+    "old": "    if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function') return;",
+    "new": "    if (typeof origin !== 'string' || !origin || typeof win.postMessage !== 'function') return;",
     "why": "an act posted to an opaque origin",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "STAFF-VIEW1-shift-m-players",
     "file": "src/scenes/staffViewHost.js",
-    "old": "|| e.isTrusted !== true || !on()) return false;",
-    "new": "|| e.isTrusted !== true) return false;",
+    "old": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true || !on())\n        return false;",
+    "new": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true) return false;",
     "why": "a player's Shift+M taken from the automap",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "STAFF-VIEW1-shift-m-untrusted",
     "file": "src/scenes/staffViewHost.js",
-    "old": "e.metaKey || e.isTrusted !== true ||",
-    "new": "e.metaKey ||",
+    "old": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true || !on())\n        return false;",
+    "new": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || !on()) return false;",
     "why": "a page script's Shift+M toggles the view",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "STAFF-VIEW1-shift-m-chord",
     "file": "src/scenes/staffViewHost.js",
-    "old": "e.ctrlKey || e.altKey || e.metaKey",
-    "new": "e.ctrlKey || e.metaKey",
+    "old": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.isTrusted !== true || !on())\n        return false;",
+    "new": "      if (e?.code !== 'KeyM' || !e.shiftKey || e.ctrlKey || e.metaKey || e.isTrusted !== true || !on()) return false;",
     "why": "Shift+Alt+M taken",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -322,7 +322,7 @@
   {
     "name": "STAFF-VIEW1-shift-m-indoors",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!up() && follow.mode() !== 'exterior') return false;",
+    "old": "      if (!up() && follow.mode() !== 'exterior') return false;",
     "new": "",
     "why": "indoors Shift+M taken from the automap",
     "tests": [
@@ -332,8 +332,8 @@
   {
     "name": "STAFF-VIEW1-shift-m-repeat",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!e.repeat) { overworld(); ask(); }",
-    "new": "{ overworld(); ask(); }",
+    "old": "      if (!up() && follow.mode() !== 'exterior') return false;\n      if (!e.repeat) {",
+    "new": "      if (!up() && follow.mode() !== 'exterior') return false;\n      {",
     "why": "a held Shift+M toggles the view each repeat",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "STAFF-VIEW1-shift-m-no-ask",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!e.repeat) { overworld(); ask(); }",
-    "new": "if (!e.repeat) { overworld(); }",
+    "old": "        overworld();\n        ask();\n      }",
+    "new": "        overworld();\n      }",
     "why": "Shift+M asks no flags",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "STAFF-VIEW1-monsters-every-staff",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const admin = () => { const g = glyphs(); return Array.isArray(g) && g.includes('dev'); };",
-    "new": "const admin = () => true;",
+    "old": "  const admin = () => {\n    const g = glyphs();\n    return Array.isArray(g) && g.includes('dev');\n  };",
+    "new": "  const admin = () => true;",
     "why": "monsters and their lines for a Moderator",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "STAFF-VIEW1-lines-uncapped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (segs.length >= STAFF_LINES_MAX) break;\n            const o = threatOf(f)",
-    "new": "const o = threatOf(f)",
+    "old": "            if (segs.length >= STAFF_LINES_MAX) break;\n            const o = threatOf(f) && f.ai?.feet ? owners.get(f.puppet) : null;",
+    "new": "            const o = threatOf(f) && f.ai?.feet ? owners.get(f.puppet) : null;",
     "why": "the monster lines uncapped",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "STAFF-VIEW1-lines-on-ground",
     "file": "src/scenes/staffViewHost.js",
-    "old": "      layer.strokes(segs, w, h);\n      const tagged",
-    "new": "      const tagged",
+    "old": "      layer.strokes(segs, w, h);\n      const tagged = [];",
+    "new": "      const tagged = [];",
     "why": "the Overworld's lines left over the ground",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "STAFF-VIEW1-marks-for-players",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!on() || !esp()) { owTags = []; return list; }",
-    "new": "if (!esp()) { owTags = []; return list; }",
+    "old": "      if (!on() || !esp()) {",
+    "new": "      if (!esp()) {",
     "why": "a player's Overworld marks touched",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "STAFF-VIEW1-marks-cut-twice",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!d?.shown || typeof d.id !== 'string' || seen.has(d.id)) continue;",
-    "new": "if (!d?.shown || typeof d.id !== 'string') continue;",
+    "old": "        if (!d?.shown || typeof d.id !== 'string' || seen.has(d.id)) continue;",
+    "new": "        if (!d?.shown || typeof d.id !== 'string') continue;",
     "why": "a player the travel view marked, marked twice",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "STAFF-OW-TAGS-left-on-canvas",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (id == null) { out.push(m); continue; }",
-    "new": "out.push(m); if (id == null) continue;",
+    "old": "        if (id == null) {\n          out.push(m);\n          continue;\n        }",
+    "new": "        out.push(m);\n        if (id == null) continue;",
     "why": "staff's player marks stay on the travel view's canvas as well - under the Travellers switch, a crowd an unclickable 'N travellers', and each player twice",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "STAFF-VIEW1-marks-mask-kept",
     "file": "src/scenes/staffViewHost.js",
-    "old": "name: String(d?.name ?? t?.name ?? m.label ?? '')",
-    "new": "name: String(m.label ?? '')",
+    "old": "          name: String(d?.name ?? t?.name ?? m.label ?? ''),",
+    "new": "          name: String(m.label ?? ''),",
     "why": "the Stranger's mask kept for staff",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "STAFF-VIEW1-marks-mask-unsaid",
     "file": "src/scenes/staffViewHost.js",
-    "old": "concealedPose(d) || /^stranger\\b/.test(m.kind ?? '')",
-    "new": "concealedPose(d)",
+    "old": "          line: staffTagWords(flag, mons?.get(id) ?? 0, concealedPose(d) || /^stranger\\b/.test(m.kind ?? '')),",
+    "new": "          line: staffTagWords(flag, mons?.get(id) ?? 0, concealedPose(d)),",
     "why": "a Stranger's true name worn with no 'concealed'",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -442,8 +442,8 @@
   {
     "name": "STAFF-VIEW1-mark-for-players",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (id == null || !on()) return false;",
-    "new": "if (id == null) return false;",
+    "old": "      if (id == null || !on()) return false;",
+    "new": "      if (id == null) return false;",
     "why": "a player's Overworld mark click taken from the view",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "STAFF-VIEW1-layer-rewrites",
     "file": "src/ui/staffTags.js",
-    "old": "const put = (/** @type {any} */ o, /** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => { if (o[k] !== v) { o[k] = v; write(v); } };",
-    "new": "const put = (/** @type {any} */ o, /** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => { o[k] = v; write(v); };",
+    "old": "    if (o[k] !== v) {\n      o[k] = v;\n      write(v);\n    }",
+    "new": "    o[k] = v;\n    write(v);",
     "why": "a still frame writes every word",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "STAFF-VIEW1-layer-crowd-rebuilt",
     "file": "src/ui/staffTags.js",
-    "old": "    if (b.v.rows === key) return;\n",
-    "new": "",
+    "old": "    if (b.v.rows === key) return;\n    b.v.rows = key;",
+    "new": "    b.v.rows = key;",
     "why": "a crowd's rows rebuilt every frame",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -482,7 +482,7 @@
   {
     "name": "STAFF-VIEW1-layer-lines-redrawn",
     "file": "src/ui/staffTags.js",
-    "old": "if (sig === lineSig) return;",
+    "old": "      if (sig === lineSig) return;",
     "new": "",
     "why": "the lines drawn again every frame",
     "tests": [
@@ -492,8 +492,8 @@
   {
     "name": "STAFF-VIEW1-layer-press-leaks",
     "file": "src/ui/staffTags.js",
-    "old": "n.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.();",
-    "new": "n.addEventListener?.('click', (/** @type {any} */ e) => {",
+    "old": "    n.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.stopPropagation?.();\n      e.preventDefault?.();",
+    "new": "    n.addEventListener?.('click', (/** @type {any} */ e) => {\n      e.preventDefault?.();",
     "why": "a tag's press reaches the world under it",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "STAFF-VIEW1-tags-bad-sub",
     "file": "src/net/staffHook.js",
-    "old": "if (typeof r?.sub !== 'string' || !ID_RE.test(r.sub)) continue;",
-    "new": "if (typeof r?.sub !== 'string') continue;",
+    "old": "    if (typeof r?.sub !== 'string' || !ID_RE.test(r.sub)) continue;",
+    "new": "    if (typeof r?.sub !== 'string') continue;",
     "why": "a row whose account is no account id kept",
     "tests": [
       "test/scenes/staffview1.test.js",
@@ -523,8 +523,8 @@
   {
     "name": "STAFF-VIEW1-tags-oversize",
     "file": "src/net/staffHook.js",
-    "old": "for (const r of m.list.slice(0, TAGS_MAX)) {",
-    "new": "for (const r of m.list) {",
+    "old": "  for (const r of m.list.slice(0, TAGS_MAX)) {",
+    "new": "  for (const r of m.list) {",
     "why": "an oversize list read whole",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -533,8 +533,8 @@
   {
     "name": "STAFF-VIEW1-tags-level",
     "file": "src/net/staffHook.js",
-    "old": "const level = TAG_LEVELS.includes(r.level) ? r.level : null;",
-    "new": "const level = r.level ?? null;",
+    "old": "    const level = TAG_LEVELS.includes(r.level) ? r.level : null;",
+    "new": "    const level = r.level ?? null;",
     "why": "an unknown level kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-VIEW1-tags-why-long",
     "file": "src/net/staffHook.js",
-    "old": "r.why.length <= TAG_WHY_MAX ? r.why : '';",
-    "new": "true ? r.why : '';",
+    "old": "    const why = level && typeof r.why === 'string' && r.why.length <= TAG_WHY_MAX ? r.why : '';",
+    "new": "    const why = level && typeof r.why === 'string' && true ? r.why : '';",
     "why": "words past TAG_WHY_MAX kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "STAFF-VIEW1-tags-watch-loose",
     "file": "src/net/staffHook.js",
-    "old": "const watch = r.watch === true;",
-    "new": "const watch = !!r.watch;",
+    "old": "    const watch = r.watch === true;",
+    "new": "    const watch = !!r.watch;",
     "why": "a watch read from anything truthy",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-VIEW1-tags-dist",
     "file": "src/net/staffHook.js",
-    "old": "return { dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST, esp:",
-    "new": "return { dist: Number(m.dist) || NAMEPLATE_DIST, esp:",
+    "old": "  return {\n    dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST,\n    esp: m.esp !== false,\n    lines: m.lines !== false,\n    flags,\n  };",
+    "new": "  return { dist: Number(m.dist) || NAMEPLATE_DIST, esp: m.esp !== false, lines: m.lines !== false, flags };",
     "why": "a distance Your settings never offers kept",
     "tests": [
       "test/scenes/staffview1.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "STAFF-VIEW1-tags-fold-last",
     "file": "src/net/staffHook.js",
-    "old": "if (rank(level) < rank(had.level)) { had.level = level; had.why = why; }",
-    "new": "{ had.level = level; had.why = why; }",
+    "old": "    if (rank(level) < rank(had.level)) {",
+    "new": "    {",
     "why": "the fold keeps the last row, not the most urgent",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "STAFF-VIEW1-tags-watch-lost",
     "file": "src/net/staffHook.js",
-    "old": "had.watch = had.watch || watch;",
-    "new": "",
+    "old": "    had.watch = had.watch || watch;\n  }",
+    "new": "  }",
     "why": "a watch on a later row lost in the fold",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -594,8 +594,8 @@
   {
     "name": "STAFF-VIEW1-tags-no-list-clears",
     "file": "src/net/staffHook.js",
-    "old": "tags = validTags(m) ?? tags;",
-    "new": "tags = validTags(m);",
+    "old": "      tags = validTags(m) ?? tags; // STAFF-VIEW1: an answer with no list keeps the last",
+    "new": "      tags = validTags(m); // STAFF-VIEW1: an answer with no list keeps the last",
     "why": "an answer with no list clears the last",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "STAFF-VIEW1-tags-foreign",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source !== win || e?.origin !== origin || !m || typeof m.dfoStaff !== 'string') return;",
-    "new": "if (!m || typeof m.dfoStaff !== 'string') return;",
+    "old": "    if (e?.source !== win || e?.origin !== origin || !m || typeof m.dfoStaff !== 'string') return;",
+    "new": "    if (!m || typeof m.dfoStaff !== 'string') return;",
     "why": "another window's or origin's tags answer kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "STAFF-VIEW1-tags-ask-star",
     "file": "src/net/staffHook.js",
-    "old": "askTags: () => post({ dfoStaff: 'tags?' })",
-    "new": "askTags: () => win.postMessage({ dfoStaff: 'tags?' }, '*')",
+    "old": "  return { askToken, panel: () => seen, tags: () => tags, askTags: () => post({ dfoStaff: 'tags?' }), post };",
+    "new": "  return {\n    askToken,\n    panel: () => seen,\n    tags: () => tags,\n    askTags: () => win.postMessage({ dfoStaff: 'tags?' }, '*'),\n    post,\n  };",
     "why": "the tags ask posted to any origin",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -624,8 +624,8 @@
   {
     "name": "STAFF-VIEW1-hook-peers-none",
     "file": "src/net/staffHook.js",
-    "old": "peers: () => eye?.drawable?.() ?? [],",
-    "new": "peers: () => [],",
+    "old": "    peers: () => eye?.drawable?.() ?? [],",
+    "new": "    peers: () => [],",
     "why": "the followed room's players never handed to the staff view",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -674,9 +674,9 @@
   {
     "name": "STAFF-OW-TAGS-none",
     "file": "src/scenes/staffViewHost.js",
-    "old": "layer.render(crowded(ow.slice(0, STAFF_OW_TAGS_MAX)), Math.max(0, ow.length - STAFF_OW_TAGS_MAX));",
-    "new": "layer.render([], 0);",
-    "why": "the Overworld shows an Admin's monster lines and no player at all (mob 2026-10-24: \"like it show enemy to player but no players\")",
+    "old": "        layer.render(crowded(ow.slice(0, STAFF_OW_TAGS_MAX)), Math.max(0, ow.length - STAFF_OW_TAGS_MAX));",
+    "new": "        layer.render([], 0);",
+    "why": "the Overworld shows an Admin's monster lines and no player at all",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]
@@ -684,8 +684,8 @@
   {
     "name": "STAFF-FLAG-LINES-watch-as-review",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);",
-    "new": "const lineOf = (flag) => (flag?.level || flag?.watch ? STAFF_LINE.review : null);",
+    "old": "  const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);",
+    "new": "  const lineOf = (flag) => (flag?.level || flag?.watch ? STAFF_LINE.review : null);",
     "why": "a watched player lined again (STAFF-LINES-REVIEW: a watch draws none)",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "STAFF-FLAG-LINES-distance-cut",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (kind !== null) flagged.push({ at: head, kind });",
-    "new": "if (kind !== null && Math.hypot(head[0] - eye[0], head[1] - eye[1], head[2] - eye[2]) <= dist) flagged.push({ at: head, kind });",
+    "old": "        if (kind !== null) flagged.push({ at: head, kind });",
+    "new": "        if (kind !== null && Math.hypot(head[0] - eye[0], head[1] - eye[1], head[2] - eye[2]) <= dist)\n          flagged.push({ at: head, kind });",
     "why": "a flagged player past the nameplate distance gets no line - the lines are how staff find them",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -704,8 +704,8 @@
   {
     "name": "STAFF-FLAG-LINES-no-overworld",
     "file": "src/scenes/staffViewHost.js",
-    "old": "        flagLines(segs, owTags.map((m) => ({ at: m.at, kind: m.kind })), at, w, h);\n",
-    "new": "",
+    "old": "        flagLines(\n          segs,\n          owTags.map((m) => ({ at: m.at, kind: m.kind })),\n          at,\n          w,\n          h,\n        );\n        layer.strokes(segs, w, h);",
+    "new": "        layer.strokes(segs, w, h);",
     "why": "the Overworld draws no flag lines",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -724,8 +724,8 @@
   {
     "name": "STAFF-VIEW-SWITCH-lines-unread",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const monsterLines = () => admin() && follow.tags()?.lines !== false;",
-    "new": "const monsterLines = () => admin();",
+    "old": "  const monsterLines = () => admin() && follow.tags()?.lines !== false;",
+    "new": "  const monsterLines = () => admin();",
     "why": "Monster lines unticked, the lines still drawn",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -734,8 +734,8 @@
   {
     "name": "STAFF-VIEW-SWITCH-esp-unread",
     "file": "src/scenes/staffViewHost.js",
-    "old": "const esp = () => follow.tags()?.esp !== false;",
-    "new": "const esp = () => true;",
+    "old": "  const esp = () => follow.tags()?.esp !== false;",
+    "new": "  const esp = () => true;",
     "why": "Player tags unticked, the tags still drawn",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "STAFF-VIEW-SWITCH-default-off",
     "file": "src/net/staffHook.js",
-    "old": "esp: m.esp !== false, lines: m.lines !== false, flags };",
-    "new": "esp: m.esp === true, lines: m.lines === true, flags };",
+    "old": "    esp: m.esp !== false,\n    lines: m.lines !== false,",
+    "new": "    esp: m.esp === true,\n    lines: m.lines === true,",
     "why": "an older panel's answer turns the staff view off",
     "tests": [
       "test/scenes/staffview1.test.js"

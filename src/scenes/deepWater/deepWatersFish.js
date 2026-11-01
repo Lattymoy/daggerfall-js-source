@@ -25,7 +25,7 @@
 import { PassiveFish, rangeFloat, fishBillboardSize, PASSIVE_FISH_SPECIES } from '../../world/passiveFish.js';
 import { createFishSpawner, createEncounterPulse, FISH_ATTEMPTS_PER_PIXEL_PER_TICK } from './deepWatersEncounters.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../../player/activate.js';
-import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { noteAct } from '../../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** The mod's cut-out for a fish (SpawnPassiveFish's `_Cutoff` 0.1, which ConfigureUnderwaterDecorationMaterial copies). */
 export const FISH_CUTOFF = 0.1;
@@ -51,7 +51,22 @@ export const FISH_KEY_PREFIX = 'dwFish:';
  * @param {() => number} [deps.roll] - the unseeded UnityEngine.Random (Port-Ledger A, the engine-PRNG rule)
  * @param {?{spawner: any, canPopulate: () => boolean, attempts: number}} [deps.enemies] - DW-E4: the pulse's other lane, the deep's foes
  */
-export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, climateIndexOf, pictures, makeItem, updateInventoryState = () => {}, roll = Math.random, enemies = null }) {
+export function createDeepWatersFish({
+  settings,
+  canRunHeavy,
+  exteriorWaterContext,
+  playerPosition,
+  loadedPixels,
+  isWaterPixel,
+  pixelOrigin,
+  keyOf,
+  climateIndexOf,
+  pictures,
+  makeItem,
+  updateInventoryState = () => {},
+  roll = Math.random,
+  enemies = null,
+}) {
   /** @type {Array<{id: number, key: string, fish: PassiveFish, species: object, size: {w: number, h: number}, loot: {items: any[]}, active: boolean, gone: boolean}>} */
   const fishes = [];
   const byKey = new Map();
@@ -60,7 +75,7 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
   let frame = { time: 0, roll };
 
   function remove(o) {
-    if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');   // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once
+    if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught'); // QL11: a fish caught - its item taken into the pack (only the player's loot window empties one), once
     o.gone = true;
     byKey.delete(o.key);
     const i = fishes.indexOf(o);
@@ -75,36 +90,75 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
     const height = species.billboardHeight * rangeFloat(species.minHeightMultiplier, species.maxHeightMultiplier, roll);
     const size = fishBillboardSize(species, height);
     const loot = { items: [item] };
-    const fish = new PassiveFish({
-      position: pos, loot, cruiseMultiplier: species.cruiseSpeedMultiplier, fleeMultiplier: species.fleeSpeedMultiplier,
-      school, dartHoldMin: species.fleeDartHoldMin, dartHoldMax: species.fleeDartHoldMax,
-    }, { time: frame.time, roll });
+    const fish = new PassiveFish(
+      {
+        position: pos,
+        loot,
+        cruiseMultiplier: species.cruiseSpeedMultiplier,
+        fleeMultiplier: species.fleeSpeedMultiplier,
+        school,
+        dartHoldMin: species.fleeDartHoldMin,
+        dartHoldMax: species.fleeDartHoldMax,
+      },
+      { time: frame.time, roll },
+    );
     const id = ++nextId;
     const o = {
-      id, key: `${FISH_KEY_PREFIX}${id}`, fish, species, size, loot, active: true, gone: false,
+      id,
+      key: `${FISH_KEY_PREFIX}${id}`,
+      fish,
+      species,
+      size,
+      loot,
+      active: true,
+      gone: false,
       // TransientObjectTracker's reads: Unity's `== null` (destroyed, its item taken), the position, Object.Destroy
       destroyed: () => o.gone || fish.destroyed,
       position: () => fish.position,
       destroy: () => remove(o),
       // UnderwaterEncounterPulse.QueueDestroy's SetActive(false): not pumped, not drawn, not clickable
-      hide: () => { o.active = false; },
+      hide: () => {
+        o.active = false;
+      },
     };
     fishes.push(o);
     byKey.set(o.key, o);
     return o;
   }
 
-  const spawner = createFishSpawner({ settings, spawnable: () => pictures.spawnable(), makeFish, pixelOrigin, climateIndexOf });
+  const spawner = createFishSpawner({
+    settings,
+    spawnable: () => pictures.spawnable(),
+    makeFish,
+    pixelOrigin,
+    climateIndexOf,
+  });
   const pulse = createEncounterPulse({
-    canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, updateInventoryState,
-    fish: { spawner, canPopulate: () => settings().frequency > 0 && pictures.spawnable().length > 0, attempts: FISH_ATTEMPTS_PER_PIXEL_PER_TICK },
+    canRunHeavy,
+    exteriorWaterContext,
+    playerPosition,
+    loadedPixels,
+    isWaterPixel,
+    pixelOrigin,
+    keyOf,
+    updateInventoryState,
+    fish: {
+      spawner,
+      canPopulate: () => settings().frequency > 0 && pictures.spawnable().length > 0,
+      attempts: FISH_ATTEMPTS_PER_PIXEL_PER_TICK,
+    },
     enemies,
   });
 
   return {
-    spawner, pulse,
-    get count() { return fishes.length; },
-    get fishes() { return fishes; },
+    spawner,
+    pulse,
+    get count() {
+      return fishes.length;
+    },
+    get fishes() {
+      return fishes;
+    },
 
     /**
      * The frame's work, in DeepWaters.Update's order: UnderwaterEncounterPulse.Pump,
@@ -117,7 +171,7 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
       for (let i = fishes.length - 1; i >= 0; i--) {
         const o = fishes[i];
         if (!o || o.gone || !o.active) continue;
-        if (!o.fish.managedUpdate(f)) remove(o);   // its loot emptied: Object.Destroy
+        if (!o.fish.managedUpdate(f)) remove(o); // its loot emptied: Object.Destroy
       }
     },
 
@@ -132,13 +186,38 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
       const out = [];
       for (const o of fishes) {
         if (o.gone || !o.active || !o.fish.visible) continue;
-        const p = o.fish.position, hw = o.size.w / 2, hh = o.size.h / 2, hd = fishBoxDepth(o.size.w) / 2;
-        const m = [camRight[0], camRight[1], camRight[2], 0, camUp[0], camUp[1], camUp[2], 0, camBack[0], camBack[1], camBack[2], 0, p[0], p[1], p[2], 1];
-        const ex = [0, 1, 2].map((k) => Math.abs(camRight[k]) * hw + Math.abs(camUp[k]) * hh + Math.abs(camBack[k]) * hd);
+        const p = o.fish.position,
+          hw = o.size.w / 2,
+          hh = o.size.h / 2,
+          hd = fishBoxDepth(o.size.w) / 2;
+        const m = [
+          camRight[0],
+          camRight[1],
+          camRight[2],
+          0,
+          camUp[0],
+          camUp[1],
+          camUp[2],
+          0,
+          camBack[0],
+          camBack[1],
+          camBack[2],
+          0,
+          p[0],
+          p[1],
+          p[2],
+          1,
+        ];
+        const ex = [0, 1, 2].map(
+          (k) => Math.abs(camRight[k]) * hw + Math.abs(camUp[k]) * hh + Math.abs(camBack[k]) * hd,
+        );
         out.push({
-          key: o.key, obb: { m, box: [-hw, -hh, -hd, hw, hh, hd] },
+          key: o.key,
+          obb: { m, box: [-hw, -hh, -hd, hw, hh, hd] },
           aabb: { min: [p[0] - ex[0], p[1] - ex[1], p[2] - ex[2]], max: [p[0] + ex[0], p[1] + ex[1], p[2] + ex[2]] },
-          distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE, noSurface: true,
+          distance: RAY_DISTANCE,
+          reach: TREASURE_ACTIVATION_DISTANCE,
+          noSurface: true,
         });
       }
       return out;
@@ -172,7 +251,10 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
         const tex = textureOf(o.species);
         if (!tex) continue;
         let g = groups.get(o.species);
-        if (!g) { g = { texture: tex, fps: 0, born: 0, facing: 2, cutoff: FISH_CUTOFF, billboards: [] }; groups.set(o.species, g); }
+        if (!g) {
+          g = { texture: tex, fps: 0, born: 0, facing: 2, cutoff: FISH_CUTOFF, billboards: [] };
+          groups.set(o.species, g);
+        }
         g.billboards.push({ centre: o.fish.position, width: o.size.w, height: o.size.h, start: 0 });
       }
       return [...groups.values()];
@@ -189,9 +271,18 @@ export function createDeepWatersFish({ settings, canRunHeavy, exteriorWaterConte
     },
 
     /** OnTransientReset (UnderwaterEncounterPulse.ResetState, the spawner's ClearAll). */
-    reset() { pulse.reset(); },
+    reset() {
+      pulse.reset();
+    },
 
-    get debug() { return { fish: fishes.length, live: spawner.liveCount, pending: spawner.pendingCount, destroys: pulse.pendingDestroyCount }; },
+    get debug() {
+      return {
+        fish: fishes.length,
+        live: spawner.liveCount,
+        pending: spawner.pendingCount,
+        destroys: pulse.pendingDestroyCount,
+      };
+    },
   };
 }
 
@@ -218,7 +309,11 @@ export function createFishPictures({ fetchBytes, decode, clean, createTexture })
       (async () => {
         const img = await decode(await fetchBytes(s.textureName));
         const rows = new Uint8Array(img.width * img.height * 4);
-        for (let y = 0; y < img.height; y++) rows.set(img.data.subarray((img.height - 1 - y) * img.width * 4, (img.height - y) * img.width * 4), y * img.width * 4);
+        for (let y = 0; y < img.height; y++)
+          rows.set(
+            img.data.subarray((img.height - 1 - y) * img.width * 4, (img.height - y) * img.width * 4),
+            y * img.width * 4,
+          );
         const frame = { width: img.width, height: img.height, data: rows };
         clean(frame);
         const t = createTexture([frame]);
@@ -226,7 +321,9 @@ export function createFishPictures({ fetchBytes, decode, clean, createTexture })
         textures.set(s, t);
       })().catch((e) => {
         failed.add(s);
-        console.warn(`[DeepWaters] Could not load fish texture for '${s.itemName}': ${e?.message ?? e}; the species will not spawn.`);
+        console.warn(
+          `[DeepWaters] Could not load fish texture for '${s.itemName}': ${e?.message ?? e}; the species will not spawn.`,
+        );
       });
     }
   }
@@ -236,6 +333,8 @@ export function createFishPictures({ fetchBytes, decode, clean, createTexture })
     texture: (s) => textures.get(s) ?? null,
     /** BuildSpawnableCache: a weight and a picture, in the catalog's order. */
     spawnable: () => PASSIVE_FISH_SPECIES.filter((s) => s.spawnWeight > 0 && textures.has(s)),
-    get failed() { return failed.size; },
+    get failed() {
+      return failed.size;
+    },
   };
 }

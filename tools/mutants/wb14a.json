@@ -2,8 +2,8 @@
   {
     "name": "WB14a-a-cooldown-never-read",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    && (!/** @type {GateAttack} */ (a).cd || cooled(a, ctx)));",
-    "new": "    && (!/** @type {GateAttack} */ (a).cd || !!ctx));",
+    "old": "      (!(/** @type {GateAttack} */ (a).cd) || cooled(a, ctx)),",
+    "new": "      (!(/** @type {GateAttack} */ (a).cd) || !!ctx),",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB14a-the-court-s-count-ignored",
     "file": "src/net/gate/gateBrain.js",
-    "old": " >= a.cd && (ctx.n ?? 0) >= (a.nMin ?? 1);",
-    "new": " >= a.cd;",
+    "old": "  !!ctx &&\n  Number.isFinite(ctx.now) &&\n  ctx.now - (ctx.used?.[a.key] ?? ctx.woke ?? -Infinity) >= a.cd &&\n  (ctx.n ?? 0) >= (a.nMin ?? 1);",
+    "new": "  !!ctx && Number.isFinite(ctx.now) && ctx.now - (ctx.used?.[a.key] ?? ctx.woke ?? -Infinity) >= a.cd;",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB14a-opening-on-one",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(ctx.used?.[a.key] ?? ctx.woke ?? -Infinity)",
-    "new": "(ctx.used?.[a.key] ?? -Infinity)",
+    "old": "  ctx.now - (ctx.used?.[a.key] ?? ctx.woke ?? -Infinity) >= a.cd &&",
+    "new": "  ctx.now - (ctx.used?.[a.key] ?? -Infinity) >= a.cd &&",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB14a-the-use-never-stamped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {})[atk.key] = now;",
-    "new": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {});",
+    "old": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {})[atk.key] = now; // WB14a: its cooldown from this word (AUDIT WB14 LAW-11: the first cast's - an echo is the same Unmaking)",
+    "new": "  if (/** @type {GateAttack} */ (atk).cd && !echo) f.used ??= {}; // WB14a: its cooldown from this word (AUDIT WB14 LAW-11: the first cast's - an echo is the same Unmaking)",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "WB14a-the-ids-dropped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "...(Array.isArray(a.pk) ? { pk: [...a.pk] } : {}) };   // WB14a",
-    "new": "...({}) };   // WB14a",
+    "old": "    ...(Array.isArray(a.pk) ? { pk: [...a.pk] } : {}),",
+    "new": "    ...{},",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "WB14a-the-brand-count-off",
     "file": "src/net/gate/gateBrain.js",
-    "old": "1 + Math.floor(Math.max(0, n) / 3)",
-    "new": "1 + Math.floor(Math.max(0, n) / 2)",
+    "old": "export const brandCountFor = (n) => Math.max(1, Math.min(ATTACKS.brand.max, 1 + Math.floor(Math.max(0, n) / 3)));",
+    "new": "export const brandCountFor = (n) => Math.max(1, Math.min(ATTACKS.brand.max, 1 + Math.floor(Math.max(0, n) / 2)));",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "WB14a-the-slam-after-a-broken-chain",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift",
-    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains) f.queue.unshift",
+    "old": "    if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift({ a: 'slam' });",
+    "new": "    if (ATTACK_BY_ID[was.a] === ATTACKS.chains) f.queue.unshift({ a: 'slam' });",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "WB14a-the-chain-held-without-slack",
     "file": "src/net/gate/gateBrain.js",
-    "old": "<= CHAIN_HOLD_M + POSE_SLACK;",
-    "new": "<= CHAIN_HOLD_M;",
+    "old": "  return !!b && dist(b.x, b.z, f.pos[0], f.pos[1]) <= CHAIN_HOLD_M + POSE_SLACK;",
+    "new": "  return !!b && dist(b.x, b.z, f.pos[0], f.pos[1]) <= CHAIN_HOLD_M;",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "WB14a-the-unmaking-the-same-wedges",
     "file": "src/net/gate/gateBrain.js",
-    "old": "turn: (2 * Math.PI) / ATTACKS.unmake.n, echo: true",
-    "new": "turn: (4 * Math.PI) / ATTACKS.unmake.n, echo: true",
+    "old": "      f.queue.unshift({ a: 'unmake', turn: (2 * Math.PI) / ATTACKS.unmake.n, echo: true });",
+    "new": "      f.queue.unshift({ a: 'unmake', turn: (4 * Math.PI) / ATTACKS.unmake.n, echo: true });",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "WB14a-the-unmaking-a-third",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.unmake && !was.echo)",
-    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.unmake)",
+    "old": "    if (ATTACK_BY_ID[was.a] === ATTACKS.unmake && !was.echo)",
+    "new": "    if (ATTACK_BY_ID[was.a] === ATTACKS.unmake)",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "WB14a-the-wedges-about-his-feet",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  } else if (atk === ATTACKS.unmake) tg = [[C[0], C[1]]];",
-    "new": "  } else if (atk === ATTACKS.unmake) tg = [[f.pos[0], f.pos[1]]];",
+    "old": "  } else if (atk === ATTACKS.unmake) tg = [[C[0], C[1]]]; // WB14a: its wedges about his court's heart",
+    "new": "  } else if (atk === ATTACKS.unmake) tg = [[f.pos[0], f.pos[1]]]; // WB14a: its wedges about his court's heart",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "WB14a-a-slow-frame-s-sweep-missed",
     "file": "src/net/gate/gateStrike.js",
-    "old": "const a0 = wheelAngle(atk, Math.max(prev, atk.at)), a1",
-    "new": "const a0 = wheelAngle(atk, Math.min(now, atk.at + A.active)), a1",
+    "old": "  const a0 = wheelAngle(atk, Math.max(prev, atk.at)),",
+    "new": "  const a0 = wheelAngle(atk, Math.min(now, atk.at + A.active)),",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "WB14a-the-wheel-one-way",
     "file": "src/net/gate/gateStrike.js",
-    "old": "export const wheelSpin = (atk) => ((Math.abs(atk?.i | 0) % 2) === 1 ? 1 : -1);",
+    "old": "export const wheelSpin = (atk) => (Math.abs(atk?.i | 0) % 2 === 1 ? 1 : -1);",
     "new": "export const wheelSpin = (atk) => 1;",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "WB14a-the-wheel-judged-at-its-landing",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (A === ATTACKS.wheel) return wheelStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait';",
-    "new": "\n",
+    "old": "  if (A === ATTACKS.wheel)\n    return wheelStrikes(atk, px, pz, now, prev, P) ? 'hit' : now >= atk.at + A.active ? 'miss' : 'wait'; // WB14a: the charge's law, turning",
+    "new": "\n  // WB14a: the charge's law, turning",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "WB14a-the-brand-bursting-on-its-own",
     "file": "src/net/gate/gateStrike.js",
-    "old": "    if (pk[k] && pk[k] === me) continue;\n",
-    "new": "\n",
+    "old": "    if (pk[k] && pk[k] === me) continue;\n    if (!pk[k] && self) continue; // a relay that named nobody: the ring I stand on is mine",
+    "new": "    if (!pk[k] && self) continue; // a relay that named nobody: the ring I stand on is mine",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "WB14a-the-gaze-s-angle-off",
     "file": "src/net/gate/gateStrike.js",
-    "old": "return Math.abs(wrap(off)) <= (GAZE_HALF_DEG * Math.PI) / 180;",
-    "new": "return Math.abs(wrap(off)) <= (2 * GAZE_HALF_DEG * Math.PI) / 180;",
+    "old": "  return Math.abs(wrap(off)) <= (GAZE_HALF_DEG * Math.PI) / 180;",
+    "new": "  return Math.abs(wrap(off)) <= (2 * GAZE_HALF_DEG * Math.PI) / 180;",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "WB14a-the-gaze-s-range-ignored",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (d > GAZE_RANGE_M) return false;\n",
-    "new": "\n",
+    "old": "  if (d > GAZE_RANGE_M) return false;",
+    "new": "",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "WB14a-the-marked-blow-on-the-ground",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (!A || !Number.isFinite(atk.at) || isMarkedBlow(A)) return 'miss';   // WB14a",
-    "new": "  if (!A || !Number.isFinite(atk.at)) return 'miss';   // WB14a",
+    "old": "  if (!A || !Number.isFinite(atk.at) || isMarkedBlow(A)) return 'miss'; // WB14a: a marked blow's is markedVerdict's",
+    "new": "  if (!A || !Number.isFinite(atk.at)) return 'miss'; // WB14a: a marked blow's is markedVerdict's",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "WB14a-the-gaze-counted-by-the-relay",
     "file": "src/net/bossRef.js",
-    "old": "  if (!A || !(share > 0) || screenJudged(A)) a.bj = true;",
-    "new": "  if (!A || !(share > 0)) a.bj = true;",
+    "old": "  if (!A || !(share > 0) || screenJudged(A))",
+    "new": "  if (!A || !(share > 0))",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "WB14a-the-relay-s-wheel-once-at-its-landing",
     "file": "src/net/bossRef.js",
-    "old": "  else if (A === ATTACKS.wheel) sweep(",
-    "new": "  else if (A === null) sweep(",
+    "old": "  else if (A === ATTACKS.wheel)",
+    "new": "  else if (A === null)",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "WB14a-the-chain-s-colour-fixed",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) :",
-    "new": "color: tether ? attackColor(A, P) :",
+    "old": "    color: tether ? (held ? attackColor(A, P) : TELEGRAPH_EDGE_SAFE) : torment ? TORMENT_COLOR : attackColor(A, P),",
+    "new": "    color: tether ? attackColor(A, P) : torment ? TORMENT_COLOR : attackColor(A, P),",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "WB14a-the-blades-dark-through-their-turn",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0,",
-    "new": "flash: tel.since >= 0 ? 1 : 0,",
+    "old": "    flash: tel.since >= 0 && !(wheel && tel.since < span) ? 1 : 0,",
+    "new": "    flash: tel.since >= 0 ? 1 : 0,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "WB14a-judged-twice",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "    setMark(judged, atk);\n",
-    "new": "\n",
+    "old": "    setMark(judged, atk);",
+    "new": "",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -296,8 +296,8 @@
   {
     "name": "WB14a-the-gaze-never-blinds",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "{ land(atk, P, so); blindAt = now; }",
-    "new": "{ land(atk, P, so); }",
+    "old": "        blindAt = now;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "WB14a-the-order-the-default",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside",
-    "new": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside",
+    "old": "    warn: peril ? (peril.order ?? GROUND_VIEW_TEXT.peril(peril.name)) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
+    "new": "    warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "WB14a-the-white-never-fading",
     "file": "src/ui/gate/gateGroundView.js",
-    "old": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0;",
-    "new": "blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 : 0;",
+    "old": "    blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 - dazzle / GAZE_BLIND_MS : 0; // WB14a",
+    "new": "    blindK = dazzle >= 0 && dazzle < GAZE_BLIND_MS ? 1 : 0; // WB14a",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -341,8 +341,8 @@
   {
     "name": "WB14a-the-fold-forgets-the-marked",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'atk': return { ...s, atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) }, move: null,",
-    "new": "    case 'atk': return { ...s, atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg }, move: null,",
+    "old": "        ...s,\n        atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg, ...(g.pk ? { pk: g.pk } : {}) },",
+    "new": "        ...s,\n        atk: { i: g.i, a: g.a, at: g.at, x: g.x, z: g.z, yw: g.yw, tg: g.tg },",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-brand-self-at-the-burst-s-share",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "if (b.self) land(atk, P, { ...so, pct: ATTACKS.brand.selfPct * P.dmgX, base: ATTACKS.brand.selfBase * P.dmgX });",
-    "new": "if (b.self) land(atk, P, so);",
+    "old": "      if (b.self) land(atk, P, { ...so, pct: ATTACKS.brand.selfPct * P.dmgX, base: ATTACKS.brand.selfBase * P.dmgX });",
+    "new": "      if (b.self) land(atk, P, so);",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-chain-slam-queued-at-the-end",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift({ a: 'slam' });",
-    "new": "if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.push({ a: 'slam' });",
+    "old": "    if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.unshift({ a: 'slam' });",
+    "new": "    if (ATTACK_BY_ID[was.a] === ATTACKS.chains && was.held) f.queue.push({ a: 'slam' });",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-chains-a-wind-up-past-escape",
     "file": "src/net/gate/gateBrain.js",
-    "old": "windup: 3000, active: 150, recover: 1000, shape: 'tether'",
-    "new": "windup: 1800, active: 150, recover: 1000, shape: 'tether'",
+    "old": "    },\n    windup: 3000,\n    active: 150,",
+    "new": "    },\n    windup: 1800,\n    active: 150,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-unmake-phase-two",
     "file": "src/net/gate/gateBrain.js",
-    "old": "shape: 'wedges', n: 8, r: COURT_R + 1, pct: 0.45, base: 12, el: null, aim: 'point', phase: 3,",
-    "new": "shape: 'wedges', n: 8, r: COURT_R + 1, pct: 0.45, base: 12, el: null, aim: 'point', phase: 2,",
+    "old": "    aim: 'point',\n    phase: 3,",
+    "new": "    aim: 'point',\n    phase: 2,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "WB14a-the-seams-past-the-motor",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
-    "new": "pull: () => {}, pullDecay };",
+    "old": "  return { myId: () => online()?.id ?? null, pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
+    "new": "  return { myId: () => online()?.id ?? null, pull: () => {}, pullDecay };",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "WB14a-the-seams-read-once",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "myId: () => online()?.id ?? null,",
-    "new": "myId: ((v) => () => v)(online()?.id ?? null),",
+    "old": "  return { myId: () => online()?.id ?? null, pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
+    "new": "  return {\n    myId: (\n      (v) => () =>\n        v\n    )(online()?.id ?? null),\n    pull: (vx, vz) => motor.blowPush(vx, vz),\n    pullDecay,\n  };",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]

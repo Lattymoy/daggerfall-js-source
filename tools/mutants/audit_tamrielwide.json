@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-C4-the-mapid-read-again",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "(Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city))",
-    "new": "pixelOfLoc(city)",
+    "old": "export const cityPixelOf = (city) =>\n  Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city);",
+    "new": "export const cityPixelOf = (city) => pixelOfLoc(city);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-TW-E5-the-ports-unclosed",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);",
-    "new": "for (const s of [...sites]) if (!broken.includes(s)) closeSite(g, s);",
+    "old": "  for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);",
+    "new": "  for (const s of [...sites]) if (!broken.includes(s)) closeSite(g, s);",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "AUDIT-TW-A1-the-host-mark-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": "terraced: isFabricDoorId(placed.modelIdNum), block:",
-    "new": "terraced: false, block:",
+    "old": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
+    "new": "            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: false, block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],

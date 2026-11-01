@@ -2,8 +2,8 @@
   {
     "name": "P1-hall-unasked",
     "file": "src/scenes/spawnStandHost.js",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py)",
-    "new": ": null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py)",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "P1-hall-offline-too",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "(params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py))",
-    "new": "(zoneHalls.standIn(cyrodiilMask(), px, py))",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "P1-hall-after-the-places",
     "file": "src/scenes/spawnStandHost.js",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
-    "new": ": null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -87,8 +87,8 @@
   {
     "name": "Z7-rolls-unhanded",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "  if (_countryTemplates) zoneHalls?.standsToo(pastBayRolledAt);\n",
-    "new": "",
+    "old": "  if (_countryTemplates) zoneHalls?.standsToo(pastBayRolledAt);\n  /** AUDIT TESA II P2/P3/Z3: THE NEAREST TOWN OF THE WORLD to a map pixel - of the world's registry (the Bay's MAPS.BSA rows",
+    "new": "  /** AUDIT TESA II P2/P3/Z3: THE NEAREST TOWN OF THE WORLD to a map pixel - of the world's registry (the Bay's MAPS.BSA rows",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "P7-unregistered",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "  if (worldPlaces && (_arenaTemplates || _capitalBase)) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (worldPlaces && (_arenaTemplates || _capitalBase)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "P3-stood-towns-unread",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept)",
-    "new": "nearestSafePlace([worldPlaces?.all() ?? []], px, accept)",
+    "old": "  const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept);",
+    "new": "  const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? []], px, accept);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js",
       "test/audit_tesa.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "P3-accept-dropped",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "countryTowns()], px, accept);",
-    "new": "countryTowns()], px, null);",
+    "old": "  const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept);",
+    "new": "  const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, null);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "P3-a-lair-a-town",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "if (l?.country && !l.country.dungeon) out.push(",
-    "new": "if (l?.country) out.push(",
+    "old": "    for (const l of locationIndex.values()) if (l?.country && !l.country.dungeon) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py, name: l.name, region: l.regionIndex, mapId: l.mapTableData?.mapId });",
+    "new": "    for (const l of locationIndex.values()) if (l?.country) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py, name: l.name, region: l.regionIndex, mapId: l.mapTableData?.mapId });",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -152,8 +152,8 @@
   {
     "name": "P3-accept-ignored",
     "file": "src/systems/deathRespawn.js",
-    "old": "      if (accept && !accept(hit)) continue;\n      bestDist = d2; best = hit;",
-    "new": "      bestDist = d2; best = hit;",
+    "old": "      if (accept && !accept(hit)) continue;\n      bestDist = d2;",
+    "new": "      bestDist = d2;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js",
       "test/audit_tesa.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "P3-registry-type-unread",
     "file": "src/systems/deathRespawn.js",
-    "old": "const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };",
-    "new": "const e = { locationType: p.locationType, dungeonType: p.dungeonType };",
+    "old": "      const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };",
+    "new": "      const e = { locationType: p.locationType, dungeonType: p.dungeonType };",
     "tests": [
       "test/systems/audittesa2p_laws.test.js",
       "test/audit_tesa.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "P7-live-stamp-one-item",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "a.every((v, i) => v === b[i])",
-    "new": "a[0] === b[0]",
+    "old": "    !!a && a.length === b.length && a.every((v, i) => v === b[i]);",
+    "new": "    !!a && a.length === b.length && a[0] === b[0];",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "P7-pinned-twice",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (p.pinned && capitals) continue;   // it stands as its capital (above)\n",
-    "new": "",
+    "old": "    if (p.pinned && capitals) continue; // it stands as its capital (above)\n    const template = templateOf(p);",
+    "new": "    const template = templateOf(p);",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -226,8 +226,8 @@
   {
     "name": "P7-one-slice",
     "file": "src/world/pastBayRows.js",
-    "old": "for (let s = 0; s < D.w * D.h; s++) {",
-    "new": "for (let s = 0; s < 1; s++) {",
+    "old": "      for (let s = 0; s < D.w * D.h; s++) {",
+    "new": "      for (let s = 0; s < 1; s++) {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "P7-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: !!p.port, location: arenaLocationIndex(p) });",
-    "new": "port: false, location: arenaLocationIndex(p) });",
+    "old": "      port: !!p.port,",
+    "new": "      port: false,",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -244,8 +244,8 @@
   {
     "name": "P7-capital-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: capitalSlicePort(k, s, pin?.port),",
-    "new": "port: false,",
+    "old": "          port: capitalSlicePort(k, s, pin?.port), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
+    "new": "          port: false, // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "P7-no-clone-stands",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (!template) continue;   // no clone of its kind: no location stands\n",
-    "new": "",
+    "old": "    if (!template) continue; // no clone of its kind: no location stands\n    const ed = template.exterior?.exteriorData;",
+    "new": "    const ed = template.exterior?.exteriorData;",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
-    "new": "return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
+    "old": "            return w && to && (livingSide(to) === livingSide(town) || !!l.cross)\n              ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]\n              : []; // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge",
+    "new": "            return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : []; // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge",
     "tests": [
       "test/world/worldWide/auditww.test.js",
       "test/world/worldWide/ww7_people.test.js"
@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
+    "old": "      beyondList = longLanes(\n        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),\n      );",
+    "new": "      beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX)));",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "P7-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
-    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own",
+    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + pad; // NIBEN-SEA: a canal harbour's lane its own",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "P7-near-no-margin",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
-    "new": "      return da + db <= beyondPathPx(lane);",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own",
+    "new": "      return da + db <= beyondPathPx(lane); // NIBEN-SEA: a canal harbour's lane its own",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -332,11 +332,13 @@
   {
     "name": "P7-corner-cut",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;",
-    "new": "      if (!sea(nx, ny)) continue;",
+    "old": "        if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy)))\n          continue;",
+    "new": "        if (!sea(nx, ny)) continue;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT SEA PATHS O2: a corner cut is let where the Bay's scale holds the step (a channel a cell wide on the slant), so on the freeware's world the rule and its absence lay the same ways - the rule still holds every raw diagonal past land that scale refuses, and AUDIT-SEA-PATHS-O2-the-corner-unasked-at-the-bays-scale pins the scale's half."
   },
   {
     "name": "P7-leg-unasked",
@@ -350,8 +352,8 @@
   {
     "name": "P7-bay-rect-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
-    "new": ";",
+    "old": "    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": "    !lakes[y * w + x];",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -359,8 +361,8 @@
   {
     "name": "P7-lakes-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "=== 0 && !lakes[y * w + x]",
-    "new": "=== 0",
+    "old": "    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": "    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -370,8 +372,8 @@
   {
     "name": "P7-no-picture-no-way",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
-    "new": "beyondLaneWay(lane, worldOpenNative);",
+    "old": "      way = tamrielTrace()\n        ? beyondLaneWay(lane, worldOpenNative, kernel)\n        : laneWay(lane, worldOpen, worldOpenNative, kernel);",
+    "new": "      way = beyondLaneWay(lane, worldOpenNative, kernel);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -379,8 +381,8 @@
   {
     "name": "P7-port-region-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "region: -1, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "old": "      region: p.region,",
+    "new": "      region: -1,",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -506,8 +508,8 @@
   {
     "name": "P10-game-banks-unset",
     "file": "src/characters/nameHelper.js",
-    "old": "  _session = GAME_SESSION;\n",
-    "new": "",
+    "old": "  _session = GAME_SESSION;\n  try {",
+    "new": "  try {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -515,8 +517,8 @@
   {
     "name": "K15-nearest-last",
     "file": "src/scenes/tamrielPortsHost.js",
-    "old": "if (q && d < bd) { bd = d; best = q; }",
-    "new": "if (q) { bd = d; best = q; }",
+    "old": "        if (q && d < bd) {",
+    "new": "        if (q) {",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -524,8 +526,8 @@
   {
     "name": "K15-nearest-first",
     "file": "src/scenes/tamrielPortsHost.js",
-    "old": "if (q && d < bd) { bd = d; best = q; }",
-    "new": "if (q && !best) { bd = d; best = q; }",
+    "old": "        if (q && d < bd) {",
+    "new": "        if (q && !best) {",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -533,8 +535,8 @@
   {
     "name": "K5-renamed-kept",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;",
-    "new": "had.country.template === at.pick.template.mapTableData?.mapId;",
+    "old": "    const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;",
+    "new": "    const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId;",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

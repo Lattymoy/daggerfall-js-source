@@ -1,4 +1,4 @@
-// WG2 PHASE 2 (bible/03-World/World-2-Arc.md): THE GENERATOR'S LAWS on small regions - one by the Dragontails past the
+// WG2 PHASE 2: THE GENERATOR'S LAWS on small regions - one by the Dragontails past the
 // Bay's east edge and one in Skyrim - each baked whole: the same spec makes the same bytes; every river's surface falls
 // or holds from source to end; a closed lake keeps its water; the rocks run on across two regions' seam; every pixel's
 // byte and climate are the readers' own. Pins mutation-checked (tools/mutants/wg2.json).

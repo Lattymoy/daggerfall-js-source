@@ -31,14 +31,22 @@
 import { Table } from './table.js';
 import { intTryParse } from './parseUtils.js';
 import { GUILD_GROUPS, SOCIAL_GROUPS } from '../../formats/factionFile.js';
-import { isStartQuestName } from '../starts/starts.js';   // START1: a start's quest is the main quest's prologue
+import { isStartQuestName } from '../starts/starts.js'; // START1: a start's quest is the main quest's prologue
 
 /** QuestListsManager.MembershipStatus - char-backed, the table's
  *  membership column verbatim. */
 export const MEMBERSHIP_STATUS = Object.freeze({
-  Nonmember: 'N', Member: 'M', Prospect: 'P',
-  Akatosh: 'T', Arkay: 'A', Dibella: 'D', Julianos: 'J',
-  Kynareth: 'K', Mara: 'R', Stendarr: 'S', Zenithar: 'Z',
+  Nonmember: 'N',
+  Member: 'M',
+  Prospect: 'P',
+  Akatosh: 'T',
+  Arkay: 'A',
+  Dibella: 'D',
+  Julianos: 'J',
+  Kynareth: 'K',
+  Mara: 'R',
+  Stendarr: 'S',
+  Zenithar: 'Z',
 });
 
 /** The MAIN QUEST, by the pack's own naming - DFU ships the story as
@@ -48,7 +56,8 @@ export const MEMBERSHIP_STATUS = Object.freeze({
  *  (systems/quest/questShare.js), which kept two copies "in step". START1:
  *  and a start's quest (systems/starts/starts.js), the story's prologue -
  *  its commission is the character's own, never a party's. */
-export const isMainQuestName = (questName) => /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);
+export const isMainQuestName = (questName) =>
+  /^S0000/.test(questName ?? '') || questName === '_BRISIEN' || isStartQuestName(questName);
 
 const INIT_AT_GAME_START = 'InitAtGameStart';
 
@@ -70,14 +79,17 @@ export function registerQuestList(name, isOn = null) {
   return true;
 }
 export const registeredQuestLists = () => _questLists.filter((n) => _questListGates.get(n)?.() ?? true);
-export function _resetQuestLists() { _questLists.length = 0; _questListGates.clear(); }
+export function _resetQuestLists() {
+  _questLists.length = 0;
+  _questListGates.clear();
+}
 
 export class QuestListsManager {
   constructor(deps = {}) {
     this.deps = deps;
-    this.guilds = new Map();   // guild group id -> QuestData[]
-    this.social = new Map();   // social group id -> QuestData[]
-    this.init = [];            // InitAtGameStart rows
+    this.guilds = new Map(); // guild group id -> QuestData[]
+    this.social = new Map(); // social group id -> QuestData[]
+    this.init = []; // InitAtGameStart rows
     this.oneTimeQuestsAccepted = null;
     this.loadQuestLists();
   }
@@ -91,12 +103,15 @@ export class QuestListsManager {
     this.init.length = 0;
     this._loadQuestList('Classic');
     this._loadQuestList('DFU');
-    for (const questList of registeredQuestLists()) this._loadQuestList(questList);   // :160-161 - the registered lists
+    for (const questList of registeredQuestLists()) this._loadQuestList(questList); // :160-161 - the registered lists
   }
 
   _loadQuestList(name) {
     const text = this.deps.readListTable?.(name);
-    if (text == null) { console.warn(`[quest] Quest list ${name} not found`); return; }
+    if (text == null) {
+      console.warn(`[quest] Quest list ${name} not found`);
+      return;
+    }
     // LoadQuestList (:194-202) contains failures PER LIST: a
     // malformed table logs and the other lists survive (Q2b-ii
     // VERIFY: a throw here used to destroy the whole manager).
@@ -114,7 +129,7 @@ export class QuestListsManager {
    *  "TODO other groups"). */
   _parseQuestList(table) {
     for (let i = 0; i < table.rowCount; i++) {
-      const minReq = intTryParse(table.getValue('minReq', i));   // AUDIT 68 S30-tryparse-dup: int.TryParse, int32 bound and all
+      const minReq = intTryParse(table.getValue('minReq', i)); // AUDIT 68 S30-tryparse-dup: int.TryParse, int32 bound and all
       if (minReq === null) continue;
       const flag = table.getValue('flag', i)[0];
       const questData = {
@@ -196,16 +211,22 @@ export class QuestListsManager {
     if (this.oneTimeQuestsAccepted == null) this.oneTimeQuestsAccepted = [];
     const guildQuests = this.guilds.get(guildGroup);
     if (!guildQuests) return null;
-    const tplMemb = (guildGroup === GUILD_GROUPS.HolyOrder && status !== MEMBERSHIP_STATUS.Nonmember)
-      ? MEMBERSHIP_STATUS.Member : status;
+    const tplMemb =
+      guildGroup === GUILD_GROUPS.HolyOrder && status !== MEMBERSHIP_STATUS.Nonmember
+        ? MEMBERSHIP_STATUS.Member
+        : status;
     const pool = [];
     for (const quest of guildQuests) {
-      if ((status === quest.membership || tplMemb === quest.membership)
-        && ((status === MEMBERSHIP_STATUS.Nonmember && quest.minReq === 0)
-          || (quest.minReq < 10 && quest.minReq <= rank)
-          || (quest.minReq >= 10 && quest.minReq <= rep))) {
-        if ((!quest.adult || this.deps.playerNudity)
-          && !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))) {
+      if (
+        (status === quest.membership || tplMemb === quest.membership) &&
+        ((status === MEMBERSHIP_STATUS.Nonmember && quest.minReq === 0) ||
+          (quest.minReq < 10 && quest.minReq <= rank) ||
+          (quest.minReq >= 10 && quest.minReq <= rep))
+      ) {
+        if (
+          (!quest.adult || this.deps.playerNudity) &&
+          !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))
+        ) {
           pool.push(quest);
         }
       }
@@ -222,12 +243,16 @@ export class QuestListsManager {
     if (!socialQuests) return null;
     const pool = [];
     for (const quest of socialQuests) {
-      if (((quest.minReq < 10 && quest.minReq <= level) || rep >= quest.minReq)
-        && (quest.membership === 'N'
-          || (quest.membership === 'M' && gender === 'male')
-          || (quest.membership === 'F' && gender === 'female'))) {
-        if ((!quest.adult || this.deps.playerNudity)
-          && !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))) {
+      if (
+        ((quest.minReq < 10 && quest.minReq <= level) || rep >= quest.minReq) &&
+        (quest.membership === 'N' ||
+          (quest.membership === 'M' && gender === 'male') ||
+          (quest.membership === 'F' && gender === 'female'))
+      ) {
+        if (
+          (!quest.adult || this.deps.playerNudity) &&
+          !(quest.oneTime && this.oneTimeQuestsAccepted.includes(quest.name))
+        ) {
           pool.push(quest);
         }
       }

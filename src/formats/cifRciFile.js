@@ -278,9 +278,7 @@ export class CifRciFile extends BaseImageFile {
   _readImage(record, frame) {
     const rec = this._records[record];
     const data = new Uint8Array(rec.header.pixelDataLength);
-    data.set(
-      this._bytes.subarray(rec.header.dataPosition, rec.header.dataPosition + data.length)
-    );
+    data.set(this._bytes.subarray(rec.header.dataPosition, rec.header.dataPosition + data.length));
     rec.frames[frame] = {
       width: rec.header.width,
       height: rec.header.height,

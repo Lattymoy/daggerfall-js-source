@@ -431,7 +431,7 @@ export async function profPixels({ db }, player, env, { character, pixels, dunge
  * kept it), or harvestAnswer's for a request asked twice. Each entry `[name, statement]`; answerOf reads them by name.
  * @param {any} db @param {any} player the account asking (its find's line, where it is linked) @param {any} env
  * @param {{ player: string, char_id: string, day: number, profession: string, material: string, gem?: string|null,
- *   extra?: string|null, carry: boolean }} spec @param {string} rid the harvest's request id @param {number} nowS
+ *   extra?: string|null, carry: boolean, extraStores?: boolean }} spec @param {string} rid the harvest's request id @param {number} nowS
  */
 function answerReads(db, player, env, spec, rid, nowS, { marks = true } = {}) {
   /** @type {Array<[string, any]>} */
@@ -443,7 +443,7 @@ function answerReads(db, player, env, spec, rid, nowS, { marks = true } = {}) {
   if (spec.carry) {
     q.push(['carried', carriedStatement(db, p, c, spec.material)]);
     if (spec.gem) q.push(['gemCarried', carriedStatement(db, p, c, spec.gem)]);
-    if (spec.extra) q.push(['extraCarried', carriedStatement(db, p, c, spec.extra)]);
+    if (spec.extra && !spec.extraStores) q.push(['extraCarried', carriedStatement(db, p, c, spec.extra)]);   // BUTCHER-STORES: a body's butchery the Stores'
   }
   if (spec.profession === 'hunting') q.push(['hunt', huntStatement(db, p, day)]);   // PROF7: the account's hides today
   if (spec.profession === 'fishing') q.push(['hauls', haulsStatement(db, p, day)]);   // PROF8: the account's hauls today
@@ -453,7 +453,7 @@ function answerReads(db, player, env, spec, rid, nowS, { marks = true } = {}) {
 }
 /** GATHER-SPEED: a harvest row's own spec for answerReads - what it wrote. */
 const specOf = (row) => ({ player: row.player, char_id: row.char_id, day: Number(row.day), profession: row.profession, material: row.material,
-  gem: row.gem ?? null, extra: row.extra ?? null, carry: Number(row.carry) === 1 });
+  gem: row.gem ?? null, extra: row.extra ?? null, carry: Number(row.carry) === 1, extraStores: Number(row.extra_stores) === 1 });
 /** GATHER-SPEED: answerReads' rows by name, off a batch's answers that hold them at `from`. */
 function readsBy(/** @type {Array<[string, any]>} */ q, /** @type {any[][]} */ rows, from = 0) {
   return new Map(q.map(([name], i) => [name, rows[from + i] ?? []]));
@@ -462,6 +462,14 @@ function readsBy(/** @type {Array<[string, any]>} */ q, /** @type {any[][]} */ r
 /** The answer a harvest's row gives - the first time (`rankBefore` the track's rank before it, so a rise is said), or
  *  again to a request asked twice. PROF2: a gem the strikes found, and its Stores. GATHER-SPEED: its reads one round trip
  *  (answerReads), its find's beside them. */
+/** A harvest answered again - asked again, or racing itself. AUDIT FB1031 C1: a row whose butchery went to the Stores,
+ *  asked by a build that never asks so, names no meat: that build mints any `extra` it hears, and the meat is counted in
+ *  the Stores. III I1: the race's repeat too - an older tab losing the insert to a newer one minted it twice. */
+async function repeatAnswer(db, player, env, row, nowS, body) {
+  const again = await harvestAnswer(db, player, env, row, nowS, { repeat: true });
+  if (Number(row.extra_stores) === 1 && body?.butcheryStores !== true) { delete again.extra; delete again.extraQty; delete again.extraStore; }
+  return again;
+}
 async function harvestAnswer(db, player, env, row, nowS, extra, rankBefore = null) {
   const q = answerReads(db, player, env, specOf(row), row.rid, nowS);
   return answerOf(row, readsBy(q, await readAll(db, q.map(([, st]) => st))), nowS, extra, rankBefore);
@@ -482,7 +490,7 @@ function answerOf(row, /** @type {Map<string, any[]>} */ r, nowS, extra, rankBef
     ...(Number(row.carry) === 1 ? {
       carry: true, carried: countFrom(row.material, r.get('carried') ?? []),
       ...(row.gem ? { gemCarried: countFrom(row.gem, r.get('gemCarried') ?? []) } : {}),
-      ...(row.extra ? { extraCarried: countFrom(row.extra, r.get('extraCarried') ?? []) } : {}),
+      ...(row.extra && Number(row.extra_stores) !== 1 ? { extraCarried: countFrom(row.extra, r.get('extraCarried') ?? []) } : {}),   // BUTCHER-STORES: none for the Stores'
     } : {}),
     ...(row.profession === 'hunting' ? { hunt: huntFrom(r.get('hunt')?.[0]) } : {}),   // PROF7: the account's hides today
     ...(row.profession === 'fishing' ? { hauls: Number(r.get('hauls')?.[0]?.n ?? 0) } : {}),   // PROF8: the account's hauls today
@@ -585,7 +593,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const T = carry ? 'prof_carried' : 'prof_stores';
   const ROOM = carry ? CARRIED_MAX : STORES_MAX;
   const prior = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
-  if (prior) return harvestAnswer(db, player, env, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered
+  if (prior) return repeatAnswer(db, player, env, prior, nowS, body);   // before the switch: a harvest made is a harvest answered
   const closed = shut(player, env);
   if (closed) return closed;
   const n = parseNodeKey(node);
@@ -594,6 +602,12 @@ export async function harvestNode(ctx, player, env, body = {}) {
   if (!law.kinds.includes(kind)) return { error: 'prof-kind' };
   const isBody = n.kind === 'body';   // PROF7: a body names no ground (PROF0 6)
   const isHaul = n.kind === 'haul';   // PROF8: a haul names its pixel, and no slot
+  // BUTCHER-STORES (FIELD FEEDBACK 2026-10-31; Sammy: "The game should not add meat to your inventory when you skin
+  // animals"): a carried body's butchery lands in the Stores, never the bag or pack - for a client that says it reads it
+  // there (`butcheryStores`). An older client's is carried, as before, and minted by it: no side counts it twice.
+  const butcheryStores = isBody && carry && body?.butcheryStores === true;
+  const TX = carry && !butcheryStores ? 'prof_carried' : 'prof_stores';   // the second find's count
+  const ROOMX = TX === 'prof_carried' ? CARRIED_MAX : STORES_MAX;
   if (!isBody && (!climateHolds(n.kind, climate) || !regionOk(region))) return { error: 'prof-pixel' };
   if (n.kind !== 'dvein' && !isBody && !regionOnPixel(region, n.x, n.y)) return { error: 'prof-pixel' };   // WW-C1: a province's richness never claimed on the Bay's own ground
   const day = utcDay(nowS);
@@ -774,12 +788,12 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const deepUnconfirmed = deep && !confirmed ? 1 : 0;
   const mine = 'player = ?1 AND rid = ?2 AND n = ?3';
   const stored = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?5), 0)`;   // BAG1: the count it lands in
-  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?18), 0)`;
+  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${TX} WHERE player = ?1 AND char_id = ?4 AND material = ?18), 0)`;   // BUTCHER-STORES: its own count
   // PROF7: Hunting's rare hides today, in hides (AUDIT 32 L2) - the account's, of tiers 5-6. CAP-OFF: its day of thirty
   // hides of any tier, and Fishing's of forty hauls, are counted no more
   const huntedHigh = "COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)";
   // GATHER-SPEED: the answer's reads (answerReads), behind the decision in its own batch - and the row read back first
-  const answer = answerReads(db, player, env, { player: player.id, char_id: character, day, profession, material: key2, gem, extra, carry }, rid, nowS, { marks: !!find });
+  const answer = answerReads(db, player, env, { player: player.id, char_id: character, day, profession, material: key2, gem, extra, carry, extraStores: butcheryStores }, rid, nowS, { marks: !!find });
   const decided = [
     // BAG1: the carried count cut to what the pack and the bag hold of it, before the decision reads its room
     // AUDIT BAG1 B2/B3: and only the material the held count is of (`heldKey` - a herb, a log, a hide: the client names
@@ -792,18 +806,18 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // says what was credited); the second find kept where one of it fits, its count cut to its room (AUDIT 32 S3: a
     // Butcher's two at 4,999 were both lost). CAP-OFF: no day's cap - a character's sixty in a profession, an account's
     // 120 (A3), Hunting's thirty hides and Fishing's forty hauls are asked no more
-    db.prepare(`INSERT OR IGNORE INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, gem, at, rid, n, deep_unconfirmed, extra, tier, extra_qty, trophy, carry, school)
+    db.prepare(`INSERT OR IGNORE INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, gem, at, rid, n, deep_unconfirmed, extra, tier, extra_qty, trophy, carry, school, extra_stores)
       SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?11 - ${stored},
           CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END),
         MAX(0, MIN(?12, ?17 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),
         CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3, ?15,
-        CASE WHEN ${storedExtra} < ?11 THEN ?18 END, ?19, CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END, ?23, ?24, ?25
+        CASE WHEN ${storedExtra} < ?26 THEN ?18 END, ?19, CASE WHEN ${storedExtra} < ?26 THEN MIN(?22, ?26 - ${storedExtra}) ELSE 1 END, ?23, ?24, ?25, ?27
       WHERE (?15 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?16)
         AND (?9 <> 'hunting' OR ?19 < ?20 OR ${huntedHigh} < ?21)
         AND ?11 - ${stored} >= 1`)
       .bind(player.id, rid, nonce, character, key2, day, node, kind, profession, kept, ROOM, xp, at, gem,
         deepUnconfirmed, DEEP_UNCONFIRMED_PER_DAY, PROF_XP_MAX, extra,
-        tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, trophy, carry ? 1 : 0, schooled),
+        tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, trophy, carry ? 1 : 0, schooled, ROOMX, butcheryStores ? 1 : 0),
     db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
       SELECT player, char_id, material, 'own', qty FROM node_harvests WHERE ${mine}
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),
@@ -817,10 +831,11 @@ export async function harvestNode(ctx, player, env, body = {}) {
     db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
       SELECT player, char_id, gem, 'own', 1 FROM node_harvests WHERE ${mine} AND gem IS NOT NULL
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),
-    // PROF4: a tree's Resin beside the logs, kept the same way; PROF7: a body's butchery, its count (a Butcher's two)
-    db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
+    // PROF4: a tree's Resin beside the logs, kept the same way; PROF7: a body's butchery, its count (a Butcher's two) -
+    // BUTCHER-STORES: into the Stores where the client reads it there
+    db.prepare(`INSERT INTO ${TX} (player, char_id, material, origin, qty)
       SELECT player, char_id, extra, 'own', extra_qty FROM node_harvests WHERE ${mine} AND extra IS NOT NULL
-      ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),
+      ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${TX}.qty + excluded.qty`).bind(player.id, rid, nonce),
     // SEAT1d: the Levy's units to the seat's stockpile, beside the harvest that paid them - once (the request's own row)
     ...(levy > 0 ? [
       db.prepare(`INSERT OR IGNORE INTO town_seat_levies (player, rid, key, week, material, qty, at)
@@ -843,7 +858,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);
   const made = rows[decided.length - 1][0] ?? null;
   if (made?.n === nonce) return answerOf(made, readsBy(answer, rows, decided.length), nowS, levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}, rank);
-  if (made) return harvestAnswer(db, player, env, made, nowS, { repeat: true });   // the same request, racing itself
+  if (made) return repeatAnswer(db, player, env, made, nowS, body);   // the same request, racing itself (AUDIT FB1031 III I1)
   if (await db.prepare('SELECT 1 FROM node_harvests WHERE day = ?1 AND node = ?2 AND kind = ?3 AND player = ?4 AND char_id = ?5')
     .bind(day, node, kind, player.id, character).first()) return { error: 'node-taken' };
   // CAP-OFF: no day's cap to say - `prof-cap`, `prof-account-cap`, `prof-hunt-cap` and `prof-fish-cap` are said no more

@@ -347,9 +347,9 @@ test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere el
   assert.match(w, /const character = characterIdOf\(playerEntity\);\n[^\n]*\n\s*return region != null \? \{ region, character \} : character \? \{ character \} : null;/);
   assert.match(w, /region: \(\) => \{ const px = playerTravelPixel\(\); const r = maps\.getRegionIndexAt\(px\.x, px\.y\); return Number\.isSafeInteger\(r\) \? r : null; \},/);
   const nw = rd('src/ui/noticeWindow.js');
-  assert.match(nw, /\.\.\.\(seatShown\(\) \? \[\['seat', 'Seat'\]\] : \[\]\)\];/);
+  assert.match(nw, /\.\.\.\(seatShown\(\) \? \[\['seat', 'Seat'\]\] : \[\]\),\n\s*\];/);
   assert.match(nw, /const seatHost = guildOnly \? null : \(deps\.seat \?\? null\);/);
-  assert.match(nw, /else if \(tab === 'seat' && seatTab && seatShown\(\)\) win\.append\(seatTab\.body\(\)\);/);
+  assert.match(nw, /else if \(tab === 'seat' && seatTab && seatShown\(\)\)\n\s*win\.append\(seatTab\.body\(\)\);/);
   const idx = rd('server-account/src/index.js');
   assert.match(idx, /if \(r\.recorded && !r\.rite && body\.region != null\) answer\.seat = await creditGate\(ctx, who\.player, env, \{ character: body\.character \?\? null, day: r\.day, region: body\.region \}\);/);
   assert.match(idx, /if \(body\.region != null && r\.credited > 0 && !r\.repeat\) await creditRenown\(/);

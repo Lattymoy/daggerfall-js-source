@@ -2,7 +2,7 @@
   {
     "name": "HT6-the-equip-moment-waits-for-a-frame",
     "file": "src/systems/handheldTorches.js",
-    "old": "addEquipChangeListener((entity) => _liveHandLaw?.(entity));",
+    "old": "addEquipChangeListener((entity) => _liveHandLaw?.(entity));\n",
     "new": "",
     "tests": [
       "test/systems/ht6_offhand.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "HT6-no-host-ever-claims-the-change",
     "file": "src/systems/handheldTorches.js",
-    "old": "    _liveHandLaw = applyHandLaw;   // HT6: this host has the player, so this component answers the equip change",
+    "old": "    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
     "new": "",
     "tests": [
       "test/systems/ht6_offhand.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "HT6-a-stale-host-answers-for-any-wearer",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (ctx?.entity !== entity) return;   // no frame has run yet (no ctx to read sheathed from), or this is another host's wearer",
-    "new": "",
+    "old": "    if (ctx?.entity !== entity) return; // no frame has run yet (no ctx to read sheathed from), or this is another host's wearer\n    w.s = settings();",
+    "new": "    w.s = settings();",
     "tests": [
       "test/systems/ht6_offhand.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HT6-the-hands-are-not-worked-out-first",
     "file": "src/systems/handheldTorches.js",
-    "old": "    w.s = settings();\n    updateFreeHand();\n    handLaw(light());",
-    "new": "    w.s = settings();\n    handLaw(light());",
+    "old": "    updateFreeHand();\n    handLaw(light());",
+    "new": "    handLaw(light());",
     "tests": [
       "test/systems/ht6_offhand.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HT6-the-equip-moment-obeys-a-stale-dial",
     "file": "src/systems/handheldTorches.js",
-    "old": "    w.s = settings();\n    updateFreeHand();\n    handLaw(light());",
-    "new": "    updateFreeHand();\n    handLaw(light());",
+    "old": "    w.s = settings();\n    updateFreeHand();",
+    "new": "    updateFreeHand();",
     "tests": [
       "test/systems/ht6_offhand.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HT6-a-disposed-component-keeps-answering",
     "file": "src/systems/handheldTorches.js",
-    "old": " if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change",
-    "new": " }",
+    "old": "    if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;\n  } // HT6: a torn-down component stops answering the equip change",
+    "new": "  }",
     "tests": [
       "test/systems/ht6_offhand.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HT6-dispose-silences-every-host-not-just-its-own",
     "file": "src/systems/handheldTorches.js",
-    "old": "if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;",
-    "new": "_liveHandLaw = null;",
+    "old": "    if (_liveHandLaw === applyHandLaw) _liveHandLaw = null;",
+    "new": "    _liveHandLaw = null;",
     "tests": [
       "test/systems/ht6_offhand.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HT6-the-law-runs-but-Update-no-longer-does",
     "file": "src/systems/handheldTorches.js",
-    "old": "    handLaw(l);\n    // the sprite's frames",
-    "new": "    // the sprite's frames",
+    "old": "    handLaw(l);\n    // the sprite's frames (0x1689-0x175a): a torch's or a lantern's, a candle has none",
+    "new": "    // the sprite's frames (0x1689-0x175a): a torch's or a lantern's, a candle has none",
     "tests": [
       "test/systems/ht6_offhand.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -75,7 +75,7 @@
   {
     "name": "HT7-the-sheathed-stance-frees-the-bare-right-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
+    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false; // bare right hand, in use (0x2d53) - and only with the weapon up",
     "new": "    } else if (usingRightNow) w.handRight = false;",
     "tests": [
       "test/systems/ht6_offhand.test.js",

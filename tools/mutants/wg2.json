@@ -2,8 +2,8 @@
   {
     "name": "WG2-exact-pow-let-in",
     "file": "src/world/gen2/exact.js",
-    "old": "'Math.log10', 'Math.pow', 'Math.hypot'",
-    "new": "'Math.log10', 'Math.hypot'",
+    "old": "  'Math.atan2', 'Math.exp', 'Math.expm1', 'Math.log', 'Math.log1p', 'Math.log2', 'Math.log10', 'Math.pow', 'Math.hypot', 'Math.cbrt',",
+    "new": "  'Math.atan2', 'Math.exp', 'Math.expm1', 'Math.log', 'Math.log1p', 'Math.log2', 'Math.log10', 'Math.hypot', 'Math.cbrt',",
     "tests": [
       "test/world/gen2/wg2_foundation.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WG2-ground-print-blind-to-rebake",
     "file": "src/world/gen2/manifest.js",
-    "old": "({ id: r.id, rect: r.rect, print: r.print, generator: r.generator })",
-    "new": "({ id: r.id, rect: r.rect, generator: r.generator })",
+    "old": "  const set = m.published.map((r) => ({ id: r.id, rect: r.rect, print: r.print, generator: r.generator })).sort((a, b) => (a.id < b.id ? -1 : 1));",
+    "new": "  const set = m.published.map((r) => ({ id: r.id, rect: r.rect, generator: r.generator })).sort((a, b) => (a.id < b.id ? -1 : 1));",
     "tests": [
       "test/world/gen2/wg2_foundation.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WG2-basin-ignored",
     "file": "src/world/gen2/stageGraph.js",
-    "old": "reach < 0 ? (o.basinOf ? union(r, o.basinOf(r)) : bounds) : grow(r, reach)",
-    "new": "reach < 0 ? bounds : grow(r, reach)",
+    "old": "    const grown = reach < 0 ? (o.basinOf ? union(r, o.basinOf(r)) : bounds) : grow(r, reach);",
+    "new": "    const grown = reach < 0 ? bounds : grow(r, reach);",
     "tests": [
       "test/world/gen2/wg2_foundation.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WG2-resources-reach",
     "file": "src/world/gen2/stageGraph.js",
-    "old": "resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 2 },",
-    "new": "resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 3 },",
+    "old": "  resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 2 },",
+    "new": "  resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 3 },",
     "tests": [
       "test/world/gen2/wg2_foundation.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WG2-terminal-lake-spills",
     "file": "src/world/gen2/hydrology.js",
-    "old": "        Q[k] = 0;\n",
-    "new": "        Q[k] = inflowYr / YEAR_S;\n",
+    "old": "        Q[k] = 0;",
+    "new": "        Q[k] = inflowYr / YEAR_S;",
     "tests": [
       "test/world/gen2/wg2_terrain.test.js",
       "test/world/gen2/wg2_bakes.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "WG2-oasis-unpainted",
     "file": "src/world/gen2/biome.js",
-    "old": "air.precip.data[k] < 600 && out.data[k] !== B('lake')",
-    "new": "air.precip.data[k] < 0 && out.data[k] !== B('lake')",
+    "old": "      if (d2 < reach * reach && air.precip.data[k] < 600 && out.data[k] !== B('lake')) out.data[k] = B('oasis');",
+    "new": "      if (d2 < reach * reach && air.precip.data[k] < 0 && out.data[k] !== B('lake')) out.data[k] = B('oasis');",
     "tests": [
       "test/world/gen2/wg2_bakes.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "WG2-any-fit-taken",
     "file": "src/world/gen2/gen2Ground.js",
-    "old": "if (!fit || f.ox !== fit.ox || f.oy !== fit.oy || f.ppu !== fit.ppu) {",
-    "new": "if (!fit) {",
+    "old": "      if (!fit || f.ox !== fit.ox || f.oy !== fit.oy || f.ppu !== fit.ppu) {",
+    "new": "      if (!fit) {",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "WG2-byte-hook-unasked",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "  byte = gen2Byte(x, y, byte) ?? byte;   // WG2 (bible/03-World/World-2-Canon.md): a published region's ground over the law\n",
-    "new": "",
+    "old": "  byte = gen2Byte(x, y, byte) ?? byte;   // A published region's ground over the law\n  byte = landLayer().heightAt(x, y) ?? byte;   // FOUNDATION F4: a row of the land's (world/land/landLayer.js) over the law",
+    "new": "  byte = landLayer().heightAt(x, y) ?? byte;   // FOUNDATION F4: a row of the land's (world/land/landLayer.js) over the law",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "WG2-plinth-buried",
     "file": "src/world/gen2/settle/settlementGen.js",
-    "old": "if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: hi + 0.2, lo };",
-    "new": "if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: lo, lo };",
+    "old": "    if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: hi + 0.2, lo };",
+    "new": "    if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: lo, lo };",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "WG2-no-dock",
     "file": "src/world/gen2/settle/settlementGen.js",
-    "old": "    if (bk >= 0) docks.push(",
-    "new": "    if (bk < 0) docks.push(",
+    "old": "    if (bk >= 0) docks.push({ k: bk, at: [RAYS[bk][0] * reach[bk].shore, RAYS[bk][1] * reach[bk].shore], dir: RAYS[bk] });",
+    "new": "    if (bk < 0) docks.push({ k: bk, at: [RAYS[bk][0] * reach[bk].shore, RAYS[bk][1] * reach[bk].shore], dir: RAYS[bk] });",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "WG2-legacy-id-blind-to-layout",
     "file": "src/world/gen2/settle/buildingRecord.js",
-    "old": "`rmb:${mapId >>> 0}:${key}@${layout || 'classic'}`",
-    "new": "`rmb:${mapId >>> 0}:${key}@classic`",
+    "old": "export const legacyBuildingId = (mapId, key, layout) => `rmb:${mapId >>> 0}:${key}@${layout || 'classic'}`;",
+    "new": "export const legacyBuildingId = (mapId, key, layout) => `rmb:${mapId >>> 0}:${key}@classic`;",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "WG2-self-approval",
     "file": "src/world/gen2/edit/revisions.js",
-    "old": "  if (rev.state === 'review' && step.by === rev.author) why.push('a revision is approved by someone other than its author');\n",
-    "new": "",
+    "old": "  if (rev.state === 'review' && step.by === rev.author) why.push('a revision is approved by someone other than its author');\n  if (rev.state === 'staging' && !step.staged) why.push('its staging checks have not passed');",
+    "new": "  if (rev.state === 'staging' && !step.staged) why.push('its staging checks have not passed');",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "WG2-staging-skipped",
     "file": "src/world/gen2/edit/revisions.js",
-    "old": "  if (rev.state === 'staging' && !step.staged) why.push('its staging checks have not passed');\n",
-    "new": "",
+    "old": "  if (rev.state === 'staging' && !step.staged) why.push('its staging checks have not passed');\n  if (rev.state === 'staging' && (step.conflicts ?? []).length) why.push(...(step.conflicts ?? []).map((c) => `protected: ${c.why}`));",
+    "new": "  if (rev.state === 'staging' && (step.conflicts ?? []).length) why.push(...(step.conflicts ?? []).map((c) => `protected: ${c.why}`));",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "WG2-home-unguarded",
     "file": "src/world/gen2/edit/propertyGuard.js",
-    "old": "* 819.2 <= op.r + GUARD_PX * 819.2;",
-    "new": "* 819.2 <= 0;",
+    "old": "  if (op.x !== undefined && op.r !== undefined) return Math.sqrt((at.x - op.x) * (at.x - op.x) + (at.y - op.y) * (at.y - op.y)) * 819.2 <= op.r + GUARD_PX * 819.2;",
+    "new": "  if (op.x !== undefined && op.r !== undefined) return Math.sqrt((at.x - op.x) * (at.x - op.x) + (at.y - op.y) * (at.y - op.y)) * 819.2 <= 0;",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "WG2-package-print-unread",
     "file": "src/world/gen2/edit/contentPackage.js",
-    "old": "  if (print(body) !== p) why.push('its print does not match: changed on the way');\n",
-    "new": "",
+    "old": "  if (print(body) !== p) why.push('its print does not match: changed on the way');\n  if (pkg.world !== worldManifest().worldId) why.push(`another world (${pkg.world})`);",
+    "new": "  if (pkg.world !== worldManifest().worldId) why.push(`another world (${pkg.world})`);",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "WG2-triangle-budget-doubled",
     "file": "src/world/gen2/edit/prefabCheck.js",
-    "old": "  if (n.triangles > PREFAB_BUDGETS.triangles) out.push",
-    "new": "  if (n.triangles > PREFAB_BUDGETS.triangles * 2) out.push",
+    "old": "  if (n.triangles > PREFAB_BUDGETS.triangles) out.push(`${n.triangles} triangles, over ${PREFAB_BUDGETS.triangles}`);",
+    "new": "  if (n.triangles > PREFAB_BUDGETS.triangles * 2) out.push(`${n.triangles} triangles, over ${PREFAB_BUDGETS.triangles}`);",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "WG2-redo-kept-after-change",
     "file": "src/world/gen2/edit/editHistory.js",
-    "old": ".slice(-LIMIT), now: doc, future: [] });",
-    "new": ".slice(-LIMIT), now: doc, future: h.future });",
+    "old": "export const commitEdit = (h, doc) => (doc === h.now ? h : { past: [...h.past, h.now].slice(-LIMIT), now: doc, future: [] });",
+    "new": "export const commitEdit = (h, doc) => (doc === h.now ? h : { past: [...h.past, h.now].slice(-LIMIT), now: doc, future: h.future });",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "WG2-inflow-at-the-receiver",
     "file": "src/world/gen2/continent.js",
-    "old": "Math.max(R.x + 1.5 / spec.res, x)), cyw",
-    "new": "Math.max(R.x + 1.5 / spec.res, rx)), cyw",
+    "old": "    const cxw = Math.min(R.x + R.w - 1.5 / spec.res, Math.max(R.x + 1.5 / spec.res, x)), cyw = Math.min(R.y + R.h - 1.5 / spec.res, Math.max(R.y + 1.5 / spec.res, y));",
+    "new": "    const cxw = Math.min(R.x + R.w - 1.5 / spec.res, Math.max(R.x + 1.5 / spec.res, rx)), cyw = Math.min(R.y + R.h - 1.5 / spec.res, Math.max(R.y + 1.5 / spec.res, y));",
     "tests": [
       "test/world/gen2/wg2_continent.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "WG2-tiles-refused",
     "file": "src/world/gen2/gen2Ground.js",
-    "old": "&& !(r.tiling && r.tiling === d.header.tiling && overlaps(r.header.core, d.header.core) === false)",
-    "new": "&& !(r.tiling && r.tiling === d.header.tiling && false)",
+    "old": "      if (_regions.some((r) => overlaps(r.rect, d.header.rect) && !(r.tiling && r.tiling === d.header.tiling && overlaps(r.header.core, d.header.core) === false))) { console.warn(`[wg2] ${d.header.id} overlaps a region; left out`); continue; }   // tiles of one tiling overlap in their bands alone",
+    "new": "      if (_regions.some((r) => overlaps(r.rect, d.header.rect) && !(r.tiling && r.tiling === d.header.tiling && false))) { console.warn(`[wg2] ${d.header.id} overlaps a region; left out`); continue; }   // tiles of one tiling overlap in their bands alone",
     "tests": [
       "test/world/gen2/wg2_tiles.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "WG2-tile-left-out",
     "file": "src/world/gen2/tiling.js",
-    "old": "    for (let b = 0; b < 8 && !land; b++) for (let a = 0; a < 8 && !land; a++) land =",
-    "new": "    for (let b = 0; b < 2 && !land; b++) for (let a = 0; a < 2 && !land; a++) land =",
+    "old": "    for (let b = 0; b < 8 && !land; b++) for (let a = 0; a < 8 && !land; a++) land = canonTheatre(...worldToPicture(fit, core.x + (a + 0.5) * tile / 8, core.y + (b + 0.5) * tile / 8)) === theatre;",
+    "new": "    for (let b = 0; b < 2 && !land; b++) for (let a = 0; a < 2 && !land; a++) land = canonTheatre(...worldToPicture(fit, core.x + (a + 0.5) * tile / 8, core.y + (b + 0.5) * tile / 8)) === theatre;",
     "tests": [
       "test/world/gen2/wg2_tiles.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "WG2-drawn-river-unforced",
     "file": "src/world/gen2/regionBake.js",
-    "old": "    forced[k] = 1;\n",
-    "new": "",
+    "old": "    forced[k] = 1;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "WG2-paint-unlaid",
     "file": "src/world/gen2/regionBake.js",
-    "old": "  if (o.doc) applyBiomePaint(o.doc, bio.biome);\n",
-    "new": "",
+    "old": "  if (o.doc) applyBiomePaint(o.doc, bio.biome);\n  const elev = bio.elev;",
+    "new": "  const elev = bio.elev;",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "WG2-drawn-river-rises",
     "file": "src/world/gen2/edit/editLayers.js",
-    "old": "s = Math.min(s, zs[i] - 0.5); return [x, y, s];",
-    "new": "s = zs[i] - 0.5; return [x, y, s];",
+    "old": "        rivers.push({ width: /** @type {number} */ (op.width), depth: /** @type {number} */ (op.depth), pts: pts.map(([x, y], i) => { s = Math.min(s, zs[i] - 0.5); return [x, y, s]; }) });",
+    "new": "        rivers.push({ width: /** @type {number} */ (op.width), depth: /** @type {number} */ (op.depth), pts: pts.map(([x, y], i) => { s = zs[i] - 0.5; return [x, y, s]; }) });",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "WG2-home-key-by-sequence",
     "file": "src/world/gen2/settle/buildingRecord.js",
-    "old": "{ home: { mapId, key: makeBuildingKey(slot[0], slot[1], slot[2]) } }",
-    "new": "{ home: { mapId, key: Number(id.slice(id.lastIndexOf('/b') + 2)) } }",
+    "old": "    const homed = b.role === 'house' ? { home: { mapId, key: makeBuildingKey(slot[0], slot[1], slot[2]) } } : {};",
+    "new": "    const homed = b.role === 'house' ? { home: { mapId, key: Number(id.slice(id.lastIndexOf('/b') + 2)) } } : {};",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "WG2-town-leaves-its-pixel",
     "file": "src/world/gen2/settle/settlementValidate.js",
-    "old": "inPixel = (x, y) => x >= px && y >= py && x < px + 1 && y < py + 1;",
-    "new": "inPixel = () => true;",
+    "old": "  const px = Math.floor(cx), py = Math.floor(cy), inPixel = (x, y) => x >= px && y >= py && x < px + 1 && y < py + 1;",
+    "new": "  const px = Math.floor(cx), py = Math.floor(cy), inPixel = () => true;",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "WG2-bake-under-play",
     "file": "src/scenes/gen2Host.js",
-    "old": "new URL(`worldgen2/${file}.gz`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;",
-    "new": "new URL(`worldgen2/${file}.gz`, new URL('play/', APP_ROOT ?? 'http://localhost/')).href;",
+    "old": "export const bakeUrl = (file) => new URL(`worldgen2/${file}.gz`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;",
+    "new": "export const bakeUrl = (file) => new URL(`worldgen2/${file}.gz`, new URL('play/', APP_ROOT ?? 'http://localhost/')).href;",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "WG2-dunes-nearest-cell",
     "file": "src/world/gen2/regionSampler.js",
-    "old": "const dune = dunes.at(x, y);",
-    "new": "const dune = biome.get(...elev.cellOf(x, y)) === DUNES ? 1 : 0;",
+    "old": "    const dune = dunes.at(x, y);",
+    "new": "    const dune = biome.get(...elev.cellOf(x, y)) === DUNES ? 1 : 0;",
     "tests": [
       "test/world/gen2/wg2_bakes.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "WG2-lake-nearest-cell",
     "file": "src/world/gen2/regionSampler.js",
-    "old": "const id = lake.get(i + (c & 1), j + (c >> 1));",
-    "new": "const id = c ? 0 : lake.get(...lake.cellOf(x, y));",
+    "old": "        const id = lake.get(i + (c & 1), j + (c >> 1));",
+    "new": "        const id = c ? 0 : lake.get(...lake.cellOf(x, y));",
     "tests": [
       "test/world/gen2/wg2_bakes.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "WG2-sill-diagonal",
     "file": "src/world/gen2/padLaw.js",
-    "old": "if (az >= ax) { const h01",
-    "new": "if (az < ax) { const h01",
+    "old": "  if (az >= ax) { const h01 = at(i, j + 1); return h00 + az * (h01 - h00) + ax * (h11 - h01); }",
+    "new": "  if (az < ax) { const h01 = at(i, j + 1); return h00 + az * (h01 - h00) + ax * (h11 - h01); }",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "WG2-sill-fixed-point",
     "file": "src/world/gen2/settle/settlementGen.js",
-    "old": "if (a < 1 - 1e-6) level = Math.max(level, b / (1 - a));",
-    "new": "if (a < 1 - 1e-6) level = Math.max(level, b);",
+    "old": "    if (a < 1 - 1e-6) level = Math.max(level, b / (1 - a));",
+    "new": "    if (a < 1 - 1e-6) level = Math.max(level, b);",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "WG2-sill-plinth",
     "file": "src/world/gen2/settle/settlementGen.js",
-    "old": "if (!pad) { level = Math.max(level, drawnAt(groundAt, x, y)); continue; }",
-    "new": "if (!pad) continue;",
+    "old": "    if (!pad) { level = Math.max(level, drawnAt(groundAt, x, y)); continue; }",
+    "new": "    if (!pad) continue;",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "WG2-sill-later-pad",
     "file": "src/world/gen2/settle/settlementGen.js",
-    "old": "drawnAt(on, x, y) > sl.level + SILL_EPS));",
-    "new": "drawnAt(on, x, y) > sl.level + 99));",
+    "old": "  return sills.some((sl) => sl.pts.some(([x, y]) => Math.abs(x - pad.at[0]) <= r && Math.abs(y - pad.at[1]) <= r && drawnAt(on, x, y) > sl.level + SILL_EPS));",
+    "new": "  return sills.some((sl) => sl.pts.some(([x, y]) => Math.abs(x - pad.at[0]) <= r && Math.abs(y - pad.at[1]) <= r && drawnAt(on, x, y) > sl.level + 99));",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "WG2-sill-validator",
     "file": "src/world/gen2/settle/settlementValidate.js",
-    "old": "if (over > SILL_EPS) {",
-    "new": "if (over > 9) {",
+    "old": "      if (over > SILL_EPS) { out.push(`${name}: its door is buried ${over.toFixed(2)} m in the drawn ground`); break; }",
+    "new": "      if (over > 9) { out.push(`${name}: its door is buried ${over.toFixed(2)} m in the drawn ground`); break; }",
     "tests": [
       "test/world/gen2/wg2_settlements.test.js"
     ]

@@ -32,8 +32,8 @@
   {
     "name": "CLIMBDOWN-fit-ignores-the-terrain",
     "file": "src/player/parkour.js",
-    "old": "  if (collider.restFloor && p[1] < collider.restFloor(p[0], p[2]) - PARKOUR_FIT_EPS) return false;\n",
-    "new": "",
+    "old": "  if (collider.restFloor && p[1] < collider.restFloor(p[0], p[2]) - PARKOUR_FIT_EPS) return false;\n  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS) || !bandsClear(collider, p, height)) return false;",
+    "new": "  if (!(collider.penetrationAt(p, height) < PARKOUR_FIT_EPS) || !bandsClear(collider, p, height)) return false;",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -77,8 +77,8 @@
   {
     "name": "CLIMBDOWN-face-ray-over-the-lip",
     "file": "src/player/parkour.js",
-    "old": "lipY - PARKOUR_EDGE_FACE_DROP, edge[2] + out[2] * PARKOUR_EDGE_FACE_OUT];",
-    "new": "lipY + PARKOUR_EDGE_FACE_DROP, edge[2] + out[2] * PARKOUR_EDGE_FACE_OUT];",
+    "old": "    lipY - PARKOUR_EDGE_FACE_DROP,",
+    "new": "    lipY + PARKOUR_EDGE_FACE_DROP,",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -242,8 +242,8 @@
   {
     "name": "CLIMBDOWN-recentre-leaves-the-chain",
     "file": "src/player/parkour.js",
-    "old": "  if (m.next) offsetMove(m.next, offset);",
-    "new": "",
+    "old": "  if (m.next) offsetMove(m.next, offset); // CLIMB-DOWN: the move chained on after it",
+    "new": "  // CLIMB-DOWN: the move chained on after it",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -287,8 +287,8 @@
   {
     "name": "CLIMBDOWN-lower-ends-unheld",
     "file": "src/player/parkour.js",
-    "old": "    stand: true,\n    exit: null,\n    hang: { normal: [...grip.normal], lipY: grip.lipY },",
-    "new": "    stand: true,\n    exit: null,\n    hang: null,",
+    "old": "    stand: true,\n    exit: null,\n    hang: { normal: [...grip.normal], lipY: grip.lipY },\n    key: grip.key ?? null,",
+    "new": "    stand: true,\n    exit: null,\n    hang: null,\n    key: grip.key ?? null,",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -362,8 +362,8 @@
   {
     "name": "CLIMBDOWN-45-degree-landing-refused",
     "file": "src/player/parkour.js",
-    "old": "    if (ny >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK)",
-    "new": "    if (ny >= PARKOUR_TOP_MIN_NY && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK)",
+    "old": "    if (ny >= PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK) {",
+    "new": "    if (ny >= PARKOUR_TOP_MIN_NY && y - lipY <= s * tan + PARKOUR_SLOPE_SLACK) {",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -377,7 +377,7 @@
   {
     "name": "CLIMBDOWN-45-degree-slab-refused",
     "file": "src/player/parkour.js",
-    "old": "    if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER) continue;",
+    "old": "    if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY - PARKOUR_RAY_SCATTER)\n      continue;",
     "new": "    if (!Number.isFinite(down.dist) || !down.normal || down.normal[1] < PARKOUR_TOP_MIN_NY) continue;",
     "tests": [
       "test/player/climbdown.test.js",
@@ -514,8 +514,8 @@
   {
     "name": "CLIMBDOWN-deck-leaves-the-chain",
     "file": "src/player/parkour.js",
-    "old": "  if (m.next) carryMove(m.next, was, now);   // CLIMB-DOWN: the move chained on after it\n",
-    "new": "",
+    "old": "  if (m.next) carryMove(m.next, was, now); // CLIMB-DOWN: the move chained on after it\n}",
+    "new": "}",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -529,8 +529,8 @@
   {
     "name": "CLIMBDOWN-overhang-any-depth",
     "file": "src/player/parkour.js",
-    "old": "ledge.depth > PARKOUR_VAULT_DEPTH) return null;\n  const { radius, stand } = opts;",
-    "new": "false) return null;\n  const { radius, stand } = opts;",
+    "old": "export function senseOverHang(collider, feet, ledge, opts) {\n  if (!ledge?.ok || ledge.depth == null || ledge.depth > PARKOUR_VAULT_DEPTH) return null;",
+    "new": "export function senseOverHang(collider, feet, ledge, opts) {\n  if (!ledge?.ok || ledge.depth == null || false) return null;",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -544,8 +544,8 @@
   {
     "name": "CLIMBDOWN-overhang-down-leg-pathless",
     "file": "src/player/parkour.js",
-    "old": "    if (!pathClear(collider, path(over, over, grip.feet, 0, 0), stand)) continue;\n",
-    "new": "",
+    "old": "    if (!pathClear(collider, path(over, over, grip.feet, 0, 0), stand)) continue;\n    return { up, over, grip };",
+    "new": "    return { up, over, grip };",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "CLIMBDOWN-overhang-path-under-the-top",
     "file": "src/player/parkour.js",
-    "old": "  const y = lipY + PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
-    "new": "  const y = lipY - PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
+    "old": "  const { face, into, normal, lipY, depth } = ledge;\n  const y = lipY + PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
+    "new": "  const { face, into, normal, lipY, depth } = ledge;\n  const y = lipY - PARKOUR_VAULT_CLEAR;\n  const tangent = [-into[2], 0, into[0]];",
     "tests": [
       "test/player/climbdown.test.js",
       "test/player/climb3.test.js",

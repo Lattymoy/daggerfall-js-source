@@ -124,8 +124,8 @@
   {
     "name": "GRANT2-members-unbounded",
     "file": "src/net/grantMeasure.js",
-    "old": "&& count(r.members) && r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max",
-    "new": "&& count(r.members)",
+    "old": "        r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max &&\n        count(r.bucket) &&",
+    "new": "        count(r.bucket) &&",
     "why": "a window claiming more members than its asks could",
     "tests": [
       "test/server/grant2_service.test.js"
@@ -134,8 +134,8 @@
   {
     "name": "GRANT2-signature-unchecked",
     "file": "src/net/grantMeasure.js",
-    "old": "  if (!good) return { error: 'grant-signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { error: 'grant-signature' };\n  let batch;",
+    "new": "  let batch;",
     "why": "anyone feeds the measure",
     "tests": [
       "test/server/grant2_service.test.js"
@@ -144,8 +144,8 @@
   {
     "name": "GRANT2-batch-kept-twice",
     "file": "server-account/src/grants.js",
-    "old": "  if (!kept?.meta?.changes) return { ok: true, read: false };\n",
-    "new": "",
+    "old": "  if (!kept?.meta?.changes) return { ok: true, read: false };\n  const writes = [",
+    "new": "  const writes = [",
     "why": "a window posted twice counted twice",
     "tests": [
       "test/server/grant2_service.test.js"

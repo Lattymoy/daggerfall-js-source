@@ -11,7 +11,9 @@
 let renderer = null;
 
 /** main.js, once: the game's renderer. */
-export function setPortraitRenderer(r) { renderer = r ?? null; }
+export function setPortraitRenderer(r) {
+  renderer = r ?? null;
+}
 
 /** The renderer a face portrait is taken with, or null before boot hands one (a test's process). */
 export const portraitRenderer = () => renderer;

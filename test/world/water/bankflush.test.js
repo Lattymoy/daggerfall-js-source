@@ -17,7 +17,6 @@ const rng = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; r
 
 test('BANK-FLUSH: the shelf is one cell, diagonal included, and the swell grows only where water stands over the ground (mutants: the shelf, the swell\'s depth)', () => {
   assert.equal(SHELF_CHAMFER, 4);
-  // PIN MOVED (WATER-LEVEL): SHELF_SHEET_DEPTH retired - the sheet's attribute carries the water's own depth over the carved
   // ground, 0 on the shelf (its ground stands at the level), so the swell grows from nothing there
   assert.match(WATER_SURFACE_VS, /smoothstep\(0\.0, 2\.500, aDepth\.x\)/, 'the swell grows with the depth over the ground');
 });
@@ -68,7 +67,6 @@ test('BANK-FLUSH: a grid\'s bed - the ground lowered by the carve, the sheet\'s 
   const bed = waterBedOf(grid, bytes, { tileDim: T, width: T, height: T });
   const f = bedFields(bytes, { tileDim: T });
   assert.deepEqual(bed.depths, f.carve, '`depths` is what the ground moved (the snow\'s height reads it)');
-  // PIN MOVED (WATER-LEVEL): the sheet's depths a pair - over the carved ground, and the shading's, never under the bed's
   for (let i = 0; i < f.depths.length; i++) {
     assert.ok(Math.abs(bed.sheet.depths[i * 2] - f.carve[i]) < 1e-5, 'flat water: the plane over the carve by the carve');
     assert.ok(bed.sheet.depths[i * 2 + 1] >= f.depths[i] - 1e-6, 'the shading never under the bed\'s profile');

@@ -10,12 +10,15 @@ import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { PRIVATEERS_HOLD_MAP_ID } from '../world/dungeon/dungeonTextures.js';
 
 /** A map pixel ({ x, y }) is the classic start's cell. */
-export const isStartCell = (px) => !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
+export const isStartCell = (px) =>
+  !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
 
 /** The map pixel a location (MapsFile's: its map table's longitude and latitude) stands on, or null. */
 function pixelOf(loc) {
   const mt = loc?.mapTableData;
-  return mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude) ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude) : null;
+  return mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)
+    ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude)
+    : null;
 }
 
 /** A location stands on the classic start's cell. */
@@ -23,8 +26,7 @@ export const isStartDungeon = (loc) => isStartCell(pixelOf(loc));
 
 /** HOLD-ONCE: a location is Daggerfall's Privateer's Hold - by its map id, so a custom start cell (a setting) moves
  *  the classic start and PH1 but never which dungeon is the Hold. */
-export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;
+export const isPrivateersHold = (loc) => (loc?.mapTableData?.mapId ?? 0) >>> 0 === PRIVATEERS_HOLD_MAP_ID;
 
 /** HOLD-ONCE: the word at a way back into the Hold, refused online. */
-export const HOLD_ONCE_TEXT = 'You cannot go back into Privateer\'s Hold.';
-
+export const HOLD_ONCE_TEXT = "You cannot go back into Privateer's Hold.";

@@ -276,7 +276,6 @@ test('COAST-LOOK the silt and the sheet take the ground\'s line where the ground
   const sheet = glslFunctions(fs, { uGroundEdge: 1 });
   for (let y = 0.05; y < D; y += 7.1) for (let x = 0.07; x < D; x += 6.3) near(sheet.geWander([x, y]), groundEdgeWander(x, y), 1e-12, `the sheet's wander at (${x}, ${y})`);
   for (let byte = 0; byte < 256; byte++) assert.equal(sheet.geEntry(byte), GROUND_KIND_TABLE[byte], `the sheet's entry ${byte}`);
-  // PIN MOVED (WATER-LEVEL): the sheet's shore is its cut field's coverage (world/water/waterLevel.js), less the same wander
   assert.match(fs, /\n {4}edge = smoothstep\(0\.5 - uShoreSoft, 0\.5 \+ uShoreSoft, 0\.5 - 0\.5 \* vCut - \(geEntry\(data\) != 0u \? geWander\(unwrapped\) : 0\.0\)\);/, 'the shore on the ground\'s line where the ground blends it');
   // the sheet and the sand on one line: where the ground's share of land is a half, the sheet's water is a half - the
   // sheet built over a dirt row, a row of the march's edge and a row of water, its cut as the GPU interpolates it

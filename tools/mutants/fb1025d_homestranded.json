@@ -4,44 +4,56 @@
     "file": "server-account/src/decorAccess.js",
     "old": "  const have = new Set(goodsUnder(save, name, id).map((it) => it?.uid));",
     "new": "  const have = new Set(goodsIn(save, id).map((it) => it?.uid));",
-    "tests": ["test/server/fb1025d_strandedpour.test.js"],
+    "tests": [
+      "test/server/fb1025d_strandedpour.test.js"
+    ],
     "why": "the loss itself: a ghost under the building's scene kept the bin's good out of the pour, and the bin's row was deleted"
   },
   {
     "name": "FB1025D-STRANDED-GHOSTS-STAY",
     "file": "server-account/src/decorAccess.js",
-    "old": "    if (back.length) clearGhosts(live, name, id, new Set(back.map((it) => it.uid)));\n",
-    "new": "",
-    "tests": ["test/server/fb1025d_strandedpour.test.js"]
+    "old": "    if (back.length) clearGhosts(live, name, id, new Set(back.map((it) => it.uid)));\n    if (pour.length) {",
+    "new": "    if (pour.length) {",
+    "tests": [
+      "test/server/fb1025d_strandedpour.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-GHOSTS-TAKE-ALL",
     "file": "server-account/src/decorAccess.js",
     "old": "    const kept = list.filter((it) => !uids.has(it?.uid));",
     "new": "    const kept = [];",
-    "tests": ["test/server/fb1025d_strandedpour.test.js"]
+    "tests": [
+      "test/server/fb1025d_strandedpour.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-NOT-BROUGHT",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "    if (pool && player?.sceneCache) {",
-    "new": "    if (false) {",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"],
+    "old": "      if (pool && player?.sceneCache) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ],
     "why": "the recovery itself: the owner walks in and the stranded goods stay under the building's scene"
   },
   {
     "name": "FB1025D-STRANDED-UNSAID",
     "file": "src/systems/decor/decorGrants.js",
-    "old": "      if (back.length) door?.say?.(strandedBackLine(back.length));\n",
-    "new": "",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "old": "        if (back.length) door?.say?.(strandedBackLine(back.length));\n      }",
+    "new": "      }",
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-NOT-KEPT-AT-BOOT",
     "file": "src/scenes/homesBootHost.js",
-    "old": "      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes)) console.log",
-    "new": "      for (const name of []) console.log",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"],
+    "old": "      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes))\n        console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);",
+    "new": "      for (const name of []) console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);",
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ],
     "why": "a world move before the owner's visit cleared the goods, as it did before"
   },
   {
@@ -49,7 +61,9 @@
     "file": "src/systems/decor/homeStranded.js",
     "old": "      if (!storage.includes(id) || shared.has(id)) continue;",
     "new": "      if (!storage.includes(id)) continue;",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"],
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ],
     "why": "a shared chest's ghosts brought into the chest beside the bin's goods: a dupe"
   },
   {
@@ -57,42 +71,54 @@
     "file": "src/systems/decor/homeStranded.js",
     "old": "      if (!storage.includes(id) || shared.has(id)) continue;",
     "new": "      if (shared.has(id)) continue;",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-HELD-TWICE",
     "file": "src/systems/decor/homeStranded.js",
-    "old": "        if (it?.uid && held.has(it.uid)) continue;\n",
-    "new": "",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"],
+    "old": "        if (it?.uid && held.has(it.uid)) continue;\n        if (it?.uid) held.add(it.uid);",
+    "new": "        if (it?.uid) held.add(it.uid);",
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ],
     "why": "a good the save already holds put back a second time: a dupe"
   },
   {
     "name": "FB1025D-STRANDED-PACK-UNREAD",
     "file": "src/systems/decor/homeStranded.js",
-    "old": "  for (const it of carried ?? []) if (it?.uid) held.add(it.uid);\n",
-    "new": "",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "old": "  for (const it of carried ?? []) if (it?.uid) held.add(it.uid);\n  const moved = [];",
+    "new": "  const moved = [];",
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-STANDING-PIECE-TAKEN",
     "file": "src/systems/decor/homeStranded.js",
     "old": "    if (!standing.has(id) && Array.isArray(list) && list.length) ids.push(id);",
     "new": "    if (Array.isArray(list) && list.length) ids.push(id);",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-EMPTY-SCENE-KEPT",
     "file": "src/systems/decor/homeStranded.js",
     "old": "    if (emptyEntry(entry)) cache.scenes.delete(name);",
     "new": "    if (false) cache.scenes.delete(name);",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   },
   {
     "name": "FB1025D-STRANDED-DROP-EVERY-GHOST",
     "file": "src/systems/decor/homeStranded.js",
     "old": "    const kept = uids ? list.filter((/** @type {any} */ it) => !uids.has(it?.uid)) : [];",
     "new": "    const kept = [];",
-    "tests": ["test/systems/decor/fb1025d_homestranded.test.js"]
+    "tests": [
+      "test/systems/decor/fb1025d_homestranded.test.js"
+    ]
   }
 ]

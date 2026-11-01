@@ -21,15 +21,23 @@ const SHARD_RE = /^chat:world\.(\d{1,2})$/;
 /** The shard `k`'s key, or null for an index the hub does not have. */
 export const chatHubRoom = (k) => (Number.isInteger(k) && k >= 0 && k < HUB_SHARDS ? `${HUB_BUS}.${k}` : null);
 /** Every shard's key, in order. */
-export const HUB_SHARD_ROOMS = Object.freeze(Array.from({ length: HUB_SHARDS }, (_, k) => /** @type {string} */ (chatHubRoom(k))));
+export const HUB_SHARD_ROOMS = Object.freeze(
+  Array.from({ length: HUB_SHARDS }, (_, k) => /** @type {string} */ (chatHubRoom(k))),
+);
 /** Is `key` one of the hub's shards (never the bus itself)? */
-export const isHubShard = (key) => { const m = SHARD_RE.exec(String(key ?? '')); return !!m && Number(m[1]) < HUB_SHARDS && String(Number(m[1])) === m[1]; };
+export const isHubShard = (key) => {
+  const m = SHARD_RE.exec(String(key ?? ''));
+  return !!m && Number(m[1]) < HUB_SHARDS && String(Number(m[1])) === m[1];
+};
 
 /** The shard hash: FNV-1a, 32 bits, over a string's UTF-16 code units - the same number at both ends and on every device. */
 export function shardHash(s) {
   let h = 0x811c9dc5;
   const t = String(s ?? '');
-  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
   return h >>> 0;
 }
 /** The shard an account's hub link lands on - by its VERIFIED subject (the token's `s`), so every tab of one account is
@@ -50,7 +58,7 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  stay: a link of an older build that asks for one is told the channel (`hub`), and a region the relay names is split
  *  as before. */
 export const REGION_SHARDS = 4;
-export const REGION_CHANNELS = 71;   // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)
+export const REGION_CHANNELS = 71; // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)
 /** PROVINCE-SLEEP (2026-10-25, bible/11-Multiplayer/Scale-Arc.md PROVINCE-SLEEP): THE CHANNELS THAT ARE SPLIT - the
  *  Bay's 62 (wire.js CHAT_BAY_REGIONS, pinned equal: wire.js imports this module). A shard keeps a poll open at its bus
  *  while it holds a socket (HUB-PULL), so a split region with anyone in it keeps its bus and every shard its players
@@ -64,16 +72,31 @@ const REGION_BUS_RE = /^chat:region\.(\d{1,2})$/;
 const REGION_SHARD_RE = /^chat:region\.(\d{1,2})\.(\d{1,2})$/;
 const canon = (d, n) => String(Number(d)) === d && Number(d) < n;
 /** Is `key` a region's own channel - a region shard's bus? */
-export const isRegionBus = (key) => { const m = REGION_BUS_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_CHANNELS); };
+export const isRegionBus = (key) => {
+  const m = REGION_BUS_RE.exec(String(key ?? ''));
+  return !!m && canon(m[1], REGION_CHANNELS);
+};
 /** Is `key` one of a region's shards? PROVINCE-SLEEP: a split region's - a province has none. */
-export const isRegionShard = (key) => { const m = REGION_SHARD_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS); };
+export const isRegionShard = (key) => {
+  const m = REGION_SHARD_RE.exec(String(key ?? ''));
+  return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS);
+};
 /** Region `r`'s shard `k`, or null for one the map does not have (PROVINCE-SLEEP: a province's). */
-export const regionShardRoom = (r, k) => (Number.isInteger(r) && r >= 0 && r < REGION_SPLIT && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS ? `chat:region.${r}.${k}` : null);
+export const regionShardRoom = (r, k) =>
+  Number.isInteger(r) && r >= 0 && r < REGION_SPLIT && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS
+    ? `chat:region.${r}.${k}`
+    : null;
 /** Every region shard's key, region by region - the split regions'. */
-export const REGION_SHARD_ROOMS = Object.freeze(Array.from({ length: REGION_SPLIT * REGION_SHARDS }, (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS))));
+export const REGION_SHARD_ROOMS = Object.freeze(
+  Array.from(
+    { length: REGION_SPLIT * REGION_SHARDS },
+    (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS)),
+  ),
+);
 /** The bus a shard's key hands its frames to - `chat:world` for a hub shard, the region's own channel for a region's -
  *  or null for a key that is no shard. */
-export const busOf = (key) => (isHubShard(key) ? HUB_BUS : isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null);
+export const busOf = (key) =>
+  isHubShard(key) ? HUB_BUS : isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null;
 /** Is `key` a shard of any channel? */
 export const isChannelShard = (key) => busOf(key) != null;
 /** Is `key` a channel that has shards (the hub, each region's)? */
@@ -116,7 +139,13 @@ export function regionsSharded(raw) {
 export const shardOf = (bus, sub, sharded = NO_REGIONS) => {
   if (bus === HUB_BUS) return hubOfSubject(sub);
   // a region bus's key ends in its region's number (`chat:region.<r>`)
-  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded.has(Number(String(bus).slice(String(bus).lastIndexOf('.') + 1)))) return null;
+  if (
+    !isRegionBus(bus) ||
+    typeof sub !== 'string' ||
+    !sub ||
+    !sharded.has(Number(String(bus).slice(String(bus).lastIndexOf('.') + 1)))
+  )
+    return null;
   if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;
   return `${bus}.${shardHash(sub) % REGION_SHARDS}`;
 };
@@ -131,11 +160,11 @@ export const shardOf = (bus, sub, sharded = NO_REGIONS) => {
  * The only event room whose own law admits past SOCKETS_MAX: a Super dungeon's realm admits SD_FIGHTERS_MAX accounts, a
  * siege and an arena fewer, so none of them can fill a room.
  */
-export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\d{0,8})(?:\.(?:[1-9]|1[0-5]))?)#([1-7])$/;   // GATE-COURTS: a night's every court (`gate:<n>.<c>`, net/gate/gateCourts.js GATE_COURTS_MAX - pinned equal) has copies of its own
+export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\d{0,8})(?:\.(?:[1-9]|1[0-5]))?)#([1-7])$/; // GATE-COURTS: a night's every court (`gate:<n>.<c>`, net/gate/gateCourts.js GATE_COURTS_MAX - pinned equal) has copies of its own
 /** Is `name` a copy of a gate's court? */
 export const isCourtCopy = (name) => typeof name === 'string' && COURT_COPY_RE.test(name);
 /** The court a copy's name is one of, or null. */
-export const courtOfCopy = (name) => (typeof name === 'string' ? COURT_COPY_RE.exec(name)?.[1] ?? null : null);
+export const courtOfCopy = (name) => (typeof name === 'string' ? (COURT_COPY_RE.exec(name)?.[1] ?? null) : null);
 /** The object a shard or a copy hands up to - a channel shard's bus, a court copy's court - or null. */
 export const upOf = (name) => busOf(name) ?? courtOfCopy(name);
 // AUDIT SCALE II R3-1: a court copy hands its court the fight's words - a frame PARSED as `gate`, said again as one
@@ -204,7 +233,11 @@ export const HUB_UP_BURST = 32;
  *  the first sieve, never the verdict - JSON's last duplicate key wins, so a kept frame is parsed and, parsed as anything
  *  but the three (`{"t":"pose","t":"chat",...}`), handed up as it came (server/src/index.js `_message`): a line is the
  *  bus's to judge, a mute the bus applied with it. */
-export const shardKeeps = (s) => s.startsWith('{"t":"hello"') || s.startsWith('{"t":"ping"') || s.startsWith('{"t":"pose"') || s.startsWith('{"t":"lease"');   // LEASE1: and its lease - a hub shard mints one, a region's shard reads one (net/roomLease.js)
+export const shardKeeps = (s) =>
+  s.startsWith('{"t":"hello"') ||
+  s.startsWith('{"t":"ping"') ||
+  s.startsWith('{"t":"pose"') ||
+  s.startsWith('{"t":"lease"'); // LEASE1: and its lease - a hub shard mints one, a region's shard reads one (net/roomLease.js)
 /** The close a shard gives a socket that came to the wrong one (its `hub` frame names the right one). */
 export const CLOSE_HUB = 4001;
 /** The first relay with the shards (RELAY_VERSION's number). */
@@ -217,14 +250,18 @@ export const hubShardsSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? 
  * @param {any} m
  * @returns {string|null}
  */
-export const hubHopOf = (m) => (m && typeof m === 'object' && m.t === 'hub' && (isChannelShard(m.key) || isChannelBus(m.key)) ? m.key : null);   // SCALE5c part two: a region's shard or its own channel too
+export const hubHopOf = (m) =>
+  m && typeof m === 'object' && m.t === 'hub' && (isChannelShard(m.key) || isChannelBus(m.key)) ? m.key : null; // SCALE5c part two: a region's shard or its own channel too
 
 /** SCALE5c (Mac's decision 2): the most names a search of everyone online answers. */
 export const HUB_FIND_MAX = 32;
 /** The longest search a client may send. */
 export const HUB_FIND_Q_MAX = 24;
 /** A name as a search folds it: lower case, apostrophes and spaces dropped. */
-export const foldFind = (s) => String(s ?? '').toLowerCase().replace(/['’\s-]/g, '');
+export const foldFind = (s) =>
+  String(s ?? '')
+    .toLowerCase()
+    .replace(/['’\s-]/g, '');
 /** The searches the whole hub answers a second, whoever asks - a search walks everyone online (each socket's own
  *  bucket is a search a second besides). A search past it is answered `busy`. */
 export const HUB_FIND_ROOM_HZ_MAX = 10;

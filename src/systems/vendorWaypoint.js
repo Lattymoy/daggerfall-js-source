@@ -36,7 +36,8 @@ export function clearVendorWaypoint() {
 }
 
 /** Whether the house `(map, buildingKey)` is the waypoint's (an entered house clears it: the trader is reached). */
-export const isVendorWaypoint = (map, buildingKey) => !!_wp && _wp.map === (Number(map) >>> 0) && _wp.buildingKey === buildingKey;
+export const isVendorWaypoint = (map, buildingKey) =>
+  !!_wp && _wp.map === Number(map) >>> 0 && _wp.buildingKey === buildingKey;
 
 /** The owner's name as the town map says it on the waypoint's house ("Trader waypoint - Eve's home", homeDoorTitle). */
 export const vendorWaypointLabel = (owner) => `Trader waypoint - ${owner || _wp?.owner || 'a trader'}`;

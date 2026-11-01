@@ -2383,7 +2383,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   // clears its ring, and a press begun on the canvas must still let go)
   const swallow = (e) => e.stopPropagation();
   for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) { root.addEventListener(t, swallow); toast.addEventListener(t, swallow); }
-  // DISC25-E (Sir McMobdon on Discord, "Cant send letters": "Game still takes input making u jump and move and close
+  // DISC25-E (a player on Discord, "Cant send letters": "Game still takes input making u jump and move and close
   // the letter if u hit f"): A KEY TYPED INTO THIS PANEL'S FIELDS IS THE FIELD'S. The panel is not a window in any
   // host's slot - it stands open while the player walks - so no overlay gate stood between a letter and the world's
   // key ladder: every W walked, every space jumped, and F (SocialInteract) toggled the panel shut mid-word. Stopped

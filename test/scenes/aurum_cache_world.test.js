@@ -15,7 +15,8 @@ import {
 } from '../../src/scenes/aurumCacheHost.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE } from '../../src/world/aurumCofferArt.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
-import { aurumCacheSpotOf } from '../../src/net/aurumCacheLaw.js';
+import { aurumCacheSpotOf, aurumCacheAurumOf } from '../../src/net/aurumCacheLaw.js';
+import { aurumWeekOf } from '../../src/net/aurumLaw.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { GATE_ARENA_LOCATION_ID } from '../../src/world/gate/gateArena.js';
 import { REFUSALS } from '../../src/net/accountClient.js';
@@ -145,6 +146,9 @@ function fakeCtx() {
     pick: () => targets.flatMap((f) => f()),
   };
 }
+const WEEK = aurumWeekOf(Math.floor(Date.now() / 1000));
+/** A device note's entries for ids emptied this week. */
+const kept = (...ids) => ids.map((id) => `${id}:${WEEK}`);
 const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), m }; };
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const PILES = [pile([0, 0, 0]), pile([0, 0, 4]), pile([0, 0, 8])];
@@ -182,7 +186,7 @@ test('AURUM-CACHES the coffer stood: online and signed in, in a dungeon - its id
   assert.deepEqual([cell.said, cell.stood, cell.pick()], [[], [], []], 'and nothing said, stood or pressed');
 });
 
-test('AURUM-CACHES the press: the coffer asks the service once with its id - a second press while it asks is that ask - and on its yes opens, says its Aurum and is kept open for the account; pressed again it is empty and asks nothing; entered again it stands open, every id kept (mutants: the ask repeated, the open not kept, the picture not swapped)', async () => {
+test('AURUM-CACHES the press: the coffer asks the service once with its id - a second press while it asks is that ask - and on its yes opens, says its Aurum and is kept open for the account; pressed again it is empty and asks nothing; entered again it stands open the rest of its UTC week, shut again once the week turns, and only this week\'s entries are kept (mutants: the ask repeated, the open not kept, the picture not swapped, the week ignored)', async () => {
   _resetAurumCaches();
   const L = loc((3 << 20) | 4321), storage = memory();
   const asked = [];
@@ -205,7 +209,7 @@ test('AURUM-CACHES the press: the coffer asks the service once with its id - a s
   assert.deepEqual(ctx.stood.map((b) => b.record), [AURUM_COFFER_ART.shut, AURUM_COFFER_ART.open], 'the open picture stood');
   assert.deepEqual(ctx.dropped, [1], 'the shut one let go');
   assert.equal(ctx.name(AURUM_CACHE_KEY), AURUM_CACHE_TEXT.emptyName());
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] });
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: kept(c.id) });
   c.press(AURUM_CACHE_KEY);
   await tick();
   assert.equal(ctx.said.at(-1), AURUM_CACHE_TEXT.empty());
@@ -220,15 +224,19 @@ test('AURUM-CACHES the press: the coffer asks the service once with its id - a s
   // another account on this device: shut
   const other = standAurumCache(fakeCtx(), L, PILES, { ...deps, session: () => ({ id: 'other', kind: 'user' }) });
   assert.equal(other.open, false);
-  // PIN MOVED (CACHES-ONCE): the device kept today's and yesterday's alone. Now every id, and a day's id or mark goes
-  storage.setItem(AURUM_CACHE_STORE, JSON.stringify({ acct: ['20756:d1', 'd2', '20757:cap', c.id], gone: ['20751:d3'] }));
+  // the week turns: the same coffer stands full again
+  const monday = standAurumCache(fakeCtx(), L, PILES, { ...deps, week: () => WEEK + 1 });
+  assert.equal(monday.open, false, 'a new week: full again');
+  // a keep drops every entry not this week's: last week's, a bare id, a day's id or mark
+  storage.setItem(AURUM_CACHE_STORE, JSON.stringify({ acct: [`${c.id}:${WEEK - 1}`, 'd2', '20756:d1', '20757:cap', `d3:${WEEK}`], gone: [`d4:${WEEK - 1}`] }));
+  assert.equal(standAurumCache(fakeCtx(), L, PILES, deps).open, false, 'emptied last week: full again');
   const next = standAurumCache(fakeCtx(), loc((3 << 20) | 4322), PILES, { ...deps, claim: async () => ({ ok: true }) });
   next.press(AURUM_CACHE_KEY);
   await tick(); await tick();
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: ['d2', c.id, next.id], gone: [] });
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [...kept('d3'), ...kept(next.id)], gone: [] });
 });
 
-test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and says so; capped stays shut and says the bound; closed says so and stands no coffer again this session; an answer after the level is gone touches nothing (mutants: taken left shut, closed forgotten, a late answer stands a picture)', async () => {
+test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and says so; closed says so and stands no coffer again this session; an answer after the level is gone touches nothing (mutants: taken left shut, closed forgotten, a late answer stands a picture)', async () => {
   _resetAurumCaches();
   const L = loc((3 << 20) | 999);
   const deps = (error) => ({ online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage: memory(), claim: async () => ({ ok: false, error }), audio: null });
@@ -237,11 +245,6 @@ test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and say
   await tick(); await tick();
   assert.equal(t.open, true);
   assert.equal(taken.said.at(-1), REFUSALS['cache-taken']);
-  const capped = fakeCtx(), c = standAurumCache(capped, L, PILES, deps('cache-capped'));
-  c.press(AURUM_CACHE_KEY);
-  await tick(); await tick();
-  assert.equal(c.open, false);
-  assert.equal(capped.said.at(-1), REFUSALS['cache-capped']);
   // a late answer, the level gone
   let answer;
   const late = fakeCtx(), l = standAurumCache(late, L, PILES, { ...deps(), claim: () => new Promise((r) => { answer = r; }) });
@@ -260,24 +263,30 @@ test('AURUM-CACHES a refusal: taken (another device emptied it) opens it and say
   _resetAurumCaches();
 });
 
-// PIN MOVED (CACHES-ONCE): a UTC day's caches spent stood no coffer, kept by a `<day>:cap` mark on the device
-test('CACHES-ONCE a day the forgery bound is met stands every coffer still: a capped answer keeps nothing and the coffer stays shut, said why; entered again it stands and is said; a later press asks again and its yes opens it - no coffer is lost to a day (mutants: a capped coffer kept as emptied)', async () => {
+// PIN MOVED (CACHE-SPREAD): a capped answer (the day's bound, gone) was the refusal that kept nothing; before CACHES-ONCE
+// a UTC day's caches spent stood no coffer, kept by a `<day>:cap` mark on the device
+test('CACHES-ONCE a refusal that holds nothing (no proof yet) stands the coffer still: it keeps nothing and stays shut, said why; entered again it stands and is said; a later press asks again and its yes opens it, said as the answer\'s Aurum or, unsaid, the cache\'s own (mutants: a proofless coffer kept as emptied, the said Aurum not the cache\'s)', async () => {
   _resetAurumCaches();
   const L = loc((3 << 20) | 999), storage = memory(), asked = [];
-  let reply = { ok: false, error: 'cache-capped' };
+  let reply = { ok: false, error: 'cache-proof' };
   const deps = { online: () => true, session: () => ({ id: 'acct', kind: 'user' }), storage, claim: async (id) => { asked.push(id); return reply; }, audio: null };
   const ctx = fakeCtx(), c = standAurumCache(ctx, L, PILES, deps);
   c.press(AURUM_CACHE_KEY);
   await tick(); await tick();
-  assert.deepEqual([c.open, ctx.said.at(-1), storage.getItem(AURUM_CACHE_STORE)], [false, REFUSALS['cache-capped'], null]);
+  assert.deepEqual([c.open, ctx.said.at(-1), storage.getItem(AURUM_CACHE_STORE)], [false, REFUSALS['cache-proof'], null]);
   const again = fakeCtx();
   assert.equal(standAurumCache(again, L, PILES, deps)?.open, false, 'it still stands, shut');
   assert.deepEqual(again.said, [AURUM_CACHE_TEXT.here()]);
-  reply = { ok: true, data: { aurum: 10, today: 1, max: 10 } };
+  reply = { ok: true, data: { aurum: 9 } };
   c.press(AURUM_CACHE_KEY);
   await tick(); await tick();
-  assert.deepEqual([asked.length, c.open, ctx.said.at(-1)], [2, true, '+10 Aurum']);
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] });
+  assert.deepEqual([asked.length, c.open, ctx.said.at(-1)], [2, true, '+9 Aurum']);
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: kept(c.id) });
+  _resetAurumCaches();
+  const bare = fakeCtx(), b = standAurumCache(bare, loc((3 << 20) | 1001), PILES, { ...deps, storage: memory(), claim: async () => ({ ok: true }) });
+  b.press(AURUM_CACHE_KEY);
+  await tick(); await tick();
+  assert.equal(bare.said.at(-1), `+${aurumCacheAurumOf(b.id)} Aurum`, 'an answer with no amount says the cache\'s own');
 });
 
 // PIN MOVED (CACHES-ONCE): the service no longer knew one stood before one midnight and pressed after the next
@@ -308,7 +317,7 @@ test('AUDIT-STOREFRONT III D5 a yes that lands after the level is gone is kept: 
     await tick(); await tick();
     assert.deepEqual([ctx.stood.length, late], [1, said]);
   }
-  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [aurumCachePlaceOf(L)] });
+  assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: kept(aurumCachePlaceOf(L)) });
   const again = fakeCtx(), c2 = standAurumCache(again, L, PILES, { ...deps, claim: async () => assert.fail('asked again') });
   assert.deepEqual([c2.open, again.said], [true, []]);
 });
@@ -448,7 +457,7 @@ test('AUDIT AURUM-CACHES E1 and lane 3 F2, F6: the press carries the proof the d
     c.press(AURUM_CACHE_KEY);
     await tick(); await tick();
     assert.deepEqual(asked, [[c.id, proof, 'acct']], `${bad}: the id, the relay's proof, the account`);
-    assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: [c.id] }, `${bad}: started again`);
+    assert.deepEqual(JSON.parse(storage.getItem(AURUM_CACHE_STORE)), { acct: kept(c.id) }, `${bad}: started again`);
   }
   _resetCacheProof();
 });

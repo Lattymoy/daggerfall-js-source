@@ -67,10 +67,12 @@ export function ramContact(box, p, reach = RAM_REACH) {
   const l = [p[0] - box.c[0], p[1] - box.c[1], p[2] - box.c[2]];
   const x = l[0] * box.ax[0] + l[1] * box.ax[1] + l[2] * box.ax[2];
   const z = l[0] * box.az[0] + l[1] * box.az[1] + l[2] * box.az[2];
-  const mx = Math.abs(x) - box.h[0], mz = Math.abs(z) - box.h[2];
+  const mx = Math.abs(x) - box.h[0],
+    mz = Math.abs(z) - box.h[2];
   if (mx > reach || mz > reach) return null;
   const side = mx >= mz;
-  const a = side ? box.ax : box.az, s = (side ? x : z) < 0 ? -1 : 1;
+  const a = side ? box.ax : box.az,
+    s = (side ? x : z) < 0 ? -1 : 1;
   const len = Math.hypot(a[0], a[2]) || 1;
   return { side, normal: [(s * a[0]) / len, 0, (s * a[2]) / len] };
 }

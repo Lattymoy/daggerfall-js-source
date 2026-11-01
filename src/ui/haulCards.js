@@ -30,6 +30,7 @@ import { materialCountLabel, mintMaterialItem } from '../systems/professions/pro
 import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { lootRarityOn } from '../systems/loot/lootRarity.js';
 import { MARKS_COMBAT, MARKS_FAUCETS } from '../net/marksLaw.js';
+import { extraStored } from '../net/bagLaw.js';   // BUTCHER-STORES: a body's meat into the Stores
 
 /** A strike the day's combat cap refused, as its muted card says it - the chat's own line keeps the whole of it.
  *  SERPENT-SET: the serpents strike under the same cap; EG-E1: and the Spire's Redoubts; STAR7: and the held stars.
@@ -129,7 +130,8 @@ export function harvestHauls(d, { name = null, note = null } = {}) {
   // AUDIT HAUL-CARDS B1: "a gem" only for a gem - a tree's `gem` is its Heartwood, a body's its DFU part (a Big Tooth);
   // B3: each find its own Stores count, as the answer carries it (`gemStore`, `extraStore`)
   if (d.gem) { const g = storesHaul(d.gem, came(d.gem, 1), { held: heldOf(carried ? d.gemCarried : d.gemStore), sub: material(d.gem)?.family === 'gems' ? 'a gem' : null, where }); if (g) out.push(g); }
-  if (d.extra) { const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), { held: heldOf(carried ? d.extraCarried : d.extraStore), where }); if (x) out.push(x); }
+  const xCarried = carried && !extraStored(d);   // BUTCHER-STORES: a body's meat is the Stores' card, carried or not
+  if (d.extra) { const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), { held: heldOf(xCarried ? d.extraCarried : d.extraStore), where: xCarried ? 'Carried' : 'Stores' }); if (x) out.push(x); }
   return out;
 }
 

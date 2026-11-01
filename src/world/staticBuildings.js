@@ -69,15 +69,18 @@ export function staticBuildingWorldAabb({ size, centre }, matrix) {
   const min = [Infinity, Infinity, Infinity];
   const max = [-Infinity, -Infinity, -Infinity];
   for (let i = 0; i < 8; i++) {
-    const lx = centre[0] + ((i & 1) ? hx : -hx);
-    const ly = centre[1] + ((i & 2) ? hy : -hy);
-    const lz = centre[2] + ((i & 4) ? hz : -hz);
+    const lx = centre[0] + (i & 1 ? hx : -hx);
+    const ly = centre[1] + (i & 2 ? hy : -hy);
+    const lz = centre[2] + (i & 4 ? hz : -hz);
     const wx = matrix[0] * lx + matrix[4] * ly + matrix[8] * lz + matrix[12];
     const wy = matrix[1] * lx + matrix[5] * ly + matrix[9] * lz + matrix[13];
     const wz = matrix[2] * lx + matrix[6] * ly + matrix[10] * lz + matrix[14];
-    if (wx < min[0]) min[0] = wx; if (wx > max[0]) max[0] = wx;
-    if (wy < min[1]) min[1] = wy; if (wy > max[1]) max[1] = wy;
-    if (wz < min[2]) min[2] = wz; if (wz > max[2]) max[2] = wz;
+    if (wx < min[0]) min[0] = wx;
+    if (wx > max[0]) max[0] = wx;
+    if (wy < min[1]) min[1] = wy;
+    if (wy > max[1]) max[1] = wy;
+    if (wz < min[2]) min[2] = wz;
+    if (wz > max[2]) max[2] = wz;
   }
   return { min, max };
 }
@@ -88,9 +91,15 @@ export function staticBuildingWorldAabb({ size, centre }, matrix) {
 export function staticBuildingsHasHit(buildings, point) {
   for (const b of buildings) {
     const { min, max } = b.aabb;
-    if (point[0] >= min[0] && point[0] <= max[0]
-      && point[1] >= min[1] && point[1] <= max[1]
-      && point[2] >= min[2] && point[2] <= max[2]) return b;
+    if (
+      point[0] >= min[0] &&
+      point[0] <= max[0] &&
+      point[1] >= min[1] &&
+      point[1] <= max[1] &&
+      point[2] >= min[2] &&
+      point[2] <= max[2]
+    )
+      return b;
   }
   return null;
 }

@@ -69,6 +69,7 @@ import { lookLine } from '../../systems/appearances.js';   // APPEARANCES-II: th
 import { BINDER_CARD_LINES } from '../../systems/iliac/iliacItems.js';   // CARDS8 (AUDIT CARDS-5 C5): the binder's box
 import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from '../yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
+import { discardRefusal, destroyPiece, destroyInstead, destroyedText, destroyRefusalText } from '../../systems/item/itemDiscard.js';   // BOUND-DESTROY: a bound piece nothing else takes
 import { ListPickerWindow, listPickerArtLoaded } from '../listPicker.js';   // MEND-AIM: the piece a repair kit mends, chosen
 import { paintingImage, setPaintingArtDeps } from '../paintingImage.js';   // ROAD-A7: the painting's picture
 import { goldAmount, deductGold } from '../../systems/court.js';
@@ -1000,15 +1001,18 @@ export class NativeInventoryWindow {
       const t = remoteTargetType(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne });
       if (t !== REMOTE_TARGET_TYPES.Merchant) {
         const kind = t === REMOTE_TARGET_TYPES.Wagon ? 'wagon' : t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true ? 'storage' : 'elsewhere';
+        // SS5: a Broker ware Removed over the GROUND - the player getting rid of it - is offered its dismantle
+        // instead (a locked one was refused the ground above, and a worn one is never in this list); AUDIT SS: the
+        // player's own pile on the ground is the ground too (groundRefusalOf's, canChangeDropIcon's)
+        const ground = t === REMOTE_TARGET_TYPES.Dropped || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.playerOwned === true);
+        // BOUND-DESTROY: and a bound piece no dismantle pays for (itemDiscard.js) is offered its destroy, pack-only ones too
+        const destroy = ground && !discardRefusal(it);
         // WALLET1: a pack-only piece goes nowhere at all, and says so in its own words
-        if (isPackOnly(it)) { this._refuse({ text: packOnlyText(itemLongName(it, { getQuest: this.hooks.getQuest ?? null })) }); return; }
+        if (isPackOnly(it)) { if (destroy) this._askDestroy(it); else this._refuse({ text: packOnlyText(itemLongName(it, { getQuest: this.hooks.getQuest ?? null })) }); return; }
         if (boundRefusesPut(it, kind)) {
-          // SS5: a Broker ware Removed over the GROUND - the player getting rid of it - is offered its dismantle
-          // instead (a locked one was refused the ground above, and a worn one is never in this list); AUDIT SS: the
-          // player's own pile on the ground is the ground too (groundRefusalOf's, canChangeDropIcon's)
-          const ground = t === REMOTE_TARGET_TYPES.Dropped || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.playerOwned === true);
           const n = ground && !dismantleRefusal(it) ? dismantleStones(it) : 0;   // (and never one the law would refuse - a locked one over the player's own pile)
           if (n > 0) { this._askDismantle(it, n); return; }
+          if (destroy) { this._askDestroy(it); return; }
           this._refuse({ text: boundText(itemLongName(it, { getQuest: this.hooks.getQuest ?? null }), it) });   // AUDIT AUTO-HOLD: a piece the realm locked says so
           return;
         }
@@ -1107,6 +1111,26 @@ export class NativeInventoryWindow {
       onYes: () => {
         const r = dismantleWare(it, { items: this.hooks.items() });
         if (r.ok) this.boxes = [{ rows: [{ text: DISMANTLED(name, r.stones), center: true }] }];
+      },
+    });
+  }
+
+  /** BOUND-DESTROY (FIELD FEEDBACK 2026-10-31, "Soulbound items need to be disposable"): THE DESTROY, ON THIS SKIN - the
+   *  dismantle's place and box (NATIVE-WINDOW: DFU's own Yes/No, ui/yesNoBox.js): Remove over the ground, the refusal and
+   *  the offer. Yes takes the piece or its stack out for good (systems/item/itemDiscard.js destroyPiece - a Soul Cake or a
+   *  Hearth Offering through the account service) and says so, or says why not; No leaves it in the pack. */
+  _askDestroy(it) {
+    const name = itemLongName(it, { getQuest: this.hooks.getQuest ?? null });
+    this._tip.hide();
+    this.inputBox = new YesNoBoxWindow({
+      rows: [{ text: isPackOnly(it) ? packOnlyText(name) : boundText(name), center: true }, { text: destroyInstead(Math.max(1, it.stackCount ?? 1)), center: true }],
+      onYes: () => {
+        const say = (/** @type {any} */ r) => {
+          const text = r.ok ? destroyedText(name) : r.text || destroyRefusalText(name, r.reason);
+          if (text) this.boxes = [{ rows: [{ text, center: true }] }];
+        };
+        const r = destroyPiece(it, { items: this.hooks.items() });
+        if (r instanceof Promise) void r.then(say); else say(r);
       },
     });
   }

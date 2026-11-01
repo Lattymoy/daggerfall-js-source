@@ -2,8 +2,8 @@
   {
     "name": "QS1-the-key-forgets-the-recipe",
     "file": "src/systems/quickslots.js",
-    "old": "  return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', item.potionRecipeKey ?? '',",
-    "new": "  return [item.group ?? '', item.templateIndex ?? '', item.material ?? '', '',",
+    "old": "      item.potionRecipeKey ?? '',",
+    "new": "      '',",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QS1-the-key-remembers-the-condition",
     "file": "src/systems/quickslots.js",
-    "old": "item.aetheric ?? ''].join('|')   // SET6",
-    "new": "item.aetheric ?? '', item.currentCondition ?? ''].join('|')   // SET6",
+    "old": "    ].join('|') + // SET6: an Aetheric piece's record, as a Legendary's",
+    "new": "      item.currentCondition ?? '',\n    ].join('|') + // SET6: an Aetheric piece's record, as a Legendary's",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "QS1-the-held-weapon-is-a-swap-target",
     "file": "src/systems/quickslots.js",
-    "old": "export const canSwapTo = (item) => !!item && item.group === 'Weapons' && item.templateIndex !== ARROW && !isEquipped(item);",
+    "old": "export const canSwapTo = (item) =>\n  !!item && item.group === 'Weapons' && item.templateIndex !== ARROW && !isEquipped(item);",
     "new": "export const canSwapTo = (item) => !!item && item.group === 'Weapons' && item.templateIndex !== ARROW;",
     "tests": [
       "test/systems/quickslots.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "QS1-the-pending-stand-in-never-said",
     "file": "src/systems/quickslots.js",
-    "old": "    ?? (res.pending ? (USE_PENDING[res.kind] ?? 'Nothing happens.') : null)",
-    "new": "",
+    "old": "    (res.pending ? (USE_PENDING[res.kind] ?? 'Nothing happens.') : null) ??\n    (res.enchanted ? USE_PENDING.enchanted : null);",
+    "new": "    (res.enchanted ? USE_PENDING.enchanted : null);",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "QS1-the-swap-bills-no-pause",
     "file": "src/systems/quickslots.js",
-    "old": "  billEquipDelayOnClose(entity, snap);\n  // LH1: the table's own law",
-    "new": "  // LH1: the table's own law",
+    "old": "  billEquipDelayOnClose(entity, snap);\n  // LH1: the table's own law still places the item (GetEquipSlot: an",
+    "new": "  // LH1: the table's own law still places the item (GetEquipSlot: an",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDITQS-F2-empty-hands-clear-the-slot-again",
     "file": "src/systems/quickslots.js",
-    "old": "  else if (!previous) state.swap = { key: r.item.equipSlot === EQUIP_SLOTS.LeftHand ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };",
-    "new": "",
+    "old": "  else if (!previous)\n    state.swap = { key: r.item.equipSlot === EQUIP_SLOTS.LeftHand ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME }; // LH1: the hand it LANDED in",
+    "new": "  // LH1: the hand it LANDED in",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDITQS-F2-bare-hands-put-nothing-away",
     "file": "src/systems/quickslots.js",
-    "old": "    unequipSlot(entity, hand);\n    door?.keepHand?.();",
-    "new": "    door?.keepHand?.();",
+    "old": "    unequipSlot(entity, hand);\n    door?.keepHand?.(); // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other",
+    "new": "    door?.keepHand?.(); // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other",
     "tests": [
       "test/systems/quickslots.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "AUDITQS-F4-the-left-hand-bow-is-a-socket",
     "file": "src/systems/quickslots.js",
-    "old": "  else if (left) off = cell(left, { kind: 'weapon' });",
-    "new": "",
+    "old": "  else if (left) off = cell(left, { kind: 'weapon' });\n  else if (state.swap) {",
+    "new": "  else if (state.swap) {",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDITQS-F2-putting-the-weapon-away-bills-no-pause",
     "file": "src/systems/quickslots.js",
-    "old": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n    billEquipDelayOnClose(entity, snap);",
-    "new": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other",
+    "old": "    billEquipDelayOnClose(entity, snap);\n    state.swap = canSwapTo(held) ? { key: quickslotKey(held), name: itemLongName(held) } : null;",
+    "new": "    state.swap = canSwapTo(held) ? { key: quickslotKey(held), name: itemLongName(held) } : null;",
     "tests": [
       "test/systems/quickslots.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "QS4-the-off-hand-presses-with-no-light-at-all",
     "file": "src/systems/quickslots.js",
-    "old": "    if (typeof switchHand !== 'function') { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }",
-    "new": "",
+    "old": "    if (typeof switchHand !== 'function') {\n      say?.(QUICKSLOT_TEXT.noLight);\n      return { kind: 'none' };\n    }\n    // The rig's verdict: it switched (and said which hand), or refused",
+    "new": "    // The rig's verdict: it switched (and said which hand), or refused",
     "tests": [
       "test/systems/qs4_offhand.test.js",
       "test/ui/enhanced/macr_fixes.test.js"
@@ -214,7 +214,7 @@
     "name": "QS4-the-mods-verdict-is-ignored",
     "file": "src/systems/quickslots.js",
     "old": "  return toggleLight() === true ? { kind: 'light', lit: !!entity?.lightSource } : { kind: 'refused' };",
-    "new": "  toggleLight(); return { kind: 'light', lit: !!entity?.lightSource };",
+    "new": "  toggleLight();\n  return { kind: 'light', lit: !!entity?.lightSource };",
     "tests": [
       "test/systems/quickslots.test.js"
     ]

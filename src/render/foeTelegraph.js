@@ -8,22 +8,34 @@
 // (ONE, ONE), which could only brighten; TELL3: an iron blow's second rim and hatch; TELL5: a cut feint fades dashed;
 // TELL9: the player's telegraph contrast (a part of the Enhanced AI row) bolder over all of it.
 import { buildProgram } from './glProgram.js';
-import { FOG_FACTOR_GLSL } from './labGrass.js';   // AUDIT TACT D9: the renderer's one fog block
-import { BLOW, TELL_NOW } from '../ai/blowShapes.js';   // the leaf - the brain stays off the renderer's boot graph
-import { TELEGRAPH_STYLE_GLSL } from './telegraphStyle.js';   // TELL2: the boss's readable line, at a foe's scale (a leaf)
-import { getPref } from '../systems/uiPrefs.js';   // TELL9: the telegraph contrast, the player's own
+import { FOG_FACTOR_GLSL } from './labGrass.js'; // AUDIT TACT D9: the renderer's one fog block
+import { BLOW, TELL_NOW } from '../ai/blowShapes.js'; // the leaf - the brain stays off the renderer's boot graph
+import { TELEGRAPH_STYLE_GLSL } from './telegraphStyle.js'; // TELL2: the boss's readable line, at a foe's scale (a leaf)
+import { getPref } from '../systems/uiPrefs.js'; // TELL9: the telegraph contrast, the player's own
 
 /** TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 11.3): the player's telegraph contrast - thicker lines, a white keyline, a
  *  pattern for every guard. Read each draw: the switch flips the next frame. */
 export const telegraphContrastOn = () => getPref('telegraphContrast') === true;
 
 /** The shapes as the shader's `uKind` says them. */
-export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 });   // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers
+export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers
 /** TELL6: a shape's reach from the foe's feet (its farthest point). */
-const REACH = Object.freeze({ lunge: BLOW.lunge.len, sweep: BLOW.sweep.r, slam: BLOW.slam.ahead + BLOW.slam.r, ring: BLOW.ring.rOut, charge: BLOW.charge.len, leap: BLOW.leap.range + BLOW.leap.r, aimed: 0, pyre: BLOW.pyre.range + BLOW.pyre.r });
+const REACH = Object.freeze({
+  lunge: BLOW.lunge.len,
+  sweep: BLOW.sweep.r,
+  slam: BLOW.slam.ahead + BLOW.slam.r,
+  ring: BLOW.ring.rOut,
+  charge: BLOW.charge.len,
+  leap: BLOW.leap.range + BLOW.leap.r,
+  aimed: 0,
+  pyre: BLOW.pyre.range + BLOW.pyre.r,
+});
 /** TELL6: a blow's quad half-extent - its own shape and the line's glow past its outline (TELL2 draws 0.5 m out), so a
  *  long shape does not enlarge every quad. A leap's by its own point (`ahead`). */
-export const quadHalf = (kind, ahead = null) => (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre') ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) : REACH[kind] ?? BLOW_QUAD_HALF) + 0.6;   // the aimed line: its own length; RVN5: a pyre's by its point
+export const quadHalf = (kind, ahead = null) =>
+  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre')
+    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0)
+    : (REACH[kind] ?? BLOW_QUAD_HALF)) + 0.6; // the aimed line: its own length; RVN5: a pyre's by its point
 /** The quad's half-extent about the foe's feet - every shape fits (TELL6: the charge's lane is the longest). */
 export const BLOW_QUAD_HALF = Math.max(...Object.values(REACH)) + 0.3;
 
@@ -36,7 +48,12 @@ export function techniqueUniform(b) {
   if (b.kind === 'aimed') return [b.ahead ?? 0, b.halfW ?? 0, 0, 0];
   return [b.r ?? 0, b.ahead ?? 0, 0, 0];
 }
-export const techniqueQuadHalf = (b) => (b.kind === 'lunge' || b.kind === 'charge' ? (b.len ?? 0) + (b.halfW ?? 0) : b.kind === 'aimed' ? (b.ahead ?? 0) + (b.halfW ?? 0) : (b.ahead ?? 0) + (b.r ?? 0)) + 0.6;
+export const techniqueQuadHalf = (b) =>
+  (b.kind === 'lunge' || b.kind === 'charge'
+    ? (b.len ?? 0) + (b.halfW ?? 0)
+    : b.kind === 'aimed'
+      ? (b.ahead ?? 0) + (b.halfW ?? 0)
+      : (b.ahead ?? 0) + (b.r ?? 0)) + 0.6;
 export const BLOW_LIFT = 0.06;
 /** SNOW-TELL (2026-10-11, from play: "Can't see any boss ground attack overlays with heavy snow"): how far over its
  *  fitted ground a mark lies - BLOW_LIFT, and over the frame's deep snow (render/snowfallGlsl.js snowSurfaceRise, the
@@ -44,7 +61,7 @@ export const BLOW_LIFT = 0.06;
  *  colliders know no snow), and the snow - up to 0.8 m of it in the wild, drawn before the ground and depth-written -
  *  buried every mark 0.06 m over it: a revenant's pyre landed on a player who never saw it. */
 export const telegraphLift = (snowRise = 0) => BLOW_LIFT + (snowRise > 0 ? snowRise : 0);
-const OUTLINE = 0.12;   // metres of rim
+const OUTLINE = 0.12; // metres of rim
 
 /**
  * The shader's own reading in JS: at (across, along) in the blow's frame, the shape's field - `inside` (the point is
@@ -52,7 +69,8 @@ const OUTLINE = 0.12;   // metres of rim
  * outline of the rim).
  */
 export function blowField(kind, across, along, ahead = 0) {
-  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law
+  if (kind === 'lunge' || kind === 'charge') {
+    // TELL6: the charge's lane, the lunge's law
     const P = BLOW[kind];
     const inside = along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW;
     const edge = Math.max(0, (along + 0.3) / (P.len + 0.3));
@@ -60,26 +78,42 @@ export function blowField(kind, across, along, ahead = 0) {
     return { inside, edge, rim };
   }
   if (kind === 'sweep') {
-    const P = BLOW.sweep, d = Math.hypot(across, along);
+    const P = BLOW.sweep,
+      d = Math.hypot(across, along);
     const ang = d < 1e-9 ? 0 : Math.acos(Math.max(-1, Math.min(1, along / d)));
     const inside = d <= P.r && (d < 0.5 || ang <= P.halfArc);
     const rim = inside && (P.r - d < OUTLINE || (d >= 0.5 && (P.halfArc - ang) * d < OUTLINE));
     return { inside, edge: d / P.r, rim };
   }
-  if (kind === 'ring') {   // TELL6: the annulus, filling outward from its inner edge
-    const P = BLOW.ring, d = Math.hypot(across, along);
+  if (kind === 'ring') {
+    // TELL6: the annulus, filling outward from its inner edge
+    const P = BLOW.ring,
+      d = Math.hypot(across, along);
     const inside = d >= P.rIn && d <= P.rOut;
-    return { inside, edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn)), rim: inside && (d - P.rIn < OUTLINE || P.rOut - d < OUTLINE) };
+    return {
+      inside,
+      edge: Math.max(0, (d - P.rIn) / (P.rOut - P.rIn)),
+      rim: inside && (d - P.rIn < OUTLINE || P.rOut - d < OUTLINE),
+    };
   }
-  if (kind === 'aimed') {   // TELL6: the lunge's lane, its own length and width
-    const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;
-    return { inside, edge: Math.max(0, (along + 0.3) / (ahead + 0.3)), rim: inside && (ahead - along < OUTLINE || W - Math.abs(across) < OUTLINE) };
+  if (kind === 'aimed') {
+    // TELL6: the lunge's lane, its own length and width
+    const W = BLOW.aimed.halfW,
+      inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;
+    return {
+      inside,
+      edge: Math.max(0, (along + 0.3) / (ahead + 0.3)),
+      rim: inside && (ahead - along < OUTLINE || W - Math.abs(across) < OUTLINE),
+    };
   }
-  if (kind === 'leap' || kind === 'pyre') {   // TELL6: the slam's disc, at its own point (RVN5: a pyre's at its target's feet)
-    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);
+  if (kind === 'leap' || kind === 'pyre') {
+    // TELL6: the slam's disc, at its own point (RVN5: a pyre's at its target's feet)
+    const r = BLOW[kind].r,
+      d = Math.hypot(across, along - ahead);
     return { inside: d <= r, edge: d / r, rim: d <= r && r - d < OUTLINE };
   }
-  const P = BLOW.slam, d = Math.hypot(across, along - P.ahead);
+  const P = BLOW.slam,
+    d = Math.hypot(across, along - P.ahead);
   const inside = d <= P.r;
   return { inside, edge: d / P.r, rim: inside && P.r - d < OUTLINE };
 }
@@ -175,24 +209,52 @@ const QUAD = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOG_RANGE3 = new Float32Array([0, 0, 0]);
 const NO_FOCUS = new Float32Array([0, 0, 0, 0]);
-const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 
 /** BOOT-COMPILE: the pass's one program, as its constructor builds it - what the renderer's idle warm starts ahead of the
  *  build (render/renderer.js lazyWarmSteps). */
-export const FOE_TELEGRAPH_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, FS]]));
+export const FOE_TELEGRAPH_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[VS, FS]])
+);
 
 export class FoeTelegraphPass {
   constructor(gl) {
     this.gl = gl;
     this.program = buildProgram(gl, ...FOE_TELEGRAPH_PROGRAMS[0], 'foeTelegraph');
     this.u = {};
-    for (const n of ['uVP', 'uOrigin', 'uYaw', 'uHalf', 'uLift', 'uKind', 'uT', 'uFlash', 'uColor', 'uP', 'uSlope', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uNow', 'uNearFloor', 'uIron', 'uCut', 'uContrast', 'uShatter']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uOrigin',
+      'uYaw',
+      'uHalf',
+      'uLift',
+      'uKind',
+      'uT',
+      'uFlash',
+      'uColor',
+      'uP',
+      'uSlope',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+      'uNow',
+      'uNearFloor',
+      'uIron',
+      'uCut',
+      'uContrast',
+      'uShatter',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, QUAD, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** how many shapes the last draw put down (stats, tests) */
@@ -205,53 +267,59 @@ export class FoeTelegraphPass {
   draw(list, proj, view, fog = null, { contrast = telegraphContrastOn(), snowRise = 0 } = {}) {
     this.drawn = 0;
     if (!list?.length || !proj || !view) return 0;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mul(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
-    gl.uniform1f(U.uLift, telegraphLift(snowRise));   // SNOW-TELL: over the deep snow, where the frame drew it
-    gl.uniform1f(U.uContrast, contrast ? 1 : 0);   // TELL9
+    gl.uniform1f(U.uLift, telegraphLift(snowRise)); // SNOW-TELL: over the deep snow, where the frame drew it
+    gl.uniform1f(U.uContrast, contrast ? 1 : 0); // TELL9
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? NO_FOG_RANGE3);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
-    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1's law: under the travel view the fog is the traveller's
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS); // AUDIT DEEP R-1's law: under the travel view the fog is the traveller's
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // TELL2: premultiplied - the keyline darkens the floor, the line and the fill light it
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // TELL2: premultiplied - the keyline darkens the floor, the line and the fill light it
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
-    gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4);
+    gl.enable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(-2, -4);
     for (const { blow: b, phase, nearFloor = 0 } of list) {
       gl.uniform3f(U.uOrigin, b.origin[0], b.origin[1], b.origin[2]);
       gl.uniform1f(U.uYaw, b.yaw);
       gl.uniform2f(U.uSlope, b.slope?.[0] ?? 0, b.slope?.[1] ?? 0);
       gl.uniform1i(U.uKind, BLOW_KIND[b.kind] ?? 0);
-      gl.uniform1f(U.uHalf, quadHalf(b.kind, b.ahead));   // TELL6: each its own size
+      gl.uniform1f(U.uHalf, quadHalf(b.kind, b.ahead)); // TELL6: each its own size
       const P = BLOW[b.kind];
       if (b.kind === 'lunge' || b.kind === 'charge') gl.uniform4f(U.uP, P.len, P.halfW, 0, 0);
       else if (b.kind === 'sweep') gl.uniform4f(U.uP, P.r, P.halfArc, 0, 0);
       else if (b.kind === 'ring') gl.uniform4f(U.uP, P.rIn, P.rOut, 0, 0);
-      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);   // RVN5: the pyre's disc at its point
+      else if (b.kind === 'leap' || b.kind === 'pyre')
+        gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0); // RVN5: the pyre's disc at its point
       else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);
       else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);
-      if (b.technique) {   // TECH1: the player's own mark - its quad and its numbers its own, over its kind's fixed ones
+      if (b.technique) {
+        // TECH1: the player's own mark - its quad and its numbers its own, over its kind's fixed ones
         gl.uniform1f(U.uHalf, techniqueQuadHalf(b));
         gl.uniform4f(U.uP, ...techniqueUniform(b));
       }
       gl.uniform1f(U.uT, phase.t);
       gl.uniform1f(U.uFlash, phase.flash);
-      gl.uniform1f(U.uNow, phase.flash > 0 ? 0 : nowShare(b, phase));   // TELL2
+      gl.uniform1f(U.uNow, phase.flash > 0 ? 0 : nowShare(b, phase)); // TELL2
       gl.uniform1f(U.uNearFloor, nearFloor > 0 ? nearFloor : 0);
-      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0);   // TELL3
-      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0);   // TELL5
-      gl.uniform1f(U.uShatter, phase.shatter > 0 ? phase.shatter : 0);   // AUDIT TELL (3.2)
+      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0); // TELL3
+      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0); // TELL5
+      gl.uniform1f(U.uShatter, phase.shatter > 0 ? phase.shatter : 0); // AUDIT TELL (3.2)
       const c = b.color ?? [1, 0.42, 0.12];
       gl.uniform3f(U.uColor, c[0], c[1], c[2]);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       this.drawn++;
     }
-    gl.disable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(0, 0);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.polygonOffset(0, 0);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -267,8 +335,9 @@ export function nowShare(b, phase) {
 }
 
 function mul(out, a, b) {
-  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
-    out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
-  }
+  for (let c = 0; c < 4; c++)
+    for (let r = 0; r < 4; r++) {
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
   return out;
 }

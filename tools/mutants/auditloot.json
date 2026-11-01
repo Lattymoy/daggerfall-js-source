@@ -29,8 +29,8 @@
   {
     "name": "AUDITLOOT-F1-choices-unfitted",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "&& powerFits(item, powerOf(r.id)))",
-    "new": "&& !!powerOf(r.id))",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && !!powerOf(r.id))",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITLOOT-F2-a-made-piece-breaks",
     "file": "src/systems/reforge.js",
-    "old": "  if (typeof item?.provenance === 'string') return 0;\n",
-    "new": "\n",
+    "old": "  if (typeof item?.provenance === 'string') return 0;\n  const t = item?.rarity;",
+    "new": "  const t = item?.rarity;",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AUDITLOOT-F3-reforged-as-minted",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.reforges !== undefined || item.imprint !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
     "tests": [
       "test/systems/auditloot.test.js",
       "test/systems/affixlines_reforge.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "AUDITLOOT-F3-imprinted-as-minted",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.reforged !== undefined || item.reforges !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforged !== undefined || item.reforges !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
     "tests": [
       "test/systems/auditloot.test.js"
     ],
@@ -78,8 +78,8 @@
   {
     "name": "AUDITLOOT-F4-a-legendary-hand-alone",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "(!!weapon && powerIds(weapon).includes(p.id))",
-    "new": "(!!weapon && weapon.legendary === p.id)",
+    "old": "  wornPowers(entity).filter(\n    (p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && powerIds(weapon).includes(p.id)),\n  );",
+    "new": "  wornPowers(entity).filter((p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && weapon.legendary === p.id));",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDITLOOT-F6-classic-sheet-without",
     "file": "src/ui/reforgeWindow.js",
-    "old": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss], [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS]]",
-    "new": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss]]",
+    "old": "  const sheets = [\n    [BROKER_SKIN_STYLE_ID, brokerSkinCss],\n    [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS],\n  ];",
+    "new": "  const sheets = [[BROKER_SKIN_STYLE_ID, brokerSkinCss]];",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "AUDITLOOT-F6-the-brokers-sheet-blocks-it",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (has(id)) continue;\n",
-    "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;\n",
+    "old": "    if (has(id)) continue;",
+    "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AUDITLOOT-F6-tab-not-brass",
     "file": "src/ui/reforgeWindow.js",
-    "old": " t.classList.toggle('on', id === page); }",
-    "new": " }",
+    "old": "      t.classList.toggle('on', id === page);\n    } // AUDIT LOOT F6: the chosen page the kit's brass",
+    "new": "    } // AUDIT LOOT F6: the chosen page the kit's brass",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "AUDITLOOT-F6-imprint-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      btn.setAttribute('aria-label', why ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}` : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`);",
-    "new": "      void 0;",
+    "old": "      btn.setAttribute(\n        'aria-label',\n        why\n          ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}`\n          : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`,\n      ); // AUDIT LOOT F6: said, as the Reforge's press is",
+    "new": "      void 0; // AUDIT LOOT F6: said, as the Reforge's press is",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDITLOOT-F6-the-imprint-says-reforge",
     "file": "src/ui/reforgeWindow.js",
-    "old": "reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint')",
-    "new": "reforgeLabel(why, IMPRINT_PRICE, have)",
+    "old": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint'));",
+    "new": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have));",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "AUDITLOOT-F6-the-imprint-card-headless",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    ul.append(el('li', null, tierLabel(it)));   // AUDIT LOOT F6",
-    "new": "    void 0;   // AUDIT LOOT F6",
+    "old": "    ul.append(el('li', null, tierLabel(it))); // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
+    "new": "    void 0; // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AUDITLOOT-F8-the-last-lock-powerless",
     "file": "src/systems/thunderlock.js",
-    "old": "  power: Object.freeze({ name: 'Dwemer Defiance',",
-    "new": "  powerless: Object.freeze({ name: 'Dwemer Defiance',",
+    "old": "  power: Object.freeze({",
+    "new": "  powerless: Object.freeze({",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDITLOOT-F8-the-last-lock-at-anything",
     "file": "src/systems/thunderlock.js",
-    "old": "kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,",
-    "new": "kind: 'bane', foes: [...FOE_FAMILIES.daedra, 0], pct: 50,",
+    "old": "    foes: FOE_FAMILIES.daedra,",
+    "new": "    foes: [...FOE_FAMILIES.daedra, 0],",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDITLOOT-F8-the-codex-the-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  return allLegendaries().map((r) => {",
-    "new": "  return allLegendaries().slice(0, 30).map((r) => {",
+    "old": "  return allLegendaries().map((r) => {\n    const day = foundDay('legendary', r.id);\n    const p = powerOf(r.id);\n    return {\n      id: r.id,\n      kind: 'legendary',\n      name: day != null ? r.name : null,\n      group: r.group,\n      found: day != null,\n      day,\n      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n      power: day != null ? p : null,\n      lore: day != null ? r.lore : null,\n    };\n  });",
+    "new": "  return allLegendaries()\n    .slice(0, 30)\n    .map((r) => {\n      const day = foundDay('legendary', r.id);\n      const p = powerOf(r.id);\n      return {\n        id: r.id,\n        kind: 'legendary',\n        name: day != null ? r.name : null,\n        group: r.group,\n        found: day != null,\n        day,\n        hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n        power: day != null ? p : null,\n        lore: day != null ? r.lore : null,\n      };\n    });",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "AUDITLOOT-F8-no-hint-of-its-own",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "?? r.hint ?? '',",
-    "new": "?? '',",
+    "old": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
+    "new": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? '',",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "AUDITLOOT-F8-count-of-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "legendaries: allLegendaries().length,",
-    "new": "legendaries: 30,",
+    "old": "  legendaries: allLegendaries().length,",
+    "new": "  legendaries: 30,",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "AUDITLOOT-F8-imprint-of-the-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item)",
-    "new": "  ? allLegendaries().slice(0, 30).filter((r) => recordFitsGroup(r, item)",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries()\n        .slice(0, 30)\n        .filter(\n          (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n        )",
     "tests": [
       "test/systems/auditloot.test.js"
     ],

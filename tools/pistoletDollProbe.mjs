@@ -20,7 +20,10 @@ import { writeFile, unlink } from 'node:fs/promises';
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const ARGS = process.argv.slice(2);
 const OUT = ARGS.find((a) => !a.startsWith('--')) || 'scratch/pistolet-doll';
-const BODIES = ARGS.filter((a) => a.startsWith('--body=')).map((a) => { const [race, gender = 'male'] = a.slice(7).split(':'); return { race, gender }; });
+const BODIES = ARGS.filter((a) => a.startsWith('--body=')).map((a) => {
+  const [race, gender = 'male'] = a.slice(7).split(':');
+  return { race, gender };
+});
 if (!BODIES.length) BODIES.push({ race: 'Breton', gender: 'male' });
 mkdirSync(OUT, { recursive: true });
 // AUDIT PISTOLET M9: the page beside the probe (tools/, ignored as every *.tmp.html is), written inside the try whose
@@ -65,12 +68,17 @@ globalThis.__ready = true;
 
 const server = await createServer({ server: { port: 5193, strictPort: true }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1000, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 const results = [];
-const check = (name, ok, detail = '') => { results.push(!!ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  results.push(!!ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 try {
   await writeFile(PAGE, HTML);
   await page.goto(`http://localhost:5193/tools/${PAGE_NAME}`, { waitUntil: 'domcontentloaded', timeout: 600000 });
@@ -79,25 +87,37 @@ try {
   console.log('dolls', dolls.map((d) => d && `${d.row}: ${d.w}x${d.h} slots ${d.slots}`).join(' | '));
   // what can be judged without an eye: every body drew its three dolls, each pair worn in BOTH hands (the equip law's
   // Either - EQUIP_SLOTS RightHand 19, LeftHand 21), and nothing threw. Where the fist meets the grip is the owner's eye.
-  check(`every body drew its three dolls (${BODIES.length} bodies)`, dolls.length === BODIES.length * 3 && dolls.every(Boolean), `${dolls.filter(Boolean).length} of ${BODIES.length * 3}`);
-  check('each pair is worn in both hands', dolls.every((d) => d && [...d.slots].sort((a, b) => a - b).join() === '19,21'), dolls.map((d) => d?.slots).join(' | '));
+  check(
+    `every body drew its three dolls (${BODIES.length} bodies)`,
+    dolls.length === BODIES.length * 3 && dolls.every(Boolean),
+    `${dolls.filter(Boolean).length} of ${BODIES.length * 3}`,
+  );
+  check(
+    'each pair is worn in both hands',
+    dolls.every((d) => d && [...d.slots].sort((a, b) => a - b).join() === '19,21'),
+    dolls.map((d) => d?.slots).join(' | '),
+  );
   const { writePng } = await import('./pngIO.mjs');
   // one row of three (the pistols, the daggers, the gold pair) a body
-  const Z = 3, rows = [];
+  const Z = 3,
+    rows = [];
   for (let i = 0; i < dolls.length; i += 3) rows.push(dolls.slice(i, i + 3).filter(Boolean));
-  const W = Math.max(...rows.map((r) => r.reduce((n, d) => n + d.w * Z + 10, 0))), rowH = rows.map((r) => Math.max(0, ...r.map((d) => d.h * Z)));
+  const W = Math.max(...rows.map((r) => r.reduce((n, d) => n + d.w * Z + 10, 0))),
+    rowH = rows.map((r) => Math.max(0, ...r.map((d) => d.h * Z)));
   const H = rowH.reduce((n, h) => n + h + 10, 0);
   const out = new Uint8Array(W * H * 4).fill(30);
   let oy = 0;
   rows.forEach((r, ri) => {
     let ox = 0;
     for (const d of r) {
-      for (let y = 0; y < d.h * Z; y++) for (let x = 0; x < d.w * Z; x++) {
-        const s = (((y / Z) | 0) * d.w + ((x / Z) | 0)) * 4, o = ((oy + y) * W + ox + x) * 4;
-        const a = d.rgba[s + 3] / 255;
-        for (let c = 0; c < 3; c++) out[o + c] = d.rgba[s + c] * a + 30 * (1 - a);
-        out[o + 3] = 255;
-      }
+      for (let y = 0; y < d.h * Z; y++)
+        for (let x = 0; x < d.w * Z; x++) {
+          const s = (((y / Z) | 0) * d.w + ((x / Z) | 0)) * 4,
+            o = ((oy + y) * W + ox + x) * 4;
+          const a = d.rgba[s + 3] / 255;
+          for (let c = 0; c < 3; c++) out[o + c] = d.rgba[s + c] * a + 30 * (1 - a);
+          out[o + 3] = 255;
+        }
       ox += d.w * Z + 10;
     }
     oy += rowH[ri] + 10;
@@ -106,8 +126,11 @@ try {
   console.log(`the dolls, for the eye: ${OUT}/dolls.png`);
   check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 } finally {
-  await browser.close(); await server.close();
-  await unlink(PAGE).catch(() => { /* gone */ });
+  await browser.close();
+  await server.close();
+  await unlink(PAGE).catch(() => {
+    /* gone */
+  });
 }
 console.log(`${results.filter(Boolean).length}/${results.length} ok`);
 process.exit(results.length && results.every(Boolean) ? 0 : 1);

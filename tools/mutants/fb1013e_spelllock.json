@@ -92,8 +92,8 @@
   {
     "name": "SPELL-LOCK-the-building-memory-is-own",
     "file": "src/world/interior/interiorShared.js",
-    "old": "ctx.actions?.restoreSaveData?.(acts, { remote: true });",
-    "new": "ctx.actions?.restoreSaveData?.(acts);",
+    "old": "  if (acts.length) ctx.actions?.restoreSaveData?.(acts, { remote: true }); // SPELL-LOCK: a peer's word - no Lock spell's lock lands",
+    "new": "  if (acts.length) ctx.actions?.restoreSaveData?.(acts); // SPELL-LOCK: a peer's word - no Lock spell's lock lands",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]

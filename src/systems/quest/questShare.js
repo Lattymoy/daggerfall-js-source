@@ -71,14 +71,14 @@ import { getInnerSymbolName } from './symbol.js';
 import { sharedActionMatches, takeLocalActions } from './shareActions.js';
 import { GUILDS, hasJoined } from '../guild/guilds.js';
 import { QUEST_FRAME_MAX } from '../../net/wire.js';
-import { BUILD_TAG } from '../../buildTag.js';   // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
-import { relayQuestOnline, relayQuestMovedLayout } from './questRepair.js';   // AUDIT SD III (D5): a shared copy laid on this page's world sizes
+import { BUILD_TAG } from '../../buildTag.js'; // SHARE-MEND: the sender's build rides the envelope, so a refusal can name a skew
+import { relayQuestOnline, relayQuestMovedLayout } from './questRepair.js'; // AUDIT SD III (D5): a shared copy laid on this page's world sizes
 import { isOnlinePage } from '../online/onlineLane.js';
-import { isShelved } from './quest.js';   // QUEST-SHELF: a copy set aside
-import { lineStepOf } from '../questlines/qlLines.js';   // AUDIT QUESTLINES REWARD-2: a questline's step is never shared
-import { QL_STAMP } from '../questlines/qlState.js';   // AUDIT QUESTLINES BRANCH-12: the script a copy was read with
-import { t } from '../textManager.js';   // AUDIT QUESTLINES REWARD-2: the refusal's words
-import { ONLINE_REPUTE_GATES } from './onlineRepute.js';   // QUEST-AUDIT III REPUTE-SHARE: the gate, on receipt too
+import { isShelved } from './quest.js'; // QUEST-SHELF: a copy set aside
+import { lineStepOf } from '../questlines/qlLines.js'; // AUDIT QUESTLINES REWARD-2: a questline's step is never shared
+import { QL_STAMP } from '../questlines/qlState.js'; // AUDIT QUESTLINES BRANCH-12: the script a copy was read with
+import { t } from '../textManager.js'; // AUDIT QUESTLINES REWARD-2: the refusal's words
+import { ONLINE_REPUTE_GATES } from './onlineRepute.js'; // QUEST-AUDIT III REPUTE-SHARE: the gate, on receipt too
 
 /** The relay's own frame cap for a quest-share envelope (net/wire.js's
  *  QUEST_FRAME_MAX - its own oversized-frame arm, the same scale
@@ -137,7 +137,8 @@ export function shareSignature(quest) {
     parts.push(task.triggered ? 1 : 0);
     for (const action of task.actions ?? []) parts.push(action.isComplete ? 1 : 0);
   }
-  for (const r of quest.resources?.values?.() ?? []) if (r.isFoe) parts.push(`${r.killCount | 0}${r.injuredTrigger ? 'i' : ''}`);
+  for (const r of quest.resources?.values?.() ?? [])
+    if (r.isFoe) parts.push(`${r.killCount | 0}${r.injuredTrigger ? 'i' : ''}`);
   return parts.join(',');
 }
 
@@ -155,7 +156,10 @@ export function syncBaselineAfter(quest, result, prev = undefined) {
  *  (AUDIT DISC28 QS-1); QUEST-AUDIT III BUSY-SYNC: an ordinary sync's baseline is let go (`seen`, the host's map), so the
  *  next check sends it - the change it carried was otherwise sent by nothing until the next change. */
 export function questBusyAgain(machine, quest, seen) {
-  if (quest?.data?.final === 1) { machine?.pendFinishedShare?.(quest.data); return; }
+  if (quest?.data?.final === 1) {
+    machine?.pendFinishedShare?.(quest.data);
+    return;
+  }
   if (quest?.questName) seen?.set?.(quest.questName, '');
 }
 
@@ -164,7 +168,8 @@ export function questBusyAgain(machine, quest, seen) {
  *  the save shape where ticksToEnd is not. Pure. */
 export function shareEnvelopeEnding(data) {
   for (const task of Array.isArray(data?.tasks) ? data.tasks : []) {
-    for (const action of Array.isArray(task?.actions) ? task.actions : []) if (action?.type === 'EndQuest' && action.isComplete === true) return true;
+    for (const action of Array.isArray(task?.actions) ? task.actions : [])
+      if (action?.type === 'EndQuest' && action.isComplete === true) return true;
   }
   return false;
 }
@@ -182,8 +187,12 @@ export function shareEnvelopeEnding(data) {
 const MARKER_LISTS = ['questSpawnMarkers', 'questItemMarkers'];
 // the resource's own symbol rides the save as {original} alone (symbol.js symbolToSaveData); a marker's is the clone's
 // {original, name} - so a marker's is left off only when it IS that symbol with the name its original derives
-const ownSymbol = (m, symbol) => !!m && !!symbol && m.original === symbol.original && m.name === getInnerSymbolName(m.original ?? '')
-  && Object.keys(m).length === 2;
+const ownSymbol = (m, symbol) =>
+  !!m &&
+  !!symbol &&
+  m.original === symbol.original &&
+  m.name === getInnerSymbolName(m.original ?? '') &&
+  Object.keys(m).length === 2;
 function mapPlaceMarkers(data, each) {
   if (!data || !Array.isArray(data.resources)) return data;
   return {
@@ -192,7 +201,8 @@ function mapPlaceMarkers(data, each) {
       const sd = r?.type === 'Place' ? r.resourceSpecific?.siteDetails : null;
       if (!sd || !MARKER_LISTS.some((k) => Array.isArray(sd[k]))) return r;
       const out = { ...sd };
-      for (const k of MARKER_LISTS) if (Array.isArray(sd[k])) out[k] = sd[k].map((m) => (m && typeof m === 'object' ? each(m, sd, r.symbol) : m));
+      for (const k of MARKER_LISTS)
+        if (Array.isArray(sd[k])) out[k] = sd[k].map((m) => (m && typeof m === 'object' ? each(m, sd, r.symbol) : m));
       return { ...r, resourceSpecific: { ...r.resourceSpecific, siteDetails: out } };
     }),
   };
@@ -246,13 +256,23 @@ export function fullShareMarkers(data) {
  *  in the catalog row, and are not replicated here. A receiver who
  *  has joined the right guild always passes; a receiver who has not
  *  always fails - the one direction that must never be wrong. */
-export function canReceiveSharedQuest(machine, questLists, questName, { memberships = {}, shareId, factionId = 0 } = {}) {
+export function canReceiveSharedQuest(
+  machine,
+  questLists,
+  questName,
+  { memberships = {}, shareId, factionId = 0 } = {},
+) {
   // AUDIT DROPS A2: a quest this player already FINISHED under a share is never received again this session -
   // a fresh receipt rebuilds it from the sender's envelope and "counts as advance" would pay every completed
   // GivePc/TrainPc a second time. (The tombstone only lives a week; the memory of having been paid outlives it.)
   // DISC22-F: by the COPY (the envelope's shareId), not the name - a new share of a repeatable quest is a new copy
-  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };
-  if (lineStepOf(questName)) return { ok: false, reason: 'questline' };   // AUDIT QUESTLINES REWARD-2: a line's step, on receipt too (prepareShareData)
+  if (
+    shareId !== undefined
+      ? machine.hasFinishedSharedCopy?.(questName, shareId)
+      : machine.hasFinishedSharedQuestNamed?.(questName)
+  )
+    return { ok: false, reason: 'done' };
+  if (lineStepOf(questName)) return { ok: false, reason: 'questline' }; // AUDIT QUESTLINES REWARD-2: a line's step, on receipt too (prepareShareData)
   // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
   // client, and a hand-built envelope is not bound by it.
   if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
@@ -270,7 +290,8 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
     // progress, sites and identity, or ended it and paid for a quest this player never did. Both identities known and
     // different: the receiver's own quest stands, as an unshared one does (an older client's envelope carries none)
     const own = machine.sharedCandidateNamed?.(questName)?.shareId;
-    if (typeof shareId === 'string' && shareId && typeof own === 'string' && own && own !== shareId) return { ok: false, reason: 'active' };
+    if (typeof shareId === 'string' && shareId && typeof own === 'string' && own && own !== shareId)
+      return { ok: false, reason: 'active' };
     if (machine.hasSharedQuestNamed(questName)) return { ok: true, resync: true };
     return { ok: false, reason: 'active' };
   }
@@ -278,7 +299,7 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   if (meta?.quest?.oneTime && questLists.hasAcceptedOneTime(questName)) return { ok: false, reason: 'done' };
   if (meta?.scope === 'guild' && meta.quest.membership !== MEMBERSHIP_STATUS.Nonmember) {
     const guild = Object.values(GUILDS).find((g) => g.guildGroup === meta.group);
-    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild', guild: guild.name };   // DISC25-D: WHICH guild
+    if (guild && !hasJoined(memberships, guild)) return { ok: false, reason: 'guild', guild: guild.name }; // DISC25-D: WHICH guild
   }
   // QUEST-AUDIT III REPUTE-SHARE: REPUTE-GATE's two quests (onlineRepute.js) wait online for the guild standing their
   // headers name - in the guild's own pool, and a party's share handed them to a member at standing 0, the penalties the
@@ -286,7 +307,8 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
   // AUDIT QA3 E7: the faction is the catalog row's guild's (guilds.js), never the envelope's word - the sender writes it
   const need = ONLINE_REPUTE_GATES[questName];
   const fid = Object.values(GUILDS).find((g) => g.guildGroup === meta?.group)?.factionId ?? (Number(factionId) || 0);
-  if (need != null && isOnlinePage() && (machine.deps?.getReputation?.(fid) ?? 0) < need) return { ok: false, reason: 'repute', need };
+  if (need != null && isOnlinePage() && (machine.deps?.getReputation?.(fid) ?? 0) < need)
+    return { ok: false, reason: 'repute', need };
   return { ok: true, meta };
 }
 
@@ -304,11 +326,15 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
  *  one - the result still carries `quest`, so a caller need not branch
  *  on which arm ran to read the outcome. */
 export function receiveSharedQuest(machine, questLists, questName, data, ctx = {}) {
-  const check = canReceiveSharedQuest(machine, questLists, questName, { ...ctx, shareId: data?.shareId ?? null, factionId: data?.factionId ?? 0 });   // DISC22-F: the copy being offered; REPUTE-SHARE: its faction
+  const check = canReceiveSharedQuest(machine, questLists, questName, {
+    ...ctx,
+    shareId: data?.shareId ?? null,
+    factionId: data?.factionId ?? 0,
+  }); // DISC22-F: the copy being offered; REPUTE-SHARE: its faction
   // AUDIT QA3 E2/E4: a partner's word that it holds the copy (prepareQuestShare) - on a sync, or a deliberate Share of a
   // copy unchanged since it came: either way nothing in it is news to a member who holds the copy
   const held = data?.held === 1;
-  if (!check.ok) return held && data.sync === 1 ? { ...check, quiet: true } : check;   // a member who refused the share is not told so again by each answer
+  if (!check.ok) return held && data.sync === 1 ? { ...check, quiet: true } : check; // a member who refused the share is not told so again by each answer
   if (held && check.resync) {
     machine.noteShareHolder?.(questName, ctx.from);
     const quest = machine.sharedCandidateNamed?.(questName) ?? null;
@@ -321,7 +347,8 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   // machine. The receiver's parse also supplies the ITEM resources' items (`takeLocalItems`): a reward is the
   // receiver's own roll, never a `daggerfallUnityItem` somebody typed.
   if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };
-  const local = machine.parseQuestShape?.(questName, data.factionId, { questlines: data.ql?.stamp === QL_STAMP }) ?? null;
+  const local =
+    machine.parseQuestShape?.(questName, data.factionId, { questlines: data.ql?.stamp === QL_STAMP }) ?? null;
   // AUDIT QUESTLINES BRANCH-12 (above): the receiver's parse reads the script the copy was read with - its branch while
   // the copy is stamped, DFU's while it is not (a quest begun before the deploy, or offline with the switch off): the read
   // followed the receiver's switch, forced on online, and every share and resync of such a copy was refused as a forgery
@@ -332,7 +359,7 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   // to a string, and a forged Place's number there threw out of the receipt instead of being refused in words
   // AUDIT QUESTLINES BRANCH-2: a resync keeps the progress that is this holder's own (shareActions.js `holders`) off the
   // copy it holds; a fresh copy takes it from its own parse
-  const live = check.resync ? machine.sharedCandidateNamed?.(questName) ?? null : null;
+  const live = check.resync ? (machine.sharedCandidateNamed?.(questName) ?? null) : null;
   const safe = takeLocalItems(local, takeLocalActions(local, fullShareMarkers(data), live));
   // AUDIT SD III (D5): online, the copy's dungeons laid on the world's own sizes, as a load lays a saved quest's
   // (questRepair.js relayQuestOnline) - an older page's copy was laid whole, and pointed into blocks this build has not
@@ -344,8 +371,12 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
     relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);
   };
   if (check.resync) {
-    const quest = machine.updateSharedQuest(questName, safe, { from: ctx.from });   // AUDIT QA3 E3: whose kills it brings
-    if (quest) { relay(quest); machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }   // QUEST-AUDIT III GOLD-HOLDERS: `from` holds it
+    const quest = machine.updateSharedQuest(questName, safe, { from: ctx.from }); // AUDIT QA3 E3: whose kills it brings
+    if (quest) {
+      relay(quest);
+      machine.noteShareHolder?.(questName, ctx.from);
+      return { ok: true, quest, resync: true };
+    } // QUEST-AUDIT III GOLD-HOLDERS: `from` holds it
     // AUDIT SHARE-MEND D4: a copy that still stands was not GONE - the restore choked on the partner's (machine.js
     // logs why), most often another build of the game, and the receiver was told they no longer had it
     const still = machine.sharedCandidateNamed?.(questName) ?? null;
@@ -358,11 +389,11 @@ export function receiveSharedQuest(machine, questLists, questName, data, ctx = {
   // paid, that never ended (ticksToEnd is no save state).
   if (safe.questComplete === true || shareEnvelopeEnding(safe)) return { ok: false, reason: 'finished' };
   const quest = machine.receiveSharedQuest(safe);
-  if (!quest) return { ok: false, reason: 'restore' };   // SHARE-MEND: the restore choked (machine.js logs why) - not a forged envelope
+  if (!quest) return { ok: false, reason: 'restore' }; // SHARE-MEND: the restore choked (machine.js logs why) - not a forged envelope
   relay(quest);
-  machine.noteShareHolder?.(questName, ctx.from);   // QUEST-AUDIT III GOLD-HOLDERS: the sharer holds it
-  quest._sentBy = ctx.from ?? null;   // AUDIT QA3 E1: who shared it - its questline choices wait while they are in the party
-  quest._heldSig = shareSignature(quest);   // AUDIT QA3 E2/E4: its first sync, unchanged, answers held
+  machine.noteShareHolder?.(questName, ctx.from); // QUEST-AUDIT III GOLD-HOLDERS: the sharer holds it
+  quest._sentBy = ctx.from ?? null; // AUDIT QA3 E1: who shared it - its questline choices wait while they are in the party
+  quest._heldSig = shareSignature(quest); // AUDIT QA3 E2/E4: its first sync, unchanged, answers held
   if (check.meta?.quest?.oneTime) questLists.markOneTimeAccepted(questName);
   return { ok: true, quest };
 }
@@ -389,7 +420,8 @@ export function shapeMismatch(local, data) {
   if (!tasks || tasks.length !== ref.tasks.length) return 'tasks';
   const taskNames = new Set();
   for (let i = 0; i < tasks.length; i++) {
-    const t = tasks[i], r = ref.tasks[i];
+    const t = tasks[i],
+      r = ref.tasks[i];
     if (!t || typeof t !== 'object' || t.type !== r.type || typeof t.symbol?.original !== 'string') return 'task';
     if (MINTED_TASK_TYPES.has(r.type)) {
       // SHARE-COPY: the sender's number is KEPT - the restore keys the task by it, as a save's load does - so it
@@ -408,13 +440,18 @@ export function shapeMismatch(local, data) {
   const res = Array.isArray(data.resources) ? data.resources : null;
   if (!res) return 'resources';
   const want = new Map(ref.resources.map((r) => [r.symbol?.original, r.type]));
-  const persons = new Set(ref.resources.filter((r) => r.type === 'Person').map((r) => getInnerSymbolName(r.symbol?.original ?? '')));
+  const persons = new Set(
+    ref.resources.filter((r) => r.type === 'Person').map((r) => getInnerSymbolName(r.symbol?.original ?? '')),
+  );
   const seen = new Set();
   for (const r of res) {
     const sym = r && typeof r === 'object' ? r.symbol?.original : null;
     if (typeof sym !== 'string' || seen.has(sym)) return 'resource';
     seen.add(sym);
-    if (want.has(sym)) { if (want.get(sym) !== r.type) return 'resource'; continue; }
+    if (want.has(sym)) {
+      if (want.get(sym) !== r.type) return 'resource';
+      continue;
+    }
     const home = HOME_SYMBOL.exec(sym);
     if (!home || r.type !== 'Place' || !persons.has(home[1])) return 'resource';
   }
@@ -445,30 +482,58 @@ export function takeLocalItems(local, data) {
 // QUEST-AUDIT III SHARE-WORDS: every word below in the player's language (the text core's) - English in every language
 // before; the fragments still follow "... but you" (scenes/world.js `quest.share.refused`), each language's frame drafted to take them
 export const SHARE_REFUSAL_TEXT = Object.freeze({
-  get gone() { return t('quest.share.gone', 'That quest is no longer active.'); },
-  get tooLarge() { return t('quest.share.tooLarge', 'This quest is too complex to share.'); },
-  get mainQuest() { return t('quest.share.mainQuest', 'The main quest cannot be shared.'); },
+  get gone() {
+    return t('quest.share.gone', 'That quest is no longer active.');
+  },
+  get tooLarge() {
+    return t('quest.share.tooLarge', 'This quest is too complex to share.');
+  },
+  get mainQuest() {
+    return t('quest.share.mainQuest', 'The main quest cannot be shared.');
+  },
   // AUDIT QUESTLINES REWARD-2: the sender's word for a questline's step (world.js reads this table by the reason)
-  get questline() { return t('quest.share.questline', 'A questline is your own road. Its steps cannot be shared.'); },   // AUDIT QUESTLINES VOICE-QL: two sentences, no dash aside (bible/10-UI/Voice.md rule 5)
+  get questline() {
+    return t('quest.share.questline', 'A questline is your own road. Its steps cannot be shared.');
+  }, // AUDIT QUESTLINES VOICE-QL: two sentences, no dash aside (bible/10-UI/Voice.md rule 5)
   // DISC22-F: the fragments below are said to the RECEIVER, after "... but you" (scenes/world.js) - second person
-  get active() { return t('quest.share.active', 'already have this quest.'); },
-  get done() { return t('quest.share.done', 'have already done this quest.'); },
-  get mismatch() { return t('quest.share.mismatch', 'received a quest that did not match your own copy.'); },   // AUDIT DROPS A1: the envelope is not the quest it names
-  get unknown() { return t('quest.share.unknown', 'do not know this quest.'); },   // AUDIT DROPS A1: no local source to check the envelope against
-  get guild() { return t('quest.share.guild', 'are not a member of the guild this quest requires.'); },
-  get repute() { return t('quest.share.repute', 'do not yet have the standing with its guild this quest asks for.'); },   // QUEST-AUDIT III REPUTE-SHARE
+  get active() {
+    return t('quest.share.active', 'already have this quest.');
+  },
+  get done() {
+    return t('quest.share.done', 'have already done this quest.');
+  },
+  get mismatch() {
+    return t('quest.share.mismatch', 'received a quest that did not match your own copy.');
+  }, // AUDIT DROPS A1: the envelope is not the quest it names
+  get unknown() {
+    return t('quest.share.unknown', 'do not know this quest.');
+  }, // AUDIT DROPS A1: no local source to check the envelope against
+  get guild() {
+    return t('quest.share.guild', 'are not a member of the guild this quest requires.');
+  },
+  get repute() {
+    return t('quest.share.repute', 'do not yet have the standing with its guild this quest asks for.');
+  }, // QUEST-AUDIT III REPUTE-SHARE
 });
 
 /** DISC25-D: the four guilds a guild quest's catalog row can name (GUILDS), as a sentence says them. */
 export const SHARE_GUILD_NAMES = Object.freeze({
-  get FightersGuild() { return t('quest.share.guildName.fighters', 'the Fighters Guild'); },
-  get MagesGuild() { return t('quest.share.guildName.mages', 'the Mages Guild'); },
-  get ThievesGuild() { return t('quest.share.guildName.thieves', 'the Thieves Guild'); },
-  get DarkBrotherhood() { return t('quest.share.guildName.darkBrotherhood', 'the Dark Brotherhood'); },
+  get FightersGuild() {
+    return t('quest.share.guildName.fighters', 'the Fighters Guild');
+  },
+  get MagesGuild() {
+    return t('quest.share.guildName.mages', 'the Mages Guild');
+  },
+  get ThievesGuild() {
+    return t('quest.share.guildName.thieves', 'the Thieves Guild');
+  },
+  get DarkBrotherhood() {
+    return t('quest.share.guildName.darkBrotherhood', 'the Dark Brotherhood');
+  },
 });
 
 /**
- * DISC25-D (Sir McMobdon on Discord: "Assumed it was cause I wasn't a part of same guild I couldn't receive the quest.
+ * DISC25-D (a player on Discord: "Assumed it was cause I wasn't a part of same guild I couldn't receive the quest.
  * But I checked i am In guild. Still cant get quest shared"): the refusal a receiver reads, naming the guild when the
  * gate was one. "Guard the Guild" is a Mages Guild quest, and a Temple of Julianos member was told only that they
  * were "not a member of the guild this quest requires" - true, and no use to someone who is in a guild. The rest are
@@ -477,24 +542,29 @@ export const SHARE_GUILD_NAMES = Object.freeze({
  */
 export function shareRefusalText(result, theirBuild = undefined) {
   const named = result?.reason === 'guild' ? SHARE_GUILD_NAMES[result.guild] : null;
-  if (named) return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });
+  if (named)
+    return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });
   const base = RECEIVER_REFUSAL_TEXT[result?.reason] ?? SHARE_REFUSAL_TEXT[result?.reason] ?? null;
   return base && theirBuild !== undefined && SKEW_REASONS.has(result.reason) ? base + shareSkewText(theirBuild) : base;
 }
 
 /** AUDIT QA3: the sender's own line after a deliberate share - sent to the party, or not now - in the player's language. */
 export function shareSentLine(sent, quest) {
-  return sent ? t('quest.share.sent', 'Shared "{quest}" with your party.', { quest }) : t('quest.share.notNow', 'Could not share that quest right now.');
+  return sent
+    ? t('quest.share.sent', 'Shared "{quest}" with your party.', { quest })
+    : t('quest.share.notNow', 'Could not share that quest right now.');
 }
 
 /** QUEST-AUDIT III SHARE-WORDS: the receiver's lines, whole, in the player's language - a partner who has no name yet, the
  *  share's arrival, and its refusal (shareRefusalText's fragment after the language's own "... but you"), or the bare
  *  failure where no fragment says why. */
 export const shareSomeone = () => t('quest.share.someone', 'A party member');
-export const shareReceivedLine = (who, quest) => t('quest.share.received', '{who} shared a quest: "{quest}".', { who, quest });
+export const shareReceivedLine = (who, quest) =>
+  t('quest.share.received', '{who} shared a quest: "{quest}".', { who, quest });
 export function shareRefusedLine(result, who, quest, theirBuild = undefined) {
   const why = shareRefusalText(result, theirBuild);
-  return why ? t('quest.share.refused', '{who} tried to share "{quest}", but you {why}', { who, quest, why })
+  return why
+    ? t('quest.share.refused', '{who} tried to share "{quest}", but you {why}', { who, quest, why })
     : t('quest.share.notReceived', 'Could not receive the quest "{quest}" from {who}.', { who, quest });
 }
 
@@ -502,12 +572,27 @@ export function shareRefusedLine(result, who, quest, theirBuild = undefined) {
  *  RECEIVER after "... tried to share X, but you" - a resync whose local copy had ended read "... but you That quest
  *  is no longer active." - and the restore's own reason. */
 export const RECEIVER_REFUSAL_TEXT = Object.freeze({
-  get gone() { return t('quest.share.receiver.gone', 'no longer have a copy of it to bring up to date.'); },
-  get tooLarge() { return t('quest.share.receiver.tooLarge', 'were sent a quest too large to read.'); },
-  get mainQuest() { return t('quest.share.receiver.mainQuest', 'cannot be given the main quest.'); },
-  get questline() { return t('quest.share.questline.receiver', 'cannot be given a step of a questline. Each player walks their own.'); },   // AUDIT QUESTLINES REWARD-2; VOICE-QL: still a fragment after "... but you", its aside a second sentence (Voice.md rule 5)
-  get restore() { return t('quest.share.receiver.restore', 'could not rebuild it in your world.'); },
-  get shelved() { return t('quest.share.receiver.shelved', 'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.'); },   // QUEST-SHELF's audit: a deliberate share is answered
+  get gone() {
+    return t('quest.share.receiver.gone', 'no longer have a copy of it to bring up to date.');
+  },
+  get tooLarge() {
+    return t('quest.share.receiver.tooLarge', 'were sent a quest too large to read.');
+  },
+  get mainQuest() {
+    return t('quest.share.receiver.mainQuest', 'cannot be given the main quest.');
+  },
+  get questline() {
+    return t('quest.share.questline.receiver', 'cannot be given a step of a questline. Each player walks their own.');
+  }, // AUDIT QUESTLINES REWARD-2; VOICE-QL: still a fragment after "... but you", its aside a second sentence (Voice.md rule 5)
+  get restore() {
+    return t('quest.share.receiver.restore', 'could not rebuild it in your world.');
+  },
+  get shelved() {
+    return t(
+      'quest.share.receiver.shelved',
+      'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.',
+    );
+  }, // QUEST-SHELF's audit: a deliberate share is answered
 });
 
 /** SHARE-MEND: the refusals that say the two copies disagree - most often two BUILDS of the game: before SHARE-COPY
@@ -518,7 +603,9 @@ const SKEW_REASONS = new Set(['mismatch', 'unknown', 'restore']);
  *  mine; when it is another, both should reload; when there is none, theirs predates this build. */
 export function shareSkewText(theirBuild, mine = BUILD_TAG) {
   if (!theirBuild) return ` ${t('quest.share.skewOld', 'Their game is out of date. They should reload the page.')}`;
-  return theirBuild === mine ? '' : ` ${t('quest.share.skewDiffer', 'You are on different versions of the game. Both of you should reload the page.')}`;
+  return theirBuild === mine
+    ? ''
+    : ` ${t('quest.share.skewDiffer', 'You are on different versions of the game. Both of you should reload the page.')}`;
 }
 
 /** SHARE-MEND: whether a refusal is to be SAID. A quest kept in step with the party is re-shared on every change
@@ -526,7 +613,7 @@ export function shareSkewText(theirBuild, mine = BUILD_TAG) {
  *  that name of their own, read the same refusal every few seconds for as long as the sharer played. A deliberate
  *  share is always answered; a sync's refusal is said once per sharer, quest and reason. `said` is the host's Set. */
 export function sayShareRefusal(said, acct, questName, result, sync, copy = '') {
-  if (result?.quiet) return false;   // AUDIT QA3 E4: a partner's held answer, refused here, is no share to answer
+  if (result?.quiet) return false; // AUDIT QA3 E4: a partner's held answer, refused here, is no share to answer
   // AUDIT SHARE-MEND D5: keyed by the copy too (`copy` - its share id and the sender's build): a sender who reloads onto
   // another build, or shares a fresh copy, is answered again; and a deliberate share's refusal counts as said
   const key = `${acct}|${questName}|${result?.reason}|${result?.guild ?? ''}|${copy}`;

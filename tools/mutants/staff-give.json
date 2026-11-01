@@ -2,8 +2,8 @@
   {
     "name": "STAFF-GIVE-the-law-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (g.findings.length) return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });\n",
-    "new": "",
+    "old": "    if (g.findings.length)\n      return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });\n    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });",
+    "new": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });",
     "why": "a gift the item law finds would be given, and the player's trading held for staff's own act",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-GIVE-seq-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });\n",
-    "new": "",
+    "old": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });\n    const prep = await seizeRealmRecord(",
+    "new": "    const prep = await seizeRealmRecord(",
     "why": "a gift confirmed on a record that moved since staff looked",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -22,9 +22,9 @@
   {
     "name": "STAFF-GIVE-reason-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n",
-    "new": "",
-    "why": "every gift names why (mob: a reason and a note like Remove)",
+    "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
+    "new": "    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
+    "why": "every gift names why",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ]
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-GIVE-preview-gives",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (body.confirm !== true) {\n      await audit('give-check'",
-    "new": "    if (body.confirm === 'never') {\n      await audit('give-check'",
+    "old": "    if ('error' in g) return refusedEarly(/** @type {string} */ (g.error));\n    if (body.confirm !== true) {",
+    "new": "    if ('error' in g) return refusedEarly(/** @type {string} */ (g.error));\n    if (body.confirm === 'never') {",
     "why": "a preview moves nothing",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-GIVE-no-ledger-id",
     "file": "server-account/src/staffGive.js",
-    "old": "  if (valuablePiece(item)) item.uid = mintItemId(rand);\n",
-    "new": "",
+    "old": "  if (valuablePiece(item)) item.uid = mintItemId(rand);\n  const cost = rows.reduce((s, r) => s + ((r.parentEnchantment ?? 0) === 0 ? r.enchantCost : 0), 0);",
+    "new": "  const cost = rows.reduce((s, r) => s + ((r.parentEnchantment ?? 0) === 0 ? r.enchantCost : 0), 0);",
     "why": "a valuable gift enters the ledger as the record's own",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-GIVE-material-unchecked",
     "file": "server-account/src/staffGive.js",
-    "old": "  if (mats && !mats.some(([v]) => v === material)) return { error: 'staff-item-template' };\n",
-    "new": "",
+    "old": "  if (mats && !mats.some(([v]) => v === material)) return { error: 'staff-item-template' };\n  if (!mats && spec.material !== undefined) return { error: 'staff-item-template' };",
+    "new": "  if (!mats && spec.material !== undefined) return { error: 'staff-item-template' };",
     "why": "a weapon at an armour's material is no item the list offers",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-GIVE-stack-unchecked",
     "file": "server-account/src/staffGive.js",
-    "old": "    if (!isStackable(item)) return { error: 'staff-item-template' };\n",
-    "new": "",
+    "old": "    if (!isStackable(item)) return { error: 'staff-item-template' };\n    item.stackCount = count;",
+    "new": "    item.stackCount = count;",
     "why": "a dagger never stacks",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-GIVE-gold-on-anything",
     "file": "server-account/src/staffGive.js",
-    "old": "    if (i !== LETTER_OF_CREDIT_TEMPLATE || !Number.isSafeInteger(spec.gold)",
-    "new": "    if (!Number.isSafeInteger(spec.gold)",
+    "old": "    if (\n      i !== LETTER_OF_CREDIT_TEMPLATE ||\n      !Number.isSafeInteger(spec.gold) ||\n      spec.gold < 1 ||\n      spec.gold > GOLD_INT_MAX\n    )",
+    "new": "    if (!Number.isSafeInteger(spec.gold) || spec.gold < 1 || spec.gold > GOLD_INT_MAX)",
     "why": "gold rides a letter of credit alone",
     "tests": [
       "test/server/staffpanel3realm.test.js"

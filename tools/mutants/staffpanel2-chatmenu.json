@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-freeze-for-moderator",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "...(admin ? ['freeze'] : [])",
-    "new": "...(true ? ['freeze'] : [])",
+    "old": "    ...(admin ? ['freeze'] : []),",
+    "new": "    ...(true ? ['freeze'] : []),",
     "why": "a Moderator's line menu offers Freeze, an Admin's act",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-tp-for-moderator",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "...(admin || fang ? ['tp'] : [])",
-    "new": "...(true ? ['tp'] : [])",
+    "old": "  return [\n    'follow',\n    ...(admin || fang ? ['tp'] : []),\n    'message',\n    'mute',\n    ...(admin ? ['freeze'] : []),\n    'ban',\n    'notes',\n    'watch',\n  ];",
+    "new": "  return ['follow', ...(true ? ['tp'] : []), 'message', 'mute', ...(admin ? ['freeze'] : []), 'ban', 'notes', 'watch'];",
     "why": "a Moderator's line menu offers TP (Admin and Shadow Fang only)",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-shield-no-acts",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (!admin && !fang && !g.includes('mod')) return [];",
-    "new": "if (!admin && !fang) return [];",
+    "old": "  if (!admin && !fang && !g.includes('mod')) return [];",
+    "new": "  if (!admin && !fang) return [];",
     "why": "a Moderator (the shield) gets no acts - and keeps Report",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-anyone-acts",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (!admin && !fang && !g.includes('mod')) return [];",
-    "new": "if (false) return [];",
+    "old": "  if (!admin && !fang && !g.includes('mod')) return [];",
+    "new": "  if (false) return [];",
     "why": "a player or a Dungeon Master gets staff acts and loses Report",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-no-id-guard",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    if (!ID_RE.test(sub)) return [];\n",
-    "new": "",
+    "old": "    if (!ID_RE.test(sub)) return [];\n    return staffLineActs(glyphs())",
+    "new": "    return staffLineActs(glyphs())",
     "why": "an account the wire's law cannot name is acted on",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-follow-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "Promise.resolve().then(() => f(sub))",
-    "new": "Promise.resolve().then(() => f(name))",
+    "old": "                    .then(() => f(sub))",
+    "new": "                    .then(() => f(name))",
     "why": "Follow names the player by the name the line showed",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -62,9 +62,9 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-row-silent-without-panel",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (ok === false) sayActive(",
-    "new": "if (ok === 'no') sayActive(",
-    "why": "Follow with no Staff Panel over the game does nothing and says nothing (mob: \"why doesnt follow work?\")",
+    "old": "                      if (ok === false)",
+    "new": "                      if (ok === 'no')",
+    "why": "Follow with no Staff Panel over the game does nothing and says nothing",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ]
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-follow-error-unsaid",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": ".catch((e) => sayActive(String(e?.message ?? e)));",
-    "new": ".catch(() => {});",
+    "old": "                    .catch((e) => sayActive(String(e?.message ?? e)));",
+    "new": "                    .catch(() => {});",
     "why": "a Follow the hook refuses is never said",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-follow-without-hook",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (act === 'follow') return typeof f === 'function' ?",
-    "new": "if (act === 'follow') return true ?",
+    "old": "          return typeof f === 'function'",
+    "new": "          return true",
     "why": "Follow shows with no staff hook",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-tp-without-socket",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "typeof teleport === 'function' && typeof line.id === 'string' && line.id ?",
-    "new": "typeof teleport === 'function' ?",
+    "old": "        if (act === 'tp')\n          return typeof teleport === 'function' && typeof line.id === 'string' && line.id\n            ? { ...row, run: () => tpTo(line) }\n            : null;",
+    "new": "        if (act === 'tp') return typeof teleport === 'function' ? { ...row, run: () => tpTo(line) } : null;",
     "why": "TP offered for a line with no socket on it",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-tp-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "    teleport?.(line.id);\n",
-    "new": "    teleport?.(line.name);\n",
+    "old": "    teleport?.(line.id);",
+    "new": "    teleport?.(line.name);",
     "why": "TP asks by the name the line showed",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-tp-socket-check-dropped",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (typeof p?.sub === 'string' && p.sub !== line.sub) { sayActive(STAFF_TP_ERROR_TEXT.offline); return; }",
-    "new": "if (false) { sayActive(STAFF_TP_ERROR_TEXT.offline); return; }",
+    "old": "      if (typeof p?.sub === 'string' && p.sub !== line.sub) {",
+    "new": "      if (false) {",
     "why": "TP goes to a socket a room here holds under another account",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-mute-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "run: () => { void muteFor(sub, name, m); }",
-    "new": "run: () => { void muteFor(name, name, m); }",
+    "old": "                void muteFor(sub, name, m);",
+    "new": "                void muteFor(name, name, m);",
     "why": "Mute asks for the name, not the line's account",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-mute-said-wrong",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "sayActive(await muteNamed({ sub, name }, minutes, { links: allLinks(), mute, refusal: accountRefusalText })",
-    "new": "sayActive(await muteNamed({ sub, name }, minutes, { links: [], mute, refusal: accountRefusalText })",
+    "old": "      await muteNamed({ sub, name }, minutes, { links: allLinks(), mute, refusal: accountRefusalText }).catch(() =>",
+    "new": "      await muteNamed({ sub, name }, minutes, { links: [], mute, refusal: accountRefusalText }).catch(() =>",
     "why": "a line menu's mute is never carried to the rooms",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-ban-without-confirm",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "menu: banLevel(sub, name, d) }",
-    "new": "run: () => { void host.command(log()?.active, { op: 'ban', name: `#${sub}`, days: d }); } }",
+    "old": "              menu: banLevel(sub, name, d),",
+    "new": "              run: () => {\n                void host.command(log()?.active, { op: 'ban', name: `#${sub}`, days: d });\n              },",
     "why": "a ban's length bans at once, with no confirm",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-ban-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "{ op: 'ban', name: `#${sub}`, days }",
-    "new": "{ op: 'ban', name, days }",
+    "old": "          void host.command(log()?.active, { op: 'ban', name: `#${sub}`, days });",
+    "new": "          void host.command(log()?.active, { op: 'ban', name, days });",
     "why": "the confirm bans by the name the line showed",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-ban-reason-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "const cmd = `/ban #${sub} ${days || 'perm'}: `;",
-    "new": "const cmd = `/ban ${name} ${days || 'perm'}: `;",
+    "old": "    const cmd = `/ban #${sub} ${days || 'perm'}: `;",
+    "new": "    const cmd = `/ban ${name} ${days || 'perm'}: `;",
     "why": "the reason's command names the player by name",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-ban-reason-overwrites",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "if (p?.restore?.(cmd) === true) p.input?.focus?.();\n        else sayActive(",
-    "new": "p?.restore?.(cmd); p.input?.focus?.();\n        if (false) sayActive(",
+    "old": "          if (p?.restore?.(cmd) === true) p.input?.focus?.();\n          else",
+    "new": "          p?.restore?.(cmd);\n          p.input?.focus?.();\n          if (false)",
     "why": "a busy field is not told how to give a reason",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-hand-any-origin",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
-    "new": "win.postMessage({ dfoStaff: 'act', act, sub, name }, '*');",
+    "old": "    win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
+    "new": "    win.postMessage({ dfoStaff: 'act', act, sub, name }, '*');",
     "why": "the act is posted to any origin",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-hand-by-name",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
-    "new": "win.postMessage({ dfoStaff: 'act', act, sub: name, name }, origin);",
+    "old": "    win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
+    "new": "    win.postMessage({ dfoStaff: 'act', act, sub: name, name }, origin);",
     "why": "the Staff Panel is handed the name for the account",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-hand-null-origin",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "!origin || origin === 'null' ||",
-    "new": "!origin ||",
+    "old": "    if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function')\n      return false;",
+    "new": "    if (typeof origin !== 'string' || !origin || typeof win.postMessage !== 'function') return false;",
     "why": "an opaque origin ('null') is posted to",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-report-for-staff",
     "file": "src/scenes/chatSafetyHost.js",
-    "old": "      rows.push(...staffRows(line, name));\n",
-    "new": "",
+    "old": "      rows.push(...staffRows(line, name));\n      rows.push(",
+    "new": "      rows.push(",
     "why": "staff get no acts in their line menu",
     "tests": [
       "test/net/safety/safe_client.test.js"

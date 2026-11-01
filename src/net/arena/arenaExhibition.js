@@ -16,7 +16,7 @@
 // pinned to it row for row) and the port's one seeded die (systems/wind/wind.js seededRng); both import nothing.
 //
 // Not a DFU member. Ledger A (ARENA).
-import { seededRng } from '../../systems/wind/wind.js';   // the port's one seeded die (mulberry32) - one home
+import { seededRng } from '../../systems/wind/wind.js'; // the port's one seeded die (mulberry32) - one home
 import { ARENA_LADDER_SPEC, ARENA_BEAST_TIER, ARENA_TIER_BOUTS } from './arenaLaw.js';
 
 /** The schedule: a bout on each hour of the game's clock, its call at the hour's minute 0, and the last minute of the
@@ -30,7 +30,13 @@ export const ARENA_SEED = 0x41524e32;
 /** A 32-bit mix (the market's xorshift family, systems/arena/arenaMove.js) of a number and a salt. Pure. */
 export function arenaHash(n, salt = 0) {
   let s = (Math.imul((n | 0) ^ ARENA_SEED, 0x9e3779b1) + Math.imul((salt | 0) + 1, 0x85ebca6b)) >>> 0 || 1;
-  for (let i = 0; i < 4; i++) { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; }
+  for (let i = 0; i < 4; i++) {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+  }
   return s >>> 0;
 }
 
@@ -48,18 +54,28 @@ export function exhibitionFor(gameMinutes) {
   if (!EXHIBITION_HOURS.includes(hod)) return null;
   const seed = arenaHash(hour, 1);
   const rng = seededRng(seed);
-  const tier = Math.floor(rng() * 8);   // the eight tiers whose bouts are one against one
+  const tier = Math.floor(rng() * 8); // the eight tiers whose bouts are one against one
   const pool = ARENA_LADDER_SPEC[tier].slice(0, ARENA_TIER_BOUTS).map((b) => ({ mobile: b[0][0], level: b[0][1] }));
   const i = Math.floor(rng() * pool.length);
   let j = Math.floor(rng() * (pool.length - 1));
   if (j >= i) j++;
-  const minute = (Math.max(0, Number(gameMinutes) || 0)) - hour * 60;
-  return { hour, seed, tier, opponents: [pool[i], pool[j]], startsAt: hour * 60, open: minute < EXHIBITION_START_MINUTES, beasts: tier === ARENA_BEAST_TIER };
+  const minute = Math.max(0, Number(gameMinutes) || 0) - hour * 60;
+  return {
+    hour,
+    seed,
+    tier,
+    opponents: [pool[i], pool[j]],
+    startsAt: hour * 60,
+    open: minute < EXHIBITION_START_MINUTES,
+    beasts: tier === ARENA_BEAST_TIER,
+  };
 }
 
 /** ARENA4b: THE EXHIBITION'S BOUT ID on the relay - the hour's seed and the hour, eight hex each, so its seed
  *  (net/arena/arenaBrain.js arenaBoutSeed - its first eight) is the seed the offline bout names its fighters by. Pure. */
-export const exhibitionBoutId = (hour) => arenaHash(hour, 1).toString(16).padStart(8, '0') + ((Math.floor(Number(hour) || 0) >>> 0).toString(16).padStart(8, '0'));
+export const exhibitionBoutId = (hour) =>
+  arenaHash(hour, 1).toString(16).padStart(8, '0') +
+  (Math.floor(Number(hour) || 0) >>> 0).toString(16).padStart(8, '0');
 /**
  * ARENA4b: THE EXHIBITION THE RELAY MAY OPEN for the room of `hour` at the shared clock's `nowMinutes` (net/wire.js
  * sharedClassicMinutes): the hour's own (the clock in it), the gates open (one of EXHIBITION_HOURS), and still open
@@ -75,4 +91,7 @@ export function exhibitionOpening(hour, nowMinutes) {
  *  that runs past its hour) and, for its kept verdict, the game day before that (net/arena/arenaLaw.js ARENA_EX_KEEP_MS); one
  *  hour ahead for a clock a breath fast. Pure. */
 export const EXHIBITION_KEPT_HOURS = 24;
-export const exhibitionAdmits = (hour, nowMinutes) => { const now = hourIndexOf(nowMinutes); return Number.isSafeInteger(hour) && hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1; };
+export const exhibitionAdmits = (hour, nowMinutes) => {
+  const now = hourIndexOf(nowMinutes);
+  return Number.isSafeInteger(hour) && hour >= now - EXHIBITION_KEPT_HOURS - 1 && hour <= now + 1;
+};

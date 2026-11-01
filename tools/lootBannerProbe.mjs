@@ -119,7 +119,10 @@ const port = vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
 const overlaps = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
@@ -127,16 +130,21 @@ try {
     const ctx = await browser.newContext({ viewport: v.viewport, deviceScaleFactor: v.dsf });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&touch=off&nofonts`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&touch=off&nofonts`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
     for (const s of SCENE_NAMES) {
       await page.evaluate((n) => globalThis.__scene(n), s);
-      await page.waitForTimeout(1300);   // landed, the sweep run
+      await page.waitForTimeout(1300); // landed, the sweep run
       const m = await page.evaluate(() => globalThis.__measure());
       const tag = `${v.name}/${s}`;
       const file = join(OUT, `lootbanner-${v.name}-${s}.png`);
       await page.screenshot({ path: file });
-      console.log(`${tag.padEnd(16)} ${m.banners.map((b) => `[${b.kicker} | ${b.name}${b.big ? ' BIG' : ''}]`).join(' ')}  notice ${m.notice ? `${m.notice.y.toFixed(0)}-${m.notice.b.toFixed(0)}` : '-'}  -> ${file}`);
+      console.log(
+        `${tag.padEnd(16)} ${m.banners.map((b) => `[${b.kicker} | ${b.name}${b.big ? ' BIG' : ''}]`).join(' ')}  notice ${m.notice ? `${m.notice.y.toFixed(0)}-${m.notice.b.toFixed(0)}` : '-'}  -> ${file}`,
+      );
       check(m.banners.length > 0, `${tag}: no banner drawn`);
       check(m.banners.length <= 3, `${tag}: more than three stand`);
       for (const b of m.banners) {
@@ -145,12 +153,24 @@ try {
         check(!overlaps(b, m.notice), `${tag}: [${b.name}] overlaps the notices`);
         check(b.scrollW <= b.clientW + 1, `${tag}: [${b.name}] scrolls sideways`);
         check(b.nameColour !== 'rgb(233, 228, 217)', `${tag}: [${b.name}] name wears no tier colour`);
-        check(b.big === ['aetheric', 'artifact', 'gilded'].includes(b.tier), `${tag}: [${b.name}] big is ${b.big} for ${b.tier}`);
+        check(
+          b.big === ['aetheric', 'artifact', 'gilded'].includes(b.tier),
+          `${tag}: [${b.name}] big is ${b.big} for ${b.tier}`,
+        );
       }
-      if (s === 'burst') check(m.banners[m.banners.length - 1]?.tier === 'aetheric' || m.banners.some((b) => b.tier === 'aetheric'), `${tag}: the best tier did not stand first`);
+      if (s === 'burst')
+        check(
+          m.banners[m.banners.length - 1]?.tier === 'aetheric' || m.banners.some((b) => b.tier === 'aetheric'),
+          `${tag}: the best tier did not stand first`,
+        );
       if (s === 'big') {
-        const big = m.banners.filter((b) => b.big), small = m.banners.filter((b) => !b.big);
-        if (big.length && small.length) check(Math.min(...big.map((b) => b.h)) > Math.max(...small.map((b) => b.h)), `${tag}: a big banner is not taller`);
+        const big = m.banners.filter((b) => b.big),
+          small = m.banners.filter((b) => !b.big);
+        if (big.length && small.length)
+          check(
+            Math.min(...big.map((b) => b.h)) > Math.max(...small.map((b) => b.h)),
+            `${tag}: a big banner is not taller`,
+          );
       }
     }
     await ctx.close();

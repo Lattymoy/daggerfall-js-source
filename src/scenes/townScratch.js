@@ -45,8 +45,11 @@ export function createTownScratch({ areEnemiesNearby, foes }) {
   // of which were minted per person per frame for a predicate that
   // reads them once
   const opts = {
-    playerStandingStill: false, distanceToPlayer: Infinity, sheathed: false,
-    invisible: false, inBeastForm: false,
+    playerStandingStill: false,
+    distanceToPlayer: Infinity,
+    sheathed: false,
+    invisible: false,
+    inBeastForm: false,
     enemiesNearby: () => areEnemiesNearby(foes()),
   };
   // the {person, pos} rows the activation ray walks
@@ -61,7 +64,7 @@ export function createTownScratch({ areEnemiesNearby, foes }) {
       opts.playerStandingStill = playerStandingStill;
       opts.sheathed = sheathed;
       opts.invisible = invisible;
-      opts.inBeastForm = inBeastForm;   // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)
+      opts.inBeastForm = inBeastForm; // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)
     },
     /** The per-person callback `TownPopulation.update` calls. */
     stops(person) {
@@ -69,12 +72,15 @@ export function createTownScratch({ areEnemiesNearby, foes }) {
       // written to survive overflow at the extremes of the float range
       // and charges for it on every call, and these are two world
       // coordinates a few hundred units apart.
-      const dx = person.pos[0] - local[0], dz = person.pos[2] - local[2];
+      const dx = person.pos[0] - local[0],
+        dz = person.pos[2] - local[2];
       opts.distanceToPlayer = Math.sqrt(dx * dx + dz * dz);
       return personWantsToStop(opts);
     },
     /** Row `i` of the activation list, minted once and refilled. */
-    seat(i) { return seats[i] ??= { person: null, pos: null }; },
+    seat(i) {
+      return (seats[i] ??= { person: null, pos: null });
+    },
   };
 }
 
@@ -94,7 +100,10 @@ export function createPersonTextureKeys() {
   return (archive, record, frame) => {
     const k = (archive * 4096 + record) * 1024 + frame;
     let v = keys.get(k);
-    if (v === undefined) { v = `${archive}_${record}#${frame}`; keys.set(k, v); }
+    if (v === undefined) {
+      v = `${archive}_${record}#${frame}`;
+      keys.set(k, v);
+    }
     return v;
   };
 }

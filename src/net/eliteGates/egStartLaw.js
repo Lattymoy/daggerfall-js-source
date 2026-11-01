@@ -20,8 +20,26 @@ export const EG_WAGER_MAX = 3;
 export const EG_START_DEEPEST = 999;
 /** Each decree's family by its number - net/eliteGates/egLaw.js EG_DECREES' `fam`, copied and held equal by a test. */
 export const EG_WAGER_FAMILY_OF = Object.freeze([
-  'blows', 'blows', 'blows', 'blows', 'legion', 'legion', 'legion', 'legion', 'legion', 'ground', 'ground', 'ground', 'ground',
-  'covenant', 'covenant', 'lord', 'lord', 'lord', 'lord', 'ground',   // AUDIT EG V (L2-10): 19 The Fraying, the ground's
+  'blows',
+  'blows',
+  'blows',
+  'blows',
+  'legion',
+  'legion',
+  'legion',
+  'legion',
+  'legion',
+  'ground',
+  'ground',
+  'ground',
+  'ground',
+  'covenant',
+  'covenant',
+  'lord',
+  'lord',
+  'lord',
+  'lord',
+  'ground', // AUDIT EG V (L2-10): 19 The Fraying, the ground's
 ]);
 
 /**
@@ -33,11 +51,12 @@ export const EG_WAGER_FAMILY_OF = Object.freeze([
 export function egStartsFrom(season, best) {
   const ok = (w) => Number.isSafeInteger(w) && w >= 1 && w <= EG_START_DEEPEST;
   const taken = [...new Set((season ?? []).filter(ok))];
-  const deeper = taken.length ? taken : (ok(Math.floor((Number(best) || 0) / 2)) ? [Math.floor(best / 2)] : []);
+  const deeper = taken.length ? taken : ok(Math.floor((Number(best) || 0) / 2)) ? [Math.floor(best / 2)] : [];
   return [...deeper.sort((a, b) => b - a), 0];
 }
 /** Whether start `ew` is one of `starts` (Hall 1 always is). */
-export const egMayStart = (starts, ew) => ew === 0 || (Array.isArray(starts) && Number.isSafeInteger(ew) && ew > 0 && starts.includes(ew));
+export const egMayStart = (starts, ew) =>
+  ew === 0 || (Array.isArray(starts) && Number.isSafeInteger(ew) && ew > 0 && starts.includes(ew));
 
 /**
  * A WAGER, read: up to EG_WAGER_MAX decree numbers, each a decree, no two of one family - answered sorted, or null for

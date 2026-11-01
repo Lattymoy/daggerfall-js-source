@@ -1,5 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus", "The click takes a while before the new page shows
-// (it's waiting on the server)") - HOW MANY D1 ROUND TRIPS A STAFF ROUTE WAITS ON. The service's own SQL is a few
+// STAFF-PANEL-SPEED (2026-10-23) - HOW MANY D1 ROUND TRIPS A STAFF ROUTE WAITS ON. The service's own SQL is a few
 // milliseconds a page; what a click waits on is each statement awaited after the last, times the network to D1. So every
 // call over this database answers on a later macrotask, as D1 answers over the network: calls made together (a batch,
 // a Promise.all) share one trip, and a call made after an await starts the next.

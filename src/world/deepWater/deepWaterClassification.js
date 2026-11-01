@@ -27,7 +27,12 @@
 // MapPixelData holds when DaggerfallTerrain.OnPromoteTerrainData fires.
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION } from '../terrain/terrainSampler.js';
+import {
+  SCALED_OCEAN_ELEVATION,
+  SCALED_BEACH_ELEVATION,
+  MAX_TERRAIN_HEIGHT,
+  HEIGHTMAP_DIMENSION,
+} from '../terrain/terrainSampler.js';
 import { WORLD_MAP_TILE_DIM } from '../terrain/terrainTiles.js';
 import { roundToInt } from '../../systems/mathf.js';
 import { WATER_THRESHOLD } from './deepWatersBake.js';
@@ -43,8 +48,8 @@ export const DW_CARVE_THRESHOLD = f32(f32(SCALED_OCEAN_ELEVATION + f32(0.25)) / 
 /** TryGetVisualWaterThreshold: BeachElevation / MaxTerrainHeight. */
 export const DW_VISUAL_THRESHOLD = f32(SCALED_BEACH_ELEVATION / MAX_TERRAIN_HEIGHT);
 
-const H_LEN = HEIGHTMAP_DIMENSION;   // heightmapSamples.GetLength(0) and (1)
-const T_LEN = WORLD_MAP_TILE_DIM;    // tilemapSamples.GetLength(0) and (1)
+const H_LEN = HEIGHTMAP_DIMENSION; // heightmapSamples.GetLength(0) and (1)
+const T_LEN = WORLD_MAP_TILE_DIM; // tilemapSamples.GetLength(0) and (1)
 
 /** heightmapSamples[a, b]. */
 export const heightSample = (mapData, a, b) => mapData.samples[b * H_LEN + a];
@@ -81,7 +86,8 @@ export function isLocalPointWater(mapData, fracX, fracZ) {
 /** CellContainsWaterTile. */
 export function cellContainsWaterTile(mapData, cellX, cellY, cellResolution) {
   if (!mapData.tilemap || cellResolution <= 0) return false;
-  const length = T_LEN, length2 = T_LEN;
+  const length = T_LEN,
+    length2 = T_LEN;
   const num = clampInt(Math.trunc((cellX * length2) / cellResolution), 0, length2 - 1);
   const num2 = clampInt(Math.trunc(((cellX + 1) * length2 - 1) / cellResolution), 0, length2 - 1);
   const num3 = clampInt(Math.trunc((cellY * length) / cellResolution), 0, length - 1);
@@ -95,7 +101,8 @@ export function cellContainsWaterTile(mapData, cellX, cellY, cellResolution) {
 /** IsLocalPointPureWaterTile. */
 export function isLocalPointPureWaterTile(mapData, fracX, fracZ) {
   if (!mapData.tilemap) return false;
-  const length = T_LEN, length2 = T_LEN;
+  const length = T_LEN,
+    length2 = T_LEN;
   const num = clampInt(Math.floor(f32(clamp01(f32(fracX)) * length2)), 0, length2 - 1);
   const num2 = clampInt(Math.floor(f32(clamp01(f32(fracZ)) * length)), 0, length - 1);
   return (tileSample(mapData, num2, num) & 0x3f) === 0;
@@ -114,11 +121,16 @@ export function isCellVisuallyWet(mapData, cellX, cellY, cellResolution) {
 /** TilemapHasWater(tilemap, heights): a water tile whose cell dips to the beach line. */
 function tilemapHasWater(mapData, withHeights) {
   if (!mapData.tilemap) return false;
-  const length = T_LEN, length2 = T_LEN;
+  const length = T_LEN,
+    length2 = T_LEN;
   const flag = withHeights && !!mapData.samples;
   for (let i = 0; i < length; i++) {
     for (let j = 0; j < length2; j++) {
-      if (tileValueContainsWater(tileSample(mapData, i, j)) && (!flag || heightmapCellBelowThreshold(mapData, j, i, length2, DW_VISUAL_THRESHOLD))) return true;
+      if (
+        tileValueContainsWater(tileSample(mapData, i, j)) &&
+        (!flag || heightmapCellBelowThreshold(mapData, j, i, length2, DW_VISUAL_THRESHOLD))
+      )
+        return true;
     }
   }
   return false;
@@ -127,7 +139,8 @@ function tilemapHasWater(mapData, withHeights) {
 /** TilemapPointHasWater. */
 function tilemapPointHasWater(mapData, fracX, fracZ, lowTerrainThreshold) {
   if (!mapData.tilemap) return false;
-  const length = T_LEN, length2 = T_LEN;
+  const length = T_LEN,
+    length2 = T_LEN;
   const num = clampInt(Math.floor(f32(clamp01(f32(fracX)) * length2)), 0, length2 - 1);
   const num2 = clampInt(Math.floor(f32(clamp01(f32(fracZ)) * length)), 0, length - 1);
   if (!tileValueContainsWater(tileSample(mapData, num2, num))) return false;
@@ -138,7 +151,8 @@ function tilemapPointHasWater(mapData, fracX, fracZ, lowTerrainThreshold) {
 /** HeightmapHasWater. */
 function heightmapHasWater(mapData) {
   if (!mapData.samples) return false;
-  const s = mapData.samples, t = DW_WATER_THRESHOLD;
+  const s = mapData.samples,
+    t = DW_WATER_THRESHOLD;
   for (let i = 0; i < s.length; i++) if (s[i] <= t) return true;
   return false;
 }
@@ -154,7 +168,8 @@ function heightmapFullyBelowThreshold(mapData, threshold) {
 /** HeightmapPointBelowThreshold. */
 export function heightmapPointBelowThreshold(mapData, fracX, fracZ, threshold) {
   if (!mapData.samples) return false;
-  const length = H_LEN, length2 = H_LEN;
+  const length = H_LEN,
+    length2 = H_LEN;
   const num = clampInt(roundToInt(f32(clamp01(f32(fracX)) * (length2 - 1))), 0, length2 - 1);
   const num2 = clampInt(roundToInt(f32(clamp01(f32(fracZ)) * (length - 1))), 0, length - 1);
   return heightSample(mapData, num2, num) <= threshold;
@@ -163,7 +178,8 @@ export function heightmapPointBelowThreshold(mapData, fracX, fracZ, threshold) {
 /** HeightmapCellBelowThreshold. */
 export function heightmapCellBelowThreshold(mapData, cellX, cellY, cellResolution, threshold) {
   if (!mapData.samples || cellResolution <= 0) return false;
-  const length = H_LEN, length2 = H_LEN;
+  const length = H_LEN,
+    length2 = H_LEN;
   const num = clampInt(Math.floor(f32(f32(cellX * (length2 - 1)) / cellResolution)), 0, length2 - 1);
   const num2 = clampInt(Math.ceil(f32(f32((cellX + 1) * (length2 - 1)) / cellResolution)), 0, length2 - 1);
   const num3 = clampInt(Math.floor(f32(f32(cellY * (length - 1)) / cellResolution)), 0, length - 1);

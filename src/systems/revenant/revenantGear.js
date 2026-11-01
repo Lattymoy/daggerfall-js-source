@@ -10,7 +10,7 @@
 //    kind may wear a CHARM (a piece of jewellery the player could wear - a wand is none: AUDIT RVN G2): a bear wears it
 //    on a cord.
 //  - A MELEE WEAPON. A foe's archery is its kind's flags (enemyMotor.js hasBowAttack), never its weapon, so a bow in a
-//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe.
+//    sworn one's hand would only be swung: the weapon slot takes Dagger to War Axe, and RRI's two (AUDIT FB1031 C3).
 //  - BALANCED BY RANK. A sworn one bears what its rank has earned: the metal (GEAR.METAL_CAP - Silver at rank I up to
 //    Daedric at rank V) and the tier (GEAR.RARITY_CAP - Magic at rank I, Rare from rank II, Legendary from rank IV).
 //    An artifact, an Aetheric or a Gilded piece answers to the player alone.
@@ -40,22 +40,83 @@ import { equipmentVariantFor, enemyArmorValues } from '../../combat/enemyEquipme
 import { plateMetal, SHIELD_VALUES } from '../armorMaterials.js';
 import { rarityOf } from '../loot/lootRarity.js';
 import { computeEntityMods } from '../entityMods.js';
-import { t } from '../textManager.js';   // L10N4: the page's words through the text core
-import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { t } from '../textManager.js'; // L10N4: the page's words through the text core
+import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { customItemClass } from '../roleplayRealismItems/rriItems.js'; // AUDIT FB1031 C3: the mod's two melee weapons (the anvil makes them)
 
 /** The slots, in the page's order: `key` the record's, `label` the page's, `slot` the equip table's (a charm's is
  *  whichever jewellery slot the piece takes - null here). */
 export const GEAR_SLOTS = Object.freeze([
-  Object.freeze({ key: 'weapon', get label() { return t('rvn.gear.slot.weapon', 'Weapon'); }, slot: EQUIP_SLOTS.RightHand }),
-  Object.freeze({ key: 'shield', get label() { return t('rvn.gear.slot.shield', 'Shield'); }, slot: EQUIP_SLOTS.LeftHand }),
-  Object.freeze({ key: 'head', get label() { return t('rvn.gear.slot.head', 'Helm'); }, slot: EQUIP_SLOTS.Head }),
-  Object.freeze({ key: 'rightArm', get label() { return t('rvn.gear.slot.rightArm', 'Right pauldron'); }, slot: EQUIP_SLOTS.RightArm }),
-  Object.freeze({ key: 'leftArm', get label() { return t('rvn.gear.slot.leftArm', 'Left pauldron'); }, slot: EQUIP_SLOTS.LeftArm }),
-  Object.freeze({ key: 'body', get label() { return t('rvn.gear.slot.body', 'Cuirass'); }, slot: EQUIP_SLOTS.ChestArmor }),
-  Object.freeze({ key: 'hands', get label() { return t('rvn.gear.slot.hands', 'Gauntlets'); }, slot: EQUIP_SLOTS.Gloves }),
-  Object.freeze({ key: 'legs', get label() { return t('rvn.gear.slot.legs', 'Greaves'); }, slot: EQUIP_SLOTS.LegsArmor }),
-  Object.freeze({ key: 'feet', get label() { return t('rvn.gear.slot.feet', 'Boots'); }, slot: EQUIP_SLOTS.Feet }),
-  Object.freeze({ key: 'charm', get label() { return t('rvn.gear.slot.charm', 'Charm'); }, slot: null }),
+  Object.freeze({
+    key: 'weapon',
+    get label() {
+      return t('rvn.gear.slot.weapon', 'Weapon');
+    },
+    slot: EQUIP_SLOTS.RightHand,
+  }),
+  Object.freeze({
+    key: 'shield',
+    get label() {
+      return t('rvn.gear.slot.shield', 'Shield');
+    },
+    slot: EQUIP_SLOTS.LeftHand,
+  }),
+  Object.freeze({
+    key: 'head',
+    get label() {
+      return t('rvn.gear.slot.head', 'Helm');
+    },
+    slot: EQUIP_SLOTS.Head,
+  }),
+  Object.freeze({
+    key: 'rightArm',
+    get label() {
+      return t('rvn.gear.slot.rightArm', 'Right pauldron');
+    },
+    slot: EQUIP_SLOTS.RightArm,
+  }),
+  Object.freeze({
+    key: 'leftArm',
+    get label() {
+      return t('rvn.gear.slot.leftArm', 'Left pauldron');
+    },
+    slot: EQUIP_SLOTS.LeftArm,
+  }),
+  Object.freeze({
+    key: 'body',
+    get label() {
+      return t('rvn.gear.slot.body', 'Cuirass');
+    },
+    slot: EQUIP_SLOTS.ChestArmor,
+  }),
+  Object.freeze({
+    key: 'hands',
+    get label() {
+      return t('rvn.gear.slot.hands', 'Gauntlets');
+    },
+    slot: EQUIP_SLOTS.Gloves,
+  }),
+  Object.freeze({
+    key: 'legs',
+    get label() {
+      return t('rvn.gear.slot.legs', 'Greaves');
+    },
+    slot: EQUIP_SLOTS.LegsArmor,
+  }),
+  Object.freeze({
+    key: 'feet',
+    get label() {
+      return t('rvn.gear.slot.feet', 'Boots');
+    },
+    slot: EQUIP_SLOTS.Feet,
+  }),
+  Object.freeze({
+    key: 'charm',
+    get label() {
+      return t('rvn.gear.slot.charm', 'Charm');
+    },
+    slot: null,
+  }),
 ]);
 export const GEAR_KEYS = Object.freeze(GEAR_SLOTS.map((s) => s.key));
 const KEY_SET = new Set(/** @type {readonly string[]} */ (GEAR_KEYS));
@@ -79,16 +140,26 @@ export const GEAR = Object.freeze({
 /** A metal's name (0-9), in the player's language. */
 export function metalName(i) {
   switch (i) {
-    case 0: return t('rvn.gear.metal.iron', 'Iron');
-    case 1: return t('rvn.gear.metal.steel', 'Steel');
-    case 2: return t('rvn.gear.metal.silver', 'Silver');
-    case 3: return t('rvn.gear.metal.elven', 'Elven');
-    case 4: return t('rvn.gear.metal.dwarven', 'Dwarven');
-    case 5: return t('rvn.gear.metal.mithril', 'Mithril');
-    case 6: return t('rvn.gear.metal.adamantium', 'Adamantium');
-    case 7: return t('rvn.gear.metal.ebony', 'Ebony');
-    case 8: return t('rvn.gear.metal.orcish', 'Orcish');
-    default: return t('rvn.gear.metal.daedric', 'Daedric');
+    case 0:
+      return t('rvn.gear.metal.iron', 'Iron');
+    case 1:
+      return t('rvn.gear.metal.steel', 'Steel');
+    case 2:
+      return t('rvn.gear.metal.silver', 'Silver');
+    case 3:
+      return t('rvn.gear.metal.elven', 'Elven');
+    case 4:
+      return t('rvn.gear.metal.dwarven', 'Dwarven');
+    case 5:
+      return t('rvn.gear.metal.mithril', 'Mithril');
+    case 6:
+      return t('rvn.gear.metal.adamantium', 'Adamantium');
+    case 7:
+      return t('rvn.gear.metal.ebony', 'Ebony');
+    case 8:
+      return t('rvn.gear.metal.orcish', 'Orcish');
+    default:
+      return t('rvn.gear.metal.daedric', 'Daedric');
   }
 }
 const TIERS = Object.freeze(['common', 'magic', 'rare', 'legendary']);
@@ -106,17 +177,25 @@ export function armedKind(mobileType) {
   const isClass = isClassEnemyId(mobileType);
   return equipmentVariantFor(isClass ? mobileType - 128 : mobileType, isClass, () => 0) !== null;
 }
-/** A melee weapon (Dagger .. War Axe): what the weapon slot takes. */
-export const meleeWeapon = (item) => item?.group === 'Weapons' && Number.isInteger(item.templateIndex) && item.templateIndex >= WEAPONS.Dagger && item.templateIndex <= WEAPONS.War_Axe;
+/** A melee weapon (Dagger .. War Axe, and RRI's Light Flail and Archer's Axe while registered): what the weapon slot takes. */
+export const meleeWeapon = (item) =>
+  item?.group === 'Weapons' &&
+  Number.isInteger(item.templateIndex) &&
+  ((item.templateIndex >= WEAPONS.Dagger && item.templateIndex <= WEAPONS.War_Axe) ||
+    customItemClass(item.templateIndex)?.group === 'Weapons');
 export const needsBothHands = (item) => !!item && item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both;
 /** The slot a piece goes to - 'weapon', an armour place, 'charm' - or null for one no sworn one wears. */
 export function gearKeyOf(item) {
   if (!item || typeof item !== 'object') return null;
   if (item.group === 'Weapons') return meleeWeapon(item) ? 'weapon' : null;
-  if (item.group === 'Jewellery') return wearableItem(item) ? 'charm' : null;   // AUDIT RVN G2: a wand is jewellery nobody wears
+  if (item.group === 'Jewellery') return wearableItem(item) ? 'charm' : null; // AUDIT RVN G2: a wand is jewellery nobody wears
   if (item.group !== 'Armor') return null;
   let slot = EQUIP_SLOTS.None;
-  try { slot = getEquipSlot({}, item); } catch { slot = EQUIP_SLOTS.None; }
+  try {
+    slot = getEquipSlot({}, item);
+  } catch {
+    slot = EQUIP_SLOTS.None;
+  }
   return KEY_OF_SLOT.get(slot) ?? null;
 }
 /** A piece's metal (0-9), for the rank's cap: a weapon's material, a plate piece's low byte; leather, chain and jewellery
@@ -133,7 +212,8 @@ export function gearTier(item) {
 }
 /** The lowest rank that may bear `item` (1-5), or null for none. */
 export function gearRankNeeded(item) {
-  const m = gearMetal(item), t = gearTier(item);
+  const m = gearMetal(item),
+    t = gearTier(item);
   for (let rank = 1; rank <= 5; rank++) if (m <= GEAR.METAL_CAP[rank] && t <= GEAR.RARITY_CAP[rank]) return rank;
   return null;
 }
@@ -146,24 +226,43 @@ const holdsShield = (gear) => !!gear?.weapon && !brokenPiece(gear.weapon) && !ne
  *  (the record's, by default). */
 export function gearRefusal(r, item, { gear = r?.companion?.gear ?? {}, kindName = null } = {}) {
   if (!r?.sworn) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
-  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.');   // AUDIT RVN F10
+  if (r.companion?.state === 'errand') return t('rvn.gear.no.abroad', 'It is abroad with its kit.'); // AUDIT RVN F10
   const key = gearKeyOf(item);
   if (!key) return t('rvn.gear.no.use', 'It can only use a melee weapon, armor or a charm.');
   if (item.questItem) return t('rvn.gear.no.quest', 'A quest item stays with you.');
-  if ((item.timeForItemToDisappear ?? 0) !== 0) return t('rvn.gear.no.summoned', 'A summoned piece fades in any hand but yours.');
+  if ((item.timeForItemToDisappear ?? 0) !== 0)
+    return t('rvn.gear.no.summoned', 'A summoned piece fades in any hand but yours.');
   if (gearTier(item) > 3) return t('rvn.gear.no.yours', 'It answers to you alone.');
-  if (key !== 'charm' && !armedKind(r.mobileType)) return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armor, only a charm.', { kind: kindName ?? t('rvn.gear.itsKind', 'Its kind') });
+  if (key !== 'charm' && !armedKind(r.mobileType))
+    return t('rvn.gear.no.kind', '{kind} wields no weapon and wears no armor, only a charm.', {
+      kind: kindName ?? t('rvn.gear.itsKind', 'Its kind'),
+    });
   if (brokenPiece(item)) return t('rvn.gear.no.broken', 'It is broken.');
   const rank = Math.max(1, Math.min(5, r.rank | 0));
-  const m = gearMetal(item), tier = gearTier(item);
-  const overMetal = m > GEAR.METAL_CAP[rank], overTier = tier > GEAR.RARITY_CAP[rank];
-  const need = ROMAN[gearRankNeeded(item) ?? 5];   // AUDIT RVN G5: the rank that bears it whole, whichever cap binds
-  if (overMetal && overTier) return t('rvn.gear.no.both', 'It must rise to Rank {rank} to bear a {tier} piece of {metal}.', { rank: need, tier: tierWord(tier), metal: metalName(m) });
-  if (overMetal) return t('rvn.gear.no.metal', 'It must rise to Rank {rank} to bear {metal}.', { rank: need, metal: metalName(m) });
-  if (overTier) return t('rvn.gear.no.tier', 'It must rise to Rank {rank} to bear a {tier} piece.', { rank: need, tier: tierWord(tier) });
-  if (key === 'shield' && (!gear.weapon || brokenPiece(gear.weapon))) return t('rvn.gear.no.shieldAlone', 'Give it a one-handed weapon first.');
-  if (key === 'shield' && needsBothHands(gear.weapon)) return t('rvn.gear.no.shieldTwoHanded', 'Its weapon needs both hands.');
-  if (key === 'weapon' && needsBothHands(item) && gear.shield) return t('rvn.gear.no.twoHandedShield', 'Take back its shield first.');
+  const m = gearMetal(item),
+    tier = gearTier(item);
+  const overMetal = m > GEAR.METAL_CAP[rank],
+    overTier = tier > GEAR.RARITY_CAP[rank];
+  const need = ROMAN[gearRankNeeded(item) ?? 5]; // AUDIT RVN G5: the rank that bears it whole, whichever cap binds
+  if (overMetal && overTier)
+    return t('rvn.gear.no.both', 'It must rise to Rank {rank} to bear a {tier} piece of {metal}.', {
+      rank: need,
+      tier: tierWord(tier),
+      metal: metalName(m),
+    });
+  if (overMetal)
+    return t('rvn.gear.no.metal', 'It must rise to Rank {rank} to bear {metal}.', { rank: need, metal: metalName(m) });
+  if (overTier)
+    return t('rvn.gear.no.tier', 'It must rise to Rank {rank} to bear a {tier} piece.', {
+      rank: need,
+      tier: tierWord(tier),
+    });
+  if (key === 'shield' && (!gear.weapon || brokenPiece(gear.weapon)))
+    return t('rvn.gear.no.shieldAlone', 'Give it a one-handed weapon first.');
+  if (key === 'shield' && needsBothHands(gear.weapon))
+    return t('rvn.gear.no.shieldTwoHanded', 'Its weapon needs both hands.');
+  if (key === 'weapon' && needsBothHands(item) && gear.shield)
+    return t('rvn.gear.no.twoHandedShield', 'Take back its shield first.');
   return null;
 }
 
@@ -179,7 +278,8 @@ export function sanitizeGear(g) {
   return out;
 }
 /** Every piece of a kit, in the slots' order - the walks that count what the character owns. */
-export const gearItems = (gear) => (gear && typeof gear === 'object' ? GEAR_KEYS.map((k) => gear[k]).filter((it) => it && typeof it === 'object') : []);
+export const gearItems = (gear) =>
+  gear && typeof gear === 'object' ? GEAR_KEYS.map((k) => gear[k]).filter((it) => it && typeof it === 'object') : [];
 export const isGearKey = (k) => typeof k === 'string' && KEY_SET.has(k);
 
 /** What it wears now: each slot's piece that its kind, its rank and its condition allow ([key, item] in the slots'
@@ -210,7 +310,15 @@ export function gearPower(r) {
 /** The armour pieces a table wears, as DFU's armour pass reads them (combat/enemyEquipment.js enemyArmorValues). */
 function armourPieces(slots) {
   const out = [];
-  for (const s of [EQUIP_SLOTS.Head, EQUIP_SLOTS.RightArm, EQUIP_SLOTS.LeftArm, EQUIP_SLOTS.ChestArmor, EQUIP_SLOTS.Gloves, EQUIP_SLOTS.LegsArmor, EQUIP_SLOTS.Feet]) {
+  for (const s of [
+    EQUIP_SLOTS.Head,
+    EQUIP_SLOTS.RightArm,
+    EQUIP_SLOTS.LeftArm,
+    EQUIP_SLOTS.ChestArmor,
+    EQUIP_SLOTS.Gloves,
+    EQUIP_SLOTS.LegsArmor,
+    EQUIP_SLOTS.Feet,
+  ]) {
     const it = slots[s];
     if (it && Number.isInteger(it.templateIndex)) out.push({ piece: it.templateIndex, item: it });
   }
@@ -231,7 +339,7 @@ function armourPieces(slots) {
 export function applySwornGear(entity, r, { taken = [] } = {}) {
   if (!entity || !r) return 0;
   const kit = wornGear(r);
-  if (!kit.length && !taken.length) return 0;   // nothing given: its stand is DFU's, untouched
+  if (!kit.length && !taken.length) return 0; // nothing given: its stand is DFU's, untouched
   const slots = equipTableOf(entity);
   for (const it of taken) {
     if (!it || typeof it !== 'object') continue;
@@ -243,7 +351,13 @@ export function applySwornGear(entity, r, { taken = [] } = {}) {
     let s = SLOT_OF_KEY.get(key);
     if (key === 'charm') {
       s = entity._gearCharmSlot ?? EQUIP_SLOTS.None;
-      if (s === EQUIP_SLOTS.None) { try { s = getEquipSlot(entity, it); } catch { s = EQUIP_SLOTS.None; } }
+      if (s === EQUIP_SLOTS.None) {
+        try {
+          s = getEquipSlot(entity, it);
+        } catch {
+          s = EQUIP_SLOTS.None;
+        }
+      }
       if (s == null || s === EQUIP_SLOTS.None) continue;
       entity._gearCharmSlot = s;
     }
@@ -254,6 +368,10 @@ export function applySwornGear(entity, r, { taken = [] } = {}) {
     slots[s] = it;
   }
   entity.armorValues = enemyArmorValues(entity, armourPieces(slots));
-  try { computeEntityMods(entity); } catch { /* a fold's fault is not its kit's */ }
+  try {
+    computeEntityMods(entity);
+  } catch {
+    /* a fold's fault is not its kit's */
+  }
   return kit.length;
 }

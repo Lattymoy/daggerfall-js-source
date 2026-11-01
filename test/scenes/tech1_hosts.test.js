@@ -36,7 +36,6 @@ test('TECH1 THE ACTION: WeaponTechnique appended last, a port row the classic wi
   assert.deepEqual(TOUCH_BUTTON_ACTIONS.find((a) => a.id === 'WeaponTechnique'), { id: 'WeaponTechnique', label: 'Weapon technique (hold to aim)', glyph: 'Tech', kind: 'hold', w: 60 });
   assert.deepEqual(DPAD_CHOICES.find(([v]) => v === 'WeaponTechnique'), ['WeaponTechnique', 'Weapon technique']);
   assert.deepEqual(PLUS_BIND_ROWS.find((r) => r.sec === 'WeaponTechnique'), { id: 'technique', label: 'Weapon technique (hold to aim)', sec: 'WeaponTechnique' });
-  assert.match(read('bible/10-UI/Controls.md'), /\| `WeaponTechnique` \| MOUSE3 \|  \| Weapon technique \(hold to aim\) \|/);
 });
 
 test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s own gate, the key through the registry\'s held read, the loose claimed as the frame\'s events leave (mutants: stepped after the gesture; the gate dropped; the claim dropped)', () => {
@@ -66,7 +65,7 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the machine's attack through _attack, which starts it the same
   // way and names the strike's hand - a technique's always the lead's, never a flurry's
   // PIN MOVED (TECH-CANCEL): the swing in flight cut first, put back if the strike cannot begin
-  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*const was = machineCut\(this\.machine\);\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{ if \(was\) Object\.assign\(this\.machine, was\); return false; \}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
+  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\n\s*const was = machineCut\(this\.machine\);\n\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{\n\s*if \(was\) Object\.assign\(this\.machine, was\);\n\s*return false;\n\s*\}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's
@@ -136,7 +135,7 @@ test('TECH1 THE WORLD HOST\'S OWN: the chip off the MODE\'s rig with its key\'s 
   assert.match(w, /setHudTechniqueChips\(\(e\) => techniqueHudChips\(e, \(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)\?\.playerWeapon, techniqueKeyWord\)\);/);
   // PIN MOVED (TECH-KEY2): the word moved out of the host (ui/techniqueKeyWord.js), one a key, kept a binding change
   assert.match(w, /import \{ techniqueKeyWord \} from '\.\.\/ui\/techniqueKeyWord\.js';/);
-  assert.match(code('src/ui/techniqueKeyWord.js'), /const b = bindings\(\), rev = b\?\.rev \?\? 0, pad = controllerLook\(\) \? \(padFamily\(\) \?\? 'xbox'\) : null;\s*if \(_store !== b \|\| _rev !== rev \|\| _pad !== pad\) \{ _store = b; _rev = rev; _pad = pad; _words\.clear\(\); \}\s*if \(!_words\.has\(action\)\) _words\.set\(action, actionKeyWord\(action, \{ bindings: b, controller: pad !== null, family: pad \?\? 'xbox' \}\)\);/);   // PIN MOVED (FINAL AUDIT): the card's word (actionKeyWord - the key that answers, a pad's button while a pad is in hand), asked again when the pad is taken up or put down
+  assert.match(code('src/ui/techniqueKeyWord.js'), /const b = bindings\(\),\n\s*rev = b\?\.rev \?\? 0,\n\s*pad = controllerLook\(\) \? \(padFamily\(\) \?\? 'xbox'\) : null;\n\s*if \(_store !== b \|\| _rev !== rev \|\| _pad !== pad\) \{\n\s*_store = b;\n\s*_rev = rev;\n\s*_pad = pad;\n\s*_words\.clear\(\);\n\s*\}\n\s*if \(!_words\.has\(action\)\)\n\s*_words\.set\(action, actionKeyWord\(action, \{ bindings: b, controller: pad !== null, family: pad \?\? 'xbox' \}\)\);/);   // PIN MOVED (FINAL AUDIT): the card's word (actionKeyWord - the key that answers, a pad's button while a pad is in hand), asked again when the pad is taken up or put down
   assert.match(code('src/ui/enhanced/enhancedHud.js'), /const powers = setPowerChips\(vitals\);\s*powers\.push\(\.\.\.techniqueChips\(vitals\)\);/, 'the chip after the set powers\'');
   assert.match(w, /offsetTactics\(r\.offset\);\s*offsetTechniques\(r\.offset\);/);
   assert.equal(TECH_CHIP_COLOUR, '#59c7ff');

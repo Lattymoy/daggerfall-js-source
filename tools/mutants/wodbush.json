@@ -2,51 +2,65 @@
   {
     "name": "WODBUSH-not-grounded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
-    "new": "if (false && isWodShrub(m.modelId, stood[m.pick]?.name)) {",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "        if (isWodShrub(m.modelId, stood[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
+    "new": "        if (false && isWodShrub(m.modelId, stood[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   },
   {
     "name": "WODBUSH-every-model-grounded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
-    "new": "if (true) {",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "        if (isWodShrub(m.modelId, stood[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
+    "new": "        if (true) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   },
   {
     "name": "WODBUSH-mesh-left-behind",
     "file": "src/scenes/pixelBuild.js",
-    "old": "lowestGroundUnder(samples, box) - box[1];\n          m.matrix[13] += dy; box[1] += dy; box[4] += dy;",
-    "new": "lowestGroundUnder(samples, box) - box[1];\n          box[1] += dy; box[4] += dy;",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "          m.matrix[13] += dy; box[1] += dy; box[4] += dy;",
+    "new": "          box[1] += dy; box[4] += dy;",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   },
   {
     "name": "WODBUSH-model-id",
     "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
     "old": "export const WOD_BUSH_MODEL = 60610;",
     "new": "export const WOD_BUSH_MODEL = 60611;",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   },
   {
     "name": "WODBUSH-highest-ground",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "low = Math.min(low, walkGroundAt(heightmapData, x, z));",
-    "new": "low = Math.max(low === Infinity ? -Infinity : low, walkGroundAt(heightmapData, x, z));",
-    "tests": ["test/world/terrain/wodbush.test.js"],
+    "old": "  for (const x of xs) for (const z of zs) low = Math.min(low, walkGroundAt(heightmapData, x, z)); // FLORA-GROUND: the walk law",
+    "new": "  for (const x of xs)\n    for (const z of zs) low = Math.max(low === Infinity ? -Infinity : low, walkGroundAt(heightmapData, x, z)); // FLORA-GROUND: the walk law",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ],
     "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ground's one law, walkGroundAt (the walker's and the flora's), where it read surfaceHeightAt."
   },
   {
     "name": "WODBUSH-no-sample-lines",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "    for (let g = Math.ceil(a / cell) * cell; g < b; g += cell) out.push(g);\n",
-    "new": "",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "    for (let g = Math.ceil(a / cell) * cell; g < b; g += cell) out.push(g);\n    return out;",
+    "new": "    return out;",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   },
   {
     "name": "WODBUSH-off-the-pixel",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "const clamp = (v) => Math.max(0, Math.min(TERRAIN_SIZE, v));",
-    "new": "const clamp = (v) => v;",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "  const clamp = (v) => Math.max(0, Math.min(TERRAIN_SIZE, v));",
+    "new": "  const clamp = (v) => v;",
+    "tests": [
+      "test/world/terrain/wodbush.test.js"
+    ]
   }
 ]

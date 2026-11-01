@@ -318,12 +318,10 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (AUDIT FB1028 A1): 73 - TS2's blend as it stood, kept for the town move (world/terrain/townBlendBefore.js), pure
   // PIN MOVED (FB1029 GROUND): 75 - ACROSS-EDGE's meet (world/terrain/townMeet.js) and ROAD-DRY's lift (world/road/roadDry.js), both pure
   // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
-  // PIN MOVED (WG2, bible/03-World/World-2-Canon.md the seam): 84 - a published region's ground, asked by the ground's reads
   // (world/gen2/gen2Ground.js and what it decodes and samples with: bakeCodec.js, regionSampler.js, riverLaw.js, field.js,
   // exact.js, formats/fnv1a.js), all pure
-  // PIN MOVED (WG2 baked towns): 85 - a town's terrace pad, one law for the generator and the streamed ground
   // (world/gen2/padLaw.js), pure
-  // PIN MOVED (WATER-LEVEL, bible/07-Rendering/Water-Arc.md): 87 - the water's level, built with its bed on the worker
   // (world/water/waterLevel.js) and the streamed bodies' own laws (world/water/streamLevels.js), both pure
-  assert.ok(seen.size > 20 && seen.size < 88, `${seen.size} modules`);
+  // Skyrim's plant catalog (world/tamriel/skyrimFlora.js) sits on the Lands table: 88
+  assert.ok(seen.size > 20 && seen.size < 89, `${seen.size} modules`);
 });

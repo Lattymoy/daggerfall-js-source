@@ -17,10 +17,10 @@
 import { accountRefusalText } from '../../net/accountClient.js';
 import { goldText, wearOf, wearText, MARKET_PRICE_MAX } from '../../net/marketLaw.js';
 import { vendorSearch, VENDOR_LISTING_S } from '../../net/vendorLaw.js';
-import { pictureNode, frameWake } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
-import { packPickerNode, packCardNode, freshPackSift, packTierWord } from '../packPicker.js';   // PACK-PICK: the piece put up chosen from its picture
+import { pictureNode, frameWake } from '../menu/menuGlyphs.js'; // MENU-ORDER: a piece's picture, the host's
+import { packPickerNode, packCardNode, freshPackSift, packTierWord } from '../packPicker.js'; // PACK-PICK: the piece put up chosen from its picture
 import { t } from '../../systems/textManager.js';
-import { isStolen, stolenTag } from '../../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
+import { isStolen, stolenTag } from '../../systems/stolenGoods.js'; // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 
 const el = (tag, cls = null, text = null) => {
   const n = document.createElement(tag);
@@ -31,10 +31,16 @@ const el = (tag, cls = null, text = null) => {
 const button = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `act ${cls}`, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e?.stopPropagation?.(); return onPress(); };
+  b.onclick = (e) => {
+    e?.stopPropagation?.();
+    return onPress();
+  };
   return b;
 };
-const intOf = (s, lo, hi) => { const n = Math.floor(Number(s)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo; };
+const intOf = (s, lo, hi) => {
+  const n = Math.floor(Number(s));
+  return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo;
+};
 /** BOARD-UI: the column names over the rows - the Market tab's own (`.market-listhead`, its piece rows' columns). */
 const listHead = (names) => {
   const h = el('div', 'market-listhead market-piece');
@@ -54,7 +60,15 @@ export function standsText(expiresAt, nowS) {
  *  look panel's rows - damage, armour, hands, material, condition, weight - the magic the trade window names, and
  *  RPT1026-LEDGERLAW the theft's card line on a stolen piece), a row a line, the magic in the tier's gold under them and
  *  the theft's line last; null for a piece the host cannot read. */
-export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }) {
+export function vendorStatsNode(
+  stats,
+  el = (t, c = null, x = null) => {
+    const n = document.createElement(t);
+    if (c) n.className = c;
+    if (x != null) n.textContent = x;
+    return n;
+  },
+) {
   if (!stats || (!stats.rows?.length && !stats.magic?.length && !stats.stolen)) return null;
   const box = el('div', 'vendor-stats');
   if (stats.rows?.length) {
@@ -67,7 +81,7 @@ export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n
     for (const m of stats.magic) ul.append(el('li', null, m));
     box.append(ul);
   }
-  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));   // RPT1026-LEDGERLAW
+  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen)); // RPT1026-LEDGERLAW
   return box;
 }
 /** The stats' dress - the Plus palette, the board's and the pause window's alike. */
@@ -88,12 +102,12 @@ export function injectVendorStatsCss() {
 /** The words the stall and the board say. BOARD-UI (Mac: "Reduce overusage of bloated text"): short, and plain. */
 export const VENDOR_TEXT = Object.freeze({
   boardEmpty: 'No trader in this region has anything for sale.',
-  searchEmpty: 'No trader\'s goods match that search.',
+  searchEmpty: "No trader's goods match that search.",
   stallEmpty: 'The trader has nothing for sale.',
   ownEmpty: 'Your trader has nothing for sale yet. Put up a piece from your pack below.',
   reading: 'Reading the traders...',
   cold: 'The traders did not load.',
-  boardTip: 'Buy at the trader\'s stall in the owner\'s house. Pick a row to see its stats and set a waypoint.',
+  boardTip: "Buy at the trader's stall in the owner's house. Pick a row to see its stats and set a waypoint.",
   noGold: 'Only a character whose gold is kept online can trade here.',
   packEmpty: 'Nothing in your pack can be put up for sale.',
   stockTip: `Each piece stays up ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you. Collect your takings on the Vendor page (pause menu, Professions).`,
@@ -111,17 +125,42 @@ export const VENDOR_TEXT = Object.freeze({
  * @param {any} v @param {{ busy: () => boolean, run: (start: () => Promise<any>) => Promise<void>, rerender: () => void, nowS: () => number, alive: () => boolean }} ui
  */
 export function createVendorTab(v, ui) {
-  const st = { data: /** @type {any} */ (null), error: /** @type {string|null} */ (null), loading: false, query: '', picked: /** @type {string|null} */ (null), price: 100, good: /** @type {any} */ (null),
-    sift: freshPackSift() };   // PACK-PICK: the put-up picker's search and menus
+  const st = {
+    data: /** @type {any} */ (null),
+    error: /** @type {string|null} */ (null),
+    loading: false,
+    query: '',
+    picked: /** @type {string|null} */ (null),
+    price: 100,
+    good: /** @type {any} */ (null),
+    sift: freshPackSift(),
+  }; // PACK-PICK: the put-up picker's search and menus
   const stall = v.mode === 'stall';
-  const nameOf = (it) => { try { return v.nameOf?.(it) || 'a piece'; } catch { return 'a piece'; } };
-  const townOf = (map) => { try { return v.townOf?.(map) || 'a town'; } catch { return 'a town'; } };
+  const nameOf = (it) => {
+    try {
+      return v.nameOf?.(it) || 'a piece';
+    } catch {
+      return 'a piece';
+    }
+  };
+  const townOf = (map) => {
+    try {
+      return v.townOf?.(map) || 'a town';
+    } catch {
+      return 'a town';
+    }
+  };
   let seq = 0;
   async function load() {
     const mine = ++seq;
-    st.loading = true; ui.rerender();
+    st.loading = true;
+    ui.rerender();
     let r = null;
-    try { r = await v.read(); } catch { r = { ok: false, error: 'offline' }; }
+    try {
+      r = await v.read();
+    } catch {
+      r = { ok: false, error: 'offline' };
+    }
     if (!ui.alive() || mine !== seq) return;
     st.loading = false;
     st.data = r?.ok ? r.data : st.data;
@@ -144,12 +183,17 @@ export function createVendorTab(v, ui) {
     return load();
   }
   /** An act through the window's one door, the tab read again on its answer. */
-  const act = (start) => ui.run(async () => {
-    let r = null;
-    try { r = await start(); } catch { r = { ok: false, text: accountRefusalText('server') }; }
-    load();
-    return r;
-  });
+  const act = (start) =>
+    ui.run(async () => {
+      let r = null;
+      try {
+        r = await start();
+      } catch {
+        r = { ok: false, text: accountRefusalText('server') };
+      }
+      load();
+      return r;
+    });
 
   /** MENU-ORDER (AUDIT MENU-ORDER C5): the one wake every row's picture is asked with - a picture that lands wakes the
    *  board once (textureCanvas.js hears a wake once), never once a row - and (AUDIT PACK-PICK A1) the pictures that land in
@@ -161,34 +205,66 @@ export function createVendorTab(v, ui) {
     const b = el('button', `market-row market-piece market-good${st.picked === row.id ? ' on' : ''}`);
     b.setAttribute('type', 'button');
     b.setAttribute('aria-expanded', st.picked === row.id ? 'true' : 'false');
-    b.onclick = () => { st.picked = st.picked === row.id ? null : row.id; ui.rerender(); };
-    const name = el('b', null, nameOf(row.item));   // MENU-ORDER: the piece's picture before its name (the host's, `v.picture`)
+    b.onclick = () => {
+      st.picked = st.picked === row.id ? null : row.id;
+      ui.rerender();
+    };
+    const name = el('b', null, nameOf(row.item)); // MENU-ORDER: the piece's picture before its name (the host's, `v.picture`)
     const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');
-    if (pic) { if (name.prepend) name.prepend(pic); else name.append(pic); }
-    b.append(name,
+    if (pic) {
+      if (name.prepend) name.prepend(pic);
+      else name.append(pic);
+    }
+    b.append(
+      name,
       el('span', 'market-quality', wearText(wearOf(row.item)) ?? 'whole'),
       el('span', 'market-price', goldText(row.price)),
-      el('span', 'market-where', where ? `${row.owner ?? 'someone'}'s house, ${townOf(row.map)}` : standsText(row.expiresAt, ui.nowS())));
-    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
-    if (row.mine && !stall) b.append(el('span', 'market-mine', 'yours'));   // at my own stall every piece is mine: said once, in its title
+      el(
+        'span',
+        'market-where',
+        where ? `${row.owner ?? 'someone'}'s house, ${townOf(row.map)}` : standsText(row.expiresAt, ui.nowS()),
+      ),
+    );
+    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing
+    if (row.mine && !stall) b.append(el('span', 'market-mine', 'yours')); // at my own stall every piece is mine: said once, in its title
     if (st.picked !== row.id) return [b];
     const bar = el('div', 'market-bar');
     // THE PIECE LOOKED AT: its stats and its magic, before what to do with it
     let stats = null;
-    try { stats = v.stats?.(row.item) ?? null; } catch { stats = null; }
+    try {
+      stats = v.stats?.(row.item) ?? null;
+    } catch {
+      stats = null;
+    }
     const look = vendorStatsNode(stats, el);
     if (look) bar.append(look);
     if (where) {
       const set = v.waypointKey?.() === `${row.map}:${row.buildingKey}`;
       bar.append(el('span', 'market-ask', `Sold at ${row.owner ?? 'someone'}'s house in ${townOf(row.map)}.`));
-      bar.append(set
-        ? button('market-cancel', 'Clear waypoint', () => { v.clearWaypoint?.(); ui.rerender(); })
-        : button('primary market-buy', 'Set waypoint', () => { v.waypoint?.(row); ui.rerender(); }));
+      bar.append(
+        set
+          ? button('market-cancel', 'Clear waypoint', () => {
+              v.clearWaypoint?.();
+              ui.rerender();
+            })
+          : button('primary market-buy', 'Set waypoint', () => {
+              v.waypoint?.(row);
+              ui.rerender();
+            }),
+      );
     }
     if (buy) {
       const purse = v.purse?.();
       const short = purse != null && purse < row.price;
-      bar.append(el('span', 'market-ask', purse == null ? VENDOR_TEXT.noGold : `Buy ${nameOf(row.item)} for ${goldText(row.price)}?${short ? ' You cannot pay that.' : ''}`));
+      bar.append(
+        el(
+          'span',
+          'market-ask',
+          purse == null
+            ? VENDOR_TEXT.noGold
+            : `Buy ${nameOf(row.item)} for ${goldText(row.price)}?${short ? ' You cannot pay that.' : ''}`,
+        ),
+      );
       const go = button('primary market-buy', ui.busy() ? 'Buying...' : 'Buy', () => act(() => v.buy(row)));
       go.disabled = ui.busy() || purse == null || short;
       bar.append(go);
@@ -209,41 +285,83 @@ export function createVendorTab(v, ui) {
     search.setAttribute('aria-label', 'Search the traders');
     search.setAttribute('data-focus', 'vendor-search');
     search.value = st.query;
-    search.oninput = () => { st.query = search.value; st.picked = null; ui.rerender(); };
-    search.type = 'search';   // the field's own clear
+    search.oninput = () => {
+      st.query = search.value;
+      st.picked = null;
+      ui.rerender();
+    };
+    search.type = 'search'; // the field's own clear
     row.append(search);
     return row;
   }
 
   function putNode() {
-    const box = el('div', 'market-listform');   // the Market tab's List form's dress
+    const box = el('div', 'market-listform'); // the Market tab's List form's dress
     box.append(el('h4', null, 'Put up a piece from your pack'));
     // PACK-PICK (ui/packPicker.js): the pack's pieces as the Market's List form shows them - pictured and sifted, what may
     // not go folded with why, the one chosen looked at (the stall's own `stats`) - and none chosen until one is pressed
     const all = v.goods?.() ?? [];
     const goods = all.filter((g) => !g.why);
     if (!goods.some((g) => g.item === st.good)) st.good = null;
-    if (!all.length) { box.append(el('p', 'notice-tip', VENDOR_TEXT.packEmpty)); return box; }
-    const entries = all.map((g) => ({ item: g.item, name: nameOf(g.item), sub: [packTierWord(g.item), wearText(wearOf(g.item))].filter(Boolean).join(' · ') || null, why: g.why ?? null }));
-    box.append(packPickerNode({ entries, chosen: st.good, sift: st.sift, pick: (it) => { st.good = st.good === it ? null : it; ui.rerender(); },
-      picture: v.picture ?? null, wake, label: t('market.list.packLabel', 'The pieces in your pack'), focus: 'vendor-good', empty: VENDOR_TEXT.packEmpty,
-      refusedWhat: t('vendor.put.refused', 'Stays in your pack'), redraw: () => ui.rerender() }),
-    packCardNode(entries.find((e) => e.item === st.good) ?? null, { picture: v.picture ?? null, wake, look: (it) => v.stats?.(it) ?? null,
-      none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.') }));
+    if (!all.length) {
+      box.append(el('p', 'notice-tip', VENDOR_TEXT.packEmpty));
+      return box;
+    }
+    const entries = all.map((g) => ({
+      item: g.item,
+      name: nameOf(g.item),
+      sub: [packTierWord(g.item), wearText(wearOf(g.item))].filter(Boolean).join(' · ') || null,
+      why: g.why ?? null,
+    }));
+    box.append(
+      packPickerNode({
+        entries,
+        chosen: st.good,
+        sift: st.sift,
+        pick: (it) => {
+          st.good = st.good === it ? null : it;
+          ui.rerender();
+        },
+        picture: v.picture ?? null,
+        wake,
+        label: t('market.list.packLabel', 'The pieces in your pack'),
+        focus: 'vendor-good',
+        empty: VENDOR_TEXT.packEmpty,
+        refusedWhat: t('vendor.put.refused', 'Stays in your pack'),
+        redraw: () => ui.rerender(),
+      }),
+      packCardNode(entries.find((e) => e.item === st.good) ?? null, {
+        picture: v.picture ?? null,
+        wake,
+        look: (it) => v.stats?.(it) ?? null,
+        none: t('market.list.pickPack', 'Press a piece above to look at it and set its price.'),
+      }),
+    );
     const price = /** @type {HTMLInputElement} */ (el('input', 'notice-input market-num'));
-    price.type = 'number'; price.min = '1'; price.max = String(MARKET_PRICE_MAX); price.value = String(st.price);
+    price.type = 'number';
+    price.min = '1';
+    price.max = String(MARKET_PRICE_MAX);
+    price.value = String(st.price);
     price.setAttribute('aria-label', 'Price in gold');
     price.setAttribute('data-focus', 'vendor-price');
-    price.oninput = () => { st.price = intOf(price.value, 1, MARKET_PRICE_MAX); };
+    price.oninput = () => {
+      st.price = intOf(price.value, 1, MARKET_PRICE_MAX);
+    };
     const chosen = st.good;
-    const go = button('primary market-post', ui.busy() ? 'Putting up...' : 'Put up for sale', () => act(() => v.put(chosen, st.price)));
-    go.setAttribute('data-focus', 'vendor-post');   // AUDIT PACK-PICK B2: a redraw keeps the focus on it
+    const go = button('primary market-post', ui.busy() ? 'Putting up...' : 'Put up for sale', () =>
+      act(() => v.put(chosen, st.price)),
+    );
+    go.setAttribute('data-focus', 'vendor-post'); // AUDIT PACK-PICK B2: a redraw keeps the focus on it
     go.disabled = ui.busy() || !chosen;
     // AUDIT 657 B3: its fields under their names, as the List form's (marketTab.js field) - BOARD-UI stood that form's
     // fields in a column, and this form, in its dress, stood its select and its press each the window's width
-    const field = (name, input, cls = '') => { const f = el('label', `market-field${cls ? ` ${cls}` : ''}`); f.append(el('span', 'notice-label', name), input); return f; };
+    const field = (name, input, cls = '') => {
+      const f = el('label', `market-field${cls ? ` ${cls}` : ''}`);
+      f.append(el('span', 'notice-label', name), input);
+      return f;
+    };
     const fields = el('div', 'market-fields');
-    fields.append(field('Price in gold', price), go);   // PACK-PICK: the piece is the picker's, above
+    fields.append(field('Price in gold', price), go); // PACK-PICK: the piece is the picker's, above
     box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
     return box;
   }
@@ -252,12 +370,19 @@ export function createVendorTab(v, ui) {
     injectVendorStatsCss();
     const box = el('div', 'notice-cork market-body vendor-body');
     if (st.error && !st.data) {
-      const p = el('p', 'notice-empty', st.error === 'offline' || st.error === 'server' ? VENDOR_TEXT.cold : accountRefusalText(st.error));
+      const p = el(
+        'p',
+        'notice-empty',
+        st.error === 'offline' || st.error === 'server' ? VENDOR_TEXT.cold : accountRefusalText(st.error),
+      );
       p.append(button('notice-retry', 'Try again', () => load()));
       box.append(p);
       return box;
     }
-    if (st.loading && !st.data) { box.append(el('p', 'notice-empty', VENDOR_TEXT.reading)); return box; }
+    if (st.loading && !st.data) {
+      box.append(el('p', 'notice-empty', VENDOR_TEXT.reading));
+      return box;
+    }
     const rows = st.data?.rows ?? [];
     const list = el('div', 'market-rows');
     if (!stall) {
@@ -265,14 +390,16 @@ export function createVendorTab(v, ui) {
       const found = vendorSearch(rows, st.query, { nameOf, townOf });
       if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));
       for (const r of found) list.append(...rowNodes(r, { where: true }));
-      if (st.data && !found.length) list.append(el('p', 'notice-empty', rows.length ? VENDOR_TEXT.searchEmpty : VENDOR_TEXT.boardEmpty));
+      if (st.data && !found.length)
+        list.append(el('p', 'notice-empty', rows.length ? VENDOR_TEXT.searchEmpty : VENDOR_TEXT.boardEmpty));
       box.append(list);
       return box;
     }
     const own = v.own === true;
     if (rows.length) list.append(listHead(['Item', 'Condition', 'Price', 'Stays up']));
     for (const r of rows) list.append(...rowNodes(r, { buy: !own && !r.mine, take: own && r.mine }));
-    if (st.data && !rows.length) list.append(el('p', 'notice-empty', own ? VENDOR_TEXT.ownEmpty : VENDOR_TEXT.stallEmpty));
+    if (st.data && !rows.length)
+      list.append(el('p', 'notice-empty', own ? VENDOR_TEXT.ownEmpty : VENDOR_TEXT.stallEmpty));
     box.append(list);
     if (own) box.append(putNode());
     return box;

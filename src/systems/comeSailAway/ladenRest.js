@@ -16,6 +16,5 @@ export function swingStep(/** @type {number} */ swing, /** @type {number} */ cur
 
 /** Whether her way rests: the way wanted (`wanted`) less than hers (`was`) and along her own line (`dot`, the two
  *  vectors' dot) - AUDIT FB1029e S5: a way wanted across it (her oars' slide) gathers at the load's rate. */
-export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was
-  && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));
-
+export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) =>
+  wanted < was && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));

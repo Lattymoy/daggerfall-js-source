@@ -52,17 +52,17 @@ import { objectTree, BOX_SLACK } from './bakeSteelPlate.mjs';
 
 /** The owner's exports, as committed - one per batch, as it came. */
 export const SOURCES = Object.freeze({
-  breton: 'src/assets/mw/source/Breton_Heads.fbx',   // daggerwind.fbx (2026-10-13)
+  breton: 'src/assets/mw/source/Breton_Heads.fbx', // daggerwind.fbx (2026-10-13)
 });
 
 /** The paintings, as committed - each under its part's id, beside the name the export gives it. */
 export const PAINTINGS = Object.freeze({
-  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png',       // tx_b_n_breton_m_h04.png
-  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0411.png',   // tx_b_n_breton_m_h0411.png
-  breton_m_head_h0423: 'src/assets/mw/source/Breton_Head_H0423.png',   // tx_b_n_breton_m_h0423.png
-  breton_m_hair_widow: 'src/assets/mw/source/Breton_Hair_Widow.png',   // tx_b_n_breton_m_hair_widow.png
-  breton_m_hair_01: 'src/assets/mw/source/Breton_Hair_01.png',         // tx_b_n_breton_m_hair01.png
-  breton_m_hair_0111: 'src/assets/mw/source/Breton_Hair_0111.png',     // tx_b_n_breton_m_hair0111.png
+  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png', // tx_b_n_breton_m_h04.png
+  breton_m_head_h0411: 'src/assets/mw/source/Breton_Head_H0411.png', // tx_b_n_breton_m_h0411.png
+  breton_m_head_h0423: 'src/assets/mw/source/Breton_Head_H0423.png', // tx_b_n_breton_m_h0423.png
+  breton_m_hair_widow: 'src/assets/mw/source/Breton_Hair_Widow.png', // tx_b_n_breton_m_hair_widow.png
+  breton_m_hair_01: 'src/assets/mw/source/Breton_Hair_01.png', // tx_b_n_breton_m_hair01.png
+  breton_m_hair_0111: 'src/assets/mw/source/Breton_Hair_0111.png', // tx_b_n_breton_m_hair0111.png
 });
 
 /** The DDS's name as the NIFs spell it (a bare file, re-rooted under `textures/`), and the shipped files -
@@ -76,7 +76,8 @@ export const textureFile = (id) => `src/assets/mw/textures/${id}.dds`;
 export const HEAD_FORWARD = '-y';
 export const HEAD_UP = '+z';
 
-const part = (id, batch, slot, object, material, texture, box) => Object.freeze({ id, batch, slot, object, material, texture, box: Object.freeze(box) });
+const part = (id, batch, slot, object, material, texture, box) =>
+  Object.freeze({ id, batch, slot, object, material, texture, box: Object.freeze(box) });
 
 /**
  * Every part: its id (its mesh's, its texture's and its record's), its batch, its slot, the object and the material it
@@ -84,12 +85,30 @@ const part = (id, batch, slot, object, material, texture, box) => Object.freeze(
  * placement the bake keeps.
  */
 export const HEAD_PARTS = Object.freeze([
-  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1, 'tx_b_n_breton_m_h04.png', [[-4.78, -8.28, -8.89], [4.78, 6.95, 7.66]]),
-  part('breton_m_hair_widow', 'breton', 'hair', 'b_n_breton_m_hair_widow', 0, 'tx_b_n_breton_m_hair_widow.png', [[-7.18, -5.92, -8.71], [7.18, 10.83, 9.27]]),
-  part('breton_m_head_h0411', 'breton', 'head', 'b_n_breton_m_head_05.002', 0, 'tx_b_n_breton_m_h0411.png', [[-4.78, -8.38, -8.4], [4.78, 6.95, 7.66]]),
-  part('breton_m_hair_01', 'breton', 'hair', 'b_n_breton_m_head_05.002', 1, 'tx_b_n_breton_m_hair01.png', [[-6.05, -6.9, -6.94], [6.05, 8.56, 9.16]]),
-  part('breton_m_head_h0423', 'breton', 'head', 'b_n_breton_m_head_05.003', 0, 'tx_b_n_breton_m_h0423.png', [[-4.78, -7.92, -9.84], [4.78, 6.95, 7.66]]),
-  part('breton_m_hair_0111', 'breton', 'hair', 'b_n_breton_m_head_05.003', 1, 'tx_b_n_breton_m_hair0111.png', [[-6.96, -7.31, -6.94], [6.96, 8.56, 8.82]]),
+  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1, 'tx_b_n_breton_m_h04.png', [
+    [-4.78, -8.28, -8.89],
+    [4.78, 6.95, 7.66],
+  ]),
+  part('breton_m_hair_widow', 'breton', 'hair', 'b_n_breton_m_hair_widow', 0, 'tx_b_n_breton_m_hair_widow.png', [
+    [-7.18, -5.92, -8.71],
+    [7.18, 10.83, 9.27],
+  ]),
+  part('breton_m_head_h0411', 'breton', 'head', 'b_n_breton_m_head_05.002', 0, 'tx_b_n_breton_m_h0411.png', [
+    [-4.78, -8.38, -8.4],
+    [4.78, 6.95, 7.66],
+  ]),
+  part('breton_m_hair_01', 'breton', 'hair', 'b_n_breton_m_head_05.002', 1, 'tx_b_n_breton_m_hair01.png', [
+    [-6.05, -6.9, -6.94],
+    [6.05, 8.56, 9.16],
+  ]),
+  part('breton_m_head_h0423', 'breton', 'head', 'b_n_breton_m_head_05.003', 0, 'tx_b_n_breton_m_h0423.png', [
+    [-4.78, -7.92, -9.84],
+    [4.78, 6.95, 7.66],
+  ]),
+  part('breton_m_hair_0111', 'breton', 'hair', 'b_n_breton_m_head_05.003', 1, 'tx_b_n_breton_m_hair0111.png', [
+    [-6.96, -7.31, -6.94],
+    [6.96, 8.56, 8.82],
+  ]),
 ]);
 
 /** A scene-placed mesh in its OBJECT'S own frame: the scene translation the bake kept, taken back off - to the bake's
@@ -110,12 +129,27 @@ export function partFrame(mesh, toBasis = basisMap(HEAD_FORWARD, HEAD_UP)) {
 export function partMesh(tree, p) {
   const names = objectMaterials(tree, p.object);
   if (names[p.material] !== p.texture) {
-    throw new Error(`"${p.object}" wears ${JSON.stringify(names[p.material] ?? null)} in material ${p.material}, not ${p.texture} - re-read the export before baking it`);
+    throw new Error(
+      `"${p.object}" wears ${JSON.stringify(names[p.material] ?? null)} in material ${p.material}, not ${p.texture} - re-read the export before baking it`,
+    );
   }
-  const mesh = partFrame(bakeMesh(objectTree(tree, p.object), { name: p.id, placement: 'scene', forward: HEAD_FORWARD, up: HEAD_UP, material: p.material }));
-  const off = [0, 1, 2].flatMap((k) => [Math.abs(mesh.bounds.min[k] - p.box[0][k]), Math.abs(mesh.bounds.max[k] - p.box[1][k])]);
+  const mesh = partFrame(
+    bakeMesh(objectTree(tree, p.object), {
+      name: p.id,
+      placement: 'scene',
+      forward: HEAD_FORWARD,
+      up: HEAD_UP,
+      material: p.material,
+    }),
+  );
+  const off = [0, 1, 2].flatMap((k) => [
+    Math.abs(mesh.bounds.min[k] - p.box[0][k]),
+    Math.abs(mesh.bounds.max[k] - p.box[1][k]),
+  ]);
   if (Math.max(...off) > BOX_SLACK) {
-    throw new Error(`"${p.id}" stands at ${JSON.stringify(mesh.bounds)}, not where it was read (${JSON.stringify(p.box)}) - re-read the export before baking it`);
+    throw new Error(
+      `"${p.id}" stands at ${JSON.stringify(mesh.bounds)}, not where it was read (${JSON.stringify(p.box)}) - re-read the export before baking it`,
+    );
   }
   return mesh;
 }
@@ -139,18 +173,28 @@ export function bakeHeads({ sources, pngs }) {
   return { parts, textures };
 }
 
-const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
+const save = (path, bytes) => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, bytes);
+};
 
 if (isMain(import.meta.url)) {
-  const missing = Object.entries(PAINTINGS).filter(([, p]) => !existsSync(p)).map(([id]) => id);
-  if (missing.length) { console.error(`no painting yet for: ${missing.join(', ')}`); process.exit(1); }
+  const missing = Object.entries(PAINTINGS)
+    .filter(([, p]) => !existsSync(p))
+    .map(([id]) => id);
+  if (missing.length) {
+    console.error(`no painting yet for: ${missing.join(', ')}`);
+    process.exit(1);
+  }
   const r = bakeHeads({
     sources: Object.fromEntries(Object.entries(SOURCES).map(([b, p]) => [b, readFileSync(p)])),
     pngs: Object.fromEntries(Object.entries(PAINTINGS).map(([id, p]) => [id, readFileSync(p)])),
   });
   for (const p of r.parts) {
     save(meshFile(p.id), p.nif);
-    console.log(`  ${p.id.padEnd(22)} ${String(p.mesh.indices.length / 3).padStart(5)} triangles -> ${meshFile(p.id)}  ${p.nif.length} bytes`);
+    console.log(
+      `  ${p.id.padEnd(22)} ${String(p.mesh.indices.length / 3).padStart(5)} triangles -> ${meshFile(p.id)}  ${p.nif.length} bytes`,
+    );
   }
   for (const t of r.textures) {
     save(textureFile(t.id), t.dds);

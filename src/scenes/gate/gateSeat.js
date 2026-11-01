@@ -27,10 +27,14 @@ import { BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
 export function gateSeatRegion(d, bayScan) {
   if (!Number.isSafeInteger(d) || /** @type {number} */ (d) < 0) return null;
   const lane = gateLaneOf(/** @type {number} */ (d));
-  if (lane !== BAY_THEATRE) { const r = regionOfTheatre(lane); return r >= 0 ? r : null; }
-  return bayScan ? findGateSite(/** @type {number} */ (d), bayScan)?.region ?? null : null;
+  if (lane !== BAY_THEATRE) {
+    const r = regionOfTheatre(lane);
+    return r >= 0 ? r : null;
+  }
+  return bayScan ? (findGateSite(/** @type {number} */ (d), bayScan)?.region ?? null) : null;
 }
 
 /** Does the claim of gate `d` wait for the Bay's scan (`bayScan` null while it is not done)? The Bay's lane's alone - a
  *  lane past the Bay's region is its number's. */
-export const gateClaimWaits = (/** @type {number|undefined} */ d, /** @type {any} */ bayScan) => !bayScan && !(Number.isSafeInteger(d) && gateLaneOf(/** @type {number} */ (d)) !== BAY_THEATRE);
+export const gateClaimWaits = (/** @type {number|undefined} */ d, /** @type {any} */ bayScan) =>
+  !bayScan && !(Number.isSafeInteger(d) && gateLaneOf(/** @type {number} */ (d)) !== BAY_THEATRE);

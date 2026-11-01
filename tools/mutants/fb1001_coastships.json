@@ -40,8 +40,8 @@
   {
     "name": "SHIP-FLAGS-a-product-turned",
     "file": "src/world/quat.js",
-    "old": "uv1 = z * vx - x * vz",
-    "new": "uv1 = x * vz - z * vx",
+    "old": "    uv1 = z * vx - x * vz,",
+    "new": "    uv1 = x * vz - z * vx,",
     "tests": [
       "test/scenes/fb1001_coastships.test.js"
     ]

@@ -11,8 +11,8 @@
 import { pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW } from './pathData.js';
 import { MAP_W, MAP_H } from './roadNetwork.js';
 import { PATH_HALF_WIDTH, UNITS_PER_METRE, pointNearPath } from './roadClearance.js';
-import { arenaRoadByte, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
-import { curveDistance, CURVE_DIM } from './roadCurves.js';   // VOYAGER2: past the Bay the band is a curve's
+import { arenaRoadByte, arenaJoinByte } from '../arenaRoads.js'; // TESA4: Arena's roads past the Bay; TESA5: their joins on it
+import { curveDistance, CURVE_DIM } from './roadCurves.js'; // VOYAGER2: past the Bay the band is a curve's
 
 /** A path's half width (m): Basic Roads paints a road or a track two tiles wide about its line. */
 export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE;
@@ -22,7 +22,16 @@ const HALF_M = PIXEL_M / 2;
 /** A terrain tile (m) - the curves' unit. */
 const TILE_M = PIXEL_M / CURVE_DIM;
 /** Each compass bit's arm: from the pixel's centre to the edge or corner it names, in half pixels (x east, z north). */
-export const ARMS = Object.freeze([[N, 0, 1], [NE, 1, 1], [E, 1, 0], [SE, 1, -1], [S, 0, -1], [SW, -1, -1], [W, -1, 0], [NW, -1, 1]]);
+export const ARMS = Object.freeze([
+  [N, 0, 1],
+  [NE, 1, 1],
+  [E, 1, 0],
+  [SE, 1, -1],
+  [S, 0, -1],
+  [SW, -1, -1],
+  [W, -1, 0],
+  [NW, -1, 1],
+]);
 
 /**
  * THE ROOM BESIDE THE ROAD: how far (m) a pixel-local point - x east, z north, from the pixel's south-west corner, the
@@ -36,28 +45,37 @@ export function roadRoom(net, px, py, x, z, reach) {
   const g = PATH_HALF_M + reach;
   // the map's pixels ask its network (OW-WOD-LAG's law, roadClearance.js: none past its edges has one of his); TESA4:
   // every other pixel asks Arena's roads (world/arenaRoads.js) - none without them
-  const ix0 = Math.floor((x - g) / PIXEL_M), ix1 = Math.floor((x + g) / PIXEL_M);
-  const iz0 = Math.floor((z - g) / PIXEL_M), iz1 = Math.floor((z + g) / PIXEL_M);
+  const ix0 = Math.floor((x - g) / PIXEL_M),
+    ix1 = Math.floor((x + g) / PIXEL_M);
+  const iz0 = Math.floor((z - g) / PIXEL_M),
+    iz1 = Math.floor((z + g) / PIXEL_M);
   let room = reach;
   for (let iz = iz0; iz <= iz1; iz++) {
     for (let ix = ix0; ix <= ix1; ix++) {
-      const mx = px + ix, my = py - iz;   // north (+z) is the row above: py - 1
+      const mx = px + ix,
+        my = py - iz; // north (+z) is the row above: py - 1
       const onMap = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;
       // VOYAGER2: past the Bay the band is the curves' (world/road/roadCurves.js) - its roads' and its tracks' each
       if (!onMap) {
-        const r = arenaRoadByte('roads', mx, my), t = arenaRoadByte('tracks', mx, my);
+        const r = arenaRoadByte('roads', mx, my),
+          t = arenaRoadByte('tracks', mx, my);
         if (!r && !t) continue;
-        const tx = (x - ix * PIXEL_M) / TILE_M, tz = (z - iz * PIXEL_M) / TILE_M;   // the point in that pixel's tile frame
-        const d = Math.min(r ? curveDistance(r, tx, tz) : Infinity, t ? curveDistance(t, tx, tz) : Infinity) * TILE_M - PATH_HALF_M;
+        const tx = (x - ix * PIXEL_M) / TILE_M,
+          tz = (z - iz * PIXEL_M) / TILE_M; // the point in that pixel's tile frame
+        const d =
+          Math.min(r ? curveDistance(r, tx, tz) : Infinity, t ? curveDistance(t, tx, tz) : Infinity) * TILE_M -
+          PATH_HALF_M;
         if (d < room) room = Math.max(0, d);
         continue;
       }
-      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my);   // TESA5: and a crossing's join on it
+      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my); // TESA5: and a crossing's join on it
       if (!bits) continue;
-      const qx = x - (ix * PIXEL_M + HALF_M), qz = z - (iz * PIXEL_M + HALF_M);   // the point from that pixel's centre
+      const qx = x - (ix * PIXEL_M + HALF_M),
+        qz = z - (iz * PIXEL_M + HALF_M); // the point from that pixel's centre
       for (const [bit, sx, sz] of ARMS) {
         if (!(bits & bit)) continue;
-        const ex = sx * HALF_M, ez = sz * HALF_M;
+        const ex = sx * HALF_M,
+          ez = sz * HALF_M;
         const t = Math.min(1, Math.max(0, (qx * ex + qz * ez) / (ex * ex + ez * ez)));
         const d = Math.hypot(qx - t * ex, qz - t * ez) - PATH_HALF_M;
         if (d < room) room = Math.max(0, d);

@@ -17,18 +17,47 @@ export const WALLED_SAID = 8;
  *  pack, and what a station made of it - net/bagLaw.js LOOSE_ORIGIN, FB1020h ESSENCE-LOOSE). The List form offered only
  *  what may go and said nothing of the rest, so a Stores page full of Cured Leather and Arcane Essence made of looted or
  *  gold-bought goods read as the market losing them. */
-export const walledUnits = (/** @type {any} */ s, /** @type {string} */ currency) => (s ? (currency === 'gold' ? (s.bought | 0) : (s.gold | 0)) + (s[LOOSE_ORIGIN] | 0) : 0);
+export const walledUnits = (/** @type {any} */ s, /** @type {string} */ currency) =>
+  s ? (currency === 'gold' ? s.bought | 0 : s.gold | 0) + (s[LOOSE_ORIGIN] | 0) : 0;
 /** ...said: `{name} ({n})` of each such material of `stores` (the professions' book's Map), at most WALLED_SAID by name,
  *  or '' for none. `whose` 'gold' or 'marks' (a listing's currency), or 'guild' - the guild Stores, which take a silver
  *  listing's units (net/bagLaw.js WRIT_ORIGINS). */
-export function walledText(/** @type {any} */ stores, /** @type {string} */ whose, /** @type {(key: string) => string} */ nameOf) {
+export function walledText(
+  /** @type {any} */ stores,
+  /** @type {string} */ whose,
+  /** @type {(key: string) => string} */ nameOf,
+) {
   /** @type {Array<[string, number]>} */
-  const rows = [...(stores?.values?.() ?? [])].map((/** @type {any} */ s) => /** @type {[string, number]} */ ([s.material, walledUnits(s, whose === 'gold' ? 'gold' : 'marks')])).filter(([, n]) => n > 0);
+  const rows = [...(stores?.values?.() ?? [])]
+    .map(
+      (/** @type {any} */ s) =>
+        /** @type {[string, number]} */ ([s.material, walledUnits(s, whose === 'gold' ? 'gold' : 'marks')]),
+    )
+    .filter(([, n]) => n > 0);
   if (!rows.length) return '';
-  const shown = rows.slice(0, WALLED_SAID).map(([k, n]) => `${nameOf(k)} (${n.toLocaleString('en-US')})`).join(', ');
-  const list = rows.length > WALLED_SAID ? t('market.list.walledMore', '{list} and {n, number} more', { list: shown, n: rows.length - WALLED_SAID }) : shown;
-  if (whose === 'guild') return t('market.list.walledGuild', 'Not for the guild Stores: {list}. The guild takes only what you gathered or bought with silver. Goods bought with gold or from your pack stay in your own Stores.', { list });
+  const shown = rows
+    .slice(0, WALLED_SAID)
+    .map(([k, n]) => `${nameOf(k)} (${n.toLocaleString('en-US')})`)
+    .join(', ');
+  const list =
+    rows.length > WALLED_SAID
+      ? t('market.list.walledMore', '{list} and {n, number} more', { list: shown, n: rows.length - WALLED_SAID })
+      : shown;
+  if (whose === 'guild')
+    return t(
+      'market.list.walledGuild',
+      'Not for the guild Stores: {list}. The guild takes only what you gathered or bought with silver. Goods bought with gold or from your pack stay in your own Stores.',
+      { list },
+    );
   return whose === 'gold'
-    ? t('market.list.walledGold', 'Not for a gold sale: {list}. Goods bought with silver sell only for silver, and goods from your pack, or made from them, only go to crafting stations.', { list })
-    : t('market.list.walledSilver', 'Not for a silver sale: {list}. Goods bought with gold sell only for gold, and goods from your pack, or made from them, only go to crafting stations.', { list });
+    ? t(
+        'market.list.walledGold',
+        'Not for a gold sale: {list}. Goods bought with silver sell only for silver, and goods from your pack, or made from them, only go to crafting stations.',
+        { list },
+      )
+    : t(
+        'market.list.walledSilver',
+        'Not for a silver sale: {list}. Goods bought with gold sell only for gold, and goods from your pack, or made from them, only go to crafting stations.',
+        { list },
+      );
 }

@@ -182,7 +182,6 @@ test('IC-GRAND THE DOOR AND THE FAMILY ASK THE WORKER FIRST - a block the worker
   _resetCapitals();
   assert.match(read('src/world/capitalModels.js'), /registerPortBlockFamily\(\{ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make, keep: IMPERIAL_KEEP\.blocks \}\);/);
   // and the pixel's build reads a slice's blocks a breath at a time before its tiles read all sixty-four in one task
-  // PIN MOVED (WG2-TOWNS): a World 2.0 town's blocks made a breath at a time too (world/settle2/settle2Blocks.js)
   assert.match(read('src/scenes/pixelBuild.js'), /if \(capitalViewOf\(dfLocation\) \|\| dfLocation\?\.settle2\) for \(const name of dfLocation\.exterior\.exteriorData\.blockNames\) \{ blocks\.getBlockByName\(name\); await breather\.breathe\(\); \}[^\n]*\n\s+if \(groundLocation\) locationRect = setLocationTiles\(/);   // PIN MOVED (IC-GRAND x GROUND-AGREE, at the merge into the main-merged TESA branch): main's GROUND-AGREE tiles the ground's place (`groundLocation`), the pre-read still stands just before it
 });
 

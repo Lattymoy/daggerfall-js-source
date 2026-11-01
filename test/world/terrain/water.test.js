@@ -95,7 +95,6 @@ test('WATER1: the pack, and the coverage - the JS twin held against the silt\'s 
   // other. A swapped corner bit or a swapped f.x/f.y in EITHER half reddens
   // this block - the shader's through the two regexes, the JS twin's through
   // the six values above.
-  // PIN MOVED (WATER-LEVEL): the sheet asks no tile's coverage now (world/water/waterLevel.js); the one GLSL bilinear left is
   // the silt's, where the tiles mark the water under it (render/waterBedGlsl.js bedCover)
   assert.match(WATER_BED_GLSL, /float c = mix\(mix\(float\(m & 1u\), float\(\(m >> 1u\) & 1u\), f\.x\), mix\(float\(\(m >> 2u\) & 1u\), float\(\(m >> 3u\) & 1u\), f\.x\), f\.y\);/, 'the silt blends the corners in the same order, bit0 (0,0), bit1 (1,0), bit2 (0,1), bit3 (1,1)');
 });
@@ -153,7 +152,6 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
 });
 
 test('WATER1: the shader - the sheet lifted, the shore its cut, the discards, one light law with the ground', () => {
-  // PIN MOVED (WATER-LEVEL): the sheet's own attributes - the plane at its level, its depths over the carved ground, its cut
   assert.match(WATER_SURFACE_VS, /layout\(location=0\) in vec3 aPos;\s*\n\s*layout\(location=1\) in vec2 aDepth;\s*\n\s*layout\(location=2\) in float aCut;/, 'the sheet\'s attributes');
   assert.match(WATER_SURFACE_VS, /vec4 world = uModel \* vec4\(aPos\.x, aPos\.y \+ uLift, aPos\.z, 1\.0\);/, 'lifted in the model\'s frame');
   const fs = waterSurfaceFs('/*CS*/ float cloudShadowAt(vec3 wp) { return 1.0; }');
@@ -178,7 +176,7 @@ test('WATER1: the shader - the sheet lifted, the shore its cut, the discards, on
   // wrapped coordinate would draw a blurred line wherever the scroll
   // rolls over, which is the artefact the mipmap exists to remove.
   assert.match(fs, /body = textureLod\(uTileArr, vec3\(0\.5, 0\.5, 0\.0\), 8\.0\)\.rgb \* uTint;/, 'PIN MOVED (WATER-NEXT 2): the classic water texel, layer 0, its mip chain\'s average - the water\'s colour');
-  assert.ok(fs.indexOf('vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);') < fs.indexOf('if (edge <= 0.002) discard;'), 'GRAIN AUDIT 1: the derivatives are taken ABOVE the discards - inside non-uniform control flow they are undefined');   // PIN MOVED (WATER-LEVEL): the first discard is the feather's
+  assert.ok(fs.indexOf('vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);') < fs.indexOf('if (edge <= 0.002) discard;'), 'GRAIN AUDIT 1: the derivatives are taken ABOVE the discards - inside non-uniform control flow they are undefined');
   assert.doesNotMatch(fs, /uScroll|uOpacity/, 'the scrolled texel and the one opacity are gone');
   // the trains fade with distance on their own scale - the far sea keeps the swell
   // PIN MOVED (WATER-NEXT 2): the long train is the swell's now; the fine trains are shorter, each still fading on its own scale
@@ -238,7 +236,7 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/, 'decided at the build (PIN MOVED, WATER-NEXT 2: its own sheet over the bed; WATER-LEVEL: the sheet at its level, carved with the bed)');
   assert.match(w, /px, py, terrain, water, tilemapTex,/, 'carried on the built pixel');
   const restride = w.slice(w.indexOf('  function restrideTerrain(p, stride'));   // PERF-EXT26: it takes the worker's grid too
-  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);   // PIN MOVED (WATER-LEVEL)
+  assert.match(restride.slice(0, restride.indexOf('\n  }\n')), /if \(p\.water\) \{ renderer\.destroyWaterSurface\(p\.water\); p\.water = null; \}[\s\S]*?renderer\.destroyMesh\(p\.terrain\);[\s\S]*?p\.water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
   assert.equal((w.match(/renderer\.destroyWaterSurface\(p\.water\)/g) || []).length, 3, 'the restride, the eviction, and the Deep Waters cap\'s TileMap (DW-F: the clipped and repainted tiles take the sheet with them)');
   assert.match(w, /p\._visible = pixelVisible;/, 'the pixel gate\'s verdict, kept for the pass');
   const slot = w.indexOf('    if (waterOn) {\n      stirRipples(dt, now);   // WATER-NEXT 4\n      const wu = _waterU = waterUniforms(');   // PIN MOVED (WATER-NEXT 4): the ripples step first
@@ -285,14 +283,6 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   for (const name of ['on and off differ over the sea', 'leaves the sky alone', 'five seconds later', 'a gale varies more than a calm', 'rainy sea', 'glints toward the sun', 'midnight', 'overcast sea']) {
     assert.ok(probe.includes(name), `the probe checks: ${name}`);
   }
-  const ledger = rd('bible/01-Overview/Port-Ledger.md');
-  assert.match(ledger, /\*\*ENHANCED WATER \(WATER1, 2026-09-08\)\*\*/, 'section A carries the departure');
-  assert.match(ledger, /switch `enhancedWater` \(on by default, `\?water=off` the kill switch\)/);
-  const arc = rd('bible/07-Rendering/Water-Arc.md');
-  assert.match(arc, /# Enhanced water \(WATER1, 2026-09-08\)/);
-  assert.match(arc, /fround\(27\.2 \/ 1539\) \* 1539/, 'the ocean-band defect is on the page');
-  assert.match(rd('bible/01-Overview/Page-Index.md'), /07-Rendering\/Water-Arc\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
-  assert.match(rd('bible/07-Rendering/Rendering.md'), /`waterSurface\.js`/);
 });
 
 // ── WATER-AUDIT: the table pinned THROUGH the producer, not against itself ──

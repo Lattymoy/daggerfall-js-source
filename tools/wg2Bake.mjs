@@ -1,4 +1,4 @@
-// WG2 (bible/03-World/World-2-Arc.md, Phase 2): THE BAKE TOOL. Makes a region's bake offline - the erosion a client
+// THE BAKE TOOL. Makes a region's bake offline - the erosion a client
 // never runs (WG-4) - and writes it gzipped where the game serves it: `node tools/wg2Bake.mjs <id|all> [--out dir]`.
 // `--check` bakes again and compares each print with the file's, writing nothing; `--doc <package.json>` applies an editor
 // package as the authored overrides (its base must be the served bake); `--province <Key>` bakes a province's tiles

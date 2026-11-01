@@ -11,8 +11,8 @@
   {
     "name": "ASS-settled-never",
     "file": "src/render/glProgram.js",
-    "old": "get: () => !!pass || tried",
-    "new": "get: () => false",
+    "old": "  return /** @type {any} */ (Object.defineProperty(door, 'settled', { get: () => !!pass || tried }));",
+    "new": "  return /** @type {any} */ (Object.defineProperty(door, 'settled', { get: () => false }));",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ASS-the-release-skipped",
     "file": "src/render/glProgram.js",
-    "old": "    try { pass = make(); } catch (e) { fail(e); pass = null; releasePrograms(gl, programs); }",
-    "new": "    try { pass = make(); } catch (e) { fail(e); pass = null; }",
+    "old": "      releasePrograms(gl, programs);\n    }",
+    "new": "    }",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ASS-the-warm-need-unread",
     "file": "src/render/warmPrograms.js",
-    "old": "          if (step.need?.() === false) break;\n",
-    "new": "",
+    "old": "          if (step.need?.() === false) break;\n        }",
+    "new": "        }",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ASS-a-play-pass-left-out",
     "file": "src/render/playPrograms.js",
-    "old": ", ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS",
-    "new": ", ...FIRE_PROGRAMS",
+    "old": "  ...NODE_GLINT_PROGRAMS,\n  ...FIRE_PROGRAMS,",
+    "new": "  ...FIRE_PROGRAMS,",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ASS-the-veil-warm-only-starts",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      void warmPrograms([{ start: () => veilReady ?? (() => true), run: () => { build(); }, need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
-    "new": "",
+    "old": "      void warmPrograms(\n        [\n          {\n            start: () => veilReady ?? (() => true),\n            run: () => {\n              build();\n            },\n            need: () => !pass && !broken && !!veilGl,\n          },\n        ],\n        { alive: () => !broken && !!veilGl },\n      ); // a veil destroyed meanwhile is never built again",
+    "new": "      // a veil destroyed meanwhile is never built again",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ASS-the-veil-built-after-destroy",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "need: () => !pass && !broken && !!veilGl }], { alive: () => !broken && !!veilGl });",
-    "new": "need: () => !pass && !broken }], { alive: () => !broken });",
+    "old": "            need: () => !pass && !broken && !!veilGl,\n          },\n        ],\n        { alive: () => !broken && !!veilGl },",
+    "new": "            need: () => !pass && !broken,\n          },\n        ],\n        { alive: () => !broken },",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ASB-the-winter-waits-for-a-read",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "      if (!centre || !lines.size) return fallback;",
-    "new": "      if (nowRead === null) return fallback;",
+    "old": "      if (!centre || !lines.size) return fallback; // AUDIT SNOW-BUDGET F2: the lines the window kept across a move answer while it catches up - not the calendar's",
+    "new": "      if (nowRead === null) return fallback; // AUDIT SNOW-BUDGET F2: the lines the window kept across a move answer while it catches up - not the calendar's",
     "tests": [
       "test/systems/weather/snowbudget.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ATV-one-pitch-for-every-line",
     "file": "src/ui/virtualRows.js",
-    "old": "h = Math.max(h, s > 0 ? s : guess); }",
-    "new": "h = Math.max(h, guess); }",
+    "old": "      h = Math.max(h, s > 0 ? s : guess);",
+    "new": "      h = Math.max(h, guess);",
     "tests": [
       "test/ui/virtheights.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ATV-no-hold",
     "file": "src/ui/virtualRows.js",
-    "old": "    hold(eye, was);\n",
-    "new": "",
+    "old": "    hold(eye, was);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/ui/virtheights.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "ATV-heights-kept-across-a-remeasure",
     "file": "src/ui/virtualRows.js",
-    "old": "        for (const it of items) sized.set?.(it, 0);\n",
-    "new": "",
+    "old": "        for (const it of items) sized.set?.(it, 0);\n        knownSum = 0;",
+    "new": "        knownSum = 0;",
     "tests": [
       "test/ui/virtheights.test.js"
     ]

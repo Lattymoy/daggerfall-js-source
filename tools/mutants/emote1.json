@@ -4,216 +4,279 @@
     "file": "src/net/wire.js",
     "old": "      if (inEmoji && i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;",
     "new": "      s += ch;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-joiner-dropped-everywhere",
     "file": "src/net/wire.js",
     "old": "      if (inEmoji && i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;",
     "new": "      void ch;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-joiner-needs-no-left",
     "file": "src/net/wire.js",
     "old": "      if (inEmoji && i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;",
     "new": "      if (i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-tail-breaks-the-run",
     "file": "src/net/wire.js",
     "old": "    inEmoji = EMOJI_PICTO.test(ch) || (inEmoji && EMOJI_TAIL.test(ch));",
     "new": "    inEmoji = EMOJI_PICTO.test(ch);",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-tail-starts-a-run",
     "file": "src/net/wire.js",
     "old": "    inEmoji = EMOJI_PICTO.test(ch) || (inEmoji && EMOJI_TAIL.test(ch));",
     "new": "    inEmoji = EMOJI_PICTO.test(ch) || EMOJI_TAIL.test(ch);",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-trailing-joiner-kept",
     "file": "src/net/wire.js",
     "old": "  while (/[\\uD800-\\uDBFF]$/.test(s) || s.endsWith('\\u200d')) s = s.slice(0, -1);",
     "new": "  while (/[\\uD800-\\uDBFF]$/.test(s)) s = s.slice(0, -1);",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-any-truthy-me",
     "file": "src/net/wire.js",
     "old": "    if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };\n    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`\n    let items = null;\n    if (m.items !== undefined) {\n      items = validChatItems(m.items);\n      if (!items) return { error: 'bad chat' };\n    } else if (m.item !== undefined) {\n      const one = validChatItem(m.item);\n      if (!one) return { error: 'bad chat' };\n      items = [one];\n    }\n    const me = m.me === true ? { me: true } : {};",
     "new": "    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`\n    let items = null;\n    if (m.items !== undefined) {\n      items = validChatItems(m.items);\n      if (!items) return { error: 'bad chat' };\n    } else if (m.item !== undefined) {\n      const one = validChatItem(m.item);\n      if (!one) return { error: 'bad chat' };\n      items = [one];\n    }\n    const me = m.me ? { me: true } : {};",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-me-dropped-at-the-relay",
     "file": "server/src/index.js",
     "old": "sub: a.sub, ...(m.me === true ? { me: true } : {}), ...(m.items",
     "new": "sub: a.sub, ...(m.items",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-version-door-one-high",
     "file": "src/net/wire.js",
     "old": "return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };",
     "new": "return !!m && Number(m[1]) > EMOTE_RELAY_MIN; };",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-session-door-dropped",
     "file": "src/net/online.js",
     "old": "    if (me && !this.emoteOk) return false;\n",
     "new": "",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-truthy-me-believed",
     "file": "src/net/online.js",
     "old": "ch, ...(m.me === true ? { me: true } : {}), ...linked, ...(typeof m.sg",
     "new": "ch, ...(m.me ? { me: true } : {}), ...linked, ...(typeof m.sg",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-kind-lost",
     "file": "src/net/chat.js",
     "old": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';",
     "new": "    const kind = rolled ? 'roll' : sys ? '' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-action-bubbled",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
-    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
-    "tests": ["test/net/emote1.test.js"]
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
+    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false; // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said",
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-cut-on-units",
     "file": "src/ui/nameLayer.js",
     "old": "  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
     "new": "  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-segmenter-splits-pairs",
     "file": "src/systems/graphemes.js",
     "old": "  return Array.from(segmenter.segment(s), (g) => g.segment);",
     "new": "  return s.split('');",
-    "tests": ["test/net/emote1.test.js", "test/net/journal1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js",
+      "test/net/journal1.test.js"
+    ]
   },
   {
     "name": "EM-empty-me-said",
     "file": "src/net/chatCommands.js",
     "old": "  if (name === 'me') return rest ? { kind: 'me', text: rest } : { kind: 'empty', name };",
     "new": "  if (name === 'me') return { kind: 'me', text: rest };",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-prototype-gesture",
     "file": "src/net/chatCommands.js",
     "old": "  if (Object.hasOwn(EMOTES, name)) return { kind: 'emote', text: emoteText(name, rest) };",
     "new": "  if (name in EMOTES) return { kind: 'emote', text: emoteText(name, rest) };",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-target-unbounded",
     "file": "src/net/chatCommands.js",
-    "old": "  const t = String(target ?? '').replace(/\\s+/g, ' ').trim().slice(0, 24);",
-    "new": "  const t = String(target ?? '').replace(/\\s+/g, ' ').trim();",
-    "tests": ["test/net/emote1.test.js"]
+    "old": "    .trim()\n    .slice(0, 24);",
+    "new": "    .trim();",
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-shortcode-case",
     "file": "src/net/chatCommands.js",
-    "old": "(all, code) => SHORTCODES[code.toLowerCase()] ?? all);",
-    "new": "(all, code) => SHORTCODES[code] ?? all);",
-    "tests": ["test/net/emote1.test.js"]
+    "old": "  String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code.toLowerCase()] ?? all);",
+    "new": "  String(text ?? '').replace(/:([a-z0-9_+-]{1,20}):/gi, (all, code) => SHORTCODES[code] ?? all);",
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-pick-at-the-end",
     "file": "src/ui/chatPanel.js",
     "old": "  const insertAtCaret = (ch) => {\n    const v = String(input.value ?? '');\n    const a = Number.isInteger(input.selectionStart) ? input.selectionStart : v.length;",
     "new": "  const insertAtCaret = (ch) => {\n    const v = String(input.value ?? '');\n    const a = v.length;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-grid-left-open",
     "file": "src/ui/chatPanel.js",
     "old": "    b.addEventListener('click', () => { insertAtCaret(ch); setEmojiOpen(false); });",
     "new": "    b.addEventListener('click', () => { insertAtCaret(ch); });",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-escape-closes-the-chat-first",
     "file": "src/ui/chatPanel.js",
     "old": "        if (emojiOpen) { setEmojiOpen(false); return; }\n        if (chanOpen) { setChanOpen(false); return; }",
     "new": "        if (chanOpen) { setChanOpen(false); return; }",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-grid-outlives-the-chat",
     "file": "src/ui/chatPanel.js",
     "old": "    setEmojiOpen(false);   // EMOTE1: the picker goes with the panel\n",
     "new": "",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-picks-out-of-order",
     "file": "src/ui/chatPanel.js",
     "old": "  for (const [code, ch] of SHORTCODE_LIST) {   // one button an emoji, named by its FIRST code, in the table's order",
     "new": "  for (const [code, ch] of [...SHORTCODE_LIST].sort((x, y) => x[0].localeCompare(y[0]))) {   // one button an emoji, named by its FIRST code, in the table's order",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-gesture-on-this-tab",
     "file": "src/scenes/world.js",
     "old": "        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { ...opts, me: true });",
     "new": "        if (cmd.kind === 'emote') return chatSend(tabId, cmd.text, tabId, { ...opts, me: true });",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-action-flag-dropped-at-send",
     "file": "src/scenes/world.js",
     "old": "    return chatLinks.get(tabId)?.sendChat(text, { me, item, items }) ?? false;",
     "new": "    return chatLinks.get(tabId)?.sendChat(text, { item, items }) ?? false;",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-shortcodes-unexpanded",
     "file": "src/scenes/world.js",
     "old": "        const cmd = parseChatLine(expandShortcodes(text));",
     "new": "        const cmd = parseChatLine(text);",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-narrow-query-outer-width",
     "file": "src/ui/chatPanel.js",
     "old": "@container (width < ${CHAT_WIDTH_MIN - 2 * CHAT_BOX_BORDER}px) { .dfchat-emoji { display: none; } }",
     "new": "@container (width < ${CHAT_WIDTH_MIN}px) { .dfchat-emoji { display: none; } }",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-narrow-rule-gone",
     "file": "src/ui/chatPanel.js",
     "old": "@container (width < ${CHAT_WIDTH_MIN - 2 * CHAT_BOX_BORDER}px) { .dfchat-emoji { display: none; } }",
     "new": "",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-narrow-grid-stranded",
     "file": "src/ui/chatPanel.js",
     "old": "@container (width < ${CHAT_WIDTH_MIN - 2 * CHAT_BOX_BORDER}px) { .dfchat-emoji { display: none; } }",
     "new": "@container (width < ${CHAT_WIDTH_MIN - 2 * CHAT_BOX_BORDER}px) { .dfchat-emoji, .dfchat-emojis { display: none; } }",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   },
   {
     "name": "EM-grid-a-listbox-of-buttons",
     "file": "src/ui/chatPanel.js",
     "old": "emojiGrid.setAttribute('role', 'group');",
     "new": "emojiGrid.setAttribute('role', 'listbox');",
-    "tests": ["test/net/emote1.test.js"]
+    "tests": [
+      "test/net/emote1.test.js"
+    ]
   }
 ]

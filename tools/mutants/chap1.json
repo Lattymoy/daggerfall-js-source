@@ -12,8 +12,8 @@
   {
     "name": "CHAP1-ROLLOVER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(row.gainedDay === day ? whole(row.gained) : 0);",
-    "new": "whole(row.gained);",
+    "old": "  row.gainedDay === day ? whole(row.gained) : 0;",
+    "new": "  whole(row.gained);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -34,8 +34,8 @@
   {
     "name": "CHAP1-CAP-SIDE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "at < ROLL_EPOCH_S) ? ROLL_CUSTOMS_CAP",
-    "new": "at <= ROLL_EPOCH_S) ? ROLL_CUSTOMS_CAP",
+    "old": "  return crossed && !(typeof at === 'number' && Number.isSafeInteger(at) && at < ROLL_EPOCH_S)",
+    "new": "  return crossed && !(typeof at === 'number' && Number.isSafeInteger(at) && at <= ROLL_EPOCH_S)",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -55,8 +55,8 @@
   {
     "name": "CHAP1-ADOPT-SINCE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rollRep(current[f]) - rollRep(base[f]) - whole(sent?.[f])",
-    "new": "rollRep(current[f]) - rollRep(base[f])",
+    "old": "    const since = base && Object.hasOwn(base, f) ? rollRep(current[f]) - rollRep(base[f]) - whole(sent?.[f]) : 0;",
+    "new": "    const since = base && Object.hasOwn(base, f) ? rollRep(current[f]) - rollRep(base[f]) : 0;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "CHAP1-MEMBERS-BOOKS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const books = both ? [store.mortal, store.vampire] : [store];",
-    "new": "const books = both ? [store.mortal] : [store];",
+    "old": "  const books = both ? [store.mortal, store.vampire] : [store];",
+    "new": "  const books = both ? [store.mortal] : [store];",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "CHAP1-MEMBERS-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "ranks.set(f, Math.max(ranks.get(f) ?? 0, Math.min(ROLL_RANK_MAX, rank)));",
-    "new": "ranks.set(f, Math.min(ROLL_RANK_MAX, rank));",
+    "old": "      ranks.set(f, Math.max(ranks.get(f) ?? 0, Math.min(ROLL_RANK_MAX, rank)));",
+    "new": "      ranks.set(f, Math.min(ROLL_RANK_MAX, rank));",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "CHAP1-DELTAS-ZERO",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX",
-    "new": "(x) => Math.abs(x) <= ROLL_DELTA_MAX",
+    "old": "export const rollDeltasOk = (/** @type {unknown} */ v) =>\n  factionMapOk(v, (x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX, 1);",
+    "new": "export const rollDeltasOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) => Math.abs(x) <= ROLL_DELTA_MAX, 1);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "CHAP1-RANK-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rank < 0 || rank > ROLL_RANK_MAX)",
-    "new": "rank < 0 || rank > ROLL_RANK_MAX + 1)",
+    "old": "    if (typeof rank !== 'number' || !Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;",
+    "new": "    if (typeof rank !== 'number' || !Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX + 1) return false;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -106,8 +106,8 @@
   {
     "name": "CHAP1-FOREIGN-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (String(n) !== k || !isRollFaction(n)) return false;",
-    "new": "if (String(n) !== k) return false;",
+    "old": "    if (String(n) !== k || !isRollFaction(n)) return false;",
+    "new": "    if (String(n) !== k) return false;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "CHAP1-SVC-BUSY",
     "file": "server-account/src/npcRoll.js",
-    "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { error: 'roll-busy' };",
-    "new": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { roll: await rollViewOf(db, who.character), credited };",
+    "old": "    return { error: 'roll-busy' };",
+    "new": "    return { roll: await rollViewOf(db, who.character), credited };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "CHAP1-SVC-LEASE",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (row.lease !== lease) return { error: 'lease' };",
-    "new": "if (false) return { error: 'lease' };",
+    "old": "  if (row.lease !== lease) return { error: 'lease' };",
+    "new": "  if (false) return { error: 'lease' };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "CHAP1-SVC-SEED-CAP",
     "file": "server-account/src/npcRoll.js",
-    "old": "const cap = rollSeedCapOf(held);",
-    "new": "const cap = 100;",
+    "old": "  const cap = rollSeedCapOf(held);",
+    "new": "  const cap = 100;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "CHAP1-SVC-TENURE",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,",
-    "new": "joinedAt: member ? nowS : null,",
+    "old": "        joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,",
+    "new": "        joinedAt: member ? nowS : null,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "CHAP1-SVC-SECOND-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (head) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
-    "new": "  if (false) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
+    "old": "  if (head) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",
@@ -206,8 +206,8 @@
   {
     "name": "CHAP1-SVC-SWITCH-DEV",
     "file": "server-account/src/npcRoll.js",
-    "old": "return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
-    "new": "return s === 'on' || s === 'dev';",
+    "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "  return s === 'on' || s === 'dev';",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -216,8 +216,8 @@
   {
     "name": "CHAP1-TAB-MINUTE",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;",
-    "new": "if (false) return null;",
+    "old": "    if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null; // CHAP2a: a refresh is asked at once (a writ's, three a day)",
+    "new": "    if (false) return null; // CHAP2a: a refresh is asked at once (a writ's, three a day)",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "CHAP1-TAB-RESEND",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (pending) return pending;",
-    "new": "if (false) return pending;",
+    "old": "    if (pending) return pending;",
+    "new": "    if (false) return pending;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "CHAP1-TAB-STOP",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (ROLL_STOPS.includes(error)) {",
-    "new": "if (false) {",
+    "old": "    if (ROLL_STOPS.includes(error)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "CHAP1-TAB-SEED",
     "file": "src/net/npcRollTracker.js",
-    "old": "const r = await io.read(id, ls, { factions: values, members: members() });",
-    "new": "const r = await io.read(id, ls, null);",
+    "old": "    const r = await io.read(id, ls, { factions: values, members: members() });",
+    "new": "    const r = await io.read(id, ls, null);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "CHAP1-LEAF-ID",
     "file": "src/systems/guild/guildFactions.js",
-    "old": "Akatosh: 26, Arkay: 21,",
-    "new": "Akatosh: 26, Arkay: 20,",
+    "old": "  Arkay: 21,",
+    "new": "  Arkay: 20,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"

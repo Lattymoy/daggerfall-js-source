@@ -5,7 +5,7 @@
 // account's sockets whose token was minted before it - CLOSE_POLICY 'staff-cut' - so the staff glyphs that token carried
 // leave with it (server/src/index.js `_staffCut`).
 //
-// STAFF-PANEL5-CUT-FIX (mob: after a cut the member keeps "no staff glyph, no hidden socket and no staff power anywhere"):
+// STAFF-PANEL5-CUT-FIX (chief: after a cut the member keeps "no staff glyph, no hidden socket and no staff power anywhere"):
 // the hub hands each of those sockets the order first (`law`), so the member's own client carries it to every room it
 // holds - by the ban's door (`_banFrame`), where a room closes the account's sockets as the hub does - and the hub keeps the
 // cut beside its bans (in storage, BAN_KEEP_S), so a token from before the cut that the client still holds opens it no

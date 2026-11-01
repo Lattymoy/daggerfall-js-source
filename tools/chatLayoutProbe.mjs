@@ -38,15 +38,24 @@ import { CHAT_CSS } from '../src/ui/chatPanel.js';
 /** The row heights and the scroll, for a list of `count` lines. */
 const MEASURE = (count) => {
   document.body.innerHTML = '';
-  const el = (t, c, x) => { const e = document.createElement(t); e.className = c; if (x != null) e.textContent = x; return e; };
+  const el = (t, c, x) => {
+    const e = document.createElement(t);
+    e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
   const root = el('div', 'dfchat');
   root.dataset.state = 'open';
   const box = el('div', 'dfchat-box');
   const list = el('div', 'dfchat-list');
   for (let i = 0; i < count; i++) {
     const line = el('div', 'dfchat-line');
-    line.append(el('span', 'dfchat-time', '12:34'), el('span', 'dfchat-name', 'Mac'),
-      el('span', 'dfchat-tag', '#ab12'), el('span', 'dfchat-text', `message number ${i}`));
+    line.append(
+      el('span', 'dfchat-time', '12:34'),
+      el('span', 'dfchat-name', 'Mac'),
+      el('span', 'dfchat-tag', '#ab12'),
+      el('span', 'dfchat-text', `message number ${i}`),
+    );
     list.append(line);
   }
   box.append(list);
@@ -60,7 +69,12 @@ const MEASURE = (count) => {
  *  "fixed" into a scroller by the same hand that fixes the list. */
 const MEASURE_PEEK = (count) => {
   document.body.innerHTML = '';
-  const el = (t, c, x) => { const e = document.createElement(t); e.className = c; if (x != null) e.textContent = x; return e; };
+  const el = (t, c, x) => {
+    const e = document.createElement(t);
+    e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
   const root = el('div', 'dfchat');
   root.dataset.state = 'closed';
   const peek = el('div', 'dfchat-peek');
@@ -88,15 +102,24 @@ for (const n of COUNTS) {
   baseline ??= m.min;
   const scrolls = m.scrollH > m.listH + 1;
   const overflows = n * baseline > m.listH;
-  console.log(`  ${String(n).padStart(3)} rows: ${m.min.toFixed(2)}-${m.max.toFixed(2)}px  list ${m.listH}px  scroll ${m.scrollH}px`);
+  console.log(
+    `  ${String(n).padStart(3)} rows: ${m.min.toFixed(2)}-${m.max.toFixed(2)}px  list ${m.listH}px  scroll ${m.scrollH}px`,
+  );
   // A ROW NEVER SHRINKS. One row's height is the same at 200 as at 5.
-  if (Math.abs(m.min - baseline) > 0.5) fails.push(`${n} rows: a row is ${m.min.toFixed(2)}px where 5 rows made it ${baseline.toFixed(2)}px - the rows are being squeezed`);
+  if (Math.abs(m.min - baseline) > 0.5)
+    fails.push(
+      `${n} rows: a row is ${m.min.toFixed(2)}px where 5 rows made it ${baseline.toFixed(2)}px - the rows are being squeezed`,
+    );
   // ...and once they do not fit, the LIST scrolls rather than absorbing them.
-  if (overflows && !scrolls) fails.push(`${n} rows: ${n} x ${baseline.toFixed(2)}px does not fit ${m.listH}px and scrollHeight is still ${m.scrollH} - nothing to scroll`);
+  if (overflows && !scrolls)
+    fails.push(
+      `${n} rows: ${n} x ${baseline.toFixed(2)}px does not fit ${m.listH}px and scrollHeight is still ${m.scrollH} - nothing to scroll`,
+    );
 }
 const peek = await page.evaluate(MEASURE_PEEK, 5);
 console.log(`  peek: ${peek.min.toFixed(2)}px`);
-if (Math.abs(peek.min - baseline) > 0.5) fails.push(`the closed peek's row is ${peek.min.toFixed(2)}px, not ${baseline.toFixed(2)}px`);
+if (Math.abs(peek.min - baseline) > 0.5)
+  fails.push(`the closed peek's row is ${peek.min.toFixed(2)}px, not ${baseline.toFixed(2)}px`);
 await browser.close();
 
 if (fails.length) {
@@ -104,4 +127,6 @@ if (fails.length) {
   for (const f of fails) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`\nPASS: a chat row is ${baseline.toFixed(2)}px at every count up to ${COUNTS[COUNTS.length - 1]}, and the list scrolls once they do not fit.`);
+console.log(
+  `\nPASS: a chat row is ${baseline.toFixed(2)}px at every count up to ${COUNTS[COUNTS.length - 1]}, and the list scrolls once they do not fit.`,
+);

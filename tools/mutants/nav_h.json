@@ -241,8 +241,8 @@
   {
     "name": "NAV-H-the-pad-strokes-at-the-guns",
     "file": "src/ui/gamepadInput.js",
-    "old": " && !getBool('Controls', 'BowDrawback') && !hooks.aimHold?.();",
-    "new": " && !getBool('Controls', 'BowDrawback');",
+    "old": "    const gesture =\n      getInt('Controls', 'WeaponSwingMode', 0, 2) === 0 && !getBool('Controls', 'BowDrawback') && !hooks.aimHold?.();",
+    "new": "    const gesture = getInt('Controls', 'WeaponSwingMode', 0, 2) === 0 && !getBool('Controls', 'BowDrawback');",
     "tests": [
       "test/systems/naval/nav_h_host.test.js"
     ]

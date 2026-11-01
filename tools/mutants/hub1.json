@@ -2,8 +2,8 @@
   {
     "name": "HUB1-kind-order-reversed",
     "file": "src/systems/region/regionHubs.js",
-    "old": "[LOCATION_TYPES.TownCity]: 3,",
-    "new": "[LOCATION_TYPES.TownCity]: 1,",
+    "old": "  [LOCATION_TYPES.TownCity]: 3,",
+    "new": "  [LOCATION_TYPES.TownCity]: 1,",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HUB1-name-unread",
     "file": "src/systems/region/regionHubs.js",
-    "old": "same(loc.name, regionName) ? 1 : 0,",
-    "new": "0,",
+    "old": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, -(loc.locationIndex | 0)];",
+    "new": "  return [kind, 0, blocks, buildings, -(loc.locationIndex | 0)];",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HUB1-blocks-unread",
     "file": "src/systems/region/regionHubs.js",
-    "old": "const blocks = (ext?.width | 0) * (ext?.height | 0);",
-    "new": "const blocks = 0;",
+    "old": "  const blocks = (ext?.width | 0) * (ext?.height | 0);",
+    "new": "  const blocks = 0;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HUB1-buildings-unread",
     "file": "src/systems/region/regionHubs.js",
-    "old": "const buildings = loc.exterior?.buildingCount | 0;",
-    "new": "const buildings = 0;",
+    "old": "  const buildings = loc.exterior?.buildingCount | 0;",
+    "new": "  const buildings = 0;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HUB1-tie-reversed",
     "file": "src/systems/region/regionHubs.js",
-    "old": "-(loc.locationIndex | 0)];",
-    "new": "(loc.locationIndex | 0)];",
+    "old": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, -(loc.locationIndex | 0)];",
+    "new": "  return [kind, same(loc.name, regionName) ? 1 : 0, blocks, buildings, loc.locationIndex | 0];",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HUB1-mod-row-counted",
     "file": "src/systems/region/regionHubs.js",
-    "old": "!Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
-    "new": "!Number.isInteger(loc.locationIndex)) continue;",
+    "old": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex) || !isBase(loc)) continue;",
+    "new": "    if (!loc || !Number.isInteger(loc.regionIndex) || !Number.isInteger(loc.locationIndex)) continue;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HUB1-capital-by-name-alone",
     "file": "src/systems/region/regionHubs.js",
-    "old": "HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionName))",
-    "new": "HUB_CAPITALS.some((c) => same(c, loc.name))",
+    "old": "      capital: HUB_CAPITALS.some((c) => same(c, loc.name) && same(c, regionName)),",
+    "new": "      capital: HUB_CAPITALS.some((c) => same(c, loc.name)),",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HUB1-mapid-signed",
     "file": "src/systems/region/regionHubs.js",
-    "old": "mapId: loc.mapTableData.mapId >>> 0,",
-    "new": "mapId: loc.mapTableData.mapId,",
+    "old": "      mapId: loc.mapTableData.mapId >>> 0,",
+    "new": "      mapId: loc.mapTableData.mapId,",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HUB1-lookup-signed",
     "file": "src/systems/region/regionHubs.js",
-    "old": "hubs?.byMapId?.get(Number(mapId) >>> 0)",
-    "new": "hubs?.byMapId?.get(Number(mapId))",
+    "old": "  mapId == null || !Number.isFinite(Number(mapId)) ? null : (hubs?.byMapId?.get(Number(mapId) >>> 0) ?? null);",
+    "new": "  mapId == null || !Number.isFinite(Number(mapId)) ? null : (hubs?.byMapId?.get(Number(mapId)) ?? null);",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HUB1-name-case-kept",
     "file": "src/systems/region/regionHubs.js",
-    "old": "a.trim().toLowerCase() === b.trim().toLowerCase()",
-    "new": "a === b",
+    "old": "const same = (a, b) =>\n  typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();",
+    "new": "const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a === b;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HUB1-title-capital-on-hub",
     "file": "src/systems/region/regionHubs.js",
-    "old": "(hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`)",
-    "new": "`Hub of ${hub.regionName}`",
+    "old": "export const hubTitle = (hub) =>\n  hub.capital ? `Capital of the Kingdom of ${hub.regionName}` : `Hub of ${hub.regionName}`;",
+    "new": "export const hubTitle = (hub) => `Hub of ${hub.regionName}`;",
     "tests": [
       "test/ui/ink/hub1.test.js",
       "test/ui/heldmap.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "HUB1-map-word-flat",
     "file": "src/systems/region/regionHubs.js",
-    "old": "(hub.capital ? 'Capital' : 'Hub')",
-    "new": "'Hub'",
+    "old": "export const hubMapWord = (hub) => (hub.capital ? 'Capital' : 'Hub');",
+    "new": "export const hubMapWord = (hub) => 'Hub';",
     "tests": [
       "test/ui/ink/hub1.test.js",
       "test/ui/heldmap.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "HUB1-arrival-words-flat",
     "file": "src/systems/region/regionHubs.js",
-    "old": "${hub.capital ? 'capital of the Kingdom of' : 'hub of'}",
-    "new": "hub of",
+    "old": "export const hubArrivalLine = (hub) =>\n  `${hub.name}, ${hub.capital ? 'capital of the Kingdom of' : 'hub of'} ${hub.regionName}.`;",
+    "new": "export const hubArrivalLine = (hub) => `${hub.name}, hub of ${hub.regionName}.`;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "HUB1-marks-carry-no-hub",
     "file": "src/ui/ink/inkMap.js",
-    "old": "hub: hubAt(m.summary) ?? null,",
-    "new": "hub: null,",
+    "old": "    hub: hubAt(m.summary) ?? null,",
+    "new": "    hub: null,",
     "tests": [
       "test/ui/ink/hub1.test.js",
       "test/ui/heldmap.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "HUB1-circle-over-the-glyph",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
-    "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked) if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
+    "old": "  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);\n  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);",
+    "new": "  // SEAT1a (Seats-Arc 3.3): a seat's ring, in HUB1's order - under the glyph, round any hub's circle\n  for (const [m, x, y] of inked) if (m.seatMark) paintSeatRing(ctx, x, y, markReach(m), m.seatMark);\n  for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);\n  for (const [m, x, y] of inked)\n    if (m.hub) paintHubCircle(ctx, x, y, markReach(m) - (m.seat ? SEAT_RING_PAD : 0), !!m.hub.capital);",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "HUB1-colours-swapped",
     "file": "src/ui/ink/inkMap.js",
-    "old": "const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
-    "new": "const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
+    "old": "  const c = capital ? HUB_CIRCLE.capital : HUB_CIRCLE.hub;",
+    "new": "  const c = capital ? HUB_CIRCLE.hub : HUB_CIRCLE.capital;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "HUB1-circle-no-reach",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.hub ? HUB_CIRCLE_PAD : 0)",
-    "new": "0",
+    "old": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + (m.hub ? HUB_CIRCLE_PAD : 0) + (m.seat ? SEAT_RING_PAD : 0);",
+    "new": "export const markReach = (m) => (GLYPH_R[m.kind] ?? 4) + 0 + (m.seat ? SEAT_RING_PAD : 0);",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "HUB1-name-across-its-circle",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const glyph = markReach(m) + 1;",
-    "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1;",
+    "old": "    const glyph = markReach(m) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
+    "new": "    const glyph = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: set clear of a hub's circle, not only its glyph",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "HUB1-neighbour-across-the-circle",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    const r = markReach(m) + 1;",
-    "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1;",
+    "old": "    const r = markReach(m) + 1; // HUB1: a hub's circle is ground its glyph holds",
+    "new": "    const r = (GLYPH_R[m.kind] ?? 4) + 1; // HUB1: a hub's circle is ground its glyph holds",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "HUB1-circle-unfilled",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n",
-    "new": "",
+    "old": "  ctx.fillStyle = c.fill;\n  ctx.fill();\n  ctx.strokeStyle = c.rim;",
+    "new": "  ctx.strokeStyle = c.rim;",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]

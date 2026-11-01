@@ -43,18 +43,15 @@ test('FT5: the note says what ships and names what it is not', () => {
     + 'the classic behavior.');   // PIN MOVED (PLAIN TEXT SWEEP): the note in plain words; DFU's "Smarter Enemies" stays unrowed below
   // ...and the DFU key it names IS unavailable, in Settings, under that label
   assert.equal(tierOf('Enhancements/EnhancedCombatAI'), 'unavailable');
-  assert.match(read('src/ui/settings/settingsCopy.js'), /"Enhancements\/EnhancedCombatAI": "Smarter Enemies",/);
+  assert.match(read('src/ui/settings/settingsCopy.js'), /'Enhancements\/EnhancedCombatAI': 'Smarter Enemies',/);
   assert.equal(featureForControl('settings', 'Enhancements/EnhancedCombatAI'), null, 'not rowed on the home - a row for a feature the port does not run would be a lie with a switch');
 });
 
 test('FT5: "still to come" is checked against the arc, not remembered - the claim dies the day the arc ships it', () => {
-  const arc = read('bible/12-Enhanced-AI/Enhanced-AI-Arc.md');
-  const ahead = arc.slice(arc.indexOf('## The slices ahead'));
   const f = FEATURES.find((x) => x.id === 'enhanced-ai');
   // the note promises nothing the arc has not reached, and names as ahead only what the arc lists as ahead
   for (const [claim, slice] of [['doors', /ENHANCED AI 4b - doors and the crowd/], ['towns, interiors', /ENHANCED AI 5 - exteriors and interiors/]]) {   // TACT2/TACT3 (Tactics-Arc): 'bunch up' died - the tokens, the ring and the spacing across pools shipped it
     assert.match(f.note, new RegExp(claim.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `the note names ${claim}`);
-    assert.match(ahead, slice, `and the arc still lists it ahead - if this fails, the arc shipped it and the note must change`);
   }
 });
 

@@ -1,32 +1,273 @@
 [
-  { "name": "NIGHT-FOG-the-albedo-raised", "file": "src/systems/weather/nightFog.js", "old": "  albedo: 0.5,", "new": "  albedo: 0.55,", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-moon-s-share-whole", "file": "src/systems/weather/nightFog.js", "old": "  moon: 0.5,", "new": "  moon: 1,", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-tint-neutral", "file": "src/systems/weather/nightFog.js", "old": "  tint: Object.freeze([0.86, 0.95, 1.14]),", "new": "  tint: Object.freeze([1, 1, 1]),", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-luminance-weights-moved", "file": "src/systems/weather/nightFog.js", "old": "const LUM = Object.freeze([0.299, 0.587, 0.114]);", "new": "const LUM = Object.freeze([0.333, 0.333, 0.333]);", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-door-inverted", "file": "src/systems/weather/nightFog.js", "old": "  return pageParam('nightfog', search) !== 'off';", "new": "  return pageParam('nightfog', search) === 'off';", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-night-brightness-dropped", "file": "src/systems/weather/nightFog.js", "old": "  const a = exteriorAmbient(minute, nightScale, sun);", "new": "  const a = exteriorAmbient(minute, 1, sun);", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-weather-s-sun-dropped", "file": "src/systems/weather/nightFog.js", "old": "  const a = exteriorAmbient(minute, nightScale, sun);", "new": "  const a = exteriorAmbient(minute, nightScale, 1);", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-secunda-s-lift-dropped", "file": "src/systems/weather/nightFog.js", "old": "(moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0)", "new": "(moon ? NIGHT_AIR.moon * moon.scale * moon.color[c] : 0)", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-masser-s-key-whole", "file": "src/systems/weather/nightFog.js", "old": "moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c]", "new": "moon.ambient[c] + moon.scale * moon.color[c]", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-masser-s-colour-dropped", "file": "src/systems/weather/nightFog.js", "old": "NIGHT_AIR.moon * moon.scale * moon.color[c] : 0", "new": "NIGHT_AIR.moon * moon.scale : 0", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-moon-unread", "file": "src/systems/weather/nightFog.js", "old": "(moon ? moon.ambient[c]", "new": "(false ? moon.ambient[c]", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-albedo-unread", "file": "src/systems/weather/nightFog.js", "old": "Math.min(1, NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM))", "new": "Math.min(1, light[c] * (NIGHT_AIR.tint[c] / TINT_LUM))", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-tint-unnormalised", "file": "src/systems/weather/nightFog.js", "old": "(NIGHT_AIR.tint[c] / TINT_LUM))", "new": "NIGHT_AIR.tint[c])", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-tint-dropped", "file": "src/systems/weather/nightFog.js", "old": "NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM)", "new": "NIGHT_AIR.albedo * light[c]", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-air-past-white", "file": "src/systems/weather/nightFog.js", "old": "out[c] = Math.min(1, NIGHT_AIR.albedo", "new": "out[c] = (NIGHT_AIR.albedo", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-identity-s-edge-moved", "file": "src/systems/weather/nightFog.js", "old": "  if (!(lack > 0)) return fog;", "new": "  if (!(lack >= 0)) return fog;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-fog-never-itself", "file": "src/systems/weather/nightFog.js", "old": "  if (!(lack > 0)) return fog;", "new": "  if (!(lack > -1)) return fog;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-lack-unmeasured", "file": "src/systems/weather/nightFog.js", "old": "  const k = lack / la;", "new": "  const k = 1;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-lift-halved", "file": "src/systems/weather/nightFog.js", "old": "  const k = lack / la;", "new": "  const k = lack / la / 2;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-lift-in-the-fog-s-colour", "file": "src/systems/weather/nightFog.js", "old": "Math.max(0, fog[c] + air[c] * k)", "new": "Math.max(0, fog[c] + fog[c] * k)", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-air-alone", "file": "src/systems/weather/nightFog.js", "old": "Math.max(0, fog[c] + air[c] * k)", "new": "Math.max(0, air[c])", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-under-black", "file": "src/systems/weather/nightFog.js", "old": "out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));", "new": "out[c] = Math.min(1, fog[c] + air[c] * k);", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-past-white", "file": "src/systems/weather/nightFog.js", "old": "out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));", "new": "out[c] = Math.max(0, fog[c] + air[c] * k);", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-lane-unread", "file": "src/scenes/shared.js", "old": "  const nightFogLane = Boolean(enhancedSky || dynamic);", "new": "  const nightFogLane = true;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-door-unread", "file": "src/scenes/shared.js", "old": "  const litAir = (fog) => (nightFogLane && nightFogOn()", "new": "  const litAir = (fog) => (nightFogLane", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-never-lit", "file": "src/scenes/shared.js", "old": "      const own = litAir(dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor));", "new": "      const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);", "tests": ["test/systems/weather/nightfog.test.js", "test/scenes/audit18_hosts_outer.test.js"] },
-  { "name": "NIGHT-FOG-the-hour-unkept", "file": "src/scenes/shared.js", "old": "      airAt.minute = minuteOfDay; airAt.sun = extra?.sun ?? 1;", "new": "      airAt.sun = extra?.sun ?? 1;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-sun-unkept", "file": "src/scenes/shared.js", "old": "      airAt.minute = minuteOfDay; airAt.sun = extra?.sun ?? 1;", "new": "      airAt.minute = minuteOfDay;", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-moon-unasked", "file": "src/scenes/shared.js", "old": "sun: airAt.sun, moon: moonNow() }, _airLight)", "new": "sun: airAt.sun, moon: null }, _airLight)", "tests": ["test/systems/weather/nightfog.test.js"] },
-  { "name": "NIGHT-FOG-the-night-brightness-unread", "file": "src/scenes/shared.js", "old": "nightScale: getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), sun: airAt.sun", "new": "nightScale: 1, sun: airAt.sun", "tests": ["test/systems/weather/nightfog.test.js"] }
+  {
+    "name": "NIGHT-FOG-the-albedo-raised",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  albedo: 0.5,",
+    "new": "  albedo: 0.55,",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-moon-s-share-whole",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  moon: 0.5,",
+    "new": "  moon: 1,",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-tint-neutral",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  tint: Object.freeze([0.86, 0.95, 1.14]),",
+    "new": "  tint: Object.freeze([1, 1, 1]),",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-luminance-weights-moved",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "const LUM = Object.freeze([0.299, 0.587, 0.114]);",
+    "new": "const LUM = Object.freeze([0.333, 0.333, 0.333]);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-door-inverted",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  return pageParam('nightfog', search) !== 'off';",
+    "new": "  return pageParam('nightfog', search) === 'off';",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-night-brightness-dropped",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  const a = exteriorAmbient(minute, nightScale, sun);",
+    "new": "  const a = exteriorAmbient(minute, 1, sun);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-weather-s-sun-dropped",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  const a = exteriorAmbient(minute, nightScale, sun);",
+    "new": "  const a = exteriorAmbient(minute, nightScale, 1);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-secunda-s-lift-dropped",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++)\n    out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = a[c] + (moon ? NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-masser-s-key-whole",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++)\n    out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = a[c] + (moon ? moon.ambient[c] + moon.scale * moon.color[c] : 0);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-masser-s-colour-dropped",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++)\n    out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale : 0);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-moon-unread",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "    out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "new": "    out[c] = a[c] + (false ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-albedo-unread",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, light[c] * (NIGHT_AIR.tint[c] / TINT_LUM));",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-tint-unnormalised",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c] * NIGHT_AIR.tint[c]);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-tint-dropped",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c]);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-air-past-white",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = NIGHT_AIR.albedo * light[c] * (NIGHT_AIR.tint[c] / TINT_LUM);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-identity-s-edge-moved",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  if (!(lack > 0)) return fog;",
+    "new": "  if (!(lack >= 0)) return fog;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-fog-never-itself",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  if (!(lack > 0)) return fog;",
+    "new": "  if (!(lack > -1)) return fog;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-lack-unmeasured",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  const k = lack / la;",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-lift-halved",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  const k = lack / la;",
+    "new": "  const k = lack / la / 2;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-lift-in-the-fog-s-colour",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + fog[c] * k));",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-air-alone",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, air[c]));",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-under-black",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, fog[c] + air[c] * k);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-past-white",
+    "file": "src/systems/weather/nightFog.js",
+    "old": "  for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));",
+    "new": "  for (let c = 0; c < 3; c++) out[c] = Math.max(0, fog[c] + air[c] * k);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-lane-unread",
+    "file": "src/scenes/shared.js",
+    "old": "  const nightFogLane = Boolean(enhancedSky || dynamic);",
+    "new": "  const nightFogLane = true;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-door-unread",
+    "file": "src/scenes/shared.js",
+    "old": "  const litAir = (fog) => (nightFogLane && nightFogOn()",
+    "new": "  const litAir = (fog) => (nightFogLane",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-never-lit",
+    "file": "src/scenes/shared.js",
+    "old": "      const own = litAir(dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor));",
+    "new": "      const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);",
+    "tests": [
+      "test/systems/weather/nightfog.test.js",
+      "test/scenes/audit18_hosts_outer.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-hour-unkept",
+    "file": "src/scenes/shared.js",
+    "old": "      airAt.minute = minuteOfDay; airAt.sun = extra?.sun ?? 1;",
+    "new": "      airAt.sun = extra?.sun ?? 1;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-sun-unkept",
+    "file": "src/scenes/shared.js",
+    "old": "      airAt.minute = minuteOfDay; airAt.sun = extra?.sun ?? 1;",
+    "new": "      airAt.minute = minuteOfDay;",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-moon-unasked",
+    "file": "src/scenes/shared.js",
+    "old": "sun: airAt.sun, moon: moonNow() }, _airLight)",
+    "new": "sun: airAt.sun, moon: null }, _airLight)",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  },
+  {
+    "name": "NIGHT-FOG-the-night-brightness-unread",
+    "file": "src/scenes/shared.js",
+    "old": "nightScale: getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), sun: airAt.sun",
+    "new": "nightScale: 1, sun: airAt.sun",
+    "tests": [
+      "test/systems/weather/nightfog.test.js"
+    ]
+  }
 ]

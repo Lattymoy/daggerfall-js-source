@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-DISC28-MO4-the-read-finds-nothing",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "return Number.isFinite(d) ? at[1] + 0.2 - d : null;",
-    "new": "return null;",
+    "old": "  return Number.isFinite(d) ? at[1] + 0.2 - d : null;",
+    "new": "  return null;",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DISC28-MO4-the-read-from-the-marker-itself",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "collider.raycast([at[0], at[1] + 0.2, at[2]]",
-    "new": "collider.raycast([at[0], at[1], at[2]]",
+    "old": "  const d = collider.raycast([at[0], at[1] + 0.2, at[2]], [0, -1, 0], idleH / 2 + 0.4);",
+    "new": "  const d = collider.raycast([at[0], at[1], at[2]], [0, -1, 0], idleH / 2 + 0.4);",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-DISC28-MO4-the-door-hangs-given-feet",
     "file": "src/characters/enemy/enemyAnchor.js",
-    "old": "return feetGiven ? [at[0], at[1], at[2]] : ",
-    "new": "return ",
+    "old": "  return feetGiven ? [at[0], at[1], at[2]] : flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
+    "new": "  return flyerSpawnFeet(at, idleH, floorUnderHang(collider, at, idleH));",
     "tests": [
       "test/characters/enemy/disc28_flyer.test.js"
     ]

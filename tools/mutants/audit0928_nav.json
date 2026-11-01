@@ -2,8 +2,8 @@
   {
     "name": "N2-the-players-feet-leave-the-union-when-they-do-not-land",
     "file": "src/ai/nav/navBake.js",
-    "old": "const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ",
-    "new": "const landed = [...feet, ",
+    "old": "  const landed = [...(feet.length ? feet : [regionAnchor(anchor)]), ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
+    "new": "  const landed = [...feet, ...landAnchors(chf, anchors ?? [])]; // Feet that do not land (a load while swimming or levitating) stay in the union - the foes' alone culled the player's own room",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/ai/nav/enhancedAI.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "N4-the-workers-word-dropped",
     "file": "src/ai/nav/navClient.js",
-    "old": "{ failed = e; return null; });",
-    "new": "{ return null; });",
+    "old": "        failed = e;\n        return null;",
+    "new": "        return null;",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "N4-a-small-soup-bakes-here-in-silence",
     "file": "src/ai/nav/navClient.js",
-    "old": "    if (!result && this._hadWorker) console.warn(`[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`);",
-    "new": "",
+    "old": "    if (!result && this._hadWorker)\n      console.warn(\n        `[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`,\n      ); // A small soup's fallback says so",
+    "new": "    // A small soup's fallback says so",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "N5-a-cache-hit-re-cuts-a-dead-workers-large-soup-here",
     "file": "src/ai/nav/navClient.js",
-    "old": "if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {",
-    "new": "if (false) {",
+    "old": "    if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "N8-the-vendored-key-spelled-from-the-wrong-folder",
     "file": "src/systems/handheldTorches.js",
-    "old": "table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
-    "new": "table == null || `../vendor/handheld-torches/Textures/${file}` in table;",
+    "old": "export const inVendoredSet = (table, file) =>\n  table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
+    "new": "export const inVendoredSet = (table, file) => table == null || `../vendor/handheld-torches/Textures/${file}` in table;",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/systems/fieldconsole1.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "N8-the-vendored-set-read-inside-out",
     "file": "src/systems/handheldTorches.js",
-    "old": "table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
-    "new": "table == null || !(`../../vendor/handheld-torches/Textures/${file}` in table);",
+    "old": "  table == null || `../../vendor/handheld-torches/Textures/${file}` in table;",
+    "new": "  table == null || !(`../../vendor/handheld-torches/Textures/${file}` in table);",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js",
       "test/systems/fieldconsole1.test.js"
@@ -97,8 +97,8 @@
   {
     "name": "N8-the-png-decode-reads-back-a-gpu-canvas",
     "file": "src/systems/textureReplacement.js",
-    "old": "const ctx = canvas.getContext('2d', { willReadFrequently: true });",
-    "new": "const ctx = canvas.getContext('2d');",
+    "old": "  const ctx = canvas.getContext('2d', { willReadFrequently: true });",
+    "new": "  const ctx = canvas.getContext('2d');",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "N8-the-sdf-atlas-first-context-unhinted",
     "file": "src/ui/glyphFace.js",
-    "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true });",
-    "new": "    const ctx = canvas?.getContext('2d');",
+    "old": "    const ctx = canvas?.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload",
+    "new": "    const ctx = canvas?.getContext('2d'); // FIELD 2026-09-27 (main's buildSdfFace): the page is read back at each upload",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "N8-the-save-shot-unhinted",
     "file": "src/ui/saveWindow.js",
-    "old": "const ctx = c.getContext('2d', { willReadFrequently: true });",
-    "new": "const ctx = c.getContext('2d');",
+    "old": "        const ctx = c.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)",
+    "new": "        const ctx = c.getContext('2d'); // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "N8-the-paperdoll-skin-unhinted",
     "file": "src/tools/paperdoll/skin.js",
-    "old": "const g2 = c.getContext('2d', { willReadFrequently: true });",
-    "new": "const g2 = c.getContext('2d');",
+    "old": "      const g2 = c.getContext('2d', { willReadFrequently: true });",
+    "new": "      const g2 = c.getContext('2d');",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "N8-the-paperdoll-beast-skin-unhinted",
     "file": "src/tools/paperdoll/skin.js",
-    "old": "bc.getContext('2d', { willReadFrequently: true }).drawImage(bi, 0, 0);",
-    "new": "bc.getContext('2d').drawImage(bi, 0, 0);",
+    "old": "        bc.getContext('2d', { willReadFrequently: true }).drawImage(bi, 0, 0);",
+    "new": "        bc.getContext('2d').drawImage(bi, 0, 0);",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]

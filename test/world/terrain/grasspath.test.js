@@ -7,7 +7,7 @@ import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
 import { createLookupTable } from '../../../src/world/terrain/terrainTiles.js';
 import { waterCorners, WATER_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
 import { tilemapRectHasWater } from '../../../src/render/waterSurface.js';
-import { waterVotes } from '../../../src/world/water/waterLevel.js';   // PIN MOVED (WATER-LEVEL): the tiles mark the water the sheet stands at
+import { waterVotes } from '../../../src/world/water/waterLevel.js';
 import { discSlotCount, cellKey, createGrassField, GRASS_CELL, LAB_GRASS } from '../../../src/render/labGrass.js';
 import { grassRecordsOf } from '../../../src/render/labGrass.js';
 import { DIR } from '../../../src/world/road/roadNetwork.js';
@@ -319,6 +319,6 @@ test('WATER-DRAW1: the draw and the feet ask different questions, and only the d
 test('WATER-DRAW1: the tile probe names the record under the player', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /window\.__tileHere = \(\) => \{/);
-  assert.match(w, /record: byte >> 2, transform: byte & 3, byte,/, 'the number a screenshot cannot give');
-  assert.match(w, /drawnWet: waterCorners\(byte, WATER_DRAW_MASK_TABLE\), feetWet: waterCorners\(byte\),/, 'and both answers, so the two questions can be told apart');
+  assert.match(w, /record: byte >> 2,\n\s*transform: byte & 3,\n\s*byte,/, 'the number a screenshot cannot give');
+  assert.match(w, /drawnWet: waterCorners\(byte, WATER_DRAW_MASK_TABLE\),\n\s*feetWet: waterCorners\(byte\),/, 'and both answers, so the two questions can be told apart');
 });

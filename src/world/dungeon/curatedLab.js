@@ -12,18 +12,35 @@ export const LAB_CURRENT_KEY = 'delve.lab.current';
 /** A point to the centimetre, as a record keeps it. */
 export const labRound = (p) => p.map((v) => Math.round(v * 100) / 100);
 /** A draft of `rec`: number 0, its lists its own, the number it ships as kept (`from` - AUDIT DLV5-6 M5). */
-export const labDraftOf = (rec) => ({ id: rec.id, n: 0, from: rec.n, base: rec.base, types: [...rec.types], drop: (rec.drop ?? []).map((d) => ({ ...d })), add: (rec.add ?? []).map((a) => ({ ...a })), anchors: (rec.anchors ?? []).map((a) => ({ ...a })) });
+export const labDraftOf = (rec) => ({
+  id: rec.id,
+  n: 0,
+  from: rec.n,
+  base: rec.base,
+  types: [...rec.types],
+  drop: (rec.drop ?? []).map((d) => ({ ...d })),
+  add: (rec.add ?? []).map((a) => ({ ...a })),
+  anchors: (rec.anchors ?? []).map((a) => ({ ...a })),
+});
 /** The types a field says (`1, 2, 11`), or null for one that says none or names no number. */
 export function labTypes(text) {
-  const t = String(text ?? '').split(/[\s,]+/).filter(Boolean).map(Number);
+  const t = String(text ?? '')
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map(Number);
   return t.length && t.every(Number.isInteger) ? [...new Set(t)] : null;
 }
 /** The drafts this browser keeps, by id, and the open one's id. Never throws: a browser that keeps none keeps none. */
 export function labKept(storage) {
   try {
     const drafts = JSON.parse(storage?.getItem(LAB_DRAFTS_KEY) ?? 'null');
-    return { drafts: drafts && typeof drafts === 'object' ? drafts : {}, current: storage?.getItem(LAB_CURRENT_KEY) ?? null };
-  } catch { return { drafts: {}, current: null }; }
+    return {
+      drafts: drafts && typeof drafts === 'object' ? drafts : {},
+      current: storage?.getItem(LAB_CURRENT_KEY) ?? null,
+    };
+  } catch {
+    return { drafts: {}, current: null };
+  }
 }
 /** THE KEEP: `draft` kept under its id and opened - or why not, by name (the law's word on it, or no storage). A draft the
  *  law refuses is never kept, so the lab always opens on one it can lay. */
@@ -35,13 +52,21 @@ export function labKeep(storage, draft) {
     storage.setItem(LAB_DRAFTS_KEY, JSON.stringify({ ...drafts, [draft.id]: draft }));
     storage.setItem(LAB_CURRENT_KEY, draft.id);
     return null;
-  } catch { return 'this browser keeps no storage: the lab needs it'; }
+  } catch {
+    return 'this browser keeps no storage: the lab needs it';
+  }
 }
 /** A new draft: its id, its base, its first type. */
 export const labNew = (id, base, type) => ({ id, n: 0, base, types: [type], drop: [], add: [], anchors: [] });
 /** The draft with `item` added to list `list` (`add`, `drop` or `anchors`) at `at` - or its refusal, by name. */
 export function labPut(draft, list, item, at) {
-  const next = { ...draft, [list]: [...(draft[list] ?? []), { ...item, at: labRound(at), ...(list === 'anchors' ? { vault: labRound(item.vault ?? at) } : {}) }] };
+  const next = {
+    ...draft,
+    [list]: [
+      ...(draft[list] ?? []),
+      { ...item, at: labRound(at), ...(list === 'anchors' ? { vault: labRound(item.vault ?? at) } : {}) },
+    ],
+  };
   const why = curatedRecordError(next);
   return why ? { why } : { draft: next };
 }
@@ -65,20 +90,42 @@ export function labBorders(template) {
  *  as none, so no exit door of its base stands - the bench stands the player itself). No map id: no room keys off it. */
 export function labLocation(draft, template) {
   const borders = labBorders(template);
-  const sides = [[0, -1], [-1, 0], [1, 0], [0, 1]];
+  const sides = [
+    [0, -1],
+    [-1, 0],
+    [1, 0],
+    [0, 1],
+  ];
   return {
-    ...template, name: `Delve lab: ${draft.id}`, locationIndex: -1, spawned: false, country: undefined, delveLab: true,
+    ...template,
+    name: `Delve lab: ${draft.id}`,
+    locationIndex: -1,
+    spawned: false,
+    country: undefined,
+    delveLab: true,
     mapTableData: { ...template.mapTableData, mapId: 0, dungeonType: draft.types[0] },
     dungeon: {
       ...template.dungeon,
-      blocks: [{ x: 0, z: 0, blockName: curatedBlockName(0), isStartingBlock: false }, ...borders.map((n, k) => ({ x: sides[k][0], z: sides[k][1], blockName: n, isStartingBlock: false }))],
+      blocks: [
+        { x: 0, z: 0, blockName: curatedBlockName(0), isStartingBlock: false },
+        ...borders.map((n, k) => ({ x: sides[k][0], z: sides[k][1], blockName: n, isStartingBlock: false })),
+      ],
     },
   };
 }
 /** The record a draft ships as, numbered `n`: its keys in the record's order, two spaces, a newline at its end. */
 export function labExport(draft, n) {
-  const rec = { id: draft.id, n, base: draft.base, types: draft.types, drop: draft.drop ?? [], add: draft.add ?? [], anchors: draft.anchors ?? [] };
-  const why = curatedRecordError(rec) ?? (n === 0 ? 'n: 0 is the lab\'s own draft - a shipped record is 1 or more' : null);   // AUDIT DLV5-6: a 0 shipped stops every load
+  const rec = {
+    id: draft.id,
+    n,
+    base: draft.base,
+    types: draft.types,
+    drop: draft.drop ?? [],
+    add: draft.add ?? [],
+    anchors: draft.anchors ?? [],
+  };
+  const why =
+    curatedRecordError(rec) ?? (n === 0 ? "n: 0 is the lab's own draft - a shipped record is 1 or more" : null); // AUDIT DLV5-6: a 0 shipped stops every load
   if (why) return { why };
   return { text: `${JSON.stringify(rec, null, 2)}\n` };
 }

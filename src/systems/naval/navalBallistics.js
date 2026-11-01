@@ -24,7 +24,7 @@
 // receiver scatter one volley the same way; `scatter` bends a lay by up to its spread in each axis, the sum of two
 // uniform draws (a triangular spread: most shots near the lay, a few at its edge).
 
-import { mulberry32 } from '../../combat/blood/bloodArt.js';   // the port's one leaf mulberry32 (no imports behind it)
+import { mulberry32 } from '../../combat/blood/bloodArt.js'; // the port's one leaf mulberry32 (no imports behind it)
 
 /** Unity's Physics.gravity magnitude, the world's metres (DFU's Unity units are metres). */
 export const SHOT_GRAVITY = 9.81;
@@ -43,7 +43,8 @@ const DEG = Math.PI / 180;
  */
 export function launchVelocity(dir, elevation, speed, carry = null) {
   const l = Math.hypot(dir[0], dir[2]) || 1;
-  const c = Math.cos(elevation) * speed / l, s = Math.sin(elevation) * speed;
+  const c = (Math.cos(elevation) * speed) / l,
+    s = Math.sin(elevation) * speed;
   return [dir[0] * c + (carry?.[0] ?? 0), s + (carry?.[1] ?? 0), dir[2] * c + (carry?.[2] ?? 0)];
 }
 
@@ -56,7 +57,9 @@ export function shotPosition(p0, v0, t, g = SHOT_GRAVITY, out = [0, 0, 0]) {
 }
 /** Its velocity then. */
 export function shotVelocity(v0, t, g = SHOT_GRAVITY, out = [0, 0, 0]) {
-  out[0] = v0[0]; out[1] = v0[1] - g * t; out[2] = v0[2];
+  out[0] = v0[0];
+  out[1] = v0[1] - g * t;
+  out[2] = v0[2];
   return out;
 }
 
@@ -139,8 +142,12 @@ export function fallArc(p0, land, n) {
  */
 export function orientedBox(m, center, extent) {
   const col = (i) => [m[i * 4], m[i * 4 + 1], m[i * 4 + 2]];
-  const cx = col(0), cy = col(1), cz = col(2);
-  const lx = Math.hypot(...cx) || 1, ly = Math.hypot(...cy) || 1, lz = Math.hypot(...cz) || 1;
+  const cx = col(0),
+    cy = col(1),
+    cz = col(2);
+  const lx = Math.hypot(...cx) || 1,
+    ly = Math.hypot(...cy) || 1,
+    lz = Math.hypot(...cz) || 1;
   const c = [
     m[0] * center[0] + m[4] * center[1] + m[8] * center[2] + m[12],
     m[1] * center[0] + m[5] * center[1] + m[9] * center[2] + m[13],
@@ -148,7 +155,9 @@ export function orientedBox(m, center, extent) {
   ];
   return {
     c,
-    ax: [cx[0] / lx, cx[1] / lx, cx[2] / lx], ay: [cy[0] / ly, cy[1] / ly, cy[2] / ly], az: [cz[0] / lz, cz[1] / lz, cz[2] / lz],
+    ax: [cx[0] / lx, cx[1] / lx, cx[2] / lx],
+    ay: [cy[0] / ly, cy[1] / ly, cy[2] / ly],
+    az: [cz[0] / lz, cz[1] / lz, cz[2] / lz],
     h: [Math.abs(extent[0] * lx), Math.abs(extent[1] * ly), Math.abs(extent[2] * lz)],
   };
 }
@@ -165,22 +174,34 @@ export function toBoxLocal(box, p) {
  * `{ t, point, local }` - `t` the segment's fraction (0 when `a` starts inside) - or null.
  */
 export function segmentBoxEntry(a, b, box, radius = 0) {
-  const la = toBoxLocal(box, a), lb = toBoxLocal(box, b);
-  let t0 = 0, t1 = 1;
+  const la = toBoxLocal(box, a),
+    lb = toBoxLocal(box, b);
+  let t0 = 0,
+    t1 = 1;
   for (let i = 0; i < 3; i++) {
-    const h = box.h[i] + radius, d = lb[i] - la[i];
+    const h = box.h[i] + radius,
+      d = lb[i] - la[i];
     if (Math.abs(d) < 1e-9) {
       if (la[i] < -h || la[i] > h) return null;
       continue;
     }
-    let u = (-h - la[i]) / d, w = (h - la[i]) / d;
-    if (u > w) { const s = u; u = w; w = s; }
+    let u = (-h - la[i]) / d,
+      w = (h - la[i]) / d;
+    if (u > w) {
+      const s = u;
+      u = w;
+      w = s;
+    }
     if (u > t0) t0 = u;
     if (w < t1) t1 = w;
     if (t0 > t1) return null;
   }
   const point = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0, a[2] + (b[2] - a[2]) * t0];
-  return { t: t0, point, local: [la[0] + (lb[0] - la[0]) * t0, la[1] + (lb[1] - la[1]) * t0, la[2] + (lb[2] - la[2]) * t0] };
+  return {
+    t: t0,
+    point,
+    local: [la[0] + (lb[0] - la[0]) * t0, la[1] + (lb[1] - la[1]) * t0, la[2] + (lb[2] - la[2]) * t0],
+  };
 }
 
 /** A segment's crossing DOWN through height `h`: its fraction, or null. */
@@ -200,11 +221,15 @@ export const volleyRandom = (seed) => mulberry32(seed >>> 0);
  * @param {() => number} rand
  */
 export function scatter(dir, elevation, yawSpreadDeg, pitchSpreadDeg, rand) {
-  const tri = () => rand() + rand() - 1;   // in (-1, 1), peaked at 0
+  const tri = () => rand() + rand() - 1; // in (-1, 1), peaked at 0
   const yaw = tri() * yawSpreadDeg * DEG;
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = Math.cos(yaw),
+    s = Math.sin(yaw);
   // about +y: x' = x c + z s, z' = -x s + z c (the port's yaw: forward (sin a, 0, cos a))
-  return { dir: [dir[0] * c + dir[2] * s, 0, -dir[0] * s + dir[2] * c], elevation: elevation + tri() * pitchSpreadDeg * DEG };
+  return {
+    dir: [dir[0] * c + dir[2] * s, 0, -dir[0] * s + dir[2] * c],
+    elevation: elevation + tri() * pitchSpreadDeg * DEG,
+  };
 }
 
 /** The unit horizontal of a vector (its y dropped), or null for a vertical one. */

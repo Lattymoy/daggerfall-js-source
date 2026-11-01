@@ -2,8 +2,8 @@
   {
     "name": "HEARTH-SIBLING-buyer-only",
     "file": "server-account/src/festival.js",
-    "old": "h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
-    "new": "h.guild_id IS NULL AND h.char_id = ?4)`;",
+    "old": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND h.char_id = ?4)`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HEARTH-SIBLING-deed-ignored",
     "file": "server-account/src/festival.js",
-    "old": "h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
-    "new": "h.guild_id IS NULL AND (h.deed >= 0 OR h.char_id = ?4))`;",
+    "old": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed >= 0 OR h.char_id = ?4))`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HEARTH-SIBLING-stored-under-setter",
     "file": "server-account/src/festival.js",
-    "old": "SELECT ?1, ?2, ?3, ${KEEPER}, 0, ?4 WHERE changes() > 0",
-    "new": "SELECT ?1, ?2, ?3, 'char-other', 0, ?4 WHERE changes() > 0",
+    "old": "        `INSERT INTO fest_offerings (map_id, building_key, player, char_id, stock, placed_at) SELECT ?1, ?2, ?3, ${KEEPER}, 0, ?4 WHERE changes() > 0",
+    "new": "        `INSERT INTO fest_offerings (map_id, building_key, player, char_id, stock, placed_at) SELECT ?1, ?2, ?3, 'char-other', 0, ?4 WHERE changes() > 0",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HEARTH-SIBLING-take-in-by-character",
     "file": "server-account/src/festival.js",
-    "old": "const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3';",
-    "new": "const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3 AND char_id = ?3';",
+    "old": "  const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3';",
+    "new": "  const key = 'map_id = ?1 AND building_key = ?2 AND player = ?3 AND char_id = ?3';",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-FB1029e-H4-fill-anywhere",
     "file": "server-account/src/festival.js",
-    "old": "  if (!(await db.prepare(`SELECT ${OWNED_HOME} AS own`).bind(mapId, buildingKey, player.id, character).first())?.own) return { error: 'home' };\n  const row = await db.prepare('SELECT o.stock",
-    "new": "  const row = await db.prepare('SELECT o.stock",
+    "old": "  // AUDIT FB1029e H4: filled only at a home the set-out could stand at - a deed's home its holder's alone\n  if (!(await db.prepare(`SELECT ${OWNED_HOME} AS own`).bind(mapId, buildingKey, player.id, character).first())?.own)\n    return { error: 'home' };\n  const row = await db",
+    "new": "  // AUDIT FB1029e H4: filled only at a home the set-out could stand at - a deed's home its holder's alone\n  const row = await db",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],

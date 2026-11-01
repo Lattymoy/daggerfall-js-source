@@ -29,8 +29,8 @@
   {
     "name": "SERPENT5-grants-to-a-ship-that-stood",
     "file": "server-account/src/serpents.js",
-    "old": "const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));",
-    "new": "const draw = rand(new Uint8Array(4));",
+    "old": "  const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));",
+    "new": "  const draw = rand(new Uint8Array(4));",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SERPENT5-laid-by-any-claim",
     "file": "server-account/src/serpents.js",
-    "old": "serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END",
-    "new": "serpent_honours = serpent_honours | ?10",
+    "old": "         serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END",
+    "new": "         serpent_honours = serpent_honours | ?10",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SERPENT5-new-when-held",
     "file": "server-account/src/serpents.js",
-    "old": "titleNew: title && !(prior & SERPENT_HONOUR_TITLE),",
-    "new": "titleNew: title,",
+    "old": "    titleNew: title && !(prior & SERPENT_HONOUR_TITLE),",
+    "new": "    titleNew: title,",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SERPENT5-the-kills-row-unwritten",
     "file": "server-account/src/serpents.js",
-    "old": "title ? 1 : 0, aura ? 1 : 0),",
-    "new": "0, 0),",
+    "old": "      .bind(\n        c.d,\n        player.id,\n        c.b,\n        c.h,\n        character,\n        xp,\n        nonce,\n        nowS,\n        embers,\n        c.m ? JSON.stringify(c.m) : null,\n        title ? 1 : 0,\n        aura ? 1 : 0,\n      ), // INT14: the relay's count, kept; SERPENT5: its grants",
+    "new": "      .bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null, 0, 0), // INT14: the relay's count, kept; SERPENT5: its grants",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SERPENT5-held-off-any-bit",
     "file": "server-account/src/titles.js",
-    "old": "(Number(player?.serpent_honours) & SERPENT_HONOUR_TITLE)) held.push('coilbreaker');",
-    "new": "Number(player?.serpent_honours)) held.push('coilbreaker');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.serpent_honours) & SERPENT_HONOUR_TITLE)\n    held.push('coilbreaker');",
+    "new": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.serpent_honours)) held.push('coilbreaker');",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SERPENT5-held-by-a-guest",
     "file": "server-account/src/titles.js",
-    "old": "if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');",
-    "new": "if (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA) held.push('maelstrom');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)\n    held.push('maelstrom');",
+    "new": "  if (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA) held.push('maelstrom');",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SERPENT5-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  maelstrom: 'The Maelstrom',",
-    "new": "  maelstrom: 'Maelstrom',",
+    "old": "  maelstrom: 'The Maelstrom', // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty",
+    "new": "  maelstrom: 'Maelstrom', // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SERPENT5-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "maelstrom: 'coilbreaker', beaconlight:",
-    "new": "maelstrom: 'hourbreaker', beaconlight:",
+    "old": "  maelstrom: 'coilbreaker',",
+    "new": "  maelstrom: 'hourbreaker',",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SERPENT5-popped-when-held",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.titleNew === true) hear(announce,",
-    "new": "if (answer.data.title === true) hear(announce,",
+    "old": "          if (answer.data.titleNew === true) hear(announce, 'title', SERPENT_HONOUR_KEYS.title);",
+    "new": "          if (answer.data.title === true) hear(announce, 'title', SERPENT_HONOUR_KEYS.title);",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "SERPENT5-the-keys",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });",
-    "new": "Object.freeze({ title: 'coilbreaker', aura: 'turninghour' });",
+    "old": "export const SERPENT_HONOUR_KEYS = Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });",
+    "new": "export const SERPENT_HONOUR_KEYS = Object.freeze({ title: 'coilbreaker', aura: 'turninghour' });",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SERPENT5-AUDIT-aura-new-when-held",
     "file": "server-account/src/serpents.js",
-    "old": "auraNew: aura && !(prior & SERPENT_HONOUR_AURA),",
-    "new": "auraNew: aura,",
+    "old": "    auraNew: aura && !(prior & SERPENT_HONOUR_AURA), // SERPENT5",
+    "new": "    auraNew: aura, // SERPENT5",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "SERPENT5-AUDIT-aura-popped-when-held",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.auraNew === true) hear(announce,",
-    "new": "if (answer.data.aura === true) hear(announce,",
+    "old": "          if (answer.data.auraNew === true) hear(announce, 'aura', SERPENT_HONOUR_KEYS.aura);",
+    "new": "          if (answer.data.aura === true) hear(announce, 'aura', SERPENT_HONOUR_KEYS.aura);",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "SERPENT5-AUDIT-an-older-service-says-the-maelstrom",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());",
-    "new": "if (answer.data.aura !== false) say(SERPENT_CLAIM_TEXT.aura());",
+    "old": "          if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());",
+    "new": "          if (answer.data.aura !== false) say(SERPENT_CLAIM_TEXT.aura());",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "SERPENT5-AUDIT-the-kills-row-aura-is-the-title",
     "file": "server-account/src/serpents.js",
-    "old": "title ? 1 : 0, aura ? 1 : 0),",
-    "new": "title ? 1 : 0, title ? 1 : 0),",
+    "old": "        aura ? 1 : 0,",
+    "new": "        title ? 1 : 0,",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]

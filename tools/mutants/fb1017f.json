@@ -262,8 +262,8 @@
   {
     "name": "GROUND-GATE-print-mountains",
     "file": "src/world/landforms.js",
-    "old": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true })",
-    "new": "peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160, sharp: true })",
+    "old": "    mountain: Object.freeze({ low: 16, high: 112, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true }) }),",
+    "new": "    mountain: Object.freeze({ low: 16, high: 112, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160, sharp: true }) }),",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "GROUND-GATE-print-desert",
     "file": "src/world/landforms.js",
-    "old": "desert: Object.freeze({ low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 })",
-    "new": "desert: Object.freeze({ low: 6, high: 24, upland: 1.3, shape: 'desert', rockFrom: 0.3 })",
+    "old": "    desert: Object.freeze({ low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 }),",
+    "new": "    desert: Object.freeze({ low: 6, high: 24, upland: 1.3, shape: 'desert', rockFrom: 0.3 }),",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ],

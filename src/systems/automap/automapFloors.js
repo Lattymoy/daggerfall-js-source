@@ -135,14 +135,21 @@ export const LINK_JOIN = 2;
 /** `matrix` is the row's placement (a column-major 4x4, the port's own
  *  convention); a row with none is already in world space. */
 function tx(m, x, y, z, out) {
-  if (!m) { out[0] = x; out[1] = y; out[2] = z; return out; }
+  if (!m) {
+    out[0] = x;
+    out[1] = y;
+    out[2] = z;
+    return out;
+  }
   out[0] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[1] = m[1] * x + m[5] * y + m[9] * z + m[13];
   out[2] = m[2] * x + m[6] * y + m[10] * z + m[14];
   return out;
 }
 
-const A = [0, 0, 0], B = [0, 0, 0], C = [0, 0, 0];
+const A = [0, 0, 0],
+  B = [0, 0, 0],
+  C = [0, 0, 0];
 
 /** DISC22-G: every row's floor triangles, computed ONCE. The rows are the reveal index's own objects, built once
  *  per level, so a row's triangles are a pure function of it; before this every open of the map (and every
@@ -153,12 +160,16 @@ const _rowTris = new WeakMap();
  *  flips its y with the positions', :135/:139), which is what DFU lights the face by. The upper 3x3 is a rotation
  *  (a placement never shears), so it turns a normal as it turns a point. */
 function fileUp(m, n, i0, i1, i2) {
-  let x = n[i0] + n[i1] + n[i2], y = n[i0 + 1] + n[i1 + 1] + n[i2 + 1], z = n[i0 + 2] + n[i1 + 2] + n[i2 + 2];
+  let x = n[i0] + n[i1] + n[i2],
+    y = n[i0 + 1] + n[i1 + 1] + n[i2 + 1],
+    z = n[i0 + 2] + n[i1 + 2] + n[i2 + 2];
   if (m) {
     const ny = m[1] * x + m[5] * y + m[9] * z;
     const nx = m[0] * x + m[4] * y + m[8] * z;
     const nz = m[2] * x + m[6] * y + m[10] * z;
-    x = nx; y = ny; z = nz;
+    x = nx;
+    y = ny;
+    z = nz;
   }
   const len = Math.hypot(x, y, z);
   return len > 0 ? y / len : NaN;
@@ -166,25 +177,32 @@ function fileUp(m, n, i0, i1, i2) {
 
 /** One row's floor triangles (uncached - see floorTriangles). */
 function rowFloorTriangles(r, out) {
-  const p = r?.positions, idx = r?.indices;
+  const p = r?.positions,
+    idx = r?.indices;
   if (!p || !idx) return out;
   const m = r.matrix ?? null;
   const normals = r.normals ?? null;
   for (let i = 0; i + 2 < idx.length; i += 3) {
-    const i0 = idx[i] * 3, i1 = idx[i + 1] * 3, i2 = idx[i + 2] * 3;
+    const i0 = idx[i] * 3,
+      i1 = idx[i + 1] * 3,
+      i2 = idx[i + 2] * 3;
     tx(m, p[i0], p[i0 + 1], p[i0 + 2], A);
     tx(m, p[i1], p[i1 + 1], p[i1 + 2], B);
     tx(m, p[i2], p[i2 + 1], p[i2 + 2], C);
     // the cross product's own length IS twice the area, and its y
     // over that length is the normal's y - one square root, and the
     // facing and the weight both fall out of it
-    const ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2];
-    const vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
+    const ux = B[0] - A[0],
+      uy = B[1] - A[1],
+      uz = B[2] - A[2];
+    const vx = C[0] - A[0],
+      vy = C[1] - A[1],
+      vz = C[2] - A[2];
     const nx = uy * vz - uz * vy;
     const ny = uz * vx - ux * vz;
     const nz = ux * vy - uy * vx;
     const len = Math.hypot(nx, ny, nz);
-    if (!(len > 0)) continue;              // degenerate: no facing to read
+    if (!(len > 0)) continue; // degenerate: no facing to read
     const area = len / 2;
     if (area < MIN_TRI_AREA) continue;
     // DISC22-G: THE FILE SAYS WHICH WAY A FACE LOOKS. EM2 took the geometric normal's ABS on the premise that the
@@ -198,9 +216,16 @@ function rowFloorTriangles(r, out) {
     out.push({
       y: (A[1] + B[1] + C[1]) / 3,
       area,
-      flat: up >= LEVEL_NY,   // may it vote for a storey? (the header's ramp note)
-      ax: A[0], az: A[2], bx: B[0], bz: B[2], cx: C[0], cz: C[2],
-      ay: A[1], by: B[1], cy: C[1],   // DISC25-A: the corners' heights, so a cell reads the surface where it stands
+      flat: up >= LEVEL_NY, // may it vote for a storey? (the header's ramp note)
+      ax: A[0],
+      az: A[2],
+      bx: B[0],
+      bz: B[2],
+      cx: C[0],
+      cz: C[2],
+      ay: A[1],
+      by: B[1],
+      cy: C[1], // DISC25-A: the corners' heights, so a cell reads the surface where it stands
     });
   }
   return out;
@@ -219,7 +244,10 @@ export function floorTriangles(rows) {
   for (const r of rows ?? []) {
     if (!r || typeof r !== 'object') continue;
     let mine = _rowTris.get(r);
-    if (!mine) { mine = rowFloorTriangles(r, []); _rowTris.set(r, mine); }
+    if (!mine) {
+      mine = rowFloorTriangles(r, []);
+      _rowTris.set(r, mine);
+    }
     for (const t of mine) out.push(t);
   }
   return out;
@@ -253,15 +281,19 @@ export function deriveFloors(tris, { minGap = FLOOR_MIN_GAP, minArea = STOREY_MI
   const levels = [];
   for (const t of sorted) {
     const last = levels[levels.length - 1];
-    if (last && t.y - last.hi <= LEVEL_TOL) { last.sum += t.y * t.area; last.area += t.area; last.hi = t.y; }
-    else levels.push({ sum: t.y * t.area, area: t.area, lo: t.y, hi: t.y, y: 0 });
+    if (last && t.y - last.hi <= LEVEL_TOL) {
+      last.sum += t.y * t.area;
+      last.area += t.area;
+      last.hi = t.y;
+    } else levels.push({ sum: t.y * t.area, area: t.area, lo: t.y, hi: t.y, y: 0 });
   }
   for (const l of levels) l.y = l.area > 0 ? l.sum / l.area : l.lo;
   /** the runs: levels chained by the headroom rule, EM2's own */
   const runs = [];
   for (const l of levels) {
     const last = runs[runs.length - 1];
-    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);
+    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l);
+    else runs.push([l]);
   }
   const storeys = [];
   for (const run of runs) {
@@ -271,21 +303,34 @@ export function deriveFloors(tris, { minGap = FLOOR_MIN_GAP, minArea = STOREY_MI
     }
     if (!anchors.length) {
       // a run with no floor of its own is one storey, meaned by area (EM2's reading)
-      const sum = run.reduce((n, l) => n + l.sum, 0), area = run.reduce((n, l) => n + l.area, 0);
+      const sum = run.reduce((n, l) => n + l.sum, 0),
+        area = run.reduce((n, l) => n + l.area, 0);
       storeys.push({ y: area > 0 ? sum / area : run[0].lo, y0: run[0].lo, y1: run[run.length - 1].hi });
       continue;
     }
     anchors.sort((a, b) => a.y - b.y);
     const mine = anchors.map((a) => ({ a, levels: [] }));
     for (const l of run) {
-      let best = mine[0], bestD = Infinity;
-      for (const m of mine) { const d = Math.abs(m.a.y - l.y); if (d < bestD) { bestD = d; best = m; } }
+      let best = mine[0],
+        bestD = Infinity;
+      for (const m of mine) {
+        const d = Math.abs(m.a.y - l.y);
+        if (d < bestD) {
+          bestD = d;
+          best = m;
+        }
+      }
       best.levels.push(l);
     }
     for (const { a, levels: ls } of mine) {
       const near = ls.filter((l) => Math.abs(l.y - a.y) <= STOREY_NEAR);
-      const sum = near.reduce((n, l) => n + l.sum, 0), area = near.reduce((n, l) => n + l.area, 0);
-      storeys.push({ y: area > 0 ? sum / area : a.y, y0: Math.min(...ls.map((l) => l.lo)), y1: Math.max(...ls.map((l) => l.hi)) });
+      const sum = near.reduce((n, l) => n + l.sum, 0),
+        area = near.reduce((n, l) => n + l.area, 0);
+      storeys.push({
+        y: area > 0 ? sum / area : a.y,
+        y0: Math.min(...ls.map((l) => l.lo)),
+        y1: Math.max(...ls.map((l) => l.hi)),
+      });
     }
   }
   return storeys.map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index + 1}` }));
@@ -295,10 +340,14 @@ export function deriveFloors(tris, { minGap = FLOOR_MIN_GAP, minArea = STOREY_MI
  *  triangles split between the two it joins, which is a ramp. */
 export function floorAt(floors, y) {
   if (!floors?.length) return -1;
-  let best = 0, bestD = Infinity;
+  let best = 0,
+    bestD = Infinity;
   for (let i = 0; i < floors.length; i++) {
     const d = Math.abs(floors[i].y - y);
-    if (d < bestD) { bestD = d; best = i; }
+    if (d < bestD) {
+      bestD = d;
+      best = i;
+    }
   }
   return best;
 }
@@ -321,7 +370,8 @@ export function surfaceY(t, px, pz) {
  *  the lower storey, exactly as floorAt breaks it - widened by a hair, because it only PREFILTERS: the cell's own
  *  floorAt is the law. */
 function storeyBand(floors, set) {
-  let lo = Infinity, hi = -Infinity;
+  let lo = Infinity,
+    hi = -Infinity;
   for (const i of set) {
     const below = i > 0 ? (floors[i - 1].y + floors[i].y) / 2 : -Infinity;
     const above = i < floors.length - 1 ? (floors[i].y + floors[i + 1].y) / 2 : Infinity;
@@ -353,10 +403,15 @@ function trianglesFor(tris, floors, set) {
  *  has a rim of empty to close against (an island that runs off the
  *  grid's edge has no shore there). */
 export function planBounds(tris, cell = PLAN_CELL) {
-  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+  let x0 = Infinity,
+    z0 = Infinity,
+    x1 = -Infinity,
+    z1 = -Infinity;
   for (const t of tris) {
-    x0 = Math.min(x0, t.ax, t.bx, t.cx); x1 = Math.max(x1, t.ax, t.bx, t.cx);
-    z0 = Math.min(z0, t.az, t.bz, t.cz); z1 = Math.max(z1, t.az, t.bz, t.cz);
+    x0 = Math.min(x0, t.ax, t.bx, t.cx);
+    x1 = Math.max(x1, t.ax, t.bx, t.cx);
+    z0 = Math.min(z0, t.az, t.bz, t.cz);
+    z1 = Math.max(z1, t.az, t.bz, t.cz);
   }
   if (!(x1 >= x0)) return null;
   return { x0: x0 - cell, z0: z0 - cell, x1: x1 + cell, z1: z1 + cell };
@@ -368,8 +423,8 @@ function inTri(px, pz, t) {
   const d1 = (px - t.bx) * (t.az - t.bz) - (t.ax - t.bx) * (pz - t.bz);
   const d2 = (px - t.cx) * (t.bz - t.cz) - (t.bx - t.cx) * (pz - t.cz);
   const d3 = (px - t.ax) * (t.cz - t.az) - (t.cx - t.ax) * (pz - t.az);
-  const neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-  const pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+  const neg = d1 < 0 || d2 < 0 || d3 < 0;
+  const pos = d1 > 0 || d2 > 0 || d3 > 0;
   return !(neg && pos);
 }
 
@@ -399,7 +454,12 @@ export function floorOccupancy(tris, { cell = PLAN_CELL, bounds = null, keep = n
     });
   }
   return {
-    w, h, cell, x0: b.x0, z0: b.z0, covered,
+    w,
+    h,
+    cell,
+    x0: b.x0,
+    z0: b.z0,
+    covered,
     at: (x, y) => x >= 0 && y >= 0 && x < w && y < h && covered[y * w + x] === 1,
   };
 }
@@ -437,7 +497,8 @@ function eachCellOf(t, b, w, h, cell, visit) {
  * @returns {{walls: number[][], openings: number[][]}}
  */
 export function splitEdges(inside, open, width, height, pass = null) {
-  const walls = [], openings = [];
+  const walls = [],
+    openings = [];
   const sort = (ox, oy, seg) => {
     if (open(ox, oy)) openings.push(seg);
     else if (!pass?.(ox, oy)) walls.push(seg);
@@ -463,7 +524,11 @@ export function splitEdges(inside, open, width, height, pass = null) {
 export function storeyOccupancy(rows, floors, index, bounds, cell = PLAN_CELL) {
   const set = storeySet(floors, index);
   const want = new Set(set);
-  return floorOccupancy(trianglesFor(floorTriangles(rows), floors, set), { cell, bounds, keep: (y) => want.has(floorAt(floors, y)) });
+  return floorOccupancy(trianglesFor(floorTriangles(rows), floors, set), {
+    cell,
+    bounds,
+    keep: (y) => want.has(floorAt(floors, y)),
+  });
 }
 
 // ─── DISC25-A: THE LEVEL, READ ONCE ─────────────────────────────────
@@ -487,11 +552,16 @@ export function levelField(rows, floors, { cell = PLAN_CELL, bounds = null } = {
   if (!b) return null;
   const w = Math.max(1, Math.ceil((b.x1 - b.x0) / cell));
   const h = Math.max(1, Math.ceil((b.z1 - b.z0) / cell));
-  const cellsOf = [], ys = [];
+  const cellsOf = [],
+    ys = [];
   const rowOf = [];
   rows.forEach((r, ri) => {
     for (const t of floorTriangles([r])) {
-      eachCellOf(t, b, w, h, cell, (k, px, pz) => { cellsOf.push(k); ys.push(surfaceY(t, px, pz)); rowOf.push(ri); });
+      eachCellOf(t, b, w, h, cell, (k, px, pz) => {
+        cellsOf.push(k);
+        ys.push(surfaceY(t, px, pz));
+        rowOf.push(ri);
+      });
     }
   });
   const n = cellsOf.length;
@@ -499,7 +569,9 @@ export function levelField(rows, floors, { cell = PLAN_CELL, bounds = null } = {
   for (let e = 0; e < n; e++) start[cellsOf[e] + 1]++;
   for (let k = 0; k < w * h; k++) start[k + 1] += start[k];
   const fill = start.slice(0, w * h);
-  const y = new Float32Array(n), storey = new Int16Array(n), row = new Int32Array(n);
+  const y = new Float32Array(n),
+    storey = new Int16Array(n),
+    row = new Int32Array(n);
   for (let e = 0; e < n; e++) {
     const at = fill[cellsOf[e]]++;
     y[at] = ys[e];
@@ -531,22 +603,25 @@ export function storeyLinks(field, { rise = STAIR_RISE, join = LINK_JOIN } = {})
   const add = (s, t, a, b) => {
     const key = s * 65536 + t;
     let p = pairs.get(key);
-    if (!p) pairs.set(key, p = { near: new Set(), far: new Map() });
+    if (!p) pairs.set(key, (p = { near: new Set(), far: new Map() }));
     p.near.add(a);
     let f = p.far.get(a);
-    if (!f) p.far.set(a, f = new Set());
+    if (!f) p.far.set(a, (f = new Set()));
     f.add(b);
   };
   const meet = (i, a, j, b) => {
-    const s = storey[i], t = storey[j];
+    const s = storey[i],
+      t = storey[j];
     if (s === t || !(Math.abs(y[i] - y[j]) <= rise)) return;
     add(s, t, a, b);
     add(t, s, b, a);
   };
   for (let k = 0; k < w * h; k++) {
-    const e0 = start[k], e1 = start[k + 1];
+    const e0 = start[k],
+      e1 = start[k + 1];
     if (e0 === e1) continue;
-    const gx = k % w, gz = (k - gx) / w;
+    const gx = k % w,
+      gz = (k - gx) / w;
     for (let i = e0; i < e1; i++) for (let j = i + 1; j < e1; j++) meet(i, k, j, k);
     for (const n of [gx + 1 < w ? k + 1 : -1, gz + 1 < h ? k + w : -1]) {
       if (n < 0) continue;
@@ -554,26 +629,37 @@ export function storeyLinks(field, { rise = STAIR_RISE, join = LINK_JOIN } = {})
     }
   }
   const centre = (cells) => {
-    let sx = 0, sz = 0;
-    for (const k of cells) { sx += k % w; sz += Math.floor(k / w); }
+    let sx = 0,
+      sz = 0;
+    for (const k of cells) {
+      sx += k % w;
+      sz += Math.floor(k / w);
+    }
     return [field.x0 + (sx / cells.length + 0.5) * field.cell, field.z0 + (sz / cells.length + 0.5) * field.cell];
   };
   const links = [];
   for (const [key, { near, far }] of [...pairs].sort((a, b) => a[0] - b[0])) {
-    const from = Math.floor(key / 65536), to = key % 65536;
+    const from = Math.floor(key / 65536),
+      to = key % 65536;
     const left = new Set(near);
     for (const seed of [...near].sort((a, b) => a - b)) {
       if (!left.has(seed)) continue;
       left.delete(seed);
       const comp = [seed];
       for (let q = 0; q < comp.length; q++) {
-        const k = comp[q], gx = k % w, gz = (k - gx) / w;
+        const k = comp[q],
+          gx = k % w,
+          gz = (k - gx) / w;
         for (let dz = -join; dz <= join; dz++) {
           for (let dx = -join; dx <= join; dx++) {
-            const x = gx + dx, z = gz + dz;
+            const x = gx + dx,
+              z = gz + dz;
             if (x < 0 || z < 0 || x >= w || z >= h) continue;
             const n = z * w + x;
-            if (left.has(n)) { left.delete(n); comp.push(n); }
+            if (left.has(n)) {
+              left.delete(n);
+              comp.push(n);
+            }
           }
         }
       }
@@ -583,7 +669,10 @@ export function storeyLinks(field, { rise = STAIR_RISE, join = LINK_JOIN } = {})
       const [fx, fz] = centre(farCells);
       const len = Math.hypot(fx - x, fz - z);
       links.push({
-        from, to, x, z,
+        from,
+        to,
+        x,
+        z,
         dx: len > 1e-6 ? (fx - x) / len : 0,
         dz: len > 1e-6 ? (fz - z) / len : 0,
         cells: Int32Array.from(comp),
@@ -615,15 +704,22 @@ export function groupSheets(field, floors, { overlap = SHEET_OVERLAP, rise = STA
     const seen = new Int32Array(n).fill(-1);
     const pairSeen = new Int32Array(n * n).fill(-1);
     for (let k = 0; k + 1 < start.length; k++) {
-      const e0 = start[k], e1 = start[k + 1];
+      const e0 = start[k],
+        e1 = start[k + 1];
       for (let i = e0; i < e1; i++) {
         const s = storey[i];
-        if (seen[s] !== k) { seen[s] = k; area[s]++; }
+        if (seen[s] !== k) {
+          seen[s] = k;
+          area[s]++;
+        }
         for (let j = i + 1; j < e1; j++) {
           const t = storey[j];
           if (t === s || !(Math.abs(y[i] - y[j]) > rise)) continue;
           const pair = Math.min(s, t) * n + Math.max(s, t);
-          if (pairSeen[pair] !== k) { pairSeen[pair] = k; stack[pair]++; }
+          if (pairSeen[pair] !== k) {
+            pairSeen[pair] = k;
+            stack[pair]++;
+          }
         }
       }
     }
@@ -632,7 +728,10 @@ export function groupSheets(field, floors, { overlap = SHEET_OVERLAP, rise = STA
   let run = [];
   for (let i = 0; i < n; i++) {
     if (run.every((j) => stack[j * n + i] <= overlap)) run.push(i);
-    else { runs.push(run); run = [i]; }
+    else {
+      runs.push(run);
+      run = [i];
+    }
   }
   if (run.length) runs.push(run);
   return runs.map((storeys, index) => {
@@ -640,7 +739,8 @@ export function groupSheets(field, floors, { overlap = SHEET_OVERLAP, rise = STA
     let main = storeys[0];
     for (const s of storeys) if (area[s] > area[main]) main = s;
     return {
-      index, storeys,
+      index,
+      storeys,
       y: floors[main].y,
       y0: Math.min(...storeys.map((s) => floors[s].y0 ?? floors[s].y)),
       y1: Math.max(...storeys.map((s) => floors[s].y1 ?? floors[s].y)),
@@ -670,11 +770,19 @@ export function fieldOccupancy(field, storeys, { rowMask = null } = {}) {
   const covered = new Uint8Array(w * h);
   for (let k = 0; k < w * h; k++) {
     for (let e = start[k]; e < start[k + 1]; e++) {
-      if (want.has(storey[e]) && (!rowMask || rowMask[row[e]])) { covered[k] = 1; break; }
+      if (want.has(storey[e]) && (!rowMask || rowMask[row[e]])) {
+        covered[k] = 1;
+        break;
+      }
     }
   }
   return {
-    w, h, cell: field.cell, x0: field.x0, z0: field.z0, covered,
+    w,
+    h,
+    cell: field.cell,
+    x0: field.x0,
+    z0: field.z0,
+    covered,
     at: (x, y) => x >= 0 && y >= 0 && x < w && y < h && covered[y * w + x] === 1,
   };
 }
@@ -709,12 +817,24 @@ export function fieldOccupancy(field, storeys, { rowMask = null } = {}) {
  * @returns {{floors: Array<object>, index: number, chains: Array<Array<{x:number,y:number}>>, openChains: Array<Array<{x:number,y:number}>>, occupancy: object|null, bounds: object|null}}
  */
 /** The plain outline, for a caller that hands `full` without `segments`: every edge a wall. */
-function boundarySegmentsLocal(inside, w, h) { return splitEdges(inside, () => false, w, h).walls; }
+function boundarySegmentsLocal(inside, w, h) {
+  return splitEdges(inside, () => false, w, h).walls;
+}
 
-export function floorPlan(rows, wanted, {
-  cell = PLAN_CELL, minGap = FLOOR_MIN_GAP, segments = null, link = null,
-  floors: given = null, bounds: box = null, full = null, pass = null,
-} = {}) {
+export function floorPlan(
+  rows,
+  wanted,
+  {
+    cell = PLAN_CELL,
+    minGap = FLOOR_MIN_GAP,
+    segments = null,
+    link = null,
+    floors: given = null,
+    bounds: box = null,
+    full = null,
+    pass = null,
+  } = {},
+) {
   const tris = floorTriangles(rows);
   const floors = given?.length ? given : deriveFloors(tris, { minGap });
   if (!floors.length) return { floors, index: -1, chains: [], openChains: [], occupancy: null, bounds: box };
@@ -724,14 +844,28 @@ export function floorPlan(rows, wanted, {
   const mine = set.length ? trianglesFor(tris, floors, set) : [];
   const bounds = box ?? planBounds(mine, cell);
   const occ = floorOccupancy(mine, { cell, bounds, keep: (y) => want.has(floorAt(floors, y)) });
-  if (!occ || !link || (!segments && !full)) return { floors, index, chains: [], openChains: [], occupancy: occ, bounds };
+  if (!occ || !link || (!segments && !full))
+    return { floors, index, chains: [], openChains: [], occupancy: occ, bounds };
   const toWorld = (chain) => chain.map((p) => ({ x: occ.x0 + p.x * cell, y: occ.z0 + p.y * cell }));
   // DISC22-G: with the storey's whole floor on the same grid, an edge onto real floor not yet seen is an opening
   const sameGrid = full && full.w === occ.w && full.h === occ.h && full.x0 === occ.x0 && full.z0 === occ.z0;
   if (sameGrid) {
     const through = pass?.size ? (x, y) => pass.has(y * occ.w + x) : null;
-    const { walls, openings } = splitEdges((x, y) => occ.at(x, y), (x, y) => full.at(x, y), occ.w, occ.h, through);
-    return { floors, index, chains: link(walls).map(toWorld), openChains: link(openings).map(toWorld), occupancy: occ, bounds };
+    const { walls, openings } = splitEdges(
+      (x, y) => occ.at(x, y),
+      (x, y) => full.at(x, y),
+      occ.w,
+      occ.h,
+      through,
+    );
+    return {
+      floors,
+      index,
+      chains: link(walls).map(toWorld),
+      openChains: link(openings).map(toWorld),
+      occupancy: occ,
+      bounds,
+    };
   }
   const segs = (segments ?? boundarySegmentsLocal)((x, y) => occ.at(x, y), occ.w, occ.h);
   return { floors, index, chains: link(segs).map(toWorld), openChains: [], occupancy: occ, bounds };

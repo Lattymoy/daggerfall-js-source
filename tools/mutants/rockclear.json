@@ -2,8 +2,8 @@
   {
     "name": "RC-the-mills-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            late.add(key, BODY.positions, BODY.indices, local,\n",
-    "new": "            collider.addMesh(key, BODY.positions, BODY.indices, local,\n",
+    "old": "            late.add(key, BODY.positions, BODY.indices, local,",
+    "new": "            collider.addMesh(key, BODY.positions, BODY.indices, local,",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RC-the-towns-models-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,\n",
-    "new": "          if (isSolidModel(placed.modelIdNum)) collider.addMesh(gateKey, cpu.positions, cpu.indices, local,\n",
+    "old": "          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,",
+    "new": "          if (isSolidModel(placed.modelIdNum)) collider.addMesh(gateKey, cpu.positions, cpu.indices, local,",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "RC-the-wod-pieces-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });",
-    "new": "collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);",
+    "old": "        late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
+    "new": "        collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "RC-the-holds-camp-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });",
-    "new": "collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);",
+    "old": "          late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
+    "new": "          collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);   // CreateDaggerfallMeshGameObject's MeshCollider - ROCK-CLEAR: through the gate",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "RC-the-collider-never-hooked",
     "file": "src/player/lateSolid.js",
-    "old": "    if (collider instanceof Collider) collider.late = gate;",
-    "new": "    void 0;",
+    "old": "    if (collider instanceof Collider) collider.late = gate; // ROCK-CLEAR: its removeBucket forgets a withheld part",
+    "new": "    void 0; // ROCK-CLEAR: its removeBucket forgets a withheld part",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "RC-the-probe-off-the-provider",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, null, null, false, h.sight);",
+    "old": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "      h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, null, null, false, h.sight);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -102,7 +102,7 @@
   {
     "name": "RC-the-stand-off-the-provider",
     "file": "src/player/lateSolid.js",
-    "old": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "old": "  const stand = (key, h) =>\n    collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
     "new": "  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, null, null, false, h.sight);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "RC-the-translation-dropped",
     "file": "src/player/lateSolid.js",
-    "old": "      const h = partOf(positions, indices, matrix, translation, sight);\n      const now = bodyNow(body);",
-    "new": "      const h = partOf(positions, indices, matrix, null, sight);\n      const now = bodyNow(body);",
+    "old": "      const h = partOf(positions, indices, matrix, translation, sight);",
+    "new": "      const h = partOf(positions, indices, matrix, null, sight);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "RC-one-part-a-key",
     "file": "src/player/lateSolid.js",
-    "old": "      if (parts) parts.push(h); else held.set(key, [h]);",
+    "old": "      if (parts) parts.push(h);\n      else held.set(key, [h]);",
     "new": "      held.set(key, [h]);",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"

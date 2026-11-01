@@ -29,8 +29,8 @@
   {
     "name": "R25-lairs-unbounded",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)",
-    "new": "lairsNear(o.x, o.y, PROVINCE_LAIR_REACH)",
+    "old": "      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS))",
+    "new": "      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH))",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "R25-stood-id-unchecked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;",
-    "new": "    return loc ? questView(loc) : null;",
+    "old": "    return loc && loc.mapTableData?.mapId >>> 0 === row.mapId ? questView(loc) : null; // R2-5b: a slice under its quest name",
+    "new": "    return loc ? questView(loc) : null; // R2-5b: a slice under its quest name",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "R25-held-name-unchecked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
-    "new": "      if (!loc || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "old": "      if (!loc || loc.name !== name || loc.mapTableData?.mapId >>> 0 !== sd.mapId >>> 0) continue;",
+    "new": "      if (!loc || loc.mapTableData?.mapId >>> 0 !== sd.mapId >>> 0) continue;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "R25-held-id-unchecked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "old": "      if (!loc || loc.name !== name || loc.mapTableData?.mapId >>> 0 !== sd.mapId >>> 0) continue;",
     "new": "      if (!loc || loc.name !== name) continue;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "R25-names-miss-unasked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "  get(name) { return super.has(name) ? super.get(name) : this.miss(name); }",
-    "new": "  get(name) { return super.get(name); }",
+    "old": "    return super.has(name) ? super.get(name) : this.miss(name);",
+    "new": "    return super.get(name);",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "R25-host-lair-not-free",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const row = at && lairBlocksOf(at) && lairFree(s.px, s.py) ? {",
-    "new": "    const row = at && lairBlocksOf(at) ? {",
+    "old": "    const row = at && lairBlocksOf(at) && lairFree(s.px, s.py) ? { mapId: lairPlaceId(at.c), name: at.name, px: s.px, py: s.py, type: at.pick.type, dungeonType: at.dungeonType ?? 0 } : null;",
+    "new": "    const row = at && lairBlocksOf(at) ? { mapId: lairPlaceId(at.c), name: at.name, px: s.px, py: s.py, type: at.pick.type, dungeonType: at.dungeonType ?? 0 } : null;",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "R25b-centre-kept",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
+    "old": "  return (\n    at.s === capitalCentre(at.cap) ||\n    (capitalDims(at.cap).sea ?? []).includes(at.s) ||\n    PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s))\n  );",
     "new": "  return (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "R25b-fills-kept",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));",
+    "old": "  return (\n    at.s === capitalCentre(at.cap) ||\n    (capitalDims(at.cap).sea ?? []).includes(at.s) ||\n    PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s))\n  );",
     "new": "  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s);",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "R25b-table-plain-name",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));",
-    "new": "      add(provinceRow({ ...p, tableKey: tableKeyAt(p.px, p.py) }));",
+    "old": "      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) })); // R2-5b: a slice under its quest name; BAY-LEFT-B: its key",
+    "new": "      add(provinceRow({ ...p, tableKey: tableKeyAt(p.px, p.py) })); // R2-5b: a slice under its quest name; BAY-LEFT-B: its key",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "R25b-view-unnamed",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "  if (v?.name !== name) { v = { ...loc, name }; _views.set(loc, v); }",
-    "new": "  if (v?.name !== name) { v = { ...loc }; _views.set(loc, v); }",
+    "old": "    v = { ...loc, name };",
+    "new": "    v = { ...loc };",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "R25b-located-plain",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;",
-    "new": "    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? loc : null;",
+    "old": "    return loc && loc.mapTableData?.mapId >>> 0 === row.mapId ? questView(loc) : null; // R2-5b: a slice under its quest name",
+    "new": "    return loc && loc.mapTableData?.mapId >>> 0 === row.mapId ? loc : null; // R2-5b: a slice under its quest name",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "R25d-warm-order",
     "file": "src/scenes/quest/questProvinceWarm.js",
-    "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0])",
-    "new": ".sort((a, b) => a[0] - b[0])",
+    "old": "      .sort((a, b) => a[1] - b[1] || a[0] - b[0])",
+    "new": "      .sort((a, b) => a[0] - b[0])",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -380,7 +380,7 @@
   {
     "name": "R25e-country-unasked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS))\n        if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
     "new": "",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
@@ -389,8 +389,8 @@
   {
     "name": "R25e-country-bound",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
-    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS))",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH))",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "R25e-country-region",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
-    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "old": "        if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
+    "new": "        add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "R25e-name-twice",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "if (!ids.has(row.mapId) && !names.has(row.name)) {",
-    "new": "if (!ids.has(row.mapId)) {",
+    "old": "      if (!ids.has(row.mapId) && !names.has(row.name)) {",
+    "new": "      if (!ids.has(row.mapId)) {",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "R25f-near-admit-unread",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "    if (admits && !admits(indexAt(q.x, q.y))) continue;",
-    "new": "",
+    "old": "    if (admits && !admits(indexAt(q.x, q.y))) continue;\n    count.picked++;",
+    "new": "    count.picked++;",
     "tests": [
       "test/systems/quest/auditrelease_r25f.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "R25f-index-not-kept",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); sliceIndexes.set(k, index); }",
-    "new": "index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); }",
+    "old": "      sliceIndexes.set(k, index);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/auditrelease_r25f.test.js"
     ]
@@ -734,8 +734,8 @@
   {
     "name": "R25f-near-index-unpassed",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
-    "new": "capitalSlicesNear(loc, standAt, admits, undefined, count),",
+    "old": "      capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
+    "new": "      capitalSlicesNear(loc, standAt, admits, undefined, count),",
     "tests": [
       "test/systems/quest/auditrelease_r25f.test.js",
       "test/systems/quest/auditrelease_r25_freeware.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "R25f-near-count-unpassed",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
-    "new": "capitalSlicesNear(loc, standAt, admits, sliceIndexAt),",
+    "old": "      capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),",
+    "new": "      capitalSlicesNear(loc, standAt, admits, sliceIndexAt),",
     "tests": [
       "test/systems/quest/auditrelease_r25f.test.js",
       "test/systems/quest/auditrelease_r25_freeware.test.js"
@@ -754,7 +754,7 @@
   {
     "name": "R25f-warm-index-unread",
     "file": "src/scenes/quest/questProvinceWarm.js",
-    "old": "      provinces.sliceIndexAt?.(row.px, row.py);   // R2-5f: a capital slice's sites by kind, read while it is warm",
+    "old": "      provinces.sliceIndexAt?.(row.px, row.py); // R2-5f: a capital slice's sites by kind, read while it is warm",
     "new": "",
     "tests": [
       "test/systems/quest/auditrelease_r25f.test.js"
@@ -810,8 +810,8 @@
   {
     "name": "R25f-slice-unwired",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "startLairAt, sliceAt: capitalSliceAt,",
-    "new": "startLairAt, sliceAt: () => null,",
+    "old": "    worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: capitalSliceAt,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)",
+    "new": "    worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: () => null,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "QF-the-records-unread",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) }, SubRecords:",
-    "new": "  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: [] }, SubRecords:",
+    "old": "      FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) },",
+    "new": "      FldHeader: { BuildingDataList: [] },",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "QF-a-far-cell-viewed",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "  if (!b || b.kind !== 'own' || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
-    "new": "  if (!b || !blocksFile) return null;\n  const { r, c } = b, recs = fabricCellBuildings(r, c);\n  const json",
+    "old": "  if (!b || b.kind !== 'own' || !blocksFile) return null;",
+    "new": "  if (!b || !blocksFile) return null;",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]
@@ -903,8 +903,8 @@
   {
     "name": "QF-a-baked-kind-dropped",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).map(",
-    "new": "    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).slice(1).map(",
+    "old": "        .map((k) => {",
+    "new": "        .slice(1)\n        .map((k) => {",
     "tests": [
       "test/systems/quest/questfabric.test.js",
       "test/systems/quest/auditrelease_r25f.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "QF-an-unmarked-donor-counted",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);",
-    "new": "    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) kinds.add(`${b.type}:${b.factionId}`);",
+    "old": "      if (rc)\n        for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);",
+    "new": "      if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) kinds.add(`${b.type}:${b.factionId}`);",
     "tests": [
       "test/systems/quest/questfabric.test.js"
     ]

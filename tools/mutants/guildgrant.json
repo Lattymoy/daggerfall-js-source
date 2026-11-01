@@ -2,8 +2,8 @@
   {
     "name": "GUILDGRANT-realm-gold-left-out",
     "file": "tools/grantGuildGold.mjs",
-    "old": "realm_gold = realm_gold + ${gold}, ",
-    "new": "",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GUILDGRANT-the-kind-unnamed",
     "file": "tools/grantGuildGold.mjs",
-    "old": ", moved_kind = 'grant'",
-    "new": "",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "GUILDGRANT-the-moment-unstamped",
     "file": "tools/grantGuildGold.mjs",
-    "old": ", moved_at = CAST(strftime('%s', 'now') AS INTEGER)",
-    "new": "",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "GUILDGRANT-the-cap-unasked",
     "file": "tools/grantGuildGold.mjs",
-    "old": " AND treasury + ${gold} <= ${GUILD_TREASURY_MAX}",
-    "new": "",
+    "old": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' AND treasury + ${gold} <= ${GUILD_TREASURY_MAX} RETURNING name, tag, treasury, realm_gold;`;",
+    "new": "  return `UPDATE guilds SET treasury = treasury + ${gold}, realm_gold = realm_gold + ${gold}, moved_by = '${GRANT_BY}', moved_at = CAST(strftime('%s', 'now') AS INTEGER), moved_kind = 'grant' WHERE name_key = '${key}' RETURNING name, tag, treasury, realm_gold;`;",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "GUILDGRANT-the-name-as-typed",
     "file": "tools/grantGuildGold.mjs",
-    "old": "  return guildNameKey(n);",
-    "new": "  return n.replaceAll(\"'\", \"''\");",
+    "old": "  return guildNameKey(n); // [a-z0-9]+ alone: nothing in it can end an SQL string",
+    "new": "  return n.replaceAll(\"'\", \"''\"); // [a-z0-9]+ alone: nothing in it can end an SQL string",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "GUILDGRANT-the-gold-unchecked",
     "file": "tools/grantGuildGold.mjs",
-    "old": "const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
-    "new": "const gold = Number(s);",
+    "old": "  const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
+    "new": "  const gold = Number(s);",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "GUILDGRANT-zero-awarded",
     "file": "tools/grantGuildGold.mjs",
-    "old": "/^[1-9][0-9]*$/",
-    "new": "/^[0-9]+$/",
+    "old": "  const gold = /^[1-9][0-9]*$/.test(s) ? Number(s) : NaN;",
+    "new": "  const gold = /^[0-9]+$/.test(s) ? Number(s) : NaN;",
     "tests": [
       "test/tooling/guildgrant.test.js"
     ],

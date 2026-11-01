@@ -174,8 +174,8 @@
   {
     "name": "FOREST1-kernel-hidden-flag",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "[{ ...locationRect, hide: !!hidden }]",
-    "new": "[{ ...locationRect, hide: true }]",
+    "old": "    ...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),",
+    "new": "    ...(hasLocation && locationRect ? [{ ...locationRect, hide: true }] : []),",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "FOREST1-kernel-location-a-place",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),",
-    "new": "",
+    "old": "    ...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),",
+    "new": "    ",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "FOREST1-kernel-scenery-no-place",
     "file": "src/world/terrain/terrainGen.js",
-    "old": ".filter((p) => p.hide !== false)",
-    "new": ".filter(() => true)",
+    "old": "    ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (b",
+    "new": "    ...(wod?.picks ?? []).filter(() => true).map(({ rect: r, bounds: b }) => (b",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "FOREST1-kernel-footprint",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "({ rect: r, bounds: b }) => (b",
-    "new": "({ rect: r, bounds: b }) => (false",
+    "old": "    ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (b",
+    "new": "    ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (false",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "FOREST1-host-gate-clear",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n",
-    "new": "",
+    "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch",
+    "new": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch",
     "tests": [
       "test/systems/forest1.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "FOREST1-host-rocks",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch\n",
-    "new": "",
+    "old": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch\n      const base = f.archive ?? climate.natureArchive;   // ECOTONE1: a border's flat is its own climate's - the summer archive the kernel names",
+    "new": "      const base = f.archive ?? climate.natureArchive;   // ECOTONE1: a border's flat is its own climate's - the summer archive the kernel names",
     "tests": [
       "test/systems/forest1.test.js"
     ]

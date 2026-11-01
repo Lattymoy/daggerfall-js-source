@@ -30,7 +30,7 @@ import { resetPastBayPlaces, addPastBayPlaces } from '../world/pastBayPlaces.js'
 import { cyrodiilTrunkSpec, CYRODIIL_ROADS } from '../world/road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL
 import { resetExactPieces, addExactPieces, clearExactPieces } from '../systems/travel/landPieces.js';   // EXACT-PIECES: the land's pieces, a region at a time
 import { landLayer } from '../world/land/landLayer.js';   // FOUNDATION F4: the land's rows, in the kept set's print
-import { gen2Shipped } from '../world/gen2/gen2Ground.js';   // WG2: the published regions, posted with the trace
+import { gen2Shipped } from '../world/gen2/gen2Ground.js';   // The published regions, posted with the trace
 
 /** VOYAGER-CYRODIIL: THE IMPERIAL CITY'S KEY in the capitals' table - its ring and its gates the plan's own. */
 export const CYRODIIL_CAPITAL = 'imperial-city';
@@ -141,7 +141,7 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     const ground = `w1|g${GROUND_ROLL_VERSION}|b${BIOMES_VERSION}|${landLayer().stamp ? `l${landLayer().stamp}|` : ''}${fit ? `${fit.ox}:${fit.oy}:${fit.ppu}` : '-'}|${fnv32(woodsBytes ?? []).toString(36)}`;   // w1: the kept set is the regions EXACT-PIECES wants (regionWanted - the Bay's own too), not the regions with land a boot before it kept
     const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionWanted(r, heightAt), ground }), from);   // EXACT-PIECES: the Bay's own regions too
     // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
-    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped(), spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };   // WG2: the published regions
+    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped(), spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };   // The published regions
     landed = 0;
     total = regions.length;
     build++; asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed

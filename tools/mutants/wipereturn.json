@@ -12,8 +12,8 @@
   {
     "name": "WIPE-RETURN-never-offered-by-the-law",
     "file": "src/systems/instancePlaces.js",
-    "old": ": null)), stood];",
-    "new": ": null))];",
+    "old": "  const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null)), stood];",
+    "new": "  const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null))];",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WIPE-RETURN-never-offered-by-the-door",
     "file": "src/scenes/instanceDoor.js",
-    "old": "(acct) => owners.get(acct) ?? null, instanceOf(stood));",
-    "new": "(acct) => owners.get(acct) ?? null);",
+    "old": "    return partnerInstances(\n      deps.members?.() ?? [],\n      siteBase(site),\n      (acct) => owners.get(acct) ?? null,\n      instanceOf(stood),\n    );",
+    "new": "    return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null);",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "WIPE-RETURN-before-the-living",
     "file": "src/systems/instancePlaces.js",
-    "old": "const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null)), stood];",
-    "new": "const rooms = [stood, ...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null))];",
+    "old": "  const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null)), stood];",
+    "new": "  const rooms = [stood, ...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null))];",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "WIPE-RETURN-twice",
     "file": "src/systems/instancePlaces.js",
-    "old": " || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
-    "new": ") continue;",
+    "old": "    if (!r || r.base !== base || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
+    "new": "    if (!r || r.base !== base) continue;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WIPE-RETURN-kept-from-outside",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n      stood = room;\n",
-    "new": "      stood = room;\n      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n",
+    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n      stood = room;",
+    "new": "      stood = room;\n      if (mode === 'exterior' || !isInstanceRoom(room)) return {};",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WIPE-RETURN-kept-past-a-refusal",
     "file": "src/scenes/instanceDoor.js",
-    "old": "      if (stood === room) stood = null;\n",
-    "new": "",
+    "old": "      if (stood === room) stood = null;\n      deps.say?.(INSTANCE_TEXT.refused());",
+    "new": "      deps.say?.(INSTANCE_TEXT.refused());",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "WIPE-RETURN-mine-before-the-party",
     "file": "src/systems/instancePlaces.js",
-    "old": "  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });\n  if (mine) rows.push({ kind: 'mine' });",
-    "new": "  if (mine) rows.push({ kind: 'mine' });\n  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (lastPublic ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });",
+    "old": "  for (const p of (partners ?? []).slice(\n    0,\n    Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),\n  ))\n    rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });\n  if (mine) rows.push({ kind: 'mine' });",
+    "new": "  if (mine) rows.push({ kind: 'mine' });\n  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (lastPublic ? 1 : 0))))\n    rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

@@ -2,7 +2,7 @@
   {
     "name": "DOMAIN2-a-palace-castle",
     "file": "src/net/castleLaw.js",
-    "old": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, r);",
+    "old": "export const castleRegionOk = (r) =>\n  Number.isSafeInteger(r) && Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, r);",
     "new": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r <= 61;",
     "tests": [
       "test/net/domain2_castles.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "DOMAIN2-an-officer-buys",
     "file": "src/net/castleLaw.js",
-    "old": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER]),",
-    "new": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER, 1]),",
+    "old": "  buy: Object.freeze([GUILD_RANK_MASTER]),",
+    "new": "  buy: Object.freeze([GUILD_RANK_MASTER, 1]),",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN2-a-kept-castle-offered",
     "file": "src/net/castleLaw.js",
-    "old": "castleRegionOk(h.region) && castleKeyOk(h.key) && !taken.has(h.region))",
-    "new": "castleRegionOk(h.region) && castleKeyOk(h.key))",
+    "old": "    .filter((h) => h?.tier === 'crown' && castleRegionOk(h.region) && castleKeyOk(h.key) && !taken.has(h.region)) // AUDIT DOMAINS R2: a castle the relay admits",
+    "new": "    .filter((h) => h?.tier === 'crown' && castleRegionOk(h.region) && castleKeyOk(h.key)) // AUDIT DOMAINS R2: a castle the relay admits",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "DOMAIN2-an-account-domain",
     "file": "src/net/instanceRoom.js",
-    "old": "digest(`instance:guild:${guild}`, INSTANCE_OWNER_HEX / 2)",
-    "new": "digest(`instance:account:${guild}`, INSTANCE_OWNER_HEX / 2)",
+    "old": "  return identity(guild) ? digest(`instance:guild:${guild}`, INSTANCE_OWNER_HEX / 2) : null;",
+    "new": "  return identity(guild) ? digest(`instance:account:${guild}`, INSTANCE_OWNER_HEX / 2) : null;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "DOMAIN2-no-guild-arm",
     "file": "src/net/instanceRoom.js",
-    "old": "  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';   // a castle's, whole (AUDIT DOMAINS R2)\n",
-    "new": "",
+    "old": "  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)\n  return typeof kin === 'function' && (await kin(subject, r.owner)) ? 'party' : null;",
+    "new": "  return typeof kin === 'function' && (await kin(subject, r.owner)) ? 'party' : null;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
@@ -140,8 +140,8 @@
   {
     "name": "DOMAIN2-the-relay-minimum",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 208;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 208; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
@@ -150,8 +150,8 @@
   {
     "name": "DOMAIN2-no-castle-row",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });\n",
-    "new": "",
+    "old": "  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });\n  // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is",
+    "new": "  // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "DOMAIN2-any-instance-a-throne",
     "file": "src/scenes/seatHallHost.js",
-    "old": "      if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;\n",
-    "new": "",
+    "old": "      if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;\n      return {",
+    "new": "      return {",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

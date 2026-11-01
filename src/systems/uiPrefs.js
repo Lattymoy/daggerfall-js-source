@@ -19,13 +19,20 @@ const SHELF_REV = 2;
  *  already materialised the old one, adopted once on an unstamped
  *  shelf. A key joins this list only when the old stored value cannot
  *  honestly be read as the player's answer - see loadPrefs. */
-const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']);   // BAL4: and the Enhanced AI - see loadPrefs
+const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']); // BAL4: and the Enhanced AI - see loadPrefs
 
-import { appStorage } from './appStorage.js';   // DA1: the storage seam
-import { onlineForcedPref } from './online/onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
-import { FEATURE_PREF_DEFAULTS } from './features.js';   // RF4: the port's own switches, declared once on their rows
-import { isStoredTier } from './survival/difficulty.js';   // SURV-TIERS: what the survival key may hold (an import-free leaf)
-import { isStoredHorseCare, HORSE_CARE_OLD_ON, HORSE_CARE_OLD_ON_TIER, isStoredWagonUpkeep, WAGON_UPKEEP_OLD_ON, WAGON_UPKEEP_OLD_ON_TIER } from './upkeep/upkeepTiers.js';   // HORSE-TIERS / WAGON-TIERS: what the two upkeep keys may hold (a leaf too)
+import { appStorage } from './appStorage.js'; // DA1: the storage seam
+import { onlineForcedPref } from './online/onlineLane.js'; // OL1: the online lane's forcing, read before the shelf
+import { FEATURE_PREF_DEFAULTS } from './features.js'; // RF4: the port's own switches, declared once on their rows
+import { isStoredTier } from './survival/difficulty.js'; // SURV-TIERS: what the survival key may hold (an import-free leaf)
+import {
+  isStoredHorseCare,
+  HORSE_CARE_OLD_ON,
+  HORSE_CARE_OLD_ON_TIER,
+  isStoredWagonUpkeep,
+  WAGON_UPKEEP_OLD_ON,
+  WAGON_UPKEEP_OLD_ON_TIER,
+} from './upkeep/upkeepTiers.js'; // HORSE-TIERS / WAGON-TIERS: what the two upkeep keys may hold (a leaf too)
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -80,34 +87,47 @@ export const PREF_DEFAULTS = Object.freeze({
   // PLUS-ONLY (2026-09-26): `enhancedPlus`, the switch between it and plain Enhanced (PLUS-DEFAULT turned it on), is
   // RETIRED - plain Enhanced is gone and Plus is simply the enhanced skin. A stored value is read by nothing.
   // PLUS2: Enhanced Plus's colours - a ui/enhanced/enhancedFrame.js PLUS_THEMES id; 'slate' is the kit as it ships.
-  plusTheme: 'slate',  plusCursor: true,   // PLUS6: the gauntlet cursor - off gives the system pointer back
-  plusItemHover: true,   // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card
+  plusTheme: 'slate',
+  plusCursor: true, // PLUS6: the gauntlet cursor - off gives the system pointer back
+  plusItemHover: true, // PLUS7: the inventory's hover card - off keeps the right-click menu, drops the card
   // GRIM1 (2026-10-09): THE DFO GRIMOIRE DRESS over the enhanced skin ('none' or 'grimoire' - ui/grimoireDress.js), and
   // its card's two choices: the page the windows are written on ('cream' | 'scroll') and what the front door and the
   // full screens stand on ('desk' | 'map'), and the vitals' vials upright in the corner or lying in a row ('upright' |
   // 'row'). While the dress is worn `plusTheme` stays the player's, unworn.
-  plusDress: 'none', grimoirePages: 'cream', grimoireBackdrop: 'desk', grimoireVitals: 'upright', grimoireSpellbook: 'book',
-  grimoireDial: 'classic',   // DIAL-PACK (2026-10-12): the Tab dial's doors - Daggerfall's own art ('classic') or the pack's paintings ('pack')
+  plusDress: 'none',
+  grimoirePages: 'cream',
+  grimoireBackdrop: 'desk',
+  grimoireVitals: 'upright',
+  grimoireSpellbook: 'book',
+  grimoireDial: 'classic', // DIAL-PACK (2026-10-12): the Tab dial's doors - Daggerfall's own art ('classic') or the pack's paintings ('pack')
   // TEXT-FONT (2026-10-11): the face the enhanced skin's words are written in ('game' | 'sans' | 'mono' | 'dyslexic' |
   // 'system', ui/textFont.js) and the installed font 'system' names.
-  textFont: 'game', textFontSystem: '',
+  textFont: 'game',
+  textFontSystem: '',
   // CHAT-LANG (2026-10-11): the language channel this player chose ('' none, else a net/wire.js CHAT_LANGS code - /lang).
   // CHAT-COLOURS: each channel's lines in its own colour (World white, Region green, Guild purple, Local grey ...). PING1:
   // a line naming me with an @ chimes.
-  chatLang: '', chatChannelColours: true, chatPingSound: true,
+  chatLang: '',
+  chatChannelColours: true,
+  chatPingSound: true,
   // CHAT-TRADE (2026-10-14): the Trade and LFG channels this player joined (/join, /leave) - off until they choose one,
   // so a player who never does sees no new tab.
-  chatTrade: false, chatLfg: false,
-  // STAFF-CHAT-RED (2026-10-23, mob: "give me a option next to chat to chat as /red or myself at all times"): the voice an
+  chatTrade: false,
+  chatLfg: false,
+  // STAFF-CHAT-RED (2026-10-23): the voice an
   // Admin's chat lines go out in - 'me' (as themselves) or 'red' (each as /red would say it, net/chatVoice.js) - kept
   chatAs: 'me',
-  packPhoneDoll: false,   // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it
+  packPhoneDoll: false, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it
   // PADPLUS1: the Plus controller - the crossbar ('auto' while a pad is connected, 'on', 'off'), run as a toggle on
   // the Run button, and the version of the one-time layout move already made (ui/plus/plusPad.js)
-  plusCrossbar: 'auto', plusToggleRun: true, plusPadLayout: 0,
+  plusCrossbar: 'auto',
+  plusToggleRun: true,
+  plusPadLayout: 0,
   // PADPLUS10: the d-pad's tap and hold per direction (null = the defaults, ui/plus/plusPad.js PLUS_DPAD_DEFAULTS) and the
   // two sticks' sensitivity multipliers - the Controller bindings window writes them
-  plusDpad: null, plusStickLeft: 1, plusStickRight: 1,
+  plusDpad: null,
+  plusStickLeft: 1,
+  plusStickRight: 1,
   // PAD-CURSOR: the controller cursor's assisted feel (systems/padCursor.js) - its curve, ramp, boost and the pull to
   // a control; off is DFU's linear cursor, on both skins
   padCursorAssist: true,
@@ -122,10 +142,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 25.7): THE SPIRE'S ACCESSIBILITY (ui/eliteGates/egAccess.js) - the danger
   // palette ('standard' | 'contrast' | 'deutan' | 'tritan'), a danger fill's light (0.5-1), and reduced motion (the
   // system's setting does the same)
-  dangerPalette: 'standard', telegraphFill: 1, reducedMotion: false,
+  dangerPalette: 'standard',
+  telegraphFill: 1,
+  reducedMotion: false,
   // PEERMENU1: the player menu's two binds, keyboard and controller, each { code, hold } (null = the defaults: hold E,
   // hold A - systems/peerMenuBind.js). Online only.
-  peerMenuKey: null, peerMenuPad: null,
+  peerMenuKey: null,
+  peerMenuPad: null,
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
   onlineServer: '',
@@ -146,13 +169,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // in the baked catalog. Read at the point of use by ui/touch/touch.js; set
   // from the Enhanced pane's Touch card, which mounts only where the
   // device reports touch.
-  touchLookSensitivity: 1,   // a multiplier on the mouse sensitivity the drag already rides (0.25..4)
-  touchAnalogStick: true,    // the stick's throw is the speed (InputManager's joystick arm) - off is TI1's 8-way digital
+  touchLookSensitivity: 1, // a multiplier on the mouse sensitivity the drag already rides (0.25..4)
+  touchAnalogStick: true, // the stick's throw is the speed (InputManager's joystick arm) - off is TI1's 8-way digital
   touchStickAnchor: 'float', // 'float': the stick is born under the finger; 'fixed': it lives bottom-left and the finger's offset is the throw
-  touchGyroLook: false,      // fine aim from the phone's rotation, on top of the drag - opt-in (iOS asks permission)
-  touchGyroSensitivity: 1,   // 1 = a degree of phone is a degree of camera
-  touchHaptics: true,        // a short vibration on a button, an armed swipe and a lock
-  touchFullscreen: true,     // the first touch asks for fullscreen and a landscape lock where the browser allows it
+  touchGyroLook: false, // fine aim from the phone's rotation, on top of the drag - opt-in (iOS asks permission)
+  touchGyroSensitivity: 1, // 1 = a degree of phone is a degree of camera
+  touchHaptics: true, // a short vibration on a button, an armed swipe and a lock
+  touchFullscreen: true, // the first touch asks for fullscreen and a landscape lock where the browser allows it
   // TOUCH-BUTTONS (2026-09-27): the corner's three slots, from the corner in (ui/touch/touchButtons.js) - TI1's two, and
   // TOUCH-HOLD's Interact (2026-10-01 part four: the professions' E, which a phone never had)
   touchButton1: 'Jump',
@@ -161,11 +184,11 @@ export const PREF_DEFAULTS = Object.freeze({
   // SPELL-GIFT (2026-09-27): whether a player OUTSIDE my party may cast the stranger's list of spells on me (Heal,
   // Regenerate, Cure, Fortify, Shield, resistances, Jumping, Water Breathing - systems/allyCast.js). On: Tabitha's ask.
   acceptStrangerSpells: true,
-  restWithParty: true,   // REST-OPT: off - I rest alone, and the party rests without me
+  restWithParty: true, // REST-OPT: off - I rest alone, and the party rests without me
   // PROF1 (bible/06-Systems/Professions-Arc.md 5.1, 22): GENTLE ACTS - an accessibility choice, the port's own: every
   // profession's act completes at a plain result, with no clean bonus and no bruise. Set on the Professions page.
   gentleActs: false,
-  showToTravellers: true,   // TV3: off - the region's travellers do not see where I am (my party always does)
+  showToTravellers: true, // TV3: off - the region's travellers do not see where I am (my party always does)
   // MWA4 (2026-09-25): `mwArms` (MWA1's arms switch) is retired - the attached Morrowind files are the switch, and
   // Remove data the off (combat/weapon/weaponRig.js autoBuildArms, ui/enhanced/enhancedMenu.js morrowindCard). A stored value is
   // read by nothing.
@@ -175,12 +198,12 @@ export const PREF_DEFAULTS = Object.freeze({
   // Defaults ON: this needs no attached data and no build step, so there is nothing to opt INTO the way Morrowind
   // assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
-  peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
-  monsterVolume: 1,   // MONSTER-VOL: a monster's calls, attack sounds and pain cries, 0..1 (systems/monsterVolume.js)
-  companionVolume: 1,   // COMPANION-VOL: a companion's idle calls (its moans and cries while it walks with you), 0..1, over Monster Volume
-  horseVolume: 1,   // HORSE-VOL: every horse's neigh and hooves, 0..1 (systems/animalVolume.js)
-  animalVolume: 1,   // ANIMAL-VOL: the town's dogs, cats, pigs and cows, 0..1 (systems/animalVolume.js)
-  peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  peerAttackSounds: true, // PEER-FS2: other players' swing sounds - on by default
+  monsterVolume: 1, // MONSTER-VOL: a monster's calls, attack sounds and pain cries, 0..1 (systems/monsterVolume.js)
+  companionVolume: 1, // COMPANION-VOL: a companion's idle calls (its moans and cries while it walks with you), 0..1, over Monster Volume
+  horseVolume: 1, // HORSE-VOL: every horse's neigh and hooves, 0..1 (systems/animalVolume.js)
+  animalVolume: 1, // ANIMAL-VOL: the town's dogs, cats, pigs and cows, 0..1 (systems/animalVolume.js)
+  peerFootsteps: true, // PEER-FS1: other players' footstep sounds - on by default
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players are drawn
   // at once - the nearest, the party and the duel's opponent always; everywhere but where a stranger can fight me since
   // CROWD-WIDE (2026-10-23), a gate's court alone before it (net/gate/gateCrowd.js GATE_CROWD_TIERS; 0 everyone,
@@ -197,8 +220,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // drawn - one's own always (scenes/homeYards.js YARD_RANGE_TIERS; 0 none). The default 300, the distance every yard was
   // drawn at before; its YARD_RANGE_DEFAULT, pinned equal by test/scenes/yardrange.test.js and not imported, for GATE-CROWD's reason
   yardRange: 300,
-  nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
-  distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
+  nightCrickets: true, // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
+  distantHowl: true, // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
   // declared on its Features row (systems/features.js), RF4's law - it
   // arrives through FEATURE_PREF_DEFAULTS below.
@@ -241,7 +264,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // FT18 (Mac: "Add option to set all mods/enhancements off"): what the Features home's All off moved, tile id ->
   // the segment it had, so Restore can put it back - across launches. null is nothing to restore.
   featuresRestore: null,
-  proceduralSky: true,   // LEGACY: read only by the migration in loadPrefs
+  proceduralSky: true, // LEGACY: read only by the migration in loadPrefs
   // RF4 (2026-09-14, Mac's refactor pass, the fourth): THE PORT'S OWN
   // FEATURE SWITCHES ARE DECLARED ONCE, ON THEIR ROWS. The Features
   // registry (systems/features.js) is the one declaration of an
@@ -253,13 +276,13 @@ export const PREF_DEFAULTS = Object.freeze({
   // (RA1/EE1, the AI, ECV1, WATER1, LV1, PERF1, LR1) is the row's note
   // now. Adding a switch is one row; nothing here.
   ...FEATURE_PREF_DEFAULTS,
-  textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
+  textScale: 0, // 0 = normal, 1 = large (buys a whole scale step)
   category: 'game',
-  open: {},            // "video:stored" -> true
+  open: {}, // "video:stored" -> true
 });
 
 let _prefs = null;
-const storage = () => appStorage();   // DA1: localStorage in a browser, the shell's file store in the app
+const storage = () => appStorage(); // DA1: localStorage in a browser, the shell's file store in the app
 
 export function loadPrefs() {
   _prefs = { ...PREF_DEFAULTS, open: {} };
@@ -301,7 +324,8 @@ export function loadPrefs() {
         // and the new default would put a bar up over that answer; a shelf older than rev 2 holding it keeps the
         // diamond's style, and so stays Off. Diamond was the old default and left no trace: it moves to the hotbar
         // with everyone who never chose.
-        if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false) _prefs.quickbarStyle = 'quickbar';
+        if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false)
+          _prefs.quickbarStyle = 'quickbar';
         // DIAMOND-HB (2026-10-18): Diamond is now its own style ('diamond'). An old save with 'quickbar' and the switch on
         // had chosen Diamond, so it moves to 'diamond'. Off ('quickbar' with the switch off) stays as it was.
         if (_prefs.quickbarStyle === 'quickbar' && _prefs.quickslots !== false) _prefs.quickbarStyle = 'diamond';
@@ -310,7 +334,8 @@ export function loadPrefs() {
         // was its default, and this shelf writes no default - so the flip would stand the AI up over "everything off".
         // While the All-off keep stands (`featuresRestore`, spent by Restore) and the shelf holds no word of its own on
         // the AI, it stays Off; Off differs from the default now, so the next save writes it as the choice it is.
-        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;
+        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined)
+          _prefs.enhancedAI = false;
         // GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default"): THE GRASS IS FULL BY DEFAULT AGAIN
         // (features.js 'grass', grassDensity 0 to 1), and AUDIT MEADOW1's adoption that stood here - an unstamped
         // shelf's `grassDensity: 1` moved to its Off - went with the Off: that Full is the default again. Nothing stored
@@ -346,11 +371,14 @@ export function loadPrefs() {
         // who never touched the switch stored nothing and plays the new default - Boons, BOONS-DEFAULT's reading. An On
         // written to the shelf all the same chose the system as it stood, and lands on Hard (HORSE_CARE_OLD_ON); any
         // other value names no tier and is dropped here, as the survival key's is, so the bar and the laws agree.
-        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare)) _prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;
+        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare))
+          _prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;
         // WAGON-TIERS (2026-10-15, Mac: "Yes, same tiers"): WAGON UPKEEP THE SAME WAY, on its own key - a stored Off
         // (the old switch's `false`) stays Off, nothing stored plays the new default (Boons), an On written to the
         // shelf lands on Hard (WAGON_UPKEEP_OLD_ON), and any other value is dropped here.
-        if (p.wagonUpkeep !== undefined && !isStoredWagonUpkeep(p.wagonUpkeep)) _prefs.wagonUpkeep = p.wagonUpkeep === WAGON_UPKEEP_OLD_ON ? WAGON_UPKEEP_OLD_ON_TIER : PREF_DEFAULTS.wagonUpkeep;
+        if (p.wagonUpkeep !== undefined && !isStoredWagonUpkeep(p.wagonUpkeep))
+          _prefs.wagonUpkeep =
+            p.wagonUpkeep === WAGON_UPKEEP_OLD_ON ? WAGON_UPKEEP_OLD_ON_TIER : PREF_DEFAULTS.wagonUpkeep;
       }
     }
   } catch (e) {
@@ -379,8 +407,13 @@ export function loadPrefs() {
  *  the player asked for, which is what makes every FUTURE default
  *  change land. `open` is the player's own map and is always written. */
 export function savePrefs() {
-  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(overridesOf(_prefs ?? PREF_DEFAULTS))); return true; }
-  catch (e) { console.warn('[uiPrefs] screen preferences could not be saved', e); return false; }
+  try {
+    storage()?.setItem(STORAGE_KEY, JSON.stringify(overridesOf(_prefs ?? PREF_DEFAULTS)));
+    return true;
+  } catch (e) {
+    console.warn('[uiPrefs] screen preferences could not be saved', e);
+    return false;
+  }
 }
 /** The shelf's real overrides: every key whose value differs from the
  *  default, plus `open` and the stamp. Pure; pinned in test/systems/pref1_shelf.test.js. */
@@ -388,7 +421,7 @@ export function overridesOf(prefs) {
   const out = {};
   for (const [k, v] of Object.entries(prefs ?? {})) {
     if (k === 'open') continue;
-    if (Object.hasOwn(PREF_DEFAULTS, k) && v === PREF_DEFAULTS[k]) continue;   // the default is not a choice
+    if (Object.hasOwn(PREF_DEFAULTS, k) && v === PREF_DEFAULTS[k]) continue; // the default is not a choice
     out[k] = v;
   }
   out.open = { ...(prefs?.open ?? {}) };
@@ -396,17 +429,28 @@ export function overridesOf(prefs) {
   return out;
 }
 export function getPref(k) {
-  const forced = onlineForcedPref(k);   // OL1: online is the enhanced lane, whole - a forced switch reads forced and the shelf is not written
+  const forced = onlineForcedPref(k); // OL1: online is the enhanced lane, whole - a forced switch reads forced and the shelf is not written
   if (forced !== undefined) return forced;
   if (_prefs === null) loadPrefs();
   return _prefs[k] ?? PREF_DEFAULTS[k];
 }
-export function setPref(k, v) { if (_prefs === null) loadPrefs(); _prefs[k] = v; return savePrefs(); }   // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
-export function isOpen(catId, group) { return !!getPref('open')[`${catId}:${group}`]; }
+export function setPref(k, v) {
+  if (_prefs === null) loadPrefs();
+  _prefs[k] = v;
+  return savePrefs();
+} // SKIN-CARRY: the store's word comes back - a refused write is the caller's to carry another way
+export function isOpen(catId, group) {
+  return !!getPref('open')[`${catId}:${group}`];
+}
 export function setOpen(catId, group, open) {
   if (_prefs === null) loadPrefs();
   _prefs.open = { ..._prefs.open, [`${catId}:${group}`]: !!open };
   savePrefs();
 }
-export function resetPrefs() { _prefs = { ...PREF_DEFAULTS, open: {} }; savePrefs(); }
-export function _resetForTests() { _prefs = null; }
+export function resetPrefs() {
+  _prefs = { ...PREF_DEFAULTS, open: {} };
+  savePrefs();
+}
+export function _resetForTests() {
+  _prefs = null;
+}

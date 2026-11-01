@@ -2,8 +2,8 @@
   {
     "name": "SET3-setFold-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerEntityFold(SIGIL_SETS_POWER, setFold);\n",
-    "new": "",
+    "old": "registerEntityFold(SIGIL_SETS_POWER, setFold);\nregisterWeaponBlowMod(SIGIL_SETS_POWER, setBlow);",
+    "new": "registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SET3-setBlow-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);\n",
-    "new": "",
+    "old": "registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);\nregisterPlayerStruckListener(SIGIL_SETS_POWER, setStruck);",
+    "new": "registerPlayerStruckListener(SIGIL_SETS_POWER, setStruck);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SET3-setStruck-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerStruckListener(SIGIL_SETS_POWER, setStruck);\n",
-    "new": "",
+    "old": "registerPlayerStruckListener(SIGIL_SETS_POWER, setStruck);\nregisterPlayerStrikeListener(SIGIL_SETS_POWER, setStrike); // AUDIT SET M2",
+    "new": "registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike); // AUDIT SET M2",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SET3-setDamageMod-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);\n",
-    "new": "",
+    "old": "registerPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);\nregisterPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);",
+    "new": "registerPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SET3-setDeathSave-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);\n",
-    "new": "",
+    "old": "registerPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);\nregisterPlayerHurtListener(SIGIL_SETS_POWER, setHurt);",
+    "new": "registerPlayerHurtListener(SIGIL_SETS_POWER, setHurt);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SET3-setHurt-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerHurtListener(SIGIL_SETS_POWER, setHurt);\n",
-    "new": "",
+    "old": "registerPlayerHurtListener(SIGIL_SETS_POWER, setHurt);\nregisterPlayerDoorOpen(SIGIL_SETS_POWER, setDoorOpen); // AUDIT FINAL F10",
+    "new": "registerPlayerDoorOpen(SIGIL_SETS_POWER, setDoorOpen); // AUDIT FINAL F10",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SET3-setKill-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerKillListener(SIGIL_SETS_POWER, setKill);\n",
-    "new": "",
+    "old": "registerPlayerKillListener(SIGIL_SETS_POWER, setKill);\nregisterSpellCostMod(SIGIL_SETS_POWER, setCastCost);",
+    "new": "registerSpellCostMod(SIGIL_SETS_POWER, setCastCost);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SET3-setCastCost-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerSpellCostMod(SIGIL_SETS_POWER, setCastCost);\n",
-    "new": "",
+    "old": "registerSpellCostMod(SIGIL_SETS_POWER, setCastCost);\nregisterAbsorptionChance(SIGIL_SETS_POWER, setAbsorbChance);",
+    "new": "registerAbsorptionChance(SIGIL_SETS_POWER, setAbsorbChance);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SET3-setAbsorbChance-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerAbsorptionChance(SIGIL_SETS_POWER, setAbsorbChance);\n",
-    "new": "",
+    "old": "registerAbsorptionChance(SIGIL_SETS_POWER, setAbsorbChance);\nregisterMagicRoundHook(SIGIL_SETS_POWER, setRound);",
+    "new": "registerMagicRoundHook(SIGIL_SETS_POWER, setRound);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SET3-setRound-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerMagicRoundHook(SIGIL_SETS_POWER, setRound);\n",
-    "new": "",
+    "old": "registerMagicRoundHook(SIGIL_SETS_POWER, setRound);\nregisterPlayerCastListener(SIGIL_SETS_POWER, setCast); // EG15",
+    "new": "registerPlayerCastListener(SIGIL_SETS_POWER, setCast); // EG15",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SET3-a-part-left-out",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor;",
-    "new": "for (let p = 1; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor;",
+    "old": "    for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor;",
+    "new": "    for (let p = 1; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SET3-a-school-left-out",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "for (const s of MAGIC_SKILLS) add(m().skills, s, mor.schools);",
-    "new": "for (const s of MAGIC_SKILLS.slice(1)) add(m().skills, s, mor.schools);",
+    "old": "    for (const s of MAGIC_SKILLS) add(m().skills, s, mor.schools);",
+    "new": "    for (const s of MAGIC_SKILLS.slice(1)) add(m().skills, s, mor.schools);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SET3-the-resistance-on-the-wrong-element",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().resist, 'fire', ruhn.fire)",
-    "new": "add(m().resist, 'frost', ruhn.fire)",
+    "old": "  if (ruhn) add(m().resist, 'fire', ruhn.fire);",
+    "new": "  if (ruhn) add(m().resist, 'frost', ruhn.fire);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SET3-a-stat-on-the-wrong-name",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().stats, 'endurance', mal.endurance)",
-    "new": "add(m().stats, 'strength', mal.endurance)",
+    "old": "    add(m().stats, 'endurance', mal.endurance);",
+    "new": "    add(m().stats, 'strength', mal.endurance);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SET3-awake-while-the-sets-sleep",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;",
-    "new": "if (!entity?.isPlayer || entity.peer) return null;",
+    "old": "  if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;",
+    "new": "  if (!entity?.isPlayer || entity.peer) return null;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SET3-a-peers-entity-awake",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;",
-    "new": "if (!entity?.isPlayer || !setsAwake()) return null;",
+    "old": "  if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;",
+    "new": "  if (!entity?.isPlayer || !setsAwake()) return null;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SET3-the-doubling-at-half-health-itself",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "(healthShare(e) ?? 1) < 0.5;",
-    "new": "(healthShare(e) ?? 1) <= 0.5;",
+    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
+    "new": "const belowHalf = (e) => (healthShare(e) ?? 1) <= 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "SET3-the-carry-dropped",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);",
-    "new": "const exact = (damage * pct) / 100;",
+    "old": "    const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);",
+    "new": "    const exact = (damage * pct) / 100;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SET3-the-carry-per-wielder",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const key = weapon ?? attacker;",
-    "new": "const key = attacker;",
+    "old": "    const key = weapon ?? attacker;",
+    "new": "    const key = attacker;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "SET3-a-duels-blow-raised",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "|| !target || target.isPlayer) return damage;",
-    "new": "|| !target) return damage;",
+    "old": "  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;",
+    "new": "  if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target) return damage;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SET3-the-rampage-window-from-the-first-kill",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.rampageUntil = now + RAMPAGE_SECONDS;   // a kill refreshes them all\n",
-    "new": "    if (!had) _s.rampageUntil = now + RAMPAGE_SECONDS;\n",
+    "old": "    _s.rampageUntil = now + RAMPAGE_SECONDS; // a kill refreshes them all",
+    "new": "    if (!had) _s.rampageUntil = now + RAMPAGE_SECONDS;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "SET3-no-rampage-cap",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_s.rampage = Math.min(RAMPAGE_STACKS, had + 1);",
-    "new": "_s.rampage = had + 1;",
+    "old": "    _s.rampage = Math.min(RAMPAGE_STACKS, had + 1);",
+    "new": "    _s.rampage = had + 1;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SET3-a-stack-said-at-the-cap",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (_s.rampage > had) say(",
-    "new": "if (_s.rampage >= had) say(",
+    "old": "    if (_s.rampage > had) say(`Rampage ${'I'.repeat(_s.rampage)}`);",
+    "new": "    if (_s.rampage >= had) say(`Rampage ${'I'.repeat(_s.rampage)}`);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SET3-nightfall-on-an-aware-foe",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (noc?.[1] && info?.unaware) pct += noc[1].more;",
-    "new": "if (noc?.[1]) pct += noc[1].more;",
+    "old": "  if (noc?.[1] && info?.unaware) pct += noc[1].more;",
+    "new": "  if (noc?.[1]) pct += noc[1].more;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "SET3-nightfall-never-on-an-arrow",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (noc?.[1] && info?.unaware) pct += noc[1].more;",
-    "new": "if (noc?.[1] && info?.unaware && !ranged(weapon)) pct += noc[1].more;",
+    "old": "  if (noc?.[1] && info?.unaware) pct += noc[1].more;",
+    "new": "  if (noc?.[1] && info?.unaware && !ranged(weapon)) pct += noc[1].more;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "SET3-the-sear-inside-the-per-cent",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;",
-    "new": "if (ruhn?.[0] && !fireProof(target)) pct += ruhn[0].sear;",
+    "old": "  if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear; // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch",
+    "new": "  if (ruhn?.[0] && !fireProof(target)) pct += ruhn[0].sear; // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SET3-the-last-in-reach-not-the-nearest",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (d > bestD) continue;\n",
-    "new": "    if (d > CLEAVE_METRES) continue;\n",
+    "old": "    if (d > bestD) continue;",
+    "new": "    if (d > CLEAVE_METRES) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "SET3-the-cleave-reach-ignored",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "let best = null, bestD = CLEAVE_METRES;",
-    "new": "let best = null, bestD = Infinity;",
+    "old": "    bestD = CLEAVE_METRES;",
+    "new": "    bestD = Infinity;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "SET3-a-bow-cleaving",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  if (ranged(weapon)) return;\n  const v = tierOf(attacker, 'ruhn', 1);",
-    "new": "  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone\n  const v = tierOf(attacker, 'ruhn', 1);",
+    "old": "  if (ranged(weapon)) return;\n  const v = tierOf(attacker, 'ruhn', 1);",
+    "new": "  const v = tierOf(attacker, 'ruhn', 1);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
@@ -265,8 +265,8 @@
   {
     "name": "SET3-the-whole-blow-cleaved",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (v) cleave(target, (damage * v.share) / 100, weapon);",
-    "new": "if (v) cleave(target, damage, weapon);",
+    "old": "  if (v) cleave(target, (damage * v.share) / 100, weapon);",
+    "new": "  if (v) cleave(target, damage, weapon);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "SET3-the-whole-blow-sent-back",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "paidBack(f, Math.max(1, Math.round((took * v.back) / 100)))",
-    "new": "paidBack(f, Math.max(1, Math.round(took)))",
+    "old": "  const back = f ? paidBack(f, Math.max(1, Math.round((took * v.back) / 100))) : 0;",
+    "new": "  const back = f ? paidBack(f, Math.max(1, Math.round(took))) : 0;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "SET3-a-foe-that-did-not-strike-hurt",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const f = door?.foes().find((x) => x.entity === blow.attacker);",
-    "new": "const f = door?.foes()[0];",
+    "old": "  const f = door?.foes().find((x) => x.entity === blow.attacker);",
+    "new": "  const f = door?.foes()[0];",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "SET3-unbroken-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!recovered('unbroken', now)) return false;   // EG15: and in the Spire, not before its next Redoubt\n",
-    "new": "",
+    "old": "  if (!recovered('unbroken', now)) return false; // EG15: and in the Spire, not before its next Redoubt\n  _s.unbrokenReady = now + v.recover;",
+    "new": "  _s.unbrokenReady = now + v.recover;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
@@ -311,8 +311,8 @@
   {
     "name": "SET3-the-halving-never-ends",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
-    "new": "return _s.halvedUntil > 0 && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
+    "old": "  return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2)",
+    "new": "  return _s.halvedUntil > 0 && tierOf(entity, 'malacath', 2)",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "SET3-the-recovery-read-off-the-halving",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "_s.unbrokenReady = now + v.recover;",
-    "new": "_s.unbrokenReady = now + v.halved;",
+    "old": "  _s.unbrokenReady = now + v.recover;",
+    "new": "  _s.unbrokenReady = now + v.halved;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "SET3-the-nova-past-its-reach",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "flat2(f.ai.feet, feet) > NOVA_METRES || spared(f)) continue;",
-    "new": "flat2(f.ai.feet, feet) > NOVA_METRES * 2 || spared(f)) continue;",
+    "old": "    if (f.dead || !f.ai?.feet || flat2(f.ai.feet, feet) > NOVA_METRES || spared(f)) continue;",
+    "new": "    if (f.dead || !f.ai?.feet || flat2(f.ai.feet, feet) > NOVA_METRES * 2 || spared(f)) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "SET3-the-fury-never-ending",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (ruhn?.[2] && now < _s.wrathUntil) pct += ruhn[2].more;",
-    "new": "if (ruhn?.[2] && _s.wrathUntil > 0) pct += ruhn[2].more;",
+    "old": "  if (ruhn?.[2] && now < _s.wrathUntil) pct += ruhn[2].more;",
+    "new": "  if (ruhn?.[2] && _s.wrathUntil > 0) pct += ruhn[2].more;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "SET3-wrath-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (now < _s.wrathReady) return;\n",
-    "new": "",
+    "old": "  if (now < _s.wrathReady) return;\n  _s.wrathReady = now + v.recover;",
+    "new": "  _s.wrathReady = now + v.recover;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "SET3-a-killing-blow-waking-it",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'ruhn', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
-    "new": "  const v = tierOf(entity, 'ruhn', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0)) return;",
+    "old": "  if (!v || !(max > 0) || !(after > 0)) return;",
+    "new": "  if (!v || !(max > 0)) return;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
@@ -376,8 +376,8 @@
   {
     "name": "SET3-eventide-no-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (noc && now >= _s.eventideReady) {",
-    "new": "if (noc) {",
+    "old": "  if (noc && now >= _s.eventideReady) {",
+    "new": "  if (noc) {",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "SET3-the-shadow-on-four-pieces",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const noc = t.get('nocturnal')?.[2];",
-    "new": "const noc = t.get('nocturnal')?.[1];",
+    "old": "  const noc = t.get('nocturnal')?.[2];",
+    "new": "  const noc = t.get('nocturnal')?.[1];",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "SET3-the-rounds-off-the-stage",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "durationBase: Math.max(1, rounds | 0) + 1,",
-    "new": "durationBase: 2,",
+    "old": "      durationBase: Math.max(1, rounds | 0) + 1,",
+    "new": "      durationBase: 2,",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "SET3-the-price-raised",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return v ? (sp * (100 - v.less)) / 100 : sp;",
-    "new": "return v ? (sp * (100 + v.less)) / 100 : sp;",
+    "old": "  return v ? (sp * (100 - v.less)) / 100 : sp;",
+    "new": "  return v ? (sp * (100 + v.less)) / 100 : sp;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "SET3-the-eye-on-four-pieces",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "tierOf(target, 'mora', 2)?.absorb ?? 0;",
-    "new": "tierOf(target, 'mora', 1)?.less ?? 0;",
+    "old": "export const setAbsorbChance = (target) => tierOf(target, 'mora', 2)?.absorb ?? 0;",
+    "new": "export const setAbsorbChance = (target) => tierOf(target, 'mora', 1)?.less ?? 0;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "SET3-said-before-its-time",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (now < r.at() || spireHeld(k)) continue;",
-    "new": "    if (spireHeld(k)) continue;",
+    "old": "    if (now < r.at() || spireHeld(k)) continue; // EG15: a death save the Spire holds is said at its Redoubt",
+    "new": "    if (spireHeld(k)) continue; // EG15: a death save the Spire holds is said at its Redoubt",
     "tests": [
       "test/systems/set3_powers.test.js"
     ],
@@ -431,8 +431,8 @@
   {
     "name": "SET3-said-every-round",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    _s.recovering.delete(k);\n",
-    "new": "",
+    "old": "    _s.recovering.delete(k);\n    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
+    "new": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "SET3-said-in-a-duel",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
-    "new": "if (!r.spent || r.spent()) say(r.line);",
+    "old": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
+    "new": "    if (!r.spent || r.spent()) say(r.line);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "SET3-a-window-read-past-its-end",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const left = (t) => Math.max(0, Math.ceil(t - now));",
-    "new": "const left = (t) => Math.ceil(t - now);",
+    "old": "  const left = (t) => Math.max(0, Math.ceil(t - now));",
+    "new": "  const left = (t) => Math.ceil(t - now);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "SET3-a-thrown-sound-breaking-the-save",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const sound = (name) => { try { _sound?.(name); } catch { /* a sound is not the power's problem */ } };",
-    "new": "const sound = (name) => { _sound?.(name); };",
+    "old": "  try {\n    _sound?.(name);\n  } catch {\n    /* a sound is not the power's problem */\n  }",
+    "new": "  _sound?.(name);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "SET3-the-sear-on-a-fire-immune-foe",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;",
-    "new": "if (ruhn?.[0]) flat += ruhn[0].sear;",
+    "old": "  if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear; // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch",
+    "new": "  if (ruhn?.[0]) flat += ruhn[0].sear; // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "SET3-an-ally-or-a-pacified-foe-cleaved",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (f === struck || f.dead || !f.ai?.feet || spared(f)) continue;",
-    "new": "if (f === struck || f.dead || !f.ai?.feet) continue;",
+    "old": "    if (f === struck || f.dead || !f.ai?.feet || spared(f)) continue;",
+    "new": "    if (f === struck || f.dead || !f.ai?.feet) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "SET3-a-foe-a-storey-away-cleaved",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if (rise(f.ai.feet, struck.ai.feet) > REACH_RISE_M) continue;\n",
-    "new": "",
+    "old": "    if (rise(f.ai.feet, struck.ai.feet) > REACH_RISE_M) continue;\n    if ((f.entity?.minMetalToHit ?? -1) > (weapon?.material ?? 0)) continue;",
+    "new": "    if ((f.entity?.minMetalToHit ?? -1) > (weapon?.material ?? 0)) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "SET3-an-iron-blade-cleaving-a-daedra",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "    if ((f.entity?.minMetalToHit ?? -1) > (weapon?.material ?? 0)) continue;\n",
-    "new": "",
+    "old": "    if ((f.entity?.minMetalToHit ?? -1) > (weapon?.material ?? 0)) continue;\n    const d = flat2(f.ai.feet, struck.ai.feet);",
+    "new": "    const d = flat2(f.ai.feet, struck.ai.feet);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "SET3-a-swallowed-blow-paid-back",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  _blow = damage > 0 && attacker ? { attacker, at: _now() } : null;\n",
-    "new": "  _blow = damage > 0 && attacker ? { attacker, at: _now() } : null;\n  if (_blow) spite(target, _blow, damage);\n",
+    "old": "  _blow = damage > 0 && attacker ? { attacker, at: _now() } : null;\n}",
+    "new": "  _blow = damage > 0 && attacker ? { attacker, at: _now() } : null;\n  if (_blow) spite(target, _blow, damage);\n}",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "SET3-a-fall-paid-back",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const b = _blow;\n  _blow = null;\n",
-    "new": "  const b = _blow;\n",
+    "old": "  _blow = null;\n  return b && _now() - b.at <= BLOW_WINDOW_S ? b : null;",
+    "new": "  return b && _now() - b.at <= BLOW_WINDOW_S ? b : null;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "SET3-the-mark-kept-past-its-window",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "return b && _now() - b.at <= BLOW_WINDOW_S ? b : null;",
-    "new": "return b;",
+    "old": "  return b && _now() - b.at <= BLOW_WINDOW_S ? b : null;",
+    "new": "  return b;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "SET3-a-half-point-kept",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;",
-    "new": "? (dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100 : dmg;",
+    "old": "    ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)",
+    "new": "    ? (dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "SET3-the-voice-unguarded",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const say = (line) => { try { _say(line); } catch { /* a line is not the power's problem */ } };",
-    "new": "const say = (line) => { _say(line); };",
+    "old": "  try {\n    _say(line);\n  } catch {\n    /* a line is not the power's problem */\n  }",
+    "new": "  _say(line);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "SET3-a-fall-waking-it",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4\n  spite(entity, blow, before - after);\n",
-    "new": "  if (blow && before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4\n  if (blow) spite(entity, blow, before - after);\n",
+    "old": "  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (before - after > 0)\n    for (const fn of _landed.values()) {\n      try {\n        fn(entity, blow.attacker, before - after);\n      } catch {\n        /* the loot is not the blow's problem */\n      }\n    } // LOOT4\n  spite(entity, blow, before - after);",
+    "new": "  if (blow && before - after > 0)\n    for (const fn of _landed.values()) {\n      try {\n        fn(entity, blow.attacker, before - after);\n      } catch {\n        /* the loot is not the blow's problem */\n      }\n    } // LOOT4\n  if (blow) spite(entity, blow, before - after);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "SET3-the-nova-on-an-ally-or-a-pacified-foe",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "flat2(f.ai.feet, feet) > NOVA_METRES || spared(f)) continue;",
-    "new": "flat2(f.ai.feet, feet) > NOVA_METRES) continue;",
+    "old": "    if (f.dead || !f.ai?.feet || flat2(f.ai.feet, feet) > NOVA_METRES || spared(f)) continue;",
+    "new": "    if (f.dead || !f.ai?.feet || flat2(f.ai.feet, feet) > NOVA_METRES) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "SET3-the-nova-a-storey-up",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (rise(f.ai.feet, feet) > REACH_RISE_M || fireProof(f.entity)) continue;",
-    "new": "if (fireProof(f.entity)) continue;",
+    "old": "    if (rise(f.ai.feet, feet) > REACH_RISE_M || fireProof(f.entity)) continue;",
+    "new": "    if (fireProof(f.entity)) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "SET3-the-nova-on-a-fire-daedra",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (rise(f.ai.feet, feet) > REACH_RISE_M || fireProof(f.entity)) continue;",
-    "new": "if (rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
+    "old": "    if (rise(f.ai.feet, feet) > REACH_RISE_M || fireProof(f.entity)) continue;",
+    "new": "    if (rise(f.ai.feet, feet) > REACH_RISE_M) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "SET3-the-nova-through-a-wall",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (door.clear && !door.clear(feet, f.ai.feet)) continue;",
-    "new": "if (door.clear && !door.clear(feet, f.ai.feet) && false) continue;",
+    "old": "    if (door.clear && !door.clear(feet, f.ai.feet)) continue;",
+    "new": "    if (door.clear && !door.clear(feet, f.ai.feet) && false) continue;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -629,7 +629,7 @@
   {
     "name": "SET3-an-allys-death-a-stack",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const neverCounts = (entity) => entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';",
+    "old": "const neverCounts = (entity) =>\n  entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';",
     "new": "const neverCounts = (entity) => entity?.mobileType === KNIGHT_CITY_WATCH;",
     "tests": [
       "test/systems/set3_powers.test.js"
@@ -638,7 +638,7 @@
   {
     "name": "SET3-the-watchs-death-a-stack",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const neverCounts = (entity) => entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';",
+    "old": "const neverCounts = (entity) =>\n  entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';",
     "new": "const neverCounts = (entity) => entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';",
     "tests": [
       "test/systems/set3_powers.test.js"
@@ -647,8 +647,8 @@
   {
     "name": "SET3-the-shadow-a-round-short",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "durationBase: Math.max(1, rounds | 0) + 1,",
-    "new": "durationBase: Math.max(1, rounds | 0),",
+    "old": "      durationBase: Math.max(1, rounds | 0) + 1,",
+    "new": "      durationBase: Math.max(1, rounds | 0),",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "SET3-cleave-at-the-blow-modifier",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  return out;   // AUDIT SET M2: Cleave shares the blow that LANDED - setStrike, at the formula's tail\n",
-    "new": "  if (ruhn?.[1] && weapon && !ranged(weapon)) cleave(target, (out * ruhn[1].share) / 100, weapon);\n  return out;\n",
+    "old": "  return out; // AUDIT SET M2: Cleave shares the blow that LANDED - setStrike, at the formula's tail",
+    "new": "  if (ruhn?.[1] && weapon && !ranged(weapon)) cleave(target, (out * ruhn[1].share) / 100, weapon);\n  return out;",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "SET3-setStrike-never-registered",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike);   // AUDIT SET M2\n",
-    "new": "",
+    "old": "registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike); // AUDIT SET M2\nregisterPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);",
+    "new": "registerPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

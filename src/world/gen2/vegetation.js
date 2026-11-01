@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 VEGETATION (bible/03-World/World-2-Canon.md, "Plants"): which plant stands where, from each species' needs
+// WG2 VEGETATION ("Plants"): which plant stands where, from each species' needs
 // (data/species.json) - its warmth, its water, its soil, its slope and height, its sun - against the environment at the
 // point. Plants grow in groves (a slow field at the species' cluster scale), not in an even sprinkle; a tree keeps its
 // spacing from every tree placed before it, the taller kinds first. Pure in the point and the bake: the same rectangle

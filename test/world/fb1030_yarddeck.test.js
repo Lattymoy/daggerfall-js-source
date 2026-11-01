@@ -113,11 +113,11 @@ test('YARD-DECK every level roof facing up inside the ground floor\'s walls is a
   assert.equal(yardWhyNot([-0.3, 3.22, 0], lot, [], CHAIR), null, 'against the storey\'s wall');
   assert.equal(yardWhyNot([-0.25, 3.22, 0], lot, [], CHAIR), null, 'sat into it by the clip');
   assert.equal(yardWhyNot([0.4, 3.22, 0], lot, [], CHAIR), YARD_IN_HOUSE, 'into the storey');
-  assert.equal(yardWhyNot([2.5, 6.45, 0], lot, [], CHAIR), YARD_TOO_HIGH, 'the storey\'s roof stands past the yard\'s height');
+  assert.equal(yardWhyNot([2.5, 6.45, 0], lot, [], CHAIR), null, 'PIN MOVED (YARD-WALLS): the storey\'s roof is a deck under the yard\'s 8 m');
   // AUDIT FB1030 Y5: a tall model's origin stands over the deck while its foot stands on the ground under it
   const tall = Object.assign(CHAIR.map(([x, z]) => [x, z]), { bottom: -4 });
   assert.equal(yardWhyNot([-2.5, 4, 0], lot, [], tall), YARD_IN_HOUSE, 'its foot under the deck');
-  assert.equal(yardWhyNot([-2.5, 7.22, 0], lot, [], Object.assign(CHAIR.map(([x, z]) => [x, z]), { bottom: -4 })), YARD_TOO_HIGH, 'its foot on it, its origin past the height');
+  assert.equal(yardWhyNot([-2.5, 8.5, 0], lot, [], Object.assign(CHAIR.map(([x, z]) => [x, z]), { bottom: -5.28 })), YARD_TOO_HIGH, 'its foot on it, its origin past the height (PIN MOVED, YARD-WALLS: past 8 m)');
   // a deck face that runs on under the storey (its sloped roof no deck) is the house where the storey stands on it
   const under = model([...ring([-5, -5, 5, 5], 0, 3.22), ...ring([0, -5, 5, 5], 3.22, 6.45)], [[-5, -5, 5, 5, 3.22]]);
   const P = Array.from(under.positions), I = Array.from(under.indices), n = P.length / 3;

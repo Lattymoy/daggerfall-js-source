@@ -31,6 +31,7 @@ import {
 } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -134,8 +135,8 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     await settled();
     assert.equal(book.held('stone:cut'), 5);
     assert.equal(book.held('stone:rough'), 10);
-    assert.equal(book.track('masonry').xp, 5 * 20 * 1.5 + 1823, 'a clean chisel half again, and the first cut\'s - Building\'s share');   // PIN MOVED (FIRST-BUDGET): 1,823
-    assert.deepEqual([said.at(-1), player.gold], ['+1973 building', 950]);   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
+    assert.equal(book.track('masonry').xp, 5 * 20 * 1.5 + 1832, 'a clean chisel half again, and the first cut\'s - Building\'s share');   // PIN MOVED (FIRST-BUDGET): 1,832
+    assert.deepEqual([said.at(-1), player.gold], ['+1982 building', 950]);   // PIN MOVED (SMITH-RRI): Building's 1,832   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE MIX: rank 10 opens it - PIN MOVED (FIRST-BUDGET): the cut alone brought 650 of 1,000; with its first's -
     // Building's share - 1,973 now, rank 14, so the Mortar stands open after it (Mortar's rank pinned by the service's own test)
     assert.match(page.text(), /BuildingNovice 14[^]*Mortar x10[^]*Mix/, 'the cut alone past rank 10: the Mortar open');   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
@@ -146,7 +147,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     await settled();
     assert.equal(book.held('stone:mortar'), 10, 'ten at a time');
     assert.deepEqual([book.held('metal:sulphur'), book.held('metal:lead'), book.held('stone:rough')], [0, 0, 5]);
-    assert.equal(said.at(-1), `+${1 * 20 * 2 + 1823} building`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first\'s share');   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
+    assert.equal(said.at(-1), `+${1 * 20 * 2 + 1832} building`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first\'s share');   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE SCULPTOR'S COLUMN: a Master who chose the Sculptor, the dice steered to a Masterwork (the mark)
     track(PROF_XP_MAX, 'quarryman', 'sculptor');
     give('stone:cut', 12);
@@ -504,9 +505,9 @@ test('PROF11 wiring: the mason\'s bench a General Store\'s (open for trade) or a
   assert.match(m, /if \(interiorBuilding\.buildingType === BUILDING_TYPES\.GeneralStore\) return interiorBuilding\.insideOpenShop === false \? null : \{ kind: 'shop', fee: MASON_FEE \};/);
   assert.match(m, /if \(stationOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'mason'\)\) return \{ kind: 'home', fee: 0 \};/);   // PIN MOVED (FB1018D HOME-BENCH, test/scenes/fb1018d_homebench.test.js): a home's stations serve its owner's account
   assert.match(m, /if \(hallMemberHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'mason'\)\) return \{ kind: 'home', fee: 0 \};/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /: profession === 'masonry'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.masonHere\?\.\(\) \?\? null, a: 'a mason\\'s bench', who: 'mason', noun: 'mason\\'s bench', kept: MASON_KEPT_TEXT, xp: professionName\('masonry'\) \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word; PIN MOVED (CRAFT3): the XP said as the track's name ("Building")
-  assert.match(w, /mason: \(\) => modes\?\.masonHere\?\.\(\) \?\? null,/);
+  assert.match(w, /mason: \(\) => host\.modes\?\.masonHere\?\.\(\) \?\? null,/);
   assert.match(w, /chiselBand: \(\) => chiselBand\(\{ strength: liveStat\(playerEntity, 'strength'\), endurance: liveStat\(playerEntity, 'endurance'\) \}\),/);
   assert.match(w, /smelt: async \(recipe, count, \{ clean = false \} = \{\}\) => \{/);
   assert.match(w, /const r = await profBook\.smelt\(recipe, count, \{ clean \}\);/);

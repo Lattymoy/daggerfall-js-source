@@ -198,7 +198,7 @@ test('AUDIT SET U2: in the item lists\' classic tooltip a row of the port\'s own
   const name = 'Ebony Dai-Katana of the Unseen Blade, Rusty and Forgotten'.repeat(2);
   assert.deepEqual(wrapToolTipRows([name, long], measure, TOOLTIP_WRAP_W, 1)[0], name, 'a row before `wrapFrom` - the item\'s name, DFU\'s - never wraps');
   const T = strip(read('src/ui/toolTip.js'));
-  assert.match(T, /const rows = wrapFrom == null \? toolTipRows\(text\) : wrapToolTipRows\(toolTipRows\(text\), \(r\) => measureText\(font\.fnt, r\), TOOLTIP_WRAP_W, wrapFrom\);/, 'the box wraps only when asked');
+  assert.match(T, /const rows =\n\s*wrapFrom == null\n\s*\? toolTipRows\(text\)\n\s*: wrapToolTipRows\(toolTipRows\(text\), \(r\) => measureText\(font\.fnt, r\), TOOLTIP_WRAP_W, wrapFrom\);/, 'the box wraps only when asked');
   assert.match(T, /drawToolTipBox\(renderer, m, font, this\.text, this\.x, this\.y, \{ wrapFrom: this\.wrapFrom \}\);/);
   assert.equal(new ToolTip().wrapFrom, null, 'a window\'s own tip (DFU\'s) wraps nothing');
   assert.equal(makeSlotToolTip().tip.wrapFrom, 1, 'the item lists\' tip wraps the lines under the name');

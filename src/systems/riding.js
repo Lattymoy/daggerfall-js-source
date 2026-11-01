@@ -34,9 +34,9 @@
 // keeps DFU's every arm: the fast clop off the edge, 1.2 pitch, 0.125 s.
 
 import { CfaFile } from '../formats/cfaFile.js';
-import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses
+import { frameToColor32 } from '../combat/fpsWeapon.js'; // TR2: the same index-to-RGBA the weapon art uses
 import { TRANSPORT_MODES, isHorseRide } from './transport.js';
-import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horse/horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
+import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horse/horseCoats.js'; // COATS1: the horse's look, dyed as it uploads
 
 /** :148-155. */
 export const HORSE_TEXTURE = 'MRED00I0.CFA';
@@ -87,9 +87,14 @@ export async function loadRidingArt(getBytes, palette, renderer, mode, look = 0)
   const cfa = new CfaFile();
   cfa.load(await getBytes(fileName), fileName, palette);
   const { width, height } = cfa.getSize(0);
-  const frames = [], records = [];
+  const frames = [],
+    records = [];
   for (let f = 0; f < cfa.getFrameCount(0); f++) {
-    const c32 = recolorHorse(frameToColor32(cfa.getDFBitmap(0, f), palette, null), c, { bottomFirst: false, legs: false, tack: false });
+    const c32 = recolorHorse(frameToColor32(cfa.getDFBitmap(0, f), palette, null), c, {
+      bottomFirst: false,
+      legs: false,
+      tack: false,
+    });
     records.push(`ride:${fileName}:${f}${lookSuffix(c)}`);
     frames.push(renderer.uploadTexture('img', records[f], c32));
   }
@@ -118,11 +123,11 @@ export function ridingRect(canvas, art, hudOffset = 0) {
 export class RidingAnimator {
   constructor() {
     this.frameIndex = 0;
-    this.lastFrameTime = 0;   // 0 is DFU's "not started" sentinel (:215)
+    this.lastFrameTime = 0; // 0 is DFU's "not started" sentinel (:215)
     this.now = 0;
     this.neighTime = 0;
     this.wasMovingLessThanHalfSpeed = true;
-    this.stopAt = null;       // the 0.2s StopRidingAudio coroutine
+    this.stopAt = null; // the 0.2s StopRidingAudio coroutine
     this.playing = false;
     this.clip = null;
   }
@@ -145,17 +150,31 @@ export class RidingAnimator {
    * @returns {{frame:number, clip:string|null, playing:boolean,
    *            volume:number, pitch:number, neigh:boolean}}
    */
-  update(dt, { mode = TRANSPORT_MODES.Foot, standingStill = false, grounded = true,
-    paused = false, movingLessThanHalfSpeed = true, running = false, walking = false,
-    soundVolume = 1, rolls = Math.random } = {}) {
+  update(
+    dt,
+    {
+      mode = TRANSPORT_MODES.Foot,
+      standingStill = false,
+      grounded = true,
+      paused = false,
+      movingLessThanHalfSpeed = true,
+      running = false,
+      walking = false,
+      soundVolume = 1,
+      rolls = Math.random,
+    } = {},
+  ) {
     this.now += dt;
-    if (!isHorseRide(mode)) return { frame: 0, clip: this.clip, playing: false, volume: 0, pitch: 1, neigh: false };   // DRAGON5: no hooves under a dragon
+    if (!isHorseRide(mode)) return { frame: 0, clip: this.clip, playing: false, volume: 0, pitch: 1, neigh: false }; // DRAGON5: no hooves under a dragon
     if (standingStill || !grounded || paused) {
       // :213-220 - the animation resets and the loop fades after 0.2s.
       this.lastFrameTime = 0;
       this.frameIndex = 0;
       if (this.stopAt == null && this.playing) this.stopAt = this.now + STOP_RIDING_DELAY;
-      if (this.stopAt != null && this.now >= this.stopAt) { this.playing = false; this.stopAt = null; }
+      if (this.stopAt != null && this.now >= this.stopAt) {
+        this.playing = false;
+        this.stopAt = null;
+      }
     } else {
       // :221-233 - the 0.125s frame clock, wrapping 3 -> 0 (HORSE-WALK: a walk's WALK_FRAME_TIME).
       if (this.lastFrameTime === 0) this.lastFrameTime = this.now;

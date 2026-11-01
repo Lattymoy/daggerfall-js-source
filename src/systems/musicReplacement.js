@@ -58,7 +58,10 @@ export const musicReplacementEnabled = () => getBool('Enhancements', 'AssetInjec
  * whatever their tools emitted.
  */
 export const replacementKey = (songName) =>
-  String(songName ?? '').trim().replace(/\.HMI$/i, '').toUpperCase();
+  String(songName ?? '')
+    .trim()
+    .replace(/\.HMI$/i, '')
+    .toUpperCase();
 
 /**
  * Split a supplied filename into its key and extension.
@@ -71,7 +74,7 @@ export function replacementEntry(fileName) {
   // browsers and the last segment is the file.
   const base = name.slice(name.lastIndexOf('/') + 1);
   const dot = base.lastIndexOf('.');
-  if (dot <= 0) return null;                     // no extension, or a dotfile
+  if (dot <= 0) return null; // no extension, or a dotfile
   const ext = base.slice(dot + 1).toLowerCase();
   if (!MUSIC_EXTENSIONS.includes(ext)) return null;
   // THE `song_` PREFIX IS DFU'S OWN, and accepting it is what lets an
@@ -82,7 +85,13 @@ export function replacementEntry(fileName) {
   // already named correctly and only wears that prefix. Stripping it is
   // unambiguous: swept over the retail archive, NO record name begins
   // with SONG_, so nothing real is shortened by accident.
-  return { key: base.slice(0, dot).replace(/^song_/i, '').toUpperCase(), ext };
+  return {
+    key: base
+      .slice(0, dot)
+      .replace(/^song_/i, '')
+      .toUpperCase(),
+    ext,
+  };
 }
 
 /**

@@ -12,8 +12,8 @@
   {
     "name": "OW4P1-one-axis",
     "file": "src/systems/party/partyWalk.js",
-    "old": "(Math.round(dest.point.x) !== live.sx || Math.round(dest.point.z) !== live.sz)",
-    "new": "(Math.round(dest.point.x) !== live.sx)",
+    "old": "    const moved = !!dest.point && (Math.round(dest.point.x) !== live.sx || Math.round(dest.point.z) !== live.sz);",
+    "new": "    const moved = !!dest.point && Math.round(dest.point.x) !== live.sx;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "OW4P1-walking-never-rerouted",
     "file": "src/systems/party/partyWalk.js",
-    "old": "return free && (journeying || !mine.balk) ? 'start' : null;",
-    "new": "return free && !journeying && !mine.balk ? 'start' : null;",
+    "old": "  if (tw.h == null && tw.go !== mine.go) return free && (journeying || !mine.balk) ? 'start' : null;",
+    "new": "  if (tw.h == null && tw.go !== mine.go) return free && !journeying && !mine.balk ? 'start' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "OW4P2-halt-forever",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (walkHaltLapsed(tw, now)) return { tw: null, halt: false };   // AUDIT OW4 P2: off the pose, never set out again\n",
-    "new": "",
+    "old": "  if (walkHaltLapsed(tw, now)) return { tw: null, halt: false }; // AUDIT OW4 P2: off the pose, never set out again\n  if (journeying) return { tw: mine ? { ...tw, go: Math.round(now), h: null } : null, halt: false };",
+    "new": "  if (journeying) return { tw: mine ? { ...tw, go: Math.round(now), h: null } : null, halt: false };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "OW4P4-balk-restarted",
     "file": "src/systems/party/partyWalk.js",
-    "old": "free && (journeying || !mine.balk) ? 'start'",
-    "new": "free ? 'start'",
+    "old": "  if (tw.h == null && tw.go !== mine.go) return free && (journeying || !mine.balk) ? 'start' : null;",
+    "new": "  if (tw.h == null && tw.go !== mine.go) return free ? 'start' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "OW4P6-own-resume-halted",
     "file": "src/systems/party/partyWalk.js",
-    "old": "return !journeying ? null : was ? 'halt' : 'leave';",
-    "new": "return journeying ? 'halt' : null;",
+    "old": "  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return !journeying ? null : was ? 'halt' : 'leave';",
+    "new": "  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return journeying ? 'halt' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],

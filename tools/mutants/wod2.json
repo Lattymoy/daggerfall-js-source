@@ -2,8 +2,8 @@
   {
     "name": "the-first-pick-does-not-latch-the-pixel",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "  if (flatten) st.hasLocation = true;\n",
-    "new": "",
+    "old": "  if (flatten) st.hasLocation = true;\n  st.out.push({ index: i, prefab, flatten, rect });",
+    "new": "  st.out.push({ index: i, prefab, flatten, rect });",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "the-bounds-lose-their-transpose",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "  if ((tx + prefab.height > 127 || ty + prefab.width > 127)) return;",
-    "new": "  if ((tx + prefab.width > 127 || ty + prefab.height > 127)) return;",
+    "old": "  if (tx + prefab.height > 127 || ty + prefab.width > 127) return;",
+    "new": "  if (tx + prefab.width > 127 || ty + prefab.height > 127) return;",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "terrainX-zero-is-let-in",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "if (tx <= 0 || ty <= 0 || (tx > 128 || ty > 128)) return;",
-    "new": "if (tx < 0 || ty <= 0 || (tx > 128 || ty > 128)) return;",
+    "old": "  if (tx <= 0 || ty <= 0 || tx > 128 || ty > 128) return;",
+    "new": "  if (tx < 0 || ty <= 0 || tx > 128 || ty > 128) return;",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "a-type-0-no-longer-ends-the-call",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "    if (st.hasLocation) {\n      if (t === 0) return st.out;",
-    "new": "    if (st.hasLocation) {\n      if (t === 0) continue;",
+    "old": "    // instance ANYWHERE in the list ends the whole call; type 2 skips.\n    if (st.hasLocation) {\n      if (t === 0) return st.out;\n      else if (t === 2) continue;",
+    "new": "    // instance ANYWHERE in the list ends the whole call; type 2 skips.\n    if (st.hasLocation) {\n      if (t === 0) continue;\n      else if (t === 2) continue;",
     "tests": [
       "test/world/terrain/wod2_loader.test.js",
       "test/systems/flow2_fast_tests.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "the-flatten-touches-the-border",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "  for (let x = 1; x <= 127; x++) {\n    for (let y = 1; y <= 127; y++) {",
-    "new": "  for (let x = 0; x <= 128; x++) {\n    for (let y = 1; y <= 127; y++) {",
+    "old": "  for (let x = 1; x <= 127; x++) {",
+    "new": "  for (let x = 0; x <= 128; x++) {",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "the-kidnap-marker-is-any-357",
     "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
-    "old": "  if (arg[0] === '357' && arg[1] === '6') spawners",
-    "new": "  if (arg[0] === '357') spawners",
+    "old": "  if (arg[0] === '357' && arg[1] === '6') spawners.push({ spawnType: WOD_SPAWN_TYPE.Quest, enemyID: 0, questID: 0 }); // :1230-1231",
+    "new": "  if (arg[0] === '357') spawners.push({ spawnType: WOD_SPAWN_TYPE.Quest, enemyID: 0, questID: 0 }); // :1230-1231",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "the-street-lantern-is-not-lifted",
     "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
-    "old": "[27, -0.02], [29, 'half'],",
-    "new": "[27, -0.02],",
+    "old": "  [29, 'half'],\n]);",
+    "new": "]);",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "the-quaternion-is-not-normalized",
     "file": "src/world/worldOfDaggerfall/wodLocationObjects.js",
-    "old": "  if (n > 0) { x /= n; y /= n; z /= n; w /= n; } else { x = 0; y = 0; z = 0; w = 1; }\n  const xx",
-    "new": "  const xx",
+    "old": "  if (n > 0) {\n    x /= n;\n    y /= n;\n    z /= n;\n    w /= n;\n  } else {\n    x = 0;\n    y = 0;\n    z = 0;\n    w = 1;\n  }\n  const xx = x * x,",
+    "new": "  const xx = x * x,",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "regions-append-in-landing-order",
     "file": "src/world/worldOfDaggerfall/worldOfDaggerfall.js",
-    "old": "    this._chain = this._chain.then(async () => {\n      const b = await bytes;\n      if (b === FAILED) { this._retryLater(region, 0); return; }   // WOD6: tried again, off the chain\n      if (!b) return;\n      // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up\n      // to 88 ms; each is at most ~15 ms alone\n      await new Promise((r) => setTimeout(r, 0));\n      // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left\n      // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed\n      try { this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b); } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack\n      }\n    });",
-    "new": "    const landed = bytes.then((b) => { if (b) this.session.appendRegion(region, decodeRegionPack(b)); });\n    this._chain = Promise.all([this._chain, landed]);",
+    "old": "    this._chain = this._chain.then(async () => {\n      const b = await bytes;\n      if (b === FAILED) {\n        this._retryLater(region, 0);\n        return;\n      } // WOD6: tried again, off the chain\n      if (!b) return;\n      // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up\n      // to 88 ms; each is at most ~15 ms alone\n      await new Promise((r) => setTimeout(r, 0));\n      // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left\n      // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed\n      try {\n        this.session.appendRegion(region, decodeRegionPack(b));\n        this._bytes.set(region, b);\n      } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n        this._retryLater(region, 0); // WOD6: a body that would not read may be a proxy's page, not the pack\n      }\n    });",
+    "new": "    const landed = bytes.then((b) => {\n      if (b) this.session.appendRegion(region, decodeRegionPack(b));\n    });\n    this._chain = Promise.all([this._chain, landed]);",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "the-batch-ignores-the-normal-matrix",
     "file": "src/render/staticBatch.js",
-    "old": "    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local;",
-    "new": "    const nm = local;",
+    "old": "    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local; // WD1: a scaled world-data model lights through its inverse transpose",
+    "new": "    const nm = local; // WD1: a scaled world-data model lights through its inverse transpose",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "WOD-SEA-TEST-the-location-region-again",
     "file": "src/scenes/pixelBuild.js",
-    "old": "          regionIndex: maps.getRegionIndexAt(px, py),",
-    "new": "          regionIndex: dfLocation ? dfLocation.regionIndex : -1,",
+    "old": "          regionIndex: maps.getRegionIndexAt(px, py),   // WOD-SEA-TEST: the PIXEL's region (the sea's 31), never the location's",
+    "new": "          regionIndex: dfLocation ? dfLocation.regionIndex : -1,   // WOD-SEA-TEST: the PIXEL's region (the sea's 31), never the location's",
     "tests": [
       "test/world/terrain/wod2_loader.test.js",
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"

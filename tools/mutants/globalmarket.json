@@ -75,8 +75,8 @@
   {
     "name": "GLOBAL-MARKET-tab-fill-courier-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left) - c; };",
-    "new": "fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left); };",
+    "old": "      : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left) - c;",
+    "new": "      : n * o.price - fillTaxOn((o.units - o.left) * o.price, n * o.price, c === 0 && n === o.left);",
     "tests": [
       "test/net/globalmarket.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "GLOBAL-MARKET-tab-fill-no-least",
     "file": "src/ui/marketTab.js",
-    "old": "units: n, hubs: m.hubs, least: fillPay(o, n) ?? 1, ...at() })),",
-    "new": "units: n, hubs: m.hubs, ...at() })),",
+    "old": "            m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, least: fillPay(o, n) ?? 1, ...at() }),",
+    "new": "            m.book.fill({ region: m.region, order: o.id, units: n, hubs: m.hubs, ...at() }),",
     "tests": [
       "test/net/globalmarket.test.js"
     ]

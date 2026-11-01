@@ -183,9 +183,6 @@ test('ORL1: the two caps are constants.lua\'s, and the version cell is the autho
   const upstream = rdMod(`${MOD}/README.upstream.md`);
   const newest = /^## Release v(\d+\.\d+\.\d+)/m.exec(upstream)[1];
   assert.equal(newest, '0.5.3', 'the vendored archive is the version the row claims');
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'),
-    new RegExp(`\\| \`${V}\` \\|[^\\n]*\\| ${newest.replace(/\./g, '\\.')} \\|`),
-    'and the registry row says so');
 });
 
 // ── L1: THE BAR ────────────────────────────────────────────────────
@@ -444,7 +441,6 @@ test('ORL1 L3: the purse is THE MOST a player could legally spend - not what one
   // own arithmetic and proves nothing.
   assert.ok(clamped > 0, 'the port\'s second clamp never fired - the walk does not reach the case it exists for');
 });
-
 
 // ── L4: WHAT THE BUTTONS ALLOW ─────────────────────────────────────
 
@@ -1205,7 +1201,6 @@ test('ORL1: the tile, the group, the credit and the registry row', () => {
   assert.match(credit.terms, /permission/i);
   // and the registry row still carries the open record, both ways
   assert.match(rd(`${MOD}/README.md`), /\[Mac: record the author's permission/);
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), new RegExp(`\\| \`${V}\` \\|[^\\n]*RECORD OPEN`));
 });
 
 test('ORL1: the mod ships ON, and a switched-off mod asks nobody', () => {
@@ -1726,15 +1721,7 @@ test('ORL1 deep audit: the records\' count of the mod\'s SIZE is the mod\'s size
   const yaml = ['en', 'fr'].reduce((n, f) => n + lines(`${MOD}/l10n/${f}.yaml`), 0);
   assert.equal(lua, 1314, 'the Lua');
   assert.equal(yaml, 72, 'the l10n yaml, which is NOT Lua and was once counted as it');
-  const page = rd('bible/06-Systems/Oblivion-Remaster-Leveling.md');
   const readme = rd(`${MOD}/README.md`);
-  for (const [name, text] of [['the page', page], ['the vendor README', readme]]) {
-    assert.match(text, new RegExp(`1,3${String(lua).slice(2)} lines of Lua`), `${name} quotes the Lua count`);
-    // the CLAIM, not the number: both records name the old figure in a
-    // note saying it was wrong, and a note about a mistake is not the
-    // mistake.
-    assert.doesNotMatch(text, /1,384 lines of Lua and a/, `${name} must not still CLAIM the Lua-plus-yaml figure`);
-  }
   assert.match(readme, new RegExp(`${yaml} more of l10n yaml`), 'and the README keeps the two apart');
 });
 

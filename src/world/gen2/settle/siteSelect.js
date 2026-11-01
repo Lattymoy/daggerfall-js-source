@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Where towns stand"): A SITE'S WORTH for each kind of
+// WG2 SETTLEMENT 2.0 ("Where towns stand"): A SITE'S WORTH for each kind of
 // settlement (data/settlementTypes.json `suit`): level ground, water near, fertile soil, ore near, high ground over its
 // neighbourhood (defence), low ground, wet ground, dry air - each 0..1, weighed by the type. A fishing village favours
 // the water, a mining town the ore, a fortress the heights. The candidates are the best sites a type's spacing apart.

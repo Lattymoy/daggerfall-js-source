@@ -59,7 +59,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { RECIPES, recipeById, QUALITY_EFFECTS, MASTERWORK, craftXp, ARMOR_LEATHER, ARMOR_CHAIN } from './recipeLaw.js';
-import { REFORGES_MAX } from '../systems/loot/lootRarity.js';   // REFORGE-REPLACE: the most reforges a piece counts - the ladder's one bound (the service loads the ladder already, through the item law)
+import { REFORGES_MAX } from '../systems/loot/lootRarity.js'; // REFORGE-REPLACE: the most reforges a piece counts - the ladder's one bound (the service loads the ladder already, through the item law)
 
 /** The highest quality a temper reaches: Superior (QUALITY_NAMES[3]). */
 export const TEMPER_TOP = 3;
@@ -80,13 +80,24 @@ export const pieceQuality = (/** @type {any} */ item) => (Number.isInteger(item?
  */
 export function temperRecipeOf(item) {
   if (!item) return null;
-  if (typeof item.recipe === 'string') { const r = recipeById(item.recipe); return temperableRecipe(r) ? r : null; }
-  const t = item.templateIndex, m = item.material ?? 0;
-  if (item.group === 'Weapons') return RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t && r.material === m) ?? null;
+  if (typeof item.recipe === 'string') {
+    const r = recipeById(item.recipe);
+    return temperableRecipe(r) ? r : null;
+  }
+  const t = item.templateIndex,
+    m = item.material ?? 0;
+  if (item.group === 'Weapons')
+    return RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t && r.material === m) ?? null;
   if (item.group === 'Armor') {
-    if (m === ARMOR_LEATHER) return RECIPES.find((r) => r.kind === 'leather' && r.templateIndex === t && r.leather === 'leather:cured') ?? null;
+    if (m === ARMOR_LEATHER)
+      return (
+        RECIPES.find((r) => r.kind === 'leather' && r.templateIndex === t && r.leather === 'leather:cured') ?? null
+      );
     if ((m & 0xff00) === ARMOR_CHAIN) return RECIPES.find((r) => r.kind === 'chain' && r.templateIndex === t) ?? null;
-    return RECIPES.find((r) => (r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m) ?? null;
+    return (
+      RECIPES.find((r) => (r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m) ??
+      null
+    );
   }
   if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
     return RECIPES.find((r) => r.kind === 'garment' && r.templateIndex === t && r.cloth === 'cloth:linen') ?? null;
@@ -121,7 +132,8 @@ export function temperRefusal(item) {
 /** The share a step takes a piece's condition and weight by: the next quality's over its own (Standard to Fine: x1.15
  *  and x0.95). @param {number} q */
 export function temperStep(q) {
-  const from = QUALITY_EFFECTS[q], to = QUALITY_EFFECTS[q + 1];
+  const from = QUALITY_EFFECTS[q],
+    to = QUALITY_EFFECTS[q + 1];
   return { condition: to.condition / from.condition, weight: to.weight / from.weight };
 }
 
@@ -135,5 +147,7 @@ export const REFORGE_ESSENCE = Object.freeze({ magic: 2, rare: 5 });
  *  that is no piece's. REFORGE-REPLACE (the owner: "Replace, price rises"): its tier's first price doubled for every
  *  reforge the piece has taken (`count`, lootRarity.js reforgeCount - none by default, a request from before the count; at most REFORGES_MAX),
  *  as the Mages Guild's doubles (systems/reforge.js reforgePrice). */
-export const reforgeEssence = (/** @type {string|null|undefined} */ tier, count = 0) => (
-  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);
+export const reforgeEssence = (/** @type {string|null|undefined} */ tier, count = 0) =>
+  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX
+    ? REFORGE_ESSENCE[tier] * 2 ** count
+    : null;

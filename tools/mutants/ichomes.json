@@ -2,8 +2,8 @@
   {
     "name": "ICH-the-ground-unwritten",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "    sub.footprintM2 = areaOf(b.plot.q);   // IC-HOMES",
-    "new": "    // IC-HOMES",
+    "old": "    sub.footprintM2 = areaOf(b.plot.q); // IC-HOMES: its ground, m2 - its one model a door, which measures no house (onlineHomes.js)",
+    "new": "    // IC-HOMES: its ground, m2 - its one model a door, which measures no house (onlineHomes.js)",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ICH-the-door-record-unread",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
-    "new": "hasInterior: hasInteriorModels(sub) };",
+    "old": "    ...footprintOf(sub),\n  };",
+    "new": "  };",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]

@@ -30,12 +30,19 @@
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import {
-  JUNCTION_MAP_WIDTH, JUNCTION_MAP_HEIGHT, JUNCTION_MAP_W2, JUNCTION_MAP_H2,
-  JUNCTION_HERE_PT, junctionDirectionIndex, drawMapSection, DOT_SCALE, packRGBA,
+  JUNCTION_MAP_WIDTH,
+  JUNCTION_MAP_HEIGHT,
+  JUNCTION_MAP_W2,
+  JUNCTION_MAP_H2,
+  JUNCTION_HERE_PT,
+  junctionDirectionIndex,
+  drawMapSection,
+  DOT_SCALE,
+  packRGBA,
 } from '../travel/travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../../systems/travel/travelOptionsText.js';
 import { t } from '../../systems/textManager.js';
-import { buildPaceControls, paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIALS: the journey's own dials again
+import { buildPaceControls, paceControlsCss } from '../travel/travelPaceControls.js'; // PACE-DIALS: the journey's own dials again
 
 export const ENHANCED_TRAVEL_ID = 'enhanced-travel';
 /** PACE-DIALS: the steppers' own sheet - the bar's copy; docked in the Overworld it is hidden (the block has its own). */
@@ -60,15 +67,25 @@ let last = null;
  *  and why. AUDIT OW5 G1: the load (TV2's governor), or the ground (AUDIT OW4 J5: an Overworld journey walks at x1 on the
  *  ground until the view can rise), which the load's words called loading while nothing was; OW6: or an enemy near
  *  (systems/travel/travelThreat.js). */
-export const TRAVEL_HELD_WHY = Object.freeze({   // OW-TOWN-WALK: a town's pace; AUDIT OW-REVISITED L1-8 / L3-13 / L6-8: every word the player's language's (L10N4)
-  get load() { return t('travel.held.load', 'while the land loads'); },
-  get ground() { return t('travel.held.ground', 'until the Overworld rises'); },
-  get foes() { return t('travel.held.foes', 'with enemies near'); },
-  get town() { return t('travel.held.town', 'in town'); },
+export const TRAVEL_HELD_WHY = Object.freeze({
+  // OW-TOWN-WALK: a town's pace; AUDIT OW-REVISITED L1-8 / L3-13 / L6-8: every word the player's language's (L10N4)
+  get load() {
+    return t('travel.held.load', 'while the land loads');
+  },
+  get ground() {
+    return t('travel.held.ground', 'until the Overworld rises');
+  },
+  get foes() {
+    return t('travel.held.foes', 'with enemies near');
+  },
+  get town() {
+    return t('travel.held.town', 'in town');
+  },
 });
 /** The held line whole in the player's language - its reason was the one word translated, inside an English line
  *  ("Held to ×5 of ×100 in der Stadt"). */
-export const TRAVEL_HELD_TEXT = (n, of, why = 'load') => t('travel.held.line', 'Held to ×{n} of ×{of} {why}', { n, of, why: TRAVEL_HELD_WHY[why] ?? TRAVEL_HELD_WHY.load });
+export const TRAVEL_HELD_TEXT = (n, of, why = 'load') =>
+  t('travel.held.line', 'Held to ×{n} of ×{of} {why}', { n, of, why: TRAVEL_HELD_WHY[why] ?? TRAVEL_HELD_WHY.load });
 
 /** enhancedHud.js:"FRAME1: the smallest" - write only on a change. */
 function put(node, key, value) {
@@ -85,7 +102,7 @@ function cls(node, key, value) {
 function build(doc, hooks) {
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
-  injectPaceStyle(doc);   // PACE-DIALS
+  injectPaceStyle(doc); // PACE-DIALS
   const root = doc.createElement('div');
   root.id = ENHANCED_TRAVEL_ID;
   root.className = 'travelpanel';
@@ -122,7 +139,9 @@ function build(doc, hooks) {
   // time readout - Speed and Near enemies, 5-60 and x100 on a road alone (systems/travel/travelPace.js)
   const pace = buildPaceControls(doc, 'travelpanel');
   bar.querySelector('.travelpanel-speed')?.after(pace.root);
-  bar.addEventListener('mousedown', (e) => { if (e.target?.closest?.('[data-act]')) e.stopPropagation(); });
+  bar.addEventListener('mousedown', (e) => {
+    if (e.target?.closest?.('[data-act]')) e.stopPropagation();
+  });
   bar.addEventListener('click', (e) => {
     const act = e.target?.closest?.('[data-act]')?.dataset?.act;
     if (!act) return;
@@ -140,7 +159,7 @@ function build(doc, hooks) {
     msg: root.querySelector('.travelpanel-msg'),
     junction: root.querySelector('.travelpanel-junction'),
     bar,
-    pace,   // PACE-DIALS
+    pace, // PACE-DIALS
   };
 }
 
@@ -150,7 +169,8 @@ function build(doc, hooks) {
  *  spells them. */
 export function etaText(minutesLeft) {
   if (!Number.isFinite(minutesLeft) || minutesLeft <= 0) return '';
-  const h = Math.trunc(minutesLeft / 60), m = Math.trunc(minutesLeft % 60);
+  const h = Math.trunc(minutesLeft / 60),
+    m = Math.trunc(minutesLeft % 60);
   return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`;
 }
 
@@ -159,7 +179,8 @@ export function etaText(minutesLeft) {
  *  kilometre and a half of Iliac Bay. */
 export function distanceText(from, to) {
   if (!from || !to) return '';
-  const dx = to.x - from.x, dy = to.y - from.y;
+  const dx = to.x - from.x,
+    dy = to.y - from.y;
   const d = Math.round(Math.sqrt(dx * dx + dy * dy));
   return d <= 0 ? 'arriving' : `${d} pixel${d === 1 ? '' : 's'} out`;
 }
@@ -169,26 +190,33 @@ export function distanceText(from, to) {
  *  panel's (ui/travel/travelJunctionMap.js) - one law, two skins. */
 export function paintJunction(canvas, buf, { mapPixel, direction, settings, deps }) {
   if (!canvas?.getContext) return false;
-  drawMapSection(buf, {
-    originX: mapPixel.x - JUNCTION_MAP_W2, originY: mapPixel.y - JUNCTION_MAP_H2,
-    width: JUNCTION_MAP_WIDTH, height: JUNCTION_MAP_HEIGHT,
-    circular: settings?.junctionMapCircular !== false,
-  }, {
-    pathsAt: (x, y, type) => deps.pathsAt?.(x, y, type) ?? 0,
-    locationAt: (x, y) => deps.locationAt?.(x, y) ?? null,
-    colorOf: (t) => deps.locationColorOf?.(t) ?? null,
-    onlyLargeDots: !(settings?.variableSizeDots ?? false),
-    markedMapId: deps.markedMapId?.() ?? -1,
-    markColor: settings?.markLocationColor ? packRGBA(...settings.markLocationColor) : null,
-    showPaths: [true, true, false, false],
-  });
+  drawMapSection(
+    buf,
+    {
+      originX: mapPixel.x - JUNCTION_MAP_W2,
+      originY: mapPixel.y - JUNCTION_MAP_H2,
+      width: JUNCTION_MAP_WIDTH,
+      height: JUNCTION_MAP_HEIGHT,
+      circular: settings?.junctionMapCircular !== false,
+    },
+    {
+      pathsAt: (x, y, type) => deps.pathsAt?.(x, y, type) ?? 0,
+      locationAt: (x, y) => deps.locationAt?.(x, y) ?? null,
+      colorOf: (t) => deps.locationColorOf?.(t) ?? null,
+      onlyLargeDots: !(settings?.variableSizeDots ?? false),
+      markedMapId: deps.markedMapId?.() ?? -1,
+      markColor: settings?.markLocationColor ? packRGBA(...settings.markLocationColor) : null,
+      showPaths: [true, true, false, false],
+    },
+  );
   const player = settings?.playerColor ? packRGBA(...settings.playerColor) : packRGBA(255, 0, 0, 255);
   buf[JUNCTION_HERE_PT] = player;
   const pip = junctionDirectionIndex(direction);
   if (pip > 0 && pip < buf.length) buf[pip] = player;
   const ctx = canvas.getContext('2d');
   if (!ctx) return false;
-  const w = JUNCTION_MAP_WIDTH * DOT_SCALE, h = JUNCTION_MAP_HEIGHT * DOT_SCALE;
+  const w = JUNCTION_MAP_WIDTH * DOT_SCALE,
+    h = JUNCTION_MAP_HEIGHT * DOT_SCALE;
   const img = ctx.createImageData(w, h);
   const out = new Uint32Array(img.data.buffer);
   // the buffer is bottom-up, as every generated map texture in this
@@ -225,13 +253,30 @@ export const TRAVEL_GROUND_TEXT = Object.freeze({ road: 'on the road', open: 'of
 export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   if (typeof document === 'undefined') return null;
   const junctionOnly = !state.showing && !!state.junction?.on;
-  if (!state.showing && !junctionOnly) { hideEnhancedTravelControl(); return null; }
-  if (!host) { last = {}; parts = build(document, hooks); host = parts.root; }
+  if (!state.showing && !junctionOnly) {
+    hideEnhancedTravelControl();
+    return null;
+  }
+  if (!host) {
+    last = {};
+    parts = build(document, hooks);
+    host = parts.root;
+  }
   if (state.covered) {
-    if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; parts.bar.style.display = 'none'; parts.msg.style.display = 'none'; }   // OW-DECK: the bar and word may stand docked outside the root
+    if (last.covered !== true) {
+      last.covered = true;
+      parts.root.style.display = 'none';
+      parts.bar.style.display = 'none';
+      parts.msg.style.display = 'none';
+    } // OW-DECK: the bar and word may stand docked outside the root
     return parts.root;
   }
-  if (last.covered === true) { last.covered = false; parts.root.style.display = ''; parts.bar.style.display = ''; parts.msg.style.display = ''; }
+  if (last.covered === true) {
+    last.covered = false;
+    parts.root.style.display = '';
+    parts.bar.style.display = '';
+    parts.msg.style.display = '';
+  }
   // PLUS8: THE HUD'S SCALE, READ OFF THE HUD. The bar stands under the
   // compass (Enhanced Plus - ui/enhanced/enhancedPlusStyle.js TRAVEL_CSS), and the
   // compass grows with --hud-scale; this panel is a sibling of `.hud` on
@@ -240,8 +285,11 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   // enhancedHud.js already wrote on its own host - read, not recomputed,
   // so the clamp keeps its one home. An inline style read: no layout.
   const scale = document.querySelector('.hud')?.style?.getPropertyValue('--hud-scale') || '1';
-  if (last.scale !== scale) { last.scale = scale; parts.root.style.setProperty('--hud-scale', scale); }
-  cls(parts.bar, 'barClass', `travelpanel-bar${state.following ? ' following' : ''}${junctionOnly ? ' hidden' : ''}`);   // OW-DECK: `following` on the bar too - docked, it is outside the root
+  if (last.scale !== scale) {
+    last.scale = scale;
+    parts.root.style.setProperty('--hud-scale', scale);
+  }
+  cls(parts.bar, 'barClass', `travelpanel-bar${state.following ? ' following' : ''}${junctionOnly ? ' hidden' : ''}`); // OW-DECK: `following` on the bar too - docked, it is outside the root
   put(parts.name, 'name', String(state.destination ?? ''));
   const eta = etaText(state.minutesLeft);
   const dist = distanceText(state.from, state.to);
@@ -259,13 +307,25 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
     // STRANGER-LINE (the owner: "Stranger nearby looks totaly missplaced"): in the time box itself, in the ground line's
     // place and face (the held rate above it already says the pace) - red, while a stranger holds the journey
     const sr = state.stranger ? 'stranger near' : '';
-    if (last.strangerTxt !== sr) { last.strangerTxt = sr; parts.stranger.textContent = sr; parts.stranger.style.display = sr ? '' : 'none'; if (parts.ground) parts.ground.style.display = sr ? 'none' : ''; }
+    if (last.strangerTxt !== sr) {
+      last.strangerTxt = sr;
+      parts.stranger.textContent = sr;
+      parts.stranger.style.display = sr ? '' : 'none';
+      if (parts.ground) parts.ground.style.display = sr ? 'none' : '';
+    }
   }
   put(parts.ground, 'ground', state.onRoad ? TRAVEL_GROUND_TEXT.road : TRAVEL_GROUND_TEXT.open);
   // AUDIT DEEP X-6: and says why, under the pointer (the travel view's own words - they were written, and never shown)
   const why = held != null ? TRAVEL_HELD_TEXT(held, accel, state.heldWhy) : '';
-  if (parts.accel && last.accelTitle !== why) { last.accelTitle = why; parts.accel.title = why; }
-  cls(parts.root, 'rootFoe', `travelpanel${state.following ? ' following' : ''}${junctionOnly ? ' junction-only' : ''}${foesHold ? ' foes' : ''}`);
+  if (parts.accel && last.accelTitle !== why) {
+    last.accelTitle = why;
+    parts.accel.title = why;
+  }
+  cls(
+    parts.root,
+    'rootFoe',
+    `travelpanel${state.following ? ' following' : ''}${junctionOnly ? ' junction-only' : ''}${foesHold ? ' foes' : ''}`,
+  );
   put(parts.msg, 'msg', String(state.message ?? ''));
   cls(parts.msg, 'msgClass', state.message && !junctionOnly ? 'travelpanel-msg show' : 'travelpanel-msg');
   const j = state.junction;
@@ -285,10 +345,25 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
  *  cheap (a canvas), so this one is torn down. */
 export function hideEnhancedTravelControl() {
   if (!host) return;
-  try { parts?.pace?.dispose?.(); } catch { /* PACE-DIALS: its listener goes with it */ }
-  try { host.remove(); } catch { /* already gone */ }
-  try { parts?.bar?.remove(); parts?.msg?.remove(); } catch { /* OW-DECK: docked in the Overworld's strip - taken down with the journey */ }
-  host = null; parts = null; last = null;
+  try {
+    parts?.pace?.dispose?.();
+  } catch {
+    /* PACE-DIALS: its listener goes with it */
+  }
+  try {
+    host.remove();
+  } catch {
+    /* already gone */
+  }
+  try {
+    parts?.bar?.remove();
+    parts?.msg?.remove();
+  } catch {
+    /* OW-DECK: docked in the Overworld's strip - taken down with the journey */
+  }
+  host = null;
+  parts = null;
+  last = null;
 }
 
 export const enhancedTravelControlMounted = () => !!host;

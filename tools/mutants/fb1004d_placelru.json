@@ -12,8 +12,8 @@
   {
     "name": "PLACE-LRU-release-never-trims",
     "file": "src/scenes/placeHolds.js",
-    "old": "        shelf.set(h.key, h);\n        trim(kind);",
-    "new": "        shelf.set(h.key, h);",
+    "old": "        trim(kind);\n        sweep();",
+    "new": "        sweep();",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PLACE-LRU-a-models-pictures-never-let-go",
     "file": "src/scenes/placeHolds.js",
-    "old": "      for (const t of pictures ?? []) sub('tex', t);",
-    "new": "",
+    "old": "      for (const t of pictures ?? []) sub('tex', t);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "PLACE-LRU-a-second-keep-of-one-place-never-dropped",
     "file": "src/scenes/placeHolds.js",
-    "old": "        if (older) { shelf.delete(h.key); drop(older); }",
+    "old": "        if (older) {\n          shelf.delete(h.key);\n          drop(older);\n        }",
     "new": "",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "PLACE-LRU-a-dropped-place-still-holds",
     "file": "src/scenes/placeHolds.js",
-    "old": "        if (h.state === 'dropped') { if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k); return; }",
-    "new": "",
+    "old": "        if (h.state === 'dropped') {\n          if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k);\n          return;\n        }\n        if (h.holds[what].has(k)) return;",
+    "new": "        if (h.holds[what].has(k)) return;",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PLACE-LRU-a-drop-lets-nothing-go",
     "file": "src/scenes/placeHolds.js",
-    "old": "      for (const key of h.holds[what]) sub(what, key);",
-    "new": "",
+    "old": "      for (const key of h.holds[what]) sub(what, key);\n      h.holds[what].clear();",
+    "new": "      h.holds[what].clear();",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "PLACE-LRU-world-publish-never-settles",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const entry = built.get(pkey); pipeline.settle();",
-    "new": "    const entry = built.get(pkey);",
+    "old": "    const entry = built.get(pkey); pipeline.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: the pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)",
+    "new": "    const entry = built.get(pkey);   // FIELD BUGS 2026-10-04d PLACE-LRU: the pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "PLACE-LRU-world-the-entry-carries-no-hold",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      placeHold: pipeline,\n      location: dfLocation",
-    "new": "      location: dfLocation",
+    "old": "      placeHold: pipeline,\n      location: dfLocation ? dfLocation.name : null,",
+    "new": "      location: dfLocation ? dfLocation.name : null,",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "PLACE-LRU-world-the-build-asks-through-the-host",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
-    "new": "const pkey = `${px},${py}`, key = swap.keyFor(px, py);",
+    "old": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
+    "new": "    const pkey = `${px},${py}`, key = swap.keyFor(px, py);   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel",
     "tests": [
       "test/scenes/fb1004d_placelru.test.js"
     ],

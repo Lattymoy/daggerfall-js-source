@@ -20,8 +20,8 @@
   {
     "name": "TESA10-is-id-low-bit",
     "file": "src/world/capitalLane.js",
-    "old": "=== CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
-    "new": "=== CAPITAL_LANE;",
+    "old": "export const isCapitalPlaceId = (id) =>\n  ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
+    "new": "export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "TESA10-host-arena-first",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py)",
-    "new": "|| (_arenaTemplates && host.arenaLocationAt(px, py)) || host.capitalLocationAt(px, py) || host.countryLocationAt(px, py)",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "TESA10-host-stale-slot",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (at && had.capital.k === at.k && had.capital.s === at.s && (had.arena?.id ?? null) === (slot?.id ?? null) && (had.arena?.provinceIndex ?? null) === (slot?.provinceIndex ?? null)\n        && !!had.arena?.port === !!slot?.port   // AUDIT-TESA A4-F2: its place made a port, its slot too\n        && (had.exterior?.exteriorData?.portTownAndUnknown !== 0) === capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;",
-    "new": "      if (at && had.capital.k === at.k && had.capital.s === at.s) return had;",
+    "old": "      if (at && had.capital.k === at.k && had.capital.s === at.s && (had.arena?.id ?? null) === (slot?.id ?? null) && (had.arena?.provinceIndex ?? null) === (slot?.provinceIndex ?? null)\n        && !!had.arena?.port === !!slot?.port   // AUDIT-TESA A4-F2: its place made a port, its slot too\n        && (had.exterior?.exteriorData?.portTownAndUnknown !== 0) === capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)",
+    "new": "      if (at && had.capital.k === at.k && had.capital.s === at.s) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ],
@@ -445,8 +445,8 @@
   {
     "name": "TESA10-host-not-deleted",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)\n      host._locIndexGen += 1;\n      locationIndex.delete(key);",
-    "new": "capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)\n      host._locIndexGen += 1;",
+    "old": "        && (had.exterior?.exteriorData?.portTownAndUnknown !== 0) === capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)\n      host._locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;",
+    "new": "        && (had.exterior?.exteriorData?.portTownAndUnknown !== 0) === capitalSlicePort(at.k, at.s, capitalPinPort(at.k))) return had;   // BAY-LEFT-SEA: and its harbour's port word (its canal opened)\n      host._locIndexGen += 1;\n    }\n    if (!at) return null;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ],
@@ -455,8 +455,8 @@
   {
     "name": "TESA10-host-no-slot",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
-    "new": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
+    "old": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot, pinPort: capitalPinPort(at.k),   // BAY-LEFT-SEA: its harbour's port word",
+    "new": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null, pinPort: capitalPinPort(at.k),   // BAY-LEFT-SEA: its harbour's port word",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "TESA10-host-politic",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ?",
-    "new": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: at.k === 0 ?",
+    "old": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });",
+    "new": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "TESA10-install-unwired",
     "file": "src/scenes/modWorldData.js",
-    "old": "    installCapitals();   // TESA10",
-    "new": "    // TESA10",
+    "old": "    installCapitals(); // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)",
+    "new": "    // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -735,8 +735,8 @@
   {
     "name": "TESA10b-arch-solid",
     "file": "src/world/capitalSolitude.js",
-    "old": "o = archOpening(x, A), I = o > 0 ? o : -UNDER, depth = D - I;",
-    "new": "o = archOpening(x, A), I = -UNDER, depth = D - I;",
+    "old": "      I = o > 0 ? o : -UNDER,",
+    "new": "      I = -UNDER,",
     "tests": [
       "test/tesa10_capitals.test.js",
       "test/world/solitude_relief.test.js"
@@ -754,8 +754,8 @@
   {
     "name": "TESA10b-arch-gap-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  const gapN = [W.west, -W.archGap], gapS = [W.west, W.archGap];",
-    "new": "  const gapN = [W.west, 0], gapS = [W.west, 0];",
+    "old": "  const gapN = [W.west, -W.archGap],\n    gapS = [W.west, W.archGap];",
+    "new": "  const gapN = [W.west, 0],\n    gapS = [W.west, 0];",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -763,8 +763,8 @@
   {
     "name": "TESA10b-castle-gate-walled",
     "file": "src/world/capitalSolitude.js",
-    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, up + C.h, h, C.gate, C.gateH);",
-    "new": "  wallRun(mb, NORD, nw, sw, C.thick, up + C.h);",
+    "old": "  gatedRun(mb, NORD, nw, sw, C.thick, up + C.h, h, C.gate, C.gateH); // the west gate at the lane's level",
+    "new": "  wallRun(mb, NORD, nw, sw, C.thick, up + C.h); // the west gate at the lane's level",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -772,8 +772,8 @@
   {
     "name": "TESA10b-palace-on-water",
     "file": "src/world/capitalSolitude.js",
-    "old": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = levelY(st.top);",
-    "new": "const mb = new MeshBuilder(), B = S.palace, st = S.stack, y = 0;",
+    "old": "    y = levelY(st.top);",
+    "new": "    y = 0;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -781,8 +781,8 @@
   {
     "name": "TESA10b-piers-short",
     "file": "src/world/capitalSolitude.js",
-    "old": "    const len = D.edge - D.pierTo, zc = (D.edge + D.pierTo) / 2;",
-    "new": "    const len = (D.edge - D.pierTo) / 2, zc = (D.edge + D.pierTo) / 2;",
+    "old": "    const len = D.edge - D.pierTo,",
+    "new": "    const len = (D.edge - D.pierTo) / 2,",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

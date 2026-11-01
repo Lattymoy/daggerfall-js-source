@@ -323,7 +323,7 @@ test('TURN1 + FLIP-FIT: the compass turns over in the HUD editor (Alt+U) - the p
   assert.match(css, /\.hud-compass\[data-hm-turn\]::after \{ transform: none; \}/, 'turned: the box as painted');
   assert.match(css, /\.hud-compass\[data-hm-turn\] \.hud-strip \{ top: var\(--gcm\); bottom: calc\(2 \* var\(--gcm\)\);\s+background-position-y: calc\(0\.5 \* var\(--gcm\)\); \}/, 'the letters mirrored to the needle');
   assert.match(src, /if \(o\?\.t\) v\.t = true;/, 'the turn kept');
-  assert.match(src, /if \(mode === 'turn'\) \{ const nx = \{ \.\.\.o, t: !o\.t \};/, 'the press turns it');
+  assert.match(src, /if \(mode === 'turn'\) \{\n\s*const nx = \{ \.\.\.o, t: !o\.t \};/, 'the press turns it');
   assert.match(css, /\.pack-shell \.statflip-inner \{ grid-template-columns: minmax\(0, 1fr\) !important;/, 'one track, never past the card');
   assert.match(css, /\.pack-shell \.statflip-back \{ overflow: hidden !important; \}/);
 });

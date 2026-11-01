@@ -22,16 +22,16 @@
 import { mintDeed, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
 import { HULL_NAMES, HULL_PRICES, VARIANT_NAMES, HULL_VARIANT_COUNTS } from './comeSailAway/comeSailAwayBoat.js';
 import { checkName, textCaught } from '../net/nameFilter.js';
-import { shipFlagOf } from './naval/shipFlag.js';   // SHIP-COLOURS: her flag, through its door
-import { liveryOf, LIVERY_PARTS, isPaint } from './naval/shipLivery.js';   // SHIP-LIVERY: her paint, through its door
-import { fittingsOf } from './naval/deckFittings.js';   // DECK-PROPS: her fittings, through their door
-import { figureheadOf } from './naval/figurehead.js';   // FIGUREHEAD: her carving, through its door
-import { plateMetal } from './armorMaterials.js';   // REFIT-ORES: a piece of plate's metal
-import { isLocked } from './item/itemLock.js';   // REFIT-ORES: a locked piece is never melted down
-import { isBound } from './item/itemBound.js';   // REFIT-ORES: nor a bound one
-import { isSummoned } from './inventory.js';   // AUDIT 2: nor a conjured one
+import { shipFlagOf } from './naval/shipFlag.js'; // SHIP-COLOURS: her flag, through its door
+import { liveryOf, LIVERY_PARTS, isPaint } from './naval/shipLivery.js'; // SHIP-LIVERY: her paint, through its door
+import { fittingsOf } from './naval/deckFittings.js'; // DECK-PROPS: her fittings, through their door
+import { figureheadOf } from './naval/figurehead.js'; // FIGUREHEAD: her carving, through its door
+import { plateMetal } from './armorMaterials.js'; // REFIT-ORES: a piece of plate's metal
+import { isLocked } from './item/itemLock.js'; // REFIT-ORES: a locked piece is never melted down
+import { isBound } from './item/itemBound.js'; // REFIT-ORES: nor a bound one
+import { isSummoned } from './inventory.js'; // AUDIT 2: nor a conjured one
 import { WEAPONS } from '../characters/weapons.js';
-import { t } from './textManager.js';   // REFIT-ORES: a metal's hint in the player's language
+import { t } from './textManager.js'; // REFIT-ORES: a metal's hint in the player's language
 
 export const FLEET_SAVE_VENDOR = 'Fleet';
 export const FLEET_SAVE_VERSION = 1;
@@ -49,40 +49,84 @@ export const SHIP_NAME_MAX = 24;
  */
 export function shipNameVerdict(raw) {
   let s = '';
-  for (const ch of String(raw ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) s += ch; }
+  for (const ch of String(raw ?? '')) {
+    const c = ch.charCodeAt(0);
+    if (c >= 32 && c <= 126) s += ch;
+  }
   s = s.replace(/\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX).trim();
   if (!s) return { ok: true, name: '', reason: null };
   const v = checkName(s);
   const caught = v.ok ? textCaught(s) : null;
   if (caught) return { ok: false, name: '', reason: `That name reads as "${caught}". Please pick another.` };
-  return v.ok ? { ok: true, name: s, reason: null } : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };
+  return v.ok
+    ? { ok: true, name: s, reason: null }
+    : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };
 }
 /** What she is called where a line names her: her own name, else her hull's ("Small Ship 'I'"). */
-export const shipLabel = (rec) => (rec?.name ? rec.name : `${HULL_NAMES[rec?.hull] ?? 'Boat'} '${VARIANT_NAMES[rec?.variant | 0] ?? 'I'}'`);
+export const shipLabel = (rec) =>
+  rec?.name ? rec.name : `${HULL_NAMES[rec?.hull] ?? 'Boat'} '${VARIANT_NAMES[rec?.variant | 0] ?? 'I'}'`;
 
 // ── THE REFITS ───────────────────────────────────────────────────────────────────────────────────────────────────────
 /** The materials a refit takes, and what in the world each is: a Foraging find (the Wood-Axe's Wood Bundle), an
  *  alchemist's shelf (Iron, a Pine Branch - DFU's own ingredients, the Sickle's quests' finds), or online a Stores
  *  good withdrawn to the pack (a plank or a log, an ingot, resin - net/professionLaw.js). Each item counts one. */
 /** REFIT-ORES: a metal's store - its label, its metal (`metal`), its ingots' templates, and its hint in the player's language. */
-const metalStore = (label, metal, templates, hint) => Object.freeze({ label, templates: Object.freeze(templates), metal, get hint() { return hint(); } });
+const metalStore = (label, metal, templates, hint) =>
+  Object.freeze({
+    label,
+    templates: Object.freeze(templates),
+    metal,
+    get hint() {
+      return hint();
+    },
+  });
 export const MATERIALS = Object.freeze({
-  timber: Object.freeze({ label: 'Timber', hint: 'Wood Bundles (gathered with a Wood-Axe), planks or logs', templates: Object.freeze([1604, 645, 646, 647, 648, 649, 650, 651, 635, 636, 637, 638, 639, 640, 641]) }),
-  iron: Object.freeze({ label: 'Iron', hint: 'Iron from an alchemist, or iron and steel ingots', templates: Object.freeze([71, 620, 621]) }),
-  pitch: Object.freeze({ label: 'Pitch', hint: 'Pine Branches for their resin, or Resin itself', templates: Object.freeze([14, 653]) }),
+  timber: Object.freeze({
+    label: 'Timber',
+    hint: 'Wood Bundles (gathered with a Wood-Axe), planks or logs',
+    templates: Object.freeze([1604, 645, 646, 647, 648, 649, 650, 651, 635, 636, 637, 638, 639, 640, 641]),
+  }),
+  iron: Object.freeze({
+    label: 'Iron',
+    hint: 'Iron from an alchemist, or iron and steel ingots',
+    templates: Object.freeze([71, 620, 621]),
+  }),
+  pitch: Object.freeze({
+    label: 'Pitch',
+    hint: 'Pine Branches for their resin, or Resin itself',
+    templates: Object.freeze([14, 653]),
+  }),
   // REFIT-ORES (2026-10-17, bible/03-World/Naval-Refit.md REFIT-ORES): the metals of DFU's ladder past iron - each its
   // forge's ingot (net/professionLaw.js 621-629; the Warforged Steel ingot, 630, counts as Ebony), or a weapon or a piece
   // of plate of that metal melted down (`metal`: DFU's WeaponMaterialTypes, and ArmorMaterialTypes' plate over it) - never
   // one worn, a quest's, or enchanted (`meltable`)
-  steel: metalStore('Steel', 1, [621], () => t('naval.ore.steel', 'Steel ingots, or a steel weapon or plate melted down')),
-  silver: metalStore('Silver', 2, [622], () => t('naval.ore.silver', 'Silver ingots, or a silver weapon or plate melted down')),
-  elven: metalStore('Elven', 3, [623], () => t('naval.ore.elven', 'Moonstone ingots, or an elven weapon or plate melted down')),
-  dwarven: metalStore('Dwarven', 4, [624], () => t('naval.ore.dwarven', 'Dwarven ingots, or a dwarven weapon or plate melted down')),
-  mithril: metalStore('Mithril', 5, [625], () => t('naval.ore.mithril', 'Mithril ingots, or a mithril weapon or plate melted down')),
-  adamantium: metalStore('Adamantium', 6, [626], () => t('naval.ore.adamantium', 'Adamantium ingots, or an adamantium weapon or plate melted down')),
-  ebony: metalStore('Ebony', 7, [627, 630], () => t('naval.ore.ebony', 'Ebony or Warforged Steel ingots, or an ebony weapon or plate melted down')),
-  orcish: metalStore('Orcish', 8, [628], () => t('naval.ore.orcish', 'Orichalcum ingots, or an orcish weapon or plate melted down')),
-  daedric: metalStore('Daedric', 9, [629], () => t('naval.ore.daedric', 'Daedric ingots, or a daedric weapon or plate melted down')),
+  steel: metalStore('Steel', 1, [621], () =>
+    t('naval.ore.steel', 'Steel ingots, or a steel weapon or plate melted down'),
+  ),
+  silver: metalStore('Silver', 2, [622], () =>
+    t('naval.ore.silver', 'Silver ingots, or a silver weapon or plate melted down'),
+  ),
+  elven: metalStore('Elven', 3, [623], () =>
+    t('naval.ore.elven', 'Moonstone ingots, or an elven weapon or plate melted down'),
+  ),
+  dwarven: metalStore('Dwarven', 4, [624], () =>
+    t('naval.ore.dwarven', 'Dwarven ingots, or a dwarven weapon or plate melted down'),
+  ),
+  mithril: metalStore('Mithril', 5, [625], () =>
+    t('naval.ore.mithril', 'Mithril ingots, or a mithril weapon or plate melted down'),
+  ),
+  adamantium: metalStore('Adamantium', 6, [626], () =>
+    t('naval.ore.adamantium', 'Adamantium ingots, or an adamantium weapon or plate melted down'),
+  ),
+  ebony: metalStore('Ebony', 7, [627, 630], () =>
+    t('naval.ore.ebony', 'Ebony or Warforged Steel ingots, or an ebony weapon or plate melted down'),
+  ),
+  orcish: metalStore('Orcish', 8, [628], () =>
+    t('naval.ore.orcish', 'Orichalcum ingots, or an orcish weapon or plate melted down'),
+  ),
+  daedric: metalStore('Daedric', 9, [629], () =>
+    t('naval.ore.daedric', 'Daedric ingots, or a daedric weapon or plate melted down'),
+  ),
 });
 /** REFIT-ORES: an item's metal (DFU's WeaponMaterialTypes, 0 iron to 9 Daedric) - a weapon's, or a piece of plate's
  *  (armorMaterials.js plateMetal) - or null for anything else (leather, chain, cloth, an ingot, an arrow). */
@@ -99,20 +143,72 @@ export function refitMetalOf(item) {
  *  affixes, a Legendary's record, DFU's magic mark (loot/lootRarity.js rarityEligible's own list) - nor socketed. AUDIT 2:
  *  nor conjured (Create Item's, inventory.js isSummoned): a cast's steel paid a Steel tier from magicka. */
 const listed = (v) => Array.isArray(v) && v.length > 0;
-export const meltable = (item) => !!item && item.equipSlot == null && !isLocked(item) && !isBound(item) && !isSummoned(item) && !item.questItem
-  && !item.artifact && !item.sigil && typeof item.provenance !== 'string'
-  && !listed(item.enchantments) && !listed(item.customEnchantments)
-  && !item.magic && (item.rarity == null || item.rarity === 'common') && !listed(item.affixes) && !item.legendary
-  && item.socket == null && !listed(item.sockets);
+export const meltable = (item) =>
+  !!item &&
+  item.equipSlot == null &&
+  !isLocked(item) &&
+  !isBound(item) &&
+  !isSummoned(item) &&
+  !item.questItem &&
+  !item.artifact &&
+  !item.sigil &&
+  typeof item.provenance !== 'string' &&
+  !listed(item.enchantments) &&
+  !listed(item.customEnchantments) &&
+  !item.magic &&
+  (item.rarity == null || item.rarity === 'common') &&
+  !listed(item.affixes) &&
+  !item.legendary &&
+  item.socket == null &&
+  !listed(item.sockets);
 /** Whether `item` is one of `kind`: its template, or (an ore) a meltable piece of its metal. */
-const isOf = (item, kind) => { const m = MATERIALS[kind]; return !!m && !!item && (m.templates.includes(item.templateIndex) || (m.metal != null && refitMetalOf(item) === m.metal && meltable(item))); };
+const isOf = (item, kind) => {
+  const m = MATERIALS[kind];
+  return (
+    !!m &&
+    !!item &&
+    (m.templates.includes(item.templateIndex) || (m.metal != null && refitMetalOf(item) === m.metal && meltable(item)))
+  );
+};
 /** The four refits, each UPGRADE_TIERS deep: what it betters, by how much a tier, and what it is built of. Guns only on
  *  a hull that carries them. */
 export const UPGRADE_LINES = Object.freeze([
-  Object.freeze({ id: 'hold', label: 'Hold', what: 'More cargo before the ship slows', per: 0.2, effect: 'cargo', mats: Object.freeze(['timber', 'iron']), guns: false }),
-  Object.freeze({ id: 'rigging', label: 'Rigging', what: 'Speed under sail', per: 0.04, effect: 'speed', mats: Object.freeze(['timber', 'pitch']), guns: false }),
-  Object.freeze({ id: 'hull', label: 'Hull', what: 'Hull and sail strength', per: 0.1, effect: 'hull', mats: Object.freeze(['timber', 'pitch', 'iron']), guns: false }),
-  Object.freeze({ id: 'guns', label: 'Guns', what: 'Broadside damage', per: 0.08, effect: 'guns', mats: Object.freeze(['iron', 'pitch']), guns: true }),
+  Object.freeze({
+    id: 'hold',
+    label: 'Hold',
+    what: 'More cargo before the ship slows',
+    per: 0.2,
+    effect: 'cargo',
+    mats: Object.freeze(['timber', 'iron']),
+    guns: false,
+  }),
+  Object.freeze({
+    id: 'rigging',
+    label: 'Rigging',
+    what: 'Speed under sail',
+    per: 0.04,
+    effect: 'speed',
+    mats: Object.freeze(['timber', 'pitch']),
+    guns: false,
+  }),
+  Object.freeze({
+    id: 'hull',
+    label: 'Hull',
+    what: 'Hull and sail strength',
+    per: 0.1,
+    effect: 'hull',
+    mats: Object.freeze(['timber', 'pitch', 'iron']),
+    guns: false,
+  }),
+  Object.freeze({
+    id: 'guns',
+    label: 'Guns',
+    what: 'Broadside damage',
+    per: 0.08,
+    effect: 'guns',
+    mats: Object.freeze(['iron', 'pitch']),
+    guns: true,
+  }),
 ]);
 /** The shipwright's own three tiers - timber, iron and pitch. */
 export const BASE_TIERS = 3;
@@ -137,7 +233,21 @@ export const ORE_TIERS = Object.freeze([
 export const ORE_PER = 0.5;
 export const UPGRADE_TIERS = BASE_TIERS + ORE_TIERS.length;
 /** A tier's numeral, I to XII (0 none). */
-export const REFIT_NUMERALS = Object.freeze(['-', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']);
+export const REFIT_NUMERALS = Object.freeze([
+  '-',
+  'I',
+  'II',
+  'III',
+  'IV',
+  'V',
+  'VI',
+  'VII',
+  'VIII',
+  'IX',
+  'X',
+  'XI',
+  'XII',
+]);
 /** A tier's gold and each material's count, for a Small Ship - times her hull's share (HULL_UPGRADE_SCALE). */
 export const TIER_GOLD = Object.freeze([600, 1500, 3500]);
 export const TIER_MATS = Object.freeze([3, 6, 10]);
@@ -151,13 +261,26 @@ export function upgradeCost(hull, id, tier) {
   if (!line || !(tier >= 0 && tier < UPGRADE_TIERS)) return null;
   const k = HULL_UPGRADE_SCALE[hull] ?? 1;
   const n = (c) => Math.max(1, Math.round(c * k));
-  if (tier < BASE_TIERS) return { gold: Math.round((TIER_GOLD[tier] * k) / 10) * 10, mats: line.mats.map((kind) => ({ kind, n: n(TIER_MATS[tier]) })), level: 1 };
+  if (tier < BASE_TIERS)
+    return {
+      gold: Math.round((TIER_GOLD[tier] * k) / 10) * 10,
+      mats: line.mats.map((kind) => ({ kind, n: n(TIER_MATS[tier]) })),
+      level: 1,
+    };
   const ore = ORE_TIERS[tier - BASE_TIERS];
-  return { gold: Math.round((ore.gold * k) / 10) * 10, mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: ore.level };
+  return {
+    gold: Math.round((ore.gold * k) / 10) * 10,
+    mats: [
+      { kind: ore.ore, n: n(ore.n) },
+      { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) },
+    ],
+    level: ore.level,
+  };
 }
 /** What a line betters her by at `tier` (0.4: +40%) - its `per` a shipwright's tier, REFIT-ORES: ORE_PER of it a metal's. */
 export function refitShare(id, tier) {
-  const t = Math.max(0, Math.min(UPGRADE_TIERS, tier | 0)), per = lineOf(id)?.per ?? 0;
+  const t = Math.max(0, Math.min(UPGRADE_TIERS, tier | 0)),
+    per = lineOf(id)?.per ?? 0;
   return Math.min(t, BASE_TIERS) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;
 }
 /** Her refits as the sea and the helm read them - each a multiple of her build's own: `cargo` her hold's threshold,
@@ -167,7 +290,10 @@ export function refitOf(rec) {
   return { cargo: at('hold'), speed: at('rigging'), hull: at('hull'), guns: at('guns') };
 }
 /** The words for a line at a tier ("Cargo +40%"). */
-export const refitWords = (id, tier) => { const l = lineOf(id); return l ? `${l.label} ${REFIT_NUMERALS[tier] ?? tier}` : ''; };
+export const refitWords = (id, tier) => {
+  const l = lineOf(id);
+  return l ? `${l.label} ${REFIT_NUMERALS[tier] ?? tier}` : '';
+};
 /** How many of `kind` stand in `lists` (each item a template of the kind, its stack counted). Pure. */
 export function materialCount(lists, kind) {
   let n = 0;
@@ -181,17 +307,21 @@ export function meltCount(lists, kind, n) {
   const m = MATERIALS[kind];
   if (!m || m.metal == null) return 0;
   let ingots = 0;
-  for (const list of lists) for (const it of list ?? []) if (it && m.templates.includes(it.templateIndex)) ingots += Math.max(1, it.stackCount | 0 || 1);
+  for (const list of lists)
+    for (const it of list ?? [])
+      if (it && m.templates.includes(it.templateIndex)) ingots += Math.max(1, it.stackCount | 0 || 1);
   return Math.max(0, Math.min(n, materialCount(lists, kind)) - ingots);
 }
 /** AUDIT 2: whether `tpl`, one of `kind`'s templates, is another store's too (a steel ingot: Iron's and Steel's). */
-const lentTemplate = (kind, tpl) => Object.keys(MATERIALS).some((k) => k !== kind && MATERIALS[k].templates.includes(tpl));
+const lentTemplate = (kind, tpl) =>
+  Object.keys(MATERIALS).some((k) => k !== kind && MATERIALS[k].templates.includes(tpl));
 /** AUDIT 2: the order a tier's stores are taken in - a store no piece is melted for first (Iron, Timber, Pitch: its ingots
  *  and bundles alone), then a metal's, which melts down what the ingots leave it. A steel ingot is Iron's last (its
  *  templates' order) and Steel's first, so Iron takes one only when no iron is to hand, and Steel melts a blade for what
  *  it lent: taken ore first, 10 steel ingots and 4 steel swords failed a Small Ship's Guns Steel (4 Steel, 10 Iron) the
  *  stores could pay. Stable: the stores of a kind keep their order. */
-const takeOrder = (mats) => [...mats].sort((a, b) => Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null));
+const takeOrder = (mats) =>
+  [...mats].sort((a, b) => Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null));
 /** Whether every one of `mats` (`{ kind, n }`) can be taken out of `lists` together - a thing taken for one is not there
  *  for the next (REFIT-ORES: a steel ingot is Steel's and Iron's both), taken in `takeOrder`. Pure: tried on copies. */
 export function materialsFor(lists, mats) {
@@ -210,7 +340,10 @@ export function takeAllMaterials(lists, mats) {
 export function meltCounts(lists, mats) {
   const copy = lists.map((l) => (l ?? []).map((it) => (it ? { ...it } : it)));
   const melt = new Map();
-  for (const m of takeOrder(mats)) { melt.set(m, meltCount(copy, m.kind, m.n)); takeMaterials(copy, m.kind, m.n); }
+  for (const m of takeOrder(mats)) {
+    melt.set(m, meltCount(copy, m.kind, m.n));
+    takeMaterials(copy, m.kind, m.n);
+  }
   return mats.map((m) => melt.get(m) ?? 0);
 }
 /** `n` of `kind` taken out of `lists`, the first list first (a stack thinned, an item gone at its last) - all or none.
@@ -221,18 +354,28 @@ export function takeMaterials(lists, kind, n) {
   // REFIT-ORES: the ingots first, every list over, and only then a piece melted down. AUDIT 2: a store's OWN ingots before
   // one another store counts too (a steel ingot, Iron's and Steel's both) - Iron took the pack's first, and a Steel tier's
   // ingots went to an Iron store with iron ingots to hand
-  const t = MATERIALS[kind].templates, lent = t.filter((tpl) => lentTemplate(kind, tpl)), own = t.filter((tpl) => !lent.includes(tpl));
+  const t = MATERIALS[kind].templates,
+    lent = t.filter((tpl) => lentTemplate(kind, tpl)),
+    own = t.filter((tpl) => !lent.includes(tpl));
   const ingots = [own, lent].filter((ts) => ts.length).map((ts) => (it) => !!it && ts.includes(it.templateIndex));
-  for (const take of [...ingots, (it) => isOf(it, kind)]) for (const list of lists) {
-    for (let i = 0; list && i < list.length && left > 0;) {
-      const it = list[i];
-      if (!take(it)) { i++; continue; }
-      const have = Math.max(1, it.stackCount | 0 || 1);
-      if (have > left) { it.stackCount = have - left; left = 0; break; }
-      left -= have;
-      list.splice(i, 1);
+  for (const take of [...ingots, (it) => isOf(it, kind)])
+    for (const list of lists) {
+      for (let i = 0; list && i < list.length && left > 0;) {
+        const it = list[i];
+        if (!take(it)) {
+          i++;
+          continue;
+        }
+        const have = Math.max(1, it.stackCount | 0 || 1);
+        if (have > left) {
+          it.stackCount = have - left;
+          left = 0;
+          break;
+        }
+        left -= have;
+        list.splice(i, 1);
+      }
     }
-  }
   return true;
 }
 
@@ -260,13 +403,17 @@ export function loanOwed(rec, accounts) {
 export function settleCredit(accounts) {
   if (!Array.isArray(accounts)) return 0;
   let n = 0;
-  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }
+  for (const r of _ships.values())
+    if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) {
+      r.credit = null;
+      n++;
+    }
   return n;
 }
 
 // ── THE LEDGER ───────────────────────────────────────────────────────────────────────────────────────────────────────
-const _ships = new Map();   // uid -> record
-const _book = [];           // her title: the deed items, Come Sail Away's own shape (mintDeed)
+const _ships = new Map(); // uid -> record
+const _book = []; // her title: the deed items, Come Sail Away's own shape (mintDeed)
 const upgradesBlank = () => ({ hold: 0, rigging: 0, hull: 0, guns: 0 });
 const isUid = (v) => Number.isSafeInteger(v) && v > 0;
 /** AUDIT SHIPYARDS L1-2 (RESTORE's "Keep all, can't sell", a DFU deed's law, for Come Sail Away's ships): THE SHIPS THAT
@@ -295,13 +442,19 @@ export const fleetCrossed = (uid) => _crossed.has(uid);
 export function crossFleetData(modData, itemLists = [], placedBoats = null) {
   if (!modData || typeof modData !== 'object') return 0;
   const uids = new Set();
-  for (const r of Array.isArray(modData[FLEET_SAVE_VENDOR]?.ships) ? modData[FLEET_SAVE_VENDOR].ships : []) if (isUid(r?.uid)) uids.add(r.uid);
+  for (const r of Array.isArray(modData[FLEET_SAVE_VENDOR]?.ships) ? modData[FLEET_SAVE_VENDOR].ships : [])
+    if (isUid(r?.uid)) uids.add(r.uid);
   for (const b of Array.isArray(placedBoats) ? placedBoats : []) if (isUid(b?.UID)) uids.add(b.UID);
   for (const list of itemLists) {
-    for (const it of Array.isArray(list) ? list : []) if ((it?.templateIndex === BOAT_DEED_TEMPLATE || it?.templateIndex === BOAT_PARTS_TEMPLATE) && isUid(it.UID)) uids.add(it.UID);
+    for (const it of Array.isArray(list) ? list : [])
+      if ((it?.templateIndex === BOAT_DEED_TEMPLATE || it?.templateIndex === BOAT_PARTS_TEMPLATE) && isUid(it.UID))
+        uids.add(it.UID);
   }
   if (!uids.size) return 0;
-  const rec = modData[FLEET_SAVE_VENDOR] && typeof modData[FLEET_SAVE_VENDOR] === 'object' ? modData[FLEET_SAVE_VENDOR] : (modData[FLEET_SAVE_VENDOR] = newFleetSaveData());
+  const rec =
+    modData[FLEET_SAVE_VENDOR] && typeof modData[FLEET_SAVE_VENDOR] === 'object'
+      ? modData[FLEET_SAVE_VENDOR]
+      : (modData[FLEET_SAVE_VENDOR] = newFleetSaveData());
   const all = new Set((Array.isArray(rec.crossed) ? rec.crossed : []).filter(isUid));
   for (const u of uids) all.add(u);
   rec.crossed = [...all].slice(0, CROSSED_MAX);
@@ -316,7 +469,22 @@ const variantOfItem = (it) => (it?.message | 0) % 10;
 function recordFor(uid, hull, variant, value) {
   let r = _ships.get(uid);
   if (!r) {
-    r = { uid, hull, variant, value: Number.isFinite(value) ? value : HULL_PRICES[hull] ?? 0, name: '', upgrades: upgradesBlank(), credit: null, port: null, colours: null, livery: null, cabin: 0, deck: [], plaque: false, figurehead: 0 };   // FIGUREHEAD: `figurehead` her carving (0: none); SHIP-PLAQUE: `plaque` her name on her bows; DECK-PROPS: `deck` her fittings   // SHIP-COLOURS: `colours` her flag (null: the mod's pennant); SHIP-LIVERY: `livery` her paint (null: as built), `cabin` her cabin's stain (0: as built)
+    r = {
+      uid,
+      hull,
+      variant,
+      value: Number.isFinite(value) ? value : (HULL_PRICES[hull] ?? 0),
+      name: '',
+      upgrades: upgradesBlank(),
+      credit: null,
+      port: null,
+      colours: null,
+      livery: null,
+      cabin: 0,
+      deck: [],
+      plaque: false,
+      figurehead: 0,
+    }; // FIGUREHEAD: `figurehead` her carving (0: none); SHIP-PLAQUE: `plaque` her name on her bows; DECK-PROPS: `deck` her fittings   // SHIP-COLOURS: `colours` her flag (null: the mod's pennant); SHIP-LIVERY: `livery` her paint (null: as built), `cabin` her cabin's stain (0: as built)
     _ships.set(uid, r);
   }
   return r;
@@ -334,7 +502,10 @@ export const titleOf = (uid) => _book.find((it) => it?.UID === uid) ?? null;
  */
 export function titleDeed(deed, { from = null, port = null } = {}) {
   if (deed?.templateIndex !== BOAT_DEED_TEMPLATE || !isUid(deed.UID) || !hullOk(hullOfItem(deed))) return null;
-  if (from) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }
+  if (from) {
+    const i = from.indexOf(deed);
+    if (i >= 0) from.splice(i, 1);
+  }
   if (!titleOf(deed.UID)) _book.push(deed);
   const r = recordFor(deed.UID, hullOfItem(deed), variantOfItem(deed), deed.value);
   if (port) r.port = port;
@@ -345,7 +516,8 @@ export function titleDeedsIn(pack, opts = {}) {
   let n = 0;
   // AUDIT HOLDINGS F2: never the deed a placing holds (`except`) - entered mid-placing, the placing spent its small
   // boat's deed out of the pack, where it no longer lay, and her title stayed in the book while she stood
-  for (const it of [...(pack ?? [])]) if (it?.templateIndex === BOAT_DEED_TEMPLATE && it !== opts.except && titleDeed(it, { ...opts, from: pack })) n++;
+  for (const it of [...(pack ?? [])])
+    if (it?.templateIndex === BOAT_DEED_TEMPLATE && it !== opts.except && titleDeed(it, { ...opts, from: pack })) n++;
   return n;
 }
 /** A boat of the player's standing with no title (a small boat's parts placed - its deed spent, as the mod spends one;
@@ -358,7 +530,11 @@ export function knowShip(uid, hull, variant, value) {
   if (r.hull === hull && variantOk(hull, variant) && r.variant !== variant) {
     r.variant = variant;
     const t = titleOf(uid);
-    if (t) { const fresh = mintDeed(r.hull, variant, uid, t.value); t.message = fresh.message; t.name = fresh.name; }
+    if (t) {
+      const fresh = mintDeed(r.hull, variant, uid, t.value);
+      t.message = fresh.message;
+      t.name = fresh.name;
+    }
   }
   return r;
 }
@@ -373,7 +549,10 @@ export function renameShip(uid, raw) {
   const r = _ships.get(uid);
   if (!r) return { ok: false, name: '', reason: 'No such ship of yours.' };
   const v = shipNameVerdict(raw);
-  if (v.ok) { r.name = v.name; if (!r.name) r.plaque = false; }   // SHIP-PLAQUE: a name taken off takes her board with it
+  if (v.ok) {
+    r.name = v.name;
+    if (!r.name) r.plaque = false;
+  } // SHIP-PLAQUE: a name taken off takes her board with it
   return v;
 }
 /** SHIP-COLOURS (bible/03-World/Naval-Refit.md): her flag set - systems/naval/shipFlag.js shipFlagOf's, or null (none:
@@ -392,7 +571,7 @@ export function setShipLivery(uid, raw) {
   const r = _ships.get(uid);
   if (!r || (raw != null && typeof raw !== 'object')) return false;
   const l = raw == null ? null : liveryOf(raw, r.hull);
-  if (raw != null && !l && !LIVERY_PARTS.every((p) => !raw[p])) return false;   // a paint that is none at all is as built; one the door refuses is refused
+  if (raw != null && !l && !LIVERY_PARTS.every((p) => !raw[p])) return false; // a paint that is none at all is as built; one the door refuses is refused
   r.livery = l;
   return true;
 }
@@ -422,7 +601,7 @@ export function setShipFigurehead(uid, raw) {
   return true;
 }
 /** FIGUREHEAD: the carving a boat of mine stands at her stem, by her number (0: none, or no ship of mine). */
-export const shipFigureheadOf = (boat) => (boat?.uid ? fleetShip(boat.uid)?.figurehead ?? 0 : 0);
+export const shipFigureheadOf = (boat) => (boat?.uid ? (fleetShip(boat.uid)?.figurehead ?? 0) : 0);
 /** DECK-PROPS (bible/03-World/Naval-Refit.md): her deck's fittings set - systems/naval/deckFittings.js fittingsOf's (a
  *  fitting it refuses left out). Answers whether she has them now. */
 export function setShipFittings(uid, raw) {
@@ -439,7 +618,10 @@ export function addRefit(uid, id) {
   return true;
 }
 /** The port she was laid up at (`{ name }`), or null. */
-export function setShipPort(uid, port) { const r = _ships.get(uid); if (r) r.port = port ? { name: String(port.name ?? ''), ...(port.ether ? { ether: true } : {}) } : null; }   // AUDIT CAPTAIN'S SEA P5: and which side of the Veil she lies
+export function setShipPort(uid, port) {
+  const r = _ships.get(uid);
+  if (r) r.port = port ? { name: String(port.name ?? ''), ...(port.ether ? { ether: true } : {}) } : null;
+} // AUDIT CAPTAIN'S SEA P5: and which side of the Veil she lies
 /** Her title made again where none is (a crewed ship's parts placed swap back to her deed - the mod's takePlaceItem). */
 export function retitle(uid) {
   const r = _ships.get(uid);
@@ -450,13 +632,30 @@ export function retitle(uid) {
 }
 
 // ── THE SAVE ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-export function newFleetSaveData() { return { v: FLEET_SAVE_VERSION, ships: [], crossed: [] }; }
+export function newFleetSaveData() {
+  return { v: FLEET_SAVE_VERSION, ships: [], crossed: [] };
+}
 export function fleetSaveData() {
   return {
     v: FLEET_SAVE_VERSION,
-    ships: [..._ships.values()].map((r) => ({ uid: r.uid, hull: r.hull, variant: r.variant, value: r.value, name: r.name, upgrades: { ...r.upgrades },
-      credit: r.credit ? { ...r.credit } : null, port: r.port ? { ...r.port } : null, title: !!titleOf(r.uid), ...(r.colours ? { colours: { ...r.colours } } : {}), ...(r.livery ? { livery: { ...r.livery } } : {}), ...(r.cabin ? { cabin: r.cabin } : {}), ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}), ...(r.plaque ? { plaque: true } : {}), ...(r.figurehead ? { figurehead: r.figurehead } : {}) })),   // SHIP-COLOURS; SHIP-LIVERY; DECK-PROPS; SHIP-PLAQUE; FIGUREHEAD
-    crossed: [..._crossed],   // AUDIT SHIPYARDS L1-2: the numbers that came through customs
+    ships: [..._ships.values()].map((r) => ({
+      uid: r.uid,
+      hull: r.hull,
+      variant: r.variant,
+      value: r.value,
+      name: r.name,
+      upgrades: { ...r.upgrades },
+      credit: r.credit ? { ...r.credit } : null,
+      port: r.port ? { ...r.port } : null,
+      title: !!titleOf(r.uid),
+      ...(r.colours ? { colours: { ...r.colours } } : {}),
+      ...(r.livery ? { livery: { ...r.livery } } : {}),
+      ...(r.cabin ? { cabin: r.cabin } : {}),
+      ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}),
+      ...(r.plaque ? { plaque: true } : {}),
+      ...(r.figurehead ? { figurehead: r.figurehead } : {}),
+    })), // SHIP-COLOURS; SHIP-LIVERY; DECK-PROPS; SHIP-PLAQUE; FIGUREHEAD
+    crossed: [..._crossed], // AUDIT SHIPYARDS L1-2: the numbers that came through customs
   };
 }
 /** A save's record restored - every field read as it may be (a record made by hand, a newer build's): an unknown
@@ -465,33 +664,62 @@ export function restoreFleetSaveData(data) {
   _ships.clear();
   _book.length = 0;
   _crossed.clear();
-  for (const u of (Array.isArray(data?.crossed) ? data.crossed : []).slice(0, CROSSED_MAX)) if (isUid(u)) _crossed.add(u);
+  for (const u of (Array.isArray(data?.crossed) ? data.crossed : []).slice(0, CROSSED_MAX))
+    if (isUid(u)) _crossed.add(u);
   // AUDIT HOLDINGS F7: a save read as it may be - FLEET_MAX records at most, one a number (a second of the same uid
   // entered a second title), her variant one her hull has, her worth within [0, SHIP_VALUE_MAX], her port's name the
   // printable text a name keeps
   for (const s of (Array.isArray(data?.ships) ? data.ships : []).slice(0, FLEET_MAX)) {
     if (!s || !isUid(s.uid) || !hullOk(s.hull) || _ships.has(s.uid)) continue;
     const variant = variantOk(s.hull, s.variant) ? s.variant : 0;
-    const r = recordFor(s.uid, s.hull, variant, Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined);
+    const r = recordFor(
+      s.uid,
+      s.hull,
+      variant,
+      Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined,
+    );
     const v = shipNameVerdict(s.name);
     r.name = v.ok ? v.name : '';
-    for (const l of UPGRADE_LINES) r.upgrades[l.id] = Math.max(0, Math.min(UPGRADE_TIERS, Number(s.upgrades?.[l.id]) | 0));
-    r.credit = s.credit && Number.isInteger(s.credit.region) && s.credit.region >= 0 ? { region: s.credit.region, due: Number.isFinite(s.credit.due) ? s.credit.due : 0 } : null;
+    for (const l of UPGRADE_LINES)
+      r.upgrades[l.id] = Math.max(0, Math.min(UPGRADE_TIERS, Number(s.upgrades?.[l.id]) | 0));
+    r.credit =
+      s.credit && Number.isInteger(s.credit.region) && s.credit.region >= 0
+        ? { region: s.credit.region, due: Number.isFinite(s.credit.due) ? s.credit.due : 0 }
+        : null;
     const port = typeof s.port?.name === 'string' ? printable(s.port.name).slice(0, 64) : '';
-    r.port = s.port && typeof s.port.name === 'string' ? { name: port, ...(s.port.ether === true ? { ether: true } : {}) } : null;   // AUDIT CAPTAIN'S SEA P5: her side of the Veil kept
-    r.colours = shipFlagOf(s.colours);   // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)
-    r.livery = liveryOf(s.livery, r.hull);   // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)
-    r.cabin = isPaint(s.cabin) ? s.cabin : 0;   // CABIN-LOOK: her cabin's stain
-    r.deck = fittingsOf(s.deck);   // DECK-PROPS: her fittings, as the door takes them
-    r.plaque = s.plaque === true && !!r.name;   // SHIP-PLAQUE: her name on her bows - a named ship's
-    r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0;   // FIGUREHEAD: her carving, as the door takes it (one it refuses: none)
+    r.port =
+      s.port && typeof s.port.name === 'string'
+        ? { name: port, ...(s.port.ether === true ? { ether: true } : {}) }
+        : null; // AUDIT CAPTAIN'S SEA P5: her side of the Veil kept
+    r.colours = shipFlagOf(s.colours); // SHIP-COLOURS: her flag, as it may be (none, or one the door refuses: her pennant)
+    r.livery = liveryOf(s.livery, r.hull); // SHIP-LIVERY: her paint, as it may be (none, or one the door refuses: as built)
+    r.cabin = isPaint(s.cabin) ? s.cabin : 0; // CABIN-LOOK: her cabin's stain
+    r.deck = fittingsOf(s.deck); // DECK-PROPS: her fittings, as the door takes them
+    r.plaque = s.plaque === true && !!r.name; // SHIP-PLAQUE: her name on her bows - a named ship's
+    r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0; // FIGUREHEAD: her carving, as the door takes it (one it refuses: none)
     if (s.title) _book.push(mintDeed(r.hull, r.variant, r.uid, r.value));
   }
 }
 /** Printable ASCII alone (a line break or a tab a space), runs of white space closed. */
-const printable = (raw) => { let t = ''; for (const ch of String(raw ?? '')) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) t += ch; else if (/\s/.test(ch)) t += ' '; } return t.replace(/\s+/g, ' ').trim(); };
+const printable = (raw) => {
+  let t = '';
+  for (const ch of String(raw ?? '')) {
+    const c = ch.charCodeAt(0);
+    if (c >= 32 && c <= 126) t += ch;
+    else if (/\s/.test(ch)) t += ' ';
+  }
+  return t.replace(/\s+/g, ' ').trim();
+};
 /** The ledger as a mod's save slot (systems/modSaveData.js registerModSaveData). */
-export const fleetSaveSlot = Object.freeze({ newSaveData: newFleetSaveData, getSaveData: fleetSaveData, restoreSaveData: restoreFleetSaveData });
+export const fleetSaveSlot = Object.freeze({
+  newSaveData: newFleetSaveData,
+  getSaveData: fleetSaveData,
+  restoreSaveData: restoreFleetSaveData,
+});
 /** Tests: an empty ledger. */
-export function _resetFleetForTests() { _ships.clear(); _book.length = 0; _crossed.clear(); }
+export function _resetFleetForTests() {
+  _ships.clear();
+  _book.length = 0;
+  _crossed.clear();
+}
 export { BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE };

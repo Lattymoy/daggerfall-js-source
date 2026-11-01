@@ -20,8 +20,8 @@
   {
     "name": "COMPASS-PARTY-same-pixel-at-the-town-middle",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (p.px === here.x && p.py === here.y) continue;\n",
-    "new": "",
+    "old": "    if (p.px === here.x && p.py === here.y) continue;\n    if (pixelCentre) out.push(pixelCentre(p.px, p.py));",
+    "new": "    if (pixelCentre) out.push(pixelCentre(p.px, p.py));",
     "tests": [
       "test/ui/hud/compassparty.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COMPASS-PARTY-leader-feet-ignored",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) { out.push(fromWorld(p.wx, p.wz)); continue; }\n",
-    "new": "",
+    "old": "    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) {\n      out.push(fromWorld(p.wx, p.wz));\n      continue;\n    }\n    if (p.px === here.x && p.py === here.y) continue;",
+    "new": "    if (p.px === here.x && p.py === here.y) continue;",
     "tests": [
       "test/ui/hud/compassparty.test.js"
     ]

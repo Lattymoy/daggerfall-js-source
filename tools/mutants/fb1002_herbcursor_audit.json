@@ -1,8 +1,8 @@
 [
   {
     "name": "AUDIT-HERB-CURSOR-A1-relock-inside-the-escape",
-    "file": "src/scenes/world.js",
-    "old": "if (!off()) return; if (backButtonHeld) escRelock = relock; else relock(); };",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (!off()) return; if (host.backButtonHeld) host.escRelock = relock; else relock(); };",
     "new": "if (!off()) return; relock(); };",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
@@ -19,9 +19,9 @@
   },
   {
     "name": "AUDIT-HERB-CURSOR-A1-keyup-ungated",
-    "file": "src/scenes/world.js",
-    "old": "if (backButtonHeld) escRelock = relock; else relock(); };",
-    "new": "if (backButtonHeld) escRelock = () => requestLook(canvas); else relock(); };",
+    "file": "src/scenes/professionsHost.js",
+    "old": "if (host.backButtonHeld) host.escRelock = relock; else relock(); };",
+    "new": "if (host.backButtonHeld) host.escRelock = () => requestLook(canvas); else relock(); };",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-A2-toggle-under-a-hold",
     "file": "src/player/pointerLock.js",
-    "old": "    if (_cursorHolds.size) return;\n    // PL1:",
-    "new": "    // PL1:",
+    "old": "    if (_cursorHolds.size) return;\n    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
+    "new": "    // PL1: \"Don't allow activate cursor for 0.3 seconds after closing",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]
@@ -46,7 +46,7 @@
   },
   {
     "name": "AUDIT-HERB-CURSOR-A4-look-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (cursorActive()) { setCursorActive(false); relock(); } return null; }",
     "new": "if (cursorActive()) { setCursorActive(false); requestLook(canvas); } return null; }",
     "tests": [
@@ -55,7 +55,7 @@
   },
   {
     "name": "AUDIT-HERB-CURSOR-C8-hold-whatever-the-hand",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (controllerLook()) return null; const off = holdCursor();",
     "new": "const off = holdCursor();",
     "tests": [
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C2-herb-act-unsaid",
     "file": "src/systems/herbAct.js",
-    "old": "bruised: false, window, gentle,   // AUDIT HERB-CURSOR C2",
-    "new": "bruised: false, window,   // AUDIT HERB-CURSOR C2",
+    "old": "    window,\n    gentle, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
+    "new": "    window, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C3-the-old-words",
     "file": "src/scenes/herbHost.js",
-    "old": "label: plan.harvest === 'food' ? 'click the glint' :",
-    "new": "label: plan.harvest === 'food' ? 'tap the glint' :",
+    "old": "        label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "new": "        label: plan.harvest === 'food' ? 'tap the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C3-gentle-hint",
     "file": "src/ui/professions/profReticle.js",
-    "old": "hint: (st, label) => (st.gentle ? t('prof.reticle.basket.searching', 'searching...') : label || t('prof.reticle.basket.glint', 'click the glint')),",
-    "new": "hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'),",
+    "old": "    hint: (st, label) =>\n      st.gentle\n        ? t('prof.reticle.basket.searching', 'searching...')\n        : label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
+    "new": "    hint: (st, label) => label || t('prof.reticle.basket.glint', 'click the glint'), // AUDIT HERB-CURSOR C3: the cursor is free to click it; a gentle search has nothing to press",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]

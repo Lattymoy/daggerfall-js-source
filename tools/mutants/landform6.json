@@ -11,8 +11,8 @@
   {
     "name": "LANDFORM6-desert-wears-the-mountains",
     "file": "src/world/landforms.js",
-    "old": "[CLIMATES.Desert]: 'desert',",
-    "new": "[CLIMATES.Desert]: 'mountain',",
+    "old": "  const of = { [CLIMATES.Ocean]: 'ocean', [CLIMATES.Desert]: 'desert', [CLIMATES.Desert2]: 'desert2', [CLIMATES.Mountain]: 'mountain', [CLIMATES.Rainforest]: 'rainforest', [CLIMATES.Swamp]: 'swamp', [CLIMATES.Subtropical]: 'subtropical', [CLIMATES.MountainWoods]: 'mountainWoods', [CLIMATES.Woodlands]: 'woodlands', [CLIMATES.HauntedWoodlands]: 'haunted' };",
+    "new": "  const of = { [CLIMATES.Ocean]: 'ocean', [CLIMATES.Desert]: 'mountain', [CLIMATES.Desert2]: 'desert2', [CLIMATES.Mountain]: 'mountain', [CLIMATES.Rainforest]: 'rainforest', [CLIMATES.Swamp]: 'swamp', [CLIMATES.Subtropical]: 'subtropical', [CLIMATES.MountainWoods]: 'mountainWoods', [CLIMATES.Woodlands]: 'woodlands', [CLIMATES.HauntedWoodlands]: 'haunted' };",
     "tests": [
       "test/world/terrain/landform6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LANDFORM6-ravines-stand-up",
     "file": "src/world/landforms.js",
-    "old": "  return rolling(wx, wy, 0.8) - 0.75 * ravine",
-    "new": "  return rolling(wx, wy, 0.8) + 0.75 * ravine",
+    "old": "  return rolling(wx, wy, 0.8) - 0.75 * ravine + 0.3 * (crag > 0.2 ? (crag - 0.2) * (crag - 0.2) * 3 : 0);",
+    "new": "  return rolling(wx, wy, 0.8) + 0.75 * ravine + 0.3 * (crag > 0.2 ? (crag - 0.2) * (crag - 0.2) * 3 : 0);",
     "tests": [
       "test/world/terrain/landform6.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LANDFORM6-towers-sunk",
     "file": "src/world/landforms.js",
-    "old": "  return gather * knollField(",
-    "new": "  return -gather * knollField(",
+    "old": "  return gather * knollField(wx, wy, land.cell, land.fill, land.edge) + land.roll * rolling(wx, wy, land.cell / 110) + 0.05 * signed(wx / 90 + 63.7, wy / 90 + 29.1);",
+    "new": "  return -gather * knollField(wx, wy, land.cell, land.fill, land.edge) + land.roll * rolling(wx, wy, land.cell / 110) + 0.05 * signed(wx / 90 + 63.7, wy / 90 + 29.1);",
     "tests": [
       "test/world/terrain/landform6.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LANDFORM6-mountains-gentle",
     "file": "src/world/landforms.js",
-    "old": "    mountain: Object.freeze({ low: 16, high: 112, upland: 1.6, shape: 'ridged', peaks:",
-    "new": "    mountain: Object.freeze({ low: 16, high: 40, upland: 1.6, shape: 'ridged', peaks:",
+    "old": "    mountain: Object.freeze({ low: 16, high: 112, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true }) }),",
+    "new": "    mountain: Object.freeze({ low: 16, high: 40, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true }) }),",
     "tests": [
       "test/world/terrain/landform6.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "LANDFORM6-job-on-no-climates",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;",
-    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond }) : null;",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay",
+    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay",
     "tests": [
       "test/world/terrain/landform6.test.js"
     ],

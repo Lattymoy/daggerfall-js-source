@@ -11,8 +11,8 @@
   {
     "name": "LEGACY7B-look-unread",
     "file": "src/systems/legacy/family.js",
-    "old": "    if (raw.look !== undefined && raw.look !== null) { const look = memberLook(raw.look); if (look) p.look = look; else delete p.look; }\n",
-    "new": "",
+    "old": "    if (raw.look !== undefined && raw.look !== null) {\n      const look = memberLook(raw.look);\n      if (look) p.look = look;\n      else delete p.look;\n    }\n    people.push(p);",
+    "new": "    people.push(p);",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGACY7B-dead-keep-their-look",
     "file": "src/systems/legacy/family.js",
-    "old": "  delete p.look;   // LEGACY7 part four",
-    "new": "  // LEGACY7 part four",
+    "old": "  delete p.look; // LEGACY7 part four: the dead stand nowhere - what they wore is no one's to draw, and the record stays lean",
+    "new": "  // LEGACY7 part four: the dead stand nowhere - what they wore is no one's to draw, and the record stays lean",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGACY7B-resident-unclad",
     "file": "src/systems/legacy/household.js",
-    "old": "    look: p.look ?? null,   // LEGACY7 part four",
-    "new": "    look: null,   // LEGACY7 part four",
+    "old": "    look: p.look ?? null, // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit",
+    "new": "    look: null, // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]

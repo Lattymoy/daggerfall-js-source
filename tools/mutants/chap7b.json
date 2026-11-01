@@ -11,8 +11,8 @@
   {
     "name": "CHAP7B-MEMBER-TYPE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => typeof guildId === 'string' && guildId !== '' &&",
-    "new": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => guildId !== '' &&",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  guildId !== '' && chapter?.patron?.id === guildId;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP7B-MEMBER-EMPTY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
-    "new": "typeof guildId === 'string' && chapter?.patron?.id === guildId;",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  typeof guildId === 'string' && chapter?.patron?.id === guildId;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP7B-MEMBER-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& chapter?.patron?.id === guildId;",
-    "new": "&& chapter?.patron != null;",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron != null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP7B-FACTOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
-    "new": "const band = own;",
+    "old": "  const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
+    "new": "  const band = own;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP7B-OFFERS-NOW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;",
-    "new": "const now = 0;",
+    "old": "  const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;",
+    "new": "  const now = 0;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP7B-OFFERS-FIRST",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);",
-    "new": ": CHAPTER_PATRON_RAISES.map((r) => CHAPTER_PATRON_MIN + r);",
+    "old": "  const offers = now ? CHAPTER_PATRON_RAISES.map((r) => now + r) : [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);",
+    "new": "  const offers = now\n    ? CHAPTER_PATRON_RAISES.map((r) => now + r)\n    : CHAPTER_PATRON_RAISES.map((r) => CHAPTER_PATRON_MIN + r);",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP7B-OFFERS-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return offers.filter((m) => patronBidOk(m, now));\n",
-    "new": "  return offers;\n",
+    "old": "  return offers.filter((m) => patronBidOk(m, now));",
+    "new": "  return offers;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP7B-SHEET-TAG",
     "file": "src/net/npcChapterLaw.js",
-    "old": "${p.tag ? ` <${p.tag}>` : ''}",
-    "new": "${` <${p.tag}>`}",
+    "old": "  return `Its patron this Season: ${p.name}${p.tag ? ` <${p.tag}>` : ''}${priced ? ` - its members pay ${chapterBandNamed(CHAPTER_PATRON_BAND)}'s prices here, or the band's where better` : ''}.`;",
+    "new": "  return `Its patron this Season: ${p.name}${` <${p.tag}>`}${priced ? ` - its members pay ${chapterBandNamed(CHAPTER_PATRON_BAND)}'s prices here, or the band's where better` : ''}.`;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP7B-SHEET-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  const p = chapterPatronOf(patron);\n  if (!p) return null;",
-    "new": "  const p = patron;\n  if (!p) return null;",
+    "old": "  const p = chapterPatronOf(patron);",
+    "new": "  const p = patron;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP7B-BID-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "`Your guild has not bid for its patronage in ${season}.`",
-    "new": "`Your guild bids nothing for its patronage in ${season}.`",
+    "old": "    : `Your guild has not bid for its patronage in ${season}.`;",
+    "new": "    : `Your guild bids nothing for its patronage in ${season}.`;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP7B-SAID-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
-    "new": "if (!isRollFaction(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
+    "old": "  if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;",
+    "new": "  if (!isRollFaction(faction) || !name || !Number.isSafeInteger(marks)) return null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP7B-SAID-MARKS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
-    "new": "if (!isRollFaction(faction) || hallHidden(faction) || !name) return null;\n  return `Your guild bids",
+    "old": "  if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;",
+    "new": "  if (!isRollFaction(faction) || hallHidden(faction) || !name) return null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CHAP7B-SHEET-ARMS",
     "file": "src/net/chapterSheet.js",
-    "old": "return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null; };",
-    "new": "return k ? { ...k, heraldry: p?.heraldry ?? null } : null; };",
+    "old": "  return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null;",
+    "new": "  return k ? { ...k, heraldry: p?.heraldry ?? null } : null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CHAP7B-SHEET-READ",
     "file": "src/net/chapterSheet.js",
-    "old": ", patron: sheetPatronOf(c.patron) });",
-    "new": ", patron: null });",
+    "old": "                  patron: sheetPatronOf(c.patron),",
+    "new": "                  patron: null,",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CHAP7B-SHEET-COPY",
     "file": "src/net/chapterSheet.js",
-    "old": "        patron: s.patron ? { ...s.patron } : null };",
-    "new": "        patron: s.patron };",
+    "old": "            patron: s.patron ? { ...s.patron } : null,",
+    "new": "            patron: s.patron,",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CHAP7B-BANNERS-REGION",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (!Number.isInteger(region)) continue;\n",
-    "new": "",
+    "old": "      if (!Number.isInteger(region)) continue;\n      for (const [bk, faction] of p.chapterHalls) {",
+    "new": "      for (const [bk, faction] of p.chapterHalls) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CHAP7B-BANNERS-ARMS",
     "file": "src/scenes/chapterBanners.js",
-    "old": "        if (!h) continue;\n        const anchors",
-    "new": "        const anchors",
+    "old": "        if (!h) continue;\n        const anchors = hallBannerAnchors(p.homeFrames.get(bk));",
+    "new": "        const anchors = hallBannerAnchors(p.homeFrames.get(bk));",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CHAP7B-BANNERS-ANCHORS",
     "file": "src/scenes/chapterBanners.js",
-    "old": "        if (!anchors) continue;\n        anchors.forEach",
-    "new": "        anchors?.forEach",
+    "old": "        if (!anchors) continue;\n        anchors.forEach((a, i) =>",
+    "new": "        anchors?.forEach((a, i) =>",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ],
@@ -229,8 +229,8 @@
   {
     "name": "CHAP7B-BANNERS-TOP",
     "file": "src/scenes/chapterBanners.js",
-    "old": "top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1]; top[2] = t[2] + b.a.top[2];",
-    "new": "top[0] = b.a.top[0]; top[1] = b.a.top[1]; top[2] = b.a.top[2];",
+    "old": "        top[0] = t[0] + b.a.top[0];\n        top[1] = t[1] + b.a.top[1];\n        top[2] = t[2] + b.a.top[2];",
+    "new": "        top[0] = b.a.top[0];\n        top[1] = b.a.top[1];\n        top[2] = b.a.top[2];",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "CHAP7B-BANNERS-REFRESH",
     "file": "src/scenes/chapterBanners.js",
-    "old": "      if (now() - at >= BANNER_REFRESH_MS) { read(); at = now(); }",
-    "new": "      if (at === -Infinity) { read(); at = now(); }",
+    "old": "      if (now() - at >= BANNER_REFRESH_MS) {",
+    "new": "      if (at === -Infinity) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "CHAP7B-BANNERS-KEY",
     "file": "src/scenes/chapterBanners.js",
-    "old": "a, key: bannerKeyOf(h), heraldry: h,",
-    "new": "a, key: 'k', heraldry: h,",
+    "old": "          out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: (bk % 11) * 0.9 + i * 1.7 }),",
+    "new": "          out.push({ px: p.px, py: p.py, a, key: 'k', heraldry: h, phase: (bk % 11) * 0.9 + i * 1.7 }),",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "CHAP7B-WORLD-TYPES",
     "file": "src/scenes/pixelBuild.js",
-    "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
-    "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
+    "old": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
+    "new": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "CHAP7B-WORLD-FACTION",
     "file": "src/scenes/pixelBuild.js",
-    "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
-    "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
+    "old": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
+    "new": "      .filter((b) => (b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "CHAP7B-WORLD-BUILT",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n",
-    "new": "",
+    "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line",
+    "new": "      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "CHAP7B-BOARD-PATRON",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));\n",
-    "new": "",
+    "old": "    if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));\n    const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;",
+    "new": "    const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "CHAP7B-BOARD-HEAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: '",
-    "new": "'Bid for it: '",
+    "old": "      const row = el(\n        'p',\n        'notice-chapter notice-patron-pick',\n        c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: ',\n      );",
+    "new": "      const row = el('p', 'notice-chapter notice-patron-pick', 'Bid for it: ');",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "CHAP7B-BOARD-PRESS",
     "file": "src/ui/noticeWindow.js",
-    "old": "() => bidPatron(c, m)));",
-    "new": "() => bidPatron(c, 0)));",
+    "old": "        row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, m)));",
+    "new": "        row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, 0)));",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "CHAP7B-BOARD-SAID",
     "file": "src/ui/noticeWindow.js",
-    "old": "const said = r?.ok ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }",
-    "new": "const said = r?.ok ? { ok: true, text: 'Bid made.' }",
+    "old": "    const said = r?.ok\n      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "    const said = r?.ok ? { ok: true, text: 'Bid made.' } : { ok: false, text: accountRefusalText(r?.error) };",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "CHAP7B-BOARD-REFUSED",
     "file": "src/ui/noticeWindow.js",
-    "old": ": { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": ": { ok: false, text: 'No.' };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
+    "old": "      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: 'No.' };",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "CHAP7B-BOARD-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const r = await work.patron(c.faction, marks);\n    const said",
-    "new": "    const r = await work.patron(c.faction, marks);\n    if (!alive) return;\n    const said",
+    "old": "    const r = await work.patron(c.faction, marks);\n    const said = r?.ok",
+    "new": "    const r = await work.patron(c.faction, marks);\n    if (!alive) return;\n    const said = r?.ok",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "CHAP7B-BOARD-READ",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": "    word = said;\n    render();\n  }\n\n  async function setFocus",
+    "old": "    }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus(faction, focus) {",
+    "new": "    }\n    busy = false;\n    word = said;\n    render();\n  }\n\n  async function setFocus(faction, focus) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

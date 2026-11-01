@@ -210,7 +210,7 @@ export function passSection(doc, o) {
     return [seen, el('span', 'sh-sr', W.price(n))];
   };
   /** Why no press stands on an item or the unlock (AUDIT-STOREFRONT III C5), in the shop's short words, or ''. */
-  const reasonOf = (/** @type {string} */ state) => (state === 'soon' ? W.itemSoon(o.dayText(season.fromMs)) : state === 'closed' ? W.itemClosed()
+  const reasonOf = (/** @type {string} */ state) => (state === 'soon' ? W.itemSoon(o.dayText(season.tracksFromMs)) : state === 'closed' ? W.itemClosed()
     : state === 'guest' ? W.itemGuest() : state === 'out' ? W.itemOut() : '');
   /** The Gilded Folio's unlock: its price, what more it needs, its press - on its cover and in its spread. */
   const unlockNode = () => {
@@ -457,7 +457,7 @@ export function passSection(doc, o) {
     }
     const no = passCannot(fl);
     const whoText = no === 'reading' ? W.reading() : no === 'out' ? W.signIn() : no === 'guest' ? W.guest() : no === 'closed' ? W.closed()
-      : passTracksOpen(season, nowMs) ? '' : W.soon(o.dayText(season.fromMs));
+      : passTracksOpen(season, nowMs) ? '' : W.soon(o.dayText(season.tracksFromMs));
     if (who.textContent !== whoText) who.textContent = whoText;
     for (const [track, c] of Object.entries(covers)) {   // a cover: what it holds owned, Free or Unlocked or Locked, its label whole
       const has = passItemsIn(sid).filter((it) => it.track === track && bought.includes(it.grant)).length, shut = track === 'premium' && !premium;

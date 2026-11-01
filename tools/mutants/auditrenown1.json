@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-RENOWN1-repeat-credited",
     "file": "server-account/src/renownTracks.js",
-    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE",
-    "new": "  const want = `CASE WHEN ${refused} THEN 0 ELSE",
+    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
+    "new": "  const want = `CASE WHEN ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-RENOWN1-empty-track-made",
     "file": "server-account/src/renownTracks.js",
-    "old": "       WHERE id = ?1 AND renown_last_credit > 0\n",
-    "new": "       WHERE id = ?1\n",
+    "old": "       WHERE id = ?1 AND renown_last_credit > 0",
+    "new": "       WHERE id = ?1",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -221,7 +221,7 @@
     "name": "AUDIT-RENOWN1-tracker-new-id-per-retry",
     "file": "src/net/renownTracker.js",
     "old": "    if (held) return held;",
-    "new": "    if (held) { held.rid = rid(); return held; }",
+    "new": "    if (held) {\n      held.rid = rid();\n      return held;\n    }",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -229,7 +229,7 @@
   {
     "name": "AUDIT-RENOWN1-tracker-no-backoff",
     "file": "src/net/renownTracker.js",
-    "old": "  const waitMs = () => (refused ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1)) : soonNow() ? RENOWN_REPORT_MS : RENOWN_COALESCE_MS);",
+    "old": "  const waitMs = () =>\n    refused\n      ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1))\n      : soonNow()\n        ? RENOWN_REPORT_MS\n        : RENOWN_COALESCE_MS;",
     "new": "  const waitMs = () => (soonNow() ? RENOWN_REPORT_MS : RENOWN_COALESCE_MS);",
     "tests": [
       "test/net/auditrenown1.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "AUDIT-RENOWN1-tracker-early-after-a-refusal",
     "file": "src/net/renownTracker.js",
-    "old": "(!refused && held === null && pendingXp() >= RENOWN_XP_REPORT_MAX)",
-    "new": "(pendingXp() >= RENOWN_XP_REPORT_MAX)",
+    "old": "    (t - lastAt >= waitMs() || (!refused && held === null && pendingXp() >= RENOWN_XP_REPORT_MAX));",
+    "new": "    (t - lastAt >= waitMs() || pendingXp() >= RENOWN_XP_REPORT_MAX);",
     "tests": [
       "test/net/auditrenown1.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "AUDIT-RENOWN1-tracker-leave-clears",
     "file": "src/net/renownTracker.js",
-    "old": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); return true; } catch { return false; }",
-    "new": "      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); held = null; return true; } catch { return false; }",
+    "old": "        return true;",
+    "new": "        held = null;\n        return true;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ],
@@ -287,8 +287,8 @@
   {
     "name": "AUDIT-RENOWN1-answer-announced-once-ever",
     "file": "src/net/renownTracker.js",
-    "old": "(said === null || level > said)",
-    "new": "(said === null)",
+    "old": "  const announce = level !== null && data?.rose === true && (said === null || level > said) ? level : null;",
+    "new": "  const announce = level !== null && data?.rose === true && said === null ? level : null;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "AUDIT-RENOWN1-answer-hour-line-at-the-cap",
     "file": "src/net/renownTracker.js",
-    "old": "data.credited < sent && !data?.max && !data?.repeat;",
-    "new": "data.credited < sent && !data?.repeat;",
+    "old": "  const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max && !data?.repeat;",
+    "new": "  const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.repeat;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "AUDIT-RENOWN1-answer-hour-line-for-a-repeat",
     "file": "src/net/renownTracker.js",
-    "old": "data.credited < sent && !data?.max && !data?.repeat;",
-    "new": "data.credited < sent && !data?.max;",
+    "old": "  const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max && !data?.repeat;",
+    "new": "  const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "AUDIT-RENOWN1-watch-pays",
     "file": "src/net/renownTracker.js",
-    "old": "const neverPays = (foe) => foe.mobileType === KNIGHT_CITY_WATCH || foe.entity?.team",
-    "new": "const neverPays = (foe) => foe.entity?.team",
+    "old": "const neverPays = (foe) =>\n  foe.mobileType === KNIGHT_CITY_WATCH || foe.entity?.team === 'PlayerAlly' || foe.entity?.mobileTeam === 'PlayerAlly';",
+    "new": "const neverPays = (foe) => foe.entity?.team === 'PlayerAlly' || foe.entity?.mobileTeam === 'PlayerAlly';",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-RENOWN1-ally-pays-once-turned",
     "file": "src/net/renownTracker.js",
-    "old": "else _struck.set(foe, { at: now, paid: never });",
-    "new": "else _struck.set(foe, { at: now, paid: false });",
+    "old": "  } else _struck.set(foe, { at: now, paid: never });",
+    "new": "  } else _struck.set(foe, { at: now, paid: false });",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -423,8 +423,8 @@
     "name": "AUDIT-RENOWN1-limiter-caps-the-layer",
     "note": "EG-ZR (PIN MOVED): re-aimed by content - the live maximum reads the Spire's Stoneskin beside Renown's (systems/renownLayer.js spireHpOf)",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
-    "new": "      return Math.min(stored + renownHpOf(this), limiter >= 1 ? limiter : Infinity) + spireHpOf(this);",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
+    "new": "      return Math.min(stored + renownHpOf(this), limiter >= 1 ? limiter : Infinity) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
     "tests": [
       "test/net/auditrenown1.test.js",
       "test/net/renown1.test.js"
@@ -442,8 +442,8 @@
   {
     "name": "AUDIT-RENOWN1-full-heal-to-raw",
     "file": "src/systems/lycanthropy.js",
-    "old": "(entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity));",
-    "new": "(entity?.maxHealthLimiter ?? Infinity));",
+    "old": "export const currentMaxHealth = (entity) =>\n  Math.min(entity?.maxHealth ?? 0, (entity?.maxHealthLimiter ?? Infinity) + renownHpOf(entity)); // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter",
+    "new": "export const currentMaxHealth = (entity) => Math.min(entity?.maxHealth ?? 0, entity?.maxHealthLimiter ?? Infinity); // AUDIT RENOWN1 GAME-4: the online layer rides above the limiter",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-RENOWN1-cure-to-raw",
     "file": "src/systems/lycanthropy.js",
-    "old": "  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity);",
-    "new": "  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health;",
+    "old": "  entity.health = (entity.rawMaxHealth ?? entity.maxHealth ?? entity.health) + renownHpOf(entity); // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247",
+    "new": "  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health; // `CurrentHealth = RawMaxHealth` (:482). AUDIT RENOWN1 GAME-4: a full heal - and online the full maximum is raw plus the Renown layer (0 offline); the cure left a Renown 50 character at 100 of 247",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "AUDIT-RENOWN1-magery-of-the-layer",
     "file": "src/systems/passiveSpecials.js",
-    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));",
-    "new": "  const raw = entity.maxMagicka ?? 0;",
+    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
+    "new": "  const raw = entity.maxMagicka ?? 0; // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
     "tests": [
       "test/net/auditrenown1.test.js"
     ],
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-RENOWN1-box-written-once",
     "file": "src/ui/nameLayer.js",
-    "old": "        if (tag.lvOf !== p.lv) { tag.lvOf = p.lv; setText(tag.lv, renownText(p.lv) ?? ''); }   // RENOWN1: \"12\" in its box, or nothing",
-    "new": "        if (!tag.lv.textContent) { tag.lvOf = p.lv; setText(tag.lv, renownText(p.lv) ?? ''); }   // RENOWN1: \"12\" in its box, or nothing",
+    "old": "        if (tag.lvOf !== p.lv) {",
+    "new": "        if (!tag.lv.textContent) {",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]

@@ -21,11 +21,11 @@
 // (the classic frame at double size).
 
 import { readUnityBundle } from '../../formats/unity/unityBundle.js';
-import { toScreenOrder } from '../../formats/color32Order.js';   // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
+import { toScreenOrder } from '../../formats/color32Order.js'; // WW3: the ORDER *and* the shape the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from '../../systems/textureReplacement.js';
-import { MATERIAL_NAMES } from '../../systems/item/itemInfo.js';   // MetalTypes' names, Iron..Daedric
+import { MATERIAL_NAMES } from '../../systems/item/itemInfo.js'; // MetalTypes' names, Iron..Daedric
 import { WEAPON_MATERIALS } from '../../characters/weapons.js';
-import { customTextureNames } from '../diverseWeapons/diverseWeapons.js';   // AUDIT 68 S09-texname-dup: the one spelling
+import { customTextureNames } from '../diverseWeapons/diverseWeapons.js'; // AUDIT 68 S09-texname-dup: the one spelling
 
 export const WEAPON_WIDGET_MOD = Object.freeze({
   guid: '9f301f2b-298b-43d8-8f3f-c54deaa841e0',
@@ -34,7 +34,7 @@ export const WEAPON_WIDGET_MOD = Object.freeze({
   author: 'RedRoryOTheGlen',
 });
 
-import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js';   // the stored-name prefix the texture pick writes for a bundle - one home (audit24's ratchet)
+import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js'; // the stored-name prefix the texture pick writes for a bundle - one home (audit24's ratchet)
 export { DFMOD_KEY_PREFIX };
 const isWidgetDfmod = (name) => /\.dfmod$/i.test(name) && /weapon.?widget/i.test(name.slice(name.lastIndexOf('/') + 1));
 const isPng = (name) => /\.png$/i.test(name);
@@ -59,19 +59,24 @@ export function widgetTextureName(fileName, record, frame, material, doubleScale
 
 let _names = [];
 let _load = null;
-let _bundle = null;     // Promise<{ bundle, manifest } | null>
-let _images = new Map();   // texture name -> Promise<image | null>
+let _bundle = null; // Promise<{ bundle, manifest } | null>
+let _images = new Map(); // texture name -> Promise<image | null>
 
 /** Register the stored names and a `load(name) -> bytes` loader (the
  *  texture pick's own). Returns how many entries could carry this mod's
  *  textures: its bundle (one) and any loose PNG spelt as it asks. */
 export function setWeaponWidgetSources(fileNames, load) {
-  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isWidgetDfmod(n)) || (isPng(n) && /(^|\/)w?_?WEAPO/i.test(n)));
+  const names = (fileNames ?? []).filter(
+    (n) => (n.startsWith(DFMOD_KEY_PREFIX) && isWidgetDfmod(n)) || (isPng(n) && /(^|\/)w?_?WEAPO/i.test(n)),
+  );
   const loader = typeof load === 'function' ? load : null;
   const same = loader === _load && names.length === _names.length && names.every((n, i) => n === _names[i]);
   _names = names;
   _load = loader;
-  if (!same) { _bundle = null; _images = new Map(); }
+  if (!same) {
+    _bundle = null;
+    _images = new Map();
+  }
   return _names.length;
 }
 export const clearWeaponWidgetSources = () => setWeaponWidgetSources([], null);
@@ -80,7 +85,11 @@ export const weaponWidgetSourcesCount = () => _names.length;
 function manifestOf(bundle) {
   for (const t of bundle?.textAssets ?? []) {
     if (!/\.dfmod$/i.test(t.name)) continue;
-    try { return JSON.parse(t.text); } catch { /* not this one */ }
+    try {
+      return JSON.parse(t.text);
+    } catch {
+      /* not this one */
+    }
   }
   return null;
 }
@@ -100,7 +109,10 @@ export async function weaponWidgetBundle() {
           const manifest = manifestOf(bundle);
           if (!manifest) continue;
           if (manifest.GUID === WEAPON_WIDGET_MOD.guid || manifest.ModTitle === WEAPON_WIDGET_MOD.title) {
-            if (manifest.ModVersion && String(manifest.ModVersion) !== WEAPON_WIDGET_MOD.version) console.warn(`[weapon widget] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${WEAPON_WIDGET_MOD.version}'s IL`);
+            if (manifest.ModVersion && String(manifest.ModVersion) !== WEAPON_WIDGET_MOD.version)
+              console.warn(
+                `[weapon widget] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${WEAPON_WIDGET_MOD.version}'s IL`,
+              );
             return { bundle, manifest };
           }
         } catch (e) {
@@ -132,31 +144,38 @@ export async function weaponWidgetBundle() {
  *  pinned, and left alone here.) */
 export function weaponWidgetImage(name) {
   if (!_images.has(name)) {
-    _images.set(name, (async () => {
-      const b = await weaponWidgetBundle();
-      const tex = b?.bundle?.textures?.find((t) => t.name === name);
-      if (tex) {
-        // DWHD1 (a player: "all weapons are overhead"): rows KEPT. The bundle reader (unityBundle.decodeTexture2D)
-        // already answers top-first; the flip that was here turned every Weapon Widget frame upside down on its
-        // screen quad - the same fault HT3 fixed for the loose PNG below
-        try { return toScreenOrder(tex.rgba()); } catch (e) { console.warn(`[weapon widget] ${name} would not decode:`, e?.message ?? e); }
-      }
-      if (!_load) return null;
-      const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
-      if (!loose) return null;
-      try {
-        const bytes = await _load(loose);
-        if (!bytes || !bytes.byteLength) return null;
-        // HT3: the loose PNG keeps its rows. The bundle arm above is a
-        // FLIP because Unity stores bottom-up; a decoded PNG is already
-        // top-first, and this is a SCREEN quad, so flipping it here was
-        // the same upside-down sprite the held torch showed.
-        return toScreenOrder(await decodePng(bytes));
-      } catch (e) {
-        console.warn(`[weapon widget] ${loose} would not decode:`, e?.message ?? e);
-        return null;
-      }
-    })());
+    _images.set(
+      name,
+      (async () => {
+        const b = await weaponWidgetBundle();
+        const tex = b?.bundle?.textures?.find((t) => t.name === name);
+        if (tex) {
+          // DWHD1 (a player: "all weapons are overhead"): rows KEPT. The bundle reader (unityBundle.decodeTexture2D)
+          // already answers top-first; the flip that was here turned every Weapon Widget frame upside down on its
+          // screen quad - the same fault HT3 fixed for the loose PNG below
+          try {
+            return toScreenOrder(tex.rgba());
+          } catch (e) {
+            console.warn(`[weapon widget] ${name} would not decode:`, e?.message ?? e);
+          }
+        }
+        if (!_load) return null;
+        const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
+        if (!loose) return null;
+        try {
+          const bytes = await _load(loose);
+          if (!bytes || !bytes.byteLength) return null;
+          // HT3: the loose PNG keeps its rows. The bundle arm above is a
+          // FLIP because Unity stores bottom-up; a decoded PNG is already
+          // top-first, and this is a SCREEN quad, so flipping it here was
+          // the same upside-down sprite the held torch showed.
+          return toScreenOrder(await decodePng(bytes));
+        } catch (e) {
+          console.warn(`[weapon widget] ${loose} would not decode:`, e?.message ?? e);
+          return null;
+        }
+      })(),
+    );
   }
   return _images.get(name);
 }

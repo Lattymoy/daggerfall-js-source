@@ -32,20 +32,26 @@
 //
 // Not a DFU member: Daggerfall has no other player to hand a piece to. Ledger A.
 import { templateByIndex } from './itemTemplates.js';
-import { t } from '../textManager.js';   // AUDIT AUTO-HOLD: the realm lock's words, in the player's language
+import { t } from '../textManager.js'; // AUDIT AUTO-HOLD: the realm lock's words, in the player's language
 
 /** AUDIT AUTO-HOLD: the ledger keys of the pieces the realm locked on this character (scenes/realmHoldHost.js sets them
  *  from the realm session), none offline. */
 let _realmLocked = new Set();
-export function setRealmLocked(/** @type {Iterable<string> | null | undefined} */ keys) { _realmLocked = new Set(keys ?? []); }
+export function setRealmLocked(/** @type {Iterable<string> | null | undefined} */ keys) {
+  _realmLocked = new Set(keys ?? []);
+}
 /** Whether the realm locked this piece - its ledger key (systems/item/itemIds.js ledgerKeyOf: a craft's provenance, or the id
  *  its first checkpoint stamped) among the locked. */
-export const isRealmLocked = (/** @type {any} */ item) => _realmLocked.size > 0 && !!item
-  && ((typeof item.provenance === 'string' && _realmLocked.has(item.provenance)) || (typeof item.uid === 'string' && _realmLocked.has(item.uid)));
+export const isRealmLocked = (/** @type {any} */ item) =>
+  _realmLocked.size > 0 &&
+  !!item &&
+  ((typeof item.provenance === 'string' && _realmLocked.has(item.provenance)) ||
+    (typeof item.uid === 'string' && _realmLocked.has(item.uid)));
 
 /** Whether a piece is bound BY ITS NATURE: its own mark (SS4), or its template row - and no mark unbinds what the row
  *  binds. */
-export const isBoundByNature = (/** @type {any} */ item) => item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;
+export const isBoundByNature = (/** @type {any} */ item) =>
+  item?.bound === true || templateByIndex(item?.templateIndex)?.bound === true;
 /** Whether a piece is bound: by its nature, or - while it is - by the realm's lock (AUDIT AUTO-HOLD). */
 export const isBound = (/** @type {any} */ item) => isBoundByNature(item) || isRealmLocked(item);
 
@@ -61,31 +67,48 @@ export const isPackOnly = (/** @type {any} */ item) => templateByIndex(item?.tem
 
 /** SS3: whether a bound piece may not be put THERE (a remote kind): every place but the player's own - and WALLET1, a
  *  pack-only piece no place at all. */
-export const boundRefusesPut = (/** @type {any} */ item, /** @type {string} */ kind) => isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));
+export const boundRefusesPut = (/** @type {any} */ item, /** @type {string} */ kind) =>
+  isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));
 
 /** SS3: a list a peer handed over, without its bound pieces (null stays null - the caller's refusal). */
-export const unbound = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !isBound(it)) : list);
+export const unbound = (/** @type {any[] | null} */ list) =>
+  Array.isArray(list) ? list.filter((it) => !isBound(it)) : list;
 
 /** The trade's refusal, in its own voice (tradePack.js tradeRefusal's other words). */
 export const BOUND_TRADE_TEXT = 'Bound items cannot be traded.';
 /** ...and the realm lock's (AUDIT AUTO-HOLD). */
-export const boundTradeText = (/** @type {any} */ item = null) => (realmLockedOnly(item)
-  ? t('realm.locked.trade', 'A piece the realm locked cannot be traded.') : BOUND_TRADE_TEXT);
+export const boundTradeText = (/** @type {any} */ item = null) =>
+  realmLockedOnly(item) ? t('realm.locked.trade', 'A piece the realm locked cannot be traded.') : BOUND_TRADE_TEXT;
 
 /** A piece bound by the realm's lock and not by its nature - the one whose words are the realm lock's. */
 const realmLockedOnly = (/** @type {any} */ item) => !!item && isRealmLocked(item) && !isBoundByNature(item);
 
 /** SS3/SS4: the refusal, in the windows' own voice (itemLock.js lockedText's shape) - the pack's and the counter's; for a
  *  piece the realm locked (`item`), the realm lock's (AUDIT AUTO-HOLD). */
-export const boundText = (/** @type {string} */ name, /** @type {any} */ item = null) => (realmLockedOnly(item)
-  ? t('realm.locked.refusal', '{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.', { name })
-  : `${name || 'That'} is bound to you. It cannot be dropped, traded or sold.`);
+export const boundText = (/** @type {string} */ name, /** @type {any} */ item = null) =>
+  realmLockedOnly(item)
+    ? realmLockedText(name)
+    : `${name || 'That'} is bound to you. It cannot be dropped, traded or sold.`;
+/** The realm lock's own refusal (AUDIT AUTO-HOLD); AUDIT FB1031 D5: a dismantle's too, whatever binds the piece. */
+export const realmLockedText = (/** @type {string} */ name) =>
+  t(
+    'realm.locked.refusal',
+    '{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.',
+    { name },
+  );
 
 /** The card's line for a bound piece. */
 export const BOUND_LINE = 'Bound. It cannot be dropped, traded or sold.';
 /** ...and for one the realm locked (AUDIT AUTO-HOLD) - the card's line for `item`, null for a piece bound by neither. */
-export const boundLine = (/** @type {any} */ item) => (!isBound(item) ? null : realmLockedOnly(item)
-  ? t('realm.locked.line', 'Locked by the realm. It stays with you and cannot be dropped, traded, sold or stored where others can take it.') : BOUND_LINE);
+export const boundLine = (/** @type {any} */ item) =>
+  !isBound(item)
+    ? null
+    : realmLockedOnly(item)
+      ? t(
+          'realm.locked.line',
+          'Locked by the realm. It stays with you and cannot be dropped, traded, sold or stored where others can take it.',
+        )
+      : BOUND_LINE;
 
 /** WALLET1: a pack-only piece's refusal, in the windows' own voice - wherever it was put. */
 export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} stays in your pack.`;

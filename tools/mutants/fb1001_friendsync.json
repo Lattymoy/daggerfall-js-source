@@ -47,8 +47,8 @@
   {
     "name": "FRIENDS-SYNC-B19-refuses-the-players-id",
     "file": "src/net/social.js",
-    "old": "!(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect)",
-    "new": "!(Array.isArray(this.expect) ? this.expect.at(-1) === f.acct : f.acct === this.expect)",
+    "old": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect))",
+    "new": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.at(-1) === f.acct : f.acct === this.expect))",
     "tests": [
       "test/net/fb1001_friendsync.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FRIENDS-SYNC-B19-dropped",
     "file": "src/net/social.js",
-    "old": "if (this.expect && !(Array.isArray(this.expect)",
-    "new": "if (false && !(Array.isArray(this.expect)",
+    "old": "        if (this.expect && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect))\n          return null; // AUDIT SOC B19: not my picture   // FRIENDS-SYNC: mine is the signed-in player's id (a relay since FRIENDS-SYNC) or this profile's (one before it)",
+    "new": "        if (false && !(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect)) return null; // AUDIT SOC B19: not my picture   // FRIENDS-SYNC: mine is the signed-in player's id (a relay since FRIENDS-SYNC) or this profile's (one before it)",
     "tests": [
       "test/net/fb1001_friendsync.test.js"
     ]

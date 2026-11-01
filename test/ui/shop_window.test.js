@@ -326,7 +326,7 @@ test('SHOP: a receipt\'s head keeps its ware - one of the shop\'s, nothing else 
   assert.equal(shopWareTag(doc, 'glyph:origin').children.length, 2, 'the glyph\'s drawing before its label');
   assert.equal(shopWareTag(doc, 'nope'), null);
   const post = rd('src/ui/enhanced/enhancedPost.js');
-  assert.ok(post.includes("} else if (p.ware) {   // SHOP: a receipt") && post.includes("} else if (head.ware) {   // SHOP: the receipt's ware"));
+  assert.ok(post.includes("} else if (p.ware) {\n        // SHOP: a receipt") && post.includes("} else if (head.ware) {\n      // SHOP: the receipt's ware"));
 });
 
 // ── THE CATALOGUE ─────────────────────────────────────────────────────
@@ -683,6 +683,6 @@ test('STOREFRONT the Folios\' head (PASS-PANELS): the season\'s story and its th
   assert.equal(all(out.root, 'sh-fcover').length, 2, 'the covers shown to anyone');
   assert.equal(all(out.root, 'sh-passday')[0].hidden, true, 'no card: no day\'s finds');
   out.stop();
-  assert.deepEqual(shopSections(flowIn(null)), ['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'bundles', 'aurum']);   // PIN MOVED (PASS-PANELS): the Folios a section with no ware; no boosters; PIN MOVED (AURUM-ONLY): the icons
+  assert.deepEqual(shopSections(flowIn(null)), ['pass']);   // PIN MOVED (SHOP-UNTOLD): no card, no ware - the Folios alone (test/ui/shop_untold.test.js); PIN MOVED (PASS-PANELS): the Folios a section with no ware
   assert.equal(shopUntilText(Date.UTC(2026, 10, 15), false, Date.UTC(2026, 10, 14, 20)), 'Featured until Nov 14. Ends today.');
 });

@@ -17,14 +17,14 @@ const HITS = Object.freeze([0, 1, 2, 3, 4].map((i) => SOUND.Hit1 + i));
 
 /** The cues: a clip or a roll of them, and a volume (0..1, under the player's Sound volume). */
 export const PROF_CUES = Object.freeze({
-  strike: Object.freeze({ clips: HITS, volume: 0.55 }),                         // a blow off the glint, a chop off the notch
-  glint: Object.freeze({ clips: Object.freeze([SOUND.Parry6]), volume: 0.8 }),  // a blow on the glint, the anvil in the band: metal rings
-  clean: Object.freeze({ clips: Object.freeze([SOUND.ActivateLockUnlock]), volume: 0.6 }),   // a clean finish
-  swing: Object.freeze({ clips: Object.freeze([SOUND.SwingLowPitch]), volume: 0.45 }),       // a stroke that met nothing (a basket's miss, a throw)
-  splash: Object.freeze({ clips: Object.freeze([SOUND.SplashLarge]), volume: 0.7 }),         // the net lands
-  tug: Object.freeze({ clips: Object.freeze([SOUND.SplashLarge]), volume: 0.35 }),           // the floats dip
-  tick: Object.freeze({ clips: Object.freeze([SOUND.ButtonClick]), volume: 0.3 }),           // a find, a point passed, a stitch
-  slip: Object.freeze({ clips: Object.freeze([SOUND.SwingHighPitch]), volume: 0.35 }),       // a bruise, a slip, a tear
+  strike: Object.freeze({ clips: HITS, volume: 0.55 }), // a blow off the glint, a chop off the notch
+  glint: Object.freeze({ clips: Object.freeze([SOUND.Parry6]), volume: 0.8 }), // a blow on the glint, the anvil in the band: metal rings
+  clean: Object.freeze({ clips: Object.freeze([SOUND.ActivateLockUnlock]), volume: 0.6 }), // a clean finish
+  swing: Object.freeze({ clips: Object.freeze([SOUND.SwingLowPitch]), volume: 0.45 }), // a stroke that met nothing (a basket's miss, a throw)
+  splash: Object.freeze({ clips: Object.freeze([SOUND.SplashLarge]), volume: 0.7 }), // the net lands
+  tug: Object.freeze({ clips: Object.freeze([SOUND.SplashLarge]), volume: 0.35 }), // the floats dip
+  tick: Object.freeze({ clips: Object.freeze([SOUND.ButtonClick]), volume: 0.3 }), // a find, a point passed, a stitch
+  slip: Object.freeze({ clips: Object.freeze([SOUND.SwingHighPitch]), volume: 0.35 }), // a bruise, a slip, a tear
 });
 
 let _sink = (clip, volume) => audio.playOneShot(clip, volume);
@@ -35,7 +35,11 @@ export function profCue(name) {
   const c = PROF_CUES[name];
   if (!c || !c.clips.length) return false;
   const clip = c.clips[Math.min(c.clips.length - 1, Math.floor(_roll() * c.clips.length))];
-  try { _sink(clip, c.volume); } catch { return false; }
+  try {
+    _sink(clip, c.volume);
+  } catch {
+    return false;
+  }
   return true;
 }
 

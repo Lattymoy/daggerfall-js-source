@@ -1,4 +1,4 @@
-// STAFF-PANEL5-MESSAGE (2026-10-22, mob, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
+// STAFF-PANEL5-MESSAGE (2026-10-22, chief, 04:14Z: a message in the middle of one player's screen; design doc "DFO Staff
 // Panel: design", Message on screen) - THE ACCOUNT SERVICE'S HALF (server-account/src/staffMessage.js), driven through the
 // real Worker on the node:sqlite database every account pin stands on (test/accountDb.mjs): a message sent by account id,
 // bounded, paced, stored first and audited, its signed order posted to the relay's door, each one's state read back, and
@@ -35,13 +35,13 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up (staffpanel2's `stand`): mob (an Admin and owner) and Asynian and Tabbyvish
+/** The Worker with the panel set up (staffpanel2's `stand`): chief (an Admin and owner) and Asynian and Tabbyvish
  *  (Moderators) signed in, Troll and Sylvia two players; the relay's door recorded, its answer `door.say` (status, body). */
 async function stand(extra = {}) {
-  const mobKey = await extensionKey();
+  const chiefKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
-    OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`, RELAY_LAW_URL: RELAY, ...extra,
+    OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`, RELAY_LAW_URL: RELAY, ...extra,
   });
   const door = { pushed: [], say: [200, { ok: true, n: 1, old: 0 }] };
   const real = globalThis.fetch;
@@ -59,9 +59,9 @@ async function stand(extra = {}) {
   const troll = await s.registered('Troll');
   const sylvia = await s.registered('Sylvia');
   const raw = s.env.DB._raw;
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
   const enrol = async (handle) => {
-    const inv = await staff('/v1/staff/invite', { handle }, mob.session);
+    const inv = await staff('/v1/staff/invite', { handle }, chief.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -74,7 +74,7 @@ async function stand(extra = {}) {
   const later = (who) => raw.prepare(`UPDATE staff_messages SET at = at - ${STAFF_MESSAGE_GAP_S} WHERE staff_id = ?`).run(idOf(who));
   const send = (who, body) => staff('/v1/staff/message', body, who.session);
   const audits = (act) => raw.prepare('SELECT * FROM staff_audit WHERE act = ? ORDER BY id').all(act);
-  return { ...s, raw, staff, mob, asy, tab, troll, sylvia, idOf, later, send, audits, door, restore: () => { globalThis.fetch = real; } };
+  return { ...s, raw, staff, chief, asy, tab, troll, sylvia, idOf, later, send, audits, door, restore: () => { globalThis.fetch = real; } };
 }
 
 test('STAFF-PANEL5-MESSAGE: the panel\'s two doors are staff doors, opened by a staff session alone; the game\'s two are behind its own session', async () => {
@@ -197,11 +197,11 @@ test('STAFF-PANEL5-MESSAGE: the read - a Moderator their own messages, an Admin 
   try {
     assert.equal((await s.send(s.asy, { target: s.troll.id, text: 'from asy' })).status, 200);
     assert.equal((await s.send(s.tab, { target: s.troll.id, text: 'from tab' })).status, 200);
-    assert.equal((await s.send(s.mob, { target: s.sylvia.id, text: 'from mob' })).status, 200);
+    assert.equal((await s.send(s.chief, { target: s.sylvia.id, text: 'from chief' })).status, 200);
     const texts = async (who, body = {}) => (await s.staff('/v1/staff/messages', body, who.session)).body.messages.map((m) => m.text);
     assert.deepEqual(await texts(s.asy), ['from asy'], 'a Moderator reads their own');
-    assert.deepEqual(await texts(s.mob), ['from mob', 'from tab', 'from asy'], 'an Admin reads every one, newest first');
-    assert.deepEqual(await texts(s.mob, { target: s.troll.id }), ['from tab', 'from asy'], 'by player');
+    assert.deepEqual(await texts(s.chief), ['from chief', 'from tab', 'from asy'], 'an Admin reads every one, newest first');
+    assert.deepEqual(await texts(s.chief, { target: s.troll.id }), ['from tab', 'from asy'], 'by player');
     assert.deepEqual(await texts(s.tab, { target: s.sylvia.id }), [], 'a Moderator never reads another member\'s, whoever it was to');
     const reads = s.audits('messages-read');
     assert.deepEqual(reads.map((a) => [a.role, a.target, JSON.parse(a.detail).own]), [['moderator', null, true], ['admin', null, false], ['admin', s.troll.id, false], ['moderator', s.sylvia.id, true]]);
@@ -210,12 +210,12 @@ test('STAFF-PANEL5-MESSAGE: the read - a Moderator their own messages, an Admin 
     // a page and the next
     const ins = s.raw.prepare('INSERT INTO staff_messages (id, at, staff_id, staff_name, target, text, pushed, sockets, old) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 0)');
     for (let i = 0; i < STAFF_MESSAGES_PAGE + 3; i++) ins.run(`bulk-${String(i).padStart(4, '0')}`, nowS() - 1000, s.idOf('SirMcMobdon'), 'SirMcMobdon', s.troll.id, `bulk ${i}`);
-    const p1 = (await s.staff('/v1/staff/messages', {}, s.mob.session)).body;
+    const p1 = (await s.staff('/v1/staff/messages', {}, s.chief.session)).body;
     assert.equal(p1.messages.length, STAFF_MESSAGES_PAGE);
     assert.equal(p1.messages[0].text, `bulk ${STAFF_MESSAGES_PAGE + 2}`);
     assert.ok(Number.isSafeInteger(p1.next));
-    const p2 = (await s.staff('/v1/staff/messages', { before: p1.next }, s.mob.session)).body;
-    assert.deepEqual(p2.messages.map((m) => m.text), ['bulk 2', 'bulk 1', 'bulk 0', 'from mob', 'from tab', 'from asy']);
+    const p2 = (await s.staff('/v1/staff/messages', { before: p1.next }, s.chief.session)).body;
+    assert.deepEqual(p2.messages.map((m) => m.text), ['bulk 2', 'bulk 1', 'bulk 0', 'from chief', 'from tab', 'from asy']);
     assert.equal(p2.next, null);
   } finally { s.restore(); }
 });

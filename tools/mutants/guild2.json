@@ -2,8 +2,8 @@
   {
     "name": "GUILD2a-an-officer-renames",
     "file": "src/net/guild/guildLaw.js",
-    "old": "  rename: Object.freeze([0]),",
-    "new": "  rename: Object.freeze([0, 1]),",
+    "old": "  rename: Object.freeze([0]), // GUILD2a: the guild's own name and tag - the guildmaster's, for a price",
+    "new": "  rename: Object.freeze([0, 1]), // GUILD2a: the guild's own name and tag - the guildmaster's, for a price",
     "tests": [
       "test/net/guild/guild2_client.test.js",
       "test/server/guild1.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "GUILD2b-the-guildmaster-limited",
     "file": "src/net/guild/guildVaultLaw.js",
-    "old": "if (rank === GUILD_RANK_MASTER || !grant",
-    "new": "if (!grant",
+    "old": "  if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level))\n    return { level: def.level, limit: def.limit, granted: false };",
+    "new": "  if (!grant || !vaultLevelOk(grant.level)) return { level: def.level, limit: def.limit, granted: false };",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "GUILD2b-the-limit-unread",
     "file": "src/net/guild/guildVaultLaw.js",
-    "old": "(s.limit === 0 || (takenToday | 0) < s.limit)",
-    "new": "true",
+    "old": "export const vaultMayTake = (s, takenToday = 0) =>\n  s?.level === 'withdraw' && (s.limit === 0 || (takenToday | 0) < s.limit);",
+    "new": "export const vaultMayTake = (s, takenToday = 0) => s?.level === 'withdraw' && true;",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "GUILD2c-the-plain-key-moved",
     "file": "src/net/heraldryLaw.js",
-    "old": "  return h.division || h.charge ? `${base}|",
-    "new": "  return true ? `${base}|",
+    "old": "  return h.division || h.charge ? `${base}|${h.division ?? 'plain'}|${h.field2 ?? ''}|${h.charge ?? ''}` : base;",
+    "new": "  return true ? `${base}|${h.division ?? 'plain'}|${h.field2 ?? ''}|${h.charge ?? ''}` : base;",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "GUILD2b-the-reserve-never-undone",
     "file": "src/net/guild/guildBook.js",
-    "old": "        return () => { if (whole) { if (!list.includes(item)) list.splice(Math.min(at, list.length), 0, item); } else item.stackCount += n; this.pack.changed(); };",
-    "new": "        return () => {};",
+    "old": "          return () => {\n            if (whole) {\n              if (!list.includes(item)) list.splice(Math.min(at, list.length), 0, item);\n            } else item.stackCount += n;\n            this.pack.changed();\n          };",
+    "new": "          return () => {};",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "GUILD2b-the-taken-piece-unminted",
     "file": "src/net/guild/guildBook.js",
-    "old": "try { this.pack.add(rec); this.pack.changed(); held = true; }",
-    "new": "try { this.pack.changed(); held = true; }",
+    "old": "              this.pack.add(rec);\n              this.pack.changed();",
+    "new": "              this.pack.changed();",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-GUILD2-M3-a-failed-read-keeps-the-view",
     "file": "src/net/guild/guildBook.js",
-    "old": "} else { this.vaultView = null; this.vaultError = r?.error ?? 'server';",
-    "new": "} else { this.vaultError = r?.error ?? 'server';",
+    "old": "      this.vaultView = null;\n      this.vaultError = r?.error ?? 'server';",
+    "new": "      this.vaultError = r?.error ?? 'server';",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "AUDIT-GUILD2-M3-taken-from-another-guilds-view",
     "file": "src/net/guild/guildBook.js",
-    "old": "    const seen = this.vaultNow()?.items",
-    "new": "    const seen = this.vaultView?.items",
+    "old": "    const seen = this.vaultNow()?.items?.find((x) => x.slot === slot) ?? null; // AUDIT GUILD2 M3: never another's view",
+    "new": "    const seen = this.vaultView?.items?.find((x) => x.slot === slot) ?? null; // AUDIT GUILD2 M3: never another's view",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT-GUILD2-G11-a-hole-the-first-colour-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "    ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
-    "new": "    ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>`",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>`",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT-GUILD2-G12-a-swatch-keyed-by-three",
     "file": "src/ui/heraldrySwatch.js",
-    "old": "  const key = h ? heraldryKey(h) : '';",
-    "new": "  const key = h ? `${h.field}/${h.border}/${h.device}` : '';",
+    "old": "  const key = h ? heraldryKey(h) : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
+    "new": "  const key = h ? `${h.field}/${h.border}/${h.device}` : ''; // AUDIT GUILD2 G12: the whole arms - a division or a device's colour changed is a new picture",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "AUDIT-GUILD2-G14-a-swords",
     "file": "src/net/heraldryLaw.js",
-    "old": "DEVICE_NAMES[device] ?? device[0]",
-    "new": "device[0]",
+    "old": "  typeof device === 'string' && DEVICE.has(device)\n    ? (DEVICE_NAMES[device] ?? device[0].toUpperCase() + device.slice(1))\n    : '';",
+    "new": "  typeof device === 'string' && DEVICE.has(device) ? device[0].toUpperCase() + device.slice(1) : '';",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "AUDIT2-GUILD2-K1-the-take-asked-as-any-act",
     "file": "src/net/guild/guildBook.js",
-    "old": "      needsAnswer: true,\n      apply: (/** @type {any} */ a) => {\n        const rec = a?.data?.item;",
-    "new": "      apply: (/** @type {any} */ a) => {\n        const rec = a?.data?.item;",
+    "old": "        needsAnswer: true,\n        apply: (/** @type {any} */ a) => {",
+    "new": "        apply: (/** @type {any} */ a) => {",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT2-GUILD2-K1-no-piece-taken-as-done",
     "file": "src/net/guild/guildBook.js",
-    "old": "        if (!held) this.realm.abandon?.('unknown');",
-    "new": "        void held;",
+    "old": "          if (!held) this.realm.abandon?.('unknown'); // the record holds what the pack does not: a join reads it",
+    "new": "          void held; // the record holds what the pack does not: a join reads it",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "AUDIT2-GUILD2-K14-an-earlier-read-shown",
     "file": "src/net/guild/guildBook.js",
-    "old": "    if (gen !== this._vaultGen) return r;",
-    "new": "    void gen;",
+    "old": "    if (gen !== this._vaultGen) return r; // a later read is out: its answer is the vault",
+    "new": "    void gen; // a later read is out: its answer is the vault",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "AUDIT2-GUILD2-K15-a-piece-not-held-said-as-a-count",
     "file": "src/net/guild/guildBook.js",
-    "old": "    if (pick < 0) return { ok: false, error: 'vault-goods' };",
-    "new": "    if (pick < 0) return { ok: false, error: 'bad-vault-count' };",
+    "old": "    if (pick < 0) return { ok: false, error: 'vault-goods' }; // AUDIT2 GUILD2 K15: the pack no longer holds it - never \"more than the stack holds\"",
+    "new": "    if (pick < 0) return { ok: false, error: 'bad-vault-count' }; // AUDIT2 GUILD2 K15: the pack no longer holds it - never \"more than the stack holds\"",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "AUDIT2-GUILD2-S2-why-dropped-by-the-book",
     "file": "src/net/guild/guildBook.js",
-    "old": "error: r?.error ?? 'server', ...(typeof r?.why === 'string' ? { why: r.why } : {}), ...(Number.isSafeInteger(r?.at) ? { at: r.at } : {}),",
-    "new": "error: r?.error ?? 'server',",
+    "old": "        : {\n            ok: false,\n            error: r?.error ?? 'server',\n            ...(typeof r?.why === 'string' ? { why: r.why } : {}),\n            ...(Number.isSafeInteger(r?.at) ? { at: r.at } : {}),\n            ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}),\n          };",
+    "new": "        : { ok: false, error: r?.error ?? 'server', ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}) };",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-first-colour-whole-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "    ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
-    "new": "    ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>${inPart(div.id, p, div.hex)}`",
+    "old": "        ? `${inPart(div.comp, p, fieldHex)}${inPart(div.id, p, div.hex)}`",
+    "new": "        ? `<g transform=\"${transform}\">${partSvg(p, fieldHex)}</g>${inPart(div.id, p, div.hex)}`",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -513,8 +513,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-canvas",
     "file": "src/ui/heraldryArt.js",
-    "old": "inPart(p, fieldHex, comp, 'evenodd');",
-    "new": "inPart(p, fieldHex, comp, 'nonzero');",
+    "old": "      inPart(p, fieldHex, comp, 'evenodd');",
+    "new": "      inPart(p, fieldHex, comp, 'nonzero');",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -522,8 +522,8 @@
   {
     "name": "AUDIT2-GUILD2-G2-the-complement-nonzero-svg",
     "file": "src/ui/heraldryArt.js",
-    "old": "\" clip-rule=\"evenodd\"/></clipPath>`;",
-    "new": "\"/></clipPath>`;",
+    "old": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\" clip-rule=\"evenodd\"/></clipPath>`;",
+    "new": "  `<clipPath id=\"${clip}c\"><path d=\"${divisionComplement(divD, box.w, box.h)}\"/></clipPath>`;",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "AUDIT2-GUILD2-G3-the-shield-on-the-banners-box",
     "file": "src/ui/heraldryArt.js",
-    "old": "  const divD = h.division ? divisionPath(h.division, SHIELD_BOX.w, SHIELD_BOX.h) : '';\n  const div = divD ? new P(divD) : null;",
-    "new": "  const divD = h.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';\n  const div = divD ? new P(divD) : null;",
+    "old": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, SHIELD_BOX.w, SHIELD_BOX.h) : '';",
+    "new": "  ctx.clip(shield);\n  const divD = h.division ? divisionPath(h.division, BANNER_BOX.w, BANNER_BOX.h) : '';",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "AUDIT2-GUILD2-G3-field2-dropped-on-the-way",
     "file": "src/net/heraldryLaw.js",
-    "old": "  if (parted) { out.division = division; out.field2 = field2; }",
-    "new": "  if (parted) { out.division = division; }",
+    "old": "    out.field2 = field2;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/guild2_service.test.js"
     ]

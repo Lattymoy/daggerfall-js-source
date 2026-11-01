@@ -1,173 +1,173 @@
 [
- {
-  "name": "TO-the-seed-unread",
-  "file": "src/world/townOutline.js",
-  "old": "  const s = seed >>> 0, [dLo, dHi] = O.depth",
-  "new": "  const s = 0, [dLo, dHi] = O.depth",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-a-wall-kept",
-  "file": "src/world/townOutline.js",
-  "old": "      if (isWall(bx, by)) continue;\n      keep[by * w + bx] = 1;",
-  "new": "      keep[by * w + bx] = 1;",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-turn-unread",
-  "file": "src/world/townOutline.js",
-  "old": " + (turn * Math.PI) / O.turns;",
-  "new": ";",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-a-small-grid-shaped",
-  "file": "src/world/townOutline.js",
-  "old": "  if (!(iw >= O.min || ih >= O.min)) return keep;\n",
-  "new": "",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-no-kind-given-back",
-  "file": "src/world/townOutline.js",
-  "old": "  for (const [k, i] of holders) if (!kept.has(k)) keep[i] = 1;\n",
-  "new": "",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-farther-holder",
-  "file": "src/world/townOutline.js",
-  "old": "far(i) < far(holders.get(k))",
-  "new": "far(i) > far(holders.get(k))",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-a-piece-left-apart",
-  "file": "src/world/townOutline.js",
-  "old": "parts.length > 1; parts = pieces(keep, w, h)",
-  "new": "parts.length > 99; parts = pieces(keep, w, h)",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-way-through-a-wall",
-  "file": "src/world/townOutline.js",
-  "old": "from[n] >= 0 || !open(n)) continue;",
-  "new": "from[n] >= 0) continue;",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-first-turn-always",
-  "file": "src/world/townOutline.js",
-  "old": "turn < O.turns && bestMissing > 0; turn++",
-  "new": "turn < 1; turn++",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-pool-unkeyed",
-  "file": "src/world/townOutline.js",
-  "old": "const at = pool.findIndex((b, i) => !used[i] && b.buildingType === r.type);",
-  "new": "const at = pool.findIndex((b, i) => !used[i]);",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-uncarried-guild-drawn",
-  "file": "src/world/townOutline.js",
-  "old": "isNamedBuildingType(b.buildingType) && !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)));",
-  "new": "isNamedBuildingType(b.buildingType));",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-raven-unread",
-  "file": "src/world/townOutline.js",
-  "old": "      if (r.raven) kinds.push(",
-  "new": "      if (false) kinds.push(",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-kept-cells-stripped",
-  "file": "src/world/townOutline.js",
-  "old": "for (const [b, entries] of drawn) if (!keep[",
-  "new": "for (const [b, entries] of drawn) if (keep[",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-grid-renamed-in-place",
-  "file": "src/world/townOutline.js",
-  "old": "exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },",
-  "new": "exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) }),",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-no-block-read",
-  "file": "src/world/townOutline.js",
-  "old": "  if (!list.length) return dfLocation;\n",
-  "new": "",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-open-tile-stamped",
-  "file": "src/world/townOutline.js",
-  "old": "const OPEN_TILE = 63;",
-  "new": "const OPEN_TILE = 2;",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-install-unwired",
-  "file": "src/scenes/modWorldData.js",
-  "old": "    installTownOutline();   // TOWN-SHAPES TS3",
-  "new": "    // installTownOutline();   // TOWN-SHAPES TS3",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-country-unoutlined",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round",
-  "new": "    const loc = made;   // TOWN-SHAPES TS3",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TO-the-served-kinds",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "classicOf: (name) => blocks.readClassicBlock(blocks.getBlockIndex(blocks.checkName(name)))",
-  "new": "classicOf: (name) => blocks.getBlockByName(name)",
-  "tests": [
-   "test/world/townoutline.test.js"
-  ]
- }
+  {
+    "name": "TO-the-seed-unread",
+    "file": "src/world/townOutline.js",
+    "old": "  const s = seed >>> 0,",
+    "new": "  const s = 0,",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-a-wall-kept",
+    "file": "src/world/townOutline.js",
+    "old": "      if (isWall(bx, by)) continue;\n      keep[by * w + bx] = 1;",
+    "new": "      keep[by * w + bx] = 1;",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-turn-unread",
+    "file": "src/world/townOutline.js",
+    "old": "    phase = (((s >>> 3) % 360) * Math.PI) / 180 + (turn * Math.PI) / O.turns;",
+    "new": "    phase = (((s >>> 3) % 360) * Math.PI) / 180;",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-a-small-grid-shaped",
+    "file": "src/world/townOutline.js",
+    "old": "  if (!(iw >= O.min || ih >= O.min)) return keep;\n  const s = seed >>> 0,",
+    "new": "  const s = seed >>> 0,",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-no-kind-given-back",
+    "file": "src/world/townOutline.js",
+    "old": "  for (const [k, i] of holders) if (!kept.has(k)) keep[i] = 1;\n  const open = (i) => !isWall(i % w, Math.floor(i / w));",
+    "new": "  const open = (i) => !isWall(i % w, Math.floor(i / w));",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-farther-holder",
+    "file": "src/world/townOutline.js",
+    "old": "      else if (!holders.has(k) || far(i) < far(holders.get(k))) holders.set(k, i);",
+    "new": "      else if (!holders.has(k) || far(i) > far(holders.get(k))) holders.set(k, i);",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-a-piece-left-apart",
+    "file": "src/world/townOutline.js",
+    "old": "  for (let parts = pieces(keep, w, h); parts.length > 1; parts = pieces(keep, w, h)) {",
+    "new": "  for (let parts = pieces(keep, w, h); parts.length > 99; parts = pieces(keep, w, h)) {",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-way-through-a-wall",
+    "file": "src/world/townOutline.js",
+    "old": "        if (nx < 0 || ny < 0 || nx >= w || ny >= h || from[n] >= 0 || !open(n)) continue;",
+    "new": "        if (nx < 0 || ny < 0 || nx >= w || ny >= h || from[n] >= 0) continue;",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-first-turn-always",
+    "file": "src/world/townOutline.js",
+    "old": "  for (let turn = 0; turn < O.turns && bestMissing > 0; turn++) {",
+    "new": "  for (let turn = 0; turn < 1; turn++) {",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-pool-unkeyed",
+    "file": "src/world/townOutline.js",
+    "old": "      const at = pool.findIndex((b, i) => !used[i] && b.buildingType === r.type);",
+    "new": "      const at = pool.findIndex((b, i) => !used[i]);",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-uncarried-guild-drawn",
+    "file": "src/world/townOutline.js",
+    "old": "  const pool = buildings.filter(\n    (b) =>\n      isNamedBuildingType(b.buildingType) &&\n      !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)),\n  );",
+    "new": "  const pool = buildings.filter((b) => isNamedBuildingType(b.buildingType));",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-raven-unread",
+    "file": "src/world/townOutline.js",
+    "old": "      if (r.raven) kinds.push(buildingKind({ buildingType: BUILDING_TYPES.GuildHall, factionId: 414 }));",
+    "new": "      if (false) kinds.push(buildingKind({ buildingType: BUILDING_TYPES.GuildHall, factionId: 414 }));",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-kept-cells-stripped",
+    "file": "src/world/townOutline.js",
+    "old": "    if (!keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);",
+    "new": "    if (keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-grid-renamed-in-place",
+    "file": "src/world/townOutline.js",
+    "old": "      exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },",
+    "new": "      exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) }),",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-no-block-read",
+    "file": "src/world/townOutline.js",
+    "old": "  if (!list.length) return dfLocation;\n  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
+    "new": "  const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-open-tile-stamped",
+    "file": "src/world/townOutline.js",
+    "old": "const OPEN_TILE = 63;",
+    "new": "const OPEN_TILE = 2;",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-install-unwired",
+    "file": "src/scenes/modWorldData.js",
+    "old": "    installTownOutline(); // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)",
+    "new": "    // installTownOutline();   // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-country-unoutlined",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round",
+    "new": "    const loc = made;   // TOWN-SHAPES TS3",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TO-the-served-kinds",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  const blockOf = { classicOf: (name) => blocks.readClassicBlock(blocks.getBlockIndex(blocks.checkName(name))), servedOf: (name) => blocks.getBlockByName(name) };",
+    "new": "  const blockOf = { classicOf: (name) => blocks.getBlockByName(name), servedOf: (name) => blocks.getBlockByName(name) };",
+    "tests": [
+      "test/world/townoutline.test.js"
+    ]
+  }
 ]

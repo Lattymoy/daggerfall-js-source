@@ -54,7 +54,10 @@ let _seenRaw;
 let _seenSet = new Set();
 function seenNow() {
   const raw = getPref(TUTORIALS_SEEN_PREF);
-  if (raw !== _seenRaw) { _seenRaw = raw; _seenSet = new Set(Array.isArray(raw) ? raw.filter((id) => BY_ID.has(id)) : []); }
+  if (raw !== _seenRaw) {
+    _seenRaw = raw;
+    _seenSet = new Set(Array.isArray(raw) ? raw.filter((id) => BY_ID.has(id)) : []);
+  }
   return _seenSet;
 }
 export const seenTutorials = () => new Set(seenNow());
@@ -67,7 +70,10 @@ export function markTutorialsSeen(ids) {
   const before = seen.size;
   for (const id of ids ?? []) if (BY_ID.has(id)) seen.add(id);
   if (seen.size === before) return false;
-  setPref(TUTORIALS_SEEN_PREF, TUTORIALS.map((t) => t.id).filter((id) => seen.has(id)));   // catalogue order: one list, one shape
+  setPref(
+    TUTORIALS_SEEN_PREF,
+    TUTORIALS.map((t) => t.id).filter((id) => seen.has(id)),
+  ); // catalogue order: one list, one shape
   return true;
 }
 export const markTutorialSeen = (id) => markTutorialsSeen([id]);
@@ -91,7 +97,9 @@ const EARLY_MAX = 16;
 export function setTutorialHandler(fn) {
   handler = typeof fn === 'function' ? fn : null;
   if (handler) for (const id of early.splice(0)) handler(id);
-  return () => { if (handler === fn) handler = null; };
+  return () => {
+    if (handler === fn) handler = null;
+  };
 }
 
 /** THE TRIGGER: the player has just reached system `id`. `after` (ms) holds the page back - a door that is a scene's
@@ -105,14 +113,17 @@ export function noteFirstUse(id, { after = 0 } = {}) {
 }
 
 /** Tests: no handler, nothing waiting. */
-export function _resetTutorialTriggerForTests() { handler = null; early.length = 0; }
+export function _resetTutorialTriggerForTests() {
+  handler = null;
+  early.length = 0;
+}
 
 /** `{Action}` -> the key bound to it now, through `keyName(action)` (null or '' when unbound: "an unbound key"). */
 export function fillKeys(text, keyName = null) {
   return String(text ?? '').replace(/\{([A-Za-z0-9]+)\}/g, (_m, action) => {
     const k = keyName ? keyName(action) : null;
     if (!k) return '[unbound]';
-    return k === '[' || k === ']' ? `"${k}"` : `[${k}]`;   // a bracket key in brackets reads as noise
+    return k === '[' || k === ']' ? `"${k}"` : `[${k}]`; // a bracket key in brackets reads as noise
   });
 }
 
@@ -121,10 +132,15 @@ export function fillKeys(text, keyName = null) {
 export function wrapTutorialText(text, width = TUTORIAL_WRAP) {
   const out = [];
   let line = '';
-  for (const word of String(text ?? '').split(/\s+/).filter(Boolean)) {
+  for (const word of String(text ?? '')
+    .split(/\s+/)
+    .filter(Boolean)) {
     if (!line) line = word;
     else if (line.length + 1 + word.length <= width) line += ` ${word}`;
-    else { out.push(line); line = word; }
+    else {
+      out.push(line);
+      line = word;
+    }
   }
   if (line) out.push(line);
   // no word left alone on the last line: the line above lends it its last word when both still fit
@@ -132,7 +148,10 @@ export function wrapTutorialText(text, width = TUTORIAL_WRAP) {
   if (n > 1 && !out[n - 1].includes(' ') && out[n - 2].includes(' ')) {
     const cut = out[n - 2].lastIndexOf(' ');
     const moved = `${out[n - 2].slice(cut + 1)} ${out[n - 1]}`;
-    if (moved.length <= width) { out[n - 2] = out[n - 2].slice(0, cut); out[n - 1] = moved; }
+    if (moved.length <= width) {
+      out[n - 2] = out[n - 2].slice(0, cut);
+      out[n - 1] = moved;
+    }
   }
   return out;
 }

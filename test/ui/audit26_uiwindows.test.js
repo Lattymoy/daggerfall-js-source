@@ -118,9 +118,9 @@ test('F141/F145: the guild and tavern buttons all click; F146: the teleport Yes/
   // Heal Curse row under its Cure Disease (a row lower than the Reforge's or the Lift's when either stands), the seventh
   const guildClick = guild.slice(guild.indexOf('click(vx, vy)'));
   assert.equal((guildClick.match(/audio\.playOneShot\(SOUND\.ButtonClick, 1\);/g) ?? []).length, 7);
-  assert.match(guildClick, /if \(this\.hooks\.healCurse && inRect\(healCurseRect\(!!this\.hooks\.reforge \|\| !!this\.hooks\.lift\), vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._healCurse\(\); return true; \}/);
-  assert.match(guildClick, /if \(!this\.hooks\.reforge && this\.hooks\.lift && inRect\(REFORGE_RECT, vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._lift\(\); return true; \}/);
-  assert.match(guildClick, /if \(this\.hooks\.reforge && inRect\(REFORGE_RECT, vx, vy\)\) \{ audio\.playOneShot\(SOUND\.ButtonClick, 1\); this\._reforge\(\); return true; \}/);
+  assert.match(guildClick, /if \(this\.hooks\.healCurse && inRect\(healCurseRect\(!!this\.hooks\.reforge \|\| !!this\.hooks\.lift\), vx, vy\)\) \{\n\s*audio\.playOneShot\(SOUND\.ButtonClick, 1\);\n\s*this\._healCurse\(\);\n\s*return true;\n\s*\}/);
+  assert.match(guildClick, /if \(!this\.hooks\.reforge && this\.hooks\.lift && inRect\(REFORGE_RECT, vx, vy\)\) \{\n\s*audio\.playOneShot\(SOUND\.ButtonClick, 1\);\n\s*this\._lift\(\);\n\s*return true;\n\s*\}/);
+  assert.match(guildClick, /if \(this\.hooks\.reforge && inRect\(REFORGE_RECT, vx, vy\)\) \{\n\s*audio\.playOneShot\(SOUND\.ButtonClick, 1\);\n\s*this\._reforge\(\);\n\s*return true;\n\s*\}/);
 
   const tavern = src('ui/tavernWindow.js');
   // four buttons (:135, :155, :264, :339) + the food picker (:307)

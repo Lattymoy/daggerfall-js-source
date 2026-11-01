@@ -119,8 +119,8 @@
   {
     "name": "TESA14-the-bay-a-regions",
     "file": "src/world/tamrielRoads.js",
-    "old": "      if (inBay(x, y)) { water[i] = 1; bay[i] = 1; continue; }",
-    "new": "      if (false) { water[i] = 1; bay[i] = 1; continue; }",
+    "old": "      if (inBay(x, y)) { water[i] = 1; bay[i] = 1; continue; }   // the Bay's own ground is its own network's (VOYAGER1: no ford's)",
+    "new": "      if (false) { water[i] = 1; bay[i] = 1; continue; }   // the Bay's own ground is its own network's (VOYAGER1: no ford's)",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TESA14-the-places-as-they-come",
     "file": "src/world/tamrielRoads.js",
-    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  for (const p of ordered)",
-    "new": ";\n  for (const p of ordered)",
+    "old": "  const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);",
+    "new": "  const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`));",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TESA14-the-obstacles-dropped",
     "file": "src/world/tamrielRoads.js",
-    "old": "  const net = yield* roadNetworkSteps({\n    locations, dials, obstacles: blocked,",
-    "new": "  const net = yield* roadNetworkSteps({\n    locations, dials, obstacles: [],",
+    "old": "    locations, dials, obstacles: blocked,",
+    "new": "    locations, dials, obstacles: [],",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TESA14-land-on-the-bay",
     "file": "src/world/tamrielRoads.js",
-    "old": "if (!inBay(x, y) && heightAt(x, y) > WATER_BYTE) return true;",
-    "new": "if (heightAt(x, y) > WATER_BYTE) return true;",
+    "old": "  for (let y = y0; y < y1; y += LAND_LOOK) for (let x = x0; x < x1; x += LAND_LOOK) if (!inBay(x, y) && heightAt(x, y) > WATER_BYTE) return true;",
+    "new": "  for (let y = y0; y < y1; y += LAND_LOOK) for (let x = x0; x < x1; x += LAND_LOOK) if (heightAt(x, y) > WATER_BYTE) return true;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TESA14-ties-west-first",
     "file": "src/world/tamrielRoads.js",
-    "old": "d(a) - d(b) || a.j - b.j || a.i - b.i",
-    "new": "d(a) - d(b) || a.i - b.i || a.j - b.j",
+    "old": "  return out.sort((a, b) => d(a) - d(b) || a.j - b.j || a.i - b.i);",
+    "new": "  return out.sort((a, b) => d(a) - d(b) || a.i - b.i || a.j - b.j);",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TESA14-the-core-off-by-one",
     "file": "src/world/tamrielRoads.js",
-    "old": "export const inCore = (region, x, y) => x >= region.core.x0 && x < region.core.x1",
-    "new": "export const inCore = (region, x, y) => x >= region.core.x0 && x <= region.core.x1",
+    "old": "export const inCore = (region, x, y) => x >= region.core.x0 && x < region.core.x1 && y >= region.core.y0 && y < region.core.y1;",
+    "new": "export const inCore = (region, x, y) => x >= region.core.x0 && x <= region.core.x1 && y >= region.core.y0 && y < region.core.y1;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "TESA14-the-country-uncounted",
     "file": "src/world/tamrielRoads.js",
-    "old": "new Map(spec.country.counts.map(([t, n]) => [t, new Array(n).fill(null)]))",
-    "new": "new Map(spec.country.counts.map(([t]) => [t, [null]]))",
+    "old": "  const country = { rates: new Map(spec.country.rates), templates: new Map(spec.country.counts.map(([t, n]) => [t, new Array(n).fill(null)])), climateAt, heightAt, ground };",
+    "new": "  const country = { rates: new Map(spec.country.rates), templates: new Map(spec.country.counts.map(([t]) => [t, [null]])), climateAt, heightAt, ground };",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "TESA14-the-plan-size-lost",
     "file": "src/world/tamrielRoads.js",
-    "old": "list.map((l) => [l.mapTableData?.dungeonType ?? null, lairBlockCount(l)])",
-    "new": "list.map((l) => [l.mapTableData?.dungeonType ?? null, 1])",
+    "old": "      templates: [...lairTemplates].map(([t, list]) => [t, list.map((l) => [l.mapTableData?.dungeonType ?? null, lairBlockCount(l)])]),",
+    "new": "      templates: [...lairTemplates].map(([t, list]) => [t, list.map((l) => [l.mapTableData?.dungeonType ?? null, 1])]),",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "TESA14-the-print-blind-to-the-trace",
     "file": "src/world/tamrielRoads.js",
-    "old": "  if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);\n",
-    "new": "",
+    "old": "  if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);\n  if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);   // TAMRIEL-RELIEF: the heights the roads are costed on",
+    "new": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);   // TAMRIEL-RELIEF: the heights the roads are costed on",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TESA14-the-print-blind-to-the-nodes",
     "file": "src/world/tamrielRoads.js",
-    "old": "JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks])",
-    "new": "JSON.stringify([spec, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks])",
+    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again; VOYAGER1: and under other dials of the land's law; VOYAGER-CYRODIIL: and other named roads",
+    "new": "  const text = JSON.stringify([spec, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again; VOYAGER1: and under other dials of the land's law; VOYAGER-CYRODIIL: and other named roads",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "TESA14-the-worker-throws",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "      if (!inputs) throw new Error('no inputs');\n",
-    "new": "      if (!inputs) return;\n",
+    "old": "      if (!inputs) throw new Error('no inputs');",
+    "new": "      if (!inputs) return;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "TESA14-the-cache-unread",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "          if (hit?.layer?.keys) landing.push(",
-    "new": "          if (false) landing.push(",
+    "old": "          if (hit?.layer?.keys) landing.push({ region, hit });",
+    "new": "          if (false) landing.push({ region, hit });",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "TESA14-the-cache-unfilled",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "  function keep(asked, m) {\n    if (!cache) return;\n",
-    "new": "  function keep(asked, m) {\n    return;\n",
+    "old": "    if (!cache) return;",
+    "new": "    return;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "TESA14-no-inputs-posted",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "      if (slot.run !== live.run) { slot.w.postMessage({ t: 'init', ...live.inputs }); slot.run = live.run; }",
-    "new": "      if (slot.run !== live.run) { slot.run = live.run; }",
+    "old": "        slot.w.postMessage({ t: 'init', ...live.inputs });\n        slot.run = live.run;",
+    "new": "        slot.run = live.run;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "TESA14-a-superseded-start-lands",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "        if (live !== me) return;\n",
-    "new": "",
+    "old": "        if (live !== me) return;\n        for (const { region, hit } of answers) {",
+    "new": "        for (const { region, hit } of answers) {",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "TESA14-a-death-keeps-its-region",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region);",
-    "new": "    void busy;",
+    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region); // R8: given back only to the build it was of",
+    "new": "    void busy; // R8: given back only to the build it was of",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "TESA14-a-stale-answer-lands",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "&& slot.run === live.run && asked.id === m.id)",
-    "new": ")",
+    "old": "    if (m.t === 'region' && asked && live && slot.run === live.run && asked.id === m.id) landed(asked, m);",
+    "new": "    if (m.t === 'region' && asked && live) landed(asked, m);",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "TESA14-the-host-blind-to-the-trace",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "if (!pixels || (!bay && terrainGen.hasRoads)) return;",
-    "new": "if (!bay && terrainGen.hasRoads) return;",
+    "old": "        if (!pixels || (!bay && terrainGen.hasRoads)) return;   // the trace still to land; TESA5: the Bay's network on its way",
+    "new": "        if (!bay && terrainGen.hasRoads) return;   // the trace still to land; TESA5: the Bay's network on its way",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "TESA14-the-host-never-near",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "{ at = r; roadsClient?.near(player.x, player.y); }",
-    "new": "{ at = r; }",
+    "old": "        if (!at || r[0] !== at[0] || r[1] !== at[1]) { at = r; roadsClient?.near(player.x, player.y); }",
+    "new": "        if (!at || r[0] !== at[0] || r[1] !== at[1]) { at = r; }",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "TESA14-the-layer-unreset",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });",
-    "new": "terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: false });",
+    "old": "    terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });   // TESA5: the crossings first, the layer reset",
+    "new": "    terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: false });   // TESA5: the crossings first, the layer reset",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "TESA14-a-region-unhanded",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "        terrainGen.addArenaRoads(layer, onLanded);\n",
-    "new": "",
+    "old": "        terrainGen.addArenaRoads(layer, onLanded);\n        landed++;",
+    "new": "        landed++;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "TESA14-the-towns-dropped",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "  const nodes = [...towns, ...gates.map(",
-    "new": "  const nodes = [...gates.map(",
+    "old": "    const nodes = [...towns, ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))];",
+    "new": "    const nodes = [...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))];",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "TESA14-a-capital-a-town",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "now.stood.filter((p) => !(p.pinned && _capitalBase) && arenaTemplateOf(_arenaTemplates, p))",
-    "new": "now.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p))",
+    "old": "    if (now !== _roadsMade.townsFor) { _roadsMade.townsFor = now; _roadsMade.towns = arenaRoadTowns(now && { stood: now.stood.filter((p) => !(p.pinned && _capitalBase) && arenaTemplateOf(_arenaTemplates, p)) }) ?? []; }",
+    "new": "    if (now !== _roadsMade.townsFor) { _roadsMade.townsFor = now; _roadsMade.towns = arenaRoadTowns(now && { stood: now.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p)) }) ?? []; }",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "TESA14-the-worker-unmerged",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));\n",
-    "new": "",
+    "old": "  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));\n  setArenaRoads(layer);",
+    "new": "  setArenaRoads(layer);",
     "tests": [
       "test/tesa14_roads.test.js",
       "test/tesa5_join.test.js"

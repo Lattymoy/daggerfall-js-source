@@ -566,8 +566,8 @@
   {
     "name": "SCALE5b-peak-at-end",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
-    "new": "c.full, c.drops, sockets, c.foes,",
+    "old": "            Math.max(c.peak, sockets),",
+    "new": "            sockets,",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -576,8 +576,8 @@
   {
     "name": "SCALE5b-peak-under-now",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
-    "new": "c.full, c.drops, c.peak, c.foes,",
+    "old": "            Math.max(c.peak, sockets),",
+    "new": "            c.peak,",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -596,8 +596,8 @@
   {
     "name": "SCALE5b-full-not-busy",
     "file": "server/src/relayScale.js",
-    "old": " + c.refusals + c.full > 0; }",
-    "new": " + c.refusals > 0; }",
+    "old": "    return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals + c.full > 0;",
+    "new": "    return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals > 0;",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -606,8 +606,8 @@
   {
     "name": "SCALE5b-doubles-order",
     "file": "server/src/relayScale.js",
-    "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
-    "new": "c.drops, c.full, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
+    "old": "            c.full,\n            c.drops,",
+    "new": "            c.drops,\n            c.full,",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -706,8 +706,8 @@
   {
     "name": "SCALE5b-cfg-var-over-hub",
     "file": "src/net/relayCfg.js",
-    "old": "  if (typeof held === 'string') return held;\n",
-    "new": "",
+    "old": "  if (typeof held === 'string') return held;\n  const v = env?.[RELAY_CFG_VARS[k]];",
+    "new": "  const v = env?.[RELAY_CFG_VARS[k]];",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -716,8 +716,8 @@
   {
     "name": "SCALE5b-cfg-null-refused",
     "file": "src/net/relayCfg.js",
-    "old": "  if (m.v === null) return { k: m.k, v: null };\n",
-    "new": "",
+    "old": "  if (m.v === null) return { k: m.k, v: null };\n  if (typeof m.v !== 'string' || m.v.length > RELAY_CFG_VALUE_MAX) return null;",
+    "new": "  if (typeof m.v !== 'string' || m.v.length > RELAY_CFG_VALUE_MAX) return null;",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -726,8 +726,8 @@
   {
     "name": "SCALE5b-cfg-bound-unasked",
     "file": "src/net/relayCfg.js",
-    "old": "  if (typeof m.v !== 'string' || m.v.length > RELAY_CFG_VALUE_MAX) return null;\n  return { k: m.k, v: m.v };\n}\n\n/**\n * The hub's answer",
-    "new": "  if (typeof m.v !== 'string') return null;\n  return { k: m.k, v: m.v };\n}\n\n/**\n * The hub's answer",
+    "old": "  if (m.v === null) return { k: m.k, v: null };\n  if (typeof m.v !== 'string' || m.v.length > RELAY_CFG_VALUE_MAX) return null;",
+    "new": "  if (m.v === null) return { k: m.k, v: null };\n  if (typeof m.v !== 'string') return null;",
     "tests": [
       "test/net/scale5b.test.js"
     ],
@@ -816,8 +816,8 @@
   {
     "name": "SCALE5b-cfg-staff-unparsed",
     "file": "src/net/staffCommands.js",
-    "old": "  if (name === 'relay') return parseRelayCfgCommand(rest);   // SCALE5b\n",
-    "new": "",
+    "old": "  if (name === 'relay') return parseRelayCfgCommand(rest); // SCALE5b\n  if (words.length) return { error: `/${name} takes nothing after it.` };",
+    "new": "  if (words.length) return { error: `/${name} takes nothing after it.` };",
     "tests": [
       "test/net/scale5b.test.js"
     ],

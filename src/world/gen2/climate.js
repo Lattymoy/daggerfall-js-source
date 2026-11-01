@@ -1,4 +1,4 @@
-// WG2 CLIMATE (bible/03-World/World-2-Arc.md, Phase 2): the air over a region - its mean temperature, its rain and
+// WG2 CLIMATE (Phase 2): the air over a region - its mean temperature, its rain and
 // snow, how damp it is, how the wind and the sun find each slope, and how far summer is from winter. The lore sets each
 // province's numbers (data/provinces.json) and the land shapes them: the air cools 6.5 C a kilometre up, a slope that
 // faces the wet wind takes more rain, and the land behind a high ridge takes less - the rain shadow.

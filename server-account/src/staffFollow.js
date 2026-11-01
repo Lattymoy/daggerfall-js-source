@@ -6,7 +6,7 @@
 // (`hd` 1, the hidden builder's mark) that names the account it follows (`fo`), minted on a live staff session and
 // written to the audit log as it is minted.
 //
-// WHO (mob, 07:04Z: "Moderators may follow any player anywhere, as Admins do, and the audit log is the check"): an Admin
+// WHO: an Admin
 // or a Moderator, any registered or guest player but themselves.
 //
 // WHAT IT CARRIES: never the staff member's own account or name - a hidden socket on their own account would break the
@@ -16,7 +16,7 @@
 //
 // A TOKEN OPENS EACH ROOM ONCE (net/identityToken.js), so the game asks one for each room its follow enters, naming it
 // (`room`). A private one - a home, a caravan, a boat's cabin - is written down by name (`follow-home`); every other is
-// one `follow` row a member, a target and a minute (onceIn). The owners are not alerted: that waits for mob (the design
+// one `follow` row a member, a target and a minute (onceIn). The owners are not alerted: that waits on a decision (the design
 // doc's privacy policy line, "staff may watch play").
 // ═══════════════════════════════════════════════════════════════════
 import { mintToken, ID_RE, MAX_TTL_S } from '../../src/net/identityToken.js';
@@ -25,7 +25,7 @@ import { signingKey } from './signing.js';
 import { displayName } from './accounts.js';
 
 export const FOLLOW_ROUTES = Object.freeze(['/v1/staff/follow']);
-/** The roles that may follow (mob, 07:04Z). */
+/** The roles that may follow. */
 export const FOLLOW_ROLES = Object.freeze(['admin', 'moderator']);
 /** A follow's rows: one a member, a target and this many seconds - a follow through ten rooms is one row, not ten. */
 export const FOLLOW_AUDIT_S = 60;
@@ -56,18 +56,30 @@ export const privateRoomOf = (room) => !!privateInteriorOf(room);
 export async function staffFollow(ctx, env, path, body, who, audit) {
   const { db, subtle, nowS } = ctx;
   if (path !== '/v1/staff/follow') return { error: 'body' };
-  if (!FOLLOW_ROLES.includes(who.role)) { await audit('refused', null, { path, need: 'moderator' }, { outcome: 'denied' }).run(); return { error: 'staff-admin' }; }
-  const sub = body?.sub, room = body?.room ?? null;
-  if (typeof sub !== 'string' || !ID_RE.test(sub) || (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room)))) return { error: 'body' };
+  if (!FOLLOW_ROLES.includes(who.role)) {
+    await audit('refused', null, { path, need: 'moderator' }, { outcome: 'denied' }).run();
+    return { error: 'staff-admin' };
+  }
+  const sub = body?.sub,
+    room = body?.room ?? null;
+  if (
+    typeof sub !== 'string' ||
+    !ID_RE.test(sub) ||
+    (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room)))
+  )
+    return { error: 'body' };
   if (sub === who.player.id) return { error: 'staff-self' };
   const target = await db.prepare('SELECT * FROM players WHERE id = ?').bind(sub).first();
   if (!target) return { error: 'no-player' };
   const home = room !== null && privateRoomOf(room);
   const act = home ? 'follow-home' : 'follow';
   const eye = await followSubject(who.hash, subtle);
-  const detail = home ? { room, sub: eye } : { sub: eye };   // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's
+  const detail = home ? { room, sub: eye } : { sub: eye }; // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's
   const key = await signingKey(env, subtle);
-  if (!key) { await audit(act, sub, detail, { outcome: 'failed' }).run(); return { error: 'no-signing-key' }; }
+  if (!key) {
+    await audit(act, sub, detail, { outcome: 'failed' }).run();
+    return { error: 'no-signing-key' };
+  }
   const token = await mintToken({ s: eye, n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }, key, { subtle, nowS });
   await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();
   return { token, sub, name: displayName(target), expiresAt: nowS + MAX_TTL_S };

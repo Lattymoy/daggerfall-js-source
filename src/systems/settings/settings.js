@@ -50,8 +50,8 @@
 // the live set from the code and fails if a tier lies.
 
 import { SETTINGS_DEFAULTS } from './settingsDefaults.js';
-import { appStorage } from '../appStorage.js';   // DA1: the storage seam
-import { onlineForcedSetting, ONLINE_FORCED_SETTINGS } from '../online/onlineLane.js';   // DISC22-A: the room's settings, read first online
+import { appStorage } from '../appStorage.js'; // DA1: the storage seam
+import { onlineForcedSetting, ONLINE_FORCED_SETTINGS } from '../online/onlineLane.js'; // DISC22-A: the room's settings, read first online
 
 const STORAGE_KEY = 'dagger.settings.v1';
 
@@ -64,7 +64,8 @@ export const DEFAULTS = SETTINGS_DEFAULTS;
 
 /** Every key as "Section/Key", for sweeps and the launcher. */
 export const ALL_KEYS = Object.freeze(
-  Object.entries(DEFAULTS).flatMap(([s, keys]) => Object.keys(keys).map((k) => `${s}/${k}`)));
+  Object.entries(DEFAULTS).flatMap(([s, keys]) => Object.keys(keys).map((k) => `${s}/${k}`)),
+);
 
 // ---- the tiers (see the header) ----
 /** live: a consumer exists and flipping the value changes play. Each
@@ -82,7 +83,7 @@ export const LIVE = Object.freeze({
   // candidate and the whole scene is player-only again - which is
   // exactly what the launcher's own blurb promises.
   'Enhancements/EnemyInfighting': 'src/characters/enemy/enemyTargets.js',
-  'Enhancements/PlayerTorchFromItems': 'src/systems/playerTorch.js',   // T1: it gates the torch itself now, not just the starting gear
+  'Enhancements/PlayerTorchFromItems': 'src/systems/playerTorch.js', // T1: it gates the torch itself now, not just the starting gear
   'Enhancements/LoiterLimitInHours': 'src/systems/rest/restSession.js',
   // S40: the illegal-rest confirm. OFF makes camping in a town simply
   // impossible (CanRest refuses and no time passes); ON turns it into
@@ -174,8 +175,8 @@ export const LIVE = Object.freeze({
   // greeting, questions and answers smaller, narrower and blocked.
   'GUI/EnableModernConversationStyleInTalkWindow': 'src/ui/native/nativeTalk.js',
   'Controls/SoundVolume': 'src/systems/audio.js',
-  'Controls/InstantRepairs': 'src/scenes/worldModes.js',      // R1: the repair flow's instant branch
-  'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js',   // R1: the repair entry gate + world.js's enchantCtx seam
+  'Controls/InstantRepairs': 'src/scenes/worldModes.js', // R1: the repair flow's instant branch
+  'Controls/AllowMagicRepairs': 'src/scenes/worldModes.js', // R1: the repair entry gate + world.js's enchantCtx seam
   'Controls/MusicVolume': 'src/systems/song/songPlayer.js',
   'Controls/MouseLookSensitivity': 'src/ui/lookSettings.js',
   'Controls/InvertMouseVertical': 'src/ui/lookSettings.js',
@@ -258,8 +259,8 @@ export const LIVE = Object.freeze({
   // screen offered with nothing on the other end.
   'GUI/IconsPositioningScheme': 'src/ui/hud/hudActiveSpells.js',
   'GUI/Crosshair': 'src/ui/hud/hudCrosshair.js',
-  'Enhancements/AssetInjection': 'src/systems/musicReplacement.js',   // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
-  'Audio/AlternateMusic': 'src/scenes/shared.js',   // M-FM: read once in createMusicDirector, for all three hosts
+  'Enhancements/AssetInjection': 'src/systems/musicReplacement.js', // M-EXT: DFU's own gate on SoundReplacement, now real for MUSIC
+  'Audio/AlternateMusic': 'src/scenes/shared.js', // M-FM: read once in createMusicDirector, for all three hosts
   'GUI/InteractionModeIcon': 'src/ui/hud/hudCrosshair.js',
   // VB1: the vitals indicators (F148) and the health/fatigue swap
   // (F149). Both were surfaced on the settings screen and read by
@@ -267,7 +268,7 @@ export const LIVE = Object.freeze({
   // three plain bars had been the setting-FALSE path all along.
   'GUI/EnableVitalsIndicators': 'src/ui/hud/hudVitals.js',
   'GUI/SwapHealthAndFatigueColors': 'src/ui/hud/hudVitals.js',
-  'GUI/SDFFontRendering': 'src/ui/text.js',   // OVH2: a classic font draws its UI pack's SDF face (DaggerfallFont.IsSDFCapable) only with this on
+  'GUI/SDFFontRendering': 'src/ui/text.js', // OVH2: a classic font draws its UI pack's SDF face (DaggerfallFont.IsSDFCapable) only with this on
   // U41: the classic travel map. Stored-tier since the settings
   // screen shipped - the outline it offers is drawn by a window the
   // port did not have until the region pages landed.
@@ -275,7 +276,7 @@ export const LIVE = Object.freeze({
   // TransferItem's quest arm (DaggerfallInventoryWindow.cs:1487) - the
   // gate on moving a quest item out of the pack, read by the one law
   // both the inventory window and the shop's Sell staging call.
-  'GUI/CanDropQuestItems': 'src/systems/item/itemTransfer.js',   // U56: TransferItem's quest arm moved with the ladder
+  'GUI/CanDropQuestItems': 'src/systems/item/itemTransfer.js', // U56: TransferItem's quest arm moved with the ladder
   // ROAD-E E3: the developer console. ConsoleUI.ToggleConsole refuses
   // to open at all when this is off (:51-53), and the port's console
   // door answers the same way - so the key is LIVE the moment the
@@ -387,10 +388,10 @@ export const PORT_DEFAULTS = Object.freeze({
  *  drop-the-override arm, the merged view and Reset's publish - because
  *  a second layer honoured in three places out of four is the bug that
  *  layer would be famous for. */
-export const defaultOf = (section, key) => PORT_DEFAULTS[section]?.[key] ?? DEFAULTS[section]?.[key];   // FEATURES-DEFAULTS: the Features pane's Defaults reads it too
+export const defaultOf = (section, key) => PORT_DEFAULTS[section]?.[key] ?? DEFAULTS[section]?.[key]; // FEATURES-DEFAULTS: the Features pane's Defaults reads it too
 
 // ---- the store ----
-let _values = null;   // Section -> key -> raw string (overrides only)
+let _values = null; // Section -> key -> raw string (overrides only)
 
 // DA1: the storage seam - localStorage in a browser, the desktop
 // shell's file store (a real settings file under Prefs/) in the app.
@@ -433,7 +434,7 @@ export function saveSettings() {
  *  else undefined (an unknown key - DFU throws; we return undefined
  *  and let the typed getter's own fallback speak). */
 function getData(section, key) {
-  const forced = onlineForcedSetting(section, key);   // DISC22-A: online, the room's value - the store is neither read nor written
+  const forced = onlineForcedSetting(section, key); // DISC22-A: online, the room's value - the store is neither read nor written
   if (forced !== undefined) return forced;
   if (_values === null) loadSettings();
   return _values?.[section]?.[key] ?? defaultOf(section, key);
@@ -458,7 +459,9 @@ function warnOnce(fn, section, key, raw, fallback) {
  *  with surrounding whitespace and nothing else. */
 export function getBool(section, key) {
   const raw = getData(section, key);
-  const s = String(raw ?? '').trim().toLowerCase();
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   if (s === 'true') return true;
   if (s === 'false') return false;
   warnOnce('GetBool', section, key, raw, 'False');
@@ -505,7 +508,10 @@ export function setValue(section, key, value) {
   const def = defaultOf(section, key);
   if (def !== undefined && str === String(def)) {
     // back to the default: drop the override rather than pinning today's value
-    if (_values[section]) { delete _values[section][key]; if (!Object.keys(_values[section]).length) delete _values[section]; }
+    if (_values[section]) {
+      delete _values[section][key];
+      if (!Object.keys(_values[section]).length) delete _values[section];
+    }
     _publish(section, key, str);
     return;
   }
@@ -526,10 +532,17 @@ export function setValue(section, key, value) {
 // listener that throws is warned and skipped: a bad listener must not
 // make a settings write fail.
 const _listeners = new Set();
-export function onSettingChange(fn) { _listeners.add(fn); return () => _listeners.delete(fn); }
+export function onSettingChange(fn) {
+  _listeners.add(fn);
+  return () => _listeners.delete(fn);
+}
 function _publish(section, key, str) {
   for (const fn of _listeners) {
-    try { fn(section, key, str); } catch (e) { console.warn('[settings] listener failed:', e?.message ?? e); }
+    try {
+      fn(section, key, str);
+    } catch (e) {
+      console.warn('[settings] listener failed:', e?.message ?? e);
+    }
   }
 }
 
@@ -540,7 +553,8 @@ export function effectiveSettings() {
   const out = {};
   for (const [s, keys] of Object.entries(DEFAULTS)) {
     out[s] = { ...keys, ...(PORT_DEFAULTS[s] ?? {}), ...(_values[s] ?? {}) };
-    for (const k of Object.keys(ONLINE_FORCED_SETTINGS[s] ?? {})) {   // DISC22-A: what the screen shows is what the game reads
+    for (const k of Object.keys(ONLINE_FORCED_SETTINGS[s] ?? {})) {
+      // DISC22-A: what the screen shows is what the game reads
       const forced = onlineForcedSetting(s, k);
       if (forced !== undefined) out[s][k] = forced;
     }
@@ -566,4 +580,7 @@ export function resetToDefaults() {
 }
 
 /** Test seam: forget the loaded state so the next read re-loads. */
-export function _resetForTests() { _values = null; _warned.clear(); }
+export function _resetForTests() {
+  _values = null;
+  _warned.clear();
+}

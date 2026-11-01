@@ -52,8 +52,8 @@
   {
     "name": "EM2-6-a-step-is-a-storey",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);",
-    "new": "    if (last && l.lo - last[last.length - 1].hi <= 0.01) last.push(l); else runs.push([l]);",
+    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l);",
+    "new": "    if (last && l.lo - last[last.length - 1].hi <= 0.01) last.push(l);",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "EM2-7-a-run-is-measured-from-its-floor-rather-than-its-ceiling",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l); else runs.push([l]);",
-    "new": "    if (last && l.lo - last[0].lo <= minGap) last.push(l); else runs.push([l]);",
+    "old": "    if (last && l.lo - last[last.length - 1].hi <= minGap) last.push(l);",
+    "new": "    if (last && l.lo - last[0].lo <= minGap) last.push(l);",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "EM2-8-a-storey-s-height-is-the-plain-mean-not-the-area-weighted-one",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "      storeys.push({ y: area > 0 ? sum / area : a.y,",
-    "new": "      storeys.push({ y: near.length ? near.reduce((n, l) => n + l.y, 0) / near.length : a.y,",
+    "old": "        y: area > 0 ? sum / area : a.y,",
+    "new": "        y: near.length ? near.reduce((n, l) => n + l.y, 0) / near.length : a.y,",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -91,8 +91,8 @@
   {
     "name": "EM2-10-the-storeys-come-back-top-first",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "  return storeys.map((st, index) => ({ index, y: st.y,",
-    "new": "  return storeys.reverse().map((st, index) => ({ index, y: st.y,",
+    "old": "  return storeys.map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index + 1}` }));",
+    "new": "  return storeys.reverse().map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index + 1}` }));",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ]
@@ -100,8 +100,8 @@
   {
     "name": "EM2-11-a-cave-of-nothing-but-slopes-answers-no-floors",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "  const sorted = [...(voters.length ? voters : tris)]",
-    "new": "  const sorted = [...voters]",
+    "old": "  const sorted = [...(voters.length ? voters : tris)].sort((a, b) => a.y - b.y);",
+    "new": "  const sorted = [...voters].sort((a, b) => a.y - b.y);",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "EM2-16-a-degenerate-triangle-has-a-facing",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    if (!(len > 0)) continue;",
-    "new": "    if (false) continue;",
+    "old": "    if (!(len > 0)) continue; // degenerate: no facing to read",
+    "new": "    if (false) continue; // degenerate: no facing to read",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -169,8 +169,8 @@
   {
     "name": "EM2-18-a-triangle-lands-on-the-lowest-storey-rather-than-the-nearest",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    if (d < bestD) { bestD = d; best = i; }",
-    "new": "    if (d <= bestD) { bestD = d; best = i; }",
+    "old": "    const d = Math.abs(floors[i].y - y);\n    if (d < bestD) {",
+    "new": "    const d = Math.abs(floors[i].y - y);\n    if (d <= bestD) {",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],
@@ -277,8 +277,8 @@
   {
     "name": "EM2-29-the-storeys-are-labelled-from-zero",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "label: `Floor ${index + 1}` }));",
-    "new": "label: `Floor ${index}` }));",
+    "old": "  return storeys.map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index + 1}` }));",
+    "new": "  return storeys.map((st, index) => ({ index, y: st.y, y0: st.y0, y1: st.y1, label: `Floor ${index}` }));",
     "tests": [
       "test/systems/automap/automapfloors.test.js"
     ],

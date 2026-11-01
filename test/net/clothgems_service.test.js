@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { standService, T0 } from '../accountDb.mjs';
 import { xpForRank } from '../../src/net/professionLaw.js';
 import { firstCraftXp, recipeById, FIRST_MAKE_SHARE } from '../../src/net/recipeLaw.js';
-/** FIRST-BUDGET (Professions-Arc 52): a garment's first, Outfitting's first-make share asked as own - 511, the least that
+/** FIRST-BUDGET (Professions-Arc 52): a garment's first, Outfitting's first-make share asked as own - 518, the least that
  *  brings Outfitting to Master in Smithing's crafts (CLOTH-GEMS says whether a first pays, the share how much). */
 const FIRST_CRAFT_XP = firstCraftXp(recipeById('garment-141:linen'), true);
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -64,7 +64,7 @@ test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loo
   const straps = await craft('garment-141:linen');
   assert.equal(straps.status, 200, JSON.stringify(straps.body));
   assert.deepEqual([straps.body.xp, straps.body.first, straps.body.firstPaid, xpOf('outfitting')], [20 + FIRST_CRAFT_XP, true, true, 20 + FIRST_CRAFT_XP], 'the loom\'s own Linen: its first');
-  assert.equal(FIRST_CRAFT_XP, FIRST_MAKE_SHARE.outfitting, 'PIN MOVED (FIRST-BUDGET): Outfitting\'s share, 511');
+  assert.equal(FIRST_CRAFT_XP, FIRST_MAKE_SHARE.outfitting, 'PIN MOVED (FIRST-BUDGET): Outfitting\'s share, 518');
   fund(100);
   const buy = await s.call('/v1/prof/stock', { character: mac.character, material: 'cloth:linen', qty: 1, rid: rid() }, mac.secret);
   assert.deepEqual([buy.status, stores('cloth:linen')], [200, [['bought', 1]]]);

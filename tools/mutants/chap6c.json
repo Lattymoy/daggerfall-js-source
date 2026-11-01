@@ -2,8 +2,8 @@
   {
     "name": "CHAP6C-DOCTRINE-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null)",
-    "new": "(DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] ?? null)",
+    "old": "  chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null;",
+    "new": "  DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] ?? null;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP6C-OF-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const event = chapterEventOk(c?.event) ? String(c.event) : null;\n  return {",
-    "new": "const event = c?.event ?? null;\n  return {",
+    "old": "  const event = chapterEventOk(c?.event) ? String(c.event) : null;",
+    "new": "  const event = c?.event ?? null;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP6C-OF-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,",
-    "new": "season: Number.isSafeInteger(c?.season) ? c.season : null,",
+    "old": "    season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,",
+    "new": "    season: Number.isSafeInteger(c?.season) ? c.season : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP6C-OF-RIVAL-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
-    "new": "rival: isRollFaction(c?.rival) ? c.rival : null,",
+    "old": "    rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "    rival: isRollFaction(c?.rival) ? c.rival : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP6C-OF-RIVAL-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
-    "new": "rival: event === 'rivalry' ? c.rival ?? null : null,",
+    "old": "    rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "    rival: event === 'rivalry' ? (c.rival ?? null) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP6C-OF-SHUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    shut: c?.shut === true,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
-    "new": "    shut: !!c?.shut,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
+    "old": "    shut: c?.shut === true,",
+    "new": "    shut: !!c?.shut,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP6C-OF-DOCTRINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,",
-    "new": "doctrine: c?.doctrine ? String(c.doctrine) : null,",
+    "old": "    doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,",
+    "new": "    doctrine: c?.doctrine ? String(c.doctrine) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP6C-OF-SIDES-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "sides: event === 'schism' && Array.isArray(c?.sides)",
-    "new": "sides: Array.isArray(c?.sides)",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP6C-OF-SIDES-LEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
-    "new": "&& c.sides.every(chapterDoctrineOk)",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.every(chapterDoctrineOk)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP6C-OF-SIDES-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
-    "new": "&& c.sides.length === 2",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP6C-OF-SIDES-COPY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "? [String(c.sides[0]), String(c.sides[1])] : null,",
-    "new": "? c.sides : null,",
+    "old": "        ? [String(c.sides[0]), String(c.sides[1])]",
+    "new": "        ? c.sides",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP6C-OF-HEIR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
-    "new": "heir: chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "old": "    heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "    heir: chapterBackOk('succession', c?.heir) ? c.heir : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP6C-OF-HEIR-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
-    "new": "heir: event === 'succession' ? c?.heir ?? null : null,",
+    "old": "    heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "    heir: event === 'succession' ? (c?.heir ?? null) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP6C-NAME-SALT",
     "file": "src/net/chapterEvents.js",
-    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
-    "new": "const h = gateHash(season, chapterTitleKey(faction, region), index);",
+    "old": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "  const h = gateHash(season, chapterTitleKey(faction, region), index);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP6C-NAME-SEASON",
     "file": "src/net/chapterEvents.js",
-    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
-    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, chapterTitleKey(faction, region), index);",
+    "old": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, chapterTitleKey(faction, region), index);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP6C-NAME-KEY",
     "file": "src/net/chapterEvents.js",
-    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
-    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, faction, index);",
+    "old": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, faction, index);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP6C-NAME-INDEX",
     "file": "src/net/chapterEvents.js",
-    "old": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
-    "new": "const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region));",
+    "old": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);",
+    "new": "  const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region));",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CHAP6C-NAME-BANK",
     "file": "src/net/chapterEvents.js",
-    "old": "return residentName(h, getNameBankOfRegion(region),",
-    "new": "return residentName(h, getNameBankOfRegion(0),",
+    "old": "  return residentName(h, getNameBankOfRegion(region), (h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);",
+    "new": "  return residentName(h, getNameBankOfRegion(0), (h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CHAP6C-NAME-GENDER",
     "file": "src/net/chapterEvents.js",
-    "old": "(h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);",
-    "new": "GENDERS.Male);",
+    "old": "  return residentName(h, getNameBankOfRegion(region), (h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);",
+    "new": "  return residentName(h, getNameBankOfRegion(region), GENDERS.Male);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CHAP6C-RIVAL-HIDDEN",
     "file": "src/net/chapterEvents.js",
-    "old": "isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(f)}`",
-    "new": "isRollFaction(f) ? `the ${hallPosterName(f)}`",
+    "old": "  f === null\n    ? 'a rival chapter'\n    : isRollFaction(f) && !hallHidden(f)\n      ? `the ${hallPosterName(f)}`\n      : 'a rival in the shadows';",
+    "new": "  f === null ? 'a rival chapter' : isRollFaction(f) ? `the ${hallPosterName(f)}` : 'a rival in the shadows';",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CHAP6C-RIVAL-NONE",
     "file": "src/net/chapterEvents.js",
-    "old": "(f === null ? 'a rival chapter' : isRollFaction(f)",
-    "new": "(isRollFaction(f)",
+    "old": "  f === null\n    ? 'a rival chapter'\n    : isRollFaction(f) && !hallHidden(f)\n      ? `the ${hallPosterName(f)}`\n      : 'a rival in the shadows';",
+    "new": "  isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(f)}` : 'a rival in the shadows';",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CHAP6C-LINE-SCHISM",
     "file": "src/net/chapterEvents.js",
-    "old": "`The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[0])}, ${b} for ${chapterDoctrineWords(s.sides[1])}.`",
-    "new": "`The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[1])}, ${b} for ${chapterDoctrineWords(s.sides[0])}.`",
+    "old": "        ? `The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[0])}, ${b} for ${chapterDoctrineWords(s.sides[1])}.`",
+    "new": "        ? `The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[1])}, ${b} for ${chapterDoctrineWords(s.sides[0])}.`",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CHAP6C-LINE-SCHISM-NAMES",
     "file": "src/net/chapterEvents.js",
-    "old": "out.push(s.sides && a && b ?",
-    "new": "out.push(s.sides ?",
+    "old": "      s.sides && a && b",
+    "new": "      s.sides",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CHAP6C-LINE-HEIR",
     "file": "src/net/chapterEvents.js",
-    "old": "    if (s.heir !== null && names[s.heir]) out.push(`${names[s.heir]} is the hall's new head.`);\n",
-    "new": "    if (false) out.push(`${names[s.heir]} is the hall's new head.`);\n",
+    "old": "    if (s.heir !== null && names[s.heir]) out.push(`${names[s.heir]} is the hall's new head.`);",
+    "new": "    if (false) out.push(`${names[s.heir]} is the hall's new head.`);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CHAP6C-LINE-HEIRS",
     "file": "src/net/chapterEvents.js",
-    "old": "`The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.`",
-    "new": "`The hall's head steps down this Season.`",
+    "old": "        names.every(Boolean)\n          ? `The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.`\n          : \"The hall's head steps down this Season.\",",
+    "new": "        names.every(Boolean) ? `The hall's head steps down this Season.` : \"The hall's head steps down this Season.\",",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CHAP6C-LINE-LISTED",
     "file": "src/net/chapterEvents.js",
-    "old": "(n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`)",
-    "new": "n.join(', ')",
+    "old": "const listed = (/** @type {string[]} */ n) =>\n  n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;",
+    "new": "const listed = (/** @type {string[]} */ n) => n.join(', ');",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CHAP6C-LINE-CRACKDOWN",
     "file": "src/net/chapterEvents.js",
-    "old": "  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its members\\' own writs earn half again Merit.');   // AUDIT CHAP5 E1\n",
-    "new": "  }\n",
+    "old": "  } else if (s.event === 'crackdown')\n    out.push(\"The watch hunts the chapter this Season: its members' own writs earn half again Merit.\"); // AUDIT CHAP5 E1\n  else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);",
+    "new": "  } else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "CHAP6C-LINE-RIVALRY",
     "file": "src/net/chapterEvents.js",
-    "old": "  else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);\n",
-    "new": "",
+    "old": "  else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);\n  if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);",
+    "new": "  if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "CHAP6C-LINE-DOCTRINE",
     "file": "src/net/chapterEvents.js",
-    "old": "  if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);\n",
-    "new": "",
+    "old": "  if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);\n  if (s.shut) out.push(\"The chapter's halls are shut this Season, by the watch's order.\");",
+    "new": "  if (s.shut) out.push(\"The chapter's halls are shut this Season, by the watch's order.\");",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "CHAP6C-LINE-SHUT",
     "file": "src/net/chapterEvents.js",
-    "old": "  if (s.shut) out.push('The chapter\\'s halls are shut this Season, by the watch\\'s order.');\n",
-    "new": "",
+    "old": "  if (s.shut) out.push(\"The chapter's halls are shut this Season, by the watch's order.\");\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "CHAP6C-CHOICES-SEASON",
     "file": "src/net/chapterEvents.js",
-    "old": "  if (s.season === null) return [];\n  if (s.event === 'schism'",
-    "new": "  if (s.event === 'schism'",
+    "old": "  if (s.season === null) return [];\n  if (s.event === 'schism' && s.sides)",
+    "new": "  if (s.event === 'schism' && s.sides)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "CHAP6C-CHOICES-SCHISM",
     "file": "src/net/chapterEvents.js",
-    "old": "if (s.event === 'schism' && s.sides) return s.sides.map(",
-    "new": "if (false && s.sides) return s.sides.map(",
+    "old": "  if (s.event === 'schism' && s.sides)",
+    "new": "  if (false && s.sides)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "CHAP6C-CHOICES-HEIR",
     "file": "src/net/chapterEvents.js",
-    "old": "if (s.event === 'succession' && s.heir === null) return",
-    "new": "if (s.event === 'succession') return",
+    "old": "  if (s.event === 'succession' && s.heir === null)",
+    "new": "  if (s.event === 'succession')",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "CHAP6C-CHOICES-LABEL",
     "file": "src/net/chapterEvents.js",
-    "old": "label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}, for ${chapterDoctrineWords(d)}`",
-    "new": "label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}`",
+    "old": "      label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}, for ${chapterDoctrineWords(d)}`,",
+    "new": "      label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}`,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "CHAP6C-BACKED-NONE",
     "file": "src/net/chapterEvents.js",
-    "old": "  if (!choice) return null;\n",
-    "new": "  if (!choice) return 'You back no one.';\n",
+    "old": "  if (!choice) return null;",
+    "new": "  if (!choice) return 'You back no one.';",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "CHAP6C-BACKED-WORDS",
     "file": "src/net/chapterEvents.js",
-    "old": "return chapterSeasonOf(c).event === 'schism' ? `You back ${choice.label}.`",
-    "new": "return chapterSeasonOf(c).event !== 'schism' ? `You back ${choice.label}.`",
+    "old": "  return chapterSeasonOf(c).event === 'schism'",
+    "new": "  return chapterSeasonOf(c).event !== 'schism'",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "CHAP6C-SHEET-SEASON",
     "file": "src/net/chapterSheet.js",
-    "old": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(c), patron:",
-    "new": "seats: chapterRollSeatsOf(c.seats), season: chapterSeasonOf(null), patron:",
+    "old": "                  season: chapterSeasonOf(c),",
+    "new": "                  season: chapterSeasonOf(null),",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "CHAP6C-SHEET-COPY",
     "file": "src/net/chapterSheet.js",
-    "old": "sides: s.season.sides ? [...s.season.sides] : null,\n",
-    "new": "sides: s.season.sides,\n",
+    "old": "            sides: s.season.sides ? [...s.season.sides] : null,",
+    "new": "            sides: s.season.sides,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "CHAP6C-BOARD-LINES",
     "file": "src/ui/noticeWindow.js",
-    "old": "    for (const line of chapterSeasonLines(c.faction, work.region, c)) card.append(el('p', 'notice-chapter notice-season', line));\n",
-    "new": "",
+    "old": "    for (const line of chapterSeasonLines(c.faction, work.region, c))\n      card.append(el('p', 'notice-chapter notice-season', line));\n    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "CHAP6C-BOARD-MEMBER",
     "file": "src/ui/noticeWindow.js",
-    "old": "work.back && merit ? chapterBackChoices(",
-    "new": "work.back ? chapterBackChoices(",
+    "old": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = work.back ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "CHAP6C-BOARD-DOOR",
     "file": "src/ui/noticeWindow.js",
-    "old": "work.back && merit ? chapterBackChoices(",
-    "new": "merit ? chapterBackChoices(",
+    "old": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = merit ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "CHAP6C-BOARD-MARK",
     "file": "src/ui/noticeWindow.js",
-    "old": "row.append(button(ch.side === c.backed ? 'on' : '', ch.label,",
-    "new": "row.append(button('', ch.label,",
+    "old": "      for (const ch of choices)\n        row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));",
+    "new": "      for (const ch of choices) row.append(button('', ch.label, () => backSide(c, ch.side)));",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "CHAP6C-BOARD-HEADING",
     "file": "src/ui/noticeWindow.js",
-    "old": "c.event === 'schism' ? 'Back a side: ' : 'Name who follows: '",
-    "new": "'Back a side: '",
+    "old": "      const row = el(\n        'p',\n        'notice-chapter notice-back-pick',\n        c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ',\n      );",
+    "new": "      const row = el('p', 'notice-chapter notice-back-pick', 'Back a side: ');",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "CHAP6C-BACK-SIDE",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const r = await work.back(c.faction, side);\n",
-    "new": "    const r = await work.back(c.faction, 0);\n",
+    "old": "    const r = await work.back(c.faction, side);",
+    "new": "    const r = await work.back(c.faction, 0);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "CHAP6C-BACK-WORD",
     "file": "src/ui/noticeWindow.js",
-    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }",
-    "new": "text: 'Done.' }",
+    "old": "    const said = r?.ok\n      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "    const said = r?.ok ? { ok: true, text: 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "CHAP6C-BACK-REFUSAL",
     "file": "src/ui/noticeWindow.js",
-    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };",
-    "new": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: 'No.' };",
+    "old": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: 'No.' };",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "CHAP6C-BACK-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
-    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
+    "old": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) {\n      work.sayLate?.(said.text);\n      return;\n    }\n    busy = false;",
+    "new": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) {\n      return;\n    }\n    busy = false;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ],
@@ -427,8 +427,8 @@
   {
     "name": "CHAP6C-BACK-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);",
-    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    render();",
+    "old": "    }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  /** CHAP7b: a guildmaster bids its guild's silver for a chapter's patronage in the Season after - said as a backing is,",
+    "new": "    }\n    busy = false;\n    word = said;\n    render();\n  }\n\n  /** CHAP7b: a guildmaster bids its guild's silver for a chapter's patronage in the Season after - said as a backing is,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ],
@@ -509,8 +509,8 @@
   {
     "name": "CHAP6C-POOL",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "(/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[",
-    "new": "(CHAPTER_NEWS[",
+    "old": "      ? /** @type {Record<string, any>} */ (\n          CHAPTER_EVENT_NEWS[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]\n        ) // CHAP5b: a chapter's standing; CHAP6c: its Season",
+    "new": "      ? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)] // CHAP5b: a chapter's standing; CHAP6c: its Season",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "CHAP6C-POOL-SHUT",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  shut: Object.freeze([\n",
-    "new": "  closed: Object.freeze([\n",
+    "old": "  shut: Object.freeze([",
+    "new": "  closed: Object.freeze([",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]

@@ -59,22 +59,69 @@
 //   node scripts/desktopRelease.mjs seed <dist> <file>    DA13: the bundled copy's index (VERSION, DFO_SHELL)
 //   node scripts/desktopRelease.mjs pack <dist> <dir>     DA13: the game's pack and manifest (VERSION, DFO_UPDATE, DFO_SHELL)
 //   node scripts/desktopRelease.mjs delta <prev> <next> [<prev-tag>]  DA13: exit 1 on an update that is no longer per file
-import { closeSync, copyFileSync, mkdirSync, openSync, readdirSync, readFileSync, statSync, writeFileSync, writeSync } from 'node:fs';
-import { join } from 'node:path';
+//   node scripts/desktopRelease.mjs stage                 the shell's files from the repo's tree, copied inside app/
+//   node scripts/desktopRelease.mjs unstage               and taken out again after a local build
+import {
+  closeSync,
+  copyFileSync,
+  cpSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+  writeSync,
+} from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { isMain } from '../tools/lib/isMain.mjs';
 
 const require = createRequire(import.meta.url);
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** The files the shell packs from the repo's own tree, staged inside app/ before electron-builder runs: its asarUnpack
+ *  (the private server's runtime binary) holds every packed file to the app's own folder, and a file set read from
+ *  `../` fails the build. Each lands where the shell reads it, so the archive's layout is unchanged. */
+export const DESKTOP_STAGED = Object.freeze([
+  Object.freeze({ from: 'src/ui/menu/menuPad.js', to: 'app/launcher/menuPad.js' }),
+  Object.freeze({ from: 'src/assets/branding/dfo-online.png', to: 'app/launcher/dfo-online.png' }),
+  Object.freeze({ from: 'dist', to: 'app/dist' }),
+]);
+
+/** Copy DESKTOP_STAGED into app/ under `root`, each place emptied first so nothing stale rides along. */
+export function stageShell(root = ROOT) {
+  unstageShell(root);
+  for (const { from, to } of DESKTOP_STAGED) cpSync(join(root, from), join(root, to), { recursive: true });
+}
+
+/** Take the staged copies out of app/ again, so a local build leaves no second copy in the tree. */
+export function unstageShell(root = ROOT) {
+  for (const { to } of DESKTOP_STAGED) rmSync(join(root, to), { recursive: true, force: true });
+}
 const { DOWNLOAD_FILES, LEGACY_DOWNLOAD_FILES, RELEASES_URL } = require('../app/lib/downloads.cjs');
 const { parseReleaseTag } = require('../app/lib/updateCheck.cjs');
-const { GAME_CHANNEL, GAME_FILES, sha256, encodeFile, readManifest, readSeed, parseManifestFile, deltaOf } = require('../app/lib/gameChannel.cjs');
+const {
+  GAME_CHANNEL,
+  GAME_FILES,
+  sha256,
+  encodeFile,
+  readManifest,
+  readSeed,
+  parseManifestFile,
+  deltaOf,
+} = require('../app/lib/gameChannel.cjs');
 
 /** BR5: each download and the name a copy from before the rename asks for
  *  it by (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES) - [from, to] pairs,
  *  copied in the release's folder before the set is checked. */
-export const ALIAS_COPIES = Object.freeze(Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])));
+export const ALIAS_COPIES = Object.freeze(
+  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])),
+);
 
 /** Every file a published release must carry: the four downloads, the
  *  three manifests electron-updater reads (one per OS), and the two
@@ -83,14 +130,19 @@ export const ALIAS_COPIES = Object.freeze(Object.keys(DOWNLOAD_FILES).map((k) =>
  *  and the four downloads again under their names from before the rename
  *  (ALIAS_COPIES), which no manifest names - an updater reads the new. */
 export const EXPECTED_RELEASE_FILES = Object.freeze([
-  DOWNLOAD_FILES.winSetup, `${DOWNLOAD_FILES.winSetup}.blockmap`,
+  DOWNLOAD_FILES.winSetup,
+  `${DOWNLOAD_FILES.winSetup}.blockmap`,
   DOWNLOAD_FILES.winPortable,
-  DOWNLOAD_FILES.mac, `${DOWNLOAD_FILES.mac}.blockmap`,
+  DOWNLOAD_FILES.mac,
+  `${DOWNLOAD_FILES.mac}.blockmap`,
   DOWNLOAD_FILES.linux,
-  'latest.yml', 'latest-mac.yml', 'latest-linux.yml',
+  'latest.yml',
+  'latest-mac.yml',
+  'latest-linux.yml',
   ...ALIAS_COPIES.map(([, to]) => to),
   // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of
-  GAME_FILES.manifest, GAME_FILES.pack,
+  GAME_FILES.manifest,
+  GAME_FILES.pack,
 ]);
 
 /** The expected files a list of names does not have. */
@@ -233,11 +285,17 @@ const NOTHING_RE = /^[*_]*(?:none|n\/a|nothing)[*_.]*(?:[ \t]*[-–—:,;(].*)?$
  * @returns {string}
  */
 export function patchNotesOf(description) {
-  const lines = String(description ?? '').replace(/\r\n?/g, '\n').replace(/<!--[\s\S]*?(?:-->|$)/g, '').split('\n');
+  const lines = String(description ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/<!--[\s\S]*?(?:-->|$)/g, '')
+    .split('\n');
   const sections = [];
   let section = null;
   let fence = null;
-  const close = () => { if (section) sections.push(section); section = null; };
+  const close = () => {
+    if (section) sections.push(section);
+    section = null;
+  };
   for (const line of lines) {
     if (fence) {
       section?.lines.push(line);
@@ -252,7 +310,8 @@ export function patchNotesOf(description) {
     }
     const heading = HEADING_RE.exec(line);
     if (heading) {
-      const level = heading[1].length, text = heading[2] ?? '';
+      const level = heading[1].length,
+        text = heading[2] ?? '';
       if (section && level <= section.level) close();
       if (section) {
         section.lines.push(`${'#'.repeat(Math.min(6, level - section.level + 1))} ${text}`);
@@ -262,7 +321,10 @@ export function patchNotesOf(description) {
       if (notes) section = { level, title: notes[1].trim(), lines: [] };
       continue;
     }
-    if (section && (BREAK_RE.test(line) || /^\s*🤖/u.test(line))) { close(); continue; }
+    if (section && (BREAK_RE.test(line) || /^\s*🤖/u.test(line))) {
+      close();
+      continue;
+    }
     section?.lines.push(line);
   }
   close();
@@ -290,7 +352,9 @@ const capped = (text) => {
  */
 export function githubApi(path, exec = execFileSync) {
   try {
-    return JSON.parse(exec('gh', ['api', path], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] }));
+    return JSON.parse(
+      exec('gh', ['api', path], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] }),
+    );
   } catch (e) {
     if (/HTTP 404/.test(String(e?.stderr ?? ''))) return null;
     throw e;
@@ -298,7 +362,8 @@ export function githubApi(path, exec = execFileSync) {
 }
 
 /** The repository the pull requests are read from: the workflow's own, or the one the downloads name. */
-const repository = () => process.env.GITHUB_REPOSITORY || new URL(RELEASES_URL).pathname.split('/').slice(1, 3).join('/');
+const repository = () =>
+  process.env.GITHUB_REPOSITORY || new URL(RELEASES_URL).pathname.split('/').slice(1, 3).join('/');
 
 /**
  * The notes a release brings: for each pull request merged since `from`,
@@ -308,7 +373,10 @@ const repository = () => process.env.GITHUB_REPOSITORY || new URL(RELEASES_URL).
  * With no previous release there is nothing to read since, and the body
  * says "fixes and improvements" rather than every note ever written.
  */
-export function pullRequestNotesSince(from, { run = git, api = githubApi, repo = repository(), log = console.error, to = 'HEAD' } = {}) {
+export function pullRequestNotesSince(
+  from,
+  { run = git, api = githubApi, repo = repository(), log = console.error, to = 'HEAD' } = {},
+) {
   const notes = [];
   for (const pr of pullRequestsSince(from, run, to)) {
     const got = api(`repos/${repo}/pulls/${pr}`);
@@ -317,7 +385,9 @@ export function pullRequestNotesSince(from, { run = git, api = githubApi, repo =
       continue;
     }
     if (!NOTES_AUTHORS.includes(got.author_association)) {
-      log(`#${pr} was opened by ${got.user?.login ?? 'someone'} (${got.author_association}) - its notes are a maintainer's to carry`);
+      log(
+        `#${pr} was opened by ${got.user?.login ?? 'someone'} (${got.author_association}) - its notes are a maintainer's to carry`,
+      );
       continue;
     }
     const text = capped(patchNotesOf(got.body));
@@ -330,11 +400,14 @@ export function pullRequestNotesSince(from, { run = git, api = githubApi, repo =
 
 /**
  * What the shell is made of, as paths from the repository's root: app/ whole, and every file its build takes from
- * outside it (app/package.json's `build.icon`, and each `build.files` set copied in from `../` - its filter's names),
- * the game's own `../dist` excepted: that is what the channel carries. Derived from the build config, so a file the
- * shell starts to pack from elsewhere is part of its id without anyone remembering to say so.
+ * outside it (app/package.json's `build.icon`, each `build.files` set copied in from `../` - its filter's names - and
+ * each file `staged` copies into app/ first), the game's own dist excepted: that is what the channel carries. Derived
+ * from the build config and the stage, so a file the shell starts to pack from elsewhere is part of its id.
  */
-export function shellInputs(pkg = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8'))) {
+export function shellInputs(
+  pkg = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8')),
+  staged = DESKTOP_STAGED,
+) {
   const out = ['app'];
   const fromApp = (p) => join('app', p).split('\\').join('/');
   if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));
@@ -342,6 +415,7 @@ export function shellInputs(pkg = JSON.parse(readFileSync(new URL('../app/packag
     if (typeof f !== 'object' || !f.from?.startsWith('../') || f.from === '../dist') continue;
     for (const name of f.filter ?? []) out.push(fromApp(join(f.from, name)));
   }
+  for (const { from } of staged) if (from !== 'dist' && !out.includes(from)) out.push(from);
   return out;
 }
 
@@ -420,8 +494,13 @@ export function packGame(dir, outDir, { version, update = null, shell }) {
       files.push({ path: p, size: bytes.length, sha256: sha256(bytes), offset, length: data.length, encoding });
       offset += data.length;
     }
-  } finally { closeSync(fd); }
-  const manifest = readManifest({ channel: GAME_CHANNEL, version, update, shell, pack: { file: GAME_FILES.pack, size: offset }, files }, { version });
+  } finally {
+    closeSync(fd);
+  }
+  const manifest = readManifest(
+    { channel: GAME_CHANNEL, version, update, shell, pack: { file: GAME_FILES.pack, size: offset }, files },
+    { version },
+  );
   writeFileSync(join(outDir, GAME_FILES.manifest), gzipSync(Buffer.from(JSON.stringify(manifest)), { level: 9 }));
   return manifest;
 }
@@ -441,8 +520,12 @@ export function judgeDelta(prev, next, { shellChanged = null } = {}) {
   const d = deltaOf(prev, next);
   const sameShell = prev.shell === next.shell;
   const problems = [];
-  if (!sameShell && shellChanged === false) problems.push('the shell id moved with no shell file changed - every update would be the installer\'s');
-  if (sameShell && d.share > MAX_UPDATE_SHARE) problems.push(`the update re-downloads ${(100 * d.share).toFixed(1)}% of the game (more than ${100 * MAX_UPDATE_SHARE}%) - it is no longer the files that changed`);
+  if (!sameShell && shellChanged === false)
+    problems.push("the shell id moved with no shell file changed - every update would be the installer's");
+  if (sameShell && d.share > MAX_UPDATE_SHARE)
+    problems.push(
+      `the update re-downloads ${(100 * d.share).toFixed(1)}% of the game (more than ${100 * MAX_UPDATE_SHARE}%) - it is no longer the files that changed`,
+    );
   const said = `v${prev.version} -> v${next.version}: ${d.files} files, ${(d.bytes / 1e6).toFixed(2)} MB of ${(d.total / 1e6).toFixed(1)} MB (${(100 * d.share).toFixed(2)}%)${sameShell ? '' : ' - the shell changed: this release goes out by the installer'}`;
   return { ...d, sameShell, problems, said };
 }
@@ -451,6 +534,16 @@ function main(argv) {
   const [cmd, a, b] = argv;
   if (cmd === 'shell') {
     console.log(shellId());
+    return 0;
+  }
+  if (cmd === 'stage') {
+    stageShell();
+    console.log(`staged inside app/: ${DESKTOP_STAGED.map((s) => s.to).join(', ')}`);
+    return 0;
+  }
+  if (cmd === 'unstage') {
+    unstageShell();
+    console.log('the staged copies taken out of app/');
     return 0;
   }
   if (cmd === 'seed') {
@@ -467,7 +560,9 @@ function main(argv) {
     const prevTag = argv[3] ?? null;
     const prev = parseManifestFile(readFileSync(a));
     const next = parseManifestFile(readFileSync(b));
-    const j = judgeDelta(prev, next, { shellChanged: prevTag && prev.shell !== next.shell ? shellChangedSince(prevTag) : null });
+    const j = judgeDelta(prev, next, {
+      shellChanged: prevTag && prev.shell !== next.shell ? shellChangedSince(prevTag) : null,
+    });
     console.log(j.said);
     if (j.problems.length) {
       console.error(`the game's update has regressed - nothing is published: ${j.problems.join('; ')}`);
@@ -500,7 +595,9 @@ function main(argv) {
     try {
       notes = pullRequestNotesSince(previousReleaseTag(a));
     } catch (e) {
-      console.error(`the notes could not be read - nothing is published: ${String(e?.stderr || e?.message || e).trim()}`);
+      console.error(
+        `the notes could not be read - nothing is published: ${String(e?.stderr || e?.message || e).trim()}`,
+      );
       return 1;
     }
     process.stdout.write(composeReleaseNotes(notes));
@@ -512,10 +609,16 @@ function main(argv) {
   if (cmd === 'renotes') {
     let notes;
     try {
-      try { git(['rev-parse', '--verify', '--quiet', `refs/tags/${a}^{commit}`]); } catch { throw new Error(`no tag ${a} in this checkout`); }
+      try {
+        git(['rev-parse', '--verify', '--quiet', `refs/tags/${a}^{commit}`]);
+      } catch {
+        throw new Error(`no tag ${a} in this checkout`);
+      }
       notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });
     } catch (e) {
-      console.error(`the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`);
+      console.error(
+        `the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`,
+      );
       return 1;
     }
     process.stdout.write(renotedBody(readFileSync(b, 'utf8'), composeReleaseNotes(notes)));
@@ -525,7 +628,9 @@ function main(argv) {
     console.log(String(shouldMarkLatest(a, b)));
     return 0;
   }
-  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
+  console.error(
+    'usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]',
+  );
   return 2;
 }
 

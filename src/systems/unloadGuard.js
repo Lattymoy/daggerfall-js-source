@@ -91,7 +91,7 @@ let _installed = null;
  * @returns {() => void} this arm's own release - a host that tears down
  *   drops its answer without touching anybody else's
  */
-export function armUnloadGuard(atRisk, win = (typeof globalThis !== 'undefined' ? globalThis : null)) {
+export function armUnloadGuard(atRisk, win = typeof globalThis !== 'undefined' ? globalThis : null) {
   _arms.add(atRisk);
   if (win?.addEventListener && _installed !== win) {
     _installed = win;
@@ -106,7 +106,9 @@ export function armUnloadGuard(atRisk, win = (typeof globalThis !== 'undefined' 
       return '';
     });
   }
-  return () => { _arms.delete(atRisk); };
+  return () => {
+    _arms.delete(atRisk);
+  };
 }
 
 /**

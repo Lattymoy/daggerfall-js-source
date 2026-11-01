@@ -56,8 +56,8 @@
   {
     "name": "SILVER-a-market-label-old",
     "file": "src/ui/marketTab.js",
-    "old": "[['marks', 'Priced in silver'], ['gold', 'Priced in gold']]",
-    "new": "[['marks', 'Priced in Drakes'], ['gold', 'Priced in gold']]",
+    "old": "              ['marks', 'Priced in silver'],",
+    "new": "              ['marks', 'Priced in Drakes'],",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SILVER-the-royal-hud-old",
     "file": "src/net/royalLink.js",
-    "old": "toLocaleString('en-US')} silver   ends in",
-    "new": "toLocaleString('en-US')} Drakes   ends in",
+    "old": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
+    "new": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} Drakes   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SILVER-an-edict-old",
     "file": "src/net/townSeatLaw.js",
-    "old": "` Costs ${cost.toLocaleString('en-US')} silver.`",
-    "new": "` Costs ${cost.toLocaleString('en-US')} Drakes.`",
+    "old": "  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;",
+    "new": "  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} Drakes.` : ''}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SILVER-the-bounty-old",
     "file": "src/systems/seatEdicts.js",
-    "old": "`The Bounty pays you ${n} silver for the camp.`",
-    "new": "`The Bounty pays you ${n} Drakes for the camp.`",
+    "old": "export const bountyPaidText = (n) => `The Bounty pays you ${n} silver for the camp.`;",
+    "new": "export const bountyPaidText = (n) => `The Bounty pays you ${n} Drakes for the camp.`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SILVER-a-seat-label-old",
     "file": "src/ui/seatTab.js",
-    "old": "'Silver set aside for the Bounty'",
-    "new": "'Drakes set aside for the Bounty'",
+    "old": "      a.setAttribute('aria-label', 'Silver set aside for the Bounty');",
+    "new": "      a.setAttribute('aria-label', 'Drakes set aside for the Bounty');",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SILVER-the-metal-renamed",
     "file": "src/net/professionLaw.js",
-    "old": "made('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver')",
-    "new": "made('ingot:silver', 'metals', 3, 622, 'silver Ingot', ICON_IRON, 'silver')",
+    "old": "  made('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver'),",
+    "new": "  made('ingot:silver', 'metals', 3, 622, 'silver Ingot', ICON_IRON, 'silver'),",
     "tests": [
       "test/net/silver.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "LANDFORM-knee-is-the-ocean",
     "file": "src/world/landforms.js",
-    "old": "if (!(h > LANDFORM_KNEE)) return h;   // the knee",
-    "new": "if (!(h > SCALED_OCEAN_ELEVATION)) return h;   // the knee",
+    "old": "    if (!(h > LANDFORM_KNEE)) return h;   // the knee: DFU's own height, the sea and the beach whole",
+    "new": "    if (!(h > SCALED_OCEAN_ELEVATION)) return h;   // the knee: DFU's own height, the sea and the beach whole",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "LANDFORM-gain",
     "file": "src/world/landforms.js",
-    "old": "relief: Object.freeze({ from: 200, full: 900, gain: 0.9 }),",
-    "new": "relief: Object.freeze({ from: 200, full: 900, gain: 0.8 }),",
+    "old": "  relief: Object.freeze({ from: 200, full: 900, gain: 0.9 }),",
+    "new": "  relief: Object.freeze({ from: 200, full: 900, gain: 0.8 }),",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "LANDFORM-lift-eased-linear",
     "file": "src/world/landforms.js",
-    "old": "return gain * e * smooth01((e - from) / (full - from));",
-    "new": "return gain * e * Math.min(1, (e - from) / (full - from));",
+    "old": "  return gain * e * smooth01((e - from) / (full - from));",
+    "new": "  return gain * e * Math.min(1, (e - from) / (full - from));",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "LANDFORM-compass-y-not-flipped",
     "file": "src/world/landforms.js",
-    "old": "const dx = mdx, dy = -mdy;",
-    "new": "const dx = mdx, dy = mdy;",
+    "old": "          const dx = mdx, dy = -mdy;   // the compass's map Y runs south; this frame's y runs north",
+    "new": "          const dx = mdx, dy = mdy;   // the compass's map Y runs south; this frame's y runs north",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "LANDFORM-origin-y-south",
     "file": "src/world/landforms.js",
-    "old": "const oy = (MAP_H - py) * span;",
-    "new": "const oy = py * span;",
+    "old": "  const oy = (MAP_H - py) * span;",
+    "new": "  const oy = py * span;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "LANDFORM-profile-mirrored",
     "file": "src/world/landforms.js",
-    "old": "const lx = half + s.dx * k, ly = half + s.dy * k;",
-    "new": "const lx = half + s.dx * k, ly = half - s.dy * k;",
+    "old": "      const lx = half + s.dx * k, ly = half + s.dy * k;",
+    "new": "      const lx = half + s.dx * k, ly = half - s.dy * k;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "LANDFORM-profile-no-large-map",
     "file": "src/world/landforms.js",
-    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
-    "new": "const macro = Math.min(Math.max(low + noise(lx, ly), SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
+    "old": "      const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it",
+    "new": "      const macro = Math.min(Math.max(low + noise(lx, ly), SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "LANDFORM-profile-unlifted",
     "file": "src/world/landforms.js",
-    "old": "landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around)",
-    "new": "landAt(sox + lx, soy + ly, macro, macro, low, 0, around)",
+    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;",
+    "new": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, 0, around) : macro;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "LANDFORM-river-shallower",
     "file": "src/world/landforms.js",
-    "old": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),",
-    "new": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.5 }),",
+    "old": "  river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),      // the whole painted width, 2.4 m under",
+    "new": "  river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.5 }),      // the whole painted width, 2.4 m under",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "LANDFORM-river-narrow",
     "file": "src/world/landforms.js",
-    "old": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),",
-    "new": "river: Object.freeze({ flat: 1, bank: 1.5, verge: 6, drop: 1.92 }),",
+    "old": "  river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),      // the whole painted width, 2.4 m under",
+    "new": "  river: Object.freeze({ flat: 1, bank: 1.5, verge: 6, drop: 1.92 }),      // the whole painted width, 2.4 m under",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "LANDFORM-road-narrow",
     "file": "src/world/landforms.js",
-    "old": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
-    "new": "road: Object.freeze({ flat: 0.5, bank: 2.5, verge: 6, drop: 0 }),",
+    "old": "  road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
+    "new": "  road: Object.freeze({ flat: 0.5, bank: 2.5, verge: 6, drop: 0 }),",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "LANDFORM-road-short-verge",
     "file": "src/world/landforms.js",
-    "old": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
-    "new": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 4, drop: 0 }),",
+    "old": "  road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
+    "new": "  road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 4, drop: 0 }),",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "LANDFORM-stream-shallower",
     "file": "src/world/landforms.js",
-    "old": "stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.8 }),",
-    "new": "stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.5 }),",
+    "old": "  stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.8 }),     // the bank art's water down the middle: 1 m under",
+    "new": "  stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.5 }),     // the bank art's water down the middle: 1 m under",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "LANDFORM-arm-past-its-end-still-grades",
     "file": "src/world/landforms.js",
-    "old": "const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
-    "new": "const w = ((r * r) / (q * q));",
+    "old": "        const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "        const w = ((r * r) / (q * q));",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "LANDFORM-no-levee",
     "file": "src/world/landforms.js",
-    "old": "const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
-    "new": "const top = smoothLand;",
+    "old": "      const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
+    "new": "      const top = smoothLand;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "LANDFORM-no-floor-clamp",
     "file": "src/world/landforms.js",
-    "old": "return out > least ? out : least;",
-    "new": "return out;",
+    "old": "    return out > least ? out : least;",
+    "new": "    return out;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "LANDFORM-no-coast-fade",
     "file": "src/world/landforms.js",
-    "old": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
-    "new": "const fade = 1;",
+    "old": "    const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
+    "new": "    const fade = 1;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "LANDFORM-rivers-cut-unpainted",
     "file": "src/world/landforms.js",
-    "old": "const cutRivers = !!roads?.water;",
-    "new": "const cutRivers = !!roads;",
+    "old": "  const cutRivers = !!roads?.water;",
+    "new": "  const cutRivers = !!roads;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "LANDFORM-lift-unblended",
     "file": "src/world/landforms.js",
-    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground\n",
-    "new": "\n",
+    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground",
+    "new": "",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "LANDFORM-build-ghost-rows-raw",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
-    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
+    "old": "  const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
+    "new": "  const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "LANDFORM-job-uncut",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;",
-    "new": "  const landforms = landform ? createLandforms({ woods, sites, beyond, climates }) : null;",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay",
+    "new": "  const landforms = landform ? createLandforms({ woods, sites, beyond, climates }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay",
     "tests": [
       "test/systems/landform.test.js"
     ],
@@ -285,8 +285,8 @@
   {
     "name": "LANDFORM-rivers-player-online",
     "file": "src/systems/online/onlineLane.js",
-    "old": "    RiversAndStreams: true,   // LANDFORM3:",
-    "new": "    // RiversAndStreams: true,   // LANDFORM3:",
+    "old": "    RiversAndStreams: true, // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)",
+    "new": "    // RiversAndStreams: true,   // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "LANDFORM-rivers-room-default-off",
     "file": "src/systems/online/onlineLane.js",
-    "old": "    RiversAndStreams: true,   // LANDFORM3:",
-    "new": "    RiversAndStreams: false,   // LANDFORM3:",
+    "old": "    RiversAndStreams: true, // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)",
+    "new": "    RiversAndStreams: false, // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "LANDFORM-ceiling-lift-past-the-top",
     "file": "src/world/landforms.js",
-    "old": "const e = (low < LOW_TOP ? low : LOW_TOP) - LANDFORM_KNEE;",
-    "new": "const e = low - LANDFORM_KNEE;",
+    "old": "  const e = (low < LOW_TOP ? low : LOW_TOP) - LANDFORM_KNEE;",
+    "new": "  const e = low - LANDFORM_KNEE;",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "LANDFORM-ceiling-road-graded-to-the-raw-macro",
     "file": "src/world/landforms.js",
-    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
-    "new": "const macro = Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION);",
+    "old": "      const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it",
+    "new": "      const macro = Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION);   // DFU's macro as DFU stands it",
     "tests": [
       "test/systems/landform.test.js"
     ]

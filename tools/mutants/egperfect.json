@@ -20,8 +20,8 @@
   {
     "name": "EGPERFECT-the-spire-leaps",
     "file": "src/systems/madeLevel.js",
-    "old": "latePress: EG_LATE_PRESS_S, runLeap: 'refused',",
-    "new": "latePress: EG_LATE_PRESS_S,",
+    "old": "    latePress: EG_LATE_PRESS_S,\n    runLeap: 'refused',\n    avoidDeath: 'refused',",
+    "new": "    latePress: EG_LATE_PRESS_S,\n    avoidDeath: 'refused',",
     "tests": [
       "test/player/egperfect_runleap.test.js",
       "test/systems/eliteGates/egmade_law.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "EGPERFECT-the-vent-on-its-first-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
-    "new": "if (st.fire && !ventJudged.has(cycle) && (ventJudged.set(cycle, 1), standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1]))) {",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (\n          st.fire &&\n          !ventJudged.has(cycle) &&\n          (ventJudged.set(cycle, 1), standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1]))\n        ) {",
     "tests": [
       "test/net/eliteGates/egperfect_vent.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "EGPERFECT-the-rampart-vent-on-its-first-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (st.st === 'fire' && standing && ventJudged.get(`rb${i}`) !== st.at && egInVent(v, f[0], f[1]))",
-    "new": "if (st.st === 'fire' && ventJudged.get(`rb${i}`) !== st.at && (ventJudged.set(`rb${i}`, st.at), standing && egInVent(v, f[0], f[1])))",
+    "old": "        if (st.st === 'fire' && standing && ventJudged.get(`rb${i}`) !== st.at && egInVent(v, f[0], f[1])) {",
+    "new": "        if (\n          st.st === 'fire' &&\n          ventJudged.get(`rb${i}`) !== st.at &&\n          (ventJudged.set(`rb${i}`, st.at), standing && egInVent(v, f[0], f[1]))\n        ) {",
     "tests": [
       "test/net/eliteGates/egperfect_vent.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "EGPERFECT-the-old-pendulum-band",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin)",
-    "new": "pendHits(s, t, x, y, z, Math.sin)",
+    "old": "export const egPendHits = (s, t, x, y, z, h = EG_PEND_BODY_H) =>\n  y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin);",
+    "new": "export const egPendHits = (s, t, x, y, z, h = EG_PEND_BODY_H) => pendHits(s, t, x, y, z, Math.sin);",
     "tests": [
       "test/net/eliteGates/egperfect_pend.test.js"
     ]

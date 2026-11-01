@@ -110,7 +110,6 @@ test('WATER-NEXT 2 the hosts: the world carves at the build and at a restride an
   assert.match(w, /bed: waterOn,   \/\/ AUDIT WATER-NEXT P1/, 'the build asks the kernel for the bed');
   assert.match(w, /const bed = hostBed\(\{ positions, normals \}, carved\);/);
   assert.match(w, /const terrain = renderer\.createTerrainSurface\(carved\?\.positions \?\? positions, carved\?\.normals \?\? normals,/);
-  // PIN MOVED (WATER-LEVEL): the sheet is the bed's own, at its level - no sheet of the terrain's buffers
   assert.match(w, /const water = bed\?\.sheet \? renderer\.createWaterSheet\(bed\.sheet\) : null;/);
   assert.match(w, /const bed = waterOn \? hostBed\(grid, grid\.bed\) : null;/, 'the restride');
   assert.match(w, /p\.water = p\._bed\?\.sheet \? renderer\.createWaterSheet\(p\._bed\.sheet\) : null;/, 'the cap\'s re-index');

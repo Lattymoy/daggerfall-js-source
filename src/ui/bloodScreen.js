@@ -60,7 +60,8 @@ export function createBloodScreen({ rng = Math.random } = {}) {
       const n = screenDrops(share);
       for (let i = 0; i < n; i++) {
         drops.push({
-          x: 0.1 + rng() * 0.8, y: 0.1 + rng() * 0.7,
+          x: 0.1 + rng() * 0.8,
+          y: 0.1 + rng() * 0.7,
           size: SCREEN_DROP_SIZE.min + rng() * (SCREEN_DROP_SIZE.max - SCREEN_DROP_SIZE.min),
           turn: rng() * Math.PI * 2,
           age: 0,
@@ -82,7 +83,8 @@ export function createBloodScreen({ rng = Math.random } = {}) {
      *  Answers the quads drawn. */
     draw(renderer, canvas, tex) {
       if (!drops.length || !tex || !renderer?.drawScreenQuad) return 0;
-      const H = canvas.height, W = canvas.width;
+      const H = canvas.height,
+        W = canvas.width;
       let n = 0;
       for (const d of drops) {
         if (!d.cell) continue;
@@ -90,16 +92,22 @@ export function createBloodScreen({ rng = Math.random } = {}) {
         if (!(a > 0)) continue;
         const px = d.size * H;
         const slide = SCREEN_DROP_SLIDE * H * (d.age / SCREEN_DROP_LIFE);
-        const x = d.x * W - px / 2, y = d.y * H - px / 2 + slide;
-        renderer.drawScreenQuad(tex, { x, y, w: px, h: px }, d.cell,
-          [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], a],
-          { blend: true, rotate: { rad: d.turn, px: x + px / 2, py: y + px / 2 } });
+        const x = d.x * W - px / 2,
+          y = d.y * H - px / 2 + slide;
+        renderer.drawScreenQuad(tex, { x, y, w: px, h: px }, d.cell, [BLOOD_BASE[0], BLOOD_BASE[1], BLOOD_BASE[2], a], {
+          blend: true,
+          rotate: { rad: d.turn, px: x + px / 2, py: y + px / 2 },
+        });
         n++;
       }
       return n;
     },
-    clear() { drops = []; },
-    get count() { return drops.length; },
+    clear() {
+      drops = [];
+    },
+    get count() {
+      return drops.length;
+    },
     _drops: () => drops.slice(),
   };
 }

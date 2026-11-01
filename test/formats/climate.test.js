@@ -82,7 +82,8 @@ test('climate: nature and ground archives', () => {
   assert.equal(getNatureArchive(506, SEASON.Winter), 507);
   assert.equal(getNatureArchive(503, SEASON.Winter), 503);
   assert.equal(getNatureArchive(500, SEASON.Summer), 500);
-  assert.equal(getNatureArchive(999, SEASON.Summer), 504); // default
+  assert.equal(getNatureArchive(499, SEASON.Summer), 504); // classic unknown below nature range
+  assert.equal(getNatureArchive(999, SEASON.Summer), 999); // port stand-in past 511 keeps its archive
   assert.equal(getGroundArchive(0, SEASON.Summer), 2);
   assert.equal(getGroundArchive(100, SEASON.Winter), 103);
   assert.equal(getGroundArchive(300, SEASON.Rain), 304);

@@ -44,7 +44,9 @@ export function sigilCard(item, { full = false } = {}) {
   // duel). U12: and only a real set piece's sigil is called a set's (a forged set sigil on a ring answers no set)
   const setPiece = !!setIdOf(item);
   const duel = setPiece && !v0.blow && setsSleep() === 'duel';
-  const v = duel ? { ...v0, dormant: true, held: false, name: 'Asleep', stages: v0.stages.map((st) => ({ ...st, awake: false })) } : v0;
+  const v = duel
+    ? { ...v0, dormant: true, held: false, name: 'Asleep', stages: v0.stages.map((st) => ({ ...st, awake: false })) }
+    : v0;
   const box = el('section', full ? 'sigilbox' : 'sigilbox compact');
   box.dataset.stage = v.dormant ? 'dormant' : String(v.stage);
   box.setAttribute('aria-label', `Sigil, ${v.name}`);
@@ -59,13 +61,23 @@ export function sigilCard(item, { full = false } = {}) {
   if (!full) return compactSigil(box, head, v, setPiece);
   // what it gives in my hand now, and at its full growth - SET5: a set's armour carries no blow; its sigil is its
   // share of its set's stage (the set's own block, ui/setCard.js, says what the set does)
-  box.append(el('p', 'sigil-effect', !v.blow
-    ? (!setPiece ? 'A sigil with no set'
-      : duel ? 'A set\'s sigil: inactive in a duel'
-        : v.dormant ? 'A set\'s sigil: works online only' : 'A set\'s sigil: the set grows with its lowest piece')
-    : v.dormant
-      ? `Works online only: +${v.full}% damage at Ascendant`
-      : `+${pctText(v.pct)}% damage now · +${v.full}% at Ascendant`));
+  box.append(
+    el(
+      'p',
+      'sigil-effect',
+      !v.blow
+        ? !setPiece
+          ? 'A sigil with no set'
+          : duel
+            ? "A set's sigil: inactive in a duel"
+            : v.dormant
+              ? "A set's sigil: works online only"
+              : "A set's sigil: the set grows with its lowest piece"
+        : v.dormant
+          ? `Works online only: +${v.full}% damage at Ascendant`
+          : `+${pctText(v.pct)}% damage now · +${v.full}% at Ascendant`,
+    ),
+  );
   // the five stages: grown = the sigil reached it; awake = my Renown lets it burn there
   const gems = el('div', 'sigil-stages');
   gems.setAttribute('role', 'list');
@@ -92,8 +104,18 @@ export function sigilCard(item, { full = false } = {}) {
   prog.append(el('span', null, sigilProgressText(v)));
   if (v.party > 1) prog.append(el('span', 'sigil-party', `won in a fight of ${v.party}`));
   box.append(meter, prog);
-  if (v.held) box.append(el('p', 'sigil-note', `Your Renown limits it to ${v.name}. ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));
-  else if (!v.dormant && v.xp === 0) box.append(el('p', 'sigil-note', v.blow ? 'It grows as you earn Renown with this weapon.' : 'It grows as you earn Renown wearing it.'));   // said once, while it has drunk nothing (SET5: a set's armour grows worn)
+  if (v.held)
+    box.append(
+      el('p', 'sigil-note', `Your Renown limits it to ${v.name}. ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`),
+    );
+  else if (!v.dormant && v.xp === 0)
+    box.append(
+      el(
+        'p',
+        'sigil-note',
+        v.blow ? 'It grows as you earn Renown with this weapon.' : 'It grows as you earn Renown wearing it.',
+      ),
+    ); // said once, while it has drunk nothing (SET5: a set's armour grows worn)
   return box;
 }
 
@@ -101,8 +123,12 @@ export function sigilCard(item, { full = false } = {}) {
  *  the stage it grows into filled as far as it has drunk (`--fill`), lit where my Renown lets it burn; a weapon's blow
  *  in a line; the Renown's hold, when it holds it. A set's armour says no more: its set's block says what it does. */
 function compactSigil(box, head, v, setPiece) {
-  const prog = el('span', 'sigil-progress', v.to == null ? 'Fully grown' : `${v.xp.toLocaleString('en-US')}/${v.to.toLocaleString('en-US')}`);
-  prog.title = sigilProgressText(v);   // "7,420 / 12,500 to Bright" - the stage it grows into is the bar's lit edge
+  const prog = el(
+    'span',
+    'sigil-progress',
+    v.to == null ? 'Fully grown' : `${v.xp.toLocaleString('en-US')}/${v.to.toLocaleString('en-US')}`,
+  );
+  prog.title = sigilProgressText(v); // "7,420 / 12,500 to Bright" - the stage it grows into is the bar's lit edge
   head.append(prog);
   const bar = el('div', 'sigil-stages');
   bar.setAttribute('role', 'progressbar');
@@ -111,14 +137,25 @@ function compactSigil(box, head, v, setPiece) {
   bar.setAttribute('aria-valuenow', String(Math.round(v.frac * 100)));
   bar.setAttribute('aria-label', 'Sigil growth');
   v.stages.forEach((st, i) => {
-    const next = i === v.rank + 1;   // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at
+    const next = i === v.rank + 1; // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at
     const g = el('span', `sigil-gem${st.grown ? ' grown' : ''}${st.awake ? ' awake' : ''}${next ? ' next' : ''}`);
-    if (next) { const fill = `${(v.frac * 100).toFixed(1)}%`; g.dataset.fill = fill; g.style?.setProperty?.('--fill', fill); }   // the sheet reads the property; a headless host has no style door
+    if (next) {
+      const fill = `${(v.frac * 100).toFixed(1)}%`;
+      g.dataset.fill = fill;
+      g.style?.setProperty?.('--fill', fill);
+    } // the sheet reads the property; a headless host has no style door
     g.title = st.name + (st.awake ? '' : st.grown ? ' (limited by your Renown)' : '');
     bar.append(g);
   });
   box.append(bar);
-  if (v.blow) box.append(el('p', 'sigil-effect', v.dormant ? `Works online: up to +${v.full}% damage` : `+${pctText(v.pct)}% damage (up to +${v.full}%)`));
+  if (v.blow)
+    box.append(
+      el(
+        'p',
+        'sigil-effect',
+        v.dormant ? `Works online: up to +${v.full}% damage` : `+${pctText(v.pct)}% damage (up to +${v.full}%)`,
+      ),
+    );
   else if (!setPiece) box.append(el('p', 'sigil-effect', 'A sigil with no set'));
   if (v.held) box.append(el('p', 'sigil-note', `Renown limit: ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));
   return box;

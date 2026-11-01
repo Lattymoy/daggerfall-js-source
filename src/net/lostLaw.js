@@ -49,7 +49,16 @@ export const LOST_OWED_MAX_MS = LOST_WINDOW_S * 1000;
 /** The refusals that will never become a yes, asked again - the client gives those pieces to the pack at once. Every other
  *  answer (no session, offline, the service's own failure, a kill not yet recorded) is asked again later. `body`: a send
  *  past LOST_BODY_MAX; `not-found` and `method`: a service from before LOST-SPOILS. */
-export const LOST_FINAL = Object.freeze(['post-needs-account', 'lost-pieces', 'lost-item', 'lost-spent', 'lost-full', 'body', 'not-found', 'method']);
+export const LOST_FINAL = Object.freeze([
+  'post-needs-account',
+  'lost-pieces',
+  'lost-item',
+  'lost-spent',
+  'lost-full',
+  'body',
+  'not-found',
+  'method',
+]);
 
 /**
  * THE KILL A FLOOR'S DAY NAMES - the spoils pool's own key for a receipt (scenes/spoilsPool.js `rec.day`): a gate's day
@@ -59,7 +68,10 @@ export const LOST_FINAL = Object.freeze(['post-needs-account', 'lost-pieces', 'l
  * @returns {{ kind: 'gate', day: number, key: string } | { kind: 'sd', slot: number, key: string } | { kind: 'eg', b: string, w: number, key: string } | null}
  */
 export function lostKillOf(day) {
-  if (Number.isSafeInteger(day)) return /** @type {number} */ (day) >= 1 ? { kind: 'gate', day: /** @type {number} */ (day), key: `gate-${day}` } : null;
+  if (Number.isSafeInteger(day))
+    return /** @type {number} */ (day) >= 1
+      ? { kind: 'gate', day: /** @type {number} */ (day), key: `gate-${day}` }
+      : null;
   const slot = sdSpoilsSlot(day);
   if (slot != null) return { kind: 'sd', slot, key: `sd-${slot}` };
   const eg = egSpoilsOf(day);
@@ -67,7 +79,8 @@ export function lostKillOf(day) {
 }
 
 /** A piece's batch: its kill and its place - one a piece an account (0093's ux_server_post_batch). */
-export const lostBatchOf = (/** @type {{ key: string }} */ kill, /** @type {number} */ i) => `${LOST_BATCH}${kill.key}-${i}`;
+export const lostBatchOf = (/** @type {{ key: string }} */ kill, /** @type {number} */ i) =>
+  `${LOST_BATCH}${kill.key}-${i}`;
 /** Whether a batch is the Lost and Found's. */
 export const isLostBatch = (/** @type {unknown} */ batch) => typeof batch === 'string' && batch.startsWith(LOST_BATCH);
 
@@ -81,14 +94,21 @@ export const isLostBatch = (/** @type {unknown} */ batch) => typeof batch === 's
  */
 export function lostPiecesOf(pieces) {
   if (!Array.isArray(pieces) || pieces.length < 1 || pieces.length > LOST_INDEX_MAX) return { error: 'lost-pieces' };
-  const seen = new Set(), out = [];
+  const seen = new Set(),
+    out = [];
   for (const p of pieces) {
-    const i = p?.i, item = p?.item;
+    const i = p?.i,
+      item = p?.item;
     if (!Number.isSafeInteger(i) || i < 0 || i >= LOST_INDEX_MAX || seen.has(i)) return { error: 'lost-pieces' };
-    if (!item || typeof item !== 'object' || Array.isArray(item) || item.provenance != null || !postItemHead(item)) return { error: 'lost-pieces' };
+    if (!item || typeof item !== 'object' || Array.isArray(item) || item.provenance != null || !postItemHead(item))
+      return { error: 'lost-pieces' };
     const { uid: _uid, ...kept } = item;
     let bytes = 0;
-    try { bytes = new TextEncoder().encode(JSON.stringify(kept)).byteLength; } catch { return { error: 'lost-pieces' }; }
+    try {
+      bytes = new TextEncoder().encode(JSON.stringify(kept)).byteLength;
+    } catch {
+      return { error: 'lost-pieces' };
+    }
     if (bytes > LOST_ITEM_BYTES) return { error: 'lost-pieces' };
     seen.add(i);
     out.push({ i, item: kept });
@@ -97,4 +117,5 @@ export function lostPiecesOf(pieces) {
 }
 
 // The batches fit the post's own shape, for the longest kill and place a send can name.
-if (!POST_BATCH_RE.test(lostBatchOf({ key: `eg-${'f'.repeat(16)}-99999` }, LOST_INDEX_MAX - 1))) throw new Error('LOST-SPOILS: a batch past the post\'s shape');
+if (!POST_BATCH_RE.test(lostBatchOf({ key: `eg-${'f'.repeat(16)}-99999` }, LOST_INDEX_MAX - 1)))
+  throw new Error("LOST-SPOILS: a batch past the post's shape");

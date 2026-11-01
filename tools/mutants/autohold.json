@@ -3,8 +3,8 @@
     "name": "AUTOHOLD-a-contested-claim-struck",
     "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }));",
-    "new": "      ...chargeSteps(db, claimant, keys, nowS));",
+    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }),",
+    "new": "      ...chargeSteps(db, claimant, keys, nowS),",
     "tests": [
       "test/server/autohold.test.js",
       "test/systems/item/int4_itemids.test.js"
@@ -14,7 +14,7 @@
     "name": "AUTOHOLD-a-piece-a-strike",
     "file": "server-account/src/ledger.js",
     "old": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + 1 WHERE id = ?1').bind(char)] : []),",
-    "new": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + ?2 WHERE id = ?1').bind(char, keys.length)] : []),",
+    "new": "    ...(strike\n      ? [db.prepare('UPDATE realm_characters SET dupes = dupes + ?2 WHERE id = ?1').bind(char, keys.length)]\n      : []),",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -23,7 +23,7 @@
     "name": "AUTOHOLD-a-copy-holds-the-character",
     "file": "server-account/src/ledger.js",
     "old": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + 1 WHERE id = ?1').bind(char)] : []),",
-    "new": "    ...(strike ? [db.prepare(\"UPDATE realm_characters SET dupes = dupes + 1, held = 'staff' WHERE id = ?1\").bind(char)] : []),",
+    "new": "    ...(strike\n      ? [db.prepare(\"UPDATE realm_characters SET dupes = dupes + 1, held = 'staff' WHERE id = ?1\").bind(char)]\n      : []),",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -31,7 +31,7 @@
   {
     "name": "AUTOHOLD-the-locked-unlisted",
     "file": "server-account/src/ledger.js",
-    "old": "  const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(0, LOCKED_SAID_MAX);",
+    "old": "  const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(\n    0,\n    LOCKED_SAID_MAX,\n  );",
     "new": "  const locked = [...new Set([...copies])].slice(0, LOCKED_SAID_MAX);",
     "tests": [
       "test/server/autohold.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "AUTOHOLD-the-locked-unanswered",
     "file": "server-account/src/realm.js",
-    "old": ", locked: v.locked };",
-    "new": " };",
+    "old": "  return {\n    ok: true,\n    seq,\n    tradeHeld: stood.held ?? null,\n    ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}),\n    locked: v.locked,\n  };",
+    "new": "  return { ok: true, seq, tradeHeld: stood.held ?? null, ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}) };",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUTOHOLD-the-timed-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
-    "new": "    null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
+    "old": "      s.held_until ?? null,",
+    "new": "      null,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUTOHOLD-the-clear-keeps-the-timed",
     "file": "server-account/src/review.js",
-    "old": "held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,\n",
-    "new": "held = NULL, held_at = NULL, strikes = 0, review = NULL,\n",
+    "old": "          `UPDATE realm_characters SET held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,",
+    "new": "          `UPDATE realm_characters SET held = NULL, held_at = NULL, strikes = 0, review = NULL,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -184,7 +184,7 @@
   {
     "name": "AUTOHOLD-the-piece-unnamed",
     "file": "src/scenes/realmHoldHost.js",
-    "old": "    const text = piecesLockedNotice(pieces.map((it) => itemLongName(it)), pieces.length + unfound);",
+    "old": "    const text = piecesLockedNotice(\n      pieces.map((it) => itemLongName(it)),\n      pieces.length + unfound,\n    );",
     "new": "    const text = piecesLockedNotice([], pieces.length + unfound);",
     "tests": [
       "test/server/autohold.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "AUTOHOLD-the-shelf-lands-mine",
     "file": "src/world/interior/interiorShared.js",
-    "old": "  const keys = new Set([...(carried.keys ?? []), ...(stowed ? carried.stowed ?? [] : [])]);",
-    "new": "  const keys = new Set([...(stowed ? carried.stowed ?? [] : [])]);",
+    "old": "  const keys = new Set([...(carried.keys ?? []), ...(stowed ? (carried.stowed ?? []) : [])]);",
+    "new": "  const keys = new Set([...(stowed ? (carried.stowed ?? []) : [])]);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "AUTOHOLD-the-shelf-lands-twice",
     "file": "src/world/interior/interiorShared.js",
-    "old": "    if (keys.has(k)) return false;\n    keys.add(k);\n",
-    "new": "    if (keys.has(k)) return false;\n",
+    "old": "    keys.add(k);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUTOHOLD-the-memory-unhanded",
     "file": "src/world/interior/interiorShared.js",
-    "old": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null });",
-    "new": "applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, room, from: null });",
+    "old": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, carried, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
+    "new": "  if (!home) applyInteriorLoot(ctx, shared.world.loot, { seen, openKey, today, room, from: null }); // HOME1: no word lands on a home's cupboards; AUTO-HOLD: nor a piece the reader carries; OUTDOOR-LOOT: the memory is the seat's state (a null sender), never a list over a list",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -256,7 +256,7 @@
   {
     "name": "AUTOHOLD-the-carried-unread",
     "file": "src/systems/item/itemIds.js",
-    "old": "  for (const list of ownLists(entity)) for (const it of list) { const k = ledgerKeyOf(it); if (k) out.add(k); }",
+    "old": "  for (const list of ownLists(entity))\n    for (const it of list) {\n      const k = ledgerKeyOf(it);\n      if (k) out.add(k);\n    }",
     "new": "",
     "tests": [
       "test/server/autohold.test.js"
@@ -265,8 +265,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-strike-inside-the-hold",
     "file": "server-account/src/verdict.js",
-    "old": "  const struck = (faded ? 0 : row.strikes ?? 0) + (rising && standing == null ? 1 : 0);",
-    "new": "  const struck = (faded ? 0 : row.strikes ?? 0) + (rising ? 1 : 0);",
+    "old": "  const struck = (faded ? 0 : (row.strikes ?? 0)) + (rising && standing == null ? 1 : 0);",
+    "new": "  const struck = (faded ? 0 : (row.strikes ?? 0)) + (rising ? 1 : 0);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-patron-claim-struck",
     "file": "server-account/src/ledger.js",
-    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n",
-    "new": "    ...chargeSteps(db, claim, [key], nowS),\n",
+    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
+    "new": "    ...chargeSteps(db, claim, [key], nowS),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-dead-carrying-freed",
     "file": "server-account/src/realm.js",
-    "old": "AND ${a}.held_until <= ${now} AND ${a}.law_sig IS NULL))`;",
-    "new": "AND ${a}.held_until <= ${now}))`;",
+    "old": "  AND ${a}.held = 'law' AND ${a}.held_until IS NOT NULL AND ${a}.held_until <= ${now} AND ${a}.law_sig IS NULL))`;",
+    "new": "  AND ${a}.held = 'law' AND ${a}.held_until IS NOT NULL AND ${a}.held_until <= ${now}))`;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-living-freed",
     "file": "server-account/src/realm.js",
-    "old": "NOT (${a}.dead_at IS NOT NULL\n",
-    "new": "NOT (1\n",
+    "old": "export const holdStandsSql = (\n  /** @type {string} */ a,\n  /** @type {string} */ now,\n) => `(${a}.held IS NOT NULL AND NOT (${a}.dead_at IS NOT NULL",
+    "new": "export const holdStandsSql = (/** @type {string} */ a, /** @type {string} */ now) => `(${a}.held IS NOT NULL AND NOT (1",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-craft-hold-blind",
     "file": "server-account/src/realm.js",
-    "old": "WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`)",
-    "new": "WHERE p.provenance = ?1 AND r.held IS NOT NULL`)",
+    "old": "    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`,",
+    "new": "    WHERE p.provenance = ?1 AND r.held IS NOT NULL`,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-set-unheard",
     "file": "src/scenes/realmHoldHost.js",
-    "old": "  session.onLockedKeys = (/** @type {string[]} */ keys) => setRealmLocked(keys);\n",
-    "new": "",
+    "old": "  session.onLockedKeys = (/** @type {string[]} */ keys) => setRealmLocked(keys);\n  session.onPiecesLocked = (/** @type {string[]} */ keys) => {",
+    "new": "  session.onPiecesLocked = (/** @type {string[]} */ keys) => {",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-stowed-everywhere",
     "file": "src/world/interior/interiorShared.js",
-    "old": "{ stowed: canon.startsWith('shelf:') }",
-    "new": "{ stowed: true }",
+    "old": "    const lands = withoutCarried(items, carried, { stowed: canon.startsWith('shelf:') });",
+    "new": "    const lands = withoutCarried(items, carried, { stowed: true });",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-timed-piece-unnamed",
     "file": "src/systems/item/itemIds.js",
-    "old": "tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null)",
-    "new": "tradeHeldUntilNotice(/** @type {number} */ (why.until))",
+    "old": "    return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
+    "new": "    return tradeHeldUntilNotice(/** @type {number} */ (why.until));",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-end-in-tenths",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "new Date(until * 1000)",
-    "new": "new Date(until * 100)",
+    "old": "  new Date(until * 1000).toLocaleString(intlLocale(), {",
+    "new": "  new Date(until * 100).toLocaleString(intlLocale(), {",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-key-twice-one-piece",
     "file": "src/systems/item/itemIds.js",
-    "old": "if (k && want.has(k)) { pieces.push(it); found.add(k); }",
-    "new": "if (k && want.has(k) && !found.has(k)) { pieces.push(it); found.add(k); }",
+    "old": "      if (k && want.has(k)) {",
+    "new": "      if (k && want.has(k) && !found.has(k)) {",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "AUTOHOLD-AUDIT-one-of-two-leaves-unasked",
     "file": "server-account/src/ledger.js",
-    "old": "  for (const [k, n] of was) if ((now.get(k) ?? 0) < n) { leaving.push(k); if (n > 1) twice.push(k); }",
-    "new": "  for (const [k, n] of was) if (!now.has(k)) { leaving.push(k); if (n > 1) twice.push(k); }",
+    "old": "    if ((now.get(k) ?? 0) < n) {",
+    "new": "    if (!now.has(k)) {",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-is-any-leaving",
     "file": "server-account/src/ledger.js",
-    "old": "{ leaving.push(k); if (n > 1) twice.push(k); }",
-    "new": "{ leaving.push(k); twice.push(k); }",
+    "old": "      if (n > 1) twice.push(k);",
+    "new": "      twice.push(k);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-by-a-route",
     "file": "server-account/src/realm.js",
-    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ?",
-    "new": "  const why = take ? null : leaving.length ?",
+    "old": "  const why = take\n    ? null\n    : twice.length\n      ? 'piece-dupe'\n      : leaving.length\n        ? await piecesRefusal(db, at.id, leaving)\n        : null;",
+    "new": "  const why = take ? null : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-planted-key-strikes",
     "file": "server-account/src/verdict.js",
-    "old": "  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid') && (",
-    "new": "  const rising = lawHolds > 0 && (",
+    "old": "  const rising =\n    lawHolds > 0 &&\n    lawFindings.some((f) => f.code !== 'uid') &&\n    (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
+    "new": "  const rising = lawHolds > 0 && (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-finding-beside-it-unstruck",
     "file": "server-account/src/verdict.js",
-    "old": "lawFindings.some((f) => f.code !== 'uid')",
-    "new": "lawFindings.every((f) => f.code !== 'uid')",
+    "old": "    lawFindings.some((f) => f.code !== 'uid') &&",
+    "new": "    lawFindings.every((f) => f.code !== 'uid') &&",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-planted-piece-unnamed",
     "file": "server-account/src/verdict.js",
-    "old": "({ code: 'uid', at: k, t: templateOfKey(k) })",
-    "new": "({ code: 'uid', at: k })",
+    "old": "    ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) })),",
+    "new": "    ...ledger.forged.map((k) => ({ code: 'uid', at: k })),",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-locked-said-only-when-some",
     "file": "server-account/src/realm.js",
-    "old": ", locked: v.locked };",
-    "new": ", ...(v.locked.length ? { locked: v.locked } : {}) };",
+    "old": "    locked: v.locked,",
+    "new": "    ...(v.locked.length ? { locked: v.locked } : {}),",
     "tests": [
       "test/server/autohold.test.js",
       "test/server/realm1.test.js",
@@ -656,7 +656,7 @@
   {
     "name": "AUTOHOLD-AUDIT-notCarried-a-no-op",
     "file": "src/systems/peerWord.js",
-    "old": "export const notCarried = (/** @type {any[] | null} */ list) => (Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list);",
+    "old": "export const notCarried = (/** @type {any[] | null} */ list) =>\n  Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list;",
     "new": "export const notCarried = (/** @type {any[] | null} */ list) => list;",
     "tests": [
       "test/server/autohold.test.js"

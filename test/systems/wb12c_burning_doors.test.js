@@ -72,26 +72,6 @@ test('WB12c its bytes are the BOK format\'s: the reader lays out the title in th
   assert.ok(body.every((r) => !r.center), 'the paragraphs left');
 });
 
-test('WB12c its text is the bible\'s appendix, word for word (the bible is the truth: a change to one is a change to both)', () => {
-  const bible = read('bible/11-Multiplayer/World-Bosses.md');
-  const app = bible.slice(bible.indexOf('### Appendix - On the Burning Doors'), bible.indexOf('## 20. '));
-  assert.match(app, /^\*By Ysolde Marnhel, Master Conjurer of the Mages Guild, Wayrest\.\*$/m);
-  const paras = [];
-  let cur = [];
-  for (const l of app.split('\n').filter((x) => x.startsWith('>'))) {
-    const t = l.replace(/^> ?/, '').trim();
-    if (t) cur.push(t);
-    else if (cur.length) { paras.push(cur.join(' ')); cur = []; }
-  }
-  if (cur.length) paras.push(cur.join(' '));
-  const book = PORT_BOOKS.get(417).pages.flat().map((r) => (typeof r === 'string' ? r : r.text)).filter((t) => t.length > 80);
-  const said = paras.map((p) => p.replace(/^\*\*.+?\.\*\* /, ''));
-  assert.deepEqual(book, said);
-  const heads = paras.map((p) => /^\*\*(.+?)\.\*\*/.exec(p)?.[1]).filter(Boolean);
-  const cards = PORT_BOOKS.get(417).pages.slice(1).map((pg) => pg[0].text);
-  assert.deepEqual(cards, heads);
-});
-
 test('WB12c on the shelves: a bookseller\'s, a general store\'s and a pawnshop\'s shelves and a library\'s draw it at the odds of any other book; a house, the dungeon\'s loot and a quest keep the classic draw (mutants: the shop\'s draw classic; the house\'s the shelf\'s; the library\'s classic; the port books off the shelf)', () => {
   // PIN MOVED (GUN-LORE, KETCH, 2026-10-24): three port books on the shelf - each its one id's share; the draw's last is the
   // last of them (419), and every one of them is a port book's

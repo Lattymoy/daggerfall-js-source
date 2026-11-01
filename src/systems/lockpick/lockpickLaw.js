@@ -11,7 +11,7 @@
 // (spoolsFor); the order its pins bind in is the lock's own, the same every visit (bindingOrder over lockSeed).
 //
 // Not a DFU member - Daggerfall rolls the chance and has no tumblers. Ledger A (LOCKPICK).
-import { actBand } from '../../net/professionLaw.js';   // Foraging's attribute bands (FORAGE0 14.4), the acts' own
+import { actBand } from '../../net/professionLaw.js'; // Foraging's attribute bands (FORAGE0 14.4), the acts' own
 
 /** The pins a lock has: two at the least (a lock of 1-3), one more each 4 of its value, six at the most (16-19). A
  *  building's front door (quality / 2: 0-10) has 2-4, a chest (1-15) 2-5, a dungeon's door (2-18) 2-6. */
@@ -65,16 +65,21 @@ const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const chanceOf = (chance) => clamp(Number.isFinite(chance) ? chance : 5, 5, 95);
 
 /** The pins a lock of `lock` has. Pure. */
-export const pinsFor = (lock) => clamp(LOCK_PINS_MIN + Math.floor(Math.max(0, Number(lock) || 0) / LOCK_PINS_STEP), LOCK_PINS_MIN, LOCK_PINS_MAX);
+export const pinsFor = (lock) =>
+  clamp(LOCK_PINS_MIN + Math.floor(Math.max(0, Number(lock) || 0) / LOCK_PINS_STEP), LOCK_PINS_MIN, LOCK_PINS_MAX);
 /** The spool pins among them. Pure. */
 export const spoolsFor = (lock) => ((Number(lock) || 0) >= SPOOL_TWO ? 2 : (Number(lock) || 0) >= SPOOL_ONE ? 1 : 0);
 /** The hang at the shear line for DFU's `chance` (5..95), widened or narrowed by the Agility band `band` (actBand). Pure. */
 export const setWindowS = (chance, band = 1) => {
   const A = LOCKPICK_ACT;
-  return (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 90) * (Number(band) > 0 ? Number(band) : 1);
+  return (
+    (A.windowMinS + ((A.windowMaxS - A.windowMinS) * (chanceOf(chance) - 5)) / 90) *
+    (Number(band) > 0 ? Number(band) : 1)
+  );
 };
 /** The chance (0..1) a slip snaps the pick, for DFU's `chance`. Pure. */
-export const slipBreakChance = (chance) => clamp(((100 - chanceOf(chance)) / 100) * LOCKPICK_ACT.breakScale, LOCKPICK_ACT.breakMin, LOCKPICK_ACT.breakMax);
+export const slipBreakChance = (chance) =>
+  clamp(((100 - chanceOf(chance)) / 100) * LOCKPICK_ACT.breakScale, LOCKPICK_ACT.breakMin, LOCKPICK_ACT.breakMax);
 /** The Agility band a lock is picked in - Foraging's four (x0.85 to x1.30), the acts' own. Pure. */
 export const lockBand = (agility) => actBand(Number(agility) || 0);
 /** Whether a hand of `skill` Lockpicking tells the binding pin apart before it lifts it. Pure. */
@@ -84,7 +89,10 @@ export const sensesBinding = (skill) => (Number(skill) || 0) >= LOCKPICK_ACT.sen
 export function lockSeed(key) {
   let h = 0x811c9dc5;
   const s = String(key ?? '');
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
   return h >>> 0;
 }
 /** A seeded stream (mulberry32) over `seed`. */
@@ -102,7 +110,10 @@ function stream(seed) {
 export function bindingOrder(n, seed) {
   const order = Array.from({ length: Math.max(0, n | 0) }, (_, i) => i);
   const r = stream(seed);
-  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
   return order;
 }
 /** Which of a lock's `n` pins are spools (`spools` of them), by its `seed` - never the first to bind, so a lock always
@@ -122,4 +133,5 @@ export function spoolPins(n, spools, seed) {
 /** THE AUTO ATTEMPT - DFU's own roll, each site's: underground (a door, a chest) Range(0, 100) under the chance
  *  (DaggerfallActionDoor.AttemptLockpicking's Dice100.FailedRoll); a building's front door Range(1, 101) under it
  *  (PlayerActivate.ActivateStaticDoor's `chance > Random.Range(1, 101)`). Pure. */
-export const autoOpens = (chance, roll01, exterior = false) => (exterior ? 1 : 0) + Math.floor(Number(roll01) * 100) < chanceOf(chance);
+export const autoOpens = (chance, roll01, exterior = false) =>
+  (exterior ? 1 : 0) + Math.floor(Number(roll01) * 100) < chanceOf(chance);

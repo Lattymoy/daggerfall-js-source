@@ -1,4 +1,4 @@
-// WG2 THE SEAM (bible/03-World/World-2-Canon.md, "The seam"): a published region's ground through the world's own
+// WG2 THE SEAM ("The seam"): a published region's ground through the world's own
 // readers - tamrielGround.js's byte and climate, landforms.js's shaper (gen2Units), terrainGen.js's water paint - and
 // nothing at all with none installed. A bake made on another fit is refused, the region's edge eases into the world's
 // ground, and a pixel outside it is the world's own. A pixel past the Bay (Black Marsh) beside the Bay's untouched.

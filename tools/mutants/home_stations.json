@@ -20,17 +20,18 @@
   {
     "name": "HOME-STATIONS-key-always-written",
     "file": "src/net/decorLaw.js",
-    "old": "storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) };",
-    "new": "storage, paid, station, ...(name ? { name } : {}) };",
+    "old": "    ...(station ? { station } : {}),",
+    "new": "    station,",
     "tests": [
       "test/ui/homestations.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "HOME-STATIONS-own-item-serves",
     "file": "src/net/decorLaw.js",
-    "old": "(place.paid !== 0 || place.storage || place.station))) return null;",
-    "new": "(place.paid !== 0 || place.storage))) return null;",
+    "old": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage || place.station))) return null; // HOME-STATIONS: one's own item serves no craft",
+    "new": "  if (!what || !place || (what.item && (place.paid !== 0 || place.storage))) return null; // HOME-STATIONS: one's own item serves no craft",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -122,10 +123,11 @@
   {
     "name": "HOME-STATIONS-service-drops-the-craft",
     "file": "server-account/src/decor.js",
-    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
-    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS: the craft, when it serves one",
     "tests": [
       "test/ui/homestations.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   }
 ]

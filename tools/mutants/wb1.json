@@ -128,8 +128,8 @@
   {
     "name": "WB1-a-location-below-not-seen",
     "file": "src/systems/gate/gateSite.js",
-    "old": "        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {\n          const x = px + dx, y = py + dy;\n          if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
-    "new": "        for (let dy = -1; dy <= 0; dy++) for (let dx = -1; dx <= 1; dx++) {\n          const x = px + dx, y = py + dy;\n          if (x >= 0 && y >= 0 && x < W && y < H) near[y * W + x] = 1;",
+    "old": "        for (let dy = -1; dy <= 1; dy++)",
+    "new": "        for (let dy = -1; dy <= 0; dy++)",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB1-a-gate-at-the-town-gate",
     "file": "src/systems/gate/gateSite.js",
-    "old": "        if (d < GATE_TOWN_MIN_PX) continue;\n",
-    "new": "",
+    "old": "            if (d < GATE_TOWN_MIN_PX) continue;\n            const x = px + dx,",
+    "new": "            const x = px + dx,",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "WB1-a-gate-at-sea",
     "file": "src/systems/gate/gateSite.js",
-    "old": "      if (gateSeaPixel(maps.getClimateIndex(x, y), heightAt ? heightAt(x, y) : 255)) continue;\n",
-    "new": "",
+    "old": "      if (gateSeaPixel(maps.getClimateIndex(x, y), heightAt ? heightAt(x, y) : 255)) continue;\n      if (spawnsDungeon(spawnSalt, x, y)) continue;",
+    "new": "      if (spawnsDungeon(spawnSalt, x, y)) continue;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "WB1-a-gate-on-a-spawned-dungeon",
     "file": "src/systems/gate/gateSite.js",
-    "old": "      if (spawnsDungeon(spawnSalt, x, y)) continue;\n",
-    "new": "",
+    "old": "      if (spawnsDungeon(spawnSalt, x, y)) continue;\n      // the POLITIC page says whose land it is; getRegionIndexAt clamps a value it does not know to region 0, so a",
+    "new": "      // the POLITIC page says whose land it is; getRegionIndexAt clamps a value it does not know to region 0, so a",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "WB1-the-wrothgarian-value-unclaimed",
     "file": "src/systems/gate/gateSite.js",
-    "old": " || pol === 128 + 105;",
-    "new": ";",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
+    "new": "export const politicClaimed = (pol) => pol >= 128 && pol < 128 + BAY_REGION_COUNT; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WB1-a-line-said-every-frame",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath'",
-    "new": "      if (line && true && !(line === 'wrath'",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "new": "      if (line && true && !(line === 'wrath' && Number.isFinite(fell))) {",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB1-a-late-arrival-hears-the-opening",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'rise',",
-    "new": "const SAYS = Object.freeze({ omen: 'omen', rising: 'rise', sealed: 'open',",
+    "old": "  sealed: 'rise',",
+    "new": "  sealed: 'open',",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WB1-a-fallen-boss-says-the-wrath",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "&& !(line === 'wrath' && Number.isFinite(fell))",
-    "new": "&& true",
+    "old": "      if (line && (t.day !== saidDay || rank > saidRank) && !(line === 'wrath' && Number.isFinite(fell))) {",
+    "new": "      if (line && (t.day !== saidDay || rank > saidRank) && true) {",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "WB1-the-compass-only-dead-centre",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "<= mark.r + slack;",
-    "new": "<= mark.r;",
+    "old": "  !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r + slack;",
+    "new": "  !!mark && Math.hypot(px + 0.5 - mark.cx, py + 0.5 - mark.cy) <= mark.r;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "WB1-the-spot-south-of-its-corner",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "[t[0] + standing.spot[0], t[2] + standing.spot[1]]",
-    "new": "[t[0] + standing.spot[0], t[2] - standing.spot[1]]",
+    "old": "export const gateSceneXZ = (standing, t) => [t[0] + standing.spot[0], t[2] + standing.spot[1]];",
+    "new": "export const gateSceneXZ = (standing, t) => [t[0] + standing.spot[0], t[2] - standing.spot[1]];",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "WB1-an-off-map-ring-drawn",
     "file": "src/ui/gate/gateMapMark.js",
-    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;\n",
-    "new": "",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;\n  return {",
+    "new": "  return {",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WB1-the-ring-lost-at-the-far-zoom",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);\n  ctx.save();",
-    "new": "  const r = g.r * view.scale;\n  ctx.save();",
+    "old": "  const r = Math.max(GATE_RING_MIN_PX, g.r * view.scale);",
+    "new": "  const r = g.r * view.scale;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]

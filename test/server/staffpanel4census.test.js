@@ -1,4 +1,4 @@
-// STAFF-PANEL4-CENSUS (2026-10-22, mob picked it, 04:13Z; design doc "DFO Staff Panel: design", "Item and gold census",
+// STAFF-PANEL4-CENSUS (2026-10-22; design doc "DFO Staff Panel: design", "Item and gold census",
 // "Server load" and the weak spots "Copies found misses modded dupes..." and "Census rows ride every save...") - THE ITEM
 // AND GOLD CENSUS AND THE CONTESTED PIECES (server-account/src/staffCensus.js), driven through the real Worker on the
 // node:sqlite database every account pin stands on (test/accountDb.mjs): the tally a checkpoint takes - on the hour's row
@@ -40,16 +40,16 @@ async function extensionKey(clock) {
   return { pub, proof };
 }
 
-/** The Worker on a clock the pin moves (`wait`), mob (an Admin and owner) and Asynian (a Moderator) signed in, three
+/** The Worker on a clock the pin moves (`wait`), chief (an Admin and owner) and Asynian (a Moderator) signed in, three
  *  players, a realm character's checkpoint (`put`) and hand-laid rows. */
 async function stand() {
   _forgetCensusForTests();
   let now = Math.floor(realNow() / 3600000) * 3600 + 60;   // a minute into the hour: a pin's wait never crosses one it did not mean to
   Date.now = () => now * 1000;
   const clock = () => now;
-  const mobKey = await extensionKey(clock);
+  const chiefKey = await extensionKey(clock);
   const s = await standService({
-    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}`,
+    DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'Lattymoy,SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}`,
   });
   const raw = s.env.DB._raw;
   const staff = async (path, body = {}, token = null) => {
@@ -59,11 +59,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const asyKey = await extensionKey(clock);
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await asyKey.proof('enroll', 'Asynian')) })).body;
-  assert.ok(mob.session && asy.session, 'both signed in');
+  assert.ok(chief.session && asy.session, 'both signed in');
   /** A realm character made through the service (its first save a fresh one), and its checkpoint. */
   const seat = async (handle) => {
     const who = await s.registered(handle);
@@ -90,7 +90,7 @@ async function stand() {
   };
   const audits = (act) => raw.prepare('SELECT actor, act, target, detail, outcome FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r }));
   return {
-    ...s, raw, staff, mob, asy, seat, put, census, hourRow, lay, audits, now: () => now,
+    ...s, raw, staff, chief, asy, seat, put, census, hourRow, lay, audits, now: () => now,
     wait: (sec) => { now += sec; }, setNow: (t) => { now = t; },
     done: () => { Date.now = realNow; censusHooks.tallyOf = censusTally; _forgetCensusForTests(); },
   };
@@ -241,7 +241,7 @@ test('STAFF-PANEL4-CENSUS: A KIND\'S CENSUS - carried (the living characters\' l
     delivery('d2', { item: JSON.stringify(piece(113, { stackCount: 3 })) });
     delivery('d3', { item: JSON.stringify(piece(113, { stackCount: 50 })) }, 1);
     s.raw.prepare('INSERT INTO market_gold (player, char_id, gold) VALUES (?, ?, 33)').run(syl.id, big);
-    const r = await s.staff('/v1/staff/census', { kind: 't71' }, s.mob.session);
+    const r = await s.staff('/v1/staff/census', { kind: 't71' }, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     const carried = 500 + ((CENSUS_PAGE + 2) * (CENSUS_PAGE + 3)) / 2;
     assert.deepEqual(r.body.where, { carried, stores: 46, vaults: 3, market: 8 + 4 + 7 + 5 });
@@ -253,21 +253,21 @@ test('STAFF-PANEL4-CENSUS: A KIND\'S CENSUS - carried (the living characters\' l
     assert.deepEqual(r.body.holders.slice(1, 3).map((h) => h.n), [CENSUS_PAGE + 2, CENSUS_PAGE + 1]);
     assert.equal(r.body.holders.length, CENSUS_PAGE);
     assert.equal(r.body.next, CENSUS_PAGE);
-    const p2 = await s.staff('/v1/staff/census', { kind: 't71', from: r.body.next }, s.mob.session);
+    const p2 = await s.staff('/v1/staff/census', { kind: 't71', from: r.body.next }, s.chief.session);
     assert.deepEqual([p2.body.holders.length, p2.body.next, p2.body.holders.at(-1).n], [3, null, 1]);
     // cached: a new holder is not seen until the read is kept no longer
     s.lay(troll.id, { tally: { t71: 1000 } });
-    const again = await s.staff('/v1/staff/census', { kind: 't71' }, s.mob.session);
+    const again = await s.staff('/v1/staff/census', { kind: 't71' }, s.chief.session);
     assert.deepEqual([again.body.at, again.body.where.carried], [r.body.at, carried]);
     s.wait(10 * 60);
-    const fresh = await s.staff('/v1/staff/census', { kind: 't71' }, s.mob.session);
+    const fresh = await s.staff('/v1/staff/census', { kind: 't71' }, s.chief.session);
     assert.equal(fresh.body.where.carried, carried + 1000);
     // a kind no store holds: stores null
-    const dagger = await s.staff('/v1/staff/census', { kind: 113 }, s.mob.session);
+    const dagger = await s.staff('/v1/staff/census', { kind: 113 }, s.chief.session);
     assert.deepEqual(dagger.body.where, { carried: 2, stores: null, vaults: 0, market: 1 + 1 + 1 + 1 + 3 }, 'two auctions, a listing, a delivery, a stack of three');
     // gold: the latest purses and banks, the treasuries' realm gold (the rest unverified legacy gold, said apart and in no
     // total - the design's weak spot), what sales hold
-    const gold = await s.staff('/v1/staff/census', { kind: 'gold' }, s.mob.session);
+    const gold = await s.staff('/v1/staff/census', { kind: 'gold' }, s.chief.session);
     const purses = 5 + 10 * ((CENSUS_PAGE + 2) * (CENSUS_PAGE + 3)) / 2;
     assert.deepEqual(gold.body.where, { carried: purses, stores: null, vaults: 650, market: 33 });
     assert.deepEqual([gold.body.legacyGold, gold.body.total], [50, purses + 650 + 33]);
@@ -281,13 +281,13 @@ test('STAFF-PANEL4-CENSUS: A KIND\'S CENSUS - carried (the living characters\' l
     ledger('account', 'escrow', 'order-escrow', 15);
     ledger('account', 'escrow', 'bid-escrow', 12);
     ledger('escrow', 'account', 'bid-return', 5);
-    const marks = await s.staff('/v1/staff/census', { kind: 'marks' }, s.mob.session);
+    const marks = await s.staff('/v1/staff/census', { kind: 'marks' }, s.chief.session);
     assert.deepEqual(marks.body.where, { carried: 42, stores: null, vaults: 9, market: 15 + 12 - 5 });
     assert.deepEqual(marks.body.holders.map((h) => [h.player, h.handle, h.n, h.char]), [[troll.id, 'Troll', 40, null], [syl.id, 'Sylvia', 2, null]]);
     // refused words, and the reads written down once a kind in ten minutes
-    assert.deepEqual((await s.staff('/v1/staff/census', { kind: 'nope' }, s.mob.session)).status, 400);
+    assert.deepEqual((await s.staff('/v1/staff/census', { kind: 'nope' }, s.chief.session)).status, 400);
     assert.deepEqual(s.audits('census-read').map((a) => JSON.parse(a.detail).kind), ['t71', 't71', 't113', 'gold', 'marks']);
-    const found = await s.staff('/v1/staff/census/find', { q: 'iron' }, s.mob.session);
+    const found = await s.staff('/v1/staff/census/find', { q: 'iron' }, s.chief.session);
     assert.ok(found.body.kinds.some((k) => k.kind === 't71'));
   } finally { s.done(); }
 });
@@ -324,9 +324,9 @@ test('STAFF-PANEL4-CENSUS: THE DAY\'S TOTALS - once a UTC day at the census\'s q
     assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM item_census_days WHERE kind = 'more'").get().n, 0, '`more` is no kind');
     assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM item_census_days WHERE day < ?').get(day - CENSUS_DAYS_KEEP).n, 0, 'old days swept');
     assert.equal(await censusDay({ db: s.env.DB, nowS: at + 60 }), 0, 'once a day');
-    const r = await s.staff('/v1/staff/census', { kind: 't71', days: 7 }, s.mob.session);
+    const r = await s.staff('/v1/staff/census', { kind: 't71', days: 7 }, s.chief.session);
     assert.deepEqual(r.body.trend.map((d) => [d.day, d.carried, d.total]), [[day - 3, 2, 2], [day, 4, 49]]);
-    const one = await s.staff('/v1/staff/census', { kind: 't71', days: 1 }, s.mob.session);
+    const one = await s.staff('/v1/staff/census', { kind: 't71', days: 1 }, s.chief.session);
     assert.deepEqual(one.body.trend.map((d) => d.day), [day], 'the range capped by `days`');
   } finally { s.done(); }
 });
@@ -371,13 +371,13 @@ test('STAFF-PANEL4-CENSUS: CENSUS JUMPS - the characters whose count rose most i
     hour(x, h - 30 * 3600, 30); hour(x, h - 5 * 3600, 35); hour(x, h - 4 * 3600, null); hour(x, h - 3600, 69);   // rose 39 from before the window
     hour(y, h - 30 * 3600, 50); hour(y, h - 2 * 3600, 5);   // fell
     hour(z, h - 6 * 3600, 3); hour(z, h, 10);   // rose 7 from its first in the window (no tally before it)
-    const r = await s.staff('/v1/staff/census/jumps', { kind: 't113' }, s.mob.session);
+    const r = await s.staff('/v1/staff/census/jumps', { kind: 't113' }, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.deepEqual(r.body.jumps.map((j) => [j.char, j.name, j.from, j.to, j.rise]), [[x, 'X', 30, 69, 39], [z, 'Z', 3, 10, 7]]);
     assert.equal(r.body.next, null);
-    const short = await s.staff('/v1/staff/census/jumps', { kind: 't113', hours: 2 }, s.mob.session);
+    const short = await s.staff('/v1/staff/census/jumps', { kind: 't113', hours: 2 }, s.chief.session);
     assert.deepEqual(short.body.jumps.map((j) => [j.name, j.from, j.to]), [['X', 35, 69], ['Z', 3, 10]], 'a narrower window: X counted from its last tally before it');
-    assert.deepEqual((await s.staff('/v1/staff/census/jumps', { kind: 'marks' }, s.mob.session)).body, { error: 'census-no-tally' });
+    assert.deepEqual((await s.staff('/v1/staff/census/jumps', { kind: 'marks' }, s.chief.session)).body, { error: 'census-no-tally' });
     assert.equal(s.audits('census-jumps-read').length, 2);
   } finally { s.done(); }
 });
@@ -407,7 +407,7 @@ test('STAFF-PANEL4-CENSUS: CONTESTED PIECES - a claim its holder outlasted keeps
     // a death's drop is the ledger's bookkeeping: never listed
     await s.env.DB.batch(knownCopySteps(s.env.DB, A.id, ['5555555555555555'], s.now()));
     assert.equal(row('5555555555555555', A.id).kind, 'drop');
-    const list = await s.staff('/v1/staff/contested', {}, s.mob.session);
+    const list = await s.staff('/v1/staff/contested', {}, s.chief.session);
     assert.equal(list.status, 200, JSON.stringify(list.body));
     assert.equal(list.body.next, null);
     const mine = list.body.pieces.find((p) => p.uid === u);
@@ -421,31 +421,31 @@ test('STAFF-PANEL4-CENSUS: CONTESTED PIECES - a claim its holder outlasted keeps
     assert.deepEqual(list.body.pieces.map((p) => p.uid), [u2, u], 'newest first among the unchecked');
     // the trail check: what staff found, and why - refused without a word that says
     const bad = [{ found: 'guilty', note: 'x' }, { found: 'copier', note: ' ' }, { found: 'copier', note: 'x'.repeat(TRAIL_NOTE_MAX + 1) }, { found: 'copier', note: 'x', uid: 'nope' }, { found: 'copier', note: 'x', char: 'nope' }];
-    for (const b of bad) assert.equal((await s.staff('/v1/staff/contested/trail', { uid: u, char: C.id, ...b }, s.mob.session)).status, 400, JSON.stringify(b));
-    assert.deepEqual(await s.staff('/v1/staff/contested/trail', { uid: u, char: A.id, found: 'copier', note: 'no such copy' }, s.mob.session), { status: 404, body: { error: 'no-piece' } });
-    const t = await s.staff('/v1/staff/contested/trail', { uid: u, char: C.id, found: 'innocent', note: '  bought it off Ann for 900 gold, the trade log shows it  ' }, s.mob.session);
+    for (const b of bad) assert.equal((await s.staff('/v1/staff/contested/trail', { uid: u, char: C.id, ...b }, s.chief.session)).status, 400, JSON.stringify(b));
+    assert.deepEqual(await s.staff('/v1/staff/contested/trail', { uid: u, char: A.id, found: 'copier', note: 'no such copy' }, s.chief.session), { status: 404, body: { error: 'no-piece' } });
+    const t = await s.staff('/v1/staff/contested/trail', { uid: u, char: C.id, found: 'innocent', note: '  bought it off Ann for 900 gold, the trade log shows it  ' }, s.chief.session);
     assert.equal(t.status, 200, JSON.stringify(t.body));
     assert.deepEqual(t.body.trail, { at: s.now(), by: s.raw.prepare("SELECT id FROM players WHERE handle = 'SirMcMobdon'").get().id, byName: 'SirMcMobdon', found: 'innocent', note: 'bought it off Ann for 900 gold, the trade log shows it' });
     assert.deepEqual(s.audits('contested-trail').map((a) => [a.target, JSON.parse(a.detail).found ?? null, a.outcome]), [[null, 'copier', 'failed'], [C.who.id, 'innocent', 'ok']]);
-    const after = await s.staff('/v1/staff/contested', {}, s.mob.session);
+    const after = await s.staff('/v1/staff/contested', {}, s.chief.session);
     assert.deepEqual(after.body.pieces.map((p) => [p.uid, p.level]), [[u2, 'medium'], [u, 'low']], 'checked sorts last');
     assert.deepEqual(after.body.pieces[1].trail.found, 'innocent');
     assert.deepEqual(after.body.pieces[1].why, ['trail checked: innocent']);
-    assert.deepEqual((await s.staff('/v1/staff/contested', { open: true }, s.mob.session)).body.pieces.map((p) => p.uid), [u2]);
-    assert.deepEqual((await s.staff('/v1/staff/contested', { char: C.id }, s.mob.session)).body.pieces.map((p) => p.uid), [u]);
-    assert.deepEqual((await s.staff('/v1/staff/contested', { sort: 'newest' }, s.mob.session)).body.pieces.map((p) => p.uid), [u2, u]);
-    assert.equal((await s.staff('/v1/staff/contested', { char: 'x' }, s.mob.session)).status, 400);
-    for (const before of ['nope', 7, '3|1|a|b', '0|x|a|b']) assert.equal((await s.staff('/v1/staff/contested', { before }, s.mob.session)).status, 400, `a place that is none: ${before}`);
-    const one = await s.staff('/v1/staff/contested', { before: `1|${s.now() + 1}|ffffffffffffffff|r`, sort: 'urgent' }, s.mob.session);
+    assert.deepEqual((await s.staff('/v1/staff/contested', { open: true }, s.chief.session)).body.pieces.map((p) => p.uid), [u2]);
+    assert.deepEqual((await s.staff('/v1/staff/contested', { char: C.id }, s.chief.session)).body.pieces.map((p) => p.uid), [u]);
+    assert.deepEqual((await s.staff('/v1/staff/contested', { sort: 'newest' }, s.chief.session)).body.pieces.map((p) => p.uid), [u2, u]);
+    assert.equal((await s.staff('/v1/staff/contested', { char: 'x' }, s.chief.session)).status, 400);
+    for (const before of ['nope', 7, '3|1|a|b', '0|x|a|b']) assert.equal((await s.staff('/v1/staff/contested', { before }, s.chief.session)).status, 400, `a place that is none: ${before}`);
+    const one = await s.staff('/v1/staff/contested', { before: `1|${s.now() + 1}|ffffffffffffffff|r`, sort: 'urgent' }, s.chief.session);
     assert.deepEqual(one.body.pieces.map((p) => p.uid), [u2, u], 'from a place: the rows behind it');
     // one piece's trail: its copies, the ledger now, the findings naming it
-    const tr = await s.staff('/v1/staff/contested/piece', { uid: u }, s.mob.session);
+    const tr = await s.staff('/v1/staff/contested/piece', { uid: u }, s.chief.session);
     assert.equal(tr.status, 200, JSON.stringify(tr.body));
     assert.deepEqual(tr.body.ledger, { state: 'held', char: A.id, name: 'Ann', player: A.who.id, handle: 'Ann', at: heldAt, claim: null });
     assert.deepEqual(tr.body.copies.map((c) => c.copy.char), [C.id]);
     assert.deepEqual(tr.body.findings, [{ char: C.id, at: foundAt, contested: true, count: 1 }]);
     assert.equal(tr.body.craft, null);
-    assert.deepEqual(await s.staff('/v1/staff/contested/piece', { uid: '9999999999999999' }, s.mob.session), { status: 404, body: { error: 'no-piece' } });
+    assert.deepEqual(await s.staff('/v1/staff/contested/piece', { uid: '9999999999999999' }, s.chief.session), { status: 404, body: { error: 'no-piece' } });
     assert.ok(s.audits('contested-read').length >= 1 && s.audits('contested-piece-read').length === 1);
   } finally { s.done(); }
 });
@@ -460,7 +460,7 @@ test('STAFF-PANEL4-CENSUS: a character holding CONTESTED_HIGH unchecked pieces i
     const dupe = (uid, c, at) => s.raw.prepare("INSERT INTO item_dupes (uid, char_id, at, kind, fp) VALUES (?, ?, ?, 'claim', '113:1')").run(uid, c, at);
     dupe('a000000000000001', one, s.now());
     for (let i = 0; i < CONTESTED_HIGH; i++) dupe(`b00000000000000${i}`, many, s.now() - 100 - i);
-    const list = await s.staff('/v1/staff/contested', {}, s.mob.session);
+    const list = await s.staff('/v1/staff/contested', {}, s.chief.session);
     assert.deepEqual(list.body.pieces.map((p) => [p.copy.char, p.level]), [[many, 'high'], [many, 'high'], [many, 'high'], [one, 'medium']]);
     assert.match(list.body.pieces[0].why.join(' · '), new RegExp(`${CONTESTED_HIGH} contested pieces on this character`));
     const home = await HOME_WATCH.top({ db: s.env.DB, nowS: s.now() }, s.env, null, 3);
@@ -468,7 +468,7 @@ test('STAFF-PANEL4-CENSUS: a character holding CONTESTED_HIGH unchecked pieces i
     // kept a few minutes (design doc, Server load: "cache them for 5-10 minutes"): a trail check is in Home's counts once
     // the answer is kept no longer, never by reading it again
     assert.ok(CONTESTED_HOME_KEEP_S >= 5 * 60 && CONTESTED_HOME_KEEP_S <= 10 * 60, 'kept 5 to 10 minutes');
-    await s.staff('/v1/staff/contested/trail', { uid: 'a000000000000001', char: one, found: 'innocent', note: 'traded' }, s.mob.session);
+    await s.staff('/v1/staff/contested/trail', { uid: 'a000000000000001', char: one, found: 'innocent', note: 'traded' }, s.chief.session);
     s.wait(CONTESTED_HOME_KEEP_S - 1);
     assert.deepEqual(await HOME_WATCH.top({ db: s.env.DB, nowS: s.now() }, s.env, null, 3), home, 'kept');
     s.wait(1);

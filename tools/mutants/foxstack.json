@@ -32,8 +32,8 @@
   {
     "name": "FOX-STACK-the-powers-pieces-uncounted",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "(entity ? countedPieces(equipTableOf(entity).filter(Boolean)) : [])",
-    "new": "(entity ? equipTableOf(entity).filter(Boolean) : [])",
+    "old": "export const wornPieces = (entity) => (entity ? countedPieces(equipTableOf(entity).filter(Boolean)) : []); // FOX-STACK: a Legendary's lines once",
+    "new": "export const wornPieces = (entity) => (entity ? equipTableOf(entity).filter(Boolean) : []); // FOX-STACK: a Legendary's lines once",
     "why": "wornSum's lines (thorns, focus, potency, the wellspring, cast speed) count every copy",
     "tests": [
       "test/systems/loot/foxstack.test.js"

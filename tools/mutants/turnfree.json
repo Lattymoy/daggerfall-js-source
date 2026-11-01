@@ -1,0 +1,32 @@
+[
+  {
+    "name": "TURN-FREE-bundle-default",
+    "file": "src/systems/modSettings.js",
+    "old": "      'Graphics.TurnToView': Object.freeze({\n        default: 1,",
+    "new": "      'Graphics.TurnToView': Object.freeze({\n        default: 2,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a readied body only ever shows its back"
+  },
+  {
+    "name": "TURN-FREE-always",
+    "file": "src/systems/modSettings.js",
+    "old": "      'Graphics.TurnToView': Object.freeze({\n        default: 1,",
+    "new": "      'Graphics.TurnToView': Object.freeze({\n        default: 3,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "the body always shows its back"
+  },
+  {
+    "name": "TURN-FREE-never",
+    "file": "src/systems/modSettings.js",
+    "old": "      'Graphics.TurnToView': Object.freeze({\n        default: 1,",
+    "new": "      'Graphics.TurnToView': Object.freeze({\n        default: 0,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a blow no longer turns the body to where it is aimed"
+  }
+]

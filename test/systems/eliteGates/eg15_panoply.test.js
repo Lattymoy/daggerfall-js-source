@@ -400,7 +400,7 @@ test('EG15 THE CAST SEAM AND THE ONE MAGICKA: playerCasts.js is a leaf the one c
   assert.equal(f.magicka, 1, 'the reset clears the fraction (0.2 was owed)');
   const loot = strip(read('src/systems/loot/lootPowers.js'));
   assert.doesNotMatch(loot, /function gainMana/, 'one door, never two');
-  assert.match(loot, /case 'conduit': if \(whole\) gainMana\(attacker, p\.mana\); break;/);   // PIN MOVED (TWO-HANDS AUDIT 2, at the sixth merge of main): a per-blow charge on a whole blow alone - the Discipline's return beside it
+  assert.match(loot, /case 'conduit':\n\s*if \(whole\) gainMana\(attacker, p\.mana\);\n\s*break;/);   // PIN MOVED (TWO-HANDS AUDIT 2, at the sixth merge of main): a per-blow charge on a whole blow alone - the Discipline's return beside it
 });
 
 // ── Reprieve ──────────────────────────────────────────────────────────

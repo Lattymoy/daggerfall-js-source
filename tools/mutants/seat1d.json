@@ -39,8 +39,8 @@
   {
     "name": "SEAT1d-law-scale-per",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.max(0, Number(active) || 0) / CROWN_SCALE.per));",
-    "new": "Math.max(0, Number(active) || 0) / 50));",
+    "old": "  Math.min(CROWN_SCALE.most, Math.max(CROWN_SCALE.least, Math.max(0, Number(active) || 0) / CROWN_SCALE.per));",
+    "new": "  Math.min(CROWN_SCALE.most, Math.max(CROWN_SCALE.least, Math.max(0, Number(active) || 0) / 50));",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "SEAT1d-law-extra-not-heaviest",
     "file": "src/net/townSeatLaw.js",
-    "old": "return w.length ? w.reduce((a, b) => a + b, 0) - Math.max(...w) : 0;",
-    "new": "return w.length ? w.reduce((a, b) => a + b, 0) - Math.min(...w) : 0;",
+    "old": "  return w.length ? w.reduce((a, b) => a + b, 0) - Math.max(...w) : 0;",
+    "new": "  return w.length ? w.reduce((a, b) => a + b, 0) - Math.min(...w) : 0;",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "SEAT1d-law-scale-every-tier",
     "file": "src/net/townSeatLaw.js",
-    "old": "SEAT_UPKEEP[tier] * (tier === 'crown' ? crownScale(active) : 1)",
-    "new": "SEAT_UPKEEP[tier] * crownScale(active)",
+    "old": "  Math.floor(\n    SEAT_UPKEEP[tier] * (tier === 'crown' ? crownScale(active) : 1) * (1 + OVERREACH.upkeep * Math.max(0, extra)) +\n      1e-9,\n  );",
+    "new": "  Math.floor(SEAT_UPKEEP[tier] * crownScale(active) * (1 + OVERREACH.upkeep * Math.max(0, extra)) + 1e-9);",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "SEAT1d-law-defence-no-overreach",
     "file": "src/net/townSeatLaw.js",
-    "old": "* (1 + standingModifier(standing)) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
-    "new": "* (1 + standingModifier(standing)) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
+    "old": "    Math.max(0, own?.influence ?? 0) *\n      (1 + standingModifier(standing)) *\n      overreachDefence(extra) *\n      (held ? SIEGE_DEFENCE_BONUS : 1) +\n      1e-9,",
+    "new": "    Math.max(0, own?.influence ?? 0) * (1 + standingModifier(standing)) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "SEAT1d-law-tithe-cap-open",
     "file": "src/net/townSeatLaw.js",
-    "old": "pct >= 0 && pct <= (TITHE_CAP[tier] ?? -1);",
-    "new": "pct >= 0 && pct < (TITHE_CAP[tier] ?? -1);",
+    "old": "export const titheOk = (tier, pct) => Number.isSafeInteger(pct) && pct >= 0 && pct <= (TITHE_CAP[tier] ?? -1);",
+    "new": "export const titheOk = (tier, pct) => Number.isSafeInteger(pct) && pct >= 0 && pct < (TITHE_CAP[tier] ?? -1);",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "SEAT1d-law-bailiwick-any-region",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (s.region !== region || /** @type {any} */ (s).charter != null) continue;   // DOMAIN3",
-    "new": "    if (/** @type {any} */ (s).charter != null) continue;   // DOMAIN3",
+    "old": "    if (s.region !== region || /** @type {any} */ (s).charter != null) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
+    "new": "    if (/** @type {any} */ (s).charter != null) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ],
@@ -150,8 +150,8 @@
   {
     "name": "SEAT1d-law-bailiwick-tie-higher",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (d < bestD || (d === bestD && s.key < best.key))",
-    "new": "if (d < bestD || (d === bestD && s.key > best.key))",
+    "old": "    if (d < bestD || (d === bestD && s.key < best.key)) {",
+    "new": "    if (d < bestD || (d === bestD && s.key > best.key)) {",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "SEAT1d-law-crown-discount",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const MEMBER_DISCOUNT = Object.freeze({ palace: 0.10, crown: 0.15 });",
-    "new": "export const MEMBER_DISCOUNT = Object.freeze({ palace: 0.10, crown: 0.10 });",
+    "old": "export const MEMBER_DISCOUNT = Object.freeze({ palace: 0.1, crown: 0.15 });",
+    "new": "export const MEMBER_DISCOUNT = Object.freeze({ palace: 0.1, crown: 0.1 });",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "SEAT1d-law-discount-anyone",
     "file": "src/net/townSeatLaw.js",
-    "old": "const member = guildId != null && h.guild?.id === guildId;",
-    "new": "const member = guildId != null;",
+    "old": "  const member = guildId != null && h.guild?.id === guildId;",
+    "new": "  const member = guildId != null;",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "SEAT1d-law-no-market-day",
     "file": "src/net/townSeatLaw.js",
-    "old": "    + (h.edict === 'market-day' ? MARKET_DAY_DISCOUNT : 0);",
-    "new": "    + 0;",
+    "old": "    (member ? (MEMBER_DISCOUNT[seat.tier] ?? 0) + (h.standing >= STANDING_LOVED ? LOVED_DISCOUNT : 0) : 0) +\n    (h.edict === 'market-day' ? MARKET_DAY_DISCOUNT : 0);",
+    "new": "    (member ? (MEMBER_DISCOUNT[seat.tier] ?? 0) + (h.standing >= STANDING_LOVED ? LOVED_DISCOUNT : 0) : 0) + 0;",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "SEAT1d-law-tithe-high-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "  titheLow: 2, titheHigh: -3, unchallenged:",
-    "new": "  titheLow: 2, titheHigh: -2, unchallenged:",
+    "old": "  titheHigh: -3,",
+    "new": "  titheHigh: -2,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "SEAT1d-law-gate-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "gate: 2, gateWeekMax: 6, noWatch: -5,",
-    "new": "gate: 3, gateWeekMax: 6, noWatch: -5,",
+    "old": "  gate: 2,",
+    "new": "  gate: 3,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "SEAT1d-law-gate-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "gate: 2, gateWeekMax: 6, noWatch: -5,",
-    "new": "gate: 2, gateWeekMax: 8, noWatch: -5,",
+    "old": "  gateWeekMax: 6,",
+    "new": "  gateWeekMax: 8,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "SEAT1d-law-watch-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "gate: 2, gateWeekMax: 6, noWatch: -5,",
-    "new": "gate: 2, gateWeekMax: 6, noWatch: -4,",
+    "old": "  noWatch: -5,",
+    "new": "  noWatch: -4,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -233,8 +233,8 @@
   {
     "name": "SEAT1d-law-neglect-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "festival: 10, neglect: -10, writ: 1,",
-    "new": "festival: 10, neglect: -5, writ: 1,",
+    "old": "  neglect: -10,",
+    "new": "  neglect: -5,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "SEAT1d-law-writ-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "writ: 1, writWeekMax: 5, paidLate: -5,",
-    "new": "writ: 1, writWeekMax: 6, paidLate: -5,",
+    "old": "  writWeekMax: 5,",
+    "new": "  writWeekMax: 6,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "SEAT1d-law-late-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "writWeekMax: 5, paidLate: -5,\n",
-    "new": "writWeekMax: 5, paidLate: 0,\n",
+    "old": "  paidLate: -5,",
+    "new": "  paidLate: 0,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "SEAT1d-law-curfew-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "  revoltTo: 20, curfew: -2, levy: -2, openGates: 3,",
-    "new": "  revoltTo: 20, curfew: -1, levy: -2, openGates: 3,",
+    "old": "  curfew: -2,",
+    "new": "  curfew: -1,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "SEAT1d-law-open-gates-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "  revoltTo: 20, curfew: -2, levy: -2, openGates: 3,",
-    "new": "  revoltTo: 20, curfew: -2, levy: -2, openGates: 2,",
+    "old": "  openGates: 3,",
+    "new": "  openGates: 2,",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "SEAT1d-law-festival-row",
     "file": "src/net/townSeatLaw.js",
-    "old": "throneReached: -5, festival: 10, neglect",
-    "new": "throneReached: -5, festival: 5, neglect",
+    "old": "  festival: 10,",
+    "new": "  festival: 5,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -327,8 +327,8 @@
   {
     "name": "SEAT1d-law-market-day-once",
     "file": "src/net/townSeatLaw.js",
-    "old": "'market-day': Object.freeze({ name: 'Market Day', standing: 0, cost: null, repeat: true }),",
-    "new": "'market-day': Object.freeze({ name: 'Market Day', standing: 0, cost: null, repeat: false }),",
+    "old": "  'market-day': Object.freeze({ name: 'Market Day', standing: 0, cost: null, repeat: true }),",
+    "new": "  'market-day': Object.freeze({ name: 'Market Day', standing: 0, cost: null, repeat: false }),",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "SEAT1d-law-festival-cost",
     "file": "src/net/townSeatLaw.js",
-    "old": "cost: Object.freeze({ palace: 2500, crown: 10000 }), repeat: false }),",
-    "new": "cost: Object.freeze({ palace: 2000, crown: 10000 }), repeat: false }),",
+    "old": "    cost: Object.freeze({ palace: 2500, crown: 10000 }),",
+    "new": "    cost: Object.freeze({ palace: 2000, crown: 10000 }),",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -376,8 +376,8 @@
   {
     "name": "SEAT1d-plan-paid-strict",
     "file": "src/net/townSeatLaw.js",
-    "old": "const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
-    "new": "const state = has > due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
+    "old": "    const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
+    "new": "    const state = has > due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "SEAT1d-plan-never-late",
     "file": "src/net/townSeatLaw.js",
-    "old": "const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
-    "new": "const state = has >= due ? 'paid' : owed > 0 ? 'lapse' : 'neglect';",
+    "old": "    const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
+    "new": "    const state = has >= due ? 'paid' : owed > 0 ? 'lapse' : 'neglect';",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -395,8 +395,8 @@
   {
     "name": "SEAT1d-plan-never-lapse",
     "file": "src/net/townSeatLaw.js",
-    "old": "const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
-    "new": "const state = has >= due ? (owed > 0 ? 'late' : 'paid') : 'neglect';",
+    "old": "    const state = has >= due ? (owed > 0 ? 'late' : 'paid') : owed > 0 ? 'lapse' : 'neglect';",
+    "new": "    const state = has >= due ? (owed > 0 ? 'late' : 'paid') : 'neglect';",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -405,8 +405,8 @@
   {
     "name": "SEAT1d-plan-arrears-forgiven",
     "file": "src/net/townSeatLaw.js",
-    "old": "const amount = seatUpkeep(s.tier, extraOf(g), active), due = amount + owed, has = purse.get(g) ?? 0;",
-    "new": "const amount = seatUpkeep(s.tier, extraOf(g), active), due = amount, has = purse.get(g) ?? 0;",
+    "old": "      due = amount + owed,",
+    "new": "      due = amount,",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "SEAT1d-plan-no-unrest",
     "file": "src/net/townSeatLaw.js",
-    "old": "const risen = { ...g, influence: unrestInfluence(g.influence, s.holder.standing) }, total = claimTotal(risen);",
-    "new": "const risen = { ...g }, total = claimTotal(risen);",
+    "old": "      const risen = { ...g, influence: unrestInfluence(g.influence, s.holder.standing) },",
+    "new": "      const risen = { ...g },",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -444,8 +444,8 @@
   {
     "name": "SEAT1d-plan-bounty-free",
     "file": "src/net/townSeatLaw.js",
-    "old": "const cost = e === 'bounty' ? Math.max(0, s.holder.setAside ?? 0) : edictCost(e, s.tier, s.holder.tideNext)",
-    "new": "const cost = edictCost(e, s.tier, s.holder.tideNext)",
+    "old": "      const cost = e === 'bounty' ? Math.max(0, s.holder.setAside ?? 0) : edictCost(e, s.tier, s.holder.tideNext),",
+    "new": "      const cost = edictCost(e, s.tier, s.holder.tideNext),",
     "tests": [
       "test/systems/seat1d_client.test.js",
       "test/net/seat1d_service.test.js"
@@ -718,8 +718,8 @@
   {
     "name": "SEAT1d-edicts-curfew-all-day",
     "file": "src/systems/seatEdicts.js",
-    "old": "(curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0)",
-    "new": "(curfew() ? CURFEW.guardLevels : 0)",
+    "old": "    guardLevelBonus: (minuteOfDay) =>\n      curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0,",
+    "new": "    guardLevelBonus: (minuteOfDay) => (curfew() ? CURFEW.guardLevels : 0),",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -736,8 +736,8 @@
   {
     "name": "SEAT1d-edicts-festive-two-days",
     "file": "src/systems/seatEdicts.js",
-    "old": "festiveUntil = host.minutes() + FESTIVE.gameDays * MINUTES_A_DAY;",
-    "new": "festiveUntil = host.minutes() + 2 * MINUTES_A_DAY;",
+    "old": "        festiveUntil = host.minutes() + FESTIVE.gameDays * MINUTES_A_DAY;",
+    "new": "        festiveUntil = host.minutes() + 2 * MINUTES_A_DAY;",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -745,8 +745,8 @@
   {
     "name": "SEAT1d-edicts-no-news",
     "file": "src/systems/seatEdicts.js",
-    "old": "      if (news) host.say?.(news, 5);\n",
-    "new": "",
+    "old": "      if (news) host.say?.(news, 5);\n      if (seat?.holder?.edict === 'festival') {",
+    "new": "      if (seat?.holder?.edict === 'festival') {",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -790,8 +790,8 @@
   {
     "name": "SEAT1d-tab-edict-repeat-offered",
     "file": "src/ui/seatTab.js",
-    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict));",
-    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier));",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier)); // CROWN1: a crown's own at a crown",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]

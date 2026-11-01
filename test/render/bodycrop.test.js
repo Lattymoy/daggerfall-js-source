@@ -293,5 +293,5 @@ test('MW-DETAIL: the switch - a Features row, Morrowind Model Detail, enhanced, 
   assert.ok(!/drawRigSpriteBox\(/.test(arm), 'and no card of its own');
   const horse = rd('src/world/horseRig.js');
   assert.match(horse, /drawBodyPicture\(renderer, canvas, h\.mesh, h\.model, \{ \.\.\.bx, up, conceal, hitFlash \}, proj, view, eye\);/, 'a horse alone');
-  assert.match(horse, /const pixel = mwModelPixel\(\);[^\n]*\n\s*const wantW = canvas\.clientWidth \/ pixel, wantH = canvas\.clientHeight \/ pixel;\s*\n\s*const edge = renderer\.charSpriteRoom\?\.\(Math\.ceil\(Math\.max\(wantW, wantH\)\)\) \?\? CHAR_SPRITE_RT_SIZE;/, 'the rider\'s horse in first person, and its room');
+  assert.match(horse, /const pixel = mwModelPixel\(\); \/\/ MW-DETAIL: the viewer's dial, and the target's room for the screen's frame at it\n\s*const wantW = canvas\.clientWidth \/ pixel,\n\s*wantH = canvas\.clientHeight \/ pixel;\n\s*const edge = renderer\.charSpriteRoom\?\.\(Math\.ceil\(Math\.max\(wantW, wantH\)\)\) \?\? CHAR_SPRITE_RT_SIZE;/, 'the rider\'s horse in first person, and its room');
 });

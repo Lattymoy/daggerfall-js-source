@@ -107,7 +107,7 @@ test('COVERED-KEYS: every enhanced module lays its page keys through the one doo
     'enhancedOverlays.js': [1, 'the Tab registry: Tab puts the top overlay away, by design'],
     'enhancedHotbar.js': [1, 'the HUD\'s bar: no window, gated on the game\'s pause (keysPaused)'],
     'enhancedControls.js': [1, 'the Controls pane\'s armed rebind: laid by a press on the window, answered by the next key'],
-    'enhancedInventory.js': [6, 'the pack\'s popups (menu, cards, targets): laid by a press on the pack, put away by the next key or click'],
+    'enhancedInventory.js': [7, 'the pack\'s popups (menu, cards, targets): laid by a press on the pack, put away by the next key or click'],   // PIN MOVED (BOUND-DESTROY): the destroy's question, the dismantle's own keys
     'enhancedMenu.js': [2, 'the TextKey capture and the Yes/No card: laid by a press on the window, answered by its next key'],
   };
   const dir = new URL('../../src/ui/enhanced/', import.meta.url);

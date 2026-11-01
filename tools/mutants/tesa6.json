@@ -20,8 +20,8 @@
   {
     "name": "TESA6-no-harbour",
     "file": "src/world/arenaLocations.js",
-    "old": "portTownAndUnknown: place.port ? 1 : 0 },",
-    "new": "portTownAndUnknown: 0 },",
+    "old": "      exteriorData: {\n        ...template.exterior?.exteriorData,\n        locationId: mapId,\n        mapId,\n        portTownAndUnknown: place.port ? 1 : 0,\n      },",
+    "new": "      exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },",
     "tests": [
       "test/tesa6_ports.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TESA6-the-arena-flag-dark",
     "file": "src/world/arenaLocations.js",
-    "old": "kind: place.kind, port: !!place.port }),",
-    "new": "kind: place.kind, port: false }),",
+    "old": "      port: !!place.port,",
+    "new": "      port: false,",
     "tests": [
       "test/tesa6_ports.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "TESA6-a-crown-past-the-bay",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: 'Wayrest',",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: 'Wayrest', // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/tesa6_ports.test.js",
       "test/world/worldWide/ww3_sea.test.js",
@@ -70,8 +70,8 @@
   {
     "name": "TESA6-no-harbour-book",
     "file": "src/scenes/harbourHost.js",
-    "old": "      if (aloc?.exterior?.exteriorData) add({ id: portIdOfLocation(",
-    "new": "      if (false) add({ id: portIdOfLocation(",
+    "old": "      if (aloc?.exterior?.exteriorData)\n        add({ id: portIdOfLocation(aloc), loc: aloc, x: aq.bx, y: aq.by, name: aq.name });",
+    "new": "      if (false) add({ id: portIdOfLocation(aloc), loc: aloc, x: aq.bx, y: aq.by, name: aq.name });",
     "tests": [
       "test/tesa6_ports.test.js"
     ],
@@ -80,8 +80,8 @@
   {
     "name": "TESA6-a-port-clone-kept",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": " && had.arena.port === !!place.port) return had;",
-    "new": ") return had;",
+    "old": "      if (place && had.arena.provinceIndex === place.provinceIndex && had.arena.id === place.id && had.arena.port === !!place.port) return had;   // TESA6: a city made a port is cloned again",
+    "new": "      if (place && had.arena.provinceIndex === place.provinceIndex && had.arena.id === place.id) return had;   // TESA6: a city made a port is cloned again",
     "tests": [
       "test/tesa6_ports.test.js",
       "test/tesa2_arena.test.js"

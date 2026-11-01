@@ -2,8 +2,8 @@
   {
     "name": "WG2TOWNS-turn-sign",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "const f = (Math.atan2(-door.dir[0], door.dir[1]) * 180) / Math.PI;",
-    "new": "const f = (Math.atan2(door.dir[0], door.dir[1]) * 180) / Math.PI;",
+    "old": "  const f = (Math.atan2(-door.dir[0], door.dir[1]) * 180) / Math.PI;",
+    "new": "  const f = (Math.atan2(door.dir[0], door.dir[1]) * 180) / Math.PI;",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WG2TOWNS-frame-z",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "zPos: Math.round(RMB_DIMENSION - v / GLOBAL_SCALE)",
-    "new": "zPos: Math.round(v / GLOBAL_SCALE)",
+    "old": "  return { xPos: Math.round(u / GLOBAL_SCALE), zPos: Math.round(RMB_DIMENSION - v / GLOBAL_SCALE), yRotation: Math.round(-f * ROTATION_DIVISOR) };",
+    "new": "  return { xPos: Math.round(u / GLOBAL_SCALE), zPos: Math.round(v / GLOBAL_SCALE), yRotation: Math.round(-f * ROTATION_DIVISOR) };",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WG2TOWNS-sector",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "Sector: by * 8 + bx,",
-    "new": "Sector: bx * 8 + by,",
+    "old": "    list.push({ NameSeed: r?.nameSeed ?? 0, FactionId: r?.factionId ?? 0, Sector: by * 8 + bx, LocationId: 0, BuildingType: r ? r.type : -1, Quality: r?.quality ?? 0 });",
+    "new": "    list.push({ NameSeed: r?.nameSeed ?? 0, FactionId: r?.factionId ?? 0, Sector: bx * 8 + by, LocationId: 0, BuildingType: r ? r.type : -1, Quality: r?.quality ?? 0 });",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WG2TOWNS-type",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "BuildingType: r ? r.type : -1,",
-    "new": "BuildingType: r ? 18 : -1,",
+    "old": "    list.push({ NameSeed: r?.nameSeed ?? 0, FactionId: r?.factionId ?? 0, Sector: by * 8 + bx, LocationId: 0, BuildingType: r ? r.type : -1, Quality: r?.quality ?? 0 });",
+    "new": "    list.push({ NameSeed: r?.nameSeed ?? 0, FactionId: r?.factionId ?? 0, Sector: by * 8 + bx, LocationId: 0, BuildingType: r ? 18 : -1, Quality: r?.quality ?? 0 });",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WG2TOWNS-slot-record",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "const r = here.find((q) => q.slot[2] === i);",
-    "new": "const r = here.find((q) => q.slot[2] === n - 1 - i);",
+    "old": "    const r = here.find((q) => q.slot[2] === i);",
+    "new": "    const r = here.find((q) => q.slot[2] === n - 1 - i);",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WG2TOWNS-plane-height",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "yPos: -Math.round((sceneOf(door.z) - settle2Base(town)) / GLOBAL_SCALE),",
-    "new": "yPos: -Math.round(sceneOf(door.z) / GLOBAL_SCALE),",
+    "old": "    frame: settle2SubRecordFrame(door, px, py, bx, by), yPos: -Math.round((sceneOf(door.z) - settle2Base(town)) / GLOBAL_SCALE),",
+    "new": "    frame: settle2SubRecordFrame(door, px, py, bx, by), yPos: -Math.round(sceneOf(door.z) / GLOBAL_SCALE),",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WG2TOWNS-family-uninstalled",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "return c && settle2TownOf(c.ordinal) ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1;",
-    "new": "return c ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1;",
+    "old": "export const settle2FamilyIndexOf = (name) => { const c = settle2BlockOf(name); return c && settle2TownOf(c.ordinal) ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1; };",
+    "new": "export const settle2FamilyIndexOf = (name) => { const c = settle2BlockOf(name); return c ? settle2BlockIndex(c.ordinal, c.bx, c.by) : -1; };",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WG2TOWNS-shell-bits",
     "file": "src/world/settle2/settle2Shell.js",
-    "old": "| ((s.wall & 3) << 18)",
-    "new": "| ((s.wall & 3) << 17)",
+    "old": "    | ((s.wall & 3) << 18) | ((s.roofRec & 3) << 20) | (Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22) | ((s.stilts ? 1 : 0) << 27);",
+    "new": "    | ((s.wall & 3) << 17) | ((s.roofRec & 3) << 20) | (Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22) | ((s.stilts ? 1 : 0) << 27);",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WG2TOWNS-shell-footing",
     "file": "src/world/settle2/settle2Shell.js",
-    "old": "const base = s.stilts ? 0 : -s.foot,",
-    "new": "const base = 0,",
+    "old": "  const base = s.stilts ? 0 : -s.foot, roofTex = [SHELL_ROOF, s.roofRec], C = [[-hw, 0], [hw, 0], [hw, d], [-hw, d]];",
+    "new": "  const base = 0, roofTex = [SHELL_ROOF, s.roofRec], C = [[-hw, 0], [hw, 0], [hw, d], [-hw, d]];",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WG2TOWNS-shell-foot-ceil",
     "file": "src/world/settle2/settle2Shell.js",
-    "old": "(Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22)",
-    "new": "(Math.min(31, Math.floor(s.foot / SHELL_STEP_M)) << 22)",
+    "old": "    | ((s.wall & 3) << 18) | ((s.roofRec & 3) << 20) | (Math.min(31, Math.ceil(s.foot / SHELL_STEP_M - 1e-9)) << 22) | ((s.stilts ? 1 : 0) << 27);",
+    "new": "    | ((s.wall & 3) << 18) | ((s.roofRec & 3) << 20) | (Math.min(31, Math.floor(s.foot / SHELL_STEP_M)) << 22) | ((s.stilts ? 1 : 0) << 27);",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WG2TOWNS-location-own",
     "file": "src/world/settle2/settle2Location.js",
-    "old": "ground: Object.freeze({ own: true, avg: plane / WORLD_HEIGHT })",
-    "new": "ground: Object.freeze({ own: false, avg: plane / WORLD_HEIGHT })",
+    "old": "    settle2: Object.freeze({ id: town.id, ordinal: town.ordinal, print: at.region?.print ?? '', px, py, base: plane, ground: Object.freeze({ own: true, avg: plane / WORLD_HEIGHT }) }),",
+    "new": "    settle2: Object.freeze({ id: town.id, ordinal: town.ordinal, print: at.region?.print ?? '', px, py, base: plane, ground: Object.freeze({ own: false, avg: plane / WORLD_HEIGHT }) }),",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WG2TOWNS-location-index",
     "file": "src/world/settle2/settle2Location.js",
-    "old": "locationIndex: settle2LocationIndex(town.ordinal),",
-    "new": "locationIndex: settle2LocationIndex(0),",
+    "old": "    climate: where.climate ?? base.climate, locationIndex: settle2LocationIndex(town.ordinal),",
+    "new": "    climate: where.climate ?? base.climate, locationIndex: settle2LocationIndex(0),",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WG2TOWNS-terrain-seam",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (hasLocation && flattenAt?.own) avg = flattenAt.avg;",
-    "new": "if (hasLocation && flattenAt?.own && false) avg = flattenAt.avg;",
+    "old": "  if (hasLocation && flattenAt?.own) avg = flattenAt.avg;",
+    "new": "  if (hasLocation && flattenAt?.own && false) avg = flattenAt.avg;",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WG2TOWNS-terrain-water-rect",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);",
-    "new": "hasLocation ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);",
+    "old": "  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation && !flattenAt?.own ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // A published region's rivers and lakes - a town of its own ground its water too",
+    "new": "  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // A published region's rivers and lakes - a town of its own ground its water too",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WG2TOWNS-outline-skip",
     "file": "src/world/terrain/terrainTiles.js",
-    "old": "if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;",
-    "new": "if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;",
+    "old": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital || dfLocation.settle2) return null;   // A World 2.0 town stands whole on its own ground",
+    "new": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;   // A World 2.0 town stands whole on its own ground",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WG2TOWNS-held-pixel",
     "file": "src/scenes/settle2Host.js",
-    "old": "return p && !(p.source === SETTLE2_SOURCE && p.mapId === town.mapId >>> 0) ? p : null;",
-    "new": "return null;",
+    "old": "    return p && !(p.source === SETTLE2_SOURCE && p.mapId === town.mapId >>> 0) ? p : null;",
+    "new": "    return null;",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WG2TOWNS-wire-flatten",
     "file": "src/scenes/pixelBuild.js",
-    "old": "flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,",
-    "new": "flattenAt: dfLocation?.capital?.flattenAt ?? null,",
+    "old": "      flattenAt: dfLocation?.capital?.flattenAt ?? dfLocation?.settle2?.ground ?? null,   // A capital over several pixels flattened to its centre's ground; WG2-TOWNS: a World 2.0 town on its own",
+    "new": "      flattenAt: dfLocation?.capital?.flattenAt ?? null,   // A capital over several pixels flattened to its centre's ground; WG2-TOWNS: a World 2.0 town on its own",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WG2TOWNS-wire-stand-order",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| settle2LocationAt(px, py) || host.capitalLocationAt(px, py) ||",
-    "new": "|| host.capitalLocationAt(px, py) || settle2LocationAt(px, py) ||",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || settle2LocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WG2TOWNS-pool-tavern",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "const ROLE_POOL = Object.freeze({ tavern: 'tavern',",
-    "new": "const ROLE_POOL = Object.freeze({ tavern: 'general',",
+    "old": "const ROLE_POOL = Object.freeze({ tavern: 'tavern', shop: 'general', store: 'general', temple: 'temple', smith: 'weaponsmith', bank: 'bank', guild: 'fighters', barracks: 'house1' });",
+    "new": "const ROLE_POOL = Object.freeze({ tavern: 'general', shop: 'general', store: 'general', temple: 'temple', smith: 'weaponsmith', bank: 'bank', guild: 'fighters', barracks: 'house1' });",
     "tests": [
       "test/world/settle2/wg2towns_freeware.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WG2TOWNS-cast-record",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "subRecords?.[d.record]?.interior ?? null",
-    "new": "subRecords?.[d.record + 1]?.interior ?? null",
+    "old": "  if (!m.has(k)) m.set(k, blocksFile.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[d.record]?.interior ?? null);",
+    "new": "  if (!m.has(k)) m.set(k, blocksFile.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[d.record + 1]?.interior ?? null);",
     "tests": [
       "test/world/settle2/wg2towns_freeware.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WG2TOWNS-interior-frame",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "grid = fabricInteriorGrid(q, [0, 0], [0, -1], 0);",
-    "new": "grid = fabricInteriorGrid(q, [0, 0], [-1, 0], 0);",
+    "old": "  const q = [[-r.w / 2, 0], [r.w / 2, 0], [r.w / 2, r.d], [-r.w / 2, r.d]], grid = fabricInteriorGrid(q, [0, 0], [0, -1], 0);",
+    "new": "  const q = [[-r.w / 2, 0], [r.w / 2, 0], [r.w / 2, r.d], [-r.w / 2, r.d]], grid = fabricInteriorGrid(q, [0, 0], [-1, 0], 0);",
     "tests": [
       "test/world/settle2/wg2towns_freeware.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "WG2TOWNS-landing-departure",
     "file": "src/world/locationEntrance.js",
-    "old": "useNearestStartMarker: opts.useNearestStartMarker || !!dfLocation.settle2,",
-    "new": "useNearestStartMarker: opts.useNearestStartMarker,",
+    "old": "    useNearestStartMarker: opts.useNearestStartMarker || !!dfLocation.settle2, // A World 2.0 town's grid is its whole pixel, its edge the pixel's - it lands at its nearest way in, as a city does",
+    "new": "    useNearestStartMarker: opts.useNearestStartMarker, // A World 2.0 town's grid is its whole pixel, its edge the pixel's - it lands at its nearest way in, as a city does",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "WG2TOWNS-marker-height",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": ".filter(Boolean).map(([x, y]) => [...L(x, y), ground(x, y)]);",
-    "new": ".filter(Boolean).map(([x, y]) => [...L(x, y), 0]);",
+    "old": "  const markers = ways.map(([p, d, m0]) => clearSpot(at, p, d, m0)).filter(Boolean).map(([x, y]) => [...L(x, y), ground(x, y)]);",
+    "new": "  const markers = ways.map(([p, d, m0]) => clearSpot(at, p, d, m0)).filter(Boolean).map(([x, y]) => [...L(x, y), 0]);",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "WG2TOWNS-gate-cut",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "if (off < 8 && t > -6 && t < len + 6) cut.push(",
-    "new": "if (off < 0 && t > -6 && t < len + 6) cut.push(",
+    "old": "          if (off < 8 && t > -6 && t < len + 6) cut.push([t - FEATURE_M.opening / 2 - FEATURE_M.tower + 0.5, t + FEATURE_M.opening / 2 + FEATURE_M.tower - 0.5]);",
+    "new": "          if (off < 0 && t > -6 && t < len + 6) cut.push([t - FEATURE_M.opening / 2 - FEATURE_M.tower + 0.5, t + FEATURE_M.opening / 2 + FEATURE_M.tower - 0.5]);",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "WG2TOWNS-lintel",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "slab(mb, STONE, -o, f.clear, -d, o, f.tall, d, DARK);",
-    "new": "slab(mb, STONE, -o, 0, -d, o, f.tall, d, DARK);",
+    "old": "    slab(mb, STONE, -o, f.clear, -d, o, f.tall, d, DARK);",
+    "new": "    slab(mb, STONE, -o, 0, -d, o, f.tall, d, DARK);",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "WG2TOWNS-family-solid",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false });",
-    "new": "registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false, solid: false });",
+    "old": "  registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false });",
+    "new": "  registerCustomModelFamily({ owns: isSettle2ModelId, build: settle2Model, keep: 384, climateFree: false, solid: false });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "WG2TOWNS-dock-level",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "(water(p[0], p[1])?.surface ?? -Infinity) + 0.6)), bed",
-    "new": "(water(p[0], p[1])?.surface ?? -Infinity) - 0.6)), bed",
+    "old": "      const level = Math.max(ground(f.at[0], f.at[1]), ...span.map((p) => (water(p[0], p[1])?.surface ?? -Infinity) + 0.6)), bed = Math.min(...span.map((p) => ground(p[0], p[1])));",
+    "new": "      const level = Math.max(ground(f.at[0], f.at[1]), ...span.map((p) => (water(p[0], p[1])?.surface ?? -Infinity) - 0.6)), bed = Math.min(...span.map((p) => ground(p[0], p[1])));",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "WG2TOWNS-piles",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "slab(mb, PLANK, x - 0.15, -deep - 0.5, z - 0.15,",
-    "new": "slab(mb, PLANK, x - 0.15, -1, z - 0.15,",
+    "old": "    slab(mb, PLANK, x - 0.15, -deep - 0.5, z - 0.15, x + 0.15, y - 0.3, z + 0.15);",
+    "new": "    slab(mb, PLANK, x - 0.15, -1, z - 0.15, x + 0.15, y - 0.3, z + 0.15);",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "WG2TOWNS-platform-stair",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "    stair(mb, PLANK, f.piles, -hd - out, 1.4);\n",
-    "new": "\n",
+    "old": "    stair(mb, PLANK, f.piles, -hd - out, 1.4);",
+    "new": "",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "WG2TOWNS-tread",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "tread: 0.32, rise: 0.3,",
-    "new": "tread: 0.32, rise: 0.6,",
+    "old": "export const FEATURE_M = Object.freeze({ wall: 1.2, opening: 4.5, tower: 3, tread: 0.32, rise: 0.3, stair: 1.6, foot: 1, clear: 4.2 });",
+    "new": "export const FEATURE_M = Object.freeze({ wall: 1.2, opening: 4.5, tower: 3, tread: 0.32, rise: 0.6, stair: 1.6, foot: 1, clear: 4.2 });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "WG2TOWNS-platform-turn",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "at: f.at, z: f.level, dir: b.at.dir });",
-    "new": "at: f.at, z: f.level, dir: [0, 1] });",
+    "old": "      if (b) out.push({ kind: 'platform', id: deckId(DECK.platform, f.size[1], f.size[0] + 0.4, 0, f.stilts), at: f.at, z: f.level, dir: b.at.dir });",
+    "new": "      if (b) out.push({ kind: 'platform', id: deckId(DECK.platform, f.size[1], f.size[0] + 0.4, 0, f.stilts), at: f.at, z: f.level, dir: [0, 1] });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WG2TOWNS-retaining-level",
     "file": "src/world/settle2/settle2Features.js",
-    "old": "f.height), at: f.at, z: b.ground.level,",
-    "new": "f.height), at: f.at, z: b.ground.level + 1,",
+    "old": "      if (b) out.push({ kind: 'retaining', id: retainingId(b.footprint[0] + 2 * PAD_MARGIN_M, b.footprint[1] + 2 * PAD_MARGIN_M, f.height), at: f.at, z: b.ground.level, dir: f.dir });",
+    "new": "      if (b) out.push({ kind: 'retaining', id: retainingId(b.footprint[0] + 2 * PAD_MARGIN_M, b.footprint[1] + 2 * PAD_MARGIN_M, f.height), at: f.at, z: b.ground.level + 1, dir: f.dir });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WG2TOWNS-misc-turn",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "Math.round(((Math.atan2(-f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR)",
-    "new": "Math.round(((Math.atan2(f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR)",
+    "old": "  const yRotation = Math.round(((Math.atan2(-f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR);",
+    "new": "  const yRotation = Math.round(((Math.atan2(f.dir[0], f.dir[1]) * 180) / Math.PI) * -ROTATION_DIVISOR);",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WG2TOWNS-misc-height",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "YPos: -Math.round(f.h / GLOBAL_SCALE) + PROPS_OFFSET_Y,",
-    "new": "YPos: -Math.round(f.h / GLOBAL_SCALE),",
+    "old": "  return { ModelId: String(f.id), ModelIdNum: f.id, ObjectType: 0, XPos: Math.round((f.c[0] - ox) / GLOBAL_SCALE), YPos: -Math.round(f.h / GLOBAL_SCALE) + PROPS_OFFSET_Y,",
+    "new": "  return { ModelId: String(f.id), ModelIdNum: f.id, ObjectType: 0, XPos: Math.round((f.c[0] - ox) / GLOBAL_SCALE), YPos: -Math.round(f.h / GLOBAL_SCALE),",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "WG2TOWNS-features-unplaced",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "{ tile, closed, flats, models }",
-    "new": "{ tile, closed, flats }",
+    "old": "  const json = portBlockJson(settle2BlockName(at.town.ordinal, bx, by), { tile, closed, flats, models });",
+    "new": "  const json = portBlockJson(settle2BlockName(at.town.ordinal, bx, by), { tile, closed, flats });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "WG2TOWNS-ring-gap",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "hd = b.footprint[1] / 2 + PAD_MARGIN, g = 1.2;",
-    "new": "hd = b.footprint[1] / 2 + PAD_MARGIN, g = 0;",
+    "old": "  const hw = b.footprint[0] / 2 + PAD_MARGIN, hd = b.footprint[1] / 2 + PAD_MARGIN, g = 1.2;",
+    "new": "  const hw = b.footprint[0] / 2 + PAD_MARGIN, hd = b.footprint[1] / 2 + PAD_MARGIN, g = 0;",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "WG2TOWNS-well-shut",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "if (f.kind === 'well') return [r(f.c, 1.3, 1.3)];",
-    "new": "if (f.kind === 'well') return [];",
+    "old": "  if (f.kind === 'well') return [r(f.c, 1.3, 1.3)];",
+    "new": "  if (f.kind === 'well') return [];",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "WG2TOWNS-landforms-gate",
     "file": "src/scenes/settle2Host.js",
-    "old": "  if (!landform) { _live = null; return { locationAt: () => null, peekAt: () => null }; }\n",
-    "new": "\n",
+    "old": "  if (!landform) { _live = null; return { locationAt: () => null, peekAt: () => null }; }",
+    "new": "",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "WG2TOWNS-landforms-read",
     "file": "src/scenes/settle2Host.js",
-    "old": "host, landform = landformsOn() })",
-    "new": "host, landform = true })",
+    "old": "export function createSettle2Places({ locationIndex, worldPlaces, maps, base, host, landform = landformsOn() }) {",
+    "new": "export function createSettle2Places({ locationIndex, worldPlaces, maps, base, host, landform = true }) {",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "WG2TOWNS-marker-clear",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "if (!near(x, y) && !at.region.waterAt(x, y)) return [x, y];",
-    "new": "return [x, y];",
+    "old": "    if (!near(x, y) && !at.region.waterAt(x, y)) return [x, y];",
+    "new": "    return [x, y];",
     "tests": [
       "test/world/settle2/wg2towns.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "WG2TOWNS-footing-law",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "return Math.max(0.5, Number.isFinite(low) ? b.at.z - low + 0.3 : 0.5);",
-    "new": "return 0.5;",
+    "old": "  return Math.max(0.5, Number.isFinite(low) ? b.at.z - low + 0.3 : 0.5);",
+    "new": "  return 0.5;",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "WG2TOWNS-band-half-cell",
     "file": "src/world/settle2/settle2Blocks.js",
-    "old": "band = AUTO * Math.SQRT1_2,",
-    "new": "band = AUTO / 2,",
+    "old": "  const n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]], C = CAPITAL_CLOSED_BYTE, band = AUTO * Math.SQRT1_2, r = (c, hw, hd) => ({ c, n, t, hw, hd, byte: C });",
+    "new": "  const n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]], C = CAPITAL_CLOSED_BYTE, band = AUTO / 2, r = (c, hw, hd) => ({ c, n, t, hw, hd, byte: C });",
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]

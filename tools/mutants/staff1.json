@@ -1,20 +1,156 @@
 [
-  { "name": "STAFF1-anyone-staff", "file": "src/net/staffCommands.js", "old": "Array.isArray(glyphs) && glyphs.some((g) => STAFF_GLYPHS.includes(g));", "new": "Array.isArray(glyphs);", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-mod-staff", "file": "src/net/staffCommands.js", "old": "['dev', 'dm', 'shadowfang']);", "new": "['dev', 'dm', 'shadowfang', 'mod']);", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-pixel-unbounded", "file": "src/net/staffCommands.js", "old": "if (px >= TP_MAP_W || py >= TP_MAP_H)", "new": "if (px > TP_MAP_W || py > TP_MAP_H)", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-bare-toggle-on", "file": "src/net/staffCommands.js", "old": "word === undefined ? !was : null", "new": "word === undefined ? true : null", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-heal-takes-args", "file": "src/net/staffCommands.js", "old": "  if (words.length) return { error: `/${name} takes nothing after it.` };\n", "new": "", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-exact-not-first", "file": "src/net/staffCommands.js", "old": "return rungs[0] ?? rungs[1] ?? rungs[2];", "new": "return rungs[1] ?? rungs[0] ?? rungs[2];", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-longest-begun", "file": "src/net/staffCommands.js", "old": "if (!rungs[r] || n.length < fold(rungs[r].name).length) rungs[r] = p;", "new": "if (!rungs[r]) rungs[r] = p;", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-player-first-begun", "file": "src/net/staffCommands.js", "old": "    if (n === want) return p;\n", "new": "", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-hyphen-kept", "file": "src/net/staffCommands.js", "old": ".replace(/[\\s-]+/g, ' ')", "new": ".replace(/\\s+/g, ' ')", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-god-not-withheld", "file": "src/characters/playerEntity.js", "old": "{ if (_staff.god || staffFrozen()) return true; try {", "new": "{ if (staffFrozen()) return true; try {", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-switch-truthy", "file": "src/characters/playerEntity.js", "old": "if (typeof god === 'boolean') _staff.god = god;", "new": "if (god !== undefined) _staff.god = !!god;", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-fly-unwired", "file": "src/scenes/shared.js", "old": "|| staffFly() || freeFlight() || dragonAloft();", "new": "|| freeFlight() || dragonAloft();",
-    "note": "Re-aimed by content (DRAGON5): the term's tamed dragon after the spectator's flight.", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-dungeon-fly-unwired", "file": "src/scenes/dungeonContext.js", "old": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded() || staffFly(),", "new": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded(),", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-ungated", "file": "src/scenes/world.js", "old": "const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\\/godmode\\b/i, '/god'), staffPowers())) : null;", "new": "const staffCmd = parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\\/godmode\\b/i, '/god'), staffPowers());", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-testbuild-shipped", "file": "src/scenes/world.js", "old": "const TEST_GODMODE = false;", "new": "const TEST_GODMODE = true;", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-title-lost-keeps-god", "file": "src/scenes/world.js", "old": "    if (!isStaffT(_staffGlyphs)) setStaffPowers({ god: false, fly: false });", "new": "", "tests": ["test/net/staff1.test.js"] },
-  { "name": "STAFF1-no-fade", "file": "src/scenes/world.js", "old": "    hudFade.smashHUDToBlack();   // teleportTo's arrival lifts it", "new": "    // teleportTo's arrival lifts it", "tests": ["test/net/staff1.test.js"] }
+  {
+    "name": "STAFF1-anyone-staff",
+    "file": "src/net/staffCommands.js",
+    "old": "export const isStaff = (glyphs) => Array.isArray(glyphs) && glyphs.some((g) => STAFF_GLYPHS.includes(g));",
+    "new": "export const isStaff = (glyphs) => Array.isArray(glyphs);",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-mod-staff",
+    "file": "src/net/staffCommands.js",
+    "old": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);",
+    "new": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang', 'mod']);",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-pixel-unbounded",
+    "file": "src/net/staffCommands.js",
+    "old": "      if (px >= TP_MAP_W || py >= TP_MAP_H)\n        return { error: `A map pixel is x 0-${TP_MAP_W - 1}, y 0-${TP_MAP_H - 1}.` };",
+    "new": "      if (px > TP_MAP_W || py > TP_MAP_H) return { error: `A map pixel is x 0-${TP_MAP_W - 1}, y 0-${TP_MAP_H - 1}.` };",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-bare-toggle-on",
+    "file": "src/net/staffCommands.js",
+    "old": "const onOff = (word, was) => (word === 'on' ? true : word === 'off' ? false : word === undefined ? !was : null);",
+    "new": "const onOff = (word, was) => (word === 'on' ? true : word === 'off' ? false : word === undefined ? true : null);",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-heal-takes-args",
+    "file": "src/net/staffCommands.js",
+    "old": "  if (words.length) return { error: `/${name} takes nothing after it.` };\n  return { cmd: name };",
+    "new": "  return { cmd: name };",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-exact-not-first",
+    "file": "src/net/staffCommands.js",
+    "old": "  return rungs[0] ?? rungs[1] ?? rungs[2];",
+    "new": "  return rungs[1] ?? rungs[0] ?? rungs[2];",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-longest-begun",
+    "file": "src/net/staffCommands.js",
+    "old": "    if (!rungs[r] || n.length < fold(rungs[r].name).length) rungs[r] = p;",
+    "new": "    if (!rungs[r]) rungs[r] = p;",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-player-first-begun",
+    "file": "src/net/staffCommands.js",
+    "old": "    if (n === want) return p;\n    if (!begins && n.startsWith(want)) begins = p;",
+    "new": "    if (!begins && n.startsWith(want)) begins = p;",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-hyphen-kept",
+    "file": "src/net/staffCommands.js",
+    "old": "    .replace(/[\\s-]+/g, ' ')",
+    "new": "    .replace(/\\s+/g, ' ')",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-god-not-withheld",
+    "file": "src/characters/playerEntity.js",
+    "old": "{ if (_staff.god || staffFrozen()) return true; try {",
+    "new": "{ if (staffFrozen()) return true; try {",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-switch-truthy",
+    "file": "src/characters/playerEntity.js",
+    "old": "if (typeof god === 'boolean') _staff.god = god;",
+    "new": "if (god !== undefined) _staff.god = !!god;",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-fly-unwired",
+    "file": "src/scenes/shared.js",
+    "old": "|| staffFly() || freeFlight() || dragonAloft();",
+    "new": "|| freeFlight() || dragonAloft();",
+    "note": "Re-aimed by content (DRAGON5): the term's tamed dragon after the spectator's flight.",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-dungeon-fly-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded() || staffFly(),",
+    "new": "hasActiveEffect(playerEntity, 'levitate') && !levitateWarded(),",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-ungated",
+    "file": "src/scenes/world.js",
+    "old": "const staffCmd = isStaffT(staffGlyphs()) ? (parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\\/godmode\\b/i, '/god'), staffPowers())) : null;",
+    "new": "const staffCmd = parseDragonCommand(text) ?? parseStaffLine(text.replace(/^\\/godmode\\b/i, '/god'), staffPowers());",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-testbuild-shipped",
+    "file": "src/scenes/world.js",
+    "old": "const TEST_GODMODE = false;",
+    "new": "const TEST_GODMODE = true;",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-title-lost-keeps-god",
+    "file": "src/scenes/world.js",
+    "old": "    if (!isStaffT(_staffGlyphs)) setStaffPowers({ god: false, fly: false });",
+    "new": "",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF1-no-fade",
+    "file": "src/scenes/world.js",
+    "old": "    hudFade.smashHUDToBlack();   // teleportTo's arrival lifts it",
+    "new": "    // teleportTo's arrival lifts it",
+    "tests": [
+      "test/net/staff1.test.js"
+    ]
+  }
 ]

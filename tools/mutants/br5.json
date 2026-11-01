@@ -224,8 +224,8 @@
   {
     "name": "BR5-mod-switch-the-game",
     "file": "src/systems/modSettings.js",
-    "old": "which the original game never shows.",
-    "new": "which classic Daggerfall never shows.",
+    "old": "            'See your shield in first person, which the original game never shows. It is drawn in its own metal, ' +",
+    "new": "            'See your shield in first person, which classic Daggerfall never shows. It is drawn in its own metal, ' +",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "BR5-patreon-page-old-name",
     "file": "server-account/src/patreon.js",
-    "old": "+ `<title>${esc(heading)} - DFO Online</title><style>`",
-    "new": "+ `<title>${esc(heading)} - Daggerfall</title><style>`",
+    "old": "    `<title>${esc(heading)} - DFO Online</title><style>` + // BR5: the product's name on the page a player is sent back to",
+    "new": "    `<title>${esc(heading)} - Daggerfall</title><style>` + // BR5: the product's name on the page a player is sent back to",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -345,7 +345,7 @@
   {
     "name": "BR5-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct232';",
+    "old": "export const ACCOUNT_VERSION = 'acct243';",
     "new": "export const ACCOUNT_VERSION = 'acct123';",
     "tests": [
       "test/server/legacy7_service.test.js",

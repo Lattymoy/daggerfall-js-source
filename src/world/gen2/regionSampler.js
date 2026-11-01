@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 THE SAMPLER (bible/03-World/World-2-Canon.md, "Reading a bake"): what a client reads of a decoded bake - the
+// WG2 THE SAMPLER ("Reading a bake"): what a client reads of a decoded bake - the
 // ground's height anywhere in it, its water, its byte and climate a pixel, and the environment a plant or a town asks
 // for. Runtime and worker-safe: exact arithmetic over the bake's planes (WG-2), nothing worked out that the bake did
 // not already hold except the surface's grain and the rivers' channels, both pure in the point.

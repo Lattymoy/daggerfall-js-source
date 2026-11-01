@@ -4,7 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId } from '../world/arenaLocations.js';
-import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryPixelOfId, countryLocationIndex } from '../world/tamrielCountry.js';
+import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryPixelOfId, countryLocationIndex, COUNTRY_SOURCE } from '../world/tamrielCountry.js';
 import { capitalOnPixel, capitalPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceOrdinal, capitalSpanPixels, capitalsVersion, imperialOutskirts, capitalCentrePixel, capitalSlicePort } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
@@ -33,7 +33,7 @@ import { filedClimate, filedHeight } from '../world/land/landLayer.js';   // AUD
 import { placeOfRow } from '../world/worldWide/worldPlaces.js';   // FOUNDATION F1: a mod's addition as the registry would read it
 import { bayPlaceRows } from '../world/worldWide/bayPlaces.js';
 import { worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';   // FOUNDATION F1: a check when the door serves edits
-import { createSettle2Places } from './settle2Host.js';   // WG2-TOWNS: World 2.0's towns, standing
+import { createSettle2Places } from './settle2Host.js';   // World 2.0's towns, standing
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -273,7 +273,7 @@ export function createTamrielPlaces(host) {
   // and Arena's places as lists (a capital's pixel the capital's - the first list holds it), the countryside and the
   // lairs as pixel providers (the same rolls the build reads). Registered again when the land, Arena's standing or the
   // capitals' move; only where the land past the Bay stands (as every place past the Bay is).
-  const TESA_SOURCES = Object.freeze({ country: 'tesa-country', lairs: 'tesa-lairs' });   // TESA x AUDIT TESA II: the capitals and Arena's places the live list's (PAST_BAY_SOURCE, below)
+  const TESA_SOURCES = Object.freeze({ country: COUNTRY_SOURCE, lairs: 'tesa-lairs' });   // TESA x AUDIT TESA II: the capitals and Arena's places the live list's (PAST_BAY_SOURCE, below)
   const exteriorSize = (loc) => ({ w: loc?.exterior?.exteriorData?.width ?? 1, h: loc?.exterior?.exteriorData?.height ?? 1 });
   /** The countryside's place on a pixel past the Bay, as its location stands it. */
   function countryRow(px, py) {
@@ -334,7 +334,7 @@ export function createTamrielPlaces(host) {
       rows: () => pastBayPlaceRows({ pixels: _arenaTemplates ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(_arenaTemplates, p), capitals: !!_capitalBase }),   // WW7-5: each its location's index
     });
   }
-  // WG2-TOWNS (scenes/settle2Host.js): listed after the places past the Bay, so a place of theirs keeps its pixel
+  // Listed after the places past the Bay, so a place of theirs keeps its pixel
   const settle2 = createSettle2Places({ locationIndex, worldPlaces, maps, base: _capitalBase ?? _countryTemplates?.get(LOCATION_TYPES.TownVillage)?.[0] ?? null, host });
   /** AUDIT TESA II Z7: whether the countryside or a lair may stand on a pixel past the Bay - their rolls' own pick and the
    *  beach line (tamrielCountry.js countryMayStandAt, tamrielDungeons.js lairMayStandAt: no plateau summed, no name drawn;

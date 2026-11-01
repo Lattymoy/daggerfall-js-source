@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-A2-escape-on-the-field",
     "file": "src/ui/menu/menuPad.js",
-    "old": "if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)) { target.blur?.(); target = doc.body; }",
+    "old": "      if (\n        target &&\n        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)\n      ) {\n        target.blur?.();\n        target = doc.body;\n      }",
     "new": "",
     "tests": [
       "test/ui/settings/menupad.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-A3-row-to-one",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "'Controls/JoystickDeadzone': { min: 0, max: 0.9,",
-    "new": "'Controls/JoystickDeadzone': { min: 0, max: 1,",
+    "old": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 0.9,\n    step: 0.05,",
+    "new": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 1,\n    step: 0.05,",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-A3-clamp-to-one",
     "file": "src/systems/gamepad.js",
-    "old": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9),",
-    "new": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1),",
+    "old": "    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9), // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves",
+    "new": "    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1), // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-A5-lost-kept",
     "file": "src/ui/menu/menuPad.js",
-    "old": "    if (held) { state.lastEl = held; state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null; state.lostAt = null; }\n",
-    "new": "",
+    "old": "    if (held) {\n      state.lastEl = held;\n      state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null;\n      state.lostAt = null;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-A6-larger-axis-alone",
     "file": "src/ui/menu/menuPad.js",
-    "old": "  if (prev && still[prev]) return prev;\n",
-    "new": "",
+    "old": "  if (prev && still[prev]) return prev;\n  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up';",
+    "new": "  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up';",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-A9-called-a-deadzone",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Threshold\",",
-    "new": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Deadzone\",",
+    "old": "  'Controls/JoystickMovementThreshold': 'Gamepad Movement Threshold',",
+    "new": "  'Controls/JoystickMovementThreshold': 'Gamepad Movement Deadzone',",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-A10-stale-day-kept",
     "file": "src/systems/shopStock.js",
-    "old": "  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k];",
-    "new": "",
+    "old": "  if (store)\n    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
+    "new": "  // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
     "tests": [
       "test/systems/guildshelf.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-B8-covered-card-remembers",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (covered) for (const c of cards.values()) c.hpH = null;\n",
-    "new": "",
+    "old": "    if (covered) for (const c of cards.values()) c.hpH = null;\n    // AUDIT WK-U1: ...and THE COVER LIFTED IS A REPAINT. B8's forgetting is answered by the card's next paint, and a",
+    "new": "    // AUDIT WK-U1: ...and THE COVER LIFTED IS A REPAINT. B8's forgetting is answered by the card's next paint, and a",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-F4-in-settings",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "Turn on \"Rest with my party\" (${optionPath('card:peerSprites')}) to rest with them.",
-    "new": "Turn on \"Rest with my party\" in Settings to rest with them.",
+    "old": "    : `You rest on your own. Turn on \"Rest with my party\" (${optionPath('card:peerSprites')}) to rest with them.`; // ORG2: where the map puts it",
+    "new": "    : `You rest on your own. Turn on \"Rest with my party\" in Settings to rest with them.`; // ORG2: where the map puts it",
     "tests": [
       "test/systems/audit27d.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-D1-frame-alone",
     "file": "src/net/tradeSession.js",
-    "old": "\n      || tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX",
-    "new": "",
+    "old": "      tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX ||\n      tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX",
+    "new": "      tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX",
     "tests": [
       "test/systems/tradeinfo.test.js",
       "test/systems/audit27d.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-D1-revision-now",
     "file": "src/net/tradeSession.js",
-    "old": "o: TRADE_REV_MAX, items, g }).length;",
-    "new": "o: 0, items, g }).length;",
+    "old": "  JSON.stringify({ to, k: 'commit', s, r, o: TRADE_REV_MAX, items, g }).length;",
+    "new": "  JSON.stringify({ to, k: 'commit', s, r, o: 0, items, g }).length;",
     "tests": [
       "test/systems/tradeinfo.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-D3-mend-first",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  const local",
-    "new": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };\n  data = fullShareMarkers(data);\n  const local",
+    "old": "  const local =",
+    "new": "  data = fullShareMarkers(data);\n  const local =",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "AUDIT-D4-every-failure-gone",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
-    "new": "return { ok: false, reason: 'gone' };",
+    "old": "    return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "    return { ok: false, reason: 'gone' };",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "AUDIT-D4-every-failure-restore",
     "file": "src/systems/quest/questShare.js",
-    "old": "return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
-    "new": "return { ok: false, reason: 'restore' };",
+    "old": "    return { ok: false, reason: still && !still.questComplete && !still.questTombstoned ? 'restore' : 'gone' };",
+    "new": "    return { ok: false, reason: 'restore' };",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "AUDIT-D5-deliberate-unrecorded",
     "file": "src/systems/quest/questShare.js",
-    "old": "  said.add(key);\n  return !sync || fresh;",
-    "new": "  if (sync) said.add(key);\n  return !sync || fresh;",
+    "old": "  said.add(key);",
+    "new": "  if (sync) said.add(key);",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "AUDIT-D5-copy-out-of-key",
     "file": "src/systems/quest/questShare.js",
-    "old": "|${result?.guild ?? ''}|${copy}`;",
-    "new": "|${result?.guild ?? ''}`;",
+    "old": "  const key = `${acct}|${questName}|${result?.reason}|${result?.guild ?? ''}|${copy}`;",
+    "new": "  const key = `${acct}|${questName}|${result?.reason}|${result?.guild ?? ''}`;",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-S1-placer-drops-craft",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": ", ...(entry.station ? { station: entry.station } : {})",
-    "new": "",
+    "old": "        paid,\n        ...(entry.station ? { station: entry.station } : {}), // AUDIT HOME-STATIONS S1: a moved station keeps its craft",
+    "new": "        paid, // AUDIT HOME-STATIONS S1: a moved station keeps its craft",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-S8-hover-unnamed",
     "file": "src/systems/worldTooltips.js",
-    "old": "return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
-    "new": "return t ? { title: t } : null;",
+    "old": "  return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
+    "new": "  return t ? { title: t } : null;",
     "tests": [
       "test/ui/homestations.test.js"
     ]

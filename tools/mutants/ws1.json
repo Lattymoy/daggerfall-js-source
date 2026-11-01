@@ -47,8 +47,8 @@
   {
     "name": "empty-weapon-node-not-bare",
     "file": "src/systems/weaponSheathing.js",
-    "old": "preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE), bare: true, inheritOffsetFrom: 'sheath' });",
-    "new": "preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE) });",
+    "old": "      bare: true,\n      inheritOffsetFrom: 'sheath',\n    });",
+    "new": "    });",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "quiver-past-its-slots",
     "file": "src/systems/weaponSheathing.js",
-    "old": "      const n = Math.min(Math.max(0, Math.floor(Number(ammoCount) || 0)), slots.length);",
-    "new": "      const n = Math.max(0, Math.min(Math.floor(Number(ammoCount) || 0), 100));",
+    "old": "      const n = Math.min(Math.max(0, Math.floor(Number(ammoCount) || 0)), slots.length); // never `| 0`: a full quiver is asked for with MAX_SAFE_INTEGER",
+    "new": "      const n = Math.max(0, Math.min(Math.floor(Number(ammoCount) || 0), 100)); // never `| 0`: a full quiver is asked for with MAX_SAFE_INTEGER",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "no-scabbard-no-holster",
     "file": "src/systems/weaponSheathing.js",
-    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
-    "new": "    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "old": "    // (:352-360) - and for a thrown weapon nothing at all.\n    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };",
+    "new": "    // (:352-360) - and for a thrown weapon nothing at all.\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "flatten-under-ignored",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
+    "old": "      if (inside && !skipGeometryName(rec.name, hasMarkers))\n        emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
     "new": "      if (!skipGeometryName(rec.name, hasMarkers)) emit(rec, nextWorld, nextProps, nextChain, animFlags, parentRef);",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "flatten-exclude-ignored",
     "file": "src/formats/morrowind/mwNifMesh.js",
-    "old": "    if (excludeNode && lname === excludeNode) return;   // WS1: the masked subtree\n",
-    "new": "",
+    "old": "    if (excludeNode && lname === excludeNode) return; // WS1: the masked subtree\n    if (underNode && lname === underNode) inside = true; // WS1: from here down",
+    "new": "    if (underNode && lname === underNode) inside = true; // WS1: from here down",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "bone-axe-one-hand-addon-name",
     "file": "src/systems/weaponSheathing.js",
-    "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand',",
-    "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand',",
+    "old": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
+    "new": "  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 AxeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a \"Bip01 AxeOneHand\" too, at the same transform, that the reference never names)",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "thrown-bare-mesh-shown",
     "file": "src/systems/weaponSheathing.js",
-    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
-    "new": "    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "old": "    // (:352-360) - and for a thrown weapon nothing at all.\n    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });",
+    "new": "    // (:352-360) - and for a thrown weapon nothing at all.\n    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "quiver-untagged",
     "file": "src/systems/weaponSheathing.js",
-    "old": "bare: true, inheritOffsetFrom: 'sheath', tag: { i, n } });",
-    "new": "bare: true, inheritOffsetFrom: 'sheath' });",
+    "old": "          tag: { i, n },\n        });",
+    "new": "        });",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "holster-takes-own-offset",
     "file": "src/systems/weaponSheathing.js",
-    "old": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
-    "new": "    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes });\n    return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };\n  }\n  const shBytes",
+    "old": "    // (:352-360) - and for a thrown weapon nothing at all.\n    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });",
+    "new": "    // (:352-360) - and for a thrown weapon nothing at all.\n    if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes });",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "sheath-takes-own-offset",
     "file": "src/systems/weaponSheathing.js",
-    "old": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
-    "new": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
+    "old": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE, bare: true });",
+    "new": "  parts.push({ slot: 'sheath', bones: [bone], bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]

@@ -57,20 +57,36 @@ export function overFit(style) {
 /** The Steel set worn on the retail skeleton at rest, through the binder, its helm the `style` asked (the closed helm,
  *  the screenshot's, by default). */
 export async function wornSet(style = 'closed') {
-  const steel = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({ templateIndex, material: ARMOR_MATERIAL.Steel }));
+  const steel = [102, 103, 104, 105, 106, 107, 108].map((templateIndex) => ({
+    templateIndex,
+    material: ARMOR_MATERIAL.Steel,
+  }));
   const worn = composeWornArmor({ pieces: steel, armors: [], bodyPool: [], helmStyle: style });
   const skeletonBytes = new Uint8Array(readFileSync(new URL(`../${RETAIL_SKELETON}`, import.meta.url)));
   // no attach bones: the plate ships skinned, rebound by its own bones' names (rule 12), and the vendored hierarchy
   // carries none of base_anim's part nodes to attach at
-  const parts = worn.adds.map((a) => ({ slot: a.slot, partName: a.partName, bones: [],
-    bytes: new Uint8Array(readFileSync(new URL(`../src/assets/mw/meshes/${a.model}`, import.meta.url))) }));
+  const parts = worn.adds.map((a) => ({
+    slot: a.slot,
+    partName: a.partName,
+    bones: [],
+    bytes: new Uint8Array(readFileSync(new URL(`../src/assets/mw/meshes/${a.model}`, import.meta.url))),
+  }));
   const asm = await assembleFirstPersonArm({ skeletonBytes, parts });
   if (!asm.ok) throw new Error(asm.error);
-  return { style, asm, bind: plateBind(skeletonBytes).get('Bip01 Head'), head: asm.mats.get(asm.skeleton.byName.get('bip01 head')) };
+  return {
+    style,
+    asm,
+    bind: plateBind(skeletonBytes).get('Bip01 Head'),
+    head: asm.mats.get(asm.skeleton.byName.get('bip01 head')),
+  };
 }
 
-const unbind = (m, p) => { const d = [p[0] - m.t[0], p[1] - m.t[1], p[2] - m.t[2]]; return [0, 1, 2].map((c) => m.a[c] * d[0] + m.a[3 + c] * d[1] + m.a[6 + c] * d[2]); };
-const place = (m, p) => [0, 1, 2].map((r) => m.a[r * 3] * p[0] + m.a[r * 3 + 1] * p[1] + m.a[r * 3 + 2] * p[2] + m.t[r]);
+const unbind = (m, p) => {
+  const d = [p[0] - m.t[0], p[1] - m.t[1], p[2] - m.t[2]];
+  return [0, 1, 2].map((c) => m.a[c] * d[0] + m.a[3 + c] * d[1] + m.a[6 + c] * d[2]);
+};
+const place = (m, p) =>
+  [0, 1, 2].map((r) => m.a[r * 3] * p[0] + m.a[r * 3 + 1] * p[1] + m.a[r * 3 + 2] * p[2] + m.t[r]);
 
 /** The stand-in head raised `raise` up the head bone: SCENE_BODY's box as an ellipsoid in the scene, carried from the
  *  bind to the head bone's pose. */
@@ -78,16 +94,32 @@ export function standInHead({ bind, head }, raise) {
   const b = SCENE_BODY.head;
   const c = [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2 + (k === 2 ? raise : 0));
   const r = [0, 1, 2].map((k) => (b.max[k] - b.min[k]) / 2);
-  const positions = []; const indices = [];
-  const nu = 24; const nv = 16;
+  const positions = [];
+  const indices = [];
+  const nu = 24;
+  const nv = 16;
   for (let j = 0; j <= nv; j++) {
     for (let i = 0; i <= nu; i++) {
-      const th = (j / nv) * Math.PI; const ph = (i / nu) * 2 * Math.PI;
+      const th = (j / nv) * Math.PI;
+      const ph = (i / nu) * 2 * Math.PI;
       const s = [Math.sin(th) * Math.cos(ph), Math.sin(th) * Math.sin(ph), Math.cos(th)];
-      positions.push(...place(head, unbind(bind, [0, 1, 2].map((k) => c[k] + s[k] * r[k]))));
+      positions.push(
+        ...place(
+          head,
+          unbind(
+            bind,
+            [0, 1, 2].map((k) => c[k] + s[k] * r[k]),
+          ),
+        ),
+      );
     }
   }
-  for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = j * (nu + 1) + i; const d = a + nu + 1; indices.push(a, d, a + 1, a + 1, d, d + 1); }
+  for (let j = 0; j < nv; j++)
+    for (let i = 0; i < nu; i++) {
+      const a = j * (nu + 1) + i;
+      const d = a + nu + 1;
+      indices.push(a, d, a + 1, a + 1, d, d + 1);
+    }
   return { positions, indices };
 }
 
@@ -95,15 +127,28 @@ export function standInHead({ bind, head }, raise) {
 function idBuffer(meshes, eye) {
   const { width: W, height: H, fov, target } = VIEW;
   const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-  const nrm = (a) => { const l = Math.hypot(...a); return a.map((x) => x / l); };
+  const nrm = (a) => {
+    const l = Math.hypot(...a);
+    return a.map((x) => x / l);
+  };
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
   const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  const f = nrm(sub(target, eye)); const rt = nrm(cross(f, [0, 0, 1])); const up = cross(rt, f);
-  const fl = (H / 2) / Math.tan((fov * Math.PI) / 360);
-  const ids = new Uint8Array(W * H); const depth = new Float32Array(W * H).fill(Infinity);
+  const f = nrm(sub(target, eye));
+  const rt = nrm(cross(f, [0, 0, 1]));
+  const up = cross(rt, f);
+  const fl = H / 2 / Math.tan((fov * Math.PI) / 360);
+  const ids = new Uint8Array(W * H);
+  const depth = new Float32Array(W * H).fill(Infinity);
   for (const { positions: P, indices: I, id, shift } of meshes) {
     const proj = (i) => {
-      const p = sub([P[i * 3] - (shift ? shift[0] : 0), P[i * 3 + 1] - (shift ? shift[1] : 0), P[i * 3 + 2] - (shift ? shift[2] : 0)], eye);
+      const p = sub(
+        [
+          P[i * 3] - (shift ? shift[0] : 0),
+          P[i * 3 + 1] - (shift ? shift[1] : 0),
+          P[i * 3 + 2] - (shift ? shift[2] : 0),
+        ],
+        eye,
+      );
       const z = dot(p, f);
       return [W / 2 + (dot(p, rt) / z) * fl, H / 2 - (dot(p, up) / z) * fl, z];
     };
@@ -111,18 +156,22 @@ function idBuffer(meshes, eye) {
       const s = [proj(I[t]), proj(I[t + 1]), proj(I[t + 2])];
       const area = (s[1][0] - s[0][0]) * (s[2][1] - s[0][1]) - (s[2][0] - s[0][0]) * (s[1][1] - s[0][1]);
       if (Math.abs(area) < 1e-9) continue;
-      const x0 = Math.max(0, Math.floor(Math.min(s[0][0], s[1][0], s[2][0]))); const x1 = Math.min(W - 1, Math.ceil(Math.max(s[0][0], s[1][0], s[2][0])));
-      const y0 = Math.max(0, Math.floor(Math.min(s[0][1], s[1][1], s[2][1]))); const y1 = Math.min(H - 1, Math.ceil(Math.max(s[0][1], s[1][1], s[2][1])));
+      const x0 = Math.max(0, Math.floor(Math.min(s[0][0], s[1][0], s[2][0])));
+      const x1 = Math.min(W - 1, Math.ceil(Math.max(s[0][0], s[1][0], s[2][0])));
+      const y0 = Math.max(0, Math.floor(Math.min(s[0][1], s[1][1], s[2][1])));
+      const y1 = Math.min(H - 1, Math.ceil(Math.max(s[0][1], s[1][1], s[2][1])));
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
-          const px = x + 0.5; const py = y + 0.5;
+          const px = x + 0.5;
+          const py = y + 0.5;
           const w0 = ((s[1][0] - px) * (s[2][1] - py) - (s[2][0] - px) * (s[1][1] - py)) / area;
           const w1 = ((s[2][0] - px) * (s[0][1] - py) - (s[0][0] - px) * (s[2][1] - py)) / area;
           const w2 = 1 - w0 - w1;
           if (w0 < 0 || w1 < 0 || w2 < 0) continue;
           const z = w0 * s[0][2] + w1 * s[1][2] + w2 * s[2][2];
           if (z >= depth[y * W + x]) continue;
-          depth[y * W + x] = z; ids[y * W + x] = id;
+          depth[y * W + x] = z;
+          ids[y * W + x] = id;
         }
       }
     }
@@ -135,17 +184,26 @@ function idBuffer(meshes, eye) {
  *  screenshot drew it - or 'shipped', where the bake stands it now. */
 export function scalpRatio(set, { raise, eyeZ, helm: at = 'scene' }) {
   const { asm, head } = set;
-  const up = [head.a[0], head.a[3], head.a[6]];   // the head bone's own X - the way the bake lifted the helm
+  const up = [head.a[0], head.a[3], head.a[6]]; // the head bone's own X - the way the bake lifted the helm
   const back = at === 'scene' ? up.map((x) => x * overFit(set.style)) : null;
   const meshes = asm.pieces.map((p) => {
     const helm = p.slot.startsWith('hair');
-    return { positions: p.positions, indices: p.indices, id: helm ? (/visor/.test(p.material?.textureFile ?? '') ? ID.visor : ID.shell) : ID.body, shift: helm ? back : null };
+    return {
+      positions: p.positions,
+      indices: p.indices,
+      id: helm ? (/visor/.test(p.material?.textureFile ?? '') ? ID.visor : ID.shell) : ID.body,
+      shift: helm ? back : null,
+    };
   });
   meshes.push({ ...standInHead(set, raise), id: ID.head, shift: null });
   const ids = idBuffer(meshes, [0, -VIEW.back, eyeZ]);
   const col = (y) => ids[y * VIEW.width + VIEW.column];
   let shellTop = -1;
-  for (let y = 0; y < VIEW.height; y++) if (col(y) === ID.shell) { shellTop = y; break; }
+  for (let y = 0; y < VIEW.height; y++)
+    if (col(y) === ID.shell) {
+      shellTop = y;
+      break;
+    }
   if (shellTop < 0) throw new Error('the column misses the helm');
   let shellEnd = shellTop;
   while (shellEnd < VIEW.height && col(shellEnd) === ID.shell) shellEnd++;
@@ -176,6 +234,11 @@ if (isMain(import.meta.url)) {
   const r = await readLift();
   console.log(`scalp over helm, the column through the helm (the screenshot's: ${SCREENSHOT_SCALP_RATIO})`);
   console.log(`  eye   ${RAISES.map((x) => `raise ${x}`.padStart(9)).join('')}   -> the screenshot's at`);
-  for (const row of r.rows) console.log(`  ${String(row.eyeZ).padEnd(5)} ${row.ratios.map((x) => x.toFixed(2).padStart(9)).join('')}   -> ${row.raise == null ? 'outside the raises' : row.raise.toFixed(2)}`);
-  console.log(`  the head stands ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)} up its bone over the scene's; HELM_LIFT (the open helm's) is ${HELM_LIFT}`);
+  for (const row of r.rows)
+    console.log(
+      `  ${String(row.eyeZ).padEnd(5)} ${row.ratios.map((x) => x.toFixed(2).padStart(9)).join('')}   -> ${row.raise == null ? 'outside the raises' : row.raise.toFixed(2)}`,
+    );
+  console.log(
+    `  the head stands ${r.lo.toFixed(2)} to ${r.hi.toFixed(2)} up its bone over the scene's; HELM_LIFT (the open helm's) is ${HELM_LIFT}`,
+  );
 }

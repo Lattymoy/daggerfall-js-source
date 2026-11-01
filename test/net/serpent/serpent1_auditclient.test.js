@@ -269,7 +269,7 @@ test('AUDIT SERPENT D4/B8/B10/B11 and the words: the inspect card and the accoun
   assert.equal(profileSerpentLine(null), null);
   assert.equal(profileView({ record: { serpents: { slain: 2 } } }).serpents, 'Serpents slain: 2');
   // PIN MOVED (PROFILE-UI): the serpents slain are a plaque in the card's record row, said only when there is one
-  assert.match(src('src/ui/profileWindow.js'), /\['dfprofile-serpents', v\.serpents\], \['dfprofile-dragons', v\.dragons\], \['dfprofile-hours', v\.hours\], \['dfprofile-stars', v\.stars\], \['dfprofile-voyages', v\.voyages\]\]\.filter\(\(\[, t\]\) => t\);/);   // PIN MOVED (AUDIT DRAGON): the dragons slain after them; PIN MOVED: SD9b's Hours broken after them; PIN MOVED (STAR7): the fallen stars held; PIN MOVED (KETCH): the voyages sailed last
+  assert.match(src('src/ui/profileWindow.js'), /\['dfprofile-serpents', v\.serpents\],\n\s*\['dfprofile-dragons', v\.dragons\],\n\s*\['dfprofile-hours', v\.hours\],\n\s*\['dfprofile-stars', v\.stars\],\n\s*\['dfprofile-voyages', v\.voyages\],\n\s*\]\.filter\(\(\[, t\]\) => t\);/);   // PIN MOVED (AUDIT DRAGON): the dragons slain after them; PIN MOVED: SD9b's Hours broken after them; PIN MOVED (STAR7): the fallen stars held; PIN MOVED (KETCH): the voyages sailed last
   assert.match(src('src/ui/enhanced/enhancedAccount.js'), /const serpents = serpentRecordText\(flow\.account\.serpents\);\n\s+if \(serpents\) row\(t\('account\.card\.serpents', 'Serpents slain'\), serpents\);/);
   for (const w of SERPENT_NO_WORDS) assert.ok(SERPENT_NO_TEXT[w], `words for "${w}"`);
   assert.equal(SERPENT_NO_TEXT['it is already slain'], 'The serpent is already slain.');
@@ -292,7 +292,7 @@ test('AUDIT SERPENT M4/S1/L4/D2/D6/D5 and L2/B6/T4: the world\'s wiring and the 
   assert.match(w, /if \(offline\) \{ serpentHost\?\.leave\(\); serpentOmen\?\.reset\(\); \}/);
   assert.match(w, /const level = spoilsLevel\(entry\.ch === characterIdOf\(playerEntity\) \? playerEntity\.level \?\? 1 : Number\(entry\.lv\) \|\| c\.l \|\| 1, c\.l\);/);
   assert.match(w, /return spoilsLock\(\(\) => serpentSpoils\.grant\(/);
-  assert.match(src('src/scenes/naval/navalTally.js'), /if \(segmentOfTarget\(e\.target\) != null\) \{ t\.hits\+\+; t\.ended\+\+; \}/);   // PIN MOVED (AUDIT 2026-10-17: the tally a module the host wires)
+  assert.match(src('src/scenes/naval/navalTally.js'), /if \(segmentOfTarget\(e\.target\) != null\) \{\n\s*t\.hits\+\+;\n\s*t\.ended\+\+;\n\s*\}/);   // PIN MOVED (AUDIT 2026-10-17: the tally a module the host wires)
   // PIN MOVED (CREW-HOLD, 2026-10-06): its men over a player's crew's toughness (playerMen), the brace still halving hull and sail
   assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n[^\n]*\n\s+const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men, \.\.\.\(k < 1 \? \{ hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : \{\}\) \}, clock\);/);
   assert.match(n, /const v = best\.e \? velocityOf\(best\.e\.ship\) : best\.v;/);

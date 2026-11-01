@@ -49,8 +49,8 @@ import { drawText, measureText } from '../text.js';
 import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from '../native/nativePanel.js';
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { drawEnhancedToasts, releaseEnhancedToasts } from '../enhanced/enhancedNotice.js';
-import { processGrammar } from '../../systems/textManager.js';   // L10N3g: PopupText.AddText runs the grammar (PopupText.cs:117-118)
-import { timeScale } from '../../systems/timeScale.js';   // CSA-G: PopupText.Update counts Time.deltaTime, which the time scale scales
+import { processGrammar } from '../../systems/textManager.js'; // L10N3g: PopupText.AddText runs the grammar (PopupText.cs:117-118)
+import { timeScale } from '../../systems/timeScale.js'; // CSA-G: PopupText.Update counts Time.deltaTime, which the time scale scales
 
 /** AUDIT FONT F1: every model gets a name of its own, so two never
  *  share one DOM column - see ui/enhanced/enhancedHudText.js's header for why
@@ -59,11 +59,11 @@ import { timeScale } from '../../systems/timeScale.js';   // CSA-G: PopupText.Up
  *  instances agreeing on a default. */
 let _hudTextSeq = 0;
 
-export const HUD_TEXT_POP_DELAY = 1.0;      // PopupText.popDelay
-export const HUD_TEXT_MAX_ROWS = 7;         // PopupText.maxRows
-export const HUD_TEXT_SPACING = 1;          // PopupText.textSpacing
-export const HUD_TEXT_RUBBERBAND = 0.8;     // PopupText.rubberbandFactor
-export const HUD_TEXT_TOP = 4;              // PopupText.Draw's `float y = 4`
+export const HUD_TEXT_POP_DELAY = 1.0; // PopupText.popDelay
+export const HUD_TEXT_MAX_ROWS = 7; // PopupText.maxRows
+export const HUD_TEXT_SPACING = 1; // PopupText.textSpacing
+export const HUD_TEXT_RUBBERBAND = 0.8; // PopupText.rubberbandFactor
+export const HUD_TEXT_TOP = 4; // PopupText.Draw's `float y = 4`
 
 export class HudText {
   constructor(key = null) {
@@ -201,7 +201,7 @@ export class HudText {
     const drawn = this.lines.slice(0, maxCount + 1);
     return {
       rows: drawn.map((l) => l.text),
-      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames
+      ids: drawn.map((l) => l.id), // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames
       slide: this.timer < 0 ? this.timer / HUD_TEXT_POP_DELAY : 0,
     };
   }
@@ -217,7 +217,8 @@ export class HudText {
    *  gate they already had, and on the classic skin this is nothing at
    *  all - which is exactly what the classic did with those frames. */
   hide() {
-    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);
+    if (isEnhanced() && typeof document !== 'undefined')
+      drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);
   }
 
   /** EVERY ALLOCATION HAS AN OWNER (AUDIT FONT F1): a model whose host
@@ -246,7 +247,9 @@ export class HudText {
    *  window. A window slot is the HOST's to know, and a fourth
    *  positional argument here is a slot the window sweep reserves for
    *  the scale (audit24 wave40). */
-  observe(covered) { this.covered = !!covered; }
+  observe(covered) {
+    this.covered = !!covered;
+  }
 
   /** PopupText.Draw verbatim, in NativePanel coordinates - and, under
    *  the enhanced skin, the same frame handed to the notice stack as
@@ -261,9 +264,9 @@ export class HudText {
     }
     if (!font || !this.lines.length) return;
     const m = nativeMetrics(canvas);
-    const rowH = font.fnt.fixedHeight;   // TextLabel.TextHeight = font.GlyphHeight
+    const rowH = font.fnt.fixedHeight; // TextLabel.TextHeight = font.GlyphHeight
     let y = HUD_TEXT_TOP;
-    if (this.timer < 0) y += (rowH + HUD_TEXT_SPACING) * this.timer / HUD_TEXT_POP_DELAY;
+    if (this.timer < 0) y += ((rowH + HUD_TEXT_SPACING) * this.timer) / HUD_TEXT_POP_DELAY;
     const maxCount = Math.min(this.lines.length, HUD_TEXT_MAX_ROWS);
     let count = 0;
     for (const l of this.lines) {

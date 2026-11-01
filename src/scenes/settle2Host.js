@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): THE WORLD 2.0 TOWNS IN THE STREAMED WORLD - each
+// THE WORLD 2.0 TOWNS IN THE STREAMED WORLD - each
 // installed region's town a location on its pixel, stood when the build asks (spawnStandHost.js asks it first past the Bay),
 // and a row in the world's places. It stands only where the registry gives it its pixel (a capital or an Arena place listed
 // before it keeps its own; the town says so once), and only with the Landforms row on (scenes/shared.js landformsOn, read

@@ -39,8 +39,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { call, forgetSession, handleShapeOk } from './accountClient.js';
 import { letterWords, LETTER_ID_RE, LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTERS_INBOX_MAX } from './letterLaw.js';
-import { GLYPHS_MAX, ID_RE } from './identityToken.js';   // AUDIT B7 (SHADOW-FANG): a letter's glyphs are bounded as a token's; NAME-AS: a friend's account, by its id's own shape
-import { agoLadder } from './social.js';   // AUDIT 68 S14-ago-text-duplicated: the friends list's own ladder, not a copy of it
+import { GLYPHS_MAX, ID_RE } from './identityToken.js'; // AUDIT B7 (SHADOW-FANG): a letter's glyphs are bounded as a token's; NAME-AS: a friend's account, by its id's own shape
+import { agoLadder } from './social.js'; // AUDIT 68 S14-ago-text-duplicated: the friends list's own ladder, not a copy of it
 
 /** How often the host looks at the box while the game runs. */
 export const MAIL_POLL_MS = 3 * 60 * 1000;
@@ -53,7 +53,8 @@ export const inboxCall = (io) => call(io, '/v1/mail/inbox');
 /** Send one: `{ ok, id, to }`, `to` the reader's handle as they spell it. NAME-AS: or to an account (`toAccount` - a
  *  friend's), `to` then the name the world reads their account by. The name goes beside the account: a service from
  *  before NAME-AS reads `to` alone, and every name it signed is an account's - the handle the friend's row shows. */
-export const sendCall = (io, { to, toAccount, subject, body }) => call(io, '/v1/mail/send', toAccount ? { to, toAccount, subject, body } : { to, subject, body });
+export const sendCall = (io, { to, toAccount, subject, body }) =>
+  call(io, '/v1/mail/send', toAccount ? { to, toAccount, subject, body } : { to, subject, body });
 /** Open one of mine: `{ letter: { id, from, title, glyphs, subject, body, sentAt, readAt } }` - and it is read now. */
 export const readCall = (io, id) => call(io, '/v1/mail/read', { id });
 /** Throw one away: `{ ok, id }`. */
@@ -68,15 +69,25 @@ export const deleteCall = (io, id) => call(io, '/v1/mail/delete', { id });
 
 const text = (v, max) => (typeof v === 'string' && v.length <= max ? v : null);
 const when = (v) => (Number.isSafeInteger(v) && v > 0 ? v : null);
-const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, GLYPHS_MAX) : []);   // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)
+const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, GLYPHS_MAX) : []); // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)
 
 /** A letter's head as the box keeps it, or null for one that is not a letter's shape.
  *  @returns {LetterHead|null} */
 export function letterHead(l) {
   if (!l || typeof l !== 'object' || typeof l.id !== 'string' || !LETTER_ID_RE.test(l.id)) return null;
-  const from = text(l.from, 64), subject = text(l.subject, LETTER_SUBJECT_MAX), sentAt = when(l.sentAt);
+  const from = text(l.from, 64),
+    subject = text(l.subject, LETTER_SUBJECT_MAX),
+    sentAt = when(l.sentAt);
   if (!from || !subject || !sentAt) return null;
-  return { id: l.id, from, title: text(l.title, 64), glyphs: glyphList(l.glyphs), subject, sentAt, read: l.read === true };
+  return {
+    id: l.id,
+    from,
+    title: text(l.title, 64),
+    glyphs: glyphList(l.glyphs),
+    subject,
+    sentAt,
+    read: l.read === true,
+  };
 }
 
 /** A whole letter as the box keeps it, or null.
@@ -151,30 +162,63 @@ export class MailBox {
     /** @type {Promise<any>|null} */ this._looking = null;
   }
 
-  _changed() { this.version++; }
+  _changed() {
+    this.version++;
+  }
 
   /** The service, or null - and when null the box says so (a sign-out between two looks). */
   _io() {
     const io = this.ioOf?.() ?? null;
-    if (!io?.secret) { if (this.state !== 'signed-out') { this.state = 'signed-out'; this.letters = []; this.unread = 0; this.opened.clear(); this._known = null; this._changed(); } return null; }
+    if (!io?.secret) {
+      if (this.state !== 'signed-out') {
+        this.state = 'signed-out';
+        this.letters = [];
+        this.unread = 0;
+        this.opened.clear();
+        this._known = null;
+        this._changed();
+      }
+      return null;
+    }
     return io;
   }
 
   /** A refusal the whole box answers to: `auth` forgets the session (accountClient's rule), a guest is a guest. True
    *  when it was one of those. */
   _boxRefusal(io, error) {
-    if (error === 'auth') { forgetSession(io?.storage); this.state = 'signed-out'; this.letters = []; this.unread = 0; this.opened.clear(); this._known = null; this.error = error; this._changed(); return true; }
-    if (error === 'mail-needs-account') { this.state = 'guest'; this.letters = []; this.unread = 0; this.error = error; this._changed(); return true; }
+    if (error === 'auth') {
+      forgetSession(io?.storage);
+      this.state = 'signed-out';
+      this.letters = [];
+      this.unread = 0;
+      this.opened.clear();
+      this._known = null;
+      this.error = error;
+      this._changed();
+      return true;
+    }
+    if (error === 'mail-needs-account') {
+      this.state = 'guest';
+      this.letters = [];
+      this.unread = 0;
+      this.error = error;
+      this._changed();
+      return true;
+    }
     return false;
   }
 
   /** Is a look due (the host's poll)? */
-  due(nowMs = this.now()) { return !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS); }
+  due(nowMs = this.now()) {
+    return !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS);
+  }
 
   /** LOOK AT THE BOX. One look at a time - a second call while one is out answers with the first. */
   refresh() {
     if (this._looking) return this._looking;
-    this._looking = this._refresh().finally(() => { this._looking = null; });
+    this._looking = this._refresh().finally(() => {
+      this._looking = null;
+    });
     return this._looking;
   }
 
@@ -194,7 +238,11 @@ export class MailBox {
   _take(r, io = this.ioOf?.() ?? null, restamp = true) {
     if (restamp) this.at = this.now();
     if (!r.ok) {
-      if (!this._boxRefusal(io, r.error)) { this.state = 'error'; this.error = r.error ?? 'server'; this._changed(); }
+      if (!this._boxRefusal(io, r.error)) {
+        this.state = 'error';
+        this.error = r.error ?? 'server';
+        this._changed();
+      }
       return { ok: false, error: r.error };
     }
     const letters = (Array.isArray(r.data?.letters) ? r.data.letters : []).map(letterHead).filter((l) => l !== null);
@@ -207,7 +255,7 @@ export class MailBox {
     this.max = Number.isSafeInteger(r.data?.max) ? r.data.max : LETTERS_INBOX_MAX;
     this.state = 'ready';
     this.error = null;
-    for (const id of [...this.opened.keys()]) if (!this._known.has(id)) this.opened.delete(id);   // thrown away elsewhere
+    for (const id of [...this.opened.keys()]) if (!this._known.has(id)) this.opened.delete(id); // thrown away elsewhere
     if (JSON.stringify([this.state, this.letters, this.error]) !== was) this._changed();
     if (fresh.length) this.onLetter?.({ kind: 'new', letters: fresh });
     else if (first && this.unread) this.onLetter?.({ kind: 'waiting', count: this.unread });
@@ -215,7 +263,9 @@ export class MailBox {
   }
 
   /** The host's frame: a look when one is due. Never awaited by a frame - it lands on its own. */
-  poll(nowMs = this.now()) { if (this.due(nowMs)) this.refresh(); }
+  poll(nowMs = this.now()) {
+    if (this.due(nowMs)) this.refresh();
+  }
 
   /**
    * SCALE4c: THE BOX AS A HEARTBEAT'S PART (net/heartbeat.js) - due when a look is (MAIL_POLL_MS since the last), riding
@@ -229,7 +279,8 @@ export class MailBox {
   heartbeatPart() {
     // the stamp at `body` is what keeps a look from going twice: the box is not due again for MAIL_POLL_MS (and a
     // heartbeat's tick waits while one is out)
-    const ready = (/** @type {number} */ nowMs, /** @type {number} */ early) => !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS - early);
+    const ready = (/** @type {number} */ nowMs, /** @type {number} */ early) =>
+      !this._looking && (this.at === 0 || nowMs - this.at >= MAIL_POLL_MS - early);
     /** @type {((v: any) => void)|null} */
     let settle = null;
     return {
@@ -237,9 +288,11 @@ export class MailBox {
       soon: (nowMs, early) => ready(nowMs, early),
       every: MAIL_POLL_MS,
       body: () => {
-        this.at = this.now();   // MAIL1: stamped even when there is no session (`_refresh`'s own rule)
-        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides
-        this._looking = new Promise((r) => { settle = r; });
+        this.at = this.now(); // MAIL1: stamped even when there is no session (`_refresh`'s own rule)
+        if (!this._io()) return undefined; // signed out: the box says so, and nothing rides
+        this._looking = new Promise((r) => {
+          settle = r;
+        });
         return true;
       },
       take: (r) => {
@@ -261,14 +314,19 @@ export class MailBox {
     const r = await readCall(io, id);
     if (!r.ok) {
       if (this._boxRefusal(io, r.error)) return { ok: false, error: r.error };
-      if (r.error === 'no-letter') { this._drop(id); }
+      if (r.error === 'no-letter') {
+        this._drop(id);
+      }
       return { ok: false, error: r.error };
     }
     const letter = letterWhole(r.data?.letter);
     if (!letter || letter.id !== id) return { ok: false, error: 'server' };
     this.opened.set(id, letter);
     const head = this.letters.find((l) => l.id === id);
-    if (head && !head.read) { head.read = true; this.unread = Math.max(0, this.unread - 1); }
+    if (head && !head.read) {
+      head.read = true;
+      this.unread = Math.max(0, this.unread - 1);
+    }
     this._changed();
     return { ok: true, letter };
   }
@@ -285,7 +343,10 @@ export class MailBox {
     const io = this._io();
     if (!io) return { ok: false, error: 'signed-out' };
     const r = await sendCall(io, { to: handle, toAccount, subject: words.subject, body: words.body });
-    if (!r.ok) { this._boxRefusal(io, r.error); return { ok: false, error: r.error }; }
+    if (!r.ok) {
+      this._boxRefusal(io, r.error);
+      return { ok: false, error: r.error };
+    }
     return { ok: true, to: typeof r.data?.to === 'string' ? r.data.to : handle };
   }
 
@@ -295,13 +356,19 @@ export class MailBox {
     if (!io) return { ok: false, error: 'signed-out' };
     const r = await deleteCall(io, id);
     if (!r.ok && this._boxRefusal(io, r.error)) return { ok: false, error: r.error };
-    if (r.ok || r.error === 'no-letter') { this._drop(id); return { ok: true }; }
+    if (r.ok || r.error === 'no-letter') {
+      this._drop(id);
+      return { ok: true };
+    }
     return { ok: false, error: r.error };
   }
 
   _drop(id) {
     const at = this.letters.findIndex((l) => l.id === id);
-    if (at >= 0) { if (!this.letters[at].read) this.unread = Math.max(0, this.unread - 1); this.letters.splice(at, 1); }
+    if (at >= 0) {
+      if (!this.letters[at].read) this.unread = Math.max(0, this.unread - 1);
+      this.letters.splice(at, 1);
+    }
     this.opened.delete(id);
     this._known?.delete(id);
     this._changed();

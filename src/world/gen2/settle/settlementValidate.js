@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Settlements"): WHAT A TOWN MUST BE before it is saved or
+// WG2 SETTLEMENT 2.0 ("Settlements"): WHAT A TOWN MUST BE before it is saved or
 // published - every building whole (buildingRecord.js), every door within a step of a street, none floating over its
 // ground or buried in it (its pads laid, its plinth, terrace or stilts accounted for) nor its door under the ground the
 // stream draws, every street joined to the plaza, no building standing on another or in the water, and all of it within

@@ -1,5 +1,4 @@
-// STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
-// tab for banned players as well", "add a ban status as well to player list", "so we can filter them") - THE PLAYERS
+// STAFF-BANNED (2026-10-23) - THE PLAYERS
 // LIST'S BAN STATUS AND FILTER (server-account/src/staffPlayers.js /v1/staff/players `ban`) and THE BANNED TAB
 // (server-account/src/staffCases.js /v1/staff/banned), driven through the real Worker on the node:sqlite database every
 // account pin stands on (test/accountDb.mjs): a banned account out of the list unless asked for, a lapsed ban none, the
@@ -34,11 +33,11 @@ async function extensionKey() {
   return { pub, proof };
 }
 
-/** The Worker with the panel set up: mob (an Admin and owner) and Asynian (a Moderator) signed in. `player(handle, cols)`
+/** The Worker with the panel set up: chief (an Admin and owner) and Asynian (a Moderator) signed in. `player(handle, cols)`
  *  lays an account in by hand (a handle, or a guest's name with `handle: null`), its ban among `cols`. */
 async function stand() {
-  const mobKey = await extensionKey();
-  const s = await standService({ DEVELOPER_HANDLES: 'SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${mobKey.pub}` });
+  const chiefKey = await extensionKey();
+  const s = await standService({ DEVELOPER_HANDLES: 'SirMcMobdon', MODERATOR_HANDLES: 'Asynian', OWNER_HANDLES: 'SirMcMobdon', OWNER_KEYS: `SirMcMobdon:${chiefKey.pub}` });
   const staff = async (path, body = {}, token = null) => {
     const res = await s.fetch(`https://accounts.invalid${path}`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.1', ...(token ? { [STAFF_SESSION_HEADER]: token } : {}) }, body: JSON.stringify(body),
@@ -46,11 +45,11 @@ async function stand() {
     return { status: res.status, body: await res.json().catch(() => null) };
   };
   for (const h of ['SirMcMobdon', 'Asynian']) await s.registered(h);
-  const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
-  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, mob.session);
+  const chief = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await chiefKey.proof('login', 'SirMcMobdon')) })).body;
+  const inv = await staff('/v1/staff/invite', { handle: 'Asynian' }, chief.session);
   const key = await extensionKey();
   const asy = (await staff('/v1/staff/enroll', { handle: 'Asynian', password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', 'Asynian')) })).body;
-  assert.ok(asy.session && mob.session);
+  assert.ok(asy.session && chief.session);
   const raw = s.env.DB._raw;
   let n = 0;
   const player = (handle, cols = {}) => {
@@ -60,7 +59,7 @@ async function stand() {
   };
   const idOf = (h) => raw.prepare('SELECT id FROM players WHERE handle = ?').get(h).id;
   const audits = (act) => raw.prepare('SELECT detail, role FROM staff_audit WHERE act = ? ORDER BY id').all(act).map((r) => ({ ...r }));
-  return { ...s, raw, staff, mob, asy, player, idOf, audits };
+  return { ...s, raw, staff, chief, asy, player, idOf, audits };
 }
 
 /** Every page of a list, its cursor handed back as the panel's scroller hands it. */
@@ -88,13 +87,13 @@ test('STAFF-BANNED: the doors are listed among the staff panel\'s, and the Banne
 test('STAFF-BANNED: THE PLAYERS LIST says each ban - none, until when, for good - and leaves the banned out unless asked; a lapsed ban is none (mutants: the default; the filter; the lapsed; the status; the clocks\' order; the view)', async () => {
   const s = await stand();
   const t = nowS();
-  const mobId = s.idOf('SirMcMobdon');
+  const chiefId = s.idOf('SirMcMobdon');
   s.player('Alpha');
-  s.player('Bravo', { banned_until: t + 3600, ban_reason: 'spam', banned_by: mobId });
-  s.player('Charlie', { banned_until: BAN_FOREVER, ban_reason: 'cheating', banned_by: mobId });
-  s.player('Delta', { banned_until: t - 100, ban_reason: 'old', banned_by: mobId });   // lapsed
+  s.player('Bravo', { banned_until: t + 3600, ban_reason: 'spam', banned_by: chiefId });
+  s.player('Charlie', { banned_until: BAN_FOREVER, ban_reason: 'cheating', banned_by: chiefId });
+  s.player('Delta', { banned_until: t - 100, ban_reason: 'old', banned_by: chiefId });   // lapsed
   const list = async (body) => {
-    const r = await s.staff('/v1/staff/players', body, s.mob.session);
+    const r = await s.staff('/v1/staff/players', body, s.chief.session);
     assert.equal(r.status, 200, JSON.stringify(r.body));
     return r.body.players.map((p) => [p.handle, p.banned, p.bannedUntil, p.banForever]);
   };
@@ -123,19 +122,19 @@ test('STAFF-BANNED: THE CURSOR PAGES THE FILTERED LIST - each account once, none
   const made = [];
   for (let i = 0; i < 60; i++) made.push(s.player(`P${String(i).padStart(2, '0')}`, i % 2 ? { banned_until: t + 600 + i } : {}));
   const handles = (ps) => ps.flatMap((p) => p.players.map((x) => x.handle));
-  const free = await pages(s, '/v1/staff/players', {}, s.mob.session);
-  const banned = await pages(s, '/v1/staff/players', { ban: 'banned' }, s.mob.session);
-  const every = await pages(s, '/v1/staff/players', { ban: 'all' }, s.mob.session);
+  const free = await pages(s, '/v1/staff/players', {}, s.chief.session);
+  const banned = await pages(s, '/v1/staff/players', { ban: 'banned' }, s.chief.session);
+  const every = await pages(s, '/v1/staff/players', { ban: 'all' }, s.chief.session);
   assert.deepEqual(handles(free), [...made.filter((_, i) => !(i % 2)).map((p) => p.handle), 'Asynian', 'SirMcMobdon'].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())));
   assert.deepEqual(handles(banned), made.filter((_, i) => i % 2).map((p) => p.handle));
   assert.deepEqual([free.length, banned.length, every.length], [2, 2, 3], 'pages of PLAYERS_PAGE');
   assert.ok(free[0].players.length === PLAYERS_PAGE && banned[0].players.length === PLAYERS_PAGE);
   assert.equal(handles(every).length, 62);
   // between two pages: a ban laid on an account the second page holds, and one lifted on the first's
-  const p1 = await s.staff('/v1/staff/players', {}, s.mob.session);
+  const p1 = await s.staff('/v1/staff/players', {}, s.chief.session);
   s.raw.prepare('UPDATE players SET banned_until = ? WHERE handle = ?').run(t + 600, 'P56');
   s.raw.prepare('UPDATE players SET banned_until = NULL WHERE handle = ?').run('P01');
-  const p2 = await s.staff('/v1/staff/players', { from: p1.body.next }, s.mob.session);
+  const p2 = await s.staff('/v1/staff/players', { from: p1.body.next }, s.chief.session);
   const seen = [...p1.body.players, ...p2.body.players].map((p) => p.handle);
   assert.equal(new Set(seen).size, seen.length, 'no account twice');
   assert.deepEqual(seen.filter((h) => h !== 'P56'), handles(free).filter((h) => h !== 'P56'), 'every other account where it was: none skipped');
@@ -149,9 +148,9 @@ test('STAFF-BANNED: SERVER LOAD - the banned filter and the Banned tab read migr
   const seen = [];
   const prepare = s.env.DB.prepare.bind(s.env.DB);
   s.env.DB.prepare = (sql) => { const st = prepare(sql); const bind = st.bind.bind(st); st.bind = (...a) => { seen.push([sql, a]); return bind(...a); }; return st; };
-  await s.staff('/v1/staff/players', { ban: 'banned' }, s.mob.session);
-  await s.staff('/v1/staff/banned', {}, s.mob.session);
-  await s.staff('/v1/staff/banned', { sort: 'newest' }, s.mob.session);
+  await s.staff('/v1/staff/players', { ban: 'banned' }, s.chief.session);
+  await s.staff('/v1/staff/banned', {}, s.chief.session);
+  await s.staff('/v1/staff/banned', { sort: 'newest' }, s.chief.session);
   s.env.DB.prepare = prepare;
   const plan = ([sql, a]) => s.raw.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(...a).map((r) => r.detail).join(' | ');
   const reads = seen.filter(([sql]) => /banned_until >/.test(sql));
@@ -176,14 +175,14 @@ test('STAFF-BANNED: THE BANNED TAB - every account banned now, a guest too, with
     assert.equal(r.status, 200, JSON.stringify(r.body));
   };
   await ban(bravo.id, 7, 'spam', s.asy.session, 'press-b001');
-  await ban(charlie.id, 0, 'cheating', s.mob.session, 'press-b002');
+  await ban(charlie.id, 0, 'cheating', s.chief.session, 'press-b002');
   await ban(troll.id, 1, 'slurs', s.asy.session, 'press-b003');
   // the acts a second apart, the troll's first
   for (const [id, at] of [[troll.id, t - 300], [bravo.id, t - 200], [charlie.id, t - 100]]) s.raw.prepare("UPDATE mod_actions SET at = ? WHERE target = ? AND kind = 'ban'").run(at, id);
   // when the ban was laid is its newest ban act: never an older ban, never another kind of act
   s.raw.prepare("INSERT INTO mod_actions (target, kind, until, actor, at) VALUES (?, 'ban', ?, ?, ?)").run(charlie.id, t - 900, s.idOf('Asynian'), t - 1000);
   s.raw.prepare("INSERT INTO mod_actions (target, kind, until, actor, at) VALUES (?, 'mute', ?, ?, ?)").run(troll.id, t + 600, s.idOf('Asynian'), t - 10);
-  const asyId = s.idOf('Asynian'), mobId = s.idOf('SirMcMobdon');
+  const asyId = s.idOf('Asynian'), chiefId = s.idOf('SirMcMobdon');
   const r = await s.staff('/v1/staff/banned', {}, s.asy.session);
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.equal(r.body.sort, 'urgent');
@@ -195,15 +194,15 @@ test('STAFF-BANNED: THE BANNED TAB - every account banned now, a guest too, with
   assert.deepEqual({ ...g, bannedUntil: 0 }, { id: troll.id, name: guestName, handle: null, bannedUntil: 0, banForever: false, banReason: 'slurs', bannedBy: { id: asyId, name: 'Asynian' }, bannedAt: t - 300, banAdmin: false });
   assert.ok(guestName.length > 0, 'a guest by its generated name');
   assert.deepEqual({ ...b, bannedUntil: 0 }, { id: bravo.id, name: 'Bravo', handle: 'Bravo', bannedUntil: 0, banForever: false, banReason: 'spam', bannedBy: { id: asyId, name: 'Asynian' }, bannedAt: t - 200, banAdmin: false });
-  assert.deepEqual(c, { id: charlie.id, name: 'Charlie', handle: 'Charlie', bannedUntil: BAN_FOREVER, banForever: true, banReason: 'cheating', bannedBy: { id: mobId, name: 'SirMcMobdon' }, bannedAt: t - 100, banAdmin: true });
+  assert.deepEqual(c, { id: charlie.id, name: 'Charlie', handle: 'Charlie', bannedUntil: BAN_FOREVER, banForever: true, banReason: 'cheating', bannedBy: { id: chiefId, name: 'SirMcMobdon' }, bannedAt: t - 100, banAdmin: true });
   assert.deepEqual(e, { id: echo.id, name: 'Echo', handle: 'Echo', bannedUntil: t + 30 * 86400, banForever: false, banReason: null, bannedBy: null, bannedAt: null, banAdmin: false });
   // the switch back: the newest ban first, one with no act last
-  const newest = await s.staff('/v1/staff/banned', { sort: 'newest' }, s.mob.session);
+  const newest = await s.staff('/v1/staff/banned', { sort: 'newest' }, s.chief.session);
   assert.deepEqual([newest.body.sort, newest.body.banned.map((x) => x.id)], ['newest', [charlie.id, bravo.id, troll.id, echo.id]]);
   // Unban from the tab, the panel's own: a Moderator's ban lifted by a Moderator; an Admin's by an Admin alone (banAdmin)
   assert.equal((await s.staff('/v1/staff/unban', { target: bravo.id }, s.asy.session)).status, 200);
   assert.deepEqual(await s.staff('/v1/staff/unban', { target: charlie.id }, s.asy.session).then((x) => [x.status, x.body]), [403, { error: 'admin-sanction' }]);
-  assert.equal((await s.staff('/v1/staff/unban', { target: charlie.id }, s.mob.session)).status, 200);
+  assert.equal((await s.staff('/v1/staff/unban', { target: charlie.id }, s.chief.session)).status, 200);
   assert.deepEqual((await s.staff('/v1/staff/banned', {}, s.asy.session)).body.banned.map((x) => x.id), [troll.id, echo.id], 'the unbanned leave the tab');
 });
 
@@ -239,14 +238,14 @@ test('STAFF-BANNED: THE BANNED TAB IS WRITTEN DOWN once in ten minutes a member 
   for (let i = 0; i < CASES_PAGE + 3; i++) s.player(`W${String(i).padStart(2, '0')}`, { banned_until: t + 600 + i });
   const real = { prepare: s.env.DB.prepare, batch: s.env.DB.batch };
   const c = countTrips(s.env.DB);
-  const first = await s.staff('/v1/staff/banned', {}, s.mob.session);
+  const first = await s.staff('/v1/staff/banned', {}, s.chief.session);
   const trips = c.take().trips;
   Object.assign(s.env.DB, real);
   assert.equal(first.status, 200);
   assert.ok(trips <= 2, `${trips} trips: the session's, then the read with its row`);
-  await s.staff('/v1/staff/banned', { from: first.body.next }, s.mob.session);
-  await s.staff('/v1/staff/banned', {}, s.mob.session);
-  await s.staff('/v1/staff/banned', { sort: 'newest' }, s.mob.session);
+  await s.staff('/v1/staff/banned', { from: first.body.next }, s.chief.session);
+  await s.staff('/v1/staff/banned', {}, s.chief.session);
+  await s.staff('/v1/staff/banned', { sort: 'newest' }, s.chief.session);
   await s.staff('/v1/staff/banned', {}, s.asy.session);
   assert.deepEqual(s.audits('banned-read').map((a) => [a.role, JSON.parse(a.detail).sort]), [['admin', 'urgent'], ['admin', 'newest'], ['moderator', 'urgent']]);
 });

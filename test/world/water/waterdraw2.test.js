@@ -12,7 +12,7 @@ import { WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE, ISLAND_DRAWN, CORNER_DRAWN, bu
 import { BlocksFile } from '../../../src/formats/blocksFile.js';
 import { dryPuddles, groundTileWet } from '../../../src/world/puddleDry.js';
 import { waterBedDepths } from '../../../src/world/water/waterBed.js';
-import { waterVotes } from '../../../src/world/water/waterLevel.js';   // PIN MOVED (WATER-LEVEL): the tiles mark the water the sheet stands at
+import { waterVotes } from '../../../src/world/water/waterLevel.js';
 
 const ARENA2 = process.env.ARENA2_PATH;
 /** A table's four entries for a record, turn by turn. */

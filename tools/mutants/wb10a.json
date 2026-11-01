@@ -2,8 +2,8 @@
   {
     "name": "WB10a-a-plain-song-read-as-pressed",
     "file": "src/systems/song/songPlayer.js",
-    "old": "  if (!p || typeof p !== 'object') return null;\n  const out = {};",
-    "new": "  if (!p) return null;\n  const out = {};",
+    "old": "  if (!p || typeof p !== 'object') return null;",
+    "new": "  if (!p) return null;",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB10a-the-press-never-routed",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    this._routePress(songPress(song));",
-    "new": "    this._routePress(null);",
+    "old": "    this._routePress(songPress(song)); // WB10a: and its press - none for every song but the ones that carry one",
+    "new": "    this._routePress(null); // WB10a: and its press - none for every song but the ones that carry one",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB10a-a-plain-song-left-on-the-press",
     "file": "src/systems/song/songPlayer.js",
-    "old": "    let to = this._fader;\n    if (press &&",
-    "new": "    let to = this._levelTo ?? this._fader;\n    if (press &&",
+    "old": "    let to = this._fader;",
+    "new": "    let to = this._levelTo ?? this._fader;",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB10a-the-press-rebuilt-each-song",
     "file": "src/systems/song/songPlayer.js",
-    "old": "      if (!this._press) {\n        const comp",
-    "new": "      if (true) {\n        const comp",
+    "old": "      if (!this._press) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB10a-a-song-without-its-press",
     "file": "src/systems/gate/gateScore.js",
-    "old": "  }, SCORE_LEVEL.war2, SCORE_PRESS.war2);",
-    "new": "  }, SCORE_LEVEL.war2);",
+    "old": "    SCORE_PRESS.war2,\n  );",
+    "new": "  );",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB10a-the-ceiling-at-the-clip",
     "file": "src/systems/gate/gateScore.js",
-    "old": "release: 0.25, ceiling: -1 });",
-    "new": "release: 0.25, ceiling: 0 });",
+    "old": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25, ceiling: -1 });",
+    "new": "const PRESS = Object.freeze({ threshold: -18, knee: 12, ratio: 4, attack: 0.003, release: 0.25, ceiling: 0 });",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB10a-the-pizzicato-back",
     "file": "src/systems/gate/gateScore.js",
-    "old": "export const SCORE_PROGRAMS = Object.freeze({ ostinato: 57,",
-    "new": "export const SCORE_PROGRAMS = Object.freeze({ ostinato: 45,",
+    "old": "  ostinato: 57,",
+    "new": "  ostinato: 45,",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB10a-the-hi-hat-back",
     "file": "src/systems/gate/gateScore.js",
-    "old": "highFloorTom: 43, tom: 45, lowMidTom: 47",
-    "new": "highFloorTom: 43, tom: 42, lowMidTom: 47",
+    "old": "  tom: 45,",
+    "new": "  tom: 42,",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB10a-the-bell-rung-high",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D3', 96);",
-    "new": "      if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D5', 96);",
+    "old": "        if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D3', 96); // the knell, low",
+    "new": "        if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D5', 96); // the knell, low",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB10a-the-theme-an-octave-up",
     "file": "src/systems/gate/gateScore.js",
-    "old": "    themeBars(w, 24, THEME_A, 'brass', 120);",
-    "new": "    themeBars(w, 24, THEME_A, 'brass', 120, 1);",
+    "old": "      themeBars(w, 24, THEME_A, 'brass', 120);",
+    "new": "      themeBars(w, 24, THEME_A, 'brass', 120, 1);",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB10a-the-arpeggio-back",
     "file": "src/systems/gate/gateScore.js",
-    "old": "ost: ['D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'Bb2', 'A2']",
-    "new": "ost: ['D3', 'D3', 'A3', 'D3', 'Bb3', 'D3', 'A3', 'F3']",
+    "old": "    ost: ['D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'Bb2', 'A2'],",
+    "new": "    ost: ['D3', 'D3', 'A3', 'D3', 'Bb3', 'D3', 'A3', 'F3'],",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB10a-a-third-in-the-stab",
     "file": "src/systems/gate/gateScore.js",
-    "old": "stab: ['D3', 'A3', 'D4'] }",
-    "new": "stab: ['D3', 'F3', 'A3'] }",
+    "old": "    stab: ['D3', 'A3', 'D4'],",
+    "new": "    stab: ['D3', 'F3', 'A3'],",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB10a-the-major-bflat-back",
     "file": "src/systems/gate/gateScore.js",
-    "old": "str: ['Db4', 'F4', 'Bb4']",
-    "new": "str: ['D4', 'F4', 'Bb4']",
+    "old": "    str: ['Db4', 'F4', 'Bb4'],",
+    "new": "    str: ['D4', 'F4', 'Bb4'],",
     "tests": [
       "test/systems/gate/wb10a_gate_score.test.js"
     ]

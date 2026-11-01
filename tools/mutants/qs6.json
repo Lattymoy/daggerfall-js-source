@@ -2,7 +2,7 @@
   {
     "name": "QS6-the-hold-never-cycles-so-the-key-is-a-press-again",
     "file": "src/systems/quickslots.js",
-    "old": "        st.cycled = true;\n        onCycle?.(slot, cycleQuickslot(slot, { entity }));   // the cycle raises the lamp itself",
+    "old": "        st.cycled = true;\n        onCycle?.(slot, cycleQuickslot(slot, { entity })); // the cycle raises the lamp itself",
     "new": "        st.cycled = false;\n        onCycle?.(slot, null);",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "QS6-the-release-of-a-hold-performs-the-slot-too",
     "file": "src/systems/quickslots.js",
-    "old": "      if (!st.cycled) onTap?.(slot);",
-    "new": "      onTap?.(slot); if (!st.cycled) {}",
+    "old": "      if (!st.cycled) onTap?.(slot);\n      else if (!st.disarmed) cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };",
+    "new": "      onTap?.(slot);\n      if (!st.cycled) {\n      } else if (!st.disarmed) cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QS6-the-cycle-does-not-wrap-so-a-hold-sticks-at-the-end",
     "file": "src/systems/quickslots.js",
-    "old": "    const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;\n    setSpellQuickslot(list[next]);",
-    "new": "    const next = Math.max(0, Math.min(list.length - 1, at + step));\n    setSpellQuickslot(list[next]);",
+    "old": "    const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;",
+    "new": "    const next = Math.max(0, Math.min(list.length - 1, at + step));",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "QS6-a-ghost-spell-is-readied-as-undefined",
     "file": "src/systems/quickslots.js",
-    "old": "  if (!r.spell) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
-    "new": "  if (false) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
+    "old": "  if (!r.spell) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "QS6-clearQuickslots-leaves-the-spell-slot-standing",
     "file": "src/systems/quickslots.js",
-    "old": "state[s] = null; spellState = null; hotbarSets.main.fill(null);",
-    "new": "state[s] = null; hotbarSets.main.fill(null);",
+    "old": "  spellState = null;\n  hotbarSets.main.fill(null);",
+    "new": "  hotbarSets.main.fill(null);",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "QS6-the-cycle-raises-no-lamp-so-the-HUD-never-shows-a-hold",
     "file": "src/systems/quickslots.js",
-    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
-    "new": "    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
+    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] }; // L10N3e: as shown",
+    "new": "    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] }; // L10N3e: as shown",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "QS6-the-lamp-never-falls",
     "file": "src/systems/quickslots.js",
-    "old": "  if (cycling) { cycling.ms -= ms; if (cycling.ms <= 0) cycling = null; }",
-    "new": "  if (cycling) { cycling.ms -= 0; }",
+    "old": "    cycling.ms -= ms;\n    if (cycling.ms <= 0) cycling = null;",
+    "new": "    cycling.ms -= 0;",
     "tests": [
       "test/systems/qs6_spellslot.test.js"
     ]

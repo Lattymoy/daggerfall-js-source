@@ -2,8 +2,8 @@
   {
     "name": "SD18C-every-ending-one-light",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "Object.fromEntries(SD_ENDINGS.map((E, k) => [E.id, 25 + k]))",
-    "new": "Object.fromEntries(SD_ENDINGS.map((E) => [E.id, 25]))",
+    "old": "export const SD_REMNANT_ENDING_RECORD = Object.freeze(Object.fromEntries(SD_ENDINGS.map((E, k) => [E.id, 25 + k])));",
+    "new": "export const SD_REMNANT_ENDING_RECORD = Object.freeze(Object.fromEntries(SD_ENDINGS.map((E) => [E.id, 25])));",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD18C-no-own-light",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": "  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { put(albedo, x, y, rgb); put(emission, x, y, rgb); }",
-    "new": "  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { put(albedo, x, y, rgb); put(emission, x, y, [0, 0, 0]); }",
+    "old": "      put(emission, x, y, rgb);",
+    "new": "      put(emission, x, y, [0, 0, 0]);",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD18C-the-lights-never-uploaded",
     "file": "src/world/superDungeon/sdRemnantArt.js",
-    "old": ", ...SD_ENDINGS.map((E) => /** @type {[number, ReturnType<typeof echoMetalArt>]} */ ([SD_REMNANT_ENDING_RECORD[E.id], endingLightArt(E.light)]))];",
-    "new": "];",
+    "old": "    ...SD_ENDINGS.map(\n      (E) =>\n        /** @type {[number, ReturnType<typeof echoMetalArt>]} */ ([\n          SD_REMNANT_ENDING_RECORD[E.id],\n          endingLightArt(E.light),\n        ]),\n    ),\n  ];",
+    "new": "  ];",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD18C-the-heart-green",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "  lathe(f, heartRecordOf(ending), 0, 0, [[0, H - R],",
-    "new": "  lathe(f, SD_REMNANT_HEART_RECORD, 0, 0, [[0, H - R],",
+    "old": "    R = B.heartR;\n  lathe(\n    f,\n    heartRecordOf(ending),\n    0,\n    0,",
+    "new": "    R = B.heartR;\n  lathe(\n    f,\n    SD_REMNANT_HEART_RECORD,\n    0,\n    0,",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD18C-the-eyes-gold",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "    f.quad(eyeRecordOf(ending), [ex - B.eyeW / 2, ey, ez],",
-    "new": "    f.quad(SD_REMNANT_EYE_RECORD, [ex - B.eyeW / 2, ey, ez],",
+    "old": "      eyeRecordOf(ending),",
+    "new": "      SD_REMNANT_EYE_RECORD,",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD18C-the-hearts-green",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "  shard(f, heartRecordOf(ending), 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r);",
-    "new": "  shard(f, SD_REMNANT_HEART_RECORD, 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r);",
+    "old": "  shard(f, heartRecordOf(ending), 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r); // SD18c: in its Ending's light",
+    "new": "  shard(f, SD_REMNANT_HEART_RECORD, 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r); // SD18c: in its Ending's light",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD18C-the-scene-unlit",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "buildRemnantParts(metal, ending).map(make));",
-    "new": "buildRemnantParts(metal).map(make));",
+    "old": "      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal, ending).map(make));",
+    "new": "      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal).map(make));",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD18C-the-card-silent",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "...(E ? [`It keeps the Ending of ${E.stone}`] : []), ",
-    "new": "",
+    "old": "    ...(E ? [`It keeps the Ending of ${E.stone}`] : []),\n    ...(rec.fb ? [`Found by ${rec.fb}`] : []),",
+    "new": "    ...(rec.fb ? [`Found by ${rec.fb}`] : []),",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js",
       "test/ui/enhanced/sd2c_omen.test.js"

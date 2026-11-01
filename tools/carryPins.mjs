@@ -25,14 +25,24 @@
 //       `node tools/sameProgram.mjs --against HEAD` proves the files are the same programs.
 //       Carrying a record runs the transform over its whole file once, so a file with thousands of records (world.js
 //       has 3,778) is the slow part: the records are carried on N worker threads (default: every core).
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { join, dirname, resolve as resolvePath } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tokenizer } from 'acorn';
 import {
-  ANCHOR, reader, makeResolver, trackedSets, resolveAnchor, anchorLine, anchorFor, forbidAt, codeOpenAt, maskAnchors, bracesAt,
+  ANCHOR,
+  reader,
+  makeResolver,
+  trackedSets,
+  resolveAnchor,
+  anchorLine,
+  anchorFor,
+  forbidAt,
+  codeOpenAt,
+  maskAnchors,
+  bracesAt,
 } from './citeAnchor.mjs';
 import { isMain } from './lib/isMain.mjs';
 
@@ -61,7 +71,8 @@ const occurrences = (text, find) => {
  * @returns {{ record: object } | { error: string }}
  */
 export function carryMutant(record, source, transform, transformed = transform(source)) {
-  if (!source.includes(record.old) || record.old === '') return { error: 'the record does not apply to the file as it stands' };
+  if (!source.includes(record.old) || record.old === '')
+    return { error: 'the record does not apply to the file as it stands' };
   // a record whose text stands twice mutates the first copy, as tools/mutate.mjs does (mutantdrift.test.js holds the
   // few that do, CARRIED_AIM): carried, it names that site alone
   const mutated = replaceFirst(source, record.old, record.new);
@@ -71,13 +82,18 @@ export function carryMutant(record, source, transform, transformed = transform(s
   } catch (e) {
     return { error: `the transform cannot run on the mutant (${e.message.split('\n')[0]})` };
   }
-  if (transformedMutant === transformed) return { error: 'the transform erases the mutant (it changed only what the transform drops)' };
+  if (transformedMutant === transformed)
+    return { error: 'the transform erases the mutant (it changed only what the transform drops)' };
 
   let start = 0;
   const shortest = Math.min(transformed.length, transformedMutant.length);
   while (start < shortest && transformed[start] === transformedMutant[start]) start++;
   let tail = 0;
-  while (tail < shortest - start && transformed[transformed.length - 1 - tail] === transformedMutant[transformedMutant.length - 1 - tail]) tail++;
+  while (
+    tail < shortest - start &&
+    transformed[transformed.length - 1 - tail] === transformedMutant[transformedMutant.length - 1 - tail]
+  )
+    tail++;
 
   // widen to whole lines, then line by line until the stretch stands once in the transformed file
   let from = transformed.lastIndexOf('\n', start - 1) + 1;
@@ -86,13 +102,19 @@ export function carryMutant(record, source, transform, transformed = transform(s
   const stretch = () => transformed.slice(from, to);
   let widenUp = true;
   while (occurrences(transformed, stretch()) !== 1 || stretch() === '') {
-    if (from === 0 && to === transformed.length) return { error: 'no stretch of the transformed file names the site once' };
+    if (from === 0 && to === transformed.length)
+      return { error: 'no stretch of the transformed file names the site once' };
     if ((widenUp && from > 0) || to === transformed.length) from = transformed.lastIndexOf('\n', from - 2) + 1;
     else to = transformed.indexOf('\n', to + 1) < 0 ? transformed.length : transformed.indexOf('\n', to + 1);
     widenUp = !widenUp;
   }
-  const carried = { ...record, old: detach(stretch()), new: detach(transformedMutant.slice(from, transformedMutant.length - (transformed.length - to))) };
-  if (replaceFirst(transformed, carried.old, carried.new) !== transformedMutant) return { error: 'the carried record does not reproduce the transformed mutant' };
+  const carried = {
+    ...record,
+    old: detach(stretch()),
+    new: detach(transformedMutant.slice(from, transformedMutant.length - (transformed.length - to))),
+  };
+  if (replaceFirst(transformed, carried.old, carried.new) !== transformedMutant)
+    return { error: 'the carried record does not reproduce the transformed mutant' };
   return { record: carried };
 }
 
@@ -112,9 +134,15 @@ function tokensOf(source, renames) {
     let value = t.value;
     if (t.type.label === 'name' && Object.hasOwn(renames, value)) value = renames[value];
     if (t.type.label === 'regexp') value = `${t.value.pattern}/${t.value.flags}`;
-    tokens.push({ key: `${t.type.label}:${typeof value === 'bigint' ? `${value}n` : String(value ?? '')}`, start: t.start, line: t.loc.start.line, endLine: t.loc.end.line });
+    tokens.push({
+      key: `${t.type.label}:${typeof value === 'bigint' ? `${value}n` : String(value ?? '')}`,
+      start: t.start,
+      line: t.loc.start.line,
+      endLine: t.loc.end.line,
+    });
   }
-  for (const c of comments) tokens.push({ key: `comment:${c.value.trim()}`, start: c.start, line: c.loc.start.line, endLine: c.loc.end.line });
+  for (const c of comments)
+    tokens.push({ key: `comment:${c.value.trim()}`, start: c.start, line: c.loc.start.line, endLine: c.loc.end.line });
   return tokens.sort((a, b) => a.start - b.start);
 }
 
@@ -135,20 +163,41 @@ const RESYNC_REACH = 64;
  * @returns {(line: number, offset?: number | null) => number[]}
  */
 export function lineMap(oldSource, newSource, { renames = {} } = {}) {
-  const a = tokensOf(oldSource, renames), b = tokensOf(newSource, {});
+  const a = tokensOf(oldSource, renames),
+    b = tokensOf(newSource, {});
   const matched = new Array(a.length).fill(-1);
-  let i = 0, j = 0;
+  let i = 0,
+    j = 0;
   while (i < a.length && j < b.length) {
-    if (a[i].key === b[j].key) { matched[i++] = j++; continue; }
-    if (OPTIONAL.has(a[i].key)) { i++; continue; }
-    if (OPTIONAL.has(b[j].key)) { j++; continue; }
+    if (a[i].key === b[j].key) {
+      matched[i++] = j++;
+      continue;
+    }
+    if (OPTIONAL.has(a[i].key)) {
+      i++;
+      continue;
+    }
+    if (OPTIONAL.has(b[j].key)) {
+      j++;
+      continue;
+    }
     let found = false;
     for (let reach = 1; reach <= RESYNC_REACH && !found; reach++) {
-      if (i + reach < a.length && a[i + reach].key === b[j].key) { i += reach; found = true; } else if (j + reach < b.length && a[i].key === b[j + reach].key) { j += reach; found = true; }
+      if (i + reach < a.length && a[i + reach].key === b[j].key) {
+        i += reach;
+        found = true;
+      } else if (j + reach < b.length && a[i].key === b[j + reach].key) {
+        j += reach;
+        found = true;
+      }
     }
-    if (!found) { i++; j++; }
+    if (!found) {
+      i++;
+      j++;
+    }
   }
-  const startingOn = new Map(), spanning = [];
+  const startingOn = new Map(),
+    spanning = [];
   a.forEach((t, k) => {
     if (!startingOn.has(t.line)) startingOn.set(t.line, []);
     startingOn.get(t.line).push(k);
@@ -159,14 +208,22 @@ export function lineMap(oldSource, newSource, { renames = {} } = {}) {
     if (offset != null) {
       // the token the quote starts in - a quote may start inside one (a comment's words, a string's)
       let quoted;
-      for (const k of startingOn.get(line) ?? []) { if (a[k].start <= offset) quoted = k; else break; }
+      for (const k of startingOn.get(line) ?? []) {
+        if (a[k].start <= offset) quoted = k;
+        else break;
+      }
       if (quoted !== undefined && matched[quoted] >= 0) lines.add(b[matched[quoted]].line);
     }
     for (const k of startingOn.get(line) ?? []) if (matched[k] >= 0) lines.add(b[matched[k]].line);
     if (!lines.size) {
       // a line inside a token that spans lines: the same offset into the token's new place, if the token kept its text
       for (const k of spanning) {
-        if (a[k].line < line && line <= a[k].endLine && matched[k] >= 0 && a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line) {
+        if (
+          a[k].line < line &&
+          line <= a[k].endLine &&
+          matched[k] >= 0 &&
+          a[k].endLine - a[k].line === b[matched[k]].endLine - b[matched[k]].line
+        ) {
           lines.add(b[matched[k]].line + (line - a[k].line));
         }
       }
@@ -193,8 +250,10 @@ export function carryCites({ docs, oldText, newText, changed, codeFiles, renames
   const texts = new Map(docs);
   const readNew = reader((f) => texts.get(f) ?? newText(f));
   const maps = new Map();
-  const mapOf = (file) => maps.get(file) ?? maps.set(file, lineMap(oldText(file), newText(file), { renames })).get(file);
-  const placed = [], failed = [];
+  const mapOf = (file) =>
+    maps.get(file) ?? maps.set(file, lineMap(oldText(file), newText(file), { renames })).get(file);
+  const placed = [],
+    failed = [];
 
   for (const [doc, text] of texts) {
     if (!text.includes(':"')) continue;
@@ -211,30 +270,50 @@ export function carryCites({ docs, oldText, newText, changed, codeFiles, renames
         const fail = (why) => failed.push({ doc, line: i + 1, text: m[0], why });
         const before = readOld(r.file);
         const at = resolveAnchor(before.text, before.lines, m[2], m[3] ?? null);
-        if (at.error) { fail(`the anchor did not resolve before the change (${at.error})`); continue; }
-        const quoteAt = m[3] == null ? before.text.indexOf(m[2]) : null;   // a quote names its part of the line
+        if (at.error) {
+          fail(`the anchor did not resolve before the change (${at.error})`);
+          continue;
+        }
+        const quoteAt = m[3] == null ? before.text.indexOf(m[2]) : null; // a quote names its part of the line
         const newLines = mapOf(r.file)(at.line, quoteAt);
-        if (!newLines.length) { fail('no token of the cited line found its place in the new text'); continue; }
+        if (!newLines.length) {
+          fail('no token of the cited line found its place in the new text');
+          continue;
+        }
         const forbid = forbidAt(doc, line, m.index, codeOpen[i]);
-        if (!forbid) { fail('the anchor stands in code, outside a comment - a person writes it'); continue; }
-        const after = readNew(r.file), braces = bracesAt(doc);
+        if (!forbid) {
+          fail('the anchor stands in code, outside a comment - a person writes it');
+          continue;
+        }
+        const after = readNew(r.file),
+          braces = bracesAt(doc);
         const bare = m[1].replace(/^\/+/, '');
         // the cited line may have become several (a crowded line split): any of them names the same code, so the
         // first that takes an anchor does
-        let anchor = null, n = null;
+        let anchor = null,
+          n = null;
         for (const candidate of newLines) {
           ({ n } = anchorLine(after.text, after.lines, candidate, null, forbid, braces));
-          anchor = n == null ? null : anchorFor(bare, after.text, after.lines, n, forbid, r.file === doc ? null : docMasked, braces);
+          anchor =
+            n == null
+              ? null
+              : anchorFor(bare, after.text, after.lines, n, forbid, r.file === doc ? null : docMasked, braces);
           if (anchor) break;
         }
-        if (!anchor) { fail(`none of the lines it became (${r.file}:${newLines.join(',')}) holds anything quotable`); continue; }
+        if (!anchor) {
+          fail(`none of the lines it became (${r.file}:${newLines.join(',')}) holds anything quotable`);
+          continue;
+        }
         edits.push({ col: m.index, len: m[0].length, to: anchor, file: r.file, n, spelled: bare });
       }
       for (const e of edits.sort((x, y) => y.col - x.col)) {
         line = line.slice(0, e.col) + e.to + line.slice(e.col + e.len);
         placed.push({ doc, line: i + 1, ...e });
       }
-      if (edits.length) { lines[i] = line; touched = true; }
+      if (edits.length) {
+        lines[i] = line;
+        touched = true;
+      }
     });
     if (touched) texts.set(doc, lines.join('\n'));
   }
@@ -251,8 +330,22 @@ export function carryCites({ docs, oldText, newText, changed, codeFiles, renames
       const open = /\.md$/.test(p.doc) ? codeOpenAt(texts.get(p.doc))[p.line - 1] : false;
       const col = docLines[p.line - 1].indexOf(p.to);
       const forbid = col < 0 ? null : forbidAt(p.doc, docLines[p.line - 1], col, open);
-      const next = forbid && anchorFor(p.spelled, text, lines, p.n, forbid, p.file === p.doc ? null : maskAnchors(texts.get(p.doc)), bracesAt(p.doc));
-      if (!next) { failed.push({ doc: p.doc, line: p.line, text: p.to, why: 'the carried anchor could not be settled' }); p.n = -1; continue; }
+      const next =
+        forbid &&
+        anchorFor(
+          p.spelled,
+          text,
+          lines,
+          p.n,
+          forbid,
+          p.file === p.doc ? null : maskAnchors(texts.get(p.doc)),
+          bracesAt(p.doc),
+        );
+      if (!next) {
+        failed.push({ doc: p.doc, line: p.line, text: p.to, why: 'the carried anchor could not be settled' });
+        p.n = -1;
+        continue;
+      }
       docLines[p.line - 1] = docLines[p.line - 1].slice(0, col) + next + docLines[p.line - 1].slice(col + p.to.length);
       texts.set(p.doc, docLines.join('\n'));
       p.to = next;
@@ -275,25 +368,36 @@ async function carryMutantsInParallel(jobs, { transformUrl, oldTexts, newTexts, 
   const chunks = Array.from({ length: Math.max(1, Math.min(workers, jobs.length)) }, () => []);
   jobs.forEach((job, index) => chunks[index % chunks.length].push({ ...job, index }));
   const results = new Array(jobs.length);
-  await Promise.all(chunks.map((chunk) => new Promise((resolveChunk, reject) => {
-    const files = {};
-    for (const { file } of chunk) files[file] ??= { old: oldTexts.get(file), new: newTexts.get(file) };
-    const worker = new Worker(new URL(import.meta.url), {
-      workerData: { carryPinsWorker: true, transformUrl, files, jobs: chunk },
-      resourceLimits: { maxOldGenerationSizeMb: WORKER_HEAP_MB },
-    });
-    worker.once('message', (out) => { for (const { index, result } of out) results[index] = result; resolveChunk(); });
-    worker.once('error', reject);
-  })));
+  await Promise.all(
+    chunks.map(
+      (chunk) =>
+        new Promise((resolveChunk, reject) => {
+          const files = {};
+          for (const { file } of chunk) files[file] ??= { old: oldTexts.get(file), new: newTexts.get(file) };
+          const worker = new Worker(new URL(import.meta.url), {
+            workerData: { carryPinsWorker: true, transformUrl, files, jobs: chunk },
+            resourceLimits: { maxOldGenerationSizeMb: WORKER_HEAP_MB },
+          });
+          worker.once('message', (out) => {
+            for (const { index, result } of out) results[index] = result;
+            resolveChunk();
+          });
+          worker.once('error', reject);
+        }),
+    ),
+  );
   return results;
 }
 
 if (!isMainThread && workerData?.carryPinsWorker) {
   const { transformUrl, files, jobs } = workerData;
   const { transform } = await import(transformUrl);
-  parentPort.postMessage(jobs.map(({ record, file, index }) => ({
-    index, result: carryMutant(record, files[file].old, (src) => transform(src, file), files[file].new),
-  })));
+  parentPort.postMessage(
+    jobs.map(({ record, file, index }) => ({
+      index,
+      result: carryMutant(record, files[file].old, (src) => transform(src, file), files[file].new),
+    })),
+  );
 }
 
 async function main(args) {
@@ -312,42 +416,67 @@ async function main(args) {
   const targets = named.length ? named : code;
   const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 
-  const oldTexts = new Map(), newTexts = new Map();
+  const oldTexts = new Map(),
+    newTexts = new Map();
   for (const f of targets) {
-    const old = read(f), next = transform(old, f);
-    if (next !== old) { oldTexts.set(f, old); newTexts.set(f, next); }
+    const old = read(f),
+      next = transform(old, f);
+    if (next !== old) {
+      oldTexts.set(f, old);
+      newTexts.set(f, next);
+    }
   }
   console.log(`${newTexts.size} of ${targets.length} file(s) change under the transform`);
 
   let carriedRecords = 0;
   const recordFailures = [];
   const mutantDir = join(ROOT, 'tools/mutants');
-  const lists = readdirSync(mutantDir).filter((f) => f.endsWith('.json')).sort()
+  const lists = readdirSync(mutantDir)
+    .filter((f) => f.endsWith('.json'))
+    .sort()
     .map((list) => ({ list, records: JSON.parse(readFileSync(join(mutantDir, list), 'utf8')) }));
   const jobs = [];
   for (const { list, records } of lists) {
-    records.forEach((record, k) => { if (oldTexts.has(record.file)) jobs.push({ list, k, record, file: record.file }); });
+    records.forEach((record, k) => {
+      if (oldTexts.has(record.file)) jobs.push({ list, k, record, file: record.file });
+    });
   }
-  const results = await carryMutantsInParallel(jobs.map(({ record, file }) => ({ record, file })), { transformUrl, oldTexts, newTexts, workers });
+  const results = await carryMutantsInParallel(
+    jobs.map(({ record, file }) => ({ record, file })),
+    { transformUrl, oldTexts, newTexts, workers },
+  );
   const changedLists = new Set();
   jobs.forEach(({ list, k, record }, i) => {
-    if (results[i].error) { recordFailures.push(`${list}::${record.name}: ${results[i].error}`); return; }
+    if (results[i].error) {
+      recordFailures.push(`${list}::${record.name}: ${results[i].error}`);
+      return;
+    }
     lists.find((l) => l.list === list).records[k] = results[i].record;
     changedLists.add(list);
     carriedRecords++;
   });
-  const listTexts = new Map(lists.filter(({ list }) => changedLists.has(list))
-    .map(({ list, records }) => [`tools/mutants/${list}`, JSON.stringify(records, null, 2) + '\n']));
+  const listTexts = new Map(
+    lists
+      .filter(({ list }) => changedLists.has(list))
+      .map(({ list, records }) => [`tools/mutants/${list}`, JSON.stringify(records, null, 2) + '\n']),
+  );
 
-  const docTexts = new Map(docPaths.map((d) => [d, newTexts.get(d) ?? read(d)]));
+  const docTexts = new Map(
+    docPaths.filter((d) => existsSync(join(ROOT, d))).map((d) => [d, newTexts.get(d) ?? read(d)]),
+  ); // a doc deleted in the working tree is not carried
   const { docs, carried, failed } = carryCites({
-    docs: docTexts, oldText: (f) => oldTexts.get(f) ?? read(f), newText: (f) => newTexts.get(f) ?? read(f),
-    changed: new Set(newTexts.keys()), codeFiles: code,
+    docs: docTexts,
+    oldText: (f) => oldTexts.get(f) ?? read(f),
+    newText: (f) => newTexts.get(f) ?? read(f),
+    changed: new Set(newTexts.keys()),
+    codeFiles: code,
   });
 
   for (const f of recordFailures) console.log(`  RECORD NOT CARRIED  ${f}`);
   for (const f of failed) console.log(`  CITE NOT CARRIED    ${f.doc}:${f.line}  ${f.text}  - ${f.why}`);
-  console.log(`${carriedRecords} mutant record(s) carried, ${recordFailures.length} not; ${carried} cite(s) carried, ${failed.length} not`);
+  console.log(
+    `${carriedRecords} mutant record(s) carried, ${recordFailures.length} not; ${carried} cite(s) carried, ${failed.length} not`,
+  );
   if (write) {
     for (const [f, text] of newTexts) if (!docs.has(f)) writeFileSync(join(ROOT, f), text);
     for (const [d, text] of docs) if (text !== read(d)) writeFileSync(join(ROOT, d), text);

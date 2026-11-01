@@ -11,8 +11,8 @@
   {
     "name": "SPAWN-WORLD-the-lane-read-without-its-flag",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "v > 0xffffffff || !(v & FLAG)) return -1;",
-    "new": "v > 0xffffffff) return -1;",
+    "old": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff || !(v & FLAG)) return -1;",
+    "new": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return -1;",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "SPAWN-WORLD-the-pixel-read-back",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "  return worldPixelOfKey(((((v >>> 20) & 0xfff) - lane) * 0x80000) + (v & LOW));",
+    "old": "  return worldPixelOfKey((((v >>> 20) & 0xfff) - lane) * 0x80000 + (v & LOW));",
     "new": "  return worldPixelOfKey(v & LOW);",
     "tests": [
       "test/world/spawnworld.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "SPAWN-WORLD-a-spawn-on-a-place",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (!inBay(px, py) && placeAt(px, py)) return null;\n",
-    "new": "",
+    "old": "    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);",
+    "new": "    return cloneAt(px, py);",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SPAWN-WORLD-no-spawner-past-the-Bay",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
-    "new": "|| host.lairLocationAt(px, py);",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || settle2LocationAt(px, py) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SPAWN-WORLD-the-stand-on-a-place",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "      if (!onTheBay(px, py) && host.provinceQuestPlaces?.placeOnPixel(px, py)) return null;\n",
-    "new": "",
+    "old": "      if (!onTheBay(px, py) && host.provinceQuestPlaces?.placeOnPixel(px, py)) return null;\n      // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule",
+    "new": "      // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SPAWN-WORLD-the-take-back-keeps-its-clocks",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "    if (roaded) _spawnLedger.forget(key);\n",
-    "new": "",
+    "old": "    if (roaded) _spawnLedger.forget(key);\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SPAWN-WORLD-inside-taken-back",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "    if (_insideSpawn(key)) return loc;\n    const net = terrainGen.roads(), roaded",
-    "new": "    const net = terrainGen.roads(), roaded",
+    "old": "    if (_insideSpawn(key)) return loc;\n    const net = terrainGen.roads(), roaded = !!net && !pathFreePixel(net, px, py);",
+    "new": "    const net = terrainGen.roads(), roaded = !!net && !pathFreePixel(net, px, py);",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SPAWN-WORLD-the-zone-the-ground's-alone",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
-    "new": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (inOpenZone(px, py)) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "old": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;",
+    "new": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (inOpenZone(px, py)) return null;",
     "tests": [
       "test/world/spawnworld.test.js"
     ],
@@ -230,8 +230,8 @@
   {
     "name": "SPAWN-WORLD-the-Veil-the-ground's-alone",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (etherSea && inEther(px, py)) return null;\n    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
-    "new": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (etherSea && inEther(px, py)) return null;\n    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "old": "    if (etherSea && inEther(px, py)) return null;\n    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;",
+    "new": "    if (inOpenZone(px, py)) return null;\n    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;\n    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();\n    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;\n    return cloneAt(px, py);\n  }\n\n  /**\n   * The place a pixel's ground is shaped for: what stands there, else online the spawn the roll stands, alive or dead.\n   * @param {number} px @param {number} py\n   * @param {object | null | undefined} stood the location that stands on the pixel, if any\n   */\n  function groundLocationAt(px, py, stood) {\n    if (stood) return stood;\n    if (!online) return null;\n    if (etherSea && inEther(px, py)) return null;",
     "tests": [
       "test/world/spawnworld.test.js"
     ],
@@ -240,8 +240,8 @@
   {
     "name": "SPAWN-WORLD-a-lane-that-is-none",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "  if (!LANES.includes(lane)) throw new RangeError(`lane ${lane}`);\n",
-    "new": "",
+    "old": "  if (!LANES.includes(lane)) throw new RangeError(`lane ${lane}`);\n  if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
+    "new": "  if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
     "tests": [
       "test/world/spawnworld.test.js"
     ],

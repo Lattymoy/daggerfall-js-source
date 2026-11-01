@@ -63,8 +63,8 @@ test('ROAD-BEYOND the box reaches past an end beyond the table: a traveller wall
   assert.ok(planRoute({ x: 1500, y: 260 }, { x: 1500, y: 300 }, { isWater: lake }), 'and to her');
   // on the Bay the box is the map's, as it was: the table's own edge the bound
   const src = read('src/systems/travel/travelRoute.js');
-  assert.match(src, /const reachOf = \(margin\) => \(past \? \{ x0: Math\.min\(bounds\.x0, offTable\(from\) \? from\.x - margin : Infinity/);
-  assert.match(src, /: bounds\);\n/);
+  assert.match(src, /const reachOf = \(margin\) =>\n\s*etherBox\(\n\s*ether,\n\s*past\n\s*\? \{\n\s*x0: Math\.min\(\n\s*bounds\.x0,\n\s*offTable\(from\) \? from\.x - margin : Infinity/);
+  assert.match(src, /: bounds,\n\s*\);\n/);
 });
 
 test('ROAD-BEYOND a long plan past the Bay walks its roads, found over the roads alone: every step a road\'s, the cells expanded a handful a pixel of the road - where the ladder flooded the field beside it (mutants: the roads first, the step\'s edge)', () => {

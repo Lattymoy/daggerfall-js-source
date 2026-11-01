@@ -86,8 +86,8 @@
   {
     "name": "AFFIX-LINES-every-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: at(MINT_V_LINES), lean",
-    "new": "byLines: true, lean",
+    "old": "        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: true,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "AFFIX-LINES-no-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: at(MINT_V_LINES), lean",
-    "new": "byLines: false, lean",
+    "old": "        byLines: at(MINT_V_LINES),",
+    "new": "        byLines: false,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "REFORGE-REPLACE-the-essence-flat",
     "file": "src/net/temperLaw.js",
-    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
-    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] : null);",
+    "old": "    ? REFORGE_ESSENCE[tier] * 2 ** count",
+    "new": "    ? REFORGE_ESSENCE[tier]",
     "tests": [
       "test/net/craft4_temper.test.js",
       "test/systems/affixlines_reforge.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "REFORGE-REPLACE-the-essence-unbounded",
     "file": "src/net/temperLaw.js",
-    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
-    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX",
+    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -256,7 +256,7 @@
   },
   {
     "name": "REFORGE-REPLACE-the-host-asks-none",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "profBook.reforge(offer.tier, reforgeCount(it))",
     "new": "profBook.reforge(offer.tier)",
     "tests": [
@@ -275,8 +275,8 @@
   {
     "name": "REFORGE-REPLACE-the-count-unbounded-on-the-wire",
     "file": "src/systems/item/itemFields.js",
-    "old": "  reforges: int({ min: 1, max: REFORGES_MAX }),",
-    "new": "  reforges: int(),",
+    "old": "  reforges: int({ min: 1, max: REFORGES_MAX }), // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent",
+    "new": "  reforges: int(), // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "REFORGE-REPLACE-a-gilded-piece-counted",
     "file": "src/systems/gilded.js",
-    "old": "'sockets', 'reforged', 'reforges', 'honed', 'exalted']);",
-    "new": "'sockets', 'reforged', 'honed', 'exalted']);",
+    "old": "  'reforges',\n  'honed',",
+    "new": "  'honed',",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "REFORGE-REPLACE-the-note-gone",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (price && may.length) card.append(el('p', 'boundline reforge-note', REFORGE_NOTE(price)));",
-    "new": "    void REFORGE_NOTE;",
+    "old": "    if (price && may.length) card.append(el('p', 'boundline reforge-note', REFORGE_NOTE(price))); // REFORGE-REPLACE: no line is locked - the price says the count",
+    "new": "    void REFORGE_NOTE; // REFORGE-REPLACE: no line is locked - the price says the count",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/affixlines_reforge.test.js"
@@ -321,8 +321,8 @@
   {
     "name": "REFORGE-REPLACE-the-old-refusal-words",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  get line() { return t('reforge.refusal.line', 'No other kind of line can take its place'); },",
-    "new": "  line: 'Only the line it was reforged on',",
+    "old": "  get line() {\n    return t('reforge.refusal.line', 'No other kind of line can take its place');\n  }, // REFORGE-REPLACE: a record's line, or one nothing else can replace - the one-line lock is gone",
+    "new": "  line: 'Only the line it was reforged on', // REFORGE-REPLACE: a record's line, or one nothing else can replace - the one-line lock is gone",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "REFORGE-REPLACE-the-asked-reforge-forgotten",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
+    "new": "  if (item.reforged !== undefined || item.imprint !== undefined) return false; // AUDIT LOOT F3: a line the Reforge rolled again (REFORGE-REPLACE: replaced, counted), a power imprinted - the record mints neither",
     "tests": [
       "test/systems/auditloot.test.js",
       "test/systems/affixlines_reforge.test.js"

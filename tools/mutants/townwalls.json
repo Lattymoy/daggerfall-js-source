@@ -1,174 +1,174 @@
 [
- {
-  "name": "TW-the-gap-open",
-  "file": "src/world/townShape.js",
-  "old": "grown[i] = d[i] > line + close ? 1 : 0;",
-  "new": "grown[i] = d[i] > line ? 1 : 0;",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-holes-open",
-  "file": "src/world/townShape.js",
-  "old": "  for (let i = 0; i < W * H; i++) if (!inside[i] && !seen[i]) { inside[i] = 1; level[i] = 0.5; }\n",
-  "new": "",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-cut-on-the-grid",
-  "file": "src/world/townWalls.js",
-  "old": "const f = (x, y) => field(x, y) - 1 / 1024;",
-  "new": "const f = (x, y) => field(x, y);",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-a-saddle-swapped",
-  "file": "src/world/townWalls.js",
-  "old": "10: mid ? [[S, Wd], [N, E]] : [[S, E], [N, Wd]],",
-  "new": "10: mid ? [[S, E], [N, Wd]] : [[S, Wd], [N, E]],",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-normal-turned-in",
-  "file": "src/world/townWalls.js",
-  "old": "out: /** @type {[number, number]} */ ([uy, -ux]), stretch: len / (k * L) });",
-  "new": "out: /** @type {[number, number]} */ ([-uy, ux]), stretch: len / (k * L) });",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-run-uncounted",
-  "file": "src/world/townWalls.js",
-  "old": "m = Math.max(1, Math.round(K / run));",
-  "new": "m = K;",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-gates-unspaced",
-  "file": "src/world/townWalls.js",
-  "old": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + gap), P - gap)",
-  "new": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + 1), P - 1)",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-a-crowded-gate-dropped",
-  "file": "src/world/townWalls.js",
-  "old": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + gap), P - gap)",
-  "new": "arcOf(q)",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-turn-mirrored",
-  "file": "src/world/townWalls.js",
-  "old": "const [wx, wz] = p.out, ux = wz, uz = -wx, th = tower ? p.thick ?? 1 : 1;",
-  "new": "const [wx, wz] = p.out, ux = -wz, uz = wx, th = tower ? p.thick ?? 1 : 1;",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-stretch-unread",
-  "file": "src/world/townWalls.js",
-  "old": "const lx = m.positions[v * 3] * p.stretch,",
-  "new": "const lx = m.positions[v * 3],",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-markers-inside",
-  "file": "src/world/townWalls.js",
-  "old": "([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM])",
-  "new": "([p.at[0] - p.out[0] * outM + p.out[1] * alongM, p.at[1] - p.out[1] * outM - p.out[0] * alongM])",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-markers-unlaid",
-  "file": "src/world/townWalls.js",
-  "old": "  json.RmbBlock.MiscFlatObjectRecords = [...markers.map(",
-  "new": "  json.RmbBlock.MiscFlatObjectRecords = [...[].map(",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-gates-unread",
-  "file": "src/world/townWalls.js",
-  "old": "    if (!isGateBlock(name)) return;",
-  "new": "    return;",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-once-a-city-unkept",
-  "file": "src/world/townWalls.js",
-  "old": "  if (_stood.has(townWallBlockName(mapId))) return null;\n",
-  "new": "",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-round-unread",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
-  "new": "  const occ = padded;",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-apron-uncoded",
-  "file": "src/world/townShape.js",
-  "old": "      if (d <= core) out[i] = 1;   // TS4",
-  "new": "      if (d < 0) out[i] = 1;   // TS4",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-carrier-shaping",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "(isWallCarrier(blockAt[by * width + bx]?.name) ? null : blockAt[by * width + bx]?.rmbBlock ?? null)",
-  "new": "(blockAt[by * width + bx]?.rmbBlock ?? null)",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- },
- {
-  "name": "TW-the-corner-open",
-  "file": "src/world/townOutline.js",
-  "old": "(walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK)",
-  "new": "(TOWN_OUTLINE_BLOCK)",
-  "tests": [
-   "test/world/townwalls.test.js",
-   "test/world/townoutline.test.js"
-  ]
- },
- {
-  "name": "TW-the-host-unwired",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    if (loc.outline?.walled) standTownWall(loc,",
-  "new": "    if (false) standTownWall(loc,",
-  "tests": [
-   "test/world/townwalls.test.js"
-  ]
- }
+  {
+    "name": "TW-the-gap-open",
+    "file": "src/world/townShape.js",
+    "old": "  for (let i = 0; i < W * H; i++) grown[i] = d[i] > line + close ? 1 : 0;",
+    "new": "  for (let i = 0; i < W * H; i++) grown[i] = d[i] > line ? 1 : 0;",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-holes-open",
+    "file": "src/world/townShape.js",
+    "old": "  for (let i = 0; i < W * H; i++)\n    if (!inside[i] && !seen[i]) {\n      inside[i] = 1;\n      level[i] = 0.5;\n    }\n  return { inside, level };",
+    "new": "  return { inside, level };",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-cut-on-the-grid",
+    "file": "src/world/townWalls.js",
+    "old": "const f = (x, y) => field(x, y) - 1 / 1024;",
+    "new": "const f = (x, y) => field(x, y);",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-a-saddle-swapped",
+    "file": "src/world/townWalls.js",
+    "old": "10: mid ? [[S, Wd], [N, E]] : [[S, E], [N, Wd]],",
+    "new": "10: mid ? [[S, E], [N, Wd]] : [[S, Wd], [N, E]],",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-normal-turned-in",
+    "file": "src/world/townWalls.js",
+    "old": "out: /** @type {[number, number]} */ ([uy, -ux]), stretch: len / (k * L) });",
+    "new": "out: /** @type {[number, number]} */ ([-uy, ux]), stretch: len / (k * L) });",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-run-uncounted",
+    "file": "src/world/townWalls.js",
+    "old": "m = Math.max(1, Math.round(K / run));",
+    "new": "m = K;",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-gates-unspaced",
+    "file": "src/world/townWalls.js",
+    "old": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + gap), P - gap)",
+    "new": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + 1), P - 1)",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-a-crowded-gate-dropped",
+    "file": "src/world/townWalls.js",
+    "old": "Math.min(Math.max(arcOf(q), stops[stops.length - 1] + gap), P - gap)",
+    "new": "arcOf(q)",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-turn-mirrored",
+    "file": "src/world/townWalls.js",
+    "old": "const [wx, wz] = p.out, ux = wz, uz = -wx, th = tower ? p.thick ?? 1 : 1;",
+    "new": "const [wx, wz] = p.out, ux = -wz, uz = wx, th = tower ? p.thick ?? 1 : 1;",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-stretch-unread",
+    "file": "src/world/townWalls.js",
+    "old": "const lx = m.positions[v * 3] * p.stretch,",
+    "new": "const lx = m.positions[v * 3],",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-markers-inside",
+    "file": "src/world/townWalls.js",
+    "old": "([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM])",
+    "new": "([p.at[0] - p.out[0] * outM + p.out[1] * alongM, p.at[1] - p.out[1] * outM - p.out[0] * alongM])",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-markers-unlaid",
+    "file": "src/world/townWalls.js",
+    "old": "  json.RmbBlock.MiscFlatObjectRecords = [...markers.map(",
+    "new": "  json.RmbBlock.MiscFlatObjectRecords = [...[].map(",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-gates-unread",
+    "file": "src/world/townWalls.js",
+    "old": "    if (!isGateBlock(name)) return;",
+    "new": "    return;",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-once-a-city-unkept",
+    "file": "src/world/townWalls.js",
+    "old": "  if (_stood.has(townWallBlockName(mapId))) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-round-unread",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  const occ = walled ? townRound(padded, PW, PH).inside : padded;",
+    "new": "  const occ = padded;",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-apron-uncoded",
+    "file": "src/world/townShape.js",
+    "old": "      if (d <= core)",
+    "new": "      if (d < 0)",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-carrier-shaping",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  const shape = locationShapeField(dfLocation, (bx, by) => (isWallCarrier(blockAt[by * width + bx]?.name) ? null : blockAt[by * width + bx]?.rmbBlock ?? null), tilePos);   // TS4: a wall's carrier shapes none",
+    "new": "  const shape = locationShapeField(dfLocation, (bx, by) => (blockAt[by * width + bx]?.rmbBlock ?? null), tilePos);   // TS4: a wall's carrier shapes none",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-corner-open",
+    "file": "src/world/townOutline.js",
+    "old": "  const open = (i) => (walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK); // TS4: its ring's corner (world/townWalls.js)",
+    "new": "  const open = (i) => TOWN_OUTLINE_BLOCK; // TS4: its ring's corner (world/townWalls.js)",
+    "tests": [
+      "test/world/townwalls.test.js",
+      "test/world/townoutline.test.js"
+    ]
+  },
+  {
+    "name": "TW-the-host-unwired",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf, townOutlineBlockJson);   // TOWN-SHAPES TS4; TS7: what stands at its gates from the game's own blocks",
+    "new": "    if (false) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf, townOutlineBlockJson);   // TOWN-SHAPES TS4; TS7: what stands at its gates from the game's own blocks",
+    "tests": [
+      "test/world/townwalls.test.js"
+    ]
+  }
 ]

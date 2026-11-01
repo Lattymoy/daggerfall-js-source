@@ -89,19 +89,6 @@ test('WM2b: the streaming host phases mills on the MAP PIXEL, not the world', ()
     'world.js phases mills on something other than the map pixel + local offset');
 });
 
-test('WM2b: THE FOUR HOSTS RULE - the record names all four by name', () => {
-  // 17e: a slice wiring a seam into one host must name ALL FOUR in its
-  // record, each either wired or FLAGGED. Windmills are exterior
-  // scenery, so two are wired and two are deliberately not - and
-  // "deliberately" only counts if it is written down.
-  const arc = src('bible/03-World/World-Arc.md');
-  const record = arc.slice(arc.indexOf('### WM2b'));
-  assert.ok(record.length > 400, 'the WM2b record is missing from World-Arc.md');
-  for (const host of ['exterior.js', 'world.js', 'worldModes.js', 'dungeonContext.js']) {
-    assert.ok(record.includes(host), `the WM2b record does not name ${host}`);
-  }
-});
-
 test('WM2b: the two unwired hosts really do not place mills', () => {
   // The record says interiors and dungeons never stand a mill, because
   // mills are exterior scenery. Checked rather than asserted in prose.

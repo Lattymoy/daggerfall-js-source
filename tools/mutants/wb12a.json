@@ -4,69 +4,89 @@
     "file": "src/systems/gate/gateSpoils.js",
     "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
     "new": "  for (const it of list) if (false && isSigilStone(it)) { it.name = SIGIL_STONE.name; renamed++; }",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-every-item-renamed",
     "file": "src/systems/gate/gateSpoils.js",
     "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
     "new": "  for (const it of list) if (it && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-load-never-repairs",
     "file": "src/systems/save/save.js",
     "old": "    const n = nameEmbers(list);",
     "new": "    const n = 0;",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-crash-record-keeps-its-name",
     "file": "src/scenes/spoilsPool.js",
     "old": "  if (item) nameEmbers([item]);",
     "new": "",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-old-name-kept",
     "file": "src/systems/gate/gateSpoils.js",
     "old": "export const SIGIL_STONE = Object.freeze({ name: 'Deadlands Ember', value: 5000 });",
     "new": "export const SIGIL_STONE = Object.freeze({ name: 'Sigil Stone', value: 5000 });",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-old-frame-said",
     "file": "src/net/gate/gateLaw.js",
     "old": "`The Covenant tears Dagon's Breach near ${near} shut. ${boss} is cast back into the Deadlands.`",
     "new": "`The Oblivion Gate near ${near} collapses. ${boss} returns to the Deadlands.`",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-herald-says-the-old-gate",
     "file": "src/net/gate/gateHerald.js",
     "old": "    text: 'The breach collapses.',",
     "new": "    text: 'The gate collapses.',",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-protocol-renamed",
     "file": "src/net/wire.js",
     "old": "export const GATE_NO_WORDS = Object.freeze(['the gate is closed', 'the gate is sealed', 'the gate is closing', 'the court is full']);",
     "new": "export const GATE_NO_WORDS = Object.freeze(['the breach is closed', 'the gate is sealed', 'the gate is closing', 'the court is full']);",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-banner-says-the-old-name",
     "file": "src/scenes/gate/gatePool.js",
     "old": "  name: 'Dagon\\'s Breach',",
     "new": "  name: 'Oblivion Gate',",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   },
   {
     "name": "WB12a-the-record-counts-gates",
     "file": "src/ui/profileWindow.js",
-    "old": "`Breaches closed: ${n}`",
-    "new": "`Gates closed: ${n}`",
-    "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null; // WB12a",
+    "new": "  return Number.isSafeInteger(n) && n > 0 ? `Gates closed: ${n}` : null; // WB12a",
+    "tests": [
+      "test/systems/gate/wb12a_breach_words.test.js"
+    ]
   }
 ]

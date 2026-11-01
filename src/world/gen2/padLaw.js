@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 A TOWN'S PADS (bible/03-World/World-2-Canon.md, "Buildings"): the ground a terraced building is cut and filled to -
+// WG2 A TOWN'S PADS ("Buildings"): the ground a terraced building is cut and filled to -
 // an oriented rectangle of its footprint grown by PAD_MARGIN_M at its level, falling back to the land over
 // PAD_FALLOFF_M (the retaining wall stands there). One law for the generator that lays them and the sampler that stands
 // the streamed ground on them, so the building and its ground agree on every thread.

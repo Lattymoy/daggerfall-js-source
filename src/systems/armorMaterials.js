@@ -18,8 +18,16 @@ export const ARMOR_MATERIAL = Object.freeze({
   Leather: 0x0000,
   Chain: 0x0100,
   Chain2: 0x0103,
-  Iron: 0x0200, Steel: 0x0201, Silver: 0x0202, Elven: 0x0203, Dwarven: 0x0204,
-  Mithril: 0x0205, Adamantium: 0x0206, Ebony: 0x0207, Orcish: 0x0208, Daedric: 0x0209,
+  Iron: 0x0200,
+  Steel: 0x0201,
+  Silver: 0x0202,
+  Elven: 0x0203,
+  Dwarven: 0x0204,
+  Mithril: 0x0205,
+  Adamantium: 0x0206,
+  Ebony: 0x0207,
+  Orcish: 0x0208,
+  Daedric: 0x0209,
 });
 export const isLeather = (m) => m === ARMOR_MATERIAL.Leather;
 export const isChain = (m) => m === ARMOR_MATERIAL.Chain || m === ARMOR_MATERIAL.Chain2;
@@ -51,7 +59,12 @@ export function materialArmorValue(material) {
 
 /** GetShieldArmorValue + GetShieldProtectedBodyParts
  *  (DaggerfallUnityItem.cs:1061-1096). Shields are MATERIAL-BLIND. */
-export const SHIELD_VALUES = new Map([[109, 1], [110, 2], [111, 3], [112, 4]]);
+export const SHIELD_VALUES = new Map([
+  [109, 1],
+  [110, 2],
+  [111, 3],
+  [112, 4],
+]);
 export const SHIELD_PARTS = new Map([
   [109, [BODY_PARTS.LeftArm, BODY_PARTS.Hands]],
   [110, [BODY_PARTS.LeftArm, BODY_PARTS.Hands, BODY_PARTS.Legs]],
@@ -95,28 +108,31 @@ export const isShieldTemplate = (templateIndex) => SHIELD_VALUES.has(templateInd
 /** RRI1: GetMaterialArmorValue is a virtual; a custom class's answer is
  *  registered here by its installer (this file is a leaf and stays one). */
 let _customArmorValue = null;
-export function registerCustomArmorValue(fn) { _customArmorValue = typeof fn === 'function' ? fn : null; }
+export function registerCustomArmorValue(fn) {
+  _customArmorValue = typeof fn === 'function' ? fn : null;
+}
 export function itemArmorValue(item) {
   const custom = _customArmorValue?.(item);
   if (custom != null) return custom;
   if (item?.group === 'Armor' && isShieldTemplate(item?.templateIndex)) {
-    return SHIELD_VALUES.get(item.templateIndex) ?? 0;   // :1049-1052
+    return SHIELD_VALUES.get(item.templateIndex) ?? 0; // :1049-1052
   }
   let result = materialArmorValue(item?.material ?? ARMOR_MATERIAL.Leather);
-  if (item?.artifact && item?.group === 'Armor') result = Math.trunc(result / 2);   // :1054-1056
+  if (item?.artifact && item?.group === 'Armor') result = Math.trunc(result / 2); // :1054-1056
   return result;
 }
 
 /** ItemBuilder.SetVariant's material-family clamps
  *  (ItemBuilder.cs:856-908). */
 export function clampArmorVariant(templateIndex, material, variant) {
-  const leather = isLeather(material), chain = isChain(material);
+  const leather = isLeather(material),
+    chain = isChain(material);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-  if (templateIndex === 102) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);       // Cuirass
-  if (templateIndex === 104) return leather ? clamp(variant, 0, 1) : chain ? 6 : clamp(variant, 2, 5);   // Greaves
-  if (templateIndex === 105 || templateIndex === 106) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3);   // Pauldrons
-  if (templateIndex === 103) return leather ? 0 : 1;                                      // Gauntlets
-  if (templateIndex === 108) return leather ? 0 : clamp(variant, 1, 2);                   // Boots
+  if (templateIndex === 102) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3); // Cuirass
+  if (templateIndex === 104) return leather ? clamp(variant, 0, 1) : chain ? 6 : clamp(variant, 2, 5); // Greaves
+  if (templateIndex === 105 || templateIndex === 106) return leather ? 0 : chain ? 4 : clamp(variant, 1, 3); // Pauldrons
+  if (templateIndex === 103) return leather ? 0 : 1; // Gauntlets
+  if (templateIndex === 108) return leather ? 0 : clamp(variant, 1, 2); // Boots
   return variant;
 }
 

@@ -12,8 +12,8 @@
 import { buildEgCircleModel, egCircleColliderTris, egCircleLights, egGateParts } from './egHall.js';
 import { egCircleSpecs, egSpecGive } from '../../net/eliteGates/egLaw.js';
 import { egBandArt } from './egBandArt.js';
-import { buildEgRuinParts } from './egRuin.js';   // EG-LOOK (Elite-Gates-Look.md section 3): THE RUIN, a mesh a hall
-import { buildEgVista } from './egVista.js';   // EG-LOOK (section 4): THE WRECK, a band's
+import { buildEgRuinParts } from './egRuin.js'; // EG-LOOK (Elite-Gates-Look.md section 3): THE RUIN, a mesh a hall
+import { buildEgVista } from './egVista.js'; // EG-LOOK (section 4): THE WRECK, a band's
 
 /** The circle a build is for: its breach's seed, its number and its ground (the span decrees' `geo`) - the mode
  *  machine's own key for the level it stands (scenes/worldModes.js standEgHall). */
@@ -21,7 +21,10 @@ export const egCircleKey = (seed, c, geo = 0) => `${seed >>> 0}:${c}:${geo || 0}
 /** A circle's Ramparts' portcullises: `[{ h, model, tris }]`, one a hall that has one (world/eliteGates/egHall.js egGateParts). */
 export function egCircleGates(seed, c, geo = 0) {
   const out = [];
-  for (const spec of egCircleSpecs(seed, c, geo)) { const p = egGateParts(spec); if (p) out.push({ h: spec.h, model: p.model, tris: p.tris }); }
+  for (const spec of egCircleSpecs(seed, c, geo)) {
+    const p = egGateParts(spec);
+    if (p) out.push({ h: spec.h, model: p.model, tris: p.tris });
+  }
   return out;
 }
 /**
@@ -30,7 +33,13 @@ export function egCircleGates(seed, c, geo = 0) {
  * @param {number} seed @param {number} c @param {number} [geo]
  */
 export function egCircleParts(seed, c, geo = 0) {
-  return { key: egCircleKey(seed, c, geo), model: buildEgCircleModel(seed, c, geo), tris: egCircleColliderTris(seed, c, geo), lamps: egCircleLights(seed, c, geo), gates: egCircleGates(seed, c, geo) };
+  return {
+    key: egCircleKey(seed, c, geo),
+    model: buildEgCircleModel(seed, c, geo),
+    tris: egCircleColliderTris(seed, c, geo),
+    lamps: egCircleLights(seed, c, geo),
+    gates: egCircleGates(seed, c, geo),
+  };
 }
 /**
  * AUDIT EG V (L6-8, L6-9; Elite-Gates.md section 7): WHAT THE SWAP'S WORKER BUILDS for a `{ seed, c, geo, band }` ask - the
@@ -46,20 +55,38 @@ export function egCircleParts(seed, c, geo = 0) {
  */
 export function egCircleBuild(m) {
   for (const s of Array.isArray(m.given) ? m.given : []) egSpecGive(s);
-  const geo = m.geo ?? 0, band = Number.isInteger(m.band) && m.band >= 0 && m.band <= 3 ? m.band : -1;
+  const geo = m.geo ?? 0,
+    band = Number.isInteger(m.band) && m.band >= 0 && m.band <= 3 ? m.band : -1;
   const lite = !!m.lite;
-  return { ...egCircleParts(m.seed, m.c, geo), specs: egCircleSpecs(m.seed, m.c, geo), art: band >= 0 ? egBandArt(band) : null, ruins: buildEgRuinParts(m.seed, m.c, geo, { lite }), vista: band >= 0 ? buildEgVista(band, { lite }) : null };
+  return {
+    ...egCircleParts(m.seed, m.c, geo),
+    specs: egCircleSpecs(m.seed, m.c, geo),
+    art: band >= 0 ? egBandArt(band) : null,
+    ruins: buildEgRuinParts(m.seed, m.c, geo, { lite }),
+    vista: band >= 0 ? buildEgVista(band, { lite }) : null,
+  };
 }
 /** Every buffer a built circle carries - what its worker hands over rather than copies (AUDIT EG V L6-9: its band's
  *  dress's pixels too). */
 export function egCirclePartsTransfers(parts) {
   const out = new Set();
-  const take = (a) => { if (ArrayBuffer.isView(a) && a.buffer instanceof ArrayBuffer) out.add(a.buffer); };
-  const model = (m) => { for (const v of Object.values(m ?? {})) take(v); };
-  model(parts?.model); take(parts?.tris);
-  for (const g of parts?.gates ?? []) { model(g.model); take(g.tris); }
-  for (const [, art] of parts?.art ?? []) { take(art?.albedo?.colors); take(art?.emission?.colors); }
-  for (const r of parts?.ruins ?? []) model(r.model);   // EG-LOOK: the ruin's meshes and the wreck's
+  const take = (a) => {
+    if (ArrayBuffer.isView(a) && a.buffer instanceof ArrayBuffer) out.add(a.buffer);
+  };
+  const model = (m) => {
+    for (const v of Object.values(m ?? {})) take(v);
+  };
+  model(parts?.model);
+  take(parts?.tris);
+  for (const g of parts?.gates ?? []) {
+    model(g.model);
+    take(g.tris);
+  }
+  for (const [, art] of parts?.art ?? []) {
+    take(art?.albedo?.colors);
+    take(art?.emission?.colors);
+  }
+  for (const r of parts?.ruins ?? []) model(r.model); // EG-LOOK: the ruin's meshes and the wreck's
   for (const w of parts?.vista?.wings ?? []) model(w.model);
   model(parts?.vista?.under?.model);
   return [...out];

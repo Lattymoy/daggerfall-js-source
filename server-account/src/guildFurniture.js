@@ -19,20 +19,38 @@ export function guildPieceRule(/** @type {any} */ p, /** @type {{ hall: boolean,
 export function guildStockGuard(/** @type {any} */ p, /** @type {number} */ mapId, /** @type {string} */ buildingKey) {
   const w = guildWareOfModel(p?.model);
   if (!w) return ['', []];
-  return [` AND COALESCE((SELECT f.owned FROM guild_furniture f JOIN homes h ON h.guild_id = f.guild_id WHERE h.map_id = ? AND h.building_key = ? AND f.ware = ?), 0)
+  return [
+    ` AND COALESCE((SELECT f.owned FROM guild_furniture f JOIN homes h ON h.guild_id = f.guild_id WHERE h.map_id = ? AND h.building_key = ? AND f.ware = ?), 0)
     > (SELECT COUNT(*) FROM home_decor d JOIN homes h2 ON h2.map_id = d.map_id AND h2.building_key = d.building_key
-       WHERE h2.guild_id = (SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?) AND d.model = ?)`, [mapId, buildingKey, w.key, mapId, buildingKey, w.model]];
+       WHERE h2.guild_id = (SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?) AND d.model = ?)`,
+    [mapId, buildingKey, w.key, mapId, buildingKey, w.model],
+  ];
 }
 
 /** How many more of a guild piece's ware its hall's guild may stand - owned less what its halls stand; Infinity for any
  *  other piece. */
-export async function guildStockLeft(/** @type {any} */ db, /** @type {any} */ p, /** @type {number} */ mapId, /** @type {string} */ buildingKey) {
+export async function guildStockLeft(
+  /** @type {any} */ db,
+  /** @type {any} */ p,
+  /** @type {number} */ mapId,
+  /** @type {string} */ buildingKey,
+) {
   const w = guildWareOfModel(p?.model);
   if (!w) return Infinity;
-  const r = await db.prepare(`SELECT COALESCE((SELECT f.owned FROM guild_furniture f JOIN homes h ON h.guild_id = f.guild_id WHERE h.map_id = ?1 AND h.building_key = ?2 AND f.ware = ?3), 0)
+  const r = await db
+    .prepare(
+      `SELECT COALESCE((SELECT f.owned FROM guild_furniture f JOIN homes h ON h.guild_id = f.guild_id WHERE h.map_id = ?1 AND h.building_key = ?2 AND f.ware = ?3), 0)
     - (SELECT COUNT(*) FROM home_decor d JOIN homes h2 ON h2.map_id = d.map_id AND h2.building_key = d.building_key
-       WHERE h2.guild_id = (SELECT guild_id FROM homes WHERE map_id = ?1 AND building_key = ?2) AND d.model = ?4) AS n`).bind(mapId, buildingKey, w.key, w.model).first();
+       WHERE h2.guild_id = (SELECT guild_id FROM homes WHERE map_id = ?1 AND building_key = ?2) AND d.model = ?4) AS n`,
+    )
+    .bind(mapId, buildingKey, w.key, w.model)
+    .first();
   return Number(r?.n ?? 0);
 }
 /** Whether a guild piece's placement found no stock left. */
-export const guildStockSpent = async (/** @type {any} */ db, /** @type {any} */ p, /** @type {number} */ mapId, /** @type {string} */ buildingKey) => (await guildStockLeft(db, p, mapId, buildingKey)) < 1;
+export const guildStockSpent = async (
+  /** @type {any} */ db,
+  /** @type {any} */ p,
+  /** @type {number} */ mapId,
+  /** @type {string} */ buildingKey,
+) => (await guildStockLeft(db, p, mapId, buildingKey)) < 1;

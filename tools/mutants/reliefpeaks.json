@@ -11,8 +11,8 @@
   {
     "name": "RELIEF-PEAKS-large-law-knee",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "if (b <= knee) return gain * b;",
-    "new": "if (b <= knee - 15) return gain * b;",
+    "old": "  if (b <= knee) return gain * b;",
+    "new": "  if (b <= knee - 15) return gain * b;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RELIEF-PEAKS-large-law-top-run",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "const h = h0 + (h1 - h0) * Math.min(1, (b - top) / (byteTop - top));",
-    "new": "const h = h0 + (h1 - h0) * Math.min(1, (b - top) / (byteTop - top + 20));",
+    "old": "  const h = h0 + (h1 - h0) * Math.min(1, (b - top) / (byteTop - top));",
+    "new": "  const h = h0 + (h1 - h0) * Math.min(1, (b - top) / (byteTop - top + 20));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RELIEF-PEAKS-large-law-past-top-clamped",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return Math.max(0, (h - BASE_HEIGHT_SCALE * b) / NOISE_MAP_SCALE);",
-    "new": "return top;",
+    "old": "  return Math.max(0, (h - BASE_HEIGHT_SCALE * b) / NOISE_MAP_SCALE);",
+    "new": "  return top;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RELIEF-PEAKS-large-map-cell-bilinear",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "const row = (r) => cubicInterpolator(b(X - 1, r), b(X, r), b(X + 1, r), b(X + 2, r), tx);",
-    "new": "const row = (r) => b(X, r) * (1 - tx) + b(X + 1, r) * tx;",
+    "old": "        const row = (r) => cubicInterpolator(b(X - 1, r), b(X, r), b(X + 1, r), b(X + 2, r), tx);",
+    "new": "        const row = (r) => b(X, r) * (1 - tx) + b(X + 1, r) * tx;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RELIEF-PEAKS-large-map-north-for-south",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)",
-    "new": "cubicInterpolator(row(Y - 1), row(Y), row(Y + 1), row(Y + 2), 1 - ty)",
+    "old": "        col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));",
+    "new": "        col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y - 1), row(Y), row(Y + 1), row(Y + 2), 1 - ty)));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RELIEF-PEAKS-large-map-basin-unread",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "col[iy] = Math.round(keep * largeOfByte(",
-    "new": "col[iy] = Math.round(1 * largeOfByte(",
+    "old": "        col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));",
+    "new": "        col[iy] = Math.round(1 * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RELIEF-PEAKS-edge-no-blend",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "if (d >= SEAM_PX + BLEND_PX) return own;",
-    "new": "return own;",
+    "old": "    if (d >= SEAM_PX + BLEND_PX) return own;",
+    "new": "    return own;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RELIEF-PEAKS-edge-blend-share",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "t = (d - SEAM_PX) / BLEND_PX, out = [];",
-    "new": "t = (d - SEAM_PX) / (2 * BLEND_PX), out = [];",
+    "old": "    const edge = woods.getLargeMapData(x, y), t = (d - SEAM_PX) / BLEND_PX, out = [];",
+    "new": "    const edge = woods.getLargeMapData(x, y), t = (d - SEAM_PX) / (2 * BLEND_PX), out = [];",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RELIEF-PEAKS-frames-strength-unread",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "strong = smooth01(dl / ORIENT_FULL);",
-    "new": "strong = 1;",
+    "old": "    strong = smooth01(dl / ORIENT_FULL);",
+    "new": "    strong = 1;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RELIEF-PEAKS-frames-fixed-share-dropped",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "let w0 = o[1] * strong, w1 = o[3] * strong, w2 = 1 - strong;",
-    "new": "let w0 = o[1] * strong, w1 = o[3] * strong, w2 = 0;",
+    "old": "    w2 = 1 - strong; // w2: the fixed frame's (frame 0)",
+    "new": "    w2 = 0; // w2: the fixed frame's (frame 0)",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RELIEF-PEAKS-frames-direction-unit-at-node",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "vals[o + V_C2] = _st[0] * a + fc * (1 - a); vals[o + V_S2] = _st[1] * a + fs * (1 - a);",
-    "new": "vals[o + V_C2] = _st[0] * a + fc * (1 - a); vals[o + V_S2] = _st[1] * a + fs * (1 - a); { const l = Math.sqrt(vals[o + V_C2] * vals[o + V_C2] + vals[o + V_S2] * vals[o + V_S2]); if (l > 1e-9) { vals[o + V_C2] /= l; vals[o + V_S2] /= l; } }",
+    "old": "  vals[o + V_WX] = D.warp * signed(gx / D.warpScale + 5.2, gy / D.warpScale + 1.3);",
+    "new": "  {\n    const l = Math.sqrt(vals[o + V_C2] * vals[o + V_C2] + vals[o + V_S2] * vals[o + V_S2]);\n    if (l > 1e-9) {\n      vals[o + V_C2] /= l;\n      vals[o + V_S2] /= l;\n    }\n  }\n  vals[o + V_WX] = D.warp * signed(gx / D.warpScale + 5.2, gy / D.warpScale + 1.3);",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-unlaid",
     "file": "src/world/landforms.js",
-    "old": "const land = macro + lift * fade, r = ranges ? ranges(gx, gy, land) : 0;",
-    "new": "const land = macro + lift * fade, r = 0;",
+    "old": "        const land = macro + lift * fade, r = ranges ? ranges(gx, gy, land) : 0;   // RELIEF-PEAKS: the ranges first - the landforms ride on them",
+    "new": "        const land = macro + lift * fade, r = 0;   // RELIEF-PEAKS: the ranges first - the landforms ride on them",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-swing-halved",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "foot: 1000, full: 2300, high: 1250,",
-    "new": "foot: 1000, full: 2300, high: 600,",
+    "old": "  high: 1250,",
+    "new": "  high: 600,",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-centre-at-top",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return RANGE_MEAN + (1 - RANGE_MEAN) * smooth01(",
-    "new": "return 1 + 0 * smooth01(",
+    "old": "  return RANGE_MEAN + (1 - RANGE_MEAN) * smooth01((metresOf(h) - D.crest) / (metresOf(rangeCeiling()) - D.crest));",
+    "new": "  return 1 + 0 * smooth01((metresOf(h) - D.crest) / (metresOf(rangeCeiling()) - D.crest));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-no-floor",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return (out < floor ? floor : out) - h;",
-    "new": "return out - h;",
+    "old": "  return (out < floor ? floor : out) - h;",
+    "new": "  return out - h;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-no-clip",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (out > from && ceiling > from) {",
-    "new": "if (false) {",
+    "old": "  if (out > from && ceiling > from) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-through-the-waters",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (swing > 0 && nearWater) swing *= smooth01(",
-    "new": "if (false) swing *= smooth01(",
+    "old": "  if (swing > 0 && nearWater) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));",
+    "new": "  if (false) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-swing-ungraded",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return (D.high / STREAMING_TERRAIN_SCALE) * smooth01((metresOf(h) - D.foot) / (D.full - D.foot));",
-    "new": "return D.high / STREAMING_TERRAIN_SCALE;",
+    "old": "  return (D.high / STREAMING_TERRAIN_SCALE) * smooth01((metresOf(h) - D.foot) / (D.full - D.foot));",
+    "new": "  return D.high / STREAMING_TERRAIN_SCALE;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "RELIEF-PEAKS-far-large-map-left-out",
     "file": "src/world/landforms.js",
-    "old": "const low = byte * BASE_HEIGHT_SCALE, h = low + largeOfByte(byte) * NOISE_MAP_SCALE;",
-    "new": "const low = byte * BASE_HEIGHT_SCALE, h = low;",
+    "old": "  const low = byte * BASE_HEIGHT_SCALE, h = low + largeOfByte(byte) * NOISE_MAP_SCALE;",
+    "new": "  const low = byte * BASE_HEIGHT_SCALE, h = low;",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/render/farlandmark.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "RELIEF-PEAKS-far-byte-at-the-centre",
     "file": "src/world/landforms.js",
-    "old": "const w = HALF_WEIGHTS[i] * HALF_WEIGHTS[j], qx = x - 2 + i, qy = y - 2 + j;",
-    "new": "const w = HALF_WEIGHTS[i] * HALF_WEIGHTS[j], qx = x - 1 + i, qy = y - 1 + j;",
+    "old": "      const w = HALF_WEIGHTS[i] * HALF_WEIGHTS[j], qx = x - 2 + i, qy = y - 2 + j;",
+    "new": "      const w = HALF_WEIGHTS[i] * HALF_WEIGHTS[j], qx = x - 1 + i, qy = y - 1 + j;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "RELIEF-PEAKS-far-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return beyond > 0 ? land + beyond * tamrielRangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them\n}\n/** RELIEF-PEAKS: the far views",
-    "new": "return land;\n}\n/** RELIEF-PEAKS: the far views",
+    "old": "  return beyond > 0 ? land + beyond * tamrielRangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them",
+    "new": "  return land;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "RELIEF-PEAKS-far-node-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return beyond > 0 ? land + beyond * tamrielRangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;",
-    "new": "return land;",
+    "old": "  return beyond > 0 ? land + beyond * tamrielRangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them",
+    "new": "  return land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "RELIEF-PEAKS-mean-ground-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
-    "new": "return land + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "old": "    return (share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits; RED-MOUNTAIN: and its smooth cone",
+    "new": "    return land + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits; RED-MOUNTAIN: and its smooth cone",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -240,8 +240,8 @@
   {
     "name": "RELIEF-PEAKS-bound-ranges-unread",
     "file": "src/world/landforms.js",
-    "old": "if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
-    "new": "if (continentPixel(px, py)) return h + reliefLift(lowTop) + continentLift(lowTop) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
+    "old": "  if (continentPixel(px, py)) return rangeBound(px, py, h + reliefLift(lowTop) + continentLift(lowTop)) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);   // RELIEF-PEAKS: and the ranges' rise; RED-MOUNTAIN: and the volcano's most over the pixel",
+    "new": "  if (continentPixel(px, py)) return h + reliefLift(lowTop) + continentLift(lowTop) + Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);   // RELIEF-PEAKS: and the ranges' rise; RED-MOUNTAIN: and the volcano's most over the pixel",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -250,8 +250,8 @@
   {
     "name": "RELIEF-PEAKS-far-ground-unassembled",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "ground.set(m.ground, j0 * side);",
-    "new": "",
+    "old": "      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ground.set(m.ground, j0 * side);",
+    "new": "      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "RELIEF-PEAKS-move-on-todays-large-map",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "!inEtherLaw(x, y) ? largeMapBefore(x, y) : woods.getLargeMapData(x, y));",
-    "new": "!inEtherLaw(x, y) ? tamrielLargeMap(x, y) : woods.getLargeMapData(x, y));",
+    "old": "  before.getLargeMapData = (x, y) => (bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y) ? largeMapBefore(x, y) : woods.getLargeMapData(x, y));",
+    "new": "  before.getLargeMapData = (x, y) => (bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y) ? tamrielLargeMap(x, y) : woods.getLargeMapData(x, y));",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"
@@ -348,8 +348,8 @@
   {
     "name": "RELIEF-PEAKS-move-town-pointwise",
     "file": "src/world/landforms.js",
-    "old": "  if (!locationRect) {\n    const now = sampleKernel(woods, px, py, hDim, true, null), was",
-    "new": "  if (true) {\n    const now = sampleKernel(woods, px, py, hDim, true, null), was",
+    "old": "export function groundMovedField(woods, px, py, locationRect = null, before = groundBefore(woods), hDim = HEIGHTMAP_DIMENSION) {\n  if (!locationRect) {",
+    "new": "export function groundMovedField(woods, px, py, locationRect = null, before = groundBefore(woods), hDim = HEIGHTMAP_DIMENSION) {\n  if (true) {",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "RELIEF-PEAKS-landforms-ranges-option-unread",
     "file": "src/world/landforms.js",
-    "old": "const ranges = continent && hill !== NO_HILLS && ground.ranges ? rangeShaper(px, py) : null;",
-    "new": "const ranges = continent && hill !== NO_HILLS ? rangeShaper(px, py) : null;",
+    "old": "  const ranges = continent && hill !== NO_HILLS && ground.ranges ? rangeShaper(px, py) : null;   // RELIEF-PEAKS: the ranges, what the pixel meets asked once",
+    "new": "  const ranges = continent && hill !== NO_HILLS ? rangeShaper(px, py) : null;   // RELIEF-PEAKS: the ranges, what the pixel meets asked once",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "RELIEF-PEAKS-site-level-without-ranges",
     "file": "src/world/landforms.js",
-    "old": "const land = macro + lift * fade, r = ranges ? ranges(ox + x, oy + y, land) : 0, c = r +",
-    "new": "const land = macro + lift * fade, r = 0, c = r +",
+    "old": "          const land = macro + lift * fade, r = ranges ? ranges(ox + x, oy + y, land) : 0, c = r + tamrielLandformAt(tl, ox + x, oy + y, land + r);",
+    "new": "          const land = macro + lift * fade, r = 0, c = r + tamrielLandformAt(tl, ox + x, oy + y, land + r);",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]

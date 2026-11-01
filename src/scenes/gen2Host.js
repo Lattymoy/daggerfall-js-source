@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 (bible/03-World/World-2-Canon.md, "The seam"): THE PUBLISHED REGIONS' BAKES for the streamed world - the
+// THE PUBLISHED REGIONS' BAKES for the streamed world - the
 // manifest's published list (world/gen2/worldManifest.json), and with `?wg2=<id>` a prototype region a developer walks
 // (world/gen2/testRegions.js). Fetched once and opened (each is gzipped); the host hands them to terrainGen.setTamriel,
 // which installs them on every thread. A bake that fails to load is told once and left out: the world's own ground
@@ -7,7 +7,7 @@
 import { worldManifest } from '../world/gen2/manifest.js';
 import { testRegion } from '../world/gen2/testRegions.js';
 import { APP_ROOT } from '../systems/appRoot.js';
-import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the one parse of the page's query
+import { pageParam } from '../systems/pageQuery.js';   // The one parse of the page's query
 
 /** A bake's address under the app's root (systems/appRoot.js): the page is /play/, the bakes are served from the root.
  *  @param {string} file */

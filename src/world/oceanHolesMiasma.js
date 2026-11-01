@@ -34,7 +34,12 @@ export const START_SIZE_MAX = 6;
 /** velocityOverLifetime's x and z reach: a random -0.12..0.12 m/s. */
 export const DRIFT = 0.12;
 /** The size-over-lifetime curve's keys. */
-export const SIZE_KEYS = Object.freeze([[0, 0], [0.02, 1], [0.9, 1], [1, 0]]);
+export const SIZE_KEYS = Object.freeze([
+  [0, 0],
+  [0.02, 1],
+  [0.9, 1],
+  [1, 0],
+]);
 
 /** AnimationCurve.Evaluate over keys with zero tangents: each span a flat-ended Hermite. */
 export function evaluateSizeCurve(t) {
@@ -63,12 +68,15 @@ export function createMiasma({ count, height, radius, roll = Math.random }) {
   let accum = 0;
   const range = (a, b) => a + (b - a) * roll();
   function emit() {
-    const a = roll() * Math.PI * 2, r = radius * Math.sqrt(roll());
+    const a = roll() * Math.PI * 2,
+      r = radius * Math.sqrt(roll());
     particles.push({
       p: [Math.cos(a) * r, 0, Math.sin(a) * r],
       v: [range(-DRIFT, DRIFT), range(f32(v * 0.85), v), range(-DRIFT, DRIFT)],
-      size: range(3, START_SIZE_MAX), rot: range(0, Math.PI * 2),
-      age: 0, life: SURFACE_MIASMA_LIFETIME,
+      size: range(3, START_SIZE_MAX),
+      rot: range(0, Math.PI * 2),
+      age: 0,
+      life: SURFACE_MIASMA_LIFETIME,
     });
   }
   function step(dt) {
@@ -76,8 +84,13 @@ export function createMiasma({ count, height, radius, roll = Math.random }) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const q = particles[i];
       q.age += dt;
-      if (q.age >= q.life) { particles.splice(i, 1); continue; }
-      q.p[0] += q.v[0] * dt; q.p[1] += q.v[1] * dt; q.p[2] += q.v[2] * dt;
+      if (q.age >= q.life) {
+        particles.splice(i, 1);
+        continue;
+      }
+      q.p[0] += q.v[0] * dt;
+      q.p[1] += q.v[1] * dt;
+      q.p[2] += q.v[2] * dt;
     }
     accum += rate * dt;
     while (accum >= 1) {
@@ -88,7 +101,10 @@ export function createMiasma({ count, height, radius, roll = Math.random }) {
   // PREWARM: one loop's worth, in steps a frame long
   for (let t = 0; t < DEFAULT_DURATION; t += 1 / 60) step(1 / 60);
   return {
-    particles, step, rate, max,
+    particles,
+    step,
+    rate,
+    max,
     /** The size a particle draws at now (its start size through the curve). */
     sizeOf: (q) => q.size * evaluateSizeCurve(q.age / q.life),
   };
@@ -98,6 +114,7 @@ export function createMiasma({ count, height, radius, roll = Math.random }) {
  *  renderer culls it by (its particles' own bounds): the disc and a life's drift out, the whole rise (v at most
  *  height / 30 for 30 s) up, and the largest puff's half all round. */
 export function miasmaReach({ height, radius }) {
-  const half = START_SIZE_MAX / 2, out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;
+  const half = START_SIZE_MAX / 2,
+    out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;
   return [-out, -half, -out, out, height + half, out];
 }

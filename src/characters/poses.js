@@ -40,11 +40,11 @@ export const POSES = {
     lean: 0.03,
     gaitArm: 0.55,
     gaitElbow: 0.35,
-    runElbow: 0.55,   // extra elbow bend while moving (Mac: elbows bend when running)
+    runElbow: 0.55, // extra elbow bend while moving (Mac: elbows bend when running)
     armL: { sw: -0.04, bd: 0.08, spread: 0.06, handRoll: 0, handPitch: 0, handYaw: 0 },
     armR: { sw: -0.05, bd: 0.12, spread: 0.04, handRoll: 0, handPitch: 0, handYaw: 0 },
     legL: { sw: 0.08, bd: 0.08 },
-    legR: { sw: -0.14, bd: 0.10 },
+    legR: { sw: -0.14, bd: 0.1 },
   },
   // 2H melee ready (Claymore): BOTH hands on the hilt in front of the
   // body, blade up-forward. The weapon rides the LEFT (dominant)
@@ -62,8 +62,8 @@ export const POSES = {
     gaitArm: 0,
     gaitElbow: 0,
     runElbow: 0,
-    armL: { sw: -0.23, bd: 0.60, spread: -0.25, handRoll: 0, handPitch: 0, handYaw: 0 },
-    armR: { sw: -0.10, bd: 0.33, spread: -0.42, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armL: { sw: -0.23, bd: 0.6, spread: -0.25, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.1, bd: 0.33, spread: -0.42, handRoll: 0, handPitch: 0, handYaw: 0 },
     legL: { sw: 0.12, bd: 0.18 },
     legR: { sw: -0.18, bd: 0.14 },
   },
@@ -74,14 +74,14 @@ export const POSES = {
   // game's job. Locked through the gait like 2H.
   rangedAim: {
     lean: 0.05,
-    twist: 0.65,    // BLADED archer, CORRECT form: bow shoulder forward, draw shoulder back. FORM IS A CONSTRAINT, NOT AN OUTCOME - a reach-optimizing twist sweep once inverted the stance (draw shoulder led by 0.24; Mac: "the left arm looks so off"); with the seat frame-fixed, positive twist reaches the nock at 0.011.
+    twist: 0.65, // BLADED archer, CORRECT form: bow shoulder forward, draw shoulder back. FORM IS A CONSTRAINT, NOT AN OUTCOME - a reach-optimizing twist sweep once inverted the stance (draw shoulder led by 0.24; Mac: "the left arm looks so off"); with the seat frame-fixed, positive twist reaches the nock at 0.011.
     gaitArm: 0,
     gaitElbow: 0,
     runElbow: 0,
-    armL: { sw: -1.50, bd: 0, spread: -0.285, handRoll: 0, handPitch: 0, handYaw: 0 },
-    armR: { sw: -0.69, bd: 1.035, spread: -0.875, roll: -1.315, handRoll: 0, handPitch: 0, handYaw: 0 },   // draw arm: upper arm out-back, forearm FOLDED ACROSS by the humeral roll (elbow x +0.15 below the shoulder) - the railed -1.5 cross-spread contorted (Mac); the roll DOF dissolves it at nock 0.012
-    legL: { sw: 0.10, bd: 0.10 },
-    legR: { sw: -0.16, bd: 0.10 },
+    armL: { sw: -1.5, bd: 0, spread: -0.285, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armR: { sw: -0.69, bd: 1.035, spread: -0.875, roll: -1.315, handRoll: 0, handPitch: 0, handYaw: 0 }, // draw arm: upper arm out-back, forearm FOLDED ACROSS by the humeral roll (elbow x +0.15 below the shoulder) - the railed -1.5 cross-spread contorted (Mac); the roll DOF dissolves it at nock 0.012
+    legL: { sw: 0.1, bd: 0.1 },
+    legR: { sw: -0.16, bd: 0.1 },
   },
   // FIRST-PERSON 1H ready: the viewmodel state - weapon raised into
   // the eye's frame (classic DF ready), gait pumps OFF so the
@@ -95,8 +95,8 @@ export const POSES = {
     gaitArm: 0,
     gaitElbow: 0,
     runElbow: 0,
-    armL: { sw: -1.56, bd: 0.14, spread: 0.11, handRoll: 0, handPitch: 0.91, handYaw: -0.11, },   // VIEW-SPACE solved: fist NDC (0.40,-0.52) bottom-right, tip (0.08,0.76) raked tall, near-plane clean, whole blade in frame
-    armR: { sw: -0.15, bd: 0.35, spread: -0.10, handRoll: 0, handPitch: 0, handYaw: 0 },
+    armL: { sw: -1.56, bd: 0.14, spread: 0.11, handRoll: 0, handPitch: 0.91, handYaw: -0.11 }, // VIEW-SPACE solved: fist NDC (0.40,-0.52) bottom-right, tip (0.08,0.76) raked tall, near-plane clean, whole blade in frame
+    armR: { sw: -0.15, bd: 0.35, spread: -0.1, handRoll: 0, handPitch: 0, handYaw: 0 },
     legL: { sw: 0.08, bd: 0.08 },
     legR: { sw: -0.12, bd: 0.08 },
   },

@@ -15,7 +15,10 @@ import { t } from '../../systems/textManager.js';
  *  taking the tier's share less while it is awake on me (her men as the ball takes them). In place; answers it. */
 export function dueOnHull(/** @type {any} */ hurt, due = captainsDue()) {
   const k = due.hull;
-  if (k !== 1) { if (Number.isFinite(hurt.hull)) hurt.hull *= k; if (Number.isFinite(hurt.sail)) hurt.sail *= k; }
+  if (k !== 1) {
+    if (Number.isFinite(hurt.hull)) hurt.hull *= k;
+    if (Number.isFinite(hurt.sail)) hurt.sail *= k;
+  }
   return hurt;
 }
 
@@ -31,9 +34,19 @@ export function dueOnHull(/** @type {any} */ hurt, due = captainsDue()) {
  */
 export function legendTidemail(legend, seed, paid, { give, say }) {
   if (!(Number(paid) > 0)) return null;
-  const piece = rollElthericPiece(mulberry32(((seed >>> 0) ^ TIDEMAIL_SALT) >>> 0), elthericChance('legend', legend.band));
+  const piece = rollElthericPiece(
+    mulberry32(((seed >>> 0) ^ TIDEMAIL_SALT) >>> 0),
+    elthericChance('legend', legend.band),
+  );
   if (!piece) return null;
   give([piece]);
-  say(t('sea.tidemail.legend', 'From {ship}: {piece}, a piece of {set}!', { ship: legend.name, piece: piece.name, set: setById('eltheric')?.name ?? '' }), 6);
+  say(
+    t('sea.tidemail.legend', 'From {ship}: {piece}, a piece of {set}!', {
+      ship: legend.name,
+      piece: piece.name,
+      set: setById('eltheric')?.name ?? '',
+    }),
+    6,
+  );
   return piece;
 }

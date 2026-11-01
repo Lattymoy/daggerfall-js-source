@@ -17,15 +17,21 @@
 // FRAME_ROLES: a card a panel, a picture a well, a state a chip) - this sheet writes geometry and
 // the words' colours alone, as the Companions page's does.
 
-import { stableWagonName, WAGON_KINDS } from '../systems/wagon/wagonKinds.js';   // WAGONS1: the Stable's card names the wagon driven
-import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagon/wagonLooks.js';   // WAGONS2: and paints it
-import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horse/horseCoats.js';   // COATS1: and the horse's look
+import { stableWagonName, WAGON_KINDS } from '../systems/wagon/wagonKinds.js'; // WAGONS1: the Stable's card names the wagon driven
+import { paintDrivenWagon, outsidePaintRow, LOOK_TEXT } from '../systems/wagon/wagonLooks.js'; // WAGONS2: and paints it
+import { restyleRiddenHorse, horseLookRows, birthHorses, HORSE_LOOK_PARTS } from '../systems/horse/horseCoats.js'; // COATS1: and the horse's look
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { WAGON_MODE, HORSE_MODE, TRANSPORT, HORSE_NAME_MAX } from '../systems/horse/horseCartLaw.js';
-import { optionPath } from './settings/settingsMap.js';   // ORG2: a switch named in a window says where it lives
-import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js';   // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
-import { t } from '../systems/textManager.js';   // HORSE-TIERS: Boons' two hunger lines in the player's language
-import { dragonKeepDoor, dragonCardWords, DRAGON_KEEP_CARD, DRAGON_CARE_TEXT, DRAGON_NAME_MAX } from '../systems/dragon/dragonKeep.js';   // DRAGON5b: the tamed dragon's card
+import { optionPath } from './settings/settingsMap.js'; // ORG2: a switch named in a window says where it lives
+import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js'; // STEED1/WAGONS4: a horse fed by hand only beside it, a kit spent only at the wagon
+import { t } from '../systems/textManager.js'; // HORSE-TIERS: Boons' two hunger lines in the player's language
+import {
+  dragonKeepDoor,
+  dragonCardWords,
+  DRAGON_KEEP_CARD,
+  DRAGON_CARE_TEXT,
+  DRAGON_NAME_MAX,
+} from '../systems/dragon/dragonKeep.js'; // DRAGON5b: the tamed dragon's card
 import { dragonArchiveOf } from '../characters/dwarvenDragonId.js';
 import { DRAGON_MOUNT_ICON } from '../systems/dragon/dragonMount.js';
 
@@ -35,9 +41,15 @@ const ART_BOX = 48;
 /** The two items' inventory pictures (the item templates' playerTexture: Horse 94 201/0, Small Cart 93 213/1). */
 export const HORSE_ART = Object.freeze({ archive: 201, record: 0 });
 export const WAGON_ART = Object.freeze({ archive: 213, record: 1 });
-let _icon = (p, box, onReady) => requestFittedIcon(p.archive, p.record, { box, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady });
+let _icon = (p, box, onReady) =>
+  requestFittedIcon(p.archive, p.record, { box, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady });
 /** Tests: the picture source. */
-export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) => requestFittedIcon(p.archive, p.record, { box, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady })); }
+export function _setHoldingsIconForTests(fn) {
+  _icon =
+    fn ??
+    ((p, box, onReady) =>
+      requestFittedIcon(p.archive, p.record, { box, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady }));
+}
 
 /**
  * @typedef {Object} StableModel
@@ -57,7 +69,9 @@ export function _setHoldingsIconForTests(fn) { _icon = fn ?? ((p, box, onReady) 
  */
 let _provider = /** @type {HoldingsProvider|null} */ (null);
 /** The host's provider, or null to take the pages down. */
-export function setHoldingsProvider(p) { _provider = p ?? null; }
+export function setHoldingsProvider(p) {
+  _provider = p ?? null;
+}
 export const holdingsProvider = () => _provider;
 /**
  * THE ONE CONSTRUCTION SEAM (Home.md) for the two hosts that stand Horse Cart and Cargo (scenes/world.js,
@@ -70,23 +84,69 @@ export const holdingsProvider = () => _provider;
  * (the mod's own mount reach - a horse waiting across the map is not) and never at the stable; a kit spent on the wagon
  * only where its load can be reached; `pass(minutes)` the host's clock for the kit's hour.
  */
-export function stableProviderFor({ runtime, on, hasHorse, hasCart, wagonKind = () => null, items = () => [], onPainted = () => {}, upkeep = null, pass = () => {} }) {
+export function stableProviderFor({
+  runtime,
+  on,
+  hasHorse,
+  hasCart,
+  wagonKind = () => null,
+  items = () => [],
+  onPainted = () => {},
+  upkeep = null,
+  pass = () => {},
+}) {
   const view = () => (on() ? runtime.stableView() : null);
   return {
-    stable: () => { birthHorses(items()); const v = view(); return { hcc: !!on(), hasHorse: !!hasHorse(), hasCart: !!hasCart(), view: v, kind: wagonKind() ?? null, paint: outsidePaintRow(items()), look: horseLookRows(items()), care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null }; },   // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
+    stable: () => {
+      birthHorses(items());
+      const v = view();
+      return {
+        hcc: !!on(),
+        hasHorse: !!hasHorse(),
+        hasCart: !!hasCart(),
+        view: v,
+        kind: wagonKind() ?? null,
+        paint: outsidePaintRow(items()),
+        look: horseLookRows(items()),
+        care: upkeep?.model({ near: upkeepReach(runtime, on()).near, name: v?.horseName ?? '' }) ?? null,
+      };
+    }, // WAGONS1: which wagon; WAGONS2: its paint; COATS1: the horse's look; STEED1/WAGONS4: their upkeep
     stableAct: (verb, arg) => {
-      if (upkeep && (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit' || verb === 'feedDragon')) {   // STEED1/WAGONS4: the upkeep's own acts, the mod on or off; DRAGON5c: the dragon's oil
+      if (
+        upkeep &&
+        (verb === 'feed' || verb === 'treat' || verb === 'ride' || verb === 'kit' || verb === 'feedDragon')
+      ) {
+        // STEED1/WAGONS4: the upkeep's own acts, the mod on or off; DRAGON5c: the dragon's oil
         const r = upkeep.act(verb, arg, { ...upkeepReach(runtime, on()), pass });
         if (r.ok) onPainted();
         return r;
       }
-      if (verb === 'paint') { const r = paintDrivenWagon(items(), 'outside', Number(arg) | 0); if (r.ok) onPainted(); return r; }   // WAGONS2: free, any time, the mod on or off - the paint is the wagon's
-      if (HORSE_LOOK_PARTS.some((p) => p.part === verb)) { const r = restyleRiddenHorse(items(), verb, Number(arg) | 0); if (r.ok) onPainted(); return r; }   // COATS1: the same - the look is the horse's
-      if (!on()) return { ok: false, text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.` };   // ORG2: where it lives, from the map
+      if (verb === 'paint') {
+        const r = paintDrivenWagon(items(), 'outside', Number(arg) | 0);
+        if (r.ok) onPainted();
+        return r;
+      } // WAGONS2: free, any time, the mod on or off - the paint is the wagon's
+      if (HORSE_LOOK_PARTS.some((p) => p.part === verb)) {
+        const r = restyleRiddenHorse(items(), verb, Number(arg) | 0);
+        if (r.ok) onPainted();
+        return r;
+      } // COATS1: the same - the look is the horse's
+      if (!on())
+        return {
+          ok: false,
+          text: `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to call your horse and wagon.`,
+        }; // ORG2: where it lives, from the map
       if (verb === 'summon') return runtime.summonTransport();
       if (verb === 'away') return runtime.sendTransportAway();
       // AUDIT HOLDINGS C5: a horse never named answers '' - his own, not none
-      if (verb === 'rename') { const n = runtime.renameHorse(arg); return n == null ? { ok: false, text: 'You do not own a horse.' } : n ? { ok: true, text: `Your horse is called ${n}.` } : { ok: false, text: 'Your horse has no name. Give him one.' }; }
+      if (verb === 'rename') {
+        const n = runtime.renameHorse(arg);
+        return n == null
+          ? { ok: false, text: 'You do not own a horse.' }
+          : n
+            ? { ok: true, text: `Your horse is called ${n}.` }
+            : { ok: false, text: 'Your horse has no name. Give him one.' };
+      }
       return { ok: false, text: 'Not here.' };
     },
   };
@@ -168,9 +228,16 @@ export function holdingArt(el, art, glyph, rerender) {
   let shown = false;
   if (art) {
     try {
-      const pic = _icon(art, ART_BOX, () => { if (f.isConnected !== false) rerender?.(); });
-      if (pic?.src) { f.append(fittedImg(pic)); shown = true; }
-    } catch { shown = false; }
+      const pic = _icon(art, ART_BOX, () => {
+        if (f.isConnected !== false) rerender?.();
+      });
+      if (pic?.src) {
+        f.append(fittedImg(pic));
+        shown = true;
+      }
+    } catch {
+      shown = false;
+    }
   }
   if (!shown) f.append(el('span', 'hld-glyph', glyph));
   return f;
@@ -194,10 +261,18 @@ function statMeter(el, meter, label, now, plus, tone, why = '') {
   return r;
 }
 /** STEED-UI: a stat's making in words - born, the bond's points, hunger's. */
-export const statWhy = (st, bonus, penalty, hunger) => [`Born ${st.born}`, bonus ? `+${bonus} from your bond` : '', penalty ? `−${penalty} ${String(hunger).toLowerCase()}` : ''].filter(Boolean).join(', ');
+export const statWhy = (st, bonus, penalty, hunger) =>
+  [
+    `Born ${st.born}`,
+    bonus ? `+${bonus} from your bond` : '',
+    penalty ? `−${penalty} ${String(hunger).toLowerCase()}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
 /** STEED1: a hunger's chip tone. HORSE-TIERS: NO RED where hunger costs nothing (Boons) - amber at most. */
 const HUNGER_TONE = Object.freeze({ fed: '', hungry: 'is-hurt', starving: 'is-lost' });
-export const hungerTone = (h, care) => (care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : HUNGER_TONE[h.hungerKey] ?? '');
+export const hungerTone = (h, care) =>
+  care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : (HUNGER_TONE[h.hungerKey] ?? '');
 /** STEED1: what a hunger costs, in the card's words. STEED-UI: a fed horse says how long its food lasts. HORSE-TIERS:
  *  each tier's own words - Hard's what hunger takes, Boons' only the gallop a starving horse has not earned. */
 const HUNGER_LINE = Object.freeze({
@@ -205,27 +280,40 @@ const HUNGER_LINE = Object.freeze({
   hungry: 'Hungry: every attribute 10 lower, and slower to catch its breath.',
   starving: 'Starving: every attribute 25 lower, no gallop, and your bond is fading. Feed it.',
 });
-const HUNGER_LINE_BOONS = Object.freeze({   // HORSE-TIERS: in the player's language (L10N4's ratchet), read as it is shown
+const HUNGER_LINE_BOONS = Object.freeze({
+  // HORSE-TIERS: in the player's language (L10N4's ratchet), read as it is shown
   fed: 'Fed.',
-  get hungry() { return t('holdings.horse.boons.hungry', 'Hungry, but no penalty yet.'); },
-  get starving() { return t('holdings.horse.boons.starving', 'Starving. It will not gallop until it eats. Feed it.'); },
+  get hungry() {
+    return t('holdings.horse.boons.hungry', 'Hungry, but no penalty yet.');
+  },
+  get starving() {
+    return t('holdings.horse.boons.starving', 'Starving. It will not gallop until it eats. Feed it.');
+  },
 });
 /** STEED-UI: the bond's row - the kit's bar of the way from its word to the next, and the points still to go (whole at
  *  Kindred). */
 function bondMeter(el, meter, h) {
   const r = el('div', 'hld-meter');
   r.append(el('span', 'hld-mk', 'Bond'));
-  const span = h.next ? h.next.at - (h.tierAt ?? 0) : 1, got = h.next ? h.bond - (h.tierAt ?? 0) : 1;
+  const span = h.next ? h.next.at - (h.tierAt ?? 0) : 1,
+    got = h.next ? h.bond - (h.tierAt ?? 0) : 1;
   r.append(typeof meter === 'function' ? meter(Math.max(0, got), span, 'thin') : el('span', null, ''));
   r.append(el('span', 'hld-mn', h.next ? `${h.next.at - Math.floor(h.bond)} to ${h.next.name}` : 'Whole'));
-  r.title = h.next ? `Fed by your hand, ${h.tier} grows to ${h.next.name} at ${h.next.at}` : 'Kindred: the bond is complete';
+  r.title = h.next
+    ? `Fed by your hand, ${h.tier} grows to ${h.next.name} at ${h.next.at}`
+    : 'Kindred: the bond is complete';
   return r;
 }
 /** STEED-UI: hours of food as a card says them. */
-const foodHours = (hours) => (hours >= 2 ? `${Math.floor(hours)} hours` : hours * 60 >= 2 ? `${Math.round(hours * 60)} minutes` : 'a minute');
-export const hungerLine = (h, care = null) => (h.hungerKey === 'fed' && h.fedHours > 0 ? `Fed, with food enough for ${foodHours(h.fedHours)}.` : (care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
+const foodHours = (hours) =>
+  hours >= 2 ? `${Math.floor(hours)} hours` : hours * 60 >= 2 ? `${Math.round(hours * 60)} minutes` : 'a minute';
+export const hungerLine = (h, care = null) =>
+  h.hungerKey === 'fed' && h.fedHours > 0
+    ? `Fed, with food enough for ${foodHours(h.fedHours)}.`
+    : ((care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey] ?? '');
 /** STEED1: a steed's bond and hunger in words (DRAGON5c: the tamed dragon's card says its own the same). */
-const bondLine = (h, care) => `${h.tier} - bond ${Math.floor(h.bond)} of 100${h.bonus ? `, +${h.bonus} to every stat` : ''}. ${hungerLine(h, care)}`;
+const bondLine = (h, care) =>
+  `${h.tier} - bond ${Math.floor(h.bond)} of 100${h.bonus ? `, +${h.bonus} to every stat` : ''}. ${hungerLine(h, care)}`;
 /** STEED1: the choice to ride horse `h` (`chooseRiddenHorse` - made the pack's first). FIELD BUGS 2026-10-16b
  *  HORSE-CARE-OFF: on every other horse's card in every tier - with its care, or (Off, any skin but the enhanced one)
  *  in a row of its own. */
@@ -245,7 +333,9 @@ function steedLines(el, meter, h, care, act) {
   out.push(el('span', 'hld-sub', bondLine(h, care)));
   out.push(bondMeter(el, meter, h));
   if (h.ridden) {
-    out.push(holdingMeter(el, meter, 'Breath', h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'));
+    out.push(
+      holdingMeter(el, meter, 'Breath', h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'),
+    );
     if (h.winded) out.push(el('span', 'hld-sub hld-why', 'Winded. It will not gallop until it has caught its breath.'));
   }
   const row = el('div', 'hld-acts');
@@ -264,7 +354,18 @@ function steedLines(el, meter, h, care, act) {
   // block of their own under a small head (they are read, never pressed)
   const stats = el('div', 'hld-stats');
   stats.append(el('span', 'hld-subhead', 'Stats'));
-  for (const st of h.stats) stats.append(statMeter(el, meter, st.name, st.now, Math.max(0, st.now - st.born), 'thin', statWhy(st, h.bonus, h.penalty, h.hunger)));
+  for (const st of h.stats)
+    stats.append(
+      statMeter(
+        el,
+        meter,
+        st.name,
+        st.now,
+        Math.max(0, st.now - st.born),
+        'thin',
+        statWhy(st, h.bonus, h.penalty, h.hunger),
+      ),
+    );
   out.push(stats);
   return out;
 }
@@ -272,24 +373,44 @@ function steedLines(el, meter, h, care, act) {
 const WAGON_METER_TONE = Object.freeze({ sound: 'verdigris', worn: 'verdigris', rickety: '', failing: 'blood' });
 /** WAGON-TIERS: NO RED where wear costs nothing (Boons - Climates & Calories' RED MEANS IT COSTS): a failing wagon's bar
  *  is rickety's plain. A read that does not say (`wearSlows` absent) is the system as it stood. */
-export const wagonMeterTone = (w) => (w.wearSlows === false && w.stateKey === 'failing' ? WAGON_METER_TONE.rickety : WAGON_METER_TONE[w.stateKey] ?? 'verdigris');
+export const wagonMeterTone = (w) =>
+  w.wearSlows === false && w.stateKey === 'failing'
+    ? WAGON_METER_TONE.rickety
+    : (WAGON_METER_TONE[w.stateKey] ?? 'verdigris');
 /** WAGON-TIERS: Boons' words - a worn-down wagon rolls at its pace (the yard's price follows, mendLine), and a Sound one
  *  rolls faster for it. */
-const WAGON_ADVICE_BOONS = Object.freeze({   // in the player's language (L10N4's ratchet), read as it is shown
-  get rickety() { return t('holdings.wagon.boons.rickety', 'Rickety, but it still rolls at full pace.'); },
-  get failing() { return t('holdings.wagon.boons.failing', 'Failing, but it still rolls at full pace.'); },
-  get sound() { return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.'); },   // Mac: "Sound wagon rolls faster"
+const WAGON_ADVICE_BOONS = Object.freeze({
+  // in the player's language (L10N4's ratchet), read as it is shown
+  get rickety() {
+    return t('holdings.wagon.boons.rickety', 'Rickety, but it still rolls at full pace.');
+  },
+  get failing() {
+    return t('holdings.wagon.boons.failing', 'Failing, but it still rolls at full pace.');
+  },
+  get sound() {
+    return t('holdings.wagon.boons.sound', 'Sound, and it rolls faster for it.');
+  }, // Mac: "Sound wagon rolls faster"
 });
 /** STEED-UI: what a Wagon Yard asks to make it whole - at the yard, and with its wright going out to it. */
-export const mendLine = (w) => (w.mend > 0 ? `A Wagon Yard repairs it fully for ${w.mend} gold, or ${w.mendAway} if its wright must travel to it.` : 'A town’s Wagon Yard mends it.');
+export const mendLine = (w) =>
+  w.mend > 0
+    ? `A Wagon Yard repairs it fully for ${w.mend} gold, or ${w.mendAway} if its wright must travel to it.`
+    : 'A town’s Wagon Yard mends it.';
 /** WAGONS4: the wagon's soundness on its card - its condition, its state's word, and a kit's act. STEED-UI: its bar in
  *  its state's tone, and the yard's price. */
 function wagonLines(el, meter, w, care, act) {
   const out = [];
   out.push(holdingMeter(el, meter, 'Repair', w.share * 100, 100, wagonMeterTone(w)));
-  const advice = w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey) ? WAGON_ADVICE_BOONS[w.stateKey]   // WAGON-TIERS: Boons says no slowness, and the boon
-    : w.stateKey === 'failing' ? 'Failing. Its team pulls it at its slowest.'
-    : w.stateKey === 'rickety' ? 'Rickety. Its team pulls it more slowly.' : w.stateKey === 'worn' ? 'Worn. A Wagon Yard can repair it.' : 'Sound.';
+  const advice =
+    w.wearSlows === false && Object.hasOwn(WAGON_ADVICE_BOONS, w.stateKey)
+      ? WAGON_ADVICE_BOONS[w.stateKey] // WAGON-TIERS: Boons says no slowness, and the boon
+      : w.stateKey === 'failing'
+        ? 'Failing. Its team pulls it at its slowest.'
+        : w.stateKey === 'rickety'
+          ? 'Rickety. Its team pulls it more slowly.'
+          : w.stateKey === 'worn'
+            ? 'Worn. A Wagon Yard can repair it.'
+            : 'Sound.';
   out.push(el('span', `hld-sub${w.tone ? ' hld-why' : ''}`, `${advice} ${mendLine(w)}`));
   if (w.kitWorks) {
     const row = el('div', 'hld-acts');
@@ -304,7 +425,8 @@ function wagonLines(el, meter, w, care, act) {
 }
 
 /** How far a thing stands, in the words a card uses. */
-export const farWords = (m) => (m == null ? 'away from here' : m < 1000 ? `${m} m away` : `${(m / 1000).toFixed(1)} km away`);
+export const farWords = (m) =>
+  m == null ? 'away from here' : m < 1000 ? `${m} m away` : `${(m / 1000).toFixed(1)} km away`;
 
 /** The chip of a horse or a wagon with the player: the classic transport's (the mod off, or its persistence), and
  *  WAGON-STABLED's - the mod's WithPlayer never sent to the stable, which the next door leaves outside. */
@@ -319,50 +441,88 @@ const WITH_YOU = 'With you';
 export function stableWords(m) {
   if (!m.hcc || !m.view) {
     const classic = { state: WITH_YOU, tone: '', line: 'Ride from the Transport window.' };
-    return { horse: m.hasHorse ? classic : null, wagon: m.hasCart ? { ...classic, line: 'Its load rides with you.' } : null };
+    return {
+      horse: m.hasHorse ? classic : null,
+      wagon: m.hasCart ? { ...classic, line: 'Its load rides with you.' } : null,
+    };
   }
   const v = m.view;
   if (!v.persistence) {
     const classic = { state: WITH_YOU, tone: '', line: 'Physical persistence is off: it travels with you.' };
     return { horse: v.hasHorse ? classic : null, wagon: v.hasCart ? classic : null };
   }
-  const riding = v.transport === TRANSPORT.Horse, driving = v.transport === TRANSPORT.Cart;
+  const riding = v.transport === TRANSPORT.Horse,
+    driving = v.transport === TRANSPORT.Cart;
   const teamFollowing = v.wagonMode === WAGON_MODE.FollowingPlayer && v.horseMode === HORSE_MODE.HitchedToWagon;
-  const beside = { state: WITH_YOU, tone: '', line: 'At your side. It waits outside the next door you go through.' };   // WAGON-STABLED
-  let horse = null, wagon = null;
+  const beside = { state: WITH_YOU, tone: '', line: 'At your side. It waits outside the next door you go through.' }; // WAGON-STABLED
+  let horse = null,
+    wagon = null;
   if (v.hasHorse) {
     if (riding) horse = { state: 'Riding', tone: '', line: 'You are in the saddle.' };
     else if (driving) horse = { state: 'In harness', tone: '', line: 'Pulling your wagon.' };
-    else if (teamFollowing || v.horseMode === HORSE_MODE.FollowingPlayer) horse = { state: 'Following', tone: '', line: teamFollowing ? 'Following you with the wagon.' : 'Following you.' };
-    else if (v.horseMode === HORSE_MODE.LooseStationary) horse = { state: 'Waiting', tone: 'is-away', line: `Waiting where you left it, ${farWords(v.horseAt)}.` };
-    else if (v.horseMode === HORSE_MODE.HitchedToWagon && v.wagonMode === WAGON_MODE.Deployed) horse = { state: 'Hitched', tone: 'is-away', line: `Hitched to your parked wagon, ${farWords(v.wagonAt)}.` };
+    else if (teamFollowing || v.horseMode === HORSE_MODE.FollowingPlayer)
+      horse = {
+        state: 'Following',
+        tone: '',
+        line: teamFollowing ? 'Following you with the wagon.' : 'Following you.',
+      };
+    else if (v.horseMode === HORSE_MODE.LooseStationary)
+      horse = { state: 'Waiting', tone: 'is-away', line: `Waiting where you left it, ${farWords(v.horseAt)}.` };
+    else if (v.horseMode === HORSE_MODE.HitchedToWagon && v.wagonMode === WAGON_MODE.Deployed)
+      horse = { state: 'Hitched', tone: 'is-away', line: `Hitched to your parked wagon, ${farWords(v.wagonAt)}.` };
     // WAGON-STABLED: Stabled is sent away (the runtime's word); the mod's WithPlayer never sent is beside the player, and
     // the next door stands it outside
     else if (!v.horseStabled) horse = beside;
-    else horse = { state: 'Stabled', tone: 'is-away', line: 'Stabled. Mount it from the Transport window, or summon it to your side.' };
+    else
+      horse = {
+        state: 'Stabled',
+        tone: 'is-away',
+        line: 'Stabled. Mount it from the Transport window, or summon it to your side.',
+      };
   }
   if (v.hasCart) {
     if (driving) wagon = { state: 'Driving', tone: '', line: 'You are on the box.' };
     else if (teamFollowing) wagon = { state: 'Following', tone: '', line: 'Following you behind your horse.' };
-    else if (v.wagonMode === WAGON_MODE.Deployed) wagon = { state: 'Parked', tone: 'is-away', line: `Parked ${farWords(v.wagonAt)}.` };
+    else if (v.wagonMode === WAGON_MODE.Deployed)
+      wagon = { state: 'Parked', tone: 'is-away', line: `Parked ${farWords(v.wagonAt)}.` };
     else if (!v.wagonStabled) wagon = beside;
-    else wagon = { state: 'Stabled', tone: 'is-away', line: v.hasHorse ? 'Stored. Drive it from the Transport window, or summon it.' : 'Stored. You need a horse to pull it.' };
+    else
+      wagon = {
+        state: 'Stabled',
+        tone: 'is-away',
+        line: v.hasHorse
+          ? 'Stored. Drive it from the Transport window, or summon it.'
+          : 'Stored. You need a horse to pull it.',
+      };
   }
   return { horse, wagon };
 }
 
-let _said = null;   // { who: 'horse'|'wagon'|'both', ok, text } - the last act's word
-let _renaming = false;   // the horse's name field open
+let _said = null; // { who: 'horse'|'wagon'|'both', ok, text } - the last act's word
+let _renaming = false; // the horse's name field open
 let _draft = '';
-let _lookOpen = '';   // UI-CALM: whose look's pickers are open - 'horse', 'wagon', or none
-let _dragonNaming = false, _dragonDraft = '';   // DRAGON5b: the dragon's name field open, and what is typed
+let _lookOpen = ''; // UI-CALM: whose look's pickers are open - 'horse', 'wagon', or none
+let _dragonNaming = false,
+  _dragonDraft = ''; // DRAGON5b: the dragon's name field open, and what is typed
 
 /** UI-CALM: a colour a look's swatch wears, by the name the card says - a horse's coats, a wagon's outside paints. A
  *  name with none is drawn as a word (the stepper). */
 export const LOOK_SWATCHES = Object.freeze({
-  Bay: '#7a4527', Chestnut: '#9c5224', Black: '#26211e', Grey: '#9d9a93', Dun: '#b39a6b', Buckskin: '#c9a256', Palomino: '#dcbd7c',
-  'Weathered oak': '#7d6a4f', Red: '#9a2f24', Blue: '#2f4f8a', Green: '#3d6a3a', White: '#e4ded0', 'Cream canvas': '#e3d6b4',
-  Ochre: '#c08a2e', Oxblood: '#5e1d1b',
+  Bay: '#7a4527',
+  Chestnut: '#9c5224',
+  Black: '#26211e',
+  Grey: '#9d9a93',
+  Dun: '#b39a6b',
+  Buckskin: '#c9a256',
+  Palomino: '#dcbd7c',
+  'Weathered oak': '#7d6a4f',
+  Red: '#9a2f24',
+  Blue: '#2f4f8a',
+  Green: '#3d6a3a',
+  White: '#e4ded0',
+  'Cream canvas': '#e3d6b4',
+  Ochre: '#c08a2e',
+  Oxblood: '#5e1d1b',
 });
 
 /**
@@ -396,10 +556,14 @@ function choiceRow(el, word, { choices, current }, choose) {
   const step = (d, glyph, aria) => {
     const b = el('button', 'hld-step', glyph);
     b.setAttribute('aria-label', aria);
-    b.onclick = () => choose(((current + d) % n + n) % n);
+    b.onclick = () => choose((((current + d) % n) + n) % n);
     return b;
   };
-  row.append(step(-1, '\u2039', `${word}: previous`), el('span', 'hld-pickname hld-stepname', choices[current] ?? ''), step(1, '\u203a', `${word}: next`));
+  row.append(
+    step(-1, '\u2039', `${word}: previous`),
+    el('span', 'hld-pickname hld-stepname', choices[current] ?? ''),
+    step(1, '\u203a', `${word}: next`),
+  );
   return row;
 }
 /** UI-CALM: a look in words, and the small press that opens its pickers (or closes them). */
@@ -408,7 +572,10 @@ function lookLine(el, who, desc, rerender) {
   row.append(el('span', 'hld-sub', desc));
   const b = el('button', 'hld-linkbtn', _lookOpen === who ? 'Done' : 'Change look');
   b.setAttribute('aria-expanded', _lookOpen === who ? 'true' : 'false');
-  b.onclick = () => { _lookOpen = _lookOpen === who ? '' : who; rerender(); };
+  b.onclick = () => {
+    _lookOpen = _lookOpen === who ? '' : who;
+    rerender();
+  };
   row.append(b);
   return row;
 }
@@ -437,17 +604,30 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   const m = p?.stable?.() ?? { hcc: false, hasHorse: false, hasCart: false };
   const words = stableWords(m);
   detail.append(divider('Stable'));
-  const dk = dragonKeepDoor()?.model?.() ?? null;   // DRAGON5b: the tamed dragon, its own card
-  if (dk) detail.append(dragonCard(el, meter, dk, m.care ?? null, (verb) => p?.stableAct?.(verb), rerender));   // DRAGON5c: and its care
+  const dk = dragonKeepDoor()?.model?.() ?? null; // DRAGON5b: the tamed dragon, its own card
+  if (dk) detail.append(dragonCard(el, meter, dk, m.care ?? null, (verb) => p?.stableAct?.(verb), rerender)); // DRAGON5c: and its care
   if (!words.horse && !words.wagon) {
-    if (dk) { if (_said) detail.append(el('p', _said.ok ? 'hld-said' : 'hld-why', _said.text)); return; }
-    detail.append(el('p', 'px-note', 'You own no horse and no wagon. A city\'s or town\'s Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.'));
+    if (dk) {
+      if (_said) detail.append(el('p', _said.ok ? 'hld-said' : 'hld-why', _said.text));
+      return;
+    }
+    detail.append(
+      el(
+        'p',
+        'px-note',
+        "You own no horse and no wagon. A city's or town's Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.",
+      ),
+    );
     return;
   }
   const v = m.hcc ? m.view : null;
-  const care = m.care ?? null;   // STEED1/WAGONS4: the upkeep's model
+  const care = m.care ?? null; // STEED1/WAGONS4: the upkeep's model
   const list = el('div', 'hld-list');
-  const act = (verb, arg) => { const r = p?.stableAct?.(verb, arg) ?? { ok: false, text: 'Not here.' }; _said = { ok: r.ok, text: r.text }; rerender(); };
+  const act = (verb, arg) => {
+    const r = p?.stableAct?.(verb, arg) ?? { ok: false, text: 'Not here.' };
+    _said = { ok: r.ok, text: r.text };
+    rerender();
+  };
   if (words.horse) {
     const name = v?.horseName || 'Your horse';
     const extra = [];
@@ -456,46 +636,92 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
       field.type = 'text';
       field.maxLength = HORSE_NAME_MAX;
       field.value = _draft;
-      field.setAttribute('aria-label', 'Your horse\'s name');
-      field.oninput = () => { _draft = field.value; };
-      const save = () => { _renaming = false; act('rename', _draft); };
-      field.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } };
+      field.setAttribute('aria-label', "Your horse's name");
+      field.oninput = () => {
+        _draft = field.value;
+      };
+      const save = () => {
+        _renaming = false;
+        act('rename', _draft);
+      };
+      field.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          save();
+        }
+      };
       extra.push(field);
       const row = el('div', 'hld-acts');
       const ok = el('button', 'act primary', 'Name');
       ok.onclick = save;
       const no = el('button', 'act', 'Keep');
-      no.onclick = () => { _renaming = false; rerender(); };
+      no.onclick = () => {
+        _renaming = false;
+        rerender();
+      };
       row.append(ok, no);
       extra.push(row);
     }
     const ridden = care?.horseCare ? care.horses.find((h) => h.ridden) : null;
-    if (ridden) extra.push(...steedLines(el, meter, ridden, care, act));   // STEED1: its care
+    if (ridden) extra.push(...steedLines(el, meter, ridden, care, act)); // STEED1: its care
     // COATS1: its look in words, and (UI-CALM) behind a small press its coats, patterns and legs as selectors - the look
     // is chosen once in a while, the care read every visit, so the care comes first and the look waits to be asked for
     if (m.look) {
       extra.push(lookLine(el, 'horse', `${m.look.desc[0].toUpperCase()}${m.look.desc.slice(1)}.`, rerender));
-      if (_lookOpen === 'horse') for (const row of m.look.rows) extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i)));
+      if (_lookOpen === 'horse')
+        for (const row of m.look.rows)
+          extra.push(choiceRow(el, row.name, row, (i) => act(/** @type {any} */ (row.part), i)));
     }
-    list.append(card(el, { art: HORSE_ART, glyph: '♞', name, words: words.horse, sub: v?.horseName ? 'Your horse' : null, extra, rerender }).item);
+    list.append(
+      card(el, {
+        art: HORSE_ART,
+        glyph: '♞',
+        name,
+        words: words.horse,
+        sub: v?.horseName ? 'Your horse' : null,
+        extra,
+        rerender,
+      }).item,
+    );
     // STEED1: every other horse owned - its look, its care, and the choice to ride it. FIELD BUGS 2026-10-16b
     // HORSE-CARE-OFF: on every tier - Off (and any skin but the enhanced one) its look and the choice, no care to show
     for (const h of care ? care.horses.filter((x) => !x.ridden) : []) {
       const cared = !!care.horseCare;
       const extra = cared ? steedLines(el, meter, h, care, act) : [el('div', 'hld-acts')];
       if (!cared) extra[0].append(rideButton(el, h, act));
-      list.append(card(el, { art: HORSE_ART, glyph: '♞', name: `${h.look[0].toUpperCase()}${h.look.slice(1)}`, words: cared ? { state: h.hunger, tone: hungerTone(h, care), line: null } : null, sub: 'Another horse of yours', extra, rerender }).item);
+      list.append(
+        card(el, {
+          art: HORSE_ART,
+          glyph: '♞',
+          name: `${h.look[0].toUpperCase()}${h.look.slice(1)}`,
+          words: cared ? { state: h.hunger, tone: hungerTone(h, care), line: null } : null,
+          sub: 'Another horse of yours',
+          extra,
+          rerender,
+        }).item,
+      );
     }
   }
   if (words.wagon) {
     const extra = [];
     if (v && v.limit > 0) extra.push(holdingMeter(el, meter, 'Load', v.kg, v.limit, 'thin'));
-    if (care?.wagonUpkeep && care.wagon) extra.push(...wagonLines(el, meter, care.wagon, care, act));   // WAGONS4: its soundness, and a kit
-    if (m.paint) {   // WAGONS2: its outside's paints - UI-CALM: swatches, behind the same small press as the horse's look
+    if (care?.wagonUpkeep && care.wagon) extra.push(...wagonLines(el, meter, care.wagon, care, act)); // WAGONS4: its soundness, and a kit
+    if (m.paint) {
+      // WAGONS2: its outside's paints - UI-CALM: swatches, behind the same small press as the horse's look
       extra.push(lookLine(el, 'wagon', `${LOOK_TEXT.paint}: ${m.paint.choices[m.paint.current] ?? ''}.`, rerender));
       if (_lookOpen === 'wagon') extra.push(choiceRow(el, LOOK_TEXT.paint, m.paint, (i) => act('paint', i)));
     }
-    list.append(card(el, { art: WAGON_ART, glyph: '☸', name: stableWagonName(m.kind), words: words.wagon, sub: m.kind && m.kind !== 'cart' ? WAGON_KINDS[m.kind]?.name ?? null : null, extra, rerender }).item);   // WAGONS1: the wagon driven, by its kind
+    list.append(
+      card(el, {
+        art: WAGON_ART,
+        glyph: '☸',
+        name: stableWagonName(m.kind),
+        words: words.wagon,
+        sub: m.kind && m.kind !== 'cart' ? (WAGON_KINDS[m.kind]?.name ?? null) : null,
+        extra,
+        rerender,
+      }).item,
+    ); // WAGONS1: the wagon driven, by its kind
   }
   detail.append(list);
   // THE ACTS - the pair's, as the mod's summon is (both answer together)
@@ -515,13 +741,26 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
   }
   if (m.hcc && words.horse && !_renaming) {
     const ren = el('button', 'act', 'Rename horse');
-    ren.onclick = () => { _renaming = true; _draft = v?.horseName ?? ''; _said = null; rerender(); };
+    ren.onclick = () => {
+      _renaming = true;
+      _draft = v?.horseName ?? '';
+      _said = null;
+      rerender();
+    };
     acts.append(ren);
   }
   if (acts.childNodes?.length ?? acts.children?.length) detail.append(acts);
-  detail.append(el('p', 'hld-foot', m.hcc
-    ? (v?.persistence ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.' : `Turn on physical persistence (Horse Cart and Cargo\u2019s options, ${optionPath('feat:mod-horse-cart-and-cargo')}) to have them stand in the world.`)
-    : `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to have your horse and wagon stand in the world.`));
+  detail.append(
+    el(
+      'p',
+      'hld-foot',
+      m.hcc
+        ? v?.persistence
+          ? 'Your horse and wagon stand in the world: summoned to your side, or sent back to the stable.'
+          : `Turn on physical persistence (Horse Cart and Cargo\u2019s options, ${optionPath('feat:mod-horse-cart-and-cargo')}) to have them stand in the world.`
+        : `Turn on Horse Cart and Cargo (${optionPath('feat:mod-horse-cart-and-cargo')}) to have your horse and wagon stand in the world.`,
+    ),
+  );
 }
 
 /**
@@ -531,14 +770,30 @@ export function drawStablePage(detail, rerender, { el, divider, meter = null } =
 function dragonCard(el, meter, dk, care, stableAct, rerender) {
   const door = dragonKeepDoor();
   const wrap = el('div', 'hld-list');
-  const act = (fn) => { const r = fn() ?? { ok: false, text: '' }; _said = r.text ? { ok: r.ok, text: r.text } : null; rerender(); };
-  const extra = [holdingMeter(el, meter, DRAGON_KEEP_CARD.load, dk.bags.kg, dk.bags.max, 'thin'), el('span', 'hld-sub', DRAGON_KEEP_CARD.look(dk.look))];
-  const h = care?.dragon ?? null;   // DRAGON5c: horse care's law on it - its bond, hunger, breath, stats, and its oil
+  const act = (fn) => {
+    const r = fn() ?? { ok: false, text: '' };
+    _said = r.text ? { ok: r.ok, text: r.text } : null;
+    rerender();
+  };
+  const extra = [
+    holdingMeter(el, meter, DRAGON_KEEP_CARD.load, dk.bags.kg, dk.bags.max, 'thin'),
+    el('span', 'hld-sub', DRAGON_KEEP_CARD.look(dk.look)),
+  ];
+  const h = care?.dragon ?? null; // DRAGON5c: horse care's law on it - its bond, hunger, breath, stats, and its oil
   if (h) {
     extra.push(el('span', 'hld-sub', bondLine(h, care)));
     extra.push(bondMeter(el, meter, h));
     if (dk.where === 'ridden') {
-      extra.push(holdingMeter(el, meter, DRAGON_CARE_TEXT.breath, h.breath * 100, 100, h.breath < 0.25 || h.winded ? 'blood' : 'verdigris'));
+      extra.push(
+        holdingMeter(
+          el,
+          meter,
+          DRAGON_CARE_TEXT.breath,
+          h.breath * 100,
+          100,
+          h.breath < 0.25 || h.winded ? 'blood' : 'verdigris',
+        ),
+      );
       if (h.winded) extra.push(el('span', 'hld-sub hld-why', DRAGON_CARE_TEXT.windedLine));
     }
     const row = el('div', 'hld-acts');
@@ -550,7 +805,18 @@ function dragonCard(el, meter, dk, care, stableAct, rerender) {
     extra.push(row);
     const stats = el('div', 'hld-stats');
     stats.append(el('span', 'hld-subhead', DRAGON_CARE_TEXT.stats));
-    for (const st of h.stats) stats.append(statMeter(el, meter, st.name, st.now, Math.max(0, st.now - st.born), 'thin', statWhy(st, h.bonus, h.penalty, h.hunger)));
+    for (const st of h.stats)
+      stats.append(
+        statMeter(
+          el,
+          meter,
+          st.name,
+          st.now,
+          Math.max(0, st.now - st.born),
+          'thin',
+          statWhy(st, h.bonus, h.penalty, h.hunger),
+        ),
+      );
     extra.push(stats);
   }
   if (_dragonNaming) {
@@ -559,28 +825,71 @@ function dragonCard(el, meter, dk, care, stableAct, rerender) {
     field.maxLength = DRAGON_NAME_MAX;
     field.value = _dragonDraft;
     field.setAttribute('aria-label', DRAGON_KEEP_CARD.field);
-    field.oninput = () => { _dragonDraft = field.value; };
-    const save = () => { _dragonNaming = false; act(() => door?.rename(_dragonDraft)); };
-    field.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } };
+    field.oninput = () => {
+      _dragonDraft = field.value;
+    };
+    const save = () => {
+      _dragonNaming = false;
+      act(() => door?.rename(_dragonDraft));
+    };
+    field.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        save();
+      }
+    };
     const row = el('div', 'hld-acts');
     const ok = el('button', 'act primary', DRAGON_KEEP_CARD.setName);
     ok.onclick = save;
     const no = el('button', 'act', DRAGON_KEEP_CARD.keepName);
-    no.onclick = () => { _dragonNaming = false; rerender(); };
+    no.onclick = () => {
+      _dragonNaming = false;
+      rerender();
+    };
     row.append(ok, no);
     extra.push(field, row);
   }
   const acts = el('div', 'hld-acts');
-  const button = (label, primary, fn) => { const b = el('button', primary ? 'act primary' : 'act', label); b.onclick = () => act(fn); acts.append(b); };
+  const button = (label, primary, fn) => {
+    const b = el('button', primary ? 'act primary' : 'act', label);
+    b.onclick = () => act(fn);
+    acts.append(b);
+  };
   if (dk.where !== 'ridden' && !dk.coming) button(DRAGON_KEEP_CARD.call, true, () => door?.call());
   if (dk.where === 'waiting') button(DRAGON_KEEP_CARD.sendAway, false, () => door?.sendAway());
   if (dk.near) button(DRAGON_KEEP_CARD.bags, false, () => door?.openBags());
-  if (!_dragonNaming) { const ren = el('button', 'act', DRAGON_KEEP_CARD.rename); ren.onclick = () => { _dragonNaming = true; _dragonDraft = dk.name ?? ''; _said = null; rerender(); }; acts.append(ren); }
+  if (!_dragonNaming) {
+    const ren = el('button', 'act', DRAGON_KEEP_CARD.rename);
+    ren.onclick = () => {
+      _dragonNaming = true;
+      _dragonDraft = dk.name ?? '';
+      _said = null;
+      rerender();
+    };
+    acts.append(ren);
+  }
   extra.push(acts);
-  wrap.append(card(el, { art: { archive: dragonArchiveOf(dk.look), record: DRAGON_MOUNT_ICON[1] }, glyph: '\u25c6', name: dk.title, words: dragonCardWords(dk), sub: null, extra, rerender }).item);
+  wrap.append(
+    card(el, {
+      art: { archive: dragonArchiveOf(dk.look), record: DRAGON_MOUNT_ICON[1] },
+      glyph: '\u25c6',
+      name: dk.title,
+      words: dragonCardWords(dk),
+      sub: null,
+      extra,
+      rerender,
+    }).item,
+  );
   wrap.append(el('p', 'hld-foot', DRAGON_KEEP_CARD.foot));
   return wrap;
 }
 
 /** A visit's words forgotten (an act's answer, an open name field) - the pause menu's every mount. */
-export function resetHoldingsPages() { _said = null; _renaming = false; _draft = ''; _lookOpen = ''; _dragonNaming = false; _dragonDraft = ''; }
+export function resetHoldingsPages() {
+  _said = null;
+  _renaming = false;
+  _draft = '';
+  _lookOpen = '';
+  _dragonNaming = false;
+  _dragonDraft = '';
+}

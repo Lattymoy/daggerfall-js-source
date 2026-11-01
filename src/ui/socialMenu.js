@@ -27,8 +27,8 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players, no friends and no parties. Ledger A row (ONLINE).
 import { isTextEntryTarget } from './input.js';
-import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js'; // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export const SOCIAL_MENU_STYLE_ID = 'dagger-peermenu-style';
 
@@ -75,7 +75,7 @@ export function injectSocialMenuStyle(doc = document) {
   const s = doc.createElement('style');
   s.id = SOCIAL_MENU_STYLE_ID;
   s.textContent = SOCIAL_MENU_CSS;
-  (doc.head ?? doc.body)?.append(s);   // AUDIT SOC C25: the other three sheets' own fallback - a document with no head still gets the skin
+  (doc.head ?? doc.body)?.append(s); // AUDIT SOC C25: the other three sheets' own fallback - a document with no head still gets the skin
 }
 
 /** The rows the card offers, in order, for one peer and the picture's word on them. Two acts and a way out: the two
@@ -88,10 +88,35 @@ export function injectSocialMenuStyle(doc = document) {
  *  friendship is. `relation` and `acct` are no longer read at all - callers still hand the WHOLE of `actionsFor`
  *  in (they should not have to strip it), and the extra keys are simply ignored, which is what an object argument
  *  is for. */
-export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null, canInspect, canReadPage, duelRow = null, canDeclineDuel = false } = {}) {
+export function socialMenuRows({
+  peerId,
+  canFriend = false,
+  canInvite = false,
+  whyNotFriend = null,
+  whyNotInvite = null,
+  canTrade,
+  whyNotTrade = null,
+  tradeLabel = null,
+  canInspect,
+  canReadPage,
+  duelRow = null,
+  canDeclineDuel = false,
+} = {}) {
   const rows = [
-    { key: 'friend', label: 'Add friend', enabled: !!canFriend, why: canFriend ? null : (whyNotFriend ?? null), act: { k: 'friend.request', peer: peerId } },
-    { key: 'invite', label: 'Invite to party', enabled: !!canInvite, why: canInvite ? null : (whyNotInvite ?? null), act: { k: 'party.invite', peer: peerId } },
+    {
+      key: 'friend',
+      label: 'Add friend',
+      enabled: !!canFriend,
+      why: canFriend ? null : (whyNotFriend ?? null),
+      act: { k: 'friend.request', peer: peerId },
+    },
+    {
+      key: 'invite',
+      label: 'Invite to party',
+      enabled: !!canInvite,
+      why: canInvite ? null : (whyNotInvite ?? null),
+      act: { k: 'party.invite', peer: peerId },
+    },
   ];
   // INSPECT1 (kurkku: "a profile page that you can bring up when you're near them"): the look before the ask - FIRST,
   // present only when the host says (`canInspect` given), as Trade is. Not a hub act either: the host opens the
@@ -99,20 +124,55 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
   // JOURNAL1 (Addison Knox: "Player journals ... shared in-world"): a page they hold out to me, read - present ONLY while
   // one waits (`canReadPage` given: net/journalPage.js PageOffers), beside the look, because turning to them is how a
   // page held out is taken. Not a hub act: the host opens the page it holds (ui/pageWindow.js); nothing was asked.
-  if (canReadPage) rows.unshift({ key: 'page', label: 'Read their page', enabled: true, why: null, act: { k: 'page.read', peer: peerId } });
-  if (canInspect !== undefined) rows.unshift({ key: 'inspect', label: 'Inspect', enabled: !!canInspect, why: null, act: { k: 'profile.inspect', peer: peerId } });
+  if (canReadPage)
+    rows.unshift({
+      key: 'page',
+      label: 'Read their page',
+      enabled: true,
+      why: null,
+      act: { k: 'page.read', peer: peerId },
+    });
+  if (canInspect !== undefined)
+    rows.unshift({
+      key: 'inspect',
+      label: 'Inspect',
+      enabled: !!canInspect,
+      why: null,
+      act: { k: 'profile.inspect', peer: peerId },
+    });
   // TRADE1: the third act. It is present ONLY when the host says whether a trade can be had (`canTrade` given): offline, on a
   // page with no account, or on a skin that cannot draw the window, the host says nothing and the card is exactly the two
   // acts and a way out it always was. The act is NOT a hub act (net/wire.js SOCIAL_ACTS) - a trade is between two players
   // standing in one room, so the host routes `trade.request` to net/tradeSession.js, not to the hub link. When a peer has
   // already asked, the same row reads 'Accept trade' (`tradeLabel`): there is no separate panel to stand under a window.
-  if (canTrade !== undefined) rows.push({ key: 'trade', label: tradeLabel || 'Trade', enabled: !!canTrade, why: canTrade ? null : (whyNotTrade ?? null), act: { k: 'trade.request', peer: peerId } });
+  if (canTrade !== undefined)
+    rows.push({
+      key: 'trade',
+      label: tradeLabel || 'Trade',
+      enabled: !!canTrade,
+      why: canTrade ? null : (whyNotTrade ?? null),
+      act: { k: 'trade.request', peer: peerId },
+    });
   // DUEL1: the duel's rows are present ONLY while there is something to answer - the challenge itself is the Inspect
   // card's (Mac: "When inspecting a player, they should be able to send an invite to duel"). A challenge from them
   // waiting reads 'Accept duel' (`duelRow` { label, k, enabled, why }, the host's duel law) with 'Decline duel' beside it
   // (`canDeclineDuel`); a duel with them live reads 'Yield the duel'. Not hub acts: the host routes them to the duel.
-  if (duelRow && typeof duelRow.label === 'string' && typeof duelRow.k === 'string') rows.push({ key: 'duel', label: duelRow.label, enabled: !!duelRow.enabled, why: duelRow.enabled ? null : (duelRow.why ?? null), act: { k: duelRow.k, peer: peerId } });
-  if (canDeclineDuel) rows.push({ key: 'duel-decline', label: 'Decline duel', enabled: true, why: null, act: { k: 'duel.decline', peer: peerId } });
+  if (duelRow && typeof duelRow.label === 'string' && typeof duelRow.k === 'string')
+    rows.push({
+      key: 'duel',
+      label: duelRow.label,
+      enabled: !!duelRow.enabled,
+      why: duelRow.enabled ? null : (duelRow.why ?? null),
+      act: { k: duelRow.k, peer: peerId },
+    });
+  if (canDeclineDuel)
+    rows.push({
+      key: 'duel-decline',
+      label: 'Decline duel',
+      enabled: true,
+      why: null,
+      act: { k: 'duel.decline', peer: peerId },
+    });
   rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });
   return rows;
 }
@@ -138,8 +198,11 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
  */
 export function socialPlaqueRows(peerId, acts) {
   if (!peerId || !acts) return [];
-  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)
-    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));
+  return socialMenuRows({ peerId, ...acts })
+    .filter((r) => r.act)
+    .map((r) =>
+      r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null },
+    );
 }
 
 /**
@@ -155,9 +218,22 @@ export function plaqueRowFor(id, peerId, acts) {
   return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };
 }
 
-export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, doc = document, win = globalThis } = {}) {
+export function createSocialMenu({
+  onAct = null,
+  canOpen = () => true,
+  onOpen = null,
+  onClose = null,
+  above = () => false,
+  doc = document,
+  win = globalThis,
+} = {}) {
   injectSocialMenuStyle(doc);
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', 'dfpeer');
   root.dataset.state = 'closed';
   const card = el('div', 'dfpeer-card');
@@ -174,7 +250,7 @@ export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = 
 
   let alive = true;
   let open = false;
-  let shown = null;   // { peerId, rows }
+  let shown = null; // { peerId, rows }
 
   /** The card's rows, rebuilt per show: the picture can change between two presses, and a stale 'Add friend' on
    *  someone already befriended is exactly the button this menu exists to not have. */
@@ -185,15 +261,18 @@ export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = 
       const b = el('button', `dfpeer-btn${row.key === 'cancel' ? ' cancel' : ''}`);
       b.type = 'button';
       b.dataset.row = row.key;
-      b.setAttribute('role', 'menuitem');   // AUDIT SOC C21: a menu whose rows are menu items, not loose buttons
+      b.setAttribute('role', 'menuitem'); // AUDIT SOC C21: a menu whose rows are menu items, not loose buttons
       b.append(el('span', 'dfpeer-label', row.label));
       if (!row.enabled && row.why) b.append(el('span', 'dfpeer-why', row.why));
-      if (!row.enabled) { b.disabled = true; b.setAttribute('disabled', ''); }
+      if (!row.enabled) {
+        b.disabled = true;
+        b.setAttribute('disabled', '');
+      }
       if (row.why) b.title = row.why;
       b.addEventListener('click', () => {
-        if (!open || b.disabled) return;   // a disabled button's click is nothing, however it arrived
+        if (!open || b.disabled) return; // a disabled button's click is nothing, however it arrived
         const act = row.act;
-        hide();                            // the card goes first: the act is one press, and the send may answer false
+        hide(); // the card goes first: the act is one press, and the send may answer false
         if (act) onAct?.(act, row);
       });
       card.append(b);
@@ -205,7 +284,7 @@ export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = 
     open = false;
     shown = null;
     root.dataset.state = 'closed';
-    onClose?.();   // the host takes the pointer back - inside the gesture that closed
+    onClose?.(); // the host takes the pointer back - inside the gesture that closed
     return true;
   };
 
@@ -213,36 +292,38 @@ export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = 
    *  peer to draw - and a false NEVER touches the pointer, because nothing opened. */
   const show = ({ name = null, peerId = null, actions = null } = {}) => {
     if (!alive || !peerId || !canOpen()) return false;
-    noteFirstUse('party');   // TUT1: the F-menu on another player
+    noteFirstUse('party'); // TUT1: the F-menu on another player
     const rows = socialMenuRows({ peerId, ...(actions ?? {}) });
     paint(name, rows);
     shown = { peerId, rows };
     const was = open;
     open = true;
     root.dataset.state = 'open';
-    card.focus?.();         // AUDIT SOC C21: the keyboard goes where the menu is
-    if (!was) onOpen?.();   // the host frees the pointer (AUDIT CHAT C2's law for the chat) - on the OPEN alone, so a
-    return true;            // re-show over a second peer does not ask for the lock twice
+    card.focus?.(); // AUDIT SOC C21: the keyboard goes where the menu is
+    if (!was) onOpen?.(); // the host frees the pointer (AUDIT CHAT C2's law for the chat) - on the OPEN alone, so a
+    return true; // re-show over a second peer does not ask for the lock twice
   };
 
   const onKey = (e) => {
     if (!open) return;
-    if (isTextEntryTarget(e.target)) return;   // a field owns its own Escape (CG2)
+    if (isTextEntryTarget(e.target)) return; // a field owns its own Escape (CG2)
     if (e.code !== 'Escape') return;
-    if (above()) return;                       // AUDIT SOC C2/C14: a surface over this one owns the key - untouched, unstopped
+    if (above()) return; // AUDIT SOC C2/C14: a surface over this one owns the key - untouched, unstopped
     e.preventDefault();
-    e.stopImmediatePropagation();              // and NO other window listener sees it: not the host's pause door, not a sibling surface
+    e.stopImmediatePropagation(); // and NO other window listener sees it: not the host's pause door, not a sibling surface
     hide();
   };
   win.addEventListener('keydown', onKey, true);
   // a PRESS inside the card is the card's - the host swings on the left button outdoors and pressing 'Add friend'
   // must not draw a weapon; a RELEASE is never stopped (AUDIT CHAT C5: the host's mouseup clears its ring)
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) card.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    card.addEventListener(t, swallow);
 
   return {
     root,
-    show, hide,
+    show,
+    hide,
     isOpen: () => open,
     /** Which peer the card stands over, for the host's own frame and for the pins. */
     peerId: () => shown?.peerId ?? null,

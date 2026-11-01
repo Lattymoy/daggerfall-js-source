@@ -44,7 +44,9 @@ export const RENOWN_HUD_TOP = 'Highest';
 let _source = null;
 
 /** The page's hand: a getter answering `{ level, xp, pending }` (null offline) - null to take it away. */
-export function setHudRenown(fn) { _source = typeof fn === 'function' ? fn : null; }
+export function setHudRenown(fn) {
+  _source = typeof fn === 'function' ? fn : null;
+}
 
 /**
  * What the row draws, or null for no row. `level` the page's Renown, `xp` the track's total (null until the service
@@ -65,11 +67,18 @@ export function setHudRenown(fn) { _source = typeof fn === 'function' ? fn : nul
  */
 export function renownHudView(level, xp, pending = 0) {
   if (!Number.isSafeInteger(level) || level < 1 || level > RENOWN_MAX) return null;
-  if (!Number.isSafeInteger(xp) || xp < 0 || renownForXp(xp) !== level) return { level, bar: false, frac: 0, ghost: 0, text: '' };
+  if (!Number.isSafeInteger(xp) || xp < 0 || renownForXp(xp) !== level)
+    return { level, bar: false, frac: 0, ghost: 0, text: '' };
   const p = renownProgress(xp);
   if (p.need <= 0) return { level, bar: true, frac: 1, ghost: 0, text: RENOWN_HUD_TOP };
   const more = Number.isFinite(pending) && pending > 0 ? Math.trunc(pending) : 0;
-  return { level, bar: true, frac: p.frac, ghost: Math.min(1 - p.frac, more / p.need), text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP` };
+  return {
+    level,
+    bar: true,
+    frac: p.frac,
+    ghost: Math.min(1 - p.frac, more / p.need),
+    text: `${groupedXp(p.into)} / ${groupedXp(p.need)} XP`,
+  };
 }
 
 /** This frame's row, from the page's getter - null with none, offline, or when the getter throws (a readout that
@@ -79,5 +88,7 @@ export function hudRenown() {
   try {
     const s = _source();
     return s ? renownHudView(s.level, s.xp, s.pending ?? 0) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

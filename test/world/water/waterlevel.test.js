@@ -1,7 +1,7 @@
-// WATER-LEVEL (2026-10-31, the owner: "We need to make sure we go away from the water tiles and move into a proper water
+// "We need to make sure we go away from the water tiles and move into a proper water
 // shader"): A WATER BODY IS A LEVEL, NOT A TILE (world/water/waterLevel.js, world/water/streamLevels.js). The tiles mark
 // where water is; each body's own law gives its level; the ground is carved under it, never raised; the sheet stands at
-// it and its shore is where the plane meets the ground, or the cut field. The record: bible/07-Rendering/Water-Arc.md
+// it and its shore is where the plane meets the ground, or the cut field. The record:
 // WATER-LEVEL. Mutants: tools/mutants/waterlevel.json.
 import '../../modsOff.js';
 import { test } from 'node:test';
@@ -192,13 +192,4 @@ test('WATER-LEVEL THE FOUR HOSTS, and the play keeps its line: the streaming wor
   for (const [f, t] of [['exteriorSurface.js', feet], ['cityNavigation.js', town]]) assert.doesNotMatch(t, /waterLevel|streamLevels|\.sheet\b|WATER_DRAW_MASK_TABLE/, `${f} reads no level and not the draw's table`);
   assert.notDeepEqual(WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE);
   assert.doesNotMatch(w.slice(w.indexOf('const heightAt = (x, z, terrainOnly = false) => {'), w.indexOf('// BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN.')), /positions|_bed|sheet/, 'the game\'s ground is the samples\'');
-});
-
-test('WATER-LEVEL the record: the arc\'s section with the owner\'s word, its departure in the ledger, the four hosts named', () => {
-  const arc = read('bible/07-Rendering/Water-Arc.md');
-  assert.match(arc, /## WATER-LEVEL - WATER IS A LEVEL, NOT A TILE \(2026-10-31\)/);
-  assert.ok(arc.includes('We need to make sure we go away from the water tiles and move into a proper water shader'));
-  const sec = arc.slice(arc.indexOf('## WATER-LEVEL'));
-  for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) assert.ok(sec.includes(h), `THE FOUR HOSTS: ${h}`);
-  assert.match(read('bible/01-Overview/Port-Ledger.md'), /\*\*WATER IS A LEVEL, NOT A TILE \(WATER-LEVEL, 2026-10-31/);
 });

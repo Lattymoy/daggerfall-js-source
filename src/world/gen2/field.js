@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 (bible/03-World/World-2-Canon.md, "Fields"): A RASTER FIELD over world pixels - elevation, rainfall, soil and the
+// A RASTER FIELD over world pixels - elevation, rainfall, soil and the
 // rest. A grid of `w` x `h` cells, `res` cells to a world pixel, its cell (0, 0) at world pixel (x0, y0); cell (i, j)
 // covers [x0 + i / res, x0 + (i + 1) / res). Coordinates are the world's (Bay pixels, negative west and north of it).
 import { fnv1a } from '../../formats/fnv1a.js';

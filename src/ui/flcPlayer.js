@@ -30,14 +30,20 @@ export class FlcPlayer {
     this.onAnimEnd = onAnimEnd;
     this.playing = false;
     this._timeToNextFrame = 0;
-    this._displayed = null;   // the frame the caller draws, or null
+    this._displayed = null; // the frame the caller draws, or null
   }
 
-  get width() { return this.flc?.width ?? 0; }
-  get height() { return this.flc?.height ?? 0; }
+  get width() {
+    return this.flc?.width ?? 0;
+  }
+  get height() {
+    return this.flc?.height ?? 0;
+  }
   /** The frame to draw ({width,height,colors}), or null before the
    *  first one lands - DFU shows its cleared texture until then. */
-  get frame() { return this._displayed; }
+  get frame() {
+    return this._displayed;
+  }
 
   /** Start(): rewind, arm the clock, play. */
   start() {

@@ -79,10 +79,10 @@ export function loadingMode(search = globalThis.location?.search ?? '') {
 export const tipAt = (now = Date.now()) => LOADING_TIPS[Math.floor(now / 60_000) % LOADING_TIPS.length];
 
 const holds = new Set();
-let node = null;          // the screen standing, or null
-let shownAt = 0;          // when it became visible
-let appearTimer = null;   // the delay before the first hold's screen shows
-let leaveTimer = null;    // the MIN_SHOWN_MS wait before it fades
+let node = null; // the screen standing, or null
+let shownAt = 0; // when it became visible
+let appearTimer = null; // the delay before the first hold's screen shows
+let leaveTimer = null; // the MIN_SHOWN_MS wait before it fades
 let place = '';
 let line = '';
 
@@ -99,33 +99,69 @@ const el = (tag, cls, text) => {
  * @param {{ place?: string, line?: string, delay?: number, maxMs?: number, why?: string }} [opts]
  * @returns {{ end: () => void, line: (text: string) => void, place: (text: string) => void, readonly open: boolean }}
  */
-export function beginLoading({ place: p = '', line: l = '', delay = APPEAR_MS, maxMs = HOLD_MAX_MS, why = 'a load' } = {}) {
+export function beginLoading({
+  place: p = '',
+  line: l = '',
+  delay = APPEAR_MS,
+  maxMs = HOLD_MAX_MS,
+  why = 'a load',
+} = {}) {
   let open = true;
   let ceiling = null;
   const hold = {
     end() {
       if (!open) return;
       open = false;
-      if (ceiling) { clearTimeout(ceiling); ceiling = null; }
+      if (ceiling) {
+        clearTimeout(ceiling);
+        ceiling = null;
+      }
       holds.delete(hold);
       if (!holds.size) settle();
     },
-    line(text) { if (open) setLoadingLine(text); },
-    place(text) { if (open) setLoadingPlace(text); },
-    get open() { return open; },
+    line(text) {
+      if (open) setLoadingLine(text);
+    },
+    place(text) {
+      if (open) setLoadingPlace(text);
+    },
+    get open() {
+      return open;
+    },
   };
-  if (typeof document === 'undefined' || loadingMode() === 'off') { open = false; return hold; }
+  if (typeof document === 'undefined' || loadingMode() === 'off') {
+    open = false;
+    return hold;
+  }
   // the first hold of a load sets both words afresh; a hold inside it adds only what it names
-  if (!holds.size) { place = String(p ?? ''); line = String(l ?? ''); }
-  else { if (p) place = String(p); if (l) line = String(l); }
+  if (!holds.size) {
+    place = String(p ?? '');
+    line = String(l ?? '');
+  } else {
+    if (p) place = String(p);
+    if (l) line = String(l);
+  }
   holds.add(hold);
   if (Number.isFinite(maxMs) && maxMs > 0) {
-    ceiling = setTimeout(() => { console.warn(`[loading] ${why} held the loading screen past ${maxMs} ms - letting it go`); hold.end(); }, maxMs);
+    ceiling = setTimeout(() => {
+      console.warn(`[loading] ${why} held the loading screen past ${maxMs} ms - letting it go`);
+      hold.end();
+    }, maxMs);
   }
-  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }   // a screen about to leave stays for the new hold
-  if (node) { node._keepHidden = false; paint(); paintAside(); }
-  else if (!appearTimer) {
-    if (delay > 0) appearTimer = setTimeout(() => { appearTimer = null; if (holds.size && !node) build(); }, delay);
+  if (leaveTimer) {
+    clearTimeout(leaveTimer);
+    leaveTimer = null;
+  } // a screen about to leave stays for the new hold
+  if (node) {
+    node._keepHidden = false;
+    paint();
+    paintAside();
+  } else if (!appearTimer) {
+    if (delay > 0)
+      appearTimer = setTimeout(() => {
+        appearTimer = null;
+        if (holds.size && !node) build();
+      }, delay);
     else build();
   }
   return hold;
@@ -146,12 +182,15 @@ const hiddenNow = () => asideFor.size > 0 || revealOnSync;
 /** @param {'film'|'window'} reason @param {boolean} on */
 export function setLoadingAside(reason, on) {
   const had = asideFor.has(reason);
-  if (on) asideFor.add(reason); else asideFor.delete(reason);
+  if (on) asideFor.add(reason);
+  else asideFor.delete(reason);
   if (had && !on && !asideFor.size && framed?.open) revealOnSync = true;
   paintAside();
 }
 /** A film's hold (scenes/shared.js) - the 'film' reason. */
-export function stepAsideLoading(on) { setLoadingAside('film', on); }
+export function stepAsideLoading(on) {
+  setLoadingAside('film', on);
+}
 export const loadingAside = () => hiddenNow();
 function paintAside() {
   if (node) node.classList.toggle('aside', hiddenNow() || !!node._keepHidden);
@@ -164,8 +203,16 @@ function paintHudVeil() {
 
 /** The step line and the place, on the screen of the holds open now - nothing with none open, so a word set between
  *  loads never stands on the next one. */
-export function setLoadingLine(text) { if (!holds.size) return; line = String(text ?? ''); if (node) paint(); }
-export function setLoadingPlace(text) { if (!holds.size) return; place = String(text ?? ''); if (node) paint(); }
+export function setLoadingLine(text) {
+  if (!holds.size) return;
+  line = String(text ?? '');
+  if (node) paint();
+}
+export function setLoadingPlace(text) {
+  if (!holds.size) return;
+  place = String(text ?? '');
+  if (node) paint();
+}
 /** True while a screen is drawn - not merely held: a hold still inside its delay shows nothing yet. */
 export const loadingShown = () => !!node;
 export const loadingHeld = () => holds.size > 0;
@@ -177,7 +224,11 @@ export const loadingHeld = () => holds.size > 0;
  */
 export async function withLoading(opts, fn) {
   const hold = beginLoading(opts);
-  try { return await fn(hold); } finally { hold.end(); }
+  try {
+    return await fn(hold);
+  } finally {
+    hold.end();
+  }
 }
 
 // ── THE FRAME'S HOLD ─────────────────────────────────────────────
@@ -193,16 +244,23 @@ let framed = null;
 export function syncLoading(busy, { place: placeOf = () => '', line: lineOf = () => '', delay = APPEAR_MS } = {}) {
   if (revealOnSync) {
     revealOnSync = false;
-    if (!busy && node) node._keepHidden = true;   // the move ended under the film or the window: it ends hidden
+    if (!busy && node) node._keepHidden = true; // the move ended under the film or the window: it ends hidden
     paintAside();
   }
   if (!busy) {
-    if (framed) { const h = framed; framed = null; h.end(); }   // the slot first (bible Home: THE SLOT IS EMPTIED...)
+    if (framed) {
+      const h = framed;
+      framed = null;
+      h.end();
+    } // the slot first (bible Home: THE SLOT IS EMPTIED...)
     return;
   }
   // a hold its ceiling let go stays let go for the rest of this move - the flag is stuck, and the screen is not
   if (!framed) framed = beginLoading({ place: placeOf(), line: lineOf(), delay, why: 'a world move' });
-  else if (framed.open) { framed.place(placeOf()); framed.line(lineOf()); }
+  else if (framed.open) {
+    framed.place(placeOf());
+    framed.line(lineOf());
+  }
 }
 
 /** The frame's place (scenes/world.js loadingPlaceNow): where a world move is bound, once its teleport has named it;
@@ -228,16 +286,27 @@ export function bootLine(step) {
 export const BOOT_HOLD_MAX_MS = 600_000;
 
 function settle() {
-  if (appearTimer) { clearTimeout(appearTimer); appearTimer = null; }
-  if (!node) { place = ''; line = ''; return; }
+  if (appearTimer) {
+    clearTimeout(appearTimer);
+    appearTimer = null;
+  }
+  if (!node) {
+    place = '';
+    line = '';
+    return;
+  }
   const wait = Math.max(0, MIN_SHOWN_MS - (Date.now() - shownAt));
-  leaveTimer = setTimeout(() => { leaveTimer = null; if (!holds.size) leave(); }, wait);
+  leaveTimer = setTimeout(() => {
+    leaveTimer = null;
+    if (!holds.size) leave();
+  }, wait);
 }
 
 function leave() {
   const gone = node;
-  node = null;   // the slot first: a hold begun during the fade builds its own screen
-  place = ''; line = '';
+  node = null; // the slot first: a hold begun during the fade builds its own screen
+  place = '';
+  line = '';
   paintHudVeil();
   if (!gone) return;
   gone.classList.add('out');
@@ -255,17 +324,27 @@ export function removeLoadingScreen() {
   revealOnSync = false;
   for (const h of [...holds]) h.end();
   holds.clear();
-  if (appearTimer) { clearTimeout(appearTimer); appearTimer = null; }
-  if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+  if (appearTimer) {
+    clearTimeout(appearTimer);
+    appearTimer = null;
+  }
+  if (leaveTimer) {
+    clearTimeout(leaveTimer);
+    leaveTimer = null;
+  }
   const gone = node;
   node = null;
-  place = ''; line = '';
+  place = '';
+  line = '';
   if (gone) teardown(gone);
   paintHudVeil();
   document?.getElementById?.(LOADING_ID)?.remove();
 }
 /** The tests' reset of the aside reasons - in the game each reason is owned by its holder (the film's count, the frame). */
-export function _resetLoadingAsideForTests() { asideFor.clear(); revealOnSync = false; }
+export function _resetLoadingAsideForTests() {
+  asideFor.clear();
+  revealOnSync = false;
+}
 
 function paint() {
   if (!node) return;
@@ -276,7 +355,7 @@ function paint() {
   node.classList.toggle('noplace', !place);
 }
 
-let groundKept = null;   // { w, h, canvas } - the last size drawn
+let groundKept = null; // { w, h, canvas } - the last size drawn
 let groundDraws = 0;
 /** How many times the sky has been drawn this session - the tests' window on the once-per-size law. */
 export const loadingGroundDraws = () => groundDraws;
@@ -284,7 +363,7 @@ function groundFor(w, h) {
   const c = el('canvas', 'px-ground ld-ground');
   if (!groundKept || groundKept.w !== w || groundKept.h !== h) {
     const kept = el('canvas');
-    drawPixelGround(kept, w, h, 0, { keep: false });   // AUDIT MEM-AUDIT P9: a still drawn once a size - no image kept beside it
+    drawPixelGround(kept, w, h, 0, { keep: false }); // AUDIT MEM-AUDIT P9: a still drawn once a size - no image kept beside it
     groundDraws++;
     groundKept = { w, h, canvas: kept };
   }
@@ -298,12 +377,13 @@ function build() {
   injectEnhancedStyle();
   injectEnhancedFonts();
   injectLoadingStyle();
-  document.getElementById(LOADING_ID)?.remove();   // one screen, ever - a stray from a torn-down page goes first
+  document.getElementById(LOADING_ID)?.remove(); // one screen, ever - a stray from a torn-down page goes first
   const root = el('div', 'ld');
   root.id = LOADING_ID;
   root.setAttribute('role', 'status');
   root.setAttribute('aria-live', 'polite');
-  const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const still =
+    typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (still) root.classList.add('still');
   if (hiddenNow()) root.classList.add('aside');
 
@@ -327,7 +407,10 @@ function build() {
   root.append(plate, corner);
 
   root._stop = () => {
-    if (shotUrl) { URL.revokeObjectURL(shotUrl); shotUrl = null; }
+    if (shotUrl) {
+      URL.revokeObjectURL(shotUrl);
+      shotUrl = null;
+    }
   };
   document.body.append(root);
   node = root;
@@ -338,14 +421,18 @@ function build() {
   // THE PICTURE: asked once per screen, and only on the row's Your screenshots. It arrives when the gallery answers;
   // the ground stands until then, and for good if the gallery holds nothing in the turn.
   if (loadingMode() === 'shots') {
-    loadingShot().then((s) => {
-      if (node !== root || !s?.blob) return;   // the screen went, or nothing in the turn
-      shotUrl = URL.createObjectURL(s.blob);
-      shot.onload = () => { if (node === root) root.classList.add('shot'); };
-      shot.src = shotUrl;
-      const cap = shotCaption(s);
-      if (cap) corner.replaceChildren(el('span', 'ld-cap', cap));
-    }).catch(() => {});
+    loadingShot()
+      .then((s) => {
+        if (node !== root || !s?.blob) return; // the screen went, or nothing in the turn
+        shotUrl = URL.createObjectURL(s.blob);
+        shot.onload = () => {
+          if (node === root) root.classList.add('shot');
+        };
+        shot.src = shotUrl;
+        const cap = shotCaption(s);
+        if (cap) corner.replaceChildren(el('span', 'ld-cap', cap));
+      })
+      .catch(() => {});
   }
   return root;
 }

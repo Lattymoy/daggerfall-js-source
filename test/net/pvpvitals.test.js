@@ -1,5 +1,4 @@
-// PVP-VITALS (2026-10-30, the owner: "we need to make sure players cant cheat health in pvp", "cheat health mana or
-// fatigue"): a flagged fighter's health rises, magicka and fatigue are the relay's (net/wild/pvpVitals.js). Pinned: a
+// PVP-VITALS (2026-10-30): a flagged fighter's health rises, magicka and fatigue are the relay's (net/wild/pvpVitals.js). Pinned: a
 // frozen or set bar buys nothing, an honest one is never refused, and the client tells what it drank and cast.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -217,7 +216,7 @@ test('PVP-VITALS THE WIRE AND THE CLIENT: a report carries magicka, fatigue and 
   assert.equal(sent[1].u, undefined, 'a declaration goes once');
   // the seams
   assert.match(rd('src/combat/siegeCombat.js'), /\.\.\.\(pvpCastNo\(\) > 0 \? \{ c: pvpCastNo\(\) \} : \{\}\)/);
-  assert.match(rd('src/combat/pvpPotions.js'), /if \(kind\) \{ last\.set\(kind, now\); declarePotion\(kind\); \}/);
+  assert.match(rd('src/combat/pvpPotions.js'), /for \(const k of kinds\) last\.set\(k, now\);\n  if \(fight\) declarePotion\(kinds\[0\]\);/);   // PIN MOVED (POTION-CLOCK): the clock also runs in an Elite Breach, where no referee is told; PIN MOVED (AUDIT POTION-MIGHT C1): every kind a bottle is starts its clock, a fight's its first effect's alone
   assert.match(rd('src/scenes/hostMagic.js'), /if \(sp\.pvpKit\) declareKitSelf\(sp\.pvpKit\);/);
   const relay = rd('server/src/index.js');
   assert.match(relay, /!\(await this\._wildCastPaid\(a, target\[1\], m\.data, now\)\)/, 'a flagged caster\'s gift is paid for');

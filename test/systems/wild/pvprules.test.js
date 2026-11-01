@@ -92,7 +92,7 @@ test('PVP-RULES THE SPELLS REFUSED UNDER THE FLAG: Levitate at any range, a PvE 
   assert.match(readFileSync('src/scenes/hostMagic.js', 'utf8'), /\?\? sandSpellRefusal\(sp\) \?\? pvpSpellRefusal\(sp\);/, 'every host\'s one cast engine asks');
 });
 
-test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s buff goes each poll (the owner: "Item buff no"); a worn item\'s utility, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item kept; a worn utility stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
+test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s buff goes each poll; a worn item\'s utility, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item kept; a worn utility stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
   const fx = () => [
     { kind: 'fortifyAttribute', bundleSelfCast: true }, { kind: 'shield', bundleSelfCast: true }, { kind: 'jumping' },
     { kind: 'chameleonNormal', heldItem: {} }, { kind: 'fortifyAttribute', permanent: true, bundleSelfCast: true }, { kind: 'continuousDamage' },
@@ -133,7 +133,7 @@ test('PVP-RULES THE HOST: held only flagged in the zone; the rest window refused
   assert.equal(h.flag.on(), true);
 });
 
-test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast; the PvP bar\'s spells and buffs are the flag\'s own (mutants: the kit stripped; the kit refused; the bar unasked; the rider kept; the recast unasked)', () => {
+test('PVP-RULES NO SADDLE: flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast; the PvP bar\'s spells and buffs are the flag\'s own (mutants: the kit stripped; the kit refused; the bar unasked; the rider kept; the recast unasked)', () => {
   let on = true, zone = true;
   const said = [], motor = { grounded: true, transportMode: TRANSPORT_MODES.Horse }, entity = { activeEffects: [{ kind: 'chameleonNormal', heldItem: { equipSlot: 1 } }], items: [] };
   const h = createPvpRulesHost({ on: () => on }, motor, entity, (l) => said.push(l), { zone: () => zone, every: null });
@@ -149,7 +149,7 @@ test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged 
   assert.match(readFileSync('src/systems/effects.js', 'utf8'), /if \(spell\?\.pvpKit != null\) list\[i\]\.bundleKit = true;/, 'a bar spell\'s entry is marked');
   assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /function setMode\(mode\) \{\n\s+if \(mode === TRANSPORT_MODES\.Dragon[^\n]*\n\s+if \(refused\(mode\)\) return;/, 'the one place the mode changes refuses the saddle');   // PIN MOVED (DRAGON5): after the held dragon's check
   assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const refused = \(mode\) => \{ const barred = isRiding\(mode\) \? rideBarred\(\) : null; if \(barred\) _rideSay\?\.\(barred\); return !!barred; \};/, 'a saddle asks the bar and says its line');
-  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{ rideFoot\(\);/);
+  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{\n\s*rideFoot\(\);/);
   on = false;
   assert.equal(rideBarred(), null, 'off the flag a saddle is free');
   h.tick();

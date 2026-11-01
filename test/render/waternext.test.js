@@ -48,7 +48,6 @@ test('WATER-NEXT 2 the GLSL is the JS: SWELL_GLSL carries each train\'s wavenumb
 });
 
 test('WATER-NEXT 2 the sheet: lifted by the swell, which dies over the bank (none on a bed shallower than nothing), whole on the open sea; its depth rides the swell (mutants: the swell on the bank; the open sea still)', () => {
-  // PIN MOVED (WATER-LEVEL): the swell grows with the water's own depth over the carved ground (attribute 1's x), so a
   // trough never dips under it - BANK-FLUSH's shelf stands at the level, AUDIT WATER-NEXT H2's uncarved water has none;
   // the heave fades with the eye's distance (G8); the depths ride it, the plane's over the ground and the shading's
   assert.match(WATER_SURFACE_VS, /float grow = uOpen == 1 \? 1\.0 : smoothstep\(0\.0, 2\.500, aDepth\.x\);/);
@@ -90,7 +89,7 @@ test('WATER-NEXT 2 the copy: once a frame, before the first water draw, the lane
   assert.match(r, /this\._underWater = \(this\._air && this\._frameFbo && !this\.waterSimple\) \? this\._air\.snapshotUnderWater\(\) : null;/);
   const a = read('src/render/airPass.js');
   assert.match(a, /gl\.blitFramebuffer\(0, 0, F\.w, F\.h, 0, 0, F\.w, F\.h, gl\.COLOR_BUFFER_BIT \| gl\.DEPTH_BUFFER_BIT, gl\.NEAREST\);/);
-  assert.match(a, /if \(k\.uwFbo\) \{ gl\.deleteTexture\(k\.uwColor\); gl\.deleteTexture\(k\.uwDepth\); gl\.deleteFramebuffer\(k\.uwFbo\); \}/, 'freed with the frame');
+  assert.match(a, /if \(k\.uwFbo\) \{\n\s*gl\.deleteTexture\(k\.uwColor\);\n\s*gl\.deleteTexture\(k\.uwDepth\);\n\s*gl\.deleteFramebuffer\(k\.uwFbo\);\n\s*\}/, 'freed with the frame');
   const w = read('src/scenes/world.js');
   assert.match(w, /if \(waterOn && !f\.underwater && _waterU\) \{[\s\S]*?renderer\.drawSeaSurfaces\(_dwSurfaceList,[\s\S]*?return;\s*\n\s*\}/);
   assert.match(w, /dwRender\.drawSurfaces\(_dwSurfaceList,/, 'the underside stays the mod\'s');
@@ -106,7 +105,6 @@ test('WATER-NEXT 2 the bed\'s face: both terrain programs draw the ground under 
   assert.equal(BED_RECORD, 1, 'the tileset\'s dirt');
   assert.ok(BED_SILT.every((v) => v < 1), 'darkened');
   assert.match(WATER_BED_GLSL, /if \(uWaterBed < 0\.5\) return vec2\(0\.0\);/, 'off, nothing');   // PIN MOVED (SHORE-SILT): the bed's share and its fringe's
-  // PIN MOVED (WATER-LEVEL): a puddle's painted water goes under the silt by its art's own mask - no water tile art drawn
   assert.match(WATER_BED_GLSL, /rec == 8u \|\| rec == 9u \|\| rec == 23u[^\n]*\{\n\s*float pa = textureGrad\(uTileArr, tl, gx, gy\)\.a;[^\n]*\n[^\n]*\n\s*return vec2\(smoothstep\(0\.3, 0\.7, pa\), 0\.0\);/);
   assert.match(waterBedMix(), /textureGrad\(uTileArr, vec3\(tuv, 1\.0\), gx, gy\)\.rgb \* vec3\(0\.62, 0\.60, 0\.52\)/);
   assert.match(waterBedMix((t) => `elDecode(${t})`), /elDecode\(textureGrad\(uTileArr, vec3\(tuv, 1\.0\), gx, gy\)\.rgb\)/, 'the lane decodes it as it decodes the ground');

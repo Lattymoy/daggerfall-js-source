@@ -31,8 +31,8 @@
   {
     "name": "MWFIT1-the-closed-steel-helm-shows-the-head",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
-    "new": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);",
+    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
+    "new": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]); // MW-FIT1: a closed helm is the head",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "MWFIT1-the-ebony-helm-shows-the-head",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "{ parts: [part('hair', 'ebony_plate_helm.nif', ['head'])] }),",
-    "new": "{ parts: [part('hair', 'ebony_plate_helm.nif')] }),",
+    "old": "      parts: [part('hair', 'ebony_plate_helm.nif', ['head'])],",
+    "new": "      parts: [part('hair', 'ebony_plate_helm.nif')],",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js",
       "test/tooling/mwebony1.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "MWFIT1-the-hide-under-nothing",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, add);",
-    "new": "        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);",
+    "old": "            add,\n          );",
+    "new": "          );",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js",
       "test/tooling/mwebony1.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "MWFIT1-the-slot-forgets-what-it-lies-under",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under;",
-    "new": "    slot.prio = prio; slot.add = add; slot.shadow = true;",
+    "old": "    slot.under = under;\n  };",
+    "new": "  };",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "MWFIT1-a-robe-over-the-pauldron-keeps-its-exemption",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under;",
-    "new": "    slot.prio = prio; slot.add = add; slot.shadow = true; slot.under = under ?? slot.under;",
+    "old": "    slot.under = under;",
+    "new": "    slot.under = under ?? slot.under;",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js"
     ],

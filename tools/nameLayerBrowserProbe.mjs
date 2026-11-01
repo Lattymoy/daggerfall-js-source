@@ -98,7 +98,9 @@ window.__done = new Promise((resolve) => {
 </script>`;
 
 async function run(mode) {
-  const browser = await chromium.launch({ executablePath: process.env.PW_CHROME ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const browser = await chromium.launch({
+    executablePath: process.env.PW_CHROME ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  });
   const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
   const p = await ctx.newPage();
   const cdp = await ctx.newCDPSession(p);
@@ -111,14 +113,23 @@ async function run(mode) {
   const d = (k) => (after[k] ?? 0) - (before[k] ?? 0);
   // PERF-NAMES (2026-10-10): and the main thread's WHOLE work - TaskDuration, the paint and the commit with the layout
   // and the style: the layout alone was 0.12 ms a frame here, and the layer's whole cost twenty times it
-  return { layout: d('LayoutDuration') * 1000, style: d('RecalcStyleDuration') * 1000, script: d('ScriptDuration') * 1000,
-    task: d('TaskDuration') * 1000, layoutCount: d('LayoutCount'), styleCount: d('RecalcStyleCount'), frames: d('Frames') };
+  return {
+    layout: d('LayoutDuration') * 1000,
+    style: d('RecalcStyleDuration') * 1000,
+    script: d('ScriptDuration') * 1000,
+    task: d('TaskDuration') * 1000,
+    layoutCount: d('LayoutCount'),
+    styleCount: d('RecalcStyleCount'),
+    frames: d('Frames'),
+  };
 }
 
 console.log(`\n${NAMES} names, ${FRAMES} frames, Chromium 1600x900 - Performance.getMetrics, main-thread ms\n`);
 console.log('mode             layout ms   style ms   script ms   layouts   recalcs   layout ms/frame   task ms/frame');
 for (const mode of ['lefttop+font', 'transform+font', 'lefttop', 'transform', 'transform+scale']) {
   const r = await run(mode);
-  console.log(`${mode.padEnd(16)} ${r.layout.toFixed(1).padStart(9)} ${r.style.toFixed(1).padStart(10)} ${r.script.toFixed(1).padStart(11)} ${String(r.layoutCount).padStart(9)} ${String(r.styleCount).padStart(9)} ${(r.layout / FRAMES).toFixed(3).padStart(17)} ${(r.task / FRAMES).toFixed(3).padStart(15)}`);
+  console.log(
+    `${mode.padEnd(16)} ${r.layout.toFixed(1).padStart(9)} ${r.style.toFixed(1).padStart(10)} ${r.script.toFixed(1).padStart(11)} ${String(r.layoutCount).padStart(9)} ${String(r.styleCount).padStart(9)} ${(r.layout / FRAMES).toFixed(3).padStart(17)} ${(r.task / FRAMES).toFixed(3).padStart(15)}`,
+  );
 }
 console.log('');

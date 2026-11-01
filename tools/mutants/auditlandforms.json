@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-LANDFORMS-E2-road-refills-the-channel",
     "file": "src/world/landforms.js",
-    "old": "      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;\n",
-    "new": "",
+    "old": "      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;\n      if (a > 0) out += (targets[li] - out) * a;",
+    "new": "      if (a > 0) out += (targets[li] - out) * a;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-LANDFORMS-E2-no-layer-is-water",
     "file": "src/world/landforms.js",
-    "old": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford,",
-    "new": "    if (segs.length) layers.push({ dial, reach, segs, water: false, ford: !!LAYERS[li].ford,",
+    "old": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford, hold: LAYERS[li].water ? Infinity : bankHold(dial, span) });",
+    "new": "    if (segs.length) layers.push({ dial, reach, segs, water: false, ford: !!LAYERS[li].ford, hold: LAYERS[li].water ? Infinity : bankHold(dial, span) });",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-LANDFORMS-E2-distances-never-kept",
     "file": "src/world/landforms.js",
-    "old": "      dmins[li] = dmin;\n",
-    "new": "",
+    "old": "      dmins[li] = dmin;\n      if (dmin === Infinity) { weights[li] = 0; continue; }",
+    "new": "      if (dmin === Infinity) { weights[li] = 0; continue; }",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-LANDFORMS-E2-the-causeway-gives-way-too",
     "file": "src/world/landforms.js",
-    "old": "if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;",
-    "new": "if (chan > 0 && !layers[li].water) a *= 1 - chan;",
+    "old": "      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;",
+    "new": "      if (chan > 0 && !layers[li].water) a *= 1 - chan;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-LANDFORMS-E2-the-channel-past-its-bank",
     "file": "src/world/landforms.js",
-    "old": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank, dmins[li]);",
-    "new": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank + d.verge, dmins[li]);",
+    "old": "      const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank, dmins[li]);",
+    "new": "      const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank + d.verge, dmins[li]);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-LANDFORMS-E1-the-level-shelf-back",
     "file": "src/world/landforms.js",
-    "old": "const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
-    "new": "const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
+    "old": "      const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
+    "new": "      const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-least-always-the-floor",
     "file": "src/world/landforms.js",
-    "old": "const least = raw < LANDFORM_FLOOR ? raw : LANDFORM_FLOOR;",
-    "new": "const least = LANDFORM_FLOOR;",
+    "old": "    const least = raw < LANDFORM_FLOOR ? raw : LANDFORM_FLOOR;",
+    "new": "    const least = LANDFORM_FLOOR;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-coast-fade-of-h",
     "file": "src/world/landforms.js",
-    "old": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
-    "new": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, h);",
+    "old": "    const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
+    "new": "    const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, h);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -98,8 +98,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lerp-order-reversed",
     "file": "src/world/landforms.js",
-    "old": "    for (let li = 0; li < layers.length; li++) {\n      let a = weights[li] * fade;",
-    "new": "    for (let li = layers.length - 1; li >= 0; li--) {\n      let a = weights[li] * fade;",
+    "old": "    let out = land;\n    for (let li = 0; li < layers.length; li++) {",
+    "new": "    let out = land;\n    for (let li = layers.length - 1; li >= 0; li--) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -108,8 +108,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-weight-not-eased-over-verge",
     "file": "src/world/landforms.js",
-    "old": "weights[li] = 1 - smoothstep(edge, reach, dmin);",
-    "new": "weights[li] = 1;",
+    "old": "      weights[li] = 1 - smoothstep(edge, reach, dmin);",
+    "new": "      weights[li] = 1;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-no-bank",
     "file": "src/world/landforms.js",
-    "old": "const edge = dial.flat + dial.bank;",
-    "new": "const edge = dial.flat;",
+    "old": "      const edge = dial.flat + dial.bank;",
+    "new": "      const edge = dial.flat;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-bank-top-noisy-land",
     "file": "src/world/landforms.js",
-    "old": "const smoothLand = land - g * keep;",
-    "new": "const smoothLand = land;",
+    "old": "      const smoothLand = land - g * keep;   // LANDFORM4: a site's pull levels the ground noise by as much as the land",
+    "new": "      const smoothLand = land;   // LANDFORM4: a site's pull levels the ground noise by as much as the land",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-not-dropped",
     "file": "src/world/landforms.js",
-    "old": "const floor = wf / ws - dial.drop;",
-    "new": "const floor = wf / ws;",
+    "old": "      const floor = wf / ws - dial.drop;",
+    "new": "      const floor = wf / ws;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-stale-layer-weight",
     "file": "src/world/landforms.js",
-    "old": "if (dmin === Infinity) { weights[li] = 0; continue; }",
-    "new": "if (dmin === Infinity) { continue; }",
+    "old": "      if (dmin === Infinity) { weights[li] = 0; continue; }",
+    "new": "      if (dmin === Infinity) { continue; }",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-reach-doubled",
     "file": "src/world/landforms.js",
-    "old": "if (!(d < reach)) continue;",
-    "new": "if (!(d < 2 * reach)) continue;",
+    "old": "        if (!(d < reach)) continue;",
+    "new": "        if (!(d < 2 * reach)) continue;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -188,8 +188,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-weight-inverse-d-squared",
     "file": "src/world/landforms.js",
-    "old": "const q = d * d + 0.25, r = 1 - d / reach;",
-    "new": "const q = d + 0.25, r = 1 - d / reach;",
+    "old": "        const q = d * d + 0.25, r = 1 - d / reach;   // AUDIT LANDFORMS III A8: r * r, not r ** 2 (an engine's own pow)",
+    "new": "        const q = d + 0.25, r = 1 - d / reach;   // AUDIT LANDFORMS III A8: r * r, not r ** 2 (an engine's own pow)",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-weight-falloff-linear",
     "file": "src/world/landforms.js",
-    "old": "const w = ((r * r) / (q * q))",
-    "new": "const w = ((r) / (q * q))",
+    "old": "        const w = ((r * r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "        const w = ((r) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-past-only-before-start",
     "file": "src/world/landforms.js",
-    "old": "const past = t < 0 ? -t : t > s.len ? t - s.len : 0;",
-    "new": "const past = t < 0 ? -t : 0;",
+    "old": "        const past = t < 0 ? -t : t > s.len ? t - s.len : 0;   // how far the sample lies beyond the arm's end",
+    "new": "        const past = t < 0 ? -t : 0;   // how far the sample lies beyond the arm's end",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-past-only-beyond-end",
     "file": "src/world/landforms.js",
-    "old": "const past = t < 0 ? -t : t > s.len ? t - s.len : 0;",
-    "new": "const past = t > s.len ? t - s.len : 0;",
+    "old": "        const past = t < 0 ? -t : t > s.len ? t - s.len : 0;   // how far the sample lies beyond the arm's end",
+    "new": "        const past = t > s.len ? t - s.len : 0;   // how far the sample lies beyond the arm's end",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-arm-unclamped",
     "file": "src/world/landforms.js",
-    "old": "        if (t < 0) t = 0; else if (t > s.len) t = s.len;\n",
-    "new": "\n",
+    "old": "        if (t < 0) t = 0; else if (t > s.len) t = s.len;",
+    "new": "",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -238,8 +238,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-sample-y-flipped",
     "file": "src/world/landforms.js",
-    "old": "const gx = ox + x, gy = oy + y;",
-    "new": "const gx = ox + x, gy = oy - y;",
+    "old": "    const gx = ox + x, gy = oy + y;",
+    "new": "    const gx = ox + x, gy = oy - y;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -248,8 +248,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-origin-x-hdim",
     "file": "src/world/landforms.js",
-    "old": "const ox = px * span;",
-    "new": "const ox = px * hDim;",
+    "old": "  const ox = px * span;",
+    "new": "  const ox = px * hDim;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -258,8 +258,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-centre-x-hdim",
     "file": "src/world/landforms.js",
-    "old": "const cx = qx * span + half;",
-    "new": "const cx = qx * hDim + half;",
+    "old": "        const cx = qx * span + half;",
+    "new": "        const cx = qx * hDim + half;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -268,8 +268,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-centre-y-south",
     "file": "src/world/landforms.js",
-    "old": "const cy = (MAP_H - qy) * span + half;",
-    "new": "const cy = (MAP_H - qy) * span - half;",
+    "old": "        const cy = (MAP_H - qy) * span + half;",
+    "new": "        const cy = (MAP_H - qy) * span - half;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -278,8 +278,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-gather-no-south-row",
     "file": "src/world/landforms.js",
-    "old": "for (let qy = py - 1; qy <= py + 1; qy++) {",
-    "new": "for (let qy = py - 1; qy <= py; qy++) {",
+    "old": "    for (let qy = py - 1; qy <= py + 1; qy++) {",
+    "new": "    for (let qy = py - 1; qy <= py; qy++) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-gather-no-west-column",
     "file": "src/world/landforms.js",
-    "old": "for (let qx = px - 1; qx <= px + 1; qx++) {",
-    "new": "for (let qx = px; qx <= px + 1; qx++) {",
+    "old": "      for (let qx = px - 1; qx <= px + 1; qx++) {",
+    "new": "      for (let qx = px; qx <= px + 1; qx++) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -298,8 +298,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-box-x-no-reach",
     "file": "src/world/landforms.js",
-    "old": "if (Math.max(cx, ex) < ox - reach || Math.min(cx, ex) > ox + span + reach",
-    "new": "if (Math.max(cx, ex) < ox || Math.min(cx, ex) > ox + span",
+    "old": "          if (Math.max(cx, ex) < ox - reach || Math.min(cx, ex) > ox + span + reach",
+    "new": "          if (Math.max(cx, ex) < ox || Math.min(cx, ex) > ox + span",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-box-y-no-reach",
     "file": "src/world/landforms.js",
-    "old": "|| Math.max(cy, ey) < oy - reach || Math.min(cy, ey) > oy + span + reach) continue;",
-    "new": "|| Math.max(cy, ey) < oy || Math.min(cy, ey) > oy + span) continue;",
+    "old": "            || Math.max(cy, ey) < oy - reach || Math.min(cy, ey) > oy + span + reach) continue;",
+    "new": "            || Math.max(cy, ey) < oy || Math.min(cy, ey) > oy + span) continue;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-diagonal-len-cardinal",
     "file": "src/world/landforms.js",
-    "old": "const len = half * Math.sqrt(dx * dx + dy * dy);",
-    "new": "const len = half;",
+    "old": "          const len = half * Math.sqrt(dx * dx + dy * dy);",
+    "new": "          const len = half;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-unit-vector-unnormalised",
     "file": "src/world/landforms.js",
-    "old": "ux: (dx * half) / len, uy: (dy * half) / len,",
-    "new": "ux: dx, uy: dy,",
+    "old": "          segs.push({ ax: cx, ay: cy, ux: (dx * half) / len, uy: (dy * half) / len, len, dx, dy, qx, qy, prof: null });",
+    "new": "          segs.push({ ax: cx, ay: cy, ux: dx, uy: dy, len, dx, dy, qx, qy, prof: null });",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-one-short",
     "file": "src/world/landforms.js",
-    "old": "for (let k = 0; k <= half; k++) {",
-    "new": "for (let k = 0; k < half; k++) {",
+    "old": "    for (let k = 0; k <= half; k++) {",
+    "new": "    for (let k = 0; k < half; k++) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-graded-index-overruns",
     "file": "src/world/landforms.js",
-    "old": "const i = Math.min(half - 1, Math.floor(f));",
-    "new": "const i = Math.min(half, Math.floor(f));",
+    "old": "    const i = Math.min(half - 1, Math.floor(f));",
+    "new": "    const i = Math.min(half, Math.floor(f));",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-graded-nearest-point",
     "file": "src/world/landforms.js",
-    "old": "return prof[i] + (prof[i + 1] - prof[i]) * (f - i);",
-    "new": "return prof[Math.round(f)];",
+    "old": "    return prof[i] + (prof[i + 1] - prof[i]) * (f - i);",
+    "new": "    return prof[Math.round(f)];",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-read-off-the-shaping-pixel",
     "file": "src/world/landforms.js",
-    "old": "const { base, noise, cliff } = termsOf(s.qx, s.qy);",
-    "new": "const { base, noise, cliff } = termsOf(px, py);",
+    "old": "    const { base, noise, cliff } = termsOf(s.qx, s.qy);",
+    "new": "    const { base, noise, cliff } = termsOf(px, py);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-not-ocean-floored",
     "file": "src/world/landforms.js",
-    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
-    "new": "const macro = Math.min(low + noise(lx, ly) * NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT);",
+    "old": "      const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it",
+    "new": "      const macro = Math.min(low + noise(lx, ly) * NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -394,8 +394,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-rivers-off-cuts-nothing",
     "file": "src/world/landforms.js",
-    "old": "(l.water && !cutRivers ? null : roads?.[l.key] ?? null)",
-    "new": "(!cutRivers ? null : roads?.[l.key] ?? null)",
+    "old": "  const nets = LAYERS.map((l) => (l.water && !cutRivers ? null : roads?.[l.key] ?? null));",
+    "new": "  const nets = LAYERS.map((l) => (!cutRivers ? null : roads?.[l.key] ?? null));",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-blend-to-zero",
     "file": "src/world/landforms.js",
-    "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);",
-    "new": "blendLocationTerrain(field, 0, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);",
+    "old": "    blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground",
+    "new": "    blendLocationTerrain(field, 0, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-bilinear-axes-swapped",
     "file": "src/world/landforms.js",
-    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
-    "new": "return fy >= fx ? f00 + fy * (f(ix + 1, iy) - f00) + fx * (f11 - f(ix + 1, iy)) : f00 + fx * (f(ix, iy + 1) - f00) + fy * (f11 - f(ix, iy + 1));",
+    "old": "    return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
+    "new": "    return fy >= fx ? f00 + fy * (f(ix + 1, iy) - f00) + fx * (f11 - f(ix + 1, iy)) : f00 + fx * (f(ix, iy + 1) - f00) + fy * (f11 - f(ix, iy + 1));",
     "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field is read on the ground's one law, the drawn triangles (its axes swapped the same way), where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-nearest-sample",
     "file": "src/world/landforms.js",
-    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
-    "new": "return f(Math.round(cx), Math.round(cy));",
+    "old": "    return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
+    "new": "    return f(Math.round(cx), Math.round(cy));",
     "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field read on the drawn triangles, where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
@@ -456,8 +456,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-east-edge-overrun",
     "file": "src/world/landforms.js",
-    "old": "const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));",
-    "new": "const ix = Math.floor(cx), iy = Math.floor(cy);",
+    "old": "    const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));",
+    "new": "    const ix = Math.floor(cx), iy = Math.floor(cy);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -466,8 +466,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-unclamped",
     "file": "src/world/landforms.js",
-    "old": "const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));",
-    "new": "const cx = sx, cy = sy;",
+    "old": "    const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));",
+    "new": "    const cx = sx, cy = sy;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -579,8 +579,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);",
-    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites, beyond, climates }) : null);",
+    "old": "  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);   // BAY-LEFT-GROUND: and the sites past the Bay",
+    "new": "  const lf = landforms ?? (landform ? createLandforms({ woods, sites, beyond, climates }) : null);   // BAY-LEFT-GROUND: and the sites past the Bay",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -604,8 +604,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-client-fallback-grid-uncut",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));",
-    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));",
+    "old": "    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));   // LANDFORM1-3: the fallback's own network",
+    "new": "    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));   // LANDFORM1-3: the fallback's own network",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -827,7 +827,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-deck-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]]",
     "new": "pos: [...player.pos]",
     "tests": [
@@ -838,7 +838,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-deck-never-stood-again",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)",
     "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE)",
     "tests": [
@@ -892,8 +892,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-tiles-off-the-shaped-blend",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const tileData = generateTileData(classic ?? samples, px, py);",
-    "new": "const tileData = generateTileData(samples, px, py);",
+    "old": "  const tileData = generateTileData(classic ?? samples, px, py);",
+    "new": "  const tileData = generateTileData(samples, px, py);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -912,8 +912,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-unblended",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);\n",
-    "new": "",
+    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);\n    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it",
+    "new": "    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -922,8 +922,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-blended-to-the-shaped-mean",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
-    "new": "if (classic) blendLocationTerrain(classic, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
+    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
+    "new": "    if (classic) blendLocationTerrain(classic, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -977,8 +977,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-wild-lift-alone",
     "file": "src/world/landforms.js",
-    "old": "  const lf = landforms ?? createLandforms({ woods, hDim });",
-    "new": "  const lf = createLandforms({ woods, hDim });",
+    "old": "  const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way",
+    "new": "  const lf = createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -987,8 +987,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-town-lift-alone",
     "file": "src/world/landforms.js",
-    "old": "shaped = generateSamples(woods, px, py, hDim, lf, classic);",
-    "new": "shaped = generateSamples(woods, px, py, hDim, createLandforms({ woods, hDim }), classic);",
+    "old": "    const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, lf, classic);",
+    "new": "    const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, createLandforms({ woods, hDim }), classic);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -997,8 +997,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-wild-memo-blind-to-the-sample",
     "file": "src/world/landforms.js",
-    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y)))",
-    "new": "      const k = x;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y)))",
+    "old": "    f = (x, y) => {\n      const k = x * hDim + y;",
+    "new": "    f = (x, y) => {\n      const k = x;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1085,8 +1085,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J1-track-no-ford",
     "file": "src/world/landforms.js",
-    "old": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),",
-    "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),",
+    "old": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),   // AUDIT LANDFORMS II J1",
+    "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),   // AUDIT LANDFORMS II J1",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1095,8 +1095,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J1-ford-unread",
     "file": "src/world/landforms.js",
-    "old": "(layers[li].ford || dmins[li] > layers[li].dial.flat)",
-    "new": "(dmins[li] > layers[li].dial.flat)",
+    "old": "      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;",
+    "new": "      if (chan > 0 && !layers[li].water && (dmins[li] > layers[li].dial.flat)) a *= 1 - chan;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1125,8 +1125,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I2-never-held",
     "file": "src/world/landforms.js",
-    "old": "      if (dmin <= edge) {\n        const hold = layers[li].hold;",
-    "new": "      if (false) {\n        const hold = layers[li].hold;",
+    "old": "      if (dmin <= edge) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1145,8 +1145,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I2-held-to-the-noise",
     "file": "src/world/landforms.js",
-    "old": "if (targets[li] > smoothLand + hold) targets[li] = smoothLand + hold;",
-    "new": "if (targets[li] > land + hold) targets[li] = land + hold;",
+    "old": "        if (targets[li] > smoothLand + hold) targets[li] = smoothLand + hold;",
+    "new": "        if (targets[li] > land + hold) targets[li] = land + hold;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1155,8 +1155,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I2-water-held",
     "file": "src/world/landforms.js",
-    "old": "hold: LAYERS[li].water ? Infinity : bankHold(dial, span)",
-    "new": "hold: bankHold(dial, span)",
+    "old": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford, hold: LAYERS[li].water ? Infinity : bankHold(dial, span) });",
+    "new": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford, hold: bankHold(dial, span) });",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1165,8 +1165,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I2-smoothstep-peak",
     "file": "src/world/landforms.js",
-    "old": "* dial.bank) / 1.5;",
-    "new": "* dial.bank) / 1;",
+    "old": "const bankHold = (dial, span) => (LANDFORM_DIALS.bankGrade * (TERRAIN_SIZE / span / STREAMING_TERRAIN_SCALE) * dial.bank) / 1.5;",
+    "new": "const bankHold = (dial, span) => (LANDFORM_DIALS.bankGrade * (TERRAIN_SIZE / span / STREAMING_TERRAIN_SCALE) * dial.bank) / 1;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1175,8 +1175,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-never-faded",
     "file": "src/world/landforms.js",
-    "old": "let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);",
-    "new": "let land = landAt(gx, gy, h, h - g, low, 1, near);",
+    "old": "    let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);",
+    "new": "    let land = landAt(gx, gy, h, h - g, low, 1, near);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1184,8 +1184,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-profile-unfaded",
     "file": "src/world/landforms.js",
-    "old": "landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around)",
-    "new": "landAt(sox + lx, soy + ly, macro, macro, low, 1, around)",
+    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;",
+    "new": "      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, 1, around) : macro;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1193,8 +1193,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-from-the-sea",
     "file": "src/world/landforms.js",
-    "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
-    "new": "cliff: Object.freeze({ from: 0, full: 3 }),",
+    "old": "  cliff: Object.freeze({ from: 1, full: 3 }),",
+    "new": "  cliff: Object.freeze({ from: 0, full: 3 }),",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1202,8 +1202,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-full-two-in",
     "file": "src/world/landforms.js",
-    "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
-    "new": "cliff: Object.freeze({ from: 1, full: 2 }),",
+    "old": "  cliff: Object.freeze({ from: 1, full: 3 }),",
+    "new": "  cliff: Object.freeze({ from: 1, full: 2 }),",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1211,8 +1211,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-beach-byte-land",
     "file": "src/world/landforms.js",
-    "old": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE <= LANDFORM_KNEE",
-    "new": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE < SCALED_BEACH_ELEVATION",
+    "old": "      if (d2 < best && byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE <= LANDFORM_KNEE) best = d2;",
+    "new": "      if (d2 < best && byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE < SCALED_BEACH_ELEVATION) best = d2;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1220,8 +1220,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-unquantized",
     "file": "src/world/landforms.js",
-    "old": "out[d2] = Math.round(smooth01((Math.sqrt(d2) - from) / (full - from)) * 1024) / 1024;",
-    "new": "out[d2] = smooth01((Math.sqrt(d2) - from) / (full - from));",
+    "old": "  for (let d2 = 0; d2 < out.length; d2++) out[d2] = Math.round(smooth01((Math.sqrt(d2) - from) / (full - from)) * 1024) / 1024;",
+    "new": "  for (let d2 = 0; d2 < out.length; d2++) out[d2] = smooth01((Math.sqrt(d2) - from) / (full - from));",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1229,8 +1229,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-window-shifted",
     "file": "src/world/landforms.js",
-    "old": "const v = cliffFadeAt(byteAt, px - 2 + r, py - 2 + c);",
-    "new": "const v = cliffFadeAt(byteAt, px - 1 + r, py - 2 + c);",
+    "old": "      const v = cliffFadeAt(byteAt, px - 2 + r, py - 2 + c);",
+    "new": "      const v = cliffFadeAt(byteAt, px - 1 + r, py - 2 + c);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1257,8 +1257,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-view-unfaded",
     "file": "src/world/landforms.js",
-    "old": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : cliffFadeAt(byteAt, qx, qy));",
-    "new": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : 1);",
+    "old": "      if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : cliffFadeAt(byteAt, qx, qy));",
+    "new": "      if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : 1);",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1305,8 +1305,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G1-carried-the-wrong-way",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
-    "new": "const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
+    "old": "      const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);",
+    "new": "      const moved = (x, z) => groundIn(groundWas, x, z) - groundIn(now, x, z);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1350,8 +1350,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
     "file": "src/scenes/pixelBuild.js",
-    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);",
-    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);",
+    "old": "      host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld",
+    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld",
     "tests": [
       "test/scenes/bootorder.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1423,8 +1423,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H2-nature-handed-none",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    beach: classic,\n  };",
-    "new": "    beach: null,\n  };",
+    "old": "    // still stand on the shaped ground.\n    beach: classic,",
+    "new": "    // still stand on the shaped ground.\n    beach: null,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1432,8 +1432,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H2-job-returns-none",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else)",
-    "new": "    beach: null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else)",
+    "old": "    beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line",
+    "new": "    beach: null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1441,8 +1441,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H2-blend-unsmoothed",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);",
-    "new": "",
+    "old": "    if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them",
+    "new": "   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1450,8 +1450,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H2-site-unlevelled",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  if (classic && wodResult) applyPicks(classic, wod.picks);",
-    "new": "  if (false) applyPicks(classic, wod.picks);",
+    "old": "  if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks",
+    "new": "  if (false) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1496,8 +1496,8 @@
   {
     "name": "GROUND-AGREE-roll-transposed",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
-    "new": "if (!spawnsDungeon(WORLD_SALT, py, px)) return null;",
+    "old": "    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "new": "    if (!spawnsDungeon(WORLD_SALT, py, px)) return null;",
     "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks no tvSpawnGone of its own now; the ground's roll is asked of the pixel transposed.",
     "tests": [
       "test/world/terrain/auditlandforms.test.js",
@@ -1574,8 +1574,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J9-relief-blind",
     "file": "src/world/landforms.js",
-    "old": "  const lf = landforms ?? createLandforms({ woods, hDim });",
-    "new": "  const lf = landforms ?? createLandforms({ woods, hDim, roads: { roads: new Uint8Array(500000).fill(15), tracks: new Uint8Array(500000) } });",
+    "old": "  const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way",
+    "new": "  const lf = landforms ?? createLandforms({ woods, hDim, roads: { roads: new Uint8Array(500000).fill(15), tracks: new Uint8Array(500000) } });   // AUDIT LANDFORMS II J9: no network - the defaults, the kernel's own way",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1584,8 +1584,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J12-wild-not-float32",
     "file": "src/world/landforms.js",
-    "old": "v = (lifted(ms, x, y, Math.fround(shaped(x, y))) - lifted(mp, x, y, Math.fround(plain(x, y)))) * MAX_TERRAIN_HEIGHT",
-    "new": "v = (lifted(ms, x, y, shaped(x, y)) - lifted(mp, x, y, plain(x, y))) * MAX_TERRAIN_HEIGHT",
+    "old": "      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y))) - lifted(mp, x, y, Math.fround(plain(x, y)))) * MAX_TERRAIN_HEIGHT);",
+    "new": "      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, shaped(x, y)) - lifted(mp, x, y, plain(x, y))) * MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

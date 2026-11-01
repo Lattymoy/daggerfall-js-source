@@ -2,312 +2,400 @@
   {
     "name": "TOOL-SAID-a-guest-hears-the-line",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "if (!how || !isOnlinePage() || _host?.professionsOpen?.() !== true) return null;",
-    "new": "if (!how || !isOnlinePage()) return null;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "  if (!how || !isOnlinePage() || _host?.professionsOpen?.() !== true) return null;",
+    "new": "  if (!how || !isOnlinePage()) return null;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-SAID-offline-hears-the-line",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "if (!how || !isOnlinePage() || _host?.professionsOpen?.() !== true) return null;",
-    "new": "if (!how || _host?.professionsOpen?.() !== true) return null;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "  if (!how || !isOnlinePage() || _host?.professionsOpen?.() !== true) return null;",
+    "new": "  if (!how || _host?.professionsOpen?.() !== true) return null;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-SAID-the-switch-off-offers-no-use",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  toolUse.usable = (item) => foragingOn() || !!professionToolLine(item?.templateIndex);",
-    "new": "  toolUse.usable = () => foragingOn();",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "  toolUse.usable = (item) => foragingOn() || !!professionToolLine(item?.templateIndex); // TOOL-SAID: online the tools are the professions' whatever the switch says (law 6)",
+    "new": "  toolUse.usable = () => foragingOn(); // TOOL-SAID: online the tools are the professions' whatever the switch says (law 6)",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-SAID-the-basket-names-no-choice-key",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "return how(_host.keyLabel?.('Interact') || 'E', _host.keyLabel?.('ActChoice') || 'the act choice key');",
-    "new": "return how(_host.keyLabel?.('Interact') || 'E', 'the act choice key');",
+    "old": "  return how(_host.keyLabel?.('Interact') || 'E', _host.keyLabel?.('ActChoice') || 'the act choice key');",
+    "new": "  return how(_host.keyLabel?.('Interact') || 'E', 'the act choice key');",
     "equivalent": true,
     "why": "AUDIT (2026-10-04): PROF-MENU retired the act choice key from every tool line - PROFESSION_TOOL_HOW's lines all take the Interact key alone (the Basket names the list's Search), so the second argument is read by none and the key's label cannot reach the player. Kept as the seam a line naming the key again would read.",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-foraging-on-keeps-the-use",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  if (how) {\n    // TOOL-USE: at a node of the tool's own kind",
-    "new": "  if (how && !foragingOn()) {\n    // TOOL-USE: at a node of the tool's own kind",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "  if (how) {",
+    "new": "  if (how && !foragingOn()) {",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-node-is-never-asked",
     "file": "src/systems/foraging/foragingInstall.js",
     "old": "    const took = _host?.professionUse?.(item.templateIndex) ?? false;",
     "new": "    const took = false;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-an-act-flashes-a-refusal",
     "file": "src/systems/foraging/foragingInstall.js",
     "old": "    if (took === 'started') return { kind: 'foraging' };",
     "new": "    if (took === 'started') return { kind: 'foraging', refused: true };",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-need-and-the-line-too",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    if (took) return { kind: 'foraging', refused: true };",
-    "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    if (took) return { kind: 'foraging', refused: true }; // the node said why nothing started: a refusal, never gold",
+    "new": "    // the node said why nothing started: a refusal, never gold",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-need-strikes-gold",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    if (took) return { kind: 'foraging', refused: true };",
-    "new": "    if (took) return { kind: 'foraging' };",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    if (took) return { kind: 'foraging', refused: true }; // the node said why nothing started: a refusal, never gold",
+    "new": "    if (took) return { kind: 'foraging' }; // the node said why nothing started: a refusal, never gold",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-way-unsaid-on-the-hud",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    hudText(how);\n    return { kind: 'foraging', refused: true, text: how, said: true };",
-    "new": "    return { kind: 'foraging', refused: true, text: how, said: true };",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    hudText(how);\n    return { kind: 'foraging', refused: true, text: how, said: true }; // AUDIT ECON R3: said - the hotbar never says it twice",
+    "new": "    return { kind: 'foraging', refused: true, text: how, said: true }; // AUDIT ECON R3: said - the hotbar never says it twice",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-way-strikes-gold",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    return { kind: 'foraging', refused: true, text: how, said: true };",
-    "new": "    return { kind: 'foraging', text: how, said: true };",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    return { kind: 'foraging', refused: true, text: how, said: true }; // AUDIT ECON R3: said - the hotbar never says it twice",
+    "new": "    return { kind: 'foraging', text: how, said: true }; // AUDIT ECON R3: said - the hotbar never says it twice",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-way-names-no-tool",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "then press ${k} (or use the Wood-Axe).",
-    "new": "then press ${k}.",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    `Logging is done at a tree in the wilderness: walk up to one until its acts show, then press ${k} (or use the Wood-Axe). Only some trees can be felled each day.`,",
+    "new": "    `Logging is done at a tree in the wilderness: walk up to one until its acts show, then press ${k}. Only some trees can be felled each day.`,",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-any-kind-takes-any-tool",
     "file": "src/scenes/gatherHost.js",
     "old": "      const own = kinds.filter((k) => k.tools?.includes(templateIndex));",
     "new": "      const own = kinds;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-window-holds-nothing-off",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
     "new": "      if (!own.length || book.state.open !== true) return false;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-shut-book-takes-the-use",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
     "new": "      if (!own.length || !live()) return false;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-spade-is-a-profession-tool",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
     "new": "      if (!live() || book.state.open !== true) return false;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-use-mid-act-starts-another",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (act) return 'taken';",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-no-node-is-a-node",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (!t) return false;",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-need-starts-the-act",
     "file": "src/scenes/gatherHost.js",
     "old": "      if (!plan?.ready) { const line = needLine(plan, rank); if (line) hud.toast(line); return 'taken'; }",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-need-unsaid",
     "file": "src/scenes/gatherHost.js",
     "old": "if (line) hud.toast(line); return 'taken'; }",
     "new": "return 'taken'; }",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-refused-start-strikes-gold",
     "file": "src/scenes/gatherHost.js",
     "old": "      return start(t, plan, templateIndex) ? 'started' : 'taken';",
     "new": "      start(t, plan, templateIndex); return 'started';",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-refused-start-is-an-act",
     "file": "src/scenes/gatherHost.js",
     "old": "    if (a.refused) { hud.toast(a.refused); return false; }",
     "new": "    if (a.refused) { hud.toast(a.refused); return true; }",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-any-kind-is-the-tools-target",
     "file": "src/scenes/gatherHost.js",
     "old": "        if (!k || !own.includes(k) || k.gone(n)) continue;",
     "new": "        if (!k || k.gone(n)) continue;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-use-plans-as-e",
     "file": "src/scenes/gatherHost.js",
     "old": "    return learned(t, kindOf(t.node)?.plan(t.node, ctxFor(t, tool)) ?? null);",
     "new": "    return learned(t, kindOf(t.node)?.plan(t.node, ctxFor(t)) ?? null);",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-start-forgets-the-use",
     "file": "src/scenes/gatherHost.js",
     "old": "    const a = k?.start(t.node, plan, ctxFor(t, tool, byPress));",
     "new": "    const a = k?.start(t.node, plan, ctxFor(t, null, byPress));",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-use-holds-nothing",
     "file": "src/scenes/gatherHost.js",
     "old": "held: input.held || act.heldByUse === true,",
     "new": "held: input.held,",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-basket-is-no-tool-of-the-patch",
     "file": "src/scenes/herbHost.js",
-    "old": "    tools: Object.freeze([FT.Sickle, FT.Basket]),   // TOOL-USE",
-    "new": "    tools: Object.freeze([FT.Sickle]),   // TOOL-USE",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "    tools: Object.freeze([FT.Sickle, FT.Basket]), // TOOL-USE",
+    "new": "    tools: Object.freeze([FT.Sickle]), // TOOL-USE",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-pick-is-no-tool-of-the-vein",
     "file": "src/scenes/mineHost.js",
     "old": "    tools: Object.freeze([FT.PickAxe]),",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-axe-is-no-tool-of-the-tree",
     "file": "src/scenes/treeHost.js",
     "old": "    tools: Object.freeze([FT.WoodAxe]),",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-net-is-no-tool-of-the-water",
     "file": "src/scenes/fishHost.js",
     "old": "    tools: Object.freeze([FT.FishingNet]),",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-basket-follows-the-choice",
     "file": "src/scenes/herbHost.js",
-    "old": "const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
-    "new": "const only = tool === FT.Sickle ? 'herbs' : null;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "      const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
+    "new": "      const only = tool === FT.Sickle ? 'herbs' : null;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-sickle-follows-the-choice",
     "file": "src/scenes/herbHost.js",
-    "old": "const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
-    "new": "const only = tool === FT.Basket ? 'food' : null;",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "      const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
+    "new": "      const only = tool === FT.Basket ? 'food' : null;",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-choice-decides",
     "file": "src/scenes/herbHost.js",
-    "old": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
-    "new": "return planOf(p, { entity, info, rank }, false, !!only);",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
+    "new": "      return planOf(p, { entity, info, rank }, false, !!only);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-other-harvest-taken-over",
     "file": "src/scenes/herbHost.js",
-    "old": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
-    "new": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, false);",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
+    "new": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, false);",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-sickle-falls-to-the-food",
     "file": "src/scenes/herbHost.js",
     "old": "  if (!only && kind === 'herbs' && !herbsLeft && foodLeft) kind = 'food';",
     "new": "  if (kind === 'herbs' && !herbsLeft && foodLeft) kind = 'food';",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-basket-falls-to-the-herbs",
     "file": "src/scenes/herbHost.js",
     "old": "  if (!only && kind === 'food' && !foodLeft && herbsLeft) kind = 'herbs';",
     "new": "  if (kind === 'food' && !foodLeft && herbsLeft) kind = 'herbs';",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-taken-harvest-worked-again",
     "file": "src/scenes/herbHost.js",
-    "old": "  if (!(kind === 'food' ? foodLeft : herbsLeft)) return { kind, verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`, rest: counting(kind) ? 'being counted' : 'gathered today', ready: false, both };",
+    "old": "  if (!(kind === 'food' ? foodLeft : herbsLeft))\n    return {\n      kind,\n      verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`,\n      rest: counting(kind) ? 'being counted' : 'gathered today',\n      ready: false,\n      both,\n    };",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-a-counted-harvest-said-gathered",
     "file": "src/scenes/herbHost.js",
-    "old": "rest: counting(kind) ? 'being counted' : 'gathered today', ready: false, both };",
-    "new": "rest: 'gathered today', ready: false, both };",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "      rest: counting(kind) ? 'being counted' : 'gathered today',",
+    "new": "      rest: 'gathered today',",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-sickle-holds-nothing",
     "file": "src/scenes/herbHost.js",
-    "old": "        heldByUse: !!used && kind === 'steady',",
-    "new": "        heldByUse: false,",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "        heldByUse: !!used && kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "new": "        heldByUse: false, // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-e-held-by-the-use",
     "file": "src/scenes/herbHost.js",
-    "old": "        heldByUse: !!used && kind === 'steady',",
-    "new": "        heldByUse: kind === 'steady',",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "old": "        heldByUse: !!used && kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "new": "        heldByUse: kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-SAID-the-world-never-says-the-professions-are-open",
     "file": "src/scenes/world.js",
     "old": "    professionsOpen: () => profBook?.state.open === true,\n    keyLabel: (a) => actKeyWord(a),   // TOUCH-HOLD: a pad in hand, its button",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-world-never-hands-the-use",
     "file": "src/scenes/world.js",
     "old": "    professionUse: (t) => gatherHost?.useTool(t) ?? false,",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-SAID-the-page-keeps-its-silence",
     "file": "src/ui/professions/profPages.js",
     "old": "    if (GATHER_HOW[_sel]) pane.append(el('p', 'px-note', gatherHow(_sel)));   // TOOL-SAID",
     "new": "",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "TOOL-USE-the-stores-say-the-old-way",
     "file": "src/ui/professions/profPages.js",
     "old": "Tools used from your pack gather nothing.';",
     "new": "Tools used from your pack gather into the pack, not here.';",
-    "tests": ["test/systems/fb0930b_toolsaid.test.js"]
+    "tests": [
+      "test/systems/fb0930b_toolsaid.test.js"
+    ]
   },
   {
     "name": "AUDIT-carry-page-says-the-stores",

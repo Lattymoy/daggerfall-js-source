@@ -377,7 +377,7 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(fp, /bindPartsInto\(t\.arm, \[\.\.\.tResolved\.parts, \.\.\.tHolster\.parts\]\);/);
   assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, weaponShown, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the world draw, with the round on the string');
   assert.equal((fp.match(/else if \(HOLSTER_SLOTS\.includes\(r\.slot\)\) r\.hidden = holsterHidden\(r\.slot, true, \{ arrowShown, tag: r\.piece\?\.tag \}\);/g) || []).length, 1, 'the portrait: the weapon is in the hand');
-  assert.match(rd('src/systems/weaponSheathingAssets.js'), /\{ eager: true, query: '\?url', import: 'default' \}/, 'AUDIT-WS: the table is eager - no chunk per file');
+  assert.match(rd('src/systems/weaponSheathingAssets.js'), /\{\n\s*eager: true,\n\s*query: '\?url',\n\s*import: 'default',\n\s*\}/, 'AUDIT-WS: the table is eager - no chunk per file');
   assert.match(fp, /sheathing = true, ammoCount = null,/);
   const rig = rd('src/combat/weapon/weaponRig.js');
   assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountFor\(entity\.items, worn\),/);

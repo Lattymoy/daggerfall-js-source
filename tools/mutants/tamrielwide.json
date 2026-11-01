@@ -2,8 +2,8 @@
   {
     "name": "TAMRIEL-WIDE-1-pixel-id-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "      String.raw`\\b${Y}\\s*\\)?\\s*\\*\\s*${WIDE}\\s*\\)?\\s*\\+\\s*\\(?\\s*${X}\\b`,",
-    "new": "      String.raw`\\bNEVER_A_PIXEL_ID\\b`,",
+    "old": "        String.raw`\\b${Y}\\s*\\)?\\s*\\*\\s*${WIDE}\\s*\\)?\\s*\\+\\s*\\(?\\s*${X}\\b`,",
+    "new": "        String.raw`\\bNEVER_A_PIXEL_ID\\b`,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TAMRIEL-WIDE-2-region-count-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /(?:<|>=|<=|>)\\s*\\(?\\s*[\\w.?]*\\bregionCount\\b/,",
-    "new": "re: /(?!)/,",
+    "old": "    re: /(?:<|>=|<=|>)\\s*\\(?\\s*[\\w.?]*\\bregionCount\\b/,",
+    "new": "    re: /(?!)/,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TAMRIEL-WIDE-12-bay-clamp-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: /Math\\.(?:min|max)\\(\\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\\s*-\\s*1)\\b|",
-    "new": "re: /(?!)|",
+    "old": "    re: /Math\\.(?:min|max)\\(\\s*(?:999|499|(?:MAP_W|MAP_H|MAP_WIDTH|MAP_HEIGHT|BAY_W|BAY_H)\\s*-\\s*1)\\b|Math\\.min\\([^)]*(?:MAP_W|MAP_WIDTH|BAY_W)\\s*-\\s*1\\s*-\\s*p?x|Math\\.(?:min|max)\\(\\s*[\\w.]+\\s*,\\s*(?:999|499)\\s*\\)/,",
+    "new": "    re: /(?!)|Math\\.min\\([^)]*(?:MAP_W|MAP_WIDTH|BAY_W)\\s*-\\s*1\\s*-\\s*p?x|Math\\.(?:min|max)\\(\\s*[\\w.]+\\s*,\\s*(?:999|499)\\s*\\)/,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TAMRIEL-WIDE-13-bay-bound-bare-xy-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "const AT = String.raw`(?:p?[xy]\\d?|m[xy]|",
-    "new": "const AT = String.raw`(?:p[xy]\\d?|m[xy]|",
+    "old": "const AT = String.raw`(?:p?[xy]\\d?|m[xy]|b[xy]|[nqtcgw][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\\.p?[xy])`;",
+    "new": "const AT = String.raw`(?:p[xy]\\d?|m[xy]|b[xy]|[nqtcgw][xy]|mapX|mapY|mapPixelX|mapPixelY|pixelX|pixelY|[a-z]+\\.p?[xy])`;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TAMRIEL-WIDE-5-comments-counted",
     "file": "tools/tamrielWide.mjs",
-    "old": "if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return '';",
-    "new": "if (false) return '';",
+    "old": "  if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return '';",
+    "new": "  if (false) return '';",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TAMRIEL-WIDE-6-url-read-as-comment",
     "file": "tools/tamrielWide.mjs",
-    "old": "return at >= 0 && !/:\\s*$/.test(line.slice(0, at)) ? line.slice(0, at) : line;",
-    "new": "return at >= 0 ? line.slice(0, at) : line;",
+    "old": "  return at >= 0 && !/:\\s*$/.test(line.slice(0, at)) ? line.slice(0, at) : line;",
+    "new": "  return at >= 0 ? line.slice(0, at) : line;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "TAMRIEL-WIDE-7-marker-above-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));",
+    "old": "const ownedAt = (lines, i) =>\n  MARKED.test(lines[i]) || (i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));",
     "new": "const ownedAt = (lines, i) => MARKED.test(lines[i]);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "TAMRIEL-WIDE-8-unlisted-let-through",
     "file": "tools/tamrielWide.mjs",
-    "old": "if (n > (b[f] ?? 0)) over.push",
-    "new": "if (n > (b[f] ?? Infinity)) over.push",
+    "old": "    for (const [f, n] of Object.entries(n0)) if (n > (b[f] ?? 0)) over.push(`${id} ${f}: ${n} (allowed ${b[f] ?? 0})`);",
+    "new": "    for (const [f, n] of Object.entries(n0))\n      if (n > (b[f] ?? Infinity)) over.push(`${id} ${f}: ${n} (allowed ${b[f] ?? 0})`);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TAMRIEL-WIDE-9-stale-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "if ((n0[f] ?? 0) < n) stale.push",
-    "new": "if (false) stale.push",
+    "old": "    for (const [f, n] of Object.entries(b))\n      if ((n0[f] ?? 0) < n) stale.push(`${id} ${f}: ${n0[f] ?? 0} (baseline ${n})`);",
+    "new": "    for (const [f, n] of Object.entries(b)) if (false) stale.push(`${id} ${f}: ${n0[f] ?? 0} (baseline ${n})`);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "TAMRIEL-WIDE-10-lowering-raises",
     "file": "tools/tamrielWide.mjs",
-    "old": ".map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)])",
-    "new": ".map(([f, n]) => [f, Math.max(n, now[id]?.[f] ?? 0)])",
+    "old": "          .map(([f, n]) => [f, Math.min(n, now[id]?.[f] ?? 0)])",
+    "new": "          .map(([f, n]) => [f, Math.max(n, now[id]?.[f] ?? 0)])",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TAMRIEL-WIDE-15-reversed-bound-unread",
     "file": "tools/tamrielWide.mjs",
-    "old": "(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
-    "new": "(?!\\s*[-+*/])\\b|${ARG_BOUND}`),",
+    "old": "    re: new RegExp(\n      String.raw`(?<![-+*/%.]\\s*)\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`,\n    ),",
+    "new": "    re: new RegExp(String.raw`(?<![-+*/%.]\\s*)\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|${ARG_BOUND}`),",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TAMRIEL-WIDE-16-difference-counted",
     "file": "tools/tamrielWide.mjs",
-    "old": "re: new RegExp(String.raw`(?<![-+*/%.]\\s*)\\b${AT}",
-    "new": "re: new RegExp(String.raw`\\b${AT}",
+    "old": "    re: new RegExp(\n      String.raw`(?<![-+*/%.]\\s*)\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`,\n    ),",
+    "new": "    re: new RegExp(String.raw`\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "TAMRIEL-WIDE-17-marker-above-from-code",
     "file": "tools/tamrielWide.mjs",
-    "old": "(i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]))",
-    "new": "(i > 0 && MARKED.test(lines[i - 1]))",
+    "old": "const ownedAt = (lines, i) =>\n  MARKED.test(lines[i]) || (i > 0 && /^\\s*(?:\\/\\/|\\/\\*|\\*)/.test(lines[i - 1]) && MARKED.test(lines[i - 1]));",
+    "new": "const ownedAt = (lines, i) => MARKED.test(lines[i]) || (i > 0 && MARKED.test(lines[i - 1]));",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "TAMRIEL-WIDE-18-marker-without-why",
     "file": "tools/tamrielWide.mjs",
-    "old": "${BAY_OWN}(?:\\s*\\S){3}`);",
-    "new": "${BAY_OWN}`);",
+    "old": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}(?:\\s*\\S){3}`);",
+    "new": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}`);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "TAMRIEL-WIDE-19-marker-in-a-string",
     "file": "tools/tamrielWide.mjs",
-    "old": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}",
-    "new": "const MARKED = new RegExp(String.raw`${BAY_OWN}",
+    "old": "const MARKED = new RegExp(String.raw`(?:\\/\\/|\\/\\*|^\\s*\\*).*${BAY_OWN}(?:\\s*\\S){3}`);",
+    "new": "const MARKED = new RegExp(String.raw`${BAY_OWN}(?:\\s*\\S){3}`);",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "TAMRIEL-WIDE-21-the-edge-by-its-other-names",
     "file": "tools/tamrielWide.mjs",
-    "old": "BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
-    "new": "BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
+    "old": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H|MAP_W|MAP_H|TP_MAP_W|TP_MAP_H)(?:\\s*-\\s*1)?)`;",
+    "new": "const EDGE = String.raw`(?:1000|999|500|499|(?:MAP_WIDTH|MAP_HEIGHT|MAX_MAP_PIXEL_X|MAX_MAP_PIXEL_Y|BAY_W|BAY_H)(?:\\s*-\\s*1)?)`;",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "TAMRIEL-WIDE-22-a-bound-handed-to-a-call",
     "file": "tools/tamrielWide.mjs",
-    "old": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`),",
-    "new": "|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
+    "old": "    re: new RegExp(\n      String.raw`(?<![-+*/%.]\\s*)\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b|${ARG_BOUND}`,\n    ),",
+    "new": "    re: new RegExp(String.raw`(?<![-+*/%.]\\s*)\\b${AT}\\s*${CMP}\\s*${EDGE}(?!\\s*[-+*/])\\b|\\b${EDGE}\\s*${CMP}\\s*${AT}\\b`),",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "TAMRIEL-WIDE-23-a-region-bound-handed-to-a-call",
     "file": "tools/tamrielWide.mjs",
-    "old": "6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
-    "new": "6[12]\\b/i,",
+    "old": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b|\\(\\s*[\\w.]*region\\w*\\s*,\\s*(?:0\\s*,\\s*)?6[12]\\s*\\)/i,",
+    "new": "    re: /\\b(?:region\\w*|reg|r)\\s*(?:<|>=|<=|>)\\s*6[12]\\b/i,",
     "tests": [
       "test/tooling/tamrielwide.test.js"
     ],

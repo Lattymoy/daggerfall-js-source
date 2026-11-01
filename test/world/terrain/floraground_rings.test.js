@@ -239,7 +239,7 @@ test('FLORA-GROUND THE RINGS the hosts seat the plants wherever the ground they 
   const re = W.slice(W.indexOf('function restrideTerrain(p, stride'), W.indexOf('function destroyPixel('));
   assert.match(re, /p\._stride = stride;\n\s+seatFlora\(p, renderer\);/, 'a restride seats its plants at the new class, after the class is written');
   const rc = W.slice(W.indexOf('function dwRecarve(p) {'), W.indexOf('function hostBed('));
-  assert.match(rc, /p\._bed = \{ grid: grid\.positions[^\n]*\n\s+if \(!moved\) return;\n[\s\S]*?\n\s+seatFlora\(p, renderer\);/, 'a re-carve seats them on the bed as it lies');   // PIN MOVED (WATER-LEVEL): the bed kept first, the ground uploaded and seated where the carve moved
+  assert.match(rc, /p\._bed = \{ grid: grid\.positions[^\n]*\n\s+if \(!moved\) return;\n[\s\S]*?\n\s+seatFlora\(p, renderer\);/, 'a re-carve seats them on the bed as it lies');
   const B = src('src/scenes/pixelBuild.js');
   const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);');   // PIN MOVED (TESA-LANDS, the merge with FLORA-GROUND): and the lands' landmarks (test/world/tesalands_props.test.js)
   assert.ok(seat > B.indexOf('for (const [gk, g] of jungleGroups) {') && seat > B.indexOf('const grahtStood = '), 'the build seats them once every group and the graht-oaks stand');

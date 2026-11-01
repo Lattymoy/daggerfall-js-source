@@ -2,8 +2,8 @@
   {
     "name": "GATE-RELOAD-the-closed-gate-said-as-closed",
     "file": "src/net/gate/gateLink.js",
-    "old": "export const gateRefusalText = (word) => (word === 'the gate is closed' ? GATE_OUTDATED_TEXT : GATE_NO_TEXT[word] ?? word);",
-    "new": "export const gateRefusalText = (word) => (GATE_NO_TEXT[word] ?? word);",
+    "old": "export const gateRefusalText = (word) =>\n  word === 'the gate is closed' ? GATE_OUTDATED_TEXT : (GATE_NO_TEXT[word] ?? word);",
+    "new": "export const gateRefusalText = (word) => GATE_NO_TEXT[word] ?? word;",
     "tests": [
       "test/net/gate/gatereload.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GATE-RELOAD-the-link-in-the-old-words",
     "file": "src/net/gate/gateLink.js",
-    "old": "      if (g.k === 'no') { say(gateRefusalText(g.m)); onRefused(g.m); return; }",
-    "new": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }",
+    "old": "        say(gateRefusalText(g.m));",
+    "new": "        say(GATE_NO_TEXT[g.m] ?? g.m);",
     "tests": [
       "test/net/gate/gatereload.test.js"
     ]

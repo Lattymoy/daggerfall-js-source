@@ -51,13 +51,21 @@ export const ONLINE_CHECKPOINT_MS = 300_000;
  * a tab out of the seat still writes none.
  * @param {{ online?: boolean, spawned?: boolean, seatOut?: boolean, duel?: boolean, walkWaiting?: boolean, realm?: boolean }} at
  */
-export function checkpointAllowed({ online = false, spawned = false, seatOut = false, duel = false, walkWaiting = false, realm = false } = {}) {
+export function checkpointAllowed({
+  online = false,
+  spawned = false,
+  seatOut = false,
+  duel = false,
+  walkWaiting = false,
+  realm = false,
+} = {}) {
   const seatAllows = !seatOut || realm;
   return !!online && !!spawned && seatAllows && !duel && !walkWaiting;
 }
 
 /** Whether the periodic checkpoint is due, `nowMs` and `lastMs` on one clock. */
-export const checkpointDue = (/** @type {number} */ nowMs, /** @type {number} */ lastMs) => Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;
+export const checkpointDue = (/** @type {number} */ nowMs, /** @type {number} */ lastMs) =>
+  Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;
 
 /**
  * The periodic checkpoint, when it is due. A realm session runs it through its idle door, which may answer a save that
@@ -87,8 +95,14 @@ export function checkpointedTradePack(pack, checkpoint) {
       if (handle) checkpoint('trade');
       return handle;
     },
-    restore(/** @type {any} */ handle) { pack.restore(handle); checkpoint('trade'); },
-    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); checkpoint('trade'); },
+    restore(/** @type {any} */ handle) {
+      pack.restore(handle);
+      checkpoint('trade');
+    },
+    give(/** @type {any} */ received, /** @type {number} */ gold) {
+      pack.give(received, gold);
+      checkpoint('trade');
+    },
   };
 }
 
@@ -107,14 +121,27 @@ export function createSaveSoon(schedule = (run) => setTimeout(run, 0)) {
   let save = null;
   const run = () => {
     queued = false;
-    if (!save) return;   // no checkpoint yet: the change waits for `ready`
+    if (!save) return; // no checkpoint yet: the change waits for `ready`
     due = false;
     save();
   };
-  const ask = () => { if (!queued) { queued = true; schedule(run); } };
+  const ask = () => {
+    if (!queued) {
+      queued = true;
+      schedule(run);
+    }
+  };
   return {
-    changed() { due = true; ask(); },
-    ready(/** @type {() => unknown} */ fn) { save = fn; if (due) ask(); },
-    get due() { return due; },
+    changed() {
+      due = true;
+      ask();
+    },
+    ready(/** @type {() => unknown} */ fn) {
+      save = fn;
+      if (due) ask();
+    },
+    get due() {
+      return due;
+    },
   };
 }

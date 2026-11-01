@@ -29,8 +29,8 @@
   {
     "name": "ROCKSUNK-host-asks-no-site",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
-    "new": "if (isWodShrub(m.modelId, undefined)) {",
+    "old": "        if (isWodShrub(m.modelId, stood[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
+    "new": "        if (isWodShrub(m.modelId, undefined)) {   // ROCK-SUNK (2026-10-02, the field: \"Insane glitched geometry over at Hadus\"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)",
     "tests": [
       "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ROCKSUNK-rock-sites-spelled-twice",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const rockPick = (i) => WOD_ROCK_SITES.includes(stood[i]?.name);",
-    "new": "const rockPick = (i) => stood[i]?.name === 'Rocks' || stood[i]?.name === 'Mountains';",
+    "old": "      const rockPick = (i) => WOD_ROCK_SITES.includes(stood[i]?.name);   // PROF2's rock sites; ROCK-SUNK: and the sites whose 60610 is a boulder",
+    "new": "      const rockPick = (i) => stood[i]?.name === 'Rocks' || stood[i]?.name === 'Mountains';   // PROF2's rock sites; ROCK-SUNK: and the sites whose 60610 is a boulder",
     "tests": [
       "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]

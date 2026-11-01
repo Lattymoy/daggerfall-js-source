@@ -35,9 +35,9 @@
 // untouched. Not a DFU member - DFU has no live events. Ledger A (ROCKET).
 // ═══════════════════════════════════════════════════════════════════
 
-import { seededRng } from '../systems/wind/wind.js';   // the draws (the dread's)
-import { slotHash } from './dreadSky.js';   // one slot hash for every seed the shared clock reads
-import { t } from '../systems/textManager.js';   // L10N4: every line through the text core
+import { seededRng } from '../systems/wind/wind.js'; // the draws (the dread's)
+import { slotHash } from './dreadSky.js'; // one slot hash for every seed the shared clock reads
+import { t } from '../systems/textManager.js'; // L10N4: every line through the text core
 
 /** The live event this file is (net/wire.js LIVE_EVENTS). */
 export const ROCKET_EVENT = 'rocket';
@@ -115,29 +115,29 @@ export const ROCKET_COATS = Object.freeze([
   Object.freeze([0.58, 0.56, 0.54]),
 ]);
 export const ROCKET_MANES = Object.freeze([
-  Object.freeze([0.10, 0.07, 0.05]),
-  Object.freeze([0.42, 0.20, 0.08]),
-  Object.freeze([0.70, 0.66, 0.60]),
+  Object.freeze([0.1, 0.07, 0.05]),
+  Object.freeze([0.42, 0.2, 0.08]),
+  Object.freeze([0.7, 0.66, 0.6]),
   Object.freeze([0.05, 0.04, 0.04]),
-  Object.freeze([0.98, 0.94, 0.80]),
-  Object.freeze([0.30, 0.29, 0.28]),
+  Object.freeze([0.98, 0.94, 0.8]),
+  Object.freeze([0.3, 0.29, 0.28]),
 ]);
 
 // ── The colours (display space, 0..1) ─────────────────────────────
 /** The poop: its body, its dark folds, its shine. */
-export const ROCKET_POOP = Object.freeze([0.36, 0.22, 0.10]);
+export const ROCKET_POOP = Object.freeze([0.36, 0.22, 0.1]);
 export const ROCKET_POOP_DARK = Object.freeze([0.19, 0.11, 0.05]);
-export const ROCKET_POOP_SHINE = Object.freeze([0.66, 0.48, 0.30]);
+export const ROCKET_POOP_SHINE = Object.freeze([0.66, 0.48, 0.3]);
 /** A mound: its earth, and the poop crowning it. */
-export const ROCKET_MOUND = Object.freeze([0.40, 0.28, 0.16]);
+export const ROCKET_MOUND = Object.freeze([0.4, 0.28, 0.16]);
 export const ROCKET_MOUND_TOP = Object.freeze([0.29, 0.17, 0.07]);
 /** A fart's cloud: its heart, and its edge. */
-export const ROCKET_GAS = Object.freeze([0.66, 0.70, 0.32]);
+export const ROCKET_GAS = Object.freeze([0.66, 0.7, 0.32]);
 export const ROCKET_GAS_EDGE = Object.freeze([0.52, 0.46, 0.24]);
 /** The frenzy's sky: overhead, at the horizon, and its churning swirls. */
 export const ROCKET_FRENZY_ZENITH = Object.freeze([0.23, 0.13, 0.05]);
 export const ROCKET_FRENZY_HORIZON = Object.freeze([0.56, 0.38, 0.18]);
-export const ROCKET_FRENZY_SWIRL = Object.freeze([0.42, 0.26, 0.10]);
+export const ROCKET_FRENZY_SWIRL = Object.freeze([0.42, 0.26, 0.1]);
 /** How much of the frenzy's brown washes over the whole picture at its height. */
 export const ROCKET_WASH = 0.12;
 /** The frenzy's falling poop: how many chunks round the eye at its height, over how wide a square (metres), from how
@@ -171,7 +171,10 @@ export const ROCKET_LINES = Object.freeze({
 });
 
 const clamp01 = (x) => Math.max(0, Math.min(1, Number(x) || 0));
-const smooth = (x) => { const k = clamp01(x); return k * k * (3 - 2 * k); };
+const smooth = (x) => {
+  const k = clamp01(x);
+  return k * k * (3 - 2 * k);
+};
 const lerp = (a, b, k) => a + (b - a) * k;
 /** One seed out of a few integers (slotHash folded over them). */
 const seedOf = (...n) => n.reduce((h, v) => slotHash((h ^ (v | 0)) >>> 0), 0x70c4e7) >>> 0;
@@ -186,11 +189,12 @@ const stageSeed = (at) => (Number.isFinite(at) ? Math.floor(at / 1000) : 0);
  * nothing of what they never saw.
  */
 export function createRocket() {
-  let target = 0, weight = 0;
-  let at = NaN;   // the stage's moment (the cycle's clock - kept through the end's fade)
+  let target = 0,
+    weight = 0;
+  let at = NaN; // the stage's moment (the cycle's clock - kept through the end's fade)
   /** @type {number | null} */
-  let seen = null;   // the last cue framed while staged - null: nothing seen yet
-  let owed = false;   // a live stage: its first frame says the cue it lands on
+  let seen = null; // the last cue framed while staged - null: nothing seen yet
+  let owed = false; // a live stage: its first frame says the cue it lands on
   return {
     set(ev, { live = false } = {}) {
       target = ev?.kind === ROCKET_EVENT ? 1 : 0;
@@ -204,8 +208,12 @@ export function createRocket() {
     frame(sharedMs) {
       const p = rocketPhase((sharedMs - at) / 1000);
       const c = rocketCue(p.t);
-      const cue = target === 1 && ((seen !== null && c !== seen) || (seen === null && owed)) ? ROCKET_CUES[c].cue : null;
-      if (target === 1) { seen = c; owed = false; } else seen = null;
+      const cue =
+        target === 1 && ((seen !== null && c !== seen) || (seen === null && owed)) ? ROCKET_CUES[c].cue : null;
+      if (target === 1) {
+        seen = c;
+        owed = false;
+      } else seen = null;
       return { ...p, cue, line: cue ? ROCKET_LINES[cue]() : null, at };
     },
     tick(dt) {
@@ -213,9 +221,15 @@ export function createRocket() {
       weight = weight < target ? Math.min(target, weight + step) : Math.max(target, weight - step);
       return weight;
     },
-    get weight() { return weight; },
-    get on() { return target === 1; },
-    get at() { return at; },
+    get weight() {
+      return weight;
+    },
+    get on() {
+      return target === 1;
+    },
+    get at() {
+      return at;
+    },
   };
 }
 
@@ -230,16 +244,27 @@ export function rocketPhase(sinceS) {
   const since = Number.isFinite(sinceS) && sinceS > 0 ? sinceS : 0;
   const cycle = Math.floor(since / ROCKET_CYCLE_S);
   const t = since - cycle * ROCKET_CYCLE_S;
-  let start = 0, index = 0;
+  let start = 0,
+    index = 0;
   while (index < ROCKET_PHASES.length - 1 && t >= start + ROCKET_PHASES[index].s) start += ROCKET_PHASES[index++].s;
   const { phase, s } = ROCKET_PHASES[index];
   const into = t - start;
-  let rise = 1, jet = 0, frenzy = 0;
+  let rise = 1,
+    jet = 0,
+    frenzy = 0;
   if (phase === 'rise') rise = smooth(into / s);
   else if (phase === 'erupt') jet = smooth(into / ROCKET_JET_RAMP_S);
-  else if (phase === 'lull') { jet = 1 - smooth(into / ROCKET_SUBSIDE_S); frenzy = ROCKET_BROWN_W * smooth((into - (s - ROCKET_BROWN_S)) / ROCKET_BROWN_S); }
-  else if (phase === 'frenzy') { jet = 1; frenzy = lerp(ROCKET_BROWN_W, 1, smooth(into / ROCKET_FRENZY_RAMP_S)); }
-  else { rise = 1 - smooth(into / s); jet = 1 - smooth(into / ROCKET_JET_RAMP_S); frenzy = 1 - smooth(into / (s * 0.75)); }
+  else if (phase === 'lull') {
+    jet = 1 - smooth(into / ROCKET_SUBSIDE_S);
+    frenzy = ROCKET_BROWN_W * smooth((into - (s - ROCKET_BROWN_S)) / ROCKET_BROWN_S);
+  } else if (phase === 'frenzy') {
+    jet = 1;
+    frenzy = lerp(ROCKET_BROWN_W, 1, smooth(into / ROCKET_FRENZY_RAMP_S));
+  } else {
+    rise = 1 - smooth(into / s);
+    jet = 1 - smooth(into / ROCKET_JET_RAMP_S);
+    frenzy = 1 - smooth(into / (s * 0.75));
+  }
   return { cycle, t, index, phase, rise, jet, frenzy };
 }
 
@@ -264,18 +289,24 @@ export const rocketJetScale = (jet, frenzy) => clamp01(jet) * (1 + (ROCKET_FRENZ
 export function rocketMounds(ax, az) {
   const out = [];
   if (!Number.isFinite(ax) || !Number.isFinite(az)) return out;
-  const C = ROCKET_MOUND_CELL_M, n = Math.ceil(ROCKET_MOUND_REACH_M / C);
-  const cx0 = Math.floor(ax / C), cz0 = Math.floor(az / C);
+  const C = ROCKET_MOUND_CELL_M,
+    n = Math.ceil(ROCKET_MOUND_REACH_M / C);
+  const cx0 = Math.floor(ax / C),
+    cz0 = Math.floor(az / C);
   for (let dz = -n; dz <= n; dz++) {
     for (let dx = -n; dx <= n; dx++) {
-      const cx = cx0 + dx, cz = cz0 + dz;
+      const cx = cx0 + dx,
+        cz = cz0 + dz;
       const seed = seedOf(cx, cz);
       const r = seededRng(seed);
       if (r() >= ROCKET_MOUND_CHANCE) continue;
-      const x = (cx + 0.15 + 0.7 * r()) * C, z = (cz + 0.15 + 0.7 * r()) * C;
+      const x = (cx + 0.15 + 0.7 * r()) * C,
+        z = (cz + 0.15 + 0.7 * r()) * C;
       if (Math.hypot(x - ax, z - az) > ROCKET_MOUND_REACH_M) continue;
       out.push({
-        x, z, seed,
+        x,
+        z,
+        seed,
         r: lerp(ROCKET_MOUND_R_M[0], ROCKET_MOUND_R_M[1], r()),
         h: lerp(ROCKET_MOUND_H_M[0], ROCKET_MOUND_H_M[1], r()),
         jetH: lerp(ROCKET_JET_H_M[0], ROCKET_JET_H_M[1], r()),
@@ -299,24 +330,77 @@ export function rocketFlights(at, cycle) {
   const base = seedOf(stageSeed(at), cycle | 0);
   const r = seededRng(base);
   const [e0, e1] = ROCKET_HORSE_ELEV_DEG;
-  const elevOf = (k) => (e0 + (e1 - e0) * k) * Math.PI / 180;
+  const elevOf = (k) => ((e0 + (e1 - e0) * k) * Math.PI) / 180;
   const fartsOf = (s, every, seed) => {
-    const f = seededRng(seed), out = [];
+    const f = seededRng(seed),
+      out = [];
     for (let x = every * (0.3 + 0.5 * f()); x < s; x += every * (0.75 + 0.5 * f())) out.push(x);
     return out;
   };
-  const flight = (kind, start, s, bearing, sweep, elev, len, coat, seed) => ({ kind, start, s, bearing, sweep, elev, len, coat, seed, farts: fartsOf(s, ROCKET_FART_EVERY_S[kind], seed) });
+  const flight = (kind, start, s, bearing, sweep, elev, len, coat, seed) => ({
+    kind,
+    start,
+    s,
+    bearing,
+    sweep,
+    elev,
+    len,
+    coat,
+    seed,
+    farts: fartsOf(s, ROCKET_FART_EVERY_S[kind], seed),
+  });
   const out = [];
-  const way = r() * 2 * Math.PI, dir = r() < 0.5 ? -1 : 1, high = r();
-  out.push(flight('great', ROCKET_GREAT.at, ROCKET_GREAT.s, way, dir * ROCKET_HORSE_SWEEP, elevOf(0.35 + 0.4 * high), ROCKET_GREAT.len, Math.floor(r() * ROCKET_COATS.length), seedOf(base, 1)));
+  const way = r() * 2 * Math.PI,
+    dir = r() < 0.5 ? -1 : 1,
+    high = r();
+  out.push(
+    flight(
+      'great',
+      ROCKET_GREAT.at,
+      ROCKET_GREAT.s,
+      way,
+      dir * ROCKET_HORSE_SWEEP,
+      elevOf(0.35 + 0.4 * high),
+      ROCKET_GREAT.len,
+      Math.floor(r() * ROCKET_COATS.length),
+      seedOf(base, 1),
+    ),
+  );
   for (let i = 0; i < ROCKET_FOALS.n; i++) {
-    const seed = seedOf(base, 100 + i), f = seededRng(seed);
-    out.push(flight('foal', ROCKET_FOALS.at + i * ROCKET_FOALS.every, ROCKET_FOALS.s, way + (f() - 0.5) * 0.3, dir * ROCKET_HORSE_SWEEP, elevOf(clamp01(0.15 + 0.7 * f())), ROCKET_FOALS.len * (0.85 + 0.3 * f()), Math.floor(f() * ROCKET_COATS.length), seed));
+    const seed = seedOf(base, 100 + i),
+      f = seededRng(seed);
+    out.push(
+      flight(
+        'foal',
+        ROCKET_FOALS.at + i * ROCKET_FOALS.every,
+        ROCKET_FOALS.s,
+        way + (f() - 0.5) * 0.3,
+        dir * ROCKET_HORSE_SWEEP,
+        elevOf(clamp01(0.15 + 0.7 * f())),
+        ROCKET_FOALS.len * (0.85 + 0.3 * f()),
+        Math.floor(f() * ROCKET_COATS.length),
+        seed,
+      ),
+    );
   }
-  const frenzyAt = ROCKET_PHASES.slice(0, 3).reduce((a, p) => a + p.s, 0), frenzyS = ROCKET_PHASES[3].s;
+  const frenzyAt = ROCKET_PHASES.slice(0, 3).reduce((a, p) => a + p.s, 0),
+    frenzyS = ROCKET_PHASES[3].s;
   for (let i = 0, start = frenzyAt + 0.5; start < frenzyAt + frenzyS; i++, start += ROCKET_HERD.every) {
-    const seed = seedOf(base, 1000 + i), f = seededRng(seed);
-    out.push(flight('herd', start, lerp(ROCKET_HERD.s[0], ROCKET_HERD.s[1], f()), f() * 2 * Math.PI, (f() < 0.5 ? -1 : 1) * ROCKET_HORSE_SWEEP * (0.7 + 0.4 * f()), elevOf(f()), lerp(ROCKET_HERD.len[0], ROCKET_HERD.len[1], f()), Math.floor(f() * ROCKET_COATS.length), seed));
+    const seed = seedOf(base, 1000 + i),
+      f = seededRng(seed);
+    out.push(
+      flight(
+        'herd',
+        start,
+        lerp(ROCKET_HERD.s[0], ROCKET_HERD.s[1], f()),
+        f() * 2 * Math.PI,
+        (f() < 0.5 ? -1 : 1) * ROCKET_HORSE_SWEEP * (0.7 + 0.4 * f()),
+        elevOf(f()),
+        lerp(ROCKET_HERD.len[0], ROCKET_HERD.len[1], f()),
+        Math.floor(f() * ROCKET_COATS.length),
+        seed,
+      ),
+    );
   }
   return out;
 }
@@ -331,12 +415,17 @@ const skyDir = (a, e) => [Math.cos(e) * Math.sin(a), Math.sin(e), Math.cos(e) * 
  * @param {{bearing: number, sweep: number, elev: number, len: number, seed: number}} f @param {number} k
  */
 export function rocketHorseAt(f, k) {
-  const at = (q) => skyDir(f.bearing + f.sweep * q, f.elev + 0.1 * Math.sin(Math.PI * q) + 0.035 * Math.sin(q * 19 + (f.seed % 7)));
-  const dir = at(k), a = at(k - 0.004), b = at(k + 0.004);
-  const fw = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], fl = Math.hypot(fw[0], fw[1], fw[2]) || 1;
+  const at = (q) =>
+    skyDir(f.bearing + f.sweep * q, f.elev + 0.1 * Math.sin(Math.PI * q) + 0.035 * Math.sin(q * 19 + (f.seed % 7)));
+  const dir = at(k),
+    a = at(k - 0.004),
+    b = at(k + 0.004);
+  const fw = [b[0] - a[0], b[1] - a[1], b[2] - a[2]],
+    fl = Math.hypot(fw[0], fw[1], fw[2]) || 1;
   const forward = [fw[0] / fl, fw[1] / fl, fw[2] / fl];
-  const back = (f.len * 0.33) / ROCKET_SKY_R;   // the drawn body's end (render/rocketPass.js: the barrel's 0.58 of a half-length, and its haunch)
-  const rp = [dir[0] - forward[0] * back, dir[1] - forward[1] * back, dir[2] - forward[2] * back], rl = Math.hypot(rp[0], rp[1], rp[2]) || 1;
+  const back = (f.len * 0.33) / ROCKET_SKY_R; // the drawn body's end (render/rocketPass.js: the barrel's 0.58 of a half-length, and its haunch)
+  const rp = [dir[0] - forward[0] * back, dir[1] - forward[1] * back, dir[2] - forward[2] * back],
+    rl = Math.hypot(rp[0], rp[1], rp[2]) || 1;
   return { dir, forward, rump: [rp[0] / rl, rp[1] / rl, rp[2] / rl] };
 }
 
@@ -347,23 +436,41 @@ export function rocketHorseAt(f, k) {
  * @param {ReturnType<typeof rocketFlights>} flights @param {number} t @param {ArrayLike<number>} eye
  */
 export function rocketSky(flights, t, eye) {
-  const horses = [], puffs = [];
-  const R = ROCKET_SKY_R, place = (d) => [eye[0] + d[0] * R, eye[1] + d[1] * R, eye[2] + d[2] * R];
+  const horses = [],
+    puffs = [];
+  const R = ROCKET_SKY_R,
+    place = (d) => [eye[0] + d[0] * R, eye[1] + d[1] * R, eye[2] + d[2] * R];
   for (const f of flights) {
     const since = t - f.start;
     if (since < 0 || since > f.s + ROCKET_PUFF_S) continue;
     if (since <= f.s) {
       const h = rocketHorseAt(f, since / f.s);
-      horses.push({ at: place(h.dir), forward: h.forward, len: f.len, coat: f.coat, gallop: since * (f.kind === 'great' ? 2.2 : 3.4) + (f.seed % 13) });
+      horses.push({
+        at: place(h.dir),
+        forward: h.forward,
+        len: f.len,
+        coat: f.coat,
+        gallop: since * (f.kind === 'great' ? 2.2 : 3.4) + (f.seed % 13),
+      });
     }
     for (const ft of f.farts) {
       const age = since - ft;
       if (age < 0 || age > ROCKET_PUFF_S) continue;
-      const h = rocketHorseAt(f, ft / f.s), k = age / ROCKET_PUFF_S;
+      const h = rocketHorseAt(f, ft / f.s),
+        k = age / ROCKET_PUFF_S;
       for (let i = 0; i < ROCKET_PUFFS; i++) {
-        const back = (f.len * (0.12 + 0.22 * i) * (0.4 + k)) / R, rise = (f.len * 0.08 * k * (i + 1)) / R;
-        const d = [h.rump[0] - h.forward[0] * back, h.rump[1] - h.forward[1] * back + rise, h.rump[2] - h.forward[2] * back];
-        puffs.push({ at: place(d), size: f.len * (0.16 + 0.07 * i) * (0.5 + 1.1 * Math.sqrt(k)), fade: (1 - k) ** 1.4 });
+        const back = (f.len * (0.12 + 0.22 * i) * (0.4 + k)) / R,
+          rise = (f.len * 0.08 * k * (i + 1)) / R;
+        const d = [
+          h.rump[0] - h.forward[0] * back,
+          h.rump[1] - h.forward[1] * back + rise,
+          h.rump[2] - h.forward[2] * back,
+        ];
+        puffs.push({
+          at: place(d),
+          size: f.len * (0.16 + 0.07 * i) * (0.5 + 1.1 * Math.sqrt(k)),
+          fade: (1 - k) ** 1.4,
+        });
       }
     }
   }
@@ -378,8 +485,17 @@ export function rocketSounds(flights, fromT, toT) {
   if (!(toT > fromT)) return out;
   for (const f of flights) {
     const neighs = f.kind === 'great' ? [0, f.s * 0.5] : [0];
-    for (const n of neighs) if (f.start + n > fromT && f.start + n <= toT) out.push({ kind: 'neigh', who: f.kind, dir: rocketHorseAt(f, n / f.s).dir, seed: f.seed });
-    for (const ft of f.farts) if (f.start + ft > fromT && f.start + ft <= toT) out.push({ kind: 'fart', who: f.kind, dir: rocketHorseAt(f, ft / f.s).rump, seed: (f.seed + Math.round(ft * 1000)) >>> 0 });
+    for (const n of neighs)
+      if (f.start + n > fromT && f.start + n <= toT)
+        out.push({ kind: 'neigh', who: f.kind, dir: rocketHorseAt(f, n / f.s).dir, seed: f.seed });
+    for (const ft of f.farts)
+      if (f.start + ft > fromT && f.start + ft <= toT)
+        out.push({
+          kind: 'fart',
+          who: f.kind,
+          dir: rocketHorseAt(f, ft / f.s).rump,
+          seed: (f.seed + Math.round(ft * 1000)) >>> 0,
+        });
   }
   return out;
 }
@@ -400,18 +516,25 @@ export const ROCKET_FART_VARIANTS = Object.freeze([
  * @param {number} v
  */
 export function rocketFartSamples(v) {
-  const i = ((v | 0) % ROCKET_FART_VARIANTS.length + ROCKET_FART_VARIANTS.length) % ROCKET_FART_VARIANTS.length, p = ROCKET_FART_VARIANTS[i];
-  const n = Math.round(p.s * ROCKET_FART_RATE), out = new Float32Array(n);
+  const i = (((v | 0) % ROCKET_FART_VARIANTS.length) + ROCKET_FART_VARIANTS.length) % ROCKET_FART_VARIANTS.length,
+    p = ROCKET_FART_VARIANTS[i];
+  const n = Math.round(p.s * ROCKET_FART_RATE),
+    out = new Float32Array(n);
   const r = seededRng(seedOf(0xfa27, i));
-  let phase = 0, lp1 = 0, lp2 = 0, jitter = 0, peak = 0;
+  let phase = 0,
+    lp1 = 0,
+    lp2 = 0,
+    jitter = 0,
+    peak = 0;
   const cut = 0.16;
   for (let i = 0; i < n; i++) {
     const k = i / n;
     if (i % 64 === 0) jitter = jitter * 0.6 + (r() - 0.5) * 0.4;
-    const f = lerp(p.f0, p.f1, k) * (1 + p.wobble * Math.sin(2 * Math.PI * 7 * k + 4 * k * k) * 0.5 + p.wobble * jitter);
+    const f =
+      lerp(p.f0, p.f1, k) * (1 + p.wobble * Math.sin(2 * Math.PI * 7 * k + 4 * k * k) * 0.5 + p.wobble * jitter);
     phase += f / ROCKET_FART_RATE;
     phase -= Math.floor(phase);
-    const pulse = phase < 0.32 ? 1 - phase / 0.16 : -0.45;   // a reedy buzz: a short slap, a long rest
+    const pulse = phase < 0.32 ? 1 - phase / 0.16 : -0.45; // a reedy buzz: a short slap, a long rest
     const flutter = 0.55 + 0.45 * Math.sin(2 * Math.PI * p.flutter * k * p.s + 3 * jitter);
     const env = Math.min(1, k / 0.04) * (1 - k) ** 0.8;
     const x = (pulse * flutter + (r() - 0.5) * 0.35) * env;

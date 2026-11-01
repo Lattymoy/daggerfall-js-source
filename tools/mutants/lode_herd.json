@@ -1,92 +1,92 @@
 [
- {
-  "name": "LODEHERD-claim-unasked",
-  "file": "server-account/src/motherlodes.js",
-  "old": "  if (!clock && await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];\n",
-  "new": "",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "every read racing the day's turn runs the pick's scan - 33 of 1.8 s at 00:00 on 2026-10-29"
- },
- {
-  "name": "LODEHERD-window-unbounded",
-  "file": "server-account/src/motherlodes.js",
-  "old": "export const LODE_PICK_WINDOW_S = 60;",
-  "new": "export const LODE_PICK_WINDOW_S = 86400;",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "a holder that dies before its batch leaves the day unpicked until the next day"
- },
- {
-  "name": "LODEHERD-clock-claims",
-  "file": "server-account/src/motherlodes.js",
-  "old": "  if (!clock && await overRate(",
-  "new": "  if (await overRate(",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "the clock loses the claim to a reader that died, and its isolate never asks the day again"
- },
- {
-  "name": "LODEHERD-job-claims",
-  "file": "server-account/src/cron.js",
-  "old": "    const lodes = await motherlodesOf(ctx, day, { clock: true });",
-  "new": "    const lodes = await motherlodesOf(ctx, day);",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "the minute's job asks the readers' claim"
- },
- {
-  "name": "HUNTLEAN-rate-back",
-  "file": "server-account/src/hunts.js",
-  "old": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  return { ok: true,",
-  "new": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true,",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "a rate window written on the primary at every page's poll of the hunt"
- },
- {
-  "name": "HUNTLEAN-replica-dropped",
-  "file": "server-account/src/service.js",
-  "old": "  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN",
-  "new": "  // HUNT-LEAN",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "the hunt's reads on the primary"
- },
- {
-  "name": "HUNTLEAN-bookmark-dropped",
-  "file": "src/net/accountClient.js",
-  "old": "  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN",
-  "new": "  // HUNT-LEAN",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "the page carries no bookmark on the hunt's read"
- },
- {
-  "name": "HUNTLEAN-busy-dropped",
-  "file": "src/net/busyLaw.js",
-  "old": "  ['/v1/hunt/state', 'POST'],       // HUNT-LEAN",
-  "new": "  // HUNT-LEAN",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "the hunt asked on through an overload"
- },
- {
-  "name": "HUNTLEAN-two-minutes",
-  "file": "src/net/huntBook.js",
-  "old": "export const HUNT_STATE_MS = 600_000;",
-  "new": "export const HUNT_STATE_MS = 120_000;",
-  "tests": [
-   "test/server/lode_herd.test.js"
-  ],
-  "note": "every page asks the hunt every two minutes"
- }
+  {
+    "name": "LODEHERD-claim-unasked",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];\n  const candidates = await confirmedGroundBefore(db, day);",
+    "new": "  const candidates = await confirmedGroundBefore(db, day);",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "every read racing the day's turn runs the pick's scan - 33 of 1.8 s at 00:00 on 2026-10-29"
+  },
+  {
+    "name": "LODEHERD-window-unbounded",
+    "file": "server-account/src/motherlodes.js",
+    "old": "export const LODE_PICK_WINDOW_S = 60;",
+    "new": "export const LODE_PICK_WINDOW_S = 86400;",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "a holder that dies before its batch leaves the day unpicked until the next day"
+  },
+  {
+    "name": "LODEHERD-clock-claims",
+    "file": "server-account/src/motherlodes.js",
+    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];",
+    "new": "  if (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "the clock loses the claim to a reader that died, and its isolate never asks the day again"
+  },
+  {
+    "name": "LODEHERD-job-claims",
+    "file": "server-account/src/cron.js",
+    "old": "      const lodes = await motherlodesOf(ctx, day, { clock: true }); // LODE-HERD: the clock picks without the readers' claim",
+    "new": "      const lodes = await motherlodesOf(ctx, day); // LODE-HERD: the clock picks without the readers' claim",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "the minute's job asks the readers' claim"
+  },
+  {
+    "name": "HUNTLEAN-rate-back",
+    "file": "server-account/src/hunts.js",
+    "old": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  return { ok: true,",
+    "new": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true,",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "a rate window written on the primary at every page's poll of the hunt"
+  },
+  {
+    "name": "HUNTLEAN-replica-dropped",
+    "file": "server-account/src/service.js",
+    "old": "  ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)",
+    "new": "  // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "the hunt's reads on the primary"
+  },
+  {
+    "name": "HUNTLEAN-bookmark-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN",
+    "new": "  // HUNT-LEAN",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "the page carries no bookmark on the hunt's read"
+  },
+  {
+    "name": "HUNTLEAN-busy-dropped",
+    "file": "src/net/busyLaw.js",
+    "old": "  ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt, asked on the hunt book's clock (net/huntBook.js)",
+    "new": "  // HUNT-LEAN: a character's hunt, asked on the hunt book's clock (net/huntBook.js)",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "the hunt asked on through an overload"
+  },
+  {
+    "name": "HUNTLEAN-two-minutes",
+    "file": "src/net/huntBook.js",
+    "old": "export const HUNT_STATE_MS = 600_000;",
+    "new": "export const HUNT_STATE_MS = 120_000;",
+    "tests": [
+      "test/server/lode_herd.test.js"
+    ],
+    "note": "every page asks the hunt every two minutes"
+  }
 ]

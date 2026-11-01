@@ -43,9 +43,9 @@ const NO_SPELLBOOK_TEXT = 'You have no spellbook!';   // TextManager noSpellbook
 import {
   missileArchive, MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, missileReach, missileHitsFoe,   // ROAD-H tail: the reach along the normalised direction; the foe's CAPSULE at contact
   MISSILE_LIFESPAN_S, EXPLOSION_RADIUS, BODY_CAPSULE_RADIUS, pickTouchTarget, sweepFoes, sphereOverlapsCapsule,   // ROAD-H H2: DoAreaOfEffect's OverlapSphere, against the player's capsule too
-  missileHitsCapsule, PLAYER_BODY_RADIUS,   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
+  missileHitsCapsule, PLAYER_BODY_RADIUS, flightBodies, struckPoints,   // TRUNK-FOES: the bodies a flight strikes   // AUDIT 62 F21 (review): the SphereCast contact test   // AUDIT 65 CV-2: the PLAYER's own controller radius (motor.js CAPSULE_RADIUS), not the foe's
 } from '../systems/spellcast.js';
-import { corpsePrefabStruck } from './corpseMarker.js';   // DEX5: a body a mod's corpse prefab stands, which my missile meets
+import { corpsePrefabStruck, corpsePrefabBodies } from './corpseMarker.js';   // DEX5: a body a mod's corpse prefab stands, which my missile meets (AUDIT FB1031 II K4: and its line names)
 import { toBoxLocal } from '../systems/naval/navalBallistics.js';   // SERPENT4: a missile inside a box mark
 import { silenceBlocksCast, silencedText, pressButtonToFireSpellText, DOOR_SPELL_TEXT, SOUL_TRAP_TEXT } from '../systems/mysticism.js';
 import { calculateCastCost, castSchool, EFFECT_COST_TABLE } from '../systems/spellcost.js';   // SCHOOLS3: castSchool - the school a signature spell teaches
@@ -131,6 +131,7 @@ export function liveCollider(live) {
  *  grain (groundHit is never short of the crossing, and at most GROUND_MARCH_STEP / 2^10 past it), so the touch a
  *  step went to is met the next frame. */
 export const GROUND_TOUCH_M = 0.02;
+const _struck = [];   // TRUNK-FOES: a step's struck points
 
 /**
  * AUDIT GROUND-BOLT B1: WHERE A MISSILE'S STEP STOPS, AND HOW FAR IT GOES - the one law of the two flights (this
@@ -143,9 +144,10 @@ export const GROUND_TOUCH_M = 0.02;
  * `reach` the step's reach along the unit ray, `stepLen` the step's length on it (so the radius is reach - stepLen).
  * @param {any} collider @param {number[]} pos @param {number[]} unit @param {number} reach @param {number} stepLen
  */
-export function flightStop(collider, pos, unit, reach, stepLen, swept = false) {
+export function flightStop(collider, pos, unit, reach, stepLen, swept = false, bodies = null) {
   const radius = reach - stepLen;
-  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);   // WALL-SHAFT: `swept`, the bodies tested along the step - a wall met by touch too
+  const holds = bodies?.length && collider.cover?.on() ? struckPoints(pos, unit, bodies, _struck) : null;   // TRUNK-FOES: `bodies` (spellcast.js flightBodies) - cover a body the line strikes stands in stops it short of none
+  const cs = coverStep(coverDistance(collider, pos, unit, reach, false, holds), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);   // WALL-SHAFT: `swept`, the bodies tested along the step - a wall met by touch too
   const g = groundHit(pos, unit, Math.min(reach, cs.stop), collider);
   if (!(g < cs.stop)) return cs;   // no ground in reach, or a wall or cover met first
   if (g <= radius + GROUND_TOUCH_M) return { stop: g, advance: 1 };
@@ -1519,6 +1521,21 @@ export function createPlayerMagic({
     m.dead = true;
   }
 
+  /** AUDIT FB1031 F2 and F3 - the bodies `m` may strike, and no other - the list flightStop's cover law reads (a body it flies
+   *  through held cover open for it: a foe in a crown for a foe's bolt at me, a town defender for mine). A foe's strikes me
+   *  alone, never a shipmate's; mine my targets (never one sparedByPlayer, never me) and the marks its flags meet - a
+   *  mate's, my companion's, my duel's at a person's capsule, the court's boss at his own; a peer's drawn one any body. */
+  function missileBodies(m, playerFeet, playerHeight) {
+    const person = (feet, height) => ({ ai: { feet, height: height ?? CAPSULE_HEIGHT, radius: PLAYER_BODY_RADIUS } });
+    // AUDIT FB1031 II K4: and DEX5's corpse prefabs, which the drawn one and mine (never a dragon's bolt) meet below
+    if (m.visual) return flightBodies([...foes(), ...(peerBodies?.() ?? []).filter((q) => q && q.id !== m.casterId && Array.isArray(q.feet)).map((q) => person(q.feet, q.height)), ...corpsePrefabBodies(foes())], playerFeet, playerHeight);
+    const byFoe = m.fromPlayer === false;
+    if (byFoe) return flightBodies(null, isShipmate(m.casterFoe) ? null : playerFeet, playerHeight);
+    const people = m.ally ? allyMarksFor(m.spell, false).concat(companionMarksFor(m.spell, false)) : [];
+    if (m.duel) people.push(...duelMarksFor(m.spell));
+    return flightBodies([...playerTargets(), ...people.map((p) => person(p.ai.feet, p.ai.height)), ...((m.boss ?? m.duel) ? bossMarksFor(m.spell) : []), ...(m.dragon ? [] : corpsePrefabBodies(foes()))], null, playerHeight);
+  }
+
   /** PLAYER spell missile flight: lifespan, the wall raycast (an
    *  AreaAtRange payload explodes AT THE IMPACT POINT - AUDIT 23
    *  magic-2, DaggerfallMissile.cs:399-402), advance, and the
@@ -1560,7 +1577,7 @@ export function createPlayerMagic({
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);   // GROUND-BOLT: a wall, cover or the ground outdoors (AUDIT B1: the last two by touch)
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, missileBodies(m, playerFeet, playerHeight));   // GROUND-BOLT: a wall, cover or the ground outdoors (AUDIT B1: the last two by touch); TRUNK-FOES: never short of a body in cover (AUDIT FB1031 F2: one it may strike)
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)

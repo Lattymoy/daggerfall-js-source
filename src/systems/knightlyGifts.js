@@ -58,9 +58,9 @@
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { localizedText, t } from './textManager.js';   // L10N3d: the house refusal; SEAT-WORDS: and online's
-import { SEAT_RANK } from '../net/npcChapterLaw.js';   // SEAT-WORDS (AUDIT GUILD-WORDS L3-7): the seats' ranks, the law's own
-import { housesFullText } from './banking.js';   // HOUSES-3: a full region's words, the bank's
+import { localizedText, t } from './textManager.js'; // L10N3d: the house refusal; SEAT-WORDS: and online's
+import { SEAT_RANK } from '../net/npcChapterLaw.js'; // SEAT-WORDS (AUDIT GUILD-WORDS L3-7): the seats' ranks, the law's own
+import { housesFullText } from './banking.js'; // HOUSES-3: a full region's words, the bank's
 
 /** KnightlyOrder's two flag constants (:42-43). */
 export const HOUSE_FLAG_MASK = 2;
@@ -94,24 +94,28 @@ export const hasClaimedArmor = (membership, rank = membership?.rank ?? 0) =>
   ((membership?.flags ?? 0) & armorMaskForRank(rank)) > 0;
 
 /** The TEXT.RSC records the smith speaks (:36-39). */
-export const ARMOR_TEXT_ID = 463;          // "I have a fine piece of armor for you."
-export const NO_ARMOR_TEXT_ID = 461;       // "You have already received your armor..."
-export const NO_HOUSE_TEXT_ID = 460;       // ReceiveHouse's refusal, kept with its siblings
+export const ARMOR_TEXT_ID = 463; // "I have a fine piece of armor for you."
+export const NO_ARMOR_TEXT_ID = 461; // "You have already received your armor..."
+export const NO_HOUSE_TEXT_ID = 460; // ReceiveHouse's refusal, kept with its siblings
 /** The Spymaster's greeting (DaggerfallGuildServicePopupWindow:433). */
 export const SPYMASTER_GREETING_TEXT_ID = 402;
 
 /** The seven body pieces the gift draws from - Range(102, 108 + 1),
  *  INCLUSIVE, which is Cuirass through Boots and no shield. */
 export const GIFT_ARMOR_PIECES = Object.freeze([
-  ARMOR_ENUM.Cuirass, ARMOR_ENUM.Gauntlets, ARMOR_ENUM.Greaves,
-  ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Helm, ARMOR_ENUM.Boots,
+  ARMOR_ENUM.Cuirass,
+  ARMOR_ENUM.Gauntlets,
+  ARMOR_ENUM.Greaves,
+  ARMOR_ENUM.Left_Pauldron,
+  ARMOR_ENUM.Right_Pauldron,
+  ARMOR_ENUM.Helm,
+  ARMOR_ENUM.Boots,
 ]);
 
 /** `ArmorMaterialTypes.Iron + rank` (:205) - see the header. A rank
  *  past the ninth would walk off the end of the metals, so it clamps
  *  where DFU's ten ranks stop it. */
-export const giftArmorMaterial = (rank) =>
-  ARMOR_MATERIAL.Iron + Math.max(0, Math.min(9, rank ?? 0));
+export const giftArmorMaterial = (rank) => ARMOR_MATERIAL.Iron + Math.max(0, Math.min(9, rank ?? 0));
 
 /**
  * ReceiveArmor's ladder (:195-215). Answers one of
@@ -137,8 +141,8 @@ export function receiveArmorDecision(membership, { rolls = Math.random, makeArmo
 }
 
 /** The house's own text records (:34-39). */
-export const HOUSE_TEXT_ID = 462;              // "I have a house for you."
-export const RECEIVE_HOUSE_RANK = 9;           // ReceiveHouse's gate (:224)
+export const HOUSE_TEXT_ID = 462; // "I have a house for you."
+export const RECEIVE_HOUSE_RANK = 9; // ReceiveHouse's gate (:224)
 // serviceReceiveHouseAlready, VERBATIM from DFU's en string table
 // (Internal_Strings_en, m_Id 95) - AUDIT 26 F116: the line had been
 // paraphrased ("been given a house"); it is DFU localization rather
@@ -173,16 +177,32 @@ export const alreadyGivenHouseText = () => localizedText('serviceReceiveHouseAlr
  * not the cheapest, not the nearest. The caller allocates; this
  * answers which one and what to say.
  */
-export function receiveHouseDecision(membership, {
-  housesFull = false, housesForSale = [], rolls = Math.random,
-  alreadyOwnResult = null, noneForSaleResult = null, rankCeiling = null,
-} = {}) {
+export function receiveHouseDecision(
+  membership,
+  {
+    housesFull = false,
+    housesForSale = [],
+    rolls = Math.random,
+    alreadyOwnResult = null,
+    noneForSaleResult = null,
+    rankCeiling = null,
+  } = {},
+) {
   // SEAT-WORDS (Field-Bugs-2026-10-15g): online (`rankCeiling`, the host's - 7 while the Roll holds) the house reads the
   // BOOK's rank, which stops at 7 (AUDIT CHAP4 E2: a seat is held, not a rank kept), so no knight is given one there -
   // said so, where record NO_HOUSE_TEXT_ID promised a rank 9 that online never comes. A house already given says so.
   if (Number.isInteger(rankCeiling) && rankCeiling < RECEIVE_HOUSE_RANK) {
-    return { kind: 'refuse', line: ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()
-      : t('knight.seatHouse', 'Online, ranks {officer} and {master} are the order\'s chapter chairs, held by winning Merit. A chair brings no house.', { officer: SEAT_RANK.officer, master: SEAT_RANK.master }) };
+    return {
+      kind: 'refuse',
+      line:
+        ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0
+          ? alreadyGivenHouseText()
+          : t(
+              'knight.seatHouse',
+              "Online, ranks {officer} and {master} are the order's chapter chairs, held by winning Merit. A chair brings no house.",
+              { officer: SEAT_RANK.officer, master: SEAT_RANK.master },
+            ),
+    };
   }
   if ((membership?.rank ?? -1) < RECEIVE_HOUSE_RANK) return { kind: 'refuse', textId: NO_HOUSE_TEXT_ID };
   if (((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0) return { kind: 'refuse', line: alreadyGivenHouseText() };

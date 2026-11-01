@@ -346,7 +346,8 @@ test('FIELD BUGS 2026-10-25i QUEST-MARK: the enhanced pack says which heart is t
     const e = { items: [plain, quest], stats: {}, level: 12 };
     const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, getQuest: r.getQuest, onExit: () => {} });
     let rows = dom.doc.querySelectorAll('.itemrow');
-    for (const b of dom.doc.querySelectorAll('button')) { if (rows.length) break; if (/\bstatflip-btn\b/.test(b.className ?? '')) continue; b.onclick?.({}); rows = dom.doc.querySelectorAll('.itemrow'); }
+    // PIN MOVED (PACK-SORT): the walk skips the pack's Sort too - pressed, it put the quest's heart first
+    for (const b of dom.doc.querySelectorAll('button')) { if (rows.length) break; if (/\b(statflip-btn|sortbtn)\b/.test(b.className ?? '')) continue; b.onclick?.({}); rows = dom.doc.querySelectorAll('.itemrow'); }
     assert.equal(rows.length, 2, 'two rows - a quest\'s item never stacks (IsStackable)');
     const subs = rows.map((row) => row.querySelectorAll('small').map((n) => n.textContent).join(' '));
     assert.deepEqual(subs.map((s) => /quest item/.test(s)), [false, true], 'the quest\'s row says it is');

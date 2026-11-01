@@ -20,8 +20,8 @@
 
 import { ENEMY_BASICS, isClassEnemyId } from './enemyBasics.js';
 import { KNIGHT_CITY_WATCH } from '../mobile/mobileTypes.js';
-import { SPECIAL_ABILITY_BITS } from '../../systems/specialAdvantages.js';   // CF1: the AcuteHearing career bit
-import { entityImprovedAcuteHearing } from '../../systems/enchantments.js';   // AUDIT 39: ImprovesTalents(0) lives in the enchantment fold's bag
+import { SPECIAL_ABILITY_BITS } from '../../systems/specialAdvantages.js'; // CF1: the AcuteHearing career bit
+import { entityImprovedAcuteHearing } from '../../systems/enchantments.js'; // AUDIT 39: ImprovesTalents(0) lives in the enchantment fold's bag
 
 /** CF1 - ACUTE HEARING's one reader (DaggerfallEnemy.Start :53-71,
  *  the last career flag with none). DFU multiplies each enemy
@@ -66,7 +66,8 @@ export const COMPANION_ATTRACT_SCALE = 6;
  *  class foe (the city watch's Halt) and a companion (COMPANION_ATTRACT_SCALE, already quieter) keep their cadence. */
 export const FOE_ATTRACT_SCALE = 2.5;
 /** MONSTER-QUIET: the step the seam hands a source's clock for `dt` of the game's. */
-export const attractStep = (source, dt, companion = false) => (companion || isClassEnemyId(source?.mobileType) ? dt : dt / FOE_ATTRACT_SCALE);
+export const attractStep = (source, dt, companion = false) =>
+  companion || isClassEnemyId(source?.mobileType) ? dt : dt / FOE_ATTRACT_SCALE;
 
 /**
  * IgnoreHumanSounds (:219-226), verbatim:
@@ -108,7 +109,7 @@ export class EnemySoundSource {
     // volume. That is DFU's, and it is kept.
     this.volumeScale = 1;
     this.waitCounter = 0;
-    this.waitTime = rollAttractDelay(rolls);   // Awake ends with StartWaiting()
+    this.waitTime = rollAttractDelay(rolls); // Awake ends with StartWaiting()
   }
 
   /**
@@ -177,7 +178,7 @@ export const HALT_GAP_S = 15;
  */
 export class WatchVoice {
   constructor() {
-    this.since = Infinity;   // seconds since the last call - none yet
+    this.since = Infinity; // seconds since the last call - none yet
   }
 
   /**
@@ -197,5 +198,7 @@ export class WatchVoice {
   }
 
   /** The incident over: no watchman after the player - the next is met by its first call at once. */
-  end() { this.since = Infinity; }
+  end() {
+    this.since = Infinity;
+  }
 }

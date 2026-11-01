@@ -297,19 +297,6 @@ test('BUILDTAG-CLEAN (issue #626): a build leaves the tree as it found it - the 
 
 // ── the Ledger and the open flags ────────────────────────────────────────
 
-test('AUDIT 68 X5-ledgersweep-section-c-runs-to-eof: section C stops at the next heading, and a ledger without it is an error', (t) => {
-  const d = scratch(t);
-  const ledger = join(d, 'ledger.md');
-  writeFileSync(ledger, '## C. DFU features not yet ported\n| Feature | Source | Target |\n|---|---|---|\n| CROWONEQQ | x | y |\n\n'
-    + '## D. THE BOARD\n| DROWZZQQ | x | y |\n');
-  const r = node([join(ROOT, 'tools/ledgerSweep.mjs'), '--all', '--ledger', ledger]);
-  assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /CROWONEQQ/);
-  assert.doesNotMatch(r.stdout, /DROWZZQQ/, 'a section D row was swept as an unported feature');
-  writeFileSync(ledger, '## D. THE BOARD\n| DROWZZQQ | x | y |\n');
-  assert.notEqual(node([join(ROOT, 'tools/ledgerSweep.mjs'), '--ledger', ledger]).status, 0, 'no section C read as "0 unstruck rows"');
-});
-
 test('AUDIT 68 X5-regenopenflags-dies-at-zero: the open-flags list empties, stays checkable, and fills again', (t) => {
   const d = tree(t, ['tools/regenOpenFlags.mjs', 'tools/flagSites.mjs']);
   mkdirSync(join(d, 'bible'));

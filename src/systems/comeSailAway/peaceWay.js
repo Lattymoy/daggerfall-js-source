@@ -34,10 +34,14 @@ export function peaceWayOf({ enemies = false, boarding = false, aiming = false }
 export const PEACE_HOLD_S = 0.1;
 /** `read` asked at most once a PEACE_HOLD_S of `now` (s; the page's clock) - its answer held between. */
 export function heldPeaceWay(read, now = () => performance.now() / 1000) {
-  let at = -Infinity, k = 1;
+  let at = -Infinity,
+    k = 1;
   return () => {
     const t = now();
-    if (!(t >= at && t - at < PEACE_HOLD_S)) { at = t; k = read(); }
+    if (!(t >= at && t - at < PEACE_HOLD_S)) {
+      at = t;
+      k = read();
+    }
     return k;
   };
 }

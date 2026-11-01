@@ -19,13 +19,19 @@ import { ALIGN } from '../weapon/weaponAlign.js';
  * transform, in gunViewmodel.gunFrameRect, the one frame both sides draw.
  */
 export function placeSprite({
-  canvasW, canvasH, frameW, frameH,
-  widthPct = 0.62, align = ALIGN.Center, offset = 0,
-  flip = false, offsetHeight = 0,
+  canvasW,
+  canvasH,
+  frameW,
+  frameH,
+  widthPct = 0.62,
+  align = ALIGN.Center,
+  offset = 0,
+  flip = false,
+  offsetHeight = 0,
 }) {
   const w = canvasW * widthPct;
   const h = w * (frameH / frameW);
-  const a = (flip && align === ALIGN.Right) ? ALIGN.Left : align;
+  const a = flip && align === ALIGN.Right ? ALIGN.Left : align;
   let x;
   if (a === ALIGN.Left) x = canvasW * offset;
   else if (a === ALIGN.Center) x = canvasW / 2 - w / 2;

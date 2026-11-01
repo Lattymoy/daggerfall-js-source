@@ -315,11 +315,11 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   // PIN MOVED (RPT1026-WORLD FAR-QUAY): the readiness moved out of world.js navalHarbourNear to systems/naval/harbourBook.js
   // harbourOf, and a pixel it reads is known built - or dry for certain (harbourKnown: no build stands water there)
   const world = read('src/systems/naval/harbourBook.js');
-  assert.ok(world.includes('for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!harbourKnown(built, state, woods, x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN))) return false;'), 'every point of the scan box known');
+  assert.ok(world.includes('for (let i = 0; i <= nx; i++)\n      for (let k = 0; k <= nz; k++)\n        if (\n          !harbourKnown(\n            built,\n            state,\n            woods,\n            x0 + Math.min((sx * i) / nx, sx - EDGE_IN),\n            z0 + Math.min((sz * k) / nz, sz - EDGE_IN),\n          )\n        )\n          return false;'), 'every point of the scan box known');
   assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
   assert.match(hostText('src/scenes/world.js'), /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (PORT-SHIPS): each town's keep beside its harbour (scenes/harbourHost.js, systems/naval/harbourKeep.js)
   // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
-  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
+  assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH; \/\/ AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore\n\s*const ready = \(r = reach\) => \{\n\s*const x0 = rect\.minX - r,\n\s*z0 = rect\.minZ - r,\n\s*sx = rect\.maxX - rect\.minX \+ 2 \* r,\n\s*sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });
 
 test('AUDIT HOLDINGS Q1: the gangway runs square to her side at her waist and touches nothing but where it rests - every edge, face and rope of it clear of her colliders and of the quay\'s, a ship\'s climbing from the deck at GANGWAY_SLOPE, a boat\'s stepping down from the kerb\'s edge onto her gunwale over the water; the cargo never in its lane', async () => {

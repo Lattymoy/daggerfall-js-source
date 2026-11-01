@@ -107,7 +107,7 @@ test('AUDIT MERGE-PLUS D2 a list\'s picture keeps its icon inside the tier\'s 2p
   // UI1b: a worn panel's picture wears no frame (the panel is the frame), and a fitted picture carries its own caps -
   // max 100% in its style (ui/textureCanvas.js fittedImg), over any the sheet sets
   assert.ok(!ruleFor(list, '.pack-shell .wornrow[data-rarity] .tile', 'border'), 'the worn tile unframed');
-  assert.match(read('src/ui/textureCanvas.js'), /maxWidth: '100%', maxHeight: '100%', objectFit: 'contain'/);
+  assert.match(read('src/ui/textureCanvas.js'), /maxWidth: '100%',\n\s*maxHeight: '100%',\n\s*objectFit: 'contain'/);
 });
 
 test('AUDIT MERGE-PLUS D3 Stone\'s light ground: the lane\'s six surfaces the dress moved into the window and panel roles carry a Stone dim word, and the refusal\'s, the note\'s, the amber and the red words are lifted - each 4.5:1 or better over Stone\'s panel and ground, a refused row\'s reason at the disabled opacity over Stone\'s press; the old words read 2.3:1 and 3.5:1 there (mutants: the Stone dim word unset, the reason left at the old grey)', () => {

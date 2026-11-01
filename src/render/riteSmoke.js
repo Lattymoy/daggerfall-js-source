@@ -94,7 +94,9 @@ float tnoise(vec2 q, vec2 per) {
 }
 `;
 
-export const SMOKE_VS = HEAD + `layout(location = 0) in vec2 aUV;   // x around 0..1, y up the billows' height 0..1
+export const SMOKE_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aUV;   // x around 0..1, y up the billows' height 0..1
 uniform mat4 uVP;
 uniform vec3 uOrigin;   // the circle's heart, on its ground
 uniform vec3 uEye;
@@ -132,7 +134,9 @@ void main() {
   gl_Position = uVP * vec4(p, 1.0);
 }`;
 
-export const SMOKE_FS = HEAD + `in vec2 vUV;
+export const SMOKE_FS =
+  HEAD +
+  `in vec2 vUV;
 in vec3 vWorld;
 in vec3 vNormal;
 in float vRad;
@@ -172,10 +176,22 @@ export function smokeVertices(segments = SMOKE_SEGMENTS, rows = SMOKE_ROWS) {
   const out = new Float32Array(segments * rows * 12);
   let o = 0;
   for (let j = 0; j < rows; j++) {
-    const v0 = j / rows, v1 = (j + 1) / rows;
+    const v0 = j / rows,
+      v1 = (j + 1) / rows;
     for (let i = 0; i < segments; i++) {
-      const a = i / segments, b = (i + 1) / segments;
-      for (const [u, v] of [[a, v0], [b, v0], [b, v1], [a, v0], [b, v1], [a, v1]]) { out[o++] = u; out[o++] = v; }
+      const a = i / segments,
+        b = (i + 1) / segments;
+      for (const [u, v] of [
+        [a, v0],
+        [b, v0],
+        [b, v1],
+        [a, v0],
+        [b, v1],
+        [a, v1],
+      ]) {
+        out[o++] = u;
+        out[o++] = v;
+      }
     }
   }
   return out;
@@ -191,12 +207,14 @@ function mat4Multiply(out, a, b) {
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
-const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 const ORIGIN = new Float32Array([0, 0, 0]);
 
 /** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the rite's door waits on
  *  (render/glProgram.js compiledPass). */
-export const RITE_SMOKE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SMOKE_VS, SMOKE_FS]]));
+export const RITE_SMOKE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[SMOKE_VS, SMOKE_FS]])
+);
 
 /** The rite's pillars of smoke, one foreign pass. */
 export class RiteSmokeRenderer {
@@ -206,14 +224,29 @@ export class RiteSmokeRenderer {
     const [[vs, fs]] = RITE_SMOKE_PROGRAMS;
     this.program = buildProgram(gl, vs, fs, 'rite smoke');
     this.u = {};
-    for (const n of ['uVP', 'uOrigin', 'uEye', 'uTime', 'uFade', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uOrigin',
+      'uEye',
+      'uTime',
+      'uFade',
+      'uLight',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uFocus',
+      'uJungleHaze',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = smokeVertices();
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     const b = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, b);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this.count = verts.length / 2;
     this._vp = new Float32Array(16);
@@ -227,9 +260,19 @@ export class RiteSmokeRenderer {
    */
   draw(smokes, proj, view, eye, seconds, fog = null) {
     this.drawn = 0;
-    const list = (Array.isArray(smokes) ? smokes : []).filter((s) => s && Array.isArray(s.origin) && s.origin.length === 3 && s.origin.every(Number.isFinite) && s.fade > SMOKE_FADE_MIN).slice(0, SMOKE_MAX);
+    const list = (Array.isArray(smokes) ? smokes : [])
+      .filter(
+        (s) =>
+          s &&
+          Array.isArray(s.origin) &&
+          s.origin.length === 3 &&
+          s.origin.every(Number.isFinite) &&
+          s.fade > SMOKE_FADE_MIN,
+      )
+      .slice(0, SMOKE_MAX);
     if (!list.length) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -244,8 +287,8 @@ export class RiteSmokeRenderer {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? ORIGIN);
-    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS); // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
     for (const s of list) {
       gl.uniform3f(U.uOrigin, s.origin[0], s.origin[1], s.origin[2]);

@@ -571,6 +571,6 @@ test('INDOOR-WATCH AUDIT (the merge): THE DUNGEON\'S FOES TAKE THE SAME OFF-MESH
   const dc = rd('src/scenes/dungeonContext.js');
   assert.match(dc, /import \{ navGoalOn \} from '\.\/interiorNav\.js';/);
   assert.equal((dc.match(/nav: \(\) => enhancedNav\.chf, navWorld: enhancedNav\.world, navGoal: \(f\) => navGoalOn\(enhancedNav\.chf, f, \{ collider \}\), navSeed: \(yawDeg \* 1000\) \| 0,/g) ?? []).length, 2, 'both motor sites: the placed foes and the spawned');
-  assert.match(rd('src/scenes/interiorNav.js'), /goal: \(feet\) => \(room\?\.chf \? navGoalOn\(room\.chf, feet, \{ collider: room\.collider, skip: doorsOutOfSoup\(room\.actions\) \}\) : null\),/);
+  assert.match(rd('src/scenes/interiorNav.js'), /goal: \(feet\) =>\n\s*room\?\.chf \? navGoalOn\(room\.chf, feet, \{ collider: room\.collider, skip: doorsOutOfSoup\(room\.actions\) \}\) : null,/);
   assert.deepEqual([navGoalOn(null, [0, 0, 0]), navGoalOn({ mesh: { polys: [] } }, null)], [null, null]);
 });

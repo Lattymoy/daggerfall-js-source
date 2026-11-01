@@ -25,8 +25,10 @@ export const FLAG_CLOTH = Object.freeze({
 export const FLAG_BORDER_W = 9;
 /** Where the device stands, by shape: its 100 box scaled to `scale` and set at (x, y). */
 export const FLAG_DEVICE = Object.freeze({
-  flag: Object.freeze({ x: 44, y: 19, scale: 0.62 }), swallowtail: Object.freeze({ x: 34, y: 19, scale: 0.62 }),
-  pennant: Object.freeze({ x: 10, y: 27, scale: 0.46 }), burgee: Object.freeze({ x: 10, y: 27, scale: 0.46 }),
+  flag: Object.freeze({ x: 44, y: 19, scale: 0.62 }),
+  swallowtail: Object.freeze({ x: 34, y: 19, scale: 0.62 }),
+  pennant: Object.freeze({ x: 10, y: 27, scale: 0.46 }),
+  burgee: Object.freeze({ x: 10, y: 27, scale: 0.46 }),
 });
 
 const hexOf = (k) => HERALDRY_COLOURS.find((c) => c.key === k)?.hex ?? null;
@@ -38,15 +40,22 @@ export function flagSvg(raw, { width = 150 } = {}) {
   const cloth = FLAG_CLOTH[f.shape];
   const clip = `sf${flagKey(f).replace(/[^a-z0-9]/gi, '')}`;
   const divD = f.division !== 'plain' ? divisionPath(f.division, FLAG_BOX.w, FLAG_BOX.h) : '';
-  const field = hexOf(f.field), d = FLAG_DEVICE[f.shape];
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="${width}" height="${Math.round((width * 2) / 3)}" role="img" aria-label="flag">`
-    + `<defs><clipPath id="${clip}"><path d="${cloth}"/></clipPath>${divD ? partClips(clip, divD, FLAG_BOX) : ''}</defs>`
-    + `<path d="${cloth}" fill="${field}"/>`
-    + (divD ? `<path d="${divD}" fill="${hexOf(f.field2)}" clip-path="url(#${clip})"/>` : '')
-    + (f.border ? `<path d="${cloth}" fill="none" stroke="${hexOf(f.border)}" stroke-width="${FLAG_BORDER_W * 2}" clip-path="url(#${clip})"/>` : '')
-    + (f.device ? `<g clip-path="url(#${clip})">${deviceLayers(f.device, hexOf(f.charge), field, `translate(${d.x} ${d.y}) scale(${d.scale})`, divD ? { id: `${clip}d`, comp: `${clip}c`, hex: hexOf(f.field2) } : null)}</g>` : '')
-    + `<path d="${cloth}" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="2"/>`
-    + '</svg>';
+  const field = hexOf(f.field),
+    d = FLAG_DEVICE[f.shape];
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="${width}" height="${Math.round((width * 2) / 3)}" role="img" aria-label="flag">` +
+    `<defs><clipPath id="${clip}"><path d="${cloth}"/></clipPath>${divD ? partClips(clip, divD, FLAG_BOX) : ''}</defs>` +
+    `<path d="${cloth}" fill="${field}"/>` +
+    (divD ? `<path d="${divD}" fill="${hexOf(f.field2)}" clip-path="url(#${clip})"/>` : '') +
+    (f.border
+      ? `<path d="${cloth}" fill="none" stroke="${hexOf(f.border)}" stroke-width="${FLAG_BORDER_W * 2}" clip-path="url(#${clip})"/>`
+      : '') +
+    (f.device
+      ? `<g clip-path="url(#${clip})">${deviceLayers(f.device, hexOf(f.charge), field, `translate(${d.x} ${d.y}) scale(${d.scale})`, divD ? { id: `${clip}d`, comp: `${clip}c`, hex: hexOf(f.field2) } : null)}</g>`
+      : '') +
+    `<path d="${cloth}" fill="none" stroke="#000" stroke-opacity="0.5" stroke-width="2"/>` +
+    '</svg>'
+  );
 }
 
 /**
@@ -69,10 +78,28 @@ export function drawFlag(ctx, raw, w) {
   ctx.clip(cloth);
   const divD = f.division !== 'plain' ? divisionPath(f.division, FLAG_BOX.w, FLAG_BOX.h) : '';
   const div = divD ? new P(divD) : null;
-  const f2 = div ? hexOf(f.field2) ?? field : null;
-  if (div) { ctx.fillStyle = f2; ctx.fill(div); }
-  if (f.border) { ctx.strokeStyle = hexOf(f.border) ?? field; ctx.lineWidth = FLAG_BORDER_W * 2; ctx.stroke(cloth); }
-  if (f.device) drawDevice(ctx, P, f.device, hexOf(f.charge) ?? '#e6e6e6', field, FLAG_DEVICE[f.shape], div, f2, divD ? new P(divisionComplement(divD, FLAG_BOX.w, FLAG_BOX.h)) : null);
+  const f2 = div ? (hexOf(f.field2) ?? field) : null;
+  if (div) {
+    ctx.fillStyle = f2;
+    ctx.fill(div);
+  }
+  if (f.border) {
+    ctx.strokeStyle = hexOf(f.border) ?? field;
+    ctx.lineWidth = FLAG_BORDER_W * 2;
+    ctx.stroke(cloth);
+  }
+  if (f.device)
+    drawDevice(
+      ctx,
+      P,
+      f.device,
+      hexOf(f.charge) ?? '#e6e6e6',
+      field,
+      FLAG_DEVICE[f.shape],
+      div,
+      f2,
+      divD ? new P(divisionComplement(divD, FLAG_BOX.w, FLAG_BOX.h)) : null,
+    );
   ctx.restore();
   ctx.restore();
   return true;

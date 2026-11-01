@@ -2,8 +2,8 @@
   {
     "name": "ROADS-CLEAR-a-piece-over-a-road-still-stands",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (boxNearPath(_roadsNow, px, py, box[0] * UNITS_PER_METRE, box[2] * UNITS_PER_METRE, box[3] * UNITS_PER_METRE, box[5] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }\n",
-    "new": "",
+    "old": "        if (boxNearPath(_roadsNow, px, py, box[0] * UNITS_PER_METRE, box[2] * UNITS_PER_METRE, box[3] * UNITS_PER_METRE, box[5] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }\n        // GATE-CLEAR (2026-09-28, Mac: \"the gate can spawn inside the rock geometry from world of daggerfall\"): nor one",
+    "new": "        // GATE-CLEAR (2026-09-28, Mac: \"the gate can spawn inside the rock geometry from world of daggerfall\"): nor one",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROADS-CLEAR-a-flat-over-a-road-still-stands",
     "file": "src/scenes/pixelBuild.js",
-    "old": "        if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }",
-    "new": "        // gone",
+    "old": "        if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }   // ROADS-CLEAR: and a flat on one",
+    "new": "        // gone   // ROADS-CLEAR: and a flat on one",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROADS-CLEAR-the-site-is-never-asked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
-    "new": "}, wodPathsPoint, null);",
+    "old": "        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js)",
+    "new": "        }, wodPathsPoint, null);   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js)",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ROADS-CLEAR-the-loader-ignores-the-verdict",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;\n",
-    "new": "",
+    "old": "  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;\n  // :175-230 - types 0 and 2 run the identical smoothing arm and set",
+    "new": "  // :175-230 - types 0 and 2 run the identical smoothing arm and set",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROADS-CLEAR-north-is-the-row-below",
     "file": "src/world/road/roadClearance.js",
-    "old": "pathsDataPoint(net, px + ix, py - iz)",
-    "new": "pathsDataPoint(net, px + ix, py + iz)",
+    "old": "      const bits = pathsDataPoint(net, px + ix, py - iz); // north (+z) is the row above: py - 1",
+    "new": "      const bits = pathsDataPoint(net, px + ix, py + iz); // north (+z) is the row above: py - 1",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ROADS-CLEAR-the-cave-is-a-rock-field",
     "file": "src/world/road/roadClearance.js",
-    "old": "/^WOD_(?:Rocks_(?!Cave)|Mountain_)/",
-    "new": "/^WOD_(?:Rocks_|Mountain_)/",
+    "old": "export const wodPiecewise = (prefabName) => /^WOD_(?:Rocks_(?!Cave)|Mountain_)/.test(String(prefabName ?? ''));",
+    "new": "export const wodPiecewise = (prefabName) => /^WOD_(?:Rocks_|Mountain_)/.test(String(prefabName ?? ''));",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]

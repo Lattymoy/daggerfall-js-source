@@ -39,7 +39,7 @@
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (RENOWN1).
 
 import { renownBonus } from '../net/renown.js';
-import { evenHpOf } from './levelEven.js';   // LEVEL-EVEN: the floor's health, a term of the layer
+import { evenHpOf } from './levelEven.js'; // LEVEL-EVEN: the floor's health, a term of the layer
 
 /** The layer's health on an entity: whole, never negative. */
 export const renownHpOf = (e) => (Number.isFinite(e?.renownHp) && e.renownHp > 0 ? Math.trunc(e.renownHp) : 0);
@@ -51,7 +51,10 @@ export const spireBodyMax = (e) => Math.max(0, (e?.maxHealth ?? 0) - spireHpOf(e
 export const renownMpOf = (e) => (Number.isFinite(e?.renownMp) && e.renownMp > 0 ? Math.trunc(e.renownMp) : 0);
 /** EG15: the folds' magicka on an entity (entityMods.js's `magicka` channel, read off the one cached field as statMods.js
  *  reads `_mods` - this leaf imports no fold): whole, never negative. */
-export const foldMpOf = (e) => { const v = e?._mods?.magicka; return Number.isFinite(v) && v > 0 ? Math.trunc(v) : 0; };
+export const foldMpOf = (e) => {
+  const v = e?._mods?.magicka;
+  return Number.isFinite(v) && v > 0 ? Math.trunc(v) : 0;
+};
 /** EG15: every online term on the maximum magicka - Renown's and the folds' - what a save and the magery take off. */
 export const onlineMpOf = (e) => renownMpOf(e) + foldMpOf(e);
 
@@ -80,9 +83,10 @@ export function setRenownLayer(entity, level) {
   // LEVEL-EVEN (systems/levelEven.js): the floor's health, at the permanent Endurance with the Firmament's in it
   const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + (x?.end ?? 0)) : 0;
   const b = x || even ? { hp: r.hp + (x?.hp ?? 0) + even, mp: r.mp + (x?.mp ?? 0) } : r;
-  entity.evenHp = even;   // AUDIT LEVEL-EVEN L2-3: the floor's share of the layer, for the readers that size the body (mentorMode.js)
+  entity.evenHp = even; // AUDIT LEVEL-EVEN L2-3: the floor's share of the layer, for the readers that size the body (mentorMode.js)
   if (renownHpOf(entity) === b.hp && renownMpOf(entity) === b.mp) return b;
-  const hpFrom = entity.maxHealth, mpFrom = entity.maxMagicka;
+  const hpFrom = entity.maxHealth,
+    mpFrom = entity.maxMagicka;
   entity.renownHp = b.hp;
   entity.renownMp = b.mp;
   if (Number.isFinite(entity.health)) entity.health = keepFraction(entity.health, hpFrom, entity.maxHealth);
@@ -103,9 +107,11 @@ const _levels = new WeakMap();
  */
 export function setOnlineLayerExtra(entity, extra) {
   if (!entity) return { hp: 0, mp: 0 };
-  const hp = Math.max(0, Math.trunc(Number(extra?.hp) || 0)), mp = Math.max(0, Math.trunc(Number(extra?.mp) || 0));
-  const end = Math.trunc(Number(extra?.end) || 0);   // LEVEL-EVEN: the stars' Endurance, which the floor reads
-  if (hp || mp || end) _extras.set(entity, { hp, mp, end }); else _extras.delete(entity);
+  const hp = Math.max(0, Math.trunc(Number(extra?.hp) || 0)),
+    mp = Math.max(0, Math.trunc(Number(extra?.mp) || 0));
+  const end = Math.trunc(Number(extra?.end) || 0); // LEVEL-EVEN: the stars' Endurance, which the floor reads
+  if (hp || mp || end) _extras.set(entity, { hp, mp, end });
+  else _extras.delete(entity);
   const level = _levels.get(entity);
   return level == null ? { hp: renownHpOf(entity), mp: renownMpOf(entity) } : setRenownLayer(entity, level);
 }
@@ -144,7 +150,8 @@ export function setSpireHp(entity, hp) {
  * @param {any} entity
  */
 export function offlineVitals(entity) {
-  const hp = renownHpOf(entity), mp = onlineMpOf(entity);   // EG15: and the folds' magicka (the Battlemage's Bearing)
+  const hp = renownHpOf(entity),
+    mp = onlineMpOf(entity); // EG15: and the folds' magicka (the Battlemage's Bearing)
   const out = { health: entity?.health, magicka: entity?.magicka, maxMagicka: entity?.maxMagicka };
   if (hp) {
     // the offline maximum is the stored one under the limiter, exactly as the accessor reads it with no layer

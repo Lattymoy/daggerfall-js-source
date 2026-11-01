@@ -458,7 +458,7 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   assert.match(main, /click: \(\) => checkForUpdatesLoudly\(\),/);
   // served by the version in use
   const serve = sliceOf('function handleDagger(req) {', '// ---- updating:');
-  assert.match(serve, /if \(gameStore\?\.active\(\)\) \{\s*const file = gameStore\.resolve\(rel\) \?\? gameStore\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
+  assert.match(serve, /const store = servingStore \?\? gameStore;.*\s*if \(store\?\.active\(\)\) \{\s*const file = store\.resolve\(rel\) \?\? store\.resolve\(`\$\{rel\}\/index\.html`\);\s*return file \? fileResponse\(file\) : new Response\('not found', \{ status: 404 \}\);\s*\}/,
     'a path the version does not name is not served - whatever the install holds');
   assert.ok(serve.indexOf('gameStore?.active()') < serve.indexOf('let p = path.normalize(path.join(DIST, rel));'), 'before the install\'s own copy');
   // counted, switched at a document load, proved, given up
@@ -511,7 +511,8 @@ test('DA13: a readied version is switched to only by a navigation that can commi
 test('DA13: the release pipeline - one shell id, the bundled game indexed in every installer, the pack cut once beside them, and the publish step that fails an update that is no longer per file', () => {
   // the shell is app/ and what its build takes from outside it - derived from the build config, never a list to forget
   assert.deepEqual(shellInputs(), ['app', 'public/icons/icon-512.png', 'src/ui/menu/menuPad.js', 'src/assets/branding/dfo-online.png']);
-  assert.deepEqual(shellInputs({ build: { files: [{ from: '../src/x', to: 'y', filter: ['a.js'] }, { from: '../dist', to: 'dist', filter: ['x.js'] }, 'lib/**'] } }), ['app', 'src/x/a.js'], 'the game is the channel\'s, never the shell\'s');
+  assert.deepEqual(shellInputs({ build: {} }, [{ from: 'src/a.js', to: 'app/a.js' }, { from: 'dist', to: 'app/dist' }]), ['app', 'src/a.js'], 'a staged file is the shell\'s; the staged game is the channel\'s');
+  assert.deepEqual(shellInputs({ build: { files: [{ from: '../src/x', to: 'y', filter: ['a.js'] }, { from: '../dist', to: 'dist', filter: ['x.js'] }, 'lib/**'] } }, []), ['app', 'src/x/a.js'], 'the game is the channel\'s, never the shell\'s');
   const objects = { 'HEAD:app': 't1', 'HEAD:src/x/a.js': 'b1' };
   const id = shellId((args) => objects[args[1]], 'HEAD', ['app', 'src/x/a.js']);
   assert.match(id, /^[0-9a-f]{64}$/);

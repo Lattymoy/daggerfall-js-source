@@ -25,13 +25,13 @@ import { setSeed, randomRange } from '../formats/dfRandom.js';
 import { getBool } from '../systems/settings/settings.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { isMainStoryDungeon } from './dungeon/dungeonTextures.js';
-import { isArenaUndercroft } from './arena/arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
-import { isEnhanced } from '../systems/uiSkin.js';   // DSIZE1: the medium size is the enhanced skin's
-import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
-import { isOnlinePage } from '../systems/online/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
-import { seededFirst } from '../systems/wind/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
-import { dungeonTier } from '../systems/dungeon/dungeonTier.js';   // AUDIT SD: a Hollow, by the one tier law
-import { curatedLocation, curatedSlot } from './dungeon/curatedSplice.js';   // DELVE II (AUDIT DLV5-6 H1): the curated block, in the location as built
+import { isArenaUndercroft } from './arena/arenaCity.js'; // ARENA5: the fighters' hall keeps its blocks
+import { isEnhanced } from '../systems/uiSkin.js'; // DSIZE1: the medium size is the enhanced skin's
+import { getPref } from '../systems/uiPrefs.js'; // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
+import { isOnlinePage } from '../systems/online/onlineLane.js'; // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
+import { seededFirst } from '../systems/wind/wind.js'; // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
+import { dungeonTier } from '../systems/dungeon/dungeonTier.js'; // AUDIT SD: a Hollow, by the one tier law
+import { curatedLocation, curatedSlot } from './dungeon/curatedSplice.js'; // DELVE II (AUDIT DLV5-6 H1): the curated block, in the location as built
 import { CURATED_RECORDS } from './dungeon/curatedRecords.js';
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
@@ -91,7 +91,13 @@ export const mediumDungeonsWanted = () => isEnhanced() && getPref(MEDIUM_DUNGEON
  *  appended past the medium size, as the medium size was past DFU's three, and read by an older build as neither. */
 export const ONLINE_DUNGEONS_STATE = 4;
 /** SD-ONLINE: the online world's sizes and their weights - small 1, medium 2, large (the whole dungeon) 1. */
-export const ONLINE_DUNGEON_SIZES = Object.freeze([['small', 1], ['medium', 2], ['full', 1]].map((r) => Object.freeze(r)));
+export const ONLINE_DUNGEON_SIZES = Object.freeze(
+  [
+    ['small', 1],
+    ['medium', 2],
+    ['full', 1],
+  ].map((r) => Object.freeze(r)),
+);
 /** SD-ONLINE: the draw's own salt, so a dungeon's size is not any other roll the port makes on its map id. */
 export const ONLINE_DUNGEON_SIZE_SALT = 0x5d1e5a2b;
 /** SD-ONLINE: THE SIZE THE ONLINE WORLD GIVES A DUNGEON - one draw of the port's seeded die on its map id and the
@@ -115,20 +121,30 @@ export const WORLD_DUNGEON_SIZES_PREF = 'worldDungeonSizes';
 export const worldDungeonSizesWanted = () => isEnhanced() && getPref(WORLD_DUNGEON_SIZES_PREF) === true;
 /** The medium size: [x, z, border] - the two interior blocks first (the starting block, then the one east of it),
  *  then the six border blocks that close them (the two north, west, east, the two south). */
-export const MEDIUM_LAYOUT = Object.freeze([
-  [0, 0, false], [1, 0, false],
-  [0, -1, true], [1, -1, true], [-1, 0, true], [2, 0, true], [0, 1, true], [1, 1, true],
-].map((r) => Object.freeze(r)));
+export const MEDIUM_LAYOUT = Object.freeze(
+  [
+    [0, 0, false],
+    [1, 0, false],
+    [0, -1, true],
+    [1, -1, true],
+    [-1, 0, true],
+    [2, 0, true],
+    [0, 1, true],
+    [1, 1, true],
+  ].map((r) => Object.freeze(r)),
+);
 
 /** GenerateSmallerDungeon's plus (:1391-1398), as rows: the central starting block, then the North, West, East and
  *  South border blocks, in DFU's draw order. */
-const SMALLER_LAYOUT = Object.freeze([
-  [0, 0, false],    // Central starting block
-  [0, -1, true],    // North border block
-  [-1, 0, true],    // West border block
-  [1, 0, true],     // East border block
-  [0, 1, true],     // South border block
-].map((r) => Object.freeze(r)));
+const SMALLER_LAYOUT = Object.freeze(
+  [
+    [0, 0, false], // Central starting block
+    [0, -1, true], // North border block
+    [-1, 0, true], // West border block
+    [1, 0, true], // East border block
+    [0, 1, true], // South border block
+  ].map((r) => Object.freeze(r)),
+);
 
 /** Quest.Start's stamp (Quest.cs:284): the setting AS OF the quest's
  *  start, frozen into the quest. DSIZE1: and the medium size, when it is asked for and Smaller Dungeons is not on.
@@ -136,7 +152,12 @@ const SMALLER_LAYOUT = Object.freeze([
  *  room builds every dungeon at its own size whatever the player's settings say (dungeonSizeFor, below), so a copy
  *  taken offline builds the dungeon its markers know. SD-ONLINE: those are the online world's sizes (it was the whole
  *  dungeon), ONLINE_DUNGEONS_STATE - and offline too, when the world's sizes are asked for and Smaller is not on. */
-export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = isOnlinePage(), world = worldDungeonSizesWanted()) {
+export function smallerDungeonsStateNow(
+  enabled = getBool('Experimental', 'SmallerDungeons'),
+  medium = mediumDungeonsWanted(),
+  online = isOnlinePage(),
+  world = worldDungeonSizesWanted(),
+) {
   // INSTANCES (bible/11-Multiplayer/Instances.md): online a quest's markers are chosen on the dungeon WHOLE (dungeonSizeFor's
   // `whole` - the quest's world asks so), the layout its instance builds - so its stamp is the whole dungeon's, DFU's
   // Disabled, and a copy taken offline builds the layout its markers know
@@ -153,11 +174,13 @@ export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'Small
  * AUDIT DELVE A6: DFU's member, verbatim - a frozen state it does not name (the medium size's) falls through to the
  * setting, as DFU's own law has it. The size the hosts build at is dungeonSizeFor's, below.
  */
-export function useSmallerDungeon(dfLocation, { questMachine = null,
-  setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {}) {
+export function useSmallerDungeon(
+  dfLocation,
+  { questMachine = null, setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {},
+) {
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return false;
-  if (isArenaUndercroft(dfLocation)) return false;   // ARENA5: the arena's undercroft never shrinks (dungeonSizeFor, below)
-  if (online) return false;   // AUDIT WORLD34 B2: online, not the setting's (dungeonSizeFor, below: SD-ONLINE, the world's sizes)
+  if (isArenaUndercroft(dfLocation)) return false; // ARENA5: the arena's undercroft never shrinks (dungeonSizeFor, below)
+  if (online) return false; // AUDIT WORLD34 B2: online, not the setting's (dungeonSizeFor, below: SD-ONLINE, the world's sizes)
   const links = questMachine?.getSiteLinks(SITE_TYPES.Dungeon, dfLocation.mapTableData?.mapId) ?? [];
   if (links.length > 0) {
     const quest = questMachine.getQuest(links[0].questUID);
@@ -174,9 +197,18 @@ export function useSmallerDungeon(dfLocation, { questMachine = null,
  * medium, ONLINE_DUNGEONS_STATE the world's, Disabled full - first link wins), and then the setting (small), else the
  * world's sizes asked for, else the medium ask, else full.
  */
-export function dungeonSizeFor(dfLocation, { questMachine = null,
-  setting = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = false,
-  world = worldDungeonSizesWanted(), whole = false } = {}) {   // INSTANCES: `whole` - online, the dungeon as Daggerfall lays it, whatever size the world gives it
+export function dungeonSizeFor(
+  dfLocation,
+  {
+    questMachine = null,
+    setting = getBool('Experimental', 'SmallerDungeons'),
+    medium = mediumDungeonsWanted(),
+    online = false,
+    world = worldDungeonSizesWanted(),
+    whole = false,
+  } = {},
+) {
+  // INSTANCES: `whole` - online, the dungeon as Daggerfall lays it, whatever size the world gives it
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return 'full';
   // ARENA5 (the audit, closing ARENA1's open item "Smaller Dungeons may trim the undercroft"): THE ARENA'S UNDERCROFT
   // NEVER SHRINKS. It is no keep of Daggerfall's but the fighters' hall (world/arena/arenaUndercroft.js): its people, the Pit
@@ -205,12 +237,12 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   if (links.length > 0) {
     const quest = questMachine.getQuest(links[0].questUID);
     if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Enabled) return 'small';
-    if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium';   // DSIZE1
-    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation);   // SD-ONLINE: the world's, as its markers know it
+    if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium'; // DSIZE1
+    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation); // SD-ONLINE: the world's, as its markers know it
     if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return 'full';
   }
   if (setting) return 'small';
-  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for
+  if (world) return onlineDungeonSize(dfLocation); // SD-ONLINE: offline, the world's sizes asked for
   return medium ? 'medium' : 'full';
 }
 
@@ -233,7 +265,12 @@ export function adoptLinkedDungeonSize(quest, questMachine, online = isOnlinePag
   // room's before it reads a link) and Start stamps them so - a link's older stamp (one a load's re-lay could not read)
   // took its place, and offline the copy built a layout its markers do not know
   if (online) return null;
-  const known = [SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE, ONLINE_DUNGEONS_STATE];
+  const known = [
+    SMALLER_DUNGEONS_STATE.Disabled,
+    SMALLER_DUNGEONS_STATE.Enabled,
+    MEDIUM_DUNGEONS_STATE,
+    ONLINE_DUNGEONS_STATE,
+  ];
   for (const r of quest?.resources?.values?.() ?? []) {
     const sd = r?.isPlace ? r.siteDetails : null;
     if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
@@ -256,7 +293,9 @@ function getRandomBlock(borderBlock, dfLocation) {
     return borderBlock ? isBorder : !isBorder;
   });
   if (filtered.length === 0) {
-    throw new Error(`GetRandomBlock() failed to find a suitable block. borderBlock=${borderBlock}, location=${dfLocation.name}`);
+    throw new Error(
+      `GetRandomBlock() failed to find a suitable block. borderBlock=${borderBlock}, location=${dfLocation.name}`,
+    );
   }
   return filtered[randomRange(0, filtered.length)];
 }
@@ -325,8 +364,11 @@ function regenerateDungeon(dfLocation, threshold, rows, mark, member) {
   // DFRandom.Seed = (uint)MapId (:1389) - the same layout every visit.
   setSeed(dfLocation.mapTableData.mapId);
   const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));
-  const distinct = distinctInterior(layout, dfLocation);   // MEDIUM-DISTINCT: never one interior block twice
-  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...(distinct ? { distinct: true } : {}) } };
+  const distinct = distinctInterior(layout, dfLocation); // MEDIUM-DISTINCT: never one interior block twice
+  return {
+    ...dfLocation,
+    dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...(distinct ? { distinct: true } : {}) },
+  };
 }
 
 /**
@@ -371,7 +413,8 @@ export function builtDungeonSize(dfLocation) {
 /** DELVE II (AUDIT DLV5-6 M3): THE ROOM'S LAYOUT WORD - the size it was built at and the curated block it took, `medium+2`.
  *  An older page lays that slot as Daggerfall's, so the room is the layout's (net/wire.js dungeonRoomTag: `.m.c2`). */
 export const dungeonRoomSize = (dfLocation) => {
-  const s = builtDungeonSize(dfLocation), n = dfLocation?.curated;
+  const s = builtDungeonSize(dfLocation),
+    n = dfLocation?.curated;
   return Number.isInteger(n) && n > 0 ? `${s}+${n}` : s;
 };
 
@@ -391,7 +434,8 @@ export const dungeonRoomSize = (dfLocation) => {
 export function smallerDungeonsStamp(dfLocation) {
   // DSIZE1: the build, at its own value - MEDIUM-DISTINCT: and a medium build whose interior block was taken again, at
   // its own, so a save made in the layout that laid it twice (3) is another layout's
-  if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;
+  if (isMediumDungeon(dfLocation))
+    return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;
   return isSmallerDungeon(dfLocation) ? SMALLER_DUNGEONS_STATE.Enabled : SMALLER_DUNGEONS_STATE.Disabled;
 }
 
@@ -413,7 +457,12 @@ export function needsStartWarp(savedState, dfLocation) {
 /** The one door the hosts use: the location to BUILD, sized by the law. DSIZE1: at any of the three sizes. */
 export function dungeonLocationFor(dfLocation, deps = {}) {
   const size = dungeonSizeFor(dfLocation, deps);
-  const built = size === 'small' ? generateSmallerDungeon(dfLocation) : size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;
+  const built =
+    size === 'small'
+      ? generateSmallerDungeon(dfLocation)
+      : size === 'medium'
+        ? generateMediumDungeon(dfLocation)
+        : dfLocation;
   // DELVE II (AUDIT DLV5-6 H1): and the curated block a game-made dungeon takes, after its size - the layout, the quests'
   // markers and the room read this one list. The dungeon whole (an instance's, an online quest's) is its own blocks.
   return deps.whole ? built : curatedLocation(built);
@@ -434,4 +483,5 @@ export function builtSizeFor(dfLocation, deps = {}) {
 /** DELVE II (AUDIT DLV5-6 M3): IS ITS PUBLIC ROOM, ONLINE, A LAYOUT OF ITS OWN - built smaller, or whole with a curated
  *  block (its own list's slot: a dungeon built whole lays the location's own blocks) - where a quest's things, laid whole,
  *  never stand (scenes/instanceDoor.js dungeonSite). Builds nothing. */
-export const relaidOnline = (dfLocation) => builtSizeFor(dfLocation, { online: true }) !== 'full' || curatedSlot(dfLocation, CURATED_RECORDS) != null;
+export const relaidOnline = (dfLocation) =>
+  builtSizeFor(dfLocation, { online: true }) !== 'full' || curatedSlot(dfLocation, CURATED_RECORDS) != null;

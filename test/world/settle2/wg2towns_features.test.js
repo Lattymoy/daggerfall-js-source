@@ -1,4 +1,4 @@
-// WG2-TOWNS FEATURES (bible/03-World/World-2-Canon.md, "Buildings and settlements"): a World 2.0 town's features stood as
+// WG2-TOWNS FEATURES ("Buildings and settlements"): a World 2.0 town's features stood as
 // models of the shells' lane - every baked feature but a field one model (a wall its run's pieces), at its place facing its
 // way at its level; its wall solid and open at its gates; its docks', bridges' and platforms' decks at their level over
 // the water or the marsh, its stairs climbable; its fields its crop ground; its terraces' edges shut to its walkers but at

@@ -1,4 +1,4 @@
-// WG2 PHASE 0 (bible/01-Overview/audits/Audit-World-2-Phase-0.md): THE BASELINES World 2.0 is held against - what a
+// WG2 PHASE 0: THE BASELINES World 2.0 is held against - what a
 // bake costs offline, what a published region costs the ground's hot reads on the client (tamrielHeightByte uncached,
 // the shaper's gen2Units, the sampler's heightAt), with none installed and with one. `node tools/wg2Measure.mjs`.
 // A measurement, not a pin: the numbers move with the machine.

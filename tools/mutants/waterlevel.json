@@ -4,174 +4,228 @@
     "file": "src/world/water/waterLevel.js",
     "old": "      f[vz * gx + vx] = wet / ((sw >= 0 ? 1 : 0) + (se >= 0 ? 1 : 0) + (nw >= 0 ? 1 : 0) + (ne >= 0 ? 1 : 0));",
     "new": "      f[vz * gx + vx] = wet / 4;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-halo-blind-to-painted",
     "file": "src/world/water/waterBed.js",
-    "old": "v = painted && painted(px + x / side, py + 1 - z / side) ? WATER : tileDataAt(",
-    "new": "v = tileDataAt(",
-    "tests": ["test/world/water/waterlevel.test.js", "test/world/terrain/audit_waternext.test.js"]
+    "old": "      v =\n        painted && painted(px + x / side, py + 1 - z / side)\n          ? WATER\n          : tileDataAt(sampleHeight(Math.fround(ghost(x, z))), x - dx * side, z + dz * side, px + dx, py + dz);",
+    "new": "      v = tileDataAt(sampleHeight(Math.fround(ghost(x, z))), x - dx * side, z + dz * side, px + dx, py + dz);",
+    "tests": [
+      "test/world/water/waterlevel.test.js",
+      "test/world/terrain/audit_waternext.test.js"
+    ]
   },
   {
     "name": "WL-clip-votes-dry",
     "file": "src/world/water/waterLevel.js",
-    "old": "return b === CLIP_SENTINEL ? -1 : table[b];",
-    "new": "return b === CLIP_SENTINEL ? 0 : table[b];",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "    return b === CLIP_SENTINEL ? -1 : table[b];",
+    "new": "    return b === CLIP_SENTINEL ? 0 : table[b];",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-ring-above-its-ground",
     "file": "src/world/water/waterLevel.js",
     "old": "      level[i] = Math.min(sum / k, y);",
     "new": "      level[i] = sum / k;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-ring-one-neighbour",
     "file": "src/world/water/waterLevel.js",
-    "old": "        sum += level[nz * gx + nx]; k++;",
-    "new": "        sum = level[nz * gx + nx]; k = 1;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "          sum += level[nz * gx + nx];\n          k++;",
+    "new": "          sum = level[nz * gx + nx];\n          k = 1;",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-no-depth-cut",
     "file": "src/world/water/waterLevel.js",
     "old": "      cut[i] = y > level[i] + DEPTH_CUT_RISE ? -1 : 1;",
     "new": "      cut[i] = 1;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-rise-under-the-lift",
     "file": "src/world/water/waterLevel.js",
     "old": "export const DEPTH_CUT_RISE = 0.25;",
     "new": "export const DEPTH_CUT_RISE = 0.05;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-law-ignored",
     "file": "src/world/water/waterLevel.js",
     "old": "      level[i] = Number.isFinite(own) ? own : grid[i * 3 + 1];",
     "new": "      level[i] = grid[i * 3 + 1];",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-carve-by-the-ground-alone",
     "file": "src/world/water/waterBed.js",
-    "old": "moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));",
-    "new": "moved[i] = fields.carve[i];",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "  if (fields)\n    for (let i = 0; i < n; i++)\n      if (fields.carve[i] > 0) moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));",
+    "new": "  if (fields) for (let i = 0; i < n; i++) if (fields.carve[i] > 0) moved[i] = fields.carve[i];",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-floor-raised",
     "file": "src/world/water/waterBed.js",
-    "old": "moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));",
-    "new": "moved[i] = grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]);",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "      if (fields.carve[i] > 0) moved[i] = Math.max(0, grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]));",
+    "new": "      if (fields.carve[i] > 0) moved[i] = grid.positions[i * 3 + 1] - (level[i] - fields.carve[i]);",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-quad-of-borrowed-corners",
     "file": "src/world/water/waterLevel.js",
     "old": "      if (!(votes[i0] > 0 || votes[i1] > 0 || votes[i2] > 0 || votes[i3] > 0)) continue;",
     "new": "",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-clipped-quad-drawn",
     "file": "src/world/water/waterLevel.js",
-    "old": "      if (clipped(bytes, x, z, stride, tileDim)) continue;",
-    "new": "",
-    "tests": ["test/world/water/waterlevel.test.js", "test/world/deepWater/dwf_farsea.test.js"]
+    "old": "      if (clipped(bytes, x, z, stride, tileDim)) continue; // Iliac Puddle No More's own sea stands there",
+    "new": "      // Iliac Puddle No More's own sea stands there",
+    "tests": [
+      "test/world/water/waterlevel.test.js",
+      "test/world/deepWater/dwf_farsea.test.js"
+    ]
   },
   {
     "name": "WL-centre-without-its-tile",
     "file": "src/world/water/waterLevel.js",
     "old": "    cuts[c] = stride === 1 ? Math.min(mean, 1 - 2 * corners(tileBits(bytes, x, z, tileDim, table))) : mean;",
     "new": "    cuts[c] = mean;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-centre-off-the-diagonal",
     "file": "src/world/water/waterLevel.js",
-    "old": "positions[c * 3] = (grid[i0 * 3] + grid[i3 * 3]) / 2;",
-    "new": "positions[c * 3] = grid[i0 * 3];",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "    positions[c * 3] = (grid[i0 * 3] + grid[i3 * 3]) / 2;",
+    "new": "    positions[c * 3] = grid[i0 * 3];",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-shading-under-the-bed",
     "file": "src/world/water/waterLevel.js",
     "old": "  const shade = (i) => Math.max(level[i] - ground[i * 3 + 1], bedDepths ? bedDepths[i] : 0);",
     "new": "  const shade = (i) => level[i] - ground[i * 3 + 1];",
-    "tests": ["test/world/water/waterlevel.test.js", "test/world/water/bankflush.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js",
+      "test/world/water/bankflush.test.js"
+    ]
   },
   {
     "name": "WL-sea-strict",
     "file": "src/world/water/waterLevel.js",
-    "old": "(y <= SEA_LEVEL_Y + SEA_GROUND_EPSILON ? SEA_LEVEL_Y : NaN);",
-    "new": "(y < SEA_LEVEL_Y ? SEA_LEVEL_Y : NaN);",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "export const seaLevelAt = (y) => (y <= SEA_LEVEL_Y + SEA_GROUND_EPSILON ? SEA_LEVEL_Y : NaN);",
+    "new": "export const seaLevelAt = (y) => (y < SEA_LEVEL_Y ? SEA_LEVEL_Y : NaN);",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-gen2-metres-unframed",
     "file": "src/world/water/streamLevels.js",
     "old": "export const gen2LevelY = (m) => SEA_LEVEL_Y + m;",
     "new": "export const gen2LevelY = (m) => m;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-gen2-no-share-gate",
     "file": "src/world/water/streamLevels.js",
-    "old": "r && r.weight(x, wy) >= 0.5 && shareAt(x, wy) >= 0.999 ? r.waterAt(x, wy) : null;",
-    "new": "r ? r.waterAt(x, wy) : null;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "      w = r && r.weight(x, wy) >= 0.5 && shareAt(x, wy) >= 0.999 ? r.waterAt(x, wy) : null;",
+    "new": "      w = r ? r.waterAt(x, wy) : null;",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-far-vertex-at-the-near-point",
     "file": "src/world/water/streamLevels.js",
-    "old": "const x = px + (vx * stride) / 128, wy = py + 1 - (vz * stride) / 128,",
-    "new": "const x = px + vx / 128, wy = py + 1 - vz / 128,",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "    const x = px + (vx * stride) / 128,\n      wy = py + 1 - (vz * stride) / 128,",
+    "new": "    const x = px + vx / 128,\n      wy = py + 1 - vz / 128,",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-meet-dropped",
     "file": "src/render/waterSurface.js",
     "old": "  if (uOpen == 0) edge *= smoothstep(0.0, ${SHORE_MEET.toFixed(3)}, meet);",
     "new": "",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-meet-the-bed-not-the-scene",
     "file": "src/render/waterSurface.js",
     "old": "    meet = (bedD - here) * slant;",
     "new": "",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-cut-sign",
     "file": "src/render/waterSurface.js",
     "old": "0.5 - 0.5 * vCut - (geEntry(data)",
     "new": "0.5 + 0.5 * vCut - (geEntry(data)",
-    "tests": ["test/world/water/waterlevel.test.js", "test/render/coastlook.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js",
+      "test/render/coastlook.test.js"
+    ]
   },
   {
     "name": "WL-restride-off-the-sheet",
     "file": "src/scenes/world.js",
     "old": "    p.water = bed?.sheet ? renderer.createWaterSheet(bed.sheet) : null;",
     "new": "    p.water = null;",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-kernel-without-the-laws",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "levelAt: at ? streamLevelAt(at.px, at.py, stride) : null",
-    "new": "levelAt: null",
-    "tests": ["test/world/water/waterlevel.test.js"]
+    "old": "  const carved = waterBedOf(grid, bytes, { stride, halo, levelAt: at ? streamLevelAt(at.px, at.py, stride) : null });",
+    "new": "  const carved = waterBedOf(grid, bytes, { stride, halo, levelAt: null });",
+    "tests": [
+      "test/world/water/waterlevel.test.js"
+    ]
   },
   {
     "name": "WL-recarve-keeps-a-stale-sheet",
     "file": "src/scenes/world.js",
     "old": "depths: bed?.depths ?? null, sheet: bed?.sheet ?? null, halo };",
     "new": "depths: bed?.depths ?? null, sheet: p._bed.sheet, halo };",
-    "tests": ["test/world/terrain/audit_waternext.test.js"]
+    "tests": [
+      "test/world/terrain/audit_waternext.test.js"
+    ]
   }
 ]

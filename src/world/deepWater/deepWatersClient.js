@@ -19,15 +19,22 @@
 //    worker runs; a job the dead worker still owed is answered here too.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildGlobalSteps, classifyPixel, PIXEL_MIXED, PIXEL_LAND, DeepWatersBake, bakeMeetsAt } from './deepWatersBake.js';
+import {
+  buildGlobalSteps,
+  classifyPixel,
+  PIXEL_MIXED,
+  PIXEL_LAND,
+  DeepWatersBake,
+  bakeMeetsAt,
+} from './deepWatersBake.js';
 import { bakeCacheKey, bakeStore, cachedBake, fnv1a, rectsFingerprint, rectsLookup } from './deepWatersBakeCache.js';
-import { locationRectReader } from '../terrain/terrainTiles.js';   // BOOT-RECTS: the walk's blocks parsed once
+import { locationRectReader } from '../terrain/terrainTiles.js'; // BOOT-RECTS: the walk's blocks parsed once
 import { buildDeepWatersPixel } from './deepWatersPixel.js';
-import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP: the Eltheric Ocean's bake beside the Bay's
+import { worldBakes } from '../etherWatersBake.js'; // ETHER-DEEP: the Eltheric Ocean's bake beside the Bay's
 import { etherWoods } from '../ethericSea.js';
-import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's bake, set when its trace lands
+import { TamrielWatersBake } from '../tamrielWatersBake.js'; // TAMRIEL-DEEP: the continent's bake, set when its trace lands
 import { groundWoods } from '../tamriel/tamrielGround.js';
-import { gen2Shipped } from '../gen2/gen2Ground.js';   // WG2: the published regions, posted with the trace
+import { gen2Shipped } from '../gen2/gen2Ground.js'; // The published regions, posted with the trace
 
 function defaultWorkerFactory() {
   return new Worker(new URL('./deepWatersWorker.js', import.meta.url), { type: 'module' });
@@ -45,9 +52,13 @@ export function deepWatersLocationRects(woods, locations, maps, blocks, meets = 
   const rows = [];
   const rectOf = locationRectReader(maps, blocks);
   /** ACROSS-EDGE: whether a town's 3 x 3 holds a pixel that may be water - its meet may raise it */
-  const nearWater = (px, py) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (classifyPixel(woods, px + dx, py + dy) !== PIXEL_LAND) return true; return false; };
+  const nearWater = (px, py) => {
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) if (classifyPixel(woods, px + dx, py + dy) !== PIXEL_LAND) return true;
+    return false;
+  };
   for (const [px, py, loc] of locations) {
-    if (!loc || loc.spawned) continue;   // SPAWNED-DUNGEONS1 clones are the port's, not the baker's
+    if (!loc || loc.spawned) continue; // SPAWNED-DUNGEONS1 clones are the port's, not the baker's
     const met = meets(loc);
     if (classifyPixel(woods, px, py) !== PIXEL_MIXED && !(met && nearWater(px, py))) continue;
     const r = rectOf(loc);
@@ -64,7 +75,8 @@ const etherGround = (woods) => (woods?.isEtherGround ? woods : etherWoods(woods)
 /** Same-thread build, sliced: at most `sliceMs` of work between yields to the event loop. */
 async function buildHere(woods, rows, { store = bakeStore(), sliceMs = 8, woodsBytes = null } = {}) {
   const key = bakeCacheKey({ woodsHash: woodsBytes ? fnv1a(woodsBytes) : 0, rectsHash: rectsFingerprint(rows) });
-  const locationRectAt = rectsLookup(rows), meetsAt = bakeMeetsAt(woods, locationRectAt);   // ACROSS-EDGE: one read of each town's meet
+  const locationRectAt = rectsLookup(rows),
+    meetsAt = bakeMeetsAt(woods, locationRectAt); // ACROSS-EDGE: one read of each town's meet
   let result = null;
   if (store) {
     const hit = await store.get(key);
@@ -74,8 +86,13 @@ async function buildHere(woods, rows, { store = bakeStore(), sliceMs = 8, woodsB
   for (;;) {
     const t0 = globalThis.performance?.now?.() ?? Date.now();
     let r;
-    do { r = steps.next(); } while (!r.done && (globalThis.performance?.now?.() ?? Date.now()) - t0 < sliceMs);
-    if (r.done) { result = r.value; break; }
+    do {
+      r = steps.next();
+    } while (!r.done && (globalThis.performance?.now?.() ?? Date.now()) - t0 < sliceMs);
+    if (r.done) {
+      result = r.value;
+      break;
+    }
     await new Promise((res) => setTimeout(res, 0));
   }
   // through the cache's own door, so a store that fails stays a miss rather than an error
@@ -96,16 +113,36 @@ async function buildHere(woods, rows, { store = bakeStore(), sliceMs = 8, woodsB
  * @param {?object} [deps.store] - the same-thread path's cache (default IndexedDB).
  * @returns {{ready: Promise<?DeepWatersBake>, buildPixel: (job: object, centre?: number[]) => Promise<?object>, setTamriel: (o: { trace: any, fit: any }) => void, dispose: () => void, readonly onWorker: boolean}}
  */
-export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = null, continent = false, workerFactory = undefined, store = undefined } = {}) {
-  if (!woods) return { ready: Promise.resolve(null), buildPixel: async () => null, setTamriel() {}, dispose() {}, get onWorker() { return false; } };
-  const factory = workerFactory === undefined
-    ? ((typeof Worker === 'undefined' || !woodsBytes) ? null : defaultWorkerFactory)
-    : workerFactory;
+export function openDeepWaters({
+  woods,
+  woodsBytes = null,
+  rects = [],
+  ether = null,
+  continent = false,
+  workerFactory = undefined,
+  store = undefined,
+} = {}) {
+  if (!woods)
+    return {
+      ready: Promise.resolve(null),
+      buildPixel: async () => null,
+      setTamriel() {},
+      dispose() {},
+      get onWorker() {
+        return false;
+      },
+    };
+  const factory =
+    workerFactory === undefined
+      ? typeof Worker === 'undefined' || !woodsBytes
+        ? null
+        : defaultWorkerFactory
+      : workerFactory;
   let worker = null;
   let bake = null;
   let disposed = false;
   let warned = false;
-  const pending = new Map();   // id -> {resolve, job}
+  const pending = new Map(); // id -> {resolve, job}
   let nextId = 1;
 
   const here = (job) => {
@@ -113,7 +150,10 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
     try {
       return buildDeepWatersPixel(job, bake);
     } catch (e) {
-      if (!warned) { warned = true; console.warn(`[deep waters] pixel ${job?.px},${job?.py} failed to promote: ${e?.message ?? e}`); }
+      if (!warned) {
+        warned = true;
+        console.warn(`[deep waters] pixel ${job?.px},${job?.py} failed to promote: ${e?.message ?? e}`);
+      }
       return null;
     }
   };
@@ -124,8 +164,15 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
   const dropWorker = () => {
     const w = worker;
     worker = null;
-    try { w?.terminate?.(); } catch { /* gone */ }
-    for (const [id, p] of pending) { pending.delete(id); p.resolve(adopt(here(p.job))); }
+    try {
+      w?.terminate?.();
+    } catch {
+      /* gone */
+    }
+    for (const [id, p] of pending) {
+      pending.delete(id);
+      p.resolve(adopt(here(p.job)));
+    }
   };
 
   const ready = (async () => {
@@ -134,12 +181,17 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
       record = await new Promise((resolve) => {
         try {
           worker = factory();
-          worker.onerror = () => { resolve(null); dropWorker(); };
+          worker.onerror = () => {
+            resolve(null);
+            dropWorker();
+          };
           worker.onmessage = (ev) => {
             const m = ev.data ?? {};
             if (m.t === 'built') resolve(m.record);
-            else if (m.t === 'error') { resolve(null); dropWorker(); }
-            else if (m.t === 'pixel') {
+            else if (m.t === 'error') {
+              resolve(null);
+              dropWorker();
+            } else if (m.t === 'pixel') {
               const p = pending.get(m.id);
               if (!p) return;
               pending.delete(m.id);
@@ -155,9 +207,14 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
         }
       });
     }
-    if (!record && !disposed) record = await buildHere(woods, rects, { woodsBytes, ...(store !== undefined ? { store } : {}) });
+    if (!record && !disposed)
+      record = await buildHere(woods, rects, { woodsBytes, ...(store !== undefined ? { store } : {}) });
     if (!record || disposed) return null;
-    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether, continent });
+    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), {
+      woods: ether ? etherGround(woods) : woods,
+      ether,
+      continent,
+    });
     return bake;
   })();
 
@@ -185,19 +242,52 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
     setTamriel({ trace, fit }) {
       if (!continent || disposed) return;
       if (worker) {
-        const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;
-        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped() }); } catch { /* the main thread's bake answers */ }   // WG2: the published regions
+        const t = trace
+          ? {
+              w: trace.w,
+              h: trace.h,
+              land: trace.land.slice(),
+              province: trace.province.slice(),
+              relief: trace.relief ? trace.relief.slice() : null,
+            }
+          : null;
+        try {
+          worker.postMessage({
+            t: 'tamriel',
+            trace: t,
+            fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null,
+            wg2: gen2Shipped(),
+          });
+        } catch {
+          /* the main thread's bake answers */
+        } // The published regions
       }
-      void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });
+      void ready.then((b) => {
+        if (b && !disposed)
+          b.setTamriel?.(
+            trace
+              ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay })
+              : null,
+          );
+      });
     },
     dispose() {
       disposed = true;
       const w = worker;
       worker = null;
-      try { w?.terminate?.(); } catch { /* gone */ }
-      for (const [id, p] of pending) { pending.delete(id); p.resolve(null); }
+      try {
+        w?.terminate?.();
+      } catch {
+        /* gone */
+      }
+      for (const [id, p] of pending) {
+        pending.delete(id);
+        p.resolve(null);
+      }
     },
-    get onWorker() { return !!worker; },
+    get onWorker() {
+      return !!worker;
+    },
   };
 }
 

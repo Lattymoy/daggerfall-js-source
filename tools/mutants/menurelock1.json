@@ -1,42 +1,94 @@
 [
-  { "name": "the-worldmodes-read-slides-back-inside-the-interior-arm", "file": "src/scenes/worldModes.js",
+  {
+    "name": "the-worldmodes-read-slides-back-inside-the-interior-arm",
+    "file": "src/scenes/worldModes.js",
     "old": "    const hadOverlay = !!(mode === 'interior' ? interiorKeyCtx : dungeonCtx)?.uiOverlayActive;\n    const closedAWindow = (ctx) => hadOverlay && !ctx?.uiOverlayActive;   // MENU-RELOCK: this key dismissed the last window\n    if (mode === 'interior') {\n",
     "new": "    const closedAWindow = (ctx) => hadOverlay && !ctx?.uiOverlayActive;\n    if (mode === 'interior') {\n      const hadOverlay = !!interiorKeyCtx.uiOverlayActive;\n",
-    "tests": ["test/scenes/menu_pointer_relock.test.js", "test/systems/qs7_one_dispatch.test.js", "test/scenes/flagsweep.test.js"] },
-  { "name": "the-interior-arm-stops-relocking", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js",
+      "test/systems/qs7_one_dispatch.test.js",
+      "test/scenes/flagsweep.test.js"
+    ]
+  },
+  {
+    "name": "the-interior-arm-stops-relocking",
+    "file": "src/scenes/worldModes.js",
     "old": "      if (closedAWindow(interiorKeyCtx)) host.relock?.();   // MENU-RELOCK: inside the closing key's own gesture\n",
     "new": "",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-dungeon-arm-stops-relocking", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-dungeon-arm-stops-relocking",
+    "file": "src/scenes/worldModes.js",
     "old": "    if (closedAWindow(dungeonCtx)) host.relock?.();   // MENU-RELOCK: the same, on the dungeon arm",
     "new": "",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-keyup-edge-goes-so-a-two-phase-window-waits", "file": "src/scenes/dungeon.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-keyup-edge-goes-so-a-two-phase-window-waits",
+    "file": "src/scenes/dungeon.js",
     "old": "    const hadOverlay = !!ctx.uiOverlayActive;\n    routeKeyUp(e, ctx);\n    if (hadOverlay && !ctx.uiOverlayActive) requestLook(canvas);",
     "new": "    routeKeyUp(e, ctx);",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-interior-relocks-under-a-pause", "file": "src/scenes/interior.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-interior-relocks-under-a-pause",
+    "file": "src/scenes/interior.js",
     "old": "      if (!overlay && !gamePaused()) requestLook(canvas);\n      e.preventDefault();",
     "new": "      if (!overlay) requestLook(canvas);\n      e.preventDefault();",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-talk-panel-relocks-under-another-window", "file": "src/scenes/townTalk.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-talk-panel-relocks-under-another-window",
+    "file": "src/scenes/townTalk.js",
     "old": "      if (!overlay && !otherOverlayActive?.()) requestLook(canvas);\n      return true;\n    }\n    // AUDIT 58 (talk lane)",
     "new": "      if (!overlay) requestLook(canvas);\n      return true;\n    }\n    // AUDIT 58 (talk lane)",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "an-activated-cursor-is-taken-back-by-the-relock", "file": "src/player/pointerLock.js",
-    "old": "  if (_cursorActive || _cursorHolds.size) return;\n  // RPT1026-MISC TOUCH-NO-LOCK",
-    "new": "  if (_cursorHolds.size) return;\n  // RPT1026-MISC TOUCH-NO-LOCK",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-lock-asks-for-the-accelerated-pointer", "file": "src/player/pointerLock.js",
-    "old": "unadjustedMovement: true",
-    "new": "unadjustedMovement: false",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-grace-goes-so-the-stale-frame-tears-the-gesture-down", "file": "src/player/pointerLock.js",
-    "old": "    if (held) { if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook(); }",
-    "new": "    if (held) releaseLook();",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] },
-  { "name": "the-host-seam-is-a-silent-no-op", "file": "src/scenes/world.js",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "an-activated-cursor-is-taken-back-by-the-relock",
+    "file": "src/player/pointerLock.js",
+    "old": "  if (_cursorActive || _cursorHolds.size) return;",
+    "new": "  if (_cursorHolds.size) return;",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-lock-asks-for-the-accelerated-pointer",
+    "file": "src/player/pointerLock.js",
+    "old": "    const p = canvas.requestPointerLock({ unadjustedMovement: true });",
+    "new": "    const p = canvas.requestPointerLock({ unadjustedMovement: false });",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-grace-goes-so-the-stale-frame-tears-the-gesture-down",
+    "file": "src/player/pointerLock.js",
+    "old": "    if (held) {\n      if (nowMs() - _lastRequestAt > RELOCK_GRACE_MS) releaseLook();\n    } else if (wasHeld) requestLook(canvas);",
+    "new": "    if (held) releaseLook();\n    else if (wasHeld) requestLook(canvas);",
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  },
+  {
+    "name": "the-host-seam-is-a-silent-no-op",
+    "file": "src/scenes/world.js",
     "old": "    relock: () => requestLook(canvas),   // MAC1: the interior arm's pause door relocks through this host's canvas",
     "new": "    relockDisabled: () => requestLook(canvas),",
-    "tests": ["test/scenes/menu_pointer_relock.test.js"] }
+    "tests": [
+      "test/scenes/menu_pointer_relock.test.js"
+    ]
+  }
 ]

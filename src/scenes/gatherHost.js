@@ -73,7 +73,7 @@ import { materialCountLabel } from '../systems/professions/profItems.js';
 import { accountRefusalText } from '../net/accountClient.js';
 import { DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { harvestHauls } from '../ui/haulCards.js';   // HAUL-CARDS: a harvest's goods and XP as one card, on the enhanced skin
-import { BAG_WORDS, goodsWhere } from '../net/bagLaw.js';   // BAG1: where the goods went
+import { BAG_WORDS, goodsWhere, extraStored } from '../net/bagLaw.js';   // BAG1: where the goods went; BUTCHER-STORES: a body's meat the Stores'
 import { nodeMarkCss } from '../ui/nodeMarks.js';   // GATHER-OW: a group's glyph in its profession's compass colour
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { createGatherEar } from '../systems/gatherSounds.js';   // GATHER-FEEL: the gathering's ear
@@ -171,9 +171,12 @@ export function needLine(plan, rankOf) {
 export function storesLine(d) {
   const goods = [`${d.qty} ${materialCountLabel(d.material, d.qty)}`];
   if (d.gem) { const g = materialCountLabel(d.gem, 1); goods.push(`${/^[aeiou]/i.test(g) ? 'an' : 'a'} ${g}`); }
-  if (d.extra) { const n = Number(d.extraQty) || 1; goods.push(`${n > 1 ? `${n} ` : ''}${materialCountLabel(d.extra, n)}`); }
+  const xn = Number(d.extraQty) || 1;
+  const extra = d.extra ? `${xn > 1 ? `${xn} ` : ''}${materialCountLabel(d.extra, xn)}` : null;
+  const stored = extra && extraStored(d);   // BUTCHER-STORES: a body's meat went to the Stores, the rest to the bag
+  if (extra && !stored) goods.push(extra);
   const said = goods.length > 1 ? `${goods.slice(0, -1).join(', ')} and ${goods[goods.length - 1]}` : goods[0];
-  return `+${said} ${goodsWhere(d)}`;
+  return `+${said} ${goodsWhere(d)}${stored ? t('gather.goods.andStores', ', and {goods} to your Stores', { goods: extra }) : ''}`;
 }
 /** AUDIT BAG1 B4: the material a kind's act names for its goods (`material`: a key, or one of the act's ground - a
  *  herb's is its region's), or null where the service rolls it (the Basket's food, a boulder's stone). */

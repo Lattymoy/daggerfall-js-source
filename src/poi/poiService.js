@@ -20,7 +20,8 @@ import { call } from '../net/accountClient.js';
 
 /** @typedef {{ fetch: (url: string, init?: any) => Promise<any>, base: string, secret: string | null }} PoiIo */
 
-const hex = (/** @type {ArrayBuffer} */ buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const hex = (/** @type {ArrayBuffer} */ buf) =>
+  [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 /** An asset's name: the sha256 of its bytes, in hex. @param {Uint8Array} bytes */
 export async function poiSha256(bytes, subtle = globalThis.crypto.subtle) {
   return hex(await subtle.digest('SHA-256', /** @type {BufferSource} */ (/** @type {unknown} */ (bytes))));
@@ -37,10 +38,19 @@ async function put(io, path, body, contentType) {
     return { ok: false, error: 'offline' };
   }
   let data = null;
-  try { data = await res.json(); } catch { data = null; }
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
   if (!res.ok) {
-    return { ok: false, error: typeof data?.error === 'string' ? data.error : 'server', ...(typeof data?.why === 'string' ? { why: data.why } : {}),
-      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}), status: res.status };   // the law's own word on a refusal
+    return {
+      ok: false,
+      error: typeof data?.error === 'string' ? data.error : 'server',
+      ...(typeof data?.why === 'string' ? { why: data.why } : {}),
+      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}),
+      status: res.status,
+    }; // the law's own word on a refusal
   }
   if (!data) return { ok: false, error: 'offline', unknown: true, status: res.status };
   return { ok: true, data, status: res.status };
@@ -58,7 +68,8 @@ export const poiHistory = (io, id) => call(io, `/v1/poi/doc/${id}`);
 
 /** Save a draft: `{ id, rev, state: 'draft' }` - a builder's one open draft of a POI, made or saved over. `base` the live
  *  revision it was made from (null for a POI never approved). @param {PoiIo} io @param {any} doc @param {number | null} base */
-export const poiSaveDraft = (io, doc, base = null) => put(io, '/v1/poi/draft', JSON.stringify({ doc, base }), 'application/json');
+export const poiSaveDraft = (io, doc, base = null) =>
+  put(io, '/v1/poi/draft', JSON.stringify({ doc, base }), 'application/json');
 /** A draft sent for the approver's word. @param {PoiIo} io */
 export const poiSubmit = (io, id, rev) => call(io, '/v1/poi/submit', { id, rev });
 /** A submission taken back to a draft. @param {PoiIo} io */
@@ -68,7 +79,8 @@ export const poiRetire = (io, id) => call(io, '/v1/poi/retire', { id });
 /** The approver's word on a submission: `verdict` 'approve' or 'reject', with a note. AUDIT POI S1: `docSha` the name of
  *  the document the approver looked at (the queue item's) - an approval of a document names it, and the store refuses
  *  `poi-changed` a revision whose document is no longer that one. @param {PoiIo} io */
-export const poiReview = (io, id, rev, verdict, note = null, docSha = null) => call(io, '/v1/poi/review', { id, rev, verdict, note, ...(typeof docSha === 'string' ? { docSha } : {}) });
+export const poiReview = (io, id, rev, verdict, note = null, docSha = null) =>
+  call(io, '/v1/poi/review', { id, rev, verdict, note, ...(typeof docSha === 'string' ? { docSha } : {}) });
 /** The approver puts an earlier approved revision back in the world. @param {PoiIo} io */
 export const poiRollback = (io, id, rev) => call(io, '/v1/poi/rollback', { id, rev });
 

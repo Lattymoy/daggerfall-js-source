@@ -11,8 +11,8 @@
   {
     "name": "AUDITRETRO1-A1-no-hud-twin-in-the-config",
     "file": "src/systems/retroMode.js",
-    "old": "hud = retroTargetSize(mode, true);",
-    "new": "hud = retroTargetSize(mode, false);",
+    "old": "    hud = retroTargetSize(mode, true);",
+    "new": "    hud = retroTargetSize(mode, false);",
     "tests": [
       "test/render/auditretro1.test.js",
       "test/render/retro1.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "AUDITRETRO1-C7-the-black-shift-steppable",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "'Video/PalettizationLUTShift': { min: 0, max: 7,",
-    "new": "'Video/PalettizationLUTShift': { min: 0, max: 8,",
+    "old": "    max: 7,",
+    "new": "    max: 8,",
     "tests": [
       "test/render/auditretro1.test.js",
       "test/render/retro1.test.js"
@@ -370,7 +370,7 @@
     "name": "AUDITRETRO1-D5-a-menu-frees-the-retro-slot",
     "file": "src/render/airPass.js",
     "old": "    if (kept) this._deleteFrame(kept);",
-    "new": "    { const k = this.frame; if (k) this._deleteFrame(k); }",
+    "new": "    {\n      const k = this.frame;\n      if (k) this._deleteFrame(k);\n    }",
     "tests": [
       "test/render/auditretro1.test.js"
     ],
@@ -379,8 +379,8 @@
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
     "file": "src/render/airPass.js",
-    "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
-    "new": "      if (this.frame !== kept) { this.frame = kept; }",
+    "old": "        this.prevValid = false;\n      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
+    "new": "      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
@@ -388,7 +388,7 @@
   {
     "name": "AUDITRETRO1-D6-double-for-float",
     "file": "src/systems/retroMode.js",
-    "old": "  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);\n  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));",
+    "old": "  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);\n  const viewWidth = Math.trunc(\n    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio),\n  );",
     "new": "  const heightRatio = screenH / 6 / 200;\n  const viewWidth = Math.trunc(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6) * heightRatio);",
     "tests": [
       "test/render/auditretro1.test.js"
@@ -451,8 +451,8 @@
   {
     "name": "AUDITRETRO1-E4-a-warning-a-read",
     "file": "src/systems/settings/settings.js",
-    "old": "  if (_warned.has(k)) return;\n",
-    "new": "",
+    "old": "  if (_warned.has(k)) return;\n  _warned.add(k);",
+    "new": "  _warned.add(k);",
     "tests": [
       "test/render/auditretro1.test.js"
     ]

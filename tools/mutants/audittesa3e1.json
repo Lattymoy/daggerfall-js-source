@@ -38,8 +38,8 @@
   {
     "name": "E1-4-the-outline-off-the-row",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])]);",
-    "new": "rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax]);",
+    "old": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape, ...(met ? [1] : [])] : [])]);",
+    "new": "    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax]);",
     "tests": [
       "test/world/audittesa3e1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "E1-4-the-outline-unread-by-the-lookup",
     "file": "src/world/deepWater/deepWatersBakeCache.js",
-    "old": "yMax: r[4], ...(r[5] ? { shape: r[5] } : {}), ...(r[6] ? { meets: true } : {}) });",
-    "new": "yMax: r[4], ...(r[6] ? { meets: true } : {}) });",
+    "old": "    m.set(r[0], {\n      xMin: r[1],\n      xMax: r[2],\n      yMin: r[3],\n      yMax: r[4],\n      ...(r[5] ? { shape: r[5] } : {}),\n      ...(r[6] ? { meets: true } : {}),\n    });",
+    "new": "    m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[6] ? { meets: true } : {}) });",
     "tests": [
       "test/world/audittesa3e1.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "E1-1-the-guard-passes-the-ring",
     "file": "src/world/road/roadPainter.js",
-    "old": "\n        && !locationRect?.ring?.[i]) continue;",
-    "new": ") continue;",
+    "old": "        ) &&\n        !locationRect?.ring?.[i]",
+    "new": "        )",
     "tests": [
       "test/world/road/audittesa3e1_ring.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "E1-1-the-ring-paves-the-sea",
     "file": "src/world/road/roadPainter.js",
-    "old": "ctx.rect.ring[ctx.i] === RING.road && ctx.ground !== TILE.water :",
-    "new": "ctx.rect.ring[ctx.i] === RING.road :",
+    "old": "      ? ctx.rect.ring[ctx.i] === RING.road && ctx.ground !== TILE.water",
+    "new": "      ? ctx.rect.ring[ctx.i] === RING.road",
     "tests": [
       "test/world/road/audittesa3e1_ring.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "E1-1-the-curved-ring-paves-the-sea",
     "file": "src/world/road/roadCurves.js",
-    "old": "        if (ground === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps\n",
-    "new": "",
+    "old": "        if (ground === WATER) continue; // AUDIT TESA III E1-1: never the sea a shore town keeps\n        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;",
+    "new": "        tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;",
     "tests": [
       "test/world/road/audittesa3e1_ring.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "E1-1-the-ring-smoothed",
     "file": "src/world/road/roadPainter.js",
-    "old": "      if (rect?.ring?.[y * tDim + x]) continue;",
-    "new": "",
+    "old": "      if (rect?.ring?.[y * tDim + x]) continue; // AUDIT TESA III E1-1: nor TS2's ring - the padding it stands for was never smoothed",
+    "new": "      // AUDIT TESA III E1-1: nor TS2's ring - the padding it stands for was never smoothed",
     "tests": [
       "test/world/road/audittesa3e1_ring.test.js"
     ]

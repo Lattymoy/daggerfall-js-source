@@ -34,7 +34,8 @@ import { mobileBillboardSize } from './rmbFlats.js';
 import { bandSpriteReach, stepBandAlpha, BAND_SPRITE_FAR_M } from './bandSprites.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
 import { FlatAnim } from '../render/flatAnimation.js';
-import { createPopulationLane } from '../characters/npcBodies.js'; import { residentLook, rosterActor } from '../characters/rosterBodies.js';   // MWNPC10c
+import { createPopulationLane } from '../characters/npcBodies.js';
+import { residentLook, rosterActor } from '../characters/rosterBodies.js'; // MWNPC10c
 
 /** Under the Overworld a body past this (m) is not drawn - the bands' own far edge, the same fade. */
 export const TRAVELLER_FAR_M = BAND_SPRITE_FAR_M;
@@ -57,11 +58,25 @@ export function classLookOf(res) {
  *   handle each talk target carries (`person.living.town`: the roads' refusal and noted word); MWNPC10c `laneName` the
  *   body lane's, `wantBodies` / `makeBodies` its seams
  */
-export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living = null, laneName = 'roads', wantBodies = undefined, makeBodies = null }) {
-  const bodiesLane = createPopulationLane({ laneName, renderer, ...(wantBodies ? { want: wantBodies } : {}), make: makeBodies });   // MWNPC10c: their Morrowind bodies
+export function createTravellerSprites({
+  renderer,
+  getTexture,
+  uploadRecordFrame,
+  living = null,
+  laneName = 'roads',
+  wantBodies = undefined,
+  makeBodies = null,
+}) {
+  const bodiesLane = createPopulationLane({
+    laneName,
+    renderer,
+    ...(wantBodies ? { want: wantBodies } : {}),
+    make: makeBodies,
+  }); // MWNPC10c: their Morrowind bodies
   /** MWNPC10c: the bodies drawn at the last sync, and whether it stood them on the ground */
   const shown = [];
-  let _ground = false, _ids = 0;
+  let _ground = false,
+    _ids = 0;
   /** archive -> texture | null (failed) | Promise (loading) */
   const texs = new Map();
   /** key -> its body */
@@ -72,7 +87,13 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
 
   function texOf(archive) {
     if (texs.has(archive)) return texs.get(archive);
-    const p = Promise.resolve(getTexture?.(archive)).then((t) => { texs.set(archive, t ?? null); }).catch(() => { texs.set(archive, null); });
+    const p = Promise.resolve(getTexture?.(archive))
+      .then((t) => {
+        texs.set(archive, t ?? null);
+      })
+      .catch(() => {
+        texs.set(archive, null);
+      });
     texs.set(archive, p);
     return p;
   }
@@ -86,21 +107,60 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
   /** A body for a resident: armed in their class's sprite where they have one, else their own outfit - LW-LOOKS: or their
    *  still picture, a talk target where it is one (`talk`). */
   function make(res, tex, look, flat = null, talk = true) {
-    const talkSeed = lwSeed(textSeed(res.id), 0x74616c6b) & 0x7fffffff;   // 'talk': the town's own seed for them
+    const talkSeed = lwSeed(textSeed(res.id), 0x74616c6b) & 0x7fffffff; // 'talk': the town's own seed for them
     if (flat) {
-      const person = talk ? { nameNPC: res.name, personFaceRecordId: res.face, _talkSeed: talkSeed, living: { id: res.id, res, town: living },
-        pos: [0, 0, 0], facingYaw: 0, guard: false, archive: flat.archive, pickpocketAttempted: false } : null;
-      return { res, archive: flat.archive, tex, unit: null, walker: null, person, flat, anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1)), batch: null, alpha: 0 };
+      const person = talk
+        ? {
+            nameNPC: res.name,
+            personFaceRecordId: res.face,
+            _talkSeed: talkSeed,
+            living: { id: res.id, res, town: living },
+            pos: [0, 0, 0],
+            facingYaw: 0,
+            guard: false,
+            archive: flat.archive,
+            pickpocketAttempted: false,
+          }
+        : null;
+      return {
+        res,
+        archive: flat.archive,
+        tex,
+        unit: null,
+        walker: null,
+        person,
+        flat,
+        anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1)),
+        batch: null,
+        alpha: 0,
+      };
     }
     if (look) {
-      const unit = new MobileUnit(look.mobileType, look.basics, (rec) => tex.getFrameCount(rec), Math.random, res.sex ?? 'male');
-      const person = { nameNPC: res.name, personFaceRecordId: res.face, _talkSeed: talkSeed, living: { id: res.id, res, town: living },
-        pos: [0, 0, 0], facingYaw: 0, guard: false, archive: look.archive, pickpocketAttempted: false };
+      const unit = new MobileUnit(
+        look.mobileType,
+        look.basics,
+        (rec) => tex.getFrameCount(rec),
+        Math.random,
+        res.sex ?? 'male',
+      );
+      const person = {
+        nameNPC: res.name,
+        personFaceRecordId: res.face,
+        _talkSeed: talkSeed,
+        living: { id: res.id, res, town: living },
+        pos: [0, 0, 0],
+        facingYaw: 0,
+        guard: false,
+        archive: look.archive,
+        pickpocketAttempted: false,
+      };
       return { res, archive: look.archive, tex, unit, walker: null, person, flat: null, batch: null, alpha: 0 };
     }
-    const archive = res.civvies ?? res.archive;   // WATCH-DAY: one of the watch here is off duty, in his own clothes (sync's own read)
+    const archive = res.civvies ?? res.archive; // WATCH-DAY: one of the watch here is off duty, in his own clothes (sync's own read)
     const walker = new ResidentWalker({}, { archive, frameCount: (rec) => tex.getFrameCount(rec), groundY: () => 0 });
-    walker.nameNPC = res.name; walker.personFaceRecordId = res.face; walker._talkSeed = talkSeed;
+    walker.nameNPC = res.name;
+    walker.personFaceRecordId = res.face;
+    walker._talkSeed = talkSeed;
     walker.living = { id: res.id, res, town: living };
     return { res, archive, tex, unit: null, walker, person: walker, flat: null, batch: null, alpha: 0 };
   }
@@ -117,26 +177,44 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
   function sync(list, { dt = 0, eye = null, grow = 1, fade = 1, ground = true } = {}) {
     drawn.length = 0;
     seats.length = 0;
-    shown.length = 0; _ground = !!ground;   // MWNPC10c
+    shown.length = 0;
+    _ground = !!ground; // MWNPC10c
     const seen = new Set();
     for (const m of list ?? []) {
       if (!m?.feet || !m.res) continue;
       const flat = m.flat ?? null;
       const look = flat ? null : classLookOf(m.res);
-      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive);   // WATCH-DAY: a watchman off duty in his own clothes
+      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive); // WATCH-DAY: a watchman off duty in his own clothes
       const tex = texOf(archive);
-      if (!tex || typeof tex.then === 'function') continue;   // loading, or no art: not yet
+      if (!tex || typeof tex.then === 'function') continue; // loading, or no art: not yet
       seen.add(m.key);
       let b = bodies.get(m.key);
-      if (!b || b.res.id !== m.res.id || b.archive !== archive || !!b.flat !== !!flat || (flat && b.flat.record !== flat.record)) {
+      if (
+        !b ||
+        b.res.id !== m.res.id ||
+        b.archive !== archive ||
+        !!b.flat !== !!flat ||
+        (flat && b.flat.record !== flat.record)
+      ) {
         if (b) drop(m.key);
         b = make(m.res, tex, look, flat, m.talk !== false);
         // MWNPC10c: its lane id (a new body a new one), its blows, whether it talks, its death's roll; its look read once
-        Object.assign(b, { id: `${laneName}:${++_ids}`, yaw: 0, moving: false, swings: 0, striking: false, talk: m.talk !== false, roll: 1 + (textSeed(String(m.res.id)) % 3), look: undefined });
+        Object.assign(b, {
+          id: `${laneName}:${++_ids}`,
+          yaw: 0,
+          moving: false,
+          swings: 0,
+          striking: false,
+          talk: m.talk !== false,
+          roll: 1 + (textSeed(String(m.res.id)) % 3),
+          look: undefined,
+        });
         bodies.set(m.key, b);
       }
-      b.yaw = m.yaw; b.moving = !!m.moving; b.body = m.body !== false;   // CAMP-FIRE: a camp's fire is a flame, nobody's body
-      if (m.striking && !b.striking) b.swings++;   // MWNPC10c: each strike begun, one blow
+      b.yaw = m.yaw;
+      b.moving = !!m.moving;
+      b.body = m.body !== false; // CAMP-FIRE: a camp's fire is a flame, nobody's body
+      if (m.striking && !b.striking) b.swings++; // MWNPC10c: each strike begun, one blow
       b.striking = !!m.striking;
       const target = ground ? 1 : bandSpriteReach(m.distM) * Math.max(0, Math.min(1, fade));
       b.alpha = ground ? 1 : stepBandAlpha(b.alpha, target, dt);
@@ -145,14 +223,25 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
       let out;
       if (b.flat) {
         out = { record: b.flat.record, frame: b.anim ? b.anim.tick(dt) : 0, flip: false };
-        if (b.person) { b.person.pos = f; b.person.facingYaw = m.yaw; }
-      }
-      else if (b.unit) {
-        out = b.unit.update(dt, { moving: !!m.moving, striking: !!m.striking }, m.yaw, f, eye && eye.length === 3 ? eye : f);
-        b.person.pos = f; b.person.facingYaw = m.yaw;
+        if (b.person) {
+          b.person.pos = f;
+          b.person.facingYaw = m.yaw;
+        }
+      } else if (b.unit) {
+        out = b.unit.update(
+          dt,
+          { moving: !!m.moving, striking: !!m.striking },
+          m.yaw,
+          f,
+          eye && eye.length === 3 ? eye : f,
+        );
+        b.person.pos = f;
+        b.person.facingYaw = m.yaw;
       } else {
         const w = b.walker;
-        w.pos = [f[0], f[1], f[2]]; w.yaw = m.yaw; w.moving = !!m.moving;
+        w.pos = [f[0], f[1], f[2]];
+        w.yaw = m.yaw;
+        w.moving = !!m.moving;
         out = w.update(dt, eye && eye.length === 3 ? eye : f, false);
       }
       const rkey = `${out.record}#${out.frame}`;
@@ -168,7 +257,9 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
         b.batch.record = rkey;
         b.batch.size = size;
       }
-      b.batch.origin[0] = f[0]; b.batch.origin[1] = f[1]; b.batch.origin[2] = f[2];
+      b.batch.origin[0] = f[0];
+      b.batch.origin[1] = f[1];
+      b.batch.origin[2] = f[2];
       b.batch.conceal = b.alpha >= 0.99 ? null : { mode: PLAIN_BLEND_MODE, alpha: b.alpha, t: 0, phase: 0 };
       drawn.push(b.batch);
       shown.push(b);
@@ -187,11 +278,22 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
     bodiesLane.frame();
     if (_ground) {
       for (const b of shown) {
-        if (!b.body) continue;   // CAMP-FIRE (FIELD BUGS 2026-10-11b): its flame drawn, never one of the fallen
+        if (!b.body) continue; // CAMP-FIRE (FIELD BUGS 2026-10-11b): its flame drawn, never one of the fallen
         if (b.look === undefined) b.look = residentLook(b, b.res, { still: !!b.flat && b.talk });
         if (!b.look) continue;
-        bodiesLane.offer(rosterActor(b, { id: b.id, look: b.look, feet: b.batch.origin, yaw: b.yaw, moving: b.moving, swingKey: b.swings || null,
-          dead: b.flat && !b.talk ? b.roll : 0, drawn: !!b.unit }), b.batch);
+        bodiesLane.offer(
+          rosterActor(b, {
+            id: b.id,
+            look: b.look,
+            feet: b.batch.origin,
+            yaw: b.yaw,
+            moving: b.moving,
+            swingKey: b.swings || null,
+            dead: b.flat && !b.talk ? b.roll : 0,
+            drawn: !!b.unit,
+          }),
+          b.batch,
+        );
       }
     } else {
       // AUDIT MW-NPC C3: under the Overworld no body stands, so every sprite draws - a batch the last ground frame left
@@ -203,11 +305,15 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
 
   return {
     sync,
-    drawBodies,   // MWNPC10c
+    drawBodies, // MWNPC10c
     /** MWNPC10c: the floating origin moved - the bodies' feet follow it. @param {number[]} o */
-    offsetBodies(o) { bodiesLane.offsetAll(o); },
+    offsetBodies(o) {
+      bodiesLane.offsetAll(o);
+    },
     /** MWNPC13: the veiled bodies (a road's ghost), translucent - after the host's opaque world. */
-    drawVeiledBodies() { bodiesLane.drawVeiled(); },
+    drawVeiledBodies() {
+      bodiesLane.drawVeiled();
+    },
     /** This frame's drawn bodies, for the exterior's billboard pass. */
     batches: () => drawn,
     /** This frame's talk targets on the ground ({ person, pos } - the street's activation shape). */
@@ -215,7 +321,15 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
     /** The body standing for a resident's id, if drawn. @param {string} key */
     bodyOf: (key) => bodies.get(key) ?? null,
     /** Every body freed (the host's teardown; the open world left). */
-    clear() { for (const key of [...bodies.keys()]) drop(key); drawn.length = 0; seats.length = 0; shown.length = 0; bodiesLane.destroy(); },   // MWNPC10c: and their bodies
-    get size() { return bodies.size; },
+    clear() {
+      for (const key of [...bodies.keys()]) drop(key);
+      drawn.length = 0;
+      seats.length = 0;
+      shown.length = 0;
+      bodiesLane.destroy();
+    }, // MWNPC10c: and their bodies
+    get size() {
+      return bodies.size;
+    },
   };
 }

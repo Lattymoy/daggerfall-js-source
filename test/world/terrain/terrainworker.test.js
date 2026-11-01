@@ -254,7 +254,6 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // and the held map's copy of the waters the kernel carves (world/tamriel/watersInk.js - pure: the waters' own law)
   // PIN MOVED (FAR-FLORA, bible/06-Systems/Travel-View.md FAR-FLORA): and the near law's woods at the middle ring's samples
   // (world/terrain/floraCover.js - pure: the nature's layout and the tiles' classes, both already in terrainGen.js's closure)
-  // PIN MOVED (WG2, bible/03-World/World-2-Canon.md the seam): and the published regions' install (world/gen2/gen2Ground.js
   // - pure: the bake's decoder and sampler, already in the ground's closure through tamrielGround.js)
   assert.deepEqual(imports, ['../../formats/woodsFile.js', '../arenaRoads.js', '../ethericSea.js', '../gen2/gen2Ground.js', '../landforms.js', '../roadsCache.js', '../roadsProducer.js', '../tamriel/tamrielFrame.js', '../tamriel/tamrielGround.js', '../tamriel/tamrielLand.js', '../tamriel/watersInk.js', './farClimate.js', './floraCover.js', './midRingGrid.js', './natureWire.js', './terrainGen.js'],
     'the import graph is exactly the reader, the road cache, the producer, the kernel, the continent\'s ground (TAMRIEL2 - pure: the authored geography and the frame), the Eltheric Ocean\'s and the nature\'s wire');
@@ -312,6 +311,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   assert.ok(bp.includes('if (wantStride === 1) host.restridePending.set(pkey, entry);'), 'the dear direction queues');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   assert.ok(bp.includes('else restrideTerrain(entry, wantStride);'), 'and the cheap one settles at once');
   // AUDIT EV F-SIM6: the probe's idle truth covers teleport builds too
-  assert.ok(world.includes('queue.length === 0 && !building && inFlight.size === 0'),
+  // PIN MOVED (HOST-SPLIT SHOT-HOOKS): the probe surface reads `building` live through its host
+  assert.ok(world.includes('queue.length === 0 && !host.building && inFlight.size === 0'),
     '__streamIdle counts every in-flight build');
 });

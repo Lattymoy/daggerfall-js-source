@@ -33,7 +33,8 @@ const _sources = new Map();
 /** A pool's word: `fn()` answers its gates' feet standing now (the scene's [x, y, z] each; none, an empty list or null).
  *  `null` lets the name go. */
 export function setEventGround(name, fn) {
-  if (typeof fn === 'function') _sources.set(name, fn); else _sources.delete(name);
+  if (typeof fn === 'function') _sources.set(name, fn);
+  else _sources.delete(name);
 }
 
 /** THE LAW: the first of `feet` within `r` of `p` on the ground (x and z), or null. Pure. */
@@ -49,7 +50,11 @@ export function eventGroundAt(p, r = EVENT_GROUND_M) {
   if (!p) return null;
   for (const [name, fn] of _sources) {
     let feet = null;
-    try { feet = fn(); } catch { feet = null; }
+    try {
+      feet = fn();
+    } catch {
+      feet = null;
+    }
     if (feet?.length && groundNear(feet, p, r)) return name;
   }
   return null;

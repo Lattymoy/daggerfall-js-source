@@ -29,8 +29,8 @@
   {
     "name": "OW-FACE-the-axes-unturned",
     "file": "src/player/travelCamera.js",
-    "old": "  const m = Math.hypot(forward, strafe), d = way - yaw;",
-    "new": "  const m = Math.hypot(forward, strafe), d = 0;",
+    "old": "    d = way - yaw;",
+    "new": "    d = 0;",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "OW-PEERS-a-body-never-grown",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      const ow = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1;   // OW-PEERS",
-    "new": "      const ow = 1;   // OW-PEERS",
+    "old": "      const ow = this._cam?.grow ? Math.max(1, this._cam.grow(b.feet)) : 1; // OW-PEERS",
+    "new": "      const ow = 1; // OW-PEERS",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OW-PEERS-a-body-unleaned",
     "file": "src/net/peer/peerBodies.js",
-    "old": "grow: g, up: this._cam?.up ?? null, fx, cast",
-    "new": "grow: g, up: null, fx, cast",
+    "old": "            up: this._cam?.up ?? null,",
+    "new": "            up: null,",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"
     ]

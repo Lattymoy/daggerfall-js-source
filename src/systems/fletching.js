@@ -14,7 +14,7 @@
 import { registerItemUseHandler, templateByIndex, ITEM_TEMPLATES } from './item/itemTemplates.js';
 import { addItem, ARROW_TEMPLATE } from './inventory.js';
 import { createWeapon } from '../combat/enemyEquipment.js';
-import { FT } from './foraging/foragingLaw.js';   // Foraging's Wood Bundle (1604) - its template is registered when the mod is on
+import { FT } from './foraging/foragingLaw.js'; // Foraging's Wood Bundle (1604) - its template is registered when the mod is on
 
 /** The wood an arrow is whittled from - Twigs (PlantIngredients1/2 8), Pine Branch (14), Foraging's Wood Bundle. */
 export const FLETCH_TEMPLATES = Object.freeze([8, 14, FT.WoodBundle]);
@@ -37,8 +37,12 @@ export function fletch(item, list, ctx = {}) {
   if (!n || item.questItem) return null;
   const pack = ctx?.localItems ?? list;
   if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;
-  else { const i = Array.isArray(list) ? list.indexOf(item) : -1; if (i < 0) return null; list.splice(i, 1); }
-  addItem(pack, { ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });   // the arrow arm's stack roll, answered
+  else {
+    const i = Array.isArray(list) ? list.indexOf(item) : -1;
+    if (i < 0) return null;
+    list.splice(i, 1);
+  }
+  addItem(pack, { ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); // the arrow arm's stack roll, answered
   const from = templateByIndex(item.templateIndex)?.name ?? 'wood';
   return { kind: 'text', text: `You fletch ${n} arrows from the ${from}.` };
 }

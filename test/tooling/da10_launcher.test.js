@@ -188,7 +188,7 @@ test('DA10: the shell - Play is the only way in, the news is the check\'s own re
   // the actions the page can name, and no others
   const acts = main.slice(main.indexOf("ipcMain.on('launcher:act'"), main.indexOf('// THE NAVIGATION FENCES'));
   assert.deepEqual([...acts.matchAll(/case '([\w-]+)':/g)].map((m) => m[1]).sort(),
-    ['choose-folder', 'download', 'open', 'open-saves', 'play', 'play-now', 'reinstall', 'restart', 'retry-saved', 'set-backend', 'set-update-check', 'skip-setup', 'use-found']);
+    ['choose-folder', 'download', 'open', 'open-saves', 'play', 'play-now', 'private-host', 'private-join', 'private-stop', 'reinstall', 'restart', 'retry-saved', 'set-backend', 'set-update-check', 'skip-setup', 'use-found']);
   assert.match(acts, /case 'set-update-check': setCheckOnLaunch\(arg === true\); break;/, 'only a real true turns it on');
   assert.match(acts, /const f = Number\.isInteger\(arg\) \? st\.setup\.found\[arg\] : null;/, 'a found folder by its index, and nothing else');
   assert.match(acts, /const r = await judgeForLauncher\(\{ op: 'judge', dir: f\.dir \}, JUDGE_DEADLINE_MS\);/, 'judged again when it is taken - a drive can go away while the window sits open (AUDIT INSTALL L5-21) - in a process of its own (R2-D1)');
@@ -270,11 +270,11 @@ test('DA10: the page - the news, the card, the options, the bar and PLAY; every 
   for (const id of ['news', 'setup', 'found', 'setup-actions', 'files', 'update-check', 'status', 'detail', 'progress', 'status-actions', 'play', 'version']) {
     assert.match(html, new RegExp(`id="${id}"`), `#${id}`);
   }
-  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['choose-folder', 'open-saves', 'reinstall', 'restart', 'play']);
+  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['play', 'private-host', 'private-join', 'private-stop', 'choose-folder', 'open-saves', 'reinstall', 'restart', 'play']);
   assert.match(html, /<button id="play" class="play" type="button" data-act="play" disabled>Play<\/button>/, 'Play starts held - the first view frees it');
   const js = rd('app/launcher/launcher.js');
   assert.match(js, /\$\('update-check'\)\.addEventListener\('change', \(e\) => bridge\.act\('set-update-check', e\.target\.checked\)\);/);
-  assert.match(js, /if \(act && !act\.disabled\) bridge\.act\(act\.dataset\.act\);/, 'a held Play sends nothing');
+  assert.match(js, /if \(act && !act\.disabled\) bridge\.act\(act\.dataset\.act, act\.dataset\.act === 'private-join' \? \$\('private-address'\)\.value : undefined\);/, 'a held Play sends nothing');
   assert.match(js, /if \(Object\.hasOwn\(BADGE, note\.badge\)\) head\.append\(el\('span', `badge \$\{note\.badge\}`, BADGE\[note\.badge\]\)\);/, 'a mark is one of two words, never the shell\'s string');
   assert.match(js, /play\.disabled = !v\.play\.enabled;/);
 });

@@ -1,5 +1,5 @@
 // @ts-check
-// WG2 (bible/03-World/World-2-Canon.md, "Canon"): THE CANONICAL GEOGRAPHY a bake reads - only what the repository owns,
+// THE CANONICAL GEOGRAPHY a bake reads - only what the repository owns,
 // so a bake ships and every machine makes it again: the provinces' authored rings, the ranges' spines and the great
 // rivers (world/tamriel/tamrielGeography.js), and the owner's relief (tamrielReliefData.js, loaded by canonReady) unmasked. The player's
 // traced picture is never read (WG-3): a raster made from it is game data. The fit that lays the picture on the world

@@ -9,6 +9,21 @@ import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5
 
 limitOpenFiles();
 
+/** Soft URL `/2d-playground` → folder index (Pages + Vite; artists' sprite preview). */
+function floraPlaygroundAlias() {
+  return {
+    name: 'flora-playground-alias',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (!req.url) return next();
+        const q = req.url.indexOf('?'), path = q < 0 ? req.url : req.url.slice(0, q), qs = q < 0 ? '' : req.url.slice(q);
+        if (path === '/2d-playground') req.url = `/2d-playground/${qs}`;
+        next();
+      });
+    },
+  };
+}
+
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
 function arena2DevServer() {
@@ -39,15 +54,16 @@ function arena2DevServer() {
   // AUDIT 68 X2: a FILE, not merely a path that exists - the name rule
   // admits `BOOKS`, `.` and `..`, and a directory's EISDIR killed the server.
   const isFile = (p) => statSync(p, { throwIfNoEntry: false })?.isFile() === true;
-  // MOUNTED TWICE (U60). dataSource fetches `./arena2/*` RELATIVE to its
+  // MOUNTED thrice (U60 + SKYRIM-FLORA). dataSource fetches `./arena2/*` RELATIVE to its
   // document, so with the game at /play/ the browser asks for
-  // /play/arena2/*; the probes' direct imports still fetch /arena2/*.
-  // Same handler, both doors - a dev server that answered one and not
+  // /play/arena2/*; the flora lab at /2d-playground/ asks /2d-playground/arena2/*;
+  // the probes' direct imports still fetch /arena2/*.
+  // Same handler, every door - a dev server that answered one and not
   // the other is the mixed-case bug above in a new coat.
   return {
     name: 'arena2-dev-server',
     configureServer(server) {
-      for (const mount of ['/arena2', '/play/arena2']) server.middlewares.use(mount, (req, res, next) => {
+      for (const mount of ['/arena2', '/play/arena2', '/2d-playground/arena2']) server.middlewares.use(mount, (req, res, next) => {
         const name = decodeURIComponent(req.url.slice(1).split('?')[0]);
         // Flat directory only - no separators, no traversal.
         if (!/^[A-Za-z0-9._-]+$/.test(name)) return next();
@@ -289,8 +305,11 @@ export default defineConfig({
         // STUDIO1: THE STUDIO - every picture the port paints itself, as worn, each with its template to download, and the
         // artists' own pictures beside them (src/tools/studioLab.js; public/art/studio/README.md). No game data.
         studio: 'studio.html',
+        // SKYRIM-FLORA: artist preview — biome ground + one sprite (catalog or uploaded PNG) as crossed cards / hang.
+        // Folder entry so Pages serves `/2d-playground/` (floraPlaygroundAlias softens the bare path in dev).
+        floraPlayground: '2d-playground/index.html',
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), floraPlaygroundAlias(), noImportedTopLevelAwait()],
 });

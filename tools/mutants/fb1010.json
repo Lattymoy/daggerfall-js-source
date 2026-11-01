@@ -2,8 +2,8 @@
   {
     "name": "SPAMTAKE-card-stays",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === at ? p.slotKey : null; picked = next; }",
-    "new": "landed = next === at ? p.slotKey : null; }",
+    "old": "            picked = next;\n          }",
+    "new": "          }",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SPAMTAKE-give-up-once",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "        if (armed !== heldId) { armed = heldId; render(); return; }",
-    "new": "",
+    "old": "          if (armed !== heldId) {\n            armed = heldId;\n            render();\n            return;\n          }\n          armed = null;",
+    "new": "          armed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SPAMTAKE-pick-keeps-arm",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
-    "new": "      const pick = () => { picked = i; word = null; landed = null; render(); };",
+    "old": "        armed = null;\n        landed = null;",
+    "new": "        landed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RFOLK-census-climate",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  const climate = walkerRace(town.people, town.area ?? town.region);",
-    "new": "  const climate = walkerRace(town.people, null);",
+    "old": "  const climate = walkerRace(town.people, town.area ?? town.region); // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)",
+    "new": "  const climate = walkerRace(town.people, null); // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RFOLK-world-host-climate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "race: walkerRace(climate?.people, dfLocation.regionIndex),",
-    "new": "race: walkerRace(climate?.people, null),",
+    "old": "          race: walkerRace(climate?.people, dfLocation.regionIndex),",
+    "new": "          race: walkerRace(climate?.people, null),",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RFOLK-rr-climate",
     "file": "src/systems/roleplayRealism/rrVariants.js",
-    "old": "walkerRace(getWorldClimateSettings(worldClimate)?.people, region));   // AUDIT FB1010 C3: the street's own rule",
-    "new": "rrClimateRace(worldClimate));",
+    "old": "      walkerRace(getWorldClimateSettings(worldClimate)?.people, region),\n    ); // AUDIT FB1010 C3: the street's own rule",
+    "new": "      rrClimateRace(worldClimate),\n    );",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DAMNED-liftable",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (isDamned(item)) return 'damned';\n",
-    "new": "",
+    "old": "  if (isDamned(item)) return 'damned';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DAMNED-label-cannot",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  if (why === 'damned') return 'Damned';   // TRUE-CURSE\n",
-    "new": "",
+    "old": "  if (why === 'damned') return 'Damned'; // TRUE-CURSE\n  return 'Cannot';",
+    "new": "  return 'Cannot';",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DAMNED-kit-unpassed",
     "file": "src/systems/foeLootCap.js",
-    "old": "  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n",
-    "new": "",
+    "old": "  damnPass(kit, opts.rolls ?? Math.random); // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
+    "new": "  techniquePass(kit, opts.rolls ?? Math.random); // TECH1: and a weapon's technique, LAST of the kit's draws (law 9)",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT-D2-priced",
     "file": "src/ui/reforgeWindow.js",
-    "old": "why === 'damned' ? '-' : `${price} gold`",
-    "new": "`${price} gold`",
+    "old": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
+    "new": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-A1-never-landed",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === at ? p.slotKey : null;",
-    "new": "landed = null;",
+    "old": "            landed = next === at ? p.slotKey : null;",
+    "new": "            landed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-A1-pick-keeps-landed",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
-    "new": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
+    "old": "        landed = null;\n        render();",
+    "new": "        render();",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-A2-focus-dropped",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "        armed = null;\n        render(keep);",
-    "new": "        armed = null;\n        render();",
+    "old": "          render(keep);",
+    "new": "          render();",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]

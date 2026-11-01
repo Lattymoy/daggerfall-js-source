@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-PILOT (2026-10-26, mob: "like play as a boss as attack players"; Staff-Events.md section 10): a staff member
+// STAFF-PILOT (2026-10-26; Staff-Events.md section 10): a staff member
 // steers their event's mini boss from the Staff Panel's Play as boss. My claim says the oldest age the wire carries, so
 // every game hands me the raid's run. The boss takes my feet and facing; its own swings and casts are held, a left
 // click swings at the player nearest my facing and a right click opens its cast. My body draws as concealment 7 and
@@ -29,12 +29,16 @@ export function pilotStart(id, now) {
   return true;
 }
 /** Leave boss (or the boss fell, or the event ended). */
-export function pilotStop() { _p = null; }
+export function pilotStop() {
+  _p = null;
+}
 /** The event raid's key I steer the boss of, or null. */
 export const pilotKey = () => _p?.key ?? null;
 export const piloting = () => _p !== null;
 /** The camera's facing, each frame (scenes/staffFollowHost.js). @param {number} yaw */
-export function pilotYaw(yaw) { if (_p && Number.isFinite(yaw)) _p.yaw = yaw; }
+export function pilotYaw(yaw) {
+  if (_p && Number.isFinite(yaw)) _p.yaw = yaw;
+}
 /** A mouse press while I steer: 0 the swing, 2 the spell. @param {number} button @param {number} now ms */
 export function pilotPress(button, now) {
   if (!_p) return false;
@@ -53,23 +57,36 @@ export const pilotFoe = (f) => !!_p && !!f && !f.puppet && !f.dead && f.raidKey 
 export function pilotSteer(f, feet, peers, now) {
   if (!pilotFoe(f) || !_p || !Array.isArray(feet)) return null;
   _p.had = true;
-  const a = f.ai, dx = feet[0] - a.feet[0], dz = feet[2] - a.feet[2];
+  const a = f.ai,
+    dx = feet[0] - a.feet[0],
+    dz = feet[2] - a.feet[2];
   a.moving = Math.hypot(dx, dz) > MOVING_M;
-  a.feet[0] = feet[0]; a.feet[1] = feet[1]; a.feet[2] = feet[2];
+  a.feet[0] = feet[0];
+  a.feet[1] = feet[1];
+  a.feet[2] = feet[2];
   a.yaw = _p.yaw;
-  if (now - _p.swingAt <= PILOT_SWING_MS) { const t = pilotTarget(feet, _p.yaw, peers); if (t) a.target = t; }
+  if (now - _p.swingAt <= PILOT_SWING_MS) {
+    const t = pilotTarget(feet, _p.yaw, peers);
+    if (t) a.target = t;
+  }
   return { swing: pilotHolds(f, 'swing', now), cast: pilotHolds(f, 'cast', now) };
 }
 /** The player nearest my facing within reach - the one a swing is at. @param {number[]} feet @param {number} yaw @param {any[]} peers */
 export function pilotTarget(feet, yaw, peers) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const c of peers ?? []) {
     if (!c || !(c.health > 0) || !Array.isArray(c.feet)) continue;
-    const dx = c.feet[0] - feet[0], dz = c.feet[2] - feet[2], d = Math.hypot(dx, dz);
+    const dx = c.feet[0] - feet[0],
+      dz = c.feet[2] - feet[2],
+      d = Math.hypot(dx, dz);
     if (d > PILOT_TARGET_M || d >= bestD) continue;
     let off = Math.atan2(dx, dz) - yaw;
     off = Math.atan2(Math.sin(off), Math.cos(off));
-    if (Math.abs(off) <= (PILOT_TARGET_DEG * Math.PI) / 180) { best = c; bestD = d; }
+    if (Math.abs(off) <= (PILOT_TARGET_DEG * Math.PI) / 180) {
+      best = c;
+      bestD = d;
+    }
   }
   return best;
 }
@@ -78,7 +95,7 @@ export function pilotTarget(feet, yaw, peers) {
 export function pilotHolds(f, kind, now) {
   if (!pilotFoe(f) || !_p) return false;
   if (kind === 'cast') return now - _p.castAt > PILOT_CAST_MS;
-  if (f.ai._blowSwing) return false;   // a swing set and not yet taken (the attack machine takes it on its next classic tick)
+  if (f.ai._blowSwing) return false; // a swing set and not yet taken (the attack machine takes it on its next classic tick)
   if (now - _p.swingAt > PILOT_SWING_MS) return true;
   _p.swingAt = -Infinity;
   f.ai._blowSwing = true;
@@ -91,8 +108,13 @@ export function pilotHolds(f, kind, now) {
  *  @param {any} mine @param {number} _now ms @returns {'fell'|null} */
 export function pilotLost(mine, _now) {
   if (!_p) return null;
-  if (mine && !mine.dead) { _p.had = true; return null; }
+  if (mine && !mine.dead) {
+    _p.had = true;
+    return null;
+  }
   return _p.had ? 'fell' : null;
 }
 /** Tests: back to no pilot. */
-export function resetPilot() { _p = null; }
+export function resetPilot() {
+  _p = null;
+}

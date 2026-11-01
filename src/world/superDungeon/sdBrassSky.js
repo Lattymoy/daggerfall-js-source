@@ -22,8 +22,12 @@ const clamp01 = (v) => (v <= 0 ? 0 : v >= 1 ? 1 : v);
 export function sdBrassGrade(rgb, w) {
   const k = clamp01(w || 0);
   if (k === 0) return [rgb[0], rgb[1], rgb[2]];
-  const l = LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2], [s0, s1, s2] = SD_BRASS_RAMP;
-  const [a, b, f] = l < s1.at ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))] : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];
+  const l = LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2],
+    [s0, s1, s2] = SD_BRASS_RAMP;
+  const [a, b, f] =
+    l < s1.at
+      ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))]
+      : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];
   return [0, 1, 2].map((i) => rgb[i] + (a[i] + (b[i] - a[i]) * f - rgb[i]) * k);
 }
 
@@ -31,7 +35,8 @@ const glslVec = (c) => `vec3(${c.map((v) => v.toFixed(4)).join(', ')})`;
 /** `sdBrassGrade` in GLSL - `vec3 brassGrade(vec3 c, float w)`, the same stops and weights (generated from them). A sky
  *  pass includes it and grades its final colour by its own `uBrass`, after the dread's. */
 export const SD_BRASS_GLSL = (() => {
-  const [s0, s1, s2] = SD_BRASS_RAMP, f = (v) => v.toFixed(4);
+  const [s0, s1, s2] = SD_BRASS_RAMP,
+    f = (v) => v.toFixed(4);
   return `
 vec3 brassGrade(vec3 c, float w) {
   if (w <= 0.0) return c;

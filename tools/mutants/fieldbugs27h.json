@@ -65,8 +65,8 @@
   {
     "name": "SHIELD-OUT-no-reread",
     "file": "src/combat/shieldWidget.js",
-    "old": "} else if (w.stale) updateShieldTextures(item);",
-    "new": "}",
+    "old": "    } else if (w.stale) updateShieldTextures(item); // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
+    "new": "    } // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
     "tests": [
       "test/combat/shieldout.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SHIELD-OUT-never-stale",
     "file": "src/combat/shieldWidget.js",
-    "old": "if (w.lastStep !== step - 1) w.stale = true;",
-    "new": "if (w.lastStep !== step - 1) w.stale = false;",
+    "old": "    if (w.lastStep !== step - 1) w.stale = true;",
+    "new": "    if (w.lastStep !== step - 1) w.stale = false;",
     "tests": [
       "test/combat/shieldout.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SHIELD-OUT-stale-forever",
     "file": "src/combat/shieldWidget.js",
-    "old": "    w.stale = false;\n",
-    "new": "",
+    "old": "    w.stale = false;\n    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
+    "new": "    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
     "tests": [
       "test/combat/shieldout.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-RISE-first-not-nearest",
     "file": "src/systems/deathRespawn.js",
-    "old": "if (d2 < bestDist) { bestDist = d2; best = hit; }",
-    "new": "if (!best) { bestDist = d2; best = hit; }",
+    "old": "    if (d2 < bestDist) {",
+    "new": "    if (!best) {",
     "tests": [
       "test/player/searise.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-RISE-resident-dropped",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n",
-    "new": "",
+    "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n  return best;",
+    "new": "  return best;",
     "tests": [
       "test/player/searise.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "BUFF-END-held-item-endable",
     "file": "src/systems/mysticism.js",
-    "old": "if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
-    "new": "if (!bundle) return false;",
+    "old": "  if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
+    "new": "  if (!bundle) return false;",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "BUFF-END-duel-endable",
     "file": "src/systems/mysticism.js",
-    "old": "entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind))",
-    "new": "entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind))",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind));",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "BUFF-END-one-help-enough",
     "file": "src/systems/mysticism.js",
-    "old": "entries.every((a) => !a.bundleDuel",
-    "new": "entries.some((a) => !a.bundleDuel",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.some((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "BUFF-END-silence-endable",
     "file": "src/systems/mysticism.js",
-    "old": "...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
-    "new": "...Object.values(BUFF_KINDS),",
+    "old": "    ...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
+    "new": "    ...Object.values(BUFF_KINDS),",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "BUFF-END-refusal-ends",
     "file": "src/systems/mysticism.js",
-    "old": "  if (!canEndBundle(bundle)) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
-    "new": "  if (!bundle) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
+    "old": "  if (!canEndBundle(bundle)) return null;",
+    "new": "  if (!bundle) return null;",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "BUFF-END-tile-without-bundle",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "endable: !!e.endable && e.bundleId != null",
-    "new": "endable: !!e.endable",
+    "old": "      endable: !!e.endable && e.bundleId != null, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
+    "new": "      endable: !!e.endable, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "HOLD-STEP-unclamped",
     "file": "src/systems/spell/spellMaker.js",
-    "old": "next[field] = clampSetting(field, Number(value), effectKey);",
-    "new": "next[field] = Number(value);",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range",
+    "new": "  next[field] = Number(value); // ABSORB-NERF: the effect's own range",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]
@@ -354,7 +354,7 @@
   {
     "name": "HOLD-STEP-no-pair-rule",
     "file": "src/systems/spell/spellMaker.js",
-    "old": "  next[field] = clampSetting(field, Number(value), effectKey);   // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
+    "old": "  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
     "new": "  next[field] = clampSetting(field, Number(value), effectKey);\n  return next;",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "HOLD-STEP-disabled-takes",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
-    "new": "if (!Number.isFinite(Number(value))) return;",
+    "old": "    if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
+    "new": "    if (!Number.isFinite(Number(value))) return;",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "THANKS-POST-the-hold-unread",
     "file": "server-account/src/titles.js",
-    "old": ", ...giftPiecesOf(player)]);",
-    "new": "]);",
+    "old": "    ...giftPiecesOf(player),\n  ]); // GUILD-SHOP: the Insignia Armlet; THANKS-POST: a gift's pieces",
+    "new": "  ]); // GUILD-SHOP: the Insignia Armlet; THANKS-POST: a gift's pieces",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "THANKS-POST-a-guest-given-it",
     "file": "tools/sendServerPost.mjs",
-    "old": "WHERE handle IS NOT NULL AND instr(",
-    "new": "WHERE instr(",
+    "old": "WHERE handle IS NOT NULL AND instr(' ' || gifts || ' ', ${sqlText(` ${g} `)}) = 0;",
+    "new": "WHERE instr(' ' || gifts || ' ', ${sqlText(` ${g} `)}) = 0;",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "THANKS-POST-a-guests-aurum",
     "file": "tools/sendServerPost.mjs",
-    "old": "FROM players p WHERE p.handle IS NOT NULL;\n${everyoneSql(THANKS_POST)}",
-    "new": "FROM players p;\n${everyoneSql(THANKS_POST)}",
+    "old": "SELECT p.id, 'gift', ${sqlText(g)}, ${GIFTS[g].aurum}, ${now} / 86400, ${now}\nFROM players p WHERE p.handle IS NOT NULL;",
+    "new": "SELECT p.id, 'gift', ${sqlText(g)}, ${GIFTS[g].aurum}, ${now} / 86400, ${now}\nFROM players p;",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "THANKS-POST-the-ledger-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)\nSELECT p.id, 'gift'",
-    "new": "INSERT INTO aurum_ledger (account, kind, ref, amount, day, at)\nSELECT p.id, 'gift'",
+    "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at)",
+    "new": "INSERT INTO aurum_ledger (account, kind, ref, amount, day, at)",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "THANKS-POST-the-box-drops-the-gift",
     "file": "server-account/src/post.js",
-    "old": "    ...(giftOf(row.gift) ? { gift: row.gift } : {}),",
-    "new": "",
+    "old": "    ...(giftOf(row.gift) ? { gift: row.gift } : {}), // THANKS-POST: the gift the letter brought, on the account already",
+    "new": "    // THANKS-POST: the gift the letter brought, on the account already",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "THANKS-POST-the-page-drops-the-gift",
     "file": "src/net/postLaw.js",
-    "old": ", ...(gift ? { gift } : {}) };",
-    "new": " };",
+    "old": "    ...(gift ? { gift } : {}),\n  };",
+    "new": "  };",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "THANKS-POST-the-letter-mute",
     "file": "src/ui/enhanced/enhancedPost.js",
-    "old": "  return g ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))] : [];",
+    "old": "  return g\n    ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))]\n    : [];",
     "new": "  return g ? [] : [];",
     "tests": [
       "test/server/thanks_post.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "THANKS-POST-one-arm",
     "file": "src/render/armoryPass.js",
-    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
-    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT);",
+    "old": "    for (const arm of /** @type {const} */ (['left', 'right'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT), from = out.length;",
+    "new": "    for (const arm of /** @type {const} */ (['left'])) {\n      const u = upperArm(arm, ARMORY_SPUR_ROOT), from = out.length;",
     "tests": [
       "test/server/thanks_post.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-LANE3-F5-the-prism-unpainted",
     "file": "src/ui/playerBadge.js",
-    "old": "  crystal: Object.freeze([Object.freeze([0.55, 0.32, 1, 1]), Object.freeze([0.22, 0.85, 0.95, 1]), Object.freeze([1, 0.38, 0.72, 1])]),\n",
-    "new": "",
+    "old": "  crystal: Object.freeze([\n    Object.freeze([0.55, 0.32, 1, 1]),\n    Object.freeze([0.22, 0.85, 0.95, 1]),\n    Object.freeze([1, 0.38, 0.72, 1]),\n  ]),\n  guild: Object.freeze([Object.freeze([0.753, 0.541, 0.243, 1]), Object.freeze([0.91, 0.75, 0.42, 1])]),",
+    "new": "  guild: Object.freeze([Object.freeze([0.753, 0.541, 0.243, 1]), Object.freeze([0.91, 0.75, 0.42, 1])]),",
     "tests": [
       "test/server/thanks_post.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-LANE3-F5-the-ring-unpainted",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ?? TITLE_GRADIENT",
-    "new": "const stops = TITLE_GRADIENT",
+    "old": "  const stops = ARMORY_LINE_GRADIENT[/** @type {keyof typeof ARMORY_LINE_GRADIENT} */ (key)] ??\n    TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [\n      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],\n      TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],\n    ]; // AUDIT lane 3 F5",
+    "new": "  const stops = TITLE_GRADIENT[/** @type {keyof typeof TITLE_GRADIENT} */ (paint)] ?? [\n    TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],\n    TITLE_RGBA[/** @type {keyof typeof TITLE_RGBA} */ (paint)],\n  ]; // AUDIT lane 3 F5",
     "tests": [
       "test/server/thanks_post.test.js"
     ]

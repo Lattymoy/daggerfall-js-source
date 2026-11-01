@@ -203,7 +203,7 @@ test('TOWN-ECON TE2 the door and the wiring: the three routes; the world host bu
   assert.match(w, /revealMemberGuildHalls\(\{ witness: onlineOn \}\);[^\n]*\n\s*townEcon\.witness\(_musicLoc\?\.mapTableData\?\.mapId\);/);
   assert.match(w, /type: loc\.mapTableData\.locationType, location: l \}\);/);
   assert.match(w, /locAt: \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\)\?\.mapTableData \?\? null, portLanes: /);   // PIN MOVED (SEA-TRADE): the location, not its type alone
-  assert.match(rd('src/scenes/townEconHost.js'), /reading\.online\(\) \? accountTowns\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage \}\) : null;/, 'the door the page\'s own online');
+  assert.match(rd('src/scenes/townEconHost.js'), /reading\.online\(\)\n\s*\? accountTowns\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage \}\)\n\s*: null;/, 'the door the page\'s own online');
 });
 
 test('SEA-TRADE the book vouches a captain\'s dealing (seaDeal): the newest tick unspent for this account within TOWN_SEA_REACH_PX of the port and TOWN_SEA_TICK_S old flags `sea` - a tick kept, or one beside the town\'s pixel held now; one tick one dealing; another\'s, a stale one and one two pixels off none; the claim sends the flagged ticks\' indices, and the flag outlives a reload (mutants: TOWNECON4-book-unvouched, TOWNECON4-book-twice, TOWNECON4-book-stale, TOWNECON4-book-reach, TOWNECON4-book-unsent)', async () => {

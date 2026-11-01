@@ -60,10 +60,10 @@
 
 import { templateByIndex } from './item/itemTemplates.js';
 import { isLightSource, expandItemMacro } from './useItem.js';
-import { getBool } from './settings/settings.js';   // T1: EnablePlayerTorch reads its own setting, inside Update
-import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
-import { modSetting } from './modSettings.js';   // HT-WAIST: the lantern-at-the-waist switch, on Handheld Torches' pane
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getBool } from './settings/settings.js'; // T1: EnablePlayerTorch reads its own setting, inside Update
+import { setLightSource } from './lightSource.js'; // DISC7: the light in hand's one door
+import { modSetting } from './modSettings.js'; // HT-WAIST: the lantern-at-the-waist switch, on Handheld Torches' pane
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** tickTimeInterval (:26) - REAL seconds, not game minutes. */
 export const TORCH_TICK_SECONDS = 20;
@@ -88,8 +88,7 @@ export const LANTERN_TEMPLATE = 248;
 
 /** `lightSource.ItemTemplate.capacityOrTarget` (:64) - the light's
  *  radius, straight off the shipping template. */
-export const torchRange = (item) =>
-  (item ? templateByIndex(item.templateIndex)?.capacityOrTarget ?? 0 : 0);
+export const torchRange = (item) => (item ? (templateByIndex(item.templateIndex)?.capacityOrTarget ?? 0) : 0);
 
 /** The per-entity torch state, created on demand. `guttering` is DFU's
  *  own field and survives between frames; `tickTimeBuffer` is its
@@ -114,7 +113,11 @@ const torchStateOf = (entity) => (entity._torch ??= { tickTimeBuffer: 0, gutteri
  *                      the caller; none, the canonical name
  * @returns {{ lit: boolean, range: number, died: (object|null) }}
  */
-export function tickPlayerTorch(entity, dtSeconds, { fromItems = null, say = null, rolls = Math.random, nameOf = null } = {}) {
+export function tickPlayerTorch(
+  entity,
+  dtSeconds,
+  { fromItems = null, say = null, rolls = Math.random, nameOf = null } = {},
+) {
   const enabled = fromItems ?? getBool('Enhancements', 'PlayerTorchFromItems');
   const st = torchStateOf(entity);
   const source = entity?.lightSource ?? null;
@@ -139,7 +142,7 @@ export function tickPlayerTorch(entity, dtSeconds, { fromItems = null, say = nul
     if (source.currentCondition === 0 && entity.lightSource === source) {
       say?.(expandItemMacro(localizedText('lightDies', LIGHT_DIES_TEXT), source, nameOf?.(source)));
       lit = false;
-      setLightSource(entity, null);   // DISC7: the one door
+      setLightSource(entity, null); // DISC7: the one door
       // A LANTERN survives its own death - it is the one that refuels.
       if (!(source.group === 'UselessItems2' && source.templateIndex === LANTERN_TEMPLATE)) {
         const items = entity.items ?? [];
@@ -149,7 +152,11 @@ export function tickPlayerTorch(entity, dtSeconds, { fromItems = null, say = nul
       died = source;
     }
   }
-  if (!lit) { st.guttering = 0; st.range = 0; return { lit: false, range: 0, died }; }
+  if (!lit) {
+    st.guttering = 0;
+    st.range = 0;
+    return { lit: false, range: 0, died };
+  }
   // The guttering band, and the steady value above it.
   let mod = ITEM_BASED_TORCH_INTENSITY;
   if ((source.currentCondition ?? 0) < GUTTERING_CONDITION) {
@@ -180,9 +187,10 @@ export function tickPlayerTorch(entity, dtSeconds, { fromItems = null, say = nul
 export function playerTorchLight(entity, feet, yaw = 0) {
   const st = entity?._torch;
   if (!st || !(st.range > 0) || !feet) return null;
-  const sy = Math.sin(yaw), cy = Math.cos(yaw);
-  const f = [sy, 0, cy];              // forward
-  const r = [cy, 0, -sy];             // right; DFU's -0.3 x is the player's LEFT
+  const sy = Math.sin(yaw),
+    cy = Math.cos(yaw);
+  const f = [sy, 0, cy]; // forward
+  const r = [cy, 0, -sy]; // right; DFU's -0.3 x is the player's LEFT
   // HT-WAIST: a lantern hung at the waist lights you from the HIP, and that beats both writers of the override
   // below (Handheld Torches' flip, which puts a HELD lantern low in the hand, and Eye Of The Beholder's
   // TorchOffset) - decided per frame from the item, so a torch lit a moment later never inherits the hip.
@@ -209,7 +217,9 @@ export function playerTorchLight(entity, feet, yaw = 0) {
  *  what was last written, so the override stands until cleared;
  *  `null` is DFU's own offset above. */
 let _offsetOverride = null;
-export function setPlayerTorchOffsetOverride(o) { _offsetOverride = o ? { left: +o.left || 0, up: +o.up || 0, forward: +o.forward || 0 } : null; }
+export function setPlayerTorchOffsetOverride(o) {
+  _offsetOverride = o ? { left: +o.left || 0, up: +o.up || 0, forward: +o.forward || 0 } : null;
+}
 export const playerTorchOffsetOverride = () => _offsetOverride;
 
 // HT-WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist instead of having to be held"):
@@ -230,8 +240,11 @@ export const LANTERN_HIP = Object.freeze({ left: -0.2, up: 1.0, forward: 0.1 });
  *  switch on, or one hung in the inventory's lantern slot (BELT-LANTERN). Torches and candles are always held. */
 export function lanternAtWaist(item) {
   if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;
-  if (item.beltLantern === true) return true;   // BELT-LANTERN: the inventory's lantern slot hangs it whatever the switch says (systems/beltLantern.js)
-  return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;
+  if (item.beltLantern === true) return true; // BELT-LANTERN: the inventory's lantern slot hangs it whatever the switch says (systems/beltLantern.js)
+  return (
+    modSetting('handheld-torches', 'Enabled') === true &&
+    modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true
+  );
 }
 
 /** HT-WAIST-NET (2026-09-24): the pose's `hl` bit (net/wire.js validPose) - 1 while the lit light is a lantern hung
@@ -244,10 +257,15 @@ export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undef
  *  Beholder's sprite faces the way it walks, not the camera's yaw, so it hands the drawn lantern's point in
  *  here (player/eyeOfTheBeholder/eotbBody.js) and clears it when it stops drawing. `null`: LANTERN_HIP. */
 let _waistOverride = null;
-const _waistPoint = { left: 0, up: 0, forward: 0 };   // written in place: its writer runs every frame the lantern is drawn
+const _waistPoint = { left: 0, up: 0, forward: 0 }; // written in place: its writer runs every frame the lantern is drawn
 export function setPlayerWaistLightOverride(o) {
-  if (!o) { _waistOverride = null; return; }
-  _waistPoint.left = +o.left || 0; _waistPoint.up = +o.up || 0; _waistPoint.forward = +o.forward || 0;
+  if (!o) {
+    _waistOverride = null;
+    return;
+  }
+  _waistPoint.left = +o.left || 0;
+  _waistPoint.up = +o.up || 0;
+  _waistPoint.forward = +o.forward || 0;
   _waistOverride = _waistPoint;
 }
 export const playerWaistLightOverride = () => _waistOverride;
@@ -266,11 +284,13 @@ export const PEER_LIGHT_RADIUS_MAX = 63;
  *  Lantern, the Candle, off their templates: the Lantern's 16). The pose may say up to the wire's bound, and a
  *  modified client's 63 lit a whole dungeon around them. */
 let _peerRangeMax = 0;
-export const peerLightRangeMax = () => (_peerRangeMax ||= Math.max(1, ...[247, 248, 253].map((templateIndex) => torchRange({ templateIndex }))));
+export const peerLightRangeMax = () =>
+  (_peerRangeMax ||= Math.max(1, ...[247, 248, 253].map((templateIndex) => torchRange({ templateIndex }))));
 
 /** My pose's `lt` - undefined while no light of mine burns (the wire's omission law). */
 export function torchPoseByte(entity) {
-  const st = entity?._torch, src = entity?.lightSource;
+  const st = entity?._torch,
+    src = entity?.lightSource;
   if (!st || !(st.range > 0) || !src) return undefined;
   const r = Math.max(1, Math.min(PEER_LIGHT_RADIUS_MAX, Math.round(torchRange(src))));
   return r * 2 + ((src.currentCondition ?? 0) < GUTTERING_CONDITION ? 1 : 0);
@@ -282,10 +302,11 @@ export function torchPoseByte(entity) {
 export function peerTorchLight(pose, feet, phase = 0) {
   const lt = pose?.lt | 0;
   if (!(lt > 1) || !feet) return null;
-  let range = Math.min(lt >> 1, peerLightRangeMax());   // AUDIT MERGE-PLUS B6
+  let range = Math.min(lt >> 1, peerLightRangeMax()); // AUDIT MERGE-PLUS B6
   if (lt & 1) range *= (GUTTER_BASE + Math.cos(phase * 1.2) * GUTTER_SWING) / ITEM_BASED_TORCH_INTENSITY;
   const yaw = Number.isFinite(pose.yaw) ? pose.yaw : 0;
-  const sy = Math.sin(yaw), cy = Math.cos(yaw);
+  const sy = Math.sin(yaw),
+    cy = Math.cos(yaw);
   const o = pose.hl ? LANTERN_HIP : TORCH_OFFSET;
   return {
     x: feet[0] - cy * o.left + sy * o.forward,

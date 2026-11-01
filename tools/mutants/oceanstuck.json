@@ -2,8 +2,8 @@
   {
     "name": "OCEANSTUCK-the-weighted-swimmer-has-no-door-the-defect",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p))",
-    "new": "swimCheckY(centreOf(p)) >= oceanY - 0.75",
+    "old": "        (swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p)) &&",
+    "new": "        swimCheckY(centreOf(p)) >= oceanY - 0.75 &&",
     "tests": [
       "test/scenes/oceanstuck.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OCEANSTUCK-every-swimmer-leaves-from-the-floor",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p))",
-    "new": "(swimCheckY(centreOf(p)) >= oceanY - 0.75 || true)",
+    "old": "        (swimCheckY(centreOf(p)) >= oceanY - 0.75 || heldUnder(p)) &&",
+    "new": "        (swimCheckY(centreOf(p)) >= oceanY - 0.75 || true) &&",
     "tests": [
       "test/scenes/oceanstuck.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OCEANSTUCK-the-weight-read-backwards",
     "file": "src/scenes/deepWater/deepWatersPlayer.js",
-    "old": "(p.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT && !p.levitating",
-    "new": "(p.carriedWeight?.() ?? 0) * 4 < OVER_ENCUMBERED_LIMIT && !p.levitating",
+    "old": "  const heldUnder = (p) => (p.carriedWeight?.() ?? 0) * 4 > OVER_ENCUMBERED_LIMIT && !p.levitating && !p.waterWalking;",
+    "new": "  const heldUnder = (p) => (p.carriedWeight?.() ?? 0) * 4 < OVER_ENCUMBERED_LIMIT && !p.levitating && !p.waterWalking;",
     "tests": [
       "test/scenes/oceanstuck.test.js"
     ]

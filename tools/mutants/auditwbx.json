@@ -2,7 +2,7 @@
   {
     "name": "AUDWBX-R1-the-share-left-in-him",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
+    "old": "  for (const p of Object.values(f.players))\n    if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);",
     "new": "  void ABSENT_RETIRE_MS;",
     "tests": [
       "test/net/gate/auditwbx.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "AUDWBX-R1-the-return-healing-him",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  f.max += p.share;\n  f.hp += p.share * frac;",
-    "new": "  f.max += p.share;\n  f.hp += p.share;",
+    "old": "  f.hp += p.share * frac;",
+    "new": "  f.hp += p.share;",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDWBX-R2-a-beat-holding-a-seat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (present.has(sub) || hasPart(p)) continue;",
-    "new": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue;",
+    "old": "    if (present.has(sub) || hasPart(p)) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
+    "new": "    if (present.has(sub) || p.dealt > 0 || p.stoodMs > 0) continue; // AUDIT WBX R2: a real part in the fight keeps a seat",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDWBX-R3-the-cleave-back-at-six",
     "file": "src/net/gate/gateBrain.js",
-    "old": "arc: 110, pct: 0.45, base: 12, el: null, aim: 'target', phase: 1, range: 7,",
-    "new": "arc: 110, pct: 0.45, base: 12, el: null, aim: 'target', phase: 1, range: 6,",
+    "old": "    range: 7,",
+    "new": "    range: 6,",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDWBX-R5-the-wind-ups-silence",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    else hpFrame(f, now, out);   // AUDIT WBX R5",
-    "new": "    else void hpFrame;   // AUDIT WBX R5",
+    "old": "    } else hpFrame(f, now, out); // AUDIT WBX R5: the blows landing through its wind-up are seen on the bar",
+    "new": "    } else void hpFrame; // AUDIT WBX R5: the blows landing through its wind-up are seen on the bar",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDWBX-R6-a-blow-after-midnight",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (now >= f.wrathAt) return 0;",
-    "new": "  if (false) return 0;",
+    "old": "  if (now >= f.wrathAt) return 0; // AUDIT WBX R6: midnight is the Wrath's, whether or not a beat has said so yet",
+    "new": "  if (false) return 0; // AUDIT WBX R6: midnight is the Wrath's, whether or not a beat has said so yet",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AUDWBX-S2-the-level-unsigned",
     "file": "src/net/gate/gateReceipt.js",
-    "old": "({ d, b, s, c, x, ...(l !== undefined ? { l } : {}), ...(r === 1 ? { r } : {})",
-    "new": "({ d, b, s, c, x, ...(r === 1 ? { r } : {})",
+    "old": "  ...(l !== undefined ? { l } : {}),\n  ...(r === 1 ? { r } : {}),",
+    "new": "  ...(r === 1 ? { r } : {}),",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ],
@@ -160,8 +160,8 @@
   {
     "name": "AUDWBX-F1-the-razor-on-the-stand-in",
     "file": "src/systems/artifactEffects.js",
-    "old": "      if (!target || !item || target.spareGear) return null;",
-    "new": "      if (!target || !item) return null;",
+    "old": "        if (!target || !item || target.spareGear) return null;",
+    "new": "        if (!target || !item) return null;",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "AUDWBX-F3-the-fall-at-the-words-start",
     "file": "src/net/gate/gateLink.js",
-    "old": "      const [x, z] = place(s, g.at);\n      return { ...s, fell:",
-    "new": "      const [x, z] = [s.x, s.z];\n      return { ...s, fell:",
+    "old": "        return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };\n      const [x, z] = place(s, g.at);",
+    "new": "        return g.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: g.dm }, heardAt: now } : { ...s, heardAt: now };\n      const [x, z] = [s.x, s.z];",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "AUDWBX-F4-the-charge-kept-through-the-walk",
     "file": "src/net/gate/gateLink.js",
-    "old": "    case 'mv': return { ...s, atk: null, move:",
-    "new": "    case 'mv': return { ...s, move:",
+    "old": "        atk: null,\n        move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at },",
+    "new": "        move: { x: g.x, z: g.z, tx: g.tx, tz: g.tz, v: g.v, at: g.at },",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "AUDWBX-F3-the-relay-left-behind",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    settleAt(f, now);   // AUDIT WBX F3",
-    "new": "    void settleAt;   // AUDIT WBX F3",
+    "old": "    settleAt(f, now); // AUDIT WBX F3: where he fell, not where his last beat left him",
+    "new": "    void settleAt; // AUDIT WBX F3: where he fell, not where his last beat left him",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "AUDWBX-F7-the-lane-at-half-its-width",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : A.shape === 'lane' ? Math.max((A.width ?? 0) / 2, P.bossR) : (A.width ?? 0) / 2,",
-    "new": "halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
+    "old": "    halfW: tether\n      ? TELEGRAPH_CHAIN_HALF_W\n      : A.shape === 'lane'\n        ? Math.max((A.width ?? 0) / 2, P.bossR)\n        : (A.width ?? 0) / 2,",
+    "new": "    halfW: tether ? TELEGRAPH_CHAIN_HALF_W : (A.width ?? 0) / 2,",
     "tests": [
       "test/net/gate/auditwbx.test.js",
       "test/net/gate/wb4_gate_boss.test.js"
@@ -251,8 +251,8 @@
   {
     "name": "AUDWBX-W3-the-fanfare-under-the-fade",
     "file": "src/systems/gate/gateScore.js",
-    "old": "stingAt = now + SCORE_STING_LEAD_MS;",
-    "new": "stingAt = now;",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "new": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now; // AUDIT WBX W3: from when it sounds",
     "tests": [
       "test/net/gate/auditwbx.test.js",
       "test/systems/gate/auditwb_sound.test.js"

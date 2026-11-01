@@ -31,7 +31,11 @@ export function createRegionChaseHearing(host) {
   /** Whether my map hides the traveller `f`, standing at `w` (world) - their kin as the Overworld's filters read it. */
   const hidden = (f, w) => {
     const s = social();
-    return wildHides({ kin: travellerKin({ friend: !!s?.isFriendPeer(f.id), gt: f.gt }, guildTag()), wire: [w.x, 0, w.z], party: !!s?.isPartyPeer(f.id) });
+    return wildHides({
+      kin: travellerKin({ friend: !!s?.isFriendPeer(f.id), gt: f.gt }, guildTag()),
+      wire: [w.x, 0, w.z],
+      party: !!s?.isPartyPeer(f.id),
+    });
   };
   /** A traveller's frame (`f`: its id, its mark `p` or null for a clear, its words), `aged` ms of its word gone. */
   function hear(f, aged = 0) {
@@ -39,13 +43,19 @@ export function createRegionChaseHearing(host) {
     const words = w && hidden(f, w) ? null : regionChaseHeard(f, me());
     regionChaseWithdraw(bands(), f.id, words && chasing(words.bd));
     regionChaseWithdraw(raids(), f.id, words && chasing(words.sr));
-    if (words) { bandHear(f.id, words.bd, TRAV_BAND_HOLD_MS, aged); seaRaidHear(f.id, words.sr, TRAV_BAND_HOLD_MS, aged); }
+    if (words) {
+      bandHear(f.id, words.bd, TRAV_BAND_HOLD_MS, aged);
+      seaRaidHear(f.id, words.sr, TRAV_BAND_HOLD_MS, aged);
+    }
   }
   /** A region's welcome (its rows, each `ag` seconds old): heard as they stand, the chases of any it no longer lists withdrawn. */
   function room(list) {
     const here = new Set((list ?? []).map((f) => f.id));
-    for (const peers of [bands(), raids()]) for (const [, p] of peers) if (!here.has(p.from)) regionChaseWithdraw(peers, p.from);
-    for (const f of list ?? []) if (f.ag * 1000 < TRAV_BAND_HOLD_MS) hear(f, f.ag * 1000); else hear({ id: f.id, p: null });
+    for (const peers of [bands(), raids()])
+      for (const [, p] of peers) if (!here.has(p.from)) regionChaseWithdraw(peers, p.from);
+    for (const f of list ?? [])
+      if (f.ag * 1000 < TRAV_BAND_HOLD_MS) hear(f, f.ag * 1000);
+      else hear({ id: f.id, p: null });
   }
   return { hear, room };
 }

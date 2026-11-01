@@ -32,7 +32,7 @@ const MEASURE = (floor) => {
   const seen = new Set();
   for (const el of document.querySelectorAll('#enhanced-menu button, #app button, #app input')) {
     const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) continue;          // not displayed
+    if (!r.width || !r.height) continue; // not displayed
     let w = r.width;
     let h = r.height;
     const a = getComputedStyle(el, '::after');
@@ -44,8 +44,7 @@ const MEASURE = (floor) => {
       const key = `${el.className}|${Math.round(w)}x${Math.round(h)}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      bad.push({ cls: el.className, w: Math.round(w), h: Math.round(h),
-        text: el.textContent.trim().slice(0, 22) });
+      bad.push({ cls: el.className, w: Math.round(w), h: Math.round(h), text: el.textContent.trim().slice(0, 22) });
     }
   }
   return bad;
@@ -99,7 +98,7 @@ for (const [label, opts] of [
     // bottom. The class is the state.
     if (await page.locator('#enhanced-menu .detail.open').count()) {
       await page.locator('#enhanced-menu .sheet-close').click();
-      await page.waitForTimeout(280);   // the slide
+      await page.waitForTimeout(280); // the slide
     }
     await page.locator('#enhanced-menu .subbtn').nth(i).click();
     await page.waitForTimeout(60);
@@ -125,8 +124,9 @@ for (const [label, opts] of [['phone', { ...devices['Pixel 5'] }]]) {
   };
   const primary = () => page.locator('.act.primary');
   await at('homeland');
-  await page.evaluate(() => [...document.querySelectorAll('.prov:not(.inert)')][1]
-    .dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await page.evaluate(() =>
+    [...document.querySelectorAll('.prov:not(.inert)')][1].dispatchEvent(new MouseEvent('click', { bubbles: true })),
+  );
   await page.waitForTimeout(150);
   await at('homeland sheet');
   await primary().click();

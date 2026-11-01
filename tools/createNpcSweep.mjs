@@ -36,7 +36,8 @@ export async function sweepCreateNpc(quests, { towns = 4, seeds = 2, mods = true
   const { SITE_TYPES } = await import('../src/systems/quest/place.js');
   const { longitudeLatitudeToMapPixel } = await import('../src/formats/mapsFile.js');
   const { FactionFile, FACTION_TYPES } = await import('../src/formats/factionFile.js');
-  const { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, findFactions } = await import('../src/systems/talk/talk.js');
+  const { getPeopleOfCurrentRegion, getCourtOfCurrentRegion, findFactions } =
+    await import('../src/systems/talk/talk.js');
   const { REGION_RACES } = await import('../src/formats/mapsTables.js');
   const { readFileSync } = await import('node:fs');
   loadTables();
@@ -47,58 +48,123 @@ export async function sweepCreateNpc(quests, { towns = 4, seeds = 2, mods = true
   const dict = factions.factionDict;
   const out = [];
   for (const name of quests) {
-    const result = { quest: name, runs: 0, people: 0, ok: 0, /** @type {Record<string, { n: number, eg: string[] }>} */ broke: {} };
-    const broke = (/** @type {string} */ kind, /** @type {string} */ eg) => { const k = (result.broke[kind] ??= { n: 0, eg: [] }); k.n++; if (k.eg.length < 4) k.eg.push(eg); };
+    const result = {
+      quest: name,
+      runs: 0,
+      people: 0,
+      ok: 0,
+      /** @type {Record<string, { n: number, eg: string[] }>} */ broke: {},
+    };
+    const broke = (/** @type {string} */ kind, /** @type {string} */ eg) => {
+      const k = (result.broke[kind] ??= { n: 0, eg: [] });
+      k.n++;
+      if (k.eg.length < 4) k.eg.push(eg);
+    };
     for (let r = 0; r < maps.regionCount; r++) {
       const region = maps.getRegion(r);
       if (!region?.locationCount) continue;
       const own = [];
-      for (let l = 0; l < region.locationCount; l++) if (region.mapTable[l].locationType <= 2) own.push(l);   // TownCity, TownHamlet, TownVillage
+      for (let l = 0; l < region.locationCount; l++) if (region.mapTable[l].locationType <= 2) own.push(l); // TownCity, TownHamlet, TownVillage
       const step = Math.max(1, Math.floor(own.length / towns));
       for (const l of own.filter((_, i) => i % step === 0).slice(0, towns)) {
         const here = maps.getLocation(r, l);
         const world = {
-          maps, getBlock: (/** @type {string} */ n) => blocks.getBlockByName(n), currentLocation: () => here,
-          currentRegionIndex: () => r, currentLocationIndex: () => l, currentRegionName: () => region.name,
-          isPlayerInLocationRect: () => true, playerInside: () => null, isHouseOwned: () => false, isPlayerHome: () => false,
+          maps,
+          getBlock: (/** @type {string} */ n) => blocks.getBlockByName(n),
+          currentLocation: () => here,
+          currentRegionIndex: () => r,
+          currentLocationIndex: () => l,
+          currentRegionName: () => region.name,
+          isPlayerInLocationRect: () => true,
+          playerInside: () => null,
+          isHouseOwned: () => false,
+          isPlayerHome: () => false,
           playerPixel: () => longitudeLatitudeToMapPixel(here.mapTableData.longitude, here.mapTableData.latitude),
           getClimateIndex: (/** @type {number} */ x, /** @type {number} */ y) => maps.getClimateIndex(x, y),
-          buildingNameOpts: () => ({}), getFactionData: (/** @type {number} */ id) => factions.getFaction(id),
+          buildingNameOpts: () => ({}),
+          getFactionData: (/** @type {number} */ id) => factions.getFaction(id),
           findFactionsOfType: (/** @type {number} */ type) => [...dict.values()].filter((f) => f.type === type),
-          currentRegionPeople: () => getPeopleOfCurrentRegion(dict, r)?.id ?? -1, currentRegionCourt: () => getCourtOfCurrentRegion(dict, r)?.id ?? -1,
-          currentRegionFaction: () => findFactions(dict, { type: FACTION_TYPES.Province, region: r })[0]?.id ?? -1,   // the world host's _regionFaction
-          currentRegionRace: () => REGION_RACES[r] + 1,   // and its currentRegionRace
+          currentRegionPeople: () => getPeopleOfCurrentRegion(dict, r)?.id ?? -1,
+          currentRegionCourt: () => getCourtOfCurrentRegion(dict, r)?.id ?? -1,
+          currentRegionFaction: () => findFactions(dict, { type: FACTION_TYPES.Province, region: r })[0]?.id ?? -1, // the world host's _regionFaction
+          currentRegionRace: () => REGION_RACES[r] + 1, // and its currentRegionRace
         };
         for (let s = 1; s <= seeds; s++) {
           result.runs++;
           const tag = `${region.name}/${here.name}#${s}`;
-          const machine = new QuestMachine({ nowSeconds: () => 0, world, getReputation: () => 0, changeReputation: () => {} });
+          const machine = new QuestMachine({
+            nowSeconds: () => 0,
+            world,
+            getReputation: () => 0,
+            changeReputation: () => {},
+          });
           const quest = machine.parseQuestForLists(questScript(name), 0, { rolls: seeded(s * 7919 + l) });
-          if (!quest) { broke('not made', tag); continue; }
-          try { machine.startQuestImmediate(quest); machine.tick(); } catch (e) { broke('start threw', `${tag}: ${/** @type {Error} */ (e).message}`); continue; }
-          const created = new Set([...quest.tasks.values()].flatMap((t) => t.actions).filter((a) => a.constructor?.typeName === 'CreateNpc' && a.isComplete).map((a) => a.npcSymbol?.name));
+          if (!quest) {
+            broke('not made', tag);
+            continue;
+          }
+          try {
+            machine.startQuestImmediate(quest);
+            machine.tick();
+          } catch (e) {
+            broke('start threw', `${tag}: ${/** @type {Error} */ (e).message}`);
+            continue;
+          }
+          const created = new Set(
+            [...quest.tasks.values()]
+              .flatMap((t) => t.actions)
+              .filter((a) => a.constructor?.typeName === 'CreateNpc' && a.isComplete)
+              .map((a) => a.npcSymbol?.name),
+          );
           let fine = true;
-          for (const p of [...quest.resources.values()].filter((x) => x.isPerson && created.has(x.symbol?.name) && !x.isQuestor && !x.isIndividualNPC)) {
+          for (const p of [...quest.resources.values()].filter(
+            (x) => x.isPerson && created.has(x.symbol?.name) && !x.isQuestor && !x.isIndividualNPC,
+          )) {
             result.people++;
             const who = `${tag} _${p.symbol.name}_`;
             const assigned = p.getAssignedPlaceSymbol();
-            if (!assigned) { broke('not assigned', who); fine = false; continue; }
+            if (!assigned) {
+              broke('not assigned', who);
+              fine = false;
+              continue;
+            }
             const sd = quest.getPlace(assigned)?.siteDetails;
-            if (sd?.siteType !== SITE_TYPES.Building || !(sd.buildingKey > 0)) { broke('no building', who); fine = false; continue; }
+            if (sd?.siteType !== SITE_TYPES.Building || !(sd.buildingKey > 0)) {
+              broke('no building', who);
+              fine = false;
+              continue;
+            }
             const reg = maps.getRegion(sd.regionIndex);
             const index = reg.mapTable.findIndex((/** @type {{ mapId: number }} */ t) => t.mapId === sd.mapId);
             const at = `${who} -> ${sd.regionName}/${sd.locationName}`;
             if (sd.regionIndex !== r) broke('another region', at);
-            if (reg.mapNameLookup?.get?.(sd.locationName) !== index) { broke('not findable by name', at); fine = false; }
+            if (reg.mapNameLookup?.get?.(sd.locationName) !== index) {
+              broke('not findable by name', at);
+              fine = false;
+            }
             const town = maps.getLocation(sd.regionIndex, index);
-            const [x, y, rec] = keyParts(sd.buildingKey >= 0x1000000 ? 0 : sd.buildingKey);   // BuildingDirectory's key 0 is 1 << 24 (talkTopics.js makeBuildingKey)
+            const [x, y, rec] = keyParts(sd.buildingKey >= 0x1000000 ? 0 : sd.buildingKey); // BuildingDirectory's key 0 is 1 << 24 (talkTopics.js makeBuildingKey)
             const ed = town.exterior.exteriorData;
             const block = ed.blockNames[y * ed.width + x];
             const type = blocks.getBlockByName(block)?.rmbBlock?.fldHeader?.buildingDataList?.[rec]?.buildingType;
-            if (!Number.isInteger(type) || type < 0) { broke('no building as laid out', `${at} ${block}#${rec}`); fine = false; }   // BuildingTypes.None is -1; Alchemist is 0
-            const holds = (/** @type {any} */ m) => (m?.targetResources ?? []).some((/** @type {any} */ t) => t.name === p.symbol.name);
-            if (![sd.selectedMarker, ...(sd.questSpawnMarkers ?? [])].some(holds)) { broke('held by no marker', at); fine = false; }
-            if (!machine.getSiteLinks(SITE_TYPES.Building, sd.mapId, sd.buildingKey)?.some((/** @type {any} */ k) => k.questUID === quest.uid)) { broke('no link of its own', at); fine = false; }
+            if (!Number.isInteger(type) || type < 0) {
+              broke('no building as laid out', `${at} ${block}#${rec}`);
+              fine = false;
+            } // BuildingTypes.None is -1; Alchemist is 0
+            const holds = (/** @type {any} */ m) =>
+              (m?.targetResources ?? []).some((/** @type {any} */ t) => t.name === p.symbol.name);
+            if (![sd.selectedMarker, ...(sd.questSpawnMarkers ?? [])].some(holds)) {
+              broke('held by no marker', at);
+              fine = false;
+            }
+            if (
+              !machine
+                .getSiteLinks(SITE_TYPES.Building, sd.mapId, sd.buildingKey)
+                ?.some((/** @type {any} */ k) => k.questUID === quest.uid)
+            ) {
+              broke('no link of its own', at);
+              fine = false;
+            }
           }
           if (fine) result.ok++;
         }
@@ -111,14 +177,21 @@ export async function sweepCreateNpc(quests, { towns = 4, seeds = 2, mods = true
 
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
-  const flag = (/** @type {string} */ f, /** @type {number} */ d) => { const i = args.indexOf(f); return i >= 0 ? Number(args.splice(i, 2)[1]) : d; };
-  const towns = flag('--towns', 4), seeds = flag('--seeds', 2);
+  const flag = (/** @type {string} */ f, /** @type {number} */ d) => {
+    const i = args.indexOf(f);
+    return i >= 0 ? Number(args.splice(i, 2)[1]) : d;
+  };
+  const towns = flag('--towns', 4),
+    seeds = flag('--seeds', 2);
   const quests = args.length ? args : ['A0C00Y15', 'A0C00Y14'];
   const results = await sweepCreateNpc(quests, { towns, seeds, mods: process.env.MODS !== '0' });
   let bad = 0;
   for (const r of results) {
     console.log(`${r.quest}: ${r.ok}/${r.runs} runs whole, ${r.people} people checked`);
-    for (const [kind, k] of Object.entries(r.broke)) { console.log(`  ${kind}: ${k.n}  e.g. ${k.eg.join(' | ')}`); if (kind !== 'another region' && kind !== 'not made') bad += k.n; }
+    for (const [kind, k] of Object.entries(r.broke)) {
+      console.log(`  ${kind}: ${k.n}  e.g. ${k.eg.join(' | ')}`);
+      if (kind !== 'another region' && kind !== 'not made') bad += k.n;
+    }
   }
   process.exit(bad ? 1 : 0);
 }

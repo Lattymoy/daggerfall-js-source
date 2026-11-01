@@ -29,8 +29,8 @@
   {
     "name": "EXACT-PIECES-the-ring-unread",
     "file": "src/world/tamrielLandPieces.js",
-    "old": "  for (let u = 0; u < w; u++) { ring[u] = dryAt(u, -1) ? 1 : 0; ring[w + u] = dryAt(u, h) ? 1 : 0; }\n  for (let v = 0; v < h; v++) { ring[2 * w + v] = dryAt(-1, v) ? 1 : 0; ring[2 * w + h + v] = dryAt(w, v) ? 1 : 0; }\n",
-    "new": "",
+    "old": "  for (let u = 0; u < w; u++) {\n    ring[u] = dryAt(u, -1) ? 1 : 0;\n    ring[w + u] = dryAt(u, h) ? 1 : 0;\n  }\n  for (let v = 0; v < h; v++) {\n    ring[2 * w + v] = dryAt(-1, v) ? 1 : 0;\n    ring[2 * w + h + v] = dryAt(w, v) ? 1 : 0;\n  }\n  return { w, h, count: label.size, rowStart, runLen: Uint16Array.from(len), runLabel: Uint32Array.from(lab), ring };",
+    "new": "  return { w, h, count: label.size, rowStart, runLen: Uint16Array.from(len), runLabel: Uint32Array.from(lab), ring };",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EXACT-PIECES-unknown-always",
     "file": "src/systems/travel/landPieces.js",
-    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
-    "new": "      if (!them) { joinX(a, UNKNOWN); continue; }",
+    "old": "        if (landRingDry(land, side, t)) joinX(a, UNKNOWN);",
+    "new": "        joinX(a, UNKNOWN);",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "EXACT-PIECES-unknown-never",
     "file": "src/systems/travel/landPieces.js",
-    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
+    "old": "      if (!them) {\n        if (landRingDry(land, side, t)) joinX(a, UNKNOWN);\n        continue;\n      }",
     "new": "      if (!them) continue;",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "EXACT-PIECES-the-water-end-blind",
     "file": "src/systems/travel/landPieces.js",
-    "old": "  if (own >= 0) return new Set([own]);\n  const out = new Set();",
-    "new": "  if (own >= 0) return new Set([own]);\n  return new Set();\n  const out = new Set();",
+    "old": "  const out = new Set();",
+    "new": "  return new Set();\n  const out = new Set();",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EXACT-PIECES-never-asked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (past && !sea && apart && apartExact(from, to)) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (past && !sea && apart && apartExact(from, to)) return null; // EXACT-PIECES: and at the pixel, once the roads' regions have all landed",
+    "new": "  if (false) return null; // EXACT-PIECES: and at the pixel, once the roads' regions have all landed",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EXACT-PIECES-the-host-unhanded",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "        addExactPieces(region, land ?? null);",
-    "new": "        addExactPieces(region, null);",
+    "old": "        addExactPieces(region, land ?? null);   // EXACT-PIECES: its land's pieces, joined to its landed neighbours'",
+    "new": "        addExactPieces(region, null);   // EXACT-PIECES: its land's pieces, joined to its landed neighbours'",
     "tests": [
       "test/systems/travel/exact_pieces.test.js"
     ]

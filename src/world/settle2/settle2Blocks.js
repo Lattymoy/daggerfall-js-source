@@ -1,5 +1,5 @@
 // @ts-check
-// WG2-TOWNS (bible/03-World/World-2-Canon.md, "Buildings and settlements"): A WORLD 2.0 TOWN'S BLOCKS - one a cell of its
+// A WORLD 2.0 TOWN'S BLOCKS - one a cell of its
 // pixel's 8 x 8 grid, made when first read (a family on the world-data door, formats/worldData/worldDataReplacement.js
 // registerPortBlockFamily). Each building is the subrecord its slot names - its shell (settle2Shell.js) and Daggerfall's
 // door (world/imperialFabricBuildings.js fabricDoorModel) laid with its door at its record's door, facing its way - and the
@@ -277,7 +277,7 @@ export function settle2Block(name, blocksFile) {
     const r = records[i];
     if (!r) return;
     Object.defineProperty(sub, 'interior', { get: () => settle2Interior(r, blocksFile), enumerable: true, configurable: true });
-    sub.footprintM2 = r.w * r.d;   // IC-HOMES: its ground, m2 - a house's price (net/onlineHomes.js)
+    sub.footprintM2 = r.w * r.d;   // Its ground, m2 - a house's price (net/onlineHomes.js)
   });
   block.ownNamedBuildings = true;
   return block;

@@ -51,7 +51,7 @@ export async function naturePicture({ door = null, seasons = null, renderer, upl
   if (far) return { key: far.record, size: far.size, plain, sib, proto, far };
   if (sib) {
     const key = seasonPictureKey(record, seasons.installedSeason);
-    renderer.uploadTexture(archive, key, sib.texture.image, { mips: false, variant: '' });   // TEX1: the door's answer, handed over whole
+    renderer.uploadTexture(archive, key, sib.texture.image, { mips: false, variant: '' }); // TEX1: the door's answer, handed over whole
     return { key, size: sib.size, plain, sib, proto: null, far: null };
   }
   uploadRecord(archive, record);

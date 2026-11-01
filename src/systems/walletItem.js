@@ -24,7 +24,7 @@
 //
 // Not a DFU member: Daggerfall's currencies are its gold and its letters, in the pack's lists. Ledger A (WALLET1).
 import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from './item/itemTemplates.js';
-import { addItem, itemWeight, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // WALLET-WEIGHT: what its pieces weigh
+import { addItem, itemWeight, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js'; // WALLET-WEIGHT: what its pieces weigh
 import { SIGIL_STONE_TEMPLATE, WELKYND_SHARD_TEMPLATE } from './gate/gateSpoils.js';
 import { isEquipped } from './equip.js';
 
@@ -33,16 +33,34 @@ export const WALLET_TEMPLATE = 580;
 /** Its row, in the port's template columns. Rarity 20: no shelf and no loot table rolls it - every character is given
  *  its one. */
 export const WALLET_ROW = Object.freeze({
-  index: WALLET_TEMPLATE, name: 'Wallet', baseWeight: 0, hitPoints: 0, capacityOrTarget: 0, basePrice: 1,
-  enchantmentPoints: 0, rarity: 20, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false,
-  isOneHanded: false, isIngredient: false, worldTextureArchive: 205, worldTextureRecord: 18,
-  playerTextureArchive: 0, playerTextureRecord: 0, stackable: false, hasNoEncumbrance: true,
-  bound: true, packOnly: true,
+  index: WALLET_TEMPLATE,
+  name: 'Wallet',
+  baseWeight: 0,
+  hitPoints: 0,
+  capacityOrTarget: 0,
+  basePrice: 1,
+  enchantmentPoints: 0,
+  rarity: 20,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 205,
+  worldTextureRecord: 18,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
+  stackable: false,
+  hasNoEncumbrance: true,
+  bound: true,
+  packOnly: true,
 });
 registerCustomTemplates([WALLET_ROW]);
 
 /** Whether a record IS a wallet - its template and its group, the one spelling every rule reads. */
-export const isWalletItem = (/** @type {any} */ item) => item?.templateIndex === WALLET_TEMPLATE && item?.group === 'UselessItems2';
+export const isWalletItem = (/** @type {any} */ item) =>
+  item?.templateIndex === WALLET_TEMPLATE && item?.group === 'UselessItems2';
 /** Whether a list (the pack) holds one. */
 export const hasWallet = (/** @type {any} */ items) => Array.isArray(items) && items.some(isWalletItem);
 
@@ -95,8 +113,17 @@ export function setWalletSilver(/** @type {any} */ read, /** @type {any} */ refr
 export function refreshWalletSilver() {
   if (_asking) return _asking;
   let ask;
-  try { ask = Promise.resolve(_refresh?.()).then(() => undefined, () => undefined); } catch { return Promise.resolve(); }
-  const mine = ask.then(() => { if (_asking === mine) _asking = null; });
+  try {
+    ask = Promise.resolve(_refresh?.()).then(
+      () => undefined,
+      () => undefined,
+    );
+  } catch {
+    return Promise.resolve();
+  }
+  const mine = ask.then(() => {
+    if (_asking === mine) _asking = null;
+  });
   _asking = mine;
   return mine;
 }
@@ -109,7 +136,9 @@ export function walletSilver() {
     const n = _silver?.() ?? null;
     if (n === false) return false;
     return Number.isSafeInteger(n) && n >= 0 ? n : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -123,19 +152,27 @@ export function walletSilver() {
  */
 export function walletContents(items, entity, { silver = walletSilver(), here = walletSilverHere() } = {}) {
   const held = (Array.isArray(items) ? items : []).filter((it) => walletHolds(it) && !isEquipped(it));
-  const count = (t) => held.reduce((n, it) => n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0);
+  const count = (t) =>
+    held.reduce((n, it) => n + (it.templateIndex === t ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0);
   const letters = held.filter((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);
   const kg = (t) => held.reduce((w, it) => w + (it.templateIndex === t ? itemWeight(it) : 0), 0);
   return {
     gold: Math.max(0, Math.trunc(Number(entity?.goldPieces) || 0)),
-    silver: typeof silver === 'number' && Number.isSafeInteger(silver) ? silver : null,   // a count, or none counted (`false` is the account's none: silverWhy says so)
+    silver: typeof silver === 'number' && Number.isSafeInteger(silver) ? silver : null, // a count, or none counted (`false` is the account's none: silverWhy says so)
     // AUDIT 625 W5: why none is counted - offline the account keeps it online; online the page is asking (every look asks
     // afresh), or the account holds none
     silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : silver === false ? 'none' : 'asking',
-    letters: { count: letters.length, gold: letters.reduce((g, it) => g + Math.max(0, Math.trunc(Number(it.value) || 0)), 0) },
+    letters: {
+      count: letters.length,
+      gold: letters.reduce((g, it) => g + Math.max(0, Math.trunc(Number(it.value) || 0)), 0),
+    },
     embers: count(SIGIL_STONE_TEMPLATE),
     shards: count(WELKYND_SHARD_TEMPLATE),
-    weights: { letters: kg(LETTER_OF_CREDIT_TEMPLATE), embers: kg(SIGIL_STONE_TEMPLATE), shards: kg(WELKYND_SHARD_TEMPLATE) },
+    weights: {
+      letters: kg(LETTER_OF_CREDIT_TEMPLATE),
+      embers: kg(SIGIL_STONE_TEMPLATE),
+      shards: kg(WELKYND_SHARD_TEMPLATE),
+    },
     weight: held.reduce((w, it) => w + itemWeight(it), 0),
     held,
   };
@@ -147,18 +184,27 @@ export const walletKg = (/** @type {number} */ kg) => `${(Number(kg) || 0).toFix
 /** TRADE-LOC II (2026-10-11, from play: "Cant see how much a letter of credit is worth when trading directly with
  *  players"): a LETTER OF CREDIT's worth as the gold it stands for ("12,500 gold"), or null for anything else - the line
  *  below's figure, for a surface that names it under its own word (the pack's card says it as its Worth pair). */
-export const letterWorthGold = (/** @type {any} */ item) => (item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE
-  ? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold` : null);
+export const letterWorthGold = (/** @type {any} */ item) =>
+  item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE
+    ? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold`
+    : null;
 /** A LETTER OF CREDIT's worth, as a line - the gold it stands for (its `value`, the whole price it was minted at), or null
  *  for anything else. TRADE-LOC (Dudey: "when players trade in any ui the letter of credit doesnt show how many gold its
  *  worth when being clicked on it in the info box"): a letter is nothing but its worth, so a window that describes an item
  *  without its price - the player trade's - says it here. */
-export const letterWorthLine = (/** @type {any} */ item) => { const g = letterWorthGold(item); return g == null ? null : `Worth ${g}`; };
+export const letterWorthLine = (/** @type {any} */ item) => {
+  const g = letterWorthGold(item);
+  return g == null ? null : `Worth ${g}`;
+};
 /** AUDIT 625 W5: the silver's words where no figure is counted, by why (walletContents' `silverWhy`): offline the
  *  account keeps it; online the page is asking it (every look asks afresh - the sheet, the classic box, the hotbar); an
  *  account that holds none (a guest's, the counting-houses not striking yet). The online wait once said the offline
  *  words. */
-export const SILVER_WHY = Object.freeze({ offline: 'held in your online account', asking: 'checking your account', none: 'none' });
+export const SILVER_WHY = Object.freeze({
+  offline: 'held in your online account',
+  asking: 'checking your account',
+  none: 'none',
+});
 /**
  * WALLET-UI (2026-10-07, Mac: "Polish and organize the ingame wallet item for ease of readability"): THE WALLET'S
  * LEDGER - its currencies in two parts, the coin (the purse's gold, the account's silver) and what the wallet holds (the
@@ -172,18 +218,39 @@ export const SILVER_WHY = Object.freeze({ offline: 'held in your online account'
  * @param {ReturnType<typeof walletContents>} c
  */
 export function walletLedger(c) {
-  const count = (/** @type {string} */ key, /** @type {string} */ label, /** @type {number} */ n, /** @type {number} */ kg, /** @type {string|null} */ note = null) =>
-    ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });
-  const silver = c.silver != null ? { key: 'silver', label: 'Silver', figure: num(c.silver), none: false, note: null, weight: null }
-    : c.silverWhy === 'none' ? { key: 'silver', label: 'Silver', figure: 'none', none: true, note: null, weight: null }
-      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline, weight: null };
+  const count = (
+    /** @type {string} */ key,
+    /** @type {string} */ label,
+    /** @type {number} */ n,
+    /** @type {number} */ kg,
+    /** @type {string|null} */ note = null,
+  ) => ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null, weight: n ? walletKg(kg) : null });
+  const silver =
+    c.silver != null
+      ? { key: 'silver', label: 'Silver', figure: num(c.silver), none: false, note: null, weight: null }
+      : c.silverWhy === 'none'
+        ? { key: 'silver', label: 'Silver', figure: 'none', none: true, note: null, weight: null }
+        : {
+            key: 'silver',
+            label: 'Silver',
+            figure: null,
+            none: false,
+            note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline,
+            weight: null,
+          };
   return [
-    { head: 'Coin', rows: [{ key: 'gold', label: 'Gold', figure: num(c.gold), none: false, note: null, weight: null }, silver] },
-    { head: 'In the wallet', rows: [
-      count('letters', 'Letters of credit', c.letters.count, c.weights.letters, `worth ${num(c.letters.gold)} gold`),
-      count('embers', 'Deadlands Embers', c.embers, c.weights.embers),
-      count('shards', 'Welkynd Shards', c.shards, c.weights.shards),
-    ] },
+    {
+      head: 'Coin',
+      rows: [{ key: 'gold', label: 'Gold', figure: num(c.gold), none: false, note: null, weight: null }, silver],
+    },
+    {
+      head: 'In the wallet',
+      rows: [
+        count('letters', 'Letters of credit', c.letters.count, c.weights.letters, `worth ${num(c.letters.gold)} gold`),
+        count('embers', 'Deadlands Embers', c.embers, c.weights.embers),
+        count('shards', 'Welkynd Shards', c.shards, c.weights.shards),
+      ],
+    },
   ];
 }
 /** A ledger row as the classic box says it: its label, then its figure and its note. */
@@ -206,4 +273,8 @@ export const WALLET_CARD_LINES = Object.freeze([
 registerItemUseHandler(WALLET_TEMPLATE, (item) => ({ kind: 'wallet', item }));
 
 /** Tests only: no silver known, none asked. */
-export function _resetWalletForTests() { _silver = null; _refresh = null; _asking = null; }
+export function _resetWalletForTests() {
+  _silver = null;
+  _refresh = null;
+  _asking = null;
+}

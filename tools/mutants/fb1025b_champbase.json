@@ -65,8 +65,8 @@
   {
     "name": "FB1025B-CHAMPBASE-apply-without-the-gate",
     "file": "src/systems/champions.js",
-    "old": "  const t = championTraitFor(entity, traitIndex);\n  if (!t) return false;",
-    "new": "  const t = Number.isInteger(traitIndex) ? CHAMPION_TRAITS[traitIndex] : null;\n  if (!t) return false;",
+    "old": "  const t = championTraitFor(entity, traitIndex);",
+    "new": "  const t = Number.isInteger(traitIndex) ? CHAMPION_TRAITS[traitIndex] : null;",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

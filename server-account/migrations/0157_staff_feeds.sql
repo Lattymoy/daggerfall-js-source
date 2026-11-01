@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS staff_foe_rows (
 );
 CREATE INDEX IF NOT EXISTS staff_foe_rows_at ON staff_foe_rows (at);
 
--- THE BOT CHECK: a natural encounter's reaction (mob, 04:47Z), kept REACT_KEEP_S (14 days) unless staff keep the account's
+-- THE BOT CHECK: a natural encounter's reaction, kept REACT_KEEP_S (14 days) unless staff keep the account's
 -- rows as evidence (`keep_until`). A row is one episode (`n` 1), or - once an hour's rows would pass what the hourly sweep
 -- deletes - one player-hour's episodes together (id `h:<account>:<hour>`, `n` its episodes). Each time is a SUM over the
 -- row's episodes beside how many had one (`*_n`), so an episode and a player-hour are read alike.

@@ -23,21 +23,27 @@ import manifest from '../../vendor/grimoire-ui/grimoire-ui.files.json' with { ty
 import { getPref, setPref } from './uiPrefs.js';
 import { uiSkin, skinOverride } from './uiSkin.js';
 import { APP_ROOT } from './appRoot.js';
-import { pageParam } from './pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageParam } from './pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 export const UI_PACK_NONE = 'none';
 /** The packs, by the pref's token. One today; a second is one row and its listing. */
 export const UI_PACKS = Object.freeze({
   grimoire: Object.freeze({
-    id: 'grimoire', title: 'GrimoireUI', version: manifest.ModVersion, author: manifest.ModAuthor, source: manifest.Source,
-    dir: 'art/grimoire-ui', vendor: 'grimoire-ui', files: Object.freeze([...manifest.Files]),   // vendor: its vendor/ folder (README, listing, credit)
+    id: 'grimoire',
+    title: 'GrimoireUI',
+    version: manifest.ModVersion,
+    author: manifest.ModAuthor,
+    source: manifest.Source,
+    dir: 'art/grimoire-ui',
+    vendor: 'grimoire-ui',
+    files: Object.freeze([...manifest.Files]), // vendor: its vendor/ folder (README, listing, credit)
   }),
 });
 const clean = (v) => (v === UI_PACK_NONE || Object.hasOwn(UI_PACKS, v) ? v : null);
 
 /** The URL's answer for this page load only, or null (uiSkin's override law). */
 export function uiPackOverride(search = globalThis.location?.search ?? '') {
-  return clean(pageParam('uipack', search));   // PERF-URL
+  return clean(pageParam('uipack', search)); // PERF-URL
 }
 
 /** The pack being worn, or null: the URL's `uipack`, else - with no URL skin override - the stored choice; and only
@@ -45,11 +51,13 @@ export function uiPackOverride(search = globalThis.location?.search ?? '') {
 export function activeUiPack(search) {
   if (uiSkin(search) !== 'classic') return null;
   const url = uiPackOverride(search);
-  const id = url ?? (skinOverride(search) ? UI_PACK_NONE : clean(getPref('uiPack')) ?? UI_PACK_NONE);
+  const id = url ?? (skinOverride(search) ? UI_PACK_NONE : (clean(getPref('uiPack')) ?? UI_PACK_NONE));
   return id === UI_PACK_NONE ? null : UI_PACKS[id];
 }
 /** Store a pack choice ('none' or a pack id); a bad value is a typo and changes nothing. */
-export function setUiPack(id) { return clean(id) ? setPref('uiPack', id) : false; }
+export function setUiPack(id) {
+  return clean(id) ? setPref('uiPack', id) : false;
+}
 
 // ---- the pack's files, by the name the port asks for ---------------------------------------------------------------
 /** Where a shipped file stands: `Textures/...` and `Fonts/...` keep their folders under the pack's directory. */
@@ -57,10 +65,13 @@ const servedPath = (file) => file.replace(/^StreamingAssets\/Textures\//, '').re
 /** The pack's index, built once from its listing: Img by IMG name, CifRci by `FILE_r-f` (case folded, as DFU's
  *  Windows file lookup is - the pack ships `Buttons.rci_0-0` beside `BUTTONS.RCI_21-0`), the save window's colour
  *  textures and the fonts by their bare names. */
-const _indexes = new WeakMap();   // pack -> its index (the pack rows are frozen)
+const _indexes = new WeakMap(); // pack -> its index (the pack rows are frozen)
 export function packIndex(pack) {
   if (_indexes.has(pack)) return _indexes.get(pack);
-  const img = new Map(), cifRci = new Map(), colours = new Map(), fonts = new Map();
+  const img = new Map(),
+    cifRci = new Map(),
+    colours = new Map(),
+    fonts = new Map();
   for (const f of pack.files) {
     const served = servedPath(f);
     let m;
@@ -81,23 +92,31 @@ export const packUrl = (pack, served, root = APP_ROOT ?? globalThis.document?.ba
  *  colour texture (DFU's camelCase name) or a font (`FONT0003.FNT`) - its URL, or null when no pack is worn or the
  *  pack does not carry it (the classic art stands). */
 export function packImgUrl(name, search) {
-  const p = activeUiPack(search); if (!p) return null;
+  const p = activeUiPack(search);
+  if (!p) return null;
   const s = packIndex(p).img.get(String(name).toUpperCase());
   return s ? packUrl(p, s) : null;
 }
 export function packCifRciUrl(file, record, frame = 0, search) {
-  const p = activeUiPack(search); if (!p) return null;
+  const p = activeUiPack(search);
+  if (!p) return null;
   const s = packIndex(p).cifRci.get(`${String(file).toUpperCase()}_${record}-${frame}`);
   return s ? packUrl(p, s) : null;
 }
 export function packColourUrl(name, search) {
-  const p = activeUiPack(search); if (!p) return null;
+  const p = activeUiPack(search);
+  if (!p) return null;
   const s = packIndex(p).colours.get(String(name).toLowerCase());
   return s ? packUrl(p, s) : null;
 }
 export function packFontUrl(fnt, search) {
-  const p = activeUiPack(search); if (!p) return null;
-  const s = packIndex(p).fonts.get(`${String(fnt).toUpperCase().replace(/\.FNT$/, '')}.FNT`);   // 'FONT0003' or 'FONT0003.FNT'
+  const p = activeUiPack(search);
+  if (!p) return null;
+  const s = packIndex(p).fonts.get(
+    `${String(fnt)
+      .toUpperCase()
+      .replace(/\.FNT$/, '')}.FNT`,
+  ); // 'FONT0003' or 'FONT0003.FNT'
   return s ? packUrl(p, s) : null;
 }
 
@@ -108,4 +127,12 @@ let _fetchBytes = async (url) => {
   return new Uint8Array(await r.arrayBuffer());
 };
 export const packBytes = (url) => _fetchBytes(url);
-export function _setPackFetchForTests(fn) { _fetchBytes = fn ?? (async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); }); }
+export function _setPackFetchForTests(fn) {
+  _fetchBytes =
+    fn ??
+    (async (url) => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`${url}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
+}

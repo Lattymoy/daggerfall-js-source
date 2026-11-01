@@ -12,8 +12,8 @@
   {
     "name": "AUDITBR5-the-set-asks-no-alias",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n",
-    "new": "",
+    "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
+    "new": "  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDITBR5-an-alias-under-anothers-name",
     "file": "scripts/desktopRelease.mjs",
-    "old": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])",
-    "new": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])",
+    "old": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])),",
+    "new": "  Object.keys(DOWNLOAD_FILES).map((k) => Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])),",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDITBR5-the-alias-copies-nothing",
     "file": "scripts/desktopRelease.mjs",
-    "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n",
-    "new": "",
+    "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
+    "new": "    console.log(`${ALIAS_COPIES.length} downloads copied under their names from before BR5`);",
     "tests": [
       "test/tooling/rel4_release.test.js"
     ],
@@ -173,13 +173,13 @@
   },
   {
     "name": "AUDITBR5-the-launcher-logo-unpacked",
-    "file": "app/package.json",
-    "old": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"launcher\",\n",
-    "new": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"branding\",\n",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/launcher/dfo-online.png' }",
+    "new": "{ from: 'src/assets/branding/dfo-online.png', to: 'app/branding/dfo-online.png' }",
     "tests": [
       "test/tooling/da8_launcher.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): packaged, the logo is not where the launcher serves it from"
+    "note": "Re-aimed by content: the logo is staged into app/launcher/ (scripts/desktopRelease.mjs DESKTOP_STAGED) rather than packed from ../ - packaged, it would not be where the launcher serves it from."
   },
   {
     "name": "AUDITBR5-the-potion-maker-named",
@@ -194,8 +194,8 @@
   {
     "name": "AUDITBR5-the-stats-card-named",
     "file": "src/ui/statsCard.js",
-    "old": "'Rules: the original game\\u2019s combat formulas.",
-    "new": "'Rules: Daggerfall\\u2019s combat formulas.",
+    "old": "      : t(\n          'stats.rules.classic',\n          'Rules: the original game\\u2019s combat formulas. Damage is before any armor effects.',\n        ),",
+    "new": "      : t('stats.rules.classic', 'Rules: Daggerfall\\u2019s combat formulas. Damage is before any armor effects.'),",
     "tests": [
       "test/ui/brand.test.js"
     ],

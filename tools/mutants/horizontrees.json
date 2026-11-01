@@ -2,8 +2,8 @@
   {
     "name": "HORIZON-TREES-js-no-lift",
     "file": "src/render/farTrees.js",
-    "old": "    cut = Math.max(cut, eye[1] + (h - GROUND_SLACK - eye[1]) / t);\n",
-    "new": "    cut = Math.max(cut, h - GROUND_SLACK);\n",
+    "old": "    cut = Math.max(cut, eye[1] + (h - GROUND_SLACK - eye[1]) / t);",
+    "new": "    cut = Math.max(cut, h - GROUND_SLACK);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HORIZON-TREES-js-built-read",
     "file": "src/render/farTrees.js",
-    "old": "    if (built(x, z)) continue;\n",
-    "new": "\n",
+    "old": "    if (built(x, z)) continue;",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HORIZON-TREES-js-past-the-ring-read",
     "file": "src/render/farTrees.js",
-    "old": "    if (gx < 0 || gz < 0 || gx > side - 1 || gz > side - 1) continue;\n",
-    "new": "\n",
+    "old": "    if (gx < 0 || gz < 0 || gx > side - 1 || gz > side - 1) continue;",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HORIZON-TREES-js-nearest",
     "file": "src/render/farTrees.js",
-    "old": "    const h = (heights[v] * (1 - wx) + heights[v + 1] * wx) * (1 - wz) + (heights[v + side] * (1 - wx) + heights[v + side + 1] * wx) * wz;\n",
-    "new": "    const h = heights[v];\n",
+    "old": "    const h =\n      (heights[v] * (1 - wx) + heights[v + 1] * wx) * (1 - wz) +\n      (heights[v + side] * (1 - wx) + heights[v + side + 1] * wx) * wz;",
+    "new": "    const h = heights[v];",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HORIZON-TREES-glsl-built-read",
     "file": "src/render/farTrees.js",
-    "old": "    if (builtAt(p)) continue;\n",
-    "new": "\n",
+    "old": "    if (builtAt(p)) continue;",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HORIZON-TREES-glsl-no-lift",
     "file": "src/render/farTrees.js",
-    "old": "    cut = max(cut, eye.y + (h - eye.y) / t);\n",
-    "new": "    cut = max(cut, h);\n",
+    "old": "    cut = max(cut, eye.y + (h - eye.y) / t);",
+    "new": "    cut = max(cut, h);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HORIZON-TREES-glsl-eye-unturned",
     "file": "src/render/farTrees.js",
-    "old": "  vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);",
-    "new": "  vec3 eye = uView[3].xyz;",
+    "old": "  vec3 eye = -(transpose(mat3(uView)) * uView[3].xyz);   // the view's own eye, in the scene",
+    "new": "  vec3 eye = uView[3].xyz;   // the view's own eye, in the scene",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HORIZON-TREES-glsl-whole-tree-drawn",
     "file": "src/render/farTrees.js",
-    "old": "  if (vCut >= 1.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // HORIZON-TREES: behind the hill whole\n",
-    "new": "\n",
+    "old": "  if (vCut >= 1.0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // HORIZON-TREES: behind the hill whole",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HORIZON-TREES-fs-uncut",
     "file": "src/render/farTrees.js",
-    "old": "  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES: under the nearer ground's skyline (a point's coordinate runs down)\n",
-    "new": "\n",
+    "old": "  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES: under the nearer ground's skyline (a point's coordinate runs down)",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HORIZON-TREES-lane-fs-uncut",
     "file": "src/render/farTrees.js",
-    "old": "  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES\n",
-    "new": "\n",
+    "old": "void main() {\n  if (1.0 - gl_PointCoord.y < vCut) discard;   // HORIZON-TREES\n  vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));",
+    "new": "void main() {\n\n  vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "HORIZON-TREES-full-float",
     "file": "src/render/farTrees.js",
-    "old": "gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, ground.side",
-    "new": "gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, ground.side",
+    "old": "      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R16F, ground.side, ground.side, 0, gl.RED, gl.FLOAT, ground.heights);",
+    "new": "      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, ground.side, ground.side, 0, gl.RED, gl.FLOAT, ground.heights);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HORIZON-TREES-unfiltered",
     "file": "src/render/farTrees.js",
-    "old": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);\n      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);\n",
-    "new": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);\n      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n",
+    "old": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);\n      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);",
+    "new": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);\n      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HORIZON-TREES-no-ground-no-null",
     "file": "src/render/farTrees.js",
-    "old": "    if (!ground?.heights) return null;\n",
-    "new": "    if (!ground) return null;\n",
+    "old": "    if (!ground?.heights) return null;",
+    "new": "    if (!ground) return null;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HORIZON-TREES-heights-unkept",
     "file": "src/render/midRing.js",
-    "old": "    this.heights = groundHeights(v.positions);",
-    "new": "    this.heights = null;",
+    "old": "    this.heights = groundHeights(v.positions); // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)",
+    "new": "    this.heights = null; // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)",
     "tests": [
       "test/render/fartrees.test.js"
     ]

@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DECOR-SHELL-5-the-normal-unscaled",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
-    "new": "const hang = nl > 0 && normal[1] < -DECOR_HANG_NY;",
+    "old": "      const hang = nl > 0 && normal[1] / nl < -DECOR_HANG_NY;",
+    "new": "      const hang = nl > 0 && normal[1] < -DECOR_HANG_NY;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDIT-DECOR-SHELL-4-a-hung-piece-raised",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "const up = hang ? drop() + s.raise : lift() + s.raise;",
-    "new": "const up = hang ? drop() + Math.abs(s.raise) : lift() + s.raise;",
+    "old": "      const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "      const up = hang ? drop() + Math.abs(s.raise) : lift() + s.raise;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-DECOR-SHELL-4-a-hung-piece-never-lowered",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "drop() + s.raise",
-    "new": "drop()",
+    "old": "      const up = hang ? drop() + s.raise : lift() + s.raise;",
+    "new": "      const up = hang ? drop() : lift() + s.raise;",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]

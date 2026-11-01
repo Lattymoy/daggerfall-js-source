@@ -101,8 +101,8 @@ test('HAND-WRAPS AUDIT C5: the running hands - the wraps leave the hands empty, 
   assert.ok(rig.includes('const held = (s) => slots?.[s] && !isHandWraps(slots[s]);'));
   assert.ok(rig.includes('twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });'));
   const two = readFileSync(new URL('../../src/combat/twoHands/twoHands.js', import.meta.url), 'utf8');
-  assert.ok(two.includes("if (glow) renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, { art: [q.rec.width, q.rec.height], view: [canvas.width, canvas.height] });   // HAND-WRAPS"), 'the run\'s swap');
-  assert.ok(two.includes('if (h.glow) renderer.drawScreenQuadGlow?.(h.tex, h.rect, h.uv, h.glow, { art: h.art, view: [canvas.width, canvas.height] });'), 'the run\'s pump');
+  assert.ok(two.includes("if (glow)\n          renderer.drawScreenQuadGlow?.(q.tex, rect, uv, glow, {\n            art: [q.rec.width, q.rec.height],\n            view: [canvas.width, canvas.height],\n          }); // HAND-WRAPS"), 'the run\'s swap');
+  assert.ok(two.includes('if (h.glow)\n        renderer.drawScreenQuadGlow?.(h.tex, h.rect, h.uv, h.glow, { art: h.art, view: [canvas.width, canvas.height] });'), 'the run\'s pump');
 });
 
 test('HAND-WRAPS AUDIT D3: the wraps\' Strikes payload strikes with the fist - Potent Vs Humanoid adds its 5 on a fist\'s hit, handed as the weapon or beside it (mutant: HANDWRAPS-strikes, the payload a weapon\'s alone)', () => {

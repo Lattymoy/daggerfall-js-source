@@ -26,9 +26,11 @@ export function personName(bank, gender, { race = null, region = -1, home = null
 export function seededPersonName(seed, bank, gender, where = {}) {
   const saved = getSeed();
   try {
-    srand((seed >>> 0) || 1);
+    srand(seed >>> 0 || 1);
     return personName(bank, gender, where);
-  } finally { setSeed(saved); }
+  } finally {
+    setSeed(saved);
+  }
 }
 
 /** MacroHelper.GetRandomFullName's draw (nameHelper.js getRandomFullNameOfBank): the gender's coin on DFRandom, then the

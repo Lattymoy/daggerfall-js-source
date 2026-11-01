@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-1003-U1-every-frame-asks",
     "file": "src/ui/arena/arenaDoor.js",
-    "old": "      if (since < ARENA_DOOR_REFRESH_S) return;\n",
-    "new": "",
+    "old": "      if (since < ARENA_DOOR_REFRESH_S) return;\n      since = 0;",
+    "new": "      since = 0;",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-1003-U1-drawn-whether-or-not-it-moved",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    if (now !== undefined && now === drawn) return false;\n",
-    "new": "",
+    "old": "    if (now !== undefined && now === drawn) return false;\n    render(m);",
+    "new": "    render(m);",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-1003-U2-the-focus-not-kept",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    }, { focus: true });",
-    "new": "    });",
+    "old": "    repaintKeepingScroll(\n      win,\n      () => {\n        for (const c of [...body.children]) c.remove();\n        ({\n          bouts: () => renderBouts(m.bouts),\n          ladder: () => renderLadder(m.ladder),\n          team: () => renderTeam(m.team),\n          boards: () => renderBoards(m.boards),\n          records: () => renderRecords(m.records),\n          rules: () => renderRules(m.rules),\n        })[page]();\n      },\n      { focus: true },\n    );",
+    "new": "    repaintKeepingScroll(win, () => {\n      for (const c of [...body.children]) c.remove();\n      ({\n        bouts: () => renderBouts(m.bouts),\n        ladder: () => renderLadder(m.ladder),\n        team: () => renderTeam(m.team),\n        boards: () => renderBoards(m.boards),\n        records: () => renderRecords(m.records),\n        rules: () => renderRules(m.rules),\n      })[page]();\n    });",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-1003-U3-the-scale-never-copied",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "  if (scale !== shown.scale) { shown.scale = scale; root.style.setProperty?.('--hud-scale', scale); }",
+    "old": "  if (scale !== shown.scale) {\n    shown.scale = scale;\n    root.style.setProperty?.('--hud-scale', scale);\n  }",
     "new": "  /* the HUD's scale never reached it */",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-1003-U3-no-step-under-the-frame",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "body:has(.hud-foe.on) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 46px * var(--hud-scale, 1)); }\n",
-    "new": "",
+    "old": "body:has(.hud-foe.on) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 46px * var(--hud-scale, 1)); }\nbody:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }",
+    "new": "body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-1003-U3-no-step-under-the-blade",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }\n",
-    "new": "",
+    "old": "body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale, 1) + 20px + 76px * var(--hud-scale, 1)); }\n.arena-plate { padding: 6px 10px 7px; background: rgba(12,14,18,0.78); border: 2px solid #5a5446; }",
+    "new": ".arena-plate { padding: 6px 10px 7px; background: rgba(12,14,18,0.78); border: 2px solid #5a5446; }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-1003-U3-the-bout-fighter-framed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
-    "new": "  /* every blow framed */\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  _foe = foe;",
+    "new": "  const bout = foe.entity.bout;\n  /* every blow framed */\n  _foe = foe;",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-1003-U3-the-chained-beast-unframed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
-    "new": "  if (bout) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  _foe = foe;",
+    "new": "  const bout = foe.entity.bout;\n  if (bout) return;\n  _foe = foe;",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-1003-U4-never-on",
     "file": "src/ui/arena/arenaHud.js",
-    "old": " root.classList.toggle('on', want); }",
-    "new": " }",
+    "old": "    root.classList.toggle('on', want);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-1003-U5-the-header-classless",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "const th = el('th', i - lead.length >= 2 ? 'opt' : i === lead.length - 1 ? 'aw-nm' : ranked && i === 0 ? 'aw-rank' : null, c);",
-    "new": "const th = el('th', i - lead.length >= 2 ? 'opt' : null, c);",
+    "old": "      const th = el(\n        'th',\n        i - lead.length >= 2 ? 'opt' : i === lead.length - 1 ? 'aw-nm' : ranked && i === 0 ? 'aw-rank' : null,\n        c,\n      );",
+    "new": "      const th = el('th', i - lead.length >= 2 ? 'opt' : null, c);",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-1003-U6-the-bark-kept",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "@media (max-height: 520px) {\n  .arena-hud .arena-vs, .arena-hud .arena-bark { display: none; }",
-    "new": "@media (max-height: 520px) {\n  .arena-hud .arena-vs { display: none; }",
+    "old": "  .arena-hud .arena-vs, .arena-hud .arena-bark { display: none; }",
+    "new": "  .arena-hud .arena-vs { display: none; }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-1003-U6-the-stamina-keeps-its-line",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "  .arena-hud .arena-plate:has(.arena-hint:not(:empty)) .arena-stam { display: none; }\n",
-    "new": "",
+    "old": "  .arena-hud .arena-plate:has(.arena-hint:not(:empty)) .arena-stam { display: none; }\n  .arena-hud .arena-stands { margin-top: 3px; }",
+    "new": "  .arena-hud .arena-stands { margin-top: 3px; }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "AUDIT-1003-U7-the-crest-unsaid",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    bannerMark(crest, h.banner);   // AUDIT PRE-MERGE 1003 U7",
+    "old": "    bannerMark(crest, h.banner); // AUDIT PRE-MERGE 1003 U7",
     "new": "    crest.dataset.banner = h.banner ?? '';",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-1003-U7-no-word-beside-the-colour",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "          if (ARENA_TEXT.teams.short[f.banner]) nums.append(chip(ARENA_TEXT.teams.short[f.banner], `aw-bannerchip b-${f.banner}`));\n",
-    "new": "",
+    "old": "          if (ARENA_TEXT.teams.short[f.banner])\n            nums.append(chip(ARENA_TEXT.teams.short[f.banner], `aw-bannerchip b-${f.banner}`));\n          nums.append(chip(f.record, 'aw-rec-chip'), chip(f.odds, 'aw-odds'));",
+    "new": "          nums.append(chip(f.record, 'aw-rec-chip'), chip(f.odds, 'aw-odds'));",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "AUDIT-1003-U10-one-seconds",
     "file": "src/systems/arena/arenaText.js",
-    "old": "`Accept within ${s} second${s === 1 ? '' : 's'}.`",
-    "new": "`Accept within ${s} seconds.`",
+    "old": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : 'The offer expired.'),",
+    "new": "    offerClock: (s) => (s > 0 ? `Accept within ${s} seconds.` : 'The offer expired.'),",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-1003-U10-accept-at-zero",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "acts = left > 0 ? [",
-    "new": "acts = left >= 0 ? [",
+    "old": "      left > 0",
+    "new": "      left >= 0",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js",
       "test/net/arena/arena4_client.test.js"
@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-1003-U10-lapsed-unsaid",
     "file": "src/systems/arena/arenaText.js",
-    "old": " : 'The offer expired.'),",
-    "new": " : `Accept within ${s} seconds.`),",
+    "old": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : 'The offer expired.'),",
+    "new": "    offerClock: (s) => (s > 0 ? `Accept within ${s} second${s === 1 ? '' : 's'}.` : `Accept within ${s} seconds.`),",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-1003-U11-the-banners-board-ranked",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "sub: W().boards.teamSub, heads: [W().season], ",
-    "new": "sub: W().boards.teamSub, ",
+    "old": "      sub: W().boards.teamSub,\n      heads: [W().season],\n      cols: W().cols.team,",
+    "new": "      sub: W().boards.teamSub,\n      cols: W().cols.team,",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-1003-U11-online-ranked",
     "file": "src/systems/arena/arenaBoard.js",
-    "old": "sub: O().teamSub, heads: [W().season], ",
-    "new": "sub: O().teamSub, ",
+    "old": "      sub: O().teamSub,\n      heads: [W().season],\n      cols: W().cols.team,",
+    "new": "      sub: O().teamSub,\n      cols: W().cols.team,",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "AUDIT-1003-U11-the-heads-not-handed",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "table(bd.cols, bd.rows, bd.pinned, { heads: bd.heads ?? null })",
-    "new": "table(bd.cols, bd.rows, bd.pinned)",
+    "old": "    if (bd.rows.length) card.append(table(bd.cols, bd.rows, bd.pinned, { heads: bd.heads ?? null }));",
+    "new": "    if (bd.rows.length) card.append(table(bd.cols, bd.rows, bd.pinned));",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "AUDIT-1003-U12-the-bare-sum",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "chip(W().pursesWon(h.purses), 'aw-purse')",
-    "new": "chip(W().gold(h.purses), 'aw-purse')",
+    "old": "    if (Number.isSafeInteger(h.purses) && h.purses > 0) id.append(chip(W().pursesWon(h.purses), 'aw-purse'));",
+    "new": "    if (Number.isSafeInteger(h.purses) && h.purses > 0) id.append(chip(W().gold(h.purses), 'aw-purse'));",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js",
       "test/systems/arena/arena4b_window.test.js"
@@ -339,8 +339,8 @@
   {
     "name": "AUDIT-1003-U14-the-page-unnamed",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    body.setAttribute('aria-labelledby', tabOf[page].id);",
-    "new": "    /* unnamed */",
+    "old": "    body.setAttribute('aria-labelledby', tabOf[page].id); // AUDIT PRE-MERGE 1003 U14: the page is named by its tab",
+    "new": "    /* unnamed */ // AUDIT PRE-MERGE 1003 U14: the page is named by its tab",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "AUDIT-1003-U14-the-tab-names-no-page",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    t.setAttribute('aria-controls', 'aw-page');\n",
-    "new": "",
+    "old": "    t.setAttribute('aria-controls', 'aw-page');\n    t.setAttribute('aria-keyshortcuts', String(i + 1));",
+    "new": "    t.setAttribute('aria-keyshortcuts', String(i + 1));",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "AUDIT-1003-U14-two-wagers",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": " : W().placeWager, () => {",
-    "new": " : W().wager, () => {",
+    "old": "      ready\n        ? ARENA_TEXT.book.wagerOn(wagerStake, c.fighters[wagerSide].name, c.fighters[wagerSide].odds)\n        : W().placeWager,",
+    "new": "      ready ? ARENA_TEXT.book.wagerOn(wagerStake, c.fighters[wagerSide].name, c.fighters[wagerSide].odds) : W().wager,",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "AUDIT-1003-U14-the-replays-one-name",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "doAct('replay', { i: b.replay.i }), '', `${b.opp}, ${b.when}`)",
-    "new": "doAct('replay', { i: b.replay.i }), '', '')",
+    "old": "        acts.append(press(b.replay, () => doAct('replay', { i: b.replay.i }), '', `${b.opp}, ${b.when}`));",
+    "new": "        acts.append(press(b.replay, () => doAct('replay', { i: b.replay.i }), '', ''));",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js",
       "test/systems/arena/arena5_replay.test.js"
@@ -385,8 +385,8 @@
   {
     "name": "AUDIT-1003-U14-the-bouts-on-the-sand-one-name",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "'', b.b ? `${b.a?.name ?? ''} ${W().vs} ${b.b.name ?? ''}` : `${b.a?.name ?? ''}, ${b.title}`)",
-    "new": "'', '')",
+    "old": "          for (const a of b.acts)\n            acts.append(\n              press(\n                a,\n                () => doAct(/** @type {any} */ (a.act), { o: b.o }),\n                '',\n                b.b ? `${b.a?.name ?? ''} ${W().vs} ${b.b.name ?? ''}` : `${b.a?.name ?? ''}, ${b.title}`,\n              ),\n            ); // AUDIT PRE-MERGE 1003 U14: which bout",
+    "new": "          for (const a of b.acts) acts.append(press(a, () => doAct(/** @type {any} */ (a.act), { o: b.o }), '', '')); // AUDIT PRE-MERGE 1003 U14: which bout",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "AUDIT-1003-U14-what-unsaid",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": " else if (what) b.setAttribute('aria-label', named);",
-    "new": "",
+    "old": "    } else if (what) b.setAttribute('aria-label', named);",
+    "new": "    }",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-1003-U15-disabled-again",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "if (m.ready) p.b.removeAttribute('aria-disabled'); else p.b.setAttribute('aria-disabled', 'true');",
-    "new": "if (m.ready) p.b.removeAttribute('disabled'); else p.b.setAttribute('disabled', '');",
+    "old": "    if (m.ready) p.b.removeAttribute('aria-disabled');\n    else p.b.setAttribute('aria-disabled', 'true');",
+    "new": "    if (m.ready) p.b.removeAttribute('disabled');\n    else p.b.setAttribute('disabled', '');",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js",
       "test/systems/arena/arena4b_stands.test.js"

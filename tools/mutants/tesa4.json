@@ -11,8 +11,8 @@
   {
     "name": "TESA4-a-corner-its-se",
     "file": "src/world/arenaRoads.js",
-    "old": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
-    "new": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x15) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "old": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "new": "  (arenaRoadByte(kind, x + 1, y) & 0x15) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TESA4-a-corner-its-n",
     "file": "src/world/arenaRoads.js",
-    "old": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
-    "new": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0xd0);",
+    "old": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "new": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0xd0);",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TESA4-the-touch-its-own-pixel",
     "file": "src/world/arenaRoads.js",
-    "old": "export const layerTouches = (layer, x, y) => !!layer && [-1, 0, 1].some(",
-    "new": "export const layerTouches = (layer, x, y) => !!layer && [0].some(",
+    "old": "  [-1, 0, 1].some(",
+    "new": "  [0].some(",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TESA4-the-version-still",
     "file": "src/world/arenaRoads.js",
-    "old": "  _layer = layer ?? null;\n  _version++;",
-    "new": "  _layer = layer ?? null;",
+    "old": "  _version++;\n  if (!merged) {",
+    "new": "  if (!merged) {",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TESA4-the-track-unread",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "track = at(roads.tracks) | (arena ? arenaRoadByte('tracks', px, py) : 0);",
-    "new": "track = at(roads.tracks);",
+    "old": "    const road = at(roads.roads) | (arena ? arenaRoadByte('roads', px, py) : join), track = at(roads.tracks) | (arena ? arenaRoadByte('tracks', px, py) : 0);",
+    "new": "    const road = at(roads.roads) | (arena ? arenaRoadByte('roads', px, py) : join), track = at(roads.tracks);",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TESA4-the-corner-unread",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "corners: { road: c(roads.roads) | arenaCorners('roads'),",
-    "new": "corners: { road: c(roads.roads),",
+    "old": "      corners: { road: c(roads.roads) | arenaCorners('roads'), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },",
+    "new": "      corners: { road: c(roads.roads), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TESA4-the-flag-blind-to-corners",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "(arena && (road || track || arenaCorners('roads') || arenaCorners('tracks')))",
-    "new": "(arena && (road || track))",
+    "old": "    arenaPainted = !!(join || (arena && (road || track || arenaCorners('roads') || arenaCorners('tracks'))));",
+    "new": "    arenaPainted = !!(join || (arena && (road || track)));",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TESA4-the-flag-dark",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    arenaRoads: arenaPainted,",
-    "new": "    arenaRoads: false,",
+    "old": "    arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves",
+    "new": "    arenaRoads: false,   // TESA4: Arena's roads reached its paint - painted again when their layer moves",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TESA4-the-verge-unasked",
     "file": "src/world/road/roadBand.js",
-    "old": "const r = arenaRoadByte('roads', mx, my), t = arenaRoadByte('tracks', mx, my);",
-    "new": "const r = 0, t = 0;",
+    "old": "        const r = arenaRoadByte('roads', mx, my),\n          t = arenaRoadByte('tracks', mx, my);",
+    "new": "        const r = 0,\n          t = 0;",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA4-the-verge-asks-the-bay-of-the-layer",
     "file": "src/world/road/roadBand.js",
-    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my);",
-    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my);",
+    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my); // TESA5: and a crossing's join on it",
+    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my); // TESA5: and a crossing's join on it",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TESA4-the-epoch-read-late",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with\n",
-    "new": "",
+    "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with\n    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({",
+    "new": "    const { yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, landProps, wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges, meets } = await terrainGen.generate({",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TESA4-in-flight-unasked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // TESA4: posted before a layer that landed while it built\n",
-    "new": "",
+    "old": "    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // TESA4: posted before a layer that landed while it built\n    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the",
+    "new": "    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the",
     "tests": [
       "test/tesa4_roads.test.js"
     ]

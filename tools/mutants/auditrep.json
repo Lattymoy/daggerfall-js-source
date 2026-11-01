@@ -20,8 +20,8 @@
   {
     "name": "AUDITREP-F2-an-untrusted-read-stamps",
     "file": "src/systems/standing.js",
-    "old": "  if (!Number.isFinite(worldNow)) return true;\n",
-    "new": "",
+    "old": "  if (!Number.isFinite(worldNow)) return true;\n  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
+    "new": "  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITREP-F2-the-court-stamps-NaN",
     "file": "src/systems/standing.js",
-    "old": "Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null",
-    "new": "banishmentEnd(worldNow)",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days",
+    "new": "  r.banishedUntil = banishmentEnd(worldNow); // BANISH-SKY: the calendar's thirty days",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDITREP-F7-the-stop-through-Invisibility",
     "file": "src/scenes/standingHost.js",
-    "old": "    if (isInvisible(playerEntity)) return false;\n",
-    "new": "",
+    "old": "    if (isInvisible(playerEntity)) return false;\n    const region = regionIndex();",
+    "new": "    const region = regionIndex();",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDITREP-F5-the-raid-written-past-the-door",
     "file": "src/systems/raidingParties.js",
-    "old": "changeLegalRep(player, region, Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP)) - rep, { kind: 'raid' });",
-    "new": "player.legalRep[region] = Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP));",
+    "old": "  changeLegalRep(player, region, Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP)) - rep, {\n    kind: 'raid',\n  });",
+    "new": "  player.legalRep[region] = Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_LEGAL_REP));",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITREP-F5-the-raid's-words-lost",
     "file": "src/scenes/standingHost.js",
-    "old": "    case 'raid': return `${name} thanks you for its defense (${by}). You are ${word}.`;   // AUDIT REP F5\n",
-    "new": "",
+    "old": "    case 'raid':\n      return `${name} thanks you for its defense (${by}). You are ${word}.`; // AUDIT REP F5\n    default:",
+    "new": "    default:",
     "tests": [
       "test/systems/auditrep.test.js"
     ]

@@ -451,7 +451,7 @@ test('WL1 W9: A BUILDING\'S FRAME READS THE OUTSIDE - the view out\'s step asks 
   r.captureOutsideLight(scene, 9000, 'off');
   assert.equal(setups, n + 1, 'the row Off reads nothing');
   assert.equal(r._rwMode, 'off');
-  assert.match(rd('src/render/realWindows.js'), /finally \{ opts\.renderer\.captureOutsideLight\?\.\(opts\.scene, opts\.now, opts\.mode\); \}/);
+  assert.match(rd('src/render/realWindows.js'), /finally \{\n\s*opts\.renderer\.captureOutsideLight\?\.\(opts\.scene, opts\.now, opts\.mode\);\n\s*\}/);
 });
 
 test('WL1 W10: THE SUN MAP IN A BUILDING - a frame with no sun of its own but a window sun draws the sun\'s cascades toward it, a window\'s sub-mesh through the glass cut (its mask a hole), the rest as ever; a frame without one draws none, and the street\'s own sun keeps the glass (mutants: the window sun ignored, the cut lost, the cut on the street\'s sun)', () => {

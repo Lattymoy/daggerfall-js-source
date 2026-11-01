@@ -560,7 +560,7 @@ test('AUDIT DEEP T1-7/X-1/X-2/T1-5: a look key let go in a text box still stops 
   // R-2: the traveller's own sprite turns its quad to the VIEW's eye and leans with the flats
   assert.match(w, /const tvFace = tvf \? \{ yaw: tvf\.yaw, up: tvf\.up, grow: player\.drawGrow \?\? tvf\.grow \} : null;/);
   assert.match(w, /mwViewDrawBody\(canvas, \{ proj, view, eye: mwv\.eye, feet: player\.bodyFeetAt\(\), yaw: player\.bodyYawFor\(cam\.yaw\), viewYaw: cam\.yaw, face: tvFace \}\);/);
-  assert.match(rd('src/player/mwView.js'), /if \(eotbLane\(\)\) \{ const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);/);   // AUDIT CLIMB-ARC N1: the sprite lane on the VIEW's yaw
+  assert.match(rd('src/player/mwView.js'), /if \(eotbLane\(\)\) \{\n\s*const drawn = drawEotbBody\(canvas, \{ proj, view, eye, feet, yaw: viewYaw, face \}\);/);   // AUDIT CLIMB-ARC N1: the sprite lane on the VIEW's yaw
   const eb = rd('src/player/eyeOfTheBeholder/eotbBody.js');
   // FP-SHADOW1 (perf pass v5): the up is named once (`bbUp`) and the draw is gated on the first-person visibility - the facing law unchanged
   assert.match(eb, /const by = face \? face\.yaw : cam\.yaw;\n\s*const camRight = \[Math\.cos\(by\), 0, -Math\.sin\(by\)\];\n(?:\s*\/\/[^\n]*\n)*\s*const bbUp = face\?\.up \?\? \[0, 1, 0\];\n\s*if \(!FP \|\| cfg\.visibility === 2\) renderer\.drawBillboards\(\[batch\], camRight, bbUp\);/);
@@ -796,8 +796,8 @@ test('AUDIT DEEP2 A2/A3/A4/A6/A7 view: a wheel zooms by its size; a repeat of a 
 
 test('AUDIT DEEP2 A1/A2/A5/A8/A9 by source: the travel panel keeps its presses; the pad is a cursor under the view; the key never repeats and answers indoors; a duel refuses the view', () => {
   const panel = rd('src/ui/enhanced/enhancedTravelControl.js');
-  assert.match(panel, /bar\.addEventListener\('mousedown', \(e\) => \{ if \(e\.target\?\.closest\?\.\('\[data-act\]'\)\) e\.stopPropagation\(\); \}\);/);
-  assert.doesNotMatch(panel, /addEventListener\('mouseup', \(e\) => \{ if \(e\.target\?\.closest/, 'never the release (AUDIT CHAT C5)');
+  assert.match(panel, /bar\.addEventListener\('mousedown', \(e\) => \{\n\s*if \(e\.target\?\.closest\?\.\('\[data-act\]'\)\) e\.stopPropagation\(\);\n\s*\}\);/);
+  assert.doesNotMatch(panel, /addEventListener\('mouseup', \(e\) => \{\s*if \(e\.target\?\.closest/, 'never the release (AUDIT CHAT C5)');   // AUDIT LEGIBLE 3: either layout
   const w = rd('src/scenes/world.js');
   assert.match(w, /overlayActive: \(\) => townTalk\.overlayActive \|\| !!travelView\?\.active \|\| !!modes\?\.overlayHeld,/);   // PIN MOVED (FIELD BUGS 29h TOUCH-HELD): and the modes' own stacks
   assert.match(w, /overlayUp: \(\) => overlayOpen\(\) \|\| travelViewConfirmOpen\(\) \|\| waypointMenuOpen\(\),/);   // PIN MOVED (OW-CONFIRM): and the view's own question has the keys; WAYPOINTS (2026-10-06): and its right-click menu (its Escape is its own)
