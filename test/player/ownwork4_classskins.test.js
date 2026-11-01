@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 import {
   CLASS_LOOKS, OUTER_SLOT, SLOT_OF_RAMP, SIGNS, CLASS_FIGURE, CLEAR, NONE, CLOTH, DRAPE, METAL, SKIN,
-  paletteTables, paintClassFrame, rampAt, classSkinPicture,
+  paletteTables, paintClassFrame, rampAt, classSkinPicture, regionsOf, torsoOf, BARE_SHEETS, TORSO_HALF,
 } from '../../src/player/classSkinArt.js';
 import { CLASS_SKINS, classSkinLabel, classRecordScale } from '../../src/player/classSkins.js';
 import { decodeSprite, buildDerivedSprite, worldOrderColors } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
@@ -119,6 +119,57 @@ test('OWN-AUDIT: a cloth\'s near-black steps join the garment nearest them - a r
   assert.deepEqual(at(painted, 20, 108), [...rampAt(look.inner, toneOf(DRAPE, 0x8e)), 255], 'a teal darkest far inside the olive legs: the legs\'');
 });
 
+/** A bare figure 60 wide and 112 tall, as TEXTURE.482 draws one: a metal helmet, a skin torso lit above (0x22) and
+ *  darker below (0x28), arms of skin apart from it, an olive loincloth, skin legs and teal boots. */
+const BARE = picture(60, 112, (x, y) => {
+  if (y >= 2 && y <= 14 && x >= 24 && x <= 36) return 0x74;
+  if (y >= 15 && y <= 44 && x >= 18 && x <= 42) return y < 30 ? 0x22 : 0x28;
+  if (y >= 18 && y <= 60 && ((x >= 7 && x <= 12) || (x >= 48 && x <= 53))) return 0x24;
+  if (y >= 45 && y <= 60 && x >= 24 && x <= 36) return 0xc4;
+  if (y >= 61 && y <= 100 && ((x >= 20 && x <= 28) || (x >= 32 && x <= 40))) return 0x24;
+  if (y >= 101 && y <= 111 && ((x >= 20 && x <= 28) || (x >= 32 && x <= 40))) return 0x84;
+  return 0;
+});
+
+test('OWN-AUDIT: TEXTURE.482\'s bare figure is clothed - its torso found from the loincloth\'s top to two rows under the helmet, about the hips\' middle, the arms left bare (mutants: the waist misread, arms clothed)', () => {
+  assert.deepEqual(BARE_SHEETS, [482]);
+  const torso = torsoOf(regionsOf(BARE, TABLES, CLASS_FIGURE), TABLES, 60, 112, { loin: DRAPE, view: 0 });
+  assert.deepEqual([torso.top, torso.waist], [16, 45], 'from two rows under the helmet to the loincloth\'s top');
+  const [from, to] = torso.span[30];
+  assert.ok(from <= 18 && to >= 42, `the torso across (${from}-${to})`);
+  assert.ok(from > 12 && to < 48, 'and not the arms');
+  assert.equal(torso.span[15], null, 'nothing above the neck');
+  assert.deepEqual(TORSO_HALF[0], TORSO_HALF[4], 'the back as wide as the front');
+  assert.ok(TORSO_HALF[2][1] < TORSO_HALF[1][1] && TORSO_HALF[1][1] < TORSO_HALF[0][1], 'the side narrowest');
+});
+
+test('OWN-AUDIT: the acrobat, the bounty hunter and the Dark Brotherhood each wear their own garment on a bare sheet - a motley jerkin, a leather harness, a dark wrapped tunic - lit by the flesh under it; skin elsewhere stays; a class with none, or a sheet that is not bare, is unchanged (mutants: the garment unworn, unlit, two garments alike, every sheet bare)', async () => {
+  const torsoMean = (pic) => { const sum = [0, 0, 0]; let n = 0; for (let y = 16; y < 43; y++) for (let x = 22; x <= 38; x++) { const o = (y * 60 + x) * 4; sum[0] += pic.data[o]; sum[1] += pic.data[o + 1]; sum[2] += pic.data[o + 2]; n++; } return sum.map((v) => v / n); };
+  const worn = {};
+  for (const name of ['Acrobat', 'Bounty Hunter', 'Dark Brotherhood']) {
+    const look = CLASS_LOOKS[name];
+    assert.ok(['motley', 'harness', 'wrap'].includes(look.garment?.kind), `${name}: a garment`);
+    const bare = paintClassFrame(BARE, TABLES, look, { outer: DRAPE, view: 0 });
+    const clothed = paintClassFrame(BARE, TABLES, look, { outer: DRAPE, view: 0, bare: true });
+    assert.deepEqual(at(bare, 20, 20), [...rgb(0x22), 255], `${name}: no garment off a bare sheet`);
+    assert.notDeepEqual(at(clothed, 20, 20), [...rgb(0x22), 255], `${name}: its torso clothed`);
+    assert.deepEqual(at(clothed, 10, 50), [...rgb(0x24), 255], `${name}: its arm bare`);
+    assert.deepEqual(at(clothed, 24, 80), [...rgb(0x24), 255], `${name}: its leg bare`);
+    const lit = paintClassFrame(BARE, TABLES, { outer: look.outer, inner: look.inner, metal: look.metal, garment: { ...look.garment, kind: 'plain' } }, { outer: DRAPE, view: 0, bare: true });
+    assert.ok(at(lit, 30, 20).slice(0, 3).reduce((a, b) => a + b) > at(lit, 30, 40).slice(0, 3).reduce((a, b) => a + b), `${name}: lit as the flesh under it`);
+    worn[name] = torsoMean(paintClassFrame(BARE, TABLES, { outer: look.outer, inner: look.inner, metal: look.metal, garment: look.garment }, { outer: DRAPE, view: 0, bare: true }));
+  }
+  const names = Object.keys(worn);
+  for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) {
+    const d = Math.hypot(...worn[names[i]].map((v, k) => v - worn[names[j]][k]));
+    assert.ok(d > 45, `${names[i]} and ${names[j]}: their garments read apart (${d.toFixed(0)})`);
+  }
+  assert.deepEqual(paintClassFrame(BARE, TABLES, CLASS_LOOKS.Healer, { outer: CLOTH, view: 0, bare: true }), paintClassFrame(BARE, TABLES, CLASS_LOOKS.Healer, { outer: CLOTH, view: 0 }), 'a class with no garment');
+  const read = async () => BARE, palette = async () => PALETTE;
+  assert.deepEqual(await classSkinPicture('1523_15-0', { picture: read, palette }), paintClassFrame(BARE, TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 0, bare: true }), 'the acrobat on TEXTURE.482: clothed');
+  assert.deepEqual(await classSkinPicture('1524_15-0', { picture: read, palette }), paintClassFrame(BARE, TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 0 }), 'the acrobat on TEXTURE.483: her own outfit');
+});
+
 test('OWN-WORK4: the marks are drawn on the frame\'s own regions - an insignia on the breast and the back, never the side; a hem; a belt on clothes alone; a shield on the left arm', () => {
   const ink = (pic, colour) => { let n = 0; for (let i = 0; i < pic.data.length; i += 4) if (pic.data[i] === colour[0] && pic.data[i + 1] === colour[1] && pic.data[i + 2] === colour[2] && pic.data[i + 3]) n++; return n; };
   const acolyte = CLASS_LOOKS['Dark Acolyte'];
@@ -203,7 +254,7 @@ for (const [name, bytes] of Object.entries(FAKE)) keepOnlyInMemory(name, bytes);
 
 test('OWN-WORK4: the body\'s, the peers\' and the card\'s one door builds a class frame from the player\'s own TEXTURE file, on the world\'s rows', async () => {
   const t = new TextureFile(); t.load(FAKE['TEXTURE.482'], 'TEXTURE.482', null);
-  const want = paintClassFrame(classicRecordRgba(t.getDFBitmap(17, 0), PALETTE), TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 2 });
+  const want = paintClassFrame(classicRecordRgba(t.getDFBitmap(17, 0), PALETTE), TABLES, CLASS_LOOKS.Acrobat, { outer: DRAPE, view: 2, bare: true });
   const px = await decodeSprite('DF:1523_17-0');
   assert.deepEqual([px.width, px.height], [12, 30]);
   assert.deepEqual([...px.colors], [...worldOrderColors(want).colors], 'our acrobat, bottom row first, as a decoded PNG');

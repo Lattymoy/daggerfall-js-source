@@ -23,7 +23,7 @@ import {
   wouldBeSpawnedInClassic, CLASSIC_SPAWN_XZ, CLASSIC_SPAWN_Y_UPPER,
   CLASSIC_SPAWN_DESPAWN_EXTERIOR,
 } from '../../src/characters/enemy/enemyMotor.js';
-import { LightningFlash } from '../../src/systems/dynamicSkies/dynamicSkies.js';
+import { StormFlash } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -347,13 +347,13 @@ test('AUDIT 62 F29: a flash in flight is killed at the door, not paid out on the
   // routine simply FREEZES and resumes lit on the first frame back
   // outside, from the position the player stood at before entering.
   const seq = (vals) => { let i = 0; return () => vals[i++ % vals.length]; };
-  const frozen = new LightningFlash(seq([0.1, 0.9, 0.5]));
+  const frozen = new StormFlash(seq([0.1, 0.9, 0.5]));
   assert.equal(frozen.startFlash([95, 30, 195]), true, 'the clap rolls a flash');
   assert.ok(frozen.tick(0.01), 'lit on the entering frame');
   // ... the player steps inside: no ticks at all for the whole visit ...
   assert.ok(frozen.tick(0.01), 'and it is STILL lit on the way back out - the defect');
   // with the transition event's teardown, there is nothing left to pay out
-  const closed = new LightningFlash(seq([0.1, 0.9, 0.5]));
+  const closed = new StormFlash(seq([0.1, 0.9, 0.5]));
   closed.startFlash([95, 30, 195]);
   closed.tick(0.01);
   closed.stopAll();

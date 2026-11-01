@@ -60,7 +60,7 @@ test('AUDIT 68 S24-ba-rain-never-retried: the indoor rain starts once its clip l
       r.release(); await r.ba.settle();
       for (let i = 0; i < 3; i++) r.ba.frame(0.016, r.m);
       assert.equal(r.ba.rainPlaying(), true, 'the clip landed: the muffled rain plays');
-      assert.equal(r.loops.filter((l) => !l.stopped).length, 1, 'exactly one source');
+      assert.equal(r.loops.filter((l) => !l.stopped && l.k === 'ba:AmbientRaining').length, 1, 'exactly one source (OWN-WORK4 audit: its eaves beside it)');
     }
     // (2) the clip is there, the AudioContext is not yet running (no gesture)
     {
@@ -72,7 +72,7 @@ test('AUDIT 68 S24-ba-rain-never-retried: the indoor rain starts once its clip l
       r.engine.running = true;
       r.ba.frame(0.016, r.m);
       assert.equal(r.ba.rainPlaying(), true, 'the engine runs: the rain starts on the next frame');
-      assert.equal(r.loops.length, 1, 'and it is made once, not every frame after');
+      assert.equal(r.loops.filter((l) => l.k === 'ba:AmbientRaining').length, 1, 'and it is made once, not every frame after');
     }
   } finally { W.resetWeatherSim(); }
 });

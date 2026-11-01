@@ -319,11 +319,15 @@ function profileOf(read, section) {
     shiverFrequency: clampF(readF(read, `${section}.ShiverSpeed`), 0.5, 8),
   });
 }
+/** OWN-AUDIT (2026-11-01): General.WindDirectionDegrees as the mod ships it. The mod adds it to a heading rolled each
+ *  day, so it never chose a direction, and the outdoors' one wind sets the heading here - the key is retired
+ *  (modSettings.js RETIRED_KEYS) and its number stands in the daily heading of a frame with no wind handed. */
+export const WINDFALL_HEADING_OFFSET = 35;
 /** WindMod.LoadSettings: the mod's keys, clamped as it clamps them (the presentation's go to windfallEffects.js). */
 export function windfallSettings(read = (k) => modSetting(WINDFALL_VENDOR, k)) {
   return Object.freeze({
     enabled: read('Enabled') === true,
-    windDirectionDegrees: readF(read, 'General.WindDirectionDegrees'),
+    windDirectionDegrees: f32(WINDFALL_HEADING_OFFSET),
     overallFrequency: percentage(read, 'General.OverallWindyPeriodFrequency'),
     naturalWindstormFrequency: percentage(read, 'General.NaturalWindstormFrequency'),
     gustFrequency: percentage(read, 'General.GustFrequency'),
@@ -407,7 +411,7 @@ const BUILT_IN = Object.freeze({
  *  mod's before LoadSettings. */
 export const WINDFALL_BUILT_IN = Object.freeze({
   enabled: true,
-  windDirectionDegrees: 35,
+  windDirectionDegrees: WINDFALL_HEADING_OFFSET,
   overallFrequency: 1,
   naturalWindstormFrequency: 1,
   gustFrequency: 1,

@@ -33,7 +33,7 @@ import {
   checkClimateTileTables, checkBuildingClimateFloorTypeTables, CLIMATE_TILE_TABLES, BUILDING_FLOOR_TABLES,
   isSnowyClimate, isGrassyClimate, isRockyClimate, isSandyClimate, isSwampyClimate,
   IMMERSIVE_FOOTSTEPS_VENDOR, IMMERSIVE_FOOTSTEPS_MOD, FIXED_DELTA_TIME, SWIM_INTERVAL, REFRESH_SLOTS_TICKS, SOUND_CLIP_QUALITY, FLOOR_TYPE,
-  LANDING_VOLUME_SCALE, SWAY_WEIGHTS, SWAY_SLOTS, SETTING_KEYS, FOOTSTEP_SETS, logModException, EXCEPTION_DOING,
+  LANDING_VOLUME_SCALE, SWAY_WEIGHTS, SWAY_SLOTS, SETTING_KEYS, FOOTSTEP_SETS, logModException, EXCEPTION_DOING, reportModCompatibilityIssues,
 } from '../../src/systems/immersiveFootsteps.js';
 import { MOD_SETTINGS, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../../src/systems/modSettings.js';
 import { FEATURES, MOD_CURATED } from '../../src/systems/features.js';
@@ -761,4 +761,15 @@ test('OWN-WORK4 audit: the two logging keys are live - LogModException logs a ca
     console.error = original;
   }
   assert.equal(lines.length, before + 1, 'and logged');
+  // ReportModCompatibilityIssues' two raises name their own (world.js passes 6 at a start and 5 at a load)
+  const report = (errorType) => reportModCompatibilityIssues({ settings, read: () => { throw new Error('unreadable'); }, log: () => {} }, errorType);
+  console.error = (l) => lines.push(['error', l]);
+  try {
+    assert.equal(report(6), false);
+    assert.match(lines.pop()[1], /LogModException\(OnStartGame\)/);
+    assert.equal(report(5), false);
+    assert.match(lines.pop()[1], /LogModException\(OnLoadSave\)/);
+  } finally {
+    console.error = original;
+  }
 });

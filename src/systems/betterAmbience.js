@@ -57,7 +57,8 @@ import { stringHash, NetRandom as SystemRandom } from '../formats/netRuntime.js'
 import { perlinNoise } from '../world/perlin.js'; // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
 import { setRemoveHealthListener } from '../ui/damageFlash.js'; // the SendMessage("RemoveHealth", amount) edge
 import { playerEntity } from '../characters/playerEntity.js';
-import { betterAmbienceClipInTurn } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
+import { betterAmbienceClipInTurn, BA_RAIN_LAYERS } from '../audio/synth/clips.js'; // OWN-WORK4: the clips our synth makes
+import { layeredLoop } from '../audio/layeredLoop.js'; // OWN-WORK4 audit: the rain loop and its eaves, as one
 
 export const BETTER_AMBIENCE_VENDOR = 'better-ambience';
 export const BETTER_AMBIENCE_MOD = Object.freeze({
@@ -672,7 +673,7 @@ export function createBetterAmbience({
   async function loadAudio() {
     // one in flight at most: syncSettings starts it only while `loading` is empty
     await Promise.all(
-      baClipNames().map(async (name) => {
+      [...baClipNames(), ...BA_RAIN_LAYERS.slice(1)].map(async (name) => {
         if (present.has(name)) return;
         try {
           const clip = await makeClip(name); // OWN-WORK4: { samples, rate }, our own
@@ -731,10 +732,14 @@ export function createBetterAmbience({
   // door, load and weather change remakes the source at the level of that moment.
   function rainTarget() {
     const street = audio.clipLevel?.(AMBIENT_RAIN_LOOP);
-    const mine = audio.clipLevel?.(baSoundKey(AMBIENT_RAIN_CLIP));
+    const levels = rainLayers().map((n) => audio.clipLevel?.(baSoundKey(n)));
+    const mine = levels[0] == null ? levels[0] : Math.hypot(...levels.map((l) => l ?? 0)); // the layers' power, summed
     const match = street > 0 && mine > 0 ? street / mine : 1;
     return rainLevel() * match * (rainKind === 'interior' ? INDOOR_RAIN_GAIN : 1);
   }
+
+  /** The rain's layers this engine holds: the mod's loop, and its eaves when they were made. */
+  const rainLayers = () => BA_RAIN_LAYERS.filter((n) => present.has(n));
 
   function updateAmbientSoundSources() {
     stopRain();
@@ -755,15 +760,17 @@ export function createBetterAmbience({
         // (a kind of 'exit' means settle4 read a dungeon with an exit, and BA-CRASH1 makes onTransition drop the kind with
         // the place - so `place.dungeon.exitPos` is there whenever this branch runs; a guard here would only hide the
         // next stale kind instead of crashing on it)
-        rainLoop =
+        const level = rainTarget(); // DISC11: the street's level, not 1
+        rainLoop = layeredLoop(rainLayers().map(baSoundKey), (key) =>
           rainKind === 'interior'
-            ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ }) // DISC11: the street's level, not 1
-            : audio.loop3d(baSoundKey(AMBIENT_RAIN_CLIP), place.dungeon.exitPos, rainTarget(), {
+            ? audio.loop(key, level, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })
+            : audio.loop3d(key, place.dungeon.exitPos, level, {
                 refDistance: 1,
                 maxDistance: 500,
                 distanceModel: 'inverse',
                 lowpass: AMBIENT_RAIN_LOWPASS_HZ,
-              });
+              }),
+        );
       }
       // AUDIT 68 S24-ba-rain-never-retried: the weather is handled only once the source plays - a clip still decoding
       // or a context not yet running (loop answers null) is asked again next frame, not forgotten until the next door

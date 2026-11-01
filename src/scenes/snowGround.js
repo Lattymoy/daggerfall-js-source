@@ -2,7 +2,7 @@
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
-import { authoredTiles, settlementsIn, snowfallNetwork, snowfallNetworkBeyond } from './snowfallHost.js';
+import { authoredTiles, settlementsIn, siteFootprintsIn, snowfallNetwork, snowfallNetworkBeyond } from './snowfallHost.js';
 import { worldPixelKey, inWorldGrid } from '../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: a pixel's one key over the world
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import {
@@ -125,6 +125,8 @@ export function createSnowGround(host) {
     ], // SNOW-THREAD: toGlobal's and pixelAt's inputs, for the worker's copy of the world
     settlements: (minX, minZ, maxX, maxZ) =>
       settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
+    // OWN-AUDIT (2026-11-01): Snowfall's Location Loader keys - World of Daggerfall's sites on the built pixels
+    footprints: (gx, gz, radius) => siteFootprintsIn((x, y) => snowGround.pixelOn(x, y), gx, gz, radius),
   };
   return { _snowPixels, snowGround };
 }

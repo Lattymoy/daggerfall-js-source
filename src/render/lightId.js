@@ -42,6 +42,11 @@ let _seq = 0;
 
 /** No identity: an anonymous list's (a test's raw vec4s, the empty list) - the pass names such a light by its place. */
 export const NO_LIGHT_ID = 0;
+/** MAC-T1's carried mask, a byte a light: the light in the player's hand (no shadow map, no contact march, no glare),
+ *  and OWN-AUDIT's light that casts no shadow and keeps its glare (a burning foe's, Handheld Torches' EmissionShadows
+ *  off). The shadow pass skips any non-zero byte; the glare skips the hand's alone. */
+export const CARRIED_IN_HAND = 1;
+export const CARRIED_SHADOWLESS = 2;
 
 /** @param {any} l @param {number} id */
 function nameLight(l, id) {

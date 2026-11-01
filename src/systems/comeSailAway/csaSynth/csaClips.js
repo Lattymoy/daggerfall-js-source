@@ -7,15 +7,36 @@
 import * as synth from './synth.js';
 import { loudnessTo } from '../../../audio/synth/dsp.js';
 
-/** Each clip's rate and length in samples (the strokes' Come Sail Away 2.1's own; the loops ours, seamless). A loop is a
- *  minute: at 20 s its slaps and creaks came round again three times a minute (the mod's ran 182 and 202 s). */
+/** Each clip's rate and length in samples: the strokes' Come Sail Away 2.1's own; a loop's its bed's (CSA_LAYERS). */
 export const CSA_CLIP_FORMAT = Object.freeze({
-  SmallShipAmbience: Object.freeze({ rate: 32000, samples: 32000 * 60 }),
-  ShipExteriorAmbience2: Object.freeze({ rate: 44100, samples: 44100 * 60 }),
+  SmallShipAmbience: Object.freeze({ rate: 32000, samples: 32000 * 29 }),
+  ShipExteriorAmbience2: Object.freeze({ rate: 44100, samples: 44100 * 31 }),
   Oars_In: Object.freeze({ rate: 22050, samples: 131982 }),
   Oars_Sweep: Object.freeze({ rate: 22050, samples: 122865 }),
   Oars_Out: Object.freeze({ rate: 22050, samples: 134314 }),
 });
+
+/** A LOOP IN LAYERS (audio/layeredLoop.js): the bed and each kind of event its own loop, each a whole number of
+ *  seconds and no two sharing a factor, so the three come round together after 29 x 41 x 37 s (12 hours) at rest and
+ *  31 x 43 x 47 s (17 hours) under way. One loop of 20 s let the slaps and creaks come round three times a minute; the
+ *  mod's ran 182 and 202 s. The events lie under 4 kHz, so their layers are made at 16 and 11.025 kHz. */
+export const CSA_LAYERS = Object.freeze({
+  SmallShipAmbience: Object.freeze(['SmallShipAmbience', 'SmallShipAmbience/slaps', 'SmallShipAmbience/creaks']),
+  ShipExteriorAmbience2: Object.freeze([
+    'ShipExteriorAmbience2',
+    'ShipExteriorAmbience2/thumps',
+    'ShipExteriorAmbience2/creaks',
+  ]),
+});
+/** The event layers' rates and lengths. */
+export const CSA_LAYER_FORMAT = Object.freeze({
+  'SmallShipAmbience/slaps': Object.freeze({ rate: 16000, samples: 16000 * 41 }),
+  'SmallShipAmbience/creaks': Object.freeze({ rate: 11025, samples: 11025 * 37 }),
+  'ShipExteriorAmbience2/thumps': Object.freeze({ rate: 11025, samples: 11025 * 43 }),
+  'ShipExteriorAmbience2/creaks': Object.freeze({ rate: 11025, samples: 11025 * 47 }),
+});
+/** A clip's layers: a loop's three, a stroke itself. @param {string} name @returns {readonly string[]} */
+export const csaLayersOf = (name) => /** @type {Record<string, readonly string[]>} */ (CSA_LAYERS)[name] ?? [name];
 
 /** A splash: a burst of filtered noise, `hertz` its colour, at `at` s. */
 function splashInto(out, rate, { at, hertz = 1200, quality = 0.8, decay = 0.12, gain = 1, seed }) {
@@ -41,6 +62,15 @@ function dripsInto(out, rate, { from, to, count, gain = 0.3, seed }) {
  *  SEA-AIR, AUDIT SOUNDSCAPE S6: the sea's beds were set under that); a stroke by its loudness (dsp.js loudnessOf) near
  *  DAGGER.SND's large splash heard at 0.7 (-15.5). */
 export const CSA_CLIP_LEVEL = Object.freeze({ loopRmsDb: -24, strokeLoudness: -17 });
+/** Each layer's share of its loop's power, in dB: the balance the one-loop mix had (the events 11 to 23 dB under). */
+export const CSA_LAYER_SHARE_DB = Object.freeze({
+  SmallShipAmbience: -0.5,
+  'SmallShipAmbience/slaps': -10.8,
+  'SmallShipAmbience/creaks': -14.8,
+  ShipExteriorAmbience2: -0.1,
+  'ShipExteriorAmbience2/thumps': -21.7,
+  'ShipExteriorAmbience2/creaks': -23.3,
+});
 
 /** `pcm` scaled so its RMS stands at `db` dBFS (in place). @param {Float32Array} pcm @param {number} db */
 function rmsTo(pcm, db) {
@@ -50,12 +80,16 @@ function rmsTo(pcm, db) {
   for (let i = 0; i < pcm.length; i++) pcm[i] *= k;
   return pcm;
 }
-const loopLevel = (/** @type {Float32Array} */ pcm) => rmsTo(pcm, CSA_CLIP_LEVEL.loopRmsDb);
+/** A layer at its share of the loop's level. @param {Float32Array} pcm @param {string} name */
+const layerLevel = (pcm, name) =>
+  rmsTo(pcm, CSA_CLIP_LEVEL.loopRmsDb + /** @type {Record<string, number>} */ (CSA_LAYER_SHARE_DB)[name]);
 const strokeLevel = (/** @type {Float32Array} */ pcm, /** @type {number} */ rate) =>
   loudnessTo(pcm, rate, CSA_CLIP_LEVEL.strokeLoudness);
 
-/** The boat at rest, a pass at a time (each `yield` a place the page may take a turn). */
-function* smallShip({ rate, samples }) {
+/** @typedef {{ rate: number, samples: number }} Format */
+
+/** The water at rest, a pass at a time (each `yield` a place the page may take a turn): a crossfaded seam. */
+function* smallShipBed({ rate, samples }) {
   const count = samples + rate;
   const water = synth.whiteNoise(count, 0xc5a1);
   yield;
@@ -66,41 +100,13 @@ function* smallShip({ rate, samples }) {
     rate,
     (time) => 0.55 + 0.3 * Math.sin(2 * Math.PI * 0.11 * time) + 0.15 * Math.sin(2 * Math.PI * 0.29 * time + 1.3),
   );
-  yield;
-  const die = synth.seededDie(0xc5a2);
-  let made = 0;
-  for (let time = 0.6; time < count / rate - 0.6; time += 1.4 + die() * 1.8) {
-    splashInto(water, rate, {
-      at: time,
-      hertz: 380 + die() * 380,
-      quality: 0.9,
-      decay: 0.18 + die() * 0.12,
-      gain: 0.5 + die() * 0.5,
-      seed: 0xc5b0 + Math.round(time * 10),
-    });
-    if (++made % 5 === 0) yield;
-  }
-  yield;
-  for (let time = 2.2; time < count / rate - 1.5; time += 4.5 + die() * 4) {
-    const groan = synth.creak(rate, {
-      length: 0.45 + die() * 0.5,
-      fromHz: 65 + die() * 40,
-      toHz: 95 + die() * 60,
-      body: 300 + die() * 300,
-      quality: 5,
-      seed: Math.round(time * 100),
-    });
-    synth.mixInto(water, groan, Math.round(time * rate), 0.35 + die() * 0.3);
-    if (++made % 5 === 0) yield;
-  }
-  yield;
   synth.onePoleHighpass(water, rate, 40);
   yield;
-  return loopLevel(synth.seamless(water, rate, samples, 1));
+  return layerLevel(synth.seamless(water, rate, samples, 1), 'SmallShipAmbience');
 }
 
-/** The boat under way, a pass at a time. */
-function* exterior({ rate, samples }) {
+/** The rush and spray under way. */
+function* exteriorBed({ rate, samples }) {
   const count = samples + rate;
   const rush = synth.onePoleHighpass(synth.onePoleLowpass(synth.whiteNoise(count, 0xe7a1), rate, 1500), rate, 120);
   yield;
@@ -114,32 +120,74 @@ function* exterior({ rate, samples }) {
   synth.modulate(hiss, rate, (time) => 0.09 + 0.09 * Math.sin(2 * Math.PI * 0.45 * time + 2.1));
   synth.mixInto(rush, hiss);
   yield;
-  const die = synth.seededDie(0xe7a3);
-  let made = 0;
-  for (let time = 1.5; time < count / rate - 1; time += 3 + die() * 3) {
-    const thump = synth.strikeEnvelope(
-      synth.onePoleLowpass(synth.whiteNoise(Math.round(0.4 * rate), Math.round(time * 1000)), rate, 180),
-      rate,
-      { attack: 0.01, decay: 0.09, gain: 1.6 },
-    );
-    synth.mixInto(rush, thump, Math.round(time * rate));
-    if (++made % 5 === 0) yield;
-  }
-  for (let time = 3.1; time < count / rate - 1.5; time += 6 + die() * 4) {
-    const groan = synth.creak(rate, {
-      length: 0.5 + die() * 0.4,
-      fromHz: 70 + die() * 30,
-      toHz: 110 + die() * 50,
-      body: 360 + die() * 220,
-      quality: 5,
-      seed: Math.round(time * 77),
-    });
-    synth.mixInto(rush, groan, Math.round(time * rate), 0.3);
-    if (++made % 5 === 0) yield;
-  }
-  yield;
-  return loopLevel(synth.seamless(rush, rate, samples, 1));
+  return layerLevel(synth.seamless(rush, rate, samples, 1), 'ShipExteriorAmbience2');
 }
+
+/**
+ * An event layer: `lay(out, rate, seconds)` puts its events (a pass every few) on a canvas two seconds past the loop,
+ * and the overhang is folded onto the start - a tail that runs past the end sounds at the start, so it has no seam.
+ * @param {string} name @param {(out: Float32Array, rate: number, seconds: number) => Generator<undefined, void>} lay
+ */
+const eventLayer = (name, lay) =>
+  /** @param {Format} fmt */
+  function* ({ rate, samples }) {
+    const out = new Float32Array(samples + 2 * rate);
+    yield* lay(out, rate, samples / rate);
+    for (let i = samples; i < out.length; i++) out[i - samples] += out[i];
+    return layerLevel(out.slice(0, samples), name);
+  };
+
+/** A creak at `time`, its timbre from the die. */
+const creakAt = (out, rate, time, gain, shape) => synth.mixInto(out, synth.creak(rate, shape), Math.round(time * rate), gain);
+
+/** @type {Record<string, (fmt: Format) => Generator<undefined, Float32Array>>} */
+const LAYER_MAKE = {
+  'SmallShipAmbience/slaps': eventLayer('SmallShipAmbience/slaps', function* (out, rate, seconds) {
+    const die = synth.seededDie(0xc5a2);
+    let made = 0;
+    for (let time = 0.6; time < seconds; time += 1.4 + die() * 1.8) {
+      splashInto(out, rate, {
+        at: time,
+        hertz: 380 + die() * 380,
+        quality: 0.9,
+        decay: 0.18 + die() * 0.12,
+        gain: 0.5 + die() * 0.5,
+        seed: 0xc5b0 + Math.round(time * 10),
+      });
+      if (++made % 5 === 0) yield;
+    }
+  }),
+  'SmallShipAmbience/creaks': eventLayer('SmallShipAmbience/creaks', function* (out, rate, seconds) {
+    const die = synth.seededDie(0xc5a4);
+    for (let time = 2.2; time < seconds; time += 4.5 + die() * 4) {
+      const shape = { length: 0.45 + die() * 0.5, fromHz: 65 + die() * 40, toHz: 95 + die() * 60, body: 300 + die() * 300 };
+      creakAt(out, rate, time, 0.35 + die() * 0.3, { ...shape, quality: 5, seed: Math.round(time * 100) });
+      yield;
+    }
+  }),
+  'ShipExteriorAmbience2/thumps': eventLayer('ShipExteriorAmbience2/thumps', function* (out, rate, seconds) {
+    const die = synth.seededDie(0xe7a3);
+    let made = 0;
+    for (let time = 1.5; time < seconds; time += 3 + die() * 3) {
+      const thump = synth.strikeEnvelope(
+        synth.onePoleLowpass(synth.whiteNoise(Math.round(0.4 * rate), Math.round(time * 1000)), rate, 180),
+        rate,
+        { attack: 0.01, decay: 0.09, gain: 1.6 },
+      );
+      synth.onePoleHighpass(thump, rate, 30); // the low-pass reaches down to 0 Hz: a DC offset without it
+      synth.mixInto(out, thump, Math.round(time * rate));
+      if (++made % 5 === 0) yield;
+    }
+  }),
+  'ShipExteriorAmbience2/creaks': eventLayer('ShipExteriorAmbience2/creaks', function* (out, rate, seconds) {
+    const die = synth.seededDie(0xe7a4);
+    for (let time = 3.1; time < seconds; time += 6 + die() * 4) {
+      const shape = { length: 0.5 + die() * 0.4, fromHz: 70 + die() * 30, toHz: 110 + die() * 50, body: 360 + die() * 220 };
+      creakAt(out, rate, time, 0.3, { ...shape, quality: 5, seed: Math.round(time * 77) });
+      yield;
+    }
+  }),
+};
 
 function oarsIn({ rate, samples }) {
   const out = new Float32Array(samples);
@@ -174,7 +222,6 @@ function oarsOut({ rate, samples }) {
   return strokeLevel(out, rate);
 }
 
-/** @typedef {{ rate: number, samples: number }} Format */
 /** A clip made in one pass, after a turn. @param {(fmt: Format) => Float32Array} make */
 const onePass = (make) =>
   /** @param {Format} fmt */
@@ -182,14 +229,19 @@ const onePass = (make) =>
     yield;
     return make(fmt);
   };
-/** Each clip as passes. @type {Record<string, (fmt: Format) => Generator<undefined, Float32Array>>} */
+/** Each clip and layer as passes. @type {Record<string, (fmt: Format) => Generator<undefined, Float32Array>>} */
 const MAKE = Object.freeze({
-  SmallShipAmbience: smallShip,
-  ShipExteriorAmbience2: exterior,
+  SmallShipAmbience: smallShipBed,
+  ShipExteriorAmbience2: exteriorBed,
+  ...LAYER_MAKE,
   Oars_In: onePass(oarsIn),
   Oars_Sweep: onePass(oarsSweep),
   Oars_Out: onePass(oarsOut),
 });
+/** @param {string} name @returns {Format | undefined} */
+const formatOf = (name) =>
+  /** @type {Record<string, Format>} */ (CSA_CLIP_FORMAT)[name] ??
+  /** @type {Record<string, Format>} */ (CSA_LAYER_FORMAT)[name];
 const _made = new Map();
 /** The clip's passes, run to the end: its PCM. @param {Generator<undefined, Float32Array>} passes */
 function finish(passes) {
@@ -198,16 +250,16 @@ function finish(passes) {
     if (pass.done) return pass.value;
   }
 }
-/** A clip's PCM (mono) and its rate, made once; null for a name that is none of the five. */
+/** A clip's or a layer's PCM (mono) and its rate, made once; null for a name that is none of them. */
 export function csaClip(name) {
-  const fmt = CSA_CLIP_FORMAT[name];
+  const fmt = formatOf(name);
   if (!fmt) return null;
   if (!_made.has(name)) _made.set(name, { samples: finish(MAKE[name](fmt)), rate: fmt.rate });
   return _made.get(name);
 }
-/** The same clip made a pass a task (a minute's loop is 60 to 200 ms of work); made once, as csaClip. */
+/** The same clip made a pass a task (a loop's bed is 30 to 120 ms of work); made once, as csaClip. */
 async function csaClipInTurns(name) {
-  const fmt = CSA_CLIP_FORMAT[name];
+  const fmt = formatOf(name);
   if (!fmt) return null;
   if (!_made.has(name)) {
     const passes = MAKE[name](fmt);
@@ -222,18 +274,21 @@ async function csaClipInTurns(name) {
 }
 
 /**
- * The five made and handed to `register(name, clip)` (the bus's registerSamples), one a task so no frame holds them
- * all; resolves once all stand, rejects when one is refused (no audio context yet: the next ask tries again).
+ * The five, each loop with its layers (csaLayersOf), made and handed to `register(name, clip)` (the bus's
+ * registerSamples) a pass a task; resolves once all stand, rejects when one is refused (no audio context yet: the next
+ * ask tries again).
  * @param {(name: string, clip: { samples: Float32Array, rate: number }) => boolean} register
  * @param {readonly string[]} names
  */
 export function registerCsaClips(register, names) {
-  return names.reduce(
-    (chain, name) =>
-      chain.then(async () => {
-        const clip = await csaClipInTurns(name);
-        if (!clip || !register(name, clip)) throw new Error(`${name}: refused`);
-      }),
-    Promise.resolve(),
-  );
+  return names
+    .flatMap((name) => csaLayersOf(name))
+    .reduce(
+      (chain, name) =>
+        chain.then(async () => {
+          const clip = await csaClipInTurns(name);
+          if (!clip || !register(name, clip)) throw new Error(`${name}: refused`);
+        }),
+      Promise.resolve(),
+    );
 }

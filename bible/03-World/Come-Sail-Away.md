@@ -26,11 +26,13 @@ climbed by ladders. Mac's three ships still stand for hulls 1, 2 and 4. Pins:
 `csa_own_assets.test.js`.
 
 **OWN-WORK4 sound audit (2026-11-01).** The two loops ran 20 and 24 s, so the boat's slaps, thumps and creaks came
-round three times a minute (the mod's ran 182 and 202 s). They run a minute now, made a pass a task
-(`csaSynth/csaClips.js`): 18 MB held, where the mod's two decoded to 59 MB. They stood 3 to 6 dB over the mod's own
-loops' -24 dBFS at the helm, which SEA-AIR's beds were set under (`08-Audio/Audio.md`); each loop is set to that RMS,
-and a stroke to -17 on `audio/synth/dsp.js` `loudnessOf`, by Daggerfall's large splash heard at 0.7 (-15.5). The
-sweep's DC offset is taken out. Pins: `csa_own_assets.test.js`.
+round three times a minute (the mod's ran 182 and 202 s). Each loop is now three layers (`csaSynth/csaClips.js`
+CSA_LAYERS, `audio/layeredLoop.js`): the bed, and each kind of event on its own loop, 29, 41 and 37 s
+at rest and 31, 43 and 47 s under way, so they come round together after 12 and 17 hours. The events are made at 16
+and 11.025 kHz: 16.6 MB held, where the mod's two decoded to 59 MB. The loops stood 3 to 6 dB over the mod's own
+loops' -24 dBFS at the helm, which SEA-AIR's beds were set under (`08-Audio/Audio.md`); the layers together are set to
+that RMS, and a stroke to -17 on `audio/synth/dsp.js` `loudnessOf`, by Daggerfall's large splash heard at 0.7. Pins:
+`csa_own_assets.test.js`.
 
 **OWN-AUDIT (2026-11-01).** The 32 breaker frames alternate the two paints, eight a second. Our second paint laid its
 fronts half a spacing below the first's, so the surf jumped back and forth four times a second. Both paints now lay the

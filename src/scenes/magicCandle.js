@@ -46,7 +46,7 @@
 
 import { billboardSize } from '../world/rmbFlats.js';
 import { LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
-import { lightList, packLight, copyLights } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
+import { lightList, packLight, copyLights, CARRIED_IN_HAND, CARRIED_SHADOWLESS } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */
 export const CANDLE = Object.freeze({
@@ -169,10 +169,13 @@ export function withPlayerLights(base, ...lights) {
   // (the player's torch and candle; playerTorch.js says why). Per LIGHT, not "the first N": this same list carries the
   // dropped and thrown torches and the burning foes (droppedTorches.lights()), which sit over real billboards and
   // keep their glare. It rides the array as a property; the renderer lifts it off before it cuts the array to its cap.
+  // OWN-AUDIT (2026-11-01): 2 for a record that says `shadowless` (a burning foe's, EmissionShadows off) - no shadow
+  // map and no contact march, as the hand's, but its glare kept (render/airPass.js reads 1 alone)
   const carried = new Uint8Array(keep / 4 + live.length);
   live.forEach((l, i) => {
     packLight(out, i, l);
-    if (l.carried) carried[i] = 1;
+    if (l.carried) carried[i] = CARRIED_IN_HAND;
+    else if (l.shadowless) carried[i] = CARRIED_SHADOWLESS;
   });
   copyLights(out, live.length, base, 0, keep / 4);
   if (base.carried) carried.set(base.carried.subarray(0, keep / 4), live.length);

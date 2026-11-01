@@ -65,8 +65,8 @@
   {
     "name": "OW4H-walk-and-still-heights-swapped",
     "file": "src/systems/horse/horseArt.js",
-    "old": "named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT, bob);",
-    "new": "named.still ? HORSE_ART_WALK_HEIGHT : HORSE_ART_STILL_HEIGHT, bob);",
+    "old": "  const height = named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT;",
+    "new": "  const height = named.still ? HORSE_ART_WALK_HEIGHT : HORSE_ART_STILL_HEIGHT;",
     "tests": [
       "test/systems/horse/ownwork4_horseart.test.js"
     ]

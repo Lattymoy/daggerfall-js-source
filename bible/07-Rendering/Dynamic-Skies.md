@@ -43,6 +43,13 @@ settings and every place the sky is wired are unchanged. The storm's flash is st
 | fog | clear rows linear to 4,800; falling rows exp2, half the light at d50 (rain 700, snow 450, fog 120, sandstorm 90, ash 400); the slider thickens by 1 + (x - 1) / 3 |
 | light | 0.92 sin(pi t)^0.6 over the day: longer sunrises and sunsets than the rig's |
 | pixel snow | our six-armed flake; MaxParticles (thousands) caps the flakes drawn - the mod logged it and never applied it (OWN-WORK4 AUDIT, 2026-11-01) |
+| storm flash | ours (OWN-WORK4 AUDIT): a clap is seen at 0.65; one to four strokes, each a 12 ms rise and a 70 ms fall, 50 to 120 ms apart, each fainter; a cold light 40 to 160 m off and 60 to 120 m up; the dome takes 0.35 of it and the clouds more (`StormFlash`, `FLASH_LOOK`) |
+| noise | each octave's lattice turned by a whole-number matrix and shifted, so no crease lines up (OWN-WORK4 AUDIT) |
+
+**OWN-WORK4 AUDIT (2026-11-01).** The long bright streaks under an overcast sky in the sky lab were not this sky's:
+with the cloud tier on, its layers stand down and the volumetric clouds' cirrus showed through the lid's thin places.
+`render/volumetricClouds.js` CIRRUS_COVER now keeps only a trace under a lid (overcast 0.1, rain and snow 0.08,
+thunder 0.06).
 
 ## What the mod is, and where each part landed
 

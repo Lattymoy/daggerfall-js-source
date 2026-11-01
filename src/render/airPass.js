@@ -97,6 +97,7 @@ import { setFrameTarget } from './renderTarget.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js'; // VC6c: a covered sun throws no shafts - the same field the ground's shadow reads
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js'; // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
 import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN } from './bounds.js'; // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
+import { CARRIED_IN_HAND } from './lightId.js'; // OWN-AUDIT: the carried mask's hand byte - a shadowless light keeps its glare
 import { billboardKey } from './billboardKey.js'; // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { windfallLawOn, swayShare } from './windfallSway.js'; // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
@@ -2285,7 +2286,7 @@ export class AirPass {
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
       if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue; // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern
-      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat
+      if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue; // OWN-AUDIT: a shadowless light keeps its glare. MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat
       const x = L[i * 4],
         y = L[i * 4 + 1],
         z = L[i * 4 + 2];

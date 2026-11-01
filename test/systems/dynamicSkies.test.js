@@ -17,7 +17,7 @@ import {
   TEXTURE_SLOTS, TEXTURE_IMPORTS, SLOT_DEFAULT_TEXEL, MAX_DELTA_SECONDS,
   srgbToLinear, linearToSrgb, hexLinear, toSrgb3, luminance, weatherRow, easeRow, weatherShow, hourAt, nightWeight, moonNightWeight,
   phasesAt, moonPhaseLight, skyFrame, fogSettingsFromPresets, fogPresetKey, sunLightDirection, sunCurveTime,
-  LightningFlash, FLASH_LOOK, strokeLevel, pixelSnowSettings,
+  StormFlash, FLASH_LOOK, strokeLevel, pixelSnowSettings,
 } from '../../src/systems/dynamicSkies/dynamicSkies.js';
 import { DynamicSkies } from '../../src/systems/dynamicSkies/dynamicSkiesRuntime.js';
 import { DYNAMIC_SKIES_TEXTURES, SKY_NOISE_CHANNELS, dynamicSkiesAssets, paintSkyNoise, paintSnowflake, loadDynamicSkiesTexture, dynamicSkiesTextureUrl } from '../../src/systems/dynamicSkies/dynamicSkiesAssets.js';
@@ -233,8 +233,26 @@ test('OWN-WORK4 the painted noise: three channels, each tiling and equalized (a 
     let edge = 0;
     for (let i = 0; i < 256 * 256; i++) quarter[a.data[i * 4 + k] >> 6]++;
     for (const q of quarter) assert.ok(Math.abs(q - 16384) < 200, `channel ${k}: a quarter of the texture in each quarter of its range (${quarter})`);
-    for (let x = 0; x < 256; x++) edge = Math.max(edge, Math.abs(a.data[x * 4 + k] - a.data[(255 * 256 + x) * 4 + k]), Math.abs(a.data[x * 256 * 4 + k] - a.data[(x * 256 + 255) * 4 + k]));
-    assert.ok(edge < 24, `channel ${k} tiles: the far edge meets the near (${edge})`);
+    // PIN MOVED (OWN-WORK4 AUDIT): the seam is no larger a step than the texture's own largest between neighbours (the
+    // turned octaves are finer than the old bound of 24 assumed)
+    let inner = 0;
+    const rows = [], cols = [];
+    for (let x = 0; x < 256; x++) {
+      edge = Math.max(edge, Math.abs(a.data[x * 4 + k] - a.data[(255 * 256 + x) * 4 + k]), Math.abs(a.data[x * 256 * 4 + k] - a.data[(x * 256 + 255) * 4 + k]));
+      let r = 0, c = 0;
+      for (let y = 0; y < 256; y++) {
+        const dy = Math.abs(a.data[(((x + 1) % 256) * 256 + y) * 4 + k] - a.data[(x * 256 + y) * 4 + k]);
+        const dx = Math.abs(a.data[(y * 256 + ((x + 1) % 256)) * 4 + k] - a.data[(y * 256 + x) * 4 + k]);
+        if (y < 255) inner = Math.max(inner, dy, dx);
+        r += dy; c += dx;
+      }
+      rows.push(r); cols.push(c);
+    }
+    assert.ok(edge <= inner, `channel ${k} tiles: the far edge meets the near (${edge}, its own steps up to ${inner})`);
+    // OWN-WORK4 AUDIT: no lattice crease - no row or column of the texture flat against the rest (aligned octaves made
+    // lines a lit cloud showed as streaks)
+    const median = (v) => [...v].sort((p, q) => p - q)[128];
+    assert.ok(Math.min(...rows) > median(rows) / 3 && Math.min(...cols) > median(cols) / 3, `channel ${k}: no crease`);
   }
   for (let i = 3; i < a.data.length; i += 4) assert.equal(a.data[i], 255);
   const flake = paintSnowflake();
@@ -474,7 +492,7 @@ test('OWN-WORK4 the pass\'s GL: one painted texture on unit 0, the layers handed
 test('OWN-WORK4 AUDIT the storm\'s flash: a clap seen at its chance; one to four strokes, each a quick rise and a falling tail, fainter than the last; a cold light at the strike off to one side, riding with the player; gone when the last tail is spent (mutants: the chance unread; the tail a step; the strokes not fainter; the strike over the player)', () => {
   // the dice in order: the clap, the stroke count, the first peak, then a gap and a fade a stroke, the bearing, the
   // distance, the height, the range
-  const dice = (clap, count, ...rest) => new LightningFlash(seq([clap, count, ...rest]));
+  const dice = (clap, count, ...rest) => new StormFlash(seq([clap, count, ...rest]));
   assert.equal(dice(FLASH_LOOK.chance).startFlash([0, 0, 0]), false, 'the chance itself does not flash');
   assert.equal(dice(FLASH_LOOK.chance - 0.01, 0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5).startFlash([0, 0, 0]), true);
   assert.equal(dice(0.1).startFlash(null), false, 'no player, no flash');

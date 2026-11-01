@@ -30,16 +30,16 @@ export function cloudsStateUnderMod(st, moons, { minuteOfDay, weather, classicMi
  *  TOO.
  *
  *  The march's aerial perspective closes every far bank on this one
- *  colour, and handing it the mod's RenderSettings.fogColor unchanged
- *  made a full overcast lid end in a hard sunset line: the mod's fog
+ *  colour, and handing it the sky's own fog colour unchanged
+ *  made a full overcast lid end in a hard sunset line: the sky's fog
  *  colour at dusk is a saturated red, its own dome shows it only in the
  *  half-degree strip at the horizon, and the deck was painting it across
  *  the whole far ring. The port's own dome has never had this - its
  *  horizon is greyed by the weather's `grey` before anything reads it
- *  (enhancedSky.skyState) - so the mod's colour gets the same treatment
+ *  (enhancedSky.skyState) - so this sky's colour gets the same treatment
  *  here, toward the deck's OWN shade rather than a fixed grey, because
  *  the far end of an overcast lid is the near end of it seen through
- *  air. Sunny is grey 0 and comes through the mod's colour untouched. */
+ *  air. Sunny is grey 0 and comes through the sky's colour untouched. */
 export function modHorizon(modColor, shade, w) {
   const g = Math.max(0, Math.min(1, w?.grey ?? 0));
   if (g === 0 || !shade) return modColor;

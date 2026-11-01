@@ -106,5 +106,59 @@
     "tests": [
       "test/player/ownwork4_classskins.test.js"
     ]
+  },
+  {
+    "name": "OWNAUDIT-garment-unworn",
+    "file": "src/player/classSkinArt.js",
+    "old": "  if (bare && scheme.garment) paintGarment(",
+    "new": "  if (false) paintGarment(",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-every-sheet-bare",
+    "file": "src/player/classSkinArt.js",
+    "old": "bare: BARE_SHEETS.includes(skin.from) });",
+    "new": "bare: true });",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-waist-misread",
+    "file": "src/player/classSkinArt.js",
+    "old": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) xs.push(x);",
+    "new": "    for (let x = 0; x < width; x++) if (mat[y * width + x] === CLOTH) xs.push(x);",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-arms-clothed",
+    "file": "src/player/classSkinArt.js",
+    "old": "export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14],",
+    "new": "export const TORSO_HALF = Object.freeze({ 0: [0.2, 0.24],",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-garment-unlit",
+    "file": "src/player/classSkinArt.js",
+    "old": "      const lit = 0.1 + 0.8 * toneIn(tables.span.flesh, tables.light[pal[i]]);",
+    "new": "      const lit = 0.5;",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
+  },
+  {
+    "name": "OWNAUDIT-garments-alike",
+    "file": "src/player/classSkinArt.js",
+    "old": "garment: { kind: 'wrap', ramp: WRAP,",
+    "new": "garment: { kind: 'harness', ramp: RAMP.leather,",
+    "tests": [
+      "test/player/ownwork4_classskins.test.js"
+    ]
   }
 ]

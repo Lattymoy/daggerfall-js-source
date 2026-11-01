@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { CifRciFile } from '../../../src/formats/cifRciFile.js';
 import { DFPalette } from '../../../src/formats/dfPalette.js';
 import { diverseWeaponsImage, hasDiverseWeaponsSprite, clearDiverseWeaponsSources, _resetDiverseWeaponsImages } from '../../../src/combat/diverseWeapons/diverseWeaponsAssets.js';
-import { createOwnWeaponArt, parseOwnName, metalLut, METAL_RAMPS, FULLER_SHADE, heldBladeMask } from '../../../src/combat/diverseWeapons/diverseWeaponsArt.js';
+import { createOwnWeaponArt, parseOwnName, metalLut, METAL_RAMPS, FULLER_SHADE, FULLER, heldBladeMask } from '../../../src/combat/diverseWeapons/diverseWeaponsArt.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -63,7 +63,9 @@ test('NO-BETHESDA3 / OWN-WORK4 (ARENA2): each of the twelve at the classic magic
     const pic = await art.frame(n), bm = cif.getDFBitmap(record, frame), lut = metalLut(pal, METAL_RAMPS[metal]);
     assert.deepEqual([pic.width, pic.height], [bm.width, bm.height], `${n}: the box it is drawn into`);
     const own = heldBladeMask(bm.data, bm.width, bm.height) ?? new Uint8Array(bm.data.length);
-    const ours = new Set(lut.flatMap((c) => [c.join(), c.map((v) => Math.round(v * FULLER_SHADE)).join()]));
+    // OWN-WORK4 AUDIT: the groove's floor, its shadowed wall and its lit wall are our blade too
+    const light = METAL_RAMPS[metal][2];
+    const ours = new Set(lut.flatMap((c) => [c, c.map((v) => Math.round(v * FULLER_SHADE)), c.map((v) => Math.round(v * FULLER.WALL)), c.map((v, k) => Math.round(v + (light[k] - v) * FULLER.LIT))].map((x) => x.join())));
     let hand = 0, classicBlade = 0, blade = 0, grooved = 0;
     for (let p = 0; p < bm.data.length; p++) {
       const i = bm.data[p], got = [...pic.data.subarray(p * 4, p * 4 + 4)], metalHere = i >= 0x70 && i <= 0x7f;

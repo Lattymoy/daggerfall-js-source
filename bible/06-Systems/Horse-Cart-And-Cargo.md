@@ -21,7 +21,15 @@ with `tools/hccAssets.mjs` (RETIRED). The horse is ours (`src/systems/horse/hors
 (TEXTURE.495, the walk's five views and eight frames), the rider taken off and the flank under his leg filled, our own
 saddle painted on, in colours no coat dyes. The names, sizes, views, frames and timing are the mod's. The text table's names were never shown;
 the rows and their words are ours. Pins: `test/systems/horse/ownwork4_horseart.test.js`; mutants
-`tools/mutants/ownwork4_horse.json` (11). An `[IL_xxxx]` below names an offset in the 1.0.0-rc12 assembly, not a file here.
+`tools/mutants/ownwork4_horse.json` (14). An `[IL_xxxx]` below names an offset in the 1.0.0-rc12 assembly, not a file here.
+
+**OWN-AUDIT (2026-11-01).** From the front the baked rider masks missed his lap and hands over the horse's head, a
+hilt and his legs, where the five mounted sets agree. The front view's rider is now ours as data
+(`src/systems/horse/horseFrontRider.js`, a mask a walk frame over TEXTURE.495 record 0), laid over the baked mask by
+`withFrontRider`. It takes every row above the forehead, every pixel above the hooves in the rider's ramps, and all
+but the hide over his legs. The flank is filled from the hide beside it and the saddle cloth covers the rest. Pinned in
+`ownwork4_horseart.test.js`: no pixel of the rider's ramps is left above the hooves in any front frame. Three mutants
+are its.
 
 The port is read off `TrailingWagon.dll`'s IL and nothing else: no
 source ships with the mod. The scope of that reading is a table, not a

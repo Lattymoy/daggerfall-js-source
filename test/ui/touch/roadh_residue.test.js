@@ -7,10 +7,7 @@
 //   H5   world.js's keydown ladder carried TWO byte-identical
 //        `act === 'Rest'` arms in one block. The second could never
 //        run. Deleted, its comment's substance folded into the first.
-//   H7b  the port's LightningFlash carries the mod's `Time.timeScale`
-//        as an option and no pin ever drove it off 1, so five of the
-//        mod's own arithmetic sites were pinned only in the case where
-//        the scale disappears.
+//   H7b  retired with the retired flash routine (OWN-WORK4 AUDIT)
 //   H8   the touch layer's HELD controls learned not to lift a key
 //        another live control still owns (AUDIT 62 F8's review); its
 //        MOMENTARY (tap) controls never did, and a tap's keyup does not
@@ -25,7 +22,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dfuFile, missingDfu } from '../../dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
-import { LightningFlash } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
 import { attachTouch } from '../../../src/ui/touch/touch.js';
 import { setBindings } from '../../../src/ui/input.js';
 import {
@@ -109,83 +105,12 @@ test('ROAD-H H5: the reference the folded comment names - R is Rest, and the dis
 });
 
 // ---------------------------------------------------------------
-// H7b - LightningFlash's UNDRIVEN TIME SCALE
+// H7b - RETIRED (OWN-WORK4 AUDIT, 2026-11-01): it pinned the retired
+// Dynamic Skies routine's own Time.timeScale arithmetic. The storm's
+// flash is ours now (systems/dynamicSkies/dynamicSkies.js StormFlash),
+// on the frame's real seconds, and test/systems/dynamicSkies.test.js
+// pins its law.
 // ---------------------------------------------------------------
-
-/** The mod draws Random.value / Random.Range in a fixed order; `seq`
- *  is dynamicSkies.test.js's own rng double. */
-const seq = (vals) => { let i = 0; return () => vals[i++ % vals.length]; };
-const FLASH_ONCE_DRAWS = Array(16).fill(0.5);   // two FlashOnce bodies, 8 draws each
-
-test('ROAD-H H7b: LightningFlash\'s timeScale is the mod\'s Time.timeScale - it DIVIDES both rolls (mutant: drop `/ this.timeScale` at either roll)', () => {
-  // LightningFlash.cs:52  `if (Random.value < (0.5f / Time.timeScale))`
-  // LightningFlash.cs:55  `if (Random.value < (0.33f / Time.timeScale))`
-  // The port carries the divisor as a constructor option and NOTHING
-  // in this suite ever built one at anything but 1, where `x / 1 === x`
-  // - so both divides were unpinned: `0.5 / t`, `0.5 * t` and a bare
-  // `0.5` are the same expression at t = 1. Driven at 2, where the
-  // mod's own arithmetic puts the first gate at 0.25 and the second at
-  // 0.165, and the three readings come apart.
-  const at2 = (rolls) => new LightningFlash(seq(rolls), { timeScale: 2 });
-  assert.equal(at2([0.25, 0.9, ...FLASH_ONCE_DRAWS]).startFlash([0, 0, 0]), false,
-    '0.25 is not < 0.5/2: no flash');
-  assert.equal(at2([0.24, 0.9, ...FLASH_ONCE_DRAWS]).startFlash([0, 0, 0]), true,
-    '0.24 < 0.5/2: a flash');
-  // the same roll at Time.timeScale 1 DOES fire - which is the whole
-  // content of the divide, and what a `0.5` literal would erase
-  assert.equal(new LightningFlash(seq([0.25, 0.9, ...FLASH_ONCE_DRAWS])).startFlash([0, 0, 0]), true,
-    'unpaused (timeScale 1) the same 0.25 is < 0.5 and fires');
-  // ...and a `*` instead of a `/` puts the gate at 1.0, where every
-  // roll fires: 0.6 must not.
-  assert.equal(at2([0.6, 0.9, ...FLASH_ONCE_DRAWS]).startFlash([0, 0, 0]), false,
-    '0.6 is not < 0.5/2 - a multiply would have let it through');
-
-  // The DOUBLE-flash gate, :55, read through the routine it picks: at
-  // timeScale 2 the mod's single flash runs flashDuration * 2 = 0.4 s
-  // (BLBSkybox.cs:183 sets flashDuration = 0.2f) and a double runs two
-  // 0.2 s halves, so "still lit at 0.39 s" separates them.
-  const single = at2([0.1, 0.165, ...FLASH_ONCE_DRAWS]);
-  assert.equal(single.startFlash([0, 0, 0]), true);
-  assert.ok(single.tick(0.05), 'lit on the entering frame');
-  assert.ok(single.tick(0.2), 'still lit at 0.20 s - a double\'s first half is over by now');
-  assert.ok(single.tick(0.19), 'still lit at 0.39 s: 0.165 is not < 0.33/2, so this is the SINGLE routine');
-  assert.equal(single.tick(0.02), null, 'and dark past 0.41 s');
-  const dbl = at2([0.1, 0.16, ...FLASH_ONCE_DRAWS]);
-  assert.equal(dbl.startFlash([0, 0, 0]), true);
-  assert.ok(dbl.tick(0.05), 'lit on the entering frame');
-  assert.ok(dbl.tick(0.19), 'still lit at 0.19 s');
-  assert.equal(dbl.tick(0.02), null, '0.16 < 0.33/2: a DOUBLE, whose first half ends at flashDuration * 2 / 2 = 0.2 s');
-});
-
-test('ROAD-H H7b: timeScale MULTIPLIES the duration and the gap (mutant: drop `* this.timeScale` at the single, the half or the 0.1 gap)', () => {
-  // LightningFlash.cs:61  `StartCoroutine(FlashRoutine(flashDuration * Time.timeScale))`
-  // LightningFlash.cs:77  `float halfDuration = flashDuration * Time.timeScale / 2f;`
-  // LightningFlash.cs:79  `yield return new WaitForSeconds(0.1f * Time.timeScale);`
-  // At timeScale 2, with BLBSkybox.cs:183's flashDuration = 0.2f, the
-  // mod's numbers are 0.4 s, 0.2 s and a 0.2 s gap. Every one of the
-  // three is 0.2 / 0.1 / 0.1 if the multiply is dropped, and the
-  // frames below are chosen so each mutant reads differently.
-  const at2 = (rolls) => new LightningFlash(seq(rolls), { timeScale: 2 });
-  // :61 - the single, 0.4 s not 0.2 s
-  const s = at2([0.1, 0.9, ...FLASH_ONCE_DRAWS]);
-  s.startFlash([0, 0, 0]);
-  assert.ok(s.tick(0.05), 'lit on the entering frame');
-  assert.ok(s.tick(0.2), 'still lit at 0.20 s - flashDuration alone would be over');
-  assert.ok(s.tick(0.19), 'still lit at 0.39 s');
-  assert.equal(s.tick(0.02), null, 'dark past 0.41 s: the duration is flashDuration * timeScale');
-  // :77 and :79 - the double's halves and the delay between them
-  const d = at2([0.1, 0.1, ...FLASH_ONCE_DRAWS]);
-  d.startFlash([0, 0, 0]);
-  assert.ok(d.tick(0.05), 'lit on the entering frame');
-  assert.ok(d.tick(0.19), 'the first half runs 0.2 s (flashDuration * timeScale / 2), not 0.1');
-  assert.equal(d.tick(0.02), null, 'over at 0.21 s');
-  assert.equal(d.tick(0.18), null, 'still dark 0.19 s into the gap - a bare 0.1 f would have re-lit by now');
-  assert.ok(d.tick(0.02), 'the second half lights at the end of the 0.1 * timeScale gap');
-  assert.ok(d.tick(0.19), 'and runs its own 0.2 s');
-  assert.equal(d.tick(0.02), null, 'then dark');
-  // the option's own default is the unpaused Unity value the mod reads
-  assert.equal(new LightningFlash(() => 0.5).timeScale, 1, 'Time.timeScale is 1 while the game runs');
-});
 
 // ---------------------------------------------------------------
 // H8 - THE TOUCH CODE-LIFT GUARD (a TI1 departure; DFU has no touch)

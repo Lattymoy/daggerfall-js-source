@@ -22,6 +22,15 @@ track packed darker and colder with its depth. PIN MOVED: the model test's cover
 keeps half the record's own grain (a quarter over a summer record), so the speckle is softened, not lost. Snow sifted
 into a paving's joints only near the drift's edge: across a whole road it drew white hatching. The masks are unchanged.
 
+**OWN-WORK4 AUDIT, the surface (2026-11-01).** `render/snowfallGlsl.js`'s vertex law is our design from what the
+snow must do, not the retired shader's. A track narrower than the grid keeps the deepest press across the vertex's
+cell, its point and four taps a texel out along the axes. A sharper track (ImpressionStrength) eases the stored
+profile: deeper at its centre, higher at its shoulders. Under a body the setting's depth stays. Every tier edge eases
+by a quintic, and the ring lands on the blanket three quarters into its band, its own surface offset over it. The
+surface stands 1 cm over its bed (`SNOW_SURFACE_OFFSET`), and the polygon offset is -0.5, -1. The albedo is read
+twice, the second read turned and at 1 / phi^2 of the scale, so a field never shows the 4 m tile. The model and
+the runtime (`systems/snowfall.js`, `systems/snowfallRuntime.js`) are still the port of the assembly.
+
 ## The winter ground
 
 The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and
@@ -185,8 +194,9 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
 - **LOCATION LOADER IS NOT THE PORT'S.** No authored footprint stands, so the
   loader's cap never applies (World of Daggerfall's sites keep their own
   ground).
-- **LIT BY THE GROUND'S PROGRAM** (above). It stands over the ground by the
-  mod's own 8 mm surface offset and its pass's own `Offset -0.25, -0.25`
+- **LIT BY THE GROUND'S PROGRAM** (above). It stands over the ground by our
+  1 cm surface offset and our polygon offset of -0.5, -1 (OWN-WORK4 AUDIT; the
+  mod's were 8 mm and -0.25, -0.25)
   (`SNOW_LAYER`, a layer of the sea's stack - over the ground, under the film;
   AUDIT ENVIRONS G2 withdrew SNOWFALL1's departure, which left the snow at the
   ground's own height fighting it), its back faces culled as the pass culls

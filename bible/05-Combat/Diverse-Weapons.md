@@ -30,8 +30,9 @@ Our set answers only while the mod is on. Pins: `ownwork4_dwart.test.js`,
 axe kept a different bit from frame to frame, and in a thrust it cut its socket in half: the side was read off the
 head's own axis. It is read off the haft now (its wood, never a glow), so a swing keeps one bit. A widened dagger
 scattered its guard's prongs into specks: past the blade's new edge what hugs it now moves out whole, and a pixel
-the move strands goes (`unspeckle`). The dagger's specks fell from 212 to 20 over its 31 frames. Mutants OW4-21 to
-OW4-26.
+the move strands goes (`unspeckle`). The dagger's specks fell from 212 to 20 over its 31 frames. A fuller is a groove
+now, not a dark band: its wall on the light's side in shadow, a darker floor, the far wall lit (`FULLER`). Mutants
+OW4-21 to OW4-29.
 
 ## The mod is one line
 

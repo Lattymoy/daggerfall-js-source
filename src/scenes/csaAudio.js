@@ -4,6 +4,8 @@
 // use as `host.<name>` - as the code read them where it was.
 import { audio, logarithmicRolloff } from '../systems/audio.js';
 import { nodeOf as csaNodeOf } from '../systems/comeSailAway/comeSailAwayBoat.js';
+import { csaLayersOf } from '../systems/comeSailAway/csaSynth/csaClips.js';
+import { layeredLoop } from '../audio/layeredLoop.js';
 
 /** @param {any} host */
 export function createCsaAudio(host) {
@@ -43,12 +45,15 @@ export function createCsaAudio(host) {
             csaSounds();
           }
           const pos = [...node.position];
-          ch.handle ??= audio.loop3d(csaClipKey(src.clip), pos, 0, {
-            refDistance: src.minDistance,
-            maxDistance: src.maxDistance,
-            distanceModel: 'inverse',
-            rolloffFactor: 0,
-          }); // null until the clip is decoded: asked again next frame
+          // OWN-WORK4 audit: the loop is its layers (csaClips.js CSA_LAYERS), played together as one
+          ch.handle ??= layeredLoop(csaLayersOf(src.clip).map(csaClipKey), (key) =>
+            audio.loop3d(key, pos, 0, {
+              refDistance: src.minDistance,
+              maxDistance: src.maxDistance,
+              distanceModel: 'inverse',
+              rolloffFactor: 0,
+            }),
+          ); // null until every layer is made: asked again next frame
           if (!ch.handle) continue;
           ch.handle.move(pos);
           const d = Math.hypot(pos[0] - ear[0], pos[1] - ear[1], pos[2] - ear[2]);

@@ -217,8 +217,9 @@ export const MOD_CURATED = Object.freeze({
   // are bound in Controls, under the mod's name, beside every other key - where a clash can be seen. The relaxed
   // switch rides along: 3ARMS ships it off. HT-WAIST: and the port's own lantern switch - a key the tile does not
   // draw is a key nobody can reach (TORCH-BIND's lesson).
+  // OWN-AUDIT (2026-11-01): and the throw's arc, drawn now and on by default - its off is a player's to reach.
   'handheld-torches': Object.freeze([
-    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Bob.Length']),
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Handling.LanternsAtWaist', 'Throwing.ShowTrajectory', 'Bob.Length']),
   // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
   'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
@@ -241,8 +242,9 @@ export const MOD_CURATED = Object.freeze({
   'ocean-holes': Object.freeze(['General.PitSpawnRate', 'General.DungeonVisualIntensity', 'General.DungeonVisualDarkness']),
   // CSA-A: fifty keys, and these four are what a player reaches for first - whether the sails trim themselves (the
   // mod's one real difficulty switch), the wind's widget, the waves and the boat's sounds. Its nine keys are
-  // Controls' (KB1), and the handling, cargo and map dials stay in the mod's own pane.
-  'come-sail-away': Object.freeze(['SailingAssist.AutoTrimming', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume']),
+  // Controls' (KB1), and the handling, cargo and map dials stay in the mod's own pane. OWN-AUDIT (2026-11-01): and the
+  // bad tack, a difficulty switch beside the trim that ships off - a key the drawer does not draw is one nobody can turn.
+  'come-sail-away': Object.freeze(['SailingAssist.AutoTrimming', 'Handling.BadTack', 'WindDirectionWidget.Enable', 'Waves.Enable', 'Audio.SoundVolume']),
   // TO1: the mod ships FIFTY-ONE keys across twelve sections, so this
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,

@@ -2257,6 +2257,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     setHeldPose(spec) { return fpArm.setHeldPose(spec); },
     draw({ paralyzed = false } = {}) {
       _armDrewLast = false;
+      if (handheldOn() && !paralyzed && !sheetWindowUp()) handheld.drawThrowArc(renderer);   // OWN-AUDIT: the throw's arc, under every lane and view, on the world's own screen
       try { return onUiScreen(renderer, cv(), () => drawInner({ paralyzed })); } finally { widget.endOfFrame(); twoHands.offWidget.endOfFrame(); shield.endOfFrame(); }   // WW1: WaitForEndOfFrame resumes after the frame's draw (TWO-HANDS: the left hand's clone's too); RETRO-UI: in the pillarbox
     },
     widget,   // WW1: the clone, for the pins

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { layGateRoads, gateWay, GATE_ROAD, GATE_BLOCK } from '../../src/world/road/gateRoads.js';
-import { gatesOnStreets, opensOntoStreet, townStreets, townHouses, townWall, standTownWall, setTownWallPaths, townWallBlockName, townWallCells, townWallGatesOf, wallPieces, gateOpening, GATE_WAY, GATE_OPENING, GATE_ARMS_MERGE, WALL_MODELS } from '../../src/world/townWalls.js';
+import { gatesOnStreets, opensOntoStreet, townStreets, townHouses, townWall, standTownWall, setTownWallPaths, townWallPathsReader, townWallBlockName, townWallCells, townWallGatesOf, wallPieces, gateOpening, GATE_WAY, GATE_OPENING, GATE_ARMS_MERGE, WALL_MODELS } from '../../src/world/townWalls.js';
 import { townGateRoads, blockGates } from '../../src/world/townGates.js';
 import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOutline.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
@@ -269,7 +269,7 @@ test('GATE-ROADS the wiring: the pixel\'s build hands the town\'s gates on its r
 // ── WITH ARENA2: the freeware's cities ──────────────────────────
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['BLOCKS.BSA', 'MAPS.BSA', 'WOODS.WLD'].every((f) => existsSync(join(ARENA2, f)));
-test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cities\' rings - every sixth one\'s every gate joined to the painter\'s roads where a third were; walled on their outline (the packs off) their gates on streets where a sixth were; past the Bay every sixth city\'s every gate on the road; the gate model\'s floor its opening (mutants: the roads never laid; the slide unread)', { skip: HAVE ? false : 'ARENA2_PATH not set', timeout: 900_000 }, async () => {
+test('GATE-ROADS with ARENA2: the Bay\'s walled cities on their outline - their gates on streets where a sixth of their roads\' crossings were; one in four of the rest every gate joined to the painter\'s roads where two in five were; past the Bay every sixth city\'s every gate on the road; the gate model\'s floor its opening (mutants: the roads never laid; the slide unread)', { skip: HAVE ? false : 'ARENA2_PATH not set', timeout: 900_000 }, async () => {
   // the gate model's opening (GATE_OPENING): its floor face, every point at the ground, x -8.05 to 1.68 m of its frame
   const { Arch3dFile } = await import('../../src/formats/arch3dFile.js');
   const arch = new Arch3dFile(); arch.load(new Uint8Array(readFileSync(join(ARENA2, 'ARCH3D.BSA'))));
@@ -282,8 +282,7 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
   const { isWallCarrier } = await import('../../src/world/townShape.js');
   const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
   const pixelOf = (loc) => ({ px: Math.trunc(loc.mapTableData.longitude / 128), py: 499 - Math.trunc(loc.mapTableData.latitude / 128) });
-  // the packs off, first (the sweep puts both packs on the world-data door for the rest of the process): the Bay's cities
-  // walled on their outline, their gates where their roads come in and onto a street
+  // the Bay's cities walled on their outline, their gates where their roads come in and onto a street
   const blocks = new BlocksFile(); blocks.load(new Uint8Array(readFileSync(join(ARENA2, 'BLOCKS.BSA'))));
   const maps = new MapsFile(); maps.load(...['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].map((f) => new Uint8Array(readFileSync(join(ARENA2, f))))); maps.autoDiscard = false;
   const rmbOf = (n) => (isWallCarrier(n) || n === TOWN_OUTLINE_BLOCK ? null : blocks.getBlockByName(n)?.rmbBlock ?? null);
@@ -307,7 +306,7 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
     }
   }
   // PIN MOVED (OWN-WORK2): over 400 gates, 85% and more on a street, on Basic Roads' arrays; 241 of 284 on the Bay's own network
-  assert.ok(gates > 250 && onStreet / gates > 0.8 && crossingOnStreet / crossings < 0.25, `the packs off: ${onStreet} of ${gates} gates on a street, where ${crossingOnStreet} of ${crossings} crossings were`);
+  assert.ok(gates > 250 && onStreet / gates > 0.8 && crossingOnStreet / crossings < 0.25, `on their outline: ${onStreet} of ${gates} gates on a street, where ${crossingOnStreet} of ${crossings} crossings were`);
   const { openSweep, sweepClone, ROADS_EVERY_WAY } = await import('../../tools/townBoardsSweep.mjs');
   const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
   const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
@@ -333,11 +332,16 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
     }
     return n;
   };
-  // the Bay as online stands it: Beautiful Cities' rings kept, their gates the mod's
-  const bay = sw.rows.filter((l) => l.exterior?.exteriorData?.blockNames?.some((x) => /^WALLAA/.test(x))).filter((_, k) => k % 6 === 0);
-  for (const loc of bay) assert.equal(wallBayCity(loc, sw.maps, sw.blocks), false, `${loc.name}: Beautiful Cities' ring kept`);
-  const b = tally(bay, () => [roadsB, tracksB]);
-  assert.ok(b.gates > 250 && b.after === b.gates && b.before / b.gates < 0.4, `the Bay's gates on the road: ${b.before} of ${b.gates} before, ${b.after} now`);
+  // PIN MOVED (OWN-WORK3): online the Bay stood Beautiful Cities' rings, every sixth one's 250 gates and more on the road where
+  // a third were. With the packs retired every Bay city is walled on its outline (the sweep's rows, TS7), its gates where its
+  // roads come in (the host's reader). A wall is registered once a city (townWalls.js), so none of those read above: every
+  // fourth of the rest.
+  const bay = sw.rows.filter((l) => l.outline?.bay && l.locationIndex % 3 !== 0).filter((_, k) => k % 4 === 0);
+  setTownWallPaths(townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));
+  let b;
+  try { b = tally(bay, () => [roadsB, tracksB]); } finally { setTownWallPaths(null); }
+  // 61 of 151 measured before
+  assert.ok(b.gates > 120 && b.after === b.gates && b.before / b.gates < 0.5, `the Bay's gates on the road: ${b.before} of ${b.gates} before, ${b.after} now`);
   // past the Bay: every sixth city template, walled on its outline, a road every way
   setTownWallPaths(() => ({ roads: ROADS_EVERY_WAY, tracks: 0, curved: false }));
   try {

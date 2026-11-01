@@ -34,10 +34,11 @@ function valueOctave(cells, seed) {
       fracY = y - top;
     const easeX = fracX * fracX * (3 - 2 * fracX),
       easeY = fracY * fracY * (3 - 2 * fracY);
-    const col0 = left % cells,
-      col1 = (left + 1) % cells,
-      row0 = (top % cells) * cells,
-      row1 = ((top + 1) % cells) * cells;
+    const wrap = (i) => ((i % cells) + cells) % cells;
+    const col0 = wrap(left),
+      col1 = wrap(left + 1),
+      row0 = wrap(top) * cells,
+      row1 = wrap(top + 1) * cells;
     const topLeft = lattice[row0 + col0],
       topRight = lattice[row0 + col1],
       lowLeft = lattice[row1 + col0],
@@ -59,6 +60,27 @@ export const SKY_NOISE_CHANNELS = Object.freeze([
   Object.freeze({ seed: 37, cells: 3, octaves: 4, billow: true }),
 ]);
 
+/** OWN-WORK4 AUDIT (2026-11-01): each octave's lattice turned by a whole-number matrix [a, b, c, d] (so the texture
+ *  still tiles) and shifted by its own fraction of a cell. Value noise is flat along its lattice lines, and with every
+ *  octave's lines on one grid the lit clouds showed them as long streaks under an overcast deck. */
+export const OCTAVE_TURNS = Object.freeze([
+  Object.freeze([1, 0, 0, 1]),
+  Object.freeze([1, 1, -1, 1]),
+  Object.freeze([2, 1, -1, 2]),
+  Object.freeze([1, -2, 2, 1]),
+  Object.freeze([3, 1, -1, 3]),
+]);
+/** An octave's sampler over 0..1 coordinates, its lattice turned and shifted (OCTAVE_TURNS); its cells kept near
+ *  `cells` across the picture whatever the turn's own scale. */
+function turnedOctave(cells, seed, index) {
+  const [a, b, c, d] = OCTAVE_TURNS[index % OCTAVE_TURNS.length];
+  const scale = Math.sqrt(a * d - b * c);
+  const octave = valueOctave(Math.max(1, Math.round(cells / scale)), seed);
+  const du = latticeHash(index, 1, seed),
+    dv = latticeHash(index, 2, seed);
+  return (across, down) => octave(a * across + b * down + du, c * across + d * down + dv);
+}
+
 /** Paint the sky's noise: RGBA bytes, `size` square, tiling on every edge. Each channel is equalized - its values
  *  replaced by their rank - so a cut at 1 - c covers c of the sky, which is the cloud layers' rule. */
 export function paintSkyNoise(size = 256) {
@@ -68,7 +90,7 @@ export function paintSkyNoise(size = 256) {
   const count = new Float64Array(BINS);
   SKY_NOISE_CHANNELS.forEach((channel, k) => {
     const octaves = Array.from({ length: channel.octaves }, (_, index) =>
-      valueOctave(channel.cells << index, channel.seed + index * 101),
+      turnedOctave(channel.cells << index, channel.seed + index * 101, index),
     );
     let lo = Infinity,
       hi = -Infinity;

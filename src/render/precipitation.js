@@ -24,6 +24,7 @@
 // the lane that draws them, and for no other.
 
 import { buildProgram, startPrograms } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { modSetting, modSettingsGeneration } from '../systems/modSettings.js'; // OWN-WORK4 AUDIT: Better Ambience's fall
 
 const PRECIP_VS = `#version 300 es
 layout(location=0) in vec3 aSeed;   // 0..1 per particle
@@ -296,6 +297,87 @@ void main(){
   o = t * color * color.a;
 }`;
 
+// ═══════════════════════════════════════════════════════════════════
+// OWN-WORK4 AUDIT (2026-11-01): BETTER AMBIENCE'S RAIN AND SNOW, OURS. The mod tuned Unity's particles; its two
+// switches (`Better Rain.enableBetterRain`, `enableBetterSnow`) now pick this fall on the enhanced lane, over the lab's
+// instances. Rain: a drop's speed by its size, its streak as long as a frame and a half of its travel along its own
+// velocity (so the wind slants and lengthens it), soft across, a storm faster and denser. Snow: slower, carried by the
+// wind further than rain, fluttering on two beats of its own, most flakes small and a few clumps, each a soft disc.
+// Off, the lab's program draws as it always has.
+export const BETTER_FALL = Object.freeze({
+  count: Object.freeze({ rain: 20800, storm: 26000, snow: 20000 }),
+  fall: Object.freeze({ rain: 22, storm: 22, snow: 1.6 }),
+});
+export const BETTER_FALL_VS =
+  LAB_HEAD +
+  `layout(location=0) in vec2 aCorner;
+layout(location=1) in vec4 aSeed;      // x,y,z in the box + the drop's own number
+uniform mat4 uVP; uniform vec3 uEye, uRight;
+uniform float uTime, uKind, uBox, uFall, uStorm;
+uniform vec2 uWindV, uWindOff;
+out vec2 vUv; out float vShade;
+vec3 wrapped(vec3 p) { return mod(p - uEye + uBox * 0.5, uBox) + uEye - uBox * 0.5; }
+void main(){
+  float s = aSeed.w, size = fract(s * 13.1), gust = 0.7 + fract(s * 3.7) * 0.6;
+  vec3 p = aSeed.xyz;
+  if (uKind < 0.5) {
+    // a drop: a big one falls faster; a storm's drops faster still
+    float fall = uFall * (0.8 + 0.4 * size) * (1.0 + 0.15 * uStorm);
+    vec2 wind = uWindV * gust;
+    p = wrapped(p + vec3(uWindOff.x, 0.0, uWindOff.y) * gust - vec3(0.0, uTime * fall, 0.0));
+    vec3 vel = vec3(wind.x, -fall, wind.y);
+    float speed = length(vel);
+    vec3 dir = vel / speed;
+    // its streak: a frame and a half of its travel, along its own velocity, as wide as the drop
+    p += dir * (aCorner.y - 0.5) * speed * 0.025;
+    vec3 c0 = cross(dir, uEye - p);
+    vec3 side = length(c0) > 1e-4 ? normalize(c0) : vec3(1.0, 0.0, 0.0);
+    p += side * (aCorner.x - 0.5) * (0.006 + 0.008 * size);
+    vShade = 0.3 + 0.16 * size + 0.08 * uStorm;
+  } else {
+    // a flake: slow, the wind's to carry, fluttering on two beats of its own
+    float fall = uFall * (0.55 + 0.3 * fract(s * 7.3));
+    p = wrapped(p + vec3(uWindOff.x, 0.0, uWindOff.y) * (0.9 + 0.4 * gust) - vec3(0.0, uTime * fall, 0.0));
+    float a1 = uTime * (0.9 + 0.6 * fract(s * 5.1)) + s * 31.0, a2 = uTime * (0.5 + 0.4 * fract(s * 9.7)) + s * 17.0;
+    p += vec3(sin(a1) + 0.5 * sin(a2 * 2.3), 0.15 * sin(a2), cos(a2) + 0.5 * cos(a1 * 1.7)) * (0.35 + 0.25 * length(uWindV));
+    // most flakes small, a few clumps
+    float sz = 0.02 + 0.09 * size * size * size;
+    p += (uRight * (aCorner.x - 0.5) + vec3(0.0, 1.0, 0.0) * (aCorner.y - 0.5)) * sz;
+    vShade = 0.8 + 0.2 * fract(s * 2.9);
+  }
+  vUv = aCorner;
+  gl_Position = uVP * vec4(p, 1.0);
+}`;
+export const BETTER_FALL_FS =
+  LAB_HEAD +
+  `in vec2 vUv; in float vShade;
+uniform float uKind;
+out vec4 o;
+void main(){
+  if (uKind < 0.5) {
+    // a streak: brightest toward its head, gone at its tail, soft across
+    float along = smoothstep(0.0, 0.7, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
+    o = vec4(vec3(0.74, 0.8, 0.88), vShade * along * (1.0 - abs(vUv.x - 0.5) * 2.0));
+  } else {
+    // a flake: a soft round disc
+    float a = 1.0 - smoothstep(0.55, 1.0, length(vUv - 0.5) * 2.0);
+    if (a <= 0.0) discard;
+    o = vec4(vec3(0.95, 0.97, 1.0) * vShade, 0.8 * a);
+  }
+}`;
+/** Better Ambience's two switches over the fall: { rain, snow }, under the mod's own; false where they cannot be read. */
+export function betterFallSwitches(read = modSetting) {
+  try {
+    const on = read('better-ambience', 'Enabled') !== false;
+    return {
+      rain: on && read('better-ambience', 'Better Rain.enableBetterRain') === true,
+      snow: on && read('better-ambience', 'Better Rain.enableBetterSnow') === true,
+    };
+  } catch {
+    return { rain: false, snow: false };
+  }
+}
+
 /** out = a * b, column-major 4x4 - the lab's uVP is proj * view */
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
@@ -311,7 +393,7 @@ function mat4Multiply(out, a, b) {
 export function precipPrograms(opts = {}) {
   /** @type {Array<readonly [string, string]>} */
   const pairs = [[PRECIP_VS, PRECIP_FS]];
-  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS]);
+  if (opts.enhanced) pairs.push([LAB_WX_VS, LAB_WX_FS], [BETTER_FALL_VS, BETTER_FALL_FS]);
   if (opts.enhanced && opts.pixelSnow) pairs.push([PIXEL_SNOW_VS, PIXEL_SNOW_FS]);
   return pairs;
 }
@@ -381,7 +463,12 @@ export class PrecipitationRenderer {
      *  flake's throw - the lab's uWindV */
     this.windV = new Float32Array(2);
     this.labProgram = null;
-    if (opts.enhanced) this._buildLab();
+    if (opts.enhanced) {
+      this._buildLab();
+      this._buildBetter(); // OWN-WORK4 AUDIT: Better Ambience's fall, on the lab's instances
+    }
+    this._betterGen = -1;
+    this._betterFall = { rain: false, snow: false };
     /** DS1: Dynamic Skies' pixel snow, when the mod's switch is on -
      *  {minParticleSize, maxParticleSize, textureUrl}; null is DFU's
      *  own snow (the lab's flakes). */
@@ -535,6 +622,61 @@ export class PrecipitationRenderer {
     gl.vertexAttribDivisor(1, 1);
     gl.bindVertexArray(null);
     this.labVao = vao;
+  }
+
+  _buildBetter() {
+    const gl = this.gl;
+    if (!this.labProgram) this._buildLab(); // the lab's instances and VAO
+    const bp = buildProgram(gl, BETTER_FALL_VS, BETTER_FALL_FS);
+    this.betterProgram = bp;
+    this.better = {};
+    for (const u of ['uVP', 'uEye', 'uRight', 'uTime', 'uKind', 'uBox', 'uFall', 'uStorm', 'uWindV', 'uWindOff'])
+      this.better[u] = gl.getUniformLocation(bp, u);
+  }
+
+  /** OWN-WORK4 AUDIT: Better Ambience's switches, read again only when a setting was written. */
+  betterSwitches() {
+    const g = modSettingsGeneration();
+    if (g !== this._betterGen) {
+      this._betterGen = g;
+      this._betterFall = betterFallSwitches();
+    }
+    return this._betterFall;
+  }
+
+  /** OWN-WORK4 AUDIT: the fall under Better Ambience's switches - the lab's instances, wrap, clock and wind, our look. */
+  drawBetter(mode, proj, view, camPos, camRight, timeSeconds) {
+    const gl = this.gl;
+    if (!this.betterProgram) this._buildBetter();
+    const full = Math.round(
+      (BETTER_FALL.count[mode] ?? BETTER_FALL.count.rain) * Math.min(1, Math.max(0, this.intensity)),
+    );
+    const count = this.countCap != null ? Math.min(full, this.countCap) : full;
+    if (count <= 0) return;
+    if (!this._vp) this._vp = new Float32Array(16);
+    mat4Multiply(this._vp, proj, view);
+    gl.useProgram(this.betterProgram);
+    const B = this.better;
+    gl.uniformMatrix4fv(B.uVP, false, this._vp);
+    gl.uniform3fv(B.uEye, camPos);
+    gl.uniform3fv(B.uRight, camRight);
+    gl.uniform1f(B.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
+    gl.uniform1f(B.uKind, mode === 'snow' ? 1 : 0);
+    gl.uniform1f(B.uStorm, mode === 'storm' ? 1 : 0);
+    gl.uniform1f(B.uBox, LAB_BOX);
+    gl.uniform1f(B.uFall, BETTER_FALL.fall[mode] ?? BETTER_FALL.fall.rain);
+    gl.uniform2fv(B.uWindV, this.windV);
+    gl.uniform2fv(B.uWindOff, this.windUpload()); // the flakes aside while drawFall draws them
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.bindVertexArray(this.labVao);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, count);
+    gl.bindVertexArray(null);
+    gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
   }
 
   /** RAIN-CLOCK: the seconds the drawing frame hands its program - the
@@ -695,6 +837,8 @@ export class PrecipitationRenderer {
    *  integrated travel. */
   drawLab(mode, proj, view, camPos, camRight, timeSeconds) {
     if (mode === 'snow' && this.pixelSnow && this.pixelTex) return this.drawPixelSnow(proj, view, camPos, timeSeconds); // DS1
+    if (this.betterSwitches()[mode === 'snow' ? 'snow' : 'rain'])
+      return this.drawBetter(mode, proj, view, camPos, camRight, timeSeconds); // OWN-WORK4 AUDIT: Better Ambience's
     const gl = this.gl;
     if (!this.labProgram) this._buildLab();
     const kind = mode === 'snow' ? 1 : 0;

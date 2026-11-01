@@ -79,5 +79,104 @@
     "tests": [
       "test/systems/dynamicSkies.test.js"
     ]
+  },
+  {
+    "name": "OWN4-noise-octaves-unturned",
+    "file": "src/systems/dynamicSkies/dynamicSkiesAssets.js",
+    "old": "      turnedOctave(channel.cells << index, channel.seed + index * 101, index),",
+    "new": "      valueOctave(channel.cells << index, channel.seed + index * 101),",
+    "tests": [
+      "test/systems/dynamicSkies.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-rain-switch-unread",
+    "file": "src/render/precipitation.js",
+    "old": "      rain: on && read('better-ambience', 'Better Rain.enableBetterRain') === true,",
+    "new": "      rain: on,",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-snow-switch-unread",
+    "file": "src/render/precipitation.js",
+    "old": "      snow: on && read('better-ambience', 'Better Rain.enableBetterSnow') === true,",
+    "new": "      snow: on,",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-master-unread",
+    "file": "src/render/precipitation.js",
+    "old": "    const on = read('better-ambience', 'Enabled') !== false;",
+    "new": "    const on = true;",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-routing-unread",
+    "file": "src/render/precipitation.js",
+    "old": "    if (this.betterSwitches()[mode === 'snow' ? 'snow' : 'rain'])",
+    "new": "    if (false && this.betterSwitches()[mode === 'snow' ? 'snow' : 'rain'])",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-storm-no-denser",
+    "file": "src/render/precipitation.js",
+    "old": "  count: Object.freeze({ rain: 20800, storm: 26000, snow: 20000 }),",
+    "new": "  count: Object.freeze({ rain: 20800, storm: 20800, snow: 20000 }),",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-streak-unslanted",
+    "file": "src/render/precipitation.js",
+    "old": "    vec2 wind = uWindV * gust;",
+    "new": "    vec2 wind = uWindV * 0.0 * gust;",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-storm-no-faster",
+    "file": "src/render/precipitation.js",
+    "old": "* (1.0 + 0.15 * uStorm);",
+    "new": "* (1.0 + 0.0 * uStorm);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-flake-lab-fast",
+    "file": "src/render/precipitation.js",
+    "old": "    float fall = uFall * (0.55 + 0.3 * fract(s * 7.3));",
+    "new": "    float fall = uFall * (0.72 + fract(s * 7.3) * 0.6);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-better-flakes-one-size",
+    "file": "src/render/precipitation.js",
+    "old": "    float sz = 0.02 + 0.09 * size * size * size;",
+    "new": "    float sz = 0.05 + 0.0 * size;",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-cirrus-through-the-lid",
+    "file": "src/render/volumetricClouds.js",
+    "old": "overcast: 0.1, fog: 0.3, rain: 0.08,",
+    "new": "overcast: 0.5, fog: 0.3, rain: 0.08,",
+    "tests": [
+      "test/render/vc7d_cirrus.test.js"
+    ]
   }
 ]

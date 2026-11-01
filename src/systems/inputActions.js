@@ -520,6 +520,12 @@ export const MOD_ACTIONS = Object.freeze({
     Object.freeze({ action: 'LegacyFamily', legacy: null, shipped: Object.freeze([]) }),
   ]),
 });
+/** OWN-AUDIT (2026-11-01): THE GAME'S OWN ACTIONS A MOD'S TILE SHOWS beside the mod's - a mod key the game made its own
+ *  (Eye Of The Beholder's Camera.TogglePerspective is VIEW-TOGGLE's TogglePerspective, for either body). Shown there,
+ *  bound in Controls, never gated on the mod (actionLive reads MOD_ACTIONS alone). */
+export const MOD_TILE_ACTIONS = Object.freeze({
+  'eye-of-the-beholder': Object.freeze(['TogglePerspective']),
+});
 const _modOf = new Map(Object.entries(MOD_ACTIONS).flatMap(([vendor, rows]) => rows.map((r) => [r.action, vendor])));
 /** The vendored mod an action belongs to, or null for the game's own. */
 export const actionMod = (action) => _modOf.get(action) ?? null;

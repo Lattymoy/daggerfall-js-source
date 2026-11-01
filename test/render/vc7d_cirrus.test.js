@@ -102,6 +102,8 @@ test('VC7d: THE VEIL - how much, how thick, and a cover that eases with the weat
   for (const w of Object.keys(VC_PROFILE)) assert.ok(CIRRUS_COVER[w] > 0 && CIRRUS_COVER[w] < 1, `${w} carries some`);
   assert.ok(Object.isFrozen(CIRRUS_COVER));
   assert.ok(CIRRUS_COVER.sunny > CIRRUS_COVER.fog && CIRRUS_COVER.sunny > CIRRUS_COVER.sandstorm, 'a fair sky shows it; fog and dust hide the high air');
+  // OWN-WORK4 AUDIT: a lid does not hide the ice by itself (streaks through its thin places) - a lid keeps a trace
+  for (const w of ['overcast', 'rain', 'snow', 'thunder']) assert.ok(CIRRUS_COVER[w] < CIRRUS_COVER.sunny / 4, `${w}: a trace under its lid`);
   // the thickest cirrus is still a veil: under half the blue is gone through it
   assert.ok(1 - Math.exp(-CIRRUS_TAU) < 0.5, `peak opacity ${(1 - Math.exp(-CIRRUS_TAU)).toFixed(2)}`);
   const c = fnBody(MARCH_FS, 'vec4 cirrus(vec3 cam, vec3 dir)');

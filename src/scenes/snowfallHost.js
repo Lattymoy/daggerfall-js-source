@@ -256,7 +256,7 @@ export function createSnowfallHost({
     terrainOn: (px, py) => terrainOf(ground.pixelOn?.(px, py) ?? null), // SNOW-THREAD: the tile terrainAt answers on a map pixel
     frame: ground.frame ? () => ground.frame() : undefined,
     settlements: (a, b, c, d) => ground.settlements(a, b, c, d),
-    footprints: () => [], // LocationLoaderBridge: Location Loader is not the port's - none stand
+    footprints: (gx, gz, radius) => ground.footprints?.(gx, gz, radius) ?? [], // OWN-AUDIT: LocationLoaderBridge's - World of Daggerfall's sites (siteFootprintsIn)
     get terrainDistance() {
       return ground.terrainDistance ?? 3;
     }, // StreamingWorld.TerrainDistance, read when asked (a host's view distance can move)
@@ -590,6 +590,21 @@ export function settlementsIn(at, minX, minZ, maxX, maxZ) {
       const d = loc?.exterior?.exteriorData;
       if (loc && isVanillaLocation(loc.mapTableData?.locationType ?? Infinity) && d?.width && d?.height)
         out.push(locationRect(x, y, getLocationTerrainTileOrigin(loc), d.width, d.height));
+    }
+  }
+  return out;
+}
+
+/** OWN-AUDIT (2026-11-01): LocationLoaderBridge's footprints - the levelled site (a camp, ruin or rock field of World
+ *  of Daggerfall, pixelBuild.js `wodSite`, in tiles) of every built pixel a global box (metres) round (gx, gz) touches,
+ *  as rectangles in global metres. Any pixel of the world's grid is asked; past the Bay the mod stands none. */
+export function siteFootprintsIn(pixelOn, gx, gz, radius) {
+  const { x0, x1, y0, y1 } = snowPixelBox(gx - radius, gz - radius, gx + radius, gz + radius);
+  const out = [];
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      const s = pixelOn(x, y)?.wodSite;
+      if (s) out.push(locationRect(x, y, { x: s.xMin, y: s.yMin }, (s.xMax - s.xMin) / 16, (s.yMax - s.yMin) / 16)); // 16 tiles a block
     }
   }
   return out;

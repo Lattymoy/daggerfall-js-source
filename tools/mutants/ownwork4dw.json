@@ -72,8 +72,8 @@
   {
     "name": "OW4-7-the-fuller-covers-the-blade",
     "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
-    "old": "Math.abs(rel) < 0.2) fuller[y * w + x] = 1;",
-    "new": "Math.abs(rel) < 2) fuller[y * w + x] = 1;",
+    "old": "share < 0.78 && Math.abs(rel) < FULLER.GROOVE)",
+    "new": "share < 0.78 && Math.abs(rel) < 2)",
     "tests": [
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "OW4-10-the-fuller-is-not-shaded",
     "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
-    "old": "    const shade = fuller?.[pixel] ? FULLER_SHADE : 1,",
-    "new": "    const shade = 1,",
+    "old": "const shade = groove === GROOVE_PART.wall ? FULLER.WALL : groove === GROOVE_PART.floor ? FULLER_SHADE : 1;",
+    "new": "const shade = 1;",
     "tests": [
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
@@ -272,5 +272,35 @@
       "test/combat/weapon/ownwork4_dwart.test.js"
     ],
     "why": "a spark alone in the source stays alone"
+  },
+  {
+    "name": "OW4-27-the-fuller-is-a-band",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "Math.abs(rel) < FULLER.FLOOR ? GROOVE_PART.floor : rel * shadowSide > 0 ? GROOVE_PART.wall : GROOVE_PART.lit;",
+    "new": "GROOVE_PART.wall;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "a fuller is a groove: a shadowed wall, a floor and a lit wall"
+  },
+  {
+    "name": "OW4-28-the-light-side-turned",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "normX * LIGHT_X + normY * LIGHT_Y > 0 ? 1 : -1;",
+    "new": "normX * LIGHT_X + normY * LIGHT_Y > 0 ? -1 : 1;",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the groove's wall on the light's side is the shadowed one"
+  },
+  {
+    "name": "OW4-29-the-lit-wall-unlit",
+    "file": "src/combat/diverseWeapons/diverseWeaponsArt.js",
+    "old": "if (groove === GROOVE_PART.lit) here = mix(here, ramp[2], FULLER.LIT);",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/ownwork4_dwart.test.js"
+    ],
+    "why": "the far wall is lit toward the ramp's light"
   }
 ]

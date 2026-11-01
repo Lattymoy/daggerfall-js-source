@@ -209,7 +209,7 @@ test('BA1: TryImportAudioClips\' names - wood 4, stone 4, armour 11, crunchy-gra
   assert.deepEqual(LIST_VOLUME.FootstepSoundOutside, ['footstepVolume', 0.15]); assert.deepEqual(LIST_VOLUME.FootstepsArmor, ['armorVolume', 0.4]); assert.deepEqual(LIST_VOLUME.FootstepSoundDungeon, ['footstepVolume', 0.3]);
   assert.equal(baSoundKey('x'), 'ba:x'); assert.equal(AMBIENT_RAIN_LOWPASS_HZ, 4236);
   // OWN-WORK4: the rain loop is ours - the mod's length, mono at 22.05 kHz (both of its plays pass the 4,236 Hz low-pass)
-  assert.deepEqual({ ...RAIN_LOOP }, { seconds: 29.546, rate: 22050, peak: 0.8 });
+  assert.deepEqual({ ...RAIN_LOOP }, { seconds: 29.546, rate: 22050, rmsDb: -22.2 });
 });
 
 // ═══ the laws ═══════════════════════════════════════════════════════════════
@@ -429,24 +429,27 @@ test('BA1: the component - a dungeon transition owes the four-frame wait, then t
   { const r0 = rig({}, { weather: 'sunny' }); r0.c.onTransition({ dungeon: d }); r0.c.settleTransition(); assert.ok(r0.c.dungeonFog(), 'BA2: the port\'s defaults - the fog'); assert.equal(r0.c.dungeonAmbient(), null, 'and no ambient: the host keeps the classic flat 0.12'); }
   assert.deepEqual(r.reverbs, ['Stoneroom'], 'level 1 Medium, on the edge into the dungeon');
   assert.equal(r.c.status().rain, null, 'sunny: the source is there, silent');
+  // OWN-WORK4 audit: the source is two loops, the mod's clip and our eaves (audio/layeredLoop.js) - counted by the clip
+  const rain3d = () => r.loops3d.filter((l) => l.k === 'ba:AmbientRaining'), rain2d = () => r.loops.filter((l) => l.k === 'ba:AmbientRaining');
   r.w.word = 'rain'; r.c.frame(0.016, r.dungeon());
-  assert.equal(r.loops3d.length, 1); assert.deepEqual(r.loops3d[0].pos, [1, 2, 3]); assert.equal(r.loops3d[0].k, 'ba:AmbientRaining'); assert.equal(r.loops3d[0].o.lowpass, 4236); assert.equal(r.loops3d[0].o.maxDistance, 500);
-  r.w.word = 'thunder'; r.c.frame(0.016, r.dungeon()); assert.equal(r.loops3d.length, 1, 'thunder is rain too: no restart'); assert.equal(r.loops3d[0].stopped, false, 'and no stop (campaign survivor `thunder-not-rain`)');
-  r.w.word = 'overcast'; r.c.frame(0.016, r.dungeon()); assert.equal(r.loops3d[0].stopped, true, 'dry: Stop');
+  assert.deepEqual(r.loops3d.map((l) => [l.k, l.pos, l.v, l.o.lowpass]), [['ba:AmbientRaining', [1, 2, 3], r.loops3d[0].v, 4236], ['ba:AmbientRaining/eaves', [1, 2, 3], r.loops3d[0].v, 4236]], 'the eaves beside it, at its place, level and low-pass');
+  assert.equal(rain3d().length, 1); assert.deepEqual(rain3d()[0].pos, [1, 2, 3]); assert.equal(rain3d()[0].k, 'ba:AmbientRaining'); assert.equal(rain3d()[0].o.lowpass, 4236); assert.equal(rain3d()[0].o.maxDistance, 500);
+  r.w.word = 'thunder'; r.c.frame(0.016, r.dungeon()); assert.equal(rain3d().length, 1, 'thunder is rain too: no restart'); assert.equal(rain3d()[0].stopped, false, 'and no stop (campaign survivor `thunder-not-rain`)');
+  r.w.word = 'overcast'; r.c.frame(0.016, r.dungeon()); assert.equal(rain3d()[0].stopped, true, 'dry: Stop');
   // a castle: DisableDungeonFog
   r.c.onTransition({ dungeon: { ...d, inCastle: () => true } }); r.c.settleTransition();
   assert.equal(r.c.dungeonFog(), null); assert.equal(r.c.dungeonAmbient(), null);
   // a building: the 2D source
   r.w.word = 'rain';
   r.c.onTransition({ building: true }); r.c.settleTransition(); r.c.frame(0.016, r.building());
-  assert.equal(r.loops.length, 1); assert.equal(r.loops[0].o.lowpass, 4236); assert.equal(r.loops[0].v, 0.35, 'DISC11: the street\'s level (1, classic) through the walls - never the AudioSource\'s flat 1');
+  assert.equal(rain2d().length, 1); assert.equal(rain2d()[0].o.lowpass, 4236); assert.equal(rain2d()[0].v, 0.35, 'DISC11: the street\'s level (1, classic) through the walls - never the AudioSource\'s flat 1');
   assert.deepEqual(r.reverbs, ['Stoneroom', null], 'off the dungeon: the zone off');
   // outside: no source at all, whatever the weather
   r.c.onTransition(null); r.c.settleTransition(); r.c.frame(0.016, r.outdoors());
-  assert.equal(r.loops[0].stopped, true); assert.equal(r.c.status().rain, null);
+  assert.equal(rain2d()[0].stopped, true); assert.equal(r.c.status().rain, null);
   // a dungeon with no exit marker: no source
   r.c.onTransition({ dungeon: { ...d, exitPos: null } }); r.c.settleTransition(); r.c.frame(0.016, r.dungeon());
-  assert.equal(r.loops3d.length, 1, 'GameObject.Find("DungeonExit") found nothing');
+  assert.equal(rain3d().length, 1, 'GameObject.Find("DungeonExit") found nothing');
   // the level
   r.store['Dungeon Reverb.level'] = 2; r.c.onTransition(null); r.c.frame(0.016, r.outdoors()); r.c.onTransition({ dungeon: d }); r.c.frame(0.016, r.dungeon());
   assert.equal(r.reverbs[r.reverbs.length - 1], 'Quarry');

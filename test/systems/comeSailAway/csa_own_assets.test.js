@@ -6,14 +6,15 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { buildOwnBoatFiles, ownBoatFiles, TRIGGER_PREFAB_IDS } from '../../../src/world/ships/ownBoats/ownBoatFiles.js';
 import { OWN_BOAT_ARCHIVE, OWN_TEX, ownBoatArt } from '../../../src/world/ships/ownBoats/ownBoatArt.js';
 import { comeSailAwayModels, decodeMeshGeometry } from '../../../src/systems/comeSailAway/comeSailAwayModels.js';
 import { spawnBoat, Boat, AUDIO_CLIPS, TRIGGER_MODEL } from '../../../src/systems/comeSailAway/comeSailAwayBoat.js';
 import { windWidgetFrame, splashPicture, WIND_WIDGET_SIZE } from '../../../src/systems/comeSailAway/csaPictures.js';
 import { windWidgetFrameCount } from '../../../src/systems/comeSailAway/comeSailAway.js';
-import { csaClip, CSA_CLIP_FORMAT, CSA_CLIP_LEVEL, registerCsaClips } from '../../../src/systems/comeSailAway/csaSynth/csaClips.js';
+import { csaClip, CSA_CLIP_FORMAT, CSA_CLIP_LEVEL, CSA_LAYERS, CSA_LAYER_FORMAT, CSA_LAYER_SHARE_DB, csaLayersOf, registerCsaClips } from '../../../src/systems/comeSailAway/csaSynth/csaClips.js';
+import { layeredLoop, layersPeriod } from '../../../src/audio/layeredLoop.js';
 import { loudnessOf } from '../../../src/audio/synth/dsp.js';
 import { CONTROLLERS } from '../../../src/world/ships/ownBoats/ownBoatAnimation.js';
 
@@ -123,29 +124,62 @@ test('OWN-WORK4: the pictures - the wind widget\'s arrow a frame a step, frame 0
   assert.ok(solid > 200 && solid < 52 * 41 * 0.8, `cut at a half, ragged (${solid})`);
 });
 
-test('OWN-WORK4: the five clips Start loads - each at its rate, the strokes as long as Come Sail Away\'s, the loops a minute and seamless; a loop at the mod\'s own loops\' -24 dBFS, a stroke near Daggerfall\'s large splash; never clipped, the same every time, made a pass a task (mutants: a level moved, a loop cut to 20 s)', async () => {
+test('OWN-WORK4: the five clips Start loads - each at its rate, the strokes as long as Come Sail Away\'s, each loop three layers that come round together only after hours; a loop at the mod\'s own loops\' -24 dBFS, a stroke near Daggerfall\'s large splash; never clipped, no DC, every layer seamless, the same every time, made a pass a task (mutants: a level moved, a layer\'s length sharing a factor, a layer dropped)', async () => {
   assert.deepEqual(Object.keys(CSA_CLIP_FORMAT), [...AUDIO_CLIPS]);
   assert.deepEqual(['Oars_In', 'Oars_Sweep', 'Oars_Out'].map((k) => [CSA_CLIP_FORMAT[k].rate, CSA_CLIP_FORMAT[k].samples]), [[22050, 131982], [22050, 122865], [22050, 134314]]);
-  assert.deepEqual(['SmallShipAmbience', 'ShipExteriorAmbience2'].map((k) => CSA_CLIP_FORMAT[k].samples / CSA_CLIP_FORMAT[k].rate), [60, 60]);
   assert.deepEqual(CSA_CLIP_LEVEL, { loopRmsDb: -24, strokeLoudness: -17 });
-  for (const name of AUDIO_CLIPS) {
+  // THE LAYERS: a bed and two kinds of event, each a whole number of seconds, no two sharing a factor
+  const seconds = (n) => { const f = CSA_CLIP_FORMAT[n] ?? CSA_LAYER_FORMAT[n]; return f.samples / f.rate; };
+  assert.deepEqual(Object.fromEntries(Object.entries(CSA_LAYERS).map(([k, v]) => [k, v.map(seconds)])), { SmallShipAmbience: [29, 41, 37], ShipExteriorAmbience2: [31, 43, 47] });
+  let bytes = 0;
+  for (const [loop, layers] of Object.entries(CSA_LAYERS)) {
+    assert.deepEqual(csaLayersOf(loop), layers);
+    const period = layersPeriod(layers.map((n) => ({ samples: csaClip(n).samples.length, rate: csaClip(n).rate })));
+    assert.ok(period > 10 * 3600, `${loop}: the three come round together after ${(period / 3600).toFixed(1)} h`);
+    let power = 0;
+    for (const n of layers) {
+      const c = csaClip(n);
+      bytes += c.samples.length * 4;
+      let sum = 0, mean = 0, peak = 0, step = 0;
+      for (let i = 0; i < c.samples.length; i++) { const v = c.samples[i]; sum += v * v; mean += v; peak = Math.max(peak, Math.abs(v)); if (i) step = Math.max(step, Math.abs(v - c.samples[i - 1])); }
+      power += sum / c.samples.length;
+      assert.ok(Math.abs(10 * Math.log10(sum / c.samples.length) - (CSA_CLIP_LEVEL.loopRmsDb + CSA_LAYER_SHARE_DB[n])) < 0.01, `${n}: its share`);
+      assert.ok(Math.abs(mean / c.samples.length) < 1e-4, `${n}: no DC`);
+      assert.ok(Math.abs(c.samples[0] - c.samples[c.samples.length - 1]) <= step, `${n}: its end runs into its start as any sample into the next`);
+    }
+    assert.ok(Math.abs(10 * Math.log10(power) - CSA_CLIP_LEVEL.loopRmsDb) < 0.1, `${loop}: the layers together at -24 dBFS`);
+  }
+  assert.ok(bytes < (32000 + 44100) * 60 * 4, `${(bytes / 2 ** 20).toFixed(1)} MB: less than one minute's loop each`);
+  for (const name of ['Oars_In', 'Oars_Sweep', 'Oars_Out']) {
     const c = csaClip(name);
     assert.equal(c.rate, CSA_CLIP_FORMAT[name].rate);
     assert.equal(c.samples.length, CSA_CLIP_FORMAT[name].samples);
-    let peak = 0, sum = 0, mean = 0;
-    for (const v of c.samples) { peak = Math.max(peak, Math.abs(v)); sum += v * v; mean += v; }
-    assert.ok(peak < 0.5, `${name}: peak ${peak}, under the limiter at full volume`);
-    assert.ok(Math.abs(mean / c.samples.length) < 1e-3, `${name}: no DC`);
-    if (/Ambience/.test(name)) assert.ok(Math.abs(10 * Math.log10(sum / c.samples.length) - CSA_CLIP_LEVEL.loopRmsDb) < 0.01, name);
-    else assert.ok(Math.abs(loudnessOf(c.samples, c.rate) - CSA_CLIP_LEVEL.strokeLoudness) < 0.01, name);
+    let peak = 0, mean = 0;
+    for (const v of c.samples) { peak = Math.max(peak, Math.abs(v)); mean += v; }
+    assert.ok(peak < 0.5 && Math.abs(mean / c.samples.length) < 1e-3, `${name}: peak ${peak}, no DC`);
+    assert.ok(Math.abs(loudnessOf(c.samples, c.rate) - CSA_CLIP_LEVEL.strokeLoudness) < 0.01, name);
     assert.equal(csaClip(name), c, 'made once');
   }
   const taken = [];
   await registerCsaClips((name, clip) => taken.push([name, clip === csaClip(name)]), AUDIO_CLIPS);
-  assert.deepEqual(taken, AUDIO_CLIPS.map((n) => [n, true]), 'each registered once made, in order');
+  assert.deepEqual(taken, AUDIO_CLIPS.flatMap((n) => csaLayersOf(n)).map((n) => [n, true]), 'each loop with its layers, registered once made, in order');
   await assert.rejects(registerCsaClips(() => false, AUDIO_CLIPS), /refused/);
-  for (const name of ['SmallShipAmbience', 'ShipExteriorAmbience2']) {
-    const s = csaClip(name).samples;
-    assert.ok(Math.abs(s[0] - s[s.length - 1]) < 0.08, `${name}: its end meets its start`);
-  }
+  // the loops' frame plays a loop as its layers
+  assert.match(readFileSync(new URL('../../../src/scenes/csaAudio.js', import.meta.url), 'utf8'), /ch\.handle \?\?= layeredLoop\(csaLayersOf\(src\.clip\)\.map\(csaClipKey\), \(key\) =>\n\s*audio\.loop3d\(key, pos, 0, \{/);
+});
+
+test('OWN-WORK4 audit: a layered loop is one handle over its layers - every layer started, moved, levelled and stopped together; none left playing while one cannot start (mutants: the partial layers left running; a layer not moved)', () => {
+  const made = [];
+  const start = (key) => (key === 'missing' ? null : { key, stopped: false, v: null, p: null, stop() { this.stopped = true; }, setVolume(v) { this.v = v; }, move(p) { this.p = p; } });
+  const loop = layeredLoop(['a', 'b', 'c'], (k) => { const h = start(k); made.push(h); return h; });
+  assert.equal(loop.layers, 3);
+  loop.move([1, 2, 3]); loop.setVolume(0.4);
+  assert.deepEqual(made.map((h) => [h.p, h.v]), [[[1, 2, 3], 0.4], [[1, 2, 3], 0.4], [[1, 2, 3], 0.4]]);
+  loop.stop();
+  assert.deepEqual(made.map((h) => h.stopped), [true, true, true]);
+  const partial = [];
+  assert.equal(layeredLoop(['a', 'missing', 'c'], (k) => { const h = start(k); partial.push(h); return h; }), null);
+  assert.deepEqual(partial.map((h) => h?.stopped ?? null), [true, null], 'the layer made before the miss is stopped, the rest never started');
+  assert.equal(layersPeriod([{ samples: 30, rate: 10 }, { samples: 40, rate: 10 }]), 12, 'lcm(3 s, 4 s)');
+  assert.equal(layersPeriod([{ samples: 29 * 32000, rate: 32000 }, { samples: 41 * 16000, rate: 16000 }, { samples: 37 * 11025, rate: 11025 }]), 29 * 41 * 37);
 });

@@ -44,8 +44,18 @@ holds the shipped settings as literals and `ownsounds.test.js` the clips. Git hi
 volume times 0.7, stood 2 to 17 dB over Daggerfall's stride on the same ground. Each clip is now set by its loudness
 (`audio/synth/dsp.js` `loudnessOf`), so its list plays it at -33 (the boards, the flags, the grass), -30 (the water)
 and -38 (the armour's clank, under its step), within 1.5 dB from its seed. The boards and the flags carry a knock over
-their thud, as Daggerfall's own do. Better Rain's two keys still change nothing: the mod tuned Unity's rain and snow
-particles, and our precipitation is its own. Pins: `ownsounds.test.js`.
+their thud, as Daggerfall's own do. The rain's eave drips, the one part a listener can count, loop on their own 41 s
+beside the bed's 29.5 (`audio/synth/rain.js` RAIN_EAVES, `audio/layeredLoop.js`), so the two come round together
+only after 2,473 hours. Better Rain's two keys still change nothing: the mod tuned Unity's rain and snow particles.
+Pins: `ownsounds.test.js`, `ba1_betterambience.test.js`.
+
+**OWN-WORK4 AUDIT, Better Rain (2026-11-01).** The two keys now pick our own fall on the enhanced lane, under the
+mod's own switch (`render/precipitation.js` BETTER_FALL). A drop falls faster as it is bigger, and its streak is a
+frame and a half of its travel along its own velocity, so the wind slants and lengthens it. A storm's drops fall 15%
+faster and the storm draws 26,000 to the rain's 20,800. A flake falls at 0.55 to 0.85 of the lab's pace, is carried
+by the wind, flutters on two beats of its own, and is a soft disc, most small and a few clumps. Off, the lab's
+program draws as before. Splash rings on the ground are not drawn: the fall's volume does not know where the ground
+is. Pins: `rainleak.test.js`, `tools/mutants/ownwork4_skies.json`.
 
 ## The compatibility brief, and the two departures
 

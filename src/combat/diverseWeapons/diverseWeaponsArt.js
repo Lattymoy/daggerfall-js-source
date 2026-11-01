@@ -70,7 +70,15 @@ const BAND_LO = 0x70;
 const BAND_HI = 0x7f;
 const MASK = 0xff;
 const isMetal = (i) => i >= BAND_LO && i <= BAND_HI;
-export const FULLER_SHADE = 0.68;
+/** A fuller is a groove: the wall on the light's side in shadow, its floor darker than the blade, the far wall lit (the
+ *  light falls from the upper left, art/ownPainter.js). `GROOVE` is its half width and `FLOOR` its floor's, in shares
+ *  of the blade's half width; a wall is shaded by `WALL`, the floor by `FULLER_SHADE`, a lit wall `LIT` toward the
+ *  ramp's light. */
+export const FULLER_SHADE = 0.8;
+export const FULLER = Object.freeze({ GROOVE: 0.36, FLOOR: 0.12, WALL: 0.58, LIT: 0.5 });
+export const GROOVE_PART = Object.freeze({ wall: 1, floor: 2, lit: 3 });
+const LIGHT_X = -0.55,
+  LIGHT_Y = -0.62;
 const MIN_BLADE = 12; // fewer metal pixels than this is a sliver: coloured, never reshaped
 const MIN_ELONGATION = 2; // a blade seen end on (a stab toward the eye) is no longer than this times its width: coloured
 
@@ -304,6 +312,7 @@ export function reshapeBlade(idx, w, height, blade) {
   const stretch = blade.length ?? 1,
     wide = blade.width ?? 1,
     bend = (blade.curve ?? 0) * len;
+  const shadowSide = normX * LIGHT_X + normY * LIGHT_Y > 0 ? 1 : -1; // the sign of `rel` on the light's side
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < w; x++) {
       const dx = x - midX,
@@ -327,7 +336,9 @@ export function reshapeBlade(idx, w, height, blade) {
       const i = idx[srcY * w + srcX];
       out[y * w + x] = i;
       from[y * w + x] = srcY * w + srcX;
-      if (blade.fuller && isMetal(i) && share > 0.05 && share < 0.78 && Math.abs(rel) < 0.2) fuller[y * w + x] = 1;
+      if (blade.fuller && isMetal(i) && share > 0.05 && share < 0.78 && Math.abs(rel) < FULLER.GROOVE)
+        fuller[y * w + x] =
+          Math.abs(rel) < FULLER.FLOOR ? GROOVE_PART.floor : rel * shadowSide > 0 ? GROOVE_PART.wall : GROOVE_PART.lit;
     }
   }
   return { idx: unspeckle(out, from, idx, w, height), fuller };
@@ -454,7 +465,7 @@ export function staffBands(idx, w, height, bands) {
 // ---- the colour ---------------------------------------------------------------------------------------------------
 
 /** Indices to a top-down RGBA picture: index 0 and the mask clear (0,0,0,0), the metal swatch by `lut`, a ring by the
- *  ramp at its wood's light, a fuller shaded, every other pixel Daggerfall's own colour. */
+ *  ramp at its wood's light, a fuller's groove shaded and lit, every other pixel Daggerfall's own colour. */
 function colour(idx, w, height, palette, lut, ramp, { fuller = null, rings = null } = {}) {
   const data = new Uint8Array(w * height * 4),
     rgb = rgbOf(palette);
@@ -470,13 +481,15 @@ function colour(idx, w, height, palette, lut, ramp, { fuller = null, rings = nul
   for (let pixel = 0; pixel < idx.length; pixel++) {
     const i = idx[pixel];
     if (!i || i === MASK) continue;
-    const here = rings?.[pixel]
+    let here = rings?.[pixel]
       ? rampAt(ramp, (light(i) - lo) / (hi - lo || 1))
       : isMetal(i)
         ? lut[i - BAND_LO]
         : rgb[i];
-    const shade = fuller?.[pixel] ? FULLER_SHADE : 1,
+    const groove = fuller?.[pixel] ?? 0,
       offset = pixel * 4;
+    const shade = groove === GROOVE_PART.wall ? FULLER.WALL : groove === GROOVE_PART.floor ? FULLER_SHADE : 1;
+    if (groove === GROOVE_PART.lit) here = mix(here, ramp[2], FULLER.LIT);
     data[offset] = Math.round(here[0] * shade);
     data[offset + 1] = Math.round(here[1] * shade);
     data[offset + 2] = Math.round(here[2] * shade);

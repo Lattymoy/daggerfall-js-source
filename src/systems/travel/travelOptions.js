@@ -464,6 +464,9 @@ export function createTravelOptions(deps = {}) {
     locationRect: null,
     locationBorderRect: null,
     corners: null,
+    // OWN-AUDIT (2026-11-01): the grass held back while a sped-up journey runs (AllowRealGrass off) - the host asks
+    // `grassHidden` where it draws the field
+    grassOff: false,
     // :157-166
     ignoreEncounters: false,
     ignoreEncountersTime: 0,
@@ -1267,17 +1270,20 @@ export function createTravelOptions(deps = {}) {
   }
 
   /** :1215-1233 / :1235-1271 - what an accelerated journey turns off
-   *  and what it turns back on. The port's hosts own the three
-   *  switches; a host that hands none simply travels with them on. */
+   *  and what it turns back on. The port's hosts own the weather's
+   *  and the sounds' switches; a host that hands none simply travels
+   *  with them on. OWN-AUDIT (2026-11-01): the mod's third, Real Grass,
+   *  is our own grass, held here (`grassHidden`) - and the end of a
+   *  journey always gives it back, whatever the switch reads by then. */
   function disableWeatherAndSound() {
     if (!st.settings.enableWeather) deps.setWeatherEnabled?.(false);
     if (!st.settings.enableSounds) deps.setTravelSoundsEnabled?.(false);
-    if (!st.settings.enableRealGrass) deps.setRealGrassEnabled?.(false);
+    st.grassOff = !st.settings.enableRealGrass;
   }
   function enableWeatherAndSound() {
     if (!st.settings.enableWeather) deps.setWeatherEnabled?.(true);
     if (!st.settings.enableSounds) deps.setTravelSoundsEnabled?.(true);
-    if (!st.settings.enableRealGrass) deps.setRealGrassEnabled?.(true);
+    st.grassOff = false;
   }
 
   /** :1246-1256, DisplayHelpInfo - the H key's message box. The three
@@ -1499,6 +1505,7 @@ export function createTravelOptions(deps = {}) {
     get arrived() { return st.arrived; },   // SEA-ROWS: the arrivals among them (st.arrived)
     get road() { return st.road; },
     get isTravelActive() { return !!ui?.isShowing; },
+    get grassHidden() { return st.grassOff; },   // OWN-AUDIT: AllowRealGrass off, a sped-up journey draws no grass
     get isPathFollowing() { return !!ui?.isShowing && st.destinationName == null; },
     get junctionMapOn() { return st.junctionMapOn; },
     get minutesLeft() { return minutesLeft(); },   // AUDIT-TO1 L5

@@ -155,6 +155,7 @@ function look() {
     dontHideWeapon: s['Compatibility.Don\'tHideWeapon'] === true,
     dontHideHorse: s['Compatibility.Don\'tHideHorse'] === true,
     scale: (s['Animation.BillboardScale'] ?? 1) + (s['Animation.FineBillboardScale'] ?? 0),
+    offsetScale: (s['Animation.GlobalOffsetScale'] ?? 1) + (s['Animation.FineGlobalOffsetScale'] ?? 0),   // OWN-AUDIT: the XML's shifts, scaled (place)
     walkAnimSpeedMod: s['Animation.WalkCycleSpeed'] ?? 1,
     enabled: s.Enabled !== false,
   };
@@ -964,8 +965,10 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const h = last.height;
     const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);
     const right = [cy, 0, -sy], fwd = [sy, 0, cy];
-    const x = xml.x / xml.scale * (shown.mirror ? -1 : 1);
-    const yOff = xml.y / xml.scale;
+    // OWN-AUDIT (2026-11-01): Animation.GlobalOffsetScale (+ Fine) scales the XML's shift - `get_scaleOffset`, which
+    // the assembly declares and never calls
+    const x = xml.x / xml.scale * cfg.offsetScale * (shown.mirror ? -1 : 1);
+    const yOff = xml.y / xml.scale * cfg.offsetScale;
     let y;
     if (last.onExteriorWater) y = yOff - size.h * 0.5;
     else if (last.crouching) y = yOff + size.h * 0.5 - h;

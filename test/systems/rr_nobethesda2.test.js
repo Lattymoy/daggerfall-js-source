@@ -26,7 +26,9 @@ const ARENA2 = process.env.ARENA2_PATH;
 function fakeArt() {
   const asked = [];
   const pic = { width: 3, height: 2, data: Uint8Array.from({ length: 24 }, (_, i) => (i % 4 === 3 ? 255 : i * 10)) };
-  return { asked, pic, art: { build: async (spec) => { asked.push(spec); return pic; } } };
+  // OWN-WORK4 AUDIT: the keepers read the player's records as palette indices - a made-up person, 20 x 40
+  const person = { width: 20, height: 40, data: new Uint8Array(800).fill(0x72) };
+  return { asked, pic, art: { build: async (spec) => { asked.push(spec); return pic; }, bitmap: async () => person, palette: async () => ({ get: (i) => ({ r: i, g: i, b: i }) }) } };
 }
 /** The door builds only while a pipeline is up; its own context must never be the one asked. */
 async function withDeriveContext(fn) {
@@ -56,7 +58,7 @@ test('NO-BETHESDA2 RRI, OWN-WORK4: all 280 pictures are ours, built over their c
   } finally { globalThis.fetch = realFetch; clearVendorTextures(); _resetRoleplayRealismItems(); _resetModSettings(); }
 });
 
-test('NO-BETHESDA2 RR: 197_4-0 is built through the classic reader; OWN-WORK4: our six keepers and the week button are painted, nothing is fetched', async () => {
+test('NO-BETHESDA2 RR: 197_4-0 is built through the classic reader; OWN-WORK4: the week button is painted and (AUDIT) our six keepers are put together from the player\'s own people, nothing is fetched', async () => {
   _resetModSettings(); clearVendorTextures(); _resetRoleplayRealismArt();
   setModSetting('roleplay-realism', 'variantNpcs', true);
   setModSetting('roleplay-realism', 'RefinedTraining.refinedTraining', true);
@@ -70,9 +72,9 @@ test('NO-BETHESDA2 RR: 197_4-0 is built through the classic reader; OWN-WORK4: o
         assert.equal(installRoleplayRealismArt({ art }), 7);
         for (const r of [4, 5]) assert.ok(await preloadTextureRecord(197, r), `197_${r}-0`);
         assert.deepEqual(asked, [RR_DERIVED['197_4-0']], 'only the edit-free spec is built; 197_5-0 is ours (it carried the author\'s paint)');
-        assert.equal(decodedTextureTopDown(197, 5, 0, 'Albedo', null).width, 61, 'our keeper at the 182_1 keeper\'s size');
+        assert.equal(decodedTextureTopDown(197, 5, 0, 'Albedo', null).width, 67, 'our keeper at the 182_1 keeper\'s aspect, Daggerfall\'s own height');
         assert.ok(await preloadTextureRecord(197, 0, 0, 'Albedo', null, { decode: async () => assert.fail('our keeper is no file') }));
-        assert.equal(decodedTextureTopDown(197, 0, 0, 'Albedo', null).width, 47, 'our keeper, at the classic keeper\'s size');
+        assert.equal(decodedTextureTopDown(197, 0, 0, 'Albedo', null).width, 79, 'our keeper, at the classic keeper\'s aspect');
       } finally { globalThis.fetch = realFetch; }
       assert.deepEqual(fetched, [], 'nothing is a file');
       // the training window's button: the message box uploads our picture, never a fetched one

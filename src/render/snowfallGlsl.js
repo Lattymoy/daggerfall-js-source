@@ -202,6 +202,15 @@ void main() {
   gl_Position = uProj * uView * world;
 }`;
 
+/** OWN-WORK4 AUDIT: the albedo's second read - a turn (column-major mat2), a scale of 1 / phi^2 (no whole number of
+ *  tiles is a whole number of its own), a shift, and its share of the colour. */
+export const SNOW_ALBEDO_SECOND = Object.freeze({
+  turn: Object.freeze([0.8, 0.6, -0.6, 0.8]),
+  scale: 0.381966,
+  shift: Object.freeze([0.37, 0.71]),
+  share: 0.4,
+});
+
 /** The fragment's snow, ending in `tex`, the colour the ground's light takes. `decode` wraps a picture's colour as the
  *  lane decodes its pictures. */
 const snowFragment = (
@@ -246,8 +255,13 @@ const snowFragment = (
       pathW += m * (sn.w - pathW);
     }
   }
+  // OWN-WORK4 AUDIT: the albedo read again, turned and at a scale no whole number of tiles meets (SNOW_ALBEDO_SECOND),
+  // its footprint the first's turned the same - a field of snow never shows the tile's repeat
+  mat2 turn = mat2(${SNOW_ALBEDO_SECOND.turn.map(f).join(', ')}) * ${f(SNOW_ALBEDO_SECOND.scale)};
+  vec2 turnUV = turn * albedoUV + vec2(${SNOW_ALBEDO_SECOND.shift.map(f).join(', ')});
+  vec3 second = ${decode('textureGrad(uSnowAlbedo, turnUV, turn * albedoDx, turn * albedoDy).rgb')};
   // OWN-WORK4: a path's snow trodden 5% grey; a track packed - darker, and colder, as the snow it pressed was deep
-  vec3 albedo = ${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')} * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);
+  vec3 albedo = mix(${decode('textureGrad(uSnowAlbedo, albedoUV, albedoDx, albedoDy).rgb')}, second, ${f(SNOW_ALBEDO_SECOND.share)}) * (1.0 - clamp(pathW, 0.0, 1.0) * 0.05);
   float packed = (1.0 - remain) * smoothstep(0.0, 0.75, depth) * uSnowDarkening;
   vec3 tex = albedo * (1.0 - packed) * mix(vec3(1.0), vec3(0.94, 0.97, 1.03), clamp(packed * 4.0, 0.0, 1.0));
 `;

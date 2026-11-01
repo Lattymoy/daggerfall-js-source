@@ -5,7 +5,7 @@
 // its length. The two mods' laws (systems/immersiveFootsteps.js, systems/betterAmbience.js) are unchanged.
 import { inTurn, mulberry32, seedOf } from './dsp.js';
 import { stepSound } from './steps.js';
-import { rainLoop, rainLoopInTurns, RAIN_LOOP } from './rain.js';
+import { rainEaves, rainLoop, rainLoopInTurns, RAIN_EAVES, RAIN_LOOP } from './rain.js';
 
 /** @typedef {{ samples: Float32Array, rate: number }} Clip */
 
@@ -141,10 +141,13 @@ export const BA_CLIPS = Object.freeze({
   sfx_footstep_water: Object.freeze({ family: 'wade', rate: 22050, ms: [963, null, 1068, 1253, 836, 1172], loudness: -18.9 }),
 });
 export const BA_RAIN_CLIP = 'AmbientRaining';
+/** The rain loop's layers (rain.js RAIN_EAVES): the mod's clip and the eaves' drips, ours, played together. */
+export const BA_RAIN_LAYERS = Object.freeze([BA_RAIN_CLIP, `${BA_RAIN_CLIP}/eaves`]);
 
 /** A Better Ambience clip by the name TryImportAudioClips asks for; null for a miss. @param {string} name @returns {Clip | null} */
 export function betterAmbienceClip(name) {
   if (name === BA_RAIN_CLIP) return { samples: rainLoop(), rate: RAIN_LOOP.rate };
+  if (name === BA_RAIN_LAYERS[1]) return { samples: rainEaves(), rate: RAIN_EAVES.rate };
   const match = /^(.+)_(\d{3})$/.exec(String(name));
   const list = match
     ? /** @type {Record<string, { family: string, rate: number, ms: (number | null)[], loudness: number }>} */ (BA_CLIPS)[

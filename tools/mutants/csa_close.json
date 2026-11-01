@@ -128,7 +128,7 @@
   {
     "name": "CSA-J-aw-read",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "const animatedWaterWaves = () => ANIMATED_WATER != null && !!setting('Compatibility.AnimatedWaterVertexWaves', false);",
+    "old": "const animatedWaterWaves = () => ANIMATED_WATER != null;",
     "new": "const animatedWaterWaves = () => !!setting('Compatibility.AnimatedWaterVertexWaves', false);",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js",

@@ -747,11 +747,10 @@ export const MOD_SETTINGS = Object.freeze({
   // fall between Controls and WindDirectionWidget, Waves and Cargo, Cargo
   // and Audio, Audio and Handling. Every description is the port's
   // (OWN-WORK4 rewrote the six the mod wrote), each saying what
-  // ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY NEVER READS - LoadSettings
-  // takes no Handling.BadTack, no Handling.BadTackMultiplier and no
-  // SailingAssist.AutoStowGaffSails, and nothing else in it does - are
-  // declared as shipped, so a player's file keeps them, and do nothing,
-  // as in DFU. The nine Controls keys are Unity KeyCode names (`text`);
+  // ComeSailAway.LoadSettings does with the key. THREE KEYS THE ASSEMBLY NEVER READS - Handling.BadTack,
+  // Handling.BadTackMultiplier and SailingAssist.AutoStowGaffSails - are ours since OWN-AUDIT (2026-11-01,
+  // comeSailAway/sailAssist.js); Compatibility.AnimatedWaterVertexWaves named a mod the game has not got and
+  // is retired (RETIRED_KEYS). The nine Controls keys are Unity KeyCode names (`text`);
   // each becomes a registry action (systems/inputActions.js MOD_ACTIONS)
   // with the slice that reads it. Plus the port's `Enabled` (MO1: on).
   'come-sail-away': Object.freeze({
@@ -1087,7 +1086,10 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.BadTack': Object.freeze({
         default: false,
         get description() {
-          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');
+          return t(
+            'mods.comeSailAway.Handling.BadTack.description',
+            'The sails lose speed the closer you sail to the wind.',
+          );
         },
       }),
       'Handling.BadTackMultiplier': Object.freeze({
@@ -1096,7 +1098,10 @@ export const MOD_SETTINGS = Object.freeze({
         max: 1,
         float: true,
         get description() {
-          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');
+          return t(
+            'mods.comeSailAway.Handling.BadTackMultiplier.description',
+            'The share of sail speed kept when you sail close to the wind.',
+          );
         },
       }),
       'SailingAssist.AutoTrimming': Object.freeze({
@@ -1117,15 +1122,9 @@ export const MOD_SETTINGS = Object.freeze({
       'SailingAssist.AutoStowGaffSails': Object.freeze({
         default: true,
         get description() {
-          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');
-        },
-      }),
-      'Compatibility.AnimatedWaterVertexWaves': Object.freeze({
-        default: false,
-        get description() {
           return t(
-            'mods.comeSailAway.Compatibility.AnimatedWaterVertexWaves.description',
-            'Has no effect here: Animated Water isn’t included, so the mod’s own waves are always drawn.',
+            'mods.comeSailAway.SailingAssist.AutoStowGaffSails.description',
+            'Stow the gaff sails for you when the wind would push them back.',
           );
         },
       }),
@@ -2887,7 +2886,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Throwing.ShowTrajectory.description',
-            'Has no effect here: the throw’s arc isn’t drawn in this game.',
+            'While you wind up a throw, dots show where the torch will fly and land.',
           );
         },
       }),
@@ -2955,7 +2954,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Throwing.EmissionShadows.description',
-            'Has no effect here: a burning foe’s light casts no shadows in this game.',
+            'The light of a burning foe casts shadows.',
           );
         },
       }),
@@ -3019,7 +3018,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.handheldTorches.Presentation.Tint.description',
-            'Has no effect here: the First-person lighting feature decides whether the hand takes the light of the room.',
+            'The hand with the light is shaded by the room, as your weapon is. Off keeps it bright.',
           );
         },
       }),
@@ -3442,23 +3441,9 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // EOTB4 (2026-09-15, Mac: "instead of numpad being used to change
-      // views, I want it scrollable like how we handle morrowind").
-      // THE MOD'S OWN KEY, KEPT AND SUPERSEDED. The wheel is the only
-      // way in and out now, so this binding does nothing - listed all
-      // the same, because the pane is a record of what the mod ships
-      // and a key quietly deleted is a key nobody can ask about (the
-      // shape HT's `Throwing.ShowTrajectory` is kept in).
-      'Camera.TogglePerspective': Object.freeze({
-        default: 'KeypadEnter',
-        text: true,
-        get description() {
-          return t(
-            'mods.eyeOfTheBeholder.Camera.TogglePerspective.description',
-            'Has no effect here: scroll the mouse wheel to change view.',
-          );
-        },
-      }),
+      // EOTB4 (Mac: "I want it scrollable like how we handle morrowind") put the view on the wheel. OWN-AUDIT
+      // (2026-11-01): the mod's Camera.TogglePerspective key is the game's TogglePerspective action, bound in
+      // Controls and shown on this mod's tile (inputActions.js MOD_TILE_ACTIONS) - retired here (RETIRED_KEYS).
       // HT4's finding again, same author, same key: the mod ships Tab,
       // which is free in Daggerfall Unity and SPENT here - PX15 gave it
       // to the port's own pixel dial (ui/input.js). B is unbound in
@@ -3564,8 +3549,8 @@ export const MOD_SETTINGS = Object.freeze({
       }),
       // MODS-ON, and Mac's own ask. The mod ships this OFF, and it is
       // the arm the port's whole view seam is built on - with it off
-      // there is no way into third person at all, because the key
-      // above is inert here. Ledger A row MODS-ON, as HT's
+      // the wheel takes no one into third person (VIEW-TOGGLE's
+      // action came later). Ledger A row MODS-ON, as HT's
       // `Modules.Sprite` is.
       'CameraScrolling.ScrollableZOffset': Object.freeze({
         default: true,
@@ -3588,23 +3573,8 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      // `axis`, not `text`: this names a Unity input AXIS, not a
-      // KeyCode, and the two are different kinds wearing the same
-      // JSON type (TextKey). Declaring it as a key told HT4's
-      // spent-key gate to resolve "Mouse ScrollWheel" as a binding,
-      // which it is not and never could be. The port's wheel is the
-      // DOM's, so this is informational here.
-      'CameraScrolling.ScrollableZOffsetAxis': Object.freeze({
-        default: 'Mouse ScrollWheel',
-        text: true,
-        axis: true,
-        get description() {
-          return t(
-            'mods.eyeOfTheBeholder.CameraScrolling.ScrollableZOffsetAxis.description',
-            'Has no effect here: the mouse wheel always moves the camera.',
-          );
-        },
-      }),
+      // OWN-AUDIT (2026-11-01): CameraScrolling.ScrollableZOffsetAxis named a Unity input axis ("Mouse ScrollWheel"),
+      // which a browser has not got - the wheel is the page's own. Retired (RETIRED_KEYS).
       'AutoTogglePerspective.ToggleInput': Object.freeze({
         default: 'KeypadPlus',
         text: true,
@@ -3846,17 +3816,8 @@ export const MOD_SETTINGS = Object.freeze({
           );
         },
       }),
-      'Graphics.PingPongOffset': Object.freeze({
-        default: 1,
-        min: -3,
-        max: 3,
-        get description() {
-          return t(
-            'mods.eyeOfTheBeholder.Graphics.PingPongOffset.description',
-            'Has no effect here: attacks never play backwards in this game.',
-          );
-        },
-      }),
+      // OWN-AUDIT (2026-11-01): Graphics.PingPongOffset tuned the ping-pong that ONE-STROKE retired (a blow plays one
+      // stroke, eotbBillboard.js meleeStrokeFrames). Retired (RETIRED_KEYS).
       'Graphics.FirstPersonBillboard': Object.freeze({
         default: 1,
         options: lazyWords(
@@ -3944,7 +3905,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.eyeOfTheBeholder.Animation.GlobalOffsetScale.description',
-            'Has no effect: the mod never uses this setting.',
+            'How far each sprite is shifted to keep it centred on you. 1 is the art’s own shift.',
           );
         },
       }),
@@ -3956,7 +3917,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.eyeOfTheBeholder.Animation.FineGlobalOffsetScale.description',
-            'Has no effect: the mod never uses this setting.',
+            'Added to GlobalOffsetScale, for a finer adjustment.',
           );
         },
       }),
@@ -4685,7 +4646,7 @@ export const MOD_SETTINGS = Object.freeze({
         get description() {
           return t(
             'mods.travelOptions.GeneralOptions.AllowRealGrass.description',
-            'Has no effect here: Real Grass isn’t included.',
+            'Show the grass during a sped-up journey.',
           );
         },
       }),
@@ -5728,14 +5689,8 @@ export const MOD_SETTINGS = Object.freeze({
         description:
           'Wind in the enhanced outdoors that changes by the day. Trees and plants sway, some days turn windy or stormy, gusts come with their own sound, and leaves and snow blow off the trees.',
       }),
-      'General.WindDirectionDegrees': Object.freeze({
-        default: 35.0,
-        min: 0.0,
-        max: 360.0,
-        float: true,
-        step: 5,
-        description: 'Has no effect here. The enhanced outdoors set the wind’s direction.',
-      }),
+      // OWN-AUDIT (2026-11-01): General.WindDirectionDegrees retired - the mod added it to a heading rolled each day, and
+      // the outdoors' one wind sets the heading here (windfall.js WINDFALL_HEADING_OFFSET, RETIRED_KEYS).
       'General.OverallWindyPeriodFrequency': Object.freeze({
         default: 100.0,
         min: 0.0,
@@ -6288,9 +6243,11 @@ export const MOD_SETTINGS = Object.freeze({
         step: 0.5,
         description: 'How many meters the snow takes to deepen past the edge of a town.',
       }),
+      // OWN-AUDIT (2026-11-01): the three Location Loader keys read World of Daggerfall's sites (snowfallHost.js
+      // siteFootprintsIn) - the camps, ruins and rock fields its loader levels in the wilds
       'Context.LocationLoaderIntegration': Object.freeze({
         default: true,
-        description: 'Has no effect here: this game doesn’t use Location Loader.',
+        description: 'Keeps the snow shallow on the camps, ruins and other sites in the wilds.',
       }),
       'Context.LocationLoaderMaximumDepth': Object.freeze({
         default: 0.1,
@@ -6298,7 +6255,7 @@ export const MOD_SETTINGS = Object.freeze({
         max: 1.0,
         float: true,
         step: 0.01,
-        description: 'Has no effect here: this game doesn’t use Location Loader.',
+        description: 'Most snow depth on the camps, ruins and other sites in the wilds, in meters.',
       }),
       'Context.LocationLoaderBoundaryFeather': Object.freeze({
         default: 4.0,
@@ -6306,7 +6263,7 @@ export const MOD_SETTINGS = Object.freeze({
         max: 32.0,
         float: true,
         step: 0.5,
-        description: 'Has no effect here: this game doesn’t use Location Loader.',
+        description: 'How many meters the snow takes to deepen past the edge of a site in the wilds.',
       }),
       'Basic Roads.Enabled': Object.freeze({
         default: true,
@@ -6700,6 +6657,13 @@ export const SWITCH_RESETS = Object.freeze([
  *  value is let go on load, once, and the file written back; a file that never mentioned the key is not touched. */
 export const RETIRED_KEYS = Object.freeze([
   Object.freeze({ vendor: 'roleplay-realism', key: 'fightersTeachHandToHand' }),
+  // OWN-AUDIT (2026-11-01): keys that could mean nothing here - a mod the game has not got (Animated Water), a Unity
+  // input axis, the ping-pong ONE-STROKE retired, a heading the one wind sets; the view's key is Controls' now
+  Object.freeze({ vendor: 'come-sail-away', key: 'Compatibility.AnimatedWaterVertexWaves' }),
+  Object.freeze({ vendor: 'eye-of-the-beholder', key: 'Camera.TogglePerspective' }),
+  Object.freeze({ vendor: 'eye-of-the-beholder', key: 'CameraScrolling.ScrollableZOffsetAxis' }),
+  Object.freeze({ vendor: 'eye-of-the-beholder', key: 'Graphics.PingPongOffset' }),
+  Object.freeze({ vendor: 'windfall', key: 'General.WindDirectionDegrees' }),
 ]);
 function migrate(m) {
   let changed = false;

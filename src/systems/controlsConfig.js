@@ -31,6 +31,7 @@ import {
   serializeKeyBinds,
   loadKeyBinds,
   MOD_ACTIONS,
+  MOD_TILE_ACTIONS,
   ACTION_GROUPS,
   codeForAction,
   actionsAt,
@@ -630,7 +631,8 @@ export function fixedKeyRows(transport) {
  *  key that answers it now (codeForAction: the primary, else the secondary - the order actionForCode resolves in). */
 export function modKeyRows(vendor, store) {
   const labels = new Map(ACTION_GROUPS.flatMap((g) => g.rows.map((r) => [r.action, r.label])));
-  return (MOD_ACTIONS[vendor] ?? []).map(({ action }) => {
+  const actions = [...(MOD_ACTIONS[vendor] ?? []).map((r) => r.action), ...(MOD_TILE_ACTIONS[vendor] ?? [])];   // OWN-AUDIT: and the game's own a mod's tile shows
+  return actions.map((action) => {
     const code = codeForAction(store, action);
     return { action, label: labels.get(action) ?? actionLabel(action), key: buttonText(code, true) };
   });

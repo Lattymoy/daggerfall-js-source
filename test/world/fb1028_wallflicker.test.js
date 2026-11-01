@@ -319,7 +319,7 @@ test('WALL-FLICKER with ARENA2: Daggerfall\'s own pieces at every twentieth wall
   assert.ok(size.cut[0] < 1.15 * size.whole[0] && size.cut[1] < 1.15 * size.whole[1], `corners and triangles ${JSON.stringify(size)}`);
 });
 
-test('WALL-FLICKER with ARENA2: Riften as the places host stands it (Skyrim\'s fourth city, Gothbrone Hall\'s grid, its one road from the east) - its gate on a straight run, the tower north of it 154 m2 of faces in its sides\' planes whole, none cut; the model door makes it a breath at a time (mutants: no cut; the door unsliced)', { skip: skipReal, timeout: 300_000 }, async () => {
+test('WALL-FLICKER with ARENA2: Riften as the places host stands it (Skyrim\'s fourth city, Gothbrone Hall\'s grid, its one road from the east) - its gate\'s two towers, where the line turns, faces in their sides\' planes whole; the straight run south of it 154 m2 at a tower; none cut; the model door makes it a breath at a time (mutants: no cut; the door unsliced)', { skip: skipReal, timeout: 300_000 }, async () => {
   const { openSweep } = await import('../../tools/townBoardsSweep.mjs');
   const { arenaTemplates, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId } = await import('../../src/world/arenaLocations.js');
   const { isMainStoryDungeon } = await import('../../src/world/dungeon/dungeonTextures.js');
@@ -344,14 +344,27 @@ test('WALL-FLICKER with ARENA2: Riften as the places host stands it (Skyrim\'s f
   try { wall = walls.standTownWall(loc, template.exterior.exteriorData.blockNames, sw.io, townOutlineBlockJson); } finally { walls.setTownWallPaths(null); }
   const gates = wall.pieces.filter((p) => p.model === WALL_MODELS.gate);
   assert.equal(gates.length, 1, 'one gate, its road\'s');
-  assert.deepEqual([...gates[0].at.map((v) => Math.round(v * 10) / 10), ...gates[0].out.map((v) => Math.round(v * 1000) / 1000 + 0)], [624, 355.2, 1, 0], 'facing east');
-  const north = wall.pieces.find((p) => p.model === WALL_MODELS.tower && Math.hypot(p.at[0] - 624, p.at[1] - 368) < 0.1);
-  const beside = wall.pieces.filter((p) => p.model !== WALL_MODELS.tower && Math.hypot(p.at[0] - north.at[0], p.at[1] - north.at[1]) < 13);
-  assert.equal(beside.length, 2, 'the gate and the length north of it');
-  assert.ok(beside.every((p) => Math.abs(p.out[0] * north.out[0] + p.out[1] * north.out[1]) > Math.cos(1e-4)), 'the line straight through the tower');
-  const at = [north, ...beside];
-  assert.ok(Math.abs(fights(whole(at, classic), 1e-3) - 154.05) < 0.1, 'whole: the length\'s and the gate\'s faces in the tower\'s sides\' planes');
-  assert.ok(fights(townWallModel(at, classic), 0.04) < 1e-3, 'cut: none');
+  // PIN MOVED (OWN-WORK3): the town's blocks are Daggerfall's now, not Beautiful Cities'. The line round their houses stands
+  // 6.2 m further east and turns at both of the gate's towers; with the pack the gate was at (624, 355.2), the run straight.
+  const [gate] = gates, from = (p, q) => Math.hypot(p.at[0] - q.at[0], p.at[1] - q.at[1]);
+  assert.deepEqual([...gate.at.map((v) => Math.round(v * 10) / 10), ...gate.out.map((v) => Math.round(v * 1000) / 1000 + 0)], [630.2, 355.2, 1, 0.018], 'facing east');
+  const towers = wall.pieces.filter((p) => p.model === WALL_MODELS.tower);
+  const beside = (t) => wall.pieces.filter((p) => p.model !== WALL_MODELS.tower && from(p, t) < 13);
+  const straight = (t) => beside(t).every((p) => Math.abs(p.out[0] * t.out[0] + p.out[1] * t.out[1]) > Math.cos(1e-4));
+  const measured = (t) => [fights(whole([t, ...beside(t)], classic), 1e-3), fights(townWallModel([t, ...beside(t)], classic), 0.04)];
+  // the gate's two towers, south and north: the line turns at each, and the gate's faces lie in their sides' planes whole
+  const atGate = towers.filter((t) => from(t, gate) < 13).sort((a, b) => a.at[1] - b.at[1]);
+  assert.ok(atGate.length === 2 && atGate.every((t) => beside(t).length === 2 && !straight(t)), 'two towers, the line turning at each');
+  atGate.map(measured).forEach(([was, now], k) => {
+    assert.ok(Math.abs(was - [4.37, 2.14][k]) < 0.1, `whole: ${was.toFixed(2)} m2 of the gate's faces in the tower's sides' planes`);
+    assert.ok(now < 1e-3, `cut: none (${now} m2)`);
+  });
+  // the straight run south of the gate, on the face its road comes to: the nearest tower the line runs straight through
+  const run = towers.filter((t) => beside(t).length === 2 && straight(t) && Math.abs(t.at[0] - gate.at[0]) < 1).sort((a, b) => from(a, gate) - from(b, gate))[0];
+  assert.deepEqual(run.at.map((v) => Math.round(v * 10) / 10), [630.4, 291.1], 'the run\'s tower');
+  const [was, now] = measured(run);
+  assert.ok(Math.abs(was - 154.56) < 0.1, `whole: ${was.toFixed(2)} m2 of the two lengths' faces in the tower's sides' planes`);
+  assert.ok(now < 1e-3, 'cut: none');
   const m = townWallModel(wall.pieces, classic);
   assert.ok(fights(m, 0.04) < 1e-3, 'its whole wall: none');
   // the model door makes it a breath at a time, the same model

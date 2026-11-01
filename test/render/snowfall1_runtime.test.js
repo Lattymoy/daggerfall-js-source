@@ -11,7 +11,8 @@ import { readFileSync } from 'node:fs';
 import { SnowCoverage, SNOWFALL_BUILT_IN, roadCorners } from '../../src/systems/snowfall.js';
 import { SnowfallRuntime, MID, BLANKET, FAR, SNOW_GUARD_BAND, SNOW_FRAME_BUDGET_MS } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost, snowfallNetwork, settlementsIn, snowPixelBox, authoredTiles, newSnowfallSaveData, SNOWFALL_COMMAND, snowfallOn } from '../../src/scenes/snowfallHost.js';
-import { SNOW_VS, snowTerrainFs, SNOW_ATTR, SNOW_UNITS } from '../../src/render/snowfallGlsl.js';
+import { SNOW_VS, snowTerrainFs, SNOW_ATTR, SNOW_UNITS, SNOW_ALBEDO_SECOND } from '../../src/render/snowfallGlsl.js';
+import { snowAlbedo } from '../../src/systems/ownTextures/ownTextureRules.js';
 import { glslFunctions } from '../glsl.mjs';   // OWN-WORK4 AUDIT: the vertex law run as written
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../../src/render/classicShadowLane.js';
@@ -439,4 +440,25 @@ test('OWN-WORK4 AUDIT the vertex law, ours (bible/03-World/Snowfall.md): a track
   // the ring's landing: done three quarters into a 24 m band, half way at 9 m
   assert.equal(fns.snowLanding(18, 24), 1);
   assert.ok(Math.abs(fns.snowLanding(9, 24) - 0.5) < 1e-9);
+});
+
+test('OWN-WORK4 AUDIT the snow\'s albedo never shows its tile\'s repeat: read again turned, at 1 / phi^2 of its scale, 40% of the colour - a field of snow a whole number of tiles along is no longer the same snow (mutants: the second read dropped; its scale a whole tile)', () => {
+  const A = snowAlbedo(64);
+  const at = (u, v) => { const x = ((Math.floor(u * 64) % 64) + 64) % 64, y = ((Math.floor(v * 64) % 64) + 64) % 64; return A.data[(y * 64 + x) * 4 + 1]; };
+  const S = SNOW_ALBEDO_SECOND, [a, b, c, d] = S.turn;
+  const snowAt = (u, v) => {
+    const tu = (a * u + c * v) * S.scale + S.shift[0], tv = (b * u + d * v) * S.scale + S.shift[1];
+    return at(u, v) * (1 - S.share) + at(tu, tv) * S.share;
+  };
+  // how like itself the snow is a few tiles on: 1 for the tile alone
+  const likeness = (k) => {
+    let same = 0, n = 0;
+    for (let i = 0; i < 400; i++) { const u = (i % 20) / 20 + 0.013, v = Math.floor(i / 20) / 20 + 0.029; same += Math.abs(snowAt(u, v) - snowAt(u + k, v)); n++; }
+    return same / n;
+  };
+  for (const k of [1, 2, 3, 5, 8]) assert.ok(likeness(k) > 1.5, `${k} tiles on, the snow differs (${likeness(k).toFixed(2)})`);
+  const snow = snowTerrainFs(EL_LANE.terrainFs);
+  assert.match(snow, /mat2 turn = mat2\(0\.8, 0\.6, -0\.6, 0\.8\) \* 0\.381966;/);
+  assert.match(snow, /vec3 albedo = mix\(elDecode\(textureGrad\(uSnowAlbedo, albedoUV, albedoDx, albedoDy\)\.rgb\), second, 0\.4\)/);
+  assert.match(snow, /vec3 second = elDecode\(textureGrad\(uSnowAlbedo, turnUV, turn \* albedoDx, turn \* albedoDy\)\.rgb\);/, 'its footprint the first\'s, turned');
 });

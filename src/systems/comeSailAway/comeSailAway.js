@@ -170,6 +170,7 @@ import { createBoatLives } from '../../scenes/comeSailAway/farLife.js';   // BOA
 import { deckPressed } from '../../scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d II E2: the deck a ladder set me on
 import { windStaleOutdoors } from './csaLoadWind.js';   // SAIL-WIND: a load outdoors never keeps the indoors' none
 import { boatPixel, pixelUnderOn } from './csaPixel.js';   // NO-PIXEL: a boat with no map pixel takes the one she stands on
+import { badTackShare, gaffFoul } from './sailAssist.js';   // OWN-AUDIT: the bad tack and the gaff sails' assist
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
 /**
@@ -177,7 +178,7 @@ export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
  * GetModFromGUID("a9091dd7-e07a-4171-b16d-d13d67a5f221") (not the port's World of Daggerfall, the locations mod,
  * 98f05888), and GetMod("Animated Water"). Both are null here, so every arm on them takes its null branch: the water
  * level 34 and a coast pixel no higher than 2 (comeSailAwayWaves.js), the mod's own waves, current, particles and
- * bob, Animated Water's getWaveHeights never sent, Compatibility/AnimatedWaterVertexWaves inert. Iliac Puddle No More
+ * bob, Animated Water's getWaveHeights never sent (its Compatibility/AnimatedWaterVertexWaves key retired). Iliac Puddle No More
  * and Travel Options are in the port, asked of the host (deps.iliacPuddleNoMore, deps.travelOptionsActive).
  * @type {null | { Title: string }}
  */
@@ -707,7 +708,7 @@ export function createComeSailAwayRuntime(deps) {
   const peace = () => f(peaceShare(deps.peaceWay?.() ?? 1));
   /** moveSpeed's two arms - AUDIT SHIPS A4: each asked of her whichever she makes way by now (sailWayOf, oarWayOf). */
   const oarSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt) * rigOf(b, 'oars')) * peace());   // CAPTAIN-TREE: her captain's oars
-  const sailSpeed = (b, hurt) => f(f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());
+  const sailSpeed = (b, hurt) => f(f(f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace()) * badTack(b));   // OWN-AUDIT: and the bad tack's share
   /** HOLDINGS (the port's own - bible/03-World/Holdings.md): her Rigging refit, her way under sail and its coming on
    *  (`deps.refit`, the Fleet's; the mod has none) - read where the rates are read, never written into the prefab's
    *  modifiers a variant's change walks again. Oars are her hands', never her rig's - CAPTAIN-TREE: her captain's drill of
@@ -1155,6 +1156,11 @@ export function createComeSailAwayRuntime(deps) {
   // is the mod's own helm's choice
   const trimAuto = () => responsive() || !!setting('SailingAssist.AutoTrimming', true);
   const trimAutoSquareUpwind = () => !!setting('SailingAssist.AutoStowSquareSails', true);
+  // OWN-AUDIT (2026-11-01, sailAssist.js): the two keys the mod shipped and never read - the gaff sails' assist (the
+  // classic helm's, as the square sails' is) and the bad tack, under either helm (a gale lays her on her quarter)
+  const gaffAssist = () => !responsive() && !!setting('SailingAssist.AutoStowGaffSails', true);
+  const gaffAback = (b, sail) => gaffAssist() && b.SailsGaff.includes(sail) && gaffFoul(vSignedAngle(flat(forwardOf(sail)), flat(state.windVectorCurrent), V_UP));
+  const badTack = (b) => f(badTackShare(state.gale ? 0 : Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP)), !!setting('Handling.BadTack', false), setting('Handling.BadTackMultiplier', 0.8)));
   /** Vector3.ProjectOnPlane(v, Vector3.up), and a Transform's forward. */
   const flat = (v) => vProjectOnPlane(v, V_UP);
   const forwardOf = (node) => quatRotate(node.rotation, V_FORWARD).map(f);
@@ -1250,7 +1256,7 @@ export function createComeSailAwayRuntime(deps) {
       for (const sail of b.Sails) {
         // SAIL-FREE (the port's, DECLARED): under the responsive helm her square canvas draws on every heading
         // (helmWay.js), so the assist stows none of it upwind
-        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {
+        if ((!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) && !gaffAback(b, sail)) {   // OWN-AUDIT: a gaff the wind would lay aback stays stowed
           const component = animatorOf(sail);
           if (component != null) stow(component, false);
         }
@@ -1436,6 +1442,8 @@ export function createComeSailAwayRuntime(deps) {
           if (flag && !bool) stow(component, true);
           else if (!flag && bool) stow(component, false);
         }
+        // OWN-AUDIT: the gaff sails' assist - stowed while the wind would lay them aback, set again when it frees
+        if (component != null && gaffAssist() && boat.SailsGaff.includes(sail) && gaffFoul(num9) !== component.GetBool('Stowed')) stow(component, gaffFoul(num9));
         num7++;
       }
       if (trimAuto()) autoTrim(boat, num6);
@@ -2865,8 +2873,9 @@ export function createComeSailAwayRuntime(deps) {
 
   // ── CSA-F: the waves (2134-2143, 2145-3477; comeSailAwayWaves.js) ──
   const waveOn = () => !!setting('Waves.Enable', true);
-  /** CSA-J: `AnimatedWater != null && AWVertexWaves` - false here, the setting never read (ANIMATED_WATER is null). */
-  const animatedWaterWaves = () => ANIMATED_WATER != null && !!setting('Compatibility.AnimatedWaterVertexWaves', false);
+  /** CSA-J: `AnimatedWater != null && AWVertexWaves` - false here (ANIMATED_WATER is null). OWN-AUDIT (2026-11-01): the
+   *  key that named Animated Water is retired (modSettings.js RETIRED_KEYS), so only the missing mod is asked. */
+  const animatedWaterWaves = () => ANIMATED_WATER != null;
   /** UpdateWaveMesh (2145-3477): the mesh cleared; with the waves off, indoors or on the player's ship nothing more;
    *  else the object stood over the player's pixel and the coast's pieces laid. */
   function UpdateWaveMesh() {

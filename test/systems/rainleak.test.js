@@ -6,7 +6,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PrecipitationRenderer, PRECIP_REST_S, PRECIP_CLOCK_MAX_S } from '../../src/render/precipitation.js';
+import { PrecipitationRenderer, PRECIP_REST_S, PRECIP_CLOCK_MAX_S, BETTER_FALL, BETTER_FALL_VS, LAB_WX_VS, LAB_COUNTS, betterFallSwitches } from '../../src/render/precipitation.js';
+import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';   // OWN-WORK4 AUDIT: Better Ambience's switches
+import { glslFunctions } from '../glsl.mjs';   // OWN-WORK4 AUDIT: our fall's vertex stage, run as written
 import { AudioEngine, releaseNodes } from '../../src/systems/audio.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -137,4 +139,61 @@ test('RAIN-LEAK: both exterior hosts hand the falling weather (the sand, the rai
       assert.ok(line.includes(`, ${scratch}, `) && !line.includes('new Float32Array('), `${host}: ${call} takes ${scratch}, and mints no array`);
     }
   }
+});
+
+// OWN-WORK4 AUDIT (2026-11-01): BETTER AMBIENCE'S RAIN AND SNOW, OURS - its two switches pick our fall on the enhanced
+// lane; off, the lab's program draws exactly as before.
+test('OWN-WORK4 AUDIT Better Ambience\'s fall: the switches pick our program on the enhanced lane, the mod\'s own switch over both; off, the lab\'s draws; a storm denser than rain (mutants: the switch unread; the master switch unread; the storm no denser)', () => {
+  const reads = (vals) => (vendor, key) => vals[key];
+  assert.deepEqual(betterFallSwitches(reads({ Enabled: true, 'Better Rain.enableBetterRain': true, 'Better Rain.enableBetterSnow': false })), { rain: true, snow: false });
+  assert.deepEqual(betterFallSwitches(reads({ Enabled: false, 'Better Rain.enableBetterRain': true, 'Better Rain.enableBetterSnow': true })), { rain: false, snow: false }, 'the mod off: both off');
+  assert.deepEqual(betterFallSwitches(() => { throw new Error('no store'); }), { rain: false, snow: false });
+  const used = [], counts = [];
+  const gl = new Proxy({}, { get: (o, k) => {
+    if (k === 'useProgram') return (p) => used.push(p);
+    if (k === 'drawArraysInstanced') return (m, f, n, c) => counts.push(c);
+    if (k === 'getUniformLocation') return (p, name) => ({ name });
+    if (k === 'createProgram') return () => ({ id: Symbol('program') });
+    if (typeof k === 'string' && k.toUpperCase() === k) return 1;
+    return () => ({});
+  } });
+  const r = new PrecipitationRenderer(gl, { enhanced: true });
+  r.intensity = 1;
+  try {
+    for (const [rain, snow] of [[false, false], [true, true]]) {
+      setModSetting('better-ambience', 'Better Rain.enableBetterRain', rain);
+      setModSetting('better-ambience', 'Better Rain.enableBetterSnow', snow);
+      used.length = 0; counts.length = 0;
+      for (const mode of ['rain', 'storm', 'snow']) r.draw(mode, M, M, E, E, 1);
+      const want = rain ? r.betterProgram : r.labProgram;
+      assert.deepEqual(used, [want, want, want], rain ? 'on: ours' : 'off: the lab\'s, as before');
+      assert.deepEqual(counts, rain ? [BETTER_FALL.count.rain, BETTER_FALL.count.storm, BETTER_FALL.count.snow] : [LAB_COUNTS.rain, LAB_COUNTS.storm, LAB_COUNTS.snow]);
+    }
+    assert.ok(BETTER_FALL.count.storm > BETTER_FALL.count.rain && BETTER_FALL.count.storm <= LAB_COUNTS.rain, 'a storm denser, inside the lab\'s instances');
+  } finally { _resetModSettings(); }
+});
+
+test('OWN-WORK4 AUDIT Better Ambience\'s fall, as drawn: a drop\'s streak along its own velocity - slanted and lengthened by the wind, longer in a storm; a flake slower than the lab\'s, carried by the wind, its size spread from small to clumps (mutants: the streak unslanted; the storm no faster; the flake as fast as the lab\'s; the flakes one size)', () => {
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const at = (vs, u, corner, seed) => {
+    const f = glslFunctions(vs, { uVP: I, uEye: [21, 21, 21], uRight: [1, 0, 0], uUp: [0, 1, 0], uTime: 0, uKind: 0, uBox: 42, uFall: 22, uStorm: 0, uWindV: [0, 0], uWindOff: [0, 0], aCorner: corner, aSeed: seed, ...u });
+    f.main();
+    return f.globals.gl_Position.slice(0, 3);
+  };
+  const seed = [20, 20, 20, 0.37];
+  const streak = (u) => { const a = at(BETTER_FALL_VS, u, [0.5, 0], seed), b = at(BETTER_FALL_VS, u, [0.5, 1], seed); return [b[0] - a[0], b[1] - a[1], b[2] - a[2]]; };
+  const len = (v) => Math.hypot(...v);
+  const still = streak({}), windy = streak({ uWindV: [12, 0] }), storm = streak({ uStorm: 1 });
+  assert.ok(Math.abs(still[0]) < 1e-6 && still[1] < 0, 'no wind: straight down');
+  assert.ok(windy[0] > 0.1 && len(windy) > len(still), `the wind slants and lengthens it (${windy.map((v) => v.toFixed(2))})`);
+  assert.ok(len(storm) > len(still) * 1.1, 'a storm\'s drops faster, their streaks longer');
+  // a flake's fall over a second, against the lab's flake on the same seed
+  const fallOf = (vs, s) => at(vs, { uKind: 1, uFall: 1.6, uTime: 0 }, [0.5, 0.5], s)[1] - at(vs, { uKind: 1, uFall: 1.6, uTime: 1 }, [0.5, 0.5], s)[1];
+  let ours = 0, lab = 0;
+  for (let i = 0; i < 20; i++) { const s = [20, 30, 20, (i + 0.5) / 20]; ours += fallOf(BETTER_FALL_VS, s); lab += fallOf(LAB_WX_VS, s); }
+  assert.ok(ours < lab * 0.8, `slower than the lab's (${ours.toFixed(2)} against ${lab.toFixed(2)})`);
+  const sizes = Array.from({ length: 40 }, (_, i) => { const s = [20, 20, 20, (i + 0.5) / 40]; const a = at(BETTER_FALL_VS, { uKind: 1 }, [0, 0.5], s), b = at(BETTER_FALL_VS, { uKind: 1 }, [1, 0.5], s); return b[0] - a[0]; });
+  assert.ok(Math.max(...sizes) / Math.min(...sizes) > 3, 'small flakes and clumps');
+  const carried = at(BETTER_FALL_VS, { uKind: 1, uWindOff: [5, 0] }, [0.5, 0.5], seed)[0] - at(BETTER_FALL_VS, { uKind: 1 }, [0.5, 0.5], seed)[0];
+  assert.ok(carried > 4.5, `the wind's travel carries a flake at least as far as it went (${carried.toFixed(2)})`);
 });

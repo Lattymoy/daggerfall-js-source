@@ -60,6 +60,7 @@ import { rebuiltPicture } from './rebuiltPicture.js'; // NO-BETHESDA2: a picture
 import DERIVED_TEXTURES from './handheldTorchesDerived.json' with { type: 'json' }; // NO-BETHESDA2's specs, moved beside their reader (OWN-WORK4)
 import { ownTorchPicture, TORCH_ART, TORCH_OVER, dousedCandle } from './handheldTorchesArt.js'; // OWN-WORK4: our own pictures
 import { setLightSource, addLightSourceListener } from './lightSource.js'; // DISC7: the light in hand's one door
+import { drawArc } from './torchArc.js'; // OWN-AUDIT: the throw's arc, drawn
 import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
@@ -312,6 +313,7 @@ export function createHandheldTorches({
     inertiaForwardTarget: [0, 0],
     throwTimer: 0,
     throwTime: 1,
+    arc: null, // OWN-AUDIT: the wind-up's arc this frame (throwArcPoints), drawn by drawArc - null while no throw winds up
     keysLast: new Set(),
     loop: null,
     loopVolume: 0,
@@ -622,15 +624,10 @@ export function createHandheldTorches({
       return;
     }
     const cam = ctx?.camera?.();
-    const centre = cam?.feet
-      ? [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]]
-      : cam?.pos
-        ? [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]]
-        : [0, 0, 0];
     torches()?.spawnLightSourceProjectile(
       item.templateIndex,
       (item.currentCondition ?? 0) * SECONDS_PER_CONDITION,
-      centre,
+      throwCentre(cam),
       cam?.forward ?? [0, 0, 1],
       strength,
       getFreeHand(),
@@ -640,6 +637,29 @@ export function createHandheldTorches({
     oneShot(CLIPS.throwSwing, 1, 1); // PlayOneShot(106, pitchVariance 0, volumeScale 1)
     say(MESSAGES.throw + torchItemWords(item));
     w.hasDroppedOrThrownLight = true;
+  }
+  /** Where a throw leaves from: the body's centre, as the pool's flight takes it. */
+  function throwCentre(cam) {
+    if (cam?.feet) return [cam.feet[0], cam.feet[1] + 0.9, cam.feet[2]];
+    return cam?.pos ? [cam.pos[0], cam.pos[1] - 0.8, cam.pos[2]] : [0, 0, 0];
+  }
+  /** OWN-AUDIT (2026-11-01): the arc a release now would fly, with Throwing.ShowTrajectory on - the flight's own law at
+   *  the wind-up's strength, without the throw's random spread - or null. */
+  function aimArc() {
+    const cam = ctx?.camera?.();
+    if (!w.s.throwDrawTrajectory || !cam) return null;
+    return throwArcPoints({
+      origin: throwCentre(cam),
+      forward: cam.forward,
+      right: cam.right,
+      freeHand: getFreeHand(),
+      strength: clampStrength(w.throwTimer / w.throwTime),
+      throwAngle: w.s.throwAngle,
+      throwGravity: w.s.throwGravity,
+      throwStrength: w.s.throwStrength,
+      bodyStrength: ctx.entity ? liveStat(ctx.entity, 'strength') : 50,
+      collider: ctx.collider?.() ?? null,
+    });
   }
   /** ThrowLightSourceAction (0x3238): the lit torch, else the first torch in the pack. */
   function throwLightSourceAction(l, strength) {
@@ -942,17 +962,10 @@ export function createHandheldTorches({
     }
     if (down('TorchThrow') && contains('UselessItems2', T.Torch) && hasFreeHand()) {
       w.throwTimer += dt * w.s.throwScale;
-      // AUDIT 66 F9: DrawTrajectory is NOT run here. The mod feeds its
-      // 300 integration steps to a LineRenderer (0x1e4a-0x1e60); this
-      // renderer has no world-space line - `drawMeshWire` wants a
-      // mesh's own edge buffer (render/renderer.js) and the only other
-      // gl.LINES is the 2D world map's - so the arc had no consumer and
-      // the port was spending 300 steps and up to 300 raycasts a frame
-      // on points nothing could see. The LAW is kept whole and pinned
-      // as `throwArcPoints` below, for the host that can draw it;
-      // `Throwing.ShowTrajectory` is inert until then, and says so on
-      // the pane, beside EmissionShadows.
-    }
+      // OWN-AUDIT (2026-11-01): DrawTrajectory's arc (0x1e4a-0x1e60), drawn as dots on the screen - this renderer has no
+      // world-space line for the mod's LineRenderer (systems/torchArc.js)
+      w.arc = aimArc();
+    } else w.arc = null;
     if (released('TorchThrow')) {
       if (hasFreeHand()) throwLightSourceAction(light(), clampStrength(w.throwTimer / w.throwTime));
       else say(MESSAGES.noFreeHand);
@@ -1126,9 +1139,12 @@ export function createHandheldTorches({
     if (!held || !(isTorch(held) || isLantern(held))) return false; // MAC-H: nothing in the hand, nothing on the screen
     if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing
     if (!w.currentTexture?.tex) return false;
-    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, tint ?? undefined);
+    // OWN-AUDIT (2026-11-01): Presentation.Tint - on, the hand takes the room's light as the weapon does; off, never
+    renderer.drawScreenQuad(w.currentTexture.tex, getSpriteRect(), w.curAnimRect, (w.s.tintSprite && tint) || undefined);
     return true;
   }
+  /** OWN-AUDIT: the wind-up's arc over the frame (torchArc.js), first or third person - the dots drawn. */
+  const drawThrowArc = (renderer) => (w.arc ? drawArc(renderer, w.arc) : 0);
 
   /** DISC6 (Discord, 2026-09-23: "sometimes even when putting it away it still makes the torch sound"): THE LOOP GOES
    *  WITH THE RIG THAT LEAVES. Every host mode has its own rig (the street's, the building's, the dungeon's) and each
@@ -1142,6 +1158,7 @@ export function createHandheldTorches({
     w.loop = null;
   }
   function dispose() {
+    w.arc = null;
     offLight?.();
     offLight = null;
     w.loop?.stop?.();
@@ -1157,6 +1174,7 @@ export function createHandheldTorches({
     update,
     lateUpdate,
     draw,
+    drawThrowArc,
     dispose,
     silence,
     receivePickedUp,
@@ -1190,7 +1208,10 @@ export function createHandheldTorches({
     },
     get throwStrength() {
       return clampStrength(w.throwTimer / w.throwTime);
-    }, // AUDIT 66 F9: the wind-up a host would draw the arc at
+    }, // AUDIT 66 F9: the wind-up the arc is drawn at
+    get arc() {
+      return w.arc;
+    }, // OWN-AUDIT: the arc drawThrowArc draws, for the pins
     get burning() {
       return !!w.loop;
     },
@@ -1209,9 +1230,8 @@ async function defaultLoadSprite(record, frame) {
  * DrawTrajectory (IL 0x1bec), whole, as a pure law: the thrown torch's
  * arc from the free hand, integrated on Unity's fixed step until it
  * meets a wall or runs 300 steps out. The mod feeds these points to a
- * LineRenderer; this port has no world-space line to draw them with
- * (AUDIT 66 F9), so nothing calls this yet - it is kept because it IS
- * the mod's arithmetic and because the arc must match the flight the
+ * LineRenderer; this port has no world-space line, so the wind-up draws
+ * them as dots (aimArc) - it is the mod's arithmetic, and the arc must match the flight the
  * pool integrates (scenes/droppedTorches.js): the two forms differ in
  * the IL - the flight scales its gravity by fixedDeltaTime and adds it
  * as a displacement (0x47c3-0x481f), the arc accumulates 9.8 x 0.05 x

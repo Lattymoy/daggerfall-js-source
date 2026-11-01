@@ -694,6 +694,15 @@ the other sixteen relabelled buttons are asked for by nothing and are not carrie
 (`systems/roleplayRealism/rrDerivedArt.json`). Nothing is fetched. Pins:
 `rr2_realism`, `rr_nobethesda2`, `lampkeeper`, `ownwork4_pictures`.
 
+**OWN-WORK4 AUDIT (2026-11-01).** The painted keepers were flat and out of style beside Daggerfall's. Each is now our
+rule over the player's own tavern and shop folk (`systems/roleplayRealism/rrKeepers.js`, `RR_KEEPERS`): one record of
+TEXTURE.182 for the body, another's head, a cloth moved to another of the palette's ramps, and for the tavern's own
+keeper a third record's bottles. Six bodies and six heads, no two shared: a working man, a shopkeeper's wife, an elder
+merchant with his purse, a lady, a young barkeep and the tavern's keeper. Each keeps the aspect of the classic keeper it
+stands in for (records 0-3 at 79 x 128, 5 at 67 x 128, 6 at 71 x 128), so the scale table still sets its size. The
+spec holds no pixels. Pins: `rr2_realism` (the rule on made-up records; with ARENA2 the six); mutants OWK-1 to OWK-7 in
+`tools/mutants/rr2.json`.
+
 ## OWN-WORK3 - our own data and words
 
 **OWN-WORK3 (2026-10-31, the owner).** The owner: "removing mods from outside authors and instead replacing them with

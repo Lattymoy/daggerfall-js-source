@@ -23,7 +23,7 @@ export const HORSE_ART_GROUND_GAP = 2;
 /** A picture's name -> `{ view, frame, still }` (0-based), or null for a name that is no horse picture. */
 export function horseArtOf(/** @type {string} */ file) {
   let parts = /^horse([1-5])\.png$/.exec(file);
-  if (parts) return { view: Number(parts[1]), frame: 0, still: true };
+  if (parts) return { view: Number(parts[1]) - 1, frame: 0, still: true };
   parts = /^Walk\.([0-4])-([1-8])\.png$/.exec(file);
   return parts ? { view: Number(parts[1]), frame: Number(parts[2]) - 1, still: false } : null;
 }
@@ -563,7 +563,13 @@ export async function ownHorsePicture(
     if (seat && seatThen) bob = [0, seat[1] - seatThen[1]];
   }
   const height = named.still ? HORSE_ART_STILL_HEIGHT : HORSE_ART_WALK_HEIGHT;
-  return composeHorse(record, named.view === 0 ? withFrontRider(mask, record, named.frame) : mask, named.view, height, bob);
+  return composeHorse(
+    record,
+    named.view === 0 ? withFrontRider(mask, record, named.frame) : mask,
+    named.view,
+    height,
+    bob,
+  );
 }
 
 /** OWN-AUDIT: the front view's rider as we drew him (horseFrontRider.js) laid over the baked mask, on a record of the

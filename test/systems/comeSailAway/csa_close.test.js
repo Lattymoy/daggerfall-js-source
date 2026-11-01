@@ -357,11 +357,11 @@ test('CSA-J: the hosts - world.js hands the view seam this boot\'s runtime (its 
 
 // ── the two mods the port does not carry ───────────────────────────────────────
 
-test('CSA-J: World of Daggerfall\'s terrain and Animated Water are not in the port - both lookups null, the water level 34, and Compatibility/AnimatedWaterVertexWaves on changes nothing: the wave frames step, the current is written, the rudder\'s particles play', () => {
+test('CSA-J: World of Daggerfall\'s terrain and Animated Water are not in the port - both lookups null, the water level 34, and the waves are the mod\'s own (OWN-AUDIT: its AnimatedWaterVertexWaves key retired, a stale saved one ignored): the wave frames step, the current is written, the rudder\'s particles play', () => {
   assert.equal(WOD_TERRAIN, null);
   assert.equal(ANIMATED_WATER, null);
   assert.equal(WATER_LEVEL, 34, 'WaterLevel: WODTerrain != null ? 100 : 34');
-  const s = scene({ settings: { 'Waves.Enable': true, 'Waves.Speed': 100, 'Compatibility.AnimatedWaterVertexWaves': true } });
+  const s = scene({ settings: { 'Waves.Enable': true, 'Waves.Speed': 100, 'Compatibility.AnimatedWaterVertexWaves': true } });   // a file that still holds the retired key
   const before = [s.rt.state.waveFrameIndex, s.rt.state.waveFrameTimer];
   s.rt.update();
   assert.notDeepEqual([s.rt.state.waveFrameIndex, s.rt.state.waveFrameTimer], before, 'Update\'s wave frame stepped (4769\'s gate open)');

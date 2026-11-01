@@ -219,8 +219,8 @@
   {
     "name": "LIGHT-NEAR1-glare-distance-skip-back",
     "file": "src/render/airPass.js",
-    "old": "      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
-    "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "old": "      if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue; // OWN-AUDIT: a shadowless light keeps its glare. MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i] === CARRIED_IN_HAND) continue; // OWN-AUDIT: a shadowless light keeps its glare. MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
     "tests": [
       "test/render/lightnear1.test.js",
       "test/render/el7_polish.test.js"

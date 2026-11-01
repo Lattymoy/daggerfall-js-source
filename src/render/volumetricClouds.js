@@ -300,9 +300,10 @@ export const CIRRUS_G = 0.7;
 export const CIRRUS_SUN = 0.8;
 export const CIRRUS_FWD = 0.6;
 export const CIRRUS_AMB = 0.45;
-/** VC7d: how much of the sky carries cirrus under each word (eased with the weather). A fair sky shows it most - an
- *  overcast lid or a storm keeps theirs, but their own cloud hides it, which the march does by itself. */
-export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.5, fog: 0.3, rain: 0.5, snow: 0.45, thunder: 0.6, sandstorm: 0.15, ashfall: 0.15 });
+/** VC7d: how much of the sky carries cirrus under each word (eased with the weather). A fair sky shows it most.
+ *  OWN-WORK4 AUDIT (2026-11-01): a lid's own cloud did not hide it - through the lid's thin places the ice drew long
+ *  bright streaks running to the jet's vanishing point (the sky lab, overcast at noon) - so a lid keeps a trace. */
+export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.1, fog: 0.3, rain: 0.08, snow: 0.08, thunder: 0.06, sandstorm: 0.15, ashfall: 0.15 });
 /** VC7e: how full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
 export const COLUMN_FILL = 0.5;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the

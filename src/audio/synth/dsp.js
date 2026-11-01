@@ -328,6 +328,15 @@ export function loudnessTo(buf, rate, db) {
   return buf;
 }
 
+/** The clip's RMS brought to `db` dBFS (a silent clip stays silent). @param {Float64Array} buf @param {number} db */
+export function rmsTo(buf, db) {
+  let power = 0;
+  for (let i = 0; i < buf.length; i++) power += buf[i] * buf[i];
+  const k = power > 0 ? 10 ** (db / 20) / Math.sqrt(power / buf.length) : 0;
+  for (let i = 0; i < buf.length; i++) buf[i] *= k;
+  return buf;
+}
+
 /** The clip held to `bits` of depth, as an old sound card held it (the retro quality). @param {Float64Array} buf @param {number} bits */
 export function crush(buf, bits) {
   const steps = 2 ** (bits - 1);

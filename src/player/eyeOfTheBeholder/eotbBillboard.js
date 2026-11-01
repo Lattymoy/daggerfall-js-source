@@ -456,7 +456,7 @@ export const DEATH_TICK = 0.5;
  * the whole string, one stroke a click. `blow` is the rig's count (weaponRig `swingN`, the wire's `an`), so a peer
  * draws the stroke the swinger drew. An odd frame count gives its first stroke the shorter half; a clip under two
  * frames is one stroke. RETIRES the ping-pong (usesPingPong, pingPongFrames, pingPongTickFrames): Graphics.PingPongOffset
- * is inert, and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly, recorded in
+ * is retired with it (OWN-AUDIT), and AttackStrings' PingPong reads as None and Mixed as Mirror. A departure from the assembly, recorded in
  * the Ledger.
  */
 export function meleeStrokeFrames(n, blow = 0) {

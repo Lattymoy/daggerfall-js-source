@@ -46,8 +46,9 @@
 // SupportChance, so the mod's Throwing.Chance reaches an effect that
 // never rolls it: the fire takes on every hit that lands. Kept.
 //
-// NOT CARRIED, recorded: the light's shadows (EmissionShadows - the
-// renderer's point lights cast none); Light.intensity's flicker on a
+// OWN-AUDIT (2026-11-01): EmissionShadows is the burning foe's light's own -
+// off (the mod's default) it says `shadowless` and takes no shadow map
+// (scenes/magicCandle.js withPlayerLights). NOT CARRIED, recorded: Light.intensity's flicker on a
 // dropped torch (1.25 + sin(2t) x 0.1 - the port's lights have range,
 // no intensity, as playerTorch.js records) - the range law is kept;
 // Bloodfall's GUID (no such mod); the Custom Tooltips names.
@@ -403,7 +404,8 @@ export function createDroppedTorches({
     // the thrown torch's light hangs over its quad's own centre (0x3ad0-0x3aea), and its range is the template's, flat (0x3b41)
     for (const p of projectiles) if (lit(p)) out.push(adoptLight({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 }, p));   // LIGHT-ID: one light in flight
     const playerRange = entity?.lightSource ? torchRange(entity.lightSource) : (templateByIndex(TEMPLATES.Torch)?.capacityOrTarget ?? 14);
-    for (const [f, fl] of flames) if (!f.dead) out.push(adoptLight({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange }, fl));   // LIGHT-ID: a burning foe's, as it walks
+    const shadowless = !s().fireLightShadows;   // OWN-AUDIT: Throwing.EmissionShadows
+    for (const [f, fl] of flames) if (!f.dead) out.push(adoptLight({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange, shadowless }, fl));   // LIGHT-ID: a burning foe's, as it walks
     return out;
   }
   const batches = () => [...dropped.map((d) => d.batch), ...projectiles.map((p) => p.batch), ...[...flames.values()].map((fl) => fl.batch)].filter(Boolean);

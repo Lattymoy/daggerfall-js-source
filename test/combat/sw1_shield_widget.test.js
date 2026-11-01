@@ -329,7 +329,8 @@ import {
   shieldTextureFileName, shieldWidgetSize, shieldWidgetImage, SHIELD_ARCHIVE_SIZES,
   SHIELD_WIDGET_MOD, SHIELD_ARCHIVES, SHIELD_WIDGET_PRESETS,
 } from '../../src/combat/shieldWidgetAssets.js';
-import { paintShieldFace, shieldFaceOf, SHIELD_KINDS, SHIELD_PAINTS } from '../../src/combat/shieldFaces.js';
+import { paintShieldFace, shieldFaceOf, SHIELD_KINDS, SHIELD_PAINTS, litBy } from '../../src/combat/shieldFaces.js';
+import { RAMP } from '../../src/art/ownPainter.js';
 import { MOD_SETTINGS } from '../../src/systems/modSettings.js';
 
 test('OWN-WORK4: the 600 sprites are our own paintings - every slot painted in code at the size the registry promises, a 1-bit cutout, one slot one picture; the mod\'s folder is gone', () => {
@@ -353,6 +354,26 @@ test('OWN-WORK4: the 600 sprites are our own paintings - every slot painted in c
   const pristine = paintShieldFace(300 + 2 * 5, shieldWidgetSize(300)), battered = paintShieldFace(300 + 22 * 5, shieldWidgetSize(300));
   assert.notDeepEqual(battered.data, pristine.data);
   assert.equal(paintShieldFace(0, null), null);
+});
+
+test('OWN-WORK4 AUDIT: the faces have depth in the painter\'s light - a bevelled rim (its outer slope lit on the upper left, its inner slope on the lower right), a boss that casts its shadow, studs that glint, metal with a sheen and wood in planks (mutants: the bevel flat; the bevel turned; no shadow; no glint; no sheen; no planks)', () => {
+  assert.equal(litBy(-0.55, -0.62, 0.56), 1, 'facing the light');
+  assert.equal(litBy(0.55, 0.62, -0.56), 0, 'facing away');
+  const i = 160, size = shieldWidgetSize(i), pic = paintShieldFace(i, size);   // a round steel shield at the guard
+  const k = Math.min(size.width, size.height), cx = size.width * 0.5, cy = size.height * 0.55, rim = 0.44 * k;
+  const lum = (x, y) => { const o = (Math.round(y) * size.width + Math.round(x)) * 4; return pic.data[o] + pic.data[o + 1] + pic.data[o + 2]; };
+  const onRim = (inset, quarter) => lum(cx + Math.cos(Math.PI * quarter) * (rim - inset), cy + Math.sin(Math.PI * quarter) * (rim - inset));
+  assert.ok(onRim(1, 1.25) > onRim(1, 0.25) + 200, `the outer slope lit on the upper left (${onRim(1, 1.25)} over ${onRim(1, 0.25)})`);
+  assert.ok(onRim(5, 0.25) > onRim(5, 1.25) + 200, `the inner slope lit on the lower right (${onRim(5, 0.25)} over ${onRim(5, 1.25)})`);
+  const b = 0.11 * k;
+  assert.ok(lum(cx + b * 0.75, cy + b * 0.75) < lum(cx - b * 0.9, cy - b * 0.9) - 200, 'the boss\'s shadow falls away from the light');
+  const count = (p, colours) => { const set = new Set(colours.map(String)); let n = 0; for (let o = 0; o < p.data.length; o += 4) if (set.has(String([p.data[o], p.data[o + 1], p.data[o + 2]]))) n++; return n; };
+  assert.ok(count(pic, [SHIELD_PAINTS[2].face.at(-1)]) > 600, `the steel's sheen reaches its brightest shade (${count(pic, [SHIELD_PAINTS[2].face.at(-1)])})`);
+  // the first stud, on the rim at the grip's right: a dome whose upper left glints in the boss ramp's brightest
+  const r = Math.max(1.4, 0.018 * k), studX = cx + 0.415 * k, glint = (Math.round(cy - r * 0.4) * size.width + Math.round(studX - r * 0.4)) * 4;
+  assert.deepEqual([...pic.data.subarray(glint, glint + 3)], [...SHIELD_PAINTS[2].boss.at(-1)], 'the stud\'s glint');
+  assert.ok(count(paintShieldFace(150, shieldWidgetSize(150)), RAMP.wood) > 3000, 'the leather group\'s face is planks of wood');
+  assert.equal(count(paintShieldFace(155, shieldWidgetSize(155)), RAMP.wood), 0, 'and an iron one is metal');
 });
 
 // ---- SW4: WHICH WAY UP ------------------------------------------------

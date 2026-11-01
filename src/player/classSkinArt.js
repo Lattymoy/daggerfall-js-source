@@ -47,13 +47,16 @@ export const OUTER_SLOT = Object.freeze({ 477: CLOTH, 479: DRAPE, 480: DRAPE, 48
  * waist; `sign` is an insignia on the breast and the back; `shield` a round shield on the left arm.
  */
 const look = (scheme) => Object.freeze(scheme);
+/** OWN-AUDIT: the sheets whose figure is bare to the waist (TEXTURE.482's), where a class's `garment` is painted on. */
+export const BARE_SHEETS = Object.freeze([482]);
+const WRAP = ownRamp('#09090c', '#121217', '#1c1c23', '#282831', '#363642', '#474756');
 export const CLASS_LOOKS = Object.freeze({
-  Acrobat: look({ outer: RAMP.red, inner: RAMP.yellow, metal: RAMP.bronze, pattern: { kind: 'motley', on: ['outer', 'inner'], ramps: [RAMP.red, RAMP.yellow] }, sash: RAMP.yellow }),
+  Acrobat: look({ outer: RAMP.red, inner: RAMP.yellow, metal: RAMP.bronze, pattern: { kind: 'motley', on: ['outer', 'inner'], ramps: [RAMP.red, RAMP.yellow] }, sash: RAMP.yellow, garment: { kind: 'motley', ramp: RAMP.red, alt: RAMP.yellow, hem: RAMP.bronze } }),
   Assassin: look({ outer: RAMP.red, inner: RAMP.black, metal: RAMP.iron, belt: RAMP.black }),
   Burglar: look({ outer: RAMP.grey, inner: RAMP.brown, metal: RAMP.iron, pattern: { kind: 'patches', on: ['inner'], ramps: [RAMP.olive] } }),
-  'Bounty Hunter': look({ outer: RAMP.leather, inner: RAMP.black, metal: RAMP.iron, sash: RAMP.leather, studs: hex('#d8c27a') }),
+  'Bounty Hunter': look({ outer: RAMP.leather, inner: RAMP.black, metal: RAMP.iron, sash: RAMP.leather, studs: hex('#d8c27a'), garment: { kind: 'harness', ramp: RAMP.leather, strap: RAMP.black, buckle: RAMP.gold, hem: RAMP.black } }),
   'Dark Acolyte': look({ outer: RAMP.black, inner: RAMP.olive, metal: RAMP.black, trim: { on: 'outer', ramp: RAMP.bone }, sign: { glyph: 'skull', colour: hex('#e8e1cd') } }),
-  'Dark Brotherhood': look({ outer: RAMP.black, inner: RAMP.black, metal: RAMP.black, sash: RAMP.red, sign: { glyph: 'hand', colour: hex('#c0281c') } }),
+  'Dark Brotherhood': look({ outer: RAMP.black, inner: RAMP.black, metal: RAMP.black, sash: RAMP.red, sign: { glyph: 'hand', colour: hex('#c0281c') }, garment: { kind: 'wrap', ramp: WRAP, edge: RAMP.grey, hem: RAMP.black } }),
   'Daggerfall Adventurer': look({ outer: RAMP.green, inner: RAMP.leather, metal: RAMP.steel }),
   Healer: look({ outer: RAMP.white, inner: RAMP.gold, metal: RAMP.gold, trim: { on: 'outer', ramp: RAMP.gold }, sign: { glyph: 'sun', colour: hex('#dcb43c') } }),
   'Healer with Shield': look({
@@ -76,24 +79,31 @@ const rgbKey = (red, green, blue) => (red << 16) | (green << 8) | blue;
 /** A cloth ramp's last steps (13-15 of 16) are near-black and alike in every ramp, so a sheet shades one garment in
  *  another's: TEXTURE.486 darkens its teal robe's hem with the olive's. Such a pixel joins the garment nearest it. */
 export const CLOTH_TAIL_STEP = 13;
+/** OWN-AUDIT: the ramps a bare figure's flesh is painted in - the skin (2, 4) and the reds and lights that shade it (11,
+ *  14, 15) - and 13's brown half beside them. */
+export const FLESH_RAMPS = Object.freeze([2, 4, 11, 14, 15]);
 /** How much nearer (px) the other garment must be before a near-black pixel joins it. */
 export const SHADE_MARGIN = 2;
 /** A palette's tables: each colour's index, each index's slot, its light within its slot (0..1), its light, each slot's
  *  span of light, and whether it is a cloth ramp's near-black tail. */
 export function paletteTables(palette) {
   const index = new Map(), slot = new Uint8Array(256).fill(NONE), tone = new Float32Array(256);
-  const light = new Float32Array(256), tail = new Uint8Array(256), span = {};
+  const light = new Float32Array(256), tail = new Uint8Array(256), flesh = new Uint8Array(256), span = {};
   for (let i = 0; i < 256; i++) light[i] = (0.299 * palette.getRed(i) + 0.587 * palette.getGreen(i) + 0.114 * palette.getBlue(i)) / 255;
   for (let i = 1; i < 255; i++) {
     const key = rgbKey(palette.getRed(i), palette.getGreen(i), palette.getBlue(i));
     if (!index.has(key)) index.set(key, i);
     slot[i] = SLOT_OF_RAMP[i >> 4] ?? NONE;
     tail[i] = (slot[i] === CLOTH || slot[i] === DRAPE) && (i & 15) >= CLOTH_TAIL_STEP ? 1 : 0;
+    flesh[i] = FLESH_RAMPS.includes(i >> 4) || ((i >> 4) === 13 && (i & 15) < 8) ? 1 : 0;
     const [lo, hi] = span[slot[i]] ?? [1, 0];
     span[slot[i]] = [Math.min(lo, light[i]), Math.max(hi, light[i])];
   }
   for (let i = 1; i < 255; i++) tone[i] = toneIn(span[slot[i]], light[i]);
-  return { index, slot, tone, light, tail, span };
+  const fleshSpan = [1, 0];
+  for (let i = 1; i < 255; i++) if (flesh[i]) { fleshSpan[0] = Math.min(fleshSpan[0], light[i]); fleshSpan[1] = Math.max(fleshSpan[1], light[i]); }
+  span.flesh = fleshSpan;
+  return { index, slot, tone, light, tail, flesh, span };
 }
 const toneIn = ([lo, hi], light) => (hi > lo ? Math.max(0, Math.min(1, (light - lo) / (hi - lo))) : 0.5);
 
@@ -133,7 +143,7 @@ function shadeByNearest(mat, tone, pal, tables, width, rows) {
 
 /** The frame's own regions: each pixel's slot and light, where the figure stands (`bottom`, its feet's row) and the
  *  middle of its trunk (`centreX`), and its height in pixels. */
-function regionsOf(picture, tables, height) {
+export function regionsOf(picture, tables, height) {
   const { width, data } = picture, rows = picture.height, mat = new Uint8Array(width * rows), tone = new Float32Array(width * rows);
   const pal = new Uint8Array(width * rows);
   for (let i = 0; i < width * rows; i++) {
@@ -154,7 +164,7 @@ function regionsOf(picture, tables, height) {
   for (let y = Math.max(0, Math.round(bottom - 0.78 * height)); y <= Math.min(rows - 1, bottom - 0.45 * height); y++)
     for (let x = 0; x < width; x++) if (body(y * width + x)) trunk.push(x);
   trunk.sort((a, b) => a - b);
-  return { mat, tone, body, bottom, centreX: trunk.length ? trunk[trunk.length >> 1] : width / 2, height };
+  return { mat, tone, pal, body, bottom, centreX: trunk.length ? trunk[trunk.length >> 1] : width / 2, height };
 }
 
 /**
@@ -163,7 +173,7 @@ function regionsOf(picture, tables, height) {
  * the orientation in its group (0 front, 2 the side facing left, 4 the back), `height` the standing figure's pixels.
  * Pure: the pins drive it on pictures and palettes of their own.
  */
-export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view = 0, height = CLASS_FIGURE } = {}) {
+export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view = 0, height = CLASS_FIGURE, bare = false } = {}) {
   const { width } = picture, rows = picture.height, out = new Uint8Array(picture.data);
   const reg = regionsOf(picture, tables, height), { mat, tone, bottom, centreX } = reg;
   const slotOf = { outer, inner: outer === CLOTH ? DRAPE : CLOTH };
@@ -173,6 +183,7 @@ export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view =
   for (let i = 0; i < mat.length; i++) if (dye[mat[i]]) put(i, rampAt(dye[mat[i]], tone[i]));
   if (scheme.pattern) paintPattern(scheme.pattern, scheme.pattern.on.map((role) => slotOf[role]), reg, width, rows, put);
   if (scheme.trim) paintTrim(slotOf[scheme.trim.on], scheme.trim.ramp, reg, width, rows, put);
+  if (bare && scheme.garment) paintGarment(scheme.garment, torsoOf(reg, tables, width, rows, { loin: outer, view }), reg, tables, view, width, put);
   const band = (inside, ramp, on = (i) => mat[i] !== CLEAR) => {
     for (let y = 0; y < rows; y++) for (let x = 0; x < width; x++) if (on(y * width + x) && inside(x, y)) put(y * width + x, rampAt(ramp, 0.2 + 0.65 * tone[y * width + x]));
   };
@@ -196,6 +207,93 @@ export function paintClassFrame(picture, tables, scheme, { outer = DRAPE, view =
   }
   if (scheme.shield) paintShield(scheme.shield, reg, view, width, rows, out);
   return { width, height: rows, data: out };
+}
+
+/** OWN-AUDIT: a bare torso's half-width a view, in figure heights, at the waist and at the shoulders. */
+export const TORSO_HALF = Object.freeze({ 0: [0.11, 0.14], 1: [0.1, 0.125], 2: [0.08, 0.1], 3: [0.1, 0.125], 4: [0.11, 0.14] });
+
+/**
+ * OWN-AUDIT: a bare figure's torso - from the waist (the top of its loincloth, slot `loin`) up to its neck (two rows
+ * under the helmet, the highest compact piece of metal), about the line from the hips' middle to the neck, as wide as
+ * the view's TORSO_HALF (wider for a body that leans). Answers each row's [from, to] or null, its top and its waist.
+ */
+export function torsoOf({ mat, pal, bottom, centreX, height }, tables, width, rows, { loin = DRAPE, view = 0 } = {}) {
+  let waist = -1, under = null;
+  for (let y = Math.max(0, Math.round(bottom - 0.66 * height)); y <= bottom - 0.35 * height && waist < 0; y++) {
+    const xs = [];
+    for (let x = 0; x < width; x++) if (mat[y * width + x] === loin) xs.push(x);
+    if (xs.length >= 2) { waist = y; under = (xs[0] + xs[xs.length - 1]) / 2; }
+  }
+  if (waist < 0) { waist = Math.round(bottom - 0.56 * height); under = centreX; }
+  // the hips' middle: the body about the waist, near the loincloth, metal (a bracer, a blade) aside
+  const hips = [];
+  for (let y = Math.max(0, waist - 3); y <= Math.min(rows - 1, waist + 3); y++)
+    for (let x = Math.max(0, Math.round(under - 0.14 * height)); x <= Math.min(width - 1, under + 0.14 * height); x++)
+      if (pal[y * width + x] && mat[y * width + x] !== METAL) hips.push(x);
+  const waistX = hips.length ? hips[hips.length >> 1] : under;
+  // the helmet: the highest piece of metal in the figure's top half that is about as tall as it is wide
+  const seen = new Uint8Array(width * rows);
+  let helmet = null;
+  for (let start = 0; start < width * rows; start++) {
+    if (seen[start] || mat[start] !== METAL) continue;
+    const queue = [start];
+    seen[start] = 1;
+    let x0 = width, x1 = -1, y0 = rows, y1 = -1;
+    for (let head = 0; head < queue.length; head++) {
+      const i = queue[head], x = i % width, y = (i - x) / width;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const j = (y + dy) * width + x + dx;
+        if (x + dx >= 0 && x + dx < width && y + dy >= 0 && y + dy < rows && !seen[j] && mat[j] === METAL) { seen[j] = 1; queue.push(j); }
+      }
+    }
+    const wide = x1 - x0 + 1, tall = y1 - y0 + 1;
+    if (queue.length >= 0.0025 * height * height && wide <= 2.2 * tall && tall <= 2.2 * wide && y0 < bottom - 0.6 * height && (!helmet || y0 < helmet.y0))
+      helmet = { x0, x1, y0, y1 };
+  }
+  const neckX = helmet ? (helmet.x0 + helmet.x1) / 2 : waistX, neckY = helmet ? helmet.y1 : Math.round(bottom - 0.86 * height);
+  const top = Math.min(waist - 1, neckY + 2), lean = (neckX - waistX) / Math.max(1, waist - neckY);
+  const [atWaist, atShoulders] = TORSO_HALF[view] ?? TORSO_HALF[0], stretch = Math.hypot(1, lean);
+  const span = new Array(rows).fill(null);
+  for (let y = top; y < waist; y++) {
+    const up = (waist - y) / Math.max(1, waist - top), mid = waistX + lean * (waist - y);
+    const half = (atWaist + (atShoulders - atWaist) * Math.min(1, up * 1.6)) * height * stretch;
+    const from = Math.max(0, Math.ceil(mid - half)), to = Math.min(width - 1, Math.floor(mid + half));
+    if (from <= to) span[y] = [from, to];
+  }
+  return { span, top, waist };
+}
+
+/** A garment over the torso (torsoOf), lit by the flesh it covers: a motley jerkin, a leather harness - two straps, a
+ *  chest strap and brass buckles - or a wrapped tunic, folded and edged; a hem at its foot. */
+function paintGarment(garment, { span, top, waist }, { mat, pal, height }, tables, view, width, put) {
+  const cell = Math.max(4, Math.round(0.06 * height)), chest = Math.round(top + 0.35 * (waist - top));
+  for (let y = top; y < waist; y++) {
+    const row = span[y];
+    if (!row) continue;
+    const mid = (row[0] + row[1]) / 2, apart = view === 2 ? 0 : (view === 0 || view === 4 ? 0.06 : 0.04) * height;
+    for (let x = row[0]; x <= row[1]; x++) {
+      const i = y * width + x;
+      if (mat[i] !== SKIN && mat[i] !== NONE) continue;
+      const lit = 0.1 + 0.8 * toneIn(tables.span.flesh, tables.light[pal[i]]);
+      let colour = rampAt(garment.ramp, lit);
+      if (garment.kind === 'motley') {
+        const across = x - mid, up = waist - y;
+        if ((Math.floor((across + up) / cell) + Math.floor((up - across) / cell)) & 1) colour = rampAt(garment.alt, lit);
+      } else if (garment.kind === 'harness') {
+        const strap = [mid - apart, mid + apart].some((at) => Math.abs(x - at) < 1) || Math.abs(y - chest) < 1;
+        const buckle = view !== 2 && Math.abs(y - chest) <= 1 && [mid - apart, mid + apart].some((at) => Math.abs(x - at) <= 1.5);
+        if (buckle) colour = rampAt(garment.buckle, 0.45 + 0.55 * lit);
+        else if (strap) colour = rampAt(garment.strap, 0.15 + 0.5 * lit);
+      } else if (garment.kind === 'wrap') {
+        const edge = mid + (view === 4 ? 1 : -1) * (0.09 * height) * (1 - (2 * (y - top)) / Math.max(1, waist - top));
+        if (Math.abs(x - edge) < 1) colour = rampAt(garment.edge, 0.3 + 0.6 * lit);
+        else if ((((x - Math.round(mid) + y) % 4) + 4) % 4 === 0) colour = rampAt(garment.ramp, lit * 0.7);
+      }
+      if (garment.hem && y >= waist - 2) colour = rampAt(garment.hem, 0.2 + 0.6 * lit);
+      put(i, colour);
+    }
+  }
 }
 
 /** Motley diamonds, sailor's stripes or sewn patches, laid on the `slots` from the figure's own feet and trunk. */
@@ -289,5 +387,5 @@ export async function classSkinPicture(own, { picture = (archive, record, frame)
   const [classic, tables] = await Promise.all([picture(skin.from, record, frame), tablesOf(palette)]);
   if (!classic) throw new Error(`TEXTURE.${skin.from} record ${record} frame ${frame}: not in the player's data`);
   const height = CLASS_FIGURE * classRecordScale(skin.archive, record);
-  return paintClassFrame(classic, tables, CLASS_LOOKS[skin.name], { outer: OUTER_SLOT[skin.from], view: record % 5, height });
+  return paintClassFrame(classic, tables, CLASS_LOOKS[skin.name], { outer: OUTER_SLOT[skin.from], view: record % 5, height, bare: BARE_SHEETS.includes(skin.from) });
 }

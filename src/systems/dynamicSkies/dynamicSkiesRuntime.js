@@ -15,7 +15,7 @@ import {
   seasonAt,
   fogSettingsFromPresets,
   fogPresetKey,
-  LightningFlash,
+  StormFlash,
   pixelSnowSettings,
 } from './dynamicSkies.js';
 
@@ -32,7 +32,7 @@ export class DynamicSkies {
     this.fogSettings = fogSettingsFromPresets(assets.fog ?? FOG_LOOK, settings.densitySetting ?? 1);
     this.lightCurve = assets.lightCurve ?? DYNAMIC_LIGHT_CURVE;
     this.pixelSnow = settings.ActivatePixelSnow ? pixelSnowSettings(settings) : null;
-    this.lightningFlash = new LightningFlash(rng);
+    this.lightningFlash = new StormFlash(rng);
     this.lightningLight = null;
     this.playerInside = false;
     this.currentWeather = 'sunny';

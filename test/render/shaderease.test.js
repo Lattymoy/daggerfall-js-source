@@ -65,7 +65,8 @@ test('SHADER-EASE WARM-POLL every list is its build: the pairs started are the o
   }
   assert.equal(DEEP_WATERS_PROGRAMS.length, 7);
   assert.equal(OCEAN_HOLES_PROGRAMS.length, 2);
-  assert.deepEqual(LANES.map((o) => precipPrograms(o).length), [1, 2, 3, 1]);
+  // PIN MOVED (OWN-WORK4 AUDIT): the enhanced lane warms Better Ambience's fall beside the lab
+  assert.deepEqual(LANES.map((o) => precipPrograms(o).length), [1, 3, 4, 1]);
 });
 
 test('SHADER-EASE WARM-POLL the sea\'s warm: built only once the driver says done, asked at each idle; a pass a draw built first is stood down; without the extension it builds at its first idle as the bare step did (mutants: the Deep Waters step built at once; its need never false; the Ocean Holes step built at once)', async () => {
@@ -114,7 +115,7 @@ test('SHADER-EASE WARM-POLL the rain\'s step: built once its programs are done, 
   assert.equal(ready(), true);
   step.run();
   assert.ok(precip instanceof PrecipitationRenderer);
-  assert.equal(f.count('createProgram'), 2, 'the two it started, no more');
+  assert.equal(f.count('createProgram'), 3, 'the three it started (the classic pass, the lab, Better Ambience\'s fall), no more');   // PIN MOVED (OWN-WORK4 AUDIT)
   const first = precip;
   step.run();
   assert.equal(precip, first, 'not built twice');

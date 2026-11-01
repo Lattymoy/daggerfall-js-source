@@ -280,5 +280,23 @@
     "tests": [
       "test/render/snowfall1_runtime.test.js"
     ]
+  },
+  {
+    "name": "OWN4-snow-albedo-second-dropped",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "second, ${f(SNOW_ALBEDO_SECOND.share)})",
+    "new": "second, 0.0)",
+    "tests": [
+      "test/render/snowfall1_runtime.test.js"
+    ]
+  },
+  {
+    "name": "OWN4-snow-albedo-second-a-whole-tile",
+    "file": "src/render/snowfallGlsl.js",
+    "old": "  scale: 0.381966,",
+    "new": "  scale: 1,",
+    "tests": [
+      "test/render/snowfall1_runtime.test.js"
+    ]
   }
 ]

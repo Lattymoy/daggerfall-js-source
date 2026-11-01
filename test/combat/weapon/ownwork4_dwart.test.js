@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  METAL_RAMPS, rampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintFrame, paintIcon, scale2x, unspeckle,
+  METAL_RAMPS, rampAt, metalLut, bladeAxis, reshapeBlade, singleBit, staffBands, paintFrame, paintIcon, scale2x, unspeckle, FULLER, GROOVE_PART,
   parseOwnName, createOwnWeaponArt, FULLER_SHADE,
 } from '../../../src/combat/diverseWeapons/diverseWeaponsArt.js';
 import { LOOKS, OWN_FILES, shapeOf, ICON_RECORDS, DIVERSE_WEAPONS_METALS } from '../../../src/combat/diverseWeapons/diverseWeaponsIndex.js';
@@ -170,6 +170,19 @@ test('OWN-WORK4 AUDIT: a widened blade carries what hugs it out whole, and a pix
   unspeckle(out, from, before, 5, 5);
   assert.equal(out[0], 0, 'a piece of a line the move stranded goes');
   assert.equal(out[24], 1, 'a spark alone in the source stays');
+});
+
+test('OWN-WORK4 AUDIT: a fuller is a groove - its wall on the light\'s side in shadow, its floor darker than the blade, its far wall lit toward the ramp\'s light (mutants: a band; the light\'s side turned; the lit wall unlit)', () => {
+  const src = new Uint8Array(W * H);
+  for (let y = TIP; y < H; y++) for (let x = 14; x <= 26; x++) src[y * W + x] = 0x7a; // a broad blade up the frame, 13 wide
+  const { fuller } = reshapeBlade(src, W, H, { fuller: true });
+  // the blade points up, so the light (upper left) falls on its left: the left wall is the shadowed one
+  assert.deepEqual([17, 18, 19, 20, 21, 22, 23].map((x) => fuller[40 * W + x]),
+    [0, GROOVE_PART.wall, GROOVE_PART.wall, GROOVE_PART.floor, GROOVE_PART.lit, GROOVE_PART.lit, 0]);
+  const pic = paintFrame({ width: W, height: H, data: src }, PAL, 'LONGSWORD', 'Iron');
+  const lum = (x) => { const o = (40 * W + x) * 4; return pic.data[o] + pic.data[o + 1] + pic.data[o + 2]; };
+  assert.ok(lum(18) < lum(20) && lum(20) < lum(16) && lum(16) < lum(22), `shadow ${lum(18)} < floor ${lum(20)} < blade ${lum(16)} < lit wall ${lum(22)}`);
+  assert.ok(FULLER.FLOOR < FULLER.GROOVE && FULLER.GROOVE < 0.5, 'a groove narrower than half the blade');
 });
 
 test('OWN-WORK4 colour: the frame painted - clear and the mask clear, the metal by our law, a groove shaded, a ring by the ramp, every other pixel Daggerfall\'s', () => {

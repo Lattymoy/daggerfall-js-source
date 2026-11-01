@@ -52,8 +52,8 @@
 //          along the ground.
 //
 // THREE DEPARTURES STAND, each Mac's or recorded in the Ledger: the
-// wheel is the only way in and out (`Camera.TogglePerspective`'s key,
-// IL_1230-IL_124d, is inert); `CameraScrolling.ScrollableZOffset` ships
+// wheel and the game's TogglePerspective action are the ways in and out
+// (`Camera.TogglePerspective`'s key, IL_1230-IL_124d, retired OWN-AUDIT); `CameraScrolling.ScrollableZOffset` ships
 // off and the port ships it on; `SwitchShoulder` is B, not Tab. And
 // two things the port cannot hold: the attack-from-body ray
 // (`MeleeDamage`, IL_2844) and the missile re-home (IL_137f-IL_1477) -

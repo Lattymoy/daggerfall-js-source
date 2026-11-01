@@ -267,7 +267,7 @@ const wrap = (value) => value - Math.floor(value);
 /**
  * One frame of the sky, in the shape the pass and the bridge read.
  * @param {object} f { minuteOfDay, classicMinutes, row (weatherRow, eased), season (SEASONS), seconds,
- *   weatherScale, phases (phasesAt), lightCurve, flash (the storm's flash now, LightningFlash's level) }
+ *   weatherScale, phases (phasesAt), lightCurve, flash (the storm's flash now, StormFlash's level) }
  */
 export function skyFrame({
   minuteOfDay,
@@ -499,7 +499,7 @@ export const strokeLevel = (t) =>
       ? t / FLASH_LOOK.rise
       : Math.exp(-(t - FLASH_LOOK.rise) / FLASH_LOOK.decay);
 
-export class LightningFlash {
+export class StormFlash {
   constructor(rng = Math.random) {
     this.rng = rng;
     /** the flashes in flight: { t (s since the first stroke; null until its first frame), strokes: [[start, peak]],

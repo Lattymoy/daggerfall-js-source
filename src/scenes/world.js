@@ -15339,7 +15339,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     setWeatherEnabled: (on) => { _travelWeatherOff = !on; },
     setTravelSoundsEnabled: (on) => { _travelSoundsOff = !on; },
-    setRealGrassEnabled: () => { /* Real Grass is not a mod the port has - recorded in bible/06-Systems/Travel-Options.md */ },
   }) : null;
   /** TO1: what the autopilot asked for THIS frame - the yaw and the
    *  forward force, or null when no journey is running. Written by the
@@ -32536,7 +32535,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the game's sun, ambient and colour in the lab's uniforms, the same
     // integrated wind the rain reads, and the lab's weather dim.
     const frameGrass = () => {   // PERF-V8
-    if (labGrass && !tvf) {   // TV1: from 150 m up a blade is under a pixel - the field waits for the traveller's eye
+    if (labGrass && !tvf && !travelOptions?.grassHidden) {   // TV1: from 150 m up a blade is under a pixel - the field waits for the traveller's eye; OWN-AUDIT: and a sped-up journey's, AllowRealGrass off
       const ex = cam.pos[0]; const ez = cam.pos[2];
       // GR5: THE FIELD IS ANCHORED TO THE WORLD. GR2's walk placed every
       // blade relative to the eye and swapped the whole field when the

@@ -34,7 +34,8 @@ of its range.
 **OWN-WORK4 AUDIT (2026-11-01).** Our faces always load, where the pack's never did in node, and that showed a
 sprite lowered wholly below the screen still drew its quad (`spellhand.test.js`, a buckler beside a readied spell).
 `draw` emits nothing for a rect wholly past the screen's edge; `drawRect` still answers it, the gate ladder's own
-verdict.
+verdict. The faces were flat; they take the painter's light now: a bevelled rim, a boss that casts its shadow, studs
+that glint, metal with a sheen and the leather group's face in planks of wood. Mutants OWW-SF-1 to OWW-SF-6.
 
 ## The source the port reads
 

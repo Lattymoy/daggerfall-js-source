@@ -13,11 +13,12 @@ import {
   seedOf, canvas, addBurst, addMode, addBubble, crush, filterSpan, inTurn, mulberry32, rmsOf, loudnessOf,
 } from '../../../src/audio/synth/dsp.js';
 import { stepSound, STEP_FAMILIES, RETRO } from '../../../src/audio/synth/steps.js';
-import { rainLoop, rainLoopInTurns, RAIN_LOOP } from '../../../src/audio/synth/rain.js';
+import { rainLoop, rainLoopInTurns, RAIN_LOOP, RAIN_EAVES } from '../../../src/audio/synth/rain.js';
 import {
   immersiveFootstepsClip, immersiveFootstepsRecipe, betterAmbienceClip, betterAmbienceClipInTurn, IF_CLIP_MS, BA_CLIPS, BA_RAIN_CLIP,
-  IF_LOUDNESS, LEVEL_SPREAD_DB,
+  IF_LOUDNESS, LEVEL_SPREAD_DB, BA_RAIN_LAYERS,
 } from '../../../src/audio/synth/clips.js';
+import { layersPeriod } from '../../../src/audio/layeredLoop.js';
 import { clipNames, SOUND_CLIP_QUALITY, LANDING_VOLUME_SCALE } from '../../../src/systems/immersiveFootsteps.js';
 import { baClipNames, MISSING_CLIPS, AMBIENT_RAIN_CLIP, CLIP_LISTS, LIST_VOLUME, BA_FOOTSTEP_VOLUME_SCALE } from '../../../src/systems/betterAmbience.js';
 
@@ -191,7 +192,7 @@ test('OWN-WORK4: every name Better Ambience asks for is a clip of ours at its li
   const r = betterAmbienceClip(BA_RAIN_CLIP);
   assert.equal(r.rate, RAIN_LOOP.rate);
   assert.equal(r.samples.length, Math.round(RAIN_LOOP.seconds * RAIN_LOOP.rate));
-  assert.ok(Math.abs(peakOf(r.samples) - RAIN_LOOP.peak) < 1e-6);
+  assert.ok(Math.abs(20 * Math.log10(rmsOf(r.samples)) - RAIN_LOOP.rmsDb) < 0.01 && peakOf(r.samples) < 1, 'at its RMS, never clipped');
   const d = [];
   for (let i = 1; i < r.samples.length; i++) d.push(Math.abs(r.samples[i] - r.samples[i - 1]));
   d.sort((a, b) => a - b);
@@ -200,6 +201,20 @@ test('OWN-WORK4: every name Better Ambience asks for is a clip of ours at its li
   assert.ok(bands(r.samples.subarray(0, 4 * RAIN_LOOP.rate), RAIN_LOOP.rate)[2] > 0.6, 'a hiss of drops, 1.5 to 5 kHz');
   assert.deepEqual(await rainLoopInTurns(), rainLoop(), 'a step a task makes the same loop');
   assert.deepEqual((await betterAmbienceClipInTurn('sfx_footstep_stone_001')).samples, betterAmbienceClip('sfx_footstep_stone_001').samples);
+  // THE EAVES' LAYER (OWN-WORK4 audit): the drips on a loop of their own 41 s, at the level they had in the bed, folded
+  // at the end so it runs into its start; the two come round together only after thousands of hours
+  assert.deepEqual(BA_RAIN_LAYERS, ['AmbientRaining', 'AmbientRaining/eaves']);
+  assert.deepEqual({ ...RAIN_EAVES }, { seconds: 41, rate: 11025, rmsDb: -36 });
+  const e = betterAmbienceClip(BA_RAIN_LAYERS[1]);
+  assert.equal(e.rate, RAIN_EAVES.rate);
+  assert.equal(e.samples.length, RAIN_EAVES.seconds * RAIN_EAVES.rate);
+  assert.ok(Math.abs(20 * Math.log10(rmsOf(e.samples)) - RAIN_EAVES.rmsDb) < 0.01);
+  let step = 0;
+  for (let i = 1; i < e.samples.length; i++) step = Math.max(step, Math.abs(e.samples[i] - e.samples[i - 1]));
+  assert.ok(Math.abs(e.samples[0] - e.samples[e.samples.length - 1]) <= step, 'the eaves run into their start');
+  assert.ok(peakOf(e.samples) / rmsOf(e.samples) > 6, 'drips, one by one');
+  assert.ok(layersPeriod([r, e].map((c) => ({ samples: c.samples.length, rate: c.rate }))) > 1000 * 3600);
+  assert.deepEqual((await betterAmbienceClipInTurn(BA_RAIN_LAYERS[1])).samples, e.samples);
 });
 
 // ═══ each family sounds like what it is ══════════════════════════════════════
@@ -256,7 +271,7 @@ test('OWN-WORK4: each family is heard as what it is - its A-weighted power in th
 
 /** sha256 of every clip's Float32 PCM in order, its first 16 hex digits. A changed sound changes it: write the new one
  *  here in the change that meant it. */
-const DIGEST = Object.freeze({ HQ: '3b5fda211e66984d', LQ: '38069d728b2ae152', BA: '8ffe8ba6a8761948', rain: '5fd4f34494fa5947' });
+const DIGEST = Object.freeze({ HQ: '3b5fda211e66984d', LQ: '38069d728b2ae152', BA: '8ffe8ba6a8761948', rain: '9671e23f0aa72400' });
 const digest = (clips) => {
   const h = createHash('sha256');
   for (const c of clips) h.update(new Uint8Array(c.samples.buffer, c.samples.byteOffset, c.samples.byteLength));
@@ -270,5 +285,5 @@ test('OWN-WORK4: the sounds are exactly what our code makes - a digest of each s
   }
   const ba = Object.entries(BA_CLIPS).flatMap(([s, l]) => l.ms.map((m, i) => (m ? betterAmbienceClip(`${s}_${String(i).padStart(3, '0')}`) : null)).filter(Boolean));
   assert.equal(digest(ba), DIGEST.BA, 'Better Ambience\'s steps');
-  assert.equal(digest([betterAmbienceClip(BA_RAIN_CLIP)]), DIGEST.rain, 'the rain loop');
+  assert.equal(digest(BA_RAIN_LAYERS.map((n) => betterAmbienceClip(n))), DIGEST.rain, 'the rain loop and its eaves');
 });
