@@ -32,7 +32,7 @@ import { RRI_TEMPLATES } from '../roleplayRealismItems/rriItems.js';
 import { templateByIndex } from './itemTemplates.js';
 import { savedItemLists } from '../save/save.js';
 
-const RRI_INDEXES = new Set(RRI_TEMPLATES.map((t) => /** @type {{ index: number }} */ (t).index));   // the mod's rows count as known, registered or not (rriInstall.js)
+const RRI_INDEXES = new Set(RRI_TEMPLATES.map((row) => /** @type {{ index: number }} */ (row).index));   // the mod's rows count as known, registered or not (rriInstall.js)
 
 /**
  * Takes out of every item list a save holds the items whose template this build does not have: a character from a
