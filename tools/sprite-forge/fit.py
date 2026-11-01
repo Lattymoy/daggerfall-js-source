@@ -373,17 +373,20 @@ def fit_shape(cloud, spec, refs, iters, rng):
     first = _shape_value(base)   # poses every frame once, before the workers fork
     pool = multiprocessing.get_context('fork').Pool(4)
     x, best = base.copy(), first
-    sigma = steps.copy()
-    for i in range(iters):
-        cands = x + rng.normal(size=(8, len(keys))) * sigma
-        vals = pool.map(_shape_value, list(cands))
+    import cma
+    es = cma.CMAEvolutionStrategy(np.zeros(len(keys)), 0.5, {'popsize': 12, 'maxiter': iters, 'verbose': -9,
+                                                              'seed': int(rng.integers(1, 2 ** 31))})
+    i = 0
+    while not es.stop():
+        zs = es.ask()
+        cands = [base + np.asarray(z) * steps for z in zs]
+        vals = pool.map(_shape_value, cands)
+        es.tell(zs, [-v for v in vals])
         k = int(np.argmax(vals))
         if vals[k] > best:
             x, best = cands[k], vals[k]
-            sigma = np.minimum(sigma * 1.2, steps * 2)
-        else:
-            sigma = np.maximum(sigma * 0.85, steps * 0.05)
         print(f'shape {i}: {best:.4f}', flush=True)
+        i += 1
     pool.close()
     print(f'shape: {first:.4f} -> {best:.4f}', flush=True)
     return dict(zip(keys, x))
